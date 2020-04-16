@@ -163,7 +163,8 @@ object ThreadUtils {
           complete(Some(a))
         } catch {
           case _: InterruptedException =>
-        }
+        } finally
+          complete(None)
       }
 
       thread = new Thread(taskRunnable)
@@ -178,7 +179,7 @@ object ThreadUtils {
       timer.schedule(timeout, maxDur.toMillis)
 
       sync.synchronized {
-        sync.wait(maxDur.toMillis + 200)
+        sync.wait(maxDur.toMillis)
       }
 
       result

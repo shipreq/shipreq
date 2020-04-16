@@ -76,12 +76,19 @@ object Redis extends StrictLogging {
   }
 
   private val ensureComplete: ProjectCache => ProjectCache = pc => {
-    val isComplete: Boolean =
-      pc.events.headOption match {
-        case Some(e) => e.ord.immediatelyFollows(pc.snapshot.map(_.ord.asEventOrd))
-        case None    => true
-      }
-    if (isComplete) pc else ProjectCache.empty
+    pc.events.headOption match {
+      case Some(e) =>
+        if (e.ord.immediatelyFollows(pc.snapshot.map(_.ord.asEventOrd)))
+          pc
+        else
+          pc.snapshot match {
+            case s@ Some(_) => ProjectCache(s, VerifiedEvent.Seq.empty)
+            case None       => ProjectCache.empty
+          }
+
+      case None =>
+        pc
+    }
   }
 
   trait ProjectAlgebra[F[_]] {
@@ -340,7 +347,11 @@ object Redis extends StrictLogging {
           case Some(o) => VerifiedEvent.Seq.empty ++ (cacheOnly.iterator ++ cacheAndPublish).filter(_.ord > o)
           case None    => cacheOnly ++ cacheAndPublish
         }
-        if (newEvents.isEmpty || cache.ord.exists(newEvents.min.ord.value > _.value + 1))
+        def containsGaps = cache.ord match {
+          case Some(o) => newEvents.min.ord.value != o.value + 1
+          case None    => newEvents.min.ord.value > 1
+        }
+        if (newEvents.isEmpty || containsGaps)
           false
         else {
           val it = newEvents.iterator

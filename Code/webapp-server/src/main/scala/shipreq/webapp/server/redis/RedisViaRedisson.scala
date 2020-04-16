@@ -34,14 +34,14 @@ object RedisViaRedisson {
 
       def apply(k1: RedisKey): Keys = {
         val keys = new ArrayList[AnyRef](1)
-        keys.add(k1)
+        keys.add(k1.value)
         new Keys(keys)
       }
 
       def apply(k1: RedisKey, k2: RedisKey): Keys = {
         val keys = new ArrayList[AnyRef](2)
-        keys.add(k1)
-        keys.add(k2)
+        keys.add(k1.value)
+        keys.add(k2.value)
         new Keys(keys)
       }
     }

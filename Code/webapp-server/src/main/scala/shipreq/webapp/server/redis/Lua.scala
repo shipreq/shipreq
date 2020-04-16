@@ -50,6 +50,7 @@ private[redis] object Lua {
       def getBeyond(ord: String)        (implicit k: KeyEvents) = s"redis.call('ZRANGEBYSCORE',$k,$ord+1,'+inf')"
       def add(ver: String, data: String)(implicit k: KeyEvents) = s"redis.call('ZADD',$k,'NX',$ver,$data)"
       def remove_<=(ver: String)        (implicit k: KeyEvents) = s"redis.call('ZREMRANGEBYSCORE',$k,1,$ver)"
+      def remove_> (ver: String)        (implicit k: KeyEvents) = s"redis.call('ZREMRANGEBYSCORE',$k,$ver+1,'+inf')"
     }
 
     object total {
@@ -63,7 +64,7 @@ private[redis] object Lua {
 
       def getVer(snapshotVer: String)(implicit k: KeyEvents): String = {
         def ver = s"(${events.getMaxVer} or $snapshotVer)"
-        s"${isComplete(snapshotVer)} and $ver or 0" // (a ? b : c) is (a and b or c) in Lua
+        s"${isComplete(snapshotVer)} and $ver or $snapshotVer" // (a ? b : c) is (a and b or c) in Lua
       }
     }
 
@@ -179,6 +180,7 @@ private[redis] object Lua {
        |    ${events.add("j", "ARGV[i+1]")}
        |    prev=j
        |  end
+       |  ${events.remove_>("prev")}
        |end
        |
        |for i = $firstCmdArg,#ARGV,2 do
@@ -238,11 +240,9 @@ local bin = ARGV[3]
 
 local ok = ver > (tonumber(redis.call('LINDEX',ks,0)) or 0)
 if ok then
-
-redis.call('LPOP',ks)
-redis.call('LPOP',ks)
-redis.call('LPUSH',ks,bin,ver)
-
+  redis.call('LPOP',ks)
+  redis.call('LPOP',ks)
+  redis.call('LPUSH',ks,bin,ver)
   redis.call('ZREMRANGEBYSCORE',ke,1,ver)
 end
 
@@ -258,7 +258,7 @@ return ok
 local ks = KEYS[1]
 local ke = KEYS[2]
 local c = ARGV[1]
-local v = ((redis.call('EXISTS',ke)==0) or ((tonumber(redis.call('LINDEX',ks,0)) or 0) + 1 == tonumber(redis.call('ZRANGE',ke,0,0,'WITHSCORES')[2]))) and (tonumber(redis.call('ZRANGE',ke,-1,-1,'WITHSCORES')[2]) or (tonumber(redis.call('LINDEX',ks,0)) or 0)) or 0
+local v=((redis.call('EXISTS',ke)==0) or ((tonumber(redis.call('LINDEX',ks,0)) or 0) + 1 == tonumber(redis.call('ZRANGE',ke,0,0,'WITHSCORES')[2]))) and (tonumber(redis.call('ZRANGE',ke,-1,-1,'WITHSCORES')[2]) or (tonumber(redis.call('LINDEX',ks,0)) or 0)) or (tonumber(redis.call('LINDEX',ks,0)) or 0)
 
 local n = 0
 local s = 0
@@ -280,6 +280,7 @@ if ok then
     redis.call('ZADD',ke,'NX',j,ARGV[i+1])
     prev=j
   end
+  redis.call('ZREMRANGEBYSCORE',ke,prev+1,'+inf')
 end
 
 for i = 2,#ARGV,2 do
