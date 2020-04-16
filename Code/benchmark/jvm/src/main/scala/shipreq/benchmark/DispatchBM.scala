@@ -130,11 +130,11 @@ class DispatchBM {
     testF(i)(_.dispatcher)
 
   @Benchmark def catsIO     = test(DispatchBM.catsIO)
-  @Benchmark def fn0        = test(DispatchBM.fn0)
-//@Benchmark def future     = test(DispatchBM.future)
-  @Benchmark def name       = test(DispatchBM.name)
-  @Benchmark def trampoline = test(DispatchBM.trampoline)
-  @Benchmark def zio        = test(DispatchBM.zio)
+//  @Benchmark def fn0        = test(DispatchBM.fn0)
+////@Benchmark def future     = test(DispatchBM.future)
+//  @Benchmark def name       = test(DispatchBM.name)
+//  @Benchmark def trampoline = test(DispatchBM.trampoline)
+//  @Benchmark def zio        = test(DispatchBM.zio)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -26,7 +26,7 @@ object SerialisationEventsBM {
   import shipreq.webapp.base.protocol.binary.v1.Rev1._
   import shipreq.webapp.base.protocol.json.v1.Rev1._
 
-  val events = SampleData.events_1000
+  val events = SampleData.`1000`.events
 
   val jsonEnc = Encoder[Vector[Event]]
   val jsonDec = Decoder[Vector[Event]]
@@ -36,12 +36,9 @@ object SerialisationEventsBM {
   val bin = binCodec.encode(events)
 }
 
-@Warmup(iterations = 6)
-@Measurement(iterations = 6)
-@Fork(1)
-@BenchmarkMode(Array(Mode.Throughput))
-@OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
+@BenchmarkMode(Array(Mode.AverageTime))
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 class SerialisationEventsBM {
 
   @Param(Array("json", "binary"))

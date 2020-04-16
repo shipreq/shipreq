@@ -3,15 +3,15 @@ package shipreq.benchmark
 import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
-import boopickle.PickleImpl
-import shipreq.webapp.base.protocol.binary.v1.Rev1.picklerProject
+import shipreq.base.util.BinaryData
 
 object SizeCompare {
 
   case class NData(name: String, data: Data)
   implicit def dataFromNData(n: NData) = n.data
+  implicit def dataFromBinaryData(n: BinaryData) = Data(n.unsafeArray)
 
-  case class Data(bytes: Array[Byte]) {
+  final case class Data(bytes: Array[Byte]) {
 
     val size = bytes.length
 
@@ -46,8 +46,8 @@ object SizeCompare {
 //    val j100  = bench("json P100",  upickle.Fns write SampleData.project_100)
 //    val j1000 = bench("json P1000", upickle.Fns write SampleData.project_1000)
 
-    val b100  = bench("bin P100", PickleImpl intoBytes SampleData.project_100)
-//    val b1000 = bench("bin P1000", PickleImpl intoBytes SampleData.project_1000)
+    val b1000   = bench("bin P1000",  SampleData.`1000`.projectBinary)
+    val b10000  = bench("bin P10000", SampleData.`10000`.projectBinary)
 
     println(sep)
     println()

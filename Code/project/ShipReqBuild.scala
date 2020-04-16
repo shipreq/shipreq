@@ -106,7 +106,7 @@ object ShipReqBuild {
       .settings(
         connectInput in run  := true,
         fork         in run  := true,
-        javaOptions  in run ++= Seq("-Xmx4g", "-Xss4m"))
+        javaOptions  in run ++= Seq("-Xmx8g", "-Xss8m"))
 
   object Benchmark {
     def commonSettings: Project => Project =
