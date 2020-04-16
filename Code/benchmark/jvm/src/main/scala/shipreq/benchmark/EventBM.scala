@@ -1,6 +1,6 @@
 package shipreq.benchmark
 
-/* > run -prof gc Event
+/* > jmh:run -prof gc Event
  *
  * =====================================================================================================================
  * ApplyEvent on KleisliEither
@@ -75,41 +75,29 @@ package shipreq.benchmark
  * EventBM.untrusted:·gc.time                          thrpt  200      605.000                   ms
  */
 
-
+import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import scalaz.{-\/, \/-}
-import shipreq.webapp.base.data.{Project, ProjectId}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ApplyEvent
-import shipreq.webapp.server.db.DbInterpreter
 
-object EventBM {
+@State(Scope.Benchmark)
+@BenchmarkMode(Array(Mode.AverageTime))
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+class EventBM {
 
-  // TODO Instead of loading events from the DB there should be...
-  // 1) An export from DB to JSON (with text scrubbing)
-  // 2) This should load a fixed JSON for the benchmark
+  val events = SampleData.`1000`.verifiedEvents
+  val pe = Project.empty
 
-//  DB.init()
-//  private val seqsAndEvents = DB.DaoProvider.withSession(_.findAllEvents(ProjectId(5)))
-//  val events = seqsAndEvents.map(_._2)
-//  println(s"Loaded ${events.size} events.")
+  val ae_trusted = ApplyEvent.trusted
+  val ae_untrusted = ApplyEvent.untrusted
 
+  def go(ae: ApplyEvent): Project =
+    ae.applyVerified(events)(pe) match {
+      case \/-(p) => p
+      case -\/(e) => println(e); sys.error(e)
+    }
+
+  @Benchmark def untrusted = go(ae_untrusted)
+  @Benchmark def trusted   = go(ae_trusted)
 }
-
-//@State(Scope.Benchmark)
-//class EventBM {
-//
-//  val events = EventBM.events
-//  val pe = Project.empty
-//
-//  val ae_trusted = ApplyEvent.trusted
-//  val ae_untrusted = ApplyEvent.untrusted
-//
-//  def go(ae: ApplyEvent): Project =
-//    ae_untrusted.applyVerified(events)(pe) match {
-//      case \/-(p) => p
-//      case -\/(e) => println(e); sys.error(e)
-//    }
-//
-//  @Benchmark def untrusted = go(ae_untrusted)
-//  @Benchmark def trusted   = go(ae_trusted)
-//}

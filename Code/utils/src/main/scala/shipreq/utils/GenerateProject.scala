@@ -1,14 +1,18 @@
 package shipreq.utils
 
+import boopickle.PickleImpl
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import java.nio.file.{Files, Paths}
+import java.time.Instant
 import nyaya.gen._
 import scala.annotation.tailrec
-import shipreq.utils.UtilUtils._
+import shipreq.webapp.base.protocol.binary.v1.Rev1.picklerProject
 import shipreq.base.test.BaseUtilGen._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.ShowSize
-import shipreq.webapp.base.{RandomData => $}
+import shipreq.webapp.base.{RandomDataSettings, RandomData => $}
 import DataImplicits._
+import shipreq.base.util.BinaryData
 
 object GenerateProject {
 
@@ -53,10 +57,12 @@ object GenerateProject {
     val Implications         = 1000
   }
 
-  val Size = Size1000
+  val Size = Size100
 
   def main(args: Array[String]): Unit = {
-//    autoSelect = true
+    autoSelect = false
+
+    RandomDataSettings.disableUnicode = true
 
     val useCaseCount    = (UseCasePercentage * Size.Reqs).toInt
     val genericReqCount = Size.Reqs - useCaseCount
@@ -72,9 +78,9 @@ object GenerateProject {
     val cfg             = ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
     val atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
     val reqsWithoutText = firstSample($.reqsWithoutText(cfg, genericReqCount, useCaseCount), 20)
-    val reqIdSet        = reqsWithoutText.idIterator.toSet
+    val reqIdSet        = reqsWithoutText.idIterator().toSet
     val reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
-    val liveReqIds      = reqsWithoutText.reqIterator.filter(_.live(cfg.reqTypes) is Live).map(_.id)
+    val liveReqIds      = reqsWithoutText.reqIterator().filter(_.live(cfg.reqTypes) is Live).map(_.id)
     val liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq
     val reqCodeDataG    = $.reqCode.data(liveReqIdG, reqIdG)
     val reqCodesG       = $.reqCodes($.reqCode.trie(reqCodeDataG, Size.ReqCodeDepth))
@@ -83,17 +89,12 @@ object GenerateProject {
     val impMethod       = $.implicationsMethod2(Size.ImplicationsPerSrc, Size.Implications)
     val reqImps         = sample($.reqFieldDataImplications(reqIdSet, impMethod), Size.Implications)
     val p               = sample($.genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps), Size.Reqs)
+    val filename        = s"/tmp/project-${Size.Reqs}-${Instant.now().toString.filter(_.isDigit)}.bin"
+    val bin             = BinaryData.unsafeFromByteBuffer(PickleImpl intoBytes p)
 
-    val objName = s"Project_${Size.Reqs}"
-//    val code    = ShowSrc.generateObject("shipreq.benchmark", objName, "project")(p)
-    val fout    = s"/tmp/$objName.scala"
-//
-    println(s"This used to create $fout but turned out to be a terrible idea.")
-    println("TODO: Save this generated project as binary or JSON or something.")
-
-//    println()
-//    println(s"Writing ${"%,d" format code.length} bytes to $fout ...")
-//    writeFile(fout, code)
+    println()
+    println(s"Writing ${"%,d" format bin.length} bytes to $filename ...")
+    Files.write(Paths.get(filename), bin.unsafeArray)
     println("Done.")
   }
 
