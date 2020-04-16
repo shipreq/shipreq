@@ -5,7 +5,7 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop.CycleDetector
 import monocle.{Lens, Traversal}
-import monocle.macros.{GenLens, Lenses}
+import monocle.macros.Lenses
 import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.collection.mutable

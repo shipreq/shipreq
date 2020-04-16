@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import org.scalajs.dom.document
 import shipreq.base.util.univeq._

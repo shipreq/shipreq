@@ -1,11 +1,11 @@
 package shipreq.taskman.server.logic
 
-import java.time.{Duration, Instant, ZoneId}
+import java.time.{Duration, Instant}
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary._
 import scala.reflect.ClassTag
 import scalaz.Lens.lensg
-import scalaz.{-\/, Endo, Heap, NonEmptyList, Order, \/, \/-}
+import scalaz.{-\/, Endo, Heap, \/, \/-}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.test.{MockOpTransformer, MockOpTransformerA, OpTypeProvider}

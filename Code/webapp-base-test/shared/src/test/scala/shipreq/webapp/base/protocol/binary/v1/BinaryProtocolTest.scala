@@ -13,7 +13,6 @@ import utest._
 
 object BinaryProtocolTest extends TestSuite {
   import BaseMemberData1.AtomPicklers.instances._
-  import PostEvents._
   import Rev1._
   import Rev1.ReqTableDataPicklers._
 

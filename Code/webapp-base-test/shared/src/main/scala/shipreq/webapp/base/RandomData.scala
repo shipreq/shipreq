@@ -17,11 +17,9 @@ import scalaz.{-\/, Need, \/-}
 import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
 import scalaz.std.set._
-import scalaz.std.stream._
 import scalaz.std.vector._
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.util._
-import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data._
@@ -30,7 +28,7 @@ import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
-import shipreq.webapp.base.util.{GenericData, PreProcessor}
+import shipreq.webapp.base.util.PreProcessor
 import shipreq.webapp.base.user._
 
 // TODO RandomData is inaccurate in that CorrectionParts aren't applied.
@@ -44,7 +42,6 @@ object RandomData {
   import DataImplicits._
   import MTrie.Ops
   import Optics.Implicits._
-  import ReqType.Mnemonic
   import TestOptics.{customReqTypesLive => _, _}
   import WebappBaseGen._
 
@@ -1657,7 +1654,6 @@ object RandomData {
 
   // ===================================================================================================================
   object routines {
-    import shipreq.webapp.base.protocol._
     import shipreq.webapp.base.protocol.entrypoint._
     import shipreq.webapp.base.protocol.websocket._
 //    import RandomData.protocol._

@@ -1,9 +1,6 @@
 package shipreq.webapp.client.project.app.pages.content
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.ScalazReact._
-import japgolly.scalajs.react.extra._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.lib.BaseReusability._
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd

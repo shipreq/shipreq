@@ -4,7 +4,6 @@ import scala.runtime.AbstractFunction1
 import scalaz.Semigroup
 import scalaz.std.option._
 import scalaz.syntax.semigroup._
-import shipreq.base.util.MTrie.Ops._
 import ShowSize.Node
 
 class ShowSize[A](f: A => Node) extends AbstractFunction1[A, Node] {

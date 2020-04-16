@@ -7,7 +7,6 @@ import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax.TestAjaxClient
-import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.public._
 import shipreq.webapp.client.public.spa._

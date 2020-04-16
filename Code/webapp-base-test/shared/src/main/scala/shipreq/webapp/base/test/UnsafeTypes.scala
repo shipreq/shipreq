@@ -6,7 +6,7 @@ import nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.base.util.univeq.UnivEq
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Grammar, ProjectText, Text}
+import shipreq.webapp.base.text.{Grammar, Text}
 import ScalaExt._
 import VectorTree.{Location, ParentLocation, PartialLocation}
 import shipreq.webapp.base.event._

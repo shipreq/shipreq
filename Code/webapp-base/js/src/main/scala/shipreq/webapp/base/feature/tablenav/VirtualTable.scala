@@ -1,6 +1,5 @@
 package shipreq.webapp.base.feature.tablenav
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import org.scalajs.dom.html
 import org.scalajs.dom.raw

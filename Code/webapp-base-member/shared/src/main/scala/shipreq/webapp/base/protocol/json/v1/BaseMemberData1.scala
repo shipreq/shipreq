@@ -36,7 +36,6 @@ private[v1] object BaseMemberData1 {
   object AtomCodecs extends AtomTC[JsonCodec] {
     import shipreq.webapp.base.text._
     import Atom._
-    import Text.Equality._
 
     override def lazily[A](f: => JsonCodec[A]): JsonCodec[A] = codecLazily(f)
 

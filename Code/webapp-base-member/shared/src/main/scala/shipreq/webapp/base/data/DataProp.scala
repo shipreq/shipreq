@@ -9,7 +9,6 @@ import scala.collection.IterableOnce
 import scala.collection.mutable
 import scala.reflect.ClassTag
 import scalaz.{-\/, Foldable, Monoid, \/-}
-import scalaz.syntax.equal._
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import scalaz.std.vector.vectorInstance
@@ -20,7 +19,6 @@ import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.WebappConfig
 import DataImplicits._
-import Debug._
 import MTrie.Ops
 import ScalaExt._
 import TaggedTypes.TaggedInt
@@ -662,7 +660,6 @@ object DataProp {
 
     def validRefs = {
       type TR = (P, Refs)
-      import Atom._
 
       def mkRefs(p: Project): Refs = Refs(
         p.config.fields.customFields.keySet,

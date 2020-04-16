@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import nyaya.prop.{Atom => _, _}
 import nyaya.gen._
 import nyaya.util._
-import nyaya.test._
 import nyaya.test.PropTest._
 import org.parboiled2._
 import japgolly.microlibs.nonempty.NonEmptyVector

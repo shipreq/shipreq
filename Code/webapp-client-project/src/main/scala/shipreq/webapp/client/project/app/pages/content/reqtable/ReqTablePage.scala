@@ -19,7 +19,6 @@ import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.filter.Filter
-import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{SavedViewCmd, UpdateContentCmd}

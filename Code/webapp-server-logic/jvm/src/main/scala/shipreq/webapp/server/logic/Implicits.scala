@@ -4,7 +4,6 @@ import com.typesafe.scalalogging.Logger
 import java.time.{Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
 import scalaz.{-\/, Monad, \/, \/-}
-import scalaz.syntax.monad._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.validation.{Composite, Simple}
 

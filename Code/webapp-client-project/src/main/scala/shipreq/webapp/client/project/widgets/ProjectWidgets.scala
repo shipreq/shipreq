@@ -6,7 +6,6 @@ import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-import scala.collection.Factory
 import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import scalaz.\/

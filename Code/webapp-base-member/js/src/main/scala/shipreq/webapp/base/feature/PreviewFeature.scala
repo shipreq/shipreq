@@ -2,7 +2,6 @@ package shipreq.webapp.base.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
-import japgolly.scalajs.react.extra._
 import japgolly.univeq._
 import monocle.Lens
 import scalaz.Equal

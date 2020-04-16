@@ -1,10 +1,10 @@
 package shipreq.webapp.base.test
 
-import shipreq.webapp.base.data._, DataImplicits._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Text => T, _}
 import shipreq.webapp.base.test.ProjectDsl._
 import shipreq.webapp.base.test.UnsafeTypes._
-import SampleProject.{project => project0, _}
+import SampleProject.{project => project0}
 
 /**
  * Builds on SampleProject #1 to add some content with a tiny bit of rich text.

@@ -32,7 +32,6 @@ object BaseMemberData1 {
   object AtomPicklers extends AtomTC[Pickler] {
     import shipreq.webapp.base.text._
     import Atom._
-    import Text.Equality._
 
     override def lazily[A](f: => Pickler[A]): Pickler[A] = pickleLazily(f)
 

@@ -6,8 +6,6 @@ import japgolly.scalajs.react.test._
 import japgolly.univeq._
 import monocle.macros.Lenses
 import scala.util.{Failure, Success, Try}
-import teststate.run.Report.AssertionSettings
-import shipreq.base.util.Debug._
 import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.feature.clipboard.TestClipboard

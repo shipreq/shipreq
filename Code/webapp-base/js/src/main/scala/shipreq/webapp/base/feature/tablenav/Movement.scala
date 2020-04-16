@@ -1,7 +1,6 @@
 package shipreq.webapp.base.feature.tablenav
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.annotation.tailrec
 import scalaz.{-\/, Applicative, \/, \/-}
 import scalaz.Scalaz.Id

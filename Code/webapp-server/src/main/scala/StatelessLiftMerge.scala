@@ -23,14 +23,13 @@ package net.liftweb
 package http
 
 import scala.collection.Map
-import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
+import scala.collection.mutable.{HashMap, ListBuffer}
 import scala.xml._
 
 import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.http.js._
   import JsCmds.Noop
-  import JE.{AnonFunc,Call,JsRaw}
 import Helpers._
 
 ///**
@@ -47,7 +46,6 @@ import Helpers._
 //)
 
 final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
-  import self._
 
 //  private def scriptUrl(scriptFile: String) = {
 //    S.encodeURL(s"${LiftRules.liftPath}/$scriptFile")

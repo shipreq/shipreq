@@ -4,9 +4,7 @@ import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.scalajs.react.test.SimEvent.{Keyboard => KB}
 import nyaya.test.PropTest._
 import utest._
-import shipreq.base.util._
 import shipreq.webapp.base.RandomData
-import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.event.{Event, GenericReqGD}

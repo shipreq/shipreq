@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.app.pages.config.fields
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra._

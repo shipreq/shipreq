@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.runtime.AbstractFunction1
 import shipreq.base.util.{Invalid, NotApplicable, Validity}
 import shipreq.webapp.base.validation.Simple._

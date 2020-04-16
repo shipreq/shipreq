@@ -15,7 +15,7 @@ import WebappTestUtil._
 
 object DeletionLogicTestData {
   import ProjectDsl._
-  import ProjectDslInternals.{ToState, Composite}
+  import ProjectDslInternals.Composite
   import SampleProject.Values._
 
   private var _selectedReqIds = Set.empty[ReqId]

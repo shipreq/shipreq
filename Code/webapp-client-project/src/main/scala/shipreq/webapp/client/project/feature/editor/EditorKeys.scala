@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.editor
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import org.scalajs.dom.ext.KeyCode
 import shipreq.webapp.base.feature.clipboard.ClipboardKeys

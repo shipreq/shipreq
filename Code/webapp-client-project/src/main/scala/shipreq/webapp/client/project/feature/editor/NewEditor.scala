@@ -8,7 +8,6 @@ import monocle.macros.Lenses
 import scala.annotation.elidable
 import scalaz.~~>
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.VectorTree.LocationOps
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD

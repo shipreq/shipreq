@@ -1,12 +1,10 @@
 package shipreq.taskman.server
 
 import doobie._
-import doobie.postgres.implicits._
 import japgolly.clearconfig._
 import java.time.Duration
 import scalaz.~>
 import shipreq.base.db.{DbAccessor, XA}
-import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api._
 import shipreq.taskman.server.logic._

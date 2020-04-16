@@ -168,7 +168,6 @@ final class ReqTableObs(global: TestGlobal, $: DomZipperJs) {
     def column(name: String): ColumnDom =
       findOne(name, columnDoms)(_.name)
 
-    import Table.Shared.CellState
 
 //    private def cell(s: CellState): String =
 //      s"td.${Style.reqtable.table.dataCell(s).className.value}"

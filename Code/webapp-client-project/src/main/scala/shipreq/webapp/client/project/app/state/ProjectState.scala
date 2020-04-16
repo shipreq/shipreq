@@ -5,11 +5,10 @@ import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.extra.Px
 import java.time.Instant
 import scala.annotation.tailrec
-import scalaz.{-\/, Need, \/-}
+import scalaz.{-\/, \/-}
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.{ApplyEvent, EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.data.TCB
-import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
 
 /**

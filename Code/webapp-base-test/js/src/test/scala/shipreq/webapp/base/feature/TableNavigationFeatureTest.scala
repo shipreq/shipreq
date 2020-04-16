@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.test.ReactTestUtils
 import org.scalajs.dom.html
-import scalaz.{Equal, \/-}
+import scalaz.\/-
 import scalaz.syntax.traverse._
 import sourcecode.Line
 import utest._

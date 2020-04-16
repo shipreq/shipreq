@@ -7,7 +7,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.VdomElement
 import monocle.Lens
 import org.scalajs.dom.window
-import scalaz.{-\/, \/, \/-}
+import scalaz.{-\/, \/-}
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId}

@@ -13,9 +13,7 @@ import shipreq.webapp.base.text.Text.Equality._
 import utest._
 
 object JsonProtocolTest extends TestSuite {
-  import BaseData._
   import BaseMemberData1._
-  import Events._
   import AtomCodecs.instances._
   import Rev1.ReqTableDataCodecs._
   import Rev1._

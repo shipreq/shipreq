@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.components.TriStateCheckbox
 import japgolly.univeq.UnivEq
 import monocle.Iso

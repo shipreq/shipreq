@@ -1,6 +1,5 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat
 import java.time.Instant
 import scala.collection.immutable.TreeSet

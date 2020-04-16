@@ -2,7 +2,7 @@ package shipreq.webapp.base.protocol.websocket
 
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import japgolly.univeq._
-import org.scalajs.dom.{CloseEvent, Event, MessageEvent, console, window}
+import org.scalajs.dom.{CloseEvent, Event, MessageEvent, window}
 import scala.annotation.elidable
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle

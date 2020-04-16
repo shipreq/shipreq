@@ -1,7 +1,6 @@
 package shipreq.base.util
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq.UnivEq
 import scala.collection.Iterable
 import scalaz.Semigroup
 

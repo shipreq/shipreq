@@ -9,7 +9,7 @@ import org.scalajs.dom.html
 import scalaz.{-\/, \/-}
 import scalaz.std.option.optionInstance
 import scalaz.syntax.traverse._
-import shipreq.base.util.{Deny, Identity}
+import shipreq.base.util.Deny
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.lib.DomUtil._
 

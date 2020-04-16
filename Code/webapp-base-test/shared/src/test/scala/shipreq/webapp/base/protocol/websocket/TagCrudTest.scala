@@ -3,10 +3,8 @@ package shipreq.webapp.base.protocol.websocket
 import utest._
 import nyaya.prop._
 import nyaya.gen.Gen
-import nyaya.test._
 import nyaya.test.PropTest._
 import shipreq.base.util.MMTree
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.{SampleProject => S, TagId_T}

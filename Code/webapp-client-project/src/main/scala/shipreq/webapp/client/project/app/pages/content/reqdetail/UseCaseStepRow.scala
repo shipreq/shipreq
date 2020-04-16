@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util._

@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol.ajax
 
 import japgolly.scalajs.react.extra.Ajax
-import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
+import japgolly.scalajs.react.{AsyncCallback, CallbackTo}
 import org.scalajs.dom.ext.AjaxException
 import org.scalajs.dom.window.console
 import scala.scalajs.js.typedarray.ArrayBuffer

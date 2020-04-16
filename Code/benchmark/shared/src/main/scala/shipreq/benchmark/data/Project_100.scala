@@ -25,7 +25,6 @@ package shipreq.benchmark.data
    └─ >    90  Implications
 */
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._

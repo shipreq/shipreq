@@ -5,7 +5,7 @@ import org.parboiled2._
 import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Atom => A, MultiLine => ML, Parsers => P}
+import shipreq.webapp.base.text.{Atom => A, Parsers => P}
 
 object Text {
 

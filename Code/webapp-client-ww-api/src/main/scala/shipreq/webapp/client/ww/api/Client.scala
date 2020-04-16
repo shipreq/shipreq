@@ -2,7 +2,6 @@ package shipreq.webapp.client.ww.api
 
 import org.scalajs.dom.window.navigator
 import scalajs.LinkingInfo.productionMode
-import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
 import Protocol._

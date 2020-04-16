@@ -9,7 +9,6 @@ import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import ApplyEventTestFns._
-import AutoNES._
 import DataImplicits._
 import Event._
 import NoInitialEvents._

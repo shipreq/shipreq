@@ -13,7 +13,6 @@ import scalaz.std.anyVal.intInstance
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.issue.{Issue, IssueTracker}
-import DataImplicits._
 
 object Project {
   type Name = String

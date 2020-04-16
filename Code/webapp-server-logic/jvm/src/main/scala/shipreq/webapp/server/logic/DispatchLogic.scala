@@ -6,14 +6,13 @@ import io.circe.syntax._
 import japgolly.microlibs.utils.Utils
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.ParseLong
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import java.time.Instant
-import scalaz.{-\/, Monad, Need, \/, \/-}
+import scalaz.{-\/, Monad, \/, \/-}
 import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util._
-import shipreq.webapp.base.{AssetManifest, Urls}
+import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler

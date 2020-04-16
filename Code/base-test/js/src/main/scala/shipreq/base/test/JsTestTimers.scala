@@ -1,6 +1,5 @@
 package shipreq.base.test
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
 import scala.annotation.tailrec
 import scala.scalajs.js.timers.{SetIntervalHandle, SetTimeoutHandle}

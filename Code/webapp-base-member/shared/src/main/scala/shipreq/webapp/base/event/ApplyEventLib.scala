@@ -10,7 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable.SavedView
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericData
-import shipreq.webapp.base.validation.{Composite, Simple}
+import shipreq.webapp.base.validation.Composite
 
 private[event] object ApplyEventLib {
   type Error = String

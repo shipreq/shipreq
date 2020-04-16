@@ -64,7 +64,6 @@ object UpdateConfigCmd {
     import boopickle.DefaultBasic._
     import shipreq.webapp.base.protocol.binary.v1.BaseData._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
-    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
     import shipreq.webapp.base.protocol.binary.v1.Events._
     import shipreq.webapp.base.protocol.binary.v1.Rev1._
 

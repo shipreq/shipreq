@@ -11,7 +11,7 @@ import monocle.macros._
 import scala.annotation.elidable
 import shipreq.base.util.Url
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.{AnalyticsConfig, WebappConfig}
+import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.text.PlainText

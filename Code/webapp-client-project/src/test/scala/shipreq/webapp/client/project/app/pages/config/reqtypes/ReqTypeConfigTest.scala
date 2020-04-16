@@ -2,9 +2,7 @@ package shipreq.webapp.client.project.app.pages.config.reqtypes
 
 import utest._
 import utest.framework.TestPath
-import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.WebappTestUtil._

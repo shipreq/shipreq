@@ -1,9 +1,6 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
-import nyaya.gen._
-import nyaya.prop._
 import nyaya.test.PropTest._
 import scalaz.{-\/, \/-}
 import utest._

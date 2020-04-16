@@ -104,7 +104,6 @@ object CustomReqTypeEventV1Test extends TestSuite with CustomReqTypeEventsV1 {
           assertEq(p.config.fields.customImpFields.filter(_.reqTypeId == c1.id), Nil)
         }
         "inUseAsFieldApplicability" - {
-          import FieldReqTypeRules.Resolution
           def test(before: ApplicableReqTypes, after: FieldReqTypeRules.ForTextField) = {
             import CustomTextFieldGDv1._
             val f  = FieldCustomTextCreateV1(2, nev(Name("R"), Key("r"), Mandatory(false), ApplicableReqTypes(before)))

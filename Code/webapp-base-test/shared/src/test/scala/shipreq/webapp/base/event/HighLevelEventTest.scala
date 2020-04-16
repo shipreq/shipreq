@@ -12,7 +12,6 @@ object HighLevelEventTest extends TestSuite {
   override def tests = Tests {
 
     "unusedReqTypeMnemonicsCanBeReclaimed" - {
-      import NoInitialEvents._
 
       def createReqType(id: CustomReqTypeId, mnemonic: ReqType.Mnemonic, name: String) = {
         import CustomReqTypeGD._

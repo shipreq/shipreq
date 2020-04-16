@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._

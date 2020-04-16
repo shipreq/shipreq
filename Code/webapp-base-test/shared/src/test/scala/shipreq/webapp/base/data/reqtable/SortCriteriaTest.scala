@@ -1,7 +1,6 @@
 package shipreq.webapp.base.data.reqtable
 
 import nyaya.prop._
-import nyaya.test._
 import nyaya.test.PropTest._
 import utest._
 import shipreq.webapp.base.RandomData

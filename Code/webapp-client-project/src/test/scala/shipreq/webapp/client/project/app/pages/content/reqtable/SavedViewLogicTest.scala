@@ -15,7 +15,7 @@ import shipreq.webapp.base.protocol.websocket.{SavedViewCmd => Cmd}
 import shipreq.webapp.base.sort.SortMethod
 import SavedViewLogic._
 import SortCriterion.SyntaxHelpers._
-import SortMethod.{Asc, AscThenBlanks, BlanksThenDesc, Desc}
+import SortMethod.{Asc, AscThenBlanks, Desc}
 
 object SavedViewLogicTest extends TestSuite {
 

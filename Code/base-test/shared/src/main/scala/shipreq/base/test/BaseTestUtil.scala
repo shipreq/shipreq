@@ -3,7 +3,6 @@ package shipreq.base.test
 import japgolly.microlibs.testutil.TestUtilInternals
 import scalaz.std.string.stringInstance
 import scalaz.{Equal, Order}
-import sourcecode.Line
 import shipreq.base.util.univeq._
 
 object BaseTestUtil extends BaseTestEquality with BaseTestUtil {

@@ -1,6 +1,6 @@
 package shipreq.webapp.base.protocol.binary.v1
 
-import boopickle.{ConstPickler, Decoder}
+import boopickle.Decoder
 import boopickle.DefaultBasic._
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.recursion.Fix

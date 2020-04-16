@@ -1,6 +1,5 @@
 package shipreq.webapp.server.protocol.entrypoint
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.Util.quickJSB
 import shipreq.webapp.base.AssetManifest
 

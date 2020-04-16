@@ -16,7 +16,6 @@ object BaseMemberData2 {
   import BaseData._
   import BaseMemberData1._
   import BaseMemberData1.AtomPicklers.instances._
-  import BaseMemberData1.ReqTableDataPicklers._
 
   // Replaced by v1.1
   // implicit lazy val picklerApplicableTag: Pickler[ApplicableTag] =

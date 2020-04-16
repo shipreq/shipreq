@@ -1,18 +1,15 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import japgolly.microlibs.nonempty._
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.base.test.BaseTestUtil.quoteStringForDisplay
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.feature.clipboard.TestClipboard
-import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util.Browser
 import shipreq.webapp.client.project.app.Style

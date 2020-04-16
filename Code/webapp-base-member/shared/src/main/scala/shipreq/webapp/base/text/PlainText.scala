@@ -12,7 +12,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.text.GrammarSpec.Surrounds
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.base.UiText
 import Atom.AnyAtom
 
 /**

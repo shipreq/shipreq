@@ -9,7 +9,6 @@ import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax.TestAjaxClient
 import shipreq.webapp.base.test.TestState.{Result => _, _}
-import shipreq.webapp.base.test._
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.client.public.PublicSpaProtocols.Register2._
 import shipreq.webapp.client.public.PublicSpaTestUtil._

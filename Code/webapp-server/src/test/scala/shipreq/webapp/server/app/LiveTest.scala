@@ -18,7 +18,7 @@ object LiveTest extends TestSuite {
   private lazy val liveTestUtils = new LiveTestUtils
 
   import liveTestUtils._
-  import userFixture.{TestUser, user1, user2}
+  import userFixture.{TestUser, user1}
 
   private var pid = Option.empty[ProjectId]
 

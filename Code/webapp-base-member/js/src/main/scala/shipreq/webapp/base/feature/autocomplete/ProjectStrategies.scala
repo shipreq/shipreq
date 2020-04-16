@@ -15,7 +15,6 @@ import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.MTrie.Ops
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Atom, Grammar, PlainText, Text, TextSearch}
 import shipreq.webapp.base.data.{Contextualise, Plain}

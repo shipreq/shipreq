@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.extra._
 import org.scalajs.dom
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.lib.DomUtil._

@@ -4,7 +4,6 @@ import doobie.ConnectionIO
 import java.time.Duration
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scalaz.{-\/, \/, \/-, ~>}
-import scalaz.syntax.catchable._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.server.logic.business._

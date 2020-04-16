@@ -1,10 +1,8 @@
 package shipreq.taskman.server.business
 
-import io.circe.Decoder
-import scalaz.{\/, \/-}
+import scalaz.\/-
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.JsonTestUtil._
-import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.EmailAddr
 import shipreq.taskman.server.business.MailChimp._

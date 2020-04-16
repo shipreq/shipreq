@@ -1,13 +1,9 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Optional
-import monocle.function.Index._
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
-import shipreq.webapp.base.sort.{SortMethod => SM}
 import shipreq.webapp.base.text.PlainText
 import shipreq.base.util.{Applicable, NotApplicable}
 import shipreq.webapp.base.sort.{Sorter => SorterBase}

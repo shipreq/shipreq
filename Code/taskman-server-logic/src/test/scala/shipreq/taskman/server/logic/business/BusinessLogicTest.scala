@@ -1,6 +1,5 @@
 package shipreq.taskman.server.logic.business
 
-import scalaz.syntax.catchable._
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.Task
 import shipreq.taskman.server.logic.TestHelpers._

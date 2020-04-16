@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.feature.render
 
 import japgolly.scalajs.react.{Reusability, Reusable, ~=>}
 import scala.reflect.ClassTag
-import scalaz.\/-
 import shipreq.base.util.{IfApplicable, NotApplicable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.ProjectText

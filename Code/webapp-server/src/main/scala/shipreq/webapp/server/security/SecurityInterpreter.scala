@@ -3,7 +3,6 @@ package shipreq.webapp.server.security
 import com.typesafe.scalalogging.StrictLogging
 import io.jsonwebtoken.{Claims, ExpiredJwtException, JwtParser, Jwts}
 import io.jsonwebtoken.security.{Keys, SignatureException}
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import java.security.SecureRandom
 import java.time.Instant

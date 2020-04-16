@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.text.ProjectText

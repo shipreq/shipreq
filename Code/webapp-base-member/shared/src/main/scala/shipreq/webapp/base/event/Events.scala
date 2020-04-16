@@ -7,7 +7,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable.SavedView
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.text.Text
-import Text.{UseCaseStep => StepTitle, _}
+import Text.{UseCaseStep => _, _}
 
 /** A change to a [[Project]].
   *

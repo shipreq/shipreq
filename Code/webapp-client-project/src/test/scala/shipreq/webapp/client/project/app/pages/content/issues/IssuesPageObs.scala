@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.scalajs.dom.html
 import shipreq.webapp.base.feature.tablenav.{VirtualLoc, VirtualTable}
 import shipreq.webapp.base.test.TestState._

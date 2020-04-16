@@ -1,6 +1,5 @@
 package shipreq.webapp.base.ui
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}

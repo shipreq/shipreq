@@ -80,7 +80,7 @@ object PublicSpaLogicTest extends TestSuite {
 
       "registrationsOff" - {
         val t2 = t.withConfig(_.copy(publicRegistration = Deny))
-        import t2._, mockInterpreters._
+        import t2._
         runRegister1(ea).getLeftOrThrow()
       }
     }

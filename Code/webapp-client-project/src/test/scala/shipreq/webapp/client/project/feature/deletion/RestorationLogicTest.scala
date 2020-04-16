@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.deletion
 
-import nyaya.prop.Prop
 import nyaya.test.DefaultSettings
 import nyaya.test.PropTest._
 import utest._

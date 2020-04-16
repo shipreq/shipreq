@@ -1,7 +1,6 @@
 package shipreq.taskman.server
 
 import cats.effect.Resource
-import doobie.implicits._
 import okhttp3.OkHttpClient
 import japgolly.clearconfig.ConfigSources
 import java.time.{Clock, Duration, Instant}

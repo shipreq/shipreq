@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
 import nyaya.prop.{Logic => _, _}
-import nyaya.test._
 import nyaya.util.Multimap
 import scalaz.{-\/, Equal, \/, \/-}
 import scalaz.std.AllInstances._

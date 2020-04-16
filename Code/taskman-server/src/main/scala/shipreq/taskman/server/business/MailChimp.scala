@@ -1,6 +1,5 @@
 package shipreq.taskman.server.business
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import io.circe._
 import io.circe.syntax._

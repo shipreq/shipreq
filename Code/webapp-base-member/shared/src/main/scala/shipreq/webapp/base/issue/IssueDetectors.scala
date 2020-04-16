@@ -4,7 +4,6 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
 import nyaya.util.Multimap
 import shipreq.base.util._
-import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Atom
 

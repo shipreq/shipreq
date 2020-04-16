@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.app.pages.config.tags
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra.StateSnapshot

@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
 import nyaya.prop.Prop
 import scala.annotation.elidable

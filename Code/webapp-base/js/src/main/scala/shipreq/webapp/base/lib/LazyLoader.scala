@@ -1,6 +1,5 @@
 package shipreq.webapp.base.lib
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import org.scalajs.dom.document
 import org.scalajs.dom.html

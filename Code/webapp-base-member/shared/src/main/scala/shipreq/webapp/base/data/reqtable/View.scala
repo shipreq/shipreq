@@ -104,7 +104,6 @@ object View {
     import Column._
     val cols = NonEmptyVector[Column.BuiltIn](Pubid, Title)
 
-    import SortCriterion.SyntaxHelpers._
     val order = SortCriteria(
       Vector.empty, // (Column.Code / SortMethod.AscThenBlanks, Column.Title / SortMethod.BlanksThenAsc),
       SortCriteria.defaultConclusive)

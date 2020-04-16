@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
