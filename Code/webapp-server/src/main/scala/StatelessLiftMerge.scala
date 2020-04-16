@@ -189,14 +189,15 @@ final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
                 node match {
                   case e: Elem if e.label == "node" &&
                                   e.prefix == "lift_deferred" =>
-                    val deferredNodes: Seq[NodesAndEventJs] =
+                    val deferredNodes: Seq[NodesAndEventJs] = {
                       for {
-                        idAttribute <- e.attributes("id").take(1).toSeq
+                        idAttribute <- e.attributes("id").iterator.take(1)
                         id = idAttribute.text
                         nodes <- processedSnippets.get(id)
                       } yield {
                         normalizeMergeAndExtractEvents(nodes, startingState)
                       }
+                    }.toSeq
 
                     deferredNodes.foldLeft(soFar.append(normalizedResults))(_ append _)
 
