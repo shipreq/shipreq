@@ -195,7 +195,7 @@ object Dependencies {
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.3")
   val μTest       = jvmAndJs("com.github.japgolly.fork",         "utest",       "1.0.0")
 
-  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.2")
+  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.3")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.8")
   val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.3.3")
@@ -204,7 +204,7 @@ object Dependencies {
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.2.0")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.12")
-  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.12.4")
+  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.12.5")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "3.1.0")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.3")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
