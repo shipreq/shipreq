@@ -1,0 +1,28 @@
+# on golly-xps
+benchmark-jvm> jmh:run -prof gc -wi 8 -i 8 -f 3
+
+Benchmark                                                     (depth)  (format)  (method)  (width)  Mode  Cnt         Score         Error   Units
+DispatchBM.catsIO                                                                                   avgt   24        94.108 ±       1.636   us/op
+EventBM.trusted                                                                                     avgt   24        39.570 ±       0.400   ms/op
+EventBM.untrusted                                                                                   avgt   24        55.247 ±       0.416   ms/op
+JwtBM.decode                                                                        hs256           avgt   24         4.558 ±       0.036   us/op
+JwtBM.decode                                                                        hs512           avgt   24         5.327 ±       0.024   us/op
+JwtBM.decode                                                                        hs768           avgt   24         5.334 ±       0.048   us/op
+JwtBM.encode                                                                        hs256           avgt   24        77.898 ±       0.336   us/op
+JwtBM.encode                                                                        hs512           avgt   24        78.553 ±       0.520   us/op
+JwtBM.encode                                                                        hs768           avgt   24        78.835 ±       0.643   us/op
+ObfuscationBM.deobfuscate                                                                           avgt   24       191.157 ±       1.409   us/op
+ObfuscationBM.obfuscate                                                                             avgt   24       194.064 ±       0.718   us/op
+PickleFixBM.test3                                                   2                            2  avgt   24         0.593 ±       0.019   us/op
+PickleFixBM.test3                                                   2                            6  avgt   24         2.692 ±       0.073   us/op
+PickleFixBM.test3                                                   6                            2  avgt   24        10.495 ±       0.587   us/op
+PickleFixBM.test3                                                   6                            6  avgt   24      4197.895 ±     119.927   us/op
+PropCheck.eval                                                                                      avgt   24         5.894 ±       0.101   ms/op
+SerialisationEventsBM.read                                                 json                     avgt   24         7.036 ±       0.048   ms/op
+SerialisationEventsBM.read                                               binary                     avgt   24         1.931 ±       0.028   ms/op
+SerialisationEventsBM.write                                                json                     avgt   24         5.841 ±       0.014   ms/op
+SerialisationEventsBM.write                                              binary                     avgt   24         2.585 ±       0.004   ms/op
+SerialisationProjectBM.read                                                                         avgt   24      1044.634 ±       6.278   us/op
+SerialisationProjectBM.write                                                                        avgt   24      1425.722 ±      25.659   us/op
+
+Total time: 11203 s (03:06:43), completed 16 Apr. 2020, 8:59:49 pm
