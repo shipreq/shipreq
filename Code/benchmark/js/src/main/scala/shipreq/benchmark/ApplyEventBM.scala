@@ -8,7 +8,7 @@ import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.ApplyEvent
 import shipreq.webapp.base.test.WebappTestUtil._
 
-object EventBM {
+object ApplyEventBM {
 
   private val pe = Project.empty
 
@@ -30,7 +30,7 @@ object EventBM {
   }
 }
 
-final case class EventBM(data: BenchmarkData) {
-  val suite    = Suite("Events")(EventBM.Method.all.whole.map(_.bm): _*)
+final case class ApplyEventBM(data: BenchmarkData) {
+  val suite    = Suite("ApplyEvent")(ApplyEventBM.Method.all.whole.map(_.bm): _*)
   val guiSuite = GuiSuite(suite, data.guiParam)
 }

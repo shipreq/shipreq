@@ -17,8 +17,8 @@ object Main {
     val async =
       for (bd <- BenchmarkData.load) yield
         BenchmarkGUI.renderMenu(body, baseUrl = baseUrl)(
+          ApplyEventBM         (bd).guiSuite,
           BinarySerialisationBM(bd).guiSuite,
-          EventBM              (bd).guiSuite,
         )
 
     async.toCallback.runNow()

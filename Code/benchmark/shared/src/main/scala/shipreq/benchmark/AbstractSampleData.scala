@@ -1,10 +1,13 @@
 package shipreq.benchmark
 
 import boopickle.PickleImpl
+import io.circe._
+import io.circe.syntax._
 import java.time.Instant
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{Event, EventOrd, VerifiedEvent}
+import shipreq.webapp.base.protocol.json.v1.Rev1.{encoderEvent}
 import shipreq.webapp.base.protocol.binary.v1.Rev1.{picklerProject, picklerVerifiedEventSeq}
 import shipreq.webapp.base.test.WebappTestUtil._
 
@@ -18,6 +21,12 @@ abstract class AbstractSampleData(name: String, events: Vector[Event]) {
       val e = es(i)
       VerifiedEvent(EventOrd(i), e, startTime.plusSeconds(i))
     }
+
+  lazy val eventJson: Json =
+    events.asJson
+
+  lazy val eventJsonStr: String =
+    eventJson.noSpacesSortKeys
 
   lazy val verifiedEvents: VerifiedEvent.Seq =
     verifyEvents(events)

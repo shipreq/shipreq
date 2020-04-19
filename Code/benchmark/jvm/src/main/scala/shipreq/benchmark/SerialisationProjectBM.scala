@@ -23,6 +23,9 @@ object SerialisationProjectBM {
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 class SerialisationProjectBM {
 
+  @Param(Array("1000", "2000"))
+  var events: String = _
+
   private var p: Project = _
   private var b: ByteBuffer = _
 
@@ -30,8 +33,9 @@ class SerialisationProjectBM {
 
   @Setup
   def setup(): Unit = {
-    p = SampleData.`1000`.project
-    b = SampleData.`1000`.projectBinary.toByteBuffer
+    val d = SampleData.byName(events)
+    p = d.project
+    b = d.projectBinary.toByteBuffer
     ()
   }
 
