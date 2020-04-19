@@ -124,20 +124,15 @@ object ShipReqBuild {
 
     def jsSettings: Project => Project = {
       import org.scalajs.sbtplugin._
-      import ScalaJSPlugin.autoImport._
-
-      val outputJs = "shipreq-benchmark.js"
 
       _.enablePlugins(ScalaJSPlugin)
         .dependsOn(webappClientProject)
         .depsForJs(scalajsBenchmark)
         .configure(
           Common.jsSettings(NoTests))
-        //.settings(
-        //  // skip in packageJSDependencies := false,
-        //  // scalaJSStage in Global := FullOptStage,
-        //  artifactPath in (Compile, fastOptJS) := ((target in Compile).value / outputJs),
-        //  artifactPath in (Compile, fullOptJS) := ((target in Compile).value / outputJs))
+        .settings(
+          skip in packageJSDependencies := false,
+          emitSourceMaps := true)
     }
   }
 

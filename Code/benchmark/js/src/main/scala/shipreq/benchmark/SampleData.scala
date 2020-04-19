@@ -1,11 +1,29 @@
 package shipreq.benchmark
 
-import shipreq.webapp.base.data.Project
-import shipreq.benchmark.data._
+import io.circe.Json
+import io.circe.parser.parse
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra.Ajax
+import shipreq.webapp.base.event.Event
+import shipreq.webapp.base.protocol.json.v1.Rev1.decoderEvent
+import shipreq.webapp.base.test.WebappTestUtil._
 
-object SampleData {
+final case class SampleData(name: String, events: Vector[Event]) extends AbstractSampleData(name, events)
 
-  def project_100: Project =
-    Project_100.project
+object SampleData extends SampleDataManifest[AsyncCallback[SampleData]] {
 
+  private def loadJsonFromResource(name: String): AsyncCallback[Json] =
+    Ajax.get(s"http://localhost:19191/$name")
+      .send
+      .asAsyncCallback
+      .map { xhr =>
+        val jsonStr = xhr.responseText
+        parse(jsonStr).getOrThrow()
+      }
+
+  override protected def load(filename: String): AsyncCallback[SampleData] =
+    loadJsonFromResource(filename)
+      .map(_.as[Vector[Event]].getOrThrow())
+      .map(SampleData(filename, _))
+      .memo()
 }

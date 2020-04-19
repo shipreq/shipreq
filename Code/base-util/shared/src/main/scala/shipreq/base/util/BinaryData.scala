@@ -47,6 +47,9 @@ final class BinaryData(private[BinaryData] val bytes: Array[Byte], val length: I
   def toByteBuffer: ByteBuffer =
     unsafeByteBuffer.asReadOnlyBuffer()
 
+  def toNewByteBuffer: ByteBuffer =
+    ByteBuffer.wrap(toNewArray, 0, length)
+
   def toNewArray: Array[Byte] =
     Arrays.copyOf(bytes, length)
 
