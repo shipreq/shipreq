@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.event.Event
+import shipreq.webapp.sampledata.SampleData
 
 object SerialisationEventsBM {
   import boopickle.DefaultBasic._

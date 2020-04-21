@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 import nyaya.prop.LogicPropExt
 import org.openjdk.jmh.annotations._
 import shipreq.webapp.base.data.DataProp
+import shipreq.webapp.sampledata.SampleData
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.AverageTime))

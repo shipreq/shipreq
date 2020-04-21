@@ -1,5 +1,5 @@
 digraph G {
-rankdir=BT node[style=filled]
+rankdir=TB node[style=filled]
 
 edge[color="#cc0000"]
 
@@ -39,6 +39,7 @@ subgraph cluster_base {
     webappMacro [label="webapp-macro\n(JVM & JS)"]
     webappBase [label="webapp-base\n(JVM & JS)"]
     webappBaseMember [label="webapp-base-member\n(JVM & JS)"]
+    webappSampleData [label="webapp-sampledata\n(JVM & JS)"]
     webappServerLogic [label="webapp-server-logic\n(JVM & JS)"]
     webappClientWwApi [label="webapp-client-ww-api\n(JS)"]
     webappClientLoaders [label="webapp-client-loaders\n(JS)"]
@@ -65,9 +66,9 @@ subgraph cluster_supp {
   style=filled fillcolor="#fff2f2" node[fillcolor="#ffcccc"]
 
   benchmark [label="[aggregate]\nbenchmark" fillcolor="#ffffdd"]
-  benchmarkJvm [label="benchmark JVM"]
-  benchmarkJs [label="benchmark JS"]
-  benchmarkShared [label="benchmark\nbase"]
+  benchmarkJvm [label="benchmark\nJVM"]
+  benchmarkJs [label="benchmark\nJS"]
+  benchmarkShared [label="benchmark\n(shared)"]
 
   utils [label="utils" fillcolor="#ffffdd"]
 }
@@ -92,10 +93,12 @@ taskmanServer -> taskmanServerLogic,taskmanApi,taskmanDb
 
 webappMacro -> baseUtil
 webappBase -> webappMacro
+webappSampleData -> webappBaseMember
 webappServerLogic -> taskmanApiLogic,webappClientPublic,webappSsrJvm
 webappServerLogic -> webappBaseTest [color="#111111" style=dashed label="test"]
 webappBaseMember -> webappBase
 webappBaseTest -> baseTest,webappBaseMember [color="#111111"]
+webappBaseTest -> webappSampleData [color="#111111" label="JVM"]
 webappClientLoaders -> webappBaseMember
 webappClientHome -> webappClientLoaders
 webappClientHome -> webappBaseTest [color="#111111" style=dashed label="test"]
@@ -114,6 +117,7 @@ webappServer -> taskmanApi,webappServerLogic
 // webappServer -> baseDb // transitive through taskman-api
 webappServer -> webappClientPublic,webappClientHome,webappClientProject,webappClientWw [style=dashed]
 
+benchmarkShared -> webappSampleData,webappBaseTest
 benchmarkJvm,benchmarkJs -> benchmarkShared
 benchmarkJvm -> webappServer
 benchmarkJs -> webappClientProject

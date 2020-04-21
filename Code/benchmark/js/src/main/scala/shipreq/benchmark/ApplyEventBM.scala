@@ -6,6 +6,7 @@ import japgolly.scalajs.benchmark.gui._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.ApplyEvent
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.sampledata.SampleData
 
 object ApplyEventBM {
 

@@ -41,8 +41,8 @@ object WebappBuild {
     project("webapp")
       .configure(Common.jvmSettings)
       .aggregate(
-        webappMacroJvm, webappBaseJvm, webappBaseMemberJvm, webappServerLogicJvm, webappBaseTestJvm,
-        webappMacroJs , webappBaseJs , webappBaseMemberJs , webappServerLogicJs , webappBaseTestJs ,
+        webappMacroJvm, webappBaseJvm, webappBaseMemberJvm, webappServerLogicJvm, webappSampleDataJvm, webappBaseTestJvm,
+        webappMacroJs , webappBaseJs , webappBaseMemberJs , webappServerLogicJs , webappSampleDataJs , webappBaseTestJs ,
         webappClientPublicJvm, webappClientPublicJs,
         webappClientLoaders,
         webappClientHome,
@@ -88,8 +88,18 @@ object WebappBuild {
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
       .dependsOn(webappBase)
-      .depsForBoth(shapeless ++ parboiled ++ (Circe.main % Provided))
+      .depsForBoth(shapeless ++ parboiled)
+      .depsForBoth(Circe.main % Provided) // Provided because for now, want to ensure JSON stuff isn't part of frontend
       .depsForJs(ScalaCSS.react)
+
+  lazy val webappSampleDataJvm = webappSampleData.jvm
+  lazy val webappSampleDataJs  = webappSampleData.js
+  lazy val webappSampleData =
+    crossProject("webapp-sampledata")
+      .configureJvm(Common.jvmSettings)
+      .configureJs(Common.jsSettings(NoTests))
+      .dependsOn(webappBaseMember)
+      .depsForBoth(Circe.main ++ Microlibs.testUtil)
 
   lazy val webappBaseTestJvm = webappBaseTest.jvm
   lazy val webappBaseTestJs  = webappBaseTest.js
@@ -97,6 +107,7 @@ object WebappBuild {
     crossProject("webapp-base-test")
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
+      .configureJvm(_.dependsOn(webappSampleDataJvm))
       .configureJs(Common.jsSettings(UsePhantomJs))
       .dependsOn(baseTest, webappBaseMember)
       .depsForBoth(μTest ++ Nyaya.test ++ Circe.main)

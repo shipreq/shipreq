@@ -1,4 +1,4 @@
-package shipreq.benchmark
+package shipreq.webapp.sampledata
 
 trait SampleDataManifest[D] {
   protected def load(filename: String): D

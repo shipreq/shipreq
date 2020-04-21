@@ -7,6 +7,7 @@ import java.nio.ByteBuffer
 import scala.collection.immutable.BitSet
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.VerifiedEvent
+import shipreq.webapp.sampledata.SampleData
 
 final case class BenchmarkData(data: Vector[SampleData], defaults: Vector[SampleData]) {
 

@@ -141,8 +141,7 @@ object ShipReqBuild {
   lazy val benchmark =
     crossProject("benchmark")
       .configureBoth(Benchmark.commonSettings)
-      .dependsOn(webappBase)
-      .dependsOn(webappBaseTest) // TODO Shouldn't be generating random data, should be using fixed sample
+      .dependsOn(webappBaseTest, webappSampleData)
       .configureJvm(Benchmark.jvmSettings)
       .configureJs(Benchmark.jsSettings)
 }

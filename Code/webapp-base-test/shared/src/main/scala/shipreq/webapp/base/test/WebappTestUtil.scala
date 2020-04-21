@@ -68,6 +68,9 @@ trait WebappTestUtil extends BaseTestUtil {
   def applyVerifiedEventSuccessfully(p: Project, es: VerifiedEvent*): Project =
     es.foldLeft(p)(applyVerifiedEventSuccessfully)
 
+  def applyVerifiedEventsSuccessfully(p: Project, es: VerifiedEvent.Seq): Project =
+    es.foldLeft(p)(applyVerifiedEventSuccessfully)
+
   def assertEventFails(p: Project, e: Event, errFrag: String = "")(implicit l: Line): Unit =
     ApplyEvent.untrusted.apply1(e)(p) match {
       case -\/(f) => assertContainsCI(f, errFrag)

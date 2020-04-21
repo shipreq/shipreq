@@ -1,11 +1,11 @@
-package shipreq.benchmark
+package shipreq.webapp.sampledata
 
 import io.circe.Json
 import io.circe.parser.parse
+import japgolly.microlibs.testutil.TestUtilImplicits._
 import scala.io.{Codec, Source}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.protocol.json.v1.Rev1.decoderEvent
-import shipreq.webapp.base.test.WebappTestUtil._
 
 final case class SampleData(name: String, events: Vector[Event]) extends AbstractSampleData(name, events)
 
