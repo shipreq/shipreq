@@ -333,7 +333,7 @@ object WebappBuild {
           // "-XX:+BootstrapJVMCI",
           //"-XX:-TieredCompilation",
           //"-XX:+EagerJVMCI",
-          // "-agentpath:/opt/jprofiler10/bin/linux-x64/libjprofilerti.so=port=8849,nowait",
+          // jprofilerAgent(wait = false),
           "-Xmx1g",
           "-XX:+UseG1GC"), // TODO use everywhere then including tests
         initialCommands += consoleCmds,

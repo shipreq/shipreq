@@ -440,4 +440,10 @@ object Common {
 
   def propOrEnv(key: String): Option[String] =
     sys.props.get(key).orElse(sys.env.get(key))
+
+  def jprofilerAgent(wait: Boolean): String = {
+    var s = "-agentpath:/opt/jprofiler/bin/linux-x64/libjprofilerti.so=port=8849"
+    if (!wait) s += ",nowait"
+    s
+  }
 }

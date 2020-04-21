@@ -106,6 +106,7 @@ object ShipReqBuild {
       .settings(
         connectInput in run  := true,
         fork         in run  := true,
+      //javaOptions  in run  += jprofilerAgent(wait = true),
         javaOptions  in run ++= Seq("-Xmx8g", "-Xss8m"))
 
   object Benchmark {
