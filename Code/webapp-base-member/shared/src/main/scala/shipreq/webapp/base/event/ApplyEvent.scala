@@ -58,7 +58,8 @@ final class ApplyEvent(implicit val trust: Trust)
     safely(applyAllUnsafely(events))
 
   private def applyAllUnsafely(events: Events): Eval[Unit] =
-    Eval.foldMapRun(events)(applyOneUnsafely)
+    events.iterator.foldLeft(Eval.unit)((q, e) => q >> Eval.restack(applyOneUnsafely(e)))
+    // Eval.foldMapRun(events)(applyOneUnsafely)
 
   private def applyOneSafely(event: Event): Eval[Unit] =
     safely(applyOneUnsafely(event))
