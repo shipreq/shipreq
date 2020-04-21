@@ -46,61 +46,37 @@ object EitherState {
 
   import ScalazTrampoline._
 
-  final class MutableState[S](initialState: S) {
-    var state: S = initialState
-
-    def mod(f: S => S): Unit =
-      state = f(state)
-  }
-
-  object MutableState {
-    def apply[S](initialState: S): MutableState[S] =
-      new MutableState(initialState)
-  }
-
-  type Underlying[S, E, A] = MutableState[S] => Trampoline[E \/ A]
+  type Underlying[S, E, A] = S => Trampoline[(S, E \/ A)]
 
   final case class Instance[S, E, A](self: Underlying[S, E, A]) extends AnyVal {
     type Self[B] = Instance[S, E, B]
 
-    def widen[B >: A]: Self[B] =
+    def widen[B >: A](implicit F: Monad[Underlying[S, E, *]]): Self[B] =
       map(a => a) // TODO *************************************************************************************************************************************
 
-    def map[B](f: A => B): Self[B] =
-      Instance(s => self(s).map(_.map(f)))
+    def map[B](f: A => B)(implicit F: Monad[Underlying[S, E, *]]): Self[B] =
+      Instance(F.map(self)(f))
 
-    def flatMap[B](f: A => Self[B]): Self[B] =
-      Instance(s => Trampoline.suspend {
-        self(s).flatMap {
-          case \/-(a)    => f(a).self(s)
-          case e@ -\/(_) => Trampoline.pure(e)
-        }
-      })
+    def flatMap[B](f: A => Self[B])(implicit F: Monad[Underlying[S, E, *]]): Self[B] =
+      Instance(F.bind(self)(f(_).self))
 
-    def flatTap[B](f: A => Self[B]): Self[A] =
-      Instance(s => Trampoline.suspend {
-        self(s).flatMap {
-          case \/-(a)    => f(a).self(s).map(_.map(_ => a))
-          case e@ -\/(_) => Trampoline.pure(e)
-        }
-      })
+    def flatTap[B](f: A => Self[B])(implicit F: Monad[Underlying[S, E, *]]): Self[A] =
+      for {
+        a <- this
+        _ <- f(a)
+      } yield a
 
-    def >>[B](next: Self[B]): Self[B] =
-      Instance(s => Trampoline.suspend {
-        self(s).flatMap {
-          case \/-(_)    => next.self(s)
-          case e@ -\/(_) => Trampoline.pure(e)
-        }
-      })
+    def >>[B](next: Self[B])(implicit F: Monad[Underlying[S, E, *]]): Self[B] =
+      flatMap(_ => next)
 
-    @inline def <<[B](prev: Self[B]): Self[A] =
+    @inline def <<[B](prev: Self[B])(implicit F: Monad[Underlying[S, E, *]]): Self[A] =
       prev >> this
 
-    def andReturn[B](b: B): Self[B] =
+    def andReturn[B](b: B)(implicit F: Monad[Underlying[S, E, *]]): Self[B] =
       map(_ => b)
 
-    def void: Self[Unit] =
-      andReturn(())
+    def void(implicit F: Monad[Underlying[S, E, *]]): Self[Unit] =
+      map(_ => ())
 
     def catchErrors(h: Throwable => E)(implicit F: Applicative[Underlying[S, E, *]]): Self[A] =
       Instance(
@@ -109,18 +85,16 @@ object EitherState {
               try
                 Trampoline.run(self(s))
               catch {
-                case t: Throwable => -\/(h(t))
+                case t: Throwable => (s, -\/(h(t)))
               }
             }
       )
 
     def run(s: S)(implicit F: Applicative[Underlying[S, E, *]]): (S, E \/ A) = {
-      val ms = MutableState(s)
-      val r = Trampoline.run(self(ms))
-      (ms.state, r)
+      Trampoline.run(self(s))
     }
 
-    def exec(s: S)(implicit F: Applicative[Underlying[S, E, *]]): E \/ S = { // TODO wrap/unwrap S ****************************************************************
+    def exec(s: S)(implicit F: Applicative[Underlying[S, E, *]]): E \/ S = {
       val r = run(s)
       r._2.map(_ => r._1)
     }
@@ -145,13 +119,21 @@ object EitherState {
       new Monad[Underlying] {
 
         override def point[A](a: => A): Underlying[A] =
-          s => Trampoline.delay(\/-(a))
+          s => Trampoline.delay((s, \/-(a)))
 
         override def map[A, B](fa: Underlying[A])(f: A => B): Underlying[B] =
-          Instance(fa).map(f).self
+          s => fa(s).map { result1 =>
+            val b = result1._2.map(f)
+            (result1._1, b)
+          }
 
         override def bind[A, B](fa: Underlying[A])(f: A => Underlying[B]): Underlying[B] =
-          Instance(fa).flatMap(a => Instance(f(a))).self
+          s => Trampoline.suspend(fa(s).flatMap { result1 =>
+            result1._2 match {
+              case \/-(a)    => f(a)(result1._1)
+              case e@ -\/(_) => Trampoline.pure((result1._1, e))
+            }
+          })
       }
 
     implicit val eitherStateMonad: Monad[Instance] =
@@ -166,8 +148,8 @@ object EitherState {
           fa.flatMap(f)
       }
 
-//    def apply[A](f: S => (S, E \/ A)): Instance[A] =
-//      Instance(s => Trampoline.pure(f(s)))
+    def apply[A](f: S => (S, E \/ A)): Instance[A] =
+      Instance(s => Trampoline.pure(f(s)))
 
     def getFlatMap[A](f: S => Instance[A]): Instance[A] =
       get.flatMap(f)
@@ -178,13 +160,11 @@ object EitherState {
     def point[A](a: => A): Instance[A] =
       Instance(eitherStateUnderlyingMonad.point(a))
 
-    def either[A](ea: E \/ A): Instance[A] = {
-      val t = Trampoline.pure(ea)
-      Instance(_ => t)
-    }
+    def either[A](ea: E \/ A): Instance[A] =
+      apply((_, ea))
 
     def eithers[A](f: S => E \/ A): Instance[A] =
-      Instance(s => Trampoline.pure(f(s.state)))
+      apply(s => (s, f(s)))
 
     def fail[A](e: E): Instance[A] =
       either(-\/(e))
@@ -196,16 +176,13 @@ object EitherState {
       getFlatMap(s => failOption(f(s)))
 
     def mod(f: S => S): Instance[Unit] =
-      Instance(ms => Trampoline.delay { // TODO ?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
-        ms.mod(f)
-        rightUnit
-      })
+      apply(s => (f(s), rightUnit))
 
     val get: Instance[S] =
-      eithers(\/-(_))
+      apply(s => (s, \/-(s)))
 
     def gets[A](f: S => A): Instance[A] =
-      eithers(s => \/-(f(s)))
+      apply(s => (s, \/-(f(s))))
 
     // TODO Some of these combinators might be faster by switching to use getFlatMap
 
