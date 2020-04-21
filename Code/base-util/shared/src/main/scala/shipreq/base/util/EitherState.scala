@@ -8,50 +8,119 @@ import scalaz.{-\/, Applicative, Monad, \/, \/-}
   */
 object EitherState {
 
-  type Underlying[S, E, A] = S => (S, E \/ A)
+  object ScalaTrampoline {
+    import scala.util.control.TailCalls._
+    type Trampoline[A] = TailRec[A]
+    object Trampoline {
+      def pure[A](a: A): Trampoline[A] = done(a)
+      def suspend[A](t: => Trampoline[A]): Trampoline[A] = tailcall(t)
+      def delay[A](a: => A): Trampoline[A] = suspend(pure(a))
+      def run[A](t: Trampoline[A]): A = t.result
+    }
+  }
 
-  final case class Instance[S, E, A](codensity: Codensity[Underlying[S, E, *], A]) extends AnyVal { self =>
+  object ScalazTrampoline {
+    import scalaz.Free
+    import scalaz.std.function.function0Instance
+    type Trampoline[A] = Free.Trampoline[A]
+    object Trampoline {
+      def pure[A](a: A): Trampoline[A] = Free.pure(a)
+      def suspend[A](t: => Trampoline[A]): Trampoline[A] = Free.suspend(t)
+      def delay[A](a: => A): Trampoline[A] = suspend(pure(a))
+      def run[A](t: Trampoline[A]): A = t.run
+    }
+  }
+
+  object NoTrampoline {
+    final class Trampoline[A](val result: A) extends AnyVal {
+      def map[B](f: A => B): Trampoline[B] = new Trampoline(f(result))
+      def flatMap[B](f: A => Trampoline[B]): Trampoline[B] = f(result)
+    }
+    object Trampoline {
+      def pure[A](a: A): Trampoline[A] = new Trampoline(a)
+      def suspend[A](t: => Trampoline[A]): Trampoline[A] = t
+      def delay[A](a: => A): Trampoline[A] = suspend(pure(a))
+      def run[A](t: Trampoline[A]): A = t.result
+    }
+  }
+
+  import ScalazTrampoline._
+
+  final class MutableState[S](initialState: S) {
+    var state: S = initialState
+
+    def mod(f: S => S): Unit =
+      state = f(state)
+  }
+
+  object MutableState {
+    def apply[S](initialState: S): MutableState[S] =
+      new MutableState(initialState)
+  }
+
+  type Underlying[S, E, A] = MutableState[S] => Trampoline[E \/ A]
+
+  final case class Instance[S, E, A](self: Underlying[S, E, A]) extends AnyVal {
     type Self[B] = Instance[S, E, B]
 
     def widen[B >: A]: Self[B] =
       map(a => a) // TODO *************************************************************************************************************************************
 
     def map[B](f: A => B): Self[B] =
-      Instance(codensity.map(f))
+      Instance(s => self(s).map(_.map(f)))
 
     def flatMap[B](f: A => Self[B]): Self[B] =
-      Instance(codensity.flatMap(f(_).codensity))
+      Instance(s => Trampoline.suspend {
+        self(s).flatMap {
+          case \/-(a)    => f(a).self(s)
+          case e@ -\/(_) => Trampoline.pure(e)
+        }
+      })
 
     def flatTap[B](f: A => Self[B]): Self[A] =
-      Instance(codensity.flatTap(f(_).codensity))
+      Instance(s => Trampoline.suspend {
+        self(s).flatMap {
+          case \/-(a)    => f(a).self(s).map(_.map(_ => a))
+          case e@ -\/(_) => Trampoline.pure(e)
+        }
+      })
 
     def >>[B](next: Self[B]): Self[B] =
-      flatMap(_ => next)
+      Instance(s => Trampoline.suspend {
+        self(s).flatMap {
+          case \/-(_)    => next.self(s)
+          case e@ -\/(_) => Trampoline.pure(e)
+        }
+      })
 
     @inline def <<[B](prev: Self[B]): Self[A] =
       prev >> this
 
     def andReturn[B](b: B): Self[B] =
-      Instance(codensity.andReturn(b))
+      map(_ => b)
 
     def void: Self[Unit] =
-      map(_ => ())
+      andReturn(())
 
-    def catchErrors(h: Throwable => E): Self[A] =
-      Instance(new Codensity[Underlying[S, E, *], A] {
-        override def apply[B](f: A => Underlying[S, E, B]): Underlying[S, E, B] =
+    def catchErrors(h: Throwable => E)(implicit F: Applicative[Underlying[S, E, *]]): Self[A] =
+      Instance(
           s =>
-            try
-              codensity(f)(s)
-            catch {
-              case t: Throwable => (s, -\/(h(t)))
+            Trampoline.delay {
+              try
+                Trampoline.run(self(s))
+              catch {
+                case t: Throwable => -\/(h(t))
+              }
             }
-      })
+      )
 
-    def run(s: S)(implicit F: Applicative[Underlying[S, E, *]]): (S, E \/ A) =
-      codensity.lower(F)(s)
+    def run(s: S)(implicit F: Applicative[Underlying[S, E, *]]): (S, E \/ A) = {
+      val ms = MutableState(s)
+      val r = Trampoline.run(self(ms))
+      (ms.state, r)
+    }
 
-    def exec(s: S)(implicit F: Applicative[Underlying[S, E, *]]): E \/ S = {
+    def exec(s: S)(implicit F: Applicative[Underlying[S, E, *]]): E \/ S = { // TODO wrap/unwrap S ****************************************************************
       val r = run(s)
       r._2.map(_ => r._1)
     }
@@ -76,23 +145,13 @@ object EitherState {
       new Monad[Underlying] {
 
         override def point[A](a: => A): Underlying[A] =
-          s => (s, \/-(a))
+          s => Trampoline.delay(\/-(a))
 
         override def map[A, B](fa: Underlying[A])(f: A => B): Underlying[B] =
-          s => {
-            val result1 = fa(s)
-            val b = result1._2.map(f)
-            (result1._1, b)
-          }
+          Instance(fa).map(f).self
 
         override def bind[A, B](fa: Underlying[A])(f: A => Underlying[B]): Underlying[B] =
-          s => {
-            val result1 = fa(s)
-            result1._2 match {
-              case \/-(a)    => f(a)(result1._1)
-              case e@ -\/(_) => (result1._1, e)
-            }
-          }
+          Instance(fa).flatMap(a => Instance(f(a))).self
       }
 
     implicit val eitherStateMonad: Monad[Instance] =
@@ -107,31 +166,25 @@ object EitherState {
           fa.flatMap(f)
       }
 
-    def apply[A](f: S => (S, E \/ A)): Instance[A] =
-      Instance(Codensity.lift[Underlying, A](f))
+//    def apply[A](f: S => (S, E \/ A)): Instance[A] =
+//      Instance(s => Trampoline.pure(f(s)))
 
     def getFlatMap[A](f: S => Instance[A]): Instance[A] =
-      Instance {
-        new Codensity[Underlying, A] {
-          override def apply[B](g: A => Underlying[B]): Underlying[B] =
-            s => f(s).codensity(g)(s)
-        }
-      }
-
-    def restack[A](i: Instance[A]): Instance[A] =
-      apply(s => i.run(s))
+      get.flatMap(f)
 
     def pure[A](a: A): Instance[A] =
-      Instance(Codensity.pure[Underlying, A](a))
+      either(\/-(a))
 
     def point[A](a: => A): Instance[A] =
-      Instance(Codensity.point[Underlying, A](a))
+      Instance(eitherStateUnderlyingMonad.point(a))
 
-    def either[A](ea: E \/ A): Instance[A] =
-      apply((_, ea))
+    def either[A](ea: E \/ A): Instance[A] = {
+      val t = Trampoline.pure(ea)
+      Instance(_ => t)
+    }
 
     def eithers[A](f: S => E \/ A): Instance[A] =
-      apply(s => (s, f(s)))
+      Instance(s => Trampoline.pure(f(s.state)))
 
     def fail[A](e: E): Instance[A] =
       either(-\/(e))
@@ -143,13 +196,16 @@ object EitherState {
       getFlatMap(s => failOption(f(s)))
 
     def mod(f: S => S): Instance[Unit] =
-      apply(s => (f(s), rightUnit))
+      Instance(ms => Trampoline.delay { // TODO ?????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
+        ms.mod(f)
+        rightUnit
+      })
 
     val get: Instance[S] =
-      apply(s => (s, \/-(s)))
+      eithers(\/-(_))
 
     def gets[A](f: S => A): Instance[A] =
-      apply(s => (s, \/-(f(s))))
+      eithers(s => \/-(f(s)))
 
     // TODO Some of these combinators might be faster by switching to use getFlatMap
 
