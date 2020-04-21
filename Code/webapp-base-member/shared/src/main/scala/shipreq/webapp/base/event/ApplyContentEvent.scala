@@ -42,10 +42,10 @@ trait ApplyContentEvent {
     def ensureLiveTextField(cf: CustomField.Text): Eval[Unit] =
       Eval.getFlatMap(p => ensureLive(cf live p.config)(show(cf)))
 
-    def needReq[T <: ReqTypeId](reqId: ReqIdT[T]): Eval[ReqT[T]] =
+    def needReq[T <: ReqTypeId](reqId: ReqIdT[T]): Eval[Req] =
       reqId match {
-        case id: GenericReqId => grIMap.need(id)
-        case id: UseCaseId    => ucIMap.need(id)
+        case id: GenericReqId => grIMap.need(id).widen[Req]
+        case id: UseCaseId    => ucIMap.need(id).widen[Req]
       }
 
     private def deleteReq(id: ReqId): Eval[Unit] =

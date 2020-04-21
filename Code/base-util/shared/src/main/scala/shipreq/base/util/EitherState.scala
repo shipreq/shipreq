@@ -8,10 +8,13 @@ import scalaz.{-\/, Applicative, Monad, \/, \/-}
   */
 object EitherState {
 
-  type Underlying[S, E, +A] = S => (S, E \/ A)
+  type Underlying[S, E, A] = S => (S, E \/ A)
 
-  final case class Instance[S, E, +A](codensity: Codensity[Underlying[S, E, *], A]) extends AnyVal {
-    type Self[+B] = Instance[S, E, B]
+  final case class Instance[S, E, A](codensity: Codensity[Underlying[S, E, *], A]) extends AnyVal {
+    type Self[B] = Instance[S, E, B]
+
+    def widen[B >: A]: Self[B] =
+      map(a => a) // TODO *************************************************************************************************************************************
 
     def map[B](f: A => B): Self[B] =
       Instance(codensity.map(f))
@@ -31,9 +34,6 @@ object EitherState {
     def andReturn[B](b: B): Self[B] =
       Instance(codensity.andReturn(b))
 
-    def underlying(implicit F: Applicative[Underlying[S, E, *]]): Underlying[S, E, A] =
-      codensity.lower(F)
-
     def void: Self[Unit] =
       map(_ => ())
 
@@ -49,7 +49,7 @@ object EitherState {
       })
 
     def run(s: S)(implicit F: Applicative[Underlying[S, E, *]]): (S, E \/ A) =
-      underlying(F)(s)
+      codensity.lower(F)(s)
 
     def exec(s: S)(implicit F: Applicative[Underlying[S, E, *]]): E \/ S = {
       val r = run(s)
@@ -67,8 +67,8 @@ object EitherState {
 
   final class ForTypes[S, E] { self =>
 
-    type Underlying[+A] = EitherState.Underlying[S, E, A]
-    type Instance  [+A] = EitherState.Instance  [S, E, A]
+    type Underlying[A] = EitherState.Underlying[S, E, A]
+    type Instance  [A] = EitherState.Instance  [S, E, A]
 
     private[this] val rightUnit = \/-(())
 
