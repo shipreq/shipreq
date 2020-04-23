@@ -120,7 +120,8 @@ object SampleProject {
       projectContent,
       ManualIssues.empty,
       reqtable.SavedViews.empty,
-      _))
+      _,
+      None))
 
   lazy val tagTree = project.config.tags.tree.mapValues(_.children)
 

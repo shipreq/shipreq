@@ -48,7 +48,11 @@ object Project {
   val reqtableViewTraversal: Traversal[Project, reqtable.View] =
     reqtableViewsNE ^|->> reqtable.SavedViews.NonEmpty.traversalSavedView ^|-> reqtable.SavedView.view
 
-  implicit lazy val equality: Equal[Project] = ScalazMacros.deriveEqual
+  implicit lazy val equality: Equal[Project] = {
+    implicit val excludeDerivations: Equal[Option[ProjectDerivations]] = Equal.equal((_, _) => true)
+    val _ = excludeDerivations
+    ScalazMacros.deriveEqual
+  }
 
   // Not allowed by validator.
   // This ensures that initial ProjectNameSet events (generated on project creation) apply instead of being discarded
@@ -58,25 +62,46 @@ object Project {
 
   val empty: Project =
     Project(
-      emptyProjectName,
-      ProjectConfig.empty,
-      ProjectContent.empty,
-      ManualIssues.empty,
-      reqtable.SavedViews.empty,
-      IdCeilings.zero)
+      name            = emptyProjectName,
+      config          = ProjectConfig.empty,
+      content         = ProjectContent.empty,
+      manualIssues    = ManualIssues.empty,
+      reqtableViews   = reqtable.SavedViews.empty,
+      idCeilings      = IdCeilings.zero,
+      prevDerivations = None)
 }
 
 @Lenses
-final case class Project(name         : Project.Name,
-                         config       : ProjectConfig,
-                         content      : ProjectContent,
-                         manualIssues : ManualIssues,
-                         reqtableViews: reqtable.SavedViews.Optional,
-                         idCeilings   : IdCeilings) {
+final case class Project(name           : Project.Name,
+                         config         : ProjectConfig,
+                         content        : ProjectContent,
+                         manualIssues   : ManualIssues,
+                         reqtableViews  : reqtable.SavedViews.Optional,
+                         idCeilings     : IdCeilings,
+                         prevDerivations: Option[ProjectDerivations]) {
 
   override def toString =
     s"Project($idCeilings)"
     //ShowSize(this).showTree
+
+  def copy(name           : Project.Name                 = name           ,
+           config         : ProjectConfig                = config         ,
+           content        : ProjectContent               = content        ,
+           manualIssues   : ManualIssues                 = manualIssues   ,
+           reqtableViews  : reqtable.SavedViews.Optional = reqtableViews  ,
+           idCeilings     : IdCeilings                   = idCeilings     ,
+           prevDerivations: Option[ProjectDerivations]   = prevDerivations): Project =
+    Project(
+      name            = name           ,
+      config          = config         ,
+      content         = content        ,
+      manualIssues    = manualIssues   ,
+      reqtableViews   = reqtableViews  ,
+      idCeilings      = idCeilings     ,
+      prevDerivations = Some(derivations))
+
+  val derivations: ProjectDerivations =
+    ProjectDerivations.next(prevDerivations, this)
 
   lazy val deadReqIds: Set[ReqId] =
     content.reqs.reqIterator().filter(_.live(config.reqTypes) is Dead).map(_.id).toSet
