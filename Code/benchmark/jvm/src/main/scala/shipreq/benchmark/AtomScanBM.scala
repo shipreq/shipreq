@@ -21,7 +21,8 @@ import shipreq.webapp.sampledata.SampleData
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 class AtomScanBM {
 
-  @Param(Array("1000", "2000", "4000", "10000"))
+//  @Param(Array("1000", "2000", "4000", "10000"))
+  @Param(Array("10000"))
   var events: String = _
 
   var p: Project = _
