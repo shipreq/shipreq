@@ -81,8 +81,10 @@ object LiveDeadStat {
 final case class LiveDeadStatMap[Key: UnivEq, @specialized(Int) A: Monoid] private[data](raw: Map[Key, LiveDeadStat[A]]) {
   def isEmpty = raw.isEmpty
 
-  val all: LiveDeadStat[A] =
+  lazy val all: LiveDeadStat[A] = {
+    CC.inc("LiveDeadStatMap.all")
     LiveDeadStat sum raw.values
+  }
 
   def apply(key: Key): LiveDeadStat[A] =
     raw.getOrElse(key, LiveDeadStat.empty[A])

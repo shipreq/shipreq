@@ -13,22 +13,34 @@ import shipreq.webapp.base.text.Text
   * @param issuesInReqs  Live/Dead refers to the requirement context; not the life-state of the issue itself.
   * @param codeRefs ReqCodes referenced in anything anywhere (including text in dead custom-text fields).
   */
-final class AtomScan(val tagRefs          : LiveDeadStatMap[ReqId, Set[LocAndValue[LocationOf.Tag.InReq, ApplicableTagId]]],
-                     val issuesInReqs     : LiveDeadStatMap[ReqId, Vector[LocAndValue[LocationOf.Text.InReq, AnyIssue]]],
-                     val issuesInRcgs     : LiveDeadStatMap[ReqCodeGroupId, Vector[Text.CodeGroupTitle.Issue]],
-                     val contentRefsInReqs: LiveDeadStatMap[ReqId, Vector[LocAndValue[LocationOf.Text.InReq, AnyContentRef]]],
-                     val contentRefsInRcgs: LiveDeadStatMap[ReqCodeGroupId, Vector[LocAndValue[LocationOf.Text.InReqCodeGroup, AnyContentRef]]],
-                     val reqRefs          : Set[ReqId],
-                     val codeRefs         : Set[ReqCodeId],
-                     val useCaseStepRefs  : Set[UseCaseStepId]
+final class AtomScan(_tagRefs          : LiveDeadStatMap[ReqId, Set[LocAndValue[LocationOf.Tag.InReq, ApplicableTagId]]],
+                     _issuesInReqs     : LiveDeadStatMap[ReqId, Vector[LocAndValue[LocationOf.Text.InReq, AnyIssue]]],
+                     _issuesInRcgs     : LiveDeadStatMap[ReqCodeGroupId, Vector[Text.CodeGroupTitle.Issue]],
+                     _contentRefsInReqs: LiveDeadStatMap[ReqId, Vector[LocAndValue[LocationOf.Text.InReq, AnyContentRef]]],
+                     _contentRefsInRcgs: LiveDeadStatMap[ReqCodeGroupId, Vector[LocAndValue[LocationOf.Text.InReqCodeGroup, AnyContentRef]]],
+                     _reqRefs          : Set[ReqId],
+                     _codeRefs         : Set[ReqCodeId],
+                     _useCaseStepRefs  : Set[UseCaseStepId]
                     ) {
 
+  CC.inc("AtomScan.instance")
+
   lazy val issueCounts: LiveDeadStatMap[CustomIssueTypeId, Int] = {
+    CC.inc("AtomScan.issueCounts")
     val r = new LiveDeadStatMap.Builder[CustomIssueTypeId, Int]
     issuesInReqs.countByValues(r, _.iterator.map(_.value.typ))
     issuesInRcgs.countByValues(r, _.iterator.map(_.typ))
     r.result()
   }
+
+  lazy val tagRefs           = CC("AtomScan.read.tagRefs          ")(_tagRefs          )
+  lazy val issuesInReqs      = CC("AtomScan.read.issuesInReqs     ")(_issuesInReqs     )
+  lazy val issuesInRcgs      = CC("AtomScan.read.issuesInRcgs     ")(_issuesInRcgs     )
+  lazy val contentRefsInReqs = CC("AtomScan.read.contentRefsInReqs")(_contentRefsInReqs)
+  lazy val contentRefsInRcgs = CC("AtomScan.read.contentRefsInRcgs")(_contentRefsInRcgs)
+  lazy val reqRefs           = CC("AtomScan.read.reqRefs          ")(_reqRefs          )
+  lazy val codeRefs          = CC("AtomScan.read.codeRefs         ")(_codeRefs         )
+  lazy val useCaseStepRefs   = CC("AtomScan.read.useCaseStepRefs  ")(_useCaseStepRefs  )
 }
 
 object AtomScan {

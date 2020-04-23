@@ -1,7 +1,7 @@
 package shipreq.utils
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import shipreq.webapp.base.data.Project
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ApplyEvent
 import shipreq.webapp.sampledata.SampleData
 import shipreq.base.util.FxModule._
@@ -12,6 +12,7 @@ object Profile {
     println("Loading sample data...")
     val sd = SampleData.`10000`
     val verifiedEvents = sd.verifiedEvents
+    CC.clear()
 
     val run = Fx(ApplyEvent.trusted.applyVerified(verifiedEvents)(Project.empty)).measureDuration_
 
@@ -21,6 +22,8 @@ object Profile {
       val dur = run.unsafeRun()
       println(s"Run #$i - ${dur.conciseDesc}")
     }
+
+    CC.printReport()
 
     println("Done.")
   }

@@ -80,6 +80,8 @@ final case class Project(name           : Project.Name,
                          idCeilings     : IdCeilings,
                          prevDerivations: Option[ProjectDerivations]) {
 
+  CC.inc("Project.instance")
+
   override def toString =
     s"Project($idCeilings)"
     //ShowSize(this).showTree
@@ -90,7 +92,8 @@ final case class Project(name           : Project.Name,
            manualIssues   : ManualIssues                 = manualIssues   ,
            reqtableViews  : reqtable.SavedViews.Optional = reqtableViews  ,
            idCeilings     : IdCeilings                   = idCeilings     ,
-           prevDerivations: Option[ProjectDerivations]   = prevDerivations): Project =
+           prevDerivations: Option[ProjectDerivations]   = prevDerivations): Project = {
+    CC.inc("Project.copy")
     Project(
       name            = name           ,
       config          = config         ,
@@ -99,6 +102,7 @@ final case class Project(name           : Project.Name,
       reqtableViews   = reqtableViews  ,
       idCeilings      = idCeilings     ,
       prevDerivations = Some(derivations))
+  }
 
   val derivations: ProjectDerivations =
     ProjectDerivations.next(prevDerivations, this)
