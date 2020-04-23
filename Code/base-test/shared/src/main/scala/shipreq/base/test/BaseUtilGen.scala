@@ -7,6 +7,7 @@ import nyaya.prop.CycleDetector
 import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
+import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 
@@ -18,6 +19,15 @@ object BaseUtilGen {
   implicit def BaseUtilGen_GenExt[A](g: Gen[A]) = new BaseUtilGen_GenExt(g.run)
   class BaseUtilGen_GenExt[A](private val _g: Gen.Run[A]) extends AnyVal {
     private implicit def g = Gen(_g)
+
+    def nea(ss: SizeSpec)(implicit ct: ClassTag[A]): Gen[NonEmptyArraySeq[A]] =
+      nea(ct, ss)
+
+    def nea(implicit ct: ClassTag[A], ss: SizeSpec): Gen[NonEmptyArraySeq[A]] = {
+      val single = g map NonEmptyArraySeq.one
+      g.arraySeq(ss).flatMap(vs =>
+        NonEmptyArraySeq.maybe(vs, single)(Gen.pure))
+    }
 
     def nev(implicit ss: SizeSpec): Gen[NonEmptyVector[A]] = {
       val single = g map NonEmptyVector.one

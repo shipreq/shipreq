@@ -10,6 +10,7 @@ import java.nio.ByteBuffer
 import java.time.Instant
 import monocle.Iso
 import nyaya.util.{MultiValues, Multimap}
+import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scalaz.Isomorphism.<=>
 import scalaz.{-\/, Functor, \&/, \/, \/-}
@@ -228,6 +229,9 @@ object BaseData {
     pickleNonEmpty(_.whole)
 
   def pickleNEV[A](implicit p: Pickler[Vector[A]]): Pickler[NonEmptyVector[A]] =
+    pickleNonEmpty(_.whole)
+
+  def pickleNEA[A](implicit p: Pickler[ArraySeq[A]]): Pickler[NonEmptyArraySeq[A]] =
     pickleNonEmpty(_.whole)
 
   def pickleNonEmpty[N, E](f: N => E)(implicit p: Pickler[E], proof: NonEmpty.Proof[E, N]): Pickler[N] =

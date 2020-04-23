@@ -6,6 +6,7 @@ import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet, NonEmptyVector}
 import japgolly.univeq._
 import shipreq.base.util.JsonUtil._
 import nyaya.util.{MultiValues, Multimap}
+import scala.collection.compat.immutable.ArraySeq
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -87,6 +88,10 @@ private[v1] object BaseData {
 
   def codecNEV[A](implicit d: Decoder[Vector[A]], e: Encoder[Vector[A]]): JsonCodec[NonEmptyVector[A]] =
     codecNonEmpty(_.whole)
+
+  def codecNEA[A](implicit d: Decoder[ArraySeq[A]], e: Encoder[ArraySeq[A]]): JsonCodec[NonEmptyArraySeq[A]] = {
+    codecNonEmpty(_.whole)
+  }
 
   def codecNonEmpty[N, E](f: N => E)(implicit d: Decoder[E], e: Encoder[E], proof: NonEmpty.Proof[E, N]): JsonCodec[N] =
     JsonCodec.xmap[E, N](NonEmpty require_! _)(f)
