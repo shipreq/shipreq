@@ -1,6 +1,6 @@
 package shipreq.base.util.storecache
 
-import shipreq.base.util.Identity
+import shipreq.base.util._
 
 private[storecache] final class StoreCache2[In, SA,A, SB,B, Z](
     val s1: StoreCache1[In, SA, A],

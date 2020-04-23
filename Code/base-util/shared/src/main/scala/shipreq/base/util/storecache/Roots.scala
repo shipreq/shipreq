@@ -1,5 +1,7 @@
 package shipreq.base.util.storecache
 
+import shipreq.base.util.LazyVal
+
 final case class Next[A](value: A, changed: LazyVal[Boolean])
 
 final class StoreCache1[I, S, A](mapInput   : I => S,

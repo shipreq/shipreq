@@ -1,9 +1,9 @@
 package shipreq.webapp.base.data.derivation
 
 import scala.collection.mutable.Builder
+import shipreq.base.util.LazyVal
 import shipreq.base.util.fp.Semigroup.Syntax._
 import shipreq.base.util.fp.{Monoid, Semigroup}
-import shipreq.base.util.storecache.LazyVal
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 

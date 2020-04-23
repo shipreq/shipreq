@@ -1,4 +1,4 @@
-package shipreq.base.util.storecache
+package shipreq.base.util
 
 import japgolly.univeq.UnivEq
 import shipreq.base.util.EitherState.ScalazTrampoline._

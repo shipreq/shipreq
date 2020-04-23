@@ -1,4 +1,4 @@
-package shipreq.base.util.storecache
+package shipreq.base.util
 
 import japgolly.microlibs.testutil.TestUtil._
 import utest._

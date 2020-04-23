@@ -151,7 +151,7 @@ object GenBoilerplateForStoreCache {
       s"""
          |package $pkg
          |
-         |import shipreq.base.util.Identity
+         |import shipreq.base.util._
          |
          |${groups.drop(1).map(_.storeCache.trim).mkString("\n\n")}
          |

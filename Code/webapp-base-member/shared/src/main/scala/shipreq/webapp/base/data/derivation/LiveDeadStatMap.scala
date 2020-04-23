@@ -2,9 +2,9 @@ package shipreq.webapp.base.data.derivation
 
 import scala.collection.mutable
 import scala.collection.mutable.Builder
+import shipreq.base.util.LazyVal
 import shipreq.base.util.fp.Monoid
 import shipreq.base.util.fp.Monoid.Implicits._
-import shipreq.base.util.storecache.LazyVal
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.CC
 
