@@ -15,3 +15,32 @@ Beginning
 | ReqCodesScan.read.inactiveIdsByReqId    |        379 |
 | ReqCodesScan.read.reqCodeGroupsById     |        874 |
 +-----------------------------------------+------------+
+
+================================================================================================================================
+20.8% in deletionMethodForUseCaseStep
+
+    def applyStepDelete(e: UseCaseStepDelete): Eval[Unit] =
+      for {
+        f   <- needStepFocus(e.id)
+        _   <- whenUntrusted(Eval.test(f.field.canDelete(f.loc) is Allow, s"Deletion of step ${show(e.id)} forbidden."))
+        del <- Eval.gets(_.deletionMethodForUseCaseStep(e.id))
+        _   <- del match {
+                 case DeletionMethod.Soft => setUseCaseStepLive(e.id, Dead)
+                 case DeletionMethod.Hard => hardDeleteStep(f)
+               }
+      } yield ()
+
+================================================================================================================================
+25.9% - atomScan
+
+    def applyReqCodesPatch(e: ReqCodesPatch): Eval[Unit] =
+      for {
+        p    <- Eval.get
+        refd = p.atomScan.codeRefs
+        keep = e.add.values.foldLeft(refd)(_ -- _)
+        t0   = p.content.reqCodes.trie
+        t1   <- inactivateReqsByIdT(t0, e.remove, keep.contains, ensureActiveReqIs(e.id))
+        t2   <- restoreToReqByIdsT(t1, e.id, e.restore)
+        t3   <- addAllT(t2, addCodesToReq(e.id, e.add))
+        _    <- Project.reqCodeTrie set t3
+      } yield ()

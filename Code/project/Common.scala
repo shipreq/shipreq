@@ -202,7 +202,8 @@ object Common {
         "WSL" -> "project webapp-server-logic-jvm",
         "WS"  -> "project webapp-server",
         "BM"  -> "project benchmark-jvm",
-        "BMJ" -> "project benchmark-js"))
+        "BMJ" -> "project benchmark-js",
+        "U"   -> "project utils"))
 
   /** Common settings used by standard modules - not benchmarks, not test modules */
   private def settings: Project => Project =
