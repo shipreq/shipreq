@@ -15,12 +15,9 @@ object Profile {
 
     val run = Fx(ApplyEvent.trusted.applyVerified(verifiedEvents)(Project.empty)).measureDuration_
 
-    for (i <- (1 to 5).reverse) {
-      println(s"Starting in $i...")
-      Thread.sleep(1100)
-    }
+    waitForInput()
 
-    for (i <- 1 to 10) {
+    for (i <- 1 to 1) {
       val dur = run.unsafeRun()
       println(s"Run #$i - ${dur.conciseDesc}")
     }
@@ -28,4 +25,11 @@ object Profile {
     println("Done.")
   }
 
+  private def waitForInput(): Unit = {
+    println(".")
+    println("Press enter to start...")
+    scala.io.StdIn.readLine()
+    println("Starting...")
+    println(".")
+  }
 }
