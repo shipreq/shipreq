@@ -2,7 +2,7 @@ package shipreq.utils
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.ApplyEvent
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.sampledata.SampleData
 import shipreq.base.util.FxModule._
 
@@ -10,22 +10,14 @@ object Profile {
 
   def main(args: Array[String]): Unit = {
     println("Loading sample data...")
-    val sd = SampleData.`10000`
-    val verifiedEvents = sd.verifiedEvents
-    CC.clear()
 
-    val run = Fx(ApplyEvent.trusted.applyVerified(verifiedEvents)(Project.empty)).measureDuration_
+    val project = SampleData.`10000`.project
+    profile(1)(Array.fill(100)(AtomScan(project)))
 
-    waitForInput()
-
-    for (i <- 1 to 1) {
-      val dur = run.unsafeRun()
-      println(s"Run #$i - ${dur.conciseDesc}")
-    }
-
-    CC.printReport()
-
-    println("Done.")
+//    import shipreq.webapp.base.event._
+//    val trusted = ApplyEvent.trusted
+//    val verifiedEvents = SampleData.`10000`.verifiedEvents
+//    profile(1)(ApplyEvent.trusted.applyVerified(verifiedEvents)(Project.empty))
   }
 
   private def waitForInput(): Unit = {
@@ -35,4 +27,17 @@ object Profile {
     println("Starting...")
     println(".")
   }
+
+  private def profile(times: Int)(body: => Any): Unit = {
+    val run = Fx(body).measureDuration_
+    CC.clear()
+    waitForInput()
+    for (i <- 1 to times) {
+      val dur = run.unsafeRun()
+      println(s"Run #$i - ${dur.conciseDesc}")
+    }
+    CC.printReport()
+    println("Done.")
+  }
+
 }
