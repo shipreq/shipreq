@@ -98,7 +98,7 @@ object LiveDeadStatMap {
       new OfBuilders(newBuilder)
 
     final class OfBuilders[Key: UnivEq, F[x] <: Iterable[x], A](newBuilder: => Builder[A, F[A]]) {
-      private val map = mutable.Map.empty[Key, LiveDeadStat.Builder.OfBuilders[A, F[A]]]
+      private[this] val map = mutable.Map.empty[Key, LiveDeadStat.Builder.OfBuilders[A, F[A]]]
 
       def apply(key: Key): LiveDeadStat.Builder.OfBuilders[A, F[A]] =
         map.getOrElseUpdate(key, LiveDeadStat.Builder.ofBuilders(newBuilder))

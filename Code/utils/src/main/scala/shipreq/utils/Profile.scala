@@ -17,7 +17,7 @@ object Profile {
 //    import shipreq.webapp.base.event._
 //    val trusted = ApplyEvent.trusted
 //    val verifiedEvents = SampleData.`10000`.verifiedEvents
-//    profile(1)(ApplyEvent.trusted.applyVerified(verifiedEvents)(Project.empty))
+//    profile(1)(trusted.applyVerified(verifiedEvents)(Project.empty))
   }
 
   private def waitForInput(): Unit = {

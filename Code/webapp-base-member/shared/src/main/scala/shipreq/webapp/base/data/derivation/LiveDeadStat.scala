@@ -86,10 +86,10 @@ object LiveDeadStat {
     def ofBuilders[A, B](newBuilder: => Builder[A, B]): OfBuilders[A, B] =
       new OfBuilders(newBuilder, newBuilder)
 
-    final class OfBuilders[A, B](live: Builder[A, B], dead: Builder[A, B]) {
+    final class OfBuilders[A, B](val live: Builder[A, B], val dead: Builder[A, B]) {
 
-      def add(l: Live, a: A): Unit = {
-        val b = if (l.is(Live)) live else dead
+      @inline def add(l: Live, a: A): Unit = {
+        val b = if (l eq Live) live else dead
         b += a
       }
 
