@@ -46,8 +46,5 @@ object StoreCache extends StoreCacheBoilerplate {
   object Logic extends StoreCacheLogicBoilerplate {
     def apply[S: QuickEq, A](run: S => A): Logic1[S, S, A] =
       new Logic1[S, S, A](Identity.apply[S], run)
-
-    @inline def fn1[S: QuickEq, A](run: S => A): Logic1[S, S, A] =
-      apply(run)
   }
 }

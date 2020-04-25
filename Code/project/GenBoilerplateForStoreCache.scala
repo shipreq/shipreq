@@ -33,7 +33,8 @@ object GenBoilerplateForStoreCache {
                         scApplyN   : String,
                         logic      : String,
                         logicApplyN: String,
-                        logicFnN   : String)
+                        logicFnN   : String,
+                        logicDslN  : String)
 
   def apply(outputDir: File): File = {
 
@@ -151,13 +152,46 @@ object GenBoilerplateForStoreCache {
              |  new Logic$n($ls, mapOut)
              |""".stripMargin
 
+        /*
+  final def fn2[Y, A: QuickEq, B: QuickEq, Z](f1: Y => A, f2: Y => B)(f: (A,B) => Z)(implicit qa): Logic1[Y, Y, Z] = {
+    implicit val qe: QuickEq[Y] = QuickEq((y1, y2) => )
+    StoreCache.Logic[Y, Z](y => f(f1(y), f2(y)))
+  }
+
+             |final def fn$n[In, ${values.ABC}, Z](
+             |${values.abcs.map(a => s"    g$a: In => ${a.toUpperCase},").mkString("\n")}
+             |    f : (${values.ABC}) => Z)
+             |   (implicit
+             |${values.abcs.map(a => s"    q$a: QuickEq[${a.toUpperCase}],").mkString("\n")}
+             |   ): Logic1[In, In, Z] = {
+             |  implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+             |${values.abcs.map(a => s"    (q$a.areEq(g$a(i1), g$a(i2)))").mkString(" &&\n")})
+             |  StoreCache.Logic[In, Z](i => f(${values.abcs.map(a => s"g$a(i)").mkString(", ")}))
+             |}
+         */
+
         val logicFnN =
           s"""
-             |final def fn$n[$valueTypesWithQE, Z](f: (${values.ABC}) => Z): Logic1[(${values.ABC}), (${values.ABC}), Z] =
-             |  StoreCache.Logic[(${values.ABC}), Z](x => f($tupleParts))
+             |final def fn$n[${values.ABC}, Z](f: (${values.ABC}) => Z): DslFn$n[${values.ABC}, Z] =
+             |  new DslFn$n(f)
              |""".stripMargin
 
-        ForN(storeCache, scApplyN, logic, logicApplyN, logicFnN)
+        val logicDslN =
+          s"""
+             |final class DslFn$n[${values.ABC}, Z](private val f: (${values.ABC}) => Z) extends AnyVal {
+             |  def apply[In](
+             |${values.abcs.map(a => s"      g$a: In => ${a.toUpperCase},").mkString("\n")}
+             |    )(implicit
+             |${values.abcs.map(a => s"      q$a: QuickEq[${a.toUpperCase}],").mkString("\n")}
+             |     ): Logic1[In, In, Z] = {
+             |    implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+             |${values.abcs.map(a => s"      (q$a.areEq(g$a(i1), g$a(i2)))").mkString(" &&\n")})
+             |    StoreCache.Logic[In, Z](i => f(${values.abcs.map(a => s"g$a(i)").mkString(", ")}))
+             |  }
+             |}
+             |""".stripMargin
+
+        ForN(storeCache, scApplyN, logic, logicApplyN, logicFnN, logicDslN)
       }
 
     val content =
@@ -176,10 +210,15 @@ object GenBoilerplateForStoreCache {
          |${groups.drop(1).map(_.logic.trim).mkString("\n\n")}
          |
          |abstract class StoreCacheLogicBoilerplate private[storecache]() {
+         |  import StoreCacheLogicBoilerplateDsl._
          |
          |${groups.drop(1).map(_.logicApplyN.trim.indent(2)).mkString("\n\n")}
          |
-         |${groups.drop(1).map(_.logicFnN.trim.indent(2)).mkString("\n\n")}
+         |${groups.map(_.logicFnN.trim.indent(2)).mkString("\n\n")}
+         |}
+         |
+         |object StoreCacheLogicBoilerplateDsl {
+         |${groups.map(_.logicDslN.trim.indent(2)).mkString("\n\n")}
          |}
         """.stripMargin.trim
 

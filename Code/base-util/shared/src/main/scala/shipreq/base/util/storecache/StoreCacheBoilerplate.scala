@@ -3345,6 +3345,7 @@ private[storecache] final class Logic22[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
 }
 
 abstract class StoreCacheLogicBoilerplate private[storecache]() {
+  import StoreCacheLogicBoilerplateDsl._
 
   final def apply2[In, SA,A, SB,B, Z](
       l1: Logic1[In, SA, A],
@@ -3682,66 +3683,1028 @@ abstract class StoreCacheLogicBoilerplate private[storecache]() {
       mapOut: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V) => Z): StoreCache.Logic[In, Z] =
     new Logic22(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22, mapOut)
 
-  final def fn2[A: QuickEq, B: QuickEq, Z](f: (A,B) => Z): Logic1[(A,B), (A,B), Z] =
-    StoreCache.Logic[(A,B), Z](x => f(x._1, x._2))
+  final def fn1[A, Z](f: (A) => Z): DslFn1[A, Z] =
+    new DslFn1(f)
 
-  final def fn3[A: QuickEq, B: QuickEq, C: QuickEq, Z](f: (A,B,C) => Z): Logic1[(A,B,C), (A,B,C), Z] =
-    StoreCache.Logic[(A,B,C), Z](x => f(x._1, x._2, x._3))
+  final def fn2[A,B, Z](f: (A,B) => Z): DslFn2[A,B, Z] =
+    new DslFn2(f)
 
-  final def fn4[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, Z](f: (A,B,C,D) => Z): Logic1[(A,B,C,D), (A,B,C,D), Z] =
-    StoreCache.Logic[(A,B,C,D), Z](x => f(x._1, x._2, x._3, x._4))
+  final def fn3[A,B,C, Z](f: (A,B,C) => Z): DslFn3[A,B,C, Z] =
+    new DslFn3(f)
 
-  final def fn5[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, Z](f: (A,B,C,D,E) => Z): Logic1[(A,B,C,D,E), (A,B,C,D,E), Z] =
-    StoreCache.Logic[(A,B,C,D,E), Z](x => f(x._1, x._2, x._3, x._4, x._5))
+  final def fn4[A,B,C,D, Z](f: (A,B,C,D) => Z): DslFn4[A,B,C,D, Z] =
+    new DslFn4(f)
 
-  final def fn6[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, Z](f: (A,B,C,D,E,F) => Z): Logic1[(A,B,C,D,E,F), (A,B,C,D,E,F), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6))
+  final def fn5[A,B,C,D,E, Z](f: (A,B,C,D,E) => Z): DslFn5[A,B,C,D,E, Z] =
+    new DslFn5(f)
 
-  final def fn7[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, Z](f: (A,B,C,D,E,F,G) => Z): Logic1[(A,B,C,D,E,F,G), (A,B,C,D,E,F,G), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7))
+  final def fn6[A,B,C,D,E,F, Z](f: (A,B,C,D,E,F) => Z): DslFn6[A,B,C,D,E,F, Z] =
+    new DslFn6(f)
 
-  final def fn8[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, Z](f: (A,B,C,D,E,F,G,H) => Z): Logic1[(A,B,C,D,E,F,G,H), (A,B,C,D,E,F,G,H), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8))
+  final def fn7[A,B,C,D,E,F,G, Z](f: (A,B,C,D,E,F,G) => Z): DslFn7[A,B,C,D,E,F,G, Z] =
+    new DslFn7(f)
 
-  final def fn9[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I) => Z): Logic1[(A,B,C,D,E,F,G,H,I), (A,B,C,D,E,F,G,H,I), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9))
+  final def fn8[A,B,C,D,E,F,G,H, Z](f: (A,B,C,D,E,F,G,H) => Z): DslFn8[A,B,C,D,E,F,G,H, Z] =
+    new DslFn8(f)
 
-  final def fn10[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J), (A,B,C,D,E,F,G,H,I,J), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10))
+  final def fn9[A,B,C,D,E,F,G,H,I, Z](f: (A,B,C,D,E,F,G,H,I) => Z): DslFn9[A,B,C,D,E,F,G,H,I, Z] =
+    new DslFn9(f)
 
-  final def fn11[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K), (A,B,C,D,E,F,G,H,I,J,K), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11))
+  final def fn10[A,B,C,D,E,F,G,H,I,J, Z](f: (A,B,C,D,E,F,G,H,I,J) => Z): DslFn10[A,B,C,D,E,F,G,H,I,J, Z] =
+    new DslFn10(f)
 
-  final def fn12[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L), (A,B,C,D,E,F,G,H,I,J,K,L), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12))
+  final def fn11[A,B,C,D,E,F,G,H,I,J,K, Z](f: (A,B,C,D,E,F,G,H,I,J,K) => Z): DslFn11[A,B,C,D,E,F,G,H,I,J,K, Z] =
+    new DslFn11(f)
 
-  final def fn13[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, M: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L,M), (A,B,C,D,E,F,G,H,I,J,K,L,M), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L,M), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12, x._13))
+  final def fn12[A,B,C,D,E,F,G,H,I,J,K,L, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L) => Z): DslFn12[A,B,C,D,E,F,G,H,I,J,K,L, Z] =
+    new DslFn12(f)
 
-  final def fn14[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, M: QuickEq, N: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L,M,N), (A,B,C,D,E,F,G,H,I,J,K,L,M,N), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L,M,N), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12, x._13, x._14))
+  final def fn13[A,B,C,D,E,F,G,H,I,J,K,L,M, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M) => Z): DslFn13[A,B,C,D,E,F,G,H,I,J,K,L,M, Z] =
+    new DslFn13(f)
 
-  final def fn15[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, M: QuickEq, N: QuickEq, O: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O), (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12, x._13, x._14, x._15))
+  final def fn14[A,B,C,D,E,F,G,H,I,J,K,L,M,N, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N) => Z): DslFn14[A,B,C,D,E,F,G,H,I,J,K,L,M,N, Z] =
+    new DslFn14(f)
 
-  final def fn16[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, M: QuickEq, N: QuickEq, O: QuickEq, P: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P), (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12, x._13, x._14, x._15, x._16))
+  final def fn15[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O) => Z): DslFn15[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O, Z] =
+    new DslFn15(f)
 
-  final def fn17[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, M: QuickEq, N: QuickEq, O: QuickEq, P: QuickEq, Q: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q), (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12, x._13, x._14, x._15, x._16, x._17))
+  final def fn16[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P) => Z): DslFn16[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P, Z] =
+    new DslFn16(f)
 
-  final def fn18[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, M: QuickEq, N: QuickEq, O: QuickEq, P: QuickEq, Q: QuickEq, R: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R), (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12, x._13, x._14, x._15, x._16, x._17, x._18))
+  final def fn17[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q) => Z): DslFn17[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q, Z] =
+    new DslFn17(f)
 
-  final def fn19[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, M: QuickEq, N: QuickEq, O: QuickEq, P: QuickEq, Q: QuickEq, R: QuickEq, S: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S), (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12, x._13, x._14, x._15, x._16, x._17, x._18, x._19))
+  final def fn18[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R) => Z): DslFn18[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R, Z] =
+    new DslFn18(f)
 
-  final def fn20[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, M: QuickEq, N: QuickEq, O: QuickEq, P: QuickEq, Q: QuickEq, R: QuickEq, S: QuickEq, T: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T), (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12, x._13, x._14, x._15, x._16, x._17, x._18, x._19, x._20))
+  final def fn19[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S) => Z): DslFn19[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S, Z] =
+    new DslFn19(f)
 
-  final def fn21[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, M: QuickEq, N: QuickEq, O: QuickEq, P: QuickEq, Q: QuickEq, R: QuickEq, S: QuickEq, T: QuickEq, U: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U), (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12, x._13, x._14, x._15, x._16, x._17, x._18, x._19, x._20, x._21))
+  final def fn20[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T) => Z): DslFn20[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T, Z] =
+    new DslFn20(f)
 
-  final def fn22[A: QuickEq, B: QuickEq, C: QuickEq, D: QuickEq, E: QuickEq, F: QuickEq, G: QuickEq, H: QuickEq, I: QuickEq, J: QuickEq, K: QuickEq, L: QuickEq, M: QuickEq, N: QuickEq, O: QuickEq, P: QuickEq, Q: QuickEq, R: QuickEq, S: QuickEq, T: QuickEq, U: QuickEq, V: QuickEq, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V) => Z): Logic1[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V), (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V), Z] =
-    StoreCache.Logic[(A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V), Z](x => f(x._1, x._2, x._3, x._4, x._5, x._6, x._7, x._8, x._9, x._10, x._11, x._12, x._13, x._14, x._15, x._16, x._17, x._18, x._19, x._20, x._21, x._22))
+  final def fn21[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U) => Z): DslFn21[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U, Z] =
+    new DslFn21(f)
+
+  final def fn22[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V, Z](f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V) => Z): DslFn22[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V, Z] =
+    new DslFn22(f)
+}
+
+object StoreCacheLogicBoilerplateDsl {
+  final class DslFn1[A, Z](private val f: (A) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+      )(implicit
+        qa: QuickEq[A],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i)))
+    }
+  }
+
+  final class DslFn2[A,B, Z](private val f: (A,B) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i)))
+    }
+  }
+
+  final class DslFn3[A,B,C, Z](private val f: (A,B,C) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i)))
+    }
+  }
+
+  final class DslFn4[A,B,C,D, Z](private val f: (A,B,C,D) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i)))
+    }
+  }
+
+  final class DslFn5[A,B,C,D,E, Z](private val f: (A,B,C,D,E) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i)))
+    }
+  }
+
+  final class DslFn6[A,B,C,D,E,F, Z](private val f: (A,B,C,D,E,F) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i)))
+    }
+  }
+
+  final class DslFn7[A,B,C,D,E,F,G, Z](private val f: (A,B,C,D,E,F,G) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i)))
+    }
+  }
+
+  final class DslFn8[A,B,C,D,E,F,G,H, Z](private val f: (A,B,C,D,E,F,G,H) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i)))
+    }
+  }
+
+  final class DslFn9[A,B,C,D,E,F,G,H,I, Z](private val f: (A,B,C,D,E,F,G,H,I) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i)))
+    }
+  }
+
+  final class DslFn10[A,B,C,D,E,F,G,H,I,J, Z](private val f: (A,B,C,D,E,F,G,H,I,J) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i)))
+    }
+  }
+
+  final class DslFn11[A,B,C,D,E,F,G,H,I,J,K, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i)))
+    }
+  }
+
+  final class DslFn12[A,B,C,D,E,F,G,H,I,J,K,L, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i)))
+    }
+  }
+
+  final class DslFn13[A,B,C,D,E,F,G,H,I,J,K,L,M, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L,M) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+        gm: In => M,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+        qm: QuickEq[M],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))) &&
+        (qm.areEq(gm(i1), gm(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i), gm(i)))
+    }
+  }
+
+  final class DslFn14[A,B,C,D,E,F,G,H,I,J,K,L,M,N, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+        gm: In => M,
+        gn: In => N,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+        qm: QuickEq[M],
+        qn: QuickEq[N],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))) &&
+        (qm.areEq(gm(i1), gm(i2))) &&
+        (qn.areEq(gn(i1), gn(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i), gm(i), gn(i)))
+    }
+  }
+
+  final class DslFn15[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+        gm: In => M,
+        gn: In => N,
+        go: In => O,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+        qm: QuickEq[M],
+        qn: QuickEq[N],
+        qo: QuickEq[O],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))) &&
+        (qm.areEq(gm(i1), gm(i2))) &&
+        (qn.areEq(gn(i1), gn(i2))) &&
+        (qo.areEq(go(i1), go(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i), gm(i), gn(i), go(i)))
+    }
+  }
+
+  final class DslFn16[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+        gm: In => M,
+        gn: In => N,
+        go: In => O,
+        gp: In => P,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+        qm: QuickEq[M],
+        qn: QuickEq[N],
+        qo: QuickEq[O],
+        qp: QuickEq[P],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))) &&
+        (qm.areEq(gm(i1), gm(i2))) &&
+        (qn.areEq(gn(i1), gn(i2))) &&
+        (qo.areEq(go(i1), go(i2))) &&
+        (qp.areEq(gp(i1), gp(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i), gm(i), gn(i), go(i), gp(i)))
+    }
+  }
+
+  final class DslFn17[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+        gm: In => M,
+        gn: In => N,
+        go: In => O,
+        gp: In => P,
+        gq: In => Q,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+        qm: QuickEq[M],
+        qn: QuickEq[N],
+        qo: QuickEq[O],
+        qp: QuickEq[P],
+        qq: QuickEq[Q],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))) &&
+        (qm.areEq(gm(i1), gm(i2))) &&
+        (qn.areEq(gn(i1), gn(i2))) &&
+        (qo.areEq(go(i1), go(i2))) &&
+        (qp.areEq(gp(i1), gp(i2))) &&
+        (qq.areEq(gq(i1), gq(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i), gm(i), gn(i), go(i), gp(i), gq(i)))
+    }
+  }
+
+  final class DslFn18[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+        gm: In => M,
+        gn: In => N,
+        go: In => O,
+        gp: In => P,
+        gq: In => Q,
+        gr: In => R,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+        qm: QuickEq[M],
+        qn: QuickEq[N],
+        qo: QuickEq[O],
+        qp: QuickEq[P],
+        qq: QuickEq[Q],
+        qr: QuickEq[R],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))) &&
+        (qm.areEq(gm(i1), gm(i2))) &&
+        (qn.areEq(gn(i1), gn(i2))) &&
+        (qo.areEq(go(i1), go(i2))) &&
+        (qp.areEq(gp(i1), gp(i2))) &&
+        (qq.areEq(gq(i1), gq(i2))) &&
+        (qr.areEq(gr(i1), gr(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i), gm(i), gn(i), go(i), gp(i), gq(i), gr(i)))
+    }
+  }
+
+  final class DslFn19[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+        gm: In => M,
+        gn: In => N,
+        go: In => O,
+        gp: In => P,
+        gq: In => Q,
+        gr: In => R,
+        gs: In => S,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+        qm: QuickEq[M],
+        qn: QuickEq[N],
+        qo: QuickEq[O],
+        qp: QuickEq[P],
+        qq: QuickEq[Q],
+        qr: QuickEq[R],
+        qs: QuickEq[S],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))) &&
+        (qm.areEq(gm(i1), gm(i2))) &&
+        (qn.areEq(gn(i1), gn(i2))) &&
+        (qo.areEq(go(i1), go(i2))) &&
+        (qp.areEq(gp(i1), gp(i2))) &&
+        (qq.areEq(gq(i1), gq(i2))) &&
+        (qr.areEq(gr(i1), gr(i2))) &&
+        (qs.areEq(gs(i1), gs(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i), gm(i), gn(i), go(i), gp(i), gq(i), gr(i), gs(i)))
+    }
+  }
+
+  final class DslFn20[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+        gm: In => M,
+        gn: In => N,
+        go: In => O,
+        gp: In => P,
+        gq: In => Q,
+        gr: In => R,
+        gs: In => S,
+        gt: In => T,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+        qm: QuickEq[M],
+        qn: QuickEq[N],
+        qo: QuickEq[O],
+        qp: QuickEq[P],
+        qq: QuickEq[Q],
+        qr: QuickEq[R],
+        qs: QuickEq[S],
+        qt: QuickEq[T],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))) &&
+        (qm.areEq(gm(i1), gm(i2))) &&
+        (qn.areEq(gn(i1), gn(i2))) &&
+        (qo.areEq(go(i1), go(i2))) &&
+        (qp.areEq(gp(i1), gp(i2))) &&
+        (qq.areEq(gq(i1), gq(i2))) &&
+        (qr.areEq(gr(i1), gr(i2))) &&
+        (qs.areEq(gs(i1), gs(i2))) &&
+        (qt.areEq(gt(i1), gt(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i), gm(i), gn(i), go(i), gp(i), gq(i), gr(i), gs(i), gt(i)))
+    }
+  }
+
+  final class DslFn21[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+        gm: In => M,
+        gn: In => N,
+        go: In => O,
+        gp: In => P,
+        gq: In => Q,
+        gr: In => R,
+        gs: In => S,
+        gt: In => T,
+        gu: In => U,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+        qm: QuickEq[M],
+        qn: QuickEq[N],
+        qo: QuickEq[O],
+        qp: QuickEq[P],
+        qq: QuickEq[Q],
+        qr: QuickEq[R],
+        qs: QuickEq[S],
+        qt: QuickEq[T],
+        qu: QuickEq[U],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))) &&
+        (qm.areEq(gm(i1), gm(i2))) &&
+        (qn.areEq(gn(i1), gn(i2))) &&
+        (qo.areEq(go(i1), go(i2))) &&
+        (qp.areEq(gp(i1), gp(i2))) &&
+        (qq.areEq(gq(i1), gq(i2))) &&
+        (qr.areEq(gr(i1), gr(i2))) &&
+        (qs.areEq(gs(i1), gs(i2))) &&
+        (qt.areEq(gt(i1), gt(i2))) &&
+        (qu.areEq(gu(i1), gu(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i), gm(i), gn(i), go(i), gp(i), gq(i), gr(i), gs(i), gt(i), gu(i)))
+    }
+  }
+
+  final class DslFn22[A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V, Z](private val f: (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V) => Z) extends AnyVal {
+    def apply[In](
+        ga: In => A,
+        gb: In => B,
+        gc: In => C,
+        gd: In => D,
+        ge: In => E,
+        gf: In => F,
+        gg: In => G,
+        gh: In => H,
+        gi: In => I,
+        gj: In => J,
+        gk: In => K,
+        gl: In => L,
+        gm: In => M,
+        gn: In => N,
+        go: In => O,
+        gp: In => P,
+        gq: In => Q,
+        gr: In => R,
+        gs: In => S,
+        gt: In => T,
+        gu: In => U,
+        gv: In => V,
+      )(implicit
+        qa: QuickEq[A],
+        qb: QuickEq[B],
+        qc: QuickEq[C],
+        qd: QuickEq[D],
+        qe: QuickEq[E],
+        qf: QuickEq[F],
+        qg: QuickEq[G],
+        qh: QuickEq[H],
+        qi: QuickEq[I],
+        qj: QuickEq[J],
+        qk: QuickEq[K],
+        ql: QuickEq[L],
+        qm: QuickEq[M],
+        qn: QuickEq[N],
+        qo: QuickEq[O],
+        qp: QuickEq[P],
+        qq: QuickEq[Q],
+        qr: QuickEq[R],
+        qs: QuickEq[S],
+        qt: QuickEq[T],
+        qu: QuickEq[U],
+        qv: QuickEq[V],
+       ): Logic1[In, In, Z] = {
+      implicit val qin: QuickEq[In] = QuickEq((i1, i2) =>
+        (qa.areEq(ga(i1), ga(i2))) &&
+        (qb.areEq(gb(i1), gb(i2))) &&
+        (qc.areEq(gc(i1), gc(i2))) &&
+        (qd.areEq(gd(i1), gd(i2))) &&
+        (qe.areEq(ge(i1), ge(i2))) &&
+        (qf.areEq(gf(i1), gf(i2))) &&
+        (qg.areEq(gg(i1), gg(i2))) &&
+        (qh.areEq(gh(i1), gh(i2))) &&
+        (qi.areEq(gi(i1), gi(i2))) &&
+        (qj.areEq(gj(i1), gj(i2))) &&
+        (qk.areEq(gk(i1), gk(i2))) &&
+        (ql.areEq(gl(i1), gl(i2))) &&
+        (qm.areEq(gm(i1), gm(i2))) &&
+        (qn.areEq(gn(i1), gn(i2))) &&
+        (qo.areEq(go(i1), go(i2))) &&
+        (qp.areEq(gp(i1), gp(i2))) &&
+        (qq.areEq(gq(i1), gq(i2))) &&
+        (qr.areEq(gr(i1), gr(i2))) &&
+        (qs.areEq(gs(i1), gs(i2))) &&
+        (qt.areEq(gt(i1), gt(i2))) &&
+        (qu.areEq(gu(i1), gu(i2))) &&
+        (qv.areEq(gv(i1), gv(i2))))
+      StoreCache.Logic[In, Z](i => f(ga(i), gb(i), gc(i), gd(i), ge(i), gf(i), gg(i), gh(i), gi(i), gj(i), gk(i), gl(i), gm(i), gn(i), go(i), gp(i), gq(i), gr(i), gs(i), gt(i), gu(i), gv(i)))
+    }
+  }
 }
