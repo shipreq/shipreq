@@ -109,13 +109,26 @@ object GenBoilerplateForStoreCache {
              |  override def map[X](ff: Z => X): Self[In, X] =
              |    new Logic$n($ls, (${values.abc}) => ff(mapOut(${values.abc})))
              |
-             |  override def init(i: => In): Cache = {
-             |${(1 to n).map(i => s"    val s$i = l$i.init(i)").mkString("\n")}
+             |  override def initStrict(i: In): Cache = {
+             |${(1 to n).map(i => s"    val s$i = l$i.initStrict(i)").mkString("\n")}
              |    StoreCache.apply$n($scs)(mapOut)
              |  }
              |
-             |  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-             |${(1 to n).map(i => s"    val n$i = l$i.nextFull(prev.s$i, i)").mkString("\n")}
+             |  override def nextStrict(prev: Cache, i: In): Cache = {
+             |${(1 to n).map(i => s"    val x$i = l$i.nextStrict(prev.s$i, i)").mkString("\n")}
+             |    if (${(1 to n).map(i => s"(x$i eq prev.s$i)").mkString(" && ")})
+             |      prev
+             |    else
+             |      StoreCache.apply$n(${(1 to n).map(i => s"x$i").mkString(", ")})(mapOut)
+             |  }
+             |
+             |  override def initLazy(i: => In): Cache = {
+             |${(1 to n).map(i => s"    val s$i = l$i.initLazy(i)").mkString("\n")}
+             |    StoreCache.apply$n($scs)(mapOut)
+             |  }
+             |
+             |  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+             |${(1 to n).map(i => s"    val n$i = l$i.nextLazyFull(prev.s$i, i)").mkString("\n")}
              |${(1 to n).map(i => s"    val s$i = n$i.value").mkString("\n")}
              |    val changed = LazyVal.exists(${(1 to n).map(i => s"n$i.changed").mkString(", ")})(Identity.apply)
              |    val prevLo = prev.lo

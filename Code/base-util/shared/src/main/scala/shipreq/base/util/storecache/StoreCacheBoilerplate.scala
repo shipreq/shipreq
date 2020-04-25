@@ -986,15 +986,30 @@ private[storecache] final class Logic2[In, SA,A, SB,B, Z](
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic2(l1, l2, (a,b) => ff(mapOut(a,b)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
     StoreCache.apply2(s1, s2)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2))
+      prev
+    else
+      StoreCache.apply2(x1, x2)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    StoreCache.apply2(s1, s2)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
     val s1 = n1.value
     val s2 = n2.value
     val changed = LazyVal.exists(n1.changed, n2.changed)(Identity.apply)
@@ -1025,17 +1040,34 @@ private[storecache] final class Logic3[In, SA,A, SB,B, SC,C, Z](
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic3(l1, l2, l3, (a,b,c) => ff(mapOut(a,b,c)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
     StoreCache.apply3(s1, s2, s3)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3))
+      prev
+    else
+      StoreCache.apply3(x1, x2, x3)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    StoreCache.apply3(s1, s2, s3)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1068,19 +1100,38 @@ private[storecache] final class Logic4[In, SA,A, SB,B, SC,C, SD,D, Z](
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic4(l1, l2, l3, l4, (a,b,c,d) => ff(mapOut(a,b,c,d)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
     StoreCache.apply4(s1, s2, s3, s4)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4))
+      prev
+    else
+      StoreCache.apply4(x1, x2, x3, x4)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    StoreCache.apply4(s1, s2, s3, s4)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1115,21 +1166,42 @@ private[storecache] final class Logic5[In, SA,A, SB,B, SC,C, SD,D, SE,E, Z](
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic5(l1, l2, l3, l4, l5, (a,b,c,d,e) => ff(mapOut(a,b,c,d,e)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
     StoreCache.apply5(s1, s2, s3, s4, s5)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5))
+      prev
+    else
+      StoreCache.apply5(x1, x2, x3, x4, x5)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    StoreCache.apply5(s1, s2, s3, s4, s5)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1166,23 +1238,46 @@ private[storecache] final class Logic6[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, Z
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic6(l1, l2, l3, l4, l5, l6, (a,b,c,d,e,f) => ff(mapOut(a,b,c,d,e,f)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
     StoreCache.apply6(s1, s2, s3, s4, s5, s6)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6))
+      prev
+    else
+      StoreCache.apply6(x1, x2, x3, x4, x5, x6)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    StoreCache.apply6(s1, s2, s3, s4, s5, s6)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1221,25 +1316,50 @@ private[storecache] final class Logic7[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, S
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic7(l1, l2, l3, l4, l5, l6, l7, (a,b,c,d,e,f,g) => ff(mapOut(a,b,c,d,e,f,g)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
     StoreCache.apply7(s1, s2, s3, s4, s5, s6, s7)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7))
+      prev
+    else
+      StoreCache.apply7(x1, x2, x3, x4, x5, x6, x7)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    StoreCache.apply7(s1, s2, s3, s4, s5, s6, s7)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1280,27 +1400,54 @@ private[storecache] final class Logic8[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, S
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic8(l1, l2, l3, l4, l5, l6, l7, l8, (a,b,c,d,e,f,g,h) => ff(mapOut(a,b,c,d,e,f,g,h)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
     StoreCache.apply8(s1, s2, s3, s4, s5, s6, s7, s8)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8))
+      prev
+    else
+      StoreCache.apply8(x1, x2, x3, x4, x5, x6, x7, x8)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    StoreCache.apply8(s1, s2, s3, s4, s5, s6, s7, s8)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1343,29 +1490,58 @@ private[storecache] final class Logic9[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, S
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic9(l1, l2, l3, l4, l5, l6, l7, l8, l9, (a,b,c,d,e,f,g,h,i) => ff(mapOut(a,b,c,d,e,f,g,h,i)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
     StoreCache.apply9(s1, s2, s3, s4, s5, s6, s7, s8, s9)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9))
+      prev
+    else
+      StoreCache.apply9(x1, x2, x3, x4, x5, x6, x7, x8, x9)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    StoreCache.apply9(s1, s2, s3, s4, s5, s6, s7, s8, s9)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1410,31 +1586,62 @@ private[storecache] final class Logic10[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic10(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, (a,b,c,d,e,f,g,h,i,j) => ff(mapOut(a,b,c,d,e,f,g,h,i,j)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
     StoreCache.apply10(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10))
+      prev
+    else
+      StoreCache.apply10(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    StoreCache.apply10(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1481,33 +1688,66 @@ private[storecache] final class Logic11[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic11(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, (a,b,c,d,e,f,g,h,i,j,k) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
     StoreCache.apply11(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11))
+      prev
+    else
+      StoreCache.apply11(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    StoreCache.apply11(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1556,35 +1796,70 @@ private[storecache] final class Logic12[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic12(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, (a,b,c,d,e,f,g,h,i,j,k,l) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
     StoreCache.apply12(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12))
+      prev
+    else
+      StoreCache.apply12(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    StoreCache.apply12(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1635,37 +1910,74 @@ private[storecache] final class Logic13[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic13(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, (a,b,c,d,e,f,g,h,i,j,k,l,m) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l,m)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
-    val s13 = l13.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
+    val s13 = l13.initStrict(i)
     StoreCache.apply13(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
-    val n13 = l13.nextFull(prev.s13, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    val x13 = l13.nextStrict(prev.s13, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12) && (x13 eq prev.s13))
+      prev
+    else
+      StoreCache.apply13(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    val s13 = l13.initLazy(i)
+    StoreCache.apply13(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
+    val n13 = l13.nextLazyFull(prev.s13, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1718,39 +2030,78 @@ private[storecache] final class Logic14[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic14(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, (a,b,c,d,e,f,g,h,i,j,k,l,m,n) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l,m,n)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
-    val s13 = l13.init(i)
-    val s14 = l14.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
+    val s13 = l13.initStrict(i)
+    val s14 = l14.initStrict(i)
     StoreCache.apply14(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
-    val n13 = l13.nextFull(prev.s13, i)
-    val n14 = l14.nextFull(prev.s14, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    val x13 = l13.nextStrict(prev.s13, i)
+    val x14 = l14.nextStrict(prev.s14, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12) && (x13 eq prev.s13) && (x14 eq prev.s14))
+      prev
+    else
+      StoreCache.apply14(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    val s13 = l13.initLazy(i)
+    val s14 = l14.initLazy(i)
+    StoreCache.apply14(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
+    val n13 = l13.nextLazyFull(prev.s13, i)
+    val n14 = l14.nextLazyFull(prev.s14, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1805,41 +2156,82 @@ private[storecache] final class Logic15[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic15(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
-    val s13 = l13.init(i)
-    val s14 = l14.init(i)
-    val s15 = l15.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
+    val s13 = l13.initStrict(i)
+    val s14 = l14.initStrict(i)
+    val s15 = l15.initStrict(i)
     StoreCache.apply15(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
-    val n13 = l13.nextFull(prev.s13, i)
-    val n14 = l14.nextFull(prev.s14, i)
-    val n15 = l15.nextFull(prev.s15, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    val x13 = l13.nextStrict(prev.s13, i)
+    val x14 = l14.nextStrict(prev.s14, i)
+    val x15 = l15.nextStrict(prev.s15, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12) && (x13 eq prev.s13) && (x14 eq prev.s14) && (x15 eq prev.s15))
+      prev
+    else
+      StoreCache.apply15(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    val s13 = l13.initLazy(i)
+    val s14 = l14.initLazy(i)
+    val s15 = l15.initLazy(i)
+    StoreCache.apply15(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
+    val n13 = l13.nextLazyFull(prev.s13, i)
+    val n14 = l14.nextLazyFull(prev.s14, i)
+    val n15 = l15.nextLazyFull(prev.s15, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1896,43 +2288,86 @@ private[storecache] final class Logic16[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic16(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
-    val s13 = l13.init(i)
-    val s14 = l14.init(i)
-    val s15 = l15.init(i)
-    val s16 = l16.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
+    val s13 = l13.initStrict(i)
+    val s14 = l14.initStrict(i)
+    val s15 = l15.initStrict(i)
+    val s16 = l16.initStrict(i)
     StoreCache.apply16(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
-    val n13 = l13.nextFull(prev.s13, i)
-    val n14 = l14.nextFull(prev.s14, i)
-    val n15 = l15.nextFull(prev.s15, i)
-    val n16 = l16.nextFull(prev.s16, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    val x13 = l13.nextStrict(prev.s13, i)
+    val x14 = l14.nextStrict(prev.s14, i)
+    val x15 = l15.nextStrict(prev.s15, i)
+    val x16 = l16.nextStrict(prev.s16, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12) && (x13 eq prev.s13) && (x14 eq prev.s14) && (x15 eq prev.s15) && (x16 eq prev.s16))
+      prev
+    else
+      StoreCache.apply16(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    val s13 = l13.initLazy(i)
+    val s14 = l14.initLazy(i)
+    val s15 = l15.initLazy(i)
+    val s16 = l16.initLazy(i)
+    StoreCache.apply16(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
+    val n13 = l13.nextLazyFull(prev.s13, i)
+    val n14 = l14.nextLazyFull(prev.s14, i)
+    val n15 = l15.nextLazyFull(prev.s15, i)
+    val n16 = l16.nextLazyFull(prev.s16, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -1991,45 +2426,90 @@ private[storecache] final class Logic17[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic17(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17, (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
-    val s13 = l13.init(i)
-    val s14 = l14.init(i)
-    val s15 = l15.init(i)
-    val s16 = l16.init(i)
-    val s17 = l17.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
+    val s13 = l13.initStrict(i)
+    val s14 = l14.initStrict(i)
+    val s15 = l15.initStrict(i)
+    val s16 = l16.initStrict(i)
+    val s17 = l17.initStrict(i)
     StoreCache.apply17(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
-    val n13 = l13.nextFull(prev.s13, i)
-    val n14 = l14.nextFull(prev.s14, i)
-    val n15 = l15.nextFull(prev.s15, i)
-    val n16 = l16.nextFull(prev.s16, i)
-    val n17 = l17.nextFull(prev.s17, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    val x13 = l13.nextStrict(prev.s13, i)
+    val x14 = l14.nextStrict(prev.s14, i)
+    val x15 = l15.nextStrict(prev.s15, i)
+    val x16 = l16.nextStrict(prev.s16, i)
+    val x17 = l17.nextStrict(prev.s17, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12) && (x13 eq prev.s13) && (x14 eq prev.s14) && (x15 eq prev.s15) && (x16 eq prev.s16) && (x17 eq prev.s17))
+      prev
+    else
+      StoreCache.apply17(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    val s13 = l13.initLazy(i)
+    val s14 = l14.initLazy(i)
+    val s15 = l15.initLazy(i)
+    val s16 = l16.initLazy(i)
+    val s17 = l17.initLazy(i)
+    StoreCache.apply17(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
+    val n13 = l13.nextLazyFull(prev.s13, i)
+    val n14 = l14.nextLazyFull(prev.s14, i)
+    val n15 = l15.nextLazyFull(prev.s15, i)
+    val n16 = l16.nextLazyFull(prev.s16, i)
+    val n17 = l17.nextLazyFull(prev.s17, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -2090,47 +2570,94 @@ private[storecache] final class Logic18[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic18(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17, l18, (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
-    val s13 = l13.init(i)
-    val s14 = l14.init(i)
-    val s15 = l15.init(i)
-    val s16 = l16.init(i)
-    val s17 = l17.init(i)
-    val s18 = l18.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
+    val s13 = l13.initStrict(i)
+    val s14 = l14.initStrict(i)
+    val s15 = l15.initStrict(i)
+    val s16 = l16.initStrict(i)
+    val s17 = l17.initStrict(i)
+    val s18 = l18.initStrict(i)
     StoreCache.apply18(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
-    val n13 = l13.nextFull(prev.s13, i)
-    val n14 = l14.nextFull(prev.s14, i)
-    val n15 = l15.nextFull(prev.s15, i)
-    val n16 = l16.nextFull(prev.s16, i)
-    val n17 = l17.nextFull(prev.s17, i)
-    val n18 = l18.nextFull(prev.s18, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    val x13 = l13.nextStrict(prev.s13, i)
+    val x14 = l14.nextStrict(prev.s14, i)
+    val x15 = l15.nextStrict(prev.s15, i)
+    val x16 = l16.nextStrict(prev.s16, i)
+    val x17 = l17.nextStrict(prev.s17, i)
+    val x18 = l18.nextStrict(prev.s18, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12) && (x13 eq prev.s13) && (x14 eq prev.s14) && (x15 eq prev.s15) && (x16 eq prev.s16) && (x17 eq prev.s17) && (x18 eq prev.s18))
+      prev
+    else
+      StoreCache.apply18(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    val s13 = l13.initLazy(i)
+    val s14 = l14.initLazy(i)
+    val s15 = l15.initLazy(i)
+    val s16 = l16.initLazy(i)
+    val s17 = l17.initLazy(i)
+    val s18 = l18.initLazy(i)
+    StoreCache.apply18(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
+    val n13 = l13.nextLazyFull(prev.s13, i)
+    val n14 = l14.nextLazyFull(prev.s14, i)
+    val n15 = l15.nextLazyFull(prev.s15, i)
+    val n16 = l16.nextLazyFull(prev.s16, i)
+    val n17 = l17.nextLazyFull(prev.s17, i)
+    val n18 = l18.nextLazyFull(prev.s18, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -2193,49 +2720,98 @@ private[storecache] final class Logic19[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic19(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
-    val s13 = l13.init(i)
-    val s14 = l14.init(i)
-    val s15 = l15.init(i)
-    val s16 = l16.init(i)
-    val s17 = l17.init(i)
-    val s18 = l18.init(i)
-    val s19 = l19.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
+    val s13 = l13.initStrict(i)
+    val s14 = l14.initStrict(i)
+    val s15 = l15.initStrict(i)
+    val s16 = l16.initStrict(i)
+    val s17 = l17.initStrict(i)
+    val s18 = l18.initStrict(i)
+    val s19 = l19.initStrict(i)
     StoreCache.apply19(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
-    val n13 = l13.nextFull(prev.s13, i)
-    val n14 = l14.nextFull(prev.s14, i)
-    val n15 = l15.nextFull(prev.s15, i)
-    val n16 = l16.nextFull(prev.s16, i)
-    val n17 = l17.nextFull(prev.s17, i)
-    val n18 = l18.nextFull(prev.s18, i)
-    val n19 = l19.nextFull(prev.s19, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    val x13 = l13.nextStrict(prev.s13, i)
+    val x14 = l14.nextStrict(prev.s14, i)
+    val x15 = l15.nextStrict(prev.s15, i)
+    val x16 = l16.nextStrict(prev.s16, i)
+    val x17 = l17.nextStrict(prev.s17, i)
+    val x18 = l18.nextStrict(prev.s18, i)
+    val x19 = l19.nextStrict(prev.s19, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12) && (x13 eq prev.s13) && (x14 eq prev.s14) && (x15 eq prev.s15) && (x16 eq prev.s16) && (x17 eq prev.s17) && (x18 eq prev.s18) && (x19 eq prev.s19))
+      prev
+    else
+      StoreCache.apply19(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    val s13 = l13.initLazy(i)
+    val s14 = l14.initLazy(i)
+    val s15 = l15.initLazy(i)
+    val s16 = l16.initLazy(i)
+    val s17 = l17.initLazy(i)
+    val s18 = l18.initLazy(i)
+    val s19 = l19.initLazy(i)
+    StoreCache.apply19(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
+    val n13 = l13.nextLazyFull(prev.s13, i)
+    val n14 = l14.nextLazyFull(prev.s14, i)
+    val n15 = l15.nextLazyFull(prev.s15, i)
+    val n16 = l16.nextLazyFull(prev.s16, i)
+    val n17 = l17.nextLazyFull(prev.s17, i)
+    val n18 = l18.nextLazyFull(prev.s18, i)
+    val n19 = l19.nextLazyFull(prev.s19, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -2300,51 +2876,102 @@ private[storecache] final class Logic20[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic20(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
-    val s13 = l13.init(i)
-    val s14 = l14.init(i)
-    val s15 = l15.init(i)
-    val s16 = l16.init(i)
-    val s17 = l17.init(i)
-    val s18 = l18.init(i)
-    val s19 = l19.init(i)
-    val s20 = l20.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
+    val s13 = l13.initStrict(i)
+    val s14 = l14.initStrict(i)
+    val s15 = l15.initStrict(i)
+    val s16 = l16.initStrict(i)
+    val s17 = l17.initStrict(i)
+    val s18 = l18.initStrict(i)
+    val s19 = l19.initStrict(i)
+    val s20 = l20.initStrict(i)
     StoreCache.apply20(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
-    val n13 = l13.nextFull(prev.s13, i)
-    val n14 = l14.nextFull(prev.s14, i)
-    val n15 = l15.nextFull(prev.s15, i)
-    val n16 = l16.nextFull(prev.s16, i)
-    val n17 = l17.nextFull(prev.s17, i)
-    val n18 = l18.nextFull(prev.s18, i)
-    val n19 = l19.nextFull(prev.s19, i)
-    val n20 = l20.nextFull(prev.s20, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    val x13 = l13.nextStrict(prev.s13, i)
+    val x14 = l14.nextStrict(prev.s14, i)
+    val x15 = l15.nextStrict(prev.s15, i)
+    val x16 = l16.nextStrict(prev.s16, i)
+    val x17 = l17.nextStrict(prev.s17, i)
+    val x18 = l18.nextStrict(prev.s18, i)
+    val x19 = l19.nextStrict(prev.s19, i)
+    val x20 = l20.nextStrict(prev.s20, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12) && (x13 eq prev.s13) && (x14 eq prev.s14) && (x15 eq prev.s15) && (x16 eq prev.s16) && (x17 eq prev.s17) && (x18 eq prev.s18) && (x19 eq prev.s19) && (x20 eq prev.s20))
+      prev
+    else
+      StoreCache.apply20(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    val s13 = l13.initLazy(i)
+    val s14 = l14.initLazy(i)
+    val s15 = l15.initLazy(i)
+    val s16 = l16.initLazy(i)
+    val s17 = l17.initLazy(i)
+    val s18 = l18.initLazy(i)
+    val s19 = l19.initLazy(i)
+    val s20 = l20.initLazy(i)
+    StoreCache.apply20(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
+    val n13 = l13.nextLazyFull(prev.s13, i)
+    val n14 = l14.nextLazyFull(prev.s14, i)
+    val n15 = l15.nextLazyFull(prev.s15, i)
+    val n16 = l16.nextLazyFull(prev.s16, i)
+    val n17 = l17.nextLazyFull(prev.s17, i)
+    val n18 = l18.nextLazyFull(prev.s18, i)
+    val n19 = l19.nextLazyFull(prev.s19, i)
+    val n20 = l20.nextLazyFull(prev.s20, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -2411,53 +3038,106 @@ private[storecache] final class Logic21[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic21(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
-    val s13 = l13.init(i)
-    val s14 = l14.init(i)
-    val s15 = l15.init(i)
-    val s16 = l16.init(i)
-    val s17 = l17.init(i)
-    val s18 = l18.init(i)
-    val s19 = l19.init(i)
-    val s20 = l20.init(i)
-    val s21 = l21.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
+    val s13 = l13.initStrict(i)
+    val s14 = l14.initStrict(i)
+    val s15 = l15.initStrict(i)
+    val s16 = l16.initStrict(i)
+    val s17 = l17.initStrict(i)
+    val s18 = l18.initStrict(i)
+    val s19 = l19.initStrict(i)
+    val s20 = l20.initStrict(i)
+    val s21 = l21.initStrict(i)
     StoreCache.apply21(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
-    val n13 = l13.nextFull(prev.s13, i)
-    val n14 = l14.nextFull(prev.s14, i)
-    val n15 = l15.nextFull(prev.s15, i)
-    val n16 = l16.nextFull(prev.s16, i)
-    val n17 = l17.nextFull(prev.s17, i)
-    val n18 = l18.nextFull(prev.s18, i)
-    val n19 = l19.nextFull(prev.s19, i)
-    val n20 = l20.nextFull(prev.s20, i)
-    val n21 = l21.nextFull(prev.s21, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    val x13 = l13.nextStrict(prev.s13, i)
+    val x14 = l14.nextStrict(prev.s14, i)
+    val x15 = l15.nextStrict(prev.s15, i)
+    val x16 = l16.nextStrict(prev.s16, i)
+    val x17 = l17.nextStrict(prev.s17, i)
+    val x18 = l18.nextStrict(prev.s18, i)
+    val x19 = l19.nextStrict(prev.s19, i)
+    val x20 = l20.nextStrict(prev.s20, i)
+    val x21 = l21.nextStrict(prev.s21, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12) && (x13 eq prev.s13) && (x14 eq prev.s14) && (x15 eq prev.s15) && (x16 eq prev.s16) && (x17 eq prev.s17) && (x18 eq prev.s18) && (x19 eq prev.s19) && (x20 eq prev.s20) && (x21 eq prev.s21))
+      prev
+    else
+      StoreCache.apply21(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    val s13 = l13.initLazy(i)
+    val s14 = l14.initLazy(i)
+    val s15 = l15.initLazy(i)
+    val s16 = l16.initLazy(i)
+    val s17 = l17.initLazy(i)
+    val s18 = l18.initLazy(i)
+    val s19 = l19.initLazy(i)
+    val s20 = l20.initLazy(i)
+    val s21 = l21.initLazy(i)
+    StoreCache.apply21(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
+    val n13 = l13.nextLazyFull(prev.s13, i)
+    val n14 = l14.nextLazyFull(prev.s14, i)
+    val n15 = l15.nextLazyFull(prev.s15, i)
+    val n16 = l16.nextLazyFull(prev.s16, i)
+    val n17 = l17.nextLazyFull(prev.s17, i)
+    val n18 = l18.nextLazyFull(prev.s18, i)
+    val n19 = l19.nextLazyFull(prev.s19, i)
+    val n20 = l20.nextLazyFull(prev.s20, i)
+    val n21 = l21.nextLazyFull(prev.s21, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value
@@ -2526,55 +3206,110 @@ private[storecache] final class Logic22[In, SA,A, SB,B, SC,C, SD,D, SE,E, SF,F, 
   override def map[X](ff: Z => X): Self[In, X] =
     new Logic22(l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22, (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v) => ff(mapOut(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v)))
 
-  override def init(i: => In): Cache = {
-    val s1 = l1.init(i)
-    val s2 = l2.init(i)
-    val s3 = l3.init(i)
-    val s4 = l4.init(i)
-    val s5 = l5.init(i)
-    val s6 = l6.init(i)
-    val s7 = l7.init(i)
-    val s8 = l8.init(i)
-    val s9 = l9.init(i)
-    val s10 = l10.init(i)
-    val s11 = l11.init(i)
-    val s12 = l12.init(i)
-    val s13 = l13.init(i)
-    val s14 = l14.init(i)
-    val s15 = l15.init(i)
-    val s16 = l16.init(i)
-    val s17 = l17.init(i)
-    val s18 = l18.init(i)
-    val s19 = l19.init(i)
-    val s20 = l20.init(i)
-    val s21 = l21.init(i)
-    val s22 = l22.init(i)
+  override def initStrict(i: In): Cache = {
+    val s1 = l1.initStrict(i)
+    val s2 = l2.initStrict(i)
+    val s3 = l3.initStrict(i)
+    val s4 = l4.initStrict(i)
+    val s5 = l5.initStrict(i)
+    val s6 = l6.initStrict(i)
+    val s7 = l7.initStrict(i)
+    val s8 = l8.initStrict(i)
+    val s9 = l9.initStrict(i)
+    val s10 = l10.initStrict(i)
+    val s11 = l11.initStrict(i)
+    val s12 = l12.initStrict(i)
+    val s13 = l13.initStrict(i)
+    val s14 = l14.initStrict(i)
+    val s15 = l15.initStrict(i)
+    val s16 = l16.initStrict(i)
+    val s17 = l17.initStrict(i)
+    val s18 = l18.initStrict(i)
+    val s19 = l19.initStrict(i)
+    val s20 = l20.initStrict(i)
+    val s21 = l21.initStrict(i)
+    val s22 = l22.initStrict(i)
     StoreCache.apply22(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22)(mapOut)
   }
 
-  override def nextFull(prev: Cache, i: => In): Next[Cache] = {
-    val n1 = l1.nextFull(prev.s1, i)
-    val n2 = l2.nextFull(prev.s2, i)
-    val n3 = l3.nextFull(prev.s3, i)
-    val n4 = l4.nextFull(prev.s4, i)
-    val n5 = l5.nextFull(prev.s5, i)
-    val n6 = l6.nextFull(prev.s6, i)
-    val n7 = l7.nextFull(prev.s7, i)
-    val n8 = l8.nextFull(prev.s8, i)
-    val n9 = l9.nextFull(prev.s9, i)
-    val n10 = l10.nextFull(prev.s10, i)
-    val n11 = l11.nextFull(prev.s11, i)
-    val n12 = l12.nextFull(prev.s12, i)
-    val n13 = l13.nextFull(prev.s13, i)
-    val n14 = l14.nextFull(prev.s14, i)
-    val n15 = l15.nextFull(prev.s15, i)
-    val n16 = l16.nextFull(prev.s16, i)
-    val n17 = l17.nextFull(prev.s17, i)
-    val n18 = l18.nextFull(prev.s18, i)
-    val n19 = l19.nextFull(prev.s19, i)
-    val n20 = l20.nextFull(prev.s20, i)
-    val n21 = l21.nextFull(prev.s21, i)
-    val n22 = l22.nextFull(prev.s22, i)
+  override def nextStrict(prev: Cache, i: In): Cache = {
+    val x1 = l1.nextStrict(prev.s1, i)
+    val x2 = l2.nextStrict(prev.s2, i)
+    val x3 = l3.nextStrict(prev.s3, i)
+    val x4 = l4.nextStrict(prev.s4, i)
+    val x5 = l5.nextStrict(prev.s5, i)
+    val x6 = l6.nextStrict(prev.s6, i)
+    val x7 = l7.nextStrict(prev.s7, i)
+    val x8 = l8.nextStrict(prev.s8, i)
+    val x9 = l9.nextStrict(prev.s9, i)
+    val x10 = l10.nextStrict(prev.s10, i)
+    val x11 = l11.nextStrict(prev.s11, i)
+    val x12 = l12.nextStrict(prev.s12, i)
+    val x13 = l13.nextStrict(prev.s13, i)
+    val x14 = l14.nextStrict(prev.s14, i)
+    val x15 = l15.nextStrict(prev.s15, i)
+    val x16 = l16.nextStrict(prev.s16, i)
+    val x17 = l17.nextStrict(prev.s17, i)
+    val x18 = l18.nextStrict(prev.s18, i)
+    val x19 = l19.nextStrict(prev.s19, i)
+    val x20 = l20.nextStrict(prev.s20, i)
+    val x21 = l21.nextStrict(prev.s21, i)
+    val x22 = l22.nextStrict(prev.s22, i)
+    if ((x1 eq prev.s1) && (x2 eq prev.s2) && (x3 eq prev.s3) && (x4 eq prev.s4) && (x5 eq prev.s5) && (x6 eq prev.s6) && (x7 eq prev.s7) && (x8 eq prev.s8) && (x9 eq prev.s9) && (x10 eq prev.s10) && (x11 eq prev.s11) && (x12 eq prev.s12) && (x13 eq prev.s13) && (x14 eq prev.s14) && (x15 eq prev.s15) && (x16 eq prev.s16) && (x17 eq prev.s17) && (x18 eq prev.s18) && (x19 eq prev.s19) && (x20 eq prev.s20) && (x21 eq prev.s21) && (x22 eq prev.s22))
+      prev
+    else
+      StoreCache.apply22(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19, x20, x21, x22)(mapOut)
+  }
+
+  override def initLazy(i: => In): Cache = {
+    val s1 = l1.initLazy(i)
+    val s2 = l2.initLazy(i)
+    val s3 = l3.initLazy(i)
+    val s4 = l4.initLazy(i)
+    val s5 = l5.initLazy(i)
+    val s6 = l6.initLazy(i)
+    val s7 = l7.initLazy(i)
+    val s8 = l8.initLazy(i)
+    val s9 = l9.initLazy(i)
+    val s10 = l10.initLazy(i)
+    val s11 = l11.initLazy(i)
+    val s12 = l12.initLazy(i)
+    val s13 = l13.initLazy(i)
+    val s14 = l14.initLazy(i)
+    val s15 = l15.initLazy(i)
+    val s16 = l16.initLazy(i)
+    val s17 = l17.initLazy(i)
+    val s18 = l18.initLazy(i)
+    val s19 = l19.initLazy(i)
+    val s20 = l20.initLazy(i)
+    val s21 = l21.initLazy(i)
+    val s22 = l22.initLazy(i)
+    StoreCache.apply22(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22)(mapOut)
+  }
+
+  override def nextLazyFull(prev: Cache, i: => In): Next[Cache] = {
+    val n1 = l1.nextLazyFull(prev.s1, i)
+    val n2 = l2.nextLazyFull(prev.s2, i)
+    val n3 = l3.nextLazyFull(prev.s3, i)
+    val n4 = l4.nextLazyFull(prev.s4, i)
+    val n5 = l5.nextLazyFull(prev.s5, i)
+    val n6 = l6.nextLazyFull(prev.s6, i)
+    val n7 = l7.nextLazyFull(prev.s7, i)
+    val n8 = l8.nextLazyFull(prev.s8, i)
+    val n9 = l9.nextLazyFull(prev.s9, i)
+    val n10 = l10.nextLazyFull(prev.s10, i)
+    val n11 = l11.nextLazyFull(prev.s11, i)
+    val n12 = l12.nextLazyFull(prev.s12, i)
+    val n13 = l13.nextLazyFull(prev.s13, i)
+    val n14 = l14.nextLazyFull(prev.s14, i)
+    val n15 = l15.nextLazyFull(prev.s15, i)
+    val n16 = l16.nextLazyFull(prev.s16, i)
+    val n17 = l17.nextLazyFull(prev.s17, i)
+    val n18 = l18.nextLazyFull(prev.s18, i)
+    val n19 = l19.nextLazyFull(prev.s19, i)
+    val n20 = l20.nextLazyFull(prev.s20, i)
+    val n21 = l21.nextLazyFull(prev.s21, i)
+    val n22 = l22.nextLazyFull(prev.s22, i)
     val s1 = n1.value
     val s2 = n2.value
     val s3 = n3.value

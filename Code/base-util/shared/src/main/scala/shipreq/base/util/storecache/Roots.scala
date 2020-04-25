@@ -17,7 +17,15 @@ final class StoreCache1[I, S, A](mapInput   : I => S,
   override def map[B](f: A => B): StoreCache1[I, S, B] =
     new StoreCache1(mapInput, source, lazyVal map f)
 
-  private[storecache] def next(nextInput: => I, run: S => A): Next[StoreCache1[I, S, A]] = {
+  private[storecache] def nextStrict(nextInput: I, run: S => A): StoreCache1[I, S, A] = {
+    val nextSource = mapInput(nextInput)
+    if (qe.areEq(source.value, nextSource))
+      this
+    else
+      new StoreCache1(mapInput, LazyVal.pure(nextSource), LazyVal(run(nextSource)))
+  }
+
+  private[storecache] def nextLazy(nextInput: => I, run: S => A): Next[StoreCache1[I, S, A]] = {
     val newSource: LazyVal[Either[S, S]] =
       source.map { s1 =>
         val s2 = mapInput(nextInput)
@@ -48,13 +56,23 @@ final class Logic1[I, S: QuickEq, A](mapInput: I => S, run: S => A) extends Stor
   override def map[B](f: A => B): Logic1[I, S, B] =
     new Logic1(mapInput, f compose run)
 
-  override def init(init: => I): Cache = {
+  override def initStrict(init: I): Cache = {
+    val s = mapInput(init)
+    val ls = LazyVal.pure(s)
+    val la = LazyVal(run(s))
+    new StoreCache1(mapInput, ls, la)
+  }
+
+  override def nextStrict(prev: Cache, i: I): Cache =
+    prev.nextStrict(i, run)
+
+  override def initLazy(init: => I): Cache = {
     val ls = LazyVal(mapInput(init))
     val la = ls.map(run)
     new StoreCache1(mapInput, ls, la)
   }
 
-  override def nextFull(prev: Cache, i: => I): Next[Cache] =
-    prev.next(i, run)
+  override def nextLazyFull(prev: Cache, i: => I): Next[Cache] =
+    prev.nextLazy(i, run)
 }
 
