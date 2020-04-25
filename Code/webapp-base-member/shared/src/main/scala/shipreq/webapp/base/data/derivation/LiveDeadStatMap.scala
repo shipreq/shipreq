@@ -25,20 +25,27 @@ final case class LiveDeadStatMap[Key, @specialized(Int) A] private[data](raw: Ma
 //  def map[B: Monoid](f: A => B): LiveDeadStatMap[Key, B] =
 //    LiveDeadStatMap(raw.mapValuesNow(_.map(f)))
 
-//  def +(that: LiveDeadStatMap[Key, A]): LiveDeadStatMap[Key, A] =
-//    if (that.isEmpty)
-//      this
-//    else if (this.isEmpty)
-//      that
-//    else {
-//      CC.inc("LiveDeadStatMap.+")
-//      var m = raw
-//      for ((key, c) <- that.raw) {
-//        val n = m.get(key).fold(c)(_ + c)
-//        m = m.updated(key, n)
-//      }
-//      LiveDeadStatMap(m)
-//    }
+  def ++(that: LiveDeadStatMap[Key, A]): LiveDeadStatMap[Key, A] = {
+    CC.inc("LiveDeadStatMap.++")
+    if (that.isEmpty)
+      this
+    else if (this.isEmpty)
+      that
+    else {
+      CC.inc("LiveDeadStatMap.++.merge")
+      var m = raw
+      for ((key, c) <- that.raw) {
+        val n = m.get(key).fold(c)(_ + c)
+        m = m.updated(key, n)
+      }
+      val a =
+        for {
+          x <- this.allLazy
+          y <- that.allLazy
+        } yield x + y
+      LiveDeadStatMap(m, a)
+    }
+  }
 
   def countByValues[B: UnivEq](f: A => IterableOnce[B]): LiveDeadStatMap[B, Int] = {
     val r = LiveDeadStatMap.Builder.ofInts[B]()

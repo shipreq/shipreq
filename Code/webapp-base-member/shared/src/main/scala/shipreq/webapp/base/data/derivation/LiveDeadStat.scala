@@ -14,6 +14,9 @@ final case class LiveDeadStat[@specialized(Int) A] private[data](live: A,
                                                                  dead: A,
                                                                  allLazy: LazyVal[A]) {
 
+  @inline def apply(l: Live): A =
+    if (l eq Live) live else dead
+
   def all: A =
     allLazy.value
 
