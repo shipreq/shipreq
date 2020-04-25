@@ -13,8 +13,9 @@ final class ReverseDependencies(atomScan: AtomScan, useCases: UseCases) {
 
   // Scan: refs in reqs
   for {
+    live       <- Live
     (src, lds) <- atomScan.contentRefsInReqs.raw
-    ld         <- lds.all
+    ld         <- lds(live)
   } ld.value match {
 
     case tgt: ContentRef # UseCaseStepRef =>
@@ -26,8 +27,9 @@ final class ReverseDependencies(atomScan: AtomScan, useCases: UseCases) {
 
   // Scan: refs in RCGs
   for {
+    live       <- Live
     (src, lds) <- atomScan.contentRefsInRcgs.raw
-    ld         <- lds.all
+    ld         <- lds(live)
   } ld.value match {
 
     case tgt: ContentRef # UseCaseStepRef =>
@@ -38,13 +40,16 @@ final class ReverseDependencies(atomScan: AtomScan, useCases: UseCases) {
   }
 
   // Scan: use case step flow
-  for {
-    dir         <- Direction
-    (src, tgts) <- useCases.stepFlow(dir).iterator
-    loc          = Location.Req(useCases.stepIndex(src).useCaseId, Location.Text.UseCaseStep(src))
-    tgt         <- tgts
+  // Don't use a for-comprehension here
+  // https://github.com/scala/bug/issues/11951
+  Direction.foreach { dir =>
+    useCases.stepFlow(dir).iterator.foreach { case (src, tgts) =>
+      val loc = Location.Req(useCases.stepIndex(src).useCaseId, Location.Text.UseCaseStep(src))
+      tgts.foreach { tgt =>
+        _useCaseStepIdRefs = _useCaseStepIdRefs.add(tgt, loc)
+      }
+    }
   }
-    _useCaseStepIdRefs = _useCaseStepIdRefs.add(tgt, loc)
 
   // ===================================================================================================================
 
