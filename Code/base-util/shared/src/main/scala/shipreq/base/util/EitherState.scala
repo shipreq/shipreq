@@ -44,6 +44,19 @@ object EitherState {
     }
   }
 
+  object Fn0Trampoline {
+    final class Trampoline[A](val result: () => A) extends AnyVal {
+      def map[B](f: A => B): Trampoline[B] = new Trampoline(() => f(result()))
+      def flatMap[B](f: A => Trampoline[B]): Trampoline[B] = f(result())
+    }
+    object Trampoline {
+      def pure[A](a: A): Trampoline[A] = new Trampoline(() => a)
+      def suspend[A](t: => Trampoline[A]): Trampoline[A] = new Trampoline(() => t.result())
+      def delay[A](a: => A): Trampoline[A] = suspend(pure(a))
+      def run[A](t: Trampoline[A]): A = t.result()
+    }
+  }
+
   import ScalazTrampoline._
 
   type Underlying[S, E, A] = S => Trampoline[(S, E \/ A)]
