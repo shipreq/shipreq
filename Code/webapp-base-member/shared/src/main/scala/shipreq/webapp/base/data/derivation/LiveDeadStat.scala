@@ -64,7 +64,7 @@ object LiveDeadStat {
       var dead = 0
 
       def add(l: Live, n: Int): Unit =
-        if (l.is(Live))
+        if (l eq Live)
           live += n
         else
           dead += n
