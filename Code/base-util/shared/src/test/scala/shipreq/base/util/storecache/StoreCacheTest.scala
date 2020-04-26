@@ -136,5 +136,64 @@ object StoreCacheTest extends TestSuite {
       }
     }
 
+    "nested" - {
+      var countA = 0
+      def aye(i: Int): String = {
+        countA += 1
+        i.toString
+      }
+
+      var countB = 0
+      def bee(s: String): String = {
+        countB += 1
+        s"$s|$s"
+      }
+
+      var countS = 0
+      var srcVar = 4
+      def src(): Int = {
+        countS += 1
+        srcVar
+      }
+
+      def counts() = (countS, countA, countB)
+
+      val la = StoreCache.Logic(aye)
+      val lb = StoreCache.Logic(bee)
+
+      val a1 = la.initStrict(src())
+      val b1 = lb.initLazy(a1.value)
+      assertEq(counts(), (1, 0, 0))
+
+      val a2 = la.nextStrict(a1, src())
+      val b2 = lb.nextLazy(b1, a2.value)
+      assertEq(counts(), (2, 0, 0))
+
+      val a3 = la.nextStrict(a2, src())
+      val b3 = lb.nextLazy(b2, a3.value)
+      assertEq(counts(), (3, 0, 0))
+
+      a3.value
+      assertEq(counts(), (3, 1, 0))
+      b3.value
+      assertEq(counts(), (3, 1, 1))
+
+      val a4 = la.nextStrict(a3, src())
+      val b4 = lb.nextLazy(b3, a4.value)
+      assertEq(counts(), (4, 1, 1))
+
+      srcVar = 7
+
+      val a5 = la.nextStrict(a4, src())
+      val b5 = lb.nextLazy(b4, a5.value)
+      assertEq(counts(), (5, 1, 1))
+
+      val a6 = la.nextStrict(a5, src())
+      val b6 = lb.nextLazy(b5, a6.value)
+      assertEq(counts(), (6, 1, 1))
+
+      b6.value
+      assertEq(counts(), (6, 2, 2))
+    }
   }
 }
