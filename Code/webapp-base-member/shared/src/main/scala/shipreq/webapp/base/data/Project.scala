@@ -148,16 +148,15 @@ final case class Project(name           : Project.Name,
 
   lazy val issues = IssueTracker(this).issues
 
-  lazy val reverseDependencies = new ReverseDependencies(atomScan, content.reqs.useCases)
-
-  def deletionMethodForUseCaseStep(id: UseCaseStepId): DeletionMethod = {
-    val f = content.reqs.useCases.focusStep(id)
-    DeletionMethod.Hard.when(
-      f.step.titleExplicitly.isEmpty &&
-      f.subtree.children.forall(n => deletionMethodForUseCaseStep(n.value.id) is DeletionMethod.Hard) &&
-      reverseDependencies.useCaseStepId(id).isEmpty
-    )
-  }
+  def deletionMethodForUseCaseStep(id: UseCaseStepId): DeletionMethod =
+    DeletionMethod.Hard.unless {
+      val f           = content.reqs.useCases.focusStep(id)
+      def hasTitle    = f.step.titleExplicitly.nonEmpty
+      def childNeeded = f.subtree.children.exists(n => deletionMethodForUseCaseStep(n.value.id) is DeletionMethod.Soft)
+      def hasFlow     = Direction.exists(content.reqs.useCases.stepFlow(_).valuesIterator.exists(_.contains(id)))
+      def refdInText  = atomScan.useCaseStepRefs.contains(id)
+      hasTitle || childNeeded || hasFlow || refdInText
+    }
 
   private lazy val conflictingTagsPerReq: Multimap[ReqId, Set, ApplicableTagId] = {
     var m = Multimap.empty[ReqId, Set, ApplicableTagId]

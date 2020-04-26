@@ -29,6 +29,9 @@ trait IsoBool[B <: IsoBool[B]] extends (Boolean <=> B) with Product with Seriali
   @inline final def when(cond: Boolean): B =
     if (cond) this else !this
 
+  @inline final def unless(cond: Boolean): B =
+    if (cond) !this else this
+
   final override val from = is(_)
   final override val to   = when(_)
 
