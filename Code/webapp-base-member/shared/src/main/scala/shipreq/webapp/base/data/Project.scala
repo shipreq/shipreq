@@ -154,8 +154,8 @@ final case class Project(name           : Project.Name,
     val f = content.reqs.useCases.focusStep(id)
     DeletionMethod.Hard.when(
       f.step.titleExplicitly.isEmpty &&
-      reverseDependencies.useCaseStepId(id).isEmpty &&
-      f.subtree.children.forall(n => deletionMethodForUseCaseStep(n.value.id) is DeletionMethod.Hard)
+      f.subtree.children.forall(n => deletionMethodForUseCaseStep(n.value.id) is DeletionMethod.Hard) &&
+      reverseDependencies.useCaseStepId(id).isEmpty
     )
   }
 
