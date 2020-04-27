@@ -1124,7 +1124,7 @@ object RandomData {
   // Req Data
 
   def reqFieldDataText(cols: Set[CustomField.Text.Id], reqs: Set[ReqId], txt: Gen[Text.CustomTextField.NonEmptyText]): Gen[ReqData.Text] =
-    txt mapByKeySubset reqs mapByKeySubset cols
+    txt.mapByKeySubset(reqs).mapByKeySubset(cols).map(ReqData.Text.apply)
 
   private[this] val emptyATagIdSet = Gen.pure(Set.empty[ApplicableTagId])
   def reqFieldDataTags(reqs: Iterable[ReqId], tags: Set[ApplicableTagId]): Gen[ReqData.Tags] = {

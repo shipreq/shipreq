@@ -180,7 +180,7 @@ object AtomScan {
 
     // Don't use a for-comprehension here
     // https://github.com/scala/bug/issues/11951
-    customTextFieldText.foreach { case (tf, textByReqId) =>
+    customTextFieldText.data.foreach { case (tf, textByReqId) =>
       val live = Live when (liveTextFields contains tf)
       textByReqId.foreach { case (id, txt) =>
         scanReqText(live, id, Location.Text.CustomTextField(tf))(txt.whole)

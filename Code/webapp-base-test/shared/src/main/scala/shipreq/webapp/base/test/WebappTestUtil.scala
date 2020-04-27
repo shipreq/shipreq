@@ -20,7 +20,6 @@ trait WebappTestEquality
      with Text.Equality
      with EventEquality
 {
-  implicit def equalityText = ReqData.equalityText
   implicit def equalityTags = ReqData.equalityTags
 
   implicit lazy val equalProjectAndOrd: Equal[ProjectAndOrd] = ScalazMacros.deriveEqual

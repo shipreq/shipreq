@@ -106,7 +106,7 @@ object SampleProject {
 
   lazy val reqs     = Requirements.empty
   lazy val reqCodes = ReqCodes.empty
-  lazy val reqText  = ReqData.emptyText
+  lazy val reqText  = ReqData.Text.empty
   lazy val reqTags  = ReqData.emptyTags
   lazy val reqImps  = Implications.emptyBiDir
 

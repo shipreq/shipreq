@@ -172,7 +172,7 @@ object ProjectDsl {
                                  reqs         = p.reqs + req,
                                  reqCodeTrie  = codeTrie,
                                  maxReqCodeId = p.newMaxReqCodeId,
-                                 text         = p.text |+| text,
+                                 text         = ReqData.Text(p.text.data |+| text),
                                  tags         = tags,
                                  imps         = imps)
         (p2, req)

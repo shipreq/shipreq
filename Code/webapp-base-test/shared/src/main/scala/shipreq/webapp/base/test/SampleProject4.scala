@@ -83,7 +83,7 @@ object SampleProject4 {
     val uc1 = addUseCase(title = "Eat food", ncac = ncac)
     // println(ncac.map(_.title.mkString(",")))
 
-    rt = ReqData.textAt(descField, uc1).set("This UC is about eating.")(rt)
+    rt = ReqData.Text.at(descField, uc1).set("This UC is about eating.")(rt)
 
     sf = sf.addPairs(13 -> 11, 15 -> 12)
 

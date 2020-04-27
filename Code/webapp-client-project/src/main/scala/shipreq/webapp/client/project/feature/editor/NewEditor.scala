@@ -763,7 +763,7 @@ object NewEditor {
       object CustomTextField extends Base(RichTextEditor.CustomTextField) {
         def apply(id: ReqId, fid: CustomField.Text.Id, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetCustomTextField(id, fid, _),
-          initialValueCB = pxProject.toCallback.map(p => ReqData.textAt(fid, id).get(p.content.reqText)).toCBO,
+          initialValueCB = pxProject.toCallback.map(p => ReqData.Text.at(fid, id).get(p.content.reqText)).toCBO,
           pid            = pid,
           reqId          = Some(id))
       }

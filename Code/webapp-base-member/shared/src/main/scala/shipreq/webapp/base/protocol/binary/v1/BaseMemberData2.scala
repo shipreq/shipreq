@@ -571,7 +571,8 @@ object BaseMemberData2 {
     pickleMultimap
 
   implicit lazy val picklerReqDataText: Pickler[ReqData.Text] =
-    pickleMap
+    pickleMap[CustomField.Text.Id, Map[ReqId, Text.CustomTextField.NonEmptyText]]
+      .xmap(ReqData.Text.apply)(_.data)
 
   implicit lazy val picklerReqIdsByDirection: Pickler[Direction.Values[Set[ReqId]]] =
     pickleIsoBoolValues

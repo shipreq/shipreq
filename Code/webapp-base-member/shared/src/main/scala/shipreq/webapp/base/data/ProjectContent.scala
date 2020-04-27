@@ -21,7 +21,7 @@ object ProjectContent {
     ProjectContent(
       Requirements.empty,
       ReqCodes.empty,
-      ReqData.emptyText,
+      ReqData.Text.empty,
       ReqData.emptyTags,
       Implications.emptyBiDir,
       DeletionReasons.empty)
@@ -48,7 +48,7 @@ final case class ProjectContent(reqs           : Requirements,
     ("GenericReq titles", reqs.genericReqs.imap.valuesIterator.map(_.title))             ::
     ("UseCase titles",    reqs.useCases.imap.valuesIterator.map(_.title))                ::
     ("UseCase steps",     reqs.useCases.stepIterator.map(_.titleExplicitly))             ::
-    ("Text fields",       reqText.valuesIterator.flatMap(_.valuesIterator).map(_.whole)) ::
+    ("Text fields",       reqText.data.valuesIterator.flatMap(_.valuesIterator).map(_.whole)) ::
     Nil
 
   def countTextAtoms: ShowSize.Node = {
@@ -59,5 +59,5 @@ final case class ProjectContent(reqs           : Requirements,
   }
 
   def reqTextFor(id: CustomField.Text.Id): Map[ReqId, Text.CustomTextField.NonEmptyText] =
-    reqText.getOrElse(id, Map.empty)
+    reqText.data.getOrElse(id, Map.empty)
 }

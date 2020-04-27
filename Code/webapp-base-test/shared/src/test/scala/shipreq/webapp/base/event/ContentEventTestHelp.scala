@@ -25,7 +25,7 @@ object DetachedGenericReq {
   def extract(p: Project, id: GenericReqId): Option[DetachedGenericReq] =
     p.content.reqs.genericReqs.imap.get(id).map { r =>
       val codes      = p.content.reqCodes.activeReqCodesByReqId(id)
-      val customText = ReqData.allTextForReq(id, p.content.reqText)
+      val customText = p.content.reqText.allTextForReq(id)
       val impliedBy  = p.content.implications.backwards(id)
       val implies    = p.content.implications.forwards(id)
       val tags       = p.content.reqTags(id)
@@ -46,7 +46,7 @@ object DetachedUseCase {
   def extract(p: Project, id: UseCaseId): Option[DetachedUseCase] =
     p.content.reqs.useCases.imap.get(id).map { r =>
       val codes      = p.content.reqCodes.activeReqCodesByReqId(id)
-      val customText = ReqData.allTextForReq(id, p.content.reqText)
+      val customText = p.content.reqText.allTextForReq(id)
       val impliedBy  = p.content.implications.backwards(id)
       val implies    = p.content.implications.forwards(id)
       val tags       = p.content.reqTags(id)

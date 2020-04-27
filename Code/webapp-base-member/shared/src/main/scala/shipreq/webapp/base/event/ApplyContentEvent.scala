@@ -138,7 +138,7 @@ trait ApplyContentEvent {
     def setCustomTextValue(id   : ReqId,
                            fid  : CustomField.Text.Id,
                            value: Text.CustomTextField.OptionalText): Eval[Unit] =
-      ensureLiveTextFieldId(fid) >> (Project.reqText ^|-> ReqData.textAt(fid, id)).set(value)
+      ensureLiveTextFieldId(fid) >> (Project.reqText ^|-> ReqData.Text.at(fid, id)).set(value)
 
     def setCustomTextValueMap(id: ReqId,
                               values: NonEmpty[Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText]]): Eval[Unit] =

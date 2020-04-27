@@ -63,7 +63,7 @@ object ParsersTest extends TestSuite {
         .toList
 
     val customTextFieldValues =
-      p.content.reqText.values.iterator.flatMap(_.values).toList
+      p.content.reqText.data.values.iterator.flatMap(_.values).toList
 
     def cmp[A <: AnyAtom](t: => String, actual0: Iterable[A], expect0: Iterable[A]): EvalL = {
 

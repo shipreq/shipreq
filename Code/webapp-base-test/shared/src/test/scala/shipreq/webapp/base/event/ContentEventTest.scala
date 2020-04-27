@@ -557,15 +557,15 @@ object ContentEventTest extends TestSuite {
       "add" - {
         val p = _assertPass(emptyGR1, e)
         val d = p.content.reqText
-        assertEq(d.size, 1)
-        val m = d(cf1)
+        assertEq(d.data.size, 1)
+        val m = d.data(cf1)
         assertEq(m.size, 1)
         assertEq(m(1), someCTF1)
       }
       "remove" - {
         val p = _assertPass(emptyGR1, e, ReqFieldCustomTextSet(1, cf1, ∅))
         val d = p.content.reqText
-        assertEq(d.size, 0)
+        assertEq(d.data.size, 0)
       }
       "reqNotFound"   - assertFail("found")(e)
       "reqIsDead"     - assertFail("dead") (emptyGR1, delGR1, e)

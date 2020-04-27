@@ -167,7 +167,7 @@ object ShowSize {
     reqCodeTrie.contramap(_.trie)
 
   implicit def reqDataText: ShowSize[ReqData.Text] =
-    ShowSize.lift(r => Node("Text", r.values.iterator.flatMap(_.values.iterator).size))
+    ShowSize.lift(r => Node("Text", r.data.values.iterator.flatMap(_.values.iterator).size))
 
   implicit def reqDataTags: ShowSize[ReqData.Tags] =
     ShowSize.lift(r => Node("Tags", r.valuesIterator.map(_.size).sum))
