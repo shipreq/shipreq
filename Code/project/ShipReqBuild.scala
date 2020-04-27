@@ -26,7 +26,6 @@ object ShipReqBuild {
     Project("root", file("."))
       .configure(Common.jvmSettings)
       .aggregate(base, taskman, webapp, utils, benchmarkJvm, benchmarkJs)
-      .settings(addCommandAlias("dockers", ";root/compile ;taskman-server/docker ;webapp-server/docker"))
 
   /** All JS modules */
   lazy val js =

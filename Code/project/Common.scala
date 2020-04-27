@@ -179,31 +179,7 @@ object Common {
       packageBinaryOnly,
       dockerLayerReuse,
       Dependencies.useKindProjector,
-      Dependencies.useBetterMonadicFor,
-      addCommandAliases(
-        "B"   -> "project base",
-        "BU"  -> "project base-util-jvm",
-        "BT"  -> "project base-test-jvm",
-        "T"   -> "project taskman",
-        "W"   -> "project webapp",
-        "TA"  -> "project taskman-api",
-        "TAL" -> "project taskman-api-logic",
-        "TS"  -> "project taskman-server",
-        "TSL" -> "project taskman-server-logic",
-        "WB"  -> "project webapp-base-jvm",
-        "WBM" -> "project webapp-base-member-jvm",
-        "WT"  -> "project webapp-base-test-jvm",
-        "WC"  -> "project webapp-client",
-        "WCA" -> "project webapp-client-public-js", // A for Anonymous
-        "WCB" -> "project webapp-client-base",
-        "WCH" -> "project webapp-client-home",
-        "WCP" -> "project webapp-client-project",
-        "WCW" -> "project webapp-client-ww",
-        "WSL" -> "project webapp-server-logic-jvm",
-        "WS"  -> "project webapp-server",
-        "BM"  -> "project benchmark-jvm",
-        "BMJ" -> "project benchmark-js",
-        "U"   -> "project utils"))
+      Dependencies.useBetterMonadicFor)
 
   /** Common settings used by standard modules - not benchmarks, not test modules */
   private def settings: Project => Project =
@@ -392,11 +368,6 @@ object Common {
 //    println("    ----------------")
 //    printf("Σ %,12d bytes\n", sizes.sum)
     println(sep)
-  }
-
-  def addCommandAliases(m: (String, String)*) = {
-    val s = m.map(p => addCommandAlias(p._1, p._2)).reduce(_ ++ _)
-    (_: Project).settings(s: _*)
   }
 
   implicit class CrossProjectExt(val p: CrossProject) extends AnyVal {
