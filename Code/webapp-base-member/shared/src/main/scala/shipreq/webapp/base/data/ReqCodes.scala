@@ -236,6 +236,11 @@ object CodeGroup {
 
 // =====================================================================================================================
 
+/** This is currently derived automatically and stored as a lazy val.
+  * On one hand that means it's always correct, but on the other hand it's the biggest bottleneck (by far) of event
+  * application. Eventually this should be manually maintained for speed. It should also be compared to its derivation
+  * in [[DataProp]].
+  */
 final case class ReqCodeManifest(apReqCodesById       : Map[ApReqCodeId, ReqCode.Value],
                                  reqCodeGroupsById    : Map[ReqCodeGroupId, ReqCode.Value],
                                  activeReqCodesByReqId: Multimap[ReqId, Set, ReqCode.Value],
