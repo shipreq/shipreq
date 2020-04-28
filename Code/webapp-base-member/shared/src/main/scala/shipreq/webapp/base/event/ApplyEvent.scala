@@ -23,6 +23,7 @@ object ApplyEvent {
 final class ApplyEvent(implicit val trust: Trust)
     extends ApplyConfigEvent
        with ApplyContentEvent
+       with ApplyReqCodeLogic
        with ApplyOtherEvent {
 
   import ApplyEvent.{Events, Result}
