@@ -18,11 +18,19 @@ object ReqData {
   final case class Text(data: Map[CustomField.Text.Id, Map[ReqId, T.CustomTextField.NonEmptyText]]) {
 
     private[data] lazy val localCodeRefs =
-      derivation.AtomScan.ReqCodeRefs { b =>
+      derivation.AtomScan.reqCodeRefs { f =>
         for {
           (_, textByReqId) <- data
           (_, txt)         <- textByReqId
-        } b.scan(txt.whole)
+        } f(txt.whole)
+      }
+
+    private[data] lazy val localUseCaseStepRefs =
+      derivation.AtomScan.useCaseStepRefs { f =>
+        for {
+          (_, textByReqId) <- data
+          (_, txt)         <- textByReqId
+        } f(txt.whole)
       }
 
     // Only used in tests

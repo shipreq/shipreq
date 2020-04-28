@@ -2,6 +2,7 @@ package shipreq.webapp.base.data.derivation
 
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.Atom._
 
 final class ReqCodeTrieScan(trie: ReqCode.Trie) {
   import ReqCode._
@@ -17,7 +18,14 @@ final class ReqCodeTrieScan(trie: ReqCode.Trie) {
   private var _liveGroups            = List.empty[LiveCodeGroup]
   private var _liveGroupsById        = Map.empty[ReqCodeGroupId, LiveCodeGroup]
   private var _reqCodeGroupsById     = Map.empty[ReqCodeGroupId, Value]
-  private val _localReqCodeRefs      = AtomScan.ReqCodeRefs.newBuilder()
+  private val _localReqCodeRefs      = UnivEq.setBuilder[ReqCodeId]
+  private val _localUseCaseStepRefs  = UnivEq.setBuilder[UseCaseStepId]
+
+  val scan = AtomScan.scan {
+    case a: ContentRef # CodeRef        => _localReqCodeRefs += a.value
+    case a: ContentRef # UseCaseStepRef => _localUseCaseStepRefs += a.value
+    case _                              => ()
+  }
 
   trie.foreachPathAndValue { (code, data) =>
 
@@ -40,7 +48,7 @@ final class ReqCodeTrieScan(trie: ReqCode.Trie) {
         _liveGroupsById = _liveGroupsById.updated(d.id, d.group)
         _liveGroups ::= d.group
         _groups ::= d.group
-        _localReqCodeRefs.scan(d.group.title)
+        scan(d.group.title)
 
       case _: Inactive =>
         ()
@@ -48,7 +56,7 @@ final class ReqCodeTrieScan(trie: ReqCode.Trie) {
 
     for (g <- data.deadGroup) {
       _groups ::= g
-      _localReqCodeRefs.scan(g.title)
+      scan(g.title)
     }
   }
 
@@ -62,4 +70,5 @@ final class ReqCodeTrieScan(trie: ReqCode.Trie) {
   lazy val idSet                 = CC("ReqCodesScan.read.idSet                ")(_idSet)
   lazy val reqCodeGroupsById     = CC("ReqCodesScan.read.reqCodeGroupsById    ")(_reqCodeGroupsById)
   lazy val localCodeRefs         = CC("ReqCodesScan.read.localCodeRefs        ")(_localReqCodeRefs.result())
+  lazy val localUseCaseStepRefs  = CC("ReqCodesScan.read.localUseCaseStepRefs ")(_localUseCaseStepRefs.result())
 }

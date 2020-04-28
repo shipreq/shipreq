@@ -51,6 +51,14 @@ final case class ProjectContent(reqs           : Requirements,
       reqCodes.scan.localCodeRefs,
     )
 
+  lazy val useCaseStepRefs: Set[UseCaseStepId] =
+    Util.mergeSets(
+      reqs.genericReqs.localUseCaseStepRefs,
+      reqs.useCases.localUseCaseStepRefs,
+      reqText.localUseCaseStepRefs,
+      reqCodes.scan.localUseCaseStepRefs,
+    )
+
   /** Dead or alive */
   def allRichText: List[(String, Iterator[Text.AnyOptional])] =
     ("Deletion reasons",  deletionReasons.reasons.iterator.map(_.whole))                 ::

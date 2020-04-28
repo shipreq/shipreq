@@ -688,8 +688,8 @@ object DataProp {
       ∧ validTagIds    ("ReqData.config.tags values",       _.content.reqTags.valueIterator)
       ∧ validReqIds    ("ReqData.implications",             _.content.implications.members)
       ∧ validReqIds    ("Atoms: ReqRefs",                   _.atomScan.reqRefs)
-      ∧ validReqCodeIds("CodeRefs",                         _.content.codeRefs)
-      ∧ validUCStepIds ("Atoms: UseCaseStepRefs",           _.atomScan.useCaseStepRefs)
+      ∧ validReqCodeIds("Atoms: CodeRefs",                  _.content.codeRefs)
+      ∧ validUCStepIds ("Atoms: UseCaseStepRefs",           _.content.useCaseStepRefs)
       ∧ validTagIds    ("Atoms: TagRefs",                   _.atomScan.tagRefs.all.all.iterator.map(_.value)) // TODO check .loc
       ∧ validIssueTypes("Atoms: Issues in reqs",            _.atomScan.issuesInReqs.all.all.map(_.value.typ))
       ∧ validIssueTypes("Atoms: Issues in RCGs",            _.atomScan.issuesInRcgs.all.all.map(_.typ))

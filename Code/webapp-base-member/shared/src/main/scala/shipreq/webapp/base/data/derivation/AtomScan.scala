@@ -21,7 +21,6 @@ final class AtomScan(_tagRefs          : LiveDeadStatMap[ReqId,          Set[Loc
                      _contentRefsInReqs: LiveDeadStatMap[ReqId,          Vector[LocAndValue[LocationOf.Text.InReq, AnyContentRef]]],
                      _contentRefsInRcgs: LiveDeadStatMap[ReqCodeGroupId, Vector[LocAndValue[LocationOf.Text.InReqCodeGroup, AnyContentRef]]],
                      _reqRefs          : Set[ReqId],
-                     _useCaseStepRefs  : Set[UseCaseStepId]
                     ) {
 
   CC.inc("AtomScan.instance")
@@ -40,7 +39,6 @@ final class AtomScan(_tagRefs          : LiveDeadStatMap[ReqId,          Set[Loc
   lazy val contentRefsInReqs = CC("AtomScan.read.contentRefsInReqs")(_contentRefsInReqs)
   lazy val contentRefsInRcgs = CC("AtomScan.read.contentRefsInRcgs")(_contentRefsInRcgs)
   lazy val reqRefs           = CC("AtomScan.read.reqRefs          ")(_reqRefs          )
-  lazy val useCaseStepRefs   = CC("AtomScan.read.useCaseStepRefs  ")(_useCaseStepRefs  )
 }
 
 object AtomScan {
@@ -52,27 +50,25 @@ object AtomScan {
     val contentRefsInReqs = LiveDeadStatMap.Builder.vec[ReqId,          LocAndValue[LocationOf.Text.InReq, AnyContentRef]         ]()
     val contentRefsInRcgs = LiveDeadStatMap.Builder.vec[ReqCodeGroupId, LocAndValue[LocationOf.Text.InReqCodeGroup, AnyContentRef]]()
     val reqRefs           = UnivEq.setBuilder[ReqId]
-    val useCaseStepRefs   = UnivEq.setBuilder[UseCaseStepId]
 
     def scanReqText(live : Live,
                     reqId: ReqId,
                     loc  : Location.Text): ArraySeq[AnyAtom] => Unit =
       scan {
-        case a: ContentRef#ReqRef =>
+        case a: ContentRef # ReqRef =>
           contentRefsInReqs(reqId).add(live, LocAndValue(loc, a))
           reqRefs += a.value
 
-        case a: ContentRef#CodeRef =>
+        case a: ContentRef # CodeRef =>
           contentRefsInReqs(reqId).add(live, LocAndValue(loc, a))
 
-        case a: ContentRef#UseCaseStepRef =>
+        case a: ContentRef # UseCaseStepRef =>
           contentRefsInReqs(reqId).add(live, LocAndValue(loc, a))
-          useCaseStepRefs += a.value
 
-        case a: Issue#Issue =>
+        case a: Issue # Issue =>
           issuesInReqs(reqId).add(live, LocAndValue(loc, a))
 
-        case a: TagRef#TagRef =>
+        case a: TagRef # TagRef =>
           tagRefs(reqId).add(live, LocAndValue(loc, a.value))
 
         // Leave this as a catch-all rather than a specific list.
@@ -86,24 +82,23 @@ object AtomScan {
                              reqCodeId: ReqCodeGroupId,
                              loc      : LocationOf.Text.InReqCodeGroup): ArraySeq[AnyAtom] => Unit =
       scan {
-        case a: ContentRef#ReqRef =>
+        case a: ContentRef # ReqRef =>
           contentRefsInRcgs(reqCodeId).add(live, LocAndValue(loc, a))
           reqRefs += a.value
 
-        case a: ContentRef#CodeRef =>
+        case a: ContentRef # CodeRef =>
           contentRefsInRcgs(reqCodeId).add(live, LocAndValue(loc, a))
 
-        case a: ContentRef#UseCaseStepRef =>
+        case a: ContentRef # UseCaseStepRef =>
           contentRefsInRcgs(reqCodeId).add(live, LocAndValue(loc, a))
-          useCaseStepRefs += a.value
 
-        case a: Issue#Issue =>
+        case a: Issue # Issue =>
           a match {
             case i: Text.CodeGroupTitle.Issue => issuesInRcgs(reqCodeId).add(live, i)
             case _                            => ()
           }
 
-        case a: TagRef#TagRef =>
+        case a: TagRef # TagRef =>
           assert(false, s"ReqCodes shouldn't have tags! Found $a in $reqCodeId")
 
         // Leave this as a catch-all rather than a specific list.
@@ -149,31 +144,53 @@ object AtomScan {
       contentRefsInReqs.result(),
       contentRefsInRcgs.result(),
       reqRefs.result(),
-      useCaseStepRefs.result())
+    )
   }
 
   // ===================================================================================================================
 
-  object ReqCodeRefs {
+  def reqCodeRefs(f: (ArraySeq[AnyAtom] => Unit) => Unit): Set[ReqCodeId] = {
+    val b = UnivEq.setBuilder[ReqCodeId]
+    val scan = AtomScan.scan {
+      case a: ContentRef # CodeRef => b += a.value
+      case _                       => ()
+    }
+    f(scan)
+    b.result()
+  }
 
-    def apply(f: Builder => Unit): Set[ReqCodeId] = {
+  def useCaseStepRefs(f: (ArraySeq[AnyAtom] => Unit) => Unit): Set[UseCaseStepId] = {
+    val b = UnivEq.setBuilder[UseCaseStepId]
+    val scan = AtomScan.scan {
+      case a: ContentRef # UseCaseStepRef => b += a.value
+      case _                              => ()
+    }
+    f(scan)
+    b.result()
+  }
+
+  // ===================================================================================================================
+
+  object UseCaseStepRefs {
+
+    def apply(f: Builder => Unit): Set[UseCaseStepId] = {
       val b = newBuilder()
       f(b)
       b.result()
     }
 
     def newBuilder(): Builder =
-      new Builder(UnivEq.setBuilder[ReqCodeId])
+      new Builder(UnivEq.setBuilder[UseCaseStepId])
 
-    final class Builder(private val b: mutable.Builder[ReqCodeId, Set[ReqCodeId]]) {
+    final class Builder(private val b: mutable.Builder[UseCaseStepId, Set[UseCaseStepId]]) {
 
       val scan =
         AtomScan.scan {
-          case a: ContentRef # CodeRef => b += a.value
-          case _                       => ()
+          case a: ContentRef # UseCaseStepRef => b += a.value
+          case _                              => ()
         }
 
-      def result(): Set[ReqCodeId] =
+      def result(): Set[UseCaseStepId] =
         b.result()
     }
   }

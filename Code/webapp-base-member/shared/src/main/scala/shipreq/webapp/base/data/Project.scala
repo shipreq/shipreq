@@ -154,7 +154,7 @@ final case class Project(name           : Project.Name,
       def hasTitle    = f.step.titleExplicitly.nonEmpty
       def childNeeded = f.subtree.children.exists(n => deletionMethodForUseCaseStep(n.value.id) is DeletionMethod.Soft)
       def hasFlow     = Direction.exists(content.reqs.useCases.stepFlow(_).valuesIterator.exists(_.contains(id)))
-      def refdInText  = atomScan.useCaseStepRefs.contains(id)
+      def refdInText  = content.useCaseStepRefs.contains(id)
       hasTitle || childNeeded || hasFlow || refdInText
     }
 
