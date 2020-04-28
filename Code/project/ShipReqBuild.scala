@@ -11,8 +11,6 @@ import WebappBuild._
 
 object ShipReqBuild {
 
-  lazy val genBoilerplateForStoreCache = TaskKey[File]("genBoilerplateForStoreCache")
-
   def project(dir: String): Project =
     Project(dir, file(dir))
 
@@ -66,8 +64,6 @@ object ShipReqBuild {
         testScope(μTest ++ Nyaya.test ++ Microlibs.testUtil))
       .depsForJvm(
         SLF4J.api ++ Logback.withPlugins ++ scalaLogging ++ clearConfig ++ catsEffect)
-      .jvmSettings(
-        genBoilerplateForStoreCache := GenBoilerplateForStoreCache(baseDirectory.value / "../shared/src/main/scala"))
 
   lazy val baseOps =
     project("base-ops")
