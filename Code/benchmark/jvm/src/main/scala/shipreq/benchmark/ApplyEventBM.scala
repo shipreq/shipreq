@@ -12,7 +12,7 @@ import shipreq.webapp.sampledata.SampleData
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 class ApplyEventBM {
 
-  @Param(Array("1000", "2000", "4000"))
+  @Param(Array("1000", "2000", "4000", "10000"))
   var events: String = _
 
   var es: VerifiedEvent.Seq = _
