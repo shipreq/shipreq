@@ -1409,8 +1409,7 @@ object RandomData {
                        dr),
                      mis,
                      reqtable.SavedViews.empty,
-                     IdCeilings.zero,
-                     None)
+                     IdCeilings.zero)
       savedViews <- reqtableData.savedViewsForProject(p1)
     } yield IdCeilings.supply(ic => p1.copy(reqtableViews = savedViews, idCeilings = ic))
   }

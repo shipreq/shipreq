@@ -938,7 +938,7 @@ object Rev1 {
         val manualIssues  = state.unpickle[ManualIssues]
         val reqtableViews = state.unpickle[reqtable.SavedViews.Optional]
         val idCeilings    = state.unpickle[IdCeilings]
-        Project(name, config, content, manualIssues, reqtableViews, idCeilings, None)
+        Project(name, config, content, manualIssues, reqtableViews, idCeilings)
       }
     }
 
