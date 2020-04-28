@@ -6,7 +6,6 @@ import shipreq.base.util.LazyVal
 import shipreq.base.util.fp.Monoid
 import shipreq.base.util.fp.Monoid.Implicits._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.CC
 
 /**
  * A collection of stats mapped by a key.
@@ -25,14 +24,12 @@ final case class LiveDeadStatMap[Key, @specialized(Int) A] private[derivation](r
 //  def map[B: Monoid](f: A => B): LiveDeadStatMap[Key, B] =
 //    LiveDeadStatMap(raw.mapValuesNow(_.map(f)))
 
-  def ++(that: LiveDeadStatMap[Key, A]): LiveDeadStatMap[Key, A] = {
-    CC.inc("LiveDeadStatMap.++")
+  def ++(that: LiveDeadStatMap[Key, A]): LiveDeadStatMap[Key, A] =
     if (that.isEmpty)
       this
     else if (this.isEmpty)
       that
     else {
-      CC.inc("LiveDeadStatMap.++.merge")
       var m = raw
       for ((key, c) <- that.raw) {
         val n = m.get(key).fold(c)(_ + c)
@@ -45,7 +42,6 @@ final case class LiveDeadStatMap[Key, @specialized(Int) A] private[derivation](r
         } yield x + y
       LiveDeadStatMap(m, a)
     }
-  }
 
   def countByValues[B: UnivEq](f: A => IterableOnce[B]): LiveDeadStatMap[B, Int] = {
     val r = LiveDeadStatMap.Builder.ofInts[B]()
@@ -53,13 +49,11 @@ final case class LiveDeadStatMap[Key, @specialized(Int) A] private[derivation](r
     r.result()
   }
 
-  def countByValues[B: UnivEq](r: LiveDeadStatMap.Builder.OfInts[B], f: A => IterableOnce[B]): Unit = {
-    CC.inc("LiveDeadStatMap.countByValues")
+  def countByValues[B: UnivEq](r: LiveDeadStatMap.Builder.OfInts[B], f: A => IterableOnce[B]): Unit =
     for (stat <- raw.values) {
       f(stat.live).iterator.foreach(r(_).live += 1)
       f(stat.dead).iterator.foreach(r(_).dead += 1)
     }
-  }
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

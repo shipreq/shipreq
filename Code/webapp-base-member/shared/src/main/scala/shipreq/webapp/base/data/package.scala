@@ -6,9 +6,6 @@ import shipreq.base.util.univeq._
 
 package object data {
 
-  val CC = Debug.CallCounter()
-  val ST = Debug.StackTraceCounter()
-
   // ----------------------------------------------------------------------------------------------
   // Data -> ID relationship & access
 

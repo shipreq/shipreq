@@ -25,15 +25,9 @@ object Profile {
 
   private def loadSampleData(): SampleData = {
     println("Loading sample data...")
-    try {
-      val sd = SampleData.`10000`
-      sd.assertValid()
-      sd
-    } catch {
-      case t: Throwable =>
-        CC.printReport()
-        throw t
-    }
+    val sd = SampleData.`10000`
+    sd.assertValid()
+    sd
   }
 
   private def waitForInput(): Unit = {
@@ -46,15 +40,11 @@ object Profile {
 
   private def profile(times: Int)(body: => Any): Unit = {
     val run = Fx(body).measureDuration_
-    CC.clear()
-    ST.clear()
     waitForInput()
     for (i <- 1 to times) {
       val dur = run.unsafeRun()
       println(s"Run #$i - ${dur.conciseDesc}")
     }
-    ST.printReport()
-    CC.printReport()
     println("Done.")
   }
 }

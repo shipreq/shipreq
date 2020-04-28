@@ -7,8 +7,6 @@ import shipreq.webapp.base.text.Atom._
 final class ReqCodeTrieScan(trie: ReqCode.Trie) {
   import ReqCode._
 
-  CC.inc("ReqCodesScan.instance")
-
   private var _activeReqCodesByReqId = UnivEq.emptySetMultimap[ReqId, Value]
   private var _apReqCodesById        = Map.empty[ApReqCodeId, Value]
   private var _groups                = List.empty[CodeGroup]
@@ -60,15 +58,15 @@ final class ReqCodeTrieScan(trie: ReqCode.Trie) {
     }
   }
 
-  lazy val activeReqCodesByReqId = CC("ReqCodesScan.read.activeReqCodesByReqId")(_activeReqCodesByReqId)
-  lazy val apReqCodesById        = CC("ReqCodesScan.read.apReqCodesById       ")(_apReqCodesById)
-  lazy val groups                = CC("ReqCodesScan.read.groups               ")(_groups)
-  lazy val inactiveIdsByReqId    = CC("ReqCodesScan.read.inactiveIdsByReqId   ")(_inactiveIdsByReqId)
-  lazy val liveGroups            = CC("ReqCodesScan.read.liveGroups           ")(_liveGroups)
-  lazy val liveGroupsById        = CC("ReqCodesScan.read.liveGroupsById       ")(_liveGroupsById)
-  lazy val idList                = CC("ReqCodesScan.read.idList               ")(_idList)
-  lazy val idSet                 = CC("ReqCodesScan.read.idSet                ")(_idSet)
-  lazy val reqCodeGroupsById     = CC("ReqCodesScan.read.reqCodeGroupsById    ")(_reqCodeGroupsById)
-  lazy val localCodeRefs         = CC("ReqCodesScan.read.localCodeRefs        ")(_localReqCodeRefs.result())
-  lazy val localUseCaseStepRefs  = CC("ReqCodesScan.read.localUseCaseStepRefs ")(_localUseCaseStepRefs.result())
+                val activeReqCodesByReqId = _activeReqCodesByReqId
+                val apReqCodesById        = _apReqCodesById
+                val groups                = _groups
+                val inactiveIdsByReqId    = _inactiveIdsByReqId
+                val liveGroups            = _liveGroups
+                val liveGroupsById        = _liveGroupsById
+                val idList                = _idList
+                val idSet                 = _idSet
+                val reqCodeGroupsById     = _reqCodeGroupsById
+  private[data] val localCodeRefs         = _localReqCodeRefs.result()
+  private[data] val localUseCaseStepRefs  = _localUseCaseStepRefs.result()
 }
