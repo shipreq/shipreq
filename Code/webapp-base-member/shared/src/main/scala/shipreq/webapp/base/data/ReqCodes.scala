@@ -5,6 +5,7 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.utils.Memo
 import nyaya.util.Multimap
 import monocle.macros.Lenses
+import scala.collection.immutable.ArraySeq
 import scalaz.{Equal, Order}
 import scalaz.std.string.stringInstance
 import shipreq.base.util._
@@ -233,6 +234,23 @@ object CodeGroup {
   implicit def equalBase: UnivEq[CodeGroup]     = UnivEq.derive
 }
 
+// =====================================================================================================================
+
+final case class ReqCodeManifest(apReqCodesById       : Map[ApReqCodeId, ReqCode.Value],
+                                 reqCodeGroupsById    : Map[ReqCodeGroupId, ReqCode.Value],
+                                 activeReqCodesByReqId: Multimap[ReqId, Set, ReqCode.Value],
+                                 inactiveIdsByReqId   : Multimap[ReqId, Set, ApReqCodeId],
+                                 idSeq                : ArraySeq[ReqCodeId]) {
+
+  lazy val idSet: Set[ReqCodeId] =
+    idSeq.toSet
+}
+
+object ReqCodeManifest {
+  implicit def univEq: UnivEq[ReqCodeManifest] = UnivEq.derive
+}
+
+
 /**
  * All req code data for in a project.
  */
@@ -243,6 +261,9 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   private[data] lazy val scan =
     new derivation.ReqCodeTrieScan(trie)
 
+  private[this] lazy val manifest =
+    derivation.ReqCodeTrieScan.deriveManifest(trie)
+
   def isEmpty: Boolean =
     trie.isEmpty
 
@@ -251,6 +272,30 @@ final case class ReqCodes(trie: ReqCode.Trie) {
 
   def need(code: Value): Data =
     get(code) mustExistElse s"No node at reqcode ${code.whole mkString "."}."
+
+  def apReqCodesById: Map[ApReqCodeId, Value] =
+    manifest.apReqCodesById
+
+  def reqCodeGroupsById: Map[ReqCodeGroupId, Value] =
+    manifest.reqCodeGroupsById
+
+  def activeReqCodesByReqId: Multimap[ReqId, Set, Value] =
+    manifest.activeReqCodesByReqId
+
+  /** Unlike the active case, the same code can have multiple inactive IDs. */
+  def inactiveIdsByReqId: Multimap[ReqId, Set, ApReqCodeId] =
+    manifest.inactiveIdsByReqId
+
+  /** Active and inactive [[ReqCodeId]]s alike.
+   *
+   * This is needed in addition to [[idSet]] so that [[DataProp]] can detect duplicate IDs.
+   */
+  def idSeq: ArraySeq[ReqCodeId] =
+    manifest.idSeq
+
+  /** Active and inactive [[ReqCodeId]]s alike. */
+  def idSet: Set[ReqCodeId] =
+    manifest.idSet
 
   def getReqCode(id: ReqCodeId): Option[Value] =
     id match {
@@ -279,33 +324,12 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   /** All groups, dead and live. */
   def groups: List[CodeGroup] =
     scan.groups
-
-  def apReqCodesById: Map[ApReqCodeId, Value] =
-    scan.apReqCodesById
-
-  def reqCodeGroupsById: Map[ReqCodeGroupId, Value] =
-    scan.reqCodeGroupsById
-
-  def activeReqCodesByReqId: Multimap[ReqId, Set, Value] =
-    scan.activeReqCodesByReqId
-
-  /** Unlike the active case, the same code can have multiple inactive IDs. */
-  def inactiveIdsByReqId: Multimap[ReqId, Set, ApReqCodeId] =
-    scan.inactiveIdsByReqId
-
-  /** Active and inactive [[ReqCodeId]]s alike.
-    *
-    * This is needed in addition to [[idSet]] so that [[DataProp]] can detect duplicate IDs.
-    */
-  def idList: List[ReqCodeId] =
-    scan.idList
-
-  /** Active and inactive [[ReqCodeId]]s alike. */
-  def idSet: Set[ReqCodeId] =
-    scan.idSet
 }
 
 object ReqCodes {
+
+  val empty: ReqCodes =
+    ReqCodes(Map.empty)
+
   implicit lazy val equality: Equal[ReqCodes] = ScalazMacros.deriveEqual
-  def empty: ReqCodes = ReqCodes(Map.empty)
 }

@@ -302,10 +302,10 @@ object DataProp {
         .forall[T, List](_.trie.cataV[List[Data]](Nil)((q, _, d) => d :: q))
 
     def idFormat =
-      id[ReqCodeId].forall((_: T).idList)
+      id[ReqCodeId].forall((_: T).idSeq)
 
     def uniqueIds =
-      uniqueNonNegIntsT[List, ReqCodeId]("IDs").contramap[T](_.idList)
+      uniqueNonNegIntsT[ArraySeq, ReqCodeId]("IDs").contramap[T](_.idSeq)
 
     val all =
       (branchesMustBranch ∧ allData ∧ uniqueIds ∧ idFormat) rename "ReqCodes"

@@ -291,7 +291,7 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
     Gen.tryGenChoose(p.content.reqs.useCases.stepIterator.map(_.id))
 
   lazy val existingReqCodeId: Option[Gen[ReqCodeId]] =
-    Gen.tryGenChoose(p.content.reqCodes.idList)
+    Gen.tryGenChoose(p.content.reqCodes.idSeq)
 
   val codeGroupId: Live => Option[Gen[ReqCodeGroupId]] =
     tryGenChooseLiveDead(l => p.content.reqCodes.groups.iterator.filter(_.live is l).map(_.id).toVector)
