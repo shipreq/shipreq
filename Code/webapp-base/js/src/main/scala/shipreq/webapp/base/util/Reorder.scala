@@ -11,7 +11,7 @@ object Reorder {
     apply(from, to, as)(e.equal)
 
   def usingUnivEq[@specialized(Int) A](from: A, to: A)(as: Vector[A])(implicit e: UnivEq[A]): Vector[A] = {
-    val _ = e
+    locally(e)
     apply(from, to, as)(_ == _)
   }
 

@@ -81,7 +81,7 @@ object ReqTypeRulesEditor {
       }
 
     def resultWhenValidI(implicit ev: D =:= Impossible): Option[FieldReqTypeRules[D]] = {
-      val _ = ev
+      locally(ev)
       resultWhenValid(Set.empty)
     }
 
@@ -142,7 +142,7 @@ object ReqTypeRulesEditor {
 
     implicit def reusabilityProps[D: UnivEq]: Reusability[Props[D]] = {
       implicit val a: Reusability[Vector[D]] = Reusability.byRefOrUnivEq
-      val _ = a // -Wunused:locals gets it wrong
+      locally(a) // -Wunused:locals gets it wrong
       Reusability.derive
     }
   }

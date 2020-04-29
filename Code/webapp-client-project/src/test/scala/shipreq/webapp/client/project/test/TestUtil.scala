@@ -22,7 +22,7 @@ object TestUtil extends WebappTestUtil with WebappTestEquality {
     }
 
     def soleDom[N <: A]()(implicit ev: A <:< org.scalajs.dom.Element): N = {
-      val _ = ev
+      locally(ev)
       sole().asInstanceOf[N]
     }
   }

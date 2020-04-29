@@ -229,7 +229,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
     implicit final val reusabilityProps: Reusability[Props] = {
       implicit val a = reusabilityRowEditor
-      val _ = a // -Wunused:locals gets it wrong
+      locally(a) // -Wunused:locals gets it wrong
       Reusability.derive
     }
 

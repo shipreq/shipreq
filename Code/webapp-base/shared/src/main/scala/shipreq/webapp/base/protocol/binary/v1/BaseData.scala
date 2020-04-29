@@ -25,7 +25,7 @@ object BaseData {
 
   implicit final class AnyRefPicklerExt[A <: AnyRef](private val p: Pickler[A]) extends AnyVal {
     def reuseByUnivEq(implicit ev: UnivEq[A]) = {
-      val _ = ev
+      locally(ev)
       new PickleWithReuse[A](p, true)
     }
 

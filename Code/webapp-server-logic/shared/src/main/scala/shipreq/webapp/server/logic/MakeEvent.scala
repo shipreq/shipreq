@@ -108,12 +108,12 @@ object MakeEvent {
         FieldCustomTagCreate(id, c.tagId, gdAllValues(CustomTagFieldGD, "c"))
 
       case c: UpdateConfigCmd.CustomFieldCreateText =>
-        val _ = c // used by macros
+        locally(c) // used by macros
         val id = CustomField.Text.Id(nextId)
         FieldCustomTextCreate(id, gdAllValues(CustomTextFieldGD, "c"))
 
       case UpdateConfigCmd.CustomFieldUpdateImp(id, vs) =>
-        val _ = vs // used by macros
+        locally(vs) // used by macros
         project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues2(CustomImpFieldGD, cur, vs)
           eventIfNonEmpty(vs2)(FieldCustomImpUpdate(id, _))
@@ -319,7 +319,7 @@ object MakeEvent {
     val nextCodeId = reqCodeIdCounter(project)
     cmd match {
       case CreateContentCmd.CreateCodeGroup(code, title) =>
-        val _ = title // used by macros
+        locally(title) // used by macros
 
         def makeEvent(id: ReqCodeGroupId) =
           Success(CodeGroupCreate(id, gdAllValues(CodeGroupGD, "")))

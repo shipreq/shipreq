@@ -30,7 +30,7 @@ object ImplicationGraph {
 
   implicit val reusabilityProps: Reusability[Props] = {
     implicit def a: Reusability[Implications.BiDir] = Reusability.byRef
-    val _ = a // -Wunused:locals gets it wrong
+    locally(a) // -Wunused:locals gets it wrong
     Reusability.derive
   }
 

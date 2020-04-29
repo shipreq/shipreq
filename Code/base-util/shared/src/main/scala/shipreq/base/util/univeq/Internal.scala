@@ -15,7 +15,7 @@ object Internal {
       Multimap.empty[K, Set, V]
 
     @inline def emptyMultimap[K: UnivEq, L[_] : MultiValues, V](implicit ev: L[V] =:!= Set[V]) = {
-      val _ = ev
+      locally(ev)
       Multimap.empty[K, L, V]
     }
   }

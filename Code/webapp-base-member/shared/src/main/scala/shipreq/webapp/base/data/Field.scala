@@ -368,7 +368,7 @@ object CustomField {
            mandatory         : Mandatory,
            applicableReqTypes: ApplicableReqTypes,
            liveExplicitly    : Live): Text = {
-      val _ = key
+      locally(key)
       apply(
         id                = id,
         name              = name,

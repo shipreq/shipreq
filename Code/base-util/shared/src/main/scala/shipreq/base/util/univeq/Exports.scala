@@ -8,7 +8,7 @@ trait Exports
      with UnivEqExports {
 
   @inline implicit def univEqMultimap[K, L[_], V](implicit ev: UnivEq[Map[K, L[V]]]): UnivEq[Multimap[K, L, V]] = {
-    val _ = ev
+    locally(ev)
     UnivEq.force
   }
 

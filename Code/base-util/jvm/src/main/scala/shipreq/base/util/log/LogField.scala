@@ -27,7 +27,7 @@ sealed abstract class LogField[T <: LogField.Type, @specialized(Long, Boolean) -
     o.fold(LogField.emptyArg)(apply)
 
   private final def convInput[T2 <: LogField.Type](t2: T2, i: fieldType.Input)(implicit ev: T =:= T2): t2.Input = {
-    val _ = ev
+    locally(ev)
     i.asInstanceOf[t2.Input]
   }
 
