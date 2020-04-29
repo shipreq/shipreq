@@ -9,14 +9,13 @@ import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.sampledata.SampleData
 
-final case class BenchmarkData(data: Vector[SampleData], defaults: Vector[SampleData]) {
+final case class BenchmarkData(data: Vector[SampleData]) {
 
   val guiParam: GuiParam[SampleData, BitSet] =
     GuiParam.`enum`[SampleData](
       header        = "Sample data",
       values        = data: _*)(
-      resultTxt     = _.name,
-      initialValues = defaults)
+      resultTxt     = _.name)
 }
 
 object BenchmarkData {
@@ -25,7 +24,7 @@ object BenchmarkData {
     for {
       data <- AsyncCallback.sequence(SampleData.all)
     } yield
-      BenchmarkData(data, data.take(3))
+      BenchmarkData(data)
 
   val verifiedEvents       = Benchmark.setup[SampleData, VerifiedEvent.Seq](_.verifiedEvents)
   val verifiedEventsBinary = Benchmark.setup[SampleData, ByteBuffer       ](_.verifiedEventsBinary.toNewByteBuffer)

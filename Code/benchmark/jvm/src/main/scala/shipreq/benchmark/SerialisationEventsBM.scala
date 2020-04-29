@@ -25,7 +25,10 @@ object SerialisationEventsBM {
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 class SerialisationEventsBM {
 
-  @Param(Array("1000", "2000", "4000"))
+  @Param(Array("full", "no_req_codes"))
+  var `type`: String = _
+
+  @Param(Array("1000", "2000", "4000", "10000"))
   var events: String = _
 
   @Param(Array("json", "binary"))
@@ -36,7 +39,7 @@ class SerialisationEventsBM {
 
   @Setup
   def setup(): Unit = {
-    val d = SampleData.byName(events)
+    val d = SampleData.byParams(`type`, events)
     val es = d.events
 
     import SerialisationEventsBM._

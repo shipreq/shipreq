@@ -25,7 +25,7 @@ object Profile {
 
   private def loadSampleData(): SampleData = {
     println("Loading sample data...")
-    val sd = SampleData.`10000`
+    val sd = SampleData.noReqCodes.`10000`
     sd.assertValid()
     sd
   }
