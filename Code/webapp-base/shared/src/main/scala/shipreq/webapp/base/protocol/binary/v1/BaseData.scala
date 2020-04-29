@@ -10,6 +10,7 @@ import java.nio.ByteBuffer
 import java.time.Instant
 import monocle.Iso
 import nyaya.util.{MultiValues, Multimap}
+import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scalaz.Isomorphism.<=>
@@ -24,10 +25,10 @@ object BaseData {
   // Extension classes
 
   implicit final class AnyRefPicklerExt[A <: AnyRef](private val p: Pickler[A]) extends AnyVal {
-    def reuseByUnivEq(implicit ev: UnivEq[A]) = {
-      locally(ev)
+
+    @nowarn("cat=unused")
+    def reuseByUnivEq(implicit ev: UnivEq[A]) =
       new PickleWithReuse[A](p, true)
-    }
 
     def reuseByRef =
       new PickleWithReuse[A](p, false)
