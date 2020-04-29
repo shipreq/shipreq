@@ -53,6 +53,7 @@ object Common {
     "-language:postfixOps",
     "-target:" + Dependencies.Java.major,            // Target platform for object files. ([8],9,10,11,12)
     "-unchecked",                                    // Enable additional warnings where generated code depends on assumptions.
+    "-Wconf:msg=may.not.be.exhaustive:e",            // Make non-exhaustive matches errors instead of warnings
     "-Wunused:implicits",                            // Warn if an implicit parameter is unused.
     "-Wunused:imports",                              // Warn if an import selector is not referenced.
     "-Wunused:locals",                               // Warn if a local definition is unused.
