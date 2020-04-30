@@ -151,7 +151,6 @@ object PlainText {
     }
 
     private def nestedText(acc: String, indent: String, live: Live, atoms: ArraySeq[AnyAtom]): String = {
-      // TODO Add index instead of head/tail
       @tailrec def go(acc: String, atoms: ArraySeq[AnyAtom], idx: Int): String = {
         val nextIdx = idx + 1
         val nextIsEmpty = nextIdx == atoms.length

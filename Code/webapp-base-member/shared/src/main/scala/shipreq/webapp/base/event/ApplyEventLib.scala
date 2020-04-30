@@ -180,22 +180,13 @@ private[event] object ApplyEventLib {
       _   <- l.set(sv2)
     } yield ()
 
-  // TODO ********************************************************************************************************************************************
   def foldMapBind[A, B](b: B, as: Iterable[A])(f: A => B => Eval[B]): Eval[B] =
     as.foldLeft(Eval.pure(b))((x, a) => x.flatMap(f(a)))
-    // ret(b).foldMapBind(as)(f)
-    // Util.mapReduceB(as, ret(b))(f(_)(b), f)(_ >>= _)
 
-  // TODO ********************************************************************************************************************************************
   def foldMapBindFns[A, B](as: Iterable[A])(f: A => B => Eval[B]): B => Eval[B] = {
     val fs = as.map(f)
     b => fs.foldLeft(Eval.pure(b))((x, y) => x.flatMap(y))
-    // as.foldLeft(ret[B] _)((x, y) => x.andThen(_ >>= f(y)))
-    // Util.mapReduce[A, B => Eval[B]](as, ret)(f, (x, y) => x.andThen(_ >>= y))
   }
-
-//  def optionGetR[A](p: Project, oa: Option[A], err: => String): Result[A] =
-//    oa.fold[Result[A]](Failure(err))(Ok(p, _))
 
   def narrowCC[A, B <: A](a: A, failure: => Error)(implicit cc: ClassTag[B], trust: Trust): Eval[B] =
     if (trust is Untrusted)

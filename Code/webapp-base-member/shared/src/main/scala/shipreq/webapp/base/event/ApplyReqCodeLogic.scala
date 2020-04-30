@@ -357,7 +357,7 @@ trait ApplyReqCodeLogic {
       mm.m.foreach { x =>
         val v    = x._1
         val ids1 = x._2
-        if (ids1.size == 1) // TODO Scala 2.13 - use isSize or whatever
+        if (ids1.sizeIs == 1)
           r += AddReq(v, Unvalidated, ids1.head, target, true)
         else {
           // Sort IDs here because only the first ID becomes the ActiveReq.id and we want determinism

@@ -59,12 +59,12 @@ trait ApplyContentEvent {
 
     /** Ignores reqcodes */
     def restore(reqIds: Iterable[ReqId]): Eval[Unit] =
-      Eval.foldMapRun(reqIds)(restoreReq) // TODO Use one Project get/put
+      Eval.foldMapRun(reqIds)(restoreReq)
 
     def applyDelete(e: ReqsDelete): Eval[Unit] = {
       val reqIds = e.reqs.whole
       for {
-        _  <- Eval.foldMapRun(reqIds)(deleteReq) // TODO Use one Project get/put
+        _  <- Eval.foldMapRun(reqIds)(deleteReq)
         t1 <- ReqCodeLogic.getTrie
         t2 <- ReqCodeLogic.inactivateBelongingToReqsT(t1, reqIds)
         t3 <- ReqCodeLogic.inactivateGroupsByIdT(t2, e.codeGroups, remember = true)
