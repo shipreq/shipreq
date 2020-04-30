@@ -26,13 +26,13 @@ object Dependencies {
   }
 
   object Monocle {
-    private val mm = MultiModule.jvmAndJs("com.github.julien-truffaut", "1.6.0")
+    private val mm = MultiModule.jvmAndJs("com.github.julien-truffaut", "1.6.3")
     val core   = mm("monocle-core")
     val macros = mm("monocle-macro") ++ core
   }
 
   object Microlibs {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "2.2")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "2.3")
     val adtMacros  = mm("adt-macros")
     val macroUtils = mm("macro-utils")
     val nonempty   = mm("nonempty")
@@ -44,7 +44,7 @@ object Dependencies {
   }
 
   object Nyaya {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.9.1")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.9.2")
     val util = mm("nyaya-util") ++ scalaz
     val prop = mm("nyaya-prop") ++ scalaz
     val gen  = mm("nyaya-gen")  ++ scalaz
@@ -75,7 +75,7 @@ object Dependencies {
   }
 
   object UnivEq {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.2.0")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.2.1")
     val univeq = mm("univeq")
     val scalaz = mm("univeq-scalaz") ++ univeq ++ Dependencies.scalaz
   }
@@ -150,7 +150,7 @@ object Dependencies {
   }
 
   object OkHttp {
-    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.7")
+    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.8")
     val core = mm("okhttp")
     // val urlConnection = mm("okhttp-urlconnection") ++ core
   }
@@ -184,9 +184,9 @@ object Dependencies {
     val servlet    = mm("simpleclient_servlet")
   }
 
-  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.4.0")
+  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.5.0")
   val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "0.9.8")
-  val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "0.2.6")
+  val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "1.0.0")
 
   val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.3.1")
   val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "1.4.0")
@@ -199,7 +199,7 @@ object Dependencies {
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.8")
   val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.3.3")
-  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.2")
+  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.3")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.2.0")

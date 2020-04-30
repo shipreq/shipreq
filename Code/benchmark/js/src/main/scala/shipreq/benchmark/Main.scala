@@ -1,6 +1,6 @@
 package shipreq.benchmark
 
-import japgolly.scalajs.benchmark.engine.Options
+import japgolly.scalajs.benchmark.engine.EngineOptions
 import japgolly.scalajs.benchmark.gui._
 import japgolly.scalajs.react.extra.router.BaseUrl
 import org.scalajs.dom
@@ -16,8 +16,8 @@ object Main {
     val body    = document getElementById "body"
     val baseUrl = BaseUrl(dom.window.location.href.takeWhile(_ != '#'))
 
-    val options: Options =
-      Options.Default.copy(
+    val options: EngineOptions =
+      EngineOptions.default.copy(
         maxTime = 60.seconds,
       )
 
