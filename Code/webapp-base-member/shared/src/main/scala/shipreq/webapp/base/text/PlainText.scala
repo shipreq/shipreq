@@ -4,7 +4,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.utils.Memo
 import scala.annotation.tailrec
-import scala.collection.immutable.SortedSet
+import scala.collection.immutable.{ArraySeq, SortedSet}
 import shipreq.base.util._
 import shipreq.base.util.SafeStringOps._
 import shipreq.base.util.univeq._
@@ -101,7 +101,7 @@ object PlainText {
       if (_t.isEmpty) None else Some[_t.type](_t)
 
     @inline def net: Option[T#NonEmptyText] =
-      NonEmptyVector.option(_t)
+      NonEmptyArraySeq.option(_t)
   }
 
   private final val bullet = "* "
@@ -150,94 +150,100 @@ object PlainText {
       desc.foldLeft(hashtag(it.key))(_ ~ G.issueDescSurround(_))
     }
 
-    private def nestedText(acc: String, indent: String, live: Live, atoms: Vector[AnyAtom]): String = {
-      @tailrec def go(acc: String, atoms: Vector[AnyAtom]): String =
-        if (atoms.isEmpty)
-          acc
-        else {
-          val nextAtoms = atoms.tail
-          import Atom._
-          val cur = atoms.head match {
-            case a: Literal         # Literal        => a.value
-            case _: NewLine         # BlankLine      => "\n\n" ~ indent
-            case a: ContentRef      # ReqRef         => reqRef(a.value)
-            case a: ContentRef      # CodeRef        => codeRef(a.value)
-            case a: ContentRef      # UseCaseStepRef => useCaseStepRef(a.value)
-            case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live, Optional)))
-            case a: PlainTextMarkup # EmailAddress   => a.value
-            case a: PlainTextMarkup # Monospace      => '`' ~ a.value ~ '`'
-            case a: PlainTextMarkup # TeX            => G.texSurround(a.value)
-            case a: PlainTextMarkup # WebAddress     => a.value
-            case a: TagRef          # TagRef         => tagRef(a.value)
+    private def nestedText(acc: String, indent: String, live: Live, atoms: ArraySeq[AnyAtom]): String = {
+      @tailrec def go(acc: String, atoms: ArraySeq[AnyAtom], idx: Int): String = {
+        val nextIdx = idx + 1
+        val nextIsEmpty = nextIdx == atoms.length
+        import Atom._
+        val cur = atoms(idx) match {
+          case a: Literal         # Literal        => a.value
+          case _: NewLine         # BlankLine      => "\n\n" ~ indent
+          case a: ContentRef      # ReqRef         => reqRef(a.value)
+          case a: ContentRef      # CodeRef        => codeRef(a.value)
+          case a: ContentRef      # UseCaseStepRef => useCaseStepRef(a.value)
+          case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live, Optional)))
+          case a: PlainTextMarkup # EmailAddress   => a.value
+          case a: PlainTextMarkup # Monospace      => '`' ~ a.value ~ '`'
+          case a: PlainTextMarkup # TeX            => G.texSurround(a.value)
+          case a: PlainTextMarkup # WebAddress     => a.value
+          case a: TagRef          # TagRef         => tagRef(a.value)
 
-            // ---------------------------------------------------------------------------------------------------------
-            case a: ListMarkup      # UnorderedList  =>
-              val nextIndent = indent + "  "
+          // ---------------------------------------------------------------------------------------------------------
+          case a: ListMarkup      # UnorderedList  =>
+            val nextIndent = indent + "  "
 
-              val prefix: String => String =
-                if (a.itemsContainMultipleLines)
-                  q =>
-                    if (q.isEmpty)
-                      (if (acc.isEmpty) bullet else "\n\n" ~ bullet)
-                    else
-                      q ~ "\n\n" ~ bullet
-                else
-                  q =>
-                    if (q.isEmpty && acc.isEmpty)
-                      bullet
-                    else
-                      q ~ "\n" ~ bullet
-
-              val r = a.items.foldLeft("")((q, li) => nestedText(prefix(q), nextIndent, live, li))
-
-              if (nextAtoms.isEmpty) r else r ~ "\n\n"
-
-            // ---------------------------------------------------------------------------------------------------------
-            case a: CodeBlock # CodeBlock =>
-
-              val firstLine: String =
-                a.language match {
-                  case Some(lang) => "```" ~ lang ~ '\n'
-                  case None       => "```\n"
-                }
-
-              if (indent.isEmpty) {
-                // top-level
-
-                val head =
-                  if (acc.isEmpty || acc.endsWith("\n\n"))
-                    "" // no top-margin required
-                  else if (acc.endsWith("\n"))
-                    "\n" // shouldn't happen but just in case - ensure our top-margin is only one line
+            val prefix: String => String =
+              if (a.itemsContainMultipleLines)
+                q =>
+                  if (q.isEmpty)
+                    (if (acc.isEmpty) bullet else "\n\n" ~ bullet)
                   else
-                    "\n\n" // add top-margin of one line
-
-                val tail = if (nextAtoms.isEmpty) "" else "\n\n"
-
-                head ~ firstLine ~ a.code ~ "\n```" ~ tail
-
-              } else {
-                // we're in a list
-
-                val head =
-                  if (acc == "* " || acc.endsWith("\n* ") || acc.endsWith("\n" ~ indent))
-                    "" // no top-margin or indentation required
-                  else if (acc.endsWith("\n"))
-                    "\n" ~ indent // shouldn't happen but just in case - ensure our top-margin is only one line
+                    q ~ "\n\n" ~ bullet
+              else
+                q =>
+                  if (q.isEmpty && acc.isEmpty)
+                    bullet
                   else
-                    "\n\n" ~ indent // add top-margin of one line, and indentation
+                    q ~ "\n" ~ bullet
 
-                val tail = if (nextAtoms.isEmpty) "" else "\n\n" ~ indent
+            val r = a.items.foldLeft("")((q, li) => nestedText(prefix(q), nextIndent, live, li))
 
-                head ~ firstLine ~ a.code.indent(indent) ~ "\n" ~ indent ~ "```" ~ tail
+            if (nextIsEmpty) r else r ~ "\n\n"
+
+          // ---------------------------------------------------------------------------------------------------------
+          case a: CodeBlock # CodeBlock =>
+
+            val firstLine: String =
+              a.language match {
+                case Some(lang) => "```" ~ lang ~ '\n'
+                case None       => "```\n"
               }
 
-          }
-          // -----------------------------------------------------------------------------------------------------------
+            if (indent.isEmpty) {
+              // top-level
 
-          go(acc ~ cur, nextAtoms)
+              val head =
+                if (acc.isEmpty || acc.endsWith("\n\n"))
+                  "" // no top-margin required
+                else if (acc.endsWith("\n"))
+                  "\n" // shouldn't happen but just in case - ensure our top-margin is only one line
+                else
+                  "\n\n" // add top-margin of one line
+
+              val tail = if (nextIsEmpty) "" else "\n\n"
+
+              head ~ firstLine ~ a.code ~ "\n```" ~ tail
+
+            } else {
+              // we're in a list
+
+              val head =
+                if (acc == "* " || acc.endsWith("\n* ") || acc.endsWith("\n" ~ indent))
+                  "" // no top-margin or indentation required
+                else if (acc.endsWith("\n"))
+                  "\n" ~ indent // shouldn't happen but just in case - ensure our top-margin is only one line
+                else
+                  "\n\n" ~ indent // add top-margin of one line, and indentation
+
+              val tail = if (nextIsEmpty) "" else "\n\n" ~ indent
+
+              head ~ firstLine ~ a.code.indent(indent) ~ "\n" ~ indent ~ "```" ~ tail
+            }
+
         }
-      go(acc, atoms)
+        // -----------------------------------------------------------------------------------------------------------
+
+        val nextAcc = acc ~ cur
+        if (nextIsEmpty)
+          nextAcc
+        else
+          go(nextAcc, atoms, nextIdx)
+      }
+
+      if (atoms.isEmpty)
+        acc
+      else
+        go(acc, atoms, 0)
     }
 
     private def reqRef(req: ReqId): String = {

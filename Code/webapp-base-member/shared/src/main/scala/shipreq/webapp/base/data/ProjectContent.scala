@@ -4,12 +4,13 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import monocle.Lens
 import monocle.macros.Lenses
 import scalaz.Equal
+import shipreq.base.util.Util
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.util.ShowSize
 
 object ProjectContent {
-  val genericReqs         : Lens[ProjectContent, GenericReqIMap     ] = reqs ^|-> Requirements.genericReqs
+  val genericReqs         : Lens[ProjectContent, GenericReqIMap     ] = reqs ^|-> Requirements.genericReqs ^|-> GenericReqs.imap
   val useCases            : Lens[ProjectContent, UseCases           ] = reqs ^|-> Requirements.useCases
   val pubidRegister       : Lens[ProjectContent, PubidRegister      ] = reqs ^|-> Requirements.pubids
   val reqCodeTrie         : Lens[ProjectContent, ReqCode.Trie       ] = reqCodes ^|-> ReqCodes.trie
@@ -21,7 +22,7 @@ object ProjectContent {
     ProjectContent(
       Requirements.empty,
       ReqCodes.empty,
-      ReqData.emptyText,
+      ReqData.Text.empty,
       ReqData.emptyTags,
       Implications.emptyBiDir,
       DeletionReasons.empty)
@@ -41,14 +42,31 @@ final case class ProjectContent(reqs           : Requirements,
                                 implications   : Implications.BiDir,
                                 deletionReasons: DeletionReasons) {
 
+  /** ReqCodes referenced in anything anywhere (including text in dead custom-text fields). */
+  lazy val codeRefs: Set[ReqCodeId] =
+    Util.mergeSets(
+      reqs.genericReqs.localCodeRefs,
+      reqs.useCases.localCodeRefs,
+      reqText.localCodeRefs,
+      reqCodes.scan.localCodeRefs,
+    )
+
+  lazy val useCaseStepRefs: Set[UseCaseStepId] =
+    Util.mergeSets(
+      reqs.genericReqs.localUseCaseStepRefs,
+      reqs.useCases.localUseCaseStepRefs,
+      reqText.localUseCaseStepRefs,
+      reqCodes.scan.localUseCaseStepRefs,
+    )
+
   /** Dead or alive */
   def allRichText: List[(String, Iterator[Text.AnyOptional])] =
     ("Deletion reasons",  deletionReasons.reasons.iterator.map(_.whole))                 ::
     ("CodeGroups",        reqCodes.groups.iterator.map(_.title))                         ::
-    ("GenericReq titles", reqs.genericReqs.valuesIterator.map(_.title))                  ::
+    ("GenericReq titles", reqs.genericReqs.imap.valuesIterator.map(_.title))             ::
     ("UseCase titles",    reqs.useCases.imap.valuesIterator.map(_.title))                ::
     ("UseCase steps",     reqs.useCases.stepIterator.map(_.titleExplicitly))             ::
-    ("Text fields",       reqText.valuesIterator.flatMap(_.valuesIterator).map(_.whole)) ::
+    ("Text fields",       reqText.data.valuesIterator.flatMap(_.valuesIterator).map(_.whole)) ::
     Nil
 
   def countTextAtoms: ShowSize.Node = {
@@ -59,5 +77,5 @@ final case class ProjectContent(reqs           : Requirements,
   }
 
   def reqTextFor(id: CustomField.Text.Id): Map[ReqId, Text.CustomTextField.NonEmptyText] =
-    reqText.getOrElse(id, Map.empty)
+    reqText.data.getOrElse(id, Map.empty)
 }

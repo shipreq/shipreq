@@ -155,7 +155,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     }
 
   private def issue(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText, liveText: Live): VdomTag =
-    NonEmptyVector.option(desc) match {
+    NonEmptyArraySeq.option(desc) match {
       case None       => issueWithoutDesc(id)(liveText)
       case Some(desc) => issueWithDesc(id, desc, liveText)
     }

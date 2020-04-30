@@ -6,7 +6,7 @@ import utest._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.ProjectText
+import shipreq.webapp.base.text.{ProjectText, Text}
 import Event._
 import GraphViz.DOT
 import WebappTestUtil._
@@ -30,7 +30,7 @@ object GraphsTest extends TestSuite {
   }
 
   def deleteReqs(id: ReqId*) =
-    ReqsDelete(NonEmptySet force id.toSet, Set.empty, Vector.empty)
+    ReqsDelete(NonEmptySet force id.toSet, Set.empty, Text.empty)
 
   lazy val SIG_deadMF4: Project =
     applyEventsSuccessfully(SampleImplicationGraph.project, deleteReqs(SampleImplicationGraph.mf4))

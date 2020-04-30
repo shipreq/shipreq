@@ -12,7 +12,7 @@ import scalaz.syntax.traverse1._
 import shipreq.base.util.{Applicable, OptionalBoolFn, TransitiveClosure}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.{FilterDead, On}
-import shipreq.webapp.base.data.DataLogic.{IssueLookup, TagLookup}
+import shipreq.webapp.base.data.derivation.DataLogic.{IssueLookup, TagLookup}
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
 

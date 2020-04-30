@@ -1,6 +1,7 @@
 package shipreq.base.util.univeq
 
 import nyaya.util.{MultiValues, Multimap}
+import scala.annotation.nowarn
 
 object Internal {
   // Copied from Shapeless
@@ -14,9 +15,8 @@ object Internal {
     @inline def emptySetMultimap[K: UnivEq, V: UnivEq] =
       Multimap.empty[K, Set, V]
 
-    @inline def emptyMultimap[K: UnivEq, L[_] : MultiValues, V](implicit ev: L[V] =:!= Set[V]) = {
-      val _ = ev
+    @nowarn("cat=unused")
+    @inline def emptyMultimap[K: UnivEq, L[_] : MultiValues, V](implicit ev: L[V] =:!= Set[V]) =
       Multimap.empty[K, L, V]
-    }
   }
 }

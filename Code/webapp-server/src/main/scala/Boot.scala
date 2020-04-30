@@ -119,7 +119,7 @@ class Boot {
     LiftRules.addToPackages(packageRoot)
 
     // Prevent "stable" func names in test, and speed up generation routine
-    LiftRules.funcNameGenerator = S.generateFuncName _
+    LiftRules.funcNameGenerator = () => S.generateFuncName
 
     // Customise URL paths for built-in resources & AJAX requests
     LiftRules.liftContextRelativePath = WebappConfig.liftCtxPath

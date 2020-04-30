@@ -5,6 +5,7 @@ import scalaz.Equal
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.issue.{Issue, Issues}

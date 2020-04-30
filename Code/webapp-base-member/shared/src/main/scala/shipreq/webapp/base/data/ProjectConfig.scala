@@ -8,6 +8,7 @@ import scalaz.{-\/, Equal, \/-}
 import shipreq.base.util.NotApplicable
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data.derivation._
 
 object ProjectConfig {
   implicit lazy val equality: Equal[ProjectConfig] =
@@ -113,6 +114,9 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
 
   lazy val liveCustomTextFields: List[CustomField.Text] =
     fields.customTextFields.filter(_.live(this) is Live)
+
+  lazy val liveCustomTextFieldIdSet: Set[CustomField.Text.Id] =
+    liveCustomTextFields.map(_.id).toSet
 
   lazy val liveCustomTagFields: List[CustomField.Tag] =
     fields.customTagFields.filter(_.live(this) is Live)

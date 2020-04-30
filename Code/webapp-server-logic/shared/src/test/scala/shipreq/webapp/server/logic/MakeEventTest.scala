@@ -80,7 +80,7 @@ object MakeEventTest extends TestSuite {
       assertMakeEventFails(_.createContent(cmd1, _))
 
       // Vacant code. Reference first code
-      val cmd2 = Cmd("some", Vector(Text.CodeGroupTitle.CodeRef(ReqCodeGroupId(1))))
+      val cmd2 = Cmd("some", Text.CodeGroupTitle(Text.CodeGroupTitle.CodeRef(ReqCodeGroupId(1))))
       val e2 = apply(cmd2)
       assertEq(e2.id, ReqCodeGroupId(2))
 

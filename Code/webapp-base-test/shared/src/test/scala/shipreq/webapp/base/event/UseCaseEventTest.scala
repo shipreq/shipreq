@@ -23,12 +23,12 @@ object UseCaseEventTest extends TestSuite {
   implicit def autoUseCaseIdNes(i: Int) = NonEmptySet[ReqId](UseCaseId(i))
 
   val someTitleUC: UCT.OptionalText =
-    Vector(UCT.Literal("Look at "), UCT.WebAddress("https://google.com"))
+    UCT(UCT.Literal("Look at "), UCT.WebAddress("https://google.com"))
 
   val setTitleUC1 = UseCaseTitleSet(1, someTitleUC)
 
   val someStepText: UCST.OptionalText =
-    Vector(UCST.Literal("blah "), UCST.WebAddress("https://omfg.com"))
+    UCST(UCST.Literal("blah "), UCST.WebAddress("https://omfg.com"))
 
   val ^ = UseCaseStepGD
   val setStepTitle4 = UseCaseStepUpdate(4, ^.Title(someStepText))
@@ -69,7 +69,7 @@ object UseCaseEventTest extends TestSuite {
       }
 
       "title" - {
-        val t = NonEmptyVector(UCT.Literal("cool"))
+        val t = UCT.nonEmpty(UCT.Literal("cool"))
         val p = _assertPass(emptyUC1.copy(vs = nev(Title(t))))
         assertUC(p, 1)(expect(title = t.whole))
       }
@@ -299,9 +299,9 @@ object UseCaseEventTest extends TestSuite {
         "hasText"        - test(UseCaseStepUpdate(7, ^.Title("asd")))
         "hasFlowIn"      - test(UseCaseStepUpdate(7, ^.FlowIn(nesd()(1))))
         "hasFlowOut"     - test(UseCaseStepUpdate(1, ^.FlowOut(nesd()(7))))
-        "refFromUCS"     - test(UseCaseStepUpdate(8, ^.Title(Vector1(UCST.UseCaseStepRef(7)))))
-        "refFromReq"     - test(createGR(2), GenericReqTitleSet(2, Vector1(Text.GenericReqTitle.UseCaseStepRef(7))))
-        "refFromRCG"     - test(createRCG(1, RCG1_code, Vector1(Text.CodeGroupTitle.UseCaseStepRef(7))))
+        "refFromUCS"     - test(UseCaseStepUpdate(8, ^.Title(UCST(UCST.UseCaseStepRef(7)))))
+        "refFromReq"     - test(createGR(2), GenericReqTitleSet(2, Text.GenericReqTitle(Text.GenericReqTitle.UseCaseStepRef(7))))
+        "refFromRCG"     - test(createRCG(1, RCG1_code, Text.CodeGroupTitle(Text.CodeGroupTitle.UseCaseStepRef(7))))
         "childInUseLive" - test(UseCaseStepUpdate(8, ^.FlowIn(nesd()(1))))
         "childInUseDead" - test(UseCaseStepUpdate(8, ^.FlowIn(nesd()(1))), UseCaseStepDelete(8))
       }

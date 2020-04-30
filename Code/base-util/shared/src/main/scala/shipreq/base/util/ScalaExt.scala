@@ -4,7 +4,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.collection.Iterable
 import scalaz.Semigroup
 
-object ScalaExt extends PlatformExt {
+object ScalaExt {
 
   type EndoFn[A] = A => A
 

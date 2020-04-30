@@ -59,7 +59,7 @@ object NewEditor {
 
     implicit val reusability: Reusability[Hooks] = {
       implicit val x: Reusability[Callback] = Reusability.by((_: Callback).toScalaFn)(Reusability.byRef) // TODO Use Reusability.callbackByRef
-      val _ = x // -Wunused:locals gets it wrong
+      locally(x) // -Wunused:locals gets it wrong
       Reusability.byRef || Reusability.derive
     }
   }
@@ -255,7 +255,7 @@ object NewEditor {
     }
 
     def getGenericReq(id: GenericReqId): CallbackOption[GenericReq] =
-      pxProject.toCallback.map(_.content.reqs.genericReqs.get(id)).asCBO
+      pxProject.toCallback.map(_.content.reqs.genericReqs.imap.get(id)).asCBO
 
     def getUseCase(id: UseCaseId): CallbackOption[UseCase] =
       pxProject.toCallback.map(_.content.reqs.useCases.imap.get(id)).asCBO
@@ -763,7 +763,7 @@ object NewEditor {
       object CustomTextField extends Base(RichTextEditor.CustomTextField) {
         def apply(id: ReqId, fid: CustomField.Text.Id, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetCustomTextField(id, fid, _),
-          initialValueCB = pxProject.toCallback.map(p => ReqData.textAt(fid, id).get(p.content.reqText)).toCBO,
+          initialValueCB = pxProject.toCallback.map(p => ReqData.Text.at(fid, id).get(p.content.reqText)).toCBO,
           pid            = pid,
           reqId          = Some(id))
       }

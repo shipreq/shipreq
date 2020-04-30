@@ -14,7 +14,7 @@ import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.DomUtil
 import shipreq.webapp.base.sort.FusedSorters
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.text.{PlainText, Text}
 import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.app.pages.root.Routes
@@ -96,8 +96,8 @@ object Table {
     val csTitles = TableRow.consolidateTitle(groupedRows(csIds, {
       case i: Row.ForReq         => i.req.title
       case i: Row.ForRcg         => i.rcg.title
-      case _: Row.ForConfig      => Vector.empty
-      case _: Row.ForManualIssue => Vector.empty // Don't consolidate manual issue titles
+      case _: Row.ForConfig      => Text.empty
+      case _: Row.ForManualIssue => Text.empty // Don't consolidate manual issue titles
     })((_, _)))
   }
 

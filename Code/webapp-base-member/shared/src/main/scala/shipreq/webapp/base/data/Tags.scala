@@ -60,7 +60,7 @@ object ApplicableTag {
          desc: Option[String],
          key : HashRefKey,
          live: Live): ApplicableTag = {
-    val _ = name // removed
+    locally(name) // removed
     apply(
       id                 = id,
       key                = key,

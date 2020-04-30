@@ -11,6 +11,7 @@ import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.event.Event.{ContentRestore, ReqsDelete}
 import shipreq.webapp.base.test.TestOptics
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.text.Text
 
 /**
   * @param mode Mode being tested
@@ -203,14 +204,14 @@ object DeletionProps {
 
   def perform(mode: DeleteOrRestore, reqIds: Set[ReqId]): Option[Event] =
     mode match {
-      case Delete  => NonEmptySet.option(reqIds).map(ReqsDelete(_, Set.empty, Vector.empty))
+      case Delete  => NonEmptySet.option(reqIds).map(ReqsDelete(_, Set.empty, Text.empty))
       case Restore => Some(ContentRestore(reqIds, Set.empty))
     }
 
   def changableImpTC(p: Project, dir: Direction) =
     p.content.implications.transitiveClosure(
       dir,
-      p.content.reqs.idIterator,
+      p.content.reqs.idIterator(),
       p.content.reqs.need(_).allowLiveChange(p.config.reqTypes) match {
         case Allow => TransitiveClosure.Filter.Follow
         case Deny  => TransitiveClosure.Filter.Exclude
@@ -246,7 +247,7 @@ object DeletionProps {
         ucCount   <- Gen.chooseSize map (_ >> 1)
         reqs1     <- *.reqsWithoutText(config, reqCount, ucCount)
         reqs2     = (TestOptics.grsLive.set(mode.fromState) compose TestOptics.ucsLive.set(mode.fromState))(reqs1)
-        imps1     <- *.reqFieldDataImplications(reqs2.idIterator.toSet)
+        imps1     <- *.reqFieldDataImplications(reqs2.idIterator().toSet)
         imps2     = imps1.forwards.m.mapValuesNow(_.take(1))
         imps3     = Implications.BiDir(Implications.UniDir(imps2).reverse) // reverse ensures take(1) is on parent side
         content   = ProjectContent.empty.copy(reqs = reqs2, implications = imps3)

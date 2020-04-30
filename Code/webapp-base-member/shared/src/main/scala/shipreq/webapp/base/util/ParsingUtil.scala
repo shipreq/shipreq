@@ -3,8 +3,11 @@ package shipreq.webapp.base.util
 import japgolly.microlibs.nonempty._
 import org.parboiled2._
 import scala.annotation.elidable
+import scala.collection.immutable.ArraySeq
+import scala.reflect.ClassTag
 import scalaz.{\/, \/-}
 import shapeless._
+import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ReqType, ReqTypePos}
 import shipreq.webapp.base.text.{Grammar => G}
@@ -87,6 +90,12 @@ abstract class ParsingUtil extends Parser {
   def popPF[A, B](pf: PartialFunction[A, B]): RuleAB[A, B] =
     rule(run((a: A) => test(pf isDefinedAt a) ~ push(pf(a))))
     // rule(run{(a: A) => val o = pf.lift(a); test(o.isDefined) ~ push(o.get)})
+
+  def popSeqToNEA[A: ClassTag]: RuleAB[Seq[A], NonEmptyArraySeq[A]] =
+    rule(run((v: Seq[A]) => test(v.nonEmpty) ~ push(NonEmptyArraySeq.force(v.to[ArraySeq[A]](ArraySeq)))))
+
+  def popNEA[A]: RuleAB[ArraySeq[A], NonEmptyArraySeq[A]] =
+    rule(run((v: ArraySeq[A]) => test(v.nonEmpty) ~ push(NonEmptyArraySeq.force(v))))
 
   def popSeqToNEV[A]: RuleAB[Seq[A], NonEmptyVector[A]] =
     rule(run((v: Seq[A]) => test(v.nonEmpty) ~ push(NonEmptyVector(v.head, v.tail.toVector))))

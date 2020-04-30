@@ -7,12 +7,13 @@ import scala.annotation.tailrec
 import scala.collection.Iterable
 import scala.collection.Factory
 import scala.reflect.ClassTag
-import scalaz.std.anyVal.intInstance
 import scalaz.syntax.semigroup._
 import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.fp.Monoid.Implicits._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.filter.{CompiledFilter, Filter}
 import shipreq.webapp.base.sort.FusedSorters
@@ -498,7 +499,7 @@ private[reqtable] object Logic {
     // Scan rows
     var codeGroups        = 0
     var rowsByReq         = UnivEq.emptyMap[ReqId, Int]
-    val uniqueReqsInTable = LiveDeadStat.newBuilder[Int]
+    val uniqueReqsInTable = LiveDeadStat.Builder.ofInts()
     rows.iterator foreach {
       case r: Row.ForReq =>
         val id = r.req.id

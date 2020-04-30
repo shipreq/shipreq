@@ -55,7 +55,7 @@ object TestOptics {
     PTraversal.fromTraverse[reqCodeTrieFixK.Trie, Data, Data](reqCodeTrieFixK.traverseTrie)
 
   val genericReqTitlesInReqs: Traversal[Requirements, Text.GenericReqTitle.OptionalText] =
-    Requirements.genericReqs ^|->> IMap.traversal[GenericReqId, GenericReq] ^|-> GenericReq.title
+    Requirements.genericReqs ^|-> GenericReqs.imap ^|->> IMap.traversal[GenericReqId, GenericReq] ^|-> GenericReq.title
 
   val useCasesInReqs: Traversal[Requirements, UseCase] =
     Requirements.useCases ^|-> UseCases.imap ^|->> IMap.traversal[UseCaseId, UseCase]
@@ -64,7 +64,7 @@ object TestOptics {
     UseCase.stepsTraversal ^|-> UseCaseSteps.tree ^|->> VectorTree.traversal ^|-> UseCaseStep.titleExplicitly
 
   val grsLive: Traversal[Requirements, Live] =
-    Requirements.genericReqs ^|->> IMap.traversal[GenericReqId, GenericReq] ^|-> GenericReq.liveExplicitly
+    Requirements.genericReqs ^|-> GenericReqs.imap ^|->> IMap.traversal[GenericReqId, GenericReq] ^|-> GenericReq.liveExplicitly
 
   val ucsLive: Traversal[Requirements, Live] =
     useCasesInReqs ^|-> UseCase.liveExplicitly

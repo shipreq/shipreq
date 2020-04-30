@@ -24,7 +24,6 @@ object ShipReqBuild {
     Project("root", file("."))
       .configure(Common.jvmSettings)
       .aggregate(base, taskman, webapp, utils, benchmarkJvm, benchmarkJs)
-      .settings(addCommandAlias("dockers", ";root/compile ;taskman-server/docker ;webapp-server/docker"))
 
   /** All JS modules */
   lazy val js =
@@ -106,6 +105,7 @@ object ShipReqBuild {
       .settings(
         connectInput in run  := true,
         fork         in run  := true,
+        javaOptions  in run  += jprofilerAgent(wait = false),
         javaOptions  in run ++= Seq("-Xmx8g", "-Xss8m"))
 
   object Benchmark {

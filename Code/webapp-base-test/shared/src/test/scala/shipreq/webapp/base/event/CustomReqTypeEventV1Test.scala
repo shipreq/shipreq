@@ -126,7 +126,7 @@ object CustomReqTypeEventV1Test extends TestSuite with CustomReqTypeEventsV1 {
         val rc    = ApReqCodeId.AndValue(9, "oh.good")
         def test(grLiveImp: Live)(e: Event): Unit =
           t(e) { name =>
-            val r = t.p.content.reqs.genericReqs.need(reqId)
+            val r = t.p.content.reqs.genericReqs.imap.need(reqId)
             assertEq(s"$name - req.live", r live t.p.config.reqTypes, grLiveImp)
             assertEq(s"$name - req.expLive", r.liveExplicitly, Live)
             assertEq(s"$name - RC.active?", t.p.content.reqCodes.need(rc.value).isActive, grLiveImp is Live)

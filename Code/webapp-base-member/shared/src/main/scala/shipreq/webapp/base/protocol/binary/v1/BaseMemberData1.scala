@@ -2,10 +2,11 @@ package shipreq.webapp.base.protocol.binary.v1
 
 import boopickle.ConstPickler
 import boopickle.DefaultBasic._
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.univeq.UnivEq
 import nyaya.util.Multimap
-import shipreq.base.util.{Applicable, Exclusive, Exclusivity, IMap, NotApplicable}
+import scala.collection.immutable.ArraySeq
+import scala.reflect.ClassTag
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod
@@ -35,9 +36,9 @@ object BaseMemberData1 {
 
     override def lazily[A](f: => Pickler[A]): Pickler[A] = pickleLazily(f)
 
-    override def vec[A](implicit a: Pickler[A]) = implicitly
+    override def arr[A](implicit a: Pickler[A], ct: ClassTag[A]) = pickleArraySeq[A]
 
-    override def nev[A](as: Pickler[Vector[A]])(implicit a: Pickler[A]) = pickleNEV
+    override def nea[A](as: Pickler[ArraySeq[A]])(implicit a: Pickler[A]) = pickleNEA(as)
 
     override def sum[T <: Atom.Base](t: T)(get: Atom.Type => Pickler[t.Atom], all: List[Pickler[t.Atom]]): Pickler[t.Atom] =
       new Pickler[t.Atom] {
@@ -146,8 +147,8 @@ object BaseMemberData1 {
         }
       }
 
-    override def unorderedList[T <: ListMarkup](t: T)(implicit h: Pickler[NonEmptyVector[t.ListItem]]): Pickler[t.UnorderedList] =
-      transformPickler((i: NonEmptyVector[t.ListItem]) => t.UnorderedList(i))(_.items)
+    override def unorderedList[T <: ListMarkup](t: T)(implicit h: Pickler[NonEmptyArraySeq[t.ListItem]]): Pickler[t.UnorderedList] =
+      transformPickler((i: NonEmptyArraySeq[t.ListItem]) => t.UnorderedList(i))(_.items)
   }
 
   object ReqTableDataPicklers {

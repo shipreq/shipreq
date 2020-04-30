@@ -1,49 +1,31 @@
 package shipreq.webapp.base.data
 
-import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
 import scala.annotation.tailrec
 import scala.collection.IterableOnce
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.reflect.ClassTag
-import scalaz.{-\/, Foldable, Monoid, \/-}
+import scalaz.{-\/, \/-}
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
-import scalaz.std.vector.vectorInstance
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.WebappConfig
-import DataImplicits._
-import MTrie.Ops
-import ScalaExt._
-import TaggedTypes.TaggedInt
 
 object DataProp {
+  import DataImplicits._
+  import MTrie.Ops
+  import ScalaExt._
+  import ScalazExtra._
+  import TaggedTypes.TaggedInt
+
   implicit def autoLiftL(e: Eval) = e.liftL
-
-  implicit val iteratorFoldable: Foldable[Iterator] =
-    new Foldable[Iterator] {
-      def foldMap[A, B](fa: Iterator[A])(f: A => B)(implicit F: Monoid[B]) = foldLeft(fa, F.zero)((x, y) => Monoid[B].append(x, f(y)))
-      def foldRight[A, B](fa: Iterator[A], b: => B)(f: (A, => B) => B)     = fa.foldRight(b)(f(_, _))
-      override def foldLeft[A, B](fa: Iterator[A], b: B)(f: (B, A) => B)   = fa.foldLeft(b)(f)
-      override def any[A](fa: Iterator[A])(p: A => Boolean)                = fa.exists(p)
-      override def all[A](fa: Iterator[A])(p: A => Boolean)                = fa.forall(p)
-    }
-
-  // TODO Should probably do a similar thing app-wide to reduce JS size
-  implicit val setFoldable: Foldable[Set] =
-    new Foldable[Set] {
-      def foldMap[A, B](fa: Set[A])(f: A => B)(implicit F: Monoid[B]) = foldLeft(fa, F.zero)((x, y) => Monoid[B].append(x, f(y)))
-      def foldRight[A, B](fa: Set[A], b: => B)(f: (A, => B) => B)     = fa.foldRight(b)(f(_, _))
-      override def foldLeft[A, B](fa: Set[A], b: B)(f: (B, A) => B)   = fa.foldLeft(b)(f)
-      override def any[A](fa: Set[A])(p: A => Boolean)                = fa.exists(p)
-      override def all[A](fa: Set[A])(p: A => Boolean)                = fa.forall(p)
-    }
 
   def id[T <: TaggedInt] =
     Prop.test[T]("id > 0", _.value > 0)
@@ -320,10 +302,10 @@ object DataProp {
         .forall[T, List](_.trie.cataV[List[Data]](Nil)((q, _, d) => d :: q))
 
     def idFormat =
-      id[ReqCodeId].forall((_: T).idList)
+      id[ReqCodeId].forall((_: T).idSeq)
 
     def uniqueIds =
-      uniqueNonNegIntsT[List, ReqCodeId]("IDs").contramap[T](_.idList)
+      uniqueNonNegIntsT[ArraySeq, ReqCodeId]("IDs").contramap[T](_.idSeq)
 
     val all =
       (branchesMustBranch ∧ allData ∧ uniqueIds ∧ idFormat) rename "ReqCodes"
@@ -457,9 +439,9 @@ object DataProp {
     } rename "AnyAtom"
 
     lazy val anyText: Prop[Text.AnyOptional] =
-      anyAtom.forallF[Vector] ∧ nonEmptyText.forallF[Option].contramap(NonEmptyVector.option)
+      anyAtom.forallF[ArraySeq] ∧ nonEmptyText.forallF[Option].contramap(NonEmptyArraySeq.option)
 
-    lazy val anyTextV: Prop[Vector[Text.AnyOptional]] = anyText.forallF
+    lazy val anyTextV: Prop[ArraySeq[Text.AnyOptional]] = anyText.forallF
 
     val anyTextI: Prop[Iterator[Text.AnyOptional]] = anyText.forallF
   }
@@ -700,14 +682,14 @@ object DataProp {
       ( validReqTypeIds("Pubid keys",                       _.content.reqs.pubids.value.m.keys)
       ∧ validReqIds    ("ReqCode ReqIds (active)",          _.content.reqCodes.activeReqCodesByReqId.keys)
       ∧ validReqIds    ("ReqCode ReqIds (inactive)",        _.content.reqCodes.inactiveIdsByReqId.keys)
-      ∧ validFieldIds  ("ReqData.text TextField ids",       _.content.reqText.keys)
-      ∧ validReqIds    ("ReqData.text.*.reqIds",            _.content.reqText.valuesIterator.flatMap(_.keysIterator))
+      ∧ validFieldIds  ("ReqData.text TextField ids",       _.content.reqText.data.keys)
+      ∧ validReqIds    ("ReqData.text.*.reqIds",            _.content.reqText.data.valuesIterator.flatMap(_.keysIterator))
       ∧ validReqIds    ("ReqData.config.tags keys",         _.content.reqTags.keys)
       ∧ validTagIds    ("ReqData.config.tags values",       _.content.reqTags.valueIterator)
       ∧ validReqIds    ("ReqData.implications",             _.content.implications.members)
       ∧ validReqIds    ("Atoms: ReqRefs",                   _.atomScan.reqRefs)
-      ∧ validReqCodeIds("Atoms: CodeRefs",                  _.atomScan.codeRefs)
-      ∧ validUCStepIds ("Atoms: UseCaseStepRefs",           _.atomScan.useCaseStepRefs)
+      ∧ validReqCodeIds("Atoms: CodeRefs",                  _.content.codeRefs)
+      ∧ validUCStepIds ("Atoms: UseCaseStepRefs",           _.content.useCaseStepRefs)
       ∧ validTagIds    ("Atoms: TagRefs",                   _.atomScan.tagRefs.all.all.iterator.map(_.value)) // TODO check .loc
       ∧ validIssueTypes("Atoms: Issues in reqs",            _.atomScan.issuesInReqs.all.all.map(_.value.typ))
       ∧ validIssueTypes("Atoms: Issues in RCGs",            _.atomScan.issuesInRcgs.all.all.map(_.typ))

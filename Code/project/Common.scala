@@ -30,7 +30,8 @@ object Common {
   }
 
   def scalafixEnabled =
-    !releaseMode
+    false // Disabled until Scala 2.13.2 supported
+    // !releaseMode
 
   lazy val emitSourceMapsValue: Boolean =
     System.getProperty("emitSourceMaps", "0").trim.toLowerCase match {
@@ -52,6 +53,7 @@ object Common {
     "-language:postfixOps",
     "-target:" + Dependencies.Java.major,            // Target platform for object files. ([8],9,10,11,12)
     "-unchecked",                                    // Enable additional warnings where generated code depends on assumptions.
+    "-Wconf:msg=may.not.be.exhaustive:e",            // Make non-exhaustive matches errors instead of warnings
     "-Wunused:implicits",                            // Warn if an implicit parameter is unused.
     "-Wunused:imports",                              // Warn if an import selector is not referenced.
     "-Wunused:locals",                               // Warn if a local definition is unused.
@@ -179,30 +181,7 @@ object Common {
       packageBinaryOnly,
       dockerLayerReuse,
       Dependencies.useKindProjector,
-      Dependencies.useBetterMonadicFor,
-      addCommandAliases(
-        "B"   -> "project base",
-        "BU"  -> "project base-util-jvm",
-        "BT"  -> "project base-test-jvm",
-        "T"   -> "project taskman",
-        "W"   -> "project webapp",
-        "TA"  -> "project taskman-api",
-        "TAL" -> "project taskman-api-logic",
-        "TS"  -> "project taskman-server",
-        "TSL" -> "project taskman-server-logic",
-        "WB"  -> "project webapp-base-jvm",
-        "WBM" -> "project webapp-base-member-jvm",
-        "WT"  -> "project webapp-base-test-jvm",
-        "WC"  -> "project webapp-client",
-        "WCA" -> "project webapp-client-public-js", // A for Anonymous
-        "WCB" -> "project webapp-client-base",
-        "WCH" -> "project webapp-client-home",
-        "WCP" -> "project webapp-client-project",
-        "WCW" -> "project webapp-client-ww",
-        "WSL" -> "project webapp-server-logic-jvm",
-        "WS"  -> "project webapp-server",
-        "BM"  -> "project benchmark-jvm",
-        "BMJ" -> "project benchmark-js"))
+      Dependencies.useBetterMonadicFor)
 
   /** Common settings used by standard modules - not benchmarks, not test modules */
   private def settings: Project => Project =
@@ -393,11 +372,6 @@ object Common {
     println(sep)
   }
 
-  def addCommandAliases(m: (String, String)*) = {
-    val s = m.map(p => addCommandAlias(p._1, p._2)).reduce(_ ++ _)
-    (_: Project).settings(s: _*)
-  }
-
   implicit class CrossProjectExt(val p: CrossProject) extends AnyVal {
 
     def configureBoth(fs: (Project => Project)*): CrossProject =
@@ -440,4 +414,10 @@ object Common {
 
   def propOrEnv(key: String): Option[String] =
     sys.props.get(key).orElse(sys.env.get(key))
+
+  def jprofilerAgent(wait: Boolean): String = {
+    var s = "-agentpath:/opt/jprofiler/bin/linux-x64/libjprofilerti.so=port=8849"
+    if (!wait) s += ",nowait"
+    s
+  }
 }

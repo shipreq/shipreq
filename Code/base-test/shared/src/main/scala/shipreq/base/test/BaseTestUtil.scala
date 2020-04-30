@@ -3,6 +3,7 @@ package shipreq.base.test
 import japgolly.microlibs.testutil.TestUtilInternals
 import scalaz.std.string.stringInstance
 import scalaz.{Equal, Order}
+import shipreq.base.util.Debug
 import shipreq.base.util.univeq._
 
 object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
@@ -30,6 +31,7 @@ object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
 
 trait BaseTestUtil
   extends japgolly.microlibs.testutil.TestUtilWithoutUnivEq
+  with Debug.Implicits
   with scalaz.syntax.ToEqualOps {
 
   implicit def BaseTestUtilOpsAny[A](a: A) =

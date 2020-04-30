@@ -2,6 +2,7 @@ package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
+import scala.collection.immutable.ArraySeq
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.reqtable.SavedView
@@ -218,7 +219,7 @@ object Event {
 
   object ReqsDelete {
     def one(reqId: ReqId): ReqsDelete =
-      ReqsDelete(NonEmptySet one reqId, Set.empty, Vector.empty)
+      ReqsDelete(NonEmptySet one reqId, Set.empty, ArraySeq.empty)
   }
 
   final case class ContentRestore(reqs      : Set[ReqId],

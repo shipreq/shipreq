@@ -23,9 +23,9 @@ object DetachedGenericReq {
   implicit def equality: UnivEq[DetachedGenericReq] = UnivEq.derive
 
   def extract(p: Project, id: GenericReqId): Option[DetachedGenericReq] =
-    p.content.reqs.genericReqs.get(id).map { r =>
+    p.content.reqs.genericReqs.imap.get(id).map { r =>
       val codes      = p.content.reqCodes.activeReqCodesByReqId(id)
-      val customText = ReqData.allTextForReq(id, p.content.reqText)
+      val customText = p.content.reqText.allTextForReq(id)
       val impliedBy  = p.content.implications.backwards(id)
       val implies    = p.content.implications.forwards(id)
       val tags       = p.content.reqTags(id)
@@ -46,7 +46,7 @@ object DetachedUseCase {
   def extract(p: Project, id: UseCaseId): Option[DetachedUseCase] =
     p.content.reqs.useCases.imap.get(id).map { r =>
       val codes      = p.content.reqCodes.activeReqCodesByReqId(id)
-      val customText = ReqData.allTextForReq(id, p.content.reqText)
+      val customText = p.content.reqText.allTextForReq(id)
       val impliedBy  = p.content.implications.backwards(id)
       val implies    = p.content.implications.forwards(id)
       val tags       = p.content.reqTags(id)
@@ -89,10 +89,10 @@ object ContentEventTestHelp {
                impTgts: Set[ReqId]                     = ∅) = {
     import GenericReqGD._
     var vs = emptyValues
-    NonEmptySet   .maybe(codes,   ())(vs += Codes   (_))
-    NonEmptySet   .maybe(impSrcs, ())(vs += ImpSrcs (_))
-    NonEmptySet   .maybe(impTgts, ())(vs += ImpTgts (_))
-    NonEmptyVector.maybe(title,   ())(vs += Title   (_))
+    NonEmptySet     .maybe(codes,   ())(vs += Codes   (_))
+    NonEmptySet     .maybe(impSrcs, ())(vs += ImpSrcs (_))
+    NonEmptySet     .maybe(impTgts, ())(vs += ImpTgts (_))
+    NonEmptyArraySeq.maybe(title,   ())(vs += Title   (_))
     GenericReqCreate(id, rt, vs)
   }
 
@@ -104,10 +104,10 @@ object ContentEventTestHelp {
                impTgts: Set[ReqId]                  = ∅) = {
     import UseCaseGD._
     var vs = emptyValues
-    NonEmptySet   .maybe(codes,   ())(vs += Codes   (_))
-    NonEmptySet   .maybe(impSrcs, ())(vs += ImpSrcs (_))
-    NonEmptySet   .maybe(impTgts, ())(vs += ImpTgts (_))
-    NonEmptyVector.maybe(title,   ())(vs += Title   (_))
+    NonEmptySet     .maybe(codes,   ())(vs += Codes   (_))
+    NonEmptySet     .maybe(impSrcs, ())(vs += ImpSrcs (_))
+    NonEmptySet     .maybe(impTgts, ())(vs += ImpTgts (_))
+    NonEmptyArraySeq.maybe(title,   ())(vs += Title   (_))
     UseCaseCreate(id, stepId, vs)
   }
 

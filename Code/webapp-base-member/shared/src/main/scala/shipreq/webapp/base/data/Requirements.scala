@@ -14,6 +14,7 @@ import shipreq.webapp.base.text.{Text, UseCaseStepFlowText}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.util.Must._
 import DataImplicits._
+import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
 
 /**
  * The ID of a top-level, or sub- requirement.
@@ -126,6 +127,29 @@ object GenericReq {
     case object NoImpact      extends ImplicitLiveStatus { override def live = Live }
     case object ReqTypeIsDead extends ImplicitLiveStatus { override def live = Dead }
   }
+}
+
+@Lenses
+final case class GenericReqs(imap: GenericReqIMap) {
+
+  private[data] lazy val localCodeRefs =
+    derivation.AtomScan.reqCodeRefs { f =>
+      for (gr <- imap.valuesIterator)
+        f(gr.title)
+    }
+
+  private[data] lazy val localUseCaseStepRefs =
+    derivation.AtomScan.useCaseStepRefs { f =>
+      for (gr <- imap.valuesIterator)
+        f(gr.title)
+    }
+}
+
+object GenericReqs {
+  val empty: GenericReqs =
+    apply(emptyDataMap(GenericReq))
+
+  implicit def univEq: UnivEq[GenericReqs] = UnivEq.derive
 }
 
 // =====================================================================================================================
@@ -395,6 +419,24 @@ final case class UseCases(imap: UseCaseIMap, stepIndex: UseCases.StepIndex, step
 
   def needStep(id: UseCaseStepId): UseCaseStep =
     stepIndex(id).need(imap).need(id)
+
+  private[data] lazy val localCodeRefs =
+    derivation.AtomScan.reqCodeRefs { f =>
+      for (uc <- imap.valuesIterator) {
+        f(uc.title)
+        for (s <- uc.stepIterator)
+          f(s.titleExplicitly)
+      }
+    }
+
+  private[data] lazy val localUseCaseStepRefs =
+    derivation.AtomScan.useCaseStepRefs { f =>
+      for (uc <- imap.valuesIterator) {
+        f(uc.title)
+        for (s <- uc.stepIterator)
+          f(s.titleExplicitly)
+      }
+    }
 }
 
 object UseCases {
@@ -455,7 +497,7 @@ object UseCases {
       u => Stateless(u.imap, u.stepFlow))
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
+// =====================================================================================================================
 // Collective
 
 sealed trait ReqTEquality {
@@ -467,11 +509,11 @@ object Requirements {
     ScalazMacros.deriveEqual
 
   def empty: Requirements =
-    Requirements(emptyDataMap(GenericReq), UseCases.empty, PubidRegister.empty)
+    Requirements(GenericReqs.empty, UseCases.empty, PubidRegister.empty)
 }
 
 @Lenses
-final case class Requirements(genericReqs: GenericReqIMap,
+final case class Requirements(genericReqs: GenericReqs,
                               useCases   : UseCases,
                               pubids     : PubidRegister) {
 
@@ -485,24 +527,24 @@ final case class Requirements(genericReqs: GenericReqIMap,
     View.fromIteratorProvider(() => reqIterator())
 
   def reqIterator(): Iterator[Req] =
-    genericReqs.valuesIterator ++
+    genericReqs.imap.valuesIterator ++
     useCases.imap.valuesIterator
 
   lazy val size: Int =
-    genericReqs.size + useCases.imap.size
+    genericReqs.imap.size + useCases.imap.size
 
   def getUseCaseByPos(pos: ReqTypePos): Option[UseCase] =
     pubids.getUseCaseId(pos) flatMap useCases.imap.get
 
   def get[T <: ReqTypeId](id: ReqIdT[T]): Option[ReqT[T]] =
     id match {
-      case i: GenericReqId => genericReqs.get(i)
+      case i: GenericReqId => genericReqs.imap.get(i)
       case i: UseCaseId    => useCases.imap.get(i)
     }
 
   def need[T <: ReqTypeId](id: ReqIdT[T]): ReqT[T] =
     id match {
-      case i: GenericReqId => genericReqs.need(i)
+      case i: GenericReqId => genericReqs.imap.need(i)
       case i: UseCaseId    => useCases.imap.need(i)
     }
 

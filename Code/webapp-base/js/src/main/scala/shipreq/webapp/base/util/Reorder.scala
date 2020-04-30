@@ -2,7 +2,7 @@ package shipreq.webapp.base.util
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq.UnivEq
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scalaz.Equal
 
 object Reorder {
@@ -10,10 +10,9 @@ object Reorder {
   def usingEqual[@specialized(Int) A](from: A, to: A)(as: Vector[A])(implicit e: Equal[A]): Vector[A] =
     apply(from, to, as)(e.equal)
 
-  def usingUnivEq[@specialized(Int) A](from: A, to: A)(as: Vector[A])(implicit e: UnivEq[A]): Vector[A] = {
-    val _ = e
+  @nowarn("cat=unused")
+  def usingUnivEq[@specialized(Int) A](from: A, to: A)(as: Vector[A])(implicit e: UnivEq[A]): Vector[A] =
     apply(from, to, as)(_ == _)
-  }
 
   def apply[@specialized(Int) A, @specialized(Int) B](from: A, to: A, bs: Vector[B])(equal: (A, B) => Boolean): Vector[B] = {
     val tmp = bs.iterableFactory.newBuilder[B]

@@ -14,7 +14,7 @@ object IMapBaseV {
     Equal.equalBy(_.underlyingMap)
 
   def univEq[K, VI, VO, I <: IMapBaseV[K, VI, VO, I]](implicit u: UnivEq[Map[K, VO]]): UnivEq[I] = {
-    val _ = u
+    locally(u)
     UnivEq.force
   }
 }

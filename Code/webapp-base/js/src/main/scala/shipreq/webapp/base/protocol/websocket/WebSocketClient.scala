@@ -199,7 +199,7 @@ object WebSocketClient {
       state.retries.pop match {
         case Some((retry, nextRetries)) =>
           logger.runNow(_.info(s"WebSocketClient: retry connection in ${retry.toMillis} ms..."))
-          val h = timers.setTimeout(retry.toMillis) {
+          val h = timers.setTimeout(retry.toMillis.toDouble) {
             // This bit here is Schedule in websocket_client.tla
             val i = unsafeNewInstance()
             state = state.copy(instance = i, scheduled = None)

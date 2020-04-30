@@ -163,7 +163,7 @@ object ReqTableTest extends TestSuite {
   }
 
   def testOtherTagsColumnEditor = {
-    val p = GReq(reqType = co, title = reqTitleTagRefs(v11, v13, v4x)).tag(wip, uat, v11, v1x, v3x) !
+    val p = GReq(reqType = co, title = reqTitleTagRefs(v11, v13, v4x).whole).tag(wip, uat, v11, v1x, v3x) !
       SampleProject.projectWithOtherTags
 
     val ce = cellEditor(pubid = "CO-1", col = StaticField.OtherTags.name)
@@ -184,7 +184,7 @@ object ReqTableTest extends TestSuite {
   }
 
   def testCustomTagColumnEditor = {
-    val p = GReq(reqType = co, title = reqTitleTagRefs(prod, uat3)).tag(wip, uat, v1x, v3x) !
+    val p = GReq(reqType = co, title = reqTitleTagRefs(prod, uat3).whole).tag(wip, uat, v1x, v3x) !
       SampleProject.project
 
     val ce = cellEditor(pubid = "CO-1", col = "Status")

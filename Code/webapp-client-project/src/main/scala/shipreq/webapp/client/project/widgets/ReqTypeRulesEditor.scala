@@ -13,6 +13,7 @@ import monocle.Lens
 import monocle.macros.Lenses
 import nyaya.util.Multimap
 import org.scalajs.dom.html
+import scala.annotation.nowarn
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import scalaz.std.option._
@@ -80,10 +81,9 @@ object ReqTypeRulesEditor {
         case Resolution.DefaultTo(_)  => value.legalDefault(legalOptions).map(Resolution.DefaultTo(_))
       }
 
-    def resultWhenValidI(implicit ev: D =:= Impossible): Option[FieldReqTypeRules[D]] = {
-      val _ = ev
+    @nowarn("cat=unused")
+    def resultWhenValidI(implicit ev: D =:= Impossible): Option[FieldReqTypeRules[D]] =
       resultWhenValid(Set.empty)
-    }
 
     def resultWhenValid(legalOptions: => Set[D]): Option[FieldReqTypeRules[D]] = {
       lazy val _legalOptions = legalOptions
@@ -142,7 +142,7 @@ object ReqTypeRulesEditor {
 
     implicit def reusabilityProps[D: UnivEq]: Reusability[Props[D]] = {
       implicit val a: Reusability[Vector[D]] = Reusability.byRefOrUnivEq
-      val _ = a // -Wunused:locals gets it wrong
+      locally(a) // -Wunused:locals gets it wrong
       Reusability.derive
     }
   }

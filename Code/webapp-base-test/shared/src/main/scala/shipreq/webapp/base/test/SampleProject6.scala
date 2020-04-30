@@ -44,7 +44,7 @@ object SampleProject6 {
 
   private def newTitleForUC1: Text.UseCaseTitle.OptionalText = {
     import Text.UseCaseTitle._
-    Vector(
+    apply(
       UseCaseStepRef(16),
       Literal(" and "),
       UseCaseStepRef(17),
@@ -57,7 +57,7 @@ object SampleProject6 {
 
   private def titleForUC2: Text.UseCaseTitle.OptionalText = {
     import Text.UseCaseTitle._
-    Vector(Literal("Empty for now"))
+    apply(Literal("Empty for now"))
   }
 
   private def setStepText(id: UseCaseStepId, txt: String) =

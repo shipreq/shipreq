@@ -29,6 +29,19 @@ import RandomData.{TextGen, TextGenExt, reqCode, customReqTypeName, desc, reqTyp
 import RandomEventStream.{State, ProjectDepGen}
 import ScalaExt._
 
+final case class RandomEventStreamConfig(retiredEvents: Boolean,
+                                         reqCodeEvents: Boolean,
+                                        )
+
+object RandomEventStreamConfig {
+  val default = apply(
+    retiredEvents = true,
+    reqCodeEvents = true,
+  )
+}
+
+// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+
 /** Generates a random event stream that can be successfully applied.
   *
   * This differs from the events that [[RandomData]] can generate which are only valid in isolation and often don't
@@ -97,8 +110,14 @@ object RandomEventStream extends RandomEventStreamDsl(ApplicableEventGen(_)) {
 //  def withEventStats(p: Project = Project.empty)(implicit ss: SizeSpec): Gen[(EventStats, VerifiedEvents)] =
 //    genEventStreamS(EventStats.empty, p)(EventStats.observeFn)
 
+  def withConfig(mod: RandomEventStreamConfig => RandomEventStreamConfig): RandomEventStreamDsl =
+    withConfig(mod(RandomEventStreamConfig.default))
+
+  def withConfig(cfg: RandomEventStreamConfig): RandomEventStreamDsl =
+    new RandomEventStreamDsl(ApplicableEventGen(_, cfg))
+
   val activeOnly =
-    new RandomEventStreamDsl(ApplicableEventGen(_, generateRetiredEvents = false))
+    withConfig(_.copy(retiredEvents = false))
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -151,13 +170,13 @@ sealed class RandomEventStreamDsl(applicableEventGen: State => ApplicableEventGe
 // =====================================================================================================================
 
 object ApplicableEventGen {
-  def apply(curState: State, generateRetiredEvents: Boolean = true): ApplicableEventGen =
-    new ApplicableEventGen(curState, generateRetiredEvents)
+  def apply(curState: State, config: RandomEventStreamConfig = RandomEventStreamConfig.default): ApplicableEventGen =
+    new ApplicableEventGen(curState, config)
 
   type ObserveFn[S] = (S, Event, ApplyEvent.Result) => S
 }
 
-final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) {
+final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig) {
   val p = curState._1
 
   private implicit val gss: SizeSpec = 0 to 3
@@ -267,7 +286,7 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
     RandomData.fieldReqTypeRules(existingReqTypeId, existingApplicableTagId)
 
   lazy val existingReqId: Option[Gen[ReqId]] =
-    Gen.tryGenChoose(p.content.reqs.idIterator)
+    Gen.tryGenChoose(p.content.reqs.idIterator())
 
   lazy val liveReqIds: Vector[ReqId] =
     p.content.reqs.reqIterator().filter(_.live(cfg.reqTypes) is Live).map(_.id).toVector
@@ -276,7 +295,7 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
     Gen.tryGenChoose(liveReqIds)
 
   val genericReqId: Live => Option[Gen[GenericReqId]] =
-    tryGenChooseLiveDead(l => p.content.reqs.genericReqs.valuesIterator.filter(_.live(cfg.reqTypes) is l).map(_.id))
+    tryGenChooseLiveDead(l => p.content.reqs.genericReqs.imap.valuesIterator.filter(_.live(cfg.reqTypes) is l).map(_.id))
 
   def liveUseCaseIterator: Iterator[UseCase] =
     p.content.reqs.useCases.imap.valuesIterator.filter(_.liveUC is Live)
@@ -291,7 +310,7 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
     Gen.tryGenChoose(p.content.reqs.useCases.stepIterator.map(_.id))
 
   lazy val existingReqCodeId: Option[Gen[ReqCodeId]] =
-    Gen.tryGenChoose(p.content.reqCodes.idList)
+    Gen.tryGenChoose(p.content.reqCodes.idSeq)
 
   val codeGroupId: Live => Option[Gen[ReqCodeGroupId]] =
     tryGenChooseLiveDead(l => p.content.reqCodes.groups.iterator.filter(_.live is l).map(_.id).toVector)
@@ -1048,11 +1067,16 @@ final class ApplicableEventGen(curState: State, generateRetiredEvents: Boolean) 
       case _: FieldCustomTextUpdateV1 => EventName("FieldCustomTextUpdateV1") -> genFieldCustomTextUpdateV1
     }
 
-  private val possibleEventGensWithNames: NonEmptyVector[(EventName, Option[Gen[Event]])] =
-    if (generateRetiredEvents)
-      possibleActiveEventGensWithNames ++ possibleRetiredEventGensWithNames
-    else
-      possibleActiveEventGensWithNames
+  private val possibleEventGensWithNames: NonEmptyVector[(EventName, Option[Gen[Event]])] = {
+    var es =
+      if (config.retiredEvents)
+        possibleActiveEventGensWithNames ++ possibleRetiredEventGensWithNames
+      else
+        possibleActiveEventGensWithNames
+    if (!config.reqCodeEvents)
+      es = NonEmptyVector.force(es.whole.filterNot(_._1.value.contains("Code")))
+    es
+  }
 
   private val possibleEventGens: NonEmptyVector[Option[Gen[Event]]] =
     possibleEventGensWithNames.map(_._2)

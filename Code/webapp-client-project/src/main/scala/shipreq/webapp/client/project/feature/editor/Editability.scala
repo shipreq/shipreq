@@ -40,7 +40,7 @@ object Editability {
   final case class ForReqs(cfg: ProjectConfig, reqs: Requirements) {
 
     def apply(id: GenericReqId): ForGenericReq = {
-      val req: GenericReq = reqs.genericReqs.need(id)
+      val req: GenericReq = reqs.genericReqs.imap.need(id)
       req.live(cfg.reqTypes) match {
         case Live => ForGenericReq(Some((cfg, req.reqTypeId)))
         case Dead => ForGenericReq(None)

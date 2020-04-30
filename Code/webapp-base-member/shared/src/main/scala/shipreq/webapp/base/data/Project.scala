@@ -9,9 +9,9 @@ import monocle.macros.Lenses
 import monocle.std.option.pSome
 import nyaya.util.Multimap
 import scalaz.Equal
-import scalaz.std.anyVal.intInstance
 import shipreq.base.util._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.issue.{Issue, IssueTracker}
 
 object Project {
@@ -48,7 +48,8 @@ object Project {
   val reqtableViewTraversal: Traversal[Project, reqtable.View] =
     reqtableViewsNE ^|->> reqtable.SavedViews.NonEmpty.traversalSavedView ^|-> reqtable.SavedView.view
 
-  implicit lazy val equality: Equal[Project] = ScalazMacros.deriveEqual
+  implicit lazy val equality: Equal[Project] =
+    ScalazMacros.deriveEqual
 
   // Not allowed by validator.
   // This ensures that initial ProjectNameSet events (generated on project creation) apply instead of being discarded
@@ -58,21 +59,21 @@ object Project {
 
   val empty: Project =
     Project(
-      emptyProjectName,
-      ProjectConfig.empty,
-      ProjectContent.empty,
-      ManualIssues.empty,
-      reqtable.SavedViews.empty,
-      IdCeilings.zero)
+      name            = emptyProjectName,
+      config          = ProjectConfig.empty,
+      content         = ProjectContent.empty,
+      manualIssues    = ManualIssues.empty,
+      reqtableViews   = reqtable.SavedViews.empty,
+      idCeilings      = IdCeilings.zero)
 }
 
 @Lenses
-final case class Project(name         : Project.Name,
-                         config       : ProjectConfig,
-                         content      : ProjectContent,
-                         manualIssues : ManualIssues,
-                         reqtableViews: reqtable.SavedViews.Optional,
-                         idCeilings   : IdCeilings) {
+final case class Project(name           : Project.Name,
+                         config         : ProjectConfig,
+                         content        : ProjectContent,
+                         manualIssues   : ManualIssues,
+                         reqtableViews  : reqtable.SavedViews.Optional,
+                         idCeilings     : IdCeilings) {
 
   override def toString =
     s"Project($idCeilings)"
@@ -85,19 +86,19 @@ final case class Project(name         : Project.Name,
     deadReqIds.size
 
   lazy val reqTypeCount: LiveDeadStatMap[ReqTypeId, Int] = {
-    val b = new LiveDeadStatMap.Builder[ReqTypeId, Int]
+    val b = LiveDeadStatMap.Builder.ofInts[ReqTypeId]()
 
     // Add reqs
     for (r <- content.reqs.reqIterator()) {
       val live = r.live(config.reqTypes)
-      b(r.reqTypeId).mod(live)(_ + 1)
+      b(r.reqTypeId).add(live, 1)
     }
 
     // Add ex-reqs
     for (reqTypeId <- config.reqTypes.custom.keys) {
       val exs = content.reqs.exReqs(reqTypeId)
       if (exs.nonEmpty)
-        b(reqTypeId).mod(Dead)(_ + exs.size)
+        b(reqTypeId).add(Dead, exs.size)
     }
 
     b.result()
@@ -109,16 +110,15 @@ final case class Project(name         : Project.Name,
 
   lazy val issues = IssueTracker(this).issues
 
-  lazy val reverseDependencies = new ReverseDependencies(atomScan, content.reqs.useCases)
-
-  def deletionMethodForUseCaseStep(id: UseCaseStepId): DeletionMethod = {
-    val f = content.reqs.useCases.focusStep(id)
-    DeletionMethod.Hard.when(
-      f.step.titleExplicitly.isEmpty &&
-      reverseDependencies.useCaseStepId(id).isEmpty &&
-      f.subtree.children.forall(n => deletionMethodForUseCaseStep(n.value.id) is DeletionMethod.Hard)
-    )
-  }
+  def deletionMethodForUseCaseStep(id: UseCaseStepId): DeletionMethod =
+    DeletionMethod.Hard.unless {
+      val f           = content.reqs.useCases.focusStep(id)
+      def hasTitle    = f.step.titleExplicitly.nonEmpty
+      def childNeeded = f.subtree.children.exists(n => deletionMethodForUseCaseStep(n.value.id) is DeletionMethod.Soft)
+      def hasFlow     = Direction.exists(content.reqs.useCases.stepFlow(_).valuesIterator.exists(_.contains(id)))
+      def refdInText  = content.useCaseStepRefs.contains(id)
+      hasTitle || childNeeded || hasFlow || refdInText
+    }
 
   private lazy val conflictingTagsPerReq: Multimap[ReqId, Set, ApplicableTagId] = {
     var m = Multimap.empty[ReqId, Set, ApplicableTagId]

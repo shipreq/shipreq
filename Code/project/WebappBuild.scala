@@ -51,8 +51,7 @@ object WebappBuild {
         webappServer)
       .settings(
         jsSizesFast := jsSizesTask(Stage.FastOpt).value,
-        jsSizesFull := jsSizesTask(Stage.FullOpt).value,
-        addCommandAlias("jsSizes", ";jsSizesFast;jsSizesFull"))
+        jsSizesFull := jsSizesTask(Stage.FullOpt).value)
 
   lazy val webappMacroJvm = webappMacro.jvm
   lazy val webappMacroJs  = webappMacro.js
@@ -301,14 +300,6 @@ object WebappBuild {
           javaOptions   in Jetty ++= DockerEnv.dev.javaOptions("webapp", baseDirectory.value),
           start         in Jetty  := (start in Jetty).dependsOn(DockerEnv.dev.devEnvStart).value)
 
-    def webappCmdAliases: Project => Project = {
-      val w = "webapp-server"
-      addCommandAliases(
-        "js" -> s"$w/webappPrepare",               // compile JavaScript
-        "up" -> s";$w/jetty:stop ;$w/jetty:start", // webapp Up
-        "d"  -> s"$w/jetty:stop")                  // webapp Down
-    }
-
     def definition: Project => Project = _
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
       .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm)
@@ -320,7 +311,6 @@ object WebappBuild {
         (LibJetty.webapp % Test))
       .configure(
         Common.jvmSettings,
-        webappCmdAliases,
         assetSettings,
         testSettings,
         connectToDockerDevEnv,
@@ -333,7 +323,7 @@ object WebappBuild {
           // "-XX:+BootstrapJVMCI",
           //"-XX:-TieredCompilation",
           //"-XX:+EagerJVMCI",
-          // "-agentpath:/opt/jprofiler10/bin/linux-x64/libjprofilerti.so=port=8849,nowait",
+          // jprofilerAgent(wait = false),
           "-Xmx1g",
           "-XX:+UseG1GC"), // TODO use everywhere then including tests
         initialCommands += consoleCmds,

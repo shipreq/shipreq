@@ -2,7 +2,7 @@ package shipreq.webapp.base.event
 
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{DataValidators => V, _}
-import ApplyEventLib._, SE.SE
+import ApplyEventLib._
 import Event._
 
 trait ApplyOtherEvent {
@@ -11,19 +11,19 @@ trait ApplyOtherEvent {
   object OtherEvents {
     val validateProjectName = validateA(V.projectName)
 
-    def applyProjectNameSet(e: ProjectNameSet): SE[Unit] =
-      validateProjectName(e.name) >>= (name =>
-        SE.mod(Project.name.set(name)))
+    def applyProjectNameSet(e: ProjectNameSet): Eval[Unit] =
+      validateProjectName(e.name).flatMap(name =>
+        Eval.mod(Project.name.set(name)))
   }
 
   // ===================================================================================================================
 
   object ManualIssueEvents {
 
-    def applyCreate(e: ManualIssueCreate): SE[Unit] = {
+    def applyCreate(e: ManualIssueCreate): Eval[Unit] = {
 
-      def validateDoesntExist: SE[Unit] =
-        SE.test(
+      def validateDoesntExist: Eval[Unit] =
+        Eval.tests(
           !_.manualIssues.imap.containsK(e.id),
           s"${show(e.id)} already exists.")
 
@@ -39,18 +39,18 @@ trait ApplyOtherEvent {
       } yield ()
     }
 
-    private def validateExists(id: ManualIssueId): SE[Unit] =
-      SE.test(
+    private def validateExists(id: ManualIssueId): Eval[Unit] =
+      Eval.tests(
         _.manualIssues.imap.containsK(id),
         s"${show(id)} not found.")
 
-    def applyUpdate(e: ManualIssueUpdate): SE[Unit] =
+    def applyUpdate(e: ManualIssueUpdate): Eval[Unit] =
       for {
         _ <- whenUntrusted(validateExists(e.id))
         _ <- Project.manualIssues.modify(_.modIMap(_ + ManualIssue(e.id, e.text)))
       } yield ()
 
-    def applyDelete(e: ManualIssueDelete): SE[Unit] =
+    def applyDelete(e: ManualIssueDelete): Eval[Unit] =
       for {
         _ <- whenUntrusted(validateExists(e.id))
         _ <- Project.manualIssues.modify(_.modIMap(_ - e.id))
@@ -80,20 +80,20 @@ trait ApplyOtherEvent {
 
     private val updateIdCeiling = updateIdCeilingFn(IdCeilings.reqtableView)
 
-    private def validateName(subject: Option[SavedView.Id], newName: SavedView.Name)(implicit trust: Trust): SE[SavedView.Name] =
+    private def validateName(subject: Option[SavedView.Id], newName: SavedView.Name)(implicit trust: Trust): Eval[SavedView.Name] =
       if (trust is Trusted)
-        SE.ret(newName)
+        Eval.pure(newName)
       else
-        SE.get.flatMap { p =>
+        Eval.get.flatMap { p =>
           val state = SavedView.Name.State(subject, p.reqtableViews)
           val validate = validateI(SavedView.Name.validator(state))(_.value)
           validate(newName)
         }
 
-    def applyCreate(e: SavedViewCreate): SE[Unit] = {
+    def applyCreate(e: SavedViewCreate): Eval[Unit] = {
 
-      def validateId: SE[Unit] =
-        SE.test(
+      def validateId: Eval[Unit] =
+        Eval.tests(
           _.reqtableViewIterator.forall(_.id !=* e.id),
           s"${show(e.id)} already exists.")
 
@@ -117,21 +117,21 @@ trait ApplyOtherEvent {
 
     private def notFound(id: SavedView.Id) = s"${show(id)} not found."
 
-    def applyUpdate(e: SavedViewUpdate): SE[Unit] =
-      optionalModSE(Project.reqtableView(e.id), notFound(e.id))(
+    def applyUpdate(e: SavedViewUpdate): Eval[Unit] =
+      optionalModEval(Project.reqtableView(e.id), notFound(e.id))(
         updateValues(e.vs))
 
-    def applyDefaultSet(e: SavedViewDefaultSet): SE[Unit] =
-      optionalModSE(Project.reqtableViewsNE, notFound(e.id)) { ne =>
-        val get: SE[SavedView] =
+    def applyDefaultSet(e: SavedViewDefaultSet): Eval[Unit] =
+      optionalModEval(Project.reqtableViewsNE, notFound(e.id)) { ne =>
+        val get: Eval[SavedView] =
           if (trust is Untrusted)
-            optionGet(ne.nonDefault.get(e.id), notFound(e.id))
+            Eval.some(ne.nonDefault.get(e.id), notFound(e.id))
           else
-            SE ret ne.nonDefault.need(e.id)
+            Eval.pure(ne.nonDefault.need(e.id))
         get.map(SavedViews.NonEmpty(_, ne.nonDefault - e.id + ne.default))
       }
 
-    def applyDelete(e: SavedViewDelete): SE[Unit] = {
+    def applyDelete(e: SavedViewDelete): Eval[Unit] = {
 
       def delDefault(ne: SavedViews.NonEmpty): SavedViews.Optional =
         if (ne.nonDefault.isEmpty)
@@ -146,9 +146,9 @@ trait ApplyOtherEvent {
         Some(ne.copy(nonDefault = ne.nonDefault - e.id))
 
       for {
-        p      <- SE.get
-        svs    <- optionGet(p.reqtableViews, notFound(e.id))
-        _      <- whenUntrusted(optionGet(svs.get(e.id), notFound(e.id)).void)
+        p      <- Eval.get
+        svs    <- Eval.some(p.reqtableViews, notFound(e.id))
+        _      <- whenUntrusted(Eval.some(svs.get(e.id), notFound(e.id)).void)
         result = if (svs.default.id ==* e.id) delDefault(svs) else delNonDefault(svs)
         _      <- Project.reqtableViews.set(result)
       } yield ()

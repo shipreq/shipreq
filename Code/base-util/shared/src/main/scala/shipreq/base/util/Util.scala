@@ -107,20 +107,6 @@ object Util {
   def nextElement[A: UnivEq](as: Vector[A])(a: A): A =
     as((as.indexOf(a) + 1) % as.length)
 
-  def mapReduce[A, B](as: IterableOnce[A], whenEmpty: => B)(map: A => B, reduce: (B, B) => B): B =
-    mapReduceB(as, whenEmpty)(map, map)(reduce)
-
-  def mapReduceB[A, B, C](as: IterableOnce[A], whenEmpty: => C)(mapFirst: A => C, map: A => B)(reduce: (C, B) => C): C = {
-    val it = as.iterator
-    if (it.hasNext) {
-      var r = mapFirst(it.next())
-      while (it.hasNext)
-        r = reduce(r, map(it.next()))
-      r
-    } else
-      whenEmpty
-  }
-
   /**
    * Fit an index within the acceptable window of indices.
    *

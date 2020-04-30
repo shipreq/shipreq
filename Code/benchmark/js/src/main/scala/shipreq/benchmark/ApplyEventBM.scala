@@ -23,10 +23,12 @@ object ApplyEventBM {
 
   object Method {
     case object Trusted extends Method(ApplyEvent.trusted)
-    case object Untrusted extends Method(ApplyEvent.untrusted)
+
+    // Speed of untrusted doesn't really matter. It only ever does one event at a time.
+    // case object Untrusted extends Method(ApplyEvent.untrusted)
 
     lazy val all      = AdtMacros.adtValues[Method]
-    lazy val guiParam = GuiParam.`enum`("Method", all.whole.sortBy(_.name): _*)(_.name, initialValues = Seq(Trusted))
+    lazy val guiParam = GuiParam.`enum`("Method", all.whole.sortBy(_.name): _*)(_.name)
   }
 }
 

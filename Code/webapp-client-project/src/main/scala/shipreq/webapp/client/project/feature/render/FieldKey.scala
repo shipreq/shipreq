@@ -6,6 +6,7 @@ import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.client.project.lib.DataReusability._
 
 /**

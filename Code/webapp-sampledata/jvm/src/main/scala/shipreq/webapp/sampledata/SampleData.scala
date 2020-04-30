@@ -7,7 +7,7 @@ import scala.io.{Codec, Source}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.protocol.json.v1.Rev1.decoderEvent
 
-final case class SampleData(name: String, events: Vector[Event]) extends AbstractSampleData(name, events)
+final case class SampleData(meta: SampleDataMeta, events: Vector[Event]) extends AbstractSampleData(meta, events)
 
 object SampleData extends SampleDataManifest[SampleData] {
 
@@ -16,12 +16,20 @@ object SampleData extends SampleDataManifest[SampleData] {
     parse(jsonStr).getOrThrow()
   }
 
-  override protected def load(filename: String): SampleData = {
+  override protected def load(meta: SampleDataMeta): SampleData = {
     val events: Vector[Event] =
-      loadJsonFromResource(filename)
+      loadJsonFromResource(meta.filename)
         .as[Vector[Event]]
         .getOrThrow()
 
-    SampleData(filename, events)
+    SampleData(meta, events)
+  }
+
+  lazy val errors: List[String] =
+    all.iterator.flatMap(_.errors).toList
+
+  def assertAllValid(): Unit = {
+    if (errors.nonEmpty)
+      throw new AssertionError(errors.mkString("\n"))
   }
 }

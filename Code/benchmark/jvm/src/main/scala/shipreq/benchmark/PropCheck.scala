@@ -12,7 +12,7 @@ import shipreq.webapp.sampledata.SampleData
 class PropCheck {
 
   val prop = DataProp.project.allIncludingConfig
-  val p  = SampleData.`1000`.project
+  val p  = SampleData.full.`10000`.project
 
   @Benchmark
   def eval = prop(p)

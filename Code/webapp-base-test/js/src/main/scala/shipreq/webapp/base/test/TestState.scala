@@ -7,8 +7,8 @@ import japgolly.scalajs.react.vdom.html_<^.VdomAttr
 import org.scalajs.dom.html
 import scalacss.internal.StyleA
 import teststate.domzipper.DomZipperJsF.Dom
-import shipreq.base.util.DebugImplicits
 import teststate.run.Report.AssertionSettings
+import shipreq.base.util.Debug
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.lib.DomUtil._
 
@@ -18,7 +18,7 @@ object TestState
     with teststate.ExtNyaya
     with teststate.ExtScalaJsReact
     with teststate.ExtScalaz
-    with DebugImplicits {
+    with Debug.Implicits {
 
   type Id[A] = A
 

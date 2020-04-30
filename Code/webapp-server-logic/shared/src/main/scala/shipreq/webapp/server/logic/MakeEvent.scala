@@ -108,12 +108,12 @@ object MakeEvent {
         FieldCustomTagCreate(id, c.tagId, gdAllValues(CustomTagFieldGD, "c"))
 
       case c: UpdateConfigCmd.CustomFieldCreateText =>
-        val _ = c // used by macros
+        locally(c) // used by macros
         val id = CustomField.Text.Id(nextId)
         FieldCustomTextCreate(id, gdAllValues(CustomTextFieldGD, "c"))
 
       case UpdateConfigCmd.CustomFieldUpdateImp(id, vs) =>
-        val _ = vs // used by macros
+        locally(vs) // used by macros
         project.config.fields.customAttempt(id) toMakeEventResult { cur =>
           val vs2 = gdUnequalValues2(CustomImpFieldGD, cur, vs)
           eventIfNonEmpty(vs2)(FieldCustomImpUpdate(id, _))
@@ -319,7 +319,7 @@ object MakeEvent {
     val nextCodeId = reqCodeIdCounter(project)
     cmd match {
       case CreateContentCmd.CreateCodeGroup(code, title) =>
-        val _ = title // used by macros
+        locally(title) // used by macros
 
         def makeEvent(id: ReqCodeGroupId) =
           Success(CodeGroupCreate(id, gdAllValues(CodeGroupGD, "")))
@@ -347,7 +347,7 @@ object MakeEvent {
         for (v <- NonEmptySet.option(i.imps(Backwards))) vs += GenericReqGD.ImpSrcs(v)
         for (v <- NonEmptySet.option(i.imps(Forwards)))  vs += GenericReqGD.ImpTgts(v)
         for (v <- NonEmptySet.option(i.tags))            vs += GenericReqGD.Tags(v)
-        for (v <- NonEmptyVector.option(i.title))        vs += GenericReqGD.Title(v)
+        for (v <- NonEmptyArraySeq.option(i.title))      vs += GenericReqGD.Title(v)
         val id = GenericReqId(project.idCeilings.req + 1)
         GenericReqCreate(id, i.reqType, vs)
 
@@ -362,7 +362,7 @@ object MakeEvent {
         for (v <- NonEmptySet.option(i.imps(Backwards))) vs += UseCaseGD.ImpSrcs(v)
         for (v <- NonEmptySet.option(i.imps(Forwards)))  vs += UseCaseGD.ImpTgts(v)
         for (v <- NonEmptySet.option(i.tags))            vs += UseCaseGD.Tags(v)
-        for (v <- NonEmptyVector.option(i.title))        vs += UseCaseGD.Title(v)
+        for (v <- NonEmptyArraySeq.option(i.title))      vs += UseCaseGD.Title(v)
         val id = UseCaseId(project.idCeilings.req + 1)
         val stepId = UseCaseStepId(project.idCeilings.useCaseStep + 1)
         UseCaseCreate(id, stepId, vs)

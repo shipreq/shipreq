@@ -7,9 +7,10 @@ import nyaya.gen._
 import nyaya.util._
 import nyaya.test.PropTest._
 import org.parboiled2._
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import scala.util.{Try, Failure, Success}
+import scala.collection.immutable.ArraySeq
+import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 import scalaz.Equal
 import utest._
 import shipreq.base.util.ScalaExt._
@@ -19,6 +20,7 @@ import shipreq.webapp.base.test.{ProjectDsl, UnsafeTypes}
 import shipreq.webapp.base.test.{SampleProject6 => SP}
 import shipreq.webapp.base.test.WebappTestUtil._
 import Atom.AnyAtom
+import shipreq.base.util.NonEmptyArraySeq
 
 object ParsersTest extends TestSuite {
 
@@ -61,7 +63,7 @@ object ParsersTest extends TestSuite {
         .toList
 
     val customTextFieldValues =
-      p.content.reqText.values.iterator.flatMap(_.values).toList
+      p.content.reqText.data.values.iterator.flatMap(_.values).toList
 
     def cmp[A <: AnyAtom](t: => String, actual0: Iterable[A], expect0: Iterable[A]): EvalL = {
 
@@ -175,9 +177,8 @@ object ParsersTest extends TestSuite {
     GReq(reqType = co, title = "be good").code("co1").code("here.i.am_3") !
     SP.project
   }
-  @inline val V = Vector
-  @inline def NEV[A](h: A, t: A*) = NonEmptyVector(h, t: _*)
-  @inline def LI[A <: AnyAtom](as: A*) = as.toVector
+  @inline def NEA[A: ClassTag](h: A, t: A*) = NonEmptyArraySeq(h, t: _*)
+  @inline def LI[A <: AnyAtom: ClassTag](as: A*) = as.to(ArraySeq)
   @inline def L(s: String) = T.Literal(s)
 
   val reqCode_co2      = ApReqCodeId(9)
@@ -219,8 +220,8 @@ object ParsersTest extends TestSuite {
       import SP.Values._
       import UnsafeTypes._
 
-      def testT[A <: AnyAtom](p: Project, parse: Project => String => Vector[A], text: String)(as: A*): Unit = {
-        val e = as.toVector
+      def testT[A <: AnyAtom: ClassTag](p: Project, parse: Project => String => ArraySeq[A], text: String)(as: A*): Unit = {
+        val e = as.to(ArraySeq)
         assertEq(quoteStringForDisplay(preprocessStr(text, MultiLine)), parse(p)(text), e)
 
 //        def x[B](as: Vector[B]) = as.mkString("\n")
@@ -245,19 +246,19 @@ object ParsersTest extends TestSuite {
 
       "hashHashHash" -
         test("#v1.x#v1.0#TBD#TBD{ whatever}#pri=high")(
-          T.TagRef(21), T.TagRef(22), T.Issue(2, V.empty), T.Issue(2, Vector(I.Literal("whatever"))), T.TagRef(2))
+          T.TagRef(21), T.TagRef(22), T.Issue(2, I.empty), T.Issue(2, I(I.Literal("whatever"))), T.TagRef(2))
 
       "innerBraceInIssueDesc" -
-        test(s"#TBD{ <${Grammar.texTag}>\\frac{22}</${Grammar.texTag}> }")(T.Issue(2, Vector(I.TeX("\\frac{22}"))))
+        test(s"#TBD{ <${Grammar.texTag}>\\frac{22}</${Grammar.texTag}> }")(T.Issue(2, I(I.TeX("\\frac{22}"))))
 
       "whitespace" - {
         "empty"   - test("    ")()
         "lit"     - test("  hehe  ")(L("hehe"))
         "email"   - test("  asd@abc.com  ")(T.EmailAddress("asd@abc.com"))
-        "li"      - test("*     hehe    \n*     yay    ")(T.UnorderedList(NEV(LI(L("hehe")), LI(L("yay")))))
+        "li"      - test("*     hehe    \n*     yay    ")(T.UnorderedList(NEA(LI(L("hehe")), LI(L("yay")))))
         "nl"      - test("here\nthere")(L("here"), T.blankLine, L("there"))
         "nls"     - test("here \n \n\n there")(L("here"), T.blankLine, L("there"))
-        "listNL"  - test("ok\n\n\n*   hehe \n \n\n  \n *  yay \n\n\nbye")(L("ok"), T.UnorderedList(NEV(LI(L("hehe")), LI(L("yay")))), L("bye"))
+        "listNL"  - test("ok\n\n\n*   hehe \n \n\n  \n *  yay \n\n\nbye")(L("ok"), T.UnorderedList(NEA(LI(L("hehe")), LI(L("yay")))), L("bye"))
         "codeRef" - test("[ here . i . am_3 ]")(T.CodeRef(reqCode_hereiam3))
         "headNL"  - whitespaceCombos.foreach(w => test(w + "good")(T.Literal("good")))
         "tailNL"  - whitespaceCombos.foreach(w => test("good" + w)(T.Literal("good")))
@@ -281,13 +282,13 @@ object ParsersTest extends TestSuite {
       }
 
       "list" - {
-        "empty" - test("* ")(T.UnorderedList(NEV(LI())))
-        "empties" - test("* \n* ")(T.UnorderedList(NEV(LI(), LI())))
+        "empty" - test("* ")(T.UnorderedList(NEA(LI())))
+        "empties" - test("* \n* ")(T.UnorderedList(NEA(LI(), LI())))
         "mid" - test("a* b")(L("a* b"))
-        "between" - test("before\n* mid\nafter")(L("before"), T.UnorderedList(NEV(LI(L("mid")))), L("after"))
-        "between2" - test("before\n* mid\n after")(L("before"), T.UnorderedList(NEV(LI(L("mid"), T.blankLine, L("after")))))
-        "between3" - test("before\n* mid \n\n \n after")(L("before"), T.UnorderedList(NEV(LI(L("mid"), T.blankLine, L("after")))))
-        "between4" - test("before\n* mid\n     \n\n      \nafter")(L("before"), T.UnorderedList(NEV(LI(L("mid")))), L("after"))
+        "between" - test("before\n* mid\nafter")(L("before"), T.UnorderedList(NEA(LI(L("mid")))), L("after"))
+        "between2" - test("before\n* mid\n after")(L("before"), T.UnorderedList(NEA(LI(L("mid"), T.blankLine, L("after")))))
+        "between3" - test("before\n* mid \n\n \n after")(L("before"), T.UnorderedList(NEA(LI(L("mid"), T.blankLine, L("after")))))
+        "between4" - test("before\n* mid\n     \n\n      \nafter")(L("before"), T.UnorderedList(NEA(LI(L("mid")))), L("after"))
 
         "newlines" - test(
           """
@@ -314,7 +315,7 @@ object ParsersTest extends TestSuite {
             |
             |yo
             |""".stripMargin)(
-          T.UnorderedList(NEV(
+          T.UnorderedList(NEA(
             LI(L("a1"), T.blankLine, L("a2")),
             LI(L("b")),
             LI(L("c1"), T.blankLine, L("c2"), T.blankLine, L("c3")),
@@ -343,12 +344,12 @@ object ParsersTest extends TestSuite {
             |* ok
             |ah
             |""".stripMargin)(
-          T.UnorderedList(NEV(
+          T.UnorderedList(NEA(
             LI(L("a1"), T.blankLine, L("a2"), T.blankLine, L("a3")),
             LI(L("b")),
           )),
           L("omg"),
-          T.UnorderedList(NEV(
+          T.UnorderedList(NEA(
             LI(L("c1"), T.blankLine, L("c2"), T.blankLine, L("c3")),
             LI(L("d1"), T.blankLine, L("*d2")),
             LI(L("e1"), T.blankLine, L("e2")),
@@ -377,19 +378,19 @@ object ParsersTest extends TestSuite {
             |U
             |""".stripMargin)(
           L("Q"),
-          T.UnorderedList(NEV(
+          T.UnorderedList(NEA(
             LI(L("A")),
             LI(L("B")),
             LI(L("C")),
           )),
           L("R"),
-          T.UnorderedList(NEV(
+          T.UnorderedList(NEA(
             LI(L("A")),
             LI(L("B")),
             LI(L("C")),
           )),
           L("S"),
-          T.UnorderedList(NEV(
+          T.UnorderedList(NEA(
             LI(L("A")),
             LI(L("B")),
             LI(L("C")),
@@ -465,7 +466,7 @@ object ParsersTest extends TestSuite {
             |   ahh
             |noice
             |""".stripMargin.trim)(
-          T.UnorderedList(NEV(
+          T.UnorderedList(NEA(
             LI(T.CodeBlock(None, "ok\n\n  great")),
             LI(T.CodeBlock(None, "  hey")),
             LI(L("cool"), T.CodeBlock(None, "  good job, me")),
@@ -487,7 +488,7 @@ object ParsersTest extends TestSuite {
             |```
             | done
             |""".stripMargin.trim)(
-          T.UnorderedList(NEV(
+          T.UnorderedList(NEA(
             LI(L("right"), T.CodeBlock(None, "inner")),
           )),
           T.CodeBlock(None, "outer"),
@@ -498,7 +499,7 @@ object ParsersTest extends TestSuite {
           "```\nasd\n```\n* "
         )(
           T.CodeBlock(None, "asd"),
-          T.UnorderedList(NEV(LI())),
+          T.UnorderedList(NEA(LI())),
         )
 
         "empty" - test(
@@ -526,7 +527,7 @@ object ParsersTest extends TestSuite {
         )(
           T.CodeBlock(None, ""),
           T.CodeBlock(None, ""),
-          T.UnorderedList(NEV(
+          T.UnorderedList(NEA(
             LI(T.CodeBlock(None, "")),
             LI(L("here"), T.CodeBlock(None, ""), L("ok")),
           )),
@@ -579,7 +580,7 @@ object ParsersTest extends TestSuite {
         "weird" - test(
           "* ```\n  \u00a0\n  ```"
         )(
-          T.UnorderedList(NEV(
+          T.UnorderedList(NEA(
             LI(T.CodeBlock(None, "\u00a0")),
           )),
         )
@@ -599,8 +600,8 @@ object ParsersTest extends TestSuite {
             |""".stripMargin.replace("!", "")
         )(
           T.CodeBlock(Some("js"), "// here we go"),
-          T.UnorderedList(NEV(
-            LI(T.CodeBlock(Some("tla"), """x = /\ \/ /\ \/ /\ \/ \/ /\""" + "\n    ...")),
+          T.UnorderedList(NEA(
+            LI(T.CodeBlock(Some("tla"), """x = /\ \/ /\ \/ /\ \/ """ + """\/ /\""" + "\n    ...")),
           )),
         )
       }
@@ -651,7 +652,7 @@ object ParsersTest extends TestSuite {
         "req" - test("[fr1][fr 1][ fr - 2 ][Mf-1 ]")(T.ReqRef(frs(1)), T.ReqRef(frs(1)), T.ReqRef(frs(2)), T.ReqRef(mfs(1)))
         "tag" - test("#wip#DEFER#V3.x")(T.TagRef(11), T.TagRef(12), T.TagRef(26))
         "issue" - test("#tbd{cool}#Todo#TBD { nice }")(
-          T.Issue(2, Vector(I.Literal("cool"))), T.Issue(1, Vector.empty), T.Issue(2, Vector(I.Literal("nice"))))
+          T.Issue(2, I(I.Literal("cool"))), T.Issue(1, I.empty), T.Issue(2, I(I.Literal("nice"))))
       }
 
       "ambiguity" - {

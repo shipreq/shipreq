@@ -10,6 +10,7 @@ import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.feature.{AsyncFeature, DragToReorderFeature, TableNavigationFeature}
 import shipreq.webapp.base.lib.DomUtil._
@@ -228,7 +229,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
     implicit final val reusabilityProps: Reusability[Props] = {
       implicit val a = reusabilityRowEditor
-      val _ = a // -Wunused:locals gets it wrong
+      locally(a) // -Wunused:locals gets it wrong
       Reusability.derive
     }
 

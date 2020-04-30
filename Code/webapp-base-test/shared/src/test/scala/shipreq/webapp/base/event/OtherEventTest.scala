@@ -106,7 +106,7 @@ object OtherEventTest extends TestSuite {
   private implicit def autoManualIssueId(i: Int) = ManualIssueId(i)
 
   private implicit def autoManualIssueText(s: String): Text.ManualIssue.NonEmptyText =
-    NonEmptyVector(Text.ManualIssue.Literal(s))
+    Text.ManualIssue.nonEmpty(Text.ManualIssue.Literal(s))
 
   override def tests = Tests {
 

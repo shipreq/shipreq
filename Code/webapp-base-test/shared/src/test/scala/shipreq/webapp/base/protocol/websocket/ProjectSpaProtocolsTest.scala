@@ -280,7 +280,7 @@ object ProjectSpaProtocolsTest extends TestSuite {
         import CreateContentCmd._
 
         "v1.0" - {
-          import Text.GenericReqTitle._
+          import Text.GenericReqTitle.{apply => mk, _}
           val bin    = BinaryData.fromHex("5945B41D01000604670000000167000E0001010009026C07556D6D2E2E2E206900010038295653")
           val expect = (ReqId(6),CreateContent.AndReq(CreateGenericReq(
             Set(),
@@ -291,7 +291,7 @@ object ProjectSpaProtocolsTest extends TestSuite {
             },
             CustomReqTypeId(1),
             Set(ApplicableTagId(9)),
-            Vector(Literal("Umm... "), Issue(CustomIssueTypeId(1),Vector())))))
+            mk(Literal("Umm... "), Issue(CustomIssueTypeId(1),Text.InlineIssueDesc.empty)))))
           assertRequest(bin, expect)
         }
       }
@@ -311,9 +311,9 @@ object ProjectSpaProtocolsTest extends TestSuite {
         import UpdateContentCmd._
 
         "v1.0" - {
-          import Text.GenericReqTitle._
+          import Text.GenericReqTitle.{apply => mk, _}
           val bin    = BinaryData.fromHex("5945B41D010002050C0006016C185068A40361727274202D20686520657869737473206E6F772138295653")
-          val expect = (ReqId(2),UpdateContent.AndReq(SetGenericReqTitle(GenericReqId(6),Vector(Literal("Phäarrt - he exists now!")))))
+          val expect = (ReqId(2),UpdateContent.AndReq(SetGenericReqTitle(GenericReqId(6),mk(Literal("Phäarrt - he exists now!")))))
           assertRequest(bin, expect)
         }
       }
@@ -401,7 +401,7 @@ object ProjectSpaProtocolsTest extends TestSuite {
         "v1.0" - {
           "create" - {
             val bin    = BinaryData.fromHex("5945B41D01000B0863026C04617364207267000138295653")
-            val expect = (ReqId(11),UpdateManualIssues.AndReq(Create(NonEmptyVector(Literal("asd "), ReqRef(GenericReqId(1))))))
+            val expect = (ReqId(11),UpdateManualIssues.AndReq(Create(nonEmpty(Literal("asd "), ReqRef(GenericReqId(1))))))
             assertRequest(bin, expect)
           }
           "delete" - {

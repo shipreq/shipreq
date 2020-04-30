@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.test
 import japgolly.scalajs.react._
 import org.scalajs.dom
 import org.scalajs.dom.{EventTarget, KeyboardEvent}
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.{UndefOr, undefined}
 import shipreq.webapp.base.test._
@@ -21,10 +22,9 @@ object TestUtil extends WebappTestUtil with WebappTestEquality {
         case n => fail(s"Expected an array with one element, found $n: ${a.mkString("[",",","]")}")
     }
 
-    def soleDom[N <: A]()(implicit ev: A <:< org.scalajs.dom.Element): N = {
-      val _ = ev
+    @nowarn("cat=unused")
+    def soleDom[N <: A]()(implicit ev: A <:< org.scalajs.dom.Element): N =
       sole().asInstanceOf[N]
-    }
   }
 
   implicit def autodomnode(c: GenericComponent.MountedRaw) =

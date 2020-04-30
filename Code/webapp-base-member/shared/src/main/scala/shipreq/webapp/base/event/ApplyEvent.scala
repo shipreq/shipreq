@@ -3,8 +3,7 @@ package shipreq.webapp.base.event
 import nyaya.prop.LogicPropExt
 import scalaz.{\/, \/-}
 import shipreq.webapp.base.data.{DataProp, Project}
-import ApplyEventLib._, SE.SE
-import ApplyEvent.{Events, Result}
+import ApplyEventLib._
 
 object ApplyEvent {
   type Result = String \/ Project
@@ -24,18 +23,29 @@ object ApplyEvent {
 final class ApplyEvent(implicit val trust: Trust)
     extends ApplyConfigEvent
        with ApplyContentEvent
+       with ApplyReqCodeLogic
        with ApplyOtherEvent {
 
-  def apply(events: Events)(p: Project): Result =
-    applyAllSafely(events) exec p
+  import ApplyEvent.{Events, Result}
 
   def apply1(event: Event)(p: Project): Result =
-    applyOneSafely(event) exec p
+    applyOneSafely(event).exec(p)
 
-  private val validateDataProps: SE[Unit] =
+  def apply(events: Events)(p: Project): Result =
+    applyAllSafely(events).exec(p)
+
+  def applyVerified(ves: IterableOnce[VerifiedEvent])(p: Project): Result =
+    if (ves.iterator.isEmpty)
+      \/-(p)
+    else
+      applyAllSafely(ves.iterator.map(_.event)).exec(p)
+
+  // ===================================================================================================================
+
+  private val validateDataProps: Eval[Unit] =
     whenUntrusted {
       val prop = DataProp.project.allIncludingConfig
-      SE.testO { p =>
+      Eval.failOptions { p =>
         val e = prop(p)
         if (e.success)
           None
@@ -44,25 +54,22 @@ final class ApplyEvent(implicit val trust: Trust)
       }
     }
 
-  def applyVerified(ves: IterableOnce[VerifiedEvent])(p: Project): Result =
-    if (ves.iterator.isEmpty)
-      \/-(p)
-    else
-      applyAllSafely(ves.iterator.map(_.event)).exec(p)
+  private def safely(apply: Eval[Unit]): Eval[Unit] =
+    (apply >> validateDataProps).catchErrors(onError)
 
-  private def safely(apply: SE[Unit]): SE[Unit] =
-    (apply >> validateDataProps) attempt onError
+  // -------------------------------------------------------------------------------------------------------------------
 
-  private def applyAllSafely(events: Events): SE[Unit] =
+  private def applyAllSafely(events: Events): Eval[Unit] =
     safely(applyAllUnsafely(events))
 
-  private def applyAllUnsafely(events: Events): SE[Unit] =
-    SE.foldMapRun(events)(applyOneUnsafely)
+  private def applyAllUnsafely(events: Events): Eval[Unit] =
+//    events.iterator.foldLeft(Eval.unit)((q, e) => q >> Eval.restack(applyOneUnsafely(e)))
+    Eval.foldMapRun(events)(applyOneUnsafely)
 
-  private def applyOneSafely(event: Event): SE[Unit] =
+  private def applyOneSafely(event: Event): Eval[Unit] =
     safely(applyOneUnsafely(event))
 
-  private def applyOneUnsafely(event: Event): SE[Unit] = {
+  private def applyOneUnsafely(event: Event): Eval[Unit] = {
     import Event._
     event match {
       case e: ApplicableTagCreate     => ApplicableTagEvents     applyCreate                e

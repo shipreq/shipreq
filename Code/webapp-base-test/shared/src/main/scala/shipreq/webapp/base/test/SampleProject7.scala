@@ -111,7 +111,7 @@ object SampleProject7 {
     ReqTagsPatch(mfs(3), nesd()(prod)),
     ReqTagsPatch(uc1   , nesd()(v10, prod)),
 
-    ReqFieldCustomTextSet(mfs(4), bizJustField, Vector(Text.CustomTextField.Literal("x"))),
+    ReqFieldCustomTextSet(mfs(4), bizJustField, Text.CustomTextField(Text.CustomTextField.Literal("x"))),
 
     ApplicableTagUpdate(prod, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(uc, mf))),
 

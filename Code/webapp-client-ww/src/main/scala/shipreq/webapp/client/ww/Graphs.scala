@@ -10,6 +10,7 @@ import shipreq.base.util.univeq._
 import shipreq.base.util.VectorTree.PartialLocation
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.text.{PlainText, ProjectText}
 import GraphViz.DOT
 import shipreq.webapp.base.UiText

@@ -151,7 +151,8 @@ object LogicTest extends TestSuite {
   private def viewSortedByCB(p: Project, c: C.SortInconclusiveHasBlanks, sm: ConsiderBlanks, fd: FilterDead, f: Filter): View =
     View(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveCB(c, sm))), fd, f)
 
-  private def testCB[A: Equal](p: Project, c: C.SortInconclusiveHasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(ConsiderBlanks, A)]) = {
+  private def testCB[A: Equal](p: Project, c: C.SortInconclusiveHasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)
+                              (tests: Seq[(ConsiderBlanks, A)])(implicit l: Line) = {
     val pc = pcache(p)
     import pc.{pt, ts}
     for ((sm, expect) <- tests) {
@@ -641,7 +642,7 @@ object LogicTest extends TestSuite {
     // TagPool, LiveText, LiveText, DeadText
     private def batch(reqLive: Live, tag: ApplicableTagId) =
       GReq(live = reqLive).tag(tag) +
-      GReq(live = reqLive, title = reqTitleTagRefs(tag)) +
+      GReq(live = reqLive, title = reqTitleTagRefs(tag).whole) +
       GReq(live = reqLive).cftext(liveCF, customTextTagRefs(tag)) +
       GReq(live = reqLive).cftext(deadCF, customTextTagRefs(tag))
 
@@ -666,7 +667,7 @@ object LogicTest extends TestSuite {
     private val fmtRowsNoFilter = prefixWithPubidNoZ(p, rowToTagTxt(p, otherTags))
     private val fmtRowsHasFilter = rowToPubid(p)
 
-    private def test(fd: FilterDead)(tags: String*): Unit = {
+    private def test(fd: FilterDead)(tags: String*)(implicit l: Line): Unit = {
       val withIds = tags.zipWithIndex.map(_.map2(_ + 1))
 
       // No filter
@@ -703,9 +704,9 @@ object LogicTest extends TestSuite {
 
     // LiveText, LiveText, DeadText
     private def batch(reqLive: Live, issue: CustomIssueTypeId) =
-      GReq(live = reqLive, title = Vector1(Text.GenericReqTitle.Issue(issue, ∅))) +
-      GReq(live = reqLive).cftext(liveCF, NonEmptyVector one Text.CustomTextField.Issue(issue, ∅)) +
-      GReq(live = reqLive).cftext(deadCF, NonEmptyVector one Text.CustomTextField.Issue(issue, ∅))
+      GReq(live = reqLive, title = Text.GenericReqTitle(Text.GenericReqTitle.Issue(issue, ∅))) +
+      GReq(live = reqLive).cftext(liveCF, Text.CustomTextField nonEmpty Text.CustomTextField.Issue(issue, ∅)) +
+      GReq(live = reqLive).cftext(deadCF, Text.CustomTextField nonEmpty Text.CustomTextField.Issue(issue, ∅))
 
     private val liveIssue = CustomIssueTypeId(2)
     private val deadIssue = CustomIssueTypeId(3)
@@ -755,9 +756,9 @@ object LogicTest extends TestSuite {
 
   def testOtherTags_inText(): Unit = {
     def t(direct: ApplicableTagId*)(inTitle: ApplicableTagId*)(inCustomText: ApplicableTagId*) =
-      GReq(title = reqTitleTagRefs(inTitle))
-        .cftextO(descField, customTextTagRefs(inCustomText))
-        .cftext(reporterField, allLiveTags map Text.CustomTextField.TagRef) // dead column has no effect
+      GReq(title = reqTitleTagRefs.optional(inTitle))
+        .cftextO(descField, customTextTagRefs.optional(inCustomText))
+        .cftext(reporterField, NonEmptyArraySeq.fromNEV(allLiveTags).map(Text.CustomTextField.TagRef)) // dead column has no effect
         .tag(direct: _*)
     val p       = t()()() + t(v10)(v12)(v1x, v1x) + t(v2x)(v2x, v11)(v11) ! PA
     val fmtRows = rowToTagTxt(p, otherTags)
@@ -771,8 +772,8 @@ object LogicTest extends TestSuite {
   def testCustomTagField_inText(): Unit = {
     // TODO test tag transitivity: column tag ← mutual tag ← tag in text
     def t(direct: ApplicableTagId*)(inTitle: ApplicableTagId*)(inCustomText: ApplicableTagId*) =
-      GReq(title = reqTitleTagRefs(inTitle))
-        .cftextO(descField, customTextTagRefs(inCustomText))
+      GReq(title = reqTitleTagRefs.optional(inTitle))
+        .cftextO(descField, customTextTagRefs.optional(inCustomText))
         .cftext(reporterField, customTextTagRefs(allLiveTags)) // dead column has no effect
         .tag(direct: _*)
     val p       = t(wip)(wip, priHigh)(priLow, priLow) + t()()() + t(priMed)(priHigh, priMed)(priHigh, defer) ! PA

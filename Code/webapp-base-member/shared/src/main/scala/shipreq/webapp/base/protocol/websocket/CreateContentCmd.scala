@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol.websocket
 
-import japgolly.microlibs.nonempty.NonEmptyVector
-import shipreq.base.util.Direction
+import scala.collection.immutable.ArraySeq
+import shipreq.base.util.{Direction, NonEmptyArraySeq}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
@@ -23,7 +23,7 @@ object CreateContentCmd {
       copy(customText = customText.updated(f, t))
 
     def addCustomText(f: CustomField.Text.Id, t: Text.CustomTextField.OptionalText): CreateGenericReq =
-      NonEmptyVector.maybe(t, this)(addCustomText(f, _))
+      NonEmptyArraySeq.maybe(t, this)(addCustomText(f, _))
 
     def addImps(d: Direction, add: Set[ReqId]): CreateGenericReq =
       copy(imps = imps.mod(d, add ++ _))
@@ -34,7 +34,7 @@ object CreateContentCmd {
 
   object CreateGenericReq {
     def empty(reqType: CustomReqTypeId): CreateGenericReq =
-      apply(Set.empty, UnivEq.emptyMap, Direction.Values.both(Set.empty), reqType, Set.empty, Vector.empty)
+      apply(Set.empty, UnivEq.emptyMap, Direction.Values.both(Set.empty), reqType, Set.empty, ArraySeq.empty)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ object CreateContentCmd {
       copy(customText = customText.updated(f, t))
 
     def addCustomText(f: CustomField.Text.Id, t: Text.CustomTextField.OptionalText): CreateUseCase =
-      NonEmptyVector.maybe(t, this)(addCustomText(f, _))
+      NonEmptyArraySeq.maybe(t, this)(addCustomText(f, _))
 
     def addImps(d: Direction, add: Set[ReqId]): CreateUseCase =
       copy(imps = imps.mod(d, add ++ _))
@@ -60,7 +60,7 @@ object CreateContentCmd {
 
   object CreateUseCase {
     def empty: CreateUseCase =
-      apply(Set.empty, UnivEq.emptyMap, Direction.Values.both(Set.empty), Set.empty, Vector.empty)
+      apply(Set.empty, UnivEq.emptyMap, Direction.Values.both(Set.empty), Set.empty, ArraySeq.empty)
   }
 
   // -------------------------------------------------------------------------------------------------------------------

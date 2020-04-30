@@ -1,10 +1,11 @@
-package shipreq.webapp.base.data
+package shipreq.webapp.base.data.derivation
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import japgolly.univeq.UnivEq
 import scala.annotation.{elidable, tailrec}
 import scalaz.{-\/, \/, \/-}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.UiText.sortedOrClause
 import shipreq.webapp.base.WebappConfig
 

@@ -15,7 +15,7 @@ object GenericReqEventTest extends TestSuite {
   import GenericReqGD._
 
   val someTitleGR: GRT.OptionalText =
-    Vector(GRT.Literal("Look at "), GRT.WebAddress("https://google.com"))
+    GRT(GRT.Literal("Look at "), GRT.WebAddress("https://google.com"))
 
   val setTitleGR1 = GenericReqTitleSet(1, someTitleGR)
 
@@ -30,7 +30,7 @@ object GenericReqEventTest extends TestSuite {
       }
 
       "title" - {
-        val t = NonEmptyVector(GRT.Literal("cool"))
+        val t = GRT.nonEmpty(GRT.Literal("cool"))
         val p = _assertPass(emptyGR1.copy(vs = nev(Title(t))))
         assertGR(p, 1)(GenericReq(1, PubidT(mf, 1), t.whole, Live))
       }
@@ -113,8 +113,8 @@ object GenericReqEventTest extends TestSuite {
         val p = _assertPass(ReqsDelete(5, 2, ∅))
         assertEq("RC#1", p.content.reqCodes.need(RCG1_code).isActive, true)
         assertEq("RC#2", p.content.reqCodes.need(RCG2_code).isActive, false)
-        assertEq("GR #1", p.content.reqs.genericReqs.need(1).liveExplicitly, Live)
-        assertEq("GR #5", p.content.reqs.genericReqs.need(5).liveExplicitly, Dead)
+        assertEq("GR #1", p.content.reqs.genericReqs.imap.need(1).liveExplicitly, Live)
+        assertEq("GR #5", p.content.reqs.genericReqs.imap.need(5).liveExplicitly, Dead)
       }
     }
 
@@ -133,8 +133,8 @@ object GenericReqEventTest extends TestSuite {
           es :+= e
           val p = _assertPass(es: _*)
           val d = p.content.reqs
-          assertEq(d.genericReqs.size, 2)
-          assertEq(d.genericReqs.get(1).get.pubid, expect)
+          assertEq(d.genericReqs.imap.size, 2)
+          assertEq(d.genericReqs.imap.get(1).get.pubid, expect)
         }
         test(GenericReqTypeSet(1, fr))(PubidT(fr, 1))
         test(GenericReqTypeSet(1, mf))(PubidT(mf, 2))
@@ -150,7 +150,7 @@ object GenericReqEventTest extends TestSuite {
     "setGenericReqTitle" - {
       "ok" - {
         val p = _assertPass(emptyGR1, setTitleGR1)
-        assertEq(p.content.reqs.genericReqs.get(1).get.title, someTitleGR)
+        assertEq(p.content.reqs.genericReqs.imap.get(1).get.title, someTitleGR)
       }
       "reqNotFound" - assertFail("found")(setTitleGR1)
       "reqIsDead"   - assertFail("dead")(emptyGR1, delGR1, setTitleGR1)

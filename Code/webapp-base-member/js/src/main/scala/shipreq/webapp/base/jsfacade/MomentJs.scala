@@ -32,7 +32,7 @@ final case class MomentJs(js: Moment) {
   @inline def ago()         : String  = js.fromNow()
   @inline def toEpochMilliD : Double  = js.valueOfL()
   @inline def toEpochMilli  : Long    = toEpochMilliD.toLong
-  @inline def toEpochSecondD: Double  = js.unix().toLong
+  @inline def toEpochSecondD: Double  = js.unix()
   @inline def toEpochSecond : Long    = toEpochSecondD.toLong
   @inline def toInstant     : Instant = Instant.ofEpochMilli(toEpochMilli)
 }
@@ -43,5 +43,5 @@ object MomentJs {
     MomentJs(Moment())
 
   def fromInstant(i: Instant): MomentJs =
-    MomentJs(Moment(i.toEpochMilli))
+    MomentJs(Moment(i.toEpochMilli.toDouble))
 }

@@ -3,6 +3,8 @@ package shipreq.webapp.base.test
 import japgolly.microlibs.nonempty._
 import java.time._
 import nyaya.util.Multimap
+import scala.collection.immutable.ArraySeq
+import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.univeq.UnivEq
 import shipreq.webapp.base.data._
@@ -17,6 +19,9 @@ object MakeEmpty {
 
   implicit def emptyVTPL: MakeEmpty[VectorTree.ParentLocation] =
     MakeEmpty(VectorTree.ParentLocation.Empty)
+
+  implicit def emptyArraySeq[A: ClassTag]: MakeEmpty[ArraySeq[A]] =
+    MakeEmpty(ArraySeq.empty)
 
   implicit def emptyOpt   [A]: MakeEmpty[Option[A]] = MakeEmpty(None)
   implicit def emptyVec   [A]: MakeEmpty[Vector[A]] = MakeEmpty(Vector.empty)
@@ -137,36 +142,36 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
       s
 
   implicit def autoText_CustomTextFieldA(s: String): Text.CustomTextField.Atom = Text.CustomTextField Literal __checkLiteral(s)
-  implicit def autoText_CustomTextFieldN(s: String): Text.CustomTextField.NonEmptyText = NonEmptyVector one s
-  implicit def autoText_CustomTextFieldO(s: String): Text.CustomTextField.OptionalText = Vector1(s)
+  implicit def autoText_CustomTextFieldN(s: String): Text.CustomTextField.NonEmptyText = NonEmptyArraySeq one s
+  implicit def autoText_CustomTextFieldO(s: String): Text.CustomTextField.OptionalText = ArraySeq(s)
 
   implicit def autoText_DeletionReasonA(s: String): Text.DeletionReason.Atom = Text.DeletionReason Literal __checkLiteral(s)
-  implicit def autoText_DeletionReasonN(s: String): Text.DeletionReason.NonEmptyText = NonEmptyVector one s
-  implicit def autoText_DeletionReasonO(s: String): Text.DeletionReason.OptionalText = Vector1(s)
+  implicit def autoText_DeletionReasonN(s: String): Text.DeletionReason.NonEmptyText = NonEmptyArraySeq one s
+  implicit def autoText_DeletionReasonO(s: String): Text.DeletionReason.OptionalText = ArraySeq(s)
 
   implicit def autoText_ManualIssueA(s: String): Text.ManualIssue.Atom = Text.ManualIssue Literal __checkLiteral(s)
-  implicit def autoText_ManualIssueN(s: String): Text.ManualIssue.NonEmptyText = NonEmptyVector one s
-  implicit def autoText_ManualIssueO(s: String): Text.ManualIssue.OptionalText = Vector1(s)
+  implicit def autoText_ManualIssueN(s: String): Text.ManualIssue.NonEmptyText = NonEmptyArraySeq one s
+  implicit def autoText_ManualIssueO(s: String): Text.ManualIssue.OptionalText = ArraySeq(s)
 
   implicit def autoText_GenericReqTitleA(s: String): Text.GenericReqTitle.Atom = Text.GenericReqTitle Literal __checkLiteral(s)
-  implicit def autoText_GenericReqTitleN(s: String): Text.GenericReqTitle.NonEmptyText = NonEmptyVector one s
-  implicit def autoText_GenericReqTitleO(s: String): Text.GenericReqTitle.OptionalText = Vector1(s)
+  implicit def autoText_GenericReqTitleN(s: String): Text.GenericReqTitle.NonEmptyText = NonEmptyArraySeq one s
+  implicit def autoText_GenericReqTitleO(s: String): Text.GenericReqTitle.OptionalText = ArraySeq(s)
 
   implicit def autoText_InlineIssueDescA(s: String): Text.InlineIssueDesc.Atom = Text.InlineIssueDesc Literal __checkLiteral(s)
-  implicit def autoText_InlineIssueDescN(s: String): Text.InlineIssueDesc.NonEmptyText = NonEmptyVector one s
-  implicit def autoText_InlineIssueDescO(s: String): Text.InlineIssueDesc.OptionalText = Vector1(s)
+  implicit def autoText_InlineIssueDescN(s: String): Text.InlineIssueDesc.NonEmptyText = NonEmptyArraySeq one s
+  implicit def autoText_InlineIssueDescO(s: String): Text.InlineIssueDesc.OptionalText = ArraySeq(s)
 
   implicit def autoText_CodeGroupTitleA(s: String): Text.CodeGroupTitle.Atom = Text.CodeGroupTitle Literal __checkLiteral(s)
-  implicit def autoText_CodeGroupTitleN(s: String): Text.CodeGroupTitle.NonEmptyText = NonEmptyVector one s
-  implicit def autoText_CodeGroupTitleO(s: String): Text.CodeGroupTitle.OptionalText = Vector1(s)
+  implicit def autoText_CodeGroupTitleN(s: String): Text.CodeGroupTitle.NonEmptyText = NonEmptyArraySeq one s
+  implicit def autoText_CodeGroupTitleO(s: String): Text.CodeGroupTitle.OptionalText = ArraySeq(s)
 
   implicit def autoText_UseCaseTitleA(s: String): Text.UseCaseTitle.Atom = Text.UseCaseTitle Literal __checkLiteral(s)
-  implicit def autoText_UseCaseTitleN(s: String): Text.UseCaseTitle.NonEmptyText = NonEmptyVector one s
-  implicit def autoText_UseCaseTitleO(s: String): Text.UseCaseTitle.OptionalText = Vector1(s)
+  implicit def autoText_UseCaseTitleN(s: String): Text.UseCaseTitle.NonEmptyText = NonEmptyArraySeq one s
+  implicit def autoText_UseCaseTitleO(s: String): Text.UseCaseTitle.OptionalText = ArraySeq(s)
 
   implicit def autoText_UseCaseStepA(s: String): Text.UseCaseStep.Atom = Text.UseCaseStep Literal __checkLiteral(s)
-  implicit def autoText_UseCaseStepN(s: String): Text.UseCaseStep.NonEmptyText = NonEmptyVector one s
-  implicit def autoText_UseCaseStepO(s: String): Text.UseCaseStep.OptionalText = Vector1(s)
+  implicit def autoText_UseCaseStepN(s: String): Text.UseCaseStep.NonEmptyText = NonEmptyArraySeq one s
+  implicit def autoText_UseCaseStepO(s: String): Text.UseCaseStep.OptionalText = ArraySeq(s)
 
   private val extpubFmt = "^([a-zA-Z]+)-?(\\d+)$".r
 

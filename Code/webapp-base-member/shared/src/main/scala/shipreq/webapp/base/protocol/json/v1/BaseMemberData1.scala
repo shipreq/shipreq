@@ -3,9 +3,10 @@ package shipreq.webapp.base.protocol.json.v1
 import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.univeq.UnivEq
 import nyaya.util.Multimap
+import scala.collection.immutable.ArraySeq
+import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.JsonUtil._
 import shipreq.webapp.base.data._
@@ -39,9 +40,9 @@ private[v1] object BaseMemberData1 {
 
     override def lazily[A](f: => JsonCodec[A]): JsonCodec[A] = codecLazily(f)
 
-    override def vec[A](implicit a: JsonCodec[A]) = JsonCodec.summon
+    override def arr[A](implicit a: JsonCodec[A], ct: ClassTag[A]) = codecArraySeq
 
-    override def nev[A](as: JsonCodec[Vector[A]])(implicit a: JsonCodec[A]) = codecNEV
+    override def nea[A](as: JsonCodec[ArraySeq[A]])(implicit a: JsonCodec[A]) = codecNEA(as.decoder, as.encoder)
 
     private[this] final val KeyBlankLine      = "bl"
     private[this] final val KeyCodeBlock      = "cb"
@@ -134,8 +135,8 @@ private[v1] object BaseMemberData1 {
         Encoder.forProduct2[t.Issue, CustomIssueTypeId, Text.InlineIssueDesc.OptionalText]("type", "desc")(a => (a.typ, a.desc)),
         Decoder.forProduct2[t.Issue, CustomIssueTypeId, Text.InlineIssueDesc.OptionalText]("type", "desc")(t.Issue(_, _)))
 
-    override def unorderedList[T <: ListMarkup](t: T)(implicit h: JsonCodec[NonEmptyVector[t.ListItem]]): JsonCodec[t.UnorderedList] =
-      h.xmap((i: NonEmptyVector[t.ListItem]) => t.UnorderedList(i))(_.items)
+    override def unorderedList[T <: ListMarkup](t: T)(implicit h: JsonCodec[NonEmptyArraySeq[t.ListItem]]): JsonCodec[t.UnorderedList] =
+      h.xmap((i: NonEmptyArraySeq[t.ListItem]) => t.UnorderedList(i))(_.items)
   }
 
   object ReqTableDataCodecs {

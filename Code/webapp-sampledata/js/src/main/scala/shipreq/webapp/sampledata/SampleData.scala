@@ -8,7 +8,7 @@ import japgolly.scalajs.react.extra.Ajax
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.protocol.json.v1.Rev1.decoderEvent
 
-final case class SampleData(name: String, events: Vector[Event]) extends AbstractSampleData(name, events)
+final case class SampleData(meta: SampleDataMeta, events: Vector[Event]) extends AbstractSampleData(meta, events)
 
 object SampleData extends SampleDataManifest[AsyncCallback[SampleData]] {
 
@@ -21,9 +21,9 @@ object SampleData extends SampleDataManifest[AsyncCallback[SampleData]] {
         parse(jsonStr).getOrThrow()
       }
 
-  override protected def load(filename: String): AsyncCallback[SampleData] =
-    loadJsonFromResource(filename)
+  override protected def load(meta: SampleDataMeta): AsyncCallback[SampleData] =
+    loadJsonFromResource(meta.filename)
       .map(_.as[Vector[Event]].getOrThrow())
-      .map(SampleData(filename, _))
+      .map(SampleData(meta, _))
       .memo()
 }

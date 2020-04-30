@@ -10,6 +10,8 @@ import java.nio.ByteBuffer
 import java.time.Instant
 import monocle.Iso
 import nyaya.util.{MultiValues, Multimap}
+import scala.annotation.nowarn
+import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scalaz.Isomorphism.<=>
 import scalaz.{-\/, Functor, \&/, \/, \/-}
@@ -23,10 +25,10 @@ object BaseData {
   // Extension classes
 
   implicit final class AnyRefPicklerExt[A <: AnyRef](private val p: Pickler[A]) extends AnyVal {
-    def reuseByUnivEq(implicit ev: UnivEq[A]) = {
-      val _ = ev
+
+    @nowarn("cat=unused")
+    def reuseByUnivEq(implicit ev: UnivEq[A]) =
       new PickleWithReuse[A](p, true)
-    }
 
     def reuseByRef =
       new PickleWithReuse[A](p, false)
@@ -221,6 +223,13 @@ object BaseData {
       }
     }
 
+  implicitly[Pickler[Vector[Int]]]
+  def pickleArraySeq[A](implicit pa: Pickler[A], ct: ClassTag[A]): Pickler[ArraySeq[A]] =
+    // Can't use boopickle.BasicPicklers.ArrayPickler here because internally, it uses writeRawInt to write length,
+    // where as IterablePickler uses writeInt. We need to be compatible because we're switching out a Vector for an
+    // ArraySeq in some impls without affecting the codec.
+    boopickle.BasicPicklers.IterablePickler[A, ArraySeq]
+
   def pickleMultimap[K: UnivEq, L[_], V](implicit p: Pickler[Map[K, L[V]]], l: MultiValues[L]): Pickler[Multimap[K, L, V]] =
     p.xmap(Multimap(_))(_.m) // TODO optimise
 
@@ -228,6 +237,9 @@ object BaseData {
     pickleNonEmpty(_.whole)
 
   def pickleNEV[A](implicit p: Pickler[Vector[A]]): Pickler[NonEmptyVector[A]] =
+    pickleNonEmpty(_.whole)
+
+  def pickleNEA[A](implicit p: Pickler[ArraySeq[A]]): Pickler[NonEmptyArraySeq[A]] =
     pickleNonEmpty(_.whole)
 
   def pickleNonEmpty[N, E](f: N => E)(implicit p: Pickler[E], proof: NonEmpty.Proof[E, N]): Pickler[N] =

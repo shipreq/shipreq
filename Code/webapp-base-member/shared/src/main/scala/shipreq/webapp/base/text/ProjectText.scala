@@ -187,7 +187,7 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   final val customTextFieldOption: CustomField.Text.Id => Req => Option[Out] =
     Memo { fid =>
-      project.content.reqText.get(fid) match {
+      project.content.reqText.data.get(fid) match {
         case Some(m) =>
           val liveField = cfg.fields.customFields.need(fid).live(cfg)
           memoByReqId(r =>

@@ -26,22 +26,22 @@ object SampleProject3 {
 
   val inlineIssueDesc = {
     import T.InlineIssueDesc._
-    Vector(Literal("Pending "), ReqRef(mfs(26)))
+    apply(Literal("Pending "), ReqRef(mfs(26)))
   }
 
   lazy val project: Project = {
 
     def fr1Title = {
       import T.GenericReqTitle._
-      Vector(
+      apply(
         EmailAddress("japgolly@gmail.com"), Literal(" is on "), WebAddress("https://github.com"),
-        Literal(" cos of "), ReqRef(mfs(6)), Literal(" "), Issue(1, Vector.empty),
+        Literal(" cos of "), ReqRef(mfs(6)), Literal(" "), Issue(1, T.empty),
         TeX("c = \\pm\\sqrt{a^2 + b^2}")
       )
     }
     def fr2Title = {
       import T.GenericReqTitle._
-      Vector(Issue(2, inlineIssueDesc), Literal(". "), ReqRef(mfs(28)), Literal(" is dead."))
+      apply(Issue(2, inlineIssueDesc), Literal(". "), ReqRef(mfs(28)), Literal(" is dead."))
     }
 
     val contentByDsl = (
@@ -76,7 +76,7 @@ object SampleProject3 {
 
     + GReq(reqType = fr, id = frs(1), title = fr1Title, codes = Set("uce.sample.1", "uce.sample.1b", "demo.whatever")).impSrc(mfs(12), mfs(19))
     + GReq(reqType = fr, id = frs(2), title = fr2Title, codes = Set("uce.sample.2")).impSrc(mfs(1), mfs(13), mfs(22), frs(1))
-    + RCGroup("demo", title = Vector(T.CodeGroupTitle.Literal("Demo group header")))
+    + RCGroup("demo", title = T.CodeGroupTitle(T.CodeGroupTitle.Literal("Demo group header")))
 
     + GReq(reqType = co, id = cos(1), live = Dead, title = "Search entities!").impSrc(mfs(28), mfs(25)).tag(v10, v3x)
     + GReq(reqType = co, id = cos(2), live = Dead, title = "Entity-search should consider low-level reqs").impSrc(cos(1), frs(1))

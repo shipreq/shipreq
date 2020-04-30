@@ -5,6 +5,7 @@ import japgolly.microlibs.nonempty.NonEmptySet
 import nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.text.Atom
 
 object IssueDetectors {

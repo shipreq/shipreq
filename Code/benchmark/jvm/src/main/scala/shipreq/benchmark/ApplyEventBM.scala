@@ -12,18 +12,20 @@ import shipreq.webapp.sampledata.SampleData
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 class ApplyEventBM {
 
-  @Param(Array("1000", "2000", "4000"))
+  @Param(Array("full", "no_req_codes"))
+  var `type`: String = _
+
+  @Param(Array("1000", "2000", "4000", "10000"))
   var events: String = _
 
   var es: VerifiedEvent.Seq = _
 
-  val pe           = Project.empty
-  val ae_trusted   = ApplyEvent.trusted
-  val ae_untrusted = ApplyEvent.untrusted
+  val pe         = Project.empty
+  val ae_trusted = ApplyEvent.trusted
 
   @Setup
   def setup(): Unit = {
-    es = SampleData.byName(events).verifiedEvents
+    es = SampleData.byParams(`type`, events).verifiedEvents
   }
 
   private def go(ae: ApplyEvent): Project =
@@ -32,6 +34,8 @@ class ApplyEventBM {
       case -\/(e) => println(e); sys.error(e)
     }
 
-  @Benchmark def untrusted = go(ae_untrusted)
-  @Benchmark def trusted   = go(ae_trusted)
+  // Speed of untrusted doesn't really matter. It only ever does one event at a time.
+  // @Benchmark def untrusted = go(ae_untrusted)
+
+  @Benchmark def trusted = go(ae_trusted)
 }

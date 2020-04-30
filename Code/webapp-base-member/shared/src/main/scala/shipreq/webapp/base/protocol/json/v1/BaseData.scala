@@ -6,6 +6,8 @@ import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet, NonEmptyVector}
 import japgolly.univeq._
 import shipreq.base.util.JsonUtil._
 import nyaya.util.{MultiValues, Multimap}
+import scala.collection.compat.immutable.ArraySeq
+import scala.reflect.ClassTag
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -76,6 +78,11 @@ private[v1] object BaseData {
     Encoder.instance(c => g(c))
   }
 
+  def codecArraySeq[A: ClassTag : Decoder : Encoder]: JsonCodec[ArraySeq[A]] = {
+    import CirceHacks.{decodeArraySeq, encodeArraySeq}
+    JsonCodec.summon
+  }
+
   def codecMap[K: KeyDecoder: KeyEncoder, V: Decoder: Encoder]: JsonCodec[Map[K, V]] =
     JsonCodec.summon
 
@@ -87,6 +94,10 @@ private[v1] object BaseData {
 
   def codecNEV[A](implicit d: Decoder[Vector[A]], e: Encoder[Vector[A]]): JsonCodec[NonEmptyVector[A]] =
     codecNonEmpty(_.whole)
+
+  def codecNEA[A](implicit d: Decoder[ArraySeq[A]], e: Encoder[ArraySeq[A]]): JsonCodec[NonEmptyArraySeq[A]] = {
+    codecNonEmpty(_.whole)
+  }
 
   def codecNonEmpty[N, E](f: N => E)(implicit d: Decoder[E], e: Encoder[E], proof: NonEmpty.Proof[E, N]): JsonCodec[N] =
     JsonCodec.xmap[E, N](NonEmpty require_! _)(f)

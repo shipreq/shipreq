@@ -58,7 +58,7 @@ object AkkaTest extends TestSuite with HasLogger {
         // wait for results
         val expect = List(Succeeded, FailAndAbort, Succeeded).map(Some(_))
         implicit val retryMax = RetryMax(10.seconds)
-        val _ = retryMax // -Wunused:locals gets it wrong here
+        locally(retryMax) // -Wunused:locals gets it wrong here
         eventually {
           List(dummy1, dummy2, dummy3).map(lookupHistory) == expect
         }

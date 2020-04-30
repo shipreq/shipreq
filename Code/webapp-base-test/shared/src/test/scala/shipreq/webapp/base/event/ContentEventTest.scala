@@ -27,7 +27,7 @@ object ContentEventTest extends TestSuite {
   import GenericReqGD._
 
   val someCTF1: CTF.NonEmptyText =
-    NonEmptyVector(CTF.Literal("hi!"), CTF.blankLine, CTF.Literal("bye."))
+    CTF.nonEmpty(CTF.Literal("hi!"), CTF.blankLine, CTF.Literal("bye."))
 
 //  val someCTF2: CTF.OptionalText =
 //    Vector(CTF.Literal("hi again!"), CTF.blankLine, CTF.Literal("bye again."))
@@ -93,14 +93,14 @@ object ContentEventTest extends TestSuite {
     }
 
   val createRefToCode3 = GenericReqCreate(500, mf, nev(
-    Title(NonEmptyVector(GRT.Literal("Ref to #3: "), GRT.CodeRef(3.ARC)))))
+    Title(GRT.nonEmpty(GRT.Literal("Ref to #3: "), GRT.CodeRef(3.ARC)))))
 
   val createRefToCodeGroup3 = GenericReqCreate(500, mf, nev(
-    Title(NonEmptyVector(GRT.Literal("Ref to #3: "), GRT.CodeRef(3.RCG)))))
+    Title(GRT.nonEmpty(GRT.Literal("Ref to #3: "), GRT.CodeRef(3.RCG)))))
 
   // As above but hides the ref in an IssueDesc
   val createRefToCodeGroup3I = GenericReqCreate(500, mf, nev(
-    Title(NonEmptyVector(GRT.Issue(issueType1, Vector(
+    Title(GRT.nonEmpty(GRT.Issue(issueType1, IID(
       IID.Literal("Ref to #3: "), IID.CodeRef(3.RCG)))))))
 
   val delA              = delGR(reqA)
@@ -132,7 +132,7 @@ object ContentEventTest extends TestSuite {
     "updateCodeGroup" - {
       "title" - {
         import CodeGroupGD._
-        val t = Vector(CodeGroupTitle.Literal("hi there"))
+        val t = CodeGroupTitle(CodeGroupTitle.Literal("hi there"))
         val p = _assertPass(createRCG(1, "a"), CodeGroupUpdate(1, nev(Title(t))))
         assertEq(p.content.reqCodes.groups.head.title, t)
       }
@@ -230,7 +230,7 @@ object ContentEventTest extends TestSuite {
 
         // 2.1: Create RCᵣ ref
         val createA = GenericReqCreate(reqA, mf, nev(
-          Title(NonEmptyVector(GRT.Literal("Ref to self: "), GRT.CodeRef(1.ARC))),
+          Title(GRT.nonEmpty(GRT.Literal("Ref to self: "), GRT.CodeRef(1.ARC))),
           Codes(1 -> "a.b.c")))
         test(createA)("a.b.c: AD[#1Req(#a)]")
 
@@ -326,7 +326,7 @@ object ContentEventTest extends TestSuite {
 
         // 3a.2: Create refs to it
         val refs = GenericReqCreate(500, mf, nev(
-          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
+          Title(GRT.nonEmpty(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
         test(refs)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]")
 
         // 3a.3: Delete req a
@@ -367,7 +367,7 @@ object ContentEventTest extends TestSuite {
 
         // 3b.2: Create refs to it
         val refs = GenericReqCreate(500, mf, nev(
-          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
+          Title(GRT.nonEmpty(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
         test(refs)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]")
 
         // 3b.3: Merge refs
@@ -397,7 +397,7 @@ object ContentEventTest extends TestSuite {
 
         // 4.2: Create refs to some of it
         val refsA = GenericReqCreate(500, mf, nev(
-          Title(NonEmptyVector(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
+          Title(GRT.nonEmpty(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
         test(refsA)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]", "other: AD[#2Req(#a)]")
 
         // 4.3: Merge refs
@@ -421,7 +421,7 @@ object ContentEventTest extends TestSuite {
 
         // 4.8: Create refs to some of B
         val refsB = GenericReqCreate(501, mf, nev(
-          Title(NonEmptyVector(GRT.Literal("Refs to #4 and #5: "), GRT.CodeRef(4.ARC), GRT.CodeRef(5.ARC)))))
+          Title(GRT.nonEmpty(GRT.Literal("Refs to #4 and #5: "), GRT.CodeRef(4.ARC), GRT.CodeRef(5.ARC)))))
         test(refsB)(
           "aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]", "other: RR[#2Req(#a)]",
           "aaa: AD[#4Req(#b)]", "bbb: AD[#5Req(#b)]", "other: AD[#6Req(#b)]")
@@ -553,23 +553,23 @@ object ContentEventTest extends TestSuite {
     }
 
     "setCustomTextField" - {
-      def e = ReqFieldCustomTextSet(1, cf1, someCTF1)
+      def e = ReqFieldCustomTextSet(1, cf1, someCTF1.whole)
       "add" - {
         val p = _assertPass(emptyGR1, e)
         val d = p.content.reqText
-        assertEq(d.size, 1)
-        val m = d(cf1)
+        assertEq(d.data.size, 1)
+        val m = d.data(cf1)
         assertEq(m.size, 1)
         assertEq(m(1), someCTF1)
       }
       "remove" - {
         val p = _assertPass(emptyGR1, e, ReqFieldCustomTextSet(1, cf1, ∅))
         val d = p.content.reqText
-        assertEq(d.size, 0)
+        assertEq(d.data.size, 0)
       }
       "reqNotFound"   - assertFail("found")(e)
       "reqIsDead"     - assertFail("dead") (emptyGR1, delGR1, e)
-      "fieldNotFound" - assertFail("found")(emptyGR1, ReqFieldCustomTextSet(1, 321, someCTF1))
+      "fieldNotFound" - assertFail("found")(emptyGR1, ReqFieldCustomTextSet(1, 321, someCTF1.whole))
       "fieldDead"     - assertFail("dead") (emptyGR1, FieldCustomDelete(cf1), e)
       // TODO test not applicable to target reqtype
     }
@@ -625,7 +625,7 @@ object ContentEventTest extends TestSuite {
               txt.fold(none)(_.mkString("").replaceAll("Literal\\((.*?)\\)", "$1"))
 
             def req(id: GenericReqId): R =
-              p.content.reqs.genericReqs.need(id) match {
+              p.content.reqs.genericReqs.imap.need(id) match {
                 case r if r.live(p.config.reqTypes) is Live => live
                 case _                                      => fmt(p.content.deletionReasons getLatest id)
               }

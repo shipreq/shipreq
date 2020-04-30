@@ -13,6 +13,7 @@ import monocle.function.Field1.first
 import monocle.function.Field2.second
 import org.parboiled2.CharPredicate
 import scala.annotation.tailrec
+import scala.collection.immutable.ArraySeq
 import scalaz.{-\/, Need, \/-}
 import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
@@ -55,13 +56,13 @@ object RandomData {
 //    val trimRightR = "\\s+$".r
 //    def trimRight(s: String) = trimRightR.replaceAllIn(s, "")
 
-  @tailrec def dropHead[A](v: Vector[A])(f: A => Boolean): Vector[A] =
+  @tailrec def dropHead[A](v: ArraySeq[A])(f: A => Boolean): ArraySeq[A] =
     if (v.nonEmpty && f(v.head))
       dropHead(v.tail)(f)
     else
       v
 
-  @tailrec def dropLast[A](v: Vector[A])(f: A => Boolean): Vector[A] =
+  @tailrec def dropLast[A](v: ArraySeq[A])(f: A => Boolean): ArraySeq[A] =
     if (v.nonEmpty && f(v.last))
       dropLast(v.init)(f)
     else
@@ -614,10 +615,10 @@ object RandomData {
       Gen.pure(t.blankLine)
 
     def listItem(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.ListItem] =
-      Gen.pure(g).flatMap(_.value).vector(MaxTextAtoms)
+      Gen.pure(g).flatMap(_.value).arraySeq(MaxTextAtoms)
 
-    def listItems(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[NonEmptyVector[t.ListItem]] =
-      listItem(t)(g).nev(0 to 7)
+    def listItems(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[NonEmptyArraySeq[t.ListItem]] =
+      listItem(t)(g).nea(0 to 7)
 
     def unorderedList(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.UnorderedList] =
       listItems(t)(g) map t.UnorderedList
@@ -643,13 +644,13 @@ object RandomData {
     def plainTextMarkup(implicit t: PlainTextMarkup): Gen[t.Atom] =
       Gen.chooseGen(webAddress, emailAddress, tex, monospace)
 
-    private[this] def singleLineGens(implicit t: SingleLine): NonEmptyVector[Gen[t.Atom]] =
-      NonEmptyVector(literal, plainTextMarkup)
+    private[this] def singleLineGens(implicit t: SingleLine): NonEmptyArraySeq[Gen[t.Atom]] =
+      NonEmptyArraySeq(literal, plainTextMarkup)
 
     /** Probability [0,9] of an increase in recursive depth. */
     val DepthIncrease: Array[Int] = Array(5, 1, 1, 1) `JVM|JS` Array(3, 1)
 
-    private[this] def multiLine(t: MultiLine, depth: Int)(g: Name[Gen[t.Atom]]): NonEmptyVector[Gen.Freq[t.Atom]] = {
+    private[this] def multiLine(t: MultiLine, depth: Int)(g: Name[Gen[t.Atom]]): NonEmptyArraySeq[Gen.Freq[t.Atom]] = {
       var gs = singleLineGens(t).map(g => (9, g))
       gs :+= ((9, blankLine(t)))
       gs :+= ((4, codeBlock(t)))
@@ -693,14 +694,14 @@ object RandomData {
               r: Option[Gen[ReqId]],
               u: Option[Gen[UseCaseStepId]],
               c: Option[Gen[ReqCodeId]])(implicit t: Issue): Gen[t.Issue] =
-      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r, u, c).vector)
+      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r, u, c).arraySeq)
 
     val isBlankLine: AnyAtom => Boolean = {
       case _: NewLine#BlankLine => true
       case _ => false
     }
 
-    def trimBlankLines[T <: Atom.Base](as: Vector[T#Atom]): Vector[T#Atom] =
+    def trimBlankLines[T <: Atom.Base](as: ArraySeq[T#Atom]): ArraySeq[T#Atom] =
       dropLast(dropHead(as)(isBlankLine))(isBlankLine)
 
     val legalListItemAtom: AnyAtom => Boolean = {
@@ -736,7 +737,7 @@ object RandomData {
     def removeFromLiterals[L <: Literal#Literal](l: L): L =
       l.map(removeFromLiteralsR.replaceAllIn(_, "*$1"))
 
-    def postProcessAtoms[T <: Atom.Base](ctx: AtomCtx)(as0: Vector[T#Atom]): Vector[T#Atom] = {
+    def postProcessAtoms[T <: Atom.Base](ctx: AtomCtx)(as0: ArraySeq[T#Atom]): ArraySeq[T#Atom] = {
       type Blank = NewLine#BlankLine
       type UL    = ListMarkup#UnorderedList
       type Lit   = Literal#Literal
@@ -762,7 +763,7 @@ object RandomData {
         if (v.isEmpty) v else v.init :+ fixLast(v.last)
       }
 
-      as.foldLeft(Vector.empty[T#Atom])((q, a0) => {
+      as.foldLeft(ArraySeq.empty[T#Atom])((q, a0) => {
         import Atom.{PlainTextMarkup => PTM}
 
         val a: T#Atom = a0 match {
@@ -821,12 +822,12 @@ object RandomData {
             case _ => q :+ a
           }
       })
-      .map(fix2) |> trimBlankLines
+      .map(fix2) |> trimBlankLines[T]
     }
 
-    def postProcessAtoms1[T <: Atom.Literal](t: T)(as: NonEmptyVector[T#Atom]): NonEmptyVector[T#Atom] = {
+    def postProcessAtoms1[T <: Atom.Literal](t: T)(as: NonEmptyArraySeq[T#Atom]): NonEmptyArraySeq[T#Atom] = {
       val r = postProcessAtoms(TopLevelAtom)(as.whole)
-      NonEmptyVector.maybe(r, NonEmptyVector[T#Atom](t.Literal("a")))(identity)
+      NonEmptyArraySeq.maybe(r, NonEmptyArraySeq[T#Atom](t.Literal("a")))(identity)
     }
 
     // Specific text types
@@ -837,7 +838,7 @@ object RandomData {
                               i: Option[Gen[CustomIssueTypeId]],
                               a: Option[Gen[ApplicableTagId]]): Gen[t.Atom] = {
       @inline implicit def tt: t.type = t
-      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      val gs = NonEmptyArraySeq newBuilderNE singleLineGens(t)
       gs ++= reqRefs(r, c)
       gs ++= u.map(useCaseStepRef(_))
       gs ++= i.map(issue(_, r, u, c))
@@ -850,7 +851,7 @@ object RandomData {
                               c: Option[Gen[ReqCodeId]],
                               i: Option[Gen[CustomIssueTypeId]]): Gen[CodeGroupTitle.Atom] = {
       @inline implicit def t: CodeGroupTitle.type = CodeGroupTitle
-      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      val gs = NonEmptyArraySeq newBuilderNE singleLineGens(t)
       gs ++= reqRefs(r, c)
       gs ++= u.map(useCaseStepRef(_))
       gs ++= i.map(issue(_, r, u, c))
@@ -865,7 +866,7 @@ object RandomData {
                             u: Option[Gen[UseCaseStepId]],
                             c: Option[Gen[ReqCodeId]]): Gen[InlineIssueDesc.Atom] = {
       @inline implicit def t: InlineIssueDesc.type = InlineIssueDesc
-      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      val gs = NonEmptyArraySeq newBuilderNE singleLineGens(t)
       gs ++= reqRefs(r, c)
       gs ++= u.map(useCaseStepRef(_))
       Gen.chooseGenNE(gs.result())
@@ -915,7 +916,7 @@ object RandomData {
                         i: Option[Gen[CustomIssueTypeId]],
                         a: Option[Gen[ApplicableTagId]]): Gen[UseCaseStep.Atom] = {
       @inline implicit def t: UseCaseStep.type = UseCaseStep
-      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      val gs = NonEmptyArraySeq newBuilderNE singleLineGens(t)
       gs ++= reqRefs(r, c)
       gs ++= u.map(useCaseStepRef(_))
       gs ++= i.map(issue(_, r, u, c))
@@ -932,11 +933,11 @@ object RandomData {
   class TextGenExt[T <: text.Atom.Literal](private val _g: Gen.Run[T#Atom]) extends AnyVal {
     private def g = Gen(_g)
 
-    def text       : Gen[T#OptionalText] = g.vector(MaxTextAtoms) map TextGen.postProcessAtoms(TextGen.TopLevelAtom)
-    def text1(t: T): Gen[T#NonEmptyText] = g.nev   (MaxTextAtoms) map TextGen.postProcessAtoms1(t)
+    def text       : Gen[T#OptionalText] = g.arraySeq(MaxTextAtoms) map TextGen.postProcessAtoms(TextGen.TopLevelAtom)
+    def text1(t: T): Gen[T#NonEmptyText] = g.nea     (MaxTextAtoms) map TextGen.postProcessAtoms1(t)
 
-    def ptext       : Gen[T#OptionalText] = g.vector(MaxTextAtomsInProject) map TextGen.postProcessAtoms(TextGen.TopLevelAtom)
-    def ptext1(t: T): Gen[T#NonEmptyText] = g.nev   (MaxTextAtomsInProject) map TextGen.postProcessAtoms1(t)
+    def ptext       : Gen[T#OptionalText] = g.arraySeq(MaxTextAtomsInProject) map TextGen.postProcessAtoms(TextGen.TopLevelAtom)
+    def ptext1(t: T): Gen[T#NonEmptyText] = g.nea     (MaxTextAtomsInProject) map TextGen.postProcessAtoms1(t)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -1039,7 +1040,7 @@ object RandomData {
           pr.value(rt).iterator.zipWithIndex.foldLeft(m0) { (m, x) =>
             val id    = x._1.asInstanceOf[GenericReqId]
             val pubid = PubidT(rt, ReqTypePos(x._2 + 1))
-            val grG   = live map (GenericReq(id, pubid, Vector.empty, _))
+            val grG   = live map (GenericReq(id, pubid, Text.empty, _))
             m + grG.run(ctx)
           }
         )
@@ -1048,7 +1049,7 @@ object RandomData {
         val uniqueIds = useCaseStepId.unique_!
 
         def stepGL(l: Live) =
-          uniqueIds.map(UseCaseStep(_, Vector.empty, l))
+          uniqueIds.map(UseCaseStep(_, Text.empty, l))
 
         val stepG = live flatMap stepGL
 
@@ -1064,7 +1065,7 @@ object RandomData {
             l       <- live
           } yield
             // Root existence guaranteed in useCaseSteps()
-            UseCase(id, pos, Vector.empty, stepsNA, stepsE, l)
+            UseCase(id, pos, Text.empty, stepsNA, stepsE, l)
           m + ucG.run(ctx)
         }
       }
@@ -1075,7 +1076,7 @@ object RandomData {
       val stepFlow: UseCases.StepFlow =
         genDigraphBiO(Gen.tryGenChoose(ucStepIds))(implicitly, 0 to 4) run ctx
 
-      Requirements(grs, UseCases.Stateless(ucs, stepFlow).withState, pr)
+      Requirements(GenericReqs(grs), UseCases.Stateless(ucs, stepFlow).withState, pr)
     }
   }
 
@@ -1084,7 +1085,7 @@ object RandomData {
                  c   : Option[Gen[ReqCodeId]],
                  i   : Option[Gen[CustomIssueTypeId]],
                  a   : Option[Gen[ApplicableTagId]]): Gen[Requirements] = {
-    val r = Gen.tryGenChoose(reqs.idIterator.toIndexedSeq)
+    val r = Gen.tryGenChoose(reqs.idIterator().toIndexedSeq)
     setReqText(reqs, r, u, c, i, a)
   }
 
@@ -1123,7 +1124,7 @@ object RandomData {
   // Req Data
 
   def reqFieldDataText(cols: Set[CustomField.Text.Id], reqs: Set[ReqId], txt: Gen[Text.CustomTextField.NonEmptyText]): Gen[ReqData.Text] =
-    txt mapByKeySubset reqs mapByKeySubset cols
+    txt.mapByKeySubset(reqs).mapByKeySubset(cols).map(ReqData.Text.apply)
 
   private[this] val emptyATagIdSet = Gen.pure(Set.empty[ApplicableTagId])
   def reqFieldDataTags(reqs: Iterable[ReqId], tags: Set[ApplicableTagId]): Gen[ReqData.Tags] = {
@@ -1238,7 +1239,7 @@ object RandomData {
       Gen pure emptyReqInactive
 
     private val gEmptyText: Gen[Text.CodeGroupTitle.OptionalText] =
-      Gen pure Vector.empty
+      Gen pure Text.empty
 
     def data(ogLiveReqId: Option[Gen[ReqId]], ogReqId: Option[Gen[ReqId]],
              gGroupText: Gen[Text.CodeGroupTitle.OptionalText] = gEmptyText)(implicit ss: SizeSpec): Gen[Data] =

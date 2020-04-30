@@ -13,6 +13,7 @@ import shipreq.webapp.base.protocol.websocket.WebSocketShared.ReqId
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.text.Text
 import shipreq.webapp.server.logic.ProjectSpaLogic.{WebSocketState => _, _}
 import shipreq.webapp.server.logic.Redis.ProjectSnapshot
 import shipreq.webapp.server.logic.Security.{SessionId, SessionToken}
@@ -46,7 +47,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
   private implicit val eqInitAppData = ScalazMacros.deriveEqual[InitAppData]
 
   private val initAppMsg = WsReqRes.InitApp.AndReq(())
-  private val cmdNewUC = CreateContentCmd.CreateUseCase(Set.empty, Map.empty, Direction.Values.both(Set.empty), Set.empty, Vector.empty)
+  private val cmdNewUC = CreateContentCmd.CreateUseCase(Set.empty, Map.empty, Direction.Values.both(Set.empty), Set.empty, Text.empty)
   private val newUC = WsReqRes.CreateContent.AndReq(cmdNewUC)
 
   private class Tester extends MockInterpreters(_.copy(projectSpa = cfg)) {

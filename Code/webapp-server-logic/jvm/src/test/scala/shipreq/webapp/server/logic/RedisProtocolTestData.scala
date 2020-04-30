@@ -66,7 +66,7 @@ object RedisProtocolTestData {
     decode[Vector[Row]](FileUtils.readResource(resourceName(ver))).getOrThrow()
 
   def main(args: Array[String]): Unit = {
-    val _ = picklerEvent // Ensure the classpath is correct - thanks SBT
+    locally(picklerEvent) // Ensure the classpath is correct - thanks SBT
 
     val events = generateEvents()
     val rows = makeRows(events)

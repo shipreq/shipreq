@@ -14,7 +14,7 @@ import shipreq.webapp.base.data.{CustomReqType, ExternalPubid, ReqType, StaticRe
 import shipreq.webapp.base.data.reqtable._
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.websocket.CreateContentCmd
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.text.{PlainText, Text}
 import shipreq.webapp.base.ui.Toast
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table => SemTable}
 import shipreq.webapp.client.project.app.Style.reqtable.{creation => *}
@@ -35,7 +35,7 @@ object NewForm {
     override val createButtonLabel = Function const NewForm.createButtonLabel(UiText.codeGroup)
     override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
       var _code: Option[FieldKey.Code.Value] = None
-      var title: FieldKey.CodeGroupTitle.Value = Vector.empty
+      var title: FieldKey.CodeGroupTitle.Value = Text.empty
       val fold = FieldKey.FoldForCodeGroup[ValueConsumer](
         f => (v: f.Value) => _code = Some(v),
         f => (v: f.Value) => title = v)

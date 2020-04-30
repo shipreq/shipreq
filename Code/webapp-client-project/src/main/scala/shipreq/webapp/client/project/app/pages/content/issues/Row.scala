@@ -5,6 +5,7 @@ import japgolly.scalajs.react.{Key, Reusability, Reusable}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.IfApplicable
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.issue._
 import shipreq.webapp.base.UiText.{Issues => UI}
 import shipreq.webapp.client.project.app.pages.root.Routes
