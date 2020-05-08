@@ -163,12 +163,12 @@ object WebSocketClient {
         reauthorise.attempt.flatMap {
 
           case Right(Allow) =>
-            AsyncCallback.point {
+            AsyncCallback.delay {
               state = state.copy(authorised = true)
             } >> connect.asAsyncCallback
 
           case Right(Deny) | Left(_) =>
-            AsyncCallback.point {
+            AsyncCallback.delay {
               unsafeFailQueued(errorUnauthorised)
             }
 

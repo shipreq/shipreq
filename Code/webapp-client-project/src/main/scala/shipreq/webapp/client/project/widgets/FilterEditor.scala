@@ -32,7 +32,7 @@ object FilterEditor {
   }
 
   implicit val reusabilityProps: Reusability[Props] =
-    Reusability.caseClassExcept('update) // used via $.props.flatMap in event handler which is reuse-safe
+    Reusability.caseClassExcept("update") // used via $.props.flatMap in event handler which is reuse-safe
 
   final case class State(text: String, validity: Validity)
 

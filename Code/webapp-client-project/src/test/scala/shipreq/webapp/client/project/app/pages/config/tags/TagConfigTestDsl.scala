@@ -26,10 +26,7 @@ object TagConfigTestDsl {
     *.action("Click filter dead")(Simulate click _.obs.filterDeadButton)
 
   def selectTag(name: String): *.Actions =
-//    *.action("Click tag: " + name)(Simulate click _.obs.tagTreeLI(name).rowDom)
-    // TODO Pending https://github.com/japgolly/scalajs-react/issues/674
-    *.action("Click tag: " + name)(x => Simulate.click(x.obs.tagTreeLI(name).rowDom, scalajs.js.Dynamic.literal(defaultPrevented = false)
-    ))
+    *.action("Click tag: " + name)(Simulate click _.obs.tagTreeLI(name).rowDom)
 
   def deleteTag(name: String): *.Actions =
     (selectTag(name) >> clickDeleteButton >> clickCloseButton).group("Delete tag: " + name)

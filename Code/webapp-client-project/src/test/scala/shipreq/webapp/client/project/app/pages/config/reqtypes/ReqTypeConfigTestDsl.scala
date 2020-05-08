@@ -35,8 +35,7 @@ object ReqTypeConfigTestDsl {
     *.action(s"Click $mnemonic usage")(_.obs.list(mnemonic).usage.click())
 
   def selectReqType(mnemonic: String): *.Actions =
-    // TODO Pending https://github.com/japgolly/scalajs-react/issues/674
-    *.action("Click req type: " + mnemonic)(x => Simulate.click(x.obs.list(mnemonic).rowDom, scalajs.js.Dynamic.literal(defaultPrevented = false)))
+    *.action("Click req type: " + mnemonic)(Simulate click _.obs.list(mnemonic).rowDom)
 
   def hardDeleteReqType(name: String): *.Actions =
     (selectReqType(name) >> clickHardDeleteButton >> clickCloseButton).group("Hard-delete reqType: " + name)

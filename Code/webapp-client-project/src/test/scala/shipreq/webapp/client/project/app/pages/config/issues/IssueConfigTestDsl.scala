@@ -31,8 +31,7 @@ object IssueConfigTestDsl {
     *.action(s"Click $key usage")(_.obs.list(key).usage.click())
 
   def selectIssue(key: String): *.Actions =
-    // TODO Pending https://github.com/japgolly/scalajs-react/issues/674
-    *.action("Click issue: " + key)(x => Simulate.click(x.obs.list(key).rowDom, scalajs.js.Dynamic.literal(defaultPrevented = false)))
+    *.action("Click issue: " + key)(Simulate click _.obs.list(key).rowDom)
 
   def deleteIssue(name: String): *.Actions =
     (selectIssue(name) >> clickDeleteButton >> clickCloseButton).group("Delete issue: " + name)

@@ -172,7 +172,7 @@ object WebappBuild {
     project("webapp-client-project")
       .configure(clientSpa)
       .dependsOn(webappClientWwApi, webappClientLoaders)
-      .depsForJs(ScalaCSS.react ++ scalajsDom ++ shapeless ++ Nyaya.prop ++ parboiled ++ React.scalaz)
+      .depsForJs(ScalaCSS.react ++ scalajsDom ++ shapeless ++ Nyaya.prop ++ parboiled)
 
   lazy val webappSsr =
     crossProject("webapp-ssr")

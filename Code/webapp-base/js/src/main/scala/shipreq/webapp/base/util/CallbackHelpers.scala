@@ -6,20 +6,6 @@ import scalaz.{-\/, \/, \/-}
 
 object CallbackHelpers {
 
-
-  final class HelperAsyncCallback[A](private val underlying: (Try[A] => Callback) => Callback) extends AnyVal {
-    @inline private def self: AsyncCallback[A] =
-      AsyncCallback(underlying)
-
-    def flatTapSync[B](f: A => CallbackTo[B]): AsyncCallback[A] = // TODO add to scalajs-react
-      self.flatTap(f.andThen(_.asAsyncCallback))
-  }
-
-  implicit def HelperAsyncCallback[A](a: AsyncCallback[A]): HelperAsyncCallback[A] =
-    new HelperAsyncCallback(a.completeWith)
-
-  // ===================================================================================================================
-
   final class HelperAsyncCallbackDisj[E, A](private val underlying: (Try[E \/ A] => Callback) => Callback) extends AnyVal {
     @inline private def self: AsyncCallback[E \/ A] =
       AsyncCallback(underlying)

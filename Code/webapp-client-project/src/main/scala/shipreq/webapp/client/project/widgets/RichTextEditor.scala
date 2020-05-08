@@ -143,7 +143,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
       val onChange: ReactEventFromTextArea => Callback =
         e => $.props.flatMap(p =>
-          p.status.wrapEdit(p.edit.setStateOption(Some(liveCorrect(e.target.value)), scrollIntoView) >> // TODO https://github.com/japgolly/scalajs-react/issues/653
+          p.status.wrapEdit(p.edit.setState(liveCorrect(e.target.value), scrollIntoView) >>
             p.preview.onEdit(p.wantPreview)))
 
       val onBlur: Callback =

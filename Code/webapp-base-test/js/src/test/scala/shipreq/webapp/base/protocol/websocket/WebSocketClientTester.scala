@@ -88,7 +88,7 @@ class WebSocketClientTester {
 
   val client = WebSocketClient.Builder(newWS, P, retries)
     .build(
-      reauthorise   = AsyncCallback.point{reauthAttempts += 1; nextReauthResult()},
+      reauthorise   = AsyncCallback.delay{reauthAttempts += 1; nextReauthResult()},
       onServerPush  = p => Callback(receivedPushes :+= p),
       onStateChange = _ => onStateChange,
       timers        = timers,

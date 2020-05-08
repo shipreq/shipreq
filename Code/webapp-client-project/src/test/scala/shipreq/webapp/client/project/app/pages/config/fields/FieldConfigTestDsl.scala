@@ -51,8 +51,7 @@ object FieldConfigTestDsl {
     *.action("Click filter dead")(Simulate click _.obs.filterDeadButton)
 
   def selectField(name: String): *.Actions =
-    // TODO Pending https://github.com/japgolly/scalajs-react/issues/674
-    *.action("Click field: " + name)(x => Simulate.click(x.obs.fieldList(name).rowDom, scalajs.js.Dynamic.literal(defaultPrevented = false)))
+    *.action("Click field: " + name)(Simulate click _.obs.fieldList(name).rowDom)
 
   def deleteField(name: String): *.Actions =
     (selectField(name) >> clickDeleteButton >> clickCloseButton).group("Delete field: " + name)

@@ -58,7 +58,7 @@ object NewEditor {
       Hooks(Callback.empty, Callback.empty)
 
     implicit val reusability: Reusability[Hooks] = {
-      implicit val x: Reusability[Callback] = Reusability.by((_: Callback).toScalaFn)(Reusability.byRef) // TODO Use Reusability.callbackByRef
+      implicit val x: Reusability[Callback] = Reusability.callbackByRef
       locally(x) // -Wunused:locals gets it wrong
       Reusability.byRef || Reusability.derive
     }

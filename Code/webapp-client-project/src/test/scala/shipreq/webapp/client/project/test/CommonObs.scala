@@ -22,8 +22,7 @@ object CommonObs {
   final class Link($: DomZipperJs) {
     val dom = $.domAs[html.Anchor]
     val label = $.innerText.trim
-    //def click() = Simulate click dom
-    def click() = Simulate.click(dom, scalajs.js.Dynamic.literal(defaultPrevented = false, metaKey = false, ctrlKey = false, button = 0)) // TODO Pending https://github.com/japgolly/scalajs-react/issues/674
+    def click() = Simulate.click(dom)
   }
 
   final class Dropdown($: DomZipperJs) {

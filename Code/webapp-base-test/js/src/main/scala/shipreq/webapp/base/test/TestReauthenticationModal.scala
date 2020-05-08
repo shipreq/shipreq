@@ -18,7 +18,7 @@ class TestReauthenticationModal(initialResponse: Option[ErrorMsg \/ Permission])
 
   val proc: ReauthenticationModal.AttemptLogin =
     p =>
-      AsyncCallback.point[AsyncCallback[ErrorMsg \/ Permission]] {
+      AsyncCallback.delay[AsyncCallback[ErrorMsg \/ Permission]] {
         attempts :+= p
         nextResponse match {
           case Some(response) => AsyncCallback.pure(response)

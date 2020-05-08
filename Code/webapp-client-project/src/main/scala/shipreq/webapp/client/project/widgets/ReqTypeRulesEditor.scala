@@ -401,7 +401,7 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean, keyFor: D => S
         <.tr(
           ^.key := row.key,
           <.td(*.rulesDeadReqTypes, "Dead req types:", reqTypes),
-          <.td(*.rulesEditorRule, renderRes(StateSnapshot(row.res)((_, _) => Callback.empty), Disabled)), // TODO scalajs-react
+          <.td(*.rulesEditorRule, renderRes(StateSnapshot(row.res).readOnly, Disabled)),
           <.td(*.rulesEditorButton))
       }
 

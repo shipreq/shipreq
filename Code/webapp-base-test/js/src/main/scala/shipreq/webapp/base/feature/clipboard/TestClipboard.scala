@@ -6,8 +6,8 @@ object TestClipboard {
 
   private final class Mock extends Clipboard {
     var text = ""
-    override val read = AsyncCallback.point(ClipboardData(text))
-    override def write(d: ClipboardData) = AsyncCallback.point {
+    override val read = AsyncCallback.delay(ClipboardData(text))
+    override def write(d: ClipboardData) = AsyncCallback.delay {
       // println("Setting clipboard text to " + d)
       text = d.text
     }

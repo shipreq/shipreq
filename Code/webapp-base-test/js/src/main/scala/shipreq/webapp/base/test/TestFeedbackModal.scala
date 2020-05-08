@@ -17,7 +17,7 @@ class TestFeedbackModal(initialResponse: Option[ErrorMsg \/ Unit]) {
 
   val proc: FeedbackModal.SubmitFn =
     p =>
-      AsyncCallback.point[AsyncCallback[ErrorMsg \/ Unit]] {
+      AsyncCallback.delay[AsyncCallback[ErrorMsg \/ Unit]] {
         attempts :+= p
         nextResponse match {
           case Some(response) => AsyncCallback.pure(response)
