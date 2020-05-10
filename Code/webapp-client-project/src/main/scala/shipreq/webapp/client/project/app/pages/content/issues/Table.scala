@@ -114,7 +114,7 @@ object Table {
       */
     private def focusAlternateRow(p: EditorNavParent.Props, rowIdx: Int): Callback =
       for {
-        focus <- DomUtil.activeHtmlElement.toCBO
+        focus <- CallbackOption.activeHtmlElement.asCallback
         _     <- CallbackOption.require(focus.isEmpty)
         table <- $.getDOMNode.map(_.toHtml).asCBO
       } yield {
