@@ -176,7 +176,7 @@ object ButtonAndDropdown {
       dropdownNode.foreach(JQuery(_).dropdown(dropdownOptions))
   }
 
-  val Component = ScalaComponent.builder[Props]("DropdownButton")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .componentDidMount(_.backend.enableDropdown)

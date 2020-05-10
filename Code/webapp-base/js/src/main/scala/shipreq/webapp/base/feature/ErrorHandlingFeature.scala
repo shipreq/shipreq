@@ -71,7 +71,7 @@ object ErrorHandlingFeature {
     }
   }
 
-  private val Component = ScalaComponent.builder[Props]("ErrorHandling")
+  private val Component = ScalaComponent.builder[Props]
     .initialState(State(0))
     .renderBackend[Backend]
     .componentDidCatch($ => $.backend.onError($.error, $.props, $.state))

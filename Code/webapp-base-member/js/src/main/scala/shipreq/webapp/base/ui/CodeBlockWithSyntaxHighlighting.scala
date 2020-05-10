@@ -52,7 +52,7 @@ object CodeBlockWithSyntaxHighlighting {
       }
   }
 
-  val Component = ScalaComponent.builder[Props]("CodeBlockWithSyntaxHighlighting")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .componentDidMount(_.backend.highlight)

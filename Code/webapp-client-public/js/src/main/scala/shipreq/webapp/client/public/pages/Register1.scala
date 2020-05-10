@@ -116,7 +116,7 @@ object Register1 {
         renderForm(p)
   }
 
-  val Component = ScalaComponent.builder[Props]("Register1")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 }

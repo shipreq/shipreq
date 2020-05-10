@@ -80,7 +80,7 @@ object Select {
     }
   }
 
-  private val Component = ScalaComponent.builder[Props]("Select")
+  private val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .componentDidMount(_.backend.enableDropdown)
     .componentDidUpdate(_.backend.enableDropdown)

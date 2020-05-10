@@ -35,7 +35,7 @@ object Table {
     val reusablePxPW  = Reusable.byRef(pxProjectWidgets)
     val pxPubidFormat = pxProjectWidgets.map(_.PubidFormat(Plain, _ => *.pubidColumnValue, titleFn = _ => None))
 
-    val component = ScalaComponent.builder[Props]("Table")
+    val component = ScalaComponent.builder[Props]
       .backend(new Backend(this, _))
       .renderBackend
       .configure(shouldComponentUpdate)

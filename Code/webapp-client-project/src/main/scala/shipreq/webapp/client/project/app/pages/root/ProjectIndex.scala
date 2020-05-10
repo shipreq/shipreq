@@ -168,7 +168,7 @@ object ProjectIndex {
         Category.All.whole.toTagMod(renderCategory(p, _)))
   }
 
-  val Component = ScalaComponent.builder[Props]("Index")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .componentDidMount(_.backend.enableDimmer)
     .build

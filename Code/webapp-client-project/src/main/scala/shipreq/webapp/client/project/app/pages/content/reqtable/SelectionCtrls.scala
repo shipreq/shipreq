@@ -250,7 +250,7 @@ object SelectionCtrls {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("SelectionCtrls")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(shouldComponentUpdate)
     .build

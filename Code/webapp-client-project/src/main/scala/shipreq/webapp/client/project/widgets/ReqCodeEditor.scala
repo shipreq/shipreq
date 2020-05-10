@@ -112,7 +112,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
 
   // lazy else there'll be a FieldNotInitialised error via .configure -> impTextEditor -> textEditor
   lazy val Component =
-    ScalaComponent.builder[Props]("ReqCodeEditor")
+    ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .configure(
         //Reusability.shouldComponentUpdate,

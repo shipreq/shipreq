@@ -359,7 +359,7 @@ object FieldConfig {
       )
   }
 
-  val Component = ScalaComponent.builder[Props]("FieldConfig")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 }

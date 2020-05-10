@@ -107,7 +107,7 @@ object MemberNavBar {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("NavBar")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

@@ -158,7 +158,7 @@ private[tags] object TagTreeView {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("TagTreeView")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

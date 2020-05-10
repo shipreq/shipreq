@@ -257,7 +257,7 @@ object Login {
             " you'll soon receive an email with a link to reset your password.")))
   }
 
-  val Component = ScalaComponent.builder[Props]("Login")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .componentWillMount(_.backend.readCredentials)
     .componentDidUpdate(_.backend.writeCredentials)

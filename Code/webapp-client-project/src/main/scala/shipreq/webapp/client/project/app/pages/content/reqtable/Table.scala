@@ -119,7 +119,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       }
     }
 
-    val Component = ScalaComponent.builder[Props]("ReqTable")
+    val Component = ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .configure(shouldComponentUpdate)
       .build
@@ -188,7 +188,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       }
     }
 
-    val Component = ScalaComponent.builder[Props]("Header")
+    val Component = ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .configure(shouldComponentUpdate)
       .build
@@ -440,7 +440,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         editor.themedRenderOr(())(p.view))
     }
 
-    val Component = ScalaComponent.builder[Props]("Cell")
+    val Component = ScalaComponent.builder[Props]
       .renderP(render)
       .configure(shouldComponentUpdate)
       .build

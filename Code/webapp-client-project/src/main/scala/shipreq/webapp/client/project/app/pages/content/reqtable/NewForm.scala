@@ -254,7 +254,7 @@ sealed trait NewForm {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("NewForm")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 
@@ -270,7 +270,7 @@ sealed trait NewForm {
           p.whole.toTagMod(col =>
             <.th(*.formHeaderCell, col.name))))
 
-    val Component = ScalaComponent.builder[Props]("Header")
+    val Component = ScalaComponent.builder[Props]
       .render_P(render)
       .configure(shouldComponentUpdate)
       .build

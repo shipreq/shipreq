@@ -61,7 +61,7 @@ object UseCaseStepRow {
               label))
       }
 
-    val Component = ScalaComponent.builder[Props]("UseCaseStep.Label")
+    val Component = ScalaComponent.builder[Props]
       .render_P(render)
       .configure(Reusability.shouldComponentUpdate)
       .build
@@ -122,7 +122,7 @@ object UseCaseStepRow {
         insertAsync    = runAdd.asyncState)
     }
 
-    val Component = ScalaComponent.builder[Props]("UseCaseStep.LiveCtrls")
+    val Component = ScalaComponent.builder[Props]
       .render_P(render)
       .configure(Reusability.shouldComponentUpdate)
       .build

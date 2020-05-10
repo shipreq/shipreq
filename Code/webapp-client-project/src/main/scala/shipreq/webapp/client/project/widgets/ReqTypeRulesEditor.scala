@@ -483,7 +483,7 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean, keyFor: D => S
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("ReqTypeRulesEditor")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

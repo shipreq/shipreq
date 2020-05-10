@@ -122,7 +122,7 @@ private[issues] object CustomIssueTypeEditor {
     Form(key, desc)
   }
 
-  val Component = ScalaComponent.builder[Props]("CustomIssueTypeEditor")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

@@ -236,7 +236,7 @@ private[tags] object TagGroupEditor {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("TagGroupEditor")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

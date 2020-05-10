@@ -90,7 +90,7 @@ object StaticFieldEditor {
     <.div(body)
   }
 
-  val Component = ScalaComponent.builder[Props]("StaticField")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

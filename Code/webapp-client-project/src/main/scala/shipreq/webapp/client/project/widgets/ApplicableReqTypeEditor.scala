@@ -136,7 +136,7 @@ object ApplicableReqTypeEditor {
 
   implicit val reusabilityProps: Reusability[Props] = Reusability.derive
 
-  val Component = ScalaComponent.builder[Props]("ApplicableReqTypeEditor")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .configure(AutoComplete.install(autoCompletableInput))

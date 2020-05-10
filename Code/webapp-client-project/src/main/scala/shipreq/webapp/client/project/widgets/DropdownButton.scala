@@ -57,7 +57,7 @@ object DropdownButton {
       Dropdown.enable($.getDOMNode)
   }
 
-  val Component = ScalaComponent.builder[Props]("DropdownButton")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .componentDidMount(_.backend.enableDropdown)

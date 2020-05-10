@@ -118,7 +118,7 @@ object EditorNavParent {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("EditorNavParent")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 

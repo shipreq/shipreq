@@ -117,7 +117,7 @@ object DropdownAndTextEditor {
       Dropdown.enable($.getDOMNode)
   }
 
-  val Component = ScalaComponent.builder[Props]("DropdownAndTextEditor")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .componentDidMount(_.backend.enableDropdown)
     .componentDidUpdate(_.backend.enableDropdown)

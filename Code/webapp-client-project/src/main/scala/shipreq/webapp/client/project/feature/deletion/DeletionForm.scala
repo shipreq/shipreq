@@ -113,7 +113,7 @@ object DeletionForm {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("Deletion")
+  val Component = ScalaComponent.builder[Props]
     .initialStateFromProps(State.init)
     .renderBackend[Backend]
     .build

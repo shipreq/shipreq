@@ -221,7 +221,7 @@ private[tags] object ApplicableTagEditor {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("ApplicableTagEditor")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

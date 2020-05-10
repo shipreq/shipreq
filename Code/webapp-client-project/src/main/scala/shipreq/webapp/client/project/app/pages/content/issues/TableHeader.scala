@@ -45,7 +45,7 @@ object TableHeader {
             columnName(c)))))
   }
 
-  val Component = ScalaComponent.builder[Props]("TableHeader")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(shouldComponentUpdate)
     .build

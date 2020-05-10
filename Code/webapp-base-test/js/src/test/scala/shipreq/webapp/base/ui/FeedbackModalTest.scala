@@ -33,7 +33,7 @@ object FeedbackModalTest extends TestSuite {
       def dom() = $.getDOMNode.runNow().toHtml.get
     }
 
-    val Component = ScalaComponent.builder[Props]("")
+    val Component = ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .componentDidMount(_.backend.onMount)
       .build

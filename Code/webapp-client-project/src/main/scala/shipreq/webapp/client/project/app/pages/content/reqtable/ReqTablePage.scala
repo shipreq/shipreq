@@ -32,7 +32,7 @@ import shipreq.webapp.client.project.widgets.{FilterDeadButton, FilterEditor, Pr
 object ReqTablePage {
 
   def apply(staticProps: StaticProps) =
-    ScalaComponent.builder[Props]("ReqTablePage")
+    ScalaComponent.builder[Props]
       .backend(new Backend(staticProps, _))
       .renderBackend
       .componentDidMount(_.backend.unfocus)

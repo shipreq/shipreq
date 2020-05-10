@@ -108,14 +108,14 @@ object ReqTypeConfig {
         ),
       )
 
-    ScalaComponent.static("NotInUse")(
+    VdomElement.static(
       Message.withBody(
         style  = Message.Style(Message.Type.Info),
         icon   = Icon.InfoCircle,
         header = "Not yet in-use",
         body   = body,
       )(*.notInUse)
-    )()
+    )
   }
 
   final class Backend($: BackendScope[Props, Unit]) {
@@ -271,7 +271,7 @@ object ReqTypeConfig {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("ReqTypeConfig")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 }

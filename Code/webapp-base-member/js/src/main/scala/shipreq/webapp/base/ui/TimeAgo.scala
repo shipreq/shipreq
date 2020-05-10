@@ -40,7 +40,7 @@ object TimeAgo {
         state)
   }
 
-  val Component = ScalaComponent.builder[Props]("TimeAgo")
+  val Component = ScalaComponent.builder[Props]
     .initialStateFromProps(_.ago())
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)

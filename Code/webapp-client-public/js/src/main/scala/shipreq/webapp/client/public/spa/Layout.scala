@@ -24,7 +24,7 @@ object Layout {
       <.main(*.main, p.content),
       Footer.Component(p))
 
-  val Component = ScalaComponent.builder[Props]("Layout")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .build
 
@@ -77,7 +77,7 @@ object Layout {
         right)
     }
 
-    val Component = ScalaComponent.builder[Props]("Layout.Header")
+    val Component = ScalaComponent.builder[Props]
       .render_P(render)
       .build
   }
@@ -91,7 +91,7 @@ object Layout {
     private def render(p: Props): VdomElement =
       footer(makeNav(p, links))
 
-    val Component = ScalaComponent.builder[Props]("Layout.Footer")
+    val Component = ScalaComponent.builder[Props]
       .render_P(render)
       .build
   }

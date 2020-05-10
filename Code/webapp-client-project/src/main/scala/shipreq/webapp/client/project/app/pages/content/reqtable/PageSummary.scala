@@ -60,7 +60,7 @@ object PageSummary {
       <.br,
       SummaryUI.selected(p.selectedRows) getOrElse SummaryUI.fakeLine)
 
-  val Component = ScalaComponent.builder[Props]("PageSummary")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(shouldComponentUpdate)
     .build

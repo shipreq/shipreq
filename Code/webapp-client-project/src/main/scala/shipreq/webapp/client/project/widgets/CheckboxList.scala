@@ -57,7 +57,7 @@ final case class CheckboxList[A: Reusability](renderFn: RenderFn) {
       }
     )
 
-  val Component = ScalaComponent.builder[Props]("CheckboxList")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

@@ -29,7 +29,7 @@ object InputComponent {
       }
   }
 
-  val Component = ScalaComponent.builder[Props]("InputWithAutoComplete")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(ForComponent.install(autoCompletableInput))
     .build

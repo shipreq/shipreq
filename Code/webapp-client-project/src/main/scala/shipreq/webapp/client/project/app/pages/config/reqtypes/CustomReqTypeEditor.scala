@@ -170,7 +170,7 @@ private[reqtypes] object CustomReqTypeEditor {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("CustomReqTypeEditor")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

@@ -31,7 +31,7 @@ object IssuesPage {
     val pxConfig      = pxProject.map(_.config).withReuse
     val pxFieldNameFn = pxConfig.map(cfg => Reusable.byRef(cfg.fieldName))
 
-    val component = ScalaComponent.builder[Props]("IssuesPage")
+    val component = ScalaComponent.builder[Props]
       .backend(new Backend(this, _))
       .renderBackend
       .build

@@ -51,7 +51,7 @@ object LandingPage {
       <.div(*.tagline,
         "Ship quality products with quality requirements."))
 
-  private val yap = ScalaComponent.static("")(
+  private val yap = ScalaComponent.static(
     <.div(*.yap,
       <.div(*.yap1,
         "ShipReq is a modern, online tool", <.br,
@@ -146,7 +146,7 @@ object LandingPage {
           renderForm(p)))
   }
 
-  val Component = ScalaComponent.builder[Props]("LandingPage")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 }

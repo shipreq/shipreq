@@ -74,7 +74,7 @@ object NewIssue {
 
   }
 
-  val Component = ScalaComponent.builder[Props]("NewIssue")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

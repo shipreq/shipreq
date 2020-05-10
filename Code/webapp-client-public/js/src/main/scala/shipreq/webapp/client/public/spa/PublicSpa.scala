@@ -35,7 +35,7 @@ object PublicSpa {
 final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClient.Binary) {
   import PublicSpa._
 
-  val Component = ScalaComponent.builder[Props]("Root")
+  val Component = ScalaComponent.builder[Props]
     .initialState(State.recorder.getOrElse(State.init))
     .renderBackend[Backend]
     .build

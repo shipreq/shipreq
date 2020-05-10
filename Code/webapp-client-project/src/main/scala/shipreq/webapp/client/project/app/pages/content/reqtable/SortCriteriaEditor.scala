@@ -98,7 +98,7 @@ object SortCriteriaEditor {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("SortCriteriaEditor")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(shouldComponentUpdate)
     .build

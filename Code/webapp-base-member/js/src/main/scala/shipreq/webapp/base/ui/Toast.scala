@@ -142,7 +142,7 @@ object Toast {
   implicit val reusabilityBread     : Reusability[Bread     ] = Reusability.derive
   implicit val reusabilityState     : Reusability[State     ] = Reusability.derive
 
-  val Component = ScalaComponent.builder[Props]("Toast")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

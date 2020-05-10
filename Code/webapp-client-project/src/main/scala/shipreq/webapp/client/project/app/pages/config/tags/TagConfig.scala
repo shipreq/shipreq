@@ -305,7 +305,7 @@ object TagConfig {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("TagConfig")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 }

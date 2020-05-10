@@ -285,7 +285,7 @@ object FieldList {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("FieldList")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

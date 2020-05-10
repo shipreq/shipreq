@@ -200,7 +200,7 @@ object FilterEditor {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("FilterEditor")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .configure(AutoComplete.install(autoCompletableInput))

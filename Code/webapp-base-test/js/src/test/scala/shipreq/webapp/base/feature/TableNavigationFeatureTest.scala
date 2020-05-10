@@ -137,7 +137,7 @@ object TableNavigationFeatureTest extends TestSuite {
         )
     }
 
-    val Component = ScalaComponent.builder[Unit]("LR")
+    val Component = ScalaComponent.builder[Unit]
       .renderBackend[Backend]
       .build
 
@@ -254,7 +254,7 @@ object TableNavigationFeatureTest extends TestSuite {
         )
     }
 
-    val Component = ScalaComponent.builder[Unit]("TD")
+    val Component = ScalaComponent.builder[Unit]
       .renderBackend[Backend]
       .build
 
@@ -352,7 +352,7 @@ object TableNavigationFeatureTest extends TestSuite {
         )
     }
 
-    val Component = ScalaComponent.builder[Unit]("RowSpan")
+    val Component = ScalaComponent.builder[Unit]
       .renderBackend[Backend]
       .build
 

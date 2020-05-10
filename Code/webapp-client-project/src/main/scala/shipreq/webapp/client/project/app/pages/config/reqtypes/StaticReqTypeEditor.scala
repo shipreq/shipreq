@@ -64,7 +64,7 @@ private[reqtypes] object StaticReqTypeEditor {
       Form(mnemonics, name, imp, desc))
   }
 
-  val Component = ScalaComponent.builder[Props]("StaticReqType")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

@@ -123,7 +123,7 @@ object ResetPassword {
       s.response.fold(renderForm(p, s))(renderResponse)
   }
 
-  val Component = ScalaComponent.builder[Props]("ResetPassword")
+  val Component = ScalaComponent.builder[Props]
     .initialState(State.init)
     .renderBackend[Backend]
     .build

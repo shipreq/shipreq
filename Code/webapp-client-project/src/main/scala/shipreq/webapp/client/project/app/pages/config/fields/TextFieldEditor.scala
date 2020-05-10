@@ -106,7 +106,7 @@ object TextFieldEditor {
   implicit val reusabilityState: Reusability[State] = Reusability.derive
   implicit val reusabilityProps: Reusability[Props] = Reusability.derive
 
-  val Component = ScalaComponent.builder[Props]("TextFieldEditor")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

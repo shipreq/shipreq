@@ -100,7 +100,7 @@ private[issues] object CustomIssueTypeList {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("CustomIssueTypeList")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

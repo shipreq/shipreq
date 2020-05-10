@@ -33,7 +33,7 @@ object ReqDetail {
   private implicit val tableNavigationFeature = TableNavigationFeature.NoRowSpans
 
   def apply(staticProps: StaticProps) =
-    ScalaComponent.builder[DynamicProps]("ReqDetail")
+    ScalaComponent.builder[DynamicProps]
       .backend(new Backend(staticProps, _))
       .renderBackend
       .build

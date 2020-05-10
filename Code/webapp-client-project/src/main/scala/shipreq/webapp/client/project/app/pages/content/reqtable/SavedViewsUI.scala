@@ -156,7 +156,7 @@ object SavedViewsUI {
           .getOrEmpty)
   }
 
-  val Component = ScalaComponent.builder[Props]("SavedViewsUI")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .componentDidUpdate(_.backend.handleAsyncError)
     .configure(Reusability.shouldComponentUpdate)

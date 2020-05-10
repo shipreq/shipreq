@@ -38,7 +38,7 @@ object AutoCompleteTest extends TestSuite {
         n <- $.getDOMNode.map(_.asElement)
       } yield AutoCompleteCtx(p, n.domCast[N])
   }
-  val Tester = ScalaComponent.builder[AutoComplete.Strategies]("AutoComplete test")
+  val Tester = ScalaComponent.builder[AutoComplete.Strategies]
     .initialState("")
     .renderBackend[Backend]
     .build

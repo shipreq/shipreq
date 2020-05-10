@@ -138,7 +138,7 @@ object TableRow {
     <.tr(cells)
   }
 
-  val Component = ScalaComponent.builder[Props]("TableRow")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(shouldComponentUpdate)
     .build

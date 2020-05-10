@@ -483,7 +483,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
       }
   }
 
-  val Component = ScalaComponent.builder[Props]("LoadedRoot")
+  val Component = ScalaComponent.builder[Props]
     .initialState(State.recorder.getOrElse(State.init(unsafeProject())))
     .renderBackend[Backend]
     .componentDidMount(_.backend.installHooks)

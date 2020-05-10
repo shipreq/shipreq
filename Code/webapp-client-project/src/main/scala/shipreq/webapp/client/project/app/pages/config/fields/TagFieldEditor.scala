@@ -207,7 +207,7 @@ object TagFieldEditor {
   implicit val reusabilityState : Reusability[State          ] = Reusability.derive
   implicit val reusabilityProps : Reusability[Props          ] = Reusability.derive
 
-  val Component = ScalaComponent.builder[Props]("TagFieldEditor")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

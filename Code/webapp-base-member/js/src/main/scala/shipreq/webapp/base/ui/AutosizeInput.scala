@@ -81,7 +81,7 @@ object AutosizeInput {
       }
   }
 
-  val Component = ScalaComponent.builder[Props]("AutosizeInput")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .componentDidMount(_.backend.resize)
     .componentDidUpdate(_.backend.resize)

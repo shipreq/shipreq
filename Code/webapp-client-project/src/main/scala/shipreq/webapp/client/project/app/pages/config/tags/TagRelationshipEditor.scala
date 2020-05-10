@@ -292,7 +292,7 @@ object TagRelationshipEditor {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("TagRelationshipEditor")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

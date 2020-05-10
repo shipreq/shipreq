@@ -11,7 +11,7 @@ object Checkbox {
     implicit val reusability = Reusability.by(bool.from)
     val on = On fnToThisWhen bool
 
-    ScalaComponent.builder[A]("Checkbox")
+    ScalaComponent.builder[A]
       .render_P { a =>
         val t = Widgets.checkbox(on(a))(^.onChange --> set(!a))
         decor(a)(t)

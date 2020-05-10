@@ -30,7 +30,7 @@ object FilterDeadButton {
     renderButton(fd)(^.onClick --> props.setState(!fd))
   }
 
-  val Component = ScalaComponent.builder[Props]("FilterDeadButton")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

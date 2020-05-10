@@ -102,7 +102,7 @@ object ColourPicker {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("ColourPicker")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

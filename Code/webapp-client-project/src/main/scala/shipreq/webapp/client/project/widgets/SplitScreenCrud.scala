@@ -122,13 +122,12 @@ object SplitScreenCrud {
 //    implicit def reusabilityState[N, I, E]: Reusability[State[N, I, E]] = Reusability.derive
 
   def emptyEditorMessage(noun: String): VdomNode =
-    ScalaComponent.static("")(
+    VdomNode.static(
       <.div(*.emptyRight,
         <.div(*.emptyRightHeader),
         <.div(*.emptyRightBody,
           <.div(s"This is the $noun editor."),
-          <.div(s"Create a new $noun, or select an existing $noun to edit it here.")))
-    )()
+          <.div(s"Create a new $noun, or select an existing $noun to edit it here."))))
 }
 
 
@@ -327,7 +326,7 @@ final class SplitScreenCrud[
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("SplitScreenCrud")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 }

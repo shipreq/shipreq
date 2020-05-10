@@ -215,7 +215,7 @@ object Register2 {
       s.response.fold(renderForm(p, s))(renderResult)
   }
 
-  val Component = ScalaComponent.builder[Props]("Register2")
+  val Component = ScalaComponent.builder[Props]
     .initialState(State.init)
     .renderBackend[Backend]
     .build

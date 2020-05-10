@@ -77,7 +77,7 @@ object RestorationForm {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("Restoration")
+  val Component = ScalaComponent.builder[Props]
     .initialStateFromProps(stateInit)
     .renderBackend[Backend]
     .build

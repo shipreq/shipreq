@@ -234,7 +234,7 @@ object EditorButtons {
           closeButton.onClick(abort))
     }
 
-  val Component = ScalaComponent.builder[Props]("EditorButtons")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .build
 }

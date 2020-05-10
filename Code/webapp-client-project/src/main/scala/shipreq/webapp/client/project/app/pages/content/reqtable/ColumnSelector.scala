@@ -104,7 +104,7 @@ object ColumnSelector {
     ColumnCheckboxes.Props(items, updateFn).render
   }
 
-  val Component = ScalaComponent.builder[Props]("ColumnSelector")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(shouldComponentUpdate)
     .build

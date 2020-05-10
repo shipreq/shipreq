@@ -90,7 +90,7 @@ object Home {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("Home")
+  val Component = ScalaComponent.builder[Props]
     .initialStateFromProps(p => State.recorder.getOrElse(State.init(p.data.projects)))
     .renderBackend[Backend]
     .build
@@ -154,7 +154,7 @@ object HomeContent {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("Home")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 

@@ -101,7 +101,7 @@ private[reqtypes] object ReqTypeList {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("ReqTypeList")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

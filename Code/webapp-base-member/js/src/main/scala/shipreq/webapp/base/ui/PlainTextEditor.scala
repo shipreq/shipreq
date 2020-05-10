@@ -90,7 +90,7 @@ object PlainTextEditor {
       }
     }
 
-    val Component = ScalaComponent.builder[Props]("PlainTextEditor.TempBasic")
+    val Component = ScalaComponent.builder[Props]
       .renderBackend[Backend]
       //    .configure(Reusability.shouldComponentUpdate)
       .build
@@ -176,7 +176,7 @@ object PlainTextEditor {
       }
     }
 
-    val Component = ScalaComponent.builder[Props]("PlainTextEditor.WithButton")
+    val Component = ScalaComponent.builder[Props]
       .renderBackend[Backend]
       //    .configure(Reusability.shouldComponentUpdate)
       .build

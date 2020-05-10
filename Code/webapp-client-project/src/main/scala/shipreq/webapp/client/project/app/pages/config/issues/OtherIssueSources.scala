@@ -134,7 +134,7 @@ object OtherIssueSources {
     )
   }
 
-  val Component = ScalaComponent.builder[Props]("OtherIssueSources")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build

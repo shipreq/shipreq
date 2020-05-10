@@ -209,7 +209,7 @@ object IssueConfig {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("IssueConfig")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 }
