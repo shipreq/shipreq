@@ -64,7 +64,7 @@ object Dependencies {
   }
 
   object TestState {
-    val Ver = "2.4.0"
+    val Ver = "2.4.1"
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", Ver)
     private val js = MultiModule.js("com.github.japgolly.test-state", Ver)
     val core            = mm("core")
@@ -90,7 +90,7 @@ object Dependencies {
   }
 
   object ScalaCSS {
-    private val mm = MultiModule.js("com.github.japgolly.scalacss", "0.6.0")
+    private val mm = MultiModule.js("com.github.japgolly.scalacss", "0.6.1")
     val core  = mm("core")
     val react = mm("ext-react") ++ core
   }
