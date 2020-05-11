@@ -22,6 +22,7 @@ cmd=(
   sbt
   -DMODE=release
   -Dsbt.server.autostart=false
+  benchmark-jvm/clean # because it or sbt-jmh isn't very good at handling old state
 )
 
 for bm in "${bms[@]}"; do
