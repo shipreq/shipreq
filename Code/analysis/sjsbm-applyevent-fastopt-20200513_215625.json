@@ -1,0 +1,354 @@
+[
+  {
+    "benchmark" : "ApplyEvent.Trusted",
+    "mode" : "avgt",
+    "threads" : 1,
+    "forks" : 1,
+    "jdkVersion" : "1.8",
+    "vmName" : "Scala.JS",
+    "vmVersion" : "0.6.33-fastOptJS",
+    "userAgent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+    "warmupIterations" : 2,
+    "warmupTime" : "1 s",
+    "warmupBatchSize" : 1,
+    "measurementIterations" : 9,
+    "measurementTime" : "1 s",
+    "measurementBatchSize" : 1,
+    "params" : {
+      "Sample data" : "shipreq-events-no_req_codes-10000.json"
+    },
+    "primaryMetric" : {
+      "score" : 1544.355333,
+      "scoreError" : 9.103355,
+      "scoreConfidence" : [
+        1535.251977,
+        1553.458688
+      ],
+      "scoreUnit" : "ms/op",
+      "rawData" : [
+        [
+          1540.263,
+          1548.102,
+          1540.168,
+          1542.87,
+          1536.821,
+          1542.769,
+          1543.832,
+          1551.177,
+          1553.196
+        ]
+      ]
+    },
+    "secondaryMetrics" : {
+      
+    }
+  },
+  {
+    "benchmark" : "ApplyEvent.Trusted",
+    "mode" : "avgt",
+    "threads" : 1,
+    "forks" : 1,
+    "jdkVersion" : "1.8",
+    "vmName" : "Scala.JS",
+    "vmVersion" : "0.6.33-fastOptJS",
+    "userAgent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+    "warmupIterations" : 2,
+    "warmupTime" : "1 s",
+    "warmupBatchSize" : 1,
+    "measurementIterations" : 9,
+    "measurementTime" : "1 s",
+    "measurementBatchSize" : 1,
+    "params" : {
+      "Sample data" : "shipreq-events-no_req_codes-1000.json"
+    },
+    "primaryMetric" : {
+      "score" : 32.764118,
+      "scoreError" : 0.469276,
+      "scoreConfidence" : [
+        32.294842,
+        33.233394
+      ],
+      "scoreUnit" : "ms/op",
+      "rawData" : [
+        [
+          33.612566,
+          33.704466,
+          32.968903,
+          32.922161,
+          32.557709,
+          33.949233,
+          31.936843,
+          31.831906,
+          31.584031
+        ]
+      ]
+    },
+    "secondaryMetrics" : {
+      
+    }
+  },
+  {
+    "benchmark" : "ApplyEvent.Trusted",
+    "mode" : "avgt",
+    "threads" : 1,
+    "forks" : 1,
+    "jdkVersion" : "1.8",
+    "vmName" : "Scala.JS",
+    "vmVersion" : "0.6.33-fastOptJS",
+    "userAgent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+    "warmupIterations" : 2,
+    "warmupTime" : "1 s",
+    "warmupBatchSize" : 1,
+    "measurementIterations" : 9,
+    "measurementTime" : "1 s",
+    "measurementBatchSize" : 1,
+    "params" : {
+      "Sample data" : "shipreq-events-full-2000.json"
+    },
+    "primaryMetric" : {
+      "score" : 281.871027,
+      "scoreError" : 6.010481,
+      "scoreConfidence" : [
+        275.860546,
+        287.881509
+      ],
+      "scoreUnit" : "ms/op",
+      "rawData" : [
+        [
+          287.9095,
+          286.6375,
+          284.96125,
+          284.3235,
+          291.987,
+          276.90625,
+          276.26575,
+          274.5865,
+          273.262
+        ]
+      ]
+    },
+    "secondaryMetrics" : {
+      
+    }
+  },
+  {
+    "benchmark" : "ApplyEvent.Trusted",
+    "mode" : "avgt",
+    "threads" : 1,
+    "forks" : 1,
+    "jdkVersion" : "1.8",
+    "vmName" : "Scala.JS",
+    "vmVersion" : "0.6.33-fastOptJS",
+    "userAgent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+    "warmupIterations" : 2,
+    "warmupTime" : "1 s",
+    "warmupBatchSize" : 1,
+    "measurementIterations" : 9,
+    "measurementTime" : "1 s",
+    "measurementBatchSize" : 1,
+    "params" : {
+      "Sample data" : "shipreq-events-no_req_codes-2000.json"
+    },
+    "primaryMetric" : {
+      "score" : 103.735422,
+      "scoreError" : 1.804974,
+      "scoreConfidence" : [
+        101.930447,
+        105.540396
+      ],
+      "scoreUnit" : "ms/op",
+      "rawData" : [
+        [
+          102.9402,
+          103.6232,
+          107.7673,
+          102.7162,
+          102.2636,
+          102.7993,
+          103.4122,
+          103.8504,
+          104.2464
+        ]
+      ]
+    },
+    "secondaryMetrics" : {
+      
+    }
+  },
+  {
+    "benchmark" : "ApplyEvent.Trusted",
+    "mode" : "avgt",
+    "threads" : 1,
+    "forks" : 1,
+    "jdkVersion" : "1.8",
+    "vmName" : "Scala.JS",
+    "vmVersion" : "0.6.33-fastOptJS",
+    "userAgent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+    "warmupIterations" : 2,
+    "warmupTime" : "1 s",
+    "warmupBatchSize" : 1,
+    "measurementIterations" : 9,
+    "measurementTime" : "1 s",
+    "measurementBatchSize" : 1,
+    "params" : {
+      "Sample data" : "shipreq-events-full-1000.json"
+    },
+    "primaryMetric" : {
+      "score" : 77.7793,
+      "scoreError" : 1.96661,
+      "scoreConfidence" : [
+        75.812689,
+        79.74591
+      ],
+      "scoreUnit" : "ms/op",
+      "rawData" : [
+        [
+          87.120833,
+          86.048666,
+          80.830153,
+          77.22823,
+          76.626142,
+          74.689857,
+          74.409571,
+          72.448214,
+          73.306428
+        ]
+      ]
+    },
+    "secondaryMetrics" : {
+      
+    }
+  },
+  {
+    "benchmark" : "ApplyEvent.Trusted",
+    "mode" : "avgt",
+    "threads" : 1,
+    "forks" : 1,
+    "jdkVersion" : "1.8",
+    "vmName" : "Scala.JS",
+    "vmVersion" : "0.6.33-fastOptJS",
+    "userAgent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+    "warmupIterations" : 2,
+    "warmupTime" : "1 s",
+    "warmupBatchSize" : 1,
+    "measurementIterations" : 9,
+    "measurementTime" : "1 s",
+    "measurementBatchSize" : 1,
+    "params" : {
+      "Sample data" : "shipreq-events-full-4000.json"
+    },
+    "primaryMetric" : {
+      "score" : 796.214833,
+      "scoreError" : 15.344269,
+      "scoreConfidence" : [
+        780.870564,
+        811.559102
+      ],
+      "scoreUnit" : "ms/op",
+      "rawData" : [
+        [
+          798.5935,
+          796.9525,
+          795.5925,
+          798.284,
+          788.165,
+          786.8555,
+          787.643,
+          789.9485,
+          823.899
+        ]
+      ]
+    },
+    "secondaryMetrics" : {
+      
+    }
+  },
+  {
+    "benchmark" : "ApplyEvent.Trusted",
+    "mode" : "avgt",
+    "threads" : 1,
+    "forks" : 1,
+    "jdkVersion" : "1.8",
+    "vmName" : "Scala.JS",
+    "vmVersion" : "0.6.33-fastOptJS",
+    "userAgent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+    "warmupIterations" : 2,
+    "warmupTime" : "1 s",
+    "warmupBatchSize" : 1,
+    "measurementIterations" : 9,
+    "measurementTime" : "1 s",
+    "measurementBatchSize" : 1,
+    "params" : {
+      "Sample data" : "shipreq-events-full-10000.json"
+    },
+    "primaryMetric" : {
+      "score" : 4949.214555,
+      "scoreError" : 115.009745,
+      "scoreConfidence" : [
+        4834.204809,
+        5064.224301
+      ],
+      "scoreUnit" : "ms/op",
+      "rawData" : [
+        [
+          4937.08,
+          4954.052,
+          4964.409,
+          4952.909,
+          4957.564,
+          5044.853,
+          5035.465,
+          4852.443,
+          4844.156
+        ]
+      ]
+    },
+    "secondaryMetrics" : {
+      
+    }
+  },
+  {
+    "benchmark" : "ApplyEvent.Trusted",
+    "mode" : "avgt",
+    "threads" : 1,
+    "forks" : 1,
+    "jdkVersion" : "1.8",
+    "vmName" : "Scala.JS",
+    "vmVersion" : "0.6.33-fastOptJS",
+    "userAgent" : "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36",
+    "warmupIterations" : 2,
+    "warmupTime" : "1 s",
+    "warmupBatchSize" : 1,
+    "measurementIterations" : 9,
+    "measurementTime" : "1 s",
+    "measurementBatchSize" : 1,
+    "params" : {
+      "Sample data" : "shipreq-events-no_req_codes-4000.json"
+    },
+    "primaryMetric" : {
+      "score" : 296.624416,
+      "scoreError" : 5.441494,
+      "scoreConfidence" : [
+        291.182922,
+        302.065911
+      ],
+      "scoreUnit" : "ms/op",
+      "rawData" : [
+        [
+          308.97475,
+          294.9245,
+          295.1425,
+          293.54275,
+          294.672,
+          293.181,
+          297.24675,
+          295.542,
+          296.3935
+        ]
+      ]
+    },
+    "secondaryMetrics" : {
+      
+    }
+  }
+]
