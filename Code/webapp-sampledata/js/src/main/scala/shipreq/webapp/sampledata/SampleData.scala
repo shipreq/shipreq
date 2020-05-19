@@ -8,7 +8,13 @@ import japgolly.scalajs.react.extra.Ajax
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.protocol.json.v1.Rev1.decoderEvent
 
-final case class SampleData(meta: SampleDataMeta, events: Vector[Event]) extends AbstractSampleData(meta, events)
+final case class SampleData(meta: SampleDataMeta, events: Vector[Event]) extends AbstractSampleData(meta, events) {
+  override val hashCode = meta.hashCode
+  override def equals(obj: Any): Boolean = obj match {
+    case x: SampleData => x.meta == meta
+    case _ => false
+  }
+}
 
 object SampleData extends SampleDataManifest[AsyncCallback[SampleData]] {
 
