@@ -194,7 +194,7 @@ services:
     mem_limit: 10m
 
   prometheus-tech:
-    image: prom/prometheus:v2.14.0
+    image: prom/prometheus:v2.18.1
     container_name: shipreq_dev_prometheus-tech
     user: root
     extra_hosts:

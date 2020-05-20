@@ -33,7 +33,7 @@ resource "aws_ecs_task_definition" "ecs_exporter" {
     ],
     "cpu": ${local.ops_cluster_cpu.ecs_exporter},
     "memoryReservation": ${local.ops_cluster_mem_res.ecs_exporter},
-    "memory": 48
+    "memory": 80
   }
 ]
 EOB

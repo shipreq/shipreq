@@ -1,9 +1,15 @@
 const env = process.env.APP__ENV_NAME || "local";
 const isLocal = env === "local" || env === "test";
+const strippedPath = process.env.APP__STRIPPED_PATH || '';
+
+console.log("Environment variables:");
+console.log(`APP__STRIPPED_PATH=${strippedPath} (path added to original host in analytics scripts)`);
+console.log(`APP__ENV_NAME=${env} (should not be local nor test in production)`);
 
 export default {
     isLocalEnv: isLocal,
     httpPort: process.env.PORT || 80,
+    strippedPath,
     proxyDomain: "",          // Domain to proxy calls through. Leave it empty to use the requested domain as a proxy domain
     proxy: {                  // Proxy configuration is here
         domains: [            // These domains are replaced in any proxied response (including scripts, URLs and redirects)
@@ -49,9 +55,21 @@ export default {
         specialContentReplace: { // Special regex rules for domains
             "www.statcounter.com": [
                 {
-                    regex: /_10\+":\/\/"\+_12\+"."\+_11/,
-                    replace: `location.protocol+'//'+_11.replace('/','/'+_12+'.')`
-                    // replace: `(location.protocol=='file:'?'http:':location.protocol)+'//'+_11.replace('/','/'+_12+'.')`
+                    // Here we replace
+                    //
+                    //     _e = _13 + "://" + _15 + "." + _14 + "/"
+                    //              subdomain ^^^         ^^^ domain
+                    //                    "c"       "."   "statcounter.com"
+                    //
+                    // in www.statcounter.com/counter/counter.js, so that it's like this:
+                    //
+                    //     _e = location.protocol + '//' + _14.replace('/', '/' + _15 + '.')
+                    //                   "https:"   "//"  "localhost:3000/statcounter.com".replace('/', '/' + "c" + '.')
+                    //                   "https:"   "//"  "localhost:3000/c.statcounter.com"
+
+                    regex: /_\d+\+":\/\/"\+(_\d+)\+"."\+(_\d+)/,
+                    replace: `location.protocol+'//'+$2.replace('/','/'+$1+'.')`
+                    // replace: `(location.protocol=='file:'?'http:':location.protocol)+'//'+$2.replace('/','/'+$1+'.')`
                 }
             ],
             "www.googletagmanager.com": [
@@ -79,6 +97,7 @@ export default {
         },
         maskPaths: [ // Paths which are masked in URLs and redirects in order to avoid firing ad-blocking rules
             "/google-analytics",
+            "/www.google-analytics.com",
             "/adsbygoogle",
             "/googleads",
             "/log_event\\?",
