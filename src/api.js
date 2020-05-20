@@ -29,11 +29,15 @@ export async function init () {
         app = express();
         app.disable("x-powered-by");
 
+        enableDefaultProxy(app);
+
         if (config.isLocalEnv) {
             app.use("/", express.static(`${ __dirname }/../test-static`));
+        } else {
+            app.use("/", (_, res) => res.status(200).set("Content-Type", "text/html").send(
+                "<html><head><title>Proxy API</title></head><body>It works! Try requesting something like <a href=\"www.google-analytics.com/analytics.js\">www.google-analytics.com/analytics.js</a>.</body></html>"
+            ));
         }
-
-        enableDefaultProxy(app);
 
         app.get('/ok', (_, res) => res.send('OK'));
 
@@ -53,7 +57,7 @@ export async function init () {
         });
 
         app.listen(config.httpPort, function onReady () {
-            info(`Web server is listening on port ${ config.httpPort }`);
+            info(`Analytics proxy web server is listening on port ${ config.httpPort }`);
             isReady = true;
         });
 

@@ -6,6 +6,8 @@ Back end for proxying Google Analytics / Google Tag Manager stuff, which primari
 >
 > This is the repository with the application code for [my Medium article "Save Your Analytics from Content Blockers"](https://medium.com/@zitro/save-your-analytics-from-content-blockers-7ee08c6ec7ee), which allows you to launch a proxy of Google Tag Manager / Google Analytics stuff avoiding ad-blocking.
 
+Available as a [Docker container](https://hub.docker.com/r/zitros/analytics-saviour) (check [setup](#setup) instructions below).
+
 ## How Does It Work
 
 Google Tag Manager (or plain Google Analytics) is a set of scripts used on the **front end** to track user actions (button clicks, page hits, device analytics, etc). Google's out-of-the-box solution works well, however, almost all ad-blocking software block Google tag manager / Google analytics by default. Hence, companies that are just on their start may loose a big
@@ -43,15 +45,17 @@ Technically, NodeJS proxy API works as follows:
 
 ## Prerequisites
 
-In order to enable analytics proxying, you have to have some "DevOps" skills to perform the following:
+In order to enable analytics proxying, you have to perform some DevOps in your infrastructure. Assuming you're using microservices:
 
-1. Run a dedicated back end with proxy (NodeJS application in this repository).
-2. Enable forwarding of a particular path (for example, `/gtm-proxy/*`) on your domain to this back end.
-    1. It is important to use your own domain, as using centralized domains might appear at the ad-blocking databases.
-    2. Make sure you strip the prefix path before proxy, the request path `https://your-domain.com/gtm-proxy/www.google-analytics.com/analytics.js` should land as `/www.google-analytics.com/analytics.js` at the NodeJS proxy application (this repository), stripping `gtm-proxy/` from the URL.
+1. Run a dedicated back end (container) with proxy (NodeJS application / container in this repository) - see setup instructions below.
+2. Create forwarding rule from your front end to hit this back end.
+    1. For instance, proxy all calls requesting `/gtm-proxy/*` to this back end. In this case you must also specify env variable `APP__STRIPPED_PATH=/gtm-proxy`. Ultimately, the request path `https://your-domain.com/gtm-proxy/www.google-analytics.com/analytics.js` should land as `/www.google-analytics.com/analytics.js` at the NodeJS proxy application/container (this repository), stripping `/gtm-proxy` from the URL.
+    2. It is important to use your own domain, as using centralized domains might one day appear at the ad-blocking databases.
 3. **Modify your initial Google Tag Manager / Google Analytics script to request the proxied file**
-    1. Replace `https://www.googletagmanager.com/gtag/js?id=UA-123456-7` there to use `https://your-domain.com/gtm-proxy/www.googletagmanager.com/gtag/js?id=UA-123456-7` (or whatever path you've set up).
-    2. The [example](src/test-static/index.html) in this repository uses `/www.googletagmanager.com/gtm.js` (which is equivalent of `http://localhost/www.googletagmanager.com/gtm.js`).
+    1. Replace `https://www.googletagmanager.com/gtag/js?id=UA-123456-7` there to use `https://your-domain.com/gtm-proxy/www.googletagmanager.com/gtag/js?id=UA-123456-7` (or whatever path you've set up). Also, mask the URL by running `npm run mask <YOUR_URL>` in this repository so that ad-blockers won't block it right away.
+    2. For instance, if you run `npm run mask www.google-analytics.com/analytics.js`, you get this masked URL: `*(d3d3Lmdvb2dsZS1hbmFseXRpY3MuY29t)*/*(YW5hbHl0aWNzLmpz)*`. Use it in your script tag now: `<script src="/gtm-proxy/*(d3d3Lmdvb2dsZS1hbmFseXRpY3MuY29t)*/*(YW5hbHl0aWNzLmpz)*" async></script>`.
+    3. The [example](src/test-static/index.html) in this repository uses unmasked `/www.googletagmanager.com/gtm.js` (which is equivalent of `http://localhost/www.googletagmanager.com/gtm.js`).
+4. Test the thing!
 
 **This to consider before implementing the solution**:
 
@@ -60,6 +64,40 @@ In order to enable analytics proxying, you have to have some "DevOps" skills to 
 3. Not all the third-parties are covered by the current solution. This repository is open for your PRs if you've found more third-parties that require proxying!
 
 ## Setup
+
+### In Docker
+
+The [light Docker container](https://hub.docker.com/r/zitros/analytics-saviour) of 41.5MB is available and ready to be run in your infrastructure.
+
+```bash
+docker pull zitros/analytics-saviour
+docker run -p 80:80 zitros/analytics-saviour
+# Now open http://localhost and check the proxy.
+```
+
+Available environment variables:
+
+```bash
+APP__STRIPPED_PATH=/gtm-proxy
+# A prefix which has been stripped in the request path reaching analytics-saviour.
+# If your ingress/router/etc strips the prefix you are required to set this variable.
+#
+# On your website, most likely you'll decide to route analytics using f.e. `/gtm-proxy`
+# prefix. Your "entry URL" in case of Google Analytics case will be
+# example.com/gtm-proxy/*(d3d3Lmdvb2dsZS1hbmFseXRpY3MuY29t)*/*(YW5hbHl0aWNzLmpz)*
+# (masked example.com/gtm-proxy/www.google-analytics.com/analytics.js).
+# Your ingress/router/etc must strip the `/gtm-proxy` path and thus analytics-saviour
+# gets localhost/*(d3d3Lmdvb2dsZS1hbmFseXRpY3MuY29t)*/*(YW5hbHl0aWNzLmpz)* hit.
+# However, many scripts which are proxied reference external domains. Normally, these
+# domains are blocked by adblockers, but luckily analytics-saviour finds and replaces
+# those domains with your (request) domain and the appropriate path to handle again later.
+# THE ONLY THING it cannot figure out is which part of the URL has been stripped before
+# reaching analytics-saviour so that next front end requests land to the same prefixed path
+# on your domain e.g. example.com/gtm-proxy/*(d3d3Lmdvb2dsZS1hbmFseXRpY3MuY29t)*/collect?..
+# Because of this, she path you strip must be explicitly provided.
+```
+
+### NodeJS Application
 
 To run the NodeJS application, simply clone the repository, navigate to its directory and run:
 
@@ -77,9 +115,20 @@ Proxied: www.google-analytics.com/collect?v=1&_v=j73&a=531530768&t=pageview&_s=1
 
 Check the [test-static/index.html](test-static/index.html) file's code to see how to bind the proxied analytics to your front end.
 
-Later, you can containerize this repository and route the incoming traffic to `/gtm-proxy` path (for example) through this container in order to avoid analytics blocking.
+### Proxy in Front of the Proxy
 
-## Configuration 
+Before the request hits this NodeJS app / container, you have to proxy/assign some useful headers to it (`host` and `x-real-ip` or `x-forwarded-for`). Below is the example of the minimal Nginx proxy configuration.
+
+```
+location /gtm-proxy/ {
+    proxy_set_header Host $host;
+    proxy_set_header x-real-ip $remote_addr;
+    proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;
+    proxy_pass http://app-address-running-in-your-infrastructure;
+}
+```
+
+## Configuration
 
 You can configure which third-parties to proxy/replace and how to do it in the config file. Find the actual configuration in [config.js](config.js) file:
 
@@ -114,7 +163,7 @@ You can configure which third-parties to proxy/replace and how to do it in the c
 
 ## License
 
-[MIT](LICENSE) © [Nikita Savchenko](https://nikita.tk)
+[MIT](LICENSE) © [Nikita Savchenko](https://nikita.tk/developer)
 
 ## Contributions
 
