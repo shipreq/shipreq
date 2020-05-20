@@ -114,11 +114,16 @@ object ErrorHandlingFeature {
       last = s
     }
 
-    def getOrElse(s: => S): S =
-      if (StateRecorder.enabled && secondLast != null)
-        secondLast
-      else
-        s
+    val get: CallbackTo[Option[S]] =
+      CallbackTo {
+        Option.when(StateRecorder.enabled && secondLast != null)(secondLast)
+      }
+
+    def getOrElse(s: => S): CallbackTo[S] =
+      get.map(_.getOrElse(s))
+
+    def getOrElseCB(cb: => CallbackTo[S]): CallbackTo[S] =
+      getOrElse(cb.runNow())
   }
 
   object StateRecorder {

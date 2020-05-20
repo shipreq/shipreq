@@ -93,8 +93,13 @@ object Login {
     val usernameOrEmail = req ^|-> Request.Untyped.usernameOrEmail
     val password        = req ^|-> Request.Untyped.password
 
-    def init: State =
+    def empty: State =
       State(Request.Untyped("", ""), true, None, None, None)
+
+    def init: CallbackTo[State] =
+      for {
+        s <- LocalStorage.read
+      } yield empty(s)
   }
 
   final case class ErrorFlash(title: String, content: String)
@@ -108,13 +113,6 @@ object Login {
     // User is likely to log in - prefetch new resources for next page
     Prefetch.memberHome()
 
-    def readCredentials: Callback =
-      for {
-        s <- LocalStorage.read
-        _ <- $.props.flatMap(_.state.modState(_(s)))
-        _ <- focusForm(3).delayMs(20).toCallback
-      } yield ()
-
     /** Stores the current state in client's local storage according to the remember-me setting */
     val writeCredentials: Callback =
       $.props.flatMap(p => LocalStorage.write(p.state.value))
@@ -122,7 +120,10 @@ object Login {
     // Else a user might go to home thinking they've reloaded, and another user might click Login and see the
     // previous user's password populated.
     def clearCredentials: Callback =
-      $.props.flatMap(_.state.setState(State.init))
+      $.props.flatMap(_.state.setState(State.empty))
+
+    def onMount: Callback =
+      focusForm(3).delayMs(20).toCallback
 
     private def focusForm(retries: Int): Callback =
       $.props.flatMap { p =>
@@ -259,7 +260,7 @@ object Login {
 
   val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
-    .componentWillMount(_.backend.readCredentials)
+    .componentDidMount(_.backend.onMount)
     .componentDidUpdate(_.backend.writeCredentials)
     .componentWillUnmount(_.backend.clearCredentials)
     .build

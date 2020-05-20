@@ -24,11 +24,14 @@ object PublicSpa {
 
     val recorder = ErrorHandlingFeature.StateRecorder[State]
 
-    def init: State =
-      State(
-        LandingPage.State.init,
-        Login      .State.init,
-        Register1  .State.init)
+    def init: CallbackTo[State] =
+      for {
+        login <- Login.State.init
+      } yield State(
+        landingPage = LandingPage.State.init,
+        login       = login,
+        register1   = Register1.State.init,
+      )
   }
 }
 
@@ -36,7 +39,7 @@ final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClie
   import PublicSpa._
 
   val Component = ScalaComponent.builder[Props]
-    .initialState(State.recorder.getOrElse(State.init))
+    .initialStateCallback(State.recorder.getOrElseCB(State.init))
     .renderBackend[Backend]
     .build
 

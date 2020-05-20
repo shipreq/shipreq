@@ -91,7 +91,7 @@ object Home {
   }
 
   val Component = ScalaComponent.builder[Props]
-    .initialStateFromProps(p => State.recorder.getOrElse(State.init(p.data.projects)))
+    .initialStateCallbackFromProps(p => State.recorder.getOrElse(State.init(p.data.projects)))
     .renderBackend[Backend]
     .build
 }

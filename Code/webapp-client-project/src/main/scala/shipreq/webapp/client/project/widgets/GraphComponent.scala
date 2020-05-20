@@ -35,8 +35,11 @@ object GraphComponent {
     def refresh(p: Props): Callback =
       p.webWorker.postCB(cmd(p))(svg => $.setState(Some(svg)))
 
-    def onRender(p: Props, s: State): Callback =
-      Callback.when(s.isDefined)(enrich(p))
+    def onRender(prevProps: Option[Props], p: Props, s: State)(implicit r: Reusability[Props]): Callback = {
+      val maybeRefresh = Callback.unless(prevProps.exists(_ ~=~ p))(refresh(p))
+      val maybeEnrich  = Callback.when(s.isDefined)(enrich(p))
+      maybeRefresh >> maybeEnrich
+    }
 
     def enrich(p: Props): Callback =
       Callback.empty
@@ -53,8 +56,6 @@ object GraphComponent {
 
   def graphConfig[P <: HasWebWorker : Reusability, C <: Children, B <: GraphBackend[P]]: ScalaComponent.Config[P, C, State, B, UpdateSnapshot.None, UpdateSnapshot.Some[Unit]] =
     _.configure(Reusability.shouldComponentUpdate)
-      .componentWillMount($ => $.backend.refresh($.props))
-      .componentWillReceiveProps(i => Callback.when(i.currentProps ~/~ i.nextProps)(i.backend.refresh(i.nextProps)))
-      .componentDidMount($ => $.backend.onRender($.props, $.state))
-      .componentDidUpdate(i => i.backend.onRender(i.currentProps, i.currentState))
+      .componentDidMount($ => $.backend.onRender(None, $.props, $.state))
+      .componentDidUpdate(i => i.backend.onRender(Some(i.prevProps), i.currentProps, i.currentState))
 }

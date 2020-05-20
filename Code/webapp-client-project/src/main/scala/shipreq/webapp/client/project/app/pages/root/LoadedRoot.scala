@@ -484,7 +484,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
   }
 
   val Component = ScalaComponent.builder[Props]
-    .initialState(State.recorder.getOrElse(State.init(unsafeProject())))
+    .initialStateCallback(State.recorder.getOrElseCB(pxProject.toCallback.map(State.init)))
     .renderBackend[Backend]
     .componentDidMount(_.backend.installHooks)
     .configure(Listenable.listen(_ => global, _.backend.onProjectChange))
