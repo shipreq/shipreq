@@ -55,9 +55,21 @@ export default {
         specialContentReplace: { // Special regex rules for domains
             "www.statcounter.com": [
                 {
-                    regex: /_10\+":\/\/"\+_12\+"."\+_11/,
-                    replace: `location.protocol+'//'+_11.replace('/','/'+_12+'.')`
-                    // replace: `(location.protocol=='file:'?'http:':location.protocol)+'//'+_11.replace('/','/'+_12+'.')`
+                    // Here we replace
+                    //
+                    //     _e = _13 + "://" + _15 + "." + _14 + "/"
+                    //              subdomain ^^^         ^^^ domain
+                    //                    "c"       "."   "statcounter.com"
+                    //
+                    // in www.statcounter.com/counter/counter.js, so that it's like this:
+                    //
+                    //     _e = location.protocol + '//' + _14.replace('/', '/' + _15 + '.')
+                    //                   "https:"   "//"  "localhost:3000/statcounter.com".replace('/', '/' + "c" + '.')
+                    //                   "https:"   "//"  "localhost:3000/c.statcounter.com"
+
+                    regex: /_\d+\+":\/\/"\+(_\d+)\+"."\+(_\d+)/,
+                    replace: `location.protocol+'//'+$2.replace('/','/'+$1+'.')`
+                    // replace: `(location.protocol=='file:'?'http:':location.protocol)+'//'+$2.replace('/','/'+$1+'.')`
                 }
             ],
             "www.googletagmanager.com": [

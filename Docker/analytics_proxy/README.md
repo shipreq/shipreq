@@ -30,7 +30,7 @@
 
 # Testing
 
-1. ./build run
+1. Run `./test` or `./build run`
 2. Open up test-static/index.html in a browser
 3. In the browser tab, click the AdBlock button, then click Open Logger (the 3rd button under the power button)
 4. Reload and look at the network tab, ensure all requests succeed

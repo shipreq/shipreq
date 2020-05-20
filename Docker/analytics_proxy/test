@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+cd "$(dirname "$0")" || exit 1
+
+APP__ENV_NAME=test \
+  NODE_ENV=test \
+  PORT=3000 \
+npm start
