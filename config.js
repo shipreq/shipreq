@@ -7,6 +7,9 @@ export default {
     proxyDomain: "",          // Domain to proxy calls through. Leave it empty to use the requested domain as a proxy domain
     proxy: {                  // Proxy configuration is here
         domains: [            // These domains are replaced in any proxied response (including scripts, URLs and redirects)
+            "statcounter.com",
+            "c.statcounter.com",
+            "www.statcounter.com",
             "adservice.google.com",
             "www.google-analytics.com",
             "www.googleadservices.com",
@@ -44,6 +47,13 @@ export default {
             "cm.g.doubleclick.net"
         ],
         specialContentReplace: { // Special regex rules for domains
+            "www.statcounter.com": [
+                {
+                    regex: /_10\+":\/\/"\+_12\+"."\+_11/,
+                    replace: `location.protocol+'//'+_11.replace('/','/'+_12+'.')`
+                    // replace: `(location.protocol=='file:'?'http:':location.protocol)+'//'+_11.replace('/','/'+_12+'.')`
+                }
+            ],
             "www.googletagmanager.com": [
                 {
                     regex: /"https\:\/\/s","http:\/\/a","\.adroll\.com/,

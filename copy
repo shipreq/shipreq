@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+cd "$(dirname "$0")"
+tmp=/tmp/analytics_proxy-$(date +%Y%m%d-%H%M%S)-$$
+
+find . -name '*.js' | xargs zip -9 $tmp "$0"
+find . -name '*.html' | xargs zip -9 $tmp
+
+echo $tmp

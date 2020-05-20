@@ -35,12 +35,21 @@ export async function init () {
 
         enableDefaultProxy(app);
 
+        app.get('/ok', (_, res) => res.send('OK'));
+
         app.use((err, _, res, next) => { // Express error handler
             if (res.headersSent) {
                 return next(err);
             }
             error(err);
             return res.status(500).send({ error: "An error ocurred. Error info was logged." });
+        });
+
+        app.use((req, res) => {
+            const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+            info(`Returning 404 for ${req.url} from ${ip}`);
+            res.status(404);
+            res.send('404 Not Found');
         });
 
         app.listen(config.httpPort, function onReady () {
