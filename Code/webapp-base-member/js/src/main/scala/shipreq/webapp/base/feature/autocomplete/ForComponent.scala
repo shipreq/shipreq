@@ -47,6 +47,9 @@ object ForComponent {
     private[this] var textCompletePrev: Option[AutoCompleteCtx] = None
     private[this] var hideNext        : Boolean                 = false
 
+    final protected val textCompleteCBO: CallbackOption[TextComplete] =
+      CallbackOption.liftOption(textComplete)
+
     final def autoCompleteMount(implicit ac: AutoCompletable[D]): Callback =
       for {
         ctx <- autoCompleteCtx if ctx.strategies.nonEmpty
@@ -87,7 +90,7 @@ object ForComponent {
 
     final private def addEventListeners(dom: D): Callback =
       for {
-        tc <- CallbackOption.liftOption(textComplete)
+        tc <- textCompleteCBO
         _  <- addEventListeners(tc, dom).toCBO
       } yield ()
 
@@ -103,7 +106,7 @@ object ForComponent {
     /** Display the auto-complete options */
     final protected def trigger(text: D => Option[String]): CallbackOption[Unit] =
       for {
-        tc  <- CallbackOption.liftOption(textComplete)
+        tc  <- textCompleteCBO
         ctx <- autoCompleteCtx
         txt <- CallbackOption.liftOption(text(ctx.dom))
       } yield {

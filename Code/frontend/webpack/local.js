@@ -14,33 +14,36 @@ const config = {
 
     // Projects access this via symlink in src/test/resources
     'webapp-base-test': [
-      'core-js/features/object/assign',
       'core-js/features/map',
+      'core-js/features/object/assign',
       'core-js/features/set',
       'expose-loader?React!react',
       'expose-loader?ReactDOM!react-dom',
+      'expose-loader?ReactDOMServer!react-dom/server',
       'expose-loader?ReactTestUtils!react-dom/test-utils',
+      'expose-loader?TextComplete!textcomplete/lib/textcomplete',
+      'expose-loader?TextCompleteTA!textcomplete/lib/textarea',
       'expose-loader?$!expose-loader?jQuery!jquery', // for Semantic UI -- must precede it! order in this array matters
       './semantic/dist/semantic.min', //.js
     ],
 
     // Projects access this via symlink in src/test/resources
     'webapp-client-test': [
-      'core-js/features/object/assign',
       'core-js/features/map',
+      'core-js/features/object/assign',
       'core-js/features/set',
+      'expose-loader?autosize!autosize',
+      'expose-loader?ChromePicker!react-color/lib/components/chrome/Chrome',
+      'expose-loader?GithubPicker!react-color/lib/components/github/Github',
+      'expose-loader?moment!moment',
       'expose-loader?React!react',
+      'expose-loader?ReactCollapse!react-collapse',
       'expose-loader?ReactDOM!react-dom',
       'expose-loader?ReactDOMServer!react-dom/server',
       'expose-loader?ReactTestUtils!react-dom/test-utils',
-      'expose-loader?ReactCollapse!react-collapse',
-      'expose-loader?moment!moment',
-      'expose-loader?autosize!autosize',
       'expose-loader?scrollIntoView!scroll-into-view-if-needed',
       'expose-loader?TextComplete!textcomplete/lib/textcomplete',
       'expose-loader?TextCompleteTA!textcomplete/lib/textarea',
-      'expose-loader?GithubPicker!react-color/lib/components/github/Github',
-      'expose-loader?ChromePicker!react-color/lib/components/chrome/Chrome',
       'expose-loader?tinycolor!tinycolor2/tinycolor',
       'expose-loader?$!expose-loader?jQuery!jquery', // for Semantic UI -- must precede it! order in this array matters
       './semantic/dist/semantic.min', //.js

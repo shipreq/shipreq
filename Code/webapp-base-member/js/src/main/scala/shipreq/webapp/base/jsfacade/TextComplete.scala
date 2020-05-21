@@ -9,7 +9,7 @@ import TextComplete._
 
 @js.native
 @JSGlobal("TextComplete.default")
-final class TextComplete(editor: Editor, options: Options = js.native) extends js.Any {
+final class TextComplete(val editor: Editor, options: Options = js.native) extends js.Any {
 
   def register(ss: js.Array[Strategy[_]]): this.type = js.native
 
@@ -29,7 +29,12 @@ final class TextComplete(editor: Editor, options: Options = js.native) extends j
 object TextComplete {
 
   @js.native
-  sealed trait Editor extends js.Object
+  sealed trait Editor extends js.Object {
+    /** @param options code: ("UP" | "DOWN") */
+    def emitMoveEvent(options: js.Object): Unit = js.native
+    def emitEnterEvent(): Unit = js.native
+    def emitEscEvent(): Unit = js.native
+  }
 
   @js.native
   @JSGlobal("TextCompleteTA.default")
