@@ -16,23 +16,21 @@ final class Colour private[Colour](val value: String) extends TaggedString {
     }
 
   /** Either "rgb" or "rrggbb" */
-  def hex: String =
+  val hex: String =
     value.drop(1)
 
-  def rgb: (Int, Int, Int) = {
+  val rgb: (Int, Int, Int) = {
     def parseHex(hex: String): Int =
       Integer.parseInt(hex, 16)
 
-    val hex = this.hex
+    def thrice[A, B](a: A, b: A, c: A)(f: A => B): (B, B, B) =
+      (f(a), f(b), f(c))
 
     hex.length match {
       case 3 => thrice(hex(0), hex(1), hex(2))(c => parseHex(c.toString + c))
       case 6 => thrice(hex.substring(0, 2), hex.substring(2, 4), hex.substring(4, 6))(parseHex)
     }
   }
-
-  private def thrice[A, B](a: A, b: A, c: A)(f: A => B): (B, B, B) =
-    (f(a), f(b), f(c))
 
   val luminanace: Double = {
     def f(i: Int): Double = {
