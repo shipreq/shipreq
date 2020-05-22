@@ -9,6 +9,7 @@ import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
 import shipreq.base.util.{Invalid, Valid, Validity}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.issue.IssueCategory

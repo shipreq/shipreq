@@ -9,6 +9,7 @@ import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.feature.PreviewFeature
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.DeleteReqs

@@ -16,8 +16,8 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.text.{Atom, Grammar, PlainText, Text, TextSearch}
-import shipreq.webapp.base.data.{Contextualise, Plain}
 import shipreq.webapp.base.jsfacade.TextComplete.Strategy
 import shipreq.webapp.base.ui.BaseStyles.{autoComplete => *}
 import Implicits.autoLiftTextCompleteStrategy
