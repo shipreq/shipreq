@@ -32,7 +32,7 @@ object Rev1 {
   import BaseMemberData1.ReqTableDataCodecs._
 
   object ReqTableDataCodecs {
-    import reqtable._
+    import shipreq.webapp.base.data.savedview._
 
     private[this] final val KeyCustomField    = "custom"
     private[this] final val KeyImplications   = "imps"

@@ -1,4 +1,4 @@
-package shipreq.webapp.base.data.reqtable
+package shipreq.webapp.base.data.savedview
 
 import nyaya.prop._
 import nyaya.test.PropTest._

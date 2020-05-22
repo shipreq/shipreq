@@ -448,7 +448,7 @@ object DataProp {
 
   // -------------------------------------------------------------------------------------------------------------------
   object savedViews {
-    import reqtable._
+    import shipreq.webapp.base.data.savedview._
 
     private def single(allViews: SavedViews.NonEmpty): Prop[SavedView] = {
 
@@ -578,7 +578,7 @@ object DataProp {
       val empty: Refs =
         Refs(UnivEq.emptySet, UnivEq.emptySet, UnivEq.emptySet, UnivEq.emptySet, UnivEq.emptySet, UnivEq.emptySet, UnivEq.emptySet)
 
-      import reqtable._
+      import shipreq.webapp.base.data.savedview._
 
       def savedViewFilters(svs: SavedViews.Optional): Refs =
         svs.fold(empty)(savedViewFiltersNE)
@@ -615,11 +615,11 @@ object DataProp {
            | _: FilterAst.Presence[Filter.Valid.Attr] => Refs.empty
       }
 
-      val reqtableColumnField: reqtable.Column => List[CustomFieldId] = {
-        case x: reqtable.Column.CustomField => x.id :: Nil
-        case reqtable.Column.AllTags
-           | reqtable.Column.OtherTags
-           | _: reqtable.Column.BuiltIn     => Nil
+      val reqtableColumnField: savedview.Column => List[CustomFieldId] = {
+        case x: savedview.Column.CustomField => x.id :: Nil
+        case savedview.Column.AllTags
+           | savedview.Column.OtherTags
+           | _: savedview.Column.BuiltIn     => Nil
       }
     }
 
@@ -632,7 +632,7 @@ object DataProp {
       ∧        reqCodes.all.contramap[P](_.content.reqCodes)
       ∧    implications.all.contramap[P](_.content.implications)
       ∧ deletionReasons.all.contramap[P](_.content.deletionReasons)
-      ∧ savedViews.optional.contramap[P](_.reqtableViews)
+      ∧ savedViews.optional.contramap[P](_.savedViews)
     ) rename "constituents"
 
     def liveReqCodeRequiresLiveTarget =
@@ -695,9 +695,9 @@ object DataProp {
       ∧ validIssueTypes("Atoms: Issues in RCGs",            _.atomScan.issuesInRcgs.all.all.map(_.typ))
       ∧ validReqIds    ("DeletionReason reqIds",            _.content.deletionReasons.reqApplication.keys)
       ∧ validUCStepIds ("UseCase step flow",                _.content.reqs.useCases.stepFlow.memberIterator)
-      ∧ fullRefCmp     ("SavedView filters",                p => Refs.savedViewFilters(p.reqtableViews))
-      ∧ validFieldIds  ("SavedViews: Columns",              _.reqtableViewIterator.flatMap(_.view.columns.whole).flatMap(Refs.reqtableColumnField))
-      ∧ validFieldIds  ("SavedViews: Sort Columns",         _.reqtableViewIterator.flatMap(_.view.order.all.whole).map(_.column).flatMap(Refs.reqtableColumnField))
+      ∧ fullRefCmp     ("SavedView filters",                p => Refs.savedViewFilters(p.savedViews))
+      ∧ validFieldIds  ("SavedViews: Columns",              _.savedViewIterator.flatMap(_.view.columns.whole).flatMap(Refs.reqtableColumnField))
+      ∧ validFieldIds  ("SavedViews: Sort Columns",         _.savedViewIterator.flatMap(_.view.order.all.whole).map(_.column).flatMap(Refs.reqtableColumnField))
 
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }

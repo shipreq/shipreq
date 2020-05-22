@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.pages.content
 
 import japgolly.scalajs.react._
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.lib.BaseReusability._
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd
 import shipreq.webapp.client.project.feature.Selection

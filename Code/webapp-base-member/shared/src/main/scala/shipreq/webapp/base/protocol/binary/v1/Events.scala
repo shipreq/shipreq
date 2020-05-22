@@ -952,8 +952,8 @@ object Events {
 //      override def unpickle(implicit state: UnpickleState): Event.SavedViewCreate = {
 //        val id         = state.unpickle[SavedView.Id]
 //        val name       = state.unpickle[SavedView.Name]
-//        val columns    = state.unpickle[NonEmptyVector[reqtable.Column]]
-//        val order      = state.unpickle[reqtable.SortCriteria]
+//        val columns    = state.unpickle[NonEmptyVector[savedview.Column]]
+//        val order      = state.unpickle[savedview.SortCriteria]
 //        val filterDead = state.unpickle[FilterDead]
 //        val filter     = state.unpickle[Option[Filter.Valid]]
 //        Event.SavedViewCreate(id, name, columns, order, filterDead, filter)

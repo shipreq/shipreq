@@ -5,7 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.ClientResources
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.client.project.app.Style.reqtable.{sortEditor => *}

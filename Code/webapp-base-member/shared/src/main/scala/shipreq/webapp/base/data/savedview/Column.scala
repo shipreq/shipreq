@@ -1,4 +1,4 @@
-package shipreq.webapp.base.data.reqtable
+package shipreq.webapp.base.data.savedview
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}

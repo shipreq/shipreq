@@ -93,13 +93,13 @@ object ProjectTemplate {
       add(FieldCustomImpCreateV1(id, gdAllValues(CustomImpFieldGDv1, "")))
     }
 
-    val savedViewId = new IdCounter(reqtable.SavedView.Id)
+    val savedViewId = new IdCounter(savedview.SavedView.Id)
     def savedView(name      : String,
-                  columns   : NonEmptyVector[reqtable.Column],
-                  order     : reqtable.SortCriteria,
+                  columns   : NonEmptyVector[savedview.Column],
+                  order     : savedview.SortCriteria,
                   filterDead: FilterDead                      = HideDead,
                   filter    : Option[Filter.Valid]            = None): Unit =
-      add(SavedViewCreate(savedViewId.next(), reqtable.SavedView.Name(name), columns, order, filterDead, filter))
+      add(SavedViewCreate(savedViewId.next(), savedview.SavedView.Name(name), columns, order, filterDead, filter))
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -135,7 +135,7 @@ object ProjectTemplate {
       customTagField(pri,                 Optional,  allReqTypes)
       customTagField(ver,                 Optional,  allReqTypes)
 
-      import reqtable._, SortCriterion.SyntaxHelpers._
+      import shipreq.webapp.base.data.savedview._, SortCriterion.SyntaxHelpers._
 
       savedView("Default",
         NonEmptyVector(Column.Pubid, Column.Title, Column.OtherTags),

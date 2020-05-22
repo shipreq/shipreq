@@ -152,7 +152,7 @@ object BaseMemberData1 {
   }
 
   object ReqTableDataPicklers {
-    import reqtable._
+    import shipreq.webapp.base.data.savedview._
 
     implicit val picklerColumnImplications: Pickler[Column.Implications] =
       transformPickler(Column.Implications.apply)(_.dir)

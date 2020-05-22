@@ -11,7 +11,7 @@ import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{CustomReqType, ExternalPubid, ReqType, StaticReqType}
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.websocket.CreateContentCmd
 import shipreq.webapp.base.text.{PlainText, Text}

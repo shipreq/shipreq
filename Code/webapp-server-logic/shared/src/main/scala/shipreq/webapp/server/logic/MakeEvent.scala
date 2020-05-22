@@ -461,11 +461,11 @@ object MakeEvent {
     }
 
   def updateSavedViews(cmd: SavedViewCmd, project: Project): Result = {
-    import reqtable._
+    import shipreq.webapp.base.data.savedview._
     cmd match {
 
       case SavedViewCmd.Create(name, view) =>
-        val id = SavedView.Id(project.idCeilings.reqtableView + 1)
+        val id = SavedView.Id(project.idCeilings.savedView + 1)
         SavedViewCreate(id, name, view.columns, view.order, view.filterDead, view.filter)
 
       case SavedViewCmd.Update(id, vs) =>

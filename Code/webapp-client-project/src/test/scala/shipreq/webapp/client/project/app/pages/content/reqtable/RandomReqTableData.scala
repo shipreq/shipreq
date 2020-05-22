@@ -4,7 +4,7 @@ import nyaya.gen._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.RandomData.reqtableData._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.filter.Filter
 
 object RandomReqTableData {

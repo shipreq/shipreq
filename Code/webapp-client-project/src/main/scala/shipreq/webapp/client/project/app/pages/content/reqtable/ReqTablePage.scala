@@ -15,7 +15,7 @@ import org.scalajs.dom.document
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Allow, ErrorMsg, Optics, Valid}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.filter.Filter
@@ -69,11 +69,11 @@ object ReqTablePage {
                          modal    : Modal.State) {
 
     def setFilterDead(fd: FilterDead, p: Project): State = {
-      val showingBuiltInDefault = p.reqtableViews.isEmpty && view.manualView.isEmpty
+      val showingBuiltInDefault = p.savedViews.isEmpty && view.manualView.isEmpty
       if (showingBuiltInDefault)
         this
       else {
-        val v1 = view.activeView(p.reqtableViews, fd)
+        val v1 = view.activeView(p.savedViews, fd)
         val v2 = v1.copy(filterDead = fd)
         State.setModifiedView(p, updateFilterText = false)(v2)(this)
       }
@@ -100,7 +100,7 @@ object ReqTablePage {
                    updateFilterText  : Boolean)
                   (modify            : View => View): State => State =
       s => {
-        val newView = modify(s.view.activeView(project.reqtableViews, filterDeadFallback))
+        val newView = modify(s.view.activeView(project.savedViews, filterDeadFallback))
         setModifiedView(project, updateFilterText)(newView)(s)
       }
 
@@ -112,7 +112,7 @@ object ReqTablePage {
     def runSavedViewAction(project         : Project,
                            updateFilterText: Boolean)
                           (action          : SavedViewLogic.Action): State => State = {
-      val modSVS   = SavedViewLogic.Action.interpret(project.reqtableViews)(action)
+      val modSVS   = SavedViewLogic.Action.interpret(project.savedViews)(action)
       val modState = view.modify(modSVS)
       if (updateFilterText)
         modState andThen this.updateFilterText(project)
@@ -122,7 +122,7 @@ object ReqTablePage {
 
     def updateFilterText(project: Project): State => State = s => {
       val filterDeadFallback = ShowDead // This doesn't impact filter text
-      val v = s.view.activeView(project.reqtableViews, filterDeadFallback)
+      val v = s.view.activeView(project.savedViews, filterDeadFallback)
       val txt = v.filter.fold("")(Filter.Valid.toText(project.config, _))
       filter.set(FilterEditor.State(txt, Valid))(s)
     }
@@ -165,7 +165,7 @@ object ReqTablePage {
     val pxSelection : Px[RowSelection]         = pxProps(_.state.selection)
 
     val pxSavedViews: Px[SavedViews.Optional] =
-      pxProject.map(_.reqtableViews).withReuse
+      pxProject.map(_.savedViews).withReuse
 
     val pxColumnPlusAll: Px[ColumnPlus.All] =
       (for {
@@ -200,7 +200,7 @@ object ReqTablePage {
           p       <- pxProject.toCallback
           (_, s1) <- stateAccess.state
           fd      <- pxFilterDead.toCallback
-          v1      = s1.view.activeView(p.reqtableViews, fd)
+          v1      = s1.view.activeView(p.savedViews, fd)
           v2      = mod(v1) getOrElse v1
           s2      = State.setModifiedView(p, updateFilterText = false)(v2)(s1)
           _       <- stateAccess.setState((v2.filterDead, s2), cb)

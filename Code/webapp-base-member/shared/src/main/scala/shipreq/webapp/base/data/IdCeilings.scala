@@ -12,15 +12,14 @@ import shipreq.base.util.univeq._
  * For each value herein, adding one should always produce a never-before-used ID.
  */
 @Lenses
-final case class IdCeilings(
-    customIssueType : Int,
-    customReqType   : Int,
-    customField     : Int,
-    tag             : Int,
-    req             : Int,
-    useCaseStep     : Int,
-    reqCode         : Int,
-    reqtableView    : Int, // i.e. reqtable.SavedView.Id
+final case class IdCeilings(customIssueType : Int,
+                            customReqType   : Int,
+                            customField     : Int,
+                            tag             : Int,
+                            req             : Int,
+                            useCaseStep     : Int,
+                            reqCode         : Int,
+                            savedView       : Int,
     ) {
 
   def update(lens: Lens[IdCeilings, Int], n: Int): IdCeilings = {
@@ -62,7 +61,7 @@ object IdCeilings {
       req             = imapKeys(p.content.reqs.genericReqs.imap) max imapKeys(p.content.reqs.useCases.imap),
       useCaseStep     = maxOfF(p.content.reqs.useCases.stepIterator)(_.id.value),
       reqCode         = maxOf(p.content.reqCodes.idSeq),
-      reqtableView    = maxOf(p.reqtableViewIterator.map(_.id)),
+      savedView       = maxOf(p.savedViewIterator.map(_.id)),
     )
   }
 

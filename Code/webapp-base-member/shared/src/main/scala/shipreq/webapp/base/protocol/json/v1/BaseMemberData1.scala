@@ -140,7 +140,7 @@ private[v1] object BaseMemberData1 {
   }
 
   object ReqTableDataCodecs {
-    import reqtable._
+    import shipreq.webapp.base.data.savedview._
 
     implicit val codecColumnImplications: JsonCodec[Column.Implications] =
       JsonCodec.xmap(Column.Implications.apply)(_.dir)

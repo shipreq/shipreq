@@ -3,8 +3,8 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 import monocle.Optional
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
-import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
+import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.text.PlainText
 import shipreq.base.util.{Applicable, NotApplicable}
 import shipreq.webapp.base.sort.{Sorter => SorterBase}

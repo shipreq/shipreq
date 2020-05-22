@@ -349,7 +349,7 @@ object ProjectSpaProtocolsTest extends TestSuite {
     // =================================================================================================================
     "UpdateSavedViews" - {
       import SavedViewCmd._
-      import reqtable._
+      import shipreq.webapp.base.data.savedview._
       import SavedView._
       import SavedViewGD.{nev, ValueForName}
 

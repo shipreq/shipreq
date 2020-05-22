@@ -96,11 +96,11 @@ trait ApplyConfigEvent {
         lazy val customFields =
           p.config.fields.customFields.valuesIterator
             .filter(CustomField.referencesCustomReqType(id))
-            .map(f => reqtable.Column.CustomField(f.id))
+            .map(f => savedview.Column.CustomField(f.id))
             .toList
 
         def inSavedViews =
-          p.reqtableViewIterator.exists(sv =>
+          p.savedViewIterator.exists(sv =>
             sv.view.referencesReqType(id) ||
               customFields.exists(sv.view.referencesColumn))
 
@@ -211,10 +211,10 @@ trait ApplyConfigEvent {
         Eval.foldMapRun(fields)(f => FieldEvents.hardDelete(f.id))
 
       def removeFromSavedViews(fields: Set[FieldId]): Eval[Unit] = {
-        import reqtable._
+        import shipreq.webapp.base.data.savedview._
         val remove = Filter.Valid.remove(fields = fields, reqTypes = Set(id))
         Eval.mod {
-          Project.reqtableViewTraversal.modify { view =>
+          Project.savedViewTraversal.modify { view =>
             view
               .filterColumns {
                 case Column.CustomField(f) if fields.contains(f) => false

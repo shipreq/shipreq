@@ -60,7 +60,7 @@ trait ApplyOtherEvent {
   // ===================================================================================================================
 
   object SavedViewEvents {
-    import reqtable._
+    import shipreq.webapp.base.data.savedview._
 
     private val ^ = SavedViewGD
     private val GD = GenericDataApp[SavedView](^)
@@ -78,14 +78,14 @@ trait ApplyOtherEvent {
       case v: ^.ValueForOrder      => updateOrder     (v.value)
     }
 
-    private val updateIdCeiling = updateIdCeilingFn(IdCeilings.reqtableView)
+    private val updateIdCeiling = updateIdCeilingFn(IdCeilings.savedView)
 
     private def validateName(subject: Option[SavedView.Id], newName: SavedView.Name)(implicit trust: Trust): Eval[SavedView.Name] =
       if (trust is Trusted)
         Eval.pure(newName)
       else
         Eval.get.flatMap { p =>
-          val state = SavedView.Name.State(subject, p.reqtableViews)
+          val state = SavedView.Name.State(subject, p.savedViews)
           val validate = validateI(SavedView.Name.validator(state))(_.value)
           validate(newName)
         }
@@ -94,7 +94,7 @@ trait ApplyOtherEvent {
 
       def validateId: Eval[Unit] =
         Eval.tests(
-          _.reqtableViewIterator.forall(_.id !=* e.id),
+          _.savedViewIterator.forall(_.id !=* e.id),
           s"${show(e.id)} already exists.")
 
       def add(sv: SavedView): SavedViews.Optional => SavedViews.Optional = {
@@ -110,7 +110,7 @@ trait ApplyOtherEvent {
                  columns    = e.columns,
                  order      = e.order,
                  filter     = e.filter))
-        _    <- Project.reqtableViews.modify(add(sv))
+        _    <- Project.savedViews.modify(add(sv))
         _    <- updateIdCeiling(e.id)
       } yield ()
     }
@@ -118,11 +118,11 @@ trait ApplyOtherEvent {
     private def notFound(id: SavedView.Id) = s"${show(id)} not found."
 
     def applyUpdate(e: SavedViewUpdate): Eval[Unit] =
-      optionalModEval(Project.reqtableView(e.id), notFound(e.id))(
+      optionalModEval(Project.savedView(e.id), notFound(e.id))(
         updateValues(e.vs))
 
     def applyDefaultSet(e: SavedViewDefaultSet): Eval[Unit] =
-      optionalModEval(Project.reqtableViewsNE, notFound(e.id)) { ne =>
+      optionalModEval(Project.savedViewsNE, notFound(e.id)) { ne =>
         val get: Eval[SavedView] =
           if (trust is Untrusted)
             Eval.some(ne.nonDefault.get(e.id), notFound(e.id))
@@ -147,10 +147,10 @@ trait ApplyOtherEvent {
 
       for {
         p      <- Eval.get
-        svs    <- Eval.some(p.reqtableViews, notFound(e.id))
+        svs    <- Eval.some(p.savedViews, notFound(e.id))
         _      <- whenUntrusted(Eval.some(svs.get(e.id), notFound(e.id)).void)
         result = if (svs.default.id ==* e.id) delDefault(svs) else delNonDefault(svs)
-        _      <- Project.reqtableViews.set(result)
+        _      <- Project.savedViews.set(result)
       } yield ()
     }
 

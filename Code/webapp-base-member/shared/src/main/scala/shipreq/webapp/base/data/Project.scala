@@ -39,14 +39,14 @@ object Project {
   val applicableTags: Traversal[Project, ApplicableTag] =
     tagTree ^|->> TagTree.traversal ^|-> TagInTree.tag ^|-? Tag.applicableTag
 
-  val reqtableViewsNE: monocle.Optional[Project, reqtable.SavedViews.NonEmpty] =
-    reqtableViews ^<-? pSome
+  val savedViewsNE: monocle.Optional[Project, savedview.SavedViews.NonEmpty] =
+    savedViews ^<-? pSome
 
-  def reqtableView(id: reqtable.SavedView.Id): monocle.Optional[Project, reqtable.SavedView] =
-    reqtableViewsNE ^|-? reqtable.SavedViews.NonEmpty.at(id)
+  def savedView(id: savedview.SavedView.Id): monocle.Optional[Project, savedview.SavedView] =
+    savedViewsNE ^|-? savedview.SavedViews.NonEmpty.at(id)
 
-  val reqtableViewTraversal: Traversal[Project, reqtable.View] =
-    reqtableViewsNE ^|->> reqtable.SavedViews.NonEmpty.traversalSavedView ^|-> reqtable.SavedView.view
+  val savedViewTraversal: Traversal[Project, savedview.View] =
+    savedViewsNE ^|->> savedview.SavedViews.NonEmpty.traversalSavedView ^|-> savedview.SavedView.view
 
   implicit lazy val equality: Equal[Project] =
     ScalazMacros.deriveEqual
@@ -59,21 +59,21 @@ object Project {
 
   val empty: Project =
     Project(
-      name            = emptyProjectName,
-      config          = ProjectConfig.empty,
-      content         = ProjectContent.empty,
-      manualIssues    = ManualIssues.empty,
-      reqtableViews   = reqtable.SavedViews.empty,
-      idCeilings      = IdCeilings.zero)
+      name         = emptyProjectName,
+      config       = ProjectConfig.empty,
+      content      = ProjectContent.empty,
+      manualIssues = ManualIssues.empty,
+      savedViews   = savedview.SavedViews.empty,
+      idCeilings   = IdCeilings.zero)
 }
 
 @Lenses
-final case class Project(name           : Project.Name,
-                         config         : ProjectConfig,
-                         content        : ProjectContent,
-                         manualIssues   : ManualIssues,
-                         reqtableViews  : reqtable.SavedViews.Optional,
-                         idCeilings     : IdCeilings) {
+final case class Project(name        : Project.Name,
+                         config      : ProjectConfig,
+                         content     : ProjectContent,
+                         manualIssues: ManualIssues,
+                         savedViews  : savedview.SavedViews.Optional,
+                         idCeilings  : IdCeilings) {
 
   override def toString =
     s"Project($idCeilings)"
@@ -171,8 +171,8 @@ final case class Project(name           : Project.Name,
   lazy val liveReqCount: Int =
     liveReqIterator().size
 
-  def reqtableViewIterator: Iterator[reqtable.SavedView] =
-    reqtableViews.fold[Iterator[reqtable.SavedView]](Iterator.empty)(_.iterator)
+  def savedViewIterator: Iterator[savedview.SavedView] =
+    savedViews.fold[Iterator[savedview.SavedView]](Iterator.empty)(_.iterator)
 
   def fieldDefaultApplied(fieldId: CustomField.Tag.Id, filterDead: FilterDead): ReqId => Boolean = {
     val scope = config.tagFieldDistribution(filterDead).inField(fieldId)

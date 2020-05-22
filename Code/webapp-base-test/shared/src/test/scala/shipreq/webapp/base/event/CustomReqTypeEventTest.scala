@@ -3,7 +3,7 @@ package shipreq.webapp.base.event
 import utest._
 import japgolly.microlibs.nonempty.NonEmpty
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.test.WebappTestUtil._
@@ -178,7 +178,7 @@ object CustomReqTypeEventTest extends TestSuite with CustomReqTypeEvents {
 
       "savedViews" - {
         val p = assertPassP(createImpF1, createImpF2, createSV)
-        val sv = p.reqtableViews.get.get(sv1).get
+        val sv = p.savedViews.get.get(sv1).get
         assertEq(sv.view, View(
           columns    = columnsAfter,
           order      = sortCriteriaAfter,

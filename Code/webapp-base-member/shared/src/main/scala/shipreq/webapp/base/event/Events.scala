@@ -5,7 +5,7 @@ import nyaya.util.Multimap
 import scala.collection.immutable.ArraySeq
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable.SavedView
+import shipreq.webapp.base.data.savedview.SavedView
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.text.Text
 import Text.{UseCaseStep => _, _}
@@ -241,8 +241,8 @@ object Event {
 
   final case class SavedViewCreate(id        : SavedView.Id,
                                    name      : SavedView.Name,
-                                   columns   : NonEmptyVector[reqtable.Column],
-                                   order     : reqtable.SortCriteria,
+                                   columns   : NonEmptyVector[savedview.Column],
+                                   order     : savedview.SortCriteria,
                                    filterDead: FilterDead,
                                    filter    : Option[Filter.Valid]) extends ActiveEvent
 

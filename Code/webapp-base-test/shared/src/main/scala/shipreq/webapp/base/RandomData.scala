@@ -1408,10 +1408,10 @@ object RandomData {
                        reqImps,
                        dr),
                      mis,
-                     reqtable.SavedViews.empty,
+                     savedview.SavedViews.empty,
                      IdCeilings.zero)
       savedViews <- reqtableData.savedViewsForProject(p1)
-    } yield IdCeilings.supply(ic => p1.copy(reqtableViews = savedViews, idCeilings = ic))
+    } yield IdCeilings.supply(ic => p1.copy(savedViews = savedViews, idCeilings = ic))
   }
 
   lazy val project: Gen[Project] =
@@ -1476,7 +1476,7 @@ object RandomData {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object reqtableData {
-    import reqtable._
+    import shipreq.webapp.base.data.savedview._
 
     def visibleColumns(p: Project): Gen[NonEmptyVector[Column]] =
       for {

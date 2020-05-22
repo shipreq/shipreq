@@ -17,7 +17,7 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable.SavedView
+import shipreq.webapp.base.data.savedview.SavedView
 import shipreq.webapp.base.test.DataTestExt._
 import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
@@ -241,7 +241,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
     IncCounter genInt p.idCeilings.useCaseStep map UseCaseStepId
 
   val nextSavedViewId: Gen[SavedView.Id] =
-    IncCounter genInt p.idCeilings.reqtableView map SavedView.Id
+    IncCounter genInt p.idCeilings.savedView map SavedView.Id
 
   val tagId: Live => Option[Gen[TagId]] =
     tryGenChooseLiveDead(l => p.config.tags.tree.valuesIterator.map(_.tag).filter(_.live is l).map(_.id))
@@ -555,7 +555,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
 
   object savedViewGD extends GenericDataGen(SavedViewGD) {
     import gd._
-    import reqtable.Column
+    import shipreq.webapp.base.data.savedview.Column
     import RandomData.reqtableData._
     private val colNev = ColumnIGen(p.config.fields.customFields.keysIterator.map(Column.CustomField).toVector).columnNEV
     val genColumns      = colNev
@@ -573,10 +573,10 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
   }
 
   lazy val savedViewId: Option[Gen[SavedView.Id]] =
-    Gen.tryGenChoose(p.reqtableViewIterator.map(_.id))
+    Gen.tryGenChoose(p.savedViewIterator.map(_.id))
 
   lazy val savedViewIdNonDefault: Option[Gen[SavedView.Id]] =
-    p.reqtableViews.flatMap(svs => Gen.tryGenChoose(svs.nonDefault.keys))
+    p.savedViews.flatMap(svs => Gen.tryGenChoose(svs.nonDefault.keys))
 
   lazy val manualIssueId: Option[Gen[ManualIssueId]] =
     Gen.tryGenChoose(p.manualIssues.imap.keysIterator)

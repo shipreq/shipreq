@@ -142,7 +142,7 @@ object State {
       editAsync                  = AsyncFeature.State.initD2,
       savedViewAsync             = AsyncFeature.State.initD0,
       preview                    = PreviewFeature.State.init,
-      _filterDead                = p.reqtableViews.map(_.default.view.filterDead).getOrElse(HideDead),
+      _filterDead                = p.savedViews.map(_.default.view.filterDead).getOrElse(HideDead),
       reqTable                   = reqtable.ReqTablePage.State.init(p),
       reqDetail                  = ReqDetail.initState,
       issuesPage                 = IssuesPage.State.init,

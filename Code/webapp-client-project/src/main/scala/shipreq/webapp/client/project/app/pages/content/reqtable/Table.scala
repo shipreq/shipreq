@@ -11,7 +11,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.feature.{AsyncFeature, DragToReorderFeature, TableNavigationFeature}
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.ui.{EditTheme, semantic}

@@ -470,7 +470,7 @@ object GenericReqGD extends GenericData {
 
 object SavedViewGD extends GenericData {
   import shipreq.webapp.base.filter.Filter.{Valid => ValidFilter}
-  import reqtable._
+  import shipreq.webapp.base.data.savedview._
 
   sealed abstract class Attr extends AttrBase
   sealed abstract class Value extends ValueBase

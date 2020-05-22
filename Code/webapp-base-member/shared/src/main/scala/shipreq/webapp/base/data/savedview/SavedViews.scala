@@ -1,4 +1,4 @@
-package shipreq.webapp.base.data.reqtable
+package shipreq.webapp.base.data.savedview
 
 import monocle.Traversal
 import monocle.macros.Lenses

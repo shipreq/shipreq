@@ -14,7 +14,7 @@ import shipreq.base.util.fp.Monoid.Implicits._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.filter.{CompiledFilter, Filter}
 import shipreq.webapp.base.sort.FusedSorters
 import shipreq.webapp.base.text.{PlainText, TextSearch}

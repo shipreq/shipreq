@@ -1,4 +1,4 @@
-package shipreq.webapp.base.data.reqtable
+package shipreq.webapp.base.data.savedview
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import monocle.macros.Lenses

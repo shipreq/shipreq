@@ -11,8 +11,8 @@ import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
+import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.sort.Sorter.{BlankPlacement, BlanksFirst, BlanksLast, Dir, FlipDir, KeepDir}
 import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch}

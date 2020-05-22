@@ -6,7 +6,7 @@ import utest._
 import shipreq.base.util.Forwards
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.text.Text
@@ -135,7 +135,7 @@ object OtherEventTest extends TestSuite {
         "valid" - {
           def test(evs: SavedViewCreate*)(sv: SavedViews.NonEmpty): Unit = {
             val p = _assertPass(evs: _*)
-            assertEq(p.reqtableViews, Some(sv))
+            assertEq(p.savedViews, Some(sv))
           }
           "1"  - test(SV1)(SavedViews(SV1))
           "2"  - test(SV2)(SavedViews(SV2))
@@ -176,7 +176,7 @@ object OtherEventTest extends TestSuite {
           def test(evs: SavedViewCreate*)(id: SavedView.Id, nev: NonEmptyValues)
                   (expect: SavedViews.NonEmpty): Unit = {
             val p = _assertPass(evs :+ SavedViewUpdate(id, nev): _*)
-            assertEq(p.reqtableViews, Some(expect))
+            assertEq(p.savedViews, Some(expect))
           }
           "1to2"   - test(SV1)     (SV1.id, SV2.values)                (SavedViews(SV2.copy(id = SV1.id)))
           "2to1"   - test(SV2)     (SV2.id, SV1.values)                (SavedViews(SV1.copy(id = SV2.id)))
@@ -211,7 +211,7 @@ object OtherEventTest extends TestSuite {
       "defaultSet" - {
         def test(evs: Event*)(id: SavedView.Id)(expect: SavedViews.NonEmpty): Unit = {
           val p = _assertPass(evs :+ SavedViewDefaultSet(id): _*)
-          assertEq(p.reqtableViews, Some(expect))
+          assertEq(p.savedViews, Some(expect))
         }
         "123_2"   - test(SV1, SV2, SV3)(SV2.id)(SavedViews(SV2) + SV1 + SV3)
         "123_3"   - test(SV1, SV2, SV3)(SV3.id)(SavedViews(SV3) + SV1 + SV2)
@@ -226,7 +226,7 @@ object OtherEventTest extends TestSuite {
         def test(evs: Event*)(del: SavedView.Id)(expect: SavedView*): Unit = {
           val p = _assertPass(evs :+ SavedViewDelete(del): _*)
           val expect2 = NonEmptyVector.option(expect.toVector).map(x => SavedViews(x.head) ++ x.tail)
-          assertEq(p.reqtableViews, expect2)
+          assertEq(p.savedViews, expect2)
         }
         "default2"    - test()(SV1.id)(SV2, SV3)
         "default3a"   - test(SavedViewUpdate(SV2.id, ValueForName("Z")))(SV1.id)(SV3, SV2.copy(name = "Z"))

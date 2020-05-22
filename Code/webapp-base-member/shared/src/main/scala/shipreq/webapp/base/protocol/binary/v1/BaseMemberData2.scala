@@ -283,7 +283,7 @@ object BaseMemberData2 {
         state.pickle(a.req)
         state.pickle(a.useCaseStep)
         state.pickle(a.reqCode)
-        state.pickle(a.reqtableView)
+        state.pickle(a.savedView)
       }
       override def unpickle(implicit state: UnpickleState): IdCeilings = {
         val customIssueType = state.unpickle[Int]
@@ -293,8 +293,8 @@ object BaseMemberData2 {
         val req             = state.unpickle[Int]
         val useCaseStep     = state.unpickle[Int]
         val reqCode         = state.unpickle[Int]
-        val reqtableView    = state.unpickle[Int]
-        IdCeilings(customIssueType, customReqType, customField, tag, req, useCaseStep, reqCode, reqtableView)
+        val savedView       = state.unpickle[Int]
+        IdCeilings(customIssueType, customReqType, customField, tag, req, useCaseStep, reqCode, savedView)
       }
     }
 
@@ -354,7 +354,7 @@ object BaseMemberData2 {
   //       state.pickle(a.config)
   //       state.pickle(a.content)
   //       state.pickle(a.manualIssues)
-  //       state.pickle(a.reqtableViews)
+  //       state.pickle(a.savedViews)
   //       state.pickle(a.idCeilings)
   //     }
   //     override def unpickle(implicit state: UnpickleState): Project = {
@@ -362,9 +362,9 @@ object BaseMemberData2 {
   //       val config        = state.unpickle[ProjectConfig]
   //       val content       = state.unpickle[ProjectContent]
   //       val manualIssues  = state.unpickle[ManualIssues]
-  //       val reqtableViews = state.unpickle[reqtable.SavedViews.Optional]
+  //       val savedViews = state.unpickle[savedview.SavedViews.Optional]
   //       val idCeilings    = state.unpickle[IdCeilings]
-  //       Project(name, config, content, manualIssues, reqtableViews, idCeilings)
+  //       Project(name, config, content, manualIssues, savedViews, idCeilings)
   //     }
   //   }
 

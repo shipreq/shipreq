@@ -6,7 +6,7 @@ import scalaz.\/
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
-import shipreq.webapp.base.data.reqtable.SavedView
+import shipreq.webapp.base.data.savedview.SavedView
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol.Version
@@ -265,7 +265,7 @@ object Rev1 {
   // ===================================================================================================================
 
   object ReqTableDataPicklers {
-    import reqtable._
+    import shipreq.webapp.base.data.savedview._
 
     implicit val picklerColumn: Pickler[Column] =
       new Pickler[Column] {
@@ -928,7 +928,7 @@ object Rev1 {
         state.pickle(a.config)
         state.pickle(a.content)
         state.pickle(a.manualIssues)
-        state.pickle(a.reqtableViews)
+        state.pickle(a.savedViews)
         state.pickle(a.idCeilings)
       }
       override def unpickle(implicit state: UnpickleState): Project = {
@@ -936,9 +936,9 @@ object Rev1 {
         val config        = state.unpickle[ProjectConfig]
         val content       = state.unpickle[ProjectContent]
         val manualIssues  = state.unpickle[ManualIssues]
-        val reqtableViews = state.unpickle[reqtable.SavedViews.Optional]
+        val savedViews    = state.unpickle[savedview.SavedViews.Optional]
         val idCeilings    = state.unpickle[IdCeilings]
-        Project(name, config, content, manualIssues, reqtableViews, idCeilings)
+        Project(name, config, content, manualIssues, savedViews, idCeilings)
       }
     }
 
@@ -1298,8 +1298,8 @@ object Rev1 {
       override def unpickle(implicit state: UnpickleState): Event.SavedViewCreate = {
         val id         = state.unpickle[SavedView.Id]
         val name       = state.unpickle[SavedView.Name]
-        val columns    = state.unpickle[NonEmptyVector[reqtable.Column]]
-        val order      = state.unpickle[reqtable.SortCriteria]
+        val columns    = state.unpickle[NonEmptyVector[savedview.Column]]
+        val order      = state.unpickle[savedview.SortCriteria]
         val filterDead = state.unpickle[FilterDead]
         val filter     = state.unpickle[Option[Filter.Valid]]
         Event.SavedViewCreate(id, name, columns, order, filterDead, filter)

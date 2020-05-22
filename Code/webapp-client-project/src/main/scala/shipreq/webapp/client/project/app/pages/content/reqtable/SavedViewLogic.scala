@@ -9,8 +9,8 @@ import monocle.macros.Lenses
 import scalaz.\/
 import shipreq.base.util.PotentialChange
 import shipreq.webapp.base.data.FilterDead
-import shipreq.webapp.base.data.reqtable.SavedView.{Id, Name}
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview.SavedView.{Id, Name}
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.event.SavedViewGD
 import shipreq.webapp.base.filter.Filter.Implicits.univEqFilterValid
 import shipreq.webapp.base.lib.BaseReusability._
