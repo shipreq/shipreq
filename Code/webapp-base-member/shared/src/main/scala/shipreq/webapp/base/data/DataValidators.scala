@@ -23,7 +23,7 @@ import Uniqueness.Util._
 
 object DataValidators {
 
-  private val genericDesc: Composite.Stateless[String, Option[String], Option[String]] =
+  private lazy val genericDesc: Composite.Stateless[String, Option[String], Option[String]] =
     V.optionalLargeText.named(FieldNames.desc)
 
   def genericRichText(pt: PlainText.ForProject.NoCtx): Invalidator[Text.AnyOptional] =
@@ -35,10 +35,9 @@ object DataValidators {
     V.auditor.optionDefined[t.NonEmptyText]
       .appendInvalidator(genericRichText(pt).contramap(_.whole))
 
-  // TODO Make vals lazy
   lazy val projectName = V.mandatoryShortText.toValidator.named("Project name")
 
-  val applicableReqTypes = Validator.id[ApplicableReqTypes].named(FieldNames.applicableReqTypes)
+  lazy val applicableReqTypes = Validator.id[ApplicableReqTypes].named(FieldNames.applicableReqTypes)
 
   lazy val colour: Composite.Stateless[String, String, Option[Colour]] =
     EndoCorrector(live = Colour.liveCorrect, full = Colour.correct)
