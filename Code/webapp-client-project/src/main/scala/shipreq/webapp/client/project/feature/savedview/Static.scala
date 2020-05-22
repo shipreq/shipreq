@@ -127,8 +127,3 @@ final case class Static(stateAccess    : StateAccessPure[(FilterDead, State)],
       update  = onFilterChange,
     ).render
 }
-
-object Static {
-  implicit val reusability: Reusability[Static] =
-    Reusability.byRef
-}

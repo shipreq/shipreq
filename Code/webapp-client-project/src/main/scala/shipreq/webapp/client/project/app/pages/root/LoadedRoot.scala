@@ -343,7 +343,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData, global: Glob
       def project          = unsafeProject()
       def projectWidgets   = pxProjectWidgets.value.value()
       def renderFeature    = pxRenderFeatureText.value()(s.filterDead)
-      def savedViewFeature = SavedViewFeature(savedViewFeatureStatic, s.savedViews)
+      def savedViewFeature = SavedViewFeature(savedViewFeatureStatic, s.savedViews, project, s.filterDead)
       def usage            = pxUsage.value()
       // def previewRW = previewW.toReadWrite(s.preview)
 
