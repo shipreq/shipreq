@@ -5,7 +5,6 @@ import shipreq.base.util.FxModule._
 import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.server.app.{Global, LiftDispatcher}
-import shipreq.webapp.server.lib.SingleOpStatelessSnippet
 import shipreq.webapp.server.protocol.entrypoint.{ClientSideProcInvoker, LoadJs}
 import shipreq.webapp.ssr.Html
 import shipreq.webapp.ssr.SsrSharedData.ProjectSpaLoaderData

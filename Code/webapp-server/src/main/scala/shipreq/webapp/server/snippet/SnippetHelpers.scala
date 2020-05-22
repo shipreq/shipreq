@@ -1,4 +1,4 @@
-package shipreq.webapp.server.lib
+package shipreq.webapp.server.snippet
 
 import net.liftweb.http._
 import net.liftweb.json.{NoTypeHints, Serialization, Serializer}
@@ -9,8 +9,7 @@ import shipreq.webapp.base.user._
 import shipreq.webapp.server.app.LiftDispatcher
 import shipreq.webapp.server.util.HttpResponses.ShouldNeverHappenResponse
 
-// TODO Move SnippetHelpers into .snippet
-object SnippetHelpers extends StaticSnippetHelpers {
+private[snippet] object SnippetHelpers extends StaticSnippetHelpers {
 
   lazy val NodeSeqJsonSerializer: Serializer[NodeSeq] = new Serializer[NodeSeq] {
     import net.liftweb.json._
@@ -26,7 +25,7 @@ object SnippetHelpers extends StaticSnippetHelpers {
 /**
  * Snippet helpers without Misc, Global and implicit vals/defs.
  */
-trait StaticSnippetHelpers extends HasLogger {
+private[snippet] trait StaticSnippetHelpers extends HasLogger {
 
   /** This removes the outer-most tag that contained the data-lift directive.
     *
@@ -56,7 +55,7 @@ trait StaticSnippetHelpers extends HasLogger {
  *
  * @since 11/06/2013
  */
-trait SnippetHelpers extends StaticSnippetHelpers with HasLogger {
+private[snippet] trait SnippetHelpers extends StaticSnippetHelpers with HasLogger {
 
   @inline final def currentUserId_!() : UserId =
     currentUser_!().id
@@ -90,7 +89,7 @@ trait SnippetHelpers extends StaticSnippetHelpers with HasLogger {
 }
 
 /** A stateless snippet with only one rendering method. */
-abstract class SingleOpStatelessSnippet extends DispatchSnippet with SnippetHelpers {
+private[snippet] abstract class SingleOpStatelessSnippet extends DispatchSnippet with SnippetHelpers {
   final override def dispatch = { case _ => render }
   def render: NodeSeq => NodeSeq
 }
