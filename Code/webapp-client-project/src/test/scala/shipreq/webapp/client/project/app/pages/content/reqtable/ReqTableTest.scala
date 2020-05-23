@@ -541,7 +541,7 @@ object ReqTableTest extends TestSuite {
     runTest(plan withInitialState SampleProject7.project)
   }
 
-  def testSavedViews()(implicit path: utest.framework.TestPath) = {
+  def testSavedViewsBasic()(implicit path: utest.framework.TestPath) = {
 
     val assertViewBasic =
       tableColumns.size.assert(7) &
@@ -583,9 +583,67 @@ object ReqTableTest extends TestSuite {
         +> savedViews.assert("AAA", "* basic", "> ded")
         +> assertViewD
 
-        >> selectView("basic") +> savedViews.assert("AAA", "> * basic", "ded") +> assertViewBasic
-        >> selectView("AAA")   +> savedViews.assert("> AAA", "* basic", "ded") +> assertViewA
-        >> selectView("ded")   +> savedViews.assert("AAA", "* basic", "> ded") +> assertViewD
+        >> selectView("basic")   +> savedViews.assert("AAA", "> * basic", "ded") +> assertViewBasic
+        >> selectView("AAA")     +> savedViews.assert("> AAA", "* basic", "ded") +> assertViewA
+        >> selectView("ded")     +> savedViews.assert("AAA", "* basic", "> ded") +> assertViewD
+        >> setDefaultView("AAA") +> savedViews.assert("* AAA", "basic", "> ded") +> assertViewD
+        >> setDefaultView("ded") +> savedViews.assert("AAA", "basic", "> * ded") +> assertViewD
+        >> selectView("AAA")     +> savedViews.assert("> AAA", "basic", "* ded") +> assertViewA
+      )
+
+    runTest(Plan.action(test) withInitialState SampleProject7.project)
+  }
+
+  def testSavedViewsDeadCol()(implicit path: utest.framework.TestPath) = {
+    val test = (
+      *.emptyAction
+
+        >> showMandatoryColumnsSortedByPubid
+        +> filterDead.assert(HideDead)
+        +> tableColumns.assert("ID", "Title")
+        +> filterText.assert("")
+        >> showHideColumn("Description")
+        >> showHideColumn("Component")
+        +> tableColumns.assert("ID", "Title", "Description", "Component")
+        >> saveCurrentView("yo!")
+        +> savedViews.assert("> * yo!")
+
+        >> receiveExternalEvent(Event.FieldCustomDelete(SampleProject7.Values.descField))
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Component")
+
+        >> receiveExternalEvent(Event.FieldCustomRestore(SampleProject7.Values.descField))
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Description", "Component")
+
+        >> showHideColumn("Priority")
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Description", "Component", "Priority")
+
+        >> receiveExternalEvent(Event.FieldCustomDelete(SampleProject7.Values.descField))
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+
+        >> receiveExternalEvent(Event.FieldCustomRestore(SampleProject7.Values.descField))
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Description", "Component", "Priority")
+
+        >> showHideColumn("Priority")
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Description", "Component")
+
+        >> receiveExternalEvent(Event.FieldCustomDelete(SampleProject7.Values.descField))
+        >> showHideColumn("Priority")
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+
+        >> saveAndReplaceView("yo!")
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+
+        >> receiveExternalEvent(Event.FieldCustomRestore(SampleProject7.Values.descField))
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
       )
 
     runTest(Plan.action(test) withInitialState SampleProject7.project)
@@ -669,6 +727,9 @@ object ReqTableTest extends TestSuite {
       "filter"  - testFieldRulesAndFilter()
     }
 
-    "savedViews" - testSavedViews()
+    "savedViews" - {
+      "basic" - testSavedViewsBasic()
+      "deadCol" - testSavedViewsDeadCol()
+    }
   }
 }

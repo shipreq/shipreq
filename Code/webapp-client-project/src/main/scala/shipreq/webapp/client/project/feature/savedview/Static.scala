@@ -88,10 +88,11 @@ final case class Static(stateAccess    : StateAccessPure[(State, FilterDead)],
 
   val pxSavedViewsMenu: Px[ViewLogic.Menu] =
     for {
-      savedViews <- pxSavedViews
-      viewState  <- pxViewState
-      activeView <- pxActiveView
-    } yield ViewLogic.Menu(savedViews, viewState, activeView, activeViewCB)
+      savedViews   <- pxSavedViews
+      viewState    <- pxViewState
+      validColumns <- pxColumnPlusAll
+      activeView   <- pxActiveView
+    } yield ViewLogic.Menu(savedViews, viewState, _.filterColumns(validColumns.containsColumn), activeView, activeViewCB)
 
   private val runSavedViewAction: ViewLogic.Action ~=> Callback = {
     def mod(p: Project, a: ViewLogic.Action, state: (State, FilterDead)): (State, FilterDead) = {

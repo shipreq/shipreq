@@ -238,7 +238,7 @@ object SavedViewLogicTest extends TestSuite {
 
       def testNE(filterDeadFallback: FilterDead)(implicit s: State, svs: SavedViews.NonEmpty): Menu = {
         val av = s.activeView(Some(svs), filterDeadFallback)
-        Menu(Some(svs), s, av, av)
+        Menu(Some(svs), s, identity, av, av)
       }
 
       def dirtyAnon(activeView: View): MenuItem.Unsaved = {
@@ -263,7 +263,7 @@ object SavedViewLogicTest extends TestSuite {
           val s = State(manualView, referenceView)
           val savedViews = None
           val av = s.activeView(savedViews, filterDeadFallback)
-          Menu(savedViews, s, av, av)
+          Menu(savedViews, s, identity, av, av)
         }
 
         def saveAsNew(v: View) = MenuAction.saveAsNew(nvForId(None)(nameValidationFn()), v)

@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.scalajs.react.test.SimEvent
+import shipreq.webapp.base.data.savedview.SavedView
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.test.TestPromptJs
 
@@ -31,6 +32,12 @@ final case class SavedViewTestDsl[R, O, S](* : Dsl[Id, R, O, S, String])
 
   def selectView(name: String) =
     *.action(s"Select view: $name")(_.obs.savedViews.needView(name).select())
+
+  def setDefaultView(name: String) =
+    *.action(s"Set default view: $name")(_.obs.savedViews.needView(name).setAsDefault())
+
+  def saveAndReplaceView(name: String) =
+    *.action(s"Save and replace view: $name")(_.obs.savedViews.needView(SavedView.Name.unsaved.value).replace(name))
 
   def saveCurrentView(name: String) =
     *.action(s"Save current view as: $name") { x =>

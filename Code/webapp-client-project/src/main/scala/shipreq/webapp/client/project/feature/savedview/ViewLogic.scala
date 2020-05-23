@@ -100,7 +100,7 @@ object ViewLogic {
     def isActive: MenuItem => Boolean
 
     final val items: NonEmptyVector[MenuItem] =
-      unsortedItems.sortBy(_.name.value.toUpperCase)
+      unsortedItems.sorted
 
     assert(items.whole.count(isActive) == 1)
   }
@@ -121,10 +121,11 @@ object ViewLogic {
       override def isActive = _.optionId.isEmpty
     }
 
-    def apply(savedViews  : SavedViews.Optional,
-              state       : State,
-              activeView  : View,
-              activeViewCB: Reusable[CallbackTo[View]]): Menu = {
+    def apply(savedViews   : SavedViews.Optional,
+              state        : State,
+              adjustRefView: View => View,
+              activeView   : View,
+              activeViewCB : Reusable[CallbackTo[View]]): Menu = {
 
       val nameValidator = NameValidator(savedViews)
 
@@ -156,7 +157,9 @@ object ViewLogic {
                   val dirtyItem = MenuItem.Unsaved(saveAsNew, None)
                   Menu.SavedDirty(default, nonDefaults, dirtyItem)
               }
-            case Some(ref) =>
+
+            case Some(ref0) =>
+              val ref = SavedView.view.modify(adjustRefView)(ref0)
               diff(ref, activeView) match {
                 case None =>
                   Menu.SavedClean(default, nonDefaults, ref.id)
@@ -245,6 +248,21 @@ object ViewLogic {
         MenuAction.makeDefault(sv.id),
         MenuAction.rename(validate, Reusable.implicitly((sv.id, sv.name))),
         MenuAction.delete(sv, state, svs))
+
+    implicit val ordering: Ordering[MenuItem] = new Ordering[MenuItem] {
+      override def compare(x: MenuItem, y: MenuItem): Int = {
+        // 1. Put "Unsaved View" last
+        // 2. Ignore case of name
+        val xu = x.name ==* Name.unsaved
+        val yu = y.name ==* Name.unsaved
+        if (xu) {
+          if (yu) 0 else 1
+        } else if (yu)
+          -1
+        else
+          x.name.value.compareToIgnoreCase(y.name.value)
+      }
+    }
   }
 
   // ===================================================================================================================

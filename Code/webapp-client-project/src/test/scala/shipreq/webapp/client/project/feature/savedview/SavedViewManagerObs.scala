@@ -34,7 +34,14 @@ object SavedViewManagerObs {
     def needAction(name: String): Action =
       actions.find(_.name == name).getOrElse(sys.error(s"Saved view [${this.name}] has actions [${actions.map(_.name).mkString(" | ")}] but not [$name]"))
 
-    def saveAsNew(): Unit = needAction("Save as new...").click()
+    def saveAsNew(): Unit =
+      needAction("Save as new...").click()
+
+    def setAsDefault(): Unit =
+      needAction("Set as default").click()
+
+    def replace(name: String): Unit =
+      needAction(s"Replace $name").click()
   }
 
   final class Action($: DomZipperJs) {

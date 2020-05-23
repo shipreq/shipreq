@@ -17,7 +17,7 @@ import shipreq.webapp.client.project.app.Style.{savedViews => *}
 object ViewManager {
   import ViewLogic._
 
-  val devMarker = VdomAttr.devOnly("data-savedViewManager")
+  val devMarker = VdomAttr.devOnly("data-savedviewmanager")
 
   final case class Props(menu       : Menu,
                          asyncRW    : AsyncFeature.ReadWrite.D0[ErrorMsg],

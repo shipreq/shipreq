@@ -9,6 +9,7 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util.Browser
@@ -18,9 +19,9 @@ import shipreq.webapp.client.project.feature.SavedViewFeature
 import shipreq.webapp.client.project.feature.savedview.SavedViewTestDsl
 import shipreq.webapp.client.project.test._
 import teststate.domzipper.DomZipper.EditableSel
-import TestState._
 
 object ReqTableTestDsl {
+  import TestState._
 
   final case class Ref(savedViewState: StateAccessImpure[SavedViewFeature.State],
                        global: TestGlobal,
@@ -307,6 +308,12 @@ object ReqTableTestDsl {
       View(cs, SortCriteria.byPubidOnly, s.filterDead, None)
     })
 
+  val showMandatoryColumnsSortedByPubid: *.Actions =
+    setViewSettings("Show mandatory columns sorted by pubid.", HideDead, (p, s) => {
+      val cs = selectVisibleColumns(Column.isMandatory, p, HideDead)
+      View(cs, SortCriteria.byPubidOnly, s.filterDead, None)
+    })
+
   def showHideColumn(columnName: String): *.Actions =
     *.action("Show/hide " + columnName)(
       Simulation.change run _.obs.columnSelector.column(columnName).checkbox)
@@ -339,6 +346,10 @@ object ReqTableTestDsl {
   val svrFailLast = *.action("Fail last server request.")(_.ref.global.failLast())
 
   val svrAssertLastTwoReqsEqual = svrLastTwoReqs.map(_.req).assert.equal(Equal.by_==, implicitly)
+
+  def receiveExternalEvent(e: Event): *.Actions =
+    *.action("Receive external event: " + e)(_.ref.global.applyTestEventsCB(e).void.runNow())
+      .updateState(WebappTestUtil.applyEventSuccessfully(_, e))
 
   def setFocus(f: ReqTableObs => html.Element): *.Actions =
     *.action("Set focus")(i => f(i.obs).focus()) +>
