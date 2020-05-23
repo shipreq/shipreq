@@ -3,13 +3,13 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 import org.parboiled2.ParseError
 import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.{document, html}
-import shipreq.base.util.{Invalid, Validity}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.project.app.Style
+import shipreq.webapp.client.project.feature.savedview.{FilterEditorObs, SavedViewManagerObs}
 import shipreq.webapp.client.project.test._
 import TestState._
 
@@ -61,7 +61,11 @@ final class ReqTableObs(global: TestGlobal, $: DomZipperJs) {
 
   val svrReqs = global.reqs()
 
-  def findOne[A: UnivEq, B](a: A, bs: Iterable[B])(f: B => A): B =
+  val savedViews = SavedViewManagerObs.needIn($)
+
+  val filter = FilterEditorObs.needIn($)
+
+  private def findOne[A: UnivEq, B](a: A, bs: Iterable[B])(f: B => A): B =
     bs.iterator.filter(f(_) ==* a).toList match {
       case b :: Nil => b
       case x => sys error s"Expected to find one result for '$a' but found: $x. Available are: ${bs.iterator.map(f).mkString(", ")}."
@@ -89,15 +93,6 @@ final class ReqTableObs(global: TestGlobal, $: DomZipperJs) {
       entirety.filter(_.on is On).map(_.name)
   }
   columnSelector // force
-
-  val filterInput: html.Input =
-    $("input[placeholder='Filter...']").domAs[html.Input]
-
-  val filterValue: String =
-    filterInput.value
-
-  val filterValueValidity: Validity =
-    Invalid when filterInput.parentNode.asInstanceOf[html.Element].classList.contains("error")
 
   val filterDeadButton: html.Button =
     $(s"${Style.reqtable.page.filterDeadButtonContainer.selector} button").domAs[html.Button]

@@ -2,32 +2,30 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
-import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-import monocle.Optional
-import monocle.std.option.pSome
 import monocle.macros.Lenses
 import org.scalajs.dom.document
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{Allow, ErrorMsg, Optics, Valid}
+import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
-import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
-import shipreq.webapp.base.protocol.websocket.{SavedViewCmd, UpdateContentCmd}
+import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text.TextSearch
-import shipreq.webapp.base.ui.{BaseStyles, NoContentMessage, Toast}
 import shipreq.webapp.base.ui.semantic.Icon
+import shipreq.webapp.base.ui.{BaseStyles, NoContentMessage, Toast}
 import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
+import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.feature._
-import shipreq.webapp.client.project.widgets.{FilterDeadButton, FilterEditor, ProjectWidgets}
+import shipreq.webapp.client.project.widgets.{FilterDeadButton, ProjectWidgets}
 
 object ReqTablePage {
 
@@ -38,94 +36,34 @@ object ReqTablePage {
       .componentDidMount(_.backend.unfocus)
       .build
 
-  final case class StaticProps(stateAccess           : StateAccessPure[(FilterDead, State)],
-                               pxProject             : Px[Project],
+  final case class StaticProps(stateAccess           : StateAccessPure[State],
+                               savedViewStatic       : SavedViewFeature.Static,
                                pxTextSearch          : Px[TextSearch],
                                pxProjectWidgets      : Reusable[Px[ProjectWidgets.NoCtx]],
                                pxFilterCompilerFromFD: Px[FilterDead => Filter.Valid.Compiler],
                                reqDetailRC           : RouterCtl[ExternalPubid],
                                toast                 : Toast,
                                updateIO              : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
-                               savedViewIO           : ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq],
-                               rowAsyncW             : AsyncFeature.Write.D1[Row.SourceId, ErrorMsg],
-                               savedViewAsyncW       : AsyncFeature.Write.D0[ErrorMsg]) {
+                               rowAsyncW             : AsyncFeature.Write.D1[Row.SourceId, ErrorMsg])
 
-    val stateAccessS: StateAccessPure[State] =
-      stateAccess.zoomStateL(Optics.lensTuple2_2)
-  }
-
-  final case class Props(create        : CreateFeature.ReadWrite.ForProject,
-                         editor        : EditorFeature.ReadWrite.ForProject,
-                         rowAsync      : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
-                         savedViewAsync: AsyncFeature.Read.D0[ErrorMsg],
-                         filterDead    : FilterDead,
-                         state         : State)
+  final case class Props(create    : CreateFeature.ReadWrite.ForProject,
+                         editor    : EditorFeature.ReadWrite.ForProject,
+                         savedViews: SavedViewFeature,
+                         rowAsync  : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
+                         filterDead: FilterDead,
+                         state     : State)
 
   @Lenses
-  final case class State(view     : SavedViewLogic.State,
-                         filter   : FilterEditor.State,
-                         selection: RowSelection,
+  final case class State(selection: RowSelection,
                          newStuff : NewStuff.State,
-                         modal    : Modal.State) {
-
-    def setFilterDead(fd: FilterDead, p: Project): State = {
-      val showingBuiltInDefault = p.savedViews.isEmpty && view.manualView.isEmpty
-      if (showingBuiltInDefault)
-        this
-      else {
-        val v1 = view.activeView(p.savedViews, fd)
-        val v2 = v1.copy(filterDead = fd)
-        State.setModifiedView(p, updateFilterText = false)(v2)(this)
-      }
-    }
-  }
+                         modal    : Modal.State)
 
   object State {
-    private def init: State =
+    def init: State =
       State(
-        SavedViewLogic.State.init,
-        FilterEditor.State.init,
         Selection.empty,
         NewStuff.State.init,
         Modal.none)
-
-    def init(p: Project): State =
-      updateFilterText(p)(init)
-
-    val manualView: Optional[State, View] =
-      view ^|-> SavedViewLogic.State.manualView ^<-? pSome
-
-    def modifyView(project           : Project,
-                   filterDeadFallback: FilterDead,
-                   updateFilterText  : Boolean)
-                  (modify            : View => View): State => State =
-      s => {
-        val newView = modify(s.view.activeView(project.savedViews, filterDeadFallback))
-        setModifiedView(project, updateFilterText)(newView)(s)
-      }
-
-    def setModifiedView(project         : Project,
-                        updateFilterText: Boolean)
-                       (newView         : View): State => State =
-      runSavedViewAction(project, updateFilterText)(SavedViewLogic.Action.Modify(newView))
-
-    def runSavedViewAction(project         : Project,
-                           updateFilterText: Boolean)
-                          (action          : SavedViewLogic.Action): State => State = {
-      val modSVS   = SavedViewLogic.Action.interpret(project.savedViews)(action)
-      val modState = view.modify(modSVS)
-      if (updateFilterText)
-        modState andThen this.updateFilterText(project)
-      else
-        modState
-    }
-
-    def updateFilterText(project: Project): State => State = s => {
-      val filterDeadFallback = ShowDead // This doesn't impact filter text
-      val v = s.view.activeView(project.savedViews, filterDeadFallback)
-      val txt = v.filter.fold("")(Filter.Valid.toText(project.config, _))
-      filter.set(FilterEditor.State(txt, Valid))(s)
-    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -141,10 +79,11 @@ object ReqTablePage {
 
   final class Backend(sp: StaticProps, $: BackendScope[Props, Unit]) {
     import sp._
+    import savedViewStatic.{stateAccess => _, _}
 
-    val modNewStuff : ModFn[NewStuff.State] = Reusable.fn.state(stateAccessS zoomStateL State.newStuff).modStateFn
-    val setSelection: SetFn[RowSelection  ] = Reusable.fn.state(stateAccessS zoomStateL State.selection).setStateFn
-    val setModal    : SetFn[Modal.State   ] = Reusable.fn.state(stateAccessS zoomStateL State.modal).setStateFn
+    val modNewStuff : ModFn[NewStuff.State] = Reusable.fn.state(stateAccess zoomStateL State.newStuff).modStateFn
+    val setSelection: SetFn[RowSelection  ] = Reusable.fn.state(stateAccess zoomStateL State.selection).setStateFn
+    val setModal    : SetFn[Modal.State   ] = Reusable.fn.state(stateAccess zoomStateL State.modal).setStateFn
 
     private val manualPxs = Px.ManualCollection()
 
@@ -154,67 +93,7 @@ object ReqTablePage {
       px
     }
 
-    private def pxState[A: Reusability](f: ((FilterDead, State)) => A): Px.ThunkM[A] = {
-      val px = Px.state(stateAccess).map(f).withReuse.manualRefresh
-      manualPxs.add(px)
-      px
-    }
-
-    val pxViewState : Px[SavedViewLogic.State] = pxProps(_.state.view)
-    val pxFilterDead: Px[FilterDead]           = pxState(_._1)
-    val pxSelection : Px[RowSelection]         = pxProps(_.state.selection)
-
-    val pxSavedViews: Px[SavedViews.Optional] =
-      pxProject.map(_.savedViews).withReuse
-
-    val pxColumnPlusAll: Px[ColumnPlus.All] =
-      (for {
-        p  <- pxProject
-        fd <- pxFilterDead
-      } yield ColumnPlus.All(p, fd))
-        .withReuse
-
-    val pxActiveView: Px[View] =
-      (for {
-        vs <- pxViewState
-        sv <- pxSavedViews
-        fd <- pxFilterDead
-        cs <- pxColumnPlusAll
-      } yield vs.activeView(sv, fd).filterColumns(cs.containsColumn)
-        ).withReuse
-
-    val activeViewCB: Reusable[CallbackTo[View]] = {
-      val f = pxActiveView.toCallback.toScalaFn
-      Reusable.byRef(f).map(CallbackTo.lift)
-    }
-
-    val pxActiveColumns: Px[NonEmptyVector[Column]] =
-      pxActiveView.map(_.columns).withReuse
-
-    val pxActiveOrder: Px[SortCriteria] =
-      pxActiveView.map(_.order).withReuse
-
-    val modifyViewFn: ModFn[View] =
-      Reusable.byRef(ModStateFn((mod, cb) =>
-        for {
-          p       <- pxProject.toCallback
-          (_, s1) <- stateAccess.state
-          fd      <- pxFilterDead.toCallback
-          v1      = s1.view.activeView(p.savedViews, fd)
-          v2      = mod(v1) getOrElse v1
-          s2      = State.setModifiedView(p, updateFilterText = false)(v2)(s1)
-          _       <- stateAccess.setState((v2.filterDead, s2), cb)
-        } yield ()))
-
-    val setFilterDeadFn: SetFn[FilterDead] =
-      Reusable.byRef(SetStateFn((fdO, cb) =>
-        fdO.fold(cb)(fd =>
-          for {
-            p       <- pxProject.toCallback
-            (_, s1) <- stateAccess.state
-            s2      = s1.setFilterDead(fd, p)
-            _       <- stateAccess.setState((fd, s2), cb)
-          } yield ())))
+    val pxSelection: Px[RowSelection] = pxProps(_.state.selection)
 
     val pxRows: Px[Vector[Row]] =
       for {
@@ -240,29 +119,12 @@ object ReqTablePage {
       } yield
         s.updateBy(setSelection.map(_.setState)).legal(rs.iterator.map(_.sourceId).toSet &~ wr)
 
-    val pxActiveColumnsPlus: Px[NonEmptyVector[ColumnPlus]] =
-      (for {
-        p  <- pxProject
-        cs <- pxActiveColumns
-      } yield ColumnPlus.forceNEV(ColumnPlus.byProject(p))(cs))
-        .withReuse
-
     val pxColumnSelector: Px[VdomElement] =
       for {
         sel <- pxActiveColumns
         all <- pxColumnPlusAll
       } yield
         ColumnSelector.Props(sel, all, modifyViewFn.map(m => u => m.modState(_.withColumns(u)))).render
-
-    val onFilterChange: FilterEditor.UpdateFn =
-      (newState, newFilter, cb) =>
-        for {
-          p  <- pxProject.toCallback
-          fd <- pxFilterDead.toCallback
-          m1 = State.filter.set(newState)
-          m2 = State.modifyView(p, fd, updateFilterText = false)(_.withFilter(newFilter))
-          _ <- stateAccessS.modState(m1 compose m2, cb)
-        } yield ()
 
     val pxTableContentStats: Px[TableContentStats] =
       for {
@@ -297,14 +159,6 @@ object ReqTablePage {
       } yield SelectionCtrls.Props(
         sel, rows, setModal.map(_.setState), project, projectWidgets, textSearch, updateIO, rowAsyncW)
 
-    val pxSavedViewsMenu: Px[SavedViewLogic.Menu] =
-      for {
-        savedViews <- pxSavedViews
-        viewState  <- pxViewState
-        activeView <- pxActiveView
-      } yield SavedViewLogic.menu(savedViews, viewState, activeView, activeViewCB)
-
-
     val reqTable = new Table(pxProjectWidgets)
 
     // Not Px because we don't want it to jitter.
@@ -318,15 +172,6 @@ object ReqTablePage {
         .lastOption
         .filter(_._2 > 0)
         .map(x => CreateFeature.RowKey.req(x._1.reqTypeId))
-    }
-
-    val runSavedViewAction: SavedViewLogic.Action ~=> Callback =
-      Reusable.fn { action =>
-        for {
-          project <- pxProject.toCallback
-          mod     = State.runSavedViewAction(project, true)(action)
-          _       <- stateAccessS.modState(mod)
-        } yield ()
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -396,18 +241,11 @@ object ReqTablePage {
         newFormColumns,
       )
 
-      val savedViews = SavedViewsUI.Props(
-        pxSavedViewsMenu.value(),
-        AsyncFeature.ReadWrite.D0(savedViewAsyncW, p.savedViewAsync),
-        runSavedViewAction,
-        savedViewIO,
-      ).render
+      val savedViews =
+        p.savedViews.renderSavedViewManager()
 
-      val filterEditor = FilterEditor.Props(
-        p.state.filter,
-        project,
-        onFilterChange,
-      ).render
+      val filterEditor =
+        p.savedViews.renderFilterEditor()
 
       def renderTable(mode: Table.Mode) = reqTable.Whole.Props(
         mode,

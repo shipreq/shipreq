@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.pages.content.reqtable
+package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros._
 import japgolly.scalajs.react.{CallbackOption, CallbackTo}
@@ -13,11 +13,11 @@ import shipreq.webapp.base.event.SavedViewGD
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol.websocket.{SavedViewCmd => Cmd}
 import shipreq.webapp.base.sort.SortMethod
-import SavedViewLogic._
-import SortCriterion.SyntaxHelpers._
-import SortMethod.{Asc, AscThenBlanks, Desc}
 
 object SavedViewLogicTest extends TestSuite {
+  import ViewLogic._
+  import SortCriterion.SyntaxHelpers._
+  import SortMethod.{Asc, AscThenBlanks, Desc}
 
   val SVb = SavedView(
     SavedView.Id(1),
@@ -238,7 +238,7 @@ object SavedViewLogicTest extends TestSuite {
 
       def testNE(filterDeadFallback: FilterDead)(implicit s: State, svs: SavedViews.NonEmpty): Menu = {
         val av = s.activeView(Some(svs), filterDeadFallback)
-        menu(Some(svs), s, av, av)
+        Menu(Some(svs), s, identity, av, av)
       }
 
       def dirtyAnon(activeView: View): MenuItem.Unsaved = {
@@ -263,7 +263,7 @@ object SavedViewLogicTest extends TestSuite {
           val s = State(manualView, referenceView)
           val savedViews = None
           val av = s.activeView(savedViews, filterDeadFallback)
-          menu(savedViews, s, av, av)
+          Menu(savedViews, s, identity, av, av)
         }
 
         def saveAsNew(v: View) = MenuAction.saveAsNew(nvForId(None)(nameValidationFn()), v)

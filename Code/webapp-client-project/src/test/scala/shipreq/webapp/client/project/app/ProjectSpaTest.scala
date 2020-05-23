@@ -38,12 +38,12 @@ object ProjectSpaTest extends TestSuite {
 
   /** The Usage links in config screens should configure the ReqTable state appropriately */
   private def cfgUsageLinkToReqTable: *.Actions = (
-    RT.filterText.assert.equal("").lift
+    RT.savedViews.filterText.assert.equal("").lift
       +> setPage(Page.CfgReqTypes)
       >> CRT.clickUsageLink("UC").lift //.updateState(_.copy(page = Page.ReqTable))
       >> setPage(Page.ReqTable) // TODO This shouldn't be needed. It works outside of tests
       +> (
-      RT.filterText.assert.equal("UC")
+      RT.savedViews.filterText.assert.equal("UC")
         & RT.tablePubids.assert.forall("be UC (or code group)", _.matches("^(?:UC-.*|–)$"))
       ).lift)
 

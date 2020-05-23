@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.pages.content.reqtable
+package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.scalajs.react._
@@ -42,6 +42,12 @@ object ColumnPlus {
       case Column.CustomField(id) => p.config.fields.customFields.get(id).map(f => apply(c, f.live(p.config), cfName(id)))
     }
   }
+
+  def byProject(p: Project, fd: FilterDead): Column => Option[ColumnPlus] =
+    fd match {
+      case HideDead => byProject(p).andThen(_.filter(_.live is Live))
+      case ShowDead => byProject(p)
+    }
 
   /** Forcing is fine because
     * 1. certain built-in columns are mandatory and can't be removed

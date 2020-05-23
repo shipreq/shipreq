@@ -463,18 +463,19 @@ object Style extends StyleSheet.Inline {
       val sortMethodHalfTop    = style(sortMethodHalf, marginBottom(0.26.em))
       val sortMethodHalfBottom = style(sortMethodHalf)
     }
+  }
 
-    object savedViews {
+  // ===================================================================================================================
+  object savedViews {
 
-      val menu = TagMod(^^.display.flex, ^^.flexWrap.wrap)
+    val menu = TagMod(^^.display.flex, ^^.flexWrap.wrap)
 
-      val activeItem = style(
-        fontWeight._700.important,
-        (boxShadow := "none").important,
-        borderColor(c"#F2711C").important,
-        color(c"#F2711C").important)
+    val activeItem = style(
+      fontWeight._700.important,
+      (boxShadow := "none").important,
+      borderColor(c"#F2711C").important,
+      color(c"#F2711C").important)
 
-    }
   }
 
   // ===================================================================================================================
@@ -1541,11 +1542,11 @@ object Style extends StyleSheet.Inline {
     reqtable.sortEditor.dragArea,
     reqtable.page.viewCtrls,
     reqtable.table.selectionColumnHeader,
-    reqtable.savedViews.activeItem,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
     fieldConfig.fieldListTable,
     reqTypeConfig.implicationHelp,
+    savedViews.activeItem,
     tagConfig.tagTree,
     widgets.issueDesc,
     widgets.reqTypeSelector.dropdown,

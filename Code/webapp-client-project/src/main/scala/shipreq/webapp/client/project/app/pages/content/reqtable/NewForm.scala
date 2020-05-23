@@ -21,6 +21,7 @@ import shipreq.webapp.client.project.app.Style.reqtable.{creation => *}
 import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.FieldKey
+import shipreq.webapp.client.project.feature.SavedViewFeature.{ColumnLogic, ColumnPlus}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.CloseButton
 
@@ -31,7 +32,7 @@ object NewForm {
   object ForCodeGroup extends NewForm {
     override type Input            = Unit
     override type FK               = FieldKey.ForCodeGroup
-    override val columnToField     = Column.creationFieldCG.getOption
+    override val columnToField     = ColumnLogic.creationFieldCG.getOption
     override val createButtonLabel = Function const NewForm.createButtonLabel(UiText.codeGroup)
     override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
       var _code: Option[FieldKey.Code.Value] = None
@@ -47,7 +48,7 @@ object NewForm {
   object ForGenericReq extends NewForm {
     override type Input            = CustomReqType
     override type FK               = FieldKey.ForGenericReq
-    override val columnToField     = Column.creationFieldGR.getOption
+    override val columnToField     = ColumnLogic.creationFieldGR.getOption
     override val createButtonLabel = NewForm.createButtonLabel(_)
     override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
       var c = CreateContentCmd.CreateGenericReq.empty(i.id)
@@ -67,7 +68,7 @@ object NewForm {
   object ForUseCase extends NewForm {
     override type Input            = Unit
     override type FK               = FieldKey.ForUseCase
-    override val columnToField     = Column.creationFieldUC.getOption
+    override val columnToField     = ColumnLogic.creationFieldUC.getOption
     override val createButtonLabel = Function const NewForm.createButtonLabel(StaticReqType.UseCase)
     override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
       var c = CreateContentCmd.CreateUseCase.empty
@@ -218,7 +219,7 @@ sealed trait NewForm {
             else
               renderArgsWithoutAutoFocus
           <.td(
-            ^.key := Column.key(cp.column),
+            ^.key := ColumnLogic.key(cp.column),
             e.value.render(renderArgs))
         }
 

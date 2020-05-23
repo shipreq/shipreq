@@ -10,6 +10,7 @@ import shipreq.webapp.base.data.{ExternalPubid, ReqTypes}
 import shipreq.webapp.base.ui.Toast
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.RowKey
+import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import NewStuff.State
 

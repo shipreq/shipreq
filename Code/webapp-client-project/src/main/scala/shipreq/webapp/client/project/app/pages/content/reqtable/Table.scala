@@ -17,6 +17,7 @@ import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.ui.{EditTheme, semantic}
 import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
+import shipreq.webapp.client.project.feature.SavedViewFeature.{ColumnLogic, ColumnPlus}
 import shipreq.webapp.client.project.widgets.{NoFilterResults, ProjectWidgets, ViewReq}
 import shipreq.webapp.client.project.lib.DataReusability._
 import EditorFeature.FieldKey
@@ -260,7 +261,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
           def editor = columnEditor(col)
           val cs     = cellStateFn(row.live & colPlus.live)
           val cp     = mkProps(col, Cell.Props(cs, editor, _))
-          Cell.Component.withKey(Column key col)(cp)
+          Cell.Component.withKey(ColumnLogic key col)(cp)
         }
 
       def renderNormal = {
@@ -319,8 +320,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
     override protected val rowToColumnToEditorField =
       _.req.id match {
-        case _: GenericReqId => Column.editorFieldGR.getOption
-        case _: UseCaseId    => Column.editorFieldUC.getOption
+        case _: GenericReqId => ColumnLogic.editorFieldGR.getOption
+        case _: UseCaseId    => ColumnLogic.editorFieldUC.getOption
       }
 
     override protected def reusabilityRowEditor = implicitly
@@ -373,7 +374,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
     ]("CodeGroupRow") {
 
     override protected val rowToColumnToEditorField =
-      _ => Column.editorFieldCG.getOption
+      _ => ColumnLogic.editorFieldCG.getOption
 
     override protected def reusabilityRowEditor = implicitly
 

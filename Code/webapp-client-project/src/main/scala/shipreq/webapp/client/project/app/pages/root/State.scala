@@ -96,7 +96,7 @@ final case class State(projectName               : ProjectItem.WithEditableName.
                        createAsync               : AsyncFeature.State.D1[CreateFeature.RowKey, CreateFeature.AsyncError],
                        edit                      : EditorFeature.State.ForProject,
                        editAsync                 : AsyncFeature.State.D2[EditorFeature.RowKey, AsyncKey, EditorFeature.AsyncError],
-                       savedViewAsync            : AsyncFeature.State.D0[EditorFeature.AsyncError],
+                       savedViews                : SavedViewFeature.State,
                        preview                   : PreviewFeature.State[PreviewId],
                        _filterDead               : FilterDead,
                        reqTable                  : reqtable.ReqTablePage.State,
@@ -124,7 +124,7 @@ final case class State(projectName               : ProjectItem.WithEditableName.
     else
       copy(
         _filterDead = fd,
-        reqTable = reqTable.setFilterDead(fd, p),
+        savedViews = savedViews.setFilterDead(fd, p),
       )
 }
 
@@ -140,10 +140,10 @@ object State {
       createAsync                = AsyncFeature.State.initD1,
       edit                       = EditorFeature.State.initForProject,
       editAsync                  = AsyncFeature.State.initD2,
-      savedViewAsync             = AsyncFeature.State.initD0,
+      savedViews                 = SavedViewFeature.State.init(p),
       preview                    = PreviewFeature.State.init,
       _filterDead                = p.savedViews.map(_.default.view.filterDead).getOrElse(HideDead),
-      reqTable                   = reqtable.ReqTablePage.State.init(p),
+      reqTable                   = reqtable.ReqTablePage.State.init,
       reqDetail                  = ReqDetail.initState,
       issuesPage                 = IssuesPage.State.init,
       toast                      = Toast.State.init,
@@ -162,4 +162,7 @@ object State {
 
   implicit val reusability: Reusability[State] =
     Reusability.byRef
+
+  val savedViewAsync =
+    savedViews ^|-> SavedViewFeature.State.async
 }

@@ -15,10 +15,12 @@ import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
+import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.test._
 
 object ReqTableTest extends TestSuite {
-  import ReqTableTestDsl._
+  import ReqTableTestDsl.{savedViews => _, _}
+  import ReqTableTestDsl.savedViews.{* => _, _}
 
   PrepareEnv()
 
@@ -539,6 +541,114 @@ object ReqTableTest extends TestSuite {
     runTest(plan withInitialState SampleProject7.project)
   }
 
+  def testSavedViewsBasic()(implicit path: utest.framework.TestPath) = {
+
+    val assertViewBasic =
+      tableColumns.size.assert(7) &
+      tableColumns.assert("ID", "Req Type", "Implied By", "Title", "Code", "Deletion Reason", "Implies") &
+      filterText.assert("")
+
+    val assertViewA =
+      tableColumns.size.assert(18) &
+      filterText.assert("MF") &
+      filterDead.assert(HideDead)
+
+    val assertViewD =
+      tableColumns.size.assert(20) &
+      filterText.assert("UC") &
+      filterDead.assert(ShowDead)
+
+    val test = (
+      *.emptyAction +> savedViews.assert("> Unsaved view") +> filterText.assert("")
+
+        >> showBuiltInColumnsSortedByPubid
+        +> assertViewBasic
+        >> saveCurrentView("basic")
+        +> savedViews.assert("> * basic")
+        +> assertViewBasic
+
+        >> showAllColumns(HideDead)
+        >> enterFilter("MF")
+        +> assertViewA
+        +> savedViews.assert("* basic", "> Unsaved view")
+        >> saveCurrentView("AAA")
+        +> savedViews.assert("> AAA", "* basic")
+        +> assertViewA
+
+        >> showAllColumns(ShowDead)
+        >> enterFilter("UC")
+        +> assertViewD
+        +> savedViews.assert("AAA", "* basic", "> Unsaved view")
+        >> saveCurrentView("ded")
+        +> savedViews.assert("AAA", "* basic", "> ded")
+        +> assertViewD
+
+        >> selectView("basic")   +> savedViews.assert("AAA", "> * basic", "ded") +> assertViewBasic
+        >> selectView("AAA")     +> savedViews.assert("> AAA", "* basic", "ded") +> assertViewA
+        >> selectView("ded")     +> savedViews.assert("AAA", "* basic", "> ded") +> assertViewD
+        >> setDefaultView("AAA") +> savedViews.assert("* AAA", "basic", "> ded") +> assertViewD
+        >> setDefaultView("ded") +> savedViews.assert("AAA", "basic", "> * ded") +> assertViewD
+        >> selectView("AAA")     +> savedViews.assert("> AAA", "basic", "* ded") +> assertViewA
+      )
+
+    runTest(Plan.action(test) withInitialState SampleProject7.project)
+  }
+
+  def testSavedViewsDeadCol()(implicit path: utest.framework.TestPath) = {
+    val test = (
+      *.emptyAction
+
+        >> showMandatoryColumnsSortedByPubid
+        +> filterDead.assert(HideDead)
+        +> tableColumns.assert("ID", "Title")
+        +> filterText.assert("")
+        >> showHideColumn("Description")
+        >> showHideColumn("Component")
+        +> tableColumns.assert("ID", "Title", "Description", "Component")
+        >> saveCurrentView("yo!")
+        +> savedViews.assert("> * yo!")
+
+        >> receiveExternalEvent(Event.FieldCustomDelete(SampleProject7.Values.descField))
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Component")
+
+        >> receiveExternalEvent(Event.FieldCustomRestore(SampleProject7.Values.descField))
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Description", "Component")
+
+        >> showHideColumn("Priority")
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Description", "Component", "Priority")
+
+        >> receiveExternalEvent(Event.FieldCustomDelete(SampleProject7.Values.descField))
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+
+        >> receiveExternalEvent(Event.FieldCustomRestore(SampleProject7.Values.descField))
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Description", "Component", "Priority")
+
+        >> showHideColumn("Priority")
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Description", "Component")
+
+        >> receiveExternalEvent(Event.FieldCustomDelete(SampleProject7.Values.descField))
+        >> showHideColumn("Priority")
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+
+        >> saveAndReplaceView("yo!")
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+
+        >> receiveExternalEvent(Event.FieldCustomRestore(SampleProject7.Values.descField))
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+      )
+
+    runTest(Plan.action(test) withInitialState SampleProject7.project)
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   override def tests = Tests {
@@ -615,6 +725,11 @@ object ReqTableTest extends TestSuite {
       "main"    - testFieldRules()
       "sorting" - testFieldRulesAndSorting()
       "filter"  - testFieldRulesAndFilter()
+    }
+
+    "savedViews" - {
+      "basic" - testSavedViewsBasic()
+      "deadCol" - testSavedViewsDeadCol()
     }
   }
 }

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.pages.content.reqtable
+package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.scalajs.react.Key
 import scalaz.{-\/, \/-}
@@ -9,7 +9,7 @@ import shipreq.webapp.base.data
 import shipreq.webapp.base.lib.ReactKeyGen
 import shipreq.webapp.client.project.feature.{CreateFeature, EditorFeature}
 
-object ColumnExt {
+object ColumnLogic {
 
   /** A value that can be passed to React to quickly identify columns. */
   val key: Column => Key = {

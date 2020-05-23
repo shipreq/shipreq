@@ -14,6 +14,7 @@ import shipreq.webapp.base.text.{Atom, PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
 import shipreq.webapp.base.jsfacade.MomentJs
+import shipreq.webapp.base.protocol.websocket.SavedViewCmd
 
 object DataReusability extends DataReusability
 
@@ -175,5 +176,31 @@ abstract class DataReusability extends BaseReusability {
 
   implicit lazy val reusabilityIssues: Reusability[Issues] =
     Reusability.byRef || Reusability.derive
-}
 
+  implicit lazy val reusabilitySavedViewColumn: Reusability[savedview.Column] =
+    Reusability.byUnivEq
+
+  implicit lazy val reusabilitySavedViewSortCriterion: Reusability[savedview.SortCriterion] =
+    Reusability.byRefOrUnivEq
+
+  implicit lazy val reusabilitySavedViewSortCriteria: Reusability[savedview.SortCriteria] =
+    Reusability.byRefOrUnivEq
+
+  implicit lazy val reusabilitySavedViewView: Reusability[savedview.View] =
+    Reusability.byRefOrUnivEq
+
+  implicit lazy val reusabilitySavedViewNE: Reusability[savedview.SavedViews.NonEmpty] =
+    Reusability.byRefOrUnivEq
+
+  implicit lazy val reusabilitySavedViewId: Reusability[savedview.SavedView.Id] =
+    Reusability.byUnivEq
+
+  implicit lazy val reusabilitySavedViewName: Reusability[savedview.SavedView.Name] =
+    Reusability.byUnivEq
+
+  implicit lazy val reusabilitySavedView: Reusability[savedview.SavedView] =
+    Reusability.byRef || Reusability.derive
+
+  implicit lazy val reusabilitySavedViewCmdD: Reusability[SavedViewCmd.Delete] =
+    Reusability.byUnivEq
+}

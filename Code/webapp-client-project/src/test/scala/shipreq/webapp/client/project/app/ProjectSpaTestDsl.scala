@@ -42,7 +42,11 @@ object ProjectSpaTestDsl {
       component = ReactTestUtils.modifyProps(c, component)(f)
   }
 
-  final case class Ref(global: TestGlobal, tester: ComponentTester[Props, State, _], confirmJs: TestConfirmJs) {
+  final case class Ref(global   : TestGlobal,
+                       tester   : ComponentTester[Props, State, _],
+                       confirmJs: TestConfirmJs,
+                       promptJs : TestPromptJs) {
+
     def observe(): Obs = {
       val $ = tester.component.domZipper
       val inner = $(">div")(">div:nth-child(2),>main")
@@ -132,7 +136,7 @@ object ProjectSpaTestDsl {
 
   implicit lazy val transformRT =
     RT.*.transformer
-      .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.reqTable, r.global))
+      .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.savedViews, r.global, r.promptJs))
       .pmapO[Obs](_.reqTable)
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
@@ -252,8 +256,9 @@ object ProjectSpaTestDsl {
 
     val global       = TestGlobal(project)
     val confirmJs    = TestConfirmJs()
+    val promptJs     = TestPromptJs()
     val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name)
-    val spa          = new LoadedRoot(initPageData, global, confirmJs)
+    val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs)
     val rc           = MockRouterCtl[Page]()
     val init         = TestState(page, global.unsafeProject(), rd)
 
@@ -263,7 +268,7 @@ object ProjectSpaTestDsl {
       val report = Plan(action, invariants)
                      .test(Observer(_.observe()))
                      .withInitialState(init)
-                     .withRefByName(Ref(global, tester, confirmJs))
+                     .withRefByName(Ref(global, tester, confirmJs, promptJs))
                      .run()
       if (assertPass)
         assertTestState(report)

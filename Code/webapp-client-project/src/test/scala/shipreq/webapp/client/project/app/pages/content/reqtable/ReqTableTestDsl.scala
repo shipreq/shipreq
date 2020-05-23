@@ -9,22 +9,30 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util.Browser
 import shipreq.webapp.client.project.app.Style
+import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
+import shipreq.webapp.client.project.feature.SavedViewFeature
+import shipreq.webapp.client.project.feature.savedview.SavedViewTestDsl
 import shipreq.webapp.client.project.test._
 import teststate.domzipper.DomZipper.EditableSel
-import TestState._
 
 object ReqTableTestDsl {
+  import TestState._
 
-  case class Ref($: StateAccessImpure[ReqTablePage.State], global: TestGlobal)
+  final case class Ref(savedViewState: StateAccessImpure[SavedViewFeature.State],
+                       global: TestGlobal,
+                       promptJs: TestPromptJs)
 
   val * = Dsl[Ref, ReqTableObs, Project]
 
   def apply(action: *.Actions = *.emptyAction): *.Plan =
     Plan(action, invariants)
+
+  val savedViews = SavedViewTestDsl(*)(_.filter, _.savedViews, _.promptJs)
 
 //  import scala.util.Try
 //  def propTrySuccess(name: => String): Prop[Try[Any]] =
@@ -66,8 +74,6 @@ object ReqTableTestDsl {
   val selectableColumns = *.focus("Selectable columns").collection(_.obs.columnSelector.allColumns)
 
   val filterDead = *.focus("FilterDead").value(_.obs.filterDead)
-
-  val filterText = *.focus("Filter text").value(_.obs.filterValue)
 
   val tablePubids = *.focus("Visible pubids").collection(_.obs.table.rowPubids)
 
@@ -270,12 +276,9 @@ object ReqTableTestDsl {
 
   implicit def autoGetDomFromZipper(d: DomZipperJs): ReactOrDomNode = d.domAsHtml
 
-  def modState(name: => String, mod: (Project, ReqTablePage.State) => ReqTablePage.State): *.Actions =
-    *.action(name)(i => i.ref.$.modState(s => mod(i.state, s)))
-
   def setViewSettings(name: => String, fd: FilterDead, mod: (Project, View) => View): *.Actions =
     (setFilterDead(fd) >> *.action("setView")(i =>
-      i.ref.$.modState(ReqTablePage.State.modifyView(i.state, fd, true)(mod(i.state, _)))))
+      i.ref.savedViewState.modState(_.modifyView(i.state, fd, updateFilterText = true)(mod(i.state, _)))))
       .renameContextFree(name)
 
 //  def applyTableSettings(ts: TableSettings): *.Actions =
@@ -305,6 +308,12 @@ object ReqTableTestDsl {
       View(cs, SortCriteria.byPubidOnly, s.filterDead, None)
     })
 
+  val showMandatoryColumnsSortedByPubid: *.Actions =
+    setViewSettings("Show mandatory columns sorted by pubid.", HideDead, (p, s) => {
+      val cs = selectVisibleColumns(Column.isMandatory, p, HideDead)
+      View(cs, SortCriteria.byPubidOnly, s.filterDead, None)
+    })
+
   def showHideColumn(columnName: String): *.Actions =
     *.action("Show/hide " + columnName)(
       Simulation.change run _.obs.columnSelector.column(columnName).checkbox)
@@ -315,12 +324,6 @@ object ReqTableTestDsl {
 
   val sortByPubid =
     sortBy(SpecialBuiltInField.Pubid.name)
-
-  def enterFilter(f: String) = {
-    val e = SimEvent.Change(f)
-    *.action(s"enterFilter('$f')")(e simulate _.obs.filterInput)
-      .addCheck(filterText.assert(f).after)
-  }
 
   lazy val filterDeadToggle =
     *.action("filterDeadToggle")(Simulate click _.obs.filterDeadButton)
@@ -343,6 +346,10 @@ object ReqTableTestDsl {
   val svrFailLast = *.action("Fail last server request.")(_.ref.global.failLast())
 
   val svrAssertLastTwoReqsEqual = svrLastTwoReqs.map(_.req).assert.equal(Equal.by_==, implicitly)
+
+  def receiveExternalEvent(e: Event): *.Actions =
+    *.action("Receive external event: " + e)(_.ref.global.applyTestEventsCB(e).void.runNow())
+      .updateState(WebappTestUtil.applyEventSuccessfully(_, e))
 
   def setFocus(f: ReqTableObs => html.Element): *.Actions =
     *.action("Set focus")(i => f(i.obs).focus()) +>

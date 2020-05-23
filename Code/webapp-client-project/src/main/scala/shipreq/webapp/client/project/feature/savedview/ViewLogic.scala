@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.pages.content.reqtable
+package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptyVector}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
@@ -13,19 +13,11 @@ import shipreq.webapp.base.data.savedview.SavedView.{Id, Name}
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.event.SavedViewGD
 import shipreq.webapp.base.filter.Filter.Implicits.univEqFilterValid
-import shipreq.webapp.base.lib.BaseReusability._
+import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd
 import shipreq.webapp.base.validation.Simple
 
-object SavedViewLogic {
-
-  implicit class SavedViewsOptionalOps[A](private val self: SavedViews.Optional) extends AnyVal {
-    def defaultSavedViewId: Option[Id] =
-      self.map(_.default.id)
-
-    def get(id: Id): Option[SavedView] =
-      self.flatMap(_.get(id))
-  }
+object ViewLogic {
 
   /** @param manualView      The view that exists because the user has manually changed the view.
     * @param referenceViewId The view that the user has either selected manually, or was selected when they modified the view.
@@ -46,6 +38,31 @@ object SavedViewLogic {
     implicit def univEq: UnivEq[State] = UnivEq.derive
     implicit def reusability: Reusability[State] = Reusability.byUnivEq
   }
+
+  // ===================================================================================================================
+
+  implicit class SavedViewsOptionalOps[A](private val self: SavedViews.Optional) extends AnyVal {
+    def defaultSavedViewId: Option[Id] =
+      self.map(_.default.id)
+
+    def get(id: Id): Option[SavedView] =
+      self.flatMap(_.get(id))
+  }
+
+  // ===================================================================================================================
+
+  type NameValidator = Reusable[Option[Id] => String => String \/ Name]
+
+  object NameValidator {
+    def apply(savedViews: SavedViews.Optional): NameValidator =
+      Reusable.implicitly(savedViews).map(_ => id => name =>
+        Name.validator(Name.State(id, savedViews))
+          .unnamed
+          .apply(name)
+          .leftMap("Invalid name: " + Simple.Invalidity.toText(_)))
+  }
+
+  // ===================================================================================================================
 
   sealed abstract class Action
   object Action {
@@ -76,14 +93,14 @@ object SavedViewLogic {
     }
   }
 
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+  // ===================================================================================================================
 
   sealed trait Menu {
     protected def unsortedItems: NonEmptyVector[MenuItem]
     def isActive: MenuItem => Boolean
 
     final val items: NonEmptyVector[MenuItem] =
-      unsortedItems.sortBy(_.name.value.toUpperCase)
+      unsortedItems.sorted
 
     assert(items.whole.count(isActive) == 1)
   }
@@ -103,7 +120,80 @@ object SavedViewLogic {
       override protected def unsortedItems = NonEmptyVector(default, nonDefaults :+ unsaved)
       override def isActive = _.optionId.isEmpty
     }
+
+    def apply(savedViews   : SavedViews.Optional,
+              state        : State,
+              adjustRefView: View => View,
+              activeView   : View,
+              activeViewCB : Reusable[CallbackTo[View]]): Menu = {
+
+      val nameValidator = NameValidator(savedViews)
+
+      def saveAsNew: MenuAction.SaveAsNew =
+        MenuAction.saveAsNew(nameValidator, activeViewCB)
+
+      savedViews match {
+        case None =>
+          Menu.NoSaved(MenuItem.Unsaved(saveAsNew, replace = None))
+
+        case Some(svs) =>
+
+          val default = {
+            val sv = svs.default
+            MenuItem.default(nameValidator, state, svs)(sv)
+          }
+
+          val nonDefaults = svs.nonDefault
+            .valuesIterator
+            .map(sv => MenuItem.nonDefault(nameValidator, state, svs)(sv))
+            .toVector
+
+          state.referenceViewId.flatMap(svs.get) match {
+            case None =>
+              state.manualView match {
+                case None =>
+                  Menu.SavedClean(default, nonDefaults, svs.default.id)
+                case Some(_) =>
+                  val dirtyItem = MenuItem.Unsaved(saveAsNew, None)
+                  Menu.SavedDirty(default, nonDefaults, dirtyItem)
+              }
+
+            case Some(ref0) =>
+              val ref = SavedView.view.modify(adjustRefView)(ref0)
+              diff(ref, activeView) match {
+                case None =>
+                  Menu.SavedClean(default, nonDefaults, ref.id)
+                case Some(_) =>
+                  val updateCB = Reusable.ap(Reusable.implicitly(ref), activeViewCB)((_, viewCB) =>
+                    viewCB.map(diff(ref, _)).asCBO.map(SavedViewCmd.Update(ref.id, _)))
+                  val replace   = MenuAction.Replace(ref.name, updateCB)
+                  val dirtyItem = MenuItem.Unsaved(saveAsNew, Some(replace))
+                  Menu.SavedDirty(default, nonDefaults, dirtyItem)
+              }
+          }
+      }
+    }
+
+    private def diff(ref: SavedView, activeView: View): Option[SavedViewGD.NonEmptyValues] = {
+      def changedAttr[A: UnivEq, B](lens: Lens[View, A]): Option[A] = {
+        val a = lens.get(ref.view)
+        val b = lens.get(activeView)
+        Option.unless(a ==* b)(b)
+      }
+
+      NonEmpty(
+        SavedViewGD.values(
+          SavedViewGD.attrs.iterator.map {
+            case SavedViewGD.Name               => None
+            case a: SavedViewGD.Columns   .type => changedAttr(View.columns)   .map(a.apply)
+            case a: SavedViewGD.Order     .type => changedAttr(View.order)     .map(a.apply)
+            case a: SavedViewGD.FilterDead.type => changedAttr(View.filterDead).map(a.apply)
+            case a: SavedViewGD.Filter    .type => changedAttr(View.filter)    .map(a.apply)
+          }.filterDefined))
+    }
   }
+
+  // ===================================================================================================================
 
   sealed trait MenuItem {
     def optionId: Option[Id]
@@ -158,7 +248,24 @@ object SavedViewLogic {
         MenuAction.makeDefault(sv.id),
         MenuAction.rename(validate, Reusable.implicitly((sv.id, sv.name))),
         MenuAction.delete(sv, state, svs))
+
+    implicit val ordering: Ordering[MenuItem] = new Ordering[MenuItem] {
+      override def compare(x: MenuItem, y: MenuItem): Int = {
+        // 1. Put "Unsaved View" last
+        // 2. Ignore case of name
+        val xu = x.name ==* Name.unsaved
+        val yu = y.name ==* Name.unsaved
+        if (xu) {
+          if (yu) 0 else 1
+        } else if (yu)
+          -1
+        else
+          x.name.value.compareToIgnoreCase(y.name.value)
+      }
+    }
   }
+
+  // ===================================================================================================================
 
   sealed trait MenuAction
 
@@ -207,84 +314,7 @@ object SavedViewLogic {
     }
   }
 
-  private def diff(ref: SavedView, activeView: View): Option[SavedViewGD.NonEmptyValues] = {
-    def changedAttr[A: UnivEq, B](lens: Lens[View, A]): Option[A] = {
-      val a = lens.get(ref.view)
-      val b = lens.get(activeView)
-      Option.unless(a ==* b)(b)
-    }
-
-    NonEmpty(
-      SavedViewGD.values(
-        SavedViewGD.attrs.iterator.map {
-          case SavedViewGD.Name               => None
-          case a: SavedViewGD.Columns   .type => changedAttr(View.columns)   .map(a.apply)
-          case a: SavedViewGD.Order     .type => changedAttr(View.order)     .map(a.apply)
-          case a: SavedViewGD.FilterDead.type => changedAttr(View.filterDead).map(a.apply)
-          case a: SavedViewGD.Filter    .type => changedAttr(View.filter)    .map(a.apply)
-        }.filterDefined))
-  }
-
-  type NameValidator = Reusable[Option[Id] => String => String \/ Name]
-
-  def nameValidator(savedViews: SavedViews.Optional): NameValidator =
-    Reusable.implicitly(savedViews).map(_ => id => name =>
-      Name.validator(Name.State(id, savedViews))
-        .unnamed
-        .apply(name)
-        .leftMap("Invalid name: " + Simple.Invalidity.toText(_)))
-
-  def menu(savedViews  : SavedViews.Optional,
-           state       : State,
-           activeView  : View,
-           activeViewCB: Reusable[CallbackTo[View]]): Menu = {
-
-    val nameValidator = this.nameValidator(savedViews)
-
-    def saveAsNew: MenuAction.SaveAsNew =
-      MenuAction.saveAsNew(nameValidator, activeViewCB)
-
-    savedViews match {
-      case None =>
-        Menu.NoSaved(MenuItem.Unsaved(saveAsNew, replace = None))
-
-      case Some(svs) =>
-
-        val default = {
-          val sv = svs.default
-          MenuItem.default(nameValidator, state, svs)(sv)
-        }
-
-        val nonDefaults = svs.nonDefault
-          .valuesIterator
-          .map(sv => MenuItem.nonDefault(nameValidator, state, svs)(sv))
-          .toVector
-
-        state.referenceViewId.flatMap(svs.get) match {
-          case None =>
-            state.manualView match {
-              case None =>
-                Menu.SavedClean(default, nonDefaults, svs.default.id)
-              case Some(_) =>
-                val dirtyItem = MenuItem.Unsaved(saveAsNew, None)
-                Menu.SavedDirty(default, nonDefaults, dirtyItem)
-            }
-          case Some(ref) =>
-            diff(ref, activeView) match {
-              case None =>
-                Menu.SavedClean(default, nonDefaults, ref.id)
-              case Some(_) =>
-                val updateCB = Reusable.ap(Reusable.implicitly(ref), activeViewCB)((_, viewCB) =>
-                                 viewCB.map(diff(ref, _)).asCBO.map(SavedViewCmd.Update(ref.id, _)))
-                val replace   = MenuAction.Replace(ref.name, updateCB)
-                val dirtyItem = MenuItem.Unsaved(saveAsNew, Some(replace))
-                Menu.SavedDirty(default, nonDefaults, dirtyItem)
-            }
-        }
-    }
-  }
-
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+  // ===================================================================================================================
 
   implicit def univEqActionModify              : UnivEq[Action.Modify              ] = UnivEq.derive
   implicit def univEqActionSelect              : UnivEq[Action.Select              ] = UnivEq.derive

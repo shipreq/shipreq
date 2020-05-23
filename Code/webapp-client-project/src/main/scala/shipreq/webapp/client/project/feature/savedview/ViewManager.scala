@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.pages.content.reqtable
+package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -6,18 +6,23 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.event.{Event, VerifiedEvent}
 import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd
 import shipreq.webapp.base.ui.semantic.Dropdown.JsOptionsOps
 import shipreq.webapp.base.ui.semantic.{Colour, Dropdown, Icon, SemExtAny, Menu => SemUiMenu}
 import shipreq.webapp.base.util.CallbackHelpers._
-import shipreq.webapp.client.project.app.Style.reqtable.{savedViews => *}
-import SavedViewLogic._
+import shipreq.webapp.client.project.app.Style.{savedViews => *}
 
-object SavedViewsUI {
+object ViewManager {
+  import ViewLogic._
+
+  val devMarker = VdomAttr.devOnly("data-savedviewmanager")
 
   final case class Props(menu       : Menu,
                          asyncRW    : AsyncFeature.ReadWrite.D0[ErrorMsg],
+                         promptJs   : PromptJs,
+                         confirmJs  : ConfirmJs,
                          runAction  : Action ~=> Callback,
                          savedViewIO: ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq]) {
     @inline def render: VdomElement = Component(this)
@@ -75,6 +80,8 @@ object SavedViewsUI {
     }
 
     private def interpretMenuAction(runAction  : Action => Callback,
+                                    confirmJs  : ConfirmJs,
+                                    promptJs   : PromptJs,
                                     asyncW     : AsyncFeature.Write.D0[ErrorMsg],
                                     savedViewIO: ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq]): MenuAction => Dropdown.Item = {
 
@@ -108,7 +115,7 @@ object SavedViewsUI {
         case MenuAction.SaveAsNew(cmdFn) =>
           item(Icon.Plus, "Save as new...",
             promptThenRun(
-              prompt    = CallbackTo.prompt("Enter a name for this view"),
+              prompt    = promptJs("Enter a name for this view"),
               validate  = cmdFn.value.map(_.andThen(_.map(Some(_)).toEither)),
               onSuccess = runActionOnSuccess { case e: Event.SavedViewCreate => Action.Select(e.id) }))
 
@@ -123,14 +130,14 @@ object SavedViewsUI {
         case MenuAction.Delete(name, cmd, action) =>
           item(Icon.Trash, "Delete...",
             for {
-              _ <- CallbackTo.confirm(s"Really delete the '${name.value}' view?").requireCBO
+              _ <- confirmJs(s"Really delete the '${name.value}' view?").requireCBO
               _ <- runCmd(cmd, _ => runAction(action)).toCBO
             } yield ())
 
         case MenuAction.Rename(name, cmdFn) =>
           item(Icon.Write, "Rename...",
             promptThenRun(
-              prompt   = CallbackTo.prompt(s"Enter a new name for ${name.value}", name.value),
+              prompt   = promptJs(s"Enter a new name for ${name.value}", name.value),
               validate = CallbackTo.pure(cmdFn(_).toDisjOption.toEither)))
       }
     }
@@ -138,13 +145,15 @@ object SavedViewsUI {
     def render(p: Props): VdomElement = {
       val i = interpretMenu(
         interpretMenuItem(p.runAction, p.asyncRW.read,
-          interpretMenuAction(p.runAction, p.asyncRW.write, p.savedViewIO)))
+          interpretMenuAction(p.runAction, p.confirmJs, p.promptJs, p.asyncRW.write, p.savedViewIO)))
       val semUiMenu = i(p.menu)
-      semUiMenu.render
+      <.div(
+        devMarker := 1,
+        semUiMenu.render)
     }
 
-    private def onFailure(f: AsyncFeature.Status.Failed[ErrorMsg]): Callback =
-      CallbackTo.confirm(s"Failed to update saved views:\n${f.failure.value}\n\nRetry?")
+    private def onFailure(confirmJs: ConfirmJs, f: AsyncFeature.Status.Failed[ErrorMsg]): Callback =
+      confirmJs(s"Failed to update saved views:\n${f.failure.value}\n\nRetry?")
         .flatMap {
           case true  => f.retry
           case false => f.cancel
@@ -152,7 +161,7 @@ object SavedViewsUI {
 
     val handleAsyncError: Callback =
       $.props.flatMap(p =>
-        p.asyncRW.read.collect { case f: AsyncFeature.Status.Failed[ErrorMsg] => onFailure(f) }
+        p.asyncRW.read.collect { case f: AsyncFeature.Status.Failed[ErrorMsg] => onFailure(p.confirmJs, f) }
           .getOrEmpty)
   }
 

@@ -1,7 +1,6 @@
 package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react.{CallbackTo, Reusability}
-import org.scalajs.dom.window
 
 /** Abstraction over JS's `window.confirm`. */
 trait ConfirmJs {
@@ -11,7 +10,7 @@ trait ConfirmJs {
 object ConfirmJs {
 
   val real: ConfirmJs =
-    msg => CallbackTo(window.confirm(msg))
+    CallbackTo.confirm
 
   def const(b: Boolean): ConfirmJs =
     const(CallbackTo.pure(b))
