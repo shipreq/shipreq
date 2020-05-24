@@ -7,7 +7,7 @@ import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.GraphComponent._
-import shipreq.webapp.client.ww.api.Cmd
+import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object UseCaseStepFlowGraph {
 
@@ -23,7 +23,7 @@ object UseCaseStepFlowGraph {
 
   final class Backend($: BackendScope[Props, State]) extends GraphBackend($) {
     override def cmd(p: Props) =
-      Cmd.GraphUseCaseStepFlow(p.id, p.project, p.ctx)
+      WebWorkerCmd.GraphUseCaseStepFlow(p.id, p.project, p.ctx)
 
     override def enrich(p: Props): Callback =
       $.getDOMNode.map(_.toElement.foreach { root =>

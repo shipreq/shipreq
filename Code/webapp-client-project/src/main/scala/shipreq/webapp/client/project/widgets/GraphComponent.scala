@@ -30,10 +30,10 @@ object GraphComponent {
 
   abstract class GraphBackend[Props <: HasWebWorker]($: BackendScope[Props, State]) {
 
-    def cmd(p: Props): Cmd[Svg]
+    def cmd(p: Props): WebWorkerCmd[Svg]
 
     def refresh(p: Props): Callback =
-      p.webWorker.postCB(cmd(p))(svg => $.setState(Some(svg)))
+      p.webWorker.post(cmd(p)).flatMapSync(svg => $.setState(Some(svg))).toCallback
 
     def onRender(prevProps: Option[Props], p: Props, s: State)(implicit r: Reusability[Props]): Callback = {
       val maybeRefresh = Callback.unless(prevProps.exists(_ ~=~ p))(refresh(p))

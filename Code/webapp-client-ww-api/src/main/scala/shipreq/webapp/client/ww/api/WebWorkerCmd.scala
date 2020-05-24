@@ -7,26 +7,24 @@ import shipreq.webapp.base.text.ProjectText
 // Another idea could be to maintain a separate ClientData instance in the WW thread and feed it all the same updates
 // that the main thread processes.
 
-sealed abstract class Cmd[Result](implicit r: Pickler[Result]) {
-  val resultPickler = r
-}
+sealed abstract class WebWorkerCmd[Result](implicit final val resultPickler: Pickler[Result])
 
-object Cmd {
+object WebWorkerCmd {
 
-  case class GraphUseCaseStepFlow(id     : UseCaseId,
-                                  project: Project,
-                                  ctx    : ProjectText.Context) extends Cmd[Svg]
+  final case class GraphUseCaseStepFlow(id     : UseCaseId,
+                                        project: Project,
+                                        ctx    : ProjectText.Context) extends WebWorkerCmd[Svg]
 
-  case class GraphAllImplications(filterDead: FilterDead,
-                                  imps      : Implications.BiDir,
-                                  reqs      : Requirements,
-                                  reqTypes  : ReqTypes) extends Cmd[Svg]
+  final case class GraphAllImplications(filterDead: FilterDead,
+                                        imps      : Implications.BiDir,
+                                        reqs      : Requirements,
+                                        reqTypes  : ReqTypes) extends WebWorkerCmd[Svg]
 
-  case class GraphReqImplications(focus     : ReqId,
-                                  filterDead: FilterDead,
-                                  imps      : Implications.BiDir,
-                                  reqs      : Requirements,
-                                  reqTypes  : ReqTypes) extends Cmd[Svg]
+  final case class GraphReqImplications(focus     : ReqId,
+                                        filterDead: FilterDead,
+                                        imps      : Implications.BiDir,
+                                        reqs      : Requirements,
+                                        reqTypes  : ReqTypes) extends WebWorkerCmd[Svg]
 
   // ===================================================================================================================
 
@@ -85,18 +83,18 @@ object Cmd {
       }
     }
 
-  implicit val picklerCmd: Pickler[Cmd[_]] =
-    new Pickler[Cmd[_]] {
+  implicit val picklerCmd: Pickler[WebWorkerCmd[_]] =
+    new Pickler[WebWorkerCmd[_]] {
       private[this] final val KeyGraphAllImplications = 0
       private[this] final val KeyGraphReqImplications = 1
       private[this] final val KeyGraphUseCaseStepFlow = 2
-      override def pickle(a: Cmd[_])(implicit state: PickleState): Unit =
+      override def pickle(a: WebWorkerCmd[_])(implicit state: PickleState): Unit =
         a match {
           case b: GraphAllImplications => state.enc.writeByte(KeyGraphAllImplications); state.pickle(b)
           case b: GraphReqImplications => state.enc.writeByte(KeyGraphReqImplications); state.pickle(b)
           case b: GraphUseCaseStepFlow => state.enc.writeByte(KeyGraphUseCaseStepFlow); state.pickle(b)
         }
-      override def unpickle(implicit state: UnpickleState): Cmd[_] =
+      override def unpickle(implicit state: UnpickleState): WebWorkerCmd[_] =
         state.dec.readByte match {
           case KeyGraphAllImplications => state.unpickle[GraphAllImplications]
           case KeyGraphReqImplications => state.unpickle[GraphReqImplications]

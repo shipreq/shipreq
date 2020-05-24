@@ -5,9 +5,9 @@ import org.scalajs.dom.console
 
 object Protocol {
 
-  class Message[+C](val key: Int, val cmd: C) extends js.Object
+  final class Message[+C](val key: Int, val cmd: C) extends js.Object
 
-  trait Codec[E, R[_], W[_]] {
+  sealed trait Codec[E, R[_], W[_]] {
     final type Encoded   = E
     final type Reader[A] = R[A]
     final type Writer[A] = W[A]
@@ -33,7 +33,7 @@ object Protocol {
     }
   }
 
-  case class OnError(handle: String => Unit) extends AnyVal {
+  final case class OnError(handle: String => Unit) extends AnyVal {
     @inline def apply(s: String) = handle(s)
   }
 

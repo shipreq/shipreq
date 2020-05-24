@@ -14,14 +14,14 @@ object Main {
     Server(Handler)(ResultEncoder)
   }
 
-  object ResultEncoder extends ResultEncoder[Cmd, Writer] {
-    override def apply[R](cmd: Cmd[R]): Writer[R] =
+  object ResultEncoder extends ResultEncoder[WebWorkerCmd, Writer] {
+    override def apply[R](cmd: WebWorkerCmd[R]): Writer[R] =
       cmd.resultPickler
   }
 
-  object Handler extends Handler[Cmd] {
-    import Cmd._
-    override def apply[R](cmd: Cmd[R]): R =
+  object Handler extends Handler[WebWorkerCmd] {
+    import WebWorkerCmd._
+    override def apply[R](cmd: WebWorkerCmd[R]): R =
       cmd match {
         case GraphUseCaseStepFlow(a, b, c)       => Graphs.useCaseStepFlow(a, b, c).toSvg
         case GraphAllImplications(a, b, c, d)    => Graphs.implicationAll(a, b, c, d).toSvg

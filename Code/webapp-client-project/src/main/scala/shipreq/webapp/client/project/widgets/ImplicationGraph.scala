@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import org.scalajs.dom.document
+import scala.annotation.nowarn
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
@@ -10,7 +11,7 @@ import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.GraphComponent._
-import shipreq.webapp.client.ww.api.Cmd
+import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object ImplicationGraph {
 
@@ -29,18 +30,16 @@ object ImplicationGraph {
   }
 
   implicit val reusabilityProps: Reusability[Props] = {
-    implicit def a: Reusability[Implications.BiDir] = Reusability.byRef
-    locally(a) // -Wunused:locals gets it wrong
+    @nowarn("cat=unused") implicit def a: Reusability[Implications.BiDir] = Reusability.byRef
     Reusability.derive
   }
 
   final class Backend($: BackendScope[Props, State]) extends GraphBackend($) {
     override def cmd(p: Props) =
       p.focus match {
-        case Some(f) => Cmd.GraphReqImplications(f, p.filterDead, p.imps, p.reqs, p.reqTypes)
-        case None    => Cmd.GraphAllImplications(p.filterDead, p.imps, p.reqs, p.reqTypes)
+        case Some(f) => WebWorkerCmd.GraphReqImplications(f, p.filterDead, p.imps, p.reqs, p.reqTypes)
+        case None    => WebWorkerCmd.GraphAllImplications(p.filterDead, p.imps, p.reqs, p.reqTypes)
       }
-
 
     override def enrich(p: Props): Callback =
       $.getDOMNode.map(_.toElement.foreach { root =>
