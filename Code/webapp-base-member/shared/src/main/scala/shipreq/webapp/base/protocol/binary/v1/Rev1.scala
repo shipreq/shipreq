@@ -441,6 +441,50 @@ object Rev1 {
         }
       }
 
+    implicit val picklerImpGraphConfigGraphDir: Pickler[ImpGraphConfig.GraphDir] =
+      new Pickler[ImpGraphConfig.GraphDir] {
+        import ImpGraphConfig.GraphDir
+        private[this] final val KeyLeftToRight = 0
+        private[this] final val KeyTopToBottom = 1
+        override def pickle(a: GraphDir)(implicit state: PickleState): Unit =
+          a match {
+            case GraphDir.LeftToRight => state.enc.writeByte(KeyLeftToRight)
+            case GraphDir.TopToBottom => state.enc.writeByte(KeyTopToBottom)
+          }
+        override def unpickle(implicit state: UnpickleState): GraphDir =
+          state.dec.readByte match {
+            case KeyLeftToRight => GraphDir.LeftToRight
+            case KeyTopToBottom => GraphDir.TopToBottom
+          }
+      }
+
+    implicit val picklerImpGraphConfigColours: Pickler[ImpGraphConfig.Colours] =
+      new Pickler[ImpGraphConfig.Colours] {
+        import ImpGraphConfig.Colours
+        private[this] final val KeyAutoByReqType = 0
+        override def pickle(a: Colours)(implicit state: PickleState): Unit =
+          a match {
+            case Colours.AutoByReqType => state.enc.writeByte(KeyAutoByReqType)
+          }
+        override def unpickle(implicit state: UnpickleState): Colours =
+          state.dec.readByte match {
+            case KeyAutoByReqType => Colours.AutoByReqType
+          }
+      }
+
+    implicit val picklerImpGraphConfig: Pickler[ImpGraphConfig] =
+      new Pickler[ImpGraphConfig] {
+        override def pickle(a: ImpGraphConfig)(implicit state: PickleState): Unit = {
+          state.pickle(a.graphDir)
+          state.pickle(a.colours)
+        }
+        override def unpickle(implicit state: UnpickleState): ImpGraphConfig = {
+          val graphDir = state.unpickle[ImpGraphConfig.GraphDir]
+          val colours  = state.unpickle[ImpGraphConfig.Colours]
+          ImpGraphConfig(graphDir, colours)
+        }
+      }
+
     implicit val picklerView: Pickler[View] =
       new Pickler[View] {
         override def pickle(a: View)(implicit state: PickleState): Unit = {

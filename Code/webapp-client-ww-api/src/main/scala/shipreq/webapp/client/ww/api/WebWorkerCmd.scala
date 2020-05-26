@@ -2,6 +2,7 @@ package shipreq.webapp.client.ww.api
 
 import boopickle.DefaultBasic._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.text.ProjectText
 
 // Another idea could be to maintain a separate ClientData instance in the WW thread and feed it all the same updates
@@ -15,22 +16,24 @@ object WebWorkerCmd {
                                         project: Project,
                                         ctx    : ProjectText.Context) extends WebWorkerCmd[Svg]
 
-  final case class GraphAllImplications(filterDead: FilterDead,
-                                        imps      : Implications.BiDir,
-                                        reqs      : Requirements,
-                                        reqTypes  : ReqTypes) extends WebWorkerCmd[Svg]
-
   final case class GraphReqImplications(focus     : ReqId,
                                         filterDead: FilterDead,
                                         imps      : Implications.BiDir,
                                         reqs      : Requirements,
                                         reqTypes  : ReqTypes) extends WebWorkerCmd[Svg]
 
+  final case class GraphAllImplications(imps    : Implications.BiDir,
+                                        reqs    : Requirements,
+                                        reqTypes: ReqTypes,
+                                        scope   : Option[Set[ReqId]],
+                                        config  : ImpGraphConfig) extends WebWorkerCmd[Svg]
+
   // ===================================================================================================================
 
   import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
   import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
   import shipreq.webapp.base.protocol.binary.v1.Rev1._
+  import shipreq.webapp.base.protocol.binary.v1.Rev1.SavedViewPicklers._
 
   private implicit val picklerGraphUseCaseStepFlow: Pickler[GraphUseCaseStepFlow] =
     new Pickler[GraphUseCaseStepFlow] {
@@ -50,17 +53,19 @@ object WebWorkerCmd {
   private implicit val picklerGraphAllImplications: Pickler[GraphAllImplications] =
     new Pickler[GraphAllImplications] {
       override def pickle(a: GraphAllImplications)(implicit state: PickleState): Unit = {
-        state.pickle(a.filterDead)
         state.pickle(a.imps)
         state.pickle(a.reqs)
         state.pickle(a.reqTypes)
+        state.pickle(a.scope)
+        state.pickle(a.config)
       }
       override def unpickle(implicit state: UnpickleState): GraphAllImplications = {
-        val filterDead = state.unpickle[FilterDead]
-        val imps       = state.unpickle[Implications.BiDir]
-        val reqs       = state.unpickle[Requirements]
-        val reqTypes   = state.unpickle[ReqTypes]
-        GraphAllImplications(filterDead, imps, reqs, reqTypes)
+        val imps     = state.unpickle[Implications.BiDir]
+        val reqs     = state.unpickle[Requirements]
+        val reqTypes = state.unpickle[ReqTypes]
+        val scope    = state.unpickle[Option[Set[ReqId]]]
+        val config   = state.unpickle[ImpGraphConfig]
+        GraphAllImplications(imps, reqs, reqTypes, scope, config)
       }
     }
 

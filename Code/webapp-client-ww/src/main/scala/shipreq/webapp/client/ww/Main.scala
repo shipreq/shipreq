@@ -24,8 +24,8 @@ object Main {
     override def apply[R](cmd: WebWorkerCmd[R]): R =
       cmd match {
         case GraphUseCaseStepFlow(a, b, c)       => Graphs.useCaseStepFlow(a, b, c).toSvg
-        case GraphAllImplications(a, b, c, d)    => Graphs.implicationAll(a, b, c, d).toSvg
         case GraphReqImplications(a, b, c, d, e) => Graphs.implicationFocused(a, b, c, d, e).toSvg
+        case a: GraphAllImplications             => Graphs.implicationAll(a).toSvg
       }
   }
 }

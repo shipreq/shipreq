@@ -167,6 +167,30 @@ object Rev1 {
     implicit val encoderSortCriteria: Encoder[SortCriteria] =
       Encoder.forProduct2("init", "last")(a => (a.init, a.last))
 
+    implicit val decoderImpGraphConfigGraphDir: Decoder[ImpGraphConfig.GraphDir] = decodeSumBySoleKey {
+      case ("leftToRight", _) => Right(ImpGraphConfig.GraphDir.LeftToRight)
+      case ("topToBottom", _) => Right(ImpGraphConfig.GraphDir.TopToBottom)
+    }
+
+    implicit val encoderImpGraphConfigGraphDir: Encoder[ImpGraphConfig.GraphDir] = Encoder.instance {
+      case ImpGraphConfig.GraphDir.LeftToRight => Json.obj("leftToRight" -> ().asJson)
+      case ImpGraphConfig.GraphDir.TopToBottom => Json.obj("topToBottom" -> ().asJson)
+    }
+
+    implicit val decoderImpGraphConfigColours: Decoder[ImpGraphConfig.Colours] = decodeSumBySoleKey {
+      case ("autoByReqType", _) => Right(ImpGraphConfig.Colours.AutoByReqType)
+    }
+
+    implicit val encoderImpGraphConfigColours: Encoder[ImpGraphConfig.Colours] = Encoder.instance {
+      case ImpGraphConfig.Colours.AutoByReqType => Json.obj("autoByReqType" -> ().asJson)
+    }
+
+    implicit val decoderImpGraphConfigImpGraphConfig: Decoder[ImpGraphConfig] =
+      Decoder.forProduct2("graphDir", "colours")(ImpGraphConfig.apply)
+
+    implicit val encoderImpGraphConfig: Encoder[ImpGraphConfig] =
+      Encoder.forProduct2("graphDir", "colours")(a => (a.graphDir, a.colours))
+
     implicit val decoderView: Decoder[View] =
       Decoder.forProduct4("columns", "order", "filterDead", "filter")(View.apply)
 

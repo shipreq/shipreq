@@ -3,14 +3,17 @@ package shipreq.webapp.client.ww
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
+import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.collection.mutable
 import shipreq.base.util.VectorTree.PartialLocation
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
+import shipreq.webapp.base.data.savedview.ImpGraphConfig.{Colours, GraphDir}
 import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.client.ww.GraphViz.DOT
+import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object Graphs {
 
@@ -205,16 +208,11 @@ object Graphs {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  private final class ImpHelpers(fd: FilterDead, reqs: Requirements, reqTypes: ReqTypes)(implicit b: GraphViz.Builder) {
+  private final class ImpHelpers(reqs: Requirements, reqTypes: ReqTypes)(implicit b: GraphViz.Builder) {
     val live: ReqId => Live =
       Memo(reqs.need(_).live(reqTypes))
 
-    val filterIdSet: Set[ReqId] => Set[ReqId] =
-      fd(_)(live)
-
-    val pubid: ReqId => String =
-      PlainText.pubidByReqId(_, reqs, reqTypes)
-
+    val pubid   : ReqId => String = PlainText.pubidByReqId(_, reqs, reqTypes)
     val nodeName: ReqId => String = _.value.toString
     val node    : ReqId => Unit   = id => b.append(id.value)
 
@@ -240,8 +238,11 @@ object Graphs {
                          imps: Implications.BiDir, reqs: Requirements, reqTypes: ReqTypes): DOT =
     GraphViz.digraph { implicit b =>
 
-      val impHelpers = new ImpHelpers(fd, reqs, reqTypes)
+      val impHelpers = new ImpHelpers(reqs, reqTypes)
       import impHelpers._
+
+      val filterIdSet: Set[ReqId] => Set[ReqId] =
+        fd(_)(live)
 
       val Focus = "F"
       val focusLive = live(focus)
@@ -308,10 +309,10 @@ object Graphs {
       b.setLabel(pubid(focus))
       b append ']'
 
-      b append """node[fillcolor="#FFEDE2"]""";                           declare(backwards.indirect.decl)
+      b append """node[fillcolor="#FFEDE2"]""";                              declare(backwards.indirect.decl)
       b.attrGroup("""rank=same;node[fillcolor="#FFC19C"]"""                )(declare(backwards.direct  .decl))
       b.attrGroup("""rank=same;node[fillcolor="#7692B7" fontcolor=white]""")(declare(forwards .direct  .decl))
-      b append """node[fillcolor="#D6E1EF"]""";                           declare(forwards .indirect.decl)
+      b append """node[fillcolor="#D6E1EF"]""";                              declare(forwards .indirect.decl)
 
       b append """edge[color="#FFC19C"]"""; backwards.indirect.flow.foreach(_())
       b append """edge[color="#C27040"]"""; backwards.direct  .flow.foreach(_())
@@ -321,39 +322,68 @@ object Graphs {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  def implicationAll(fd: FilterDead,
-                     imps: Implications.BiDir, reqs: Requirements, reqTypes: ReqTypes): DOT =
+  def implicationAll(cmd: WebWorkerCmd.GraphAllImplications): DOT =
     GraphViz.digraph { implicit b =>
-      val impHelpers = new ImpHelpers(fd, reqs, reqTypes)
+      import cmd._
+
+      val impHelpers = new ImpHelpers(reqs, reqTypes)
       import impHelpers._
 
-      // Add to reqTypesWithReqs regardless of live status so that colours don't change when user toggles the
-      // FilterDead setting. Colours jumping around it's a needless cognitive burden when you're trying to analyse
-      // the graph.
-      val reqTypesWithReqs: Map[ReqTypeId, Int] =
-        MutableArray(reqs.reqsByType.keys)
-          .sortBy(reqTypes.order) // Deterministic (and stable until config changes) order of colours
-          .iterator
-          .zipWithIndex
-          .toMap
+      val reqIdFilter    = OptionalBoolFn[ReqId](cmd.scope.map(s => s.contains _))
+      val reqIdSetFilter = reqIdFilter.setFilter
+      val reqFilter      = reqIdFilter.contramap[Req](_.id)
 
-      val reqsByReqType = {
-        var x = reqs.reqsByType
-        if (fd is HideDead)
-          for (rt <- x.keys)
-            x = x.mod(rt, _.filter(_.live(reqTypes) is Live))
-        x
-      }
+      def declareDirection: () => Unit =
+        config.graphDir match {
+          case GraphDir.TopToBottom => () => b.rankdirTB()
+          case GraphDir.LeftToRight => () => b.rankdirLR()
+        }
+
+      def declareNodes: () => Unit =
+        config.colours match {
+
+          case Colours.AutoByReqType => () => {
+
+            // Add to reqTypesWithReqs regardless of live status so that colours don't change when user toggles the
+            // FilterDead setting. Colours jumping around it's a needless cognitive burden when you're trying to analyse
+            // the graph.
+            val reqTypesWithReqs: Map[ReqTypeId, Int] =
+              MutableArray(reqs.reqsByType.keys)
+                .sortBy(reqTypes.order) // Deterministic (and stable until config changes) order of colours
+                .iterator
+                .zipWithIndex
+                .toMap
+
+            val reqsByReqType: Multimap[ReqTypeId, Vector, Req] =
+              reqFilter.value match {
+                case Some(f) =>
+                  var m = reqs.reqsByType
+                  for (rt <- m.keys)
+                    m = m.mod(rt, _.filter(f))
+                  m
+                case None =>
+                  reqs.reqsByType
+              }
+
+            val colourFn =
+              DistinctColours("ffffff", reqTypesWithReqs.size, "ffffff")
+
+            def nodeData =
+              MutableArray(reqsByReqType.iterator)
+                .sortBy(x => reqTypes.order(x._1))
+                .iterator
+
+            for ((reqType, reqs) <- nodeData) {
+              val color = colourFn(reqTypesWithReqs(reqType))
+              b append """node[fillcolor="#"""
+              b append color
+              b append """"]"""
+              declare(reqs.iterator.map(_.id))
+            }
+          }
+        }
 
       val impReqResult = DataLogic.requiringImplication(reqTypes, imps, reqs)
-
-      val colourFn =
-        DistinctColours("ffffff", reqTypesWithReqs.size, "ffffff")
-
-      def nodeData =
-        MutableArray(reqsByReqType.iterator)
-          .sortBy(x => reqTypes.order(x._1))
-          .iterator
 
       def flow(fromId: ReqId, fromLive: Live, toIds: IterableOnce[ReqId], toLive: Live): Unit = {
         val atEnd: () => Unit =
@@ -365,33 +395,21 @@ object Graphs {
       }
 
       def allFlow(graph: Implications.UniDir): Unit =
-        for ((fromId, toIds) <- graph.iterator) {
-          val fromLive = live(fromId)
-          fd match {
-            case HideDead =>
-              if (fd.filter(fromLive))
-                flow(fromId, fromLive, filterIdSet(toIds), Live)
-            case ShowDead =>
-              val (l, d) = toIds.partition(live(_) is Live)
-              flow(fromId, fromLive, l, Live)
-              flow(fromId, fromLive, d, Dead)
+        for ((fromId, toIds) <- graph.iterator)
+          if (reqIdFilter(fromId)) {
+            val fromLive = live(fromId)
+            val (l, d) = reqIdSetFilter(toIds).partition(live(_) is Live)
+            flow(fromId, fromLive, l, Live)
+            flow(fromId, fromLive, d, Dead)
           }
-        }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      b.rankdirTB()
+      declareDirection()
       implicationNodeStyle()
       b append """edge[color="#333333"]"""
 
-      // Declare nodes
-      for ((reqType, reqs) <- nodeData) {
-        val color = colourFn(reqTypesWithReqs(reqType))
-        b append """node[fillcolor="#"""
-        b append color
-        b append """"]"""
-        declare(reqs.iterator.map(_.id))
-      }
+      declareNodes()
 
       // Implication required
       if (impReqResult.badIds.nonEmpty)
