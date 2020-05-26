@@ -6,7 +6,8 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
-import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.data.savedview.ImpGraphConfig
+import shipreq.webapp.base.filter.{CompiledFilter, Filter}
 import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.issue.{Issue, Issues}
 import shipreq.webapp.base.user._
@@ -203,4 +204,16 @@ abstract class DataReusability extends BaseReusability {
 
   implicit lazy val reusabilitySavedViewCmdD: Reusability[SavedViewCmd.Delete] =
     Reusability.byUnivEq
+
+  implicit lazy val reusabilityCompiledFilter: Reusability[CompiledFilter] =
+    Reusability.byRef
+
+  implicit lazy val reusabilityImpGraphConfigColours: Reusability[ImpGraphConfig.Colours] =
+    Reusability.derive
+
+  implicit lazy val reusabilityImpGraphConfigGraphDir: Reusability[ImpGraphConfig.GraphDir] =
+    Reusability.derive
+
+  implicit lazy val reusabilityImpGraphConfig: Reusability[ImpGraphConfig] =
+    Reusability.byRef || Reusability.derive
 }

@@ -227,13 +227,14 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
 
     private val savedViewFeatureStatic: SavedViewFeature.Static =
       SavedViewFeature.Static(
-        stateAccess     = $.zoomStateL(stateLensSavedViewStateAndFilterDead),
-        pxProject       = pxProject,
-        pxFilterDead    = pxFilterDead,
-        confirmJs       = confirmJs,
-        promptJs        = promptJs,
-        savedViewAsyncW = savedViewAsyncW,
-        savedViewIO     = sspUpdateSavedViews,
+        stateAccess                    = $.zoomStateL(stateLensSavedViewStateAndFilterDead),
+        pxProject                      = pxProject,
+        pxFilterDead                   = pxFilterDead,
+        pxFilterCompilerFromFilterDead = pxFilterCompilerFromFilterDead,
+        confirmJs                      = confirmJs,
+        promptJs                       = promptJs,
+        savedViewAsyncW                = savedViewAsyncW,
+        savedViewIO                    = sspUpdateSavedViews,
       )
 
     private val issuesPage = content.issues.IssuesPage.StaticProps(
@@ -452,16 +453,16 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
 
         case Page.ImpGraph =>
           val p = project
-          val g = ImplicationGraph.Props(
-            focus       = None,
-            filterDead  = s.filterDead,
-            imps        = p.content.implications,
-            reqs        = p.content.reqs,
-            reqTypes    = p.config.reqTypes,
-            plainText   = pxPlainText.value(),
-            reqDetailRC = reqDetailRC,
-            webWorker   = ww)
-          content.impgraph.ImplicationGraphPage.Props(g, setFilterDead).render
+          content.impgraph.ImplicationGraphPage.Props(
+            imps             = p.content.implications,
+            reqs             = p.content.reqs,
+            reqTypes         = p.config.reqTypes,
+            plainText        = pxPlainText.value(),
+            reqDetailRC      = reqDetailRC,
+            webWorker        = ww,
+            savedViewFeature = savedViewFeature,
+            setFilterDead    = setFilterDead
+          ).render
       }
 
       State.recorder.record(s)

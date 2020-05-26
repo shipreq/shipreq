@@ -385,12 +385,15 @@ object ReqDetail {
 
           case Row.ImplicationGraph =>
             nonDirectlyEditorNavParent(
-              ImplicationGraph.Props(
-                Some(req.id), data.filterDead,
-                project.content.implications, project.content.reqs, project.config.reqTypes,
-                data.pxPlainText.value(),
-                reqDetailRC,
-                webWorker
+              ImplicationGraph.Props.FocusReq(
+                focus       = req.id,
+                filterDead  = data.filterDead,
+                imps        = project.content.implications,
+                reqs        = project.content.reqs,
+                reqTypes    = project.config.reqTypes,
+                plainText   = data.pxPlainText.value(),
+                reqDetailRC = reqDetailRC,
+                webWorker   = webWorker
               ).render)
 
           case Row.UseCaseStepsN =>

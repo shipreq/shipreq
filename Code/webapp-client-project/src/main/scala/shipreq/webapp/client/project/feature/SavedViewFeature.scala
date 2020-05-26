@@ -4,7 +4,7 @@ import japgolly.scalajs.react.Reusability
 import japgolly.scalajs.react.vdom.VdomElement
 import scala.annotation.nowarn
 import shipreq.webapp.base.data.savedview.View
-import shipreq.webapp.base.data.{FilterDead, Project}
+import shipreq.webapp.base.data.{FilterDead, Project, ReqId}
 import shipreq.webapp.base.lib.DataReusability._
 
 /** Usage
@@ -56,6 +56,12 @@ final case class SavedViewFeature(static            : SavedViewFeature.Static,
 
   def filterDead: FilterDead =
     activeView.filterDead
+
+  lazy val pxReqWhitelistIgnoringFilterDead: Option[Set[ReqId]] =
+    static.pxReqWhitelistIgnoringFilterDead.value()
+
+  lazy val reqWhitelist: Option[Set[ReqId]] =
+    static.pxReqWhitelist.value()
 
   lazy val renderSavedViewManager: VdomElement =
     static.renderSavedViewManager(state.async)

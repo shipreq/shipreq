@@ -10,6 +10,8 @@ import shipreq.webapp.base.text.{ProjectText, Text}
 import Event._
 import GraphViz.DOT
 import WebappTestUtil._
+import shipreq.webapp.base.data.savedview.ImpGraphConfig
+import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object GraphsTest extends TestSuite {
 
@@ -35,8 +37,12 @@ object GraphsTest extends TestSuite {
   lazy val SIG_deadMF4: Project =
     applyEventsSuccessfully(SampleImplicationGraph.project, deleteReqs(SampleImplicationGraph.mf4))
 
-  private def implicationAll(fd: FilterDead, p: Project): DOT =
-    Graphs.implicationAll(fd, p.content.implications, p.content.reqs, p.config.reqTypes)
+  private def implicationAll(fd: FilterDead, p: Project): DOT = {
+    val w = ImpGraphConfig.buildReqWhitelist(fd, None, p)
+    val c = ImpGraphConfig.default
+    val cmd = WebWorkerCmd.GraphAllImplications(p.content.implications, p.content.reqs, p.config.reqTypes, w, c)
+    Graphs.implicationAll(cmd)
+  }
 
   override def tests = Tests {
 

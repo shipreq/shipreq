@@ -6,24 +6,26 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.{Px, StateSnapshot}
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.data.savedview.{Column, SavedViews, SortCriteria, View}
-import shipreq.webapp.base.data.{FilterDead, Project}
+import shipreq.base.util.{ErrorMsg, OptionalBoolFn}
+import shipreq.webapp.base.data.savedview.{Column, ImpGraphConfig, SavedViews, SortCriteria, View}
+import shipreq.webapp.base.data.{FilterDead, Live, Project, Req, ReqId, ShowDead}
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.filter.{CompiledFilter, Filter}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd
 import shipreq.webapp.client.project.widgets.{FilterDeadButton, FilterEditor}
 
-final case class Static(stateAccess    : StateAccessPure[(State, FilterDead)],
-                        pxProject      : Px[Project],
-                        pxFilterDead   : Px[FilterDead],
-                        confirmJs      : ConfirmJs,
-                        promptJs       : PromptJs,
-                        savedViewAsyncW: AsyncFeature.Write.D0[ErrorMsg],
-                        savedViewIO    : ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq]) {
+final case class Static(stateAccess                   : StateAccessPure[(State, FilterDead)],
+                        pxProject                     : Px[Project],
+                        pxFilterDead                  : Px[FilterDead],
+                        pxFilterCompilerFromFilterDead: Px[FilterDead => Filter.Valid.Compiler],
+                        confirmJs                     : ConfirmJs,
+                        promptJs                      : PromptJs,
+                        savedViewAsyncW               : AsyncFeature.Write.D0[ErrorMsg],
+                        savedViewIO                   : ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq]) {
 
   val setFilterDeadFn: Reusable[SetStateFnPure[FilterDead]] =
     Reusable.byRef(SetStateFn((fdO, cb) =>
@@ -75,6 +77,29 @@ final case class Static(stateAccess    : StateAccessPure[(State, FilterDead)],
 
   val pxActiveOrder: Px[SortCriteria] =
     pxActiveView.map(_.order).withReuse
+
+  val pxActiveFilter: Px[Option[CompiledFilter]] =
+    (for {
+      view <- pxActiveView
+      ff   <- pxFilterCompilerFromFilterDead
+      fd   <- pxFilterDead
+    } yield view.filter.map(f => ff(fd)(f))
+    ).withReuse
+
+  val pxReqWhitelistIgnoringFilterDead: Px[Option[Set[ReqId]]] =
+    (for {
+      f <- pxActiveFilter
+      p <- pxProject
+    } yield ImpGraphConfig.buildReqWhitelist(ShowDead, f, p)
+    ).withReuse
+
+  val pxReqWhitelist: Px[Option[Set[ReqId]]] =
+    (for {
+      fd <- pxFilterDead
+      f  <- pxActiveFilter
+      p  <- pxProject
+    } yield ImpGraphConfig.buildReqWhitelist(fd, f, p)
+    ).withReuse
 
   val modifyViewFn: Reusable[ModStateFnPure[View]] =
     Reusable.byRef(ModStateFn((mod, cb) =>
