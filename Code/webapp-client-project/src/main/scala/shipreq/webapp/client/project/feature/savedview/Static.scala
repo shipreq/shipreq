@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.Px
+import japgolly.scalajs.react.extra.{Px, StateSnapshot}
 import japgolly.scalajs.react.vdom.VdomElement
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.savedview.{Column, SavedViews, SortCriteria, View}
@@ -13,7 +13,7 @@ import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd
-import shipreq.webapp.client.project.widgets.FilterEditor
+import shipreq.webapp.client.project.widgets.{FilterDeadButton, FilterEditor}
 
 final case class Static(stateAccess    : StateAccessPure[(State, FilterDead)],
                         pxProject      : Px[Project],
@@ -138,4 +138,7 @@ final case class Static(stateAccess    : StateAccessPure[(State, FilterDead)],
       project = pxProject.value(),
       update  = onFilterChange,
     ).render
+
+  def renderFilterDeadButton(filterDead: FilterDead): VdomElement =
+    FilterDeadButton.Component(StateSnapshot.withReuse(filterDead)(setFilterDeadFn))
 }

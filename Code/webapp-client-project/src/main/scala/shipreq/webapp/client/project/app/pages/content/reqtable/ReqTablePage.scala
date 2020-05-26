@@ -218,7 +218,7 @@ object ReqTablePage {
         if (mode ==* Mode.EmptyProject)
           FilterDeadButton.ForceHideDead
         else
-          FilterDeadButton.Component(StateSnapshot.withReuse(activeView.filterDead)(setFilterDeadFn))
+          p.savedViews.renderFilterDeadButton
 
       val newFormColumns: NonEmptyVector[ColumnPlus] =
         mode match {
