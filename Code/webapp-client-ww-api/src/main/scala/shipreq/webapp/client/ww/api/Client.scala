@@ -18,14 +18,14 @@ object Client {
 
   def default[Cmd[_]](worker: Worker)(implicit writeCmd: Writer[Cmd[_]]): Client[Cmd, Reader] = {
     import Codec.{default => codec}
-    apply(codec)(interface(codec, worker), OnError.logToConsole)
+    apply(codec)(interface(codec, worker, _), OnError.logToConsole)
   }
 
   // ===================================================================================================================
 
-  def apply[Cmd[_]](codec    : Codec)
-                   (interface: Interface[codec.Encoded],
-                    onError  : OnError)
+  def apply[Cmd[_]](codec      : Codec)
+                   (mkInterface: Callback => Interface[codec.Encoded],
+                    onError    : OnError)
                    (implicit writeCmd: codec.Writer[Cmd[_]]): Client[Cmd, codec.Reader] = {
 
     import codec.{Encoded, Reader}
@@ -33,17 +33,22 @@ object Client {
     var lastPromiseId = 0
     var promises = List.empty[Promise[Encoded]]
 
+    val (awaitInit, onInit) = AsyncCallback.promise[Unit].runNow()
+
+    val interface = mkInterface(onInit(Try(())))
+
     new Client[Cmd, codec.Reader] {
 
       interface.listen(receive, onError).runNow()
 
       override def post[A](cmd: Cmd[A])(implicit readResult: Reader[A]): AsyncCallback[A] =
-        AsyncCallback.promise[A].map { case (result, complete) =>
+        awaitInit >> AsyncCallback.promise[A].map { case (result, complete) =>
           lastPromiseId += 1
           val id = lastPromiseId
           val p = Promise[Encoded](id, msg => complete(Try(codec.decode[A](msg))))
           promises ::= p
-          interface.post(new Message(id, codec.encode[Cmd[_]](cmd))).runNow()
+          val msg = new Message(id, codec.encode[Cmd[_]](cmd))
+          interface.post(msg).runNow()
           result
         }.asAsyncCallback.flatten.memo()
 
@@ -72,7 +77,7 @@ object Client {
 
   // ===================================================================================================================
 
-  def interface(codec: Codec, worker: Worker): Interface[codec.Encoded] =
+  def interface(codec: Codec, worker: Worker, onInit: Callback): Interface[codec.Encoded] =
     new Interface[codec.Encoded] {
       import codec.Encoded
 
@@ -84,7 +89,7 @@ object Client {
           ) {
             worker.onerror = Interface.onErrorFn(onError.handle)
           }
-          worker.onmessage = Interface.onMessageFn(f)
+          worker.onmessage = Interface.onMessageFn(onInit, f)
         }
 
       override def post(msg: Message[Encoded]): Callback =

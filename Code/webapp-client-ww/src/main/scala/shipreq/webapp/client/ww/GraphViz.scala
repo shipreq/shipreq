@@ -1,37 +1,43 @@
 package shipreq.webapp.client.ww
 
+import japgolly.scalajs.react.AsyncCallback
 import japgolly.univeq._
-import org.scalajs.dom.console
 import org.scalajs.dom.webworkers.DedicatedWorkerGlobalScope
 import scala.scalajs.js
 import scala.scalajs.js.JSON
-import shipreq.base.util.{Backwards, Direction, Forwards}
+import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.{Backwards, Direction, ErrorMsg, Forwards}
 import shipreq.webapp.base.{AssetManifest, UiText}
 import shipreq.webapp.client.ww.api.Svg
 
 object GraphViz {
-  type Fn = js.Function2[String, String, String]
+  private type RawFn = js.Function1[String, js.Thenable[String]]
 
-  lazy val instance: Fn = {
-    DedicatedWorkerGlobalScope.self importScripts js.Array(AssetManifest.vizJs)
-    js.Dynamic.global.Viz.asInstanceOf[Fn]
+  def init(): Unit = {
+    instance
+    ()
+  }
+
+  private lazy val instance: RawFn = {
+    DedicatedWorkerGlobalScope.self.importScripts(js.Array(AssetManifest.vizJs))
+    js.Dynamic.global.viz.asInstanceOf[RawFn]
   }
 
   private val titlesAndComments = "(?:<title>[^<>]*?</title>|<!--[^\u0000]*?-->)".r
 
-  def apply(dot: DOT): Svg =
-    try {
-      var svg = instance(dot.content, "svg")
-      svg = titlesAndComments.replaceAllIn(svg, "")
-      Svg(svg)
-    } catch {
-      case t: Throwable =>
-        console.error("GraphViz crash: ", dot.content)
-        throw t
+  def apply(dot: DOT): AsyncCallback[ErrorMsg \/ Svg] = {
+    val main: AsyncCallback[Svg] =
+      for {
+        svg <- AsyncCallback.fromJsPromise(instance(dot.content))
+      } yield Svg(titlesAndComments.replaceAllIn(svg, ""))
+    main.attempt.map {
+      case Right(svg) => \/-(svg)
+      case Left(t)    => -\/(ErrorMsg.fromThrowable(t))
     }
+  }
 
   final case class DOT(content: String) extends AnyVal {
-    @inline def toSvg: Svg =
+    @inline def toSvg: AsyncCallback[ErrorMsg \/ Svg] =
       GraphViz(this)
   }
 

@@ -1,6 +1,6 @@
 package shipreq.webapp.client.ww
 
-import japgolly.scalajs.react.{Callback, CallbackTo}
+import japgolly.scalajs.react.{AsyncCallback, Callback}
 import org.scalajs.dom.webworkers.DedicatedWorkerGlobalScope
 import shipreq.webapp.client.ww.api.Protocol._
 
@@ -22,16 +22,17 @@ object Server {
 
     import codec.Encoded
 
-    def respondForSome[A](id: Int, cmd: Cmd[A]): Callback =
-      CallbackTo {
-        val a = service(cmd)
-        val e = codec.encode(a)(resultEnc(cmd))
-        new Message(id, e)
-      }.flatMap(interface.post(_))
+    def respondForSome[A](id: Int, cmd: Cmd[A]): AsyncCallback[Unit] =
+      for {
+        a <- service(cmd)
+        e  = codec.encode(a)(resultEnc(cmd))
+        m  = new Message(id, e)
+        _ <- interface.post(m).asAsyncCallback
+      } yield ()
 
     def respond(m: Message[Encoded]): Callback = {
       val cmd = codec.decode[Cmd[_]](m.cmd)
-      respondForSome(m.id, cmd)
+      respondForSome(m.id, cmd).toCallback
     }
 
     interface.listen(respond, onError)
@@ -40,7 +41,7 @@ object Server {
   // ===================================================================================================================
 
   trait Service[Cmd[_]] {
-    def apply[R](cmd: Cmd[R]): R
+    def apply[A](cmd: Cmd[A]): AsyncCallback[A]
   }
 
   trait ResultEncoder[Cmd[_], W[_]] {
@@ -59,6 +60,7 @@ object Server {
         Callback {
           worker.onmessage = Interface.onMessageFn(hnd)
           worker.onError = Interface.onErrorFn(onError.handle)
+          worker.postMessage(Ready)
         }
 
       override def post(msg: Message[Encoded]): Callback =

@@ -9,6 +9,9 @@ object Protocol {
 
   final class Message[+C](val id: Int, val cmd: C) extends js.Object
 
+  // Msg sent from server to client to declare that initialisation is complete
+  val Ready = "."
+
   // ===================================================================================================================
 
   sealed trait Codec {
@@ -74,5 +77,12 @@ object Protocol {
 
     def onMessageFn[M](handle: Message[M] => Callback): js.Function1[MessageEvent, Unit] =
       (e: MessageEvent) => handle(e.data.asInstanceOf[Message[M]]).runNow()
+
+    def onMessageFn[M](onInit: Callback, handle: Message[M] => Callback): js.Function1[MessageEvent, Unit] =
+      (e: MessageEvent) =>
+        if (Ready == e.data)
+          onInit.runNow()
+        else
+          handle(e.data.asInstanceOf[Message[M]]).runNow()
   }
 }

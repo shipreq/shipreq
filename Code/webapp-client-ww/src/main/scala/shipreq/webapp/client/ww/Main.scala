@@ -11,6 +11,7 @@ import shipreq.webapp.client.ww.api.Protocol.Codec.default.Writer
 object Main {
 
   def main(): Unit = {
+    GraphViz.init()
     Server.startDefault(Service, ResultEncoder).runNow()
   }
 
@@ -19,5 +20,3 @@ object Main {
       cmd.resultPickler
   }
 }
-
-
