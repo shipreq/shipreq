@@ -1,6 +1,8 @@
 package shipreq.webapp.client.ww.api
 
 import boopickle.DefaultBasic._
+import scalaz.\/
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.text.ProjectText
@@ -14,26 +16,30 @@ object WebWorkerCmd {
 
   final case class GraphUseCaseStepFlow(id     : UseCaseId,
                                         project: Project,
-                                        ctx    : ProjectText.Context) extends WebWorkerCmd[Svg]
+                                        ctx    : ProjectText.Context) extends WebWorkerCmd[ErrorMsg \/ Svg]
 
   final case class GraphReqImplications(focus     : ReqId,
                                         filterDead: FilterDead,
                                         imps      : Implications.BiDir,
                                         reqs      : Requirements,
-                                        reqTypes  : ReqTypes) extends WebWorkerCmd[Svg]
+                                        reqTypes  : ReqTypes) extends WebWorkerCmd[ErrorMsg \/ Svg]
 
   final case class GraphAllImplications(imps    : Implications.BiDir,
                                         reqs    : Requirements,
                                         reqTypes: ReqTypes,
                                         scope   : Option[Set[ReqId]],
-                                        config  : ImpGraphConfig) extends WebWorkerCmd[Svg]
+                                        config  : ImpGraphConfig) extends WebWorkerCmd[ErrorMsg \/ Svg]
 
   // ===================================================================================================================
 
+  import shipreq.webapp.base.protocol.binary.v1.BaseData._
   import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
   import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
   import shipreq.webapp.base.protocol.binary.v1.Rev1._
   import shipreq.webapp.base.protocol.binary.v1.Rev1.SavedViewPicklers._
+
+  implicit val picklerErrorMsgOrSvg: Pickler[ErrorMsg \/ Svg] =
+    pickleDisj
 
   private implicit val picklerGraphUseCaseStepFlow: Pickler[GraphUseCaseStepFlow] =
     new Pickler[GraphUseCaseStepFlow] {

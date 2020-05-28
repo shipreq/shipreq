@@ -1,13 +1,17 @@
 package shipreq.webapp.client.project.widgets
 
+import japgolly.scalajs.react.ScalazReact.reusabilityDisjunction
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import scalacss.ScalaCssReact._
+import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.client.project.app.{Style, WebWorkerClient}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.ww.api._
+import shipreq.webapp.client.ww.api.WebWorkerCmd.picklerErrorMsgOrSvg
 
 /**
  * The reusable bits of a component the renders a graph through the WebWorker API.
@@ -24,16 +28,16 @@ object GraphComponent {
     val webWorker: WebWorkerClient
   }
 
-  type State = Option[Svg]
+  type State = Option[ErrorMsg \/ Svg]
 
   def initialState: State = None
 
   abstract class GraphBackend[Props <: HasWebWorker]($: BackendScope[Props, State]) {
 
-    def cmd(p: Props): WebWorkerCmd[Svg]
+    def cmd(p: Props): WebWorkerCmd[ErrorMsg \/ Svg]
 
     def refresh(p: Props): Callback =
-      p.webWorker.post(cmd(p)).flatMapSync(svg => $.setState(Some(svg))).toCallback
+      p.webWorker.post(cmd(p)).flatMapSync(result => $.setState(Some(result))).toCallback
 
     def onRender(prevProps: Option[Props], p: Props, s: State)(implicit r: Reusability[Props]): Callback = {
       val maybeRefresh = Callback.unless(prevProps.exists(_ ~=~ p))(refresh(p))
@@ -46,8 +50,9 @@ object GraphComponent {
 
     def render(s: State): VdomElement =
       s match {
-        case Some(svg) => <.div(Style.svgGraph, ^.dangerouslySetInnerHtml := svg.content)
-        case None      => <.div
+        case Some(\/-(svg)) => <.div(Style.svgGraph, ^.dangerouslySetInnerHtml := svg.content)
+        case Some(-\/(err)) => <.div(Style.svgGraphError, err.value)
+        case None           => <.div
       }
 
     protected def graphNodeIterator(root: dom.Element): Iterator[dom.svg.G] =

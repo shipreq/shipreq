@@ -104,6 +104,9 @@ object Style extends StyleSheet.Inline {
     unsafeChild("svg")(
       maxWidth(100 %%)))
 
+  val svgGraphError = style(
+    errorRedOnRed)
+
   private val selectionCellBase = style(
     width(24.px).important,
     textAlign.center.important)

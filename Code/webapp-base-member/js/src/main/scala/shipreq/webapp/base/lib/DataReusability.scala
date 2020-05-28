@@ -28,6 +28,9 @@ abstract class DataReusability extends BaseReusability {
     Reusability((x, y) =>
       x.fold(y.isEmpty, a => y.exists(a ~=~ _)))
 
+  implicit def reusabilityErrorMsg: Reusability[ErrorMsg] =
+    Reusability.by(_.value)
+
   implicit def reusabilityMomentJs: Reusability[MomentJs] =
     Reusability.by(_.toEpochMilli)
 
