@@ -556,7 +556,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
   object savedViewGD extends GenericDataGen(SavedViewGD) {
     import gd._
     import shipreq.webapp.base.data.savedview.Column
-    import RandomData.reqtableData._
+    import RandomData.savedViews._
     private val colNev = ColumnIGen(p.config.fields.customFields.keysIterator.map(Column.CustomField).toVector).columnNEV
     val genColumns      = colNev
     val genFilter       = filter.valid.forProject(p).option

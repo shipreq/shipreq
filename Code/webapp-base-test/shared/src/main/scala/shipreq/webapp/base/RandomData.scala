@@ -1410,7 +1410,7 @@ object RandomData {
                      mis,
                      savedview.SavedViews.empty,
                      IdCeilings.zero)
-      savedViews <- reqtableData.savedViewsForProject(p1)
+      savedViews <- savedViews.savedViewsForProject(p1)
     } yield IdCeilings.supply(ic => p1.copy(savedViews = savedViews, idCeilings = ic))
   }
 
@@ -1475,7 +1475,7 @@ object RandomData {
       lastUpdatedAt = lastUpdatedAt)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  object reqtableData {
+  object savedViews {
     import shipreq.webapp.base.data.savedview._
 
     def visibleColumns(p: Project): Gen[NonEmptyVector[Column]] =
@@ -1540,7 +1540,7 @@ object RandomData {
         Gen.subset(legalColumnIs.whole).shuffle
 
       def sortCriIs: Gen[Vector[SortCriterion.Inconclusive]] =
-        colIs flatMap reqtableData.sortCriIs
+        colIs flatMap savedViews.sortCriIs
 
       def columnNEV: Gen[NonEmptyVector[Column]] =
         Gen.subset1(legalColumns.whole).shuffle[Vector, Column].map(NonEmptyVector.force)
@@ -2154,7 +2154,7 @@ object RandomData {
 
     object savedViewGD extends GenericDataGen(SavedViewGD) {
       import gd._
-      import reqtableData._
+      import savedViews._
       private val colNev = customFieldColumn.vector.map(ColumnIGen).flatMap(_.columnNEV)
 
       val genColumns      = colNev
@@ -2359,7 +2359,7 @@ object RandomData {
 
     val genSavedViewCreate: Gen[SavedViewCreate] =
       Gen.apply6(SavedViewCreate)(
-        reqtableData.savedViewId,
+        savedViews.savedViewId,
         savedViewGD.genName,
         savedViewGD.genColumns,
         savedViewGD.genSortCriteria,
@@ -2367,13 +2367,13 @@ object RandomData {
         savedViewGD.genFilter)
 
     val genSavedViewDefaultSet: Gen[SavedViewDefaultSet] =
-      reqtableData.savedViewId map SavedViewDefaultSet
+      savedViews.savedViewId map SavedViewDefaultSet
 
     val genSavedViewDelete: Gen[SavedViewDelete] =
-      reqtableData.savedViewId map SavedViewDelete
+      savedViews.savedViewId map SavedViewDelete
 
     val genSavedViewUpdate: Gen[SavedViewUpdate] =
-      Gen.apply2(SavedViewUpdate)(reqtableData.savedViewId, savedViewGD.nonEmptyValues)
+      Gen.apply2(SavedViewUpdate)(savedViews.savedViewId, savedViewGD.nonEmptyValues)
 
     val genProjectNameSet: Gen[ProjectNameSet] =
       projectName map ProjectNameSet

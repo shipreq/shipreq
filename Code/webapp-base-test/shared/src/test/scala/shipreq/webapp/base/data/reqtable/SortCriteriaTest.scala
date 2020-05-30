@@ -66,12 +66,12 @@ object SortCriteriaTest extends TestSuite {
   }
 
   val wantTest = for {
-    cfs  <- RandomData.reqtableData.customFieldColumn.vector
-    gi   = RandomData.reqtableData.ColumnIGen(cfs)
+    cfs  <- RandomData.savedViews.customFieldColumn.vector
+    gi   = RandomData.savedViews.ColumnIGen(cfs)
     scis <- gi.sortCriIs
     ci   <- gi.columnI
-    cc   <- RandomData.reqtableData.columnC
-    sc   <- RandomData.reqtableData.sortCriteria(scis)
+    cc   <- RandomData.savedViews.columnC
+    sc   <- RandomData.savedViews.sortCriteria(scis)
   } yield WantTest(sc, ci, cc)
 
   override def tests = Tests {

@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import nyaya.gen._
 import shipreq.webapp.base.RandomData
-import shipreq.webapp.base.RandomData.reqtableData._
+import shipreq.webapp.base.RandomData.savedViews._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.filter.Filter

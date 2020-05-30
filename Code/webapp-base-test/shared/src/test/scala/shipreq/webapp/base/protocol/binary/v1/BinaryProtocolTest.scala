@@ -20,7 +20,7 @@ object BinaryProtocolTest extends TestSuite {
 
   override def tests = Tests {
 
-    "savedViews" - propTestRoundTripP(R.project.flatMap(R.reqtableData.nonEmptySavedViewsForProject))
+    "savedViews" - propTestRoundTripP(R.project.flatMap(R.savedViews.nonEmptySavedViewsForProject))
 
     "text" - {
       def gr = R.reqId
