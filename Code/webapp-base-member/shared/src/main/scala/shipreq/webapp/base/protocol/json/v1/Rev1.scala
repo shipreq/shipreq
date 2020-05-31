@@ -15,10 +15,7 @@ import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol.json.JsonCodec
 
-/** v1.1
-  *
-  * Created because [[ApplicableTag]] lost and gained fields.
-  */
+/** v1.1 */
 object Rev1 {
   import JsonCodec.Implicits._
   import BaseData._

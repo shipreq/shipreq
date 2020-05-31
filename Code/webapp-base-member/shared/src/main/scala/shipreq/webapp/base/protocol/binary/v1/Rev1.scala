@@ -13,10 +13,7 @@ import shipreq.webapp.base.protocol.Version
 import shipreq.webapp.base.protocol.binary.UnsupportedVersionException
 import shipreq.webapp.base.sort.SortMethod
 
-/** v1.1
-  *
-  * Created because [[ApplicableTag]] lost and gained fields.
-  */
+/** v1.1 */
 object Rev1 {
   import boopickle.DefaultBasic._
   import BaseData._
