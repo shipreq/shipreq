@@ -12,7 +12,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.EditorStatus
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.ui.EditTheme
-import shipreq.webapp.base.ui.semantic._
+import shipreq.webapp.base.ui.semantic.{Dropdown => _, _}
+import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}
 import shipreq.webapp.client.project.feature.editor.{PotentialValue, PotentialValueAcceptor}
 
@@ -42,7 +43,7 @@ object ReqTypeSelector {
   // implicit val reusabilityProps: Reusability[Props] =
   //   Reusability.derive
 
-  private def key(rt: RT): Select.OptionKey =
+  private def key(rt: RT): Dropdown.ItemKey =
     rt.id.value.toString
 
   final class Backend($: BackendScope[Props, Unit]) {
@@ -58,11 +59,10 @@ object ReqTypeSelector {
       val options =
         MutableArray(p.choices.whole)
           .sortBy(_.fullName)
-          .iterator
-          .map(rt => Select.Option(key(rt), rt.fullName, rt))
-          .to(List)
+          .map(rt => Dropdown.Item(key(rt), rt.fullName, rt))
+          .arraySeq
 
-      val select = Select(options, Some(key(p.edit.value)), tagMod = *.dropdown)(p.edit setState _.value)
+      val dropdown = Dropdown.Props.Optional(options, Some(key(p.edit.value)), tagMod = *.dropdown)(p.edit setState _.value)
 
       val commitButton = Button(
         tipe = Button.Type.IconOnly(Icon.Checkmark),
@@ -76,7 +76,7 @@ object ReqTypeSelector {
 
       val buttons = Button.group(commitButton, abortButton)(*.buttons)
 
-      <.div(select, buttons)
+      <.div(dropdown.render, buttons)
     }
   }
 

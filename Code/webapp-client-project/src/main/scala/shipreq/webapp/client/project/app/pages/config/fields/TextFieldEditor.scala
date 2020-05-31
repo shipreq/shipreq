@@ -11,9 +11,9 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.CustomTextFieldGD
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd
-import shipreq.webapp.base.ui.semantic.Form
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ReqTypeRulesEditor
+import shipreq.webapp.base.ui.widgets.Form
 
 object TextFieldEditor {
   import DataImplicits._

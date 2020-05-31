@@ -8,7 +8,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.ui.AutosizeTextarea
-import shipreq.webapp.base.ui.semantic.{Form, Icon, Message}
+import shipreq.webapp.base.ui.semantic.{Icon, Message}
+import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.client.project.app.Style.{reqTypeConfig => *}
 
 /** This isn't really an editor; it's read/only! But it's what appears in place of the editor. */

@@ -13,7 +13,7 @@ import shipreq.webapp.base.event.CustomIssueTypeGD
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.base.ui.AutosizeTextarea
-import shipreq.webapp.base.ui.semantic.Form
+import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.client.project.lib.DataReusability._
 
 private[issues] object CustomIssueTypeEditor {

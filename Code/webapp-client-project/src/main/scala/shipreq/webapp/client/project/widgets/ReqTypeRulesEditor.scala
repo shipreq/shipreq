@@ -14,6 +14,7 @@ import monocle.macros.Lenses
 import nyaya.util.Multimap
 import org.scalajs.dom.html
 import scala.annotation.nowarn
+import scala.collection.immutable.ArraySeq
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import scalaz.std.option._
@@ -26,8 +27,9 @@ import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.lib.ReactKeyGen
 import shipreq.webapp.base.lib.ReactKeyGen.UnivEqImplicits._
 import shipreq.webapp.base.ui.GeneralTheme
-import shipreq.webapp.base.ui.semantic._
+import shipreq.webapp.base.ui.semantic.{Dropdown => _, _}
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
+import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.lib.DataReusability._
 
 object ReqTypeRulesEditor {
@@ -115,7 +117,7 @@ object ReqTypeRulesEditor {
   final case class Props[D](state        : StateSnapshot[State[D]],
                             reqTypes     : ReqTypes,
                             renderDefault: D ~=> VdomNode,
-                            defaults     : Vector[D],
+                            defaults     : ArraySeq[D],
                             filterDead   : FilterDead,
                             enabled      : Enabled) {
 
@@ -132,7 +134,7 @@ object ReqTypeRulesEditor {
         state         = state,
         reqTypes      = reqTypes,
         renderDefault = renderImpossible,
-        defaults      = Vector.empty,
+        defaults      = ArraySeq.empty,
         filterDead    = filterDead,
         enabled       = enabled,
       )
@@ -141,7 +143,7 @@ object ReqTypeRulesEditor {
       Reusable.always(_.impossible)
 
     implicit def reusabilityProps[D: UnivEq]: Reusability[Props[D]] = {
-      implicit val a: Reusability[Vector[D]] = Reusability.byRefOrUnivEq
+      implicit val a: Reusability[ArraySeq[D]] = Reusability.byRefOrUnivEq
       locally(a) // -Wunused:locals gets it wrong
       Reusability.derive
     }
@@ -256,7 +258,7 @@ object ReqTypeRulesEditor {
   // -------------------------------------------------------------------------------------------------------------------
 
   object Internals {
-    val resOptionKey: Resolution[Any] => Select.OptionKey = {
+    val resOptionKey: Resolution[Any] => Dropdown.ItemKey = {
       case Resolution.DefaultTo(_)  => "d"
       case Resolution.NotApplicable => "n"
       case Resolution.Mandatory     => "m"
@@ -334,9 +336,9 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean, keyFor: D => S
     private val delRowButton =
       Button(tipe = Button.Type.BasicIconOnly(Icon.Trash), colour = ColourPlus.Negative)
 
-    private val resOptions: List[Select.Option[Resolution[Unit]]] = {
-      def option(title: String, res: Resolution[Unit]): Select.Option[Resolution[Unit]] =
-        Select.Option(resOptionKey(res), title, res)
+    private val resOptions: ArraySeq[Dropdown.Item[Resolution[Unit]]] = {
+      def option(title: String, res: Resolution[Unit]): Dropdown.Item[Resolution[Unit]] =
+        Dropdown.Item(resOptionKey(res), title, res)
 
       def defaultTo     = option("Default to…", Resolution.DefaultTo(()))
       val mandatory     = option("Mandatory", Resolution.Mandatory)
@@ -344,9 +346,9 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean, keyFor: D => S
       val optional      = option("Optional", Resolution.Optional)
 
       if (allowDefaults)
-        List(defaultTo, mandatory, notApplicable, optional)
+        ArraySeq(defaultTo, mandatory, notApplicable, optional)
       else
-        List(mandatory, notApplicable, optional)
+        ArraySeq(mandatory, notApplicable, optional)
     }
 
     private val perReqTypeLens: Int => Lens[State, StatePerReqType] =
@@ -365,25 +367,27 @@ final class ReqTypeRulesEditor[D: UnivEq](allowDefaults: Boolean, keyFor: D => S
       def renderRes(ss: StateSnapshot[StateResValue], enabled: Enabled): TagMod = {
 
         val resSelect =
-          Select(
-            options  = resOptions,
+          Dropdown.Props.Optional(
+            items    = resOptions,
             enabled  = enabled,
             selected = Some(resOptionKey(ss.value.res)))(
-            onChange = o => ss.modState(_.copy(res = o.value)))
+            onChange = o => ss.modState(_.copy(res = o.value))
+          ).render
 
         def defaultSelect = {
           val default = ss.value.legalDefault(p.defaultSet)
 
-          val defaultOptions =
-            p.defaults.map(d => Select.Option(keyFor(d), p.renderDefault(d), d))
+          val defaultItems =
+            p.defaults.map(d => Dropdown.Item(keyFor(d), p.renderDefault(d), d))
 
-          Select(
-            options  = defaultOptions,
+          Dropdown.Props.Optional(
+            items    = defaultItems,
             enabled  = enabled,
             tagMod   = *.rulesEditorDefault,
             validity = Invalid when default.isEmpty,
             selected = default.map(keyFor))(
-            onChange = o => ss.modState(_.copy(default = Some(o.value))))
+            onChange = o => ss.modState(_.copy(default = Some(o.value)))
+          ).render
         }
 
         if (ss.value.res.isDefault)

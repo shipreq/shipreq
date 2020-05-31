@@ -6,6 +6,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import monocle.macros.Lenses
+import scala.collection.immutable.ArraySeq
 import shipreq.base.util.PotentialChange
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
@@ -14,7 +15,7 @@ import shipreq.webapp.base.event.CustomImpFieldGD
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.base.ui.semantic.{Form, Select}
+import shipreq.webapp.base.ui.widgets.{Dropdown, Form}
 import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ReqTypeRulesEditor
@@ -31,15 +32,15 @@ object ImpFieldEditor {
     private lazy val legalReqTypes: Set[ReqTypeId] =
       cfg.reqTypes.liveIds -- cfg.fields.customImpFields.iterator.map(_.reqTypeId)
 
-    private[ImpFieldEditor] lazy val reqTypeOptions: List[Select.Option[ReqTypeId]] =
+    private[ImpFieldEditor] lazy val reqTypeItems: ArraySeq[Dropdown.Item[ReqTypeId]] =
       cfg.reqTypes.sortIdsByMnemonic(legalReqTypes)
-        .map(rt => Select.Option(rt.mnemonic.value, PlainText.reqTypeFull(rt), rt.reqTypeId))
-        .toList
+        .map(rt => Dropdown.Item(rt.mnemonic.value, PlainText.reqTypeFull(rt), rt.reqTypeId))
+        .to(ArraySeq)
 
     val isPossible: Boolean =
       state.value match {
         case _: State.ForUpdate => true
-        case _: State.ForCreate => reqTypeOptions.nonEmpty
+        case _: State.ForCreate => reqTypeItems.nonEmpty
       }
 
     lazy val validatorState: DataValidators.field.State =
@@ -143,11 +144,12 @@ object ImpFieldEditor {
           case s: State.ForCreate =>
 
             val sourceSelect =
-              Select[ReqTypeId](
-                options = p.reqTypeOptions,
+              Dropdown.Props.Optional[ReqTypeId](
+                items    = p.reqTypeItems,
                 selected = s.reqType.flatMap(p.cfg.reqTypes.get).map(_.mnemonic.value),
-                enabled = p.enabled)(
-                onChange = o => p.state.setState(s.copy(Some(o.value))))
+                enabled  = p.enabled)(
+                onChange = o => p.state.setState(s.copy(Some(o.value)))
+              ).render
 
             val sourceField =
               Form.Field.ofEditor(sourceSelect)

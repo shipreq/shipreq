@@ -1,4 +1,4 @@
-package shipreq.webapp.base.ui.semantic
+package shipreq.webapp.base.ui.widgets
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
@@ -7,13 +7,16 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import monocle.{Iso, Lens}
+import scala.collection.compat.immutable.ArraySeq
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Identity, IsoBool, Validity}
 import shipreq.webapp.base.data.{Disabled, Enabled, On}
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.ui.GeneralTheme
+import shipreq.webapp.base.ui.semantic.{Input, Segment, UsesSemanticUiManually}
 import shipreq.webapp.base.validation.Simple
 
+@UsesSemanticUiManually
 object Form {
 
   def apply(field1: Field[_], fieldN: Field[_]*)(implicit vux: ValidationUX): VdomTag =
@@ -24,10 +27,7 @@ object Form {
   def apply(fields: NonEmptyVector[Field[_]])(implicit vux: ValidationUX): VdomTag =
     apply(fields.head, fields.tail: _*)
 
-  val validationErr = TagMod(
-    ^.color      := "#9f3a38",
-    ^.paddingTop := "0.15rem",
-    ^.fontSize   := "92%")
+  @inline def validationErr = Input.validationErr
 
   private def renderSimpleInvalidity(i: Simple.Invalidity) =
     GeneralTheme.renderSimpleInvalidity(i)(validationErr)
@@ -298,27 +298,28 @@ object Form {
       def key(a: A): String =
         if (a == a1) "1" else "2"
 
-      val options: List[Select.Option[A]] =
-        Select.Option(key(a1), render(a1), a1) ::
-        Select.Option(key(a2), render(a2), a2) ::
-        Nil
+      val items: ArraySeq[Dropdown.Item[A]] =
+        ArraySeq(
+          Dropdown.Item(key(a1), render(a1), a1),
+          Dropdown.Item(key(a2), render(a2), a2),
+        )
 
       generic(a1, null) { f =>
         import f._
 
         val actualLabel = label.whenDefined(<.label(_))
 
-        val onChange: Select.Option[A] => Callback =
+        val onChange: Dropdown.Item[A] => Callback =
           o => updater(validator.fold(o.value)(_.corrector.live(o.value)))
 
         val editor =
-          Select[A](
-            options  = options,
+          Dropdown.Props.Optional[A](
+            items    = items,
             selected = Some(key(value)),
             enabled  = enabled)(
             onChange = onChange)
 
-        TagMod(actualLabel, editor)
+        TagMod(actualLabel, editor.render)
       }
     }
 
@@ -390,6 +391,5 @@ object Form {
         <.div(^.cls := "two fields", f1.render, f2.render)
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   }
 }

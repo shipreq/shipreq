@@ -8,6 +8,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import monocle.macros.Lenses
+import scala.collection.immutable.ArraySeq
 import shipreq.base.util.PotentialChange
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
@@ -15,7 +16,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.CustomTagFieldGD
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd
-import shipreq.webapp.base.ui.semantic.{Form, Select}
+import shipreq.webapp.base.ui.widgets.{Dropdown, Form}
 import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, ReqTypeRulesEditor}
@@ -48,23 +49,23 @@ object TagFieldEditor {
                          pw        : ProjectWidgets.NoCtx,
                          router    : Routes.RouterCtl) {
 
-    lazy val legalDefaults: Vector[ApplicableTagId] =
-      legalDefaultIterator(state.value, cfg).toVector.distinct
+    lazy val legalDefaults: ArraySeq[ApplicableTagId] =
+      legalDefaultIterator(state.value, cfg).to(ArraySeq).distinct
 
     private lazy val legalTagGroups: Set[TagGroupId] =
       cfg.tags.liveTagGroupIds -- cfg.fields.customTagFields.iterator.map(_.tagId).filterSubType[TagGroupId]
 
-    private[TagFieldEditor] lazy val reqTypeOptions: List[Select.Option[TagGroupId]] =
+    private[TagFieldEditor] lazy val reqTypeItems: ArraySeq[Dropdown.Item[TagGroupId]] =
       MutableArray(legalTagGroups.iterator.map(cfg.tags.needTagGroup))
         .sortBy(_.name)
         .iterator
-        .map(t => Select.Option(t.id.value.toString, t.name, t.id))
-        .toList
+        .map(t => Dropdown.Item(t.id.value.toString, t.name, t.id))
+        .to(ArraySeq)
 
     val isPossible: Boolean =
       state.value match {
         case _: State.ForUpdate => true
-        case _: State.ForCreate => reqTypeOptions.nonEmpty
+        case _: State.ForCreate => reqTypeItems.nonEmpty
       }
 
     lazy val validatorState: DataValidators.field.State =
@@ -178,11 +179,12 @@ object TagFieldEditor {
           case s: State.ForCreate =>
 
             val sourceSelect =
-              Select[TagGroupId](
-                options  = p.reqTypeOptions,
+              Dropdown.Props.Optional[TagGroupId](
+                items    = p.reqTypeItems,
                 selected = s.tagId.map(p.cfg.tags.needTagGroup(_).name),
                 enabled  = p.enabled)(
-                onChange = o => p.state.setState(s.copy(Some(o.value))))
+                onChange = o => p.state.setState(s.copy(Some(o.value)))
+              ).render
 
             val sourceField =
               Form.Field.ofEditor(sourceSelect)

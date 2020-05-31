@@ -19,6 +19,11 @@ object Input {
 
   val errorAttr = VdomAttr.devOnly("data-err")
 
+  val validationErr = TagMod(
+    ^.color      := "#9f3a38",
+    ^.paddingTop := "0.15rem",
+    ^.fontSize   := "92%")
+
   object Text {
 
     def apply(input   : TagMod,
@@ -38,7 +43,7 @@ object Input {
       val base = TagMod(apply(input, enabled, Valid when error.isEmpty), afterInput)
       error match {
         case None      => base
-        case Some(err) => TagMod(base, <.div(errorAttr := "1", Form.validationErr, err))
+        case Some(err) => TagMod(base, <.div(errorAttr := "1", validationErr, err))
       }
     }
 

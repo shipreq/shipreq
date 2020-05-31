@@ -14,7 +14,8 @@ import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.ui.GeneralTheme
-import shipreq.webapp.base.ui.semantic.{Form, UsesSemanticUiManually}
+import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
+import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 
 @UsesSemanticUiManually

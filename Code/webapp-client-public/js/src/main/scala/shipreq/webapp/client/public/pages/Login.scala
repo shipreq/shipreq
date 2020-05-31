@@ -20,6 +20,7 @@ import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.{CommmonUiText, Urls}
 import shipreq.webapp.client.public.Prefetch
 import shipreq.webapp.client.public.Styles.{login => *}
+import shipreq.webapp.base.ui.widgets.Form
 
 object Login {
 

@@ -1,6 +1,7 @@
 package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react._
+import scala.collection.immutable.ArraySeq
 import scalaz.Equal
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -20,6 +21,10 @@ import shipreq.webapp.base.protocol.websocket.SavedViewCmd
 object DataReusability extends DataReusability
 
 abstract class DataReusability extends BaseReusability {
+
+  // TODO Remove after https://github.com/japgolly/scalajs-react/issues/728
+  implicit def arraySeq[A: Reusability]: Reusability[ArraySeq[A]] =
+    Reusability.byRef[ArraySeq[A]] || Reusability.indexedSeq[ArraySeq, A]
 
   final def reusabilityByRefOrEqual[A <: AnyRef](implicit e: Equal[A]): Reusability[A] =
     Reusability.byRef || Reusability(e.equal)
