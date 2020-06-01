@@ -11,7 +11,7 @@ import scala.util.{Failure, Success}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.{ErrorMsg, JsTimers}
 import shipreq.webapp.base.data.{Project, ProjectId, ProjectMetaData}
-import shipreq.webapp.base.event.{EventOrd, EventSeqSummary, VerifiedEvent}
+import shipreq.webapp.base.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -25,7 +25,7 @@ import shipreq.webapp.client.project.app.pages.root.ConnectionStatus
 import shipreq.webapp.client.project.app.state.Global.State
 
 abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
-                      onInitFailure: ErrorMsg => Callback) extends Broadcaster[EventSeqSummary.WithProject] {
+                      onInitFailure: ErrorMsg => Callback) extends Broadcaster[ProjectState.Update] {
 
   val reauthModal: ReauthenticationModal
 
@@ -207,8 +207,9 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
               unsafeSetState(State.Active(update.newState, staleSince))
 
               // Broadcast changes
-              if (!update.isEmpty)
-                broadcast(update.newEvents.summaryWithProject).runNow()
+              if (update.newlyAppliedEvents.nonEmpty) {
+                broadcast(update).runNow()
+              }
 
               update.newEvents
 

@@ -479,7 +479,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
       ).render
     }
 
-    def onProjectChange(c: EventSeqSummary.WithProject): Callback = // TODO I don't like this
+    val onProjectChange: Callback = // TODO I don't like this
       $.forceUpdate
 
     def onConnectionStatusChange(c: ConnectionStatus): Callback = {
@@ -508,7 +508,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
     .initialStateCallback(State.recorder.getOrElseCB(pxProject.toCallback.map(State.init)))
     .renderBackend[Backend]
     .componentDidMount(_.backend.installHooks)
-    .configure(Listenable.listen(_ => global, _.backend.onProjectChange))
+    .configure(Listenable.listen(_ => global, b => (_: Any) => b.backend.onProjectChange))
     .configure(Listenable.listen(_ => global.connectedStatusHub, _.backend.onConnectionStatusChange))
     .build
 }

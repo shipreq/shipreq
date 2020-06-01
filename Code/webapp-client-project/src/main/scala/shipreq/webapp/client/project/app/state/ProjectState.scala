@@ -79,7 +79,6 @@ object ProjectState {
     ProjectState(p, md, VerifiedEvent.Seq.empty)
 
   final case class Update(newState: ProjectState, newlyAppliedEvents: VerifiedEvent.Seq) {
-    def isEmpty   = newlyAppliedEvents.isEmpty
     val newEvents = NewEvents(newlyAppliedEvents, newState.project)
   }
 
