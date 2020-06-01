@@ -1,13 +1,13 @@
 package shipreq.webapp.client.ww
 
-import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import japgolly.scalajs.react.extra.Px
+import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import monocle.macros.Lenses
 import scala.util.Try
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.event.EventOrd.Implicits._
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.base.text.PlainText
 
 final class WebWorkerState {
   import WebWorkerState._
@@ -56,8 +56,8 @@ final class WebWorkerState {
   val pxPlainText: Px[PlainText.ForProject.NoCtx] =
     pxProject.map(PlainText.ForProject.noCtx.apply)
 
-  val pxTextSearch: Px[TextSearch] =
-    Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
+  val acProject   = pxProject  .toCallback.asAsyncCallback
+  val acPlainText = pxPlainText.toCallback.asAsyncCallback
 
   def await(ord: Option[EventOrd.Latest]): AsyncCallback[Unit] =
     getStateAsync.flatMap { s =>
@@ -88,5 +88,4 @@ object WebWorkerState {
   final case class OrdPromise(ord: Option[EventOrd.Latest], complete: Callback)
 
   private[WebWorkerState] val tryUnit = Try(()) // TODO Remove after https://github.com/japgolly/scalajs-react/issues/730
-
 }

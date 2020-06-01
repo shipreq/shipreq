@@ -37,17 +37,13 @@ object GraphsTest extends TestSuite {
   lazy val SIG_deadMF4: Project =
     applyEventsSuccessfully(SampleImplicationGraph.project, deleteReqs(SampleImplicationGraph.mf4))
 
-  private def implicationAll(fd: FilterDead, p: Project): DOT = {
-    val cmd = WebWorkerCmd.GraphAllImplications(
-      imps       = p.content.implications,
-      reqs       = p.content.reqs,
-      reqTypes   = p.config.reqTypes,
+  private def implicationAll(fd: FilterDead, p: Project): DOT =
+    Graphs.implicationAll(
+      project    = p,
+      filterDead = fd,
       scope      = ImpGraphConfig.buildReqWhitelist(fd, None, p),
-      reqColours = None,
       config     = ImpGraphConfig.default,
     )
-    Graphs.implicationAll(cmd)
-  }
 
   override def tests = Tests {
 

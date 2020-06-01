@@ -301,13 +301,14 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
       WebWorkerClient.Instance
 
     private val reqDetail = ReqDetail(ReqDetail.StaticProps(
-      sspUpdateContent,
-      reqDetailRC,
-      webWorkerClient,
-      pxProject,
-      pxViewReqDataCache,
-      pxTextSearch,
-      pxProjectWidgets))
+      updateIO              = sspUpdateContent,
+      reqDetailRC           = reqDetailRC,
+      webWorker             = webWorkerClient,
+      pxProjectAndOrd       = pxProjectAndOrd,
+      pxViewReqDataCache    = pxViewReqDataCache,
+      pxTextSearch          = pxTextSearch,
+      pxProjectWidgetsNoCtx = pxProjectWidgets,
+    ))
 
     private val reqDetailSetState: Reusable[SetStateFnPure[ReqDetail.State]] =
       Reusable.fn.state($ zoomStateL State.reqDetail).setStateFn
@@ -353,6 +354,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
       def editRW           = editW.toReadWrite(editR)
       def filterDeadSS     = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
       def project          = unsafeProject()
+      def projectAndOrd    = pxProjectAndOrd.value()
       def projectWidgets   = pxProjectWidgets.value.value()
       def renderFeature    = pxRenderFeatureText.value()(s.filterDead)
       def savedViewFeature = SavedViewFeature(savedViewFeatureStatic, s.savedViews, project, s.filterDead)
@@ -456,7 +458,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
 
         case Page.ImpGraph =>
           content.impgraph.ImplicationGraphPage.Props(
-            project          = project,
+            projectAndOrd    = projectAndOrd,
             plainText        = pxPlainText.value(),
             reqDetailRC      = reqDetailRC,
             webWorker        = webWorkerClient,

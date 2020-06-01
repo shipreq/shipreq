@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
+import shipreq.webapp.base.event.ProjectAndOrd
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.ui.{BaseStyles, NoContentMessage}
@@ -20,12 +21,13 @@ import shipreq.webapp.client.project.feature.SavedViewFeature
 
 object ImplicationGraphPage {
 
-  final case class Props(project         : Project,
+  final case class Props(projectAndOrd   : ProjectAndOrd,
                          plainText       : PlainText.ForProject.AnyCtx,
                          reqDetailRC     : RouterCtl[ExternalPubid],
                          webWorker       : WebWorkerClient.Instance,
                          savedViewFeature: SavedViewFeature,
                          setFilterDead   : Reusable[StateSnapshot.SetFn[FilterDead]]) {
+    @inline def project = projectAndOrd.project
     @inline def render: VdomElement = Component(this)
   }
 
@@ -44,6 +46,7 @@ object ImplicationGraphPage {
         p.savedViewFeature.activeView.impGraphConfig.getOrElse(ImpGraphConfig.default)
 
       val impGraph = ImplicationGraph.Props.All(
+        ord          = p.projectAndOrd.ord,
         reqWhitelist = p.savedViewFeature.reqWhitelist,
         filterDead   = filterDead,
         config       = impGraphConfig,

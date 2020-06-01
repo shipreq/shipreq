@@ -18,7 +18,6 @@ import shipreq.webapp.client.ww.api.WebWorkerCmd
 object ImplicationGraph {
 
   sealed trait Props extends HasWebWorker {
-    val imps       : Implications.BiDir
     val reqs       : Requirements
     val reqTypes   : ReqTypes
     val plainText  : PlainText.ForProject.AnyCtx
@@ -32,7 +31,8 @@ object ImplicationGraph {
 
   object Props {
 
-    final case class FocusReq(focus      : ReqId,
+    final case class FocusReq(ord        : WebWorkerCmd.Ord,
+                              focus      : ReqId,
                               filterDead : FilterDead,
                               imps       : Implications.BiDir,
                               reqs       : Requirements,
@@ -45,7 +45,8 @@ object ImplicationGraph {
         false
     }
 
-    final case class All(reqWhitelist: Option[Set[ReqId]],
+    final case class All(ord         : WebWorkerCmd.Ord,
+                         reqWhitelist: Option[Set[ReqId]],
                          filterDead  : FilterDead,
                          config      : ImpGraphConfig,
                          project     : Project,
@@ -53,7 +54,6 @@ object ImplicationGraph {
                          reqDetailRC : RouterCtl[ExternalPubid],
                          webWorker   : WebWorkerClient.Instance) extends Props {
 
-      override val imps = project.content.implications
       override val reqs = project.content.reqs
       override val reqTypes = project.config.reqTypes
 
@@ -72,19 +72,19 @@ object ImplicationGraph {
   }
 
   final class Backend($: BackendScope[Props, State]) extends GraphBackend($) {
+
     override def cmd(props: Props) =
       props match {
         case p: Props.FocusReq =>
           WebWorkerCmd.GraphReqImplications(
+            ord        = p.ord,
             focus      = p.focus,
             filterDead = p.filterDead,
-            imps       = p.imps,
-            reqs       = p.reqs,
-            reqTypes   = p.reqTypes)
+          )
 
         case p: Props.All =>
-          WebWorkerCmd.GraphAllImplications.build(
-            project    = p.project,
+          WebWorkerCmd.GraphAllImplications(
+            ord        = p.ord,
             filterDead = p.filterDead,
             scope      = p.reqWhitelist,
             config     = p.config,

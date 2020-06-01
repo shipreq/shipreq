@@ -17,13 +17,26 @@ object Service extends Server.Service[WebWorkerCmd] {
       case UpdateProject(ves) =>
         state.updateProject(ves).asAsyncCallback.ret(NoResult)
 
-      case GraphUseCaseStepFlow(a, b, c) =>
-        Graphs.useCaseStepFlow(a, b, c).toSvg
+      case GraphUseCaseStepFlow(ord, id, ctx) =>
+        for {
+          _ <- state.await(ord)
+          p <- state.acProject
+          x <- Graphs.useCaseStepFlow(id, p, ctx).toSvg
+        } yield x
 
-      case GraphReqImplications(a, b, c, d, e) =>
-        Graphs.implicationFocused(a, b, c, d, e).toSvg
+      case GraphReqImplications(ord, focus, filterDead) =>
+        for {
+          _ <- state.await(ord)
+          p <- state.acProject
+          x <- Graphs.implicationFocused(focus, filterDead, p).toSvg
+        } yield x
 
-      case a: GraphAllImplications =>
-        Graphs.implicationAll(a).toSvg
+      case GraphAllImplications(ord, filterDead, scope, config) =>
+        for {
+          _ <- state.await(ord)
+          p <- state.acProject
+          x <- Graphs.implicationAll(p, filterDead, scope, config).toSvg
+        } yield x
+
     }
 }

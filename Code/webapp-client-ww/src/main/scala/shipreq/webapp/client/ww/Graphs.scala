@@ -11,6 +11,7 @@ import shipreq.base.util.VectorTree.PartialLocation
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
+import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.{Colours, GraphDir}
 import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.client.ww.GraphViz.DOT
@@ -348,16 +349,21 @@ object Graphs {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  def implicationAll(cmd: WebWorkerCmd.GraphAllImplications): DOT =
+  def implicationAll(project   : Project,
+                     filterDead: FilterDead,
+                     scope     : Option[Set[ReqId]],
+                     config    : ImpGraphConfig): DOT =
     GraphViz.digraph { implicit b =>
-      import cmd._
 
-      val impHelpers = new ImpHelpers(reqs, reqTypes)
-      import impHelpers._
-
-      val reqIdFilter    = OptionalBoolFn[ReqId](cmd.scope.map(s => s.contains _))
+      val imps           = project.content.implications
+      val reqs           = project.content.reqs
+      val reqTypes       = project.config.reqTypes
+      val impHelpers     = new ImpHelpers(reqs, reqTypes)
+      val reqIdFilter    = OptionalBoolFn[ReqId](scope.map(s => s.contains _))
       val reqIdSetFilter = reqIdFilter.setFilter
       val reqFilter      = reqIdFilter.contramap[Req](_.id)
+
+      import impHelpers._
 
       def declareNodes: () => Unit =
         config.colours match {
@@ -409,9 +415,24 @@ object Graphs {
             }
           }
 
-          case Colours.ByTag(_) => () => {
+          case Colours.ByTag(tagGroupId) => () => {
 
-            val coloursByReqId = reqColours.get
+            val coloursByReqId: Map[ReqId, ArraySeq[Colour]] = {
+              val tagLookup = project.dataLogic.tagLookup(filterDead)
+              val tags      = project.config.tags
+              val tagScope  = project.config.tagFieldDistribution(filterDead).inTagGroup(tagGroupId)
+              val reqIds    = scope.fold(project.content.reqs.idIterator())(_.iterator)
+              reqIds.map { reqId =>
+                val colours =
+                  tagLookup(reqId).all
+                    .iterator
+                    .filter(tagScope.contains)
+                    .map(tags.needApplicableTag)
+                    .map(t => t.colour.getOrElse(Colour.tagDefault).live(t.live))
+                    .to(ArraySeq)
+                reqId -> colours
+              }.toMap
+            }
 
             def declareNode(id: ReqId): Unit = {
               node(id)

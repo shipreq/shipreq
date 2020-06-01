@@ -2,12 +2,11 @@ package shipreq.webapp.client.ww.api
 
 import boopickle.ConstPickler
 import boopickle.DefaultBasic._
-import scala.collection.compat.immutable.ArraySeq
 import scalaz.\/
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
-import shipreq.webapp.base.event.{ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.text.ProjectText
 
 // Another idea could be to maintain a separate ClientData instance in the WW thread and feed it all the same updates
@@ -24,61 +23,20 @@ object WebWorkerCmd {
 
   final case class UpdateProject(events: VerifiedEvent.NonEmptySeq) extends WebWorkerCmd[NoResult.type]
 
-  final case class GraphUseCaseStepFlow(id     : UseCaseId,
-                                        project: Project,
-                                        ctx    : ProjectText.Context) extends WebWorkerCmd[ErrorMsg \/ Svg]
+  type Ord = Option[EventOrd.Latest]
 
-  final case class GraphReqImplications(focus     : ReqId,
+  final case class GraphUseCaseStepFlow(ord: Ord,
+                                        id : UseCaseId,
+                                        ctx: ProjectText.Context) extends WebWorkerCmd[ErrorMsg \/ Svg]
+
+  final case class GraphReqImplications(ord       : Ord,
+                                        focus     : ReqId,
+                                        filterDead: FilterDead) extends WebWorkerCmd[ErrorMsg \/ Svg]
+
+  final case class GraphAllImplications(ord       : Ord,
                                         filterDead: FilterDead,
-                                        imps      : Implications.BiDir,
-                                        reqs      : Requirements,
-                                        reqTypes  : ReqTypes) extends WebWorkerCmd[ErrorMsg \/ Svg]
-
-  final case class GraphAllImplications(imps      : Implications.BiDir,
-                                        reqs      : Requirements,
-                                        reqTypes  : ReqTypes,
                                         scope     : Option[Set[ReqId]],
-                                        reqColours: Option[Map[ReqId, ArraySeq[Colour]]],
                                         config    : ImpGraphConfig) extends WebWorkerCmd[ErrorMsg \/ Svg]
-
-  object GraphAllImplications {
-
-    def build(project   : Project,
-              filterDead: FilterDead,
-              scope     : Option[Set[ReqId]],
-              config    : ImpGraphConfig): GraphAllImplications = {
-
-      def reqIds = scope.fold(project.content.reqs.idIterator())(_.iterator)
-      val reqColours: Option[Map[ReqId, ArraySeq[Colour]]] =
-        config.colours match {
-          case ImpGraphConfig.Colours.ByReqType =>
-            None
-          case ImpGraphConfig.Colours.ByTag(tagGroupId) =>
-            val tagLookup = project.dataLogic.tagLookup(filterDead)
-            val tags      = project.config.tags
-            val tagScope  = project.config.tagFieldDistribution(filterDead).inTagGroup(tagGroupId)
-            val colourMap =
-              reqIds.map { reqId =>
-                val colours =
-                  tagLookup(reqId).all
-                    .iterator
-                    .filter(tagScope.contains)
-                    .map(tags.needApplicableTag)
-                    .map(t => t.colour.getOrElse(Colour.tagDefault).live(t.live))
-                    .to(ArraySeq)
-                reqId -> colours
-              }.toMap
-            Some(colourMap)
-        }
-      apply(
-        imps       = project.content.implications,
-        reqs       = project.content.reqs,
-        reqTypes   = project.config.reqTypes,
-        scope      = scope,
-        reqColours = reqColours,
-        config     = config)
-    }
-  }
 
   // ===================================================================================================================
 
@@ -90,6 +48,11 @@ object WebWorkerCmd {
 
   implicit val picklerNoResult: Pickler[NoResult.type] =
     ConstPickler(NoResult)
+
+  private implicit val picklerOrd: Pickler[Ord] =
+    transformPickler[Ord, Int](
+      i => Option.when(i > 0)(EventOrd.Latest(i)))(
+      _.fold(0)(_.value))
 
   implicit val picklerSetProject: Pickler[SetProject] =
     transformPickler(SetProject.apply)(_.projectAndOrd)
@@ -103,55 +66,47 @@ object WebWorkerCmd {
   private implicit val picklerGraphUseCaseStepFlow: Pickler[GraphUseCaseStepFlow] =
     new Pickler[GraphUseCaseStepFlow] {
       override def pickle(a: GraphUseCaseStepFlow)(implicit state: PickleState): Unit = {
+        state.pickle(a.ord)
         state.pickle(a.id)
-        state.pickle(a.project)
         state.pickle(a.ctx)
       }
       override def unpickle(implicit state: UnpickleState): GraphUseCaseStepFlow = {
-        val id      = state.unpickle[UseCaseId]
-        val project = state.unpickle[Project]
-        val ctx     = state.unpickle[ProjectText.Context]
-        GraphUseCaseStepFlow(id, project, ctx)
+        val ord = state.unpickle[Ord]
+        val id  = state.unpickle[UseCaseId]
+        val ctx = state.unpickle[ProjectText.Context]
+        GraphUseCaseStepFlow(ord, id, ctx)
       }
     }
 
-  private implicit val picklerGraphAllImplications: Pickler[GraphAllImplications] =
+  implicit val picklerGraphReqImplications: Pickler[GraphReqImplications] =
+    new Pickler[GraphReqImplications] {
+      override def pickle(a: GraphReqImplications)(implicit state: PickleState): Unit = {
+        state.pickle(a.ord)
+        state.pickle(a.focus)
+        state.pickle(a.filterDead)
+      }
+      override def unpickle(implicit state: UnpickleState): GraphReqImplications = {
+        val ord        = state.unpickle[Ord]
+        val focus      = state.unpickle[ReqId]
+        val filterDead = state.unpickle[FilterDead]
+        GraphReqImplications(ord, focus, filterDead)
+      }
+    }
+
+  implicit val picklerGraphAllImplications: Pickler[GraphAllImplications] =
     new Pickler[GraphAllImplications] {
       override def pickle(a: GraphAllImplications)(implicit state: PickleState): Unit = {
-        state.pickle(a.imps)
-        state.pickle(a.reqs)
-        state.pickle(a.reqTypes)
+        state.pickle(a.ord)
+        state.pickle(a.filterDead)
         state.pickle(a.scope)
-        state.pickle(a.reqColours)
         state.pickle(a.config)
       }
       override def unpickle(implicit state: UnpickleState): GraphAllImplications = {
-        val imps       = state.unpickle[Implications.BiDir]
-        val reqs       = state.unpickle[Requirements]
-        val reqTypes   = state.unpickle[ReqTypes]
-        val scope      = state.unpickle[Option[Set[ReqId]]]
-        val reqColours = state.unpickle[Option[Map[ReqId, ArraySeq[Colour]]]]
-        val config     = state.unpickle[ImpGraphConfig]
-        GraphAllImplications(imps, reqs, reqTypes, scope, reqColours, config)
-      }
-    }
-
-  private implicit val picklerGraphReqImplications: Pickler[GraphReqImplications] =
-    new Pickler[GraphReqImplications] {
-      override def pickle(a: GraphReqImplications)(implicit state: PickleState): Unit = {
-        state.pickle(a.focus)
-        state.pickle(a.filterDead)
-        state.pickle(a.imps)
-        state.pickle(a.reqs)
-        state.pickle(a.reqTypes)
-      }
-      override def unpickle(implicit state: UnpickleState): GraphReqImplications = {
-        val focus      = state.unpickle[ReqId]
+        val ord        = state.unpickle[Ord]
         val filterDead = state.unpickle[FilterDead]
-        val imps       = state.unpickle[Implications.BiDir]
-        val reqs       = state.unpickle[Requirements]
-        val reqTypes   = state.unpickle[ReqTypes]
-        GraphReqImplications(focus, filterDead, imps, reqs, reqTypes)
+        val scope      = state.unpickle[Option[Set[ReqId]]]
+        val config     = state.unpickle[ImpGraphConfig]
+        GraphAllImplications(ord, filterDead, scope, config)
       }
     }
 

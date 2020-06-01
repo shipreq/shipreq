@@ -137,7 +137,11 @@ Phase 3A
 v2.1
 ========================================================================================================================
 
+* upgrade graal (and re-run BMs)
+* SJS 1.0 (and re-run BMs)
+
 * any more cases of Instant.now() being used with ProjectMetaData?
+* add to `GraphsTest`
 * ColourByTag -- need to handle tags being deleted
 * change all multi-ver binary codecs to use `writeVersion` and `readByVersion`
 * add new protocol safety tests after ImpGraphConfig is finished
