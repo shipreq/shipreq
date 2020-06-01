@@ -159,7 +159,7 @@ object WebappBuild {
   lazy val webappClientWw =
     project("webapp-client-ww")
       .enablePlugins(ScalaJSPlugin)
-      .configure(Common.jsSettings(UsePhantomJs))
+      .configure(Common.jsSettings(UseNode))
       .dependsOn(webappClientWwApi, webappBaseTestJs % Test)
       .depsForJs(
         boopickle ++ scalajsDom ++

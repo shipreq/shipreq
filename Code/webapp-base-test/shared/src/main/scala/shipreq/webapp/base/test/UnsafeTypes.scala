@@ -71,6 +71,7 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
   implicit def autoEventOrd(i: Int) = EventOrd(i)
 
   implicit def autoEventOrdLatest(i: Int) = EventOrd.Latest(i)
+  implicit def autoSomeEventOrdLatest(i: Int) = if (i == 0) None else Some(EventOrd.Latest(i))
 
   implicit def autoReqCodeGroupId   (i: Int) = ReqCodeGroupId(i)
   implicit def autoApReqCodeId      (i: Int) = ApReqCodeId(i)

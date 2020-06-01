@@ -116,7 +116,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
     private val pxPlainText: Px[PlainText.ForProject.NoCtx] =
       pxProject.map(PlainText.ForProject.noCtx.apply)
 
-    private val pxTextSearch =
+    private val pxTextSearch: Px[TextSearch] =
       Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
 
     private val pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]] =

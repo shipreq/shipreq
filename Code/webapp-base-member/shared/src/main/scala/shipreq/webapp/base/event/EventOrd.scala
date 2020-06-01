@@ -62,6 +62,9 @@ object EventOrd {
              | (None   , None   ) => false
         }
 
+      @inline def <=(y: Option[EventOrd.Latest]): Boolean =
+        !this.>(y)
+
       def min(y: Option[EventOrd.Latest]): Option[EventOrd.Latest] =
         if (x > y) y else x
     }
