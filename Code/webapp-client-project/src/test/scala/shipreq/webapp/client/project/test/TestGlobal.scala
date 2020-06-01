@@ -195,7 +195,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
             CallbackTo.pure(\/-(VerifiedEvent.Seq.empty))
 
           case PotentialChange.Failure(e) =>
-            CallbackTo.pure(-\/(ErrorMsg(e)))
+            CallbackTo.pure(-\/(e))
         }
       }
       pxProject.toCallback.flatMap(run)

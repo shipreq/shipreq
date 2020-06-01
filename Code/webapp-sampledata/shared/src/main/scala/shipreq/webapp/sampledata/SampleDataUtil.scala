@@ -22,5 +22,5 @@ private[sampledata] object SampleDataUtil {
   def applyVerifiedEventsSuccessfully(p: Project, es: VerifiedEvent.Seq): Project =
     // Untrusted because usually when I'm running benchmarks I'm modifying the code as well. If I make a small mistake
     // in the code modification I want it to be caught, rather than going unnoticed and reporting spurious results.
-    ApplyEvent.untrusted.applyVerified(es)(p).fold(sys.error, identity)
+    ApplyEvent.untrusted.applyVerified(es)(p).fold(_.throwException(), identity)
 }

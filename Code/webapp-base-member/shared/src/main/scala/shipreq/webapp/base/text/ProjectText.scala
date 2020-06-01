@@ -81,7 +81,7 @@ object ProjectText {
           d.deadGroup match {
             case Some(g) if g.id ==* id => DeadGroup(code, g)
             case _                      =>
-              def fail = mustNotHappen(s"$id not found in $code: $d")
+              def fail = mustNotHappen(ErrorMsg(s"$id not found in $code: $d"))
               id match {
                 case i: ApReqCodeId =>
                   d.reqInactive.m.find(_._2 contains i) match {

@@ -237,25 +237,25 @@ object Tags {
 final case class Tags(tree: TagTree) {
   import FlatTag.FilterPolicy
 
-  def validateApplicableTag(id: ApplicableTagId): Option[String] =
+  def validateApplicableTag(id: ApplicableTagId): Option[ErrorMsg] =
     applicableTag(id) match {
       case \/-(_) => None
       case -\/(e) => Some(e)
     }
 
-  def applicableTag(id: ApplicableTagId): String \/ ApplicableTag =
+  def applicableTag(id: ApplicableTagId): ErrorMsg \/ ApplicableTag =
     tree.get(id) match {
       case Some(tit) => tit.tag match {
         case t: ApplicableTag => \/-(t)
-        case _: TagGroup      => -\/(s"$id is a TagGroup.")
+        case _: TagGroup      => -\/(ErrorMsg(s"$id is a TagGroup."))
       }
-      case None               => -\/(s"$id not found.")
+      case None               => -\/(ErrorMsg(s"$id not found."))
     }
 
   def needApplicableTag(id: ApplicableTagId): ApplicableTag =
     tree.need(id).tag match {
       case a: ApplicableTag => a
-      case t: TagGroup      => mustNotHappen(s"$t is not an ApplicableTag.")
+      case t: TagGroup      => mustNotHappen(ErrorMsg(s"$t is not an ApplicableTag."))
     }
 
   def applicableTagIterator(): Iterator[ApplicableTag] =
@@ -264,19 +264,19 @@ final case class Tags(tree: TagTree) {
   def tagGroupIterator(): Iterator[TagGroup] =
     tree.valuesIterator.map(_.tag).filterSubType[TagGroup]
 
-  def tagGroup(id: TagGroupId): String \/ TagGroup =
+  def tagGroup(id: TagGroupId): ErrorMsg \/ TagGroup =
     tree.get(id) match {
       case Some(tit) => tit.tag match {
         case t: TagGroup      => \/-(t)
-        case _: ApplicableTag => -\/(s"$id is an ApplicableTag.")
+        case _: ApplicableTag => -\/(ErrorMsg(s"$id is an ApplicableTag."))
       }
-      case None               => -\/(s"$id not found.")
+      case None               => -\/(ErrorMsg(s"$id not found."))
     }
 
   def needTagGroup(id: TagGroupId): TagGroup =
     tree.need(id).tag match {
       case t: TagGroup      => t
-      case a: ApplicableTag => mustNotHappen(s"$a is not a TagGroup.")
+      case a: ApplicableTag => mustNotHappen(ErrorMsg(s"$a is not a TagGroup."))
     }
 
   lazy val deadApplicableTagIds: Set[ApplicableTagId] =

@@ -22,11 +22,11 @@ import ScalaExt._
  */
 object MakeEvent {
 
-  type Result = PotentialChange[String, ActiveEvent]
+  type Result = PotentialChange[ErrorMsg, ActiveEvent]
 
   // ===================================================================================================================
 
-  @inline private implicit class DisjExt[A](private val v: String \/ A) extends AnyVal {
+  @inline private implicit class DisjExt[A](private val v: ErrorMsg \/ A) extends AnyVal {
     @inline def toMakeEventResult(f: A => Result): Result =
       v.fold(Failure(_), f)
   }
@@ -38,6 +38,8 @@ object MakeEvent {
     }
 
   @inline private implicit def autoSuccess(e: ActiveEvent) = Success(e)
+
+  private def fail(s: String) = Failure(ErrorMsg(s))
 
   // ===================================================================================================================
 
@@ -83,8 +85,8 @@ object MakeEvent {
           case Some(cur: CustomReqType) =>
             val vs2 = gdUnequalValues2(CustomReqTypeGD, cur, vs)
             eventIfNonEmpty(vs2)(CustomReqTypeUpdate(id, _))
-          case Some(f) => Failure(s"$f must be a CustomReqType.")
-          case None    => Failure(s"$id not found")
+          case Some(f) => fail(s"$f must be a CustomReqType.")
+          case None    => fail(s"$id not found")
         }
 
       case UpdateConfigCmd.CustomReqTypeDeleteHard(id) =>
@@ -221,11 +223,11 @@ object MakeEvent {
           import ApplicableTagGD._
 
           if (newValues.containsK(Children))
-            Failure("You cannot specify ApplicableTag children")
+            fail("You cannot specify ApplicableTag children")
           else if (Parents.get(newValues).exists(_.value.keysIterator.exists(project.config.tags.tree.need(_).tag.live is Dead)))
-            Failure("You cannot specify dead parents")
+            fail("You cannot specify dead parents")
           else if (ApplicableReqTypes.get(newValues).exists(_.value.reqTypes.exists(project.config.reqTypes.live(_, Dead) is Dead)))
-            Failure("You cannot specify dead req types")
+            fail("You cannot specify dead req types")
           else {
 
             // Update values if necessary, and remove unchanged
@@ -259,9 +261,9 @@ object MakeEvent {
           import TagGroupGD._
 
           if (Children.get(newValues).exists(_.value.exists(project.config.tags.tree.need(_).tag.live is Dead)))
-            Failure("You cannot specify dead children")
+            fail("You cannot specify dead children")
           else if (Parents.get(newValues).exists(_.value.keysIterator.exists(project.config.tags.tree.need(_).tag.live is Dead)))
-            Failure("You cannot specify dead parents")
+            fail("You cannot specify dead parents")
           else {
 
             // Update values if necessary, and remove unchanged
@@ -291,7 +293,7 @@ object MakeEvent {
         if (h.okChildren ==* newLiveChildrenOrder)
           Unchanged
         else if (h.okChildrenSet !=* newLiveChildrenOrder.toSet)
-          Failure("Tag group contains different children than specified. Please try again.")
+          fail("Tag group contains different children than specified. Please try again.")
         else {
           val newChildren = h.otherChildren ++ newLiveChildrenOrder
           val values = TagGroupGD.nev(TagGroupGD.ValueForChildren(newChildren))
@@ -328,7 +330,7 @@ object MakeEvent {
           case None => makeEvent(nextCodeId.group())
           case Some(d) =>
             if (d.isActive)
-              Failure("Code in use.")
+              fail("Code in use.")
             else
               d.deadGroup match {
                 case Some(dg) => makeEvent(dg.id)
@@ -396,7 +398,7 @@ object MakeEvent {
         var r      : Option[Result]                            = None
 
         def fail(err: String): Unit =
-          r = Some(Failure(err))
+          r = Some(Failure(ErrorMsg(err)))
 
         import ReqCode._
         for (c <- cs.value.removed)
@@ -439,7 +441,7 @@ object MakeEvent {
 
       case UpdateContentCmd.RestoreContent(reqs, reqCodes) =>
         if (reqs.isEmpty && reqCodes.isEmpty)
-          Failure("No content specified.")
+          fail("No content specified.")
         else
           ContentRestore(reqs, reqCodes)
 

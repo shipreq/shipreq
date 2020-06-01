@@ -62,7 +62,7 @@ trait WebappTestUtil extends BaseTestUtil {
     es.foldLeft(p)(applyEventSuccessfully)
 
   def applyVerifiedEventSuccessfully(p: Project, e: VerifiedEvent): Project =
-    ApplyEvent.untrusted.applyVerified(Vector(e))(p).fold(sys.error, identity)
+    ApplyEvent.untrusted.applyVerified(Vector(e))(p).fold(_.throwException(), identity)
 
   def applyVerifiedEventSuccessfully(p: Project, es: VerifiedEvent*): Project =
     es.foldLeft(p)(applyVerifiedEventSuccessfully)
@@ -72,7 +72,7 @@ trait WebappTestUtil extends BaseTestUtil {
 
   def assertEventFails(p: Project, e: Event, errFrag: String = "")(implicit l: Line): Unit =
     ApplyEvent.untrusted.apply1(e)(p) match {
-      case -\/(f) => assertContainsCI(f, errFrag)
+      case -\/(f) => assertContainsCI(f.value, errFrag)
       case \/-(_) => fail(s"Failure expected but didn't occur applying $e")
     }
 

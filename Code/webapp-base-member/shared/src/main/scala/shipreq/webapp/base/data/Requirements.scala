@@ -552,10 +552,10 @@ final case class Requirements(genericReqs: GenericReqs,
     pubids(id) flatMap get
 
   def needByPubid[T <: ReqTypeId](id: PubidT[T]): ReqT[T] =
-    getReqByPubid(id) mustExistElse s"Req for $id not found."
+    getReqByPubid(id) mustExistElse ErrorMsg(s"Req for $id not found.")
 
   def reqIdByPubid[T <: ReqTypeId](id: PubidT[T]): ReqIdT[T] =
-    pubids(id) mustExistElse s"Req for $id not found."
+    pubids(id) mustExistElse ErrorMsg(s"Req for $id not found.")
 
   lazy val reqsByType: Multimap[ReqTypeId, Vector, Req] =
     reqIterator().foldLeft(UnivEq.emptyMultimap[ReqTypeId, Vector, Req])((q, r) =>

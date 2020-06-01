@@ -13,14 +13,16 @@ import shipreq.webapp.base.util.GenericData
 import shipreq.webapp.base.validation.Composite
 
 private[event] object ApplyEventLib {
-  type Error = String
 
-  val Eval = EitherState.ForTypes[Project, Error]
+  val Eval = EitherState.ForTypes[Project, ErrorMsg]
   type Eval[A] = Eval.Instance[A]
   implicit val evalUnderlyingMonad = Eval.eitherStateUnderlyingMonad
   implicit val evalMonad = Eval.eitherStateMonad
 
   type EndoFn[A] = A => A
+
+  @inline implicit def autoErrorMsgFromString(s: String): ErrorMsg =
+    ErrorMsg(s)
 
   /** Has a subject been validated or not yet? */
   sealed trait Validated extends IsoBool.WithBoolOps[Validated] {
@@ -188,7 +190,7 @@ private[event] object ApplyEventLib {
     b => fs.foldLeft(Eval.pure(b))((x, y) => x.flatMap(y))
   }
 
-  def narrowCC[A, B <: A](a: A, failure: => Error)(implicit cc: ClassTag[B], trust: Trust): Eval[B] =
+  def narrowCC[A, B <: A](a: A, failure: => ErrorMsg)(implicit cc: ClassTag[B], trust: Trust): Eval[B] =
     if (trust is Untrusted)
       cc.unapply(a) match {
         case Some(b) => Eval.pure(b)

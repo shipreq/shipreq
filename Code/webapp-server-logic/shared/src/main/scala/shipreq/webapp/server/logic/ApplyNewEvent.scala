@@ -2,7 +2,7 @@ package shipreq.webapp.server.logic
 
 import scalaz.{-\/, \/-}
 import scalaz.syntax.equal._
-import shipreq.base.util.PotentialChange
+import shipreq.base.util.{ErrorMsg, PotentialChange}
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event._
 import PotentialChange._
@@ -11,7 +11,7 @@ object ApplyNewEvent {
 
   final case class Updated(project: Project, event: ActiveEvent)
 
-  type Result = PotentialChange[String, Updated]
+  type Result = PotentialChange[ErrorMsg, Updated]
 
   def apply(e: ActiveEvent, p1: Project): Result =
     ApplyEvent.untrusted.apply1(e)(p1) match {
@@ -30,6 +30,6 @@ object ApplyNewEvent {
   def mustApply(e: ActiveEvent, p1: Project): Updated =
     apply(e, p1) match {
       case Success(a) => a
-      case x          => sys error s"Success expected. Got: $x."
+      case x          => ErrorMsg(s"Success expected. Got: $x.").throwException()
     }
 }

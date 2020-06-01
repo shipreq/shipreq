@@ -2,11 +2,12 @@ package shipreq.webapp.base.event
 
 import nyaya.prop.LogicPropExt
 import scalaz.{\/, \/-}
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{DataProp, Project}
 import ApplyEventLib._
 
 object ApplyEvent {
-  type Result = String \/ Project
+  type Result = ErrorMsg \/ Project
   type Events = IterableOnce[Event]
 
   /**
@@ -143,10 +144,10 @@ final class ApplyEvent(implicit val trust: Trust)
     }
   }
 
-  private val onError: Throwable => String =
+  private val onError: Throwable => ErrorMsg =
     e => {
       val msg = Option(e.getMessage).filter(_.nonEmpty)
-      msg getOrElse s"Error occurred: $e"
+      ErrorMsg(msg getOrElse s"Error occurred: $e")
     }
 
 }

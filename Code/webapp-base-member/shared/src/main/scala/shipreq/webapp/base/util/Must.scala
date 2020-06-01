@@ -1,5 +1,7 @@
 package shipreq.webapp.base.util
 
+import shipreq.base.util.ErrorMsg
+
 /**
  * There exist many cases in which [[shipreq.webapp.base.data.DataProp]] has verified the integrity of a
  * [[shipreq.webapp.base.data.Project]] yet we have no compiler proof that map lookups will succeed.
@@ -9,12 +11,10 @@ package shipreq.webapp.base.util
 object Must {
 
   @inline implicit class MustExtForOption[A](private val o: Option[A]) extends AnyVal {
-    @inline def mustExistElse(err: => String): A =
+    @inline def mustExistElse(err: => ErrorMsg): A =
       o getOrElse mustNotHappen(err)
   }
 
-  def mustNotHappen(err: String): Nothing =
-    throw new InvariantViolated(err)
-
-  final class InvariantViolated(msg: String) extends Exception(msg)
+  def mustNotHappen(err: ErrorMsg): Nothing =
+    err.throwException()
 }

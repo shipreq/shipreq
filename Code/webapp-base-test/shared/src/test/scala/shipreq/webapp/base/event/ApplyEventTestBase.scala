@@ -54,7 +54,7 @@ object ApplyEventTestFns {
     // Now apply the last event
     val r = apply.apply1(ev.last)(p1)
     r match {
-      case -\/(e) => assertContainsCI(e, errFrag)
+      case -\/(e) => assertContainsCI(e.value, errFrag)
       case \/-(_) => fail(s"\nFailure expected but didn't occur.\nEvents were:\n${fmtEvents(es)}")
     }
   }

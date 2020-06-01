@@ -493,7 +493,7 @@ object VectorTree extends VectorTreeLowPri {
       }
 
     final def needAt(pos: Location): Node[A] =
-      at(pos) getOrElse sys.error(s"Node not found at position ${pos.whole mkString "."}.")
+      at(pos) getOrElse ErrorMsg(s"Node not found at position ${pos.whole mkString "."}.").throwException()
 
     final def getAtLocation(pos: Location): Option[A] = {
       val it = pos.iterator
@@ -513,7 +513,7 @@ object VectorTree extends VectorTreeLowPri {
     }
 
     final def needAtLocation(pos: Location): A =
-      getAtLocation(pos) getOrElse sys.error(s"Node not found at position ${pos.whole mkString "."}.")
+      getAtLocation(pos) getOrElse ErrorMsg(s"Node not found at position ${pos.whole mkString "."}.").throwException()
 
     final def valueIterator: Iterator[A] =
       new AbstractIterator[A] {

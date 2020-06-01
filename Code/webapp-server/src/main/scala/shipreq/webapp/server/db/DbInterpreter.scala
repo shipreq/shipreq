@@ -17,6 +17,7 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.SqlHelpers._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.user._
@@ -133,7 +134,7 @@ object DbInterpreter {
         .flatMap(token => execute(token).map(_ => token))
         .inSafeTransaction
         .retry(16)
-        .map(_ getOrElse sys.error("Failed to acquire token."))
+        .map(_ getOrElse ErrorMsg("Failed to acquire token.").throwException())
 
     private final def colsRegInfo = "id,confirmation_token,confirmation_sent_at,confirmed_at"
     private final type RegInfo = (UserId, Option[VerificationToken], Instant, Option[Instant])

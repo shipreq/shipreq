@@ -31,7 +31,7 @@ class ApplyEventBM {
   private def go(ae: ApplyEvent): Project =
     ae.applyVerified(es)(pe) match {
       case \/-(p) => p
-      case -\/(e) => println(e); sys.error(e)
+      case -\/(e) => println(e); e.throwException()
     }
 
   // Speed of untrusted doesn't really matter. It only ever does one event at a time.

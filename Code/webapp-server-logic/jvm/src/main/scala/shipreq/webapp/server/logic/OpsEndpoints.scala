@@ -115,7 +115,7 @@ object OpsEndpoints extends HasLogger {
                     ResponseCmd.Json(StatusCode.OK, response.toJson)
                   }
                 case -\/(err) =>
-                  F pure ResponseCmd.Text(StatusCode.Forbidden, err)
+                  F pure ResponseCmd.Text(StatusCode.Forbidden, err.value)
               }
             case None =>
               F pure ResponseCmd.Text(StatusCode.BadRequest, "User not found")

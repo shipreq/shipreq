@@ -4,6 +4,7 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.text.PlainText
@@ -54,7 +55,7 @@ object Layout {
           index :: menu :: req :: Nil
 
         case p =>
-          val activeItem = ProjectIndex.Item.ToPage.reverse getOption p getOrElse sys.error("No breadcrumb menu item for " + p)
+          val activeItem = ProjectIndex.Item.ToPage.reverse getOption p getOrElse ErrorMsg("No breadcrumb menu item for " + p).throwException()
           val menuItems  = ProjectIndex.dropdownItems(Some(activeItem), rc)
           val menu       = Breadcrumb.Item.DropDown(activeItem.iconAndTitle, menuItems)
           index :: menu :: Nil

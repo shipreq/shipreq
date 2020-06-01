@@ -702,7 +702,7 @@ object ProjectSpaLogic extends StrictLogging {
                 F pure \/-(Result.Ok(VerifiedEvent.Seq.empty))
 
               case PotentialChange.Failure(e) =>
-                F pure \/-(Result.Reject(ErrorMsg(e)))
+                F pure \/-(Result.Reject(e))
             }
 
           case WriteRedis2(newProject, newEvent) =>

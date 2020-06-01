@@ -1126,7 +1126,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
   def eventGenOfTypes(types: NonEmptySet[EventName]): Gen[Event] = {
     val gens = possibleEventGensWithNames.iterator.filter(x => types.contains(x._1)).map(_._2).filterDefined.toVector
     if (gens.isEmpty)
-      sys.error(s"No event gens possible for types: ${types.whole.map(_.value).mkString(", ")}")
+      ErrorMsg(s"No event gens possible for types: ${types.whole.map(_.value).mkString(", ")}").throwException()
     else
       Gen.chooseGen_!(gens)
   }
@@ -1144,7 +1144,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
     BindRec[Gen].tailrecM((s: S) =>
       eventGen.map { e =>
         var r = ApplyEvent.untrusted.apply1(e)(p)
-        r foreach { p2 => if (p === p2) r = -\/("No change") }
+        r foreach { p2 => if (p === p2) r = -\/(ErrorMsg("No change")) }
         val s2 = observe(s, e, r)
         r.bimap(_ => s2, p2 => ((s2, p2), e))
       }

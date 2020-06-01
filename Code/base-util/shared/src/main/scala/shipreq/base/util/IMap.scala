@@ -49,12 +49,12 @@ final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapB
     m.get(k)
 
   def need(k: K): V =
-    get(k) getOrElse sys.error(badKeyMsg(k))
+    get(k) getOrElse badKeyMsg(k).throwException()
 
-  def attempt(k: K): String \/ V =
+  def attempt(k: K): ErrorMsg \/ V =
     toRight(get(k))(badKeyMsg(k))
 
-  private def badKeyMsg(k: K): String = {
+  private def badKeyMsg(k: K): ErrorMsg = {
     val keyArray = MutableArray(keysIterator.map(_.toString)).sort
     val max = 10
     val keyDesc =
@@ -62,7 +62,7 @@ final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapB
         keyArray.iterator.take(max).mkString("{", ", ", ", ... }")
       else
         keyArray.iterator.mkString("{", ", ", "}")
-    s"Value not found for $k.\nKeys = $keyDesc"
+    ErrorMsg(s"Value not found for $k.\nKeys = $keyDesc")
   }
 
   def modAll(f: V => V): This =

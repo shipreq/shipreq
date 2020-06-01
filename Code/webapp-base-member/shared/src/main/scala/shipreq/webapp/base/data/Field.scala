@@ -595,15 +595,15 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
 
   def custom[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): D = {
     val f = customFields.need(id)
-    d.unapplyData(f) mustExistElse s"$id associated with wrong type: $f"
+    d.unapplyData(f) mustExistElse ErrorMsg(s"$id associated with wrong type: $f")
   }
 
-  def customAttempt[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): String \/ D =
+  def customAttempt[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): ErrorMsg \/ D =
     customFields.get(id) match {
       case Some(f) =>
-        toRight(d unapplyData f)(s"$id associated with wrong type: $f")
+        toRight(d unapplyData f)(ErrorMsg(s"$id associated with wrong type: $f"))
       case None =>
-        -\/(s"$id not found.")
+        -\/(ErrorMsg(s"$id not found."))
     }
 
   private lazy val splitFields = {

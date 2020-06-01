@@ -270,7 +270,7 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     trie.lookup(code)
 
   def need(code: Value): Data =
-    get(code) mustExistElse s"No node at reqcode ${code.whole mkString "."}."
+    get(code) mustExistElse ErrorMsg(s"No node at reqcode ${code.whole mkString "."}.")
 
   def apReqCodesById: Map[ApReqCodeId, Value] =
     manifest.apReqCodesById
@@ -303,13 +303,13 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     }
 
   def reqCode(id: ReqCodeId): Value =
-    getReqCode(id) mustExistElse s"No req code associated with $id."
+    getReqCode(id) mustExistElse ErrorMsg(s"No req code associated with $id.")
 
   def getById(id: ReqCodeId): Option[Data] =
     getReqCode(id).flatMap(get)
 
   def needById(id: ReqCodeId): Data =
-    getById(id) mustExistElse s"No reqcode with id #${id.value}."
+    getById(id) mustExistElse ErrorMsg(s"No reqcode with id #${id.value}.")
 
   def liveGroup(id: ReqCodeGroupId): Option[LiveCodeGroup] =
     scan.liveGroupsById.get(id)
