@@ -15,7 +15,6 @@ import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.{Colours, GraphDir, LabelFormat}
 import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.client.ww.GraphViz.DOT
-import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object Graphs {
 
@@ -28,6 +27,36 @@ object Graphs {
   }
 
   private case class DirectAndIndirect[D, I](direct: D, indirect: I)
+
+  sealed trait Shape {
+    def declareShape: String
+    def style_=(s: String): String
+
+    val styleFilled =
+      style_=("filled")
+
+    val styleMultiColour =
+      style_=(this match {
+        case Shape.Ellipse => "wedged"
+        case Shape.Box     => "striped"
+      })
+  }
+
+  object Shape {
+    case object Ellipse extends Shape {
+      override def declareShape: String =
+        "shape=ellipse"
+      override def style_=(s: String): String =
+        "style=" + s
+    }
+
+    case object Box extends Shape {
+      override def declareShape: String =
+        "shape=box"
+      override def style_=(s: String): String =
+        s"""style="rounded,$s""""
+    }
+  }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
@@ -224,8 +253,8 @@ object Graphs {
   private def deadLink()(implicit b: GraphViz.Builder): Unit =
     b append """[color="#bbbbbb" style=dashed]"""
 
-  private def styleSubsequentNodesAsImplications()(implicit b: GraphViz.Builder): Unit =
-    b append """node[style=filled color="#333333"]"""
+  private def styleSubsequentNodesAsImplications(shape: Shape)(implicit b: GraphViz.Builder): Unit =
+    b append s"""node[${shape.styleFilled} ${shape.declareShape} color="#333333"]"""
 
   private def deadNodeStyle()(implicit b: GraphViz.Builder): Unit =
     b append """[fillcolor="#dddddd" color="#777777" fontcolor="#666666"]"""
@@ -314,7 +343,7 @@ object Graphs {
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       b.rankdir(GraphDir.LeftToRight)
-      styleSubsequentNodesAsImplications()
+      styleSubsequentNodesAsImplications(Shape.Ellipse)
 
       // Focus
       b append Focus
@@ -366,17 +395,16 @@ object Graphs {
 
       import impHelpers._
 
-      val drawBoxes =
+      val shape: Shape =
         config.labelFormat match {
-          case LabelFormat.Pubid         => false
-          case LabelFormat.PubidAndTitle => true
+          case LabelFormat.Pubid         => Shape.Ellipse
+          case LabelFormat.PubidAndTitle => Shape.Box
         }
-
-      val multiColourStyle =
-        if (drawBoxes) "striped" else "wedged"
+      import shape._
 
       val label: ReqId => String =
         config.labelFormat match {
+
           case LabelFormat.Pubid =>
             pubid
 
@@ -470,11 +498,11 @@ object Graphs {
                     if (colours.length == 1) {
                       // style=wedged requires at least 2 colours
                       val c = colours(0)
-                      s"""[style=filled fillcolor="${c.`#rrggbb`}" fontcolor="${c.foreground.`#rrggbb`}"]"""
+                      s"""[$styleFilled fillcolor="${c.`#rrggbb`}" fontcolor="${c.foreground.`#rrggbb`}"]"""
                     } else {
                       val fill = colours.iterator.map(_.`#rrggbb`).mkString(":")
                       val font = Colour.chooseForegroundOverMultipleBackgroundColours(colours)
-                      s"""[style=$multiColourStyle fillcolor="$fill" fontcolor="${font.`#rrggbb`}"]"""
+                      s"""[$styleMultiColour fillcolor="$fill" fontcolor="${font.`#rrggbb`}"]"""
                     }
                   b.append(style)
                 case Dead =>
@@ -513,10 +541,8 @@ object Graphs {
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       b.rankdir(config.graphDir)
-      styleSubsequentNodesAsImplications()
+      styleSubsequentNodesAsImplications(shape)
       b append """edge[color="#333333"]"""
-      if (drawBoxes)
-        b append "node[shape=box]"
 
       declareNodes()
 
