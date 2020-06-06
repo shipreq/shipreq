@@ -370,7 +370,7 @@ object Graphs {
         id => {
           val p = pubid(id)
           val t = plainText.reqTitleById(id)
-          WrapTextToOval(s"$p\n$t", CharWidths(' ') * 40)
+          WrapText(s"$p:\n$t", CharWidths('m') * 26)
         }
 
       def declareNodeLabel(id: ReqId): Unit =
