@@ -84,14 +84,6 @@ Phase 3A
   * Reduce biz metrics to 5m
   * Wall metrics updating every 10 min only
 
-* Add to imp graph page:
-  * Saved views
-  * Filter
-  * Filter by chain size (eg. 0=all, 1 removes all nodes without imp, 2 removes A-B but not A-B-C)
-  * Content summary
-  * Configure display (eg. id + title, just title, add tags?)
-  * Graph direction: TD / LR
-
 * Two paths...
 
   1. B2C/OSS
@@ -142,7 +134,14 @@ v2.1
 
 * any more cases of Instant.now() being used with ProjectMetaData?
 * add to `GraphsTest`
-* ColourByTag -- need to handle tags being deleted
+* ColourByTag -- need to handle tags being deleted in DataProp and/or ApplyEvent
 * change all multi-ver binary codecs to use `writeVersion` and `readByVersion`
 * add new protocol safety tests after ImpGraphConfig is finished
 * show a legend, filter out unused colours
+* use markup-free ProjectText for graph labels
+* revise hover text for graphs
+* style ImpGraphPage properly (i.e. the controls)
+* (?) Rename ImpGraphPage to "Req Graph"
+* (?) Filter by chain size (eg. 0=all, 1 removes all nodes without imp, 2 removes A-B but not A-B-C)
+  (?) or maybe add `isImplied` & `implies` (or similar) to FilterAst
+* (?) allow users to control wrapWidth (currently hardcoded to 26em)
