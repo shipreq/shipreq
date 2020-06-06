@@ -366,6 +366,15 @@ object Graphs {
 
       import impHelpers._
 
+      val drawBoxes =
+        config.labelFormat match {
+          case LabelFormat.Pubid         => false
+          case LabelFormat.PubidAndTitle => true
+        }
+
+      val multiColourStyle =
+        if (drawBoxes) "striped" else "wedged"
+
       val label: ReqId => String =
         config.labelFormat match {
           case LabelFormat.Pubid =>
@@ -465,7 +474,7 @@ object Graphs {
                     } else {
                       val fill = colours.iterator.map(_.`#rrggbb`).mkString(":")
                       val font = Colour.chooseForegroundOverMultipleBackgroundColours(colours)
-                      s"""[style=wedged fillcolor="$fill" fontcolor="${font.`#rrggbb`}"]"""
+                      s"""[style=$multiColourStyle fillcolor="$fill" fontcolor="${font.`#rrggbb`}"]"""
                     }
                   b.append(style)
                 case Dead =>
@@ -506,6 +515,8 @@ object Graphs {
       b.rankdir(config.graphDir)
       styleSubsequentNodesAsImplications()
       b append """edge[color="#333333"]"""
+      if (drawBoxes)
+        b append "node[shape=box]"
 
       declareNodes()
 
