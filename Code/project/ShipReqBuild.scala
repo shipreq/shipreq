@@ -126,7 +126,7 @@ object ShipReqBuild {
       import org.scalajs.sbtplugin._
 
       _.enablePlugins(ScalaJSPlugin)
-        .dependsOn(webappClientProject)
+        .dependsOn(webappClientProject, webappClientWw)
         .depsForJs(scalajsBenchmark)
         .configure(
           Common.jsSettings(NoTests))

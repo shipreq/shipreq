@@ -21,31 +21,36 @@ object GeneticEvolution {
               goal   : Double,
               config : Config): Chromosome = {
 
-      val isSmall = bits <= 16
-      val domain = (1 << bits) - 1
+      def isSmall = bits <= 16 // so that domain doesn't overflow
+      def domain = (1 << bits) - 1
 
       if (bits <= 0)
         MutableLargeBitSet.empty
 
-      else if (isSmall && domain <= config.popSize) {
-        val c = MutableLargeBitSet(bits)
-        var i = domain
-        var bestFitness = Double.PositiveInfinity
-        var bestValue = -1
-        while (i > 0) {
-          i -= 1
-          c.data(0) = i
-          val f = fitness(c)
-          if (f < bestFitness) {
-            bestFitness = f
-            bestValue = i
-          }
-        }
-        c.data(0) = bestValue
-        c
+      else if (config.allowBrute && isSmall && domain <= config.popSize)
+        bruteForce(bits, fitness)
 
-      } else
+      else
         solveViaEvolution(bits, fitness, goal, config)
+    }
+
+    private[algorithm] def bruteForce(bits: Int, fitness: Chromosome => Double): Chromosome = {
+      val domain      = (1 << bits) - 1
+      val c           = MutableLargeBitSet(bits)
+      var bestFitness = Double.PositiveInfinity
+      var bestValue   = -1
+      var i           = domain
+      while (i > 0) {
+        i -= 1
+        c.data(0) = i
+        val f = fitness(c)
+        if (f < bestFitness) {
+          bestFitness = f
+          bestValue = i
+        }
+      }
+      c.data(0) = bestValue
+      c
     }
 
     private[algorithm] def solveViaEvolution(bits   : Int,
@@ -226,7 +231,8 @@ object GeneticEvolution {
     final case class Config(popSize     : Int,
                             eliteSize   : Int,
                             maxGens     : Int,
-                            mutationRate: Double)
+                            mutationRate: Double,
+                            allowBrute  : Boolean)
 
     private[algorithm] final class Fitness {
       var popIdx : Int    = _

@@ -28,6 +28,7 @@ object GraphViz {
   private val titlesAndComments = "(?:<title>[^<>]*?</title>|<!--[^\u0000]*?-->)".r
 
   def apply(dot: DOT): AsyncCallback[ErrorMsg \/ Svg] = {
+    println(dot.content)
     val main: AsyncCallback[Svg] =
       for {
         svg <- AsyncCallback.fromJsPromise(instance(dot.content))

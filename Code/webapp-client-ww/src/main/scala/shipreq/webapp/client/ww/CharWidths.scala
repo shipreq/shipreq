@@ -95,4 +95,16 @@ object CharWidths {
       val block = (c - 1024) >> 10
       widths(block + 98)
     }
+
+  val string: String => Double =
+    s => {
+      var w = 0.0
+      var i = s.length
+      while (i > 0) {
+        i -= 1
+        val c = s.charAt(i)
+        w += apply(c)
+      }
+      w
+    }
 }

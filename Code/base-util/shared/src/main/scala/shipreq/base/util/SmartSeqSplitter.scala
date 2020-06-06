@@ -130,9 +130,34 @@ object SmartSeqSplitter {
         ovalWH(data, getLineWidth, lineHeight, ref)
         import ref._
 
-        var idealWidthDist = (idealWidth - w).abs
-        idealWidthDist *= idealWidthDist
-        val g = idealWidthDist * area()
+//        var idealWidthDist = (idealWidth - w).abs
+//        idealWidthDist *= idealWidthDist
+//        val g = idealWidthDist * area()
+
+        val overWidth =
+          if (w > idealWidth)
+            Math.pow(w - idealWidth, 2)
+          else
+            1.0
+
+        val orientation =
+          if (h > w)
+            1 + (h - w) / h
+          else
+            1.0
+
+//        val g = overWidth * orientation * area()
+//        val g = orientation * area()
+
+        val idealWH = 6.0
+        var idealWHDist = (idealWH - w/h).abs
+//        idealWHDist *= idealWHDist
+        val g = idealWHDist * area()
+
+
+
+        // println(s"${draw(data.map(_.map(_.toString)))} g=$g, w=$w, h=$h, a=${area()}, orientation=$orientation, overWidth=$overWidth\n")
+
         g
       }
 

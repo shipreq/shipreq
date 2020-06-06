@@ -32,11 +32,10 @@ object SmartSeqSplitterTest extends TestSuite {
 
       val input = ("* " * 32).trim
 
-
       // IDA* doesn't work cos I don't know how to define an "acceptable" goal.
       // Where as with GA you can just define perfection, let it run for a while and take its best result.
 
-      "genetic" - println(run(input)(SmartSeqSplitter.genetic[String](_ => Config(128, 64, 100, 0.01))))
+      "genetic" - println(run(input)(SmartSeqSplitter.genetic[String](_ => Config(128, 64, 100, 0.05, true))))
 
       "ovalWHRatio" - {
         def test(str: String, expected: Double)(implicit l: Line): Unit = {

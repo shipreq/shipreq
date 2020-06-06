@@ -6,7 +6,7 @@ import utest._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.{ProjectText, Text}
+import shipreq.webapp.base.text.{PlainText, ProjectText, Text}
 import Event._
 import GraphViz.DOT
 import WebappTestUtil._
@@ -40,6 +40,7 @@ object GraphsTest extends TestSuite {
   private def implicationAll(fd: FilterDead, p: Project): DOT =
     Graphs.implicationAll(
       project    = p,
+      plainText  = PlainText.ForProject.noCtx(p),
       filterDead = fd,
       scope      = ImpGraphConfig.buildReqWhitelist(fd, None, p),
       config     = ImpGraphConfig.default,

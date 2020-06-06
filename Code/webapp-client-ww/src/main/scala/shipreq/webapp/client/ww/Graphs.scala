@@ -350,6 +350,7 @@ object Graphs {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   def implicationAll(project   : Project,
+                     plainText : PlainText.ForProject.NoCtx,
                      filterDead: FilterDead,
                      scope     : Option[Set[ReqId]],
                      config    : ImpGraphConfig): DOT =
@@ -364,6 +365,16 @@ object Graphs {
       val reqFilter      = reqIdFilter.contramap[Req](_.id)
 
       import impHelpers._
+
+      val label: ReqId => String =
+        id => {
+          val p = pubid(id)
+          val t = plainText.reqTitleById(id)
+          WrapTextToOval(s"$p\n$t", CharWidths(' ') * 40)
+        }
+
+      def declareNodeLabel(id: ReqId): Unit =
+        b.labelAttr(label(id))
 
       def declareNodes: () => Unit =
         config.colours match {
@@ -401,7 +412,7 @@ object Graphs {
 
             def declareNode(id: ReqId): Unit = {
               node(id)
-              b.labelAttr(pubid(id))
+              declareNodeLabel(id)
               deadNodeStyleIfDead(live(id))
             }
 
@@ -436,7 +447,7 @@ object Graphs {
 
             def declareNode(id: ReqId): Unit = {
               node(id)
-              b.labelAttr(pubid(id))
+              declareNodeLabel(id)
               live(id) match {
                 case Live =>
                   val colours = coloursByReqId.get(id).filter(_.nonEmpty).getOrElse(ArraySeq(Colour.tagDefault))

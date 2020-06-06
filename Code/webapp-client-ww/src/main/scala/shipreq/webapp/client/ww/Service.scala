@@ -33,9 +33,10 @@ object Service extends Server.Service[WebWorkerCmd] {
 
       case GraphAllImplications(ord, filterDead, scope, config) =>
         for {
-          _ <- state.await(ord)
-          p <- state.acProject
-          x <- Graphs.implicationAll(p, filterDead, scope, config).toSvg
+          _  <- state.await(ord)
+          p  <- state.acProject
+          pt <- state.acPlainText
+          x  <- Graphs.implicationAll(p, pt, filterDead, scope, config).toSvg
         } yield x
 
     }

@@ -149,6 +149,7 @@ object GeneticEvolutionTest extends TestSuite {
         eliteSize    = 64,
         maxGens      = 10000,
         mutationRate = .01,
+        allowBrute   = true,
       )
       val result = run(bits, goal, config)
       assertChromosoneEq(result, goal)

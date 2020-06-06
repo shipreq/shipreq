@@ -9,7 +9,7 @@ import japgolly.microlibs.testutil.TestUtil._
 
 abstract class TextSearchTest(search: Array[Char] => Array[Char] => Boolean) extends TestSuite {
 
-  private final case class Input(needle: String, haystack: String)
+  private case class Input(needle: String, haystack: String)
 
   private implicit def dontNormalise(s: String): Array[Char] = s.toCharArray
 

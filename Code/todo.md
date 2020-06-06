@@ -145,3 +145,4 @@ v2.1
 * ColourByTag -- need to handle tags being deleted
 * change all multi-ver binary codecs to use `writeVersion` and `readByVersion`
 * add new protocol safety tests after ImpGraphConfig is finished
+* show a legend, filter out unused colours
