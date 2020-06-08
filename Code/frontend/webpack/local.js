@@ -38,8 +38,17 @@ const config = {
 
   context: Path.resolve(__dirname, '..'),
 
-  resolve: { modules: [NodeModules] },
-  resolveLoader: { modules: [NodeModules] },
+  resolve: {
+    modules: [
+      NodeModules,
+      'node_modules',
+    ],
+  },
+  resolveLoader: {
+    modules: [
+      NodeModules,
+    ],
+  },
 
   mode: 'production',
 

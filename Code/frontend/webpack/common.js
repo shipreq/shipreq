@@ -23,8 +23,17 @@ const config = ({ mode }) => ({
 
   context: Path.resolve(__dirname, '..'),
 
-  resolve: { modules: [NodeModules] },
-  resolveLoader: { modules: [NodeModules] },
+  resolve: {
+    modules: [
+      NodeModules,
+      'node_modules',
+    ],
+  },
+  resolveLoader: {
+    modules: [
+      NodeModules,
+    ],
+  },
 
   module: {
     rules: [
