@@ -4,30 +4,38 @@ import japgolly.microlibs.nonempty.NonEmptySet
 import sourcecode.Line
 import utest._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.event._
+import shipreq.webapp.base.filter.CompiledFilter
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{PlainText, ProjectText, Text}
 import Event._
 import GraphViz.DOT
 import WebappTestUtil._
-import shipreq.webapp.base.data.savedview.ImpGraphConfig
 
 object GraphsTest extends TestSuite {
 
-  val _normalise = "([\\]{};])".r
+  val _normalise = raw"""([\]{};])""".r
 
   def normaliseDOT(d: DOT): String =
-    _normalise.replaceAllIn(d.content, "$1\n").replace("]\n[", " ")
+    _normalise.replaceAllIn(d.content, "$1\n")
+      .replace("]\n[", " ")
+      .replace("][", " ")
 
   def assertDOT(actual: DOT, expect: DOT)(implicit l: Line): Unit = {
     val expect2 = expect.content
       .trim
-      .replaceAll("\\s*//[^\r\n]+", "")
+      .replaceAll("\\s*(?:<!:)//[^\r\n]+", "")
       .replaceAll("\n *", "")
       .replaceAll("(?:GenericReqId|UseCaseId)\\((\\d+)\\)", "$1")
     val e = normaliseDOT(DOT(expect2))
     val a = normaliseDOT(actual)
-    assertMultiline(actual = a, expect = e)
+    if (a != e) {
+      println()
+      println(actual.content)
+      println()
+      assertMultiline(actual = a, expect = e)
+    }
   }
 
   def deleteReqs(id: ReqId*) =
@@ -36,13 +44,16 @@ object GraphsTest extends TestSuite {
   lazy val SIG_deadMF4: Project =
     applyEventsSuccessfully(SampleImplicationGraph.project, deleteReqs(SampleImplicationGraph.mf4))
 
-  private def implicationAll(fd: FilterDead, p: Project): DOT =
+  private def implicationAll(fd: FilterDead,
+                             p: Project,
+                             filter: CompiledFilter = null,
+                             config: ImpGraphConfig = ImpGraphConfig.default): DOT =
     Graphs.implicationAll(
       project    = p,
       plainText  = PlainText.ForProject.noCtx(p),
       filterDead = fd,
-      scope      = ImpGraphConfig.buildReqWhitelist(fd, None, p),
-      config     = ImpGraphConfig.default,
+      scope      = ImpGraphConfig.buildReqWhitelist(fd, Option(filter), p),
+      config     = config,
     )
 
   override def tests = Tests {
@@ -378,6 +389,99 @@ object GraphsTest extends TestSuite {
             |}
           """.stripMargin)
         assertDOT(actual, expect)
+      }
+
+      "v1.1" - {
+
+        "wedged" - {
+          import SampleProject8._
+          import SampleProject8.Values._
+          import ImpGraphConfig._
+
+          val fd = HideDead
+          val filter = needFilter("-MF-{10-27}", fd)
+
+          val cfg = ImpGraphConfig(
+            GraphDir.LeftToRight,
+            LabelFormat.Pubid,
+            Colours.ByTag(priTG),
+          )
+          val actual = implicationAll(fd, project, filter, cfg)
+          val expect = DOT(
+            raw"""
+                 |digraph G{
+                 |bgcolor=transparent;
+                 |rankdir=LR;
+                 |node[style=filled shape=ellipse color="#222222"]edge[color="#222222"]
+                 |
+                 |1401[id="BR-1" label="BR-1" style=filled fillcolor="#123456" fontcolor="#ffffff"]
+                 |1402[id="BR-2" label="BR-2" style=wedged fillcolor="#ff0000:#123456" fontcolor="#ffffff"]
+                 |1403[id="BR-3" label="BR-3" style=filled fillcolor="#123456" fontcolor="#ffffff"]
+                 |1001[id="FR-1" label="FR-1" style=filled fillcolor="#0076f5" fontcolor="#ffffff"]
+                 |1002[id="FR-2" label="FR-2" style=filled fillcolor="#0076f5" fontcolor="#ffffff"]
+                 |1101[id="MF-1" label="MF-1" style=filled fillcolor="#ff0000" fontcolor="#ffffff"]
+                 |1102[id="MF-2" label="MF-2" style=filled fillcolor="#123456" fontcolor="#ffffff"]
+                 |1103[id="MF-3" label="MF-3" style=filled fillcolor="#ff0000" fontcolor="#ffffff"]
+                 |1104[id="MF-4" label="MF-4" style=filled fillcolor="#123456" fontcolor="#ffffff"]
+                 |1105[id="MF-5" label="MF-5" style=filled fillcolor="#ff0000" fontcolor="#ffffff"]
+                 |1106[id="MF-6" label="MF-6" style=filled fillcolor="#123456" fontcolor="#ffffff"]
+                 |1107[id="MF-7" label="MF-7" style=filled fillcolor="#ff0000" fontcolor="#ffffff"]
+                 |1108[id="MF-8" label="MF-8" style=filled fillcolor="#123456" fontcolor="#ffffff"]
+                 |1109[id="MF-9" label="MF-9" style=filled fillcolor="#ff0000" fontcolor="#ffffff"]
+                 |1203[id="UC-1" label="UC-1" style=filled fillcolor="#0076f5" fontcolor="#ffffff"]
+                 |1204[id="UC-2" label="UC-2" style=filled fillcolor="#0076f5" fontcolor="#ffffff"]
+                 |
+                 |1001->1002;
+                 |1101->1002;
+                 |}
+          """.stripMargin)
+          assertDOT(actual, expect)
+        }
+
+        "striped" - {
+          import SampleProject8._
+          import SampleProject8.Values._
+          import ImpGraphConfig._
+
+          val fd = HideDead
+          val filter = needFilter("-MF-{10-27}", fd)
+
+          val cfg = ImpGraphConfig(
+            GraphDir.LeftToRight,
+            LabelFormat.PubidAndTitle,
+            Colours.ByTag(priTG),
+          )
+          val actual = implicationAll(fd, project, filter, cfg)
+          val expect = DOT(
+            raw"""
+                 |digraph G{
+                 |bgcolor=transparent;
+                 |rankdir=LR;
+                 |node[style="rounded,filled" shape=box color="#222222"]edge[color="#222222"]
+                 |
+                 |1401[id="BR-1" label="BR-1\nMust make moneh" style="rounded,filled" fillcolor="#123456" fontcolor="#ffffff"]
+                 |1402[id="BR-2" label="BR-2\nMust make moar moneh" style="rounded,striped" fillcolor="#ff0000:#123456" fontcolor="#ffffff"]
+                 |1403[id="BR-3" label="BR-3\nCEO owns islands!" style="rounded,filled" fillcolor="#123456" fontcolor="#ffffff"]
+                 |1001[id="FR-1" label="FR-1\njapgolly@gmail.com is on https://github.com cos of\n[MF-6]\n#TODO<tex>c = \\pm\\sqrt{a^2 + b^2}</tex>"][style="rounded,filled" fillcolor="#0076f5" fontcolor="#ffffff"]
+                 |1002[id="FR-2" label="FR-2\n#TBD{ Pending\n[MF-26]\n}.\n[MF-28]\nis dead."][style="rounded,filled" fillcolor="#0076f5" fontcolor="#ffffff"]
+                 |1101[id="MF-1" label="MF-1\nUse Case Editor"][style="rounded,filled" fillcolor="#ff0000" fontcolor="#ffffff"]
+                 |1102[id="MF-2" label="MF-2\nAnonymous Share"][style="rounded,filled" fillcolor="#123456" fontcolor="#ffffff"]
+                 |1103[id="MF-3" label="MF-3\nExport (PDF, XLS)"][style="rounded,filled" fillcolor="#ff0000" fontcolor="#ffffff"]
+                 |1104[id="MF-4" label="MF-4\nTemplates"][style="rounded,filled" fillcolor="#123456" fontcolor="#ffffff"]
+                 |1105[id="MF-5" label="MF-5\nField Customisation"][style="rounded,filled" fillcolor="#ff0000" fontcolor="#ffffff"]
+                 |1106[id="MF-6" label="MF-6\nIncompletions"][style="rounded,filled" fillcolor="#123456" fontcolor="#ffffff"]
+                 |1107[id="MF-7" label="MF-7\nOrganisation"][style="rounded,filled" fillcolor="#ff0000" fontcolor="#ffffff"]
+                 |1108[id="MF-8" label="MF-8\nHistory/Audit"][style="rounded,filled" fillcolor="#123456" fontcolor="#ffffff"]
+                 |1109[id="MF-9" label="MF-9\nCollaboration: authoring"][style="rounded,filled" fillcolor="#ff0000" fontcolor="#ffffff"]
+                 |1203[id="UC-1" label="UC-1\n\n[UC-1.0.X.1]\nand\n[UC-1.E.X.1]\nare dead.\n[UC-1.0.2.a]\nand\n[UC-1.E.1]\nare not."][style="rounded,filled" fillcolor="#0076f5" fontcolor="#ffffff"]
+                 |1204[id="UC-2" label="UC-2\nEmpty for now"][style="rounded,filled" fillcolor="#0076f5" fontcolor="#ffffff"]
+                 |
+                 |1001->1002;
+                 |1101->1002;
+                 |}
+          """.stripMargin)
+          assertDOT(actual, expect)
+        }
       }
 
       "impRequired" - {

@@ -520,7 +520,6 @@ object Graphs {
               }
             }
 
-            b.append(s"""node[color="$blackish"]""")
             for (reqId <- reqIdFilter.iterator(reqIdsSortedByPubId.iterator)) {
               declareNode(reqId)
               coloursByReqId

@@ -132,7 +132,6 @@ v2.1
 * upgrade graal (and re-run BMs)
 * SJS 1.0 (and re-run BMs)
 
-* add to `GraphsTest`
 * ColourByTag -- need to handle tags being deleted in DataProp and/or ApplyEvent
 * change all multi-ver binary codecs to use `writeVersion` and `readByVersion`
 
