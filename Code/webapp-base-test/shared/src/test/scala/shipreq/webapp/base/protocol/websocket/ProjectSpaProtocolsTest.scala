@@ -361,12 +361,15 @@ object ProjectSpaProtocolsTest extends TestSuite {
             assertRequest(bin, expect)
           }
           "create" - {
-            val bin    = BinaryData.fromHex("5945B41D01000907630564656C6D65090407060174000403010174000303000169000701780001000000000138295653")
+            val bin    = BinaryData.fromHex("5945B41D01010907630564656C6D65D5F5B607010904070601740004030101740003030001690007017800010000000001024C010100819C38295653")
             val expect = (ReqId(9), UpdateSavedViews.AndReq(Create(Name("delme"), View(
               NonEmptyVector(Column.Pubid, Column.Title, Column.OtherTags, Column.CustomField(CustomField.Tag.Id(4)),
                 Column.Implications(Forwards), Column.CustomField(CustomField.Tag.Id(3)), Column.Implications(Backwards),
                 Column.CustomField(CustomField.Implication.Id(7)), Column.CustomField(CustomField.Text.Id(1))),
-              SortCriteria(Vector(), SortCriterion.Conclusive(Column.Pubid, Asc)), HideDead, None, None))))
+              SortCriteria(Vector(), SortCriterion.Conclusive(Column.Pubid, Asc)), HideDead, None,
+              Some(ImpGraphConfig(ImpGraphConfig.GraphDir.LeftToRight, ImpGraphConfig.LabelFormat.PubidAndTitle,
+                ImpGraphConfig.Colours.ByTag(TagGroupId(412)
+                )))))))
             assertRequest(bin, expect)
           }
         }

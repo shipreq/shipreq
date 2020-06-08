@@ -135,7 +135,6 @@ v2.1
 * add to `GraphsTest`
 * ColourByTag -- need to handle tags being deleted in DataProp and/or ApplyEvent
 * change all multi-ver binary codecs to use `writeVersion` and `readByVersion`
-* add new protocol safety tests after ImpGraphConfig is finished
 
 ### Rejected (at least for now)
 * (?) show a legend, filter out unused colours - maybe not needed anymore cos of tooltip

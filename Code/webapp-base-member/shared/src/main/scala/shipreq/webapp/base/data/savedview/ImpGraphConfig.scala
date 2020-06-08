@@ -7,10 +7,9 @@ import shipreq.base.util.OptionalBoolFn
 import shipreq.webapp.base.data.{FilterDead, Project, Req, ReqId, TagGroupId}
 import shipreq.webapp.base.filter.CompiledFilter
 
-final case class ImpGraphConfig(graphDir      : GraphDir,
-                                labelFormat   : LabelFormat,
-                              //minChainLength: Int,
-                                colours       : Colours)
+final case class ImpGraphConfig(graphDir   : GraphDir,
+                                labelFormat: LabelFormat,
+                                colours    : Colours)
 
 object ImpGraphConfig {
 
