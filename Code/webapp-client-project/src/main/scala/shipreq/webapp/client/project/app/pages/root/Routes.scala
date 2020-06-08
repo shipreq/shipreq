@@ -29,7 +29,7 @@ object Routes {
     case object CfgIssues   extends HasStaticTitle("Issue Config")
     case object CfgReqTypes extends HasStaticTitle("Req Type Config")
     case object CfgTags     extends HasStaticTitle("Tag Config")
-    case object ImpGraph    extends Page
+    case object ReqGraph    extends Page
     case object Issues      extends Page
     case object Index       extends Page
     case object ReqTable    extends Page
@@ -51,7 +51,7 @@ object Routes {
       case ReqTable     => "ReqTable" :: Nil
       case ReqDetail(p) => PlainText.pubid(p) :: Nil
       case Issues       => "Issues" :: Nil
-      case ImpGraph     => ProjectIndex.Item.ImpGraph.title :: Nil
+      case ReqGraph     => ProjectIndex.Item.ReqGraph.title :: Nil
       case CfgFields    => "Config " + ProjectIndex.Item.CfgFields  .title :: Nil
       case CfgIssues    => "Config " + ProjectIndex.Item.CfgIssues  .title :: Nil
       case CfgReqTypes  => "Config " + ProjectIndex.Item.CfgReqTypes.title :: Nil
@@ -63,7 +63,7 @@ object Routes {
       CfgIssues,
       CfgReqTypes,
       CfgTags,
-      ImpGraph,
+      ReqGraph,
       Index,
       ReqDetail(ExternalPubid(ReqType.Mnemonic("A"), ReqTypePos(1))),
       ReqTable)
@@ -93,7 +93,7 @@ object Routes {
       ( staticPage(dsl.root       , Page.Index      )
       | staticPage(reqTablePath   , Page.ReqTable   )
       | staticPage("#issues"      , Page.Issues     )
-      | staticPage("#impgraph"    , Page.ImpGraph   )
+      | staticPage("#reqgraph"    , Page.ReqGraph   )
       | staticPage("#cfg/fields"  , Page.CfgFields  )
       | staticPage("#cfg/issues"  , Page.CfgIssues  )
       | staticPage("#cfg/reqtypes", Page.CfgReqTypes)
@@ -113,7 +113,7 @@ object Routes {
         case Page.ReqTable     => root / "reqTable"
         case Page.ReqDetail(_) => root / "reqDetail"
         case Page.Issues       => root / "issues"
-        case Page.ImpGraph     => root / "impGraph"
+        case Page.ReqGraph     => root / "impGraph"
         case Page.CfgFields    => root / "cfg/fields"
         case Page.CfgIssues    => root / "cfg/issues"
         case Page.CfgReqTypes  => root / "cfg/reqTypes"

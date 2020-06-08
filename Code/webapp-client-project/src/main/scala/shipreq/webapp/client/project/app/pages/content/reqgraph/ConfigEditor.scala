@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.pages.content.impgraph
+package shipreq.webapp.client.project.app.pages.content.reqgraph
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react.extra._
@@ -14,9 +14,9 @@ import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.widgets.Dropdown
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.ui.semantic.Icon
-import shipreq.webapp.client.project.app.Style.{impgraphPage => *}
+import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}
 
-private[impgraph] object ConfigEditor {
+private[reqgraph] object ConfigEditor {
 
   final case class Props(state        : StateSnapshot[ImpGraphConfig],
                          filterDead   : FilterDead,

@@ -30,14 +30,14 @@ object ProjectIndex {
                                    val page: Page,
                                    subtitle: String) extends Item(title, icon, subtitle)
 
-    case object ReqTable    extends WithPage("Req Table"   , Icon.Cubes         , Page.ReqTable   , "View and edit all reqs.")
-    case object ReqDetail   extends Item    ("Req Lookup"  , Icon.Cube          ,                   "View and edit a single req.")
-    case object Issues      extends WithPage("Issues"      , Icon.WarningSign   , Page.Issues     , "View and resolve outstanding issues.")
-    case object ImpGraph    extends WithPage("Implications", Icon.ShareAlternate, Page.ImpGraph   , "View project-wide implication.")
-    case object CfgFields   extends WithPage("Fields"      , Icon.ListLayout    , Page.CfgFields  , "Configure fields that each type of req has.")
-    case object CfgIssues   extends WithPage("Issues"      , Icon.WarningSign   , Page.CfgIssues  , "Configure types and causes of issues.")
-    case object CfgReqTypes extends WithPage("Req Types"   , Icon.Inbox         , Page.CfgReqTypes, "Configure types of reqs.")
-    case object CfgTags     extends WithPage("Tags"        , Icon.Tags          , Page.CfgTags    , "Configure attributes for content and organisation.")
+    case object ReqTable    extends WithPage("Req Table" , Icon.Cubes         , Page.ReqTable   , "View and edit reqs.")
+    case object ReqDetail   extends Item    ("Req Lookup", Icon.Cube          ,                   "View and edit a single req.")
+    case object Issues      extends WithPage("Issues"    , Icon.WarningSign   , Page.Issues     , "View and resolve outstanding issues.")
+    case object ReqGraph    extends WithPage("Req Graph" , Icon.ShareAlternate, Page.ReqGraph   , "View a graph of reqs.")
+    case object CfgFields   extends WithPage("Fields"    , Icon.ListLayout    , Page.CfgFields  , "Configure fields that each type of req has.")
+    case object CfgIssues   extends WithPage("Issues"    , Icon.WarningSign   , Page.CfgIssues  , "Configure types and causes of issues.")
+    case object CfgReqTypes extends WithPage("Req Types" , Icon.Inbox         , Page.CfgReqTypes, "Configure types of reqs.")
+    case object CfgTags     extends WithPage("Tags"      , Icon.Tags          , Page.CfgTags    , "Configure attributes for content and organisation.")
 
     implicit def univEq: UnivEq[Item] = UnivEq.derive
 
@@ -47,7 +47,7 @@ object ProjectIndex {
         case ReqDetail   => None
       } {
         case Page.ReqTable     => Some(ReqTable)
-        case Page.ImpGraph     => Some(ImpGraph)
+        case Page.ReqGraph     => Some(ReqGraph)
         case Page.Issues       => Some(Issues)
         case Page.CfgFields    => Some(CfgFields)
         case Page.CfgIssues    => Some(CfgIssues)
@@ -68,7 +68,7 @@ object ProjectIndex {
 
     case object Content extends Category(
       "Content", Icon.FileTextOutline, Colour.Blue, Colour.Default,
-      NonEmptyVector(ReqTable, ReqDetail, Issues, ImpGraph))
+      NonEmptyVector(ReqTable, ReqDetail, Issues, ReqGraph))
 
     case object Configuration extends Category(
       "Configuration", Icon.Setting, Colour.Yellow, Colour.Grey,

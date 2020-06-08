@@ -137,7 +137,6 @@ v2.1
 * change all multi-ver binary codecs to use `writeVersion` and `readByVersion`
 * add new protocol safety tests after ImpGraphConfig is finished
 * style ImpGraphPage properly (i.e. the controls)
-* (?) Rename ImpGraphPage to "Req Graph"
 
 ### Rejected (at least for now)
 * (?) show a legend, filter out unused colours - maybe not needed anymore cos of tooltip

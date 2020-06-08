@@ -240,7 +240,7 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
-  object impgraphPage {
+  object reqgraphPage {
 
     val container = style(
       display.flex,
@@ -1545,7 +1545,7 @@ object Style extends StyleSheet.Inline {
     navBar.connected,
     home.cardHeader,
     help.examplesTable,
-    impgraphPage.graph,
+    reqgraphPage.graph,
     cfg.deadMnemonic,
     deletionRestorationForms.main,
     deletionForm.bottomSections,

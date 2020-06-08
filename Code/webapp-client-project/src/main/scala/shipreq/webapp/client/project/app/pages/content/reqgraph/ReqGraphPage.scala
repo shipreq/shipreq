@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.pages.content.impgraph
+package shipreq.webapp.client.project.app.pages.content.reqgraph
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -10,8 +10,8 @@ import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.event.ProjectAndOrd
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.base.ui.{BaseStyles, NoContentMessage}
-import shipreq.webapp.client.project.app.Style.{impgraphPage => *}
+import shipreq.webapp.base.ui.NoContentMessage
+import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}
 import shipreq.webapp.client.project.widgets.FilterDeadButton
 import shipreq.webapp.client.project.widgets.ImplicationGraph
 import shipreq.webapp.base.ui.semantic.Icon
@@ -19,7 +19,7 @@ import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.app.pages.root.ProjectIndex
 import shipreq.webapp.client.project.feature.SavedViewFeature
 
-object ImplicationGraphPage {
+object ReqGraphPage {
 
   final case class Props(projectAndOrd   : ProjectAndOrd,
                          plainText       : PlainText.ForProject.AnyCtx,

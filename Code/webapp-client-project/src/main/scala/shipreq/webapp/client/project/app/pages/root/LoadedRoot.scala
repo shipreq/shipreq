@@ -456,8 +456,8 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
             state      = StateSnapshot.withReuse(s.reqDetail)(reqDetailSetState))
           reqDetail(props)
 
-        case Page.ImpGraph =>
-          content.impgraph.ImplicationGraphPage.Props(
+        case Page.ReqGraph =>
+          content.reqgraph.ReqGraphPage.Props(
             projectAndOrd    = projectAndOrd,
             plainText        = pxPlainText.value(),
             reqDetailRC      = reqDetailRC,

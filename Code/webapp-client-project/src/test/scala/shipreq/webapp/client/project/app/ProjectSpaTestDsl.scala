@@ -66,7 +66,7 @@ object ProjectSpaTestDsl {
         case Page.ReqTable     => empty.copy(reqTable    = Try(new ReqTableObs(global, inner)))
         case Page.ReqDetail(_) => empty.copy(reqDetail   = Try(new ReqDetailObs(inner, nav)))
         case Page.Issues       => empty.copy(issues      = Try(new IssuesPageObs(inner)))
-        case Page.ImpGraph     => empty
+        case Page.ReqGraph     => empty
       }
     }
   }
@@ -189,7 +189,7 @@ object ProjectSpaTestDsl {
       case Page.CfgIssues    => invariantsIssueConfig
       case Page.CfgReqTypes  => invariantsReqTypeConfig
       case Page.CfgTags      => invariantsTagConfig
-      case Page.ImpGraph     => *.emptyInvariant
+      case Page.ReqGraph     => *.emptyInvariant
     })
 
   private val invariants: *.Invariants =
