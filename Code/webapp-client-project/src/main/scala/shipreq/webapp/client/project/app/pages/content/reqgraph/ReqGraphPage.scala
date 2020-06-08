@@ -82,7 +82,7 @@ object ReqGraphPage {
         if (impGraph.isEmpty)
           <.div(*.noContent, noContentMessage)
         else
-          <.div(*.graph, ImplicationGraph.Component.withKey(p.savedViewFeature.savedViewId.fold(-1)(_.value))(impGraph))
+          <.div(*.graph, impGraph.render)
 
       <.div(*.container,
 
