@@ -1,4 +1,4 @@
-FROM amazonlinux:2.0.20200304.0
+FROM amazonlinux:2.0.20200406.0
 
 #========#
 # System #
