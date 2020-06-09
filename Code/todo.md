@@ -35,6 +35,8 @@ Backlog (maybe-probably soon)
 * Add LastUpdated field to ReqTable/Detail
 * Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
 
+* Remove Scalaz
+
 * Investigate changes required to support phone / tablet
 
 * Metrics
