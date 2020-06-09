@@ -14,8 +14,8 @@ object SsrJs {
   private val ajaxNoop: AjaxClient.Binary =
     AjaxClient.never
 
-  @JSExportTopLevel(SsrJsFunctionManifest.Public)
-  def public(i: Pickled[PublicInitData]): String = {
+  @JSExportTopLevel(SsrJsFunctionManifest.PublicLoader)
+  def publicLoader(i: Pickled[PublicInitData]): String = {
     import shipreq.webapp.client.public.spa.PublicSpa
     import shipreq.webapp.client.public.Main
     val spa       = new PublicSpa(i.value, ajaxNoop)

@@ -35,10 +35,19 @@ final class MinimalSsr[F[_]]()(implicit F: Monad[F],
     trace.newSpan("SSR:" + name)(_ =>
       logDuration("SSR:" + name)(fa))
 
+  private def assertOk[A](result: Expr.Result[A]): F[A] =
+    F.point {
+      result match {
+        case Right(a) => a
+        case Left(e) => throw e
+      }
+    }
+
   private def withCtx[A](f: ContextSync => F[A]): F[A] =
     for {
       ctx <- F.point(ContextSync.fixedContext())
-      _   <- logAndTrace("setup")(F.point(ctx.eval(RealSsr.setup)))
+      res <- logAndTrace("setup")(F.point(ctx.eval(RealSsr.setup)))
+      _   <- assertOk(res)
       a   <- f(ctx)
       _   <- F.point(ctx.close())
     } yield a
