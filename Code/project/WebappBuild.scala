@@ -166,6 +166,7 @@ object WebappBuild {
         boopickle ++ scalajsDom ++
         testScope(μTest))
       .settings(
+        scalacOptions in Compile -= "-Xno-forwarders", // https://github.com/scala-js/scala-js/issues/4030
         scalaJSUseMainModuleInitializer := true,
         mainClass in Compile := Some("shipreq.webapp.client.ww.Main"))
 

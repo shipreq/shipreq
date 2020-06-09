@@ -10,7 +10,7 @@ import shipreq.webapp.client.ww.api.Protocol.Codec.default.Writer
  */
 object Main {
 
-  def main(): Unit = {
+  def main(args: Array[String]): Unit = {
     GraphViz.init()
     Server.startDefault(Service, ResultEncoder).runNow()
   }
