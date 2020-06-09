@@ -132,7 +132,7 @@ trait ApplyOtherEvent {
           columns        = e.columns,
           order          = e.order,
           filter         = e.filter,
-          impGraphConfig = None,
+          impGraphConfig = e.impGraphConfig,
         ))
 
       for {

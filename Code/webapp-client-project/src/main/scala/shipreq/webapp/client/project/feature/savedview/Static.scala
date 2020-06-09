@@ -1,14 +1,13 @@
 package shipreq.webapp.client.project.feature.savedview
 
-import scalacss.ScalaCssReact._
-import shipreq.webapp.client.project.app.Style.{savedViews => *}
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.{Px, StateSnapshot}
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.base.util.{ErrorMsg, OptionalBoolFn}
-import shipreq.webapp.base.data.savedview.{Column, ImpGraphConfig, SavedView, SavedViews, SortCriteria, View}
-import shipreq.webapp.base.data.{FilterDead, Live, Project, Req, ReqId, ShowDead}
+import scalacss.ScalaCssReact._
+import shipreq.base.util.ErrorMsg
+import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.data.{FilterDead, Project, ProjectConfig, ReqId, ShowDead}
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.filter.{CompiledFilter, Filter}
@@ -16,6 +15,7 @@ import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd
+import shipreq.webapp.client.project.app.Style.{savedViews => *}
 import shipreq.webapp.client.project.widgets.{FilterDeadButton, FilterEditor}
 
 final case class Static(stateAccess                   : StateAccessPure[(State, FilterDead)],
@@ -27,13 +27,16 @@ final case class Static(stateAccess                   : StateAccessPure[(State, 
                         savedViewAsyncW               : AsyncFeature.Write.D0[ErrorMsg],
                         savedViewIO                   : ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq]) {
 
+  val pxProjectConfig: Px[ProjectConfig] =
+    pxProject.map(_.config).withReuse
+
   val setFilterDeadFn: Reusable[SetStateFnPure[FilterDead]] =
     Reusable.byRef(SetStateFn((fdO, cb) =>
       fdO.fold(cb)(fd =>
         for {
           p       <- pxProject.toCallback
           (s1, _) <- stateAccess.state
-          s2      = s1.setFilterDead(fd, p)
+          s2       = s1.setFilterDead(fd, p)
           _       <- stateAccess.setState((s2, fd), cb)
         } yield ())))
 
@@ -56,10 +59,11 @@ final case class Static(stateAccess                   : StateAccessPure[(State, 
   val pxActiveView: Px[View] =
     (for {
       vs <- pxViewState
+      pc <- pxProjectConfig
       sv <- pxSavedViews
       fd <- pxFilterDead
       cs <- pxColumnPlusAll
-    } yield vs.activeView(sv, fd).filterColumns(cs.containsColumn)
+    } yield vs.activeView(sv, fd).filterColumns(pc)(cs.containsColumn) // .filterColumns calls .makeCorrect
     ).withReuse
 
   val activeViewCB: Reusable[CallbackTo[View]] = {
@@ -119,10 +123,11 @@ final case class Static(stateAccess                   : StateAccessPure[(State, 
   val pxSavedViewsMenu: Px[ViewLogic.Menu] =
     for {
       savedViews   <- pxSavedViews
+      config       <- pxProjectConfig
       viewState    <- pxViewState
       validColumns <- pxColumnPlusAll
       activeView   <- pxActiveView
-    } yield ViewLogic.Menu(savedViews, viewState, _.filterColumns(validColumns.containsColumn), activeView, activeViewCB)
+    } yield ViewLogic.Menu(savedViews, viewState, _.filterColumns(config)(validColumns.containsColumn), activeView, activeViewCB)
 
   private val runSavedViewAction: ViewLogic.Action ~=> Callback = {
     def mod(p: Project, a: ViewLogic.Action, state: (State, FilterDead)): (State, FilterDead) = {

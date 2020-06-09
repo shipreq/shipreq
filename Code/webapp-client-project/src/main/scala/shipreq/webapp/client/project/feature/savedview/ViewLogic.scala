@@ -8,7 +8,7 @@ import monocle.Lens
 import monocle.macros.Lenses
 import scalaz.\/
 import shipreq.base.util.PotentialChange
-import shipreq.webapp.base.data.FilterDead
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.SavedView.{Id, Name}
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.event.SavedViewGD

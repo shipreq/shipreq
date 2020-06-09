@@ -36,26 +36,30 @@ final case class SavedViewTestDsl[R, O, S](* : Dsl[Id, R, O, S, String])
 
   val activeSavedView = *.focus("Active saved views").value(_.obs.savedViews.activeView.name)
 
-  def selectView(name: String) =
+  def selectView(name: String): *.Actions =
     *.action(s"Select view: $name")(_.obs.savedViews.needView(name).select())
 
-  def setDefaultView(name: String) =
+  def setDefaultView(name: String): *.Actions =
     *.action(s"Set default view: $name")(_.obs.savedViews.needView(name).setAsDefault())
 
-  def saveAndReplaceView(name: String) =
+  def saveAndReplaceView(name: String): *.Actions =
     *.action(s"Save and replace view: $name")(_.obs.savedViews.needView(SavedView.Name.unsaved.value).replace(name))
 
-  def saveCurrentView(name: String) =
+  def saveCurrentView(name: String): *.Actions =
     *.action(s"Save current view as: $name") { x =>
       x.ref.promptJs.setNextResponse(name)
       x.obs.savedViews.activeView.saveAsNew()
     }
 
-  lazy val filterDeadToggle =
+  lazy val filterDeadToggleNoOp: *.Actions =
+    *.action("filterDeadToggleNoOp")(Simulate click _.obs.filterDead.button)
+      .addCheck(filterDead.assert.not.change)
+
+  lazy val filterDeadToggle: *.Actions =
     *.action("filterDeadToggle")(Simulate click _.obs.filterDead.button)
       .addCheck(filterDead.assert.change)
 
-  def setFilterDead(fd: FilterDead) =
+  def setFilterDead(fd: FilterDead): *.Actions =
     filterDeadToggle.unless(_.obs.filterDead.value ==* fd).rename(s"setFilterDead($fd)")
 
 }

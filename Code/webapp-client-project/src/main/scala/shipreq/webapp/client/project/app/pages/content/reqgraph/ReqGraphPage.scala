@@ -12,7 +12,6 @@ import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.ui.NoContentMessage
 import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}
-import shipreq.webapp.client.project.widgets.FilterDeadButton
 import shipreq.webapp.client.project.widgets.ImplicationGraph
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.WebWorkerClient
@@ -25,8 +24,7 @@ object ReqGraphPage {
                          plainText       : PlainText.ForProject.AnyCtx,
                          reqDetailRC     : RouterCtl[ExternalPubid],
                          webWorker       : WebWorkerClient.Instance,
-                         savedViewFeature: SavedViewFeature,
-                         setFilterDead   : Reusable[StateSnapshot.SetFn[FilterDead]]) {
+                         savedViewFeature: SavedViewFeature) {
     @inline def project = projectAndOrd.project
     @inline def render: VdomElement = Component(this)
   }
@@ -56,9 +54,6 @@ object ReqGraphPage {
         webWorker    = p.webWorker,
       )
 
-      val filterDeadButton =
-        FilterDeadButton.Component(StateSnapshot.withReuse(filterDead)(p.setFilterDead))
-
       def noContentMessage =
         if (filterDead.is(HideDead) && !impGraph.copy(reqWhitelist = p.savedViewFeature.pxReqWhitelistIgnoringFilterDead).isEmpty)
           NoContentMessage.becauseAllDead(
@@ -85,15 +80,10 @@ object ReqGraphPage {
           <.div(*.graph, impGraph.render)
 
       <.div(*.container,
-
-        <.div(*.controlsRow1,
-          <.div(*.controlsSavedViews, p.savedViewFeature.renderSavedViewManager),
-          <.div(*.controlsFilterDead, filterDeadButton)),
-
+        p.savedViewFeature.renderSavedViewsAndFilterDeadButton,
         <.div(*.controlsRow2,
           config,
           <.div(*.controlsFilter, p.savedViewFeature.renderFilterEditor)),
-
         content)
     }
   }

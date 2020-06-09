@@ -19,6 +19,7 @@ import shipreq.webapp.client.project.app.pages.config.tags.{TagConfigObs, TagCon
 import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigObs, ReqTypeConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.content.issues.{IssuesPageObs, IssuesPageTestDsl => IP}
 import shipreq.webapp.client.project.app.pages.content.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
+import shipreq.webapp.client.project.app.pages.content.reqgraph.{ReqGraphObs, ReqGraphTestDsl}
 import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH, _}
 import shipreq.webapp.client.project.test._
@@ -54,7 +55,7 @@ object ProjectSpaTestDsl {
 
       val empty: Obs = {
         val e = Left("Chosen page is: " + nav.page)
-        Obs(global.unsafeProject(), nav, e, e, e, e, e, e, e, e)
+        Obs(global.unsafeProject(), nav, e, e, e, e, e, e, e, e, e)
       }
 
       nav.page match {
@@ -66,7 +67,7 @@ object ProjectSpaTestDsl {
         case Page.ReqTable     => empty.copy(reqTable    = Try(new ReqTableObs(global, inner)))
         case Page.ReqDetail(_) => empty.copy(reqDetail   = Try(new ReqDetailObs(inner, nav)))
         case Page.Issues       => empty.copy(issues      = Try(new IssuesPageObs(inner)))
-        case Page.ReqGraph     => empty
+        case Page.ReqGraph     => empty.copy(reqGraph    = Try(new ReqGraphObs(inner)))
       }
     }
   }
@@ -92,6 +93,7 @@ object ProjectSpaTestDsl {
       dropdownCrumbName match {
         case Some("Req Table") => Page.ReqTable
         case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.innerText.trim).get)
+        case Some("Req Graph") => Page.ReqGraph
         case Some("Fields")    => Page.CfgFields
         case Some("Req Types") => Page.CfgReqTypes
         case Some("Tags")      => Page.CfgTags
@@ -104,16 +106,17 @@ object ProjectSpaTestDsl {
       nav.collect01(".icon.edit").zippers.fold(0)(_.parent("span").innerText.toInt)
   }
 
-  case class Obs(project    : Project,
-                 nav        : NavObs,
-                 home       : Maybe[ProjectHomeObs],
-                 cfgFields  : Maybe[FieldConfigObs],
-                 cfgIssues  : Maybe[IssueConfigObs],
-                 cfgReqTypes: Maybe[ReqTypeConfigObs],
-                 cfgTags    : Maybe[TagConfigObs],
-                 issues     : Maybe[IssuesPageObs],
-                 reqTable   : Maybe[ReqTableObs],
-                 reqDetail  : Maybe[ReqDetailObs])
+  final case class Obs(project    : Project,
+                       nav        : NavObs,
+                       home       : Maybe[ProjectHomeObs],
+                       cfgFields  : Maybe[FieldConfigObs],
+                       cfgIssues  : Maybe[IssueConfigObs],
+                       cfgReqTypes: Maybe[ReqTypeConfigObs],
+                       cfgTags    : Maybe[TagConfigObs],
+                       issues     : Maybe[IssuesPageObs],
+                       reqGraph   : Maybe[ReqGraphObs],
+                       reqTable   : Maybe[ReqTableObs],
+                       reqDetail  : Maybe[ReqDetailObs])
 
   @Lenses
   case class TestState(page: Page, project: Project, detailState: RD.State)
@@ -170,6 +173,12 @@ object ProjectSpaTestDsl {
       .pmapO[Obs](_.cfgTags)
       .mapS[TestState](_ => ())((s, _) => s)
 
+  implicit lazy val transformReqGraph =
+    ReqGraphTestDsl.*.transformer
+      .mapR[Ref](r => ReqGraphTestDsl.Ref(r.global, r.promptJs))
+      .pmapO[Obs](_.reqGraph)
+      .mapS[TestState](_ => ())((s, _) => s)
+
   private lazy val invariantsPH            = PH.invariants.lift
   private lazy val invariantsRT            = RT.invariants.lift
   private lazy val invariantsRD            = RD.invariants.lift
@@ -178,6 +187,7 @@ object ProjectSpaTestDsl {
   private lazy val invariantsReqTypeConfig = ReqTypeConfigTestDsl.invariants.lift
   private lazy val invariantsIssueConfig   = IssueConfigTestDsl.invariants.lift
   private lazy val invariantsTagConfig     = TagConfigTestDsl.invariants.lift
+  private lazy val invariantsReqGraph      = ReqGraphTestDsl.invariants.lift
 
   private val pageInvariants: *.Invariants =
     *.chooseInvariant("Page invariants")(_.state.page match {
@@ -189,7 +199,7 @@ object ProjectSpaTestDsl {
       case Page.CfgIssues    => invariantsIssueConfig
       case Page.CfgReqTypes  => invariantsReqTypeConfig
       case Page.CfgTags      => invariantsTagConfig
-      case Page.ReqGraph     => *.emptyInvariant
+      case Page.ReqGraph     => invariantsReqGraph
     })
 
   private val invariants: *.Invariants =
@@ -226,6 +236,7 @@ object ProjectSpaTestDsl {
   def liftFieldConfigPageTests(p: FieldConfigTestDsl  .*.Plan): *.Plan = p.lift
   def liftIssueConfigPageTests(p: IssueConfigTestDsl  .*.Plan): *.Plan = p.lift
   def liftTagConfigPageTests  (p: TagConfigTestDsl    .*.Plan): *.Plan = p.lift
+  def liftReqGraphTests       (p: ReqGraphTestDsl     .*.Plan): *.Plan = p.lift
 
   def testReqTable(action: RT.*.Actions): *.Actions =
     liftReqTableTests(Plan.action(action)).asAction("Test ReqTable")

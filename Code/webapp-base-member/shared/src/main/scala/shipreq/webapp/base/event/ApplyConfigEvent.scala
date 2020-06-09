@@ -213,15 +213,15 @@ trait ApplyConfigEvent {
       def removeFromSavedViews(fields: Set[FieldId]): Eval[Unit] = {
         import shipreq.webapp.base.data.savedview._
         val remove = Filter.Valid.remove(fields = fields, reqTypes = Set(id))
-        Eval.mod {
+        Eval.mod { p =>
           Project.savedViewTraversal.modify { view =>
             view
-              .filterColumns {
+              .filterColumns(p.config) {
                 case Column.CustomField(f) if fields.contains(f) => false
                 case _                                           => true
               }
               .withFilter(view.filter.flatMap(remove(_).toOption))
-          }
+          }(p)
         }
       }
 

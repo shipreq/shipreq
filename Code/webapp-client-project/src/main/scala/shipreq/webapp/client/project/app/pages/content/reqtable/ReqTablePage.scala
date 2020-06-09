@@ -123,8 +123,9 @@ object ReqTablePage {
       for {
         sel <- pxActiveColumns
         all <- pxColumnPlusAll
+        pc  <- pxProjectConfig
       } yield
-        ColumnSelector.Props(sel, all, modifyViewFn.map(m => u => m.modState(_.withColumns(u)))).render
+        ColumnSelector.Props(sel, all, modifyViewFn.map(m => u => m.modState(_.withColumns(u, pc)))).render
 
     val pxTableContentStats: Px[TableContentStats] =
       for {

@@ -258,16 +258,6 @@ object Style extends StyleSheet.Inline {
       textDecoration := "line-through",
       color(c"#999"))
 
-    val controlsRow1 = style(
-      display.flex)
-
-    val controlsSavedViews = style(
-      flexGrow(1))
-
-    val controlsFilterDead = style(
-      marginLeft(1.4 rem),
-      textAlign.right)
-
     val controlsRow2 = style(
       display.flex,
       marginTop(1.1 rem),

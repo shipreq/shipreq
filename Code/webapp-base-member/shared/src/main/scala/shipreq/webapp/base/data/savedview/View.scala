@@ -3,7 +3,7 @@ package shipreq.webapp.base.data.savedview
 import japgolly.microlibs.nonempty.NonEmptyVector
 import monocle.macros.Lenses
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{FilterDead, HideDead, Live, ReqTypeId}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.filter.Filter.Implicits._
 
@@ -44,8 +44,10 @@ final case class View(columns       : NonEmptyVector[Column],
     *
     * - all mandatory columns are present
     * - only visible columns are used in sort criteria
+    * - filterDead is ShowDead if colouring by a dead tag
     */
-  def makeCorrect: View = {
+  def makeCorrect(pc: ProjectConfig): View = {
+
     // Ensure mandatory columns are present
     val newCols = columns ++ Column.mandatory.iterator.filterNot(columns.toNES.contains)
 
@@ -56,20 +58,35 @@ final case class View(columns       : NonEmptyVector[Column],
     })
     val newOrder = order.whitelistColumns(icols)
 
-    View(newCols, newOrder, filterDead, filter, impGraphConfig)
+    // Check if we need to override filterDead
+    val forceShowDead =
+      if (filterDead is ShowDead)
+        false
+      else
+        impGraphConfig match {
+          case Some(ImpGraphConfig(_, _, ImpGraphConfig.Colours.ByTag(tagGroupId))) =>
+            pc.tags.needTagGroup(tagGroupId).live is Dead
+          case _ =>
+            false
+        }
+
+    val view1 = View(newCols, newOrder, filterDead, filter, impGraphConfig)
+    val view2 = if (forceShowDead) view1.copy(filterDead = ShowDead) else view1
+
+    view2
   }
 
-  def filterByFilterDead(l: Column => Live): View =
-    filterDead.filterFn.value.fold(this)(f => filterColumns(f compose l))
+  def filterByFilterDead(pc: ProjectConfig)(l: Column => Live): View =
+    filterDead.filterFn.value.fold(this)(f => filterColumns(pc)(f compose l))
 
-  def filterColumns(f: Column => Boolean): View =
-    tryFilterColumns(f) getOrElse withColumns(View.default.columns)
+  def filterColumns(pc: ProjectConfig)(f: Column => Boolean): View =
+    tryFilterColumns(pc)(f) getOrElse withColumns(View.default.columns, pc)
 
-  def tryFilterColumns(f: Column => Boolean): Option[View] =
-    columns.filter(f).map(withColumns)
+  def tryFilterColumns(pc: ProjectConfig)(f: Column => Boolean): Option[View] =
+    columns.filter(f).map(withColumns(_, pc))
 
-  def withColumns(newCols0: NonEmptyVector[Column]): View =
-    copy(columns = newCols0).makeCorrect
+  def withColumns(newCols0: NonEmptyVector[Column], pc: ProjectConfig): View =
+    copy(columns = newCols0).makeCorrect(pc)
 
   def orderByColumn(c: Column): View =
     copy(order = order.want(c))

@@ -62,10 +62,8 @@ final class ReqTableObs(global: TestGlobal, $: DomZipperJs) {
   val svrReqs = global.reqs()
 
   val savedViews = SavedViewManagerObs.needIn($)
-
   val filterDead = FilterDeadButtonObs.needIn($)
-
-  val filter = FilterEditorObs.needIn($)
+  val filter     = FilterEditorObs.needIn($)
 
   private def findOne[A: UnivEq, B](a: A, bs: Iterable[B])(f: B => A): B =
     bs.iterator.filter(f(_) ==* a).toList match {

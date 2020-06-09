@@ -60,13 +60,15 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         pxProjectWidgets.refresh()
         pxProjectConfig.refresh()
 
+        val pc = pxProjectConfig.value()
+
         val header =
           Header.Component(
             Header.Props(
               p.cols,
               p.selection,
-              p.modifyView.map(f => cs => f.modState(_ withColumns cs.map(_.column))),
-              p.modifyView.map(f => c => f.modState(_ orderByColumn c.column))))
+              p.modifyView.map(f => cs => f.modState(_.withColumns(cs.map(_.column), pc))),
+              p.modifyView.map(f => c => f.modState(_.orderByColumn(c.column)))))
 
         def renderMsg(msg: VdomTag): VdomTag =
           NoFilterResults.asTableRow(p.cols.length + 1)

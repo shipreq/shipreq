@@ -463,7 +463,6 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
             reqDetailRC      = reqDetailRC,
             webWorker        = webWorkerClient,
             savedViewFeature = savedViewFeature,
-            setFilterDead    = setFilterDead
           ).render
       }
 

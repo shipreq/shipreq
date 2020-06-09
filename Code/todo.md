@@ -132,8 +132,6 @@ v2.1
 * upgrade graal (and re-run BMs)
 * SJS 1.0 (and re-run BMs)
 
-* ColourByTag -- need to handle tags being deleted in DataProp and/or ApplyEvent
-
 ### Rejected (at least for now)
 * (?) show a legend, filter out unused colours - maybe not needed anymore cos of tooltip
 * (?) allow users to control wrapWidth (currently hardcoded to 28em)

@@ -468,7 +468,7 @@ object MakeEvent {
 
       case SavedViewCmd.Create(name, view) =>
         val id = SavedView.Id(project.idCeilings.savedView + 1)
-        SavedViewCreate(id, name, view.columns, view.order, view.filterDead, view.filter, None)
+        SavedViewCreate(id, name, view.columns, view.order, view.filterDead, view.filter, view.impGraphConfig)
 
       case SavedViewCmd.Update(id, vs) =>
         SavedViewUpdate(id, vs)
