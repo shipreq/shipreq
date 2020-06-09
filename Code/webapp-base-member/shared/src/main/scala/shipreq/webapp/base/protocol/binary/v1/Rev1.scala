@@ -586,8 +586,8 @@ object Rev1 {
   implicit lazy val picklerApplicableTag: Pickler[ApplicableTag] =
     new Pickler[ApplicableTag] {
       override def pickle(a: ApplicableTag)(implicit state: PickleState): Unit = {
-        state.enc.writeInt(1) // v1.1
-        state.pickle(a.id)    // first byte is <=0 because of PicklerReuse
+        writeVersion(1)
+        state.pickle(a.id)
         state.pickle(a.key)
         state.pickle(a.desc)
         state.pickle(a.colour)
@@ -595,21 +595,10 @@ object Rev1 {
         state.pickle(a.live)
       }
       override def unpickle(implicit state: UnpickleState): ApplicableTag =
-        state.dec.peek(_.readInt) match {
-
-          // v1.1
-          case 1 =>
-            state.dec.readInt
-            val id       = state.unpickle[ApplicableTagId]
-            val key      = state.unpickle[HashRefKey]
-            val desc     = state.unpickle[Option[String]]
-            val colour   = state.unpickle[Option[Colour]]
-            val reqTypes = state.unpickle[ApplicableReqTypes]
-            val live     = state.unpickle[Live]
-            ApplicableTag(id, key, desc, colour, reqTypes, live)
+        readByVersion(1) {
 
           // v1.0
-          case n if n <= 0 =>
+          case 0 =>
             val id   = state.unpickle[ApplicableTagId]
             val name = state.unpickle[String]
             val desc = state.unpickle[Option[String]]
@@ -617,8 +606,15 @@ object Rev1 {
             val live = state.unpickle[Live]
             ApplicableTag.v1(id, name, desc, key, live)
 
-          case n =>
-            throw UnsupportedVersionException(found = Version.v1(n), maxSupported = Version.v1(n))
+          // v1.1
+          case 1 =>
+            val id       = state.unpickle[ApplicableTagId]
+            val key      = state.unpickle[HashRefKey]
+            val desc     = state.unpickle[Option[String]]
+            val colour   = state.unpickle[Option[Colour]]
+            val reqTypes = state.unpickle[ApplicableReqTypes]
+            val live     = state.unpickle[Live]
+            ApplicableTag(id, key, desc, colour, reqTypes, live)
         }
     }
 
@@ -698,26 +694,17 @@ object Rev1 {
   implicit lazy val picklerCustomFieldImplication: Pickler[CustomField.Implication] =
     new Pickler[CustomField.Implication] {
       override def pickle(a: CustomField.Implication)(implicit state: PickleState): Unit = {
-        state.enc.writeInt(1) // v1.1
-        state.pickle(a.id)    // first byte is <=0 because of PicklerReuse
+        writeVersion(1)
+        state.pickle(a.id)
         state.pickle(a.reqTypeId)
         state.pickle(a.fieldReqTypeRules)
         state.pickle(a.liveExplicitly)
       }
       override def unpickle(implicit state: UnpickleState): CustomField.Implication =
-        state.dec.peek(_.readInt) match {
-
-          // v1.1
-          case 1 =>
-            state.dec.readInt
-            val id             = state.unpickle[CustomField.Implication.Id]
-            val reqTypeId      = state.unpickle[ReqTypeId]
-            val reqTypes       = state.unpickle[FieldReqTypeRules.ForImpField]
-            val liveExplicitly = state.unpickle[Live]
-            CustomField.Implication(id, reqTypeId, reqTypes, liveExplicitly)
+        readByVersion(1) {
 
           // v1.0
-          case n if n <= 0 =>
+          case 0 =>
             val id             = state.unpickle[CustomField.Implication.Id]
             val reqTypeId      = state.unpickle[ReqTypeId]
             val mandatory      = state.unpickle[Mandatory]
@@ -725,34 +712,30 @@ object Rev1 {
             val liveExplicitly = state.unpickle[Live]
             CustomField.Implication.v1(id, reqTypeId, mandatory, reqTypes, liveExplicitly)
 
-          case n =>
-            throw UnsupportedVersionException(found = Version.v1(n), maxSupported = Version.v1(n))
+          // v1.1
+          case 1 =>
+            val id             = state.unpickle[CustomField.Implication.Id]
+            val reqTypeId      = state.unpickle[ReqTypeId]
+            val reqTypes       = state.unpickle[FieldReqTypeRules.ForImpField]
+            val liveExplicitly = state.unpickle[Live]
+            CustomField.Implication(id, reqTypeId, reqTypes, liveExplicitly)
         }
     }
 
   implicit lazy val picklerCustomFieldTag: Pickler[CustomField.Tag] =
     new Pickler[CustomField.Tag] {
       override def pickle(a: CustomField.Tag)(implicit state: PickleState): Unit = {
-        state.enc.writeInt(1) // v1.1
-        state.pickle(a.id)    // first byte is <=0 because of PicklerReuse
+        writeVersion(1)
+        state.pickle(a.id)
         state.pickle(a.tagId)
         state.pickle(a.fieldReqTypeRules)
         state.pickle(a.liveExplicitly)
       }
       override def unpickle(implicit state: UnpickleState): CustomField.Tag =
-        state.dec.peek(_.readInt) match {
-
-          // v1.1
-          case 1 =>
-            state.dec.readInt
-            val id             = state.unpickle[CustomField.Tag.Id]
-            val tagId          = state.unpickle[TagGroupId]
-            val reqTypes       = state.unpickle[FieldReqTypeRules.ForTagField]
-            val liveExplicitly = state.unpickle[Live]
-            CustomField.Tag(id, tagId, reqTypes, liveExplicitly)
+        readByVersion(1) {
 
           // v1.0
-          case n if n <= 0 =>
+          case 0 =>
             val id             = state.unpickle[CustomField.Tag.Id]
             val tagId          = state.unpickle[TagId]
             val mandatory      = state.unpickle[Mandatory]
@@ -760,34 +743,30 @@ object Rev1 {
             val liveExplicitly = state.unpickle[Live]
             CustomField.Tag.v1(id, tagId, mandatory, reqTypes, liveExplicitly)
 
-          case n =>
-            throw UnsupportedVersionException(found = Version.v1(n), maxSupported = Version.v1(n))
+          // v1.1
+          case 1 =>
+            val id             = state.unpickle[CustomField.Tag.Id]
+            val tagId          = state.unpickle[TagGroupId]
+            val reqTypes       = state.unpickle[FieldReqTypeRules.ForTagField]
+            val liveExplicitly = state.unpickle[Live]
+            CustomField.Tag(id, tagId, reqTypes, liveExplicitly)
         }
     }
 
   implicit lazy val picklerCustomFieldText: Pickler[CustomField.Text] =
     new Pickler[CustomField.Text] {
       override def pickle(a: CustomField.Text)(implicit state: PickleState): Unit = {
-        state.enc.writeInt(1) // v1.1
-        state.pickle(a.id)    // first byte is <=0 because of PicklerReuse
+        writeVersion(1)
+        state.pickle(a.id)
         state.pickle(a.name)
         state.pickle(a.fieldReqTypeRules)
         state.pickle(a.liveExplicitly)
       }
       override def unpickle(implicit state: UnpickleState): CustomField.Text =
-        state.dec.peek(_.readInt) match {
-
-          // v1.1
-          case 1 =>
-            state.dec.readInt
-            val id             = state.unpickle[CustomField.Text.Id]
-            val name           = state.unpickle[String]
-            val reqTypes       = state.unpickle[FieldReqTypeRules.ForTextField]
-            val liveExplicitly = state.unpickle[Live]
-            CustomField.Text(id, name, reqTypes, liveExplicitly)
+        readByVersion(1) {
 
           // v1.0
-          case n if n <= 0 =>
+          case 0 =>
             val id             = state.unpickle[CustomField.Text.Id]
             val name           = state.unpickle[String]
             val key            = state.unpickle[String]
@@ -796,8 +775,13 @@ object Rev1 {
             val liveExplicitly = state.unpickle[Live]
             CustomField.Text.v1(id, name, key, mandatory, reqTypes, liveExplicitly)
 
-          case n =>
-            throw UnsupportedVersionException(found = Version.v1(n), maxSupported = Version.v1(n))
+          // v1.1
+          case 1 =>
+            val id             = state.unpickle[CustomField.Text.Id]
+            val name           = state.unpickle[String]
+            val reqTypes       = state.unpickle[FieldReqTypeRules.ForTextField]
+            val liveExplicitly = state.unpickle[Live]
+            CustomField.Text(id, name, reqTypes, liveExplicitly)
         }
     }
 
@@ -962,8 +946,8 @@ object Rev1 {
     new Pickler[CustomReqType] {
       private[this] implicit val picklerSetMnemonics: Pickler[Set[ReqType.Mnemonic]] = iterablePickler
       override def pickle(a: CustomReqType)(implicit state: PickleState): Unit = {
-        state.enc.writeInt(1) // v1.1
-        state.pickle(a.id)    // first byte is <=0 because of PicklerReuse
+        writeVersion(1)
+        state.pickle(a.id)
         state.pickle(a.mnemonic)
         state.pickle(a.oldMnemonics)
         state.pickle(a.name)
@@ -972,22 +956,10 @@ object Rev1 {
         state.pickle(a.live)
       }
       override def unpickle(implicit state: UnpickleState): CustomReqType =
-        state.dec.peek(_.readInt) match {
-
-          // v1.1
-          case 1 =>
-            state.dec.readInt
-            val id           = state.unpickle[CustomReqTypeId]
-            val mnemonic     = state.unpickle[ReqType.Mnemonic]
-            val oldMnemonics = state.unpickle[Set[ReqType.Mnemonic]]
-            val name         = state.unpickle[String]
-            val desc         = state.unpickle[Option[String]]
-            val imp          = state.unpickle[Mandatory]
-            val live         = state.unpickle[Live]
-            CustomReqType(id, mnemonic, oldMnemonics, name, desc, imp, live)
+        readByVersion(1) {
 
           // v1.0
-          case n if n <= 0 =>
+          case 0 =>
             val id           = state.unpickle[CustomReqTypeId]
             val mnemonic     = state.unpickle[ReqType.Mnemonic]
             val oldMnemonics = state.unpickle[Set[ReqType.Mnemonic]]
@@ -996,8 +968,16 @@ object Rev1 {
             val live         = state.unpickle[Live]
             CustomReqType.v1(id, mnemonic, oldMnemonics, name, imp, live)
 
-          case n =>
-            throw UnsupportedVersionException(found = Version.v1(n), maxSupported = Version.v1(n))
+          // v1.1
+          case 1 =>
+            val id           = state.unpickle[CustomReqTypeId]
+            val mnemonic     = state.unpickle[ReqType.Mnemonic]
+            val oldMnemonics = state.unpickle[Set[ReqType.Mnemonic]]
+            val name         = state.unpickle[String]
+            val desc         = state.unpickle[Option[String]]
+            val imp          = state.unpickle[Mandatory]
+            val live         = state.unpickle[Live]
+            CustomReqType(id, mnemonic, oldMnemonics, name, desc, imp, live)
         }
     }
 

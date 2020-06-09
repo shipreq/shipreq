@@ -133,7 +133,6 @@ v2.1
 * SJS 1.0 (and re-run BMs)
 
 * ColourByTag -- need to handle tags being deleted in DataProp and/or ApplyEvent
-* change all multi-ver binary codecs to use `writeVersion` and `readByVersion`
 
 ### Rejected (at least for now)
 * (?) show a legend, filter out unused colours - maybe not needed anymore cos of tooltip
