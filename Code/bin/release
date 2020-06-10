@@ -8,7 +8,6 @@ sbt=(
   sbt
   -DMODE=release
   -Dsbt.server.autostart=false
-  --mem 8192
 )
 
 taskman=0
