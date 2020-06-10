@@ -15,6 +15,7 @@ args=(
   -e HOME=/
   -e "SBT_OPTS=$SBT_OPTS"
   -e "sbt=sbt $SBT_OPTS"
+  --memory 15g
 )
 
 [ -n "$SHIPREQ_TARGET" -a -e "$SHIPREQ_TARGET" ] && args+=(
