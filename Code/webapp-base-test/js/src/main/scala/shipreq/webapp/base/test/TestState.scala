@@ -34,8 +34,16 @@ object TestState
       val n = v.attrName
       if (n.startsWith("data-"))
         self.dataset.get(n.drop(5)).getOrElse("")
-      else
+      else {
+        println("================================================================================")
+        println("TestStateElementExt")
+        println("name: " + n)
+        println("self: " + self)
+        println("self.attributes: " + self.attributes)
+        println("self.attributes.getNamedItem(n): " + self.attributes.getNamedItem(n))
+        println("self.attributes.getNamedItem(n).value: " + self.attributes.getNamedItem(n).value)
         self.attributes.getNamedItem(n).value
+      }
     }
   }
 
