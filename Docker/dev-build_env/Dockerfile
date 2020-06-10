@@ -63,7 +63,7 @@ ENV NODE_PATH=/root/.npm/lib/node_modules
 
 RUN pacman -Sy --noconfirm --needed npm nodejs \
  && npm config set prefix /root/.npm \
- && npm install -g jsdom@9.12.0
+ && npm install -g jsdom
 
 ##############
 # Phantom JS #
@@ -88,8 +88,8 @@ RUN cd /usr/local/bin \
 RUN mkdir /tmp/scala \
  && cd /tmp/scala \
  && mkdir project \
- && echo 'sbt.version=1.3.10' > project/build.properties \
- && echo 'scalaVersion := "2.13.1"' > build.sbt \
+ && echo 'sbt.version=1.3.12' > project/build.properties \
+ && echo 'scalaVersion := "2.13.2"' > build.sbt \
  && echo 'object M{}' > M.scala \
  && sbt test \
  && cd / \
