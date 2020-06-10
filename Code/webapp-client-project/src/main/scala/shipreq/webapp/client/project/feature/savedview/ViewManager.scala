@@ -17,7 +17,7 @@ import shipreq.webapp.client.project.app.Style.{savedViews => *}
 object ViewManager {
   import ViewLogic._
 
-  val devMarker = VdomAttr.devOnly("data-savedviewmanager")
+  val devMarker = VdomAttr("data-svm") // TODO should be .devOnly but breaks tests in release mode
 
   final case class Props(menu       : Menu,
                          asyncRW    : AsyncFeature.ReadWrite.D0[ErrorMsg],

@@ -1,6 +1,7 @@
 v2.2
 ========================================================================================================================
 
+* Fix: "TODO should be .devOnly but breaks tests in release mode"
 * Markdown: bold
 * Markdown: italics
 * Markdown: strike-through
