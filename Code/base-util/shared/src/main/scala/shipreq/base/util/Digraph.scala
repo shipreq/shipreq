@@ -33,7 +33,7 @@ object Digraph {
       }
 
     def transitiveClosure(dir   : Direction,
-                          keys  : TraversableOnce[A],
+                          keys  : IterableOnce[A],
                           filter: A => TransitiveClosure.Filter = TransitiveClosure.Filter.followAll)
                          (implicit ct: ClassTag[A]): TransitiveClosure[A] =
       TransitiveClosure.auto(keys)(apply(dir).apply, filter)

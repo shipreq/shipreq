@@ -1,20 +1,23 @@
 package shipreq.webapp.server.db
 
-import doobie.imports._
-import doobie.postgres.imports._
+import cats.free.Free
+import cats.instances.int._
+import cats.instances.vector._
+import doobie._
+import doobie.implicits._
+import doobie.postgres.implicits._
+import doobie.postgres.circe.jsonb.implicits._
 import io.circe.Json
 import japgolly.microlibs.nonempty.NonEmptySet
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
 import nyaya.gen.Gen
 import org.postgresql.util.PSQLException
-import scala.collection.generic.CanBuildFrom
-import scala.collection.mutable
-import scalaz.syntax.applicative._
-import scalaz.{-\/, Free, \/, \/-}
+import scala.collection.immutable.SortedSet
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.db.DoobieHelpers._
-import shipreq.base.db.DoobieMeta._
+import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.SqlHelpers._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.user._
@@ -46,7 +49,7 @@ final class DbInterpreter(implicit config: ServerLogicConfig.Security)
 }
 
 object DbInterpreter {
-  import DbMeta._
+  import WebappDoobieCodecs._
 
   private[db] final val logVisitorStatsSql =
     Query[(ResponseType, Array[String], Int), Unit](s"SELECT visitor_stats_per_hour_add(now(),?,?,?)")
@@ -57,11 +60,8 @@ object DbInterpreter {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait Base extends DB.Base[ConnectionIO] {
 
-    override final def inDbTransaction[A](f: ConnectionIO[A]): ConnectionIO[A] =
-      f.inTransaction
-
-    override final def inDbTransaction[A](level: Int, f: ConnectionIO[A]): ConnectionIO[A] =
-      f.inTransaction.withTransactionLevel(level)
+    override final def withTransactionLevel[A](level: Int)(f: ConnectionIO[A]): ConnectionIO[A] =
+      f.withTransactionLevel(level)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -125,16 +125,16 @@ object DbInterpreter {
 
     protected val tokenGen: () => VerificationToken
 
+    protected final lazy val tokenGenCIO: ConnectionIO[VerificationToken] =
+      Free.defer(Free.pure(tokenGen()))
+
     // TODO: TEST tokenAttempt!
     private final def tokenAttempt(execute: VerificationToken => ConnectionIO[_]): ConnectionIO[VerificationToken] =
-      ConnectionIoUnit
-        .flatMap { _ =>
-          val t = tokenGen()
-          execute(t).map(_ => t)
-        }
+      tokenGenCIO
+        .flatMap(token => execute(token).map(_ => token))
         .inSafeTransaction
         .retry(16)
-        .map(_ getOrElse sys.error("Failed to acquire token."))
+        .map(_ getOrElse ErrorMsg("Failed to acquire token.").throwException())
 
     private final def colsRegInfo = "id,confirmation_token,confirmation_sent_at,confirmed_at"
     private final type RegInfo = (UserId, Option[VerificationToken], Instant, Option[Instant])
@@ -180,21 +180,19 @@ object DbInterpreter {
                                                 ps        : PasswordAndSalt,
                                                 newsletter: Boolean): ConnectionIO[UserRegistrationResult] = {
       import UserRegistrationResult._
-      val plan: ConnectionIO[UserRegistrationResult] =
-        sqlRegisterUser.toQuery0((username, ps, token)).option.attemptSql flatMap {
-          case \/-(Some(id)) =>
-            sqlInsertUsrd.toUpdate0((id, name, newsletter)).run.map(_ => Success(id))
+      sqlRegisterUser.toQuery0((username, ps, token)).option.attemptSql flatMap {
+        case Right(Some(id)) =>
+          sqlInsertUsrd.toUpdate0((id, name, newsletter)).run.map(_ => Success(id))
 
-          case \/-(None) =>
-            Free pure TokenNotFound
+        case Right(None) =>
+          Free pure TokenNotFound
 
-          case -\/(e: PSQLException) if e.getMessage.contains("usr_username_key") =>
-            Free pure UsernameTaken
+        case Left(e: PSQLException) if e.getMessage.contains("usr_username_key") =>
+          Free pure UsernameTaken
 
-          case -\/(e) =>
-            throw e
-        }
-      plan.inTransaction
+        case Left(e) =>
+          throw e
+      }
     }
 
     private final def colsResetPasswordInfo = "reset_password_token,reset_password_sent_at"
@@ -260,7 +258,7 @@ object DbInterpreter {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private def projectMetaDataQuery[A: Composite](where: String): Query[A, ProjectMetaData] = {
+  private def projectMetaDataQuery[A: Write](where: String): Query[A, ProjectMetaData] = {
     type Types = (ProjectId, String, Int, Int, Int, Int, Instant, Instant, Instant)
     val cols = "id, name, events_init, events_total, reqs_live, reqs_total, created_at, accessed_at, updated_at"
     val sql = s"SELECT $cols FROM project WHERE $where"
@@ -294,58 +292,50 @@ object DbInterpreter {
     type Row = (EventOrd, Short, Json, Instant)
     type Result = DB.ReadProjectEventError \/ VerifiedEvent.Seq
 
-    def query[A: Composite](where: String): Query[A, Row] =
-      Query(s"SELECT ord,type,data,created_at FROM event WHERE $where")
+    def query(where: Fragment): Query0[Row] =
+      (fr"SELECT ord,type,data,created_at FROM event WHERE " ++ where).query[Row]
 
-    val all = query[ProjectId]("project_id=?")
+    def all(projectId: ProjectId): Query0[Row] =
+      query(fr"project_id=$projectId")
 
-    val after = query[(ProjectId, EventOrd)]("project_id=? AND ord>?")
+    def after(projectId: ProjectId, ord: EventOrd): Query0[Row] =
+      query(fr"project_id=$projectId AND ord>$ord")
 
-    def setSubset(ords: Seq[EventOrd]): Query[ProjectId, Row] =
-      query(ords.iterator.map(_.value).mkString("project_id=? AND ord IN (", ",", ")"))
-
-    def set(pid: ProjectId, ords: NonEmptySet[EventOrd]): ConnectionIO[List[List[Row]]] =
-      selectByNonEmptySet(ords)(setSubset(_).toQuery0(pid).list)
-
-    type ResultF[A] = Result
-
-    val builder: CanBuildFrom[Nothing, Row, ResultF[Row]] = new CanBuildFrom[Nothing, Row, ResultF[Row]] {
-      override def apply(from: Nothing): mutable.Builder[Row, Result] = ??? // impossible
-      override def apply(): mutable.Builder[Row, Result] = {
-        new mutable.Builder[Row, Result] {
-          private[this] var err = Option.empty[DB.ReadProjectEventError]
-          private[this] var res = VerifiedEvent.Seq.empty
-
-          override def clear(): Unit = ??? // not used
-
-          override def +=(row: Row): this.type = {
-            if (err.isEmpty)
-              EventSerialisation.decode(row._1, row._2, row._3) match {
-                case \/-(e) => res += VerifiedEvent(row._1, e, row._4)
-                case -\/(e) => err = Some(e)
-              }
-            this
-          }
-
-          override def result(): Result =
-            err match {
-              case None    => \/-(res)
-              case Some(e) => -\/(e)
-            }
-        }
-      }
+    def set(projectId: ProjectId, ords: NonEmptySet[EventOrd]): Query0[Row] = {
+      val ordsC = cats.data.NonEmptySet(ords.head.value, ords.tail.iterator.map(_.value).to(SortedSet))
+      val where = fr"project_id=$projectId AND " ++ Fragments.in(fr"ord", ordsC)
+      query(where)
     }
   }
 
   trait GetProjectEvents extends DB.GetProjectEvents[ConnectionIO] {
     import GetProjectEventLogic._
 
-    override def getProjectEvents(pid: ProjectId, f: EventFilter): ConnectionIO[DB.ReadProjectEventError \/ VerifiedEvent.Seq] =
-      f match {
-        case EventFilter.IncludeAll     => all.toQuery0(pid).to(builder)
-        case EventFilter.ExcludeUpTo(o) => after.toQuery0((pid, o)).to(builder)
-        case EventFilter.Set(ords)      => set(pid, ords).map(_.iterator.flatten.to(builder))
+    override def getProjectEvents(pid: ProjectId, f: EventFilter): ConnectionIO[DB.ReadProjectEventError \/ VerifiedEvent.Seq] = {
+      val q: Query0[Row] =
+        f match {
+          case EventFilter.IncludeAll     => all(pid)
+          case EventFilter.ExcludeUpTo(o) => after(pid, o)
+          case EventFilter.Set(ords)      => set(pid, ords)
+        }
+
+      q.to[Iterator].map { it =>
+        var err = Option.empty[DB.ReadProjectEventError]
+        var res = VerifiedEvent.Seq.empty
+
+        for (row <- it)
+          if (err.isEmpty)
+            EventSerialisation.decode(row._1, row._2, row._3) match {
+              case \/-(e) => res += VerifiedEvent(row._1, e, row._4)
+              case -\/(e) => err = Some(e)
+            }
+
+        err match {
+          case None    => \/-(res)
+          case Some(e) => -\/(e)
+        }
       }
+    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -381,20 +371,20 @@ object DbInterpreter {
                                   uid: UserId): ConnectionIO[DB.SaveProjectEventError \/ VerifiedEvent] = {
       type Result = DB.SaveProjectEventError \/ VerifiedEvent
       unsafeInsertEvent(pid, ord, e, uid).attemptSql.flatMap {
-        case \/-(now) =>
+        case Right(now) =>
           val result: Result = \/-(VerifiedEvent(ord, e, now))
           val update: Update0 =
             e match {
               case _: Event.ProjectNameSet => updateProjectN.toUpdate0((p.name, pid))
               case _                       => updateProjectR.toUpdate0((p.liveReqCount, p.content.reqs.size, pid))
             }
-          update.run.map(_ => result).inTransaction
+          update.run.map(_ => result)
 
-        case -\/(e: PSQLException) if e.getMessage.contains("ord_key") =>
+        case Left(e: PSQLException) if e.getMessage.contains("ord_key") =>
           val err: Result = -\/(DB.SaveProjectEventError.OrdInUse)
-          err.pure[ConnectionIO]
+          Free.pure(err)
 
-        case -\/(e) =>
+        case Left(e) =>
           throw e
       }
     }
@@ -408,7 +398,21 @@ object DbInterpreter {
       projectMetaDataQuery[UserId]("usr_id=?")
 
     override def getAllProjectMetaDataForUser(id: UserId): ConnectionIO[List[ProjectMetaData]] =
-      getAllProjectMetaDataForUserQuery.toQuery0(id).list
+      getAllProjectMetaDataForUserQuery.toQuery0(id).to[List]
+
+    override def createProject(uid: UserId, es: Vector[ActiveEvent], p: Project): ConnectionIO[ProjectId] = {
+      val events = es.length
+      val name   = es.reverseIterator.collectFirst { case e: Event.ProjectNameSet => e.name }.getOrElse("")
+      val data   = (uid, events, events, p.liveReqCount, p.content.reqs.size, name)
+      for {
+        pid  <- ForHomeSpa.createProjectQuery.toQuery0(data).unique
+        adds = es.iterator.zipWithIndex.map(x => SaveProjectEventLogic.unsafeInsertEvent(pid, EventOrd.fromIndex(x._2), x._1, uid))
+        done <- sequentially(adds, pid)
+      } yield done
+    }
+  }
+
+  object ForHomeSpa {
 
     private[db] val createProjectQuery: Query[(UserId, Int, Int, Int, Int, String), ProjectId] =
       Query(
@@ -417,17 +421,6 @@ object DbInterpreter {
           |VALUES(?,?,?,?,?,?)
           |RETURNING id
         """.stripMargin.sql)
-
-    override def createProject(uid: UserId, es: Vector[ActiveEvent], p: Project): ConnectionIO[ProjectId] = {
-      val events = es.length
-      val name   = es.reverseIterator.collectFirst { case e: Event.ProjectNameSet => e.name }.getOrElse("")
-      val data   = (uid, events, events, p.liveReqCount, p.content.reqs.size, name)
-      for {
-        pid  ← createProjectQuery.toQuery0(data).unique
-        adds = es.iterator.zipWithIndex.map(x => SaveProjectEventLogic.unsafeInsertEvent(pid, EventOrd.fromIndex(x._2), x._1, uid))
-        done ← sequentially(adds, pid)
-      } yield done
-    }
   }
 
   trait ForProjectSpa
@@ -489,7 +482,7 @@ object DbInterpreter {
 
     override final val tableStats: ConnectionIO[List[TableStat]] =
       tableStatsSql
-        .list
+        .to[List]
         .map(_.map((TableStat.apply _).tupled))
 
     private[db] final val dbSizeSql =
@@ -499,5 +492,39 @@ object DbInterpreter {
       dbSizeSql
         .toQuery0(dbName.replaceFirst("^.*/", ""))
         .unique
+
+    private[db] val userIdByUsernameSql =
+      Query[Username, UserId]("SELECT id FROM usr WHERE username=?")
+
+    private[db] val userIdByEmailSql =
+      Query[EmailAddr, UserId]("SELECT id FROM usr WHERE email=?")
+
+    override def getUserId(user: Username \/ EmailAddr): ConnectionIO[Option[UserId]] =
+      user match {
+        case -\/(u) => userIdByUsernameSql.option(u)
+        case \/-(e) => userIdByEmailSql.option(e)
+      }
+
+    private[db] val insertVerifiedEventSql: Update[(ProjectId, VerifiedEvent, UserId)] =
+      Update[(ProjectId, EventOrd, Short, Json, UserId, Instant)](
+        "INSERT INTO event (project_id, ord, type, data, usr_id, created_at) VALUES(?,?,?,?,?,?)")
+        .contramap[(ProjectId, VerifiedEvent, UserId)] { case (pid, ve, uid) =>
+          val (typeId, data) = EventSerialisation.encodeActiveOrRetired(ve.event)
+          (pid, ve.ord, typeId, data, uid, ve.createdAt)
+        }
+
+    override def createProject(userId: UserId, events: VerifiedEvent.Seq, project: Project): ConnectionIO[ProjectId] = {
+      val events_init  = 0
+      val events_total = events.size
+      val reqs_live    = project.content.reqs.reqIterator().count(_.live(project.config.reqTypes) is Live)
+      val reqs_total   = project.content.reqs.size
+      val name         = project.name
+      val creationArgs = (userId, events_init, events_total, reqs_live, reqs_total, name)
+      val eventArgs    = (pid: ProjectId) => events.iterator.map((pid, _, userId)).toVector
+      for {
+        pid <- ForHomeSpa.createProjectQuery.toQuery0(creationArgs).unique
+        _   <- insertVerifiedEventSql.updateMany(eventArgs(pid))
+      } yield pid
+    }
   }
 }

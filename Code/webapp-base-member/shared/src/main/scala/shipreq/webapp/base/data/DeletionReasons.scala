@@ -3,6 +3,7 @@ package shipreq.webapp.base.data
 import nyaya.util.Multimap
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.DeletionReason
 import shipreq.webapp.base.text.Text.Equality._
 import DeletionReasons.ReqApplication
@@ -27,7 +28,7 @@ final case class DeletionReasons(reasons       : Vector[DeletionReason.NonEmptyT
    * Obtains the most recent reason for a requirement's deletion.
    */
   def latest(id: ReqId): DeletionReason.OptionalText =
-    getLatest(id).fold[DeletionReason.OptionalText](Vector.empty)(_.whole)
+    getLatest(id).fold[DeletionReason.OptionalText](Text.empty)(_.whole)
 
   /**
    * Obtains the most recent reason for a requirement's deletion.

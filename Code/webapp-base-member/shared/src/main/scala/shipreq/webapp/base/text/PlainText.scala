@@ -4,7 +4,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.utils.Memo
 import scala.annotation.tailrec
-import scala.collection.immutable.SortedSet
+import scala.collection.immutable.{ArraySeq, SortedSet}
 import shipreq.base.util._
 import shipreq.base.util.SafeStringOps._
 import shipreq.base.util.univeq._
@@ -12,7 +12,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.text.GrammarSpec.Surrounds
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.base.UiText
 import Atom.AnyAtom
 
 /**
@@ -27,8 +26,14 @@ object PlainText {
     def apply[Ctx <: ProjectText.Context](p: Project, ctx: Ctx): ForProject[Ctx] =
       new ForProject(p, ctx)
 
-    def noCtx(p: Project): NoCtx =
-      apply(p, ProjectText.Context.None)
+    object noCtx {
+
+      def apply(p: Project): NoCtx =
+        ForProject(p, ProjectText.Context.None)
+
+      lazy val empty: NoCtx =
+        apply(Project.empty)
+    }
   }
 
   val reqCodeIndentation: NonEmptyVector[ReqCodeTreeItem.Indent] => String =
@@ -96,7 +101,7 @@ object PlainText {
       if (_t.isEmpty) None else Some[_t.type](_t)
 
     @inline def net: Option[T#NonEmptyText] =
-      NonEmptyVector.option(_t)
+      NonEmptyArraySeq.option(_t)
   }
 
   private final val bullet = "* "
@@ -109,10 +114,10 @@ object PlainText {
       ids.iterator.map(pubid(_, p)).mkString(", ")
 
     override protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): String =
-      ids.iterator.map(p.config.tags.atag(_).key.value).mkString(" ")
+      ids.iterator.map(p.config.tags.needApplicableTag(_).key.value).mkString(" ")
 
-    override protected def _text(text: Text.AnyOptional, live: Live): String =
-      nestedText("", "", live, text)
+    override protected def _text(text: Text.AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity): String =
+      nestedText("", "", live, text, true)
 
     // Keep in sync with ProjectWidgets because it's used together for sorting/rendering in ReqTable
     override protected def deletionReasonWhenNoneGiven: String =
@@ -120,7 +125,7 @@ object PlainText {
 
     // Keep in sync with ProjectWidgets because it's used together for sorting/rendering in ReqTable
     override protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): String =
-      UiText.ColumnNames.reqType + " " + rt.mnemonic.value + " is deleted."
+      SpecialBuiltInField.ReqType.name + " " + rt.mnemonic.value + " is deleted."
 
     override protected def emptyText = ""
 
@@ -141,98 +146,111 @@ object PlainText {
     }
 
     private def issue(id: CustomIssueTypeId, desc: Option[String]): String = {
-      val it = p.config.customIssueType(id)
+      val it = p.config.customIssueTypes.need(id)
       desc.foldLeft(hashtag(it.key))(_ ~ G.issueDescSurround(_))
     }
 
-    private def nestedText(acc: String, indent: String, live: Live, atoms: Vector[AnyAtom]): String = {
-      @tailrec def go(acc: String, atoms: Vector[AnyAtom]): String =
-        if (atoms.isEmpty)
-          acc
-        else {
-          val nextAtoms = atoms.tail
-          import Atom._
-          val cur = atoms.head match {
-            case a: Literal         # Literal        => a.value
-            case _: NewLine         # BlankLine      => "\n\n" ~ indent
-            case a: ContentRef      # ReqRef         => reqRef(a.value)
-            case a: ContentRef      # CodeRef        => codeRef(a.value)
-            case a: ContentRef      # UseCaseStepRef => useCaseStepRef(a.value)
-            case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live, Mandatory.Not)))
-            case a: PlainTextMarkup # EmailAddress   => a.value
-            case a: PlainTextMarkup # Monospace      => '`' ~ a.value ~ '`'
-            case a: PlainTextMarkup # TeX            => G.texSurround(a.value)
-            case a: PlainTextMarkup # WebAddress     => a.value
-            case a: TagRef          # TagRef         => tagRef(a.value)
+    private def nestedText(acc: String, indent: String, live: Live, atoms: ArraySeq[AnyAtom], includeMarkup: Boolean): String = {
+      @tailrec def go(acc: String, atoms: ArraySeq[AnyAtom], idx: Int): String = {
+        val nextIdx = idx + 1
+        val nextIsEmpty = nextIdx == atoms.length
+        import Atom._
+        val cur = atoms(idx) match {
+          case a: Literal         # Literal        => a.value
+          case _: NewLine         # BlankLine      => "\n\n" ~ indent
+          case a: ContentRef      # ReqRef         => reqRef(a.value)
+          case a: ContentRef      # CodeRef        => codeRef(a.value)
+          case a: ContentRef      # UseCaseStepRef => useCaseStepRef(a.value)
+          case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live, Optional)))
+          case a: PlainTextMarkup # EmailAddress   => a.value
+          case a: PlainTextMarkup # Monospace      => if (includeMarkup) '`' ~ a.value ~ '`' else a.value
+          case a: PlainTextMarkup # TeX            => G.texSurround(a.value)
+          case a: PlainTextMarkup # WebAddress     => a.value
+          case a: TagRef          # TagRef         => tagRef(a.value)
 
-            // ---------------------------------------------------------------------------------------------------------
-            case a: ListMarkup      # UnorderedList  =>
-              val nextIndent = indent + "  "
+          // ---------------------------------------------------------------------------------------------------------
+          case a: ListMarkup      # UnorderedList  =>
+            val nextIndent = indent + "  "
 
-              val prefix: String => String =
-                if (a.itemsContainMultipleLines)
-                  q =>
-                    if (q.isEmpty)
-                      (if (acc.isEmpty) bullet else "\n\n" ~ bullet)
-                    else
-                      q ~ "\n\n" ~ bullet
-                else
-                  q =>
-                    if (q.isEmpty && acc.isEmpty)
-                      bullet
-                    else
-                      q ~ "\n" ~ bullet
+            val prefix: String => String =
+              if (a.itemsContainMultipleLines)
+                q =>
+                  if (q.isEmpty)
+                    (if (acc.isEmpty) bullet else "\n\n" ~ bullet)
+                  else
+                    q ~ "\n\n" ~ bullet
+              else
+                q =>
+                  if (q.isEmpty && acc.isEmpty)
+                    bullet
+                  else
+                    q ~ "\n" ~ bullet
 
-              val r = a.items.foldLeft("")((q, li) => nestedText(prefix(q), nextIndent, live, li))
+            val r = a.items.foldLeft("")((q, li) => nestedText(prefix(q), nextIndent, live, li, includeMarkup))
 
-              if (nextAtoms.isEmpty) r else r ~ "\n\n"
+            if (nextIsEmpty) r else r ~ "\n\n"
 
-            // ---------------------------------------------------------------------------------------------------------
-            case a: CodeBlock # CodeBlock =>
+          // ---------------------------------------------------------------------------------------------------------
+          case a: CodeBlock # CodeBlock =>
 
-              val firstLine: String =
+            val firstLine: String =
+              if (includeMarkup)
                 a.language match {
                   case Some(lang) => "```" ~ lang ~ '\n'
                   case None       => "```\n"
                 }
+              else
+                ""
 
-              if (indent.isEmpty) {
-                // top-level
+            if (indent.isEmpty) {
+              // top-level
 
-                val head =
-                  if (acc.isEmpty || acc.endsWith("\n\n"))
-                    "" // no top-margin required
-                  else if (acc.endsWith("\n"))
-                    "\n" // shouldn't happen but just in case - ensure our top-margin is only one line
-                  else
-                    "\n\n" // add top-margin of one line
+              val head =
+                if (acc.isEmpty || acc.endsWith("\n\n"))
+                  "" // no top-margin required
+                else if (acc.endsWith("\n"))
+                  "\n" // shouldn't happen but just in case - ensure our top-margin is only one line
+                else
+                  "\n\n" // add top-margin of one line
 
-                val tail = if (nextAtoms.isEmpty) "" else "\n\n"
+              val tail = if (nextIsEmpty) "" else "\n\n"
 
-                head ~ firstLine ~ a.code ~ "\n```" ~ tail
+              val lastLine = if (includeMarkup) "\n```" else ""
 
-              } else {
-                // we're in a list
+              head ~ firstLine ~ a.code ~ lastLine ~ tail
 
-                val head =
-                  if (acc == "* " || acc.endsWith("\n* ") || acc.endsWith("\n" ~ indent))
-                    "" // no top-margin or indentation required
-                  else if (acc.endsWith("\n"))
-                    "\n" ~ indent // shouldn't happen but just in case - ensure our top-margin is only one line
-                  else
-                    "\n\n" ~ indent // add top-margin of one line, and indentation
+            } else {
+              // we're in a list
 
-                val tail = if (nextAtoms.isEmpty) "" else "\n\n" ~ indent
+              val head =
+                if (acc == "* " || acc.endsWith("\n* ") || acc.endsWith("\n" ~ indent))
+                  "" // no top-margin or indentation required
+                else if (acc.endsWith("\n"))
+                  "\n" ~ indent // shouldn't happen but just in case - ensure our top-margin is only one line
+                else
+                  "\n\n" ~ indent // add top-margin of one line, and indentation
 
-                head ~ firstLine ~ a.code.indent(indent) ~ "\n" ~ indent ~ "```" ~ tail
-              }
+              val tail = if (nextIsEmpty) "" else "\n\n" ~ indent
 
-          }
-          // -----------------------------------------------------------------------------------------------------------
+              val lastLine = if (includeMarkup) "\n" ~ indent ~ "```" else ""
 
-          go(acc ~ cur, nextAtoms)
+              head ~ firstLine ~ a.code.indent(indent) ~ lastLine ~ tail
+            }
+
         }
-      go(acc, atoms)
+        // -----------------------------------------------------------------------------------------------------------
+
+        val nextAcc = acc ~ cur
+        if (nextIsEmpty)
+          nextAcc
+        else
+          go(nextAcc, atoms, nextIdx)
+      }
+
+      if (atoms.isEmpty)
+        acc
+      else
+        go(acc, atoms, 0)
     }
 
     private def reqRef(req: ReqId): String = {
@@ -242,7 +260,7 @@ object PlainText {
     }
 
     private def tagRef(id: ApplicableTagId): String = {
-      val t = p.config.tags.atag(id)
+      val t = p.config.tags.needApplicableTag(id)
       hashtag(t.key)
     }
 
@@ -268,20 +286,23 @@ object PlainText {
     override def reqCode(c: ReqCode.Value): String =
       PlainText.reqCode(c)
 
-    override def reqCodes(reqCodes: TraversableOnce[ReqCode.Value]): String =
-      reqCodes.toIterator.map(reqCode).mkString("\n")
+    override def reqCodes(reqCodes: IterableOnce[ReqCode.Value]): String =
+      reqCodes.iterator.map(reqCode).mkString("\n")
 
     override def reqCodeTree(items: Vector[ReqCodeTreeItem]): String =
-      items.toIterator.map(reqCodeTreeItem).mkString("\n")
+      items.iterator.map(reqCodeTreeItem).mkString("\n")
 
     override def reqCodeTreeItem(item: ReqCodeTreeItem): String =
       PlainText.reqCodeTreeItem(item)
 
     override def reqTypeShort(id: ReqTypeId): String =
-      PlainText.reqTypeShort(p.config.reqTypes.need(id))
+      p.config.reqTypes.get(id).fold("?")(PlainText.reqTypeShort)
 
     override def reqTypeFull(id: ReqTypeId): String =
-      PlainText.reqTypeFull(p.config.reqTypes.need(id))
+      p.config.reqTypes.get(id).fold("?")(PlainText.reqTypeFull)
+
+    def text(text: Text.AnyOptional, live: Live, mandatory: Mandatory): String =
+      this.text(text, live, Valid.always, mandatory) // Valid.always because TagValidity doesn't affect PlainText output
 
     override def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[Text.AnyOptional, Set[UseCaseStepId]],
                                         live: Live): String =
@@ -305,5 +326,22 @@ object PlainText {
         this.asInstanceOf[ForProject[Ctx2]]
       else
         ForProject(p, newCtx)
+
+    def tagListWithHashtags(ids: Vector[ApplicableTagId]): String =
+      ids.iterator.map(p.config.tags.needApplicableTag(_).key.with_#).mkString(" ")
+
+    val reqTitleWithoutMarkup: Req => String = {
+      def make(t: Text.AnyOptional, req: Req) = textWithoutMarkup(t, req.live(cfg.reqTypes))
+      memoByReqId {
+        case gr: GenericReq => make(gr.title, gr)
+        case uc: UseCase    => make(uc.title, uc)
+      }
+    }
+
+    def reqTitleWithoutMarkupById(id: ReqId): String =
+      reqTitleWithoutMarkup(p.content.reqs.need(id))
+
+    def textWithoutMarkup(text: Text.AnyOptional, live: Live): String =
+      nestedText("", "", live, text, false)
   }
 }

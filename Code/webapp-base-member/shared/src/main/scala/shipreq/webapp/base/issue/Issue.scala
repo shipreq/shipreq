@@ -4,6 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data.{ManualIssue => ManualIssueInstance, _}
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.text.{Atom, Text}
 
 sealed trait IssueCategory
@@ -21,18 +22,23 @@ sealed abstract class IssueClass(final val category: IssueCategory)
 object IssueClass {
   import shipreq.webapp.base.issue.{IssueCategory => C}
 
-  case object BlankCustomField      extends IssueClass(C.MissingData)
-  case object BlankTitle            extends IssueClass(C.MissingData)
-  case object BlankUseCaseStep      extends IssueClass(C.MissingData)
-  case object ConflictingTags       extends IssueClass(C.BadData)
-  case object DeadIssueTag          extends IssueClass(C.BadData)
-  case object DeadReference         extends IssueClass(C.BadData)
-  case object DeadTag               extends IssueClass(C.BadData)
-  case object EmptyCodeGroup        extends IssueClass(C.Futility)
-  case object ImplicationRequired   extends IssueClass(C.MissingData)
-  case object IssueTag              extends IssueClass(C.UserDefined)
-  case object ManualIssue           extends IssueClass(C.UserDefined)
-  case object UninhabitableTagField extends IssueClass(C.Futility)
+  case object BlankCustomField             extends IssueClass(C.MissingData)
+  case object BlankTitle                   extends IssueClass(C.MissingData)
+  case object BlankUseCaseStep             extends IssueClass(C.MissingData)
+  case object ConflictingTags              extends IssueClass(C.BadData)
+  case object DeadIssueTag                 extends IssueClass(C.BadData)
+  case object DeadReference                extends IssueClass(C.BadData)
+  case object DeadTag                      extends IssueClass(C.BadData)
+  case object EmptyCodeGroup               extends IssueClass(C.Futility)
+  case object FieldDefaultTagDead          extends IssueClass(C.BadData)
+  case object FieldDefaultTagNotApplicable extends IssueClass(C.BadData)
+  case object FieldDefaultTagUnrelated     extends IssueClass(C.BadData)
+  case object ImplicationRequired          extends IssueClass(C.MissingData)
+  case object IssueTag                     extends IssueClass(C.UserDefined)
+  case object ManualIssue                  extends IssueClass(C.UserDefined)
+  case object NonApplicableField           extends IssueClass(C.Futility)
+  case object NonApplicableTag             extends IssueClass(C.BadData)
+  case object UninhabitableTagField        extends IssueClass(C.Futility)
 
   implicit def univEq: UnivEq[IssueClass] = UnivEq.derive
   val values = AdtMacros.adtValues[IssueClass]
@@ -72,9 +78,20 @@ object Issue {
 
   final case class DeadTag(req: Req,
                            loc: LocationOf.Text.InReq,
-                           tag: ApplicableTag) extends Issue(C.DeadIssueTag)
+                           tag: ApplicableTag) extends Issue(C.DeadTag)
 
   final case class EmptyCodeGroup(rcg: LiveCodeGroup) extends Issue(C.EmptyCodeGroup)
+
+  final case class FieldDefaultTagDead(field       : CustomField.Tag,
+                                       tag         : ApplicableTag,
+                                       reqsAffected: List[Req]) extends Issue(C.FieldDefaultTagDead)
+
+  final case class FieldDefaultTagNotApplicable(field  : CustomField.Tag,
+                                                tag    : ApplicableTag,
+                                                reqType: ReqType) extends Issue(C.FieldDefaultTagNotApplicable)
+
+  final case class FieldDefaultTagUnrelated(field: CustomField.Tag,
+                                            tag  : ApplicableTag) extends Issue(C.FieldDefaultTagUnrelated)
 
   final case class ImplicationRequired(req: Req) extends Issue(C.ImplicationRequired)
 
@@ -86,6 +103,12 @@ object Issue {
                                  issue: Atom.AnyIssue) extends Issue(C.IssueTag)
 
   final case class ManualIssue(issue: ManualIssueInstance) extends Issue(C.ManualIssue)
+
+  final case class NonApplicableField(field: CustomField) extends Issue(C.NonApplicableField)
+
+  final case class NonApplicableTag(req: Req,
+                                    loc: LocationOf.Text.InReq,
+                                    tag: ApplicableTag) extends Issue(C.NonApplicableTag)
 
   final case class UninhabitableTagField(field: CustomField.Tag) extends Issue(C.UninhabitableTagField)
 }

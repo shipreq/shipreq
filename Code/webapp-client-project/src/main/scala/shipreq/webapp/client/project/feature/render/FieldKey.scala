@@ -6,6 +6,7 @@ import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.client.project.lib.DataReusability._
 
 /**
@@ -25,12 +26,14 @@ object FieldKey {
   /** Fields apply to all types of reqs */
   sealed trait ForAllReqs extends ForGenericReq with ForUseCase
 
-  case object Codes                                                   extends ForAllReqs
-  case object ReqType                                                 extends ForAllReqs
-  case object Title                                                   extends ForAllReqs
-  final case class CustomTextField(field: CustomField.Text.Id)        extends ForAllReqs
-  final case class Implications   (scope: ImplicationScope)           extends ForAllReqs
-  final case class Tags           (field: Option[CustomField.Tag.Id]) extends ForAllReqs
+  case object Codes                                            extends ForAllReqs
+  case object ReqType                                          extends ForAllReqs
+  case object Title                                            extends ForAllReqs
+  case object OtherTags                                        extends ForAllReqs
+  case object AllTags                                          extends ForAllReqs
+  final case class CustomTextField(field: CustomField.Text.Id) extends ForAllReqs
+  final case class Implications   (scope: ImplicationScope)    extends ForAllReqs
+  final case class CustomFieldTags(field: CustomField.Tag.Id)  extends ForAllReqs
 
   sealed trait ForCodeGroup extends FieldKey
   case object Code           extends ForCodeGroup
@@ -54,7 +57,7 @@ object FieldKey {
   def customField(id: CustomFieldId): FieldKey =
     id match {
       case i: CustomField.Text.Id        => CustomTextField(i)
-      case i: CustomField.Tag.Id         => Tags(Some(i))
+      case i: CustomField.Tag.Id         => CustomFieldTags(i)
       case i: CustomField.Implication.Id => Implications(-\/(i))
     }
 

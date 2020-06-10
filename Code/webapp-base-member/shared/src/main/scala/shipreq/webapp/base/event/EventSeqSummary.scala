@@ -24,7 +24,7 @@ final case class EventSeqSummary(
     useCaseSteps        : EventSeqSummary.CUDR[UseCaseStepId],
     apReqCodes          : Boolean,
     contentLiveDeps     : Boolean,
-    fieldReposition     : Boolean,
+    fieldReposition     : Set[FieldId],
     ) {
 
   override def toString =
@@ -57,6 +57,14 @@ final case class EventSeqSummary(
   val hasTags: Boolean =
     hasTagsCU || hasTagsDR
 
+  lazy val allFields: Set[FieldId] =
+    mergeSets(
+      fieldReposition,
+      staticFields.all,
+      customFieldImpTypes.all,
+      customFieldTagTypes.all,
+      customFieldTextTypes.all)
+
   lazy val allTags: Set[TagId] =
     mergeSets(applicableTags.all, tagGroups.all)
 
@@ -79,7 +87,7 @@ final case class EventSeqSummary(
 
 object EventSeqSummary {
 
-  def apply(events: TraversableOnce[Event]): EventSeqSummary = {
+  def apply(events: IterableOnce[Event]): EventSeqSummary = {
     val b = new MutableBuilder
     b ++= events
     b.result()
@@ -88,8 +96,8 @@ object EventSeqSummary {
   def empty: EventSeqSummary =
     apply(Nil)
 
-  def fromVerifiedEvents(events: TraversableOnce[VerifiedEvent]): EventSeqSummary =
-    apply(events.toIterator.map(_.event))
+  def fromVerifiedEvents(events: IterableOnce[VerifiedEvent]): EventSeqSummary =
+    apply(events.iterator.map(_.event))
 
   final case class WithProject(summary: EventSeqSummary, project: Project) {
 
@@ -190,7 +198,7 @@ object EventSeqSummary {
     private[this] val useCaseSteps         = new CUDR.Mutable[UseCaseStepId]
     private var apReqCodes                 = false
     private var contentLiveDeps            = false
-    private var fieldReposition            = false
+    private var fieldReposition            = Set.empty[FieldId]
 
     import CUDR.Field._
 
@@ -210,8 +218,13 @@ object EventSeqSummary {
       case i: ApplicableTagId => applicableTags.add(f, i)
     }
 
-    def ++=(events: TraversableOnce[Event]): Unit =
-      events.foreach(+=)
+    private def customReqTypeDelete(id: CustomReqTypeId): Unit = {
+      customReqTypes.deleted += id
+      contentLiveDeps = true
+    }
+
+    def ++=(events: IterableOnce[Event]): Unit =
+      events.iterator.foreach(+=)
 
     val += : Event => Unit = {
 
@@ -228,10 +241,6 @@ object EventSeqSummary {
         e.patch.added.foreach(req(Updated, _))
         e.patch.removed.foreach(req(Updated, _))
 
-      case e: Event.CustomReqTypeDelete =>
-        customReqTypes.deleted += e.id
-        contentLiveDeps = true
-
       case e: Event.CustomReqTypeRestore =>
         customReqTypes.restored += e.id
         contentLiveDeps = true
@@ -244,53 +253,68 @@ object EventSeqSummary {
         req(Updated, e.id)
         apReqCodes = true
 
-      case e: Event.ApplicableTagCreate    => applicableTags.created += e.id
-      case e: Event.ApplicableTagUpdate    => applicableTags.updated += e.id
-      case e: Event.CodeGroupCreate        => reqCodeGroups.created += e.id
-      case e: Event.CodeGroupsDelete       => reqCodeGroups.deleted ++= e.ids.whole
-      case e: Event.CodeGroupUpdate        => reqCodeGroups.updated += e.id
-      case e: Event.CustomIssueTypeCreate  => customIssueTypes.created += e.id
-      case e: Event.CustomIssueTypeDelete  => customIssueTypes.deleted += e.id
-      case e: Event.CustomIssueTypeRestore => customIssueTypes.restored += e.id
-      case e: Event.CustomIssueTypeUpdate  => customIssueTypes.updated += e.id
-      case e: Event.CustomReqTypeCreate    => customReqTypes.created += e.id
-      case e: Event.CustomReqTypeUpdate    => customReqTypes.updated += e.id
-      case e: Event.FieldCustomDelete      => customFieldType(Deleted, e.id)
-      case e: Event.FieldCustomImpCreate   => customFieldImpTypes.created += e.id
-      case e: Event.FieldCustomImpUpdate   => customFieldImpTypes.updated += e.id
-      case e: Event.FieldCustomRestore     => customFieldType(Restored, e.id)
-      case e: Event.FieldCustomTagCreate   => customFieldTagTypes.created += e.id
-      case e: Event.FieldCustomTagUpdate   => customFieldTagTypes.updated += e.id
-      case e: Event.FieldCustomTextCreate  => customFieldTextTypes.created += e.id
-      case e: Event.FieldCustomTextUpdate  => customFieldTextTypes.updated += e.id
-      case _: Event.FieldReposition        => fieldReposition = true
-      case e: Event.FieldStaticAdd         => staticFields.created += e.f
-      case e: Event.FieldStaticRemove      => staticFields.deleted += e.f
-      case e: Event.GenericReqCreate       => genericReqs.created += e.id
-      case e: Event.GenericReqTitleSet     => genericReqs.updated += e.id
-      case e: Event.ProjectTemplateApply   => this ++= e.template.events
-      case e: Event.ReqFieldCustomTextSet  => req(Updated, e.id)
-      case e: Event.ReqTagsPatch           => req(Updated, e.id)
-      case e: Event.TagDelete              => tag(Deleted, e.id)
-      case e: Event.TagGroupCreate         => tagGroups.created += e.id
-      case e: Event.TagGroupUpdate         => tagGroups.updated += e.id
-      case e: Event.TagRestore             => tag(Restored, e.id)
-      case e: Event.UseCaseCreate          => useCasesExclSteps.created += e.id
-      case e: Event.UseCaseStepCreate      => useCaseSteps.created += e.id
-      case e: Event.UseCaseStepDelete      => useCaseSteps.deleted += e.id
-      case e: Event.UseCaseStepRestore     => useCaseSteps.restored += e.id
-      case e: Event.UseCaseStepShiftLeft   => useCaseSteps.updated += e.id // ?
-      case e: Event.UseCaseStepShiftRight  => useCaseSteps.updated += e.id // ?
-      case e: Event.UseCaseStepUpdate      => useCaseSteps.updated += e.id
-      case e: Event.UseCaseTitleSet        => useCasesExclSteps.updated += e.id
+      case e: Event.ApplicableTagCreateV1   => applicableTags.created += e.id
+      case e: Event.ApplicableTagCreate     => applicableTags.created += e.id
+      case e: Event.ApplicableTagUpdateV1   => applicableTags.updated += e.id
+      case e: Event.ApplicableTagUpdate     => applicableTags.updated += e.id
+      case e: Event.CodeGroupCreate         => reqCodeGroups.created += e.id
+      case e: Event.CodeGroupsDelete        => reqCodeGroups.deleted ++= e.ids.whole
+      case e: Event.CodeGroupUpdate         => reqCodeGroups.updated += e.id
+      case e: Event.CustomIssueTypeCreate   => customIssueTypes.created += e.id
+      case e: Event.CustomIssueTypeDelete   => customIssueTypes.deleted += e.id
+      case e: Event.CustomIssueTypeRestore  => customIssueTypes.restored += e.id
+      case e: Event.CustomIssueTypeUpdate   => customIssueTypes.updated += e.id
+      case e: Event.CustomReqTypeCreateV1   => customReqTypes.created += e.id
+      case e: Event.CustomReqTypeCreate     => customReqTypes.created += e.id
+      case e: Event.CustomReqTypeDelete     => customReqTypeDelete(e.id)
+      case e: Event.CustomReqTypeDeleteSoft => customReqTypeDelete(e.id)
+      case e: Event.CustomReqTypeDeleteHard => customReqTypeDelete(e.id)
+      case e: Event.CustomReqTypeUpdateV1   => customReqTypes.updated += e.id
+      case e: Event.CustomReqTypeUpdate     => customReqTypes.updated += e.id
+      case e: Event.FieldCustomDelete       => customFieldType(Deleted, e.id)
+      case e: Event.FieldCustomImpCreateV1  => customFieldImpTypes.created += e.id
+      case e: Event.FieldCustomImpCreate    => customFieldImpTypes.created += e.id
+      case e: Event.FieldCustomImpUpdateV1  => customFieldImpTypes.updated += e.id
+      case e: Event.FieldCustomImpUpdate    => customFieldImpTypes.updated += e.id
+      case e: Event.FieldCustomRestore      => customFieldType(Restored, e.id)
+      case e: Event.FieldCustomTagCreateV1  => customFieldTagTypes.created += e.id
+      case e: Event.FieldCustomTagCreate    => customFieldTagTypes.created += e.id
+      case e: Event.FieldCustomTagUpdateV1  => customFieldTagTypes.updated += e.id
+      case e: Event.FieldCustomTagUpdate    => customFieldTagTypes.updated += e.id
+      case e: Event.FieldCustomTextCreateV1 => customFieldTextTypes.created += e.id
+      case e: Event.FieldCustomTextCreate   => customFieldTextTypes.created += e.id
+      case e: Event.FieldCustomTextUpdateV1 => customFieldTextTypes.updated += e.id
+      case e: Event.FieldCustomTextUpdate   => customFieldTextTypes.updated += e.id
+      case e: Event.FieldReposition         => fieldReposition += e.id
+      case e: Event.FieldStaticAdd          => staticFields.created += e.f
+      case e: Event.FieldStaticRemove       => staticFields.deleted += e.f
+      case e: Event.GenericReqCreate        => genericReqs.created += e.id
+      case e: Event.GenericReqTitleSet      => genericReqs.updated += e.id
+      case e: Event.ProjectTemplateApply    => this ++= e.template.events
+      case e: Event.ReqFieldCustomTextSet   => req(Updated, e.id)
+      case e: Event.ReqTagsPatch            => req(Updated, e.id)
+      case e: Event.TagDelete               => tag(Deleted, e.id)
+      case e: Event.TagGroupCreate          => tagGroups.created += e.id
+      case e: Event.TagGroupUpdate          => tagGroups.updated += e.id
+      case e: Event.TagRestore              => tag(Restored, e.id)
+      case e: Event.UseCaseCreate           => useCasesExclSteps.created += e.id
+      case e: Event.UseCaseStepCreate       => useCaseSteps.created += e.id
+      case e: Event.UseCaseStepDelete       => useCaseSteps.deleted += e.id
+      case e: Event.UseCaseStepRestore      => useCaseSteps.restored += e.id
+      case e: Event.UseCaseStepShiftLeft    => useCaseSteps.updated += e.id // ?
+      case e: Event.UseCaseStepShiftRight   => useCaseSteps.updated += e.id // ?
+      case e: Event.UseCaseStepUpdate       => useCaseSteps.updated += e.id
+      case e: Event.UseCaseTitleSet         => useCasesExclSteps.updated += e.id
 
       case _: Event.ProjectNameSet
          | _: Event.ManualIssueCreate
          | _: Event.ManualIssueDelete
          | _: Event.ManualIssueUpdate
+         | _: Event.SavedViewCreateV1
          | _: Event.SavedViewCreate
          | _: Event.SavedViewDefaultSet
          | _: Event.SavedViewDelete
+         | _: Event.SavedViewUpdateV1
          | _: Event.SavedViewUpdate        => ()
     }
 

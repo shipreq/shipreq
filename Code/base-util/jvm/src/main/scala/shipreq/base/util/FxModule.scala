@@ -1,9 +1,10 @@
 package shipreq.base.util
 
+import cats.CommutativeApplicative
 import cats.effect.IO
 import cats.effect.IO.ioEffect
 import java.time.{Duration, Instant}
-import scala.collection.generic.CanBuildFrom
+import scala.collection.Factory
 import scala.concurrent.blocking
 import scalaz.{-\/, BindRec, Catchable, Monad, \/, \/-}
 
@@ -16,29 +17,45 @@ object FxModule {
 
   type Fx[A] = IO[A]
 
-  implicit val fxInstance: Monad[Fx] with BindRec[Fx] =
-    new Monad[Fx] with BindRec[Fx] {
-      override def ap[A, B](fa: => Fx[A])(f: => Fx[A => B]): Fx[B] = ioEffect.ap(f)(fa)
-      override def point[A](a: => A): Fx[A] = IO(a)
-      override def bind[A, B](fa: Fx[A])(f: A => Fx[B]): Fx[B] = fa.flatMap(f)
-      override def map[A, B](fa: Fx[A])(f: A => B): Fx[B] = fa.map(f)
-      override def tailrecM[A, B](f: A => Fx[A \/ B])(a: A): Fx[B] =
-        ioEffect.tailRecM(a)(f(_).map(_.toEither)) // TODO Use either in Fx interface?
-    }
+  implicit object fxScalazInstance extends Monad[Fx] with BindRec[Fx] with Catchable[Fx] {
+    override def ap[A, B](fa: => Fx[A])(f: => Fx[A => B]): Fx[B] =
+      ioEffect.ap(f)(fa)
 
-  implicit val fxInstanceCatchable: Catchable[Fx] =
-    new Catchable[Fx] {
-      override def attempt[A](f: Fx[A]): Fx[Throwable \/ A] =
-        Fx {
-          try \/-(f.unsafeRun())
-          catch {
-            case t: Throwable => -\/(t)
-          }
+    override def point[A](a: => A): Fx[A] =
+      IO(a)
+
+    override def bind[A, B](fa: Fx[A])(f: A => Fx[B]): Fx[B] =
+      fa.flatMap(f)
+
+    override def map[A, B](fa: Fx[A])(f: A => B): Fx[B] =
+      fa.map(f)
+
+    override def tailrecM[A, B](f: A => Fx[A \/ B])(a: A): Fx[B] =
+      ioEffect.tailRecM(a)(f(_).map(_.toEither)) // TODO Use either in Fx interface?
+
+    override def attempt[A](f: Fx[A]): Fx[Throwable \/ A] =
+      Fx {
+        try \/-(f.unsafeRun())
+        catch {
+          case t: Throwable => -\/(t)
         }
+      }
 
-      override def fail[A](err: Throwable): Fx[A] =
-        Fx.fail(err)
-    }
+    override def fail[A](err: Throwable): Fx[A] =
+      Fx.fail(err)
+  }
+
+  implicit object fxCatsInstance extends CommutativeApplicative[Fx] {
+
+    override def pure[A](a: A) =
+      IO.pure(a)
+
+    override def ap[A, B](ff: Fx[A => B])(fa: Fx[A]) =
+      for {
+        a <- fa
+        f <- ff
+      } yield f(a)
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -86,10 +103,10 @@ object FxModule {
         Fx(f(_).unsafeRun())
 
       /** Anything traversable by the Scala stdlib definition */
-      def std[T[X] <: TraversableOnce[X]](implicit cbf: CanBuildFrom[T[A], B, T[B]]): Fx[T[A] => T[B]] =
+      def std[T[X] <: IterableOnce[X]](implicit cbf: Factory[B, T[B]]): Fx[T[A] => T[B]] =
         Fx { ta =>
-          val r = cbf(ta)
-          ta.toIterator.foreach(a => r += f(a).unsafeRun())
+          val r = cbf.newBuilder
+          ta.iterator.foreach(a => r += f(a).unsafeRun())
           r.result()
         }
 
@@ -97,10 +114,10 @@ object FxModule {
         Fx(_.map(f(_).unsafeRun()))
     }
 
-    def traverse[T[X] <: TraversableOnce[X], A, B](ta: => T[A])(f: A => Fx[B])(implicit cbf: CanBuildFrom[T[A], B, T[B]]): Fx[T[B]] =
+    def traverse[T[X] <: IterableOnce[X], A, B](ta: => T[A])(f: A => Fx[B])(implicit cbf: Factory[B, T[B]]): Fx[T[B]] =
       liftTraverse(f).std[T](cbf).map(_(ta))
 
-    def sequence[T[X] <: TraversableOnce[X], A](tca: => T[Fx[A]])(implicit cbf: CanBuildFrom[T[Fx[A]], A, T[A]]): Fx[T[A]] =
+    def sequence[T[X] <: IterableOnce[X], A](tca: => T[Fx[A]])(implicit cbf: Factory[A, T[A]]): Fx[T[A]] =
       traverse(tca)(Identity.apply)(cbf)
 
     def traverseOption[A, B](oa: => Option[A])(f: A => Fx[B]): Fx[Option[B]] =
@@ -165,7 +182,7 @@ object FxModule {
       )
 
     @inline def attemptFx: Fx[Throwable \/ A] =
-      fxInstanceCatchable.attempt(fx)
+      fxScalazInstance.attempt(fx)
 
     /**
       * @param continue Int arg            = number of attempts thus far (i.e. ≥ 1)
@@ -223,6 +240,9 @@ object FxModule {
         unsafeRun()
         ()
       }
+
+    def withTimeLimit(maxDur: Duration): Fx[Option[A]] =
+      Fx(ThreadUtils.unsafeRunWithTimeLimit(maxDur)(fx.unsafeRun()))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

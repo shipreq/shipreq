@@ -1,0 +1,89 @@
+digraph G {
+
+node [style=filled]
+
+{
+node[fillcolor="#fff800"]
+EndoCorrector
+Corrector
+Invalidator
+Auditor
+EndoValidator
+Validator
+}
+
+{
+node[fillcolor="#ddddff" color="#000088"]
+Auditor_Invalidator [label="Auditor\nx\nInvalidator"]
+Corrector_Auditor [label="Corrector\nx\nAuditor"]
+EndoCorrector_Auditor [label="EndoCorrector\nx\nAuditor"]
+EndoCorrector_EndoValidator [label="EndoCorrector\nx\nEndoValidator"]
+EndoCorrector_Invalidator [label="EndoCorrector\nx\nInvalidator"]
+EndoValidator_EndoCorrector [label="EndoValidator\nx\nEndoCorrector"]
+EndoValidator_Invalidator [label="EndoValidator\nx\nInvalidator"]
+Invalidator_EndoValidator [label="Invalidator\nx\nEndoValidator"]
+Validator_Auditor [label="Validator\nx\nAuditor"]
+Validator_Invalidator [label="Validator\nx\nInvalidator"]
+}
+
+{
+edge[color="#0000cc"]
+Auditor,Invalidator -> Auditor_Invalidator
+// Corrector,Auditor -> Corrector_Auditor
+// EndoCorrector,Auditor -> EndoCorrector_Auditor
+EndoCorrector,EndoValidator -> EndoCorrector_EndoValidator
+EndoCorrector,Invalidator -> EndoCorrector_Invalidator
+// EndoValidator,EndoCorrector -> EndoValidator_EndoCorrector
+// EndoValidator,Invalidator -> EndoValidator_Invalidator
+Invalidator,EndoValidator -> Invalidator_EndoValidator
+Validator,Auditor -> Validator_Auditor
+// Validator,Invalidator -> Validator_Invalidator
+}
+
+Auditor -> Auditor [label="andThen / tuple"]
+Auditor -> Invalidator [label="toInvalidator"]
+Auditor -> Validator [label="toValidator"]
+Auditor_Invalidator -> Auditor [label="appendInvalidator"]
+Corrector -> Corrector [label="tuple"]
+Corrector_Auditor -> Validator [label="withAuditor"]
+EndoCorrector -> Corrector [label="toCorrector"]
+EndoCorrector -> EndoCorrector [label="append / prepend / tuple"]
+EndoCorrector -> EndoValidator [label="toEndoValidator"]
+EndoCorrector_Auditor -> Validator [label="withAuditor"]
+EndoCorrector_EndoValidator -> EndoValidator [label="appendValidator"]
+EndoCorrector_Invalidator -> EndoValidator [label="withInvalidator"]
+EndoValidator -> EndoValidator [label="append / prepend"]
+EndoValidator -> Validator [label="toValidator"]
+EndoValidator_EndoCorrector -> EndoValidator [label="{ap,pre}pendCorrector"]
+EndoValidator_Invalidator -> EndoValidator [label="addInvalidator"]
+Invalidator -> Auditor [label="toAuditor"]
+Invalidator -> EndoValidator [label="toEndoValidator"]
+Invalidator -> Invalidator [label="merge / whenValid"]
+Invalidator -> Validator [label="toValidator"]
+Invalidator_EndoValidator -> EndoValidator [label="whenValid"]
+Validator -> Invalidator [label="toInvalidator"]
+Validator -> Validator [label="andThen / tuple"]
+Validator_Auditor -> Validator [label="andThenAuditor"]
+Validator_Invalidator -> Validator [label="appendInvalidator"]
+
+edge[dir=back]
+
+{
+edge[color="#0000cc"]
+// Auditor_Invalidator -> Auditor,Invalidator
+Corrector_Auditor -> Corrector,Auditor
+EndoCorrector_Auditor -> EndoCorrector,Auditor
+// EndoCorrector_EndoValidator -> EndoCorrector,EndoValidator
+// EndoCorrector_Invalidator -> EndoCorrector,Invalidator
+EndoValidator_EndoCorrector -> EndoValidator,EndoCorrector
+EndoValidator_Invalidator -> EndoValidator,Invalidator
+// Invalidator_EndoValidator -> Invalidator,EndoValidator
+// Validator_Auditor -> Validator,Auditor
+Validator_Invalidator -> Validator,Invalidator
+}
+
+edge[style=dashed]
+EndoCorrector,Invalidator -> EndoValidator
+Corrector,Auditor -> Validator
+
+}

@@ -96,6 +96,9 @@ object Composite {
 
     def stateful[S](addStatefulValidation: (Simple.Validator[I, C, V], S) => Simple.Validator[I, C, V]): Stateful[S, I, C, V] =
       new Stateful(this, addStatefulValidation(unnamed, _))
+
+    def vectorWithGaps[G]: Stateless[Vector[G \/ I], Vector[G \/ C], Vector[V]] =
+      new Stateless(unnamed.vectorWithGaps, name)
   }
 
   object Stateless {
@@ -133,5 +136,7 @@ object Composite {
     def map[II, CC, VV](f: Simple.Validator[I, C, V] => Simple.Validator[II, CC, VV]): Stateful[S, II, CC, VV] =
       new Stateful(stateless map f, f compose unnamedFn)
 
+    def vectorWithGaps[G]: Stateful[S, Vector[G \/ I], Vector[G \/ C], Vector[V]] =
+      new Stateful(stateless.vectorWithGaps, unnamedFn(_).vectorWithGaps)
   }
 }

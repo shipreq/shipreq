@@ -1,49 +1,14 @@
 package shipreq.webapp.client.project.test
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.ScalazReact._
 import org.scalajs.dom
 import org.scalajs.dom.{EventTarget, KeyboardEvent}
-import japgolly.scalajs.react.test.ReactTestUtils
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.{UndefOr, undefined}
-import scalaz.Equal
-import scalaz.std.AllInstances._
-import nyaya.gen.Gen
-import shipreq.base.util.Debug._
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.test._
-import shipreq.webapp.client.project.app.pages.config_old.shared._
-import RowStatus._
 
 object TestUtil extends WebappTestUtil with WebappTestEquality {
-
-  def assertRowStatusFailed(r: RowStatus): RowStatus.Failed =
-    r match {
-      case f@ RowStatus.Failed(_) => f
-      case f => sys.error(s"Expected a failed row. Got: $f")
-    }
-
-  case class AB[A,B](a: A, b: B)
-
-  def genAB[A, B](ga: Gen[A], gb: Gen[B]): Gen[AB[A,B]] =
-    Gen.apply2(AB.apply[A, B])(ga, gb)
-
-  type TestFields2[A, B] = FieldSet2[AB[A, B], A, B]
-
-  def fields2[A,B](empty: (A,B)): TestFields2[A, B] =
-    FieldSet2[AB[A,B]](_.a, _.b)(empty)
-
-  implicit def eqCallbackEvent[B] = Equal.equalA[CallbackEvent[B]]
-
-  implicit val eqRowStatus = Equal.equalA[RowStatus]
-
-  val failedRowStatus =
-    Failed(Callback.empty)
-
-  def genRowStatus: Gen[RowStatus] =
-    Gen.choose(Sync, Locked, failedRowStatus)
 
   def sole[A](a: js.Array[A]): A = {
     assertEq(s"sole(Array(${a.mkString(", ")}))", a.length, 1)
@@ -57,10 +22,9 @@ object TestUtil extends WebappTestUtil with WebappTestEquality {
         case n => fail(s"Expected an array with one element, found $n: ${a.mkString("[",",","]")}")
     }
 
-    def soleDom[N <: A]()(implicit ev: A <:< org.scalajs.dom.Element): N = {
-      val _ = ev
+    @nowarn("cat=unused")
+    def soleDom[N <: A]()(implicit ev: A <:< org.scalajs.dom.Element): N =
       sole().asInstanceOf[N]
-    }
   }
 
   implicit def autodomnode(c: GenericComponent.MountedRaw) =

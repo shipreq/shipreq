@@ -1,6 +1,5 @@
 package shipreq.webapp.server.app
 
-import io.prometheus.client.exporter.MetricsServlet
 import java.time.Duration
 import java.util.UUID
 import javax.servlet._
@@ -10,7 +9,7 @@ import org.slf4j.MDC
 import scala.annotation.tailrec
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
-import shipreq.taskman.api.{Task, TaskmanApi}
+import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.user.UserId
 import shipreq.webapp.server.db.{ResponseType, StatRecorder}

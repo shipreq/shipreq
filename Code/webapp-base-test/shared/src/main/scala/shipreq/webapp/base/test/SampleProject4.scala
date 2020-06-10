@@ -3,10 +3,11 @@ package shipreq.webapp.base.test
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.VectorTree
 import shipreq.base.util.VectorTree.{Location => Loc}
-import shipreq.webapp.base.data._, DataImplicits._
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.test.UnsafeTypes._
-import UseCases.StepFlow
+import shipreq.webapp.base.test.WebappTestUtil._
 
 /**
  * Builds on SampleProject #3 to add:
@@ -21,6 +22,8 @@ import UseCases.StepFlow
  *   - (#15) 1.1.1
  */
 object SampleProject4 {
+  import DataImplicits._
+  import UseCases.StepFlow
 
   trait Values extends SampleProject3.Values {
     val uc1 = UseCaseId(1203)
@@ -44,8 +47,8 @@ object SampleProject4 {
     var rt  = p.content.reqText
 
     def addUseCase(id   : Int                            = -1,
-                   title: Text.UseCaseTitle.OptionalText = Vector.empty,
-                   ncac : UseCaseSteps.Tree              = rootOnlyStepTree(),
+                   title: Text.UseCaseTitle.OptionalText ,// = Text.empty,
+                   ncac : UseCaseSteps.Tree              ,// = rootOnlyStepTree(),
                    ec   : UseCaseSteps.Tree              = VectorTree.empty,
                    live : Live                           = Live): UseCaseId = {
 
@@ -60,16 +63,13 @@ object SampleProject4 {
       ucId
     }
 
-    def newStep(id: Int = -1,
-                title: Text.UseCaseStep.OptionalText = Vector.empty,
-                live: Live = Live): UseCaseStep = {
+    def newStep(id   : Int,
+                title: Text.UseCaseStep.OptionalText = Text.empty,
+                live : Live                          = Live): UseCaseStep = {
       val i = UseCaseStepId(if (id > 0) id else (ic.useCaseStep + 1))
       ic = ic.copy(useCaseStep = ic.useCaseStep max i.value)
       UseCaseStep(i, title, live)
     }
-
-    def rootOnlyStepTree(): UseCaseSteps.Tree =
-      VectorTree.empty append newStep()
 
     val ncac =
       VectorTree.empty
@@ -83,7 +83,7 @@ object SampleProject4 {
     val uc1 = addUseCase(title = "Eat food", ncac = ncac)
     // println(ncac.map(_.title.mkString(",")))
 
-    rt = ReqData.textAt(descField, uc1).set("This UC is about eating.")(rt)
+    rt = ReqData.Text.at(descField, uc1).set("This UC is about eating.")(rt)
 
     sf = sf.addPairs(13 -> 11, 15 -> 12)
 
@@ -99,4 +99,10 @@ object SampleProject4 {
 
   lazy val plainText  = PlainText.ForProject.noCtx(project)
   lazy val textSearch = TextSearch(project, plainText)
+
+  lazy val projectWithOtherTags =
+    applyEventSuccessfully(project, Event.FieldStaticAdd(StaticField.OtherTags))
+
+  lazy val projectWithAllAndOtherTags =
+    applyEventSuccessfully(projectWithOtherTags, Event.FieldStaticAdd(StaticField.AllTags))
 }

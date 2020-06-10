@@ -1,24 +1,47 @@
-import sbt._, Keys._
-import java.nio.file.{Files, Path}
-import scala.concurrent.duration._
+import sbt._
+import sbt.Keys._
 import com.typesafe.sbt.GitPlugin.autoImport._
-import org.scalajs.core.tools.sem._
-import org.scalajs.jsenv.phantomjs.PhantomJSEnv
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.{crossProject => _, CrossType => _, _}
-import sbtcrossproject.CrossProject
+import java.nio.file.{Files, Path}
+import org.scalajs.jsenv.Input
+import org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv
+import org.scalajs.jsenv.phantomjs.sbtplugin.PhantomJSEnvPlugin.autoImport._
+import org.scalajs.linker.interface.{CheckedBehavior, Semantics}
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import org.scalajs.sbtplugin.Stage
 import sbtcrossproject.CrossPlugin.autoImport._
+import sbtcrossproject.CrossProject
+import scala.{Console => C}
+import scala.concurrent.duration._
+import scalafix.sbt.ScalafixPlugin
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
-import sbtdocker.DockerPlugin, DockerPlugin.autoImport._
 import LibDependency.{Dep, HasBoth, HasJs, HasJvm, JS, JVM, ModDepScope}
 
 sealed trait JsTestType
-case object NoTests extends JsTestType
-case object NoDom   extends JsTestType
-case object NeedDom extends JsTestType
+case object NoTests      extends JsTestType
+case object UseNode      extends JsTestType
+case object UsePhantomJs extends JsTestType
 
 object Common {
 
-  private val availableProcessors = java.lang.Runtime.getRuntime.availableProcessors()
+  lazy val releaseMode: Boolean = {
+    val mode = System.getProperty("MODE", "").trim
+    val r = mode.compareToIgnoreCase("release") == 0
+    if (r) println(s"[info] ${C.RED_B}${C.WHITE}Release Mode.${C.RESET}")
+    r
+  }
+
+  def scalafixEnabled =
+    !releaseMode
+
+  lazy val emitSourceMapsValue: Boolean =
+    System.getProperty("emitSourceMaps", "0").trim.toLowerCase match {
+      case "0" | "no" | "n" | "off" => false
+      case _                        =>
+        println("[info] \u001b[1;93mSource maps enabled.\u001b[0m")
+        true
+    }
+
+  private val cores = java.lang.Runtime.getRuntime.availableProcessors()
 
   def scalacFlags = Seq(
     "-deprecation",
@@ -27,29 +50,53 @@ object Common {
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:postfixOps",
-    "-unchecked",
-    "-Xlint:infer-any",
+    "-target:" + Dependencies.Java.major,            // Target platform for object files. ([8],9,10,11,12)
+    "-unchecked",                                    // Enable additional warnings where generated code depends on assumptions.
+    "-Wconf:msg=may.not.be.exhaustive:e",            // Make non-exhaustive matches errors instead of warnings
+    "-Wunused:implicits",                            // Warn if an implicit parameter is unused.
+    "-Wunused:imports",                              // Warn if an import selector is not referenced.
+    "-Wunused:locals",                               // Warn if a local definition is unused.
+    "-Wunused:patvars",                              // Warn if a variable bound in a pattern is unused.
+    "-Wunused:privates",                             // Warn if a private member is unused.
+    "-Xlint:adapted-args",                           // An argument list was modified to match the receiver.
+    "-Xlint:constant",                               // Evaluation of a constant arithmetic expression resulted in an error.
+    "-Xlint:delayedinit-select",                     // Selecting member of DelayedInit.
+    "-Xlint:deprecation",                            // Enable -deprecation and also check @deprecated annotations.
+    "-Xlint:eta-zero",                               // Usage `f` of parameterless `def f()` resulted in eta-expansion, not empty application `f()`.
+    "-Xlint:implicit-not-found",                     // Check @implicitNotFound and @implicitAmbiguous messages.
+    "-Xlint:inaccessible",                           // Warn about inaccessible types in method signatures.
+    "-Xlint:infer-any",                              // A type argument was inferred as Any.
+    "-Xlint:missing-interpolator",                   // A string literal appears to be missing an interpolator id.
+    "-Xlint:nonlocal-return",                        // A return statement used an exception for flow control.
+    "-Xlint:nullary-override",                       // Non-nullary `def f()` overrides nullary `def f`.
+    "-Xlint:nullary-unit",                           // `def f: Unit` looks like an accessor; add parens to look side-effecting.
+    "-Xlint:option-implicit",                        // Option.apply used an implicit view.
+    "-Xlint:poly-implicit-overload",                 // Parameterized overloaded implicit methods are not visible as view bounds.
+    "-Xlint:private-shadow",                         // A private field (or class parameter) shadows a superclass field.
+    "-Xlint:stars-align",                            // In a pattern, a sequence wildcard `_*` should match all of a repeated parameter.
+    "-Xlint:valpattern",                             // Enable pattern checks in val definitions.
+    "-Xmixin-force-forwarders:false",                // Only generate mixin forwarders required for program correctness.
+    "-Xno-forwarders",                               // Do not generate static forwarders in mirror classes.
     "-Xsource:2.13",
-    "-Ybackend-parallelism", availableProcessors.min(16).toString,
+    "-Ybackend-parallelism", cores.min(16).toString,
     "-Ycache-macro-class-loader:last-modified",
     "-Ycache-plugin-class-loader:last-modified",
-    "-Yno-adapted-args",
-    "-Yno-generic-signatures",
-    "-Ypartial-unification",
-    "-Ypatmat-exhaust-depth", "off",
-    "-Ywarn-inaccessible",
-    "-Ywarn-infer-any",
-    "-Ywarn-unused:implicits",
-    "-Ywarn-unused:patvars",
-    "-Ywarn-unused:privates"
+    "-Yjar-compression-level", "9",                  // compression level to use when writing jar files
+    "-Ymacro-annotations",                           // Enable support for macro annotations, formerly in macro paradise.
+    "-Yno-generic-signatures",                       // Suppress generation of generic signatures for Java.
+    "-Ypatmat-exhaust-depth", "off"
   )
-    // "-Xstrict-inference", // Don't infer known-unsound types
-    // "-Ywarn-self-implicit",
-    // "-Ywarn-unused-import"
-    // "-Ywarn-unused:explicits",
-    // "-Ywarn-unused:locals",
+/*
+    "-Xsource:2.14",                                 // Prepare for Dotty -- Disabled because of warnings in macro-generated code. Fix 3rd-libs first.
+    "-Wdead-code",                                   // Warn when dead code is identified. -- Disabled due to js.native / https://github.com/scala/bug/issues/11942
+    "-Wunused:explicits",                            // Warn if an explicit parameter is unused. -- Disabled due to js.native / https://github.com/scala/bug/issues/11942
+*/
 
-  def scalacTestFlags = Seq("-language:reflectiveCalls")
+  def scalacTestFlags = Seq(
+    "-language:reflectiveCalls")
+
+  def scalacTestNonFlags = Seq(
+    "-Xlint:valpattern")
 
   val debugSettings: Project => Project =
     _.settings(
@@ -63,8 +110,17 @@ object Common {
   )
 
   val optimisationSettings: Project => Project =
-    nonTestCompilerFlags("-Xelide-below", "OFF") compose
+    nonTestCompilerFlags(
+      "-Xdisable-assertions",
+      "-Xelide-below", "OFF"
+    ) compose
     nonTestCompilerFlags(optimisationScalacFlags: _*)
+
+  val scalafixSettings: Project => Project =
+    if (scalafixEnabled)
+      _.enablePlugins(ScalafixPlugin)
+    else
+      _.disablePlugins(ScalafixPlugin)
 
   val redirectTargetDir: File => File =
     System.getenv(if (releaseMode) "SHIPREQ_RELEASE_TARGET" else "SHIPREQ_TARGET") match {
@@ -120,43 +176,19 @@ object Common {
       minForcegcInterval          := 3.minutes,
       target                      := redirectTargetDir(target.value))
     .configure(
+      scalafixSettings,
       packageBinaryOnly,
       dockerLayerReuse,
       Dependencies.useKindProjector,
-      Dependencies.useBetterMonadicFor,
-      addCommandAliases(
-        "/"   -> "project root",
-        "B"   -> "project base",
-        "BU"  -> "project base-util-jvm",
-        "BT"  -> "project base-test-jvm",
-        "T"   -> "project taskman",
-        "W"   -> "project webapp",
-        "TA"  -> "project taskman-api",
-        "TAL" -> "project taskman-api-logic",
-        "TS"  -> "project taskman-server",
-        "TSL" -> "project taskman-server-logic",
-        "WB"  -> "project webapp-base-jvm",
-        "WBM" -> "project webapp-base-member-jvm",
-        "WT"  -> "project webapp-base-test-jvm",
-        "WC"  -> "project webapp-client",
-        "WCA" -> "project webapp-client-public-js", // A for Anonymous
-        "WCB" -> "project webapp-client-base",
-        "WCH" -> "project webapp-client-home",
-        "WCP" -> "project webapp-client-project",
-        "WCW" -> "project webapp-client-ww",
-        "WSL" -> "project webapp-server-logic-jvm",
-        "WS"  -> "project webapp-server",
-        "BM"  -> "project benchmark-jvm",
-        "BMJ" -> "project benchmark-js",
-        "C"   -> "root/clean",
-        "CT"  -> ";root/clean;root/test"))
+      Dependencies.useBetterMonadicFor)
 
   /** Common settings used by standard modules - not benchmarks, not test modules */
   private def settings: Project => Project =
     _.configure(settingsMin)
       .settings(
         excludeDependencies += "commons-logging" % "commons-logging", // commons-logging should be replaced by jcl-over-slf4j
-        scalacOptions in Test ++= scalacTestFlags)
+        scalacOptions in Test ++= scalacTestFlags,
+        scalacOptions in Test --= scalacTestNonFlags)
       .configure(debugOrRelease(debugSettings, optimisationSettings))
 
   lazy val jvmSettings: Project => Project =
@@ -184,7 +216,6 @@ object Common {
 
     invoke("shipreq.webapp.server.test.LiveTestUtils", "shutdown")
     invoke("shipreq.webapp.server.test.TestJetty",     "shutdown")
-    invoke("shipreq.webapp.server.test.TestDb",        "shutdown")
     invoke("shipreq.base.test.db.TestDb",              "shutdown")
   }
 
@@ -196,25 +227,26 @@ object Common {
       InBrowserTesting.js)
     .depsForJs(Dependencies.scalajsJavaTime)
     .settings(
-      scalacOptions += "-P:scalajs:sjsDefinedByDefault",
       parallelExecution in testOnly := false,
-      // scalaJSOptimizerOptions in fullOptJS ~= (_ withPrettyPrintFullOptJS true),
-      scalaJSSemantics in fullOptJS ~= (_
-        .withProductionMode(true)
-        .withRuntimeClassNameMapper(Semantics.RuntimeClassNameMapper.discardAll())
-        .withArrayIndexOutOfBounds(CheckedBehavior.Unchecked)
-        .withAsInstanceOfs(CheckedBehavior.Unchecked)))
+      scalaJSLinkerConfig ~= { _.withSourceMap(emitSourceMapsValue) })
 
   private def jsDevSettings: Project => Project =
-    _.settings(emitSourceMaps := false)
+    identity
 
   private def jsProdSettings: Project => Project =
     _.settings(
-      emitSourceMaps := false,
       scalaJSStage := FullOptStage,
-      scalaJSOptimizerOptions ~= (_
-        .withBatchMode(true)
-        .withCheckScalaJSIR(true)),
+      scalaJSLinkerConfig ~= { _
+        .withSemantics(_
+          .withRuntimeClassNameMapper(Semantics.RuntimeClassNameMapper.discardAll())
+          .withArrayIndexOutOfBounds(CheckedBehavior.Unchecked)
+          .withAsInstanceOfs(CheckedBehavior.Unchecked)
+          .withProductionMode(true)
+        )
+          .withPrettyPrint(false)
+          .withClosureCompiler(true)
+          .withCheckIR(true)
+      },
       // More than 1 running instance of Google Closure exponentially increases time & mem-usage
       Global / concurrentRestrictions += Tags.limit(ScalaJSTags.Link, 1)
     )
@@ -233,31 +265,19 @@ object Common {
       scalacOptions += "-language:experimental.macros",
       libraryDependencies ++= Dependencies.Scala.macroDef(JVM))
 
-  // Compile-scope only
-  def jsFastDevSettings = (_: Project).settings(
-    scalaJSOptimizerOptions in fastOptJS ~= { _.withDisableOptimizer(true) },
-    emitSourceMaps in Compile in fastOptJS := false)
-
   private def jsTests(t: JsTestType): Project => Project =
     t match {
       case NoTests =>
         _.settings(test := {})
-      case NoDom =>
+      case UseNode =>
         _.settings(
-          jsEnv in Test := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv)
-      case NeedDom =>
+          jsEnv in Test := new JSDOMNodeJSEnv(JSDOMNodeJSEnv.Config()))
+      case UsePhantomJs =>
         _.settings(
-          emitSourceMaps in fastOptJS in Test := false, // PhantomJS doesn't use
-          jsEnv                       in Test := new PhantomJS2Env(PhantomJSEnv.Config().withJettyClassLoader(scalaJSPhantomJSClassLoader.value)))
-//          emitSourceMaps in fastOptJS in Test := true)
+          Test / scalaJSLinkerConfig ~= { _.withESFeatures(_.withUseECMAScript2015(false)) },
+          Test / jsEnv := PhantomJSEnv().value,
+          Test / jsEnvInput := Input.Script(((ThisBuild / baseDirectory).value / "project/phantomjs-fix.js").toPath) +: (Test / jsEnvInput).value)
     }
-
-  lazy val releaseMode: Boolean = {
-    val mode = System.getProperty("MODE", "").trim
-    val r = mode.compareToIgnoreCase("release") == 0
-    if (r) println("[mode] \u001b[1;31mRelease Mode.\u001b[0m")
-    r
-  }
 
   def devMode: Boolean = !releaseMode
 
@@ -328,7 +348,7 @@ object Common {
     bos.toByteArray.length
   }
 
-  def printFileBatches(batchesT: Traversable[Traversable[File]]): Unit = {
+  def printFileBatches(batchesT: Iterable[Iterable[File]]): Unit = {
     val sep = "=" * 100
     println(sep)
     val batches = batchesT.toVector
@@ -345,11 +365,6 @@ object Common {
 //    println("    ----------------")
 //    printf("Σ %,12d bytes\n", sizes.sum)
     println(sep)
-  }
-
-  def addCommandAliases(m: (String, String)*) = {
-    val s = m.map(p => addCommandAlias(p._1, p._2)).reduce(_ ++ _)
-    (_: Project).settings(s: _*)
   }
 
   implicit class CrossProjectExt(val p: CrossProject) extends AnyVal {
@@ -394,4 +409,16 @@ object Common {
 
   def propOrEnv(key: String): Option[String] =
     sys.props.get(key).orElse(sys.env.get(key))
+
+  def jprofilerAgent(wait: Boolean): String = {
+    var s = "-agentpath:/opt/jprofiler/bin/linux-x64/libjprofilerti.so=port=8849"
+    if (!wait) s += ",nowait"
+    s
+  }
+
+  def stageKey(stage: Stage) =
+    stage match {
+      case Stage.FastOpt => fastOptJS
+      case Stage.FullOpt => fullOptJS
+    }
 }

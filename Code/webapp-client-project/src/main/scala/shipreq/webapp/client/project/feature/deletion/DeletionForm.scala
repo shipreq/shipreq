@@ -5,14 +5,14 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.feature.PreviewFeature
 import shipreq.webapp.base.lib.KeyboardTheme
-import shipreq.webapp.base.protocol.UpdateContentCmd.DeleteReqs
+import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.TextSearch
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 import shipreq.webapp.client.project.app.Style.{deletionForm => *}
@@ -21,7 +21,7 @@ import shipreq.webapp.client.project.feature.Selection
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, RichTextEditor}
 
 object DeletionForm {
-  import DeletionRestorationLogic.{Data, ReqRow}
+  import DeletionRestorationLogic.Data
 
   final case class Props(data      : Data,
                          widgets   : ProjectWidgets.NoCtx,
@@ -46,6 +46,7 @@ object DeletionForm {
     private def reasonEditorProps(p: Props, s: State): RichTextEditor.DeletionReason.Optional =
       RichTextEditor.DeletionReason.Optional(
         project          = p.data.project,
+        naTags           = NaTags.none,
         plainTextNoCtx   = p.widgets.plainText,
         textSearch       = p.textSearch,
         projectWidgets   = p.widgets,
@@ -84,13 +85,13 @@ object DeletionForm {
 
       val deletionReason: VdomTag =
         <.section(
-          <.h4(*.deletionReasonHeader, UiText.ColumnNames.deletionReason + ":"),
+          <.h4(*.deletionReasonHeader, SpecialBuiltInField.DeletionReason.name + ":"),
           RichTextEditor.DeletionReason.Component(reasonTextProps))
 
       val commit: Option[Callback] =
         for {
-          reqs   ← NonEmptySet.option(s.selectedReqs.selected)
-          reason ← reasonTextProps.validated.toOption
+          reqs   <- NonEmptySet.option(s.selectedReqs.selected)
+          reason <- reasonTextProps.validated.toOption
         } yield p.perform(DeleteReqs(reqs, Set.empty, reason))
 
       val deleteButton: VdomTag =
@@ -113,7 +114,7 @@ object DeletionForm {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("Deletion")
+  val Component = ScalaComponent.builder[Props]
     .initialStateFromProps(State.init)
     .renderBackend[Backend]
     .build

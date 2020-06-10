@@ -6,18 +6,20 @@ import japgolly.scalajs.react.test._
 import japgolly.univeq._
 import monocle.macros.Lenses
 import scala.util.{Failure, Success, Try}
-import teststate.run.Report.AssertionSettings
-import shipreq.base.util.Debug._
 import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.feature.clipboard.TestClipboard
-import shipreq.webapp.base.protocol.ProjectSpaEntryPoint
+import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.base.test.SampleProject5
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.user.Username
-import shipreq.webapp.client.project.app.pages.config_old.reqtypes.{CfgReqTypesObs, CfgReqTypesDsl => CRT}
+import shipreq.webapp.client.project.app.pages.config.fields.{FieldConfigObs, FieldConfigTestDsl}
+import shipreq.webapp.client.project.app.pages.config.issues.{IssueConfigObs, IssueConfigTestDsl}
+import shipreq.webapp.client.project.app.pages.config.tags.{TagConfigObs, TagConfigTestDsl}
+import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigObs, ReqTypeConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.content.issues.{IssuesPageObs, IssuesPageTestDsl => IP}
 import shipreq.webapp.client.project.app.pages.content.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
+import shipreq.webapp.client.project.app.pages.content.reqgraph.{ReqGraphObs, ReqGraphTestDsl}
 import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH, _}
 import shipreq.webapp.client.project.test._
@@ -41,24 +43,31 @@ object ProjectSpaTestDsl {
       component = ReactTestUtils.modifyProps(c, component)(f)
   }
 
-  case class Ref(global: TestGlobal, tester: ComponentTester[Props, State, _]) {
+  final case class Ref(global   : TestGlobal,
+                       tester   : ComponentTester[Props, State, _],
+                       confirmJs: TestConfirmJs,
+                       promptJs : TestPromptJs) {
+
     def observe(): Obs = {
       val $ = tester.component.domZipper
-      val inner = $(">div")(">div:nth-child(2),>main")
+      val inner = $(">div")(">div:nth-child(2)>*")
       val nav = new NavObs($(">nav"), inner)
 
       val empty: Obs = {
         val e = Left("Chosen page is: " + nav.page)
-        Obs(global.unsafeProject(), nav, e, e, e, e, e)
+        Obs(global.unsafeProject(), nav, e, e, e, e, e, e, e, e, e)
       }
 
       nav.page match {
         case Page.Index        => empty.copy(home        = Try(new ProjectHomeObs(inner)))
-        case Page.CfgReqTypes  => empty.copy(cfgReqTypes = Try(new CfgReqTypesObs(inner)))
+        case Page.CfgReqTypes  => empty.copy(cfgReqTypes = Try(new ReqTypeConfigObs(inner, confirmJs)))
+        case Page.CfgFields    => empty.copy(cfgFields   = Try(new FieldConfigObs(inner)))
+        case Page.CfgIssues    => empty.copy(cfgIssues   = Try(new IssueConfigObs(inner)))
+        case Page.CfgTags      => empty.copy(cfgTags     = Try(new TagConfigObs(inner)))
         case Page.ReqTable     => empty.copy(reqTable    = Try(new ReqTableObs(global, inner)))
         case Page.ReqDetail(_) => empty.copy(reqDetail   = Try(new ReqDetailObs(inner, nav)))
         case Page.Issues       => empty.copy(issues      = Try(new IssuesPageObs(inner)))
-        case _                 => empty
+        case Page.ReqGraph     => empty.copy(reqGraph    = Try(new ReqGraphObs(inner)))
       }
     }
   }
@@ -84,6 +93,7 @@ object ProjectSpaTestDsl {
       dropdownCrumbName match {
         case Some("Req Table") => Page.ReqTable
         case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.innerText.trim).get)
+        case Some("Req Graph") => Page.ReqGraph
         case Some("Fields")    => Page.CfgFields
         case Some("Req Types") => Page.CfgReqTypes
         case Some("Tags")      => Page.CfgTags
@@ -96,13 +106,17 @@ object ProjectSpaTestDsl {
       nav.collect01(".icon.edit").zippers.fold(0)(_.parent("span").innerText.toInt)
   }
 
-  case class Obs(project    : Project,
-                 nav        : NavObs,
-                 home       : Maybe[ProjectHomeObs],
-                 cfgReqTypes: Maybe[CfgReqTypesObs],
-                 issues     : Maybe[IssuesPageObs],
-                 reqTable   : Maybe[ReqTableObs],
-                 reqDetail  : Maybe[ReqDetailObs])
+  final case class Obs(project    : Project,
+                       nav        : NavObs,
+                       home       : Maybe[ProjectHomeObs],
+                       cfgFields  : Maybe[FieldConfigObs],
+                       cfgIssues  : Maybe[IssueConfigObs],
+                       cfgReqTypes: Maybe[ReqTypeConfigObs],
+                       cfgTags    : Maybe[TagConfigObs],
+                       issues     : Maybe[IssuesPageObs],
+                       reqGraph   : Maybe[ReqGraphObs],
+                       reqTable   : Maybe[ReqTableObs],
+                       reqDetail  : Maybe[ReqDetailObs])
 
   @Lenses
   case class TestState(page: Page, project: Project, detailState: RD.State)
@@ -118,14 +132,14 @@ object ProjectSpaTestDsl {
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
   implicit lazy val transformCRT =
-    CRT.dsl.transformer
-      .mapR[Ref](_ => ())
+    ReqTypeConfigTestDsl.*.transformer
+      .mapR[Ref](_.confirmJs)
       .pmapO[Obs](_.cfgReqTypes)
       .mapS[TestState](_ => ())((s, _) => s)
 
   implicit lazy val transformRT =
     RT.*.transformer
-      .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.reqTable, r.global))
+      .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.savedViews, r.global, r.promptJs))
       .pmapO[Obs](_.reqTable)
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
@@ -141,10 +155,39 @@ object ProjectSpaTestDsl {
       .pmapO[Obs](_.issues)
       .mapS[TestState](_ => ())((s, _) => s)
 
-  private lazy val invariantsPH = PH.invariants.lift
-  private lazy val invariantsRT = RT.invariants.lift
-  private lazy val invariantsRD = RD.invariants.lift
-  private lazy val invariantsIP = IP.invariants.lift
+  implicit lazy val transformFieldConfig =
+    FieldConfigTestDsl.*.transformer
+      .mapR[Ref](_ => ())
+      .pmapO[Obs](_.cfgFields)
+      .mapS[TestState](_ => ())((s, _) => s)
+
+  implicit lazy val transformIssueConfig =
+    IssueConfigTestDsl.*.transformer
+      .mapR[Ref](_ => ())
+      .pmapO[Obs](_.cfgIssues)
+      .mapS[TestState](_ => ())((s, _) => s)
+
+  implicit lazy val transformTagConfig =
+    TagConfigTestDsl.*.transformer
+      .mapR[Ref](_ => ())
+      .pmapO[Obs](_.cfgTags)
+      .mapS[TestState](_ => ())((s, _) => s)
+
+  implicit lazy val transformReqGraph =
+    ReqGraphTestDsl.*.transformer
+      .mapR[Ref](r => ReqGraphTestDsl.Ref(r.global, r.promptJs))
+      .pmapO[Obs](_.reqGraph)
+      .mapS[TestState](_ => ())((s, _) => s)
+
+  private lazy val invariantsPH            = PH.invariants.lift
+  private lazy val invariantsRT            = RT.invariants.lift
+  private lazy val invariantsRD            = RD.invariants.lift
+  private lazy val invariantsIP            = IP.invariants.lift
+  private lazy val invariantsFieldConfig   = FieldConfigTestDsl.invariants.lift
+  private lazy val invariantsReqTypeConfig = ReqTypeConfigTestDsl.invariants.lift
+  private lazy val invariantsIssueConfig   = IssueConfigTestDsl.invariants.lift
+  private lazy val invariantsTagConfig     = TagConfigTestDsl.invariants.lift
+  private lazy val invariantsReqGraph      = ReqGraphTestDsl.invariants.lift
 
   private val pageInvariants: *.Invariants =
     *.chooseInvariant("Page invariants")(_.state.page match {
@@ -152,7 +195,11 @@ object ProjectSpaTestDsl {
       case Page.ReqTable     => invariantsRT
       case Page.ReqDetail(_) => invariantsRD
       case Page.Issues       => invariantsIP
-      case _                 => *.emptyInvariant
+      case Page.CfgFields    => invariantsFieldConfig
+      case Page.CfgIssues    => invariantsIssueConfig
+      case Page.CfgReqTypes  => invariantsReqTypeConfig
+      case Page.CfgTags      => invariantsTagConfig
+      case Page.ReqGraph     => invariantsReqGraph
     })
 
   private val invariants: *.Invariants =
@@ -181,10 +228,15 @@ object ProjectSpaTestDsl {
     *.action(name)(_.ref.global.applyTestEventsCB(es: _*).runNow())
       .updateStateBy(i => i.state.copy(project = i.obs.project))
 
-  def liftProjectHomeTests(p: PH.*.Plan): *.Plan = p.lift
-  def liftReqTableTests   (p: RT.*.Plan): *.Plan = p.lift
-  def liftReqDetailTests  (p: RD.*.Plan): *.Plan = p.lift
-  def liftIssuePageTests  (p: IP.*.Plan): *.Plan = p.lift
+  def liftProjectHomeTests    (p: PH                  .*.Plan): *.Plan = p.lift
+  def liftReqTableTests       (p: RT                  .*.Plan): *.Plan = p.lift
+  def liftReqDetailTests      (p: RD                  .*.Plan): *.Plan = p.lift
+  def liftIssuePageTests      (p: IP                  .*.Plan): *.Plan = p.lift
+  def liftReqTypeConfigTests  (p: ReqTypeConfigTestDsl.*.Plan): *.Plan = p.lift
+  def liftFieldConfigPageTests(p: FieldConfigTestDsl  .*.Plan): *.Plan = p.lift
+  def liftIssueConfigPageTests(p: IssueConfigTestDsl  .*.Plan): *.Plan = p.lift
+  def liftTagConfigPageTests  (p: TagConfigTestDsl    .*.Plan): *.Plan = p.lift
+  def liftReqGraphTests       (p: ReqGraphTestDsl     .*.Plan): *.Plan = p.lift
 
   def testReqTable(action: RT.*.Actions): *.Actions =
     liftReqTableTests(Plan.action(action)).asAction("Test ReqTable")
@@ -214,18 +266,20 @@ object ProjectSpaTestDsl {
                           assertPass: Boolean = true): Report[String] = {
 
     val global       = TestGlobal(project)
+    val confirmJs    = TestConfirmJs()
+    val promptJs     = TestPromptJs()
     val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name)
-    val spa          = new LoadedRoot(initPageData, global)
+    val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs)
     val rc           = MockRouterCtl[Page]()
     val init         = TestState(page, global.unsafeProject(), rd)
 
-    withRenderedIntoBody(spa.Component(Props(init.page, rc))) { m =>
+    ReactTestUtils.withRenderedIntoBody(spa.Component(Props(init.page, rc))) { m =>
       TestClipboard.clear()
       val tester = new ComponentTester(spa.Component)(m)
       val report = Plan(action, invariants)
                      .test(Observer(_.observe()))
                      .withInitialState(init)
-                     .withRefByName(Ref(global, tester))
+                     .withRefByName(Ref(global, tester, confirmJs, promptJs))
                      .run()
       if (assertPass)
         assertTestState(report)
@@ -233,24 +287,4 @@ object ProjectSpaTestDsl {
       report
     }
   }
-
-  // TODO Delete after next scalajs-react release
-import org.scalajs.dom.html.Element
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw.{React => RawReact, ReactDOM => RawReactDOM}
-import japgolly.scalajs.react.vdom.TopNode
-import ReactTestUtils._
-  private def mountedElement(m: RawReact.ComponentUntyped) =
-    ReactDOM.findDOMNode(m).get.asElement()
-  def withRenderedIntoBody[M, A](u: Unmounted[M])(f: M => A): A =
-    _withRenderedIntoBody(RawReactDOM.render(u.raw, _))(mountedElement, f compose u.mountRaw)
-  private def _withRenderedIntoBody[A, B](render: Element => A)(n: A => TopNode, use: A => B): B =
-    withNewBodyElement { parent =>
-      val a = render(parent)
-      try
-        use(a)
-      finally {
-        Try(ReactDOM unmountComponentAtNode n(a).parentNode)
-      }
-    }
 }

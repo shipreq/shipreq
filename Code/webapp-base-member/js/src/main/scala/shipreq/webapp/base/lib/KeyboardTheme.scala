@@ -100,7 +100,7 @@ object KeyboardTheme {
       case Link(v, c) => link(^.onClick --> c, v)
     }
 
-    def apply(clauses: TraversableOnce[Clause], help: Option[Callback]): VdomTag = {
+    def apply(clauses: IterableOnce[Clause], help: Option[Callback]): VdomTag = {
       val helpButton =
         help.whenDefined { h =>
           val eh = (e: ReactEvent) => e.stopPropagationCB >> e.preventDefaultCB >> h
@@ -108,11 +108,11 @@ object KeyboardTheme {
         }
 
       val content: TagMod =
-        if (clauses.isEmpty)
+        if (clauses.iterator.isEmpty)
           helpButton
         else {
           var rendered = Vector.empty[TagMod]
-          val it = clauses.toIterator
+          val it = clauses.iterator
           var last: VdomTag = null
           while (it.hasNext) {
             val clause = it.next()

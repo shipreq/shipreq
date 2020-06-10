@@ -4,7 +4,6 @@ import scala.runtime.AbstractFunction1
 import scalaz.Semigroup
 import scalaz.std.option._
 import scalaz.syntax.semigroup._
-import shipreq.base.util.MTrie.Ops._
 import ShowSize.Node
 
 class ShowSize[A](f: A => Node) extends AbstractFunction1[A, Node] {
@@ -54,9 +53,9 @@ object ShowSize {
     def addChildren(ns: (String, Int)*): Node =
       copy(children = ns.foldLeft(children)((q, t) => q :+ Node(t._1, t._2)))
 
-    def countChildren[A](as: TraversableOnce[A])(f: A => String): Node = {
+    def countChildren[A](as: IterableOnce[A])(f: A => String): Node = {
       val m = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
-      as.foreach { a =>
+      as.iterator.foreach { a =>
         val k = f(a)
         m.update(k, m(k) + 1)
       }
@@ -147,8 +146,8 @@ object ShowSize {
 
   implicit def requirements: ShowSize[Requirements] =
     ShowSize.lift(r =>
-      Node("Requirements", r.reqIterator.size)
-        .countChildren(r.reqIterator) {
+      Node("Requirements", r.reqIterator().size)
+        .countChildren(r.reqIterator()) {
           case _: GenericReq => "GenericReq"
           case _: UseCase    => "UseCase"
         }
@@ -158,7 +157,7 @@ object ShowSize {
   implicit def reqCodeTrie: ShowSize[ReqCode.Trie] =
     ShowSize.lift(trie =>
       Node("Req codes", trie.cataV(0)((q, _, _) => q + 1))
-        .countChildren(trie.flatStream.map(_._2)) {
+        .countChildren(trie.flatIterator().map(_._2)) {
           case _: ReqCode.ActiveReq   => "Codes @ reqs"
           case _: ReqCode.ActiveGroup => "Codes @ groups"
           case _: ReqCode.Inactive    => "Tombstones"
@@ -168,7 +167,7 @@ object ShowSize {
     reqCodeTrie.contramap(_.trie)
 
   implicit def reqDataText: ShowSize[ReqData.Text] =
-    ShowSize.lift(r => Node("Text", r.values.toStream.flatMap(_.values.toStream).size))
+    ShowSize.lift(r => Node("Text", r.data.values.iterator.flatMap(_.values.iterator).size))
 
   implicit def reqDataTags: ShowSize[ReqData.Tags] =
     ShowSize.lift(r => Node("Tags", r.valuesIterator.map(_.size).sum))

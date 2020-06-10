@@ -8,7 +8,7 @@ object ConsolidatedSeqTest extends TestSuite {
 
   override def tests = Tests {
 
-    'noConsolidation - {
+    "noConsolidation" - {
       def test(size: Int) = {
         val logic      = ConsolidatedSeq.Logic[Int](_ => false)(identity)
         val as         = Vector.tabulate(size)(100 + _)
@@ -28,7 +28,7 @@ object ConsolidatedSeqTest extends TestSuite {
       "9" - test(9)
     }
 
-    'consolidateAll - {
+    "consolidateAll" - {
       def test(size: Int) = {
         val logic      = ConsolidatedSeq.Logic[Int](_ => true)(identity)
         val as         = Vector.tabulate(size)(100 + _)
@@ -48,7 +48,7 @@ object ConsolidatedSeqTest extends TestSuite {
       "9" - test(9)
     }
 
-    'consolidateOdd - {
+    "consolidateOdd" - {
       val logic  = ConsolidatedSeq.Logic[Int](i => (i.cur & 1) != 0)(identity)
       val as     = Vector(10, 11, 12, 13, 14)
       val c      = logic(as)

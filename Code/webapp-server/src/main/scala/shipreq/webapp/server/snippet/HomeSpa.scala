@@ -3,10 +3,9 @@ package shipreq.webapp.server.snippet
 import net.liftweb.util.Helpers._
 import scala.xml.NodeSeq
 import shipreq.base.util.FxModule._
-import shipreq.webapp.base.protocol.HomeSpaEntryPoint
+import shipreq.webapp.base.protocol.entrypoint.HomeSpaEntryPoint
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.lib.SnippetHelpers
-import shipreq.webapp.server.protocol._
+import shipreq.webapp.server.protocol.entrypoint.ClientSideProcInvoker
 import shipreq.webapp.ssr.SsrSharedData.HomeSpaLoaderData
 
 object HomeSpa extends SnippetHelpers {

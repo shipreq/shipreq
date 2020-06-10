@@ -9,41 +9,41 @@ object ReqCodeEditorTest extends TestSuite {
   PrepareEnv()
 
   override def tests = Tests {
-    'forReqs {
-      'liveCorrect {
+    "forReqs" - {
+      "liveCorrect" - {
         def test(in: String, out: String): Unit =
           assertEq(ReqCodeEditor.Multiple.liveCorrect(in), out)
         def testOk(is: String*): Unit =
           is.foreach(i => test(i, i))
 
-        'lowercase {
+        "lowercase" - {
           test("A", "a")
           test("abcE", "abce")
           test("ab.cE", "ab.ce")
         }
-        'noSpace {
+        "noSpace" - {
           test(" ", "")
           test("a ", "a")
         }
-        'noSym {
+        "noSym" - {
           test("!", "")
           test("`", "")
           test("<", "")
         }
-        'numbers -
+        "numbers" -
           testOk("1", "123", "1.2.3")
-        'underscores {
+        "underscores" - {
           testOk("a_", "a_b", "abc_123")
           test("ab__", "ab_") // squash underscores together
           test("ab___c", "ab_c") // squash underscores together
         }
-        'dot {
+        "dot" - {
           testOk(".", ".abc123") // for auto-complete
           test("..", ".") // for auto-complete
           testOk("a.")
           test("a..", "a.")
         }
-        'enter {
+        "enter" - {
           testOk("a\n", "\nd", "a\n\nb", "abc.1\ndef\n")
           test("\n", "")
           test(" \n ", "")
@@ -55,41 +55,41 @@ object ReqCodeEditorTest extends TestSuite {
         }
       }
     }
-    'forGroups {
-      'liveCorrect {
+    "forGroups" - {
+      "liveCorrect" - {
         def test(in: String, out: String): Unit =
           assertEq(ReqCodeEditor.Single.liveCorrect(in), out)
         def testOk(is: String*): Unit =
           is.foreach(i => test(i, i))
 
-        'lowercase {
+        "lowercase" - {
           test("A", "a")
           test("abcE", "abce")
           test("ab.cE", "ab.ce")
         }
-        'noSpace {
+        "noSpace" - {
           test(" ", "")
           test("a ", "a")
         }
-        'noSym {
+        "noSym" - {
           test("!", "")
           test("`", "")
           test("<", "")
         }
-        'numbers -
+        "numbers" -
           testOk("1", "123", "1.2.3")
-        'underscores {
+        "underscores" - {
           testOk("a_", "a_b", "abc_123")
           test("ab__", "ab_") // squash underscores together
           test("ab___c", "ab_c") // squash underscores together
         }
-        'dot {
+        "dot" - {
           testOk(".", ".abc123") // for auto-complete
           test("..", ".") // for auto-complete
           testOk("a.")
           test("a..", "a.")
         }
-        'enter -
+        "enter" -
           test("a\n", "a")
       }
     }

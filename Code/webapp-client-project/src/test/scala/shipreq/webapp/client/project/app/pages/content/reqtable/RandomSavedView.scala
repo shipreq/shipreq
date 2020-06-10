@@ -1,0 +1,22 @@
+package shipreq.webapp.client.project.app.pages.content.reqtable
+
+import nyaya.gen._
+import shipreq.webapp.base.RandomData
+import shipreq.webapp.base.RandomData.savedViews._
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.filter.Filter
+
+object RandomSavedView {
+
+  val noFilter: Gen[Option[Filter.Valid]] =
+    Gen pure None
+
+  def view(p: Project, fd: FilterDead, allowFilter: Boolean): Gen[View] =
+    for {
+      cs     <- visibleColumns(p)
+      order  <- sortCriteria(cs)
+      filter <- if (allowFilter) RandomData.filter.valid.forProject(p).option else noFilter
+      cfg    <- impGraphConfigForProject(p).option
+    } yield View(cs, order, fd, filter, cfg)
+}

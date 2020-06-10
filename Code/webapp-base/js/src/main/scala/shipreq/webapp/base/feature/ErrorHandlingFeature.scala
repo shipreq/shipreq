@@ -3,8 +3,8 @@ package shipreq.webapp.base.feature
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.window
-import shipreq.webapp.base.protocol.{AjaxClient, CommonProtocols}
-import shipreq.webapp.base.protocol.CommonProtocols.ReportClientError.ErrorInfo
+import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocols}
+import shipreq.webapp.base.protocol.ajax.CommonProtocols.ReportClientError.ErrorInfo
 
 /** Wrap top-level components in this in order to catch React errors.
  *
@@ -71,7 +71,7 @@ object ErrorHandlingFeature {
     }
   }
 
-  private val Component = ScalaComponent.builder[Props]("ErrorHandling")
+  private val Component = ScalaComponent.builder[Props]
     .initialState(State(0))
     .renderBackend[Backend]
     .componentDidCatch($ => $.backend.onError($.error, $.props, $.state))
@@ -114,11 +114,16 @@ object ErrorHandlingFeature {
       last = s
     }
 
-    def getOrElse(s: => S): S =
-      if (StateRecorder.enabled && secondLast != null)
-        secondLast
-      else
-        s
+    val get: CallbackTo[Option[S]] =
+      CallbackTo {
+        Option.when(StateRecorder.enabled && secondLast != null)(secondLast)
+      }
+
+    def getOrElse(s: => S): CallbackTo[S] =
+      get.map(_.getOrElse(s))
+
+    def getOrElseCB(cb: => CallbackTo[S]): CallbackTo[S] =
+      getOrElse(cb.runNow())
   }
 
   object StateRecorder {

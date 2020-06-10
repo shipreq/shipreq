@@ -3,6 +3,7 @@ package shipreq.webapp.base.validation
 import monocle.Iso
 import scalaz.Isomorphism.<=>
 import scalaz.{-\/, Applicative, Semigroup, Traverse, \/, \/-}
+import scalaz.std.vector.vectorInstance
 import shipreq.base.util.{GenTuple, Identity, Valid, Validity}
 
 object Generic {
@@ -57,6 +58,9 @@ object Generic {
         aa => A.map(aa, live, b.live, A.append),
         aa => A.map(aa, full, b.full, A.append))
 
+    def appendValidator[E](c: EndoValidator[E, A]): EndoValidator[E, A] =
+      c.prependCorrector(this)
+
     def toCorrector: Corrector[A, A] =
       Corrector(live, full, Identity[A])
 
@@ -65,6 +69,9 @@ object Generic {
 
     def withInvalidator[E](i: Invalidator[E, A]): EndoValidator[E, A] =
       EndoValidator(this, i)
+
+    @inline def withAuditor[E, V](v: Auditor[E, A, V]): Validator[E, A, A, V] =
+      toCorrector.withAuditor(v)
   }
 
   object EndoCorrector {
@@ -130,12 +137,18 @@ object Generic {
 
     def tuple[I2, C2, II, CC](b: Corrector[I2, C2])(implicit I: GenTuple[I, I2, II], C: GenTuple[C, C2, CC]): Corrector[II, CC] =
       Corrector[II, CC](
-        ii => I.map(ii, live, b.live, I.append),
-        ii => I.map(ii, full, b.full, C.append),
-        cc => C.map(cc, uncorrect, b.uncorrect, I.append))
+        live      = ii => I.map(ii, live, b.live, I.append),
+        full      = ii => I.map(ii, full, b.full, C.append),
+        uncorrect = cc => C.map(cc, uncorrect, b.uncorrect, I.append))
 
     def withAuditor[E, V](v: Auditor[E, C, V]): Validator[E, I, C, V] =
       Validator(this, v)
+
+    def vectorWithGaps[G]: Corrector[Vector[G \/ I], Vector[G \/ C]] =
+      Corrector[Vector[G \/ I], Vector[G \/ C]](
+        live      = _.map(_.map(live)),
+        full      = _.map(_.map(full)),
+        uncorrect = _.map(_.map(uncorrect)))
   }
 
   object Corrector {
@@ -191,6 +204,9 @@ object Generic {
     def whenValid[EE >: E](next: Invalidator[EE, A]): Invalidator[EE, A] =
       Invalidator(a => invalidate(a) orElse next.invalidate(a))
 
+    def whenValid[EE >: E](next: EndoValidator[EE, A]): EndoValidator[EE, A] =
+      EndoValidator(next.corrector, whenValid(next.invalidator))
+
     def toEndoValidator: EndoValidator[E, A] =
       EndoValidator(EndoCorrector.id, Invalidator(invalidate))
 
@@ -218,7 +234,6 @@ object Generic {
         Invalidator(ta => {
           val ok: E \/ Unit = Auditor.unitResult
           val result: E \/ Unit = T.traverse_(ta)(invalidate(_).fold(ok)(-\/(_)))(AccumuateErrors.applicativeInstance)
-          val G = AccumuateErrors.applicativeInstance[E]
           result.fold(Some(_), _ => None)
         })
     }
@@ -273,6 +288,9 @@ object Generic {
 
     def toValidator: Validator[E, C, C, V] =
       Validator(Corrector.id, this)
+
+    def vector[EE >: E](implicit e: Semigroup[EE]): Auditor[EE, Vector[C], Vector[V]] =
+      Auditor.traverse[EE, Vector, C, V](audit)
   }
 
   object Auditor {
@@ -281,8 +299,19 @@ object Generic {
     def id[A]: Auditor[Nothing, A, A] =
       Auditor(\/-(_))
 
+    def fail[A]: Auditor[A, A, A] =
+      Auditor(-\/(_))
+
     def choose[E, C, V](f: C => Auditor[E, C, V]): Auditor[E, C, V] =
       Auditor(c => f(c).audit(c))
+
+    def test[E, A](findErr: A => Option[E]): Auditor[E, A, A] =
+      apply(a =>
+        findErr(a) match {
+          case None    => \/-(a)
+          case Some(e) => -\/(e)
+        }
+      )
 
     def optionFn[E, A, B](f: A => Option[B])(invalidity: A => E): Auditor[E, A, B] =
       apply(a => f(a) match {
@@ -401,6 +430,15 @@ object Generic {
     def imapInput[B](iso: Iso[B, I]): Validator[E, B, C, V] =
       xmapInput(iso.reverseGet)(iso.get)
 
+    def xmapCorrected[B](g: C => B)(f: B => C): Validator[E, I, B, V] =
+      Validator(corrector.xmapCorrected(g)(f), auditor.contramap(f))
+
+    def imapCorrectedZ[B](iso: B <=> C): Validator[E, I, B, V] =
+      xmapCorrected(iso.from)(iso.to)
+
+    def imapCorrected[B](iso: Iso[B, C]): Validator[E, I, B, V] =
+      xmapCorrected(iso.reverseGet)(iso.get)
+
     def appendInvalidator[EE >: E](i: Invalidator[EE, V]): Validator[EE, I, C, V] =
       mapAuditor(_.appendInvalidator(i))
 
@@ -426,11 +464,22 @@ object Generic {
 
 //    def product[EE >: E, I2, C2, V2](that: Validator[EE, I2, C2, V2])(implicit E: Semigroup[EE]): Validator[EE, (I, I2), (C, C2), (V, V2)] =
 //      this tuple that
+
+    def vectorWithGaps[G, EE >: E](implicit e: Semigroup[EE]): Validator[EE, Vector[G \/ I], Vector[G \/ C], Vector[V]] =
+      Validator[EE, Vector[G \/ I], Vector[G \/ C], Vector[V]](
+        corrector.vectorWithGaps[G],
+        auditor.vector(e).contramap(_.flatMap(_.toList)))
   }
 
   object Validator {
     def id[A]: Validator[Nothing, A, A, A] =
       Validator(Corrector.id, Auditor.id)
+
+    def fail[A]: Validator[A, A, A, A] =
+      Validator(Corrector.id, Auditor.fail)
+
+    def option[A, E](invalidity: => E): Validator[E, Option[A], Option[A], A] =
+      Validator(Corrector.id, Auditor.option(invalidity))
 
     def choose[E, I, V](f: I => Validator[E, I, I, V]): Validator[E, I, I, V] =
       Validator(Corrector.choose(f.andThen(_.corrector)), Auditor.choose(f.andThen(_.auditor)))

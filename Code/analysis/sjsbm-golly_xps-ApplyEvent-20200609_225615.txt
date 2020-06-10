@@ -1,0 +1,10 @@
+Benchmark     Sample data                                Cnt         ms/op ±   error      ops/s ± error
+                                                                                                       
+Trusted       shipreq-events-full-1000.json               10       127.481 ±  14.895      7.883 ± 0.833
+Trusted       shipreq-events-full-2000.json               10       515.871 ±  17.190      1.939 ± 0.062
+Trusted       shipreq-events-full-4000.json               10     1,547.236 ± 299.543      0.654 ± 0.096
+Trusted       shipreq-events-full-10000.json              10     9,068.437 ±  84.787      0.110 ± 0.001
+Trusted       shipreq-events-no_req_codes-1000.json       10        55.048 ±   1.079     18.169 ± 0.353
+Trusted       shipreq-events-no_req_codes-2000.json       10       183.194 ±   4.903      5.460 ± 0.144
+Trusted       shipreq-events-no_req_codes-4000.json       10       521.305 ±   8.387      1.918 ± 0.030
+Trusted       shipreq-events-no_req_codes-10000.json      10     2,844.792 ±  49.095      0.352 ± 0.006

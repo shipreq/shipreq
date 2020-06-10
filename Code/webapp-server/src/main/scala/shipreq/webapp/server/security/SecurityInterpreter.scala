@@ -3,7 +3,6 @@ package shipreq.webapp.server.security
 import com.typesafe.scalalogging.StrictLogging
 import io.jsonwebtoken.{Claims, ExpiredJwtException, JwtParser, Jwts}
 import io.jsonwebtoken.security.{Keys, SignatureException}
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import java.security.SecureRandom
 import java.time.Instant
@@ -40,7 +39,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
   private[this] val fNoToken                 = F.pure[SessionRestoreResult[Instant]](SessionRestoreResult.None)
   private[this] val passwordSecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
   private[this] val jwtMainKey               = Keys.hmacShaKeyFor(config.jwtSecret.bytes)
-  private[this] val jwtMainParser            = Jwts.parser().setSigningKey(jwtMainKey)
+  private[this] val jwtMainParser            = Jwts.parserBuilder().setSigningKey(jwtMainKey).build()
 
   private[this] val delay: F[Unit] =
     config.attackFrustrationDelayMs match {
@@ -150,7 +149,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
         parseAndVerifyJws(_, jwtMainParser)
 
       case Some(altKey) =>
-        val altParser = Jwts.parser().setSigningKey(Keys.hmacShaKeyFor(altKey.bytes))
+        val altParser = Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(altKey.bytes)).build()
         j => {
           val t1 = parseAndVerifyJws(j, jwtMainParser)
           t1.recoverWith {

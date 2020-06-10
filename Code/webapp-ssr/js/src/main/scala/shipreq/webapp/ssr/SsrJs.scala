@@ -3,7 +3,7 @@ package shipreq.webapp.ssr
 import japgolly.scalagraal.Pickled
 import japgolly.scalajs.react.ReactDOMServer
 import scala.scalajs.js.annotation.JSExportTopLevel
-import shipreq.webapp.base.protocol.AjaxClient
+import shipreq.webapp.base.protocol.ajax.AjaxClient
 import shipreq.webapp.client.loaders._
 
 /** This code is compiled into JS and executed on the JVM through Graal JS.
@@ -14,8 +14,8 @@ object SsrJs {
   private val ajaxNoop: AjaxClient.Binary =
     AjaxClient.never
 
-  @JSExportTopLevel(SsrJsFunctionManifest.Public)
-  def public(i: Pickled[PublicInitData]): String = {
+  @JSExportTopLevel(SsrJsFunctionManifest.PublicLoader)
+  def publicLoader(i: Pickled[PublicInitData]): String = {
     import shipreq.webapp.client.public.spa.PublicSpa
     import shipreq.webapp.client.public.Main
     val spa       = new PublicSpa(i.value, ajaxNoop)

@@ -116,16 +116,19 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
 
     val addCookie: Cookie => Unit = {
       val path = Full("/") // This is required for browsers to update the cookie on AJAX
-      c => S.addCookie(new HTTPCookie(
-        name     = c.name.value,
-        value    = Full(c.value),
-        maxAge   = c.maxAgeInSec,
-        secure_? = c.secure,
-        httpOnly = c.httpOnly,
-        domain   = Empty,
-        path     = path,
-        version  = Empty))
+      c => {
+        val httpCookie = new HTTPCookie(
+          name     = c.name.value,
+          value    = Full(c.value),
+          maxAge   = c.maxAgeInSec,
+          secure_? = c.secure,
+          httpOnly = c.httpOnly,
+          domain   = Empty,
+          path     = path,
+          version  = Empty)
+        S.addCookie(httpCookie)
       }
+    }
 
     (req, response) => {
       import shipreq.webapp.server.logic.dispatch.ResponseCmd._
@@ -158,19 +161,18 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
     }
   }
 
-  val logic: DispatchLogic[Fx, LiftReq, Box[LiftResponse]] = {
+  val logic: DispatchLogic[Fx, LiftReq] = {
     implicit val config    = global.config.server
     implicit val metrics   = global.metrics
     implicit val trace     = global.trace
-    implicit val taskman   = global.taskman
     implicit val security  = global.security
     implicit val common    = global.logic.common
     implicit val publicSpa = global.logic.publicSpa
     implicit val homeSpa   = global.logic.homeSpa
     implicit val ops       = global.ops
-    implicit val db        = DB.VerificationTokenReadOnly.trans(DbInterpreter.VerificationTokenReadOnly)(global.db.fx.trans)
+    implicit val db        = DB.VerificationTokenReadOnly.trans(DbInterpreter.VerificationTokenReadOnly)(global.runDB)
     implicit val server    = ServerInterpreter
-    new DispatchLogic(parseReq, makeResponse)
+    new DispatchLogic[Fx, LiftReq](parseReq)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -193,8 +195,19 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
     val dispatch = logic.all(testMode = Props.testMode)
 
     {
-      case r if (r.request ne null) && noFileExtension(r) && !isLiftRequest(r) => () => dispatch(r).unsafeRun()
-      case r if (r.request ne null) && hasHtmlFileExtension(r)                 => () => Full(r.createNotFound)
+      case r if (r.request ne null) && noFileExtension(r) && !isLiftRequest(r) =>
+        () => {
+          // The following two lines NEED to be run separately. Fusing them into the same Fx will break things.
+          // makeResponse needs to execute on the same thread that the request came in on. This is because ol' fashioned
+          // Lift uses thread-local variables for its cookies and headers.
+          // Because of Doobie's thread control, dispatch logic often ends up on the Hikari or blocker[IO] thread pools.
+          val genericResponse = dispatch(r).unsafeRun()
+          val realResponse = makeResponse(r, genericResponse).unsafeRun()
+          realResponse
+        }
+
+      case r if (r.request ne null) && hasHtmlFileExtension(r) =>
+        () => Full(r.createNotFound)
     }
   }
 

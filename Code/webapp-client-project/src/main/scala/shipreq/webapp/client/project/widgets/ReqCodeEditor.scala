@@ -110,9 +110,9 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
       EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
   }
 
-  // lazy else there'll be a FieldNotInitialised error via .configure → impTextEditor → textEditor
+  // lazy else there'll be a FieldNotInitialised error via .configure -> impTextEditor -> textEditor
   lazy val Component =
-    ScalaComponent.builder[Props]("ReqCodeEditor")
+    ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .configure(
         //Reusability.shouldComponentUpdate,
@@ -146,7 +146,7 @@ object ReqCodeEditor {
 
     override val textEditor = TextEditor.TextArea
 
-    val seqFmt = SeqFormat(_.trim, "\\s*[\n\r]\\s*".r.pattern, identity, _.isEmpty, _ mkString "\n")
+    val seqFmt = SeqFormat(_.trim, "\\s*[\n\r]\\s*".r.pattern, identity, _.isEmpty, _.iterator mkString "\n")
 
     override val validator =
       s => seqFmt.validator(V.code.unnamedFn(s).toAuditor).mapValid(_.toSet).appendInvalidator(V.codeSet)

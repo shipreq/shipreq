@@ -3,6 +3,7 @@ package shipreq.webapp.base.test
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data.{ManualIssue => ManualIssueInstance, _}
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.issue._
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.text.Text.Equality._
@@ -38,9 +39,20 @@ object IssueLite {
 
   final case class DeadTag(reqId: ReqId,
                            loc  : LocationOf.Text.InReq,
-                           tagId: ApplicableTagId) extends IssueLite(C.DeadIssueTag)
+                           tagId: ApplicableTagId) extends IssueLite(C.DeadTag)
 
   final case class EmptyCodeGroup(rcgId: ReqCodeGroupId) extends IssueLite(C.EmptyCodeGroup)
+
+  final case class FieldDefaultTagDead(fieldId     : CustomField.Tag.Id,
+                                       tagId       : ApplicableTagId,
+                                       reqsAffected: Set[ReqId]) extends IssueLite(C.FieldDefaultTagDead)
+
+  final case class FieldDefaultTagNotApplicable(fieldId  : CustomField.Tag.Id,
+                                                tagId    : ApplicableTagId,
+                                                reqTypeId: ReqTypeId) extends IssueLite(C.FieldDefaultTagNotApplicable)
+
+  final case class FieldDefaultTagUnrelated(fieldId: CustomField.Tag.Id,
+                                            tagId  : ApplicableTagId) extends IssueLite(C.FieldDefaultTagUnrelated)
 
   final case class ImplicationRequired(reqId: ReqId) extends IssueLite(C.ImplicationRequired)
 
@@ -51,27 +63,38 @@ object IssueLite {
                                  loc  : LocationOf.Text.InReq,
                                  issue: Atom.AnyIssue) extends IssueLite(C.IssueTag)
 
-  final case class UninhabitableTagField(fieldId: CustomField.Tag.Id) extends IssueLite(C.UninhabitableTagField)
-
   final case class ManualIssue(issue: ManualIssueInstance) extends IssueLite(C.ManualIssue)
+
+  final case class NonApplicableField(fieldId: CustomFieldId) extends IssueLite(C.NonApplicableField)
+
+  final case class NonApplicableTag(reqId: ReqId,
+                                    loc  : LocationOf.Text.InReq,
+                                    tagId: ApplicableTagId) extends IssueLite(C.NonApplicableTag)
+
+  final case class UninhabitableTagField(fieldId: CustomField.Tag.Id) extends IssueLite(C.UninhabitableTagField)
 
   implicit def univEq: UnivEq[IssueLite] = UnivEq.derive
 
   val fromIssue: Issue => IssueLite = {
-    case Issue.BlankCustomField     (req, field           ) => BlankCustomField     (req.id, field.id)
-    case Issue.BlankTitle           (req                  ) => BlankTitle           (req.id)
-    case Issue.BlankUseCaseStep     (step                 ) => BlankUseCaseStep     (step.id)
-    case Issue.ConflictingTags      (req, tagGroupId, locs) => ConflictingTags      (req.id, tagGroupId, locs)
-    case Issue.DeadIssueTagInRcg    (rcg, issue           ) => DeadIssueTagInRcg    (rcg.id, issue)
-    case Issue.DeadIssueTagInReq    (req, loc, issue      ) => DeadIssueTagInReq    (req.id, loc, issue)
-    case Issue.DeadRefInRcg         (rcg, ref             ) => DeadRefInRcg         (rcg.id, ref)
-    case Issue.DeadRefInReq         (req, loc, ref        ) => DeadRefInReq         (req.id, loc, ref)
-    case Issue.DeadTag              (req, loc, tag        ) => DeadTag              (req.id, loc, tag.id)
-    case Issue.EmptyCodeGroup       (rcg                  ) => EmptyCodeGroup       (rcg.id)
-    case Issue.ImplicationRequired  (req                  ) => ImplicationRequired  (req.id)
-    case Issue.IssueTagInRcg        (rcg, issue           ) => IssueTagInRcg        (rcg.id, issue)
-    case Issue.IssueTagInReq        (req, loc, issue      ) => IssueTagInReq        (req.id, loc, issue)
-    case Issue.ManualIssue          (issue                ) => ManualIssue          (issue)
-    case Issue.UninhabitableTagField(field                ) => UninhabitableTagField(field.id)
+    case Issue.BlankCustomField            (req, field           ) => BlankCustomField            (req.id, field.id)
+    case Issue.BlankTitle                  (req                  ) => BlankTitle                  (req.id)
+    case Issue.BlankUseCaseStep            (step                 ) => BlankUseCaseStep            (step.id)
+    case Issue.ConflictingTags             (req, tagGroupId, locs) => ConflictingTags             (req.id, tagGroupId, locs)
+    case Issue.DeadIssueTagInRcg           (rcg, issue           ) => DeadIssueTagInRcg           (rcg.id, issue)
+    case Issue.DeadIssueTagInReq           (req, loc, issue      ) => DeadIssueTagInReq           (req.id, loc, issue)
+    case Issue.DeadRefInRcg                (rcg, ref             ) => DeadRefInRcg                (rcg.id, ref)
+    case Issue.DeadRefInReq                (req, loc, ref        ) => DeadRefInReq                (req.id, loc, ref)
+    case Issue.DeadTag                     (req, loc, tag        ) => DeadTag                     (req.id, loc, tag.id)
+    case Issue.EmptyCodeGroup              (rcg                  ) => EmptyCodeGroup              (rcg.id)
+    case Issue.FieldDefaultTagDead         (field, tag, reqs     ) => FieldDefaultTagDead         (field.id, tag.id, reqs.iterator.map(_.id).toSet)
+    case Issue.FieldDefaultTagNotApplicable(field, tag, reqType  ) => FieldDefaultTagNotApplicable(field.id, tag.id, reqType.reqTypeId)
+    case Issue.FieldDefaultTagUnrelated    (field, tag           ) => FieldDefaultTagUnrelated    (field.id, tag.id)
+    case Issue.ImplicationRequired         (req                  ) => ImplicationRequired         (req.id)
+    case Issue.IssueTagInRcg               (rcg, issue           ) => IssueTagInRcg               (rcg.id, issue)
+    case Issue.IssueTagInReq               (req, loc, issue      ) => IssueTagInReq               (req.id, loc, issue)
+    case Issue.ManualIssue                 (issue                ) => ManualIssue                 (issue)
+    case Issue.NonApplicableField          (field                ) => NonApplicableField          (field.id)
+    case Issue.NonApplicableTag            (req, loc, tag        ) => NonApplicableTag            (req.id, loc, tag.id)
+    case Issue.UninhabitableTagField       (field                ) => UninhabitableTagField       (field.id)
   }
 }

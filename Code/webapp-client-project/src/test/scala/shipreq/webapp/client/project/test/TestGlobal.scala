@@ -10,9 +10,10 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes
-import shipreq.webapp.base.protocol.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.binary.SafePickler
+import shipreq.webapp.base.protocol.websocket._
+import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.WsReqRes
+import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
 import shipreq.webapp.base.test.TestReauthenticationModal
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.state.{Global, ProjectState}
@@ -45,7 +46,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
   type Response = Protocol.AndValue[SafePickler]
 
   case class Req(msg: FakeWebSocket.Message) {
-    lazy val (reqId, req) = svr.protocolCS.codec.decode(msg.binaryData).needRight
+    lazy val (reqId, req) = svr.protocolCS.codec.decode(msg.binaryData).getOrThrow()
 
     private var _responded = false
     def responded = _responded
@@ -77,7 +78,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
         onProjectNameSet        = failLeft,
         onUpdateSavedViews      = failLeft,
         onUpdateManualIssues    = failLeft,
-        onFieldMandatorinessMod = failLeft,
+        onFieldMandatorinessMod = _ => (),
         onReqTypeImplicationMod = failLeft,
       )
       def reqReq = req.req
@@ -194,7 +195,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
             CallbackTo.pure(\/-(VerifiedEvent.Seq.empty))
 
           case PotentialChange.Failure(e) =>
-            CallbackTo.pure(-\/(ErrorMsg(e)))
+            CallbackTo.pure(-\/(e))
         }
       }
       pxProject.toCallback.flatMap(run)
@@ -213,7 +214,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
       onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
       onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
       onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
-      onFieldMandatorinessMod = updateProjectI(MakeEvent.fieldMandatorinessMod),
+      onFieldMandatorinessMod = _ => None,
       onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
     )
 

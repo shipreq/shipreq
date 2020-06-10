@@ -40,6 +40,12 @@ object FilterParser {
       formatter(ef)
   }
 
+  val attrChar =
+    CharPredicate.Alpha ++ CharPredicate.from(_ == '/')
+
+  val fieldNameUnquotedChar =
+    CharPredicate.from(c => c != ':' && c != '"' && c != EOI && !c.isWhitespace)
+
   // Allows ' / -
   val simpleTextChar =
     CharPredicate("""#:"`()|""".toCharArray).negated -- Whitespace -- EOI
@@ -144,7 +150,16 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
     rule(reqTypeMnemonicCS ~ end ~> ((i: Mnemonic) => Potential.reqType(i)))
 
   private def attr: Rule1[String] =
-    rule(capture(CharPredicate.Alpha.+) ~ end)
+    rule(capture(attrChar.+) ~ end)
+
+  private def field: Rule1[Potential] = {
+    def quoteChar: Rule0 = rule('"')
+    def name: Rule1[String] = rule(capture(fieldNameUnquotedChar.+) | (quoteChar ~ nonGreedyCapture(() => quoteChar)))
+    rule(
+      "field:" ~ name ~ ':' ~ attr
+        ~> ((f: String, a: String) => Potential.fieldProp(f, a))
+    )
+  }
 
   private def presence: Rule1[Potential] =
     rule("has:" ~!~ attr ~> ((i: String) => Potential.presence(i)))
@@ -160,7 +175,7 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
       ) ~ ':' ~!~ reqSpecs ~ end ~> mkImplication)
 
   private def positive: Rule1[Potential] =
-    rule(anyOf | allOf | quotedText | regex | hashRef | hasIssue | presence | implication | reqs | reqType | simpleText)
+    rule(anyOf | allOf | quotedText | regex | hashRef | hasIssue | presence | field | implication | reqs | reqType | simpleText)
 
   private def negative: Rule1[Potential] =
     rule('-' ~!~ (('-' ~!~ expr) | (expr ~> ((f: Potential) => Potential.not(f)))))

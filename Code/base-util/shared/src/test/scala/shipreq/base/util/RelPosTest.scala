@@ -11,14 +11,14 @@ object RelPosTest extends TestSuite {
 
   override def tests = Tests {
 
-    'get {
+    "get" - {
       assert(RelPos.get(abcd, 'd') ==* None)
       assert(RelPos.get(abcd, 'c') ==* 'd'.some)
       assert(RelPos.get(abcd, 'b') ==* 'c'.some)
       assert(RelPos.get(abcd, 'a') ==* 'b'.some)
     }
 
-    'set {
+    "set" - {
       def test(c: Char, pos: RelPos[Char], expectS: String = "abcd"): Unit = {
         val actual = RelPos.set(abcd, c, pos)
         val expect = toVec(expectS)

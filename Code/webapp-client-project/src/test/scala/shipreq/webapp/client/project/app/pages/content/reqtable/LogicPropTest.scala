@@ -2,8 +2,7 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
-import nyaya.prop._
-import nyaya.test._
+import nyaya.prop.{Logic => _, _}
 import nyaya.util.Multimap
 import scalaz.{-\/, Equal, \/, \/-}
 import scalaz.std.AllInstances._
@@ -12,8 +11,8 @@ import shipreq.base.util.univeq._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
+import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.sort.Sorter.{BlankPlacement, BlanksFirst, BlanksLast, Dir, FlipDir, KeepDir}
 import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch}
@@ -39,7 +38,7 @@ object LogicPropTest extends TestSuite {
 
     val plainText      = PlainText.ForProject.noCtx(p)
     val textSearch     = TextSearch(p, plainText)
-    val filterCompiler = Filter.Valid.compiler(p, plainText, textSearch, fd)
+    val filterCompiler = Filter.Valid.compiler(p, plainText, textSearch, fd, applyFilterDeadToReqs = false)
     val gathered       = Logic.gather[Vector](p, v, plainText, textSearch, filterCompiler)
     val gatheredG      = gathered.iterator.filterSubType[Row.ForReq].toList
     val rowReqCodes    = gathered.flatMap(codesInRow)
@@ -64,7 +63,7 @@ object LogicPropTest extends TestSuite {
     def noEmptyAndNonEmptyReqCodesMixed = {
       val data: List[Vector[Vector[ReqCode.Value]]] =
         Multimap.empty[ReqId, Vector, Vector[ReqCode.Value]]
-          .addPairs(gatheredG.map(r => (r.req.id, r.exp.reqCodes)): _*)
+          .addPairs(gatheredG.map(r => (r.req.id, r.exp.reqCodes.values)): _*)
           .m.values.toList
       E.forall(data)(l =>
         E.test("Either all empty or all non-empty", !(l.exists(_.isEmpty) && l.exists(_.nonEmpty))))
@@ -82,7 +81,7 @@ object LogicPropTest extends TestSuite {
         ∧ noEmptyAndNonEmptyReqCodesMixed)
 
     def gather =
-      ( E.distinct("Rows", gathered.toStream)
+      ( E.distinct("Rows", gathered)
       ∧ E.allPresent("each generic req id has a row", srcGReqIds, rowGReqIds)
       ∧ reqCodeProps
       ) rename "Logic.gather"
@@ -91,14 +90,14 @@ object LogicPropTest extends TestSuite {
     // Sorting
 
     implicit def textOrd[T <: Atom.Base] =
-      implicitly[Ordering[String]].on[T#OptionalText](t => plainText.text(t, Live, Mandatory.Not).toLowerCase)
+      implicitly[Ordering[String]].on[T#OptionalText](t => plainText.text(t, Live, Optional).toLowerCase)
 
     def universalSort = {
       val revOrder  = v.order.reverse
       val revCri    = v.copy(order = revOrder)
-      val sorted    = Logic.sorter(p, v, plainText)(gathered).iterator.to[Vector]
+      val sorted    = Logic.sorter(p, v, plainText)(gathered).iterator.to(Vector)
       def criRev    = E.equal("cri.rev.rev = cri", revOrder.reverse, v.order)
-      def sortTwice = E.equal("sort.sort = sort", Logic.sorter(p, v, plainText)(sorted).iterator.to[Vector], sorted)
+      def sortTwice = E.equal("sort.sort = sort", Logic.sorter(p, v, plainText)(sorted).iterator.to(Vector), sorted)
       def sortRev   = reverseSortOnReverseCri(sorted, revCri)
       (criRev ∧ sortRev ∧ sortTwice) rename "Universal sort props"
     }
@@ -144,14 +143,14 @@ object LogicPropTest extends TestSuite {
       if (v isVisible c)
         gathered
       else
-        Logic.gather(p, View(columnState(p, c), sc, fd, v.filter), plainText, textSearch, filterCompiler)
+        Logic.gather(p, View(columnState(p, c), sc, fd, v.filter, None), plainText, textSearch, filterCompiler)
 
     def sortCriAndGather(c: SC.Inconclusive) =
       sortCri(c).mapStrengthR(gatherOn(c.column, _))
 
     def sortBy(c: SC.Inconclusive): Vector[Row] = {
       val (sc, input) = sortCriAndGather(c)
-      Logic.sorter(p, newTableSettingsForSort(sc), plainText)(input).iterator.to[Vector]
+      Logic.sorter(p, newTableSettingsForSort(sc), plainText)(input).iterator.to(Vector)
     }
 
     def newTableSettingsForSort(sc: SortCriteria): View =
@@ -187,8 +186,8 @@ object LogicPropTest extends TestSuite {
       E.either(s"$name make separate blank/non-blank blocks", separateBlanks(expectBlanksFirst, as)(isBlank))(f.tupled)
     }
 
-    def E_sorted[A <: AnyRef](name: String, as: TraversableOnce[A], dirChange: Dir)(implicit ord: Ordering[A]): EvalL = {
-      val actual = as.toVector
+    def E_sorted[A <: AnyRef](name: String, as: IterableOnce[A], dirChange: Dir)(implicit ord: Ordering[A]): EvalL = {
+      val actual = as.iterator.toVector
       val expect = dirChange(actual.sorted)(_.reverse)
       implicit val eq = Equal.equal[A]((a, b) => (a eq b) || (a == b) || ord.equiv(a, b)) // use of ord is slow - avoid
       E.equal(name + " are sorted", actual, expect)
@@ -199,7 +198,7 @@ object LogicPropTest extends TestSuite {
 
     def sortByPubid: IndivSortIB = (sm, dir) => {
       val sc     = SortCriteria(Vector.empty, SC.Conclusive(C.Pubid, sm))
-      val sorted = Logic.sorter(p, newTableSettingsForSort(sc), plainText)(gathered).iterator.to[Vector]
+      val sorted = Logic.sorter(p, newTableSettingsForSort(sc), plainText)(gathered).iterator.to(Vector)
       val na     = ("", -1)
       val pubids = sorted.map {
         case r: Row.ForReq       => pubidExtract(p)(r.req.pubid)
@@ -243,7 +242,8 @@ object LogicPropTest extends TestSuite {
       case C.Pubid           => sortIB(sortByPubid)
       case C.Code            => sortCB(sortByReqCode)
       case C.Title           => sortCB(sortByTitle)
-      case C.Tags            => nop
+      case C.AllTags         => nop
+      case C.OtherTags       => nop
       case C.Implications(_) => nop
       case C.DeletionReason  => nop
       case C.CustomField(id) =>
@@ -275,7 +275,7 @@ object LogicPropTest extends TestSuite {
     for {
       p  <- RandomData.project
       fd <- RandomData.filterDead
-      v  <- RandomReqTableData.view(p, fd, allowFilter = false)
+      v  <- RandomSavedView.view(p, fd, allowFilter = false)
     } yield
       LogicTests(v, p)
 

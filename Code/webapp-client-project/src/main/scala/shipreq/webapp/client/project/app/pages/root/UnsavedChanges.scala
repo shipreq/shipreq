@@ -4,12 +4,13 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react.{CallbackTo, Reusability}
 import japgolly.univeq._
-import scala.util.Try
+import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.client.project.app.pages
 import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.feature.create.NewEditorArgs
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -36,6 +37,10 @@ final case class UnsavedChanges(count    : Int,
         case Location.ReqCodeGroup(id) => PlainText.reqCodeById(id, p)
         case Location.ProjectName      => "project name"
         case Location.ManualIssues     => "manual issue(s)"
+        case Location.FieldConfig      => "field editor"
+        case Location.IssueConfig      => "issue type editor"
+        case Location.ReqTypeConfig    => "req type editor"
+        case Location.TagConfig        => "tag editor"
       }
         .sort
         .map("  * " + _)
@@ -51,10 +56,11 @@ object UnsavedChanges {
   implicit def univEq     : UnivEq     [UnsavedChanges] = UnivEq.derive
   implicit def reusability: Reusability[UnsavedChanges] = Reusability.byRefOrUnivEq
 
-  final case class Input(state      : State,
-                         editability: EditorFeature.Editability.ForProject,
-                         projectName: Project.Name,
-                         useCases   : UseCases)
+  final case class Input(state        : State,
+                         editability  : EditorFeature.Editability.ForProject,
+                         projectName  : Project.Name,
+                         projectConfig: ProjectConfig,
+                         useCases     : UseCases)
 
   object Input {
     implicit def reusability: Reusability[Input] = Reusability.byRef || Reusability.derive
@@ -83,6 +89,10 @@ object UnsavedChanges {
   object Location {
     case object ProjectName                           extends Location
     case object ManualIssues                          extends Location
+    case object FieldConfig                           extends Location
+    case object IssueConfig                           extends Location
+    case object ReqTypeConfig                         extends Location
+    case object TagConfig                             extends Location
     final case class Req(id: ReqId)                   extends Location
     final case class ReqCodeGroup(id: ReqCodeGroupId) extends Location
 
@@ -199,6 +209,51 @@ object UnsavedChanges {
                   }
               }
           }.toVector
+        }
+    }
+
+    case object FieldConfig extends Type {
+      import pages.config.fields.FieldConfig.EditorState
+      override def determine(i: Input) =
+        CallbackTo {
+          i.state.fieldConfig.right.editorOption match {
+            case Some(EditorState.ImpEditor (s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.FieldConfig
+            case Some(EditorState.TagEditor (s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.FieldConfig
+            case Some(EditorState.TextEditor(s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.FieldConfig
+            case _                                                                         => emptyVector
+          }
+        }
+    }
+
+    case object IssueConfig extends Type {
+      override def determine(i: Input) =
+        CallbackTo {
+          i.state.customIssueTypeConfig.right.editorOption match {
+            case Some(s) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.IssueConfig
+            case _                                                 => emptyVector
+          }
+        }
+    }
+
+    case object ReqTypeConfig extends Type {
+      import pages.config.reqtypes.ReqTypeConfig.EditorState
+      override def determine(i: Input) =
+        CallbackTo {
+          i.state.reqTypeConfig.right.editorOption match {
+            case Some(EditorState.Custom(s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.ReqTypeConfig
+            case _                                                                     => emptyVector
+          }
+        }
+    }
+
+    case object TagConfig extends Type {
+      override def determine(i: Input) =
+        CallbackTo {
+          i.state.tagConfig.right.editorOption match {
+            case Some(\/-(s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.TagConfig
+            case Some(-\/(s)) if s.updateCmd(i.projectConfig).isChanged => emptyVector :+ Location.TagConfig
+            case _                                                      => emptyVector
+          }
         }
     }
 

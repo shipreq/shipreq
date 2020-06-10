@@ -9,7 +9,7 @@ object ProjectMetaDataTest extends TestSuite {
 
   override def tests = Tests {
 
-    'applyEvent {
+    "applyEvent" - {
       val (_, vesInit, ves) = RandomEventStream.entireEventStream(100).samples().next()
       var p = applyVerifiedEventSuccessfully(Project.empty, vesInit: _*)
       var md = looseProjectMetaData(p, eventsTotal = vesInit.length)

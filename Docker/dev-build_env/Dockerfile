@@ -50,7 +50,7 @@ RUN n=jdk11-graalvm-bin \
  && cd /tmp \
  && git clone https://aur.archlinux.org/$n.git \
  && cd $n \
- && git checkout 3ec35a1a23170d2e9d2b577ee895d9517a5a1e58 2>/dev/null \
+ && git checkout 38587e749aa06e8a29d8a21febde89675cd46c34 2>/dev/null \
  && makepkg -sri --noconfirm \
  && cd /tmp \
  && rm -rf $n
@@ -88,8 +88,8 @@ RUN cd /usr/local/bin \
 RUN mkdir /tmp/scala \
  && cd /tmp/scala \
  && mkdir project \
- && echo 'sbt.version=1.3.8' > project/build.properties \
- && echo 'scalaVersion := "2.12.10"' > build.sbt \
+ && echo 'sbt.version=1.3.10' > project/build.properties \
+ && echo 'scalaVersion := "2.13.1"' > build.sbt \
  && echo 'object M{}' > M.scala \
  && sbt test \
  && cd / \

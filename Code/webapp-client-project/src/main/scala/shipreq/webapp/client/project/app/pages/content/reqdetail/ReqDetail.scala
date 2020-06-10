@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
 import japgolly.microlibs.nonempty._
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -11,9 +10,10 @@ import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event.{Event, VerifiedEvent}
+import shipreq.webapp.base.event.{Event, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
-import shipreq.webapp.base.protocol.{ServerSideProcInvoker, UpdateContentCmd}
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.semantic.Header
 import shipreq.webapp.base.ui.{BaseStyles, NoContentMessage}
@@ -27,24 +27,26 @@ import shipreq.webapp.client.project.lib.EditorNavParent
 import shipreq.webapp.client.project.widgets._
 import ExternalPubid.LookupFailure
 import ProjectWidgets.emptySpan
+import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object ReqDetail {
 
   private implicit val tableNavigationFeature = TableNavigationFeature.NoRowSpans
 
   def apply(staticProps: StaticProps) =
-    ScalaComponent.builder[DynamicProps]("ReqDetail")
+    ScalaComponent.builder[DynamicProps]
       .backend(new Backend(staticProps, _))
       .renderBackend
       .build
 
   final case class StaticProps(updateIO             : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, VerifiedEvent.Seq],
                                reqDetailRC          : RouterCtl[ExternalPubid],
-                               webWorker            : WebWorkerClient,
-                               pxProject            : Px[Project],
+                               webWorker            : WebWorkerClient.Instance,
+                               pxProjectAndOrd      : Px[ProjectAndOrd],
                                pxViewReqDataCache   : Px[ViewReqDataCache],
                                pxTextSearch         : Px[TextSearch],
                                pxProjectWidgetsNoCtx: Px[ProjectWidgets.NoCtx]) {
+    val pxProject = pxProjectAndOrd.map(_.project)
     val pxProjectConfig = pxProject.map(_.config).withReuse
   }
 
@@ -67,11 +69,12 @@ object ReqDetail {
    *
    * Cached by its inputs.
    */
-  final class Data(sp              : StaticProps,
-               val project         : Project,
-               val req             : Req,
-                   viewReqDataCache: ViewReqDataCache,
-                   upstreamFD      : FilterDead) {
+  private final class Data(sp              : StaticProps,
+                       val project         : Project,
+                       val ord             : WebWorkerCmd.Ord,
+                       val req             : Req,
+                           viewReqDataCache: ViewReqDataCache,
+                           upstreamFD      : FilterDead) {
 
     val pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]] =
       Reusable.byRef(
@@ -90,7 +93,8 @@ object ReqDetail {
     val rows: Vector[Row] = {
       val liveFilter = filterDead.filterFnBy((_: Field) live project.config)
       val fields = project.config.fields.fields.filter(f =>
-        project.config.applicability(req.reqTypeId, f.fieldId) is Applicable && liveFilter(f))
+        liveFilter(f) &&
+        project.config.applicability(req.reqTypeId, f.fieldId).is(Applicable))
       fields.foldLeft(Row head filterDead)((q, f) => q ++ Row.fromField(f.fieldId))
     }
 
@@ -109,7 +113,7 @@ object ReqDetail {
       filterDead.filterFnBy(Live whenValid _.validity)
   }
 
-  final class UseCaseData(val uc: UseCase) {
+  private final class UseCaseData(val uc: UseCase) {
     private def stepData(row: Row.UseCaseSteps) = {
       val steps = row.field.useCaseSteps.get(uc)
       val range = row.treeFilter(steps.tree)
@@ -121,32 +125,30 @@ object ReqDetail {
   }
 
   // TODO Better performance if cells are (components + shouldComponentRender) or cached
-  // TODO Make everything private
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   final class Backend(SP: StaticProps, $: BackendScope[DynamicProps, Unit]) {
     import SP._
 
-    val pxFieldNameFn = pxProjectConfig.map(Field.nameByIdFromProjectConfig)
-    val pxExtPubid    = Px.props($).map(_.extPubid).withReuse.manualRefresh
-    val pxUpstreamFD  = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
+    private val pxExtPubid   = Px.props($).map(_.extPubid).withReuse.manualRefresh
+    private val pxUpstreamFD = Px.props($).map(_.filterDead.value).withReuse.manualRefresh
 
     private def refreshPx(): Unit =
       Px.refresh(pxExtPubid, pxUpstreamFD)
 
-    val pxData: Px[LookupFailure \/ Data] =
+    private val pxData: Px[LookupFailure \/ Data] =
       for {
-        p <- pxProject
+        p <- pxProjectAndOrd
         e <- pxExtPubid
         v <- pxViewReqDataCache
         f <- pxUpstreamFD
       } yield
-        e.lookup(p).map(new Data(SP, p, _, v, f))
+        e.lookup(p.project).map(new Data(SP, p.project, p.ord, _, v, f))
 
-    val cbData: CallbackOption[Data] =
+    private val cbData: CallbackOption[Data] =
       Callback(refreshPx()).toCBO >> pxData.toCallback.map(_.toOption).asCBO
 
-    val setFilterDead: Reusable[StateSnapshot.SetFn[FilterDead]] =
+    private val setFilterDead: Reusable[StateSnapshot.SetFn[FilterDead]] =
       Reusable.byRef((v, cb) => $.props.flatMap(_.filterDead.setStateOption(v, cb)))
 
     private def mkRunCmdFn[Cmd <: UpdateContentCmd](onSuccess: VerifiedEvent.Seq => Callback) =
@@ -159,10 +161,10 @@ object ReqDetail {
           )
       )
 
-    val runCmd: ReqId ~=> (Cell ~=> (UpdateContentCmd ~=> Callback)) =
+    private val runCmd: ReqId ~=> (Cell ~=> (UpdateContentCmd ~=> Callback)) =
       mkRunCmdFn(_ => Callback.empty)
 
-    val runAddAndEditNewUseCaseStep: ReqId ~=> (Cell ~=> (UpdateContentCmd.AddUseCaseStep ~=> Callback)) =
+    private val runAddAndEditNewUseCaseStep: ReqId ~=> (Cell ~=> (UpdateContentCmd.AddUseCaseStep ~=> Callback)) =
       mkRunCmdFn { ves =>
 
         val startEditor: Callback =
@@ -183,24 +185,24 @@ object ReqDetail {
         ref
       }
 
-    def startUseCaseStepEditor(id: UseCaseStepId): Callback =
+    private def startUseCaseStepEditor(id: UseCaseStepId): Callback =
       for {
-        data      ← cbData
-        props     ← $.props.toCBO
+        data      <- cbData
+        props     <- $.props.toCBO
         key       = EditorFeature.FieldKey.UseCaseStep(id)
         editor    = props.editorUCS(key, data.pxProjectWidgets, data.filterDead)
-        ref       ← CallbackTo(useCaseStepRefs.get(id)).asCBO
-        component ← ref.get
-        _         ← CallbackOption.liftOptionCallback(component.backend.startEdit(editor))
+        ref       <- CallbackTo(useCaseStepRefs.get(id)).asCBO
+        component <- ref.get
+        _         <- CallbackOption.liftOptionCallback(component.backend.startEdit(editor))
       } yield ()
 
-    def setModal(modal: Modal.State): Callback =
+    private def setModal(modal: Modal.State): Callback =
       $.props >>= (_.state setState modal)
 
-    def clearModal: Callback =
+    private def clearModal: Callback =
       setModal(Modal.none)
 
-    def renderNotFound(ep: ExternalPubid): VdomElement = {
+    private def renderNotFound(ep: ExternalPubid): VdomElement = {
       val projectName: String = pxProject.value().name
       val id         : String = PlainText pubid ep
       NoContentMessage.becauseNotFound(
@@ -213,14 +215,11 @@ object ReqDetail {
       )(*.errorCont)
     }
 
-    val emptyRow: VdomElement = <.span
-
-    val impRowSubBase =
+    private val impRowSubBase =
       <.td(*.generalImpsSide, ^.tabIndex := -1)
 
     def render(p: DynamicProps): VdomElement =
       <.main(
-        BaseStyles.containerFull,
         p.state.value renderOrElse {
           refreshPx()
           pxData.value() match {
@@ -243,13 +242,13 @@ object ReqDetail {
           *.detailTableValue(l),
           ^.tabIndex := -1))
 
-    def renderDetail(props: DynamicProps, data: Data): VdomElement = {
+    private def renderDetail(props: DynamicProps, data: Data): VdomElement = {
       import data.{project, req, pubidText}
 
       val pw        = data.pxProjectWidgets.value()
       val reqProps  = props.reqProps(req.id)
       val reqEditor = reqProps.editor
-      val fieldName = pxFieldNameFn.value()
+      val fieldName = pxProjectConfig.value().fieldName
       val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
 
       def renderHeader: VdomElement = {
@@ -280,7 +279,8 @@ object ReqDetail {
           row match {
             case Row.Codes
                | Row.ReqType
-               | Row.Tags
+               | Row.OtherTags
+               | Row.AllTags
                | Row.Implications
                | Row.ImplicationGraph
                | Row.UseCaseStepsN
@@ -306,29 +306,29 @@ object ReqDetail {
       def renderRowTitle(row: Row): VdomNode =
         row match {
           case Row.CustomField(id)  => fieldName(id)
-          case Row.Codes            => UiText.FieldNames.reqCodes
-          case Row.ReqType          => UiText.FieldNames.reqType
-          case Row.Tags             => UiText.FieldNames.tags
+          case Row.Codes            => SpecialBuiltInField.Codes.name
+          case Row.ReqType          => SpecialBuiltInField.ReqType.name
+          case Row.OtherTags        => StaticField.OtherTags.name
+          case Row.AllTags          => StaticField.AllTags.name
           case Row.Implications     => UiText.FieldNames.implications
-          case Row.ImplicationGraph => UiText.FieldNames.implicationGraph
+          case Row.ImplicationGraph => StaticField.ImplicationGraph.name
           case Row.UseCaseStepsN    => UiText.FieldNames.useCaseStepTreeN
           case Row.UseCaseStepsA    => UiText.FieldNames.useCaseStepTreeA
-          case Row.UseCaseStepsE    => UiText.FieldNames.useCaseStepTreeE
-          case Row.DeletionReason   => UiText.FieldNames.deletionReason
-          case Row.StepGraph        => UiText.FieldNames.useCaseStepFlowGraph
+          case Row.UseCaseStepsE    => StaticField.ExceptionStepTree.name
+          case Row.DeletionReason   => SpecialBuiltInField.DeletionReason.name
+          case Row.StepGraph        => StaticField.StepGraph.name
           case Row.PastPubids       => UiText.FieldNames.pastPubids
           case Row.Life             => UiText.Life.field
         }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      // TODO Test that this applies applicability
       def renderRowData(cellBase: VdomTag, row: Row): VdomElement = {
         import EditorFeature.FieldKey
 
         def editableCell(key: FieldKey.ForSomeReq): VdomElement = {
           val editor = reqEditor(key, data.pxProjectWidgets, data.filterDead)
-          EditorNavParent.Props(cellBase, editor, view.editable(key))
+          EditorNavParent.Props(cellBase, editor, view.editable(key).getOrElse(EmptyVdom))
             .render
         }
 
@@ -345,7 +345,7 @@ object ReqDetail {
             editableCell(FieldKey.CustomTextField(id))
 
           case Row.CustomField(id: CustomField.Tag.Id) =>
-            editableCell(FieldKey.Tags(Some(id)))
+            editableCell(FieldKey.CustomFieldTags(id))
 
           case Row.CustomField(id: CustomField.Implication.Id) =>
             editableCell(FieldKey.Implications(-\/(id)))
@@ -356,8 +356,11 @@ object ReqDetail {
           case Row.ReqType =>
             editableCell(FieldKey.ReqType)
 
-          case Row.Tags =>
-            editableCell(FieldKey.Tags(None))
+          case Row.OtherTags =>
+            editableCell(FieldKey.OtherTags)
+
+          case Row.AllTags =>
+            editableCell(FieldKey.AllTags)
 
           case Row.DeletionReason =>
             nonDirectlyEditorNavParent(view.deletionReason getOrElse emptySpan)
@@ -369,7 +372,7 @@ object ReqDetail {
             def renderHalf(dir: Direction) = {
               val key = FieldKey.Implications(\/-(dir))
               val editor = reqEditor(key, data.pxProjectWidgets, data.filterDead)
-              EditorNavParent.Props(impRowSubBase, editor, view.editable(key))
+              EditorNavParent.Props(impRowSubBase, editor, view.editable(key).getOrElse(EmptyVdom))
                 .render
             }
             nonDirectlyEditorNavParent(
@@ -384,12 +387,14 @@ object ReqDetail {
 
           case Row.ImplicationGraph =>
             nonDirectlyEditorNavParent(
-              ImplicationGraph.Props(
-                Some(req.id), data.filterDead,
-                project.content.implications, project.content.reqs, project.config.reqTypes,
-                data.pxPlainText.value(),
-                reqDetailRC,
-                webWorker
+              ImplicationGraph.Props.FocusReq(
+                ord         = data.ord,
+                focus       = req.id,
+                filterDead  = data.filterDead,
+                project     = project,
+                plainText   = data.pxPlainText.value(),
+                reqDetailRC = reqDetailRC,
+                webWorker   = webWorker
               ).render)
 
           case Row.UseCaseStepsN =>
@@ -403,7 +408,7 @@ object ReqDetail {
 
           case Row.StepGraph =>
             val ucId = data.useCaseData.get.uc.id
-            nonDirectlyEditorNavParent(UseCaseStepFlowGraph.Props(ucId, project, pw.ctx, webWorker).render)
+            nonDirectlyEditorNavParent(UseCaseStepFlowGraph.Props(data.ord, ucId, pw.ctx, webWorker).render)
 
           case Row.Life =>
             nonDirectlyEditorNavParent(
@@ -474,10 +479,10 @@ object ReqDetail {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    def runActionNoAsync(cmd: UpdateContentCmd): Callback =
+    private def runActionNoAsync(cmd: UpdateContentCmd): Callback =
       updateIO(cmd).leftFlatTapSync(e => Callback.alert(e.value)).toCallback
 
-    def delete(id: ReqId): Callback =
+    private def delete(id: ReqId): Callback =
       CallbackTo {
         def run(cmd: UpdateContentCmd): Callback = runActionNoAsync(cmd) >> clearModal
         import Px.AutoValue._

@@ -3,9 +3,11 @@ package shipreq.webapp.base.util
 import japgolly.microlibs.nonempty._
 import org.parboiled2._
 import scala.annotation.elidable
+import scala.collection.immutable.ArraySeq
+import scala.reflect.ClassTag
 import scalaz.{\/, \/-}
 import shapeless._
-import shipreq.base.util.Util
+import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ReqType, ReqTypePos}
 import shipreq.webapp.base.text.{Grammar => G}
@@ -18,7 +20,7 @@ object ParsingUtil {
       // Stack overflow. Yay.
       // var i = ranges.iterator.map(r => CharPredicate(r.start.toChar to r.end.toChar))
       // if (direct.nonEmpty) {
-      //   val c = CharPredicate(direct.toIterator.map(_.toChar).toArray)
+      //   val c = CharPredicate(direct.iterator.map(_.toChar).toArray)
       //   i = Iterator.single(c) ++ i
       // }
       // i.reduce(_ ++ _)
@@ -88,6 +90,12 @@ abstract class ParsingUtil extends Parser {
   def popPF[A, B](pf: PartialFunction[A, B]): RuleAB[A, B] =
     rule(run((a: A) => test(pf isDefinedAt a) ~ push(pf(a))))
     // rule(run{(a: A) => val o = pf.lift(a); test(o.isDefined) ~ push(o.get)})
+
+  def popSeqToNEA[A: ClassTag]: RuleAB[Seq[A], NonEmptyArraySeq[A]] =
+    rule(run((v: Seq[A]) => test(v.nonEmpty) ~ push(NonEmptyArraySeq.force(v.to[ArraySeq[A]](ArraySeq)))))
+
+  def popNEA[A]: RuleAB[ArraySeq[A], NonEmptyArraySeq[A]] =
+    rule(run((v: ArraySeq[A]) => test(v.nonEmpty) ~ push(NonEmptyArraySeq.force(v))))
 
   def popSeqToNEV[A]: RuleAB[Seq[A], NonEmptyVector[A]] =
     rule(run((v: Seq[A]) => test(v.nonEmpty) ~ push(NonEmptyVector(v.head, v.tail.toVector))))
@@ -161,9 +169,6 @@ abstract class ParsingUtil extends Parser {
     }
     found
   }
-
-  def unindentBy(spaces: Int): String => String =
-    Util.unindentBy(_ , spaces)
 
   @elidable(elidable.FINE)
   def debugPrintRemainder: Rule0 =

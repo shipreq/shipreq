@@ -32,6 +32,9 @@ object DomUtil {
     def _disabled: js.UndefOr[Boolean] =
       e.asInstanceOf[js.Dynamic].disabled.asInstanceOf[js.UndefOr[Boolean]]
 
+    def disabledSafe: Boolean =
+      _disabled.getOrElse(false)
+
     def findParent(f: html.Element => Boolean, self: Boolean = false): Option[html.Element] =
       DomUtil.findParent(e, f, self = self)
   }
@@ -101,12 +104,6 @@ object DomUtil {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Functions
 
-  def activeHtmlElement: CallbackTo[Option[html.Element]] =
-    CallbackTo(
-      Option(document.activeElement)
-        .flatMap(_.domToHtml)
-        .filterNot(_ eq document.body))
-
   def focusableChildren(e: Element): Iterator[html.Element] =
     e.children.deepIteratorDepthFirst.focusable
 
@@ -149,7 +146,7 @@ object DomUtil {
     (CallbackOption.require(doesEventTargetCell(e)) >> handler).asEventDefault(e)
 
   def focusParentOnChildClose(parent: html.Element): Callback =
-    for (focused <- activeHtmlElement) yield
+    for (focused <- CallbackOption.activeHtmlElement.asCallback) yield
       // If this cell's child is focused, or there is no focus at all, then focus this cell.
       // Otherwise, don't steal another element's focus
       if (focused.forall(parent.contains))

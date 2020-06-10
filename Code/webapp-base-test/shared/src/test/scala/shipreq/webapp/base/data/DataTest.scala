@@ -10,12 +10,12 @@ object DataTest extends TestSuite {
   @inline def tr(a: Option[TagId], b: HashRefKey) = (a,b)
   @inline def ir(a: Option[CustomIssueTypeId], b: HashRefKey) = (a,b)
 
-  val tagData = Stream(tr(1.AT, "abc"), tr(2.AT, "def"))
-  val issueData = Stream(ir(1, "tbd"), ir(3, "todo"))
+  val tagData = List(tr(1.AT, "abc"), tr(2.AT, "def"))
+  val issueData = List(ir(1, "tbd"), ir(3, "todo"))
 
   override def tests = Tests {
-    'validation {
-      'hashRefKeyUniqueness {
+    "validation" - {
+      "hashRefKeyUniqueness" - {
         import DataValidators.hashRefKey._
 
         def test(input: String, expectedValidity: Validity, subjT: Option[TagId] = None, subjI: Option[CustomIssueTypeId] = None): Unit = {
@@ -23,21 +23,21 @@ object DataTest extends TestSuite {
           assertEq(s"[$input] | $subjT, $subjI", hashRefKey(state).validity(input), expectedValidity)
         }
 
-        'preventDups {
+        "preventDups" - {
           test("hehe", Valid)
           test("abc", Invalid)
           test("todo", Invalid)
           test("   todo   ", Invalid)
         }
 
-        'subjCanChangeItself {
+        "subjCanChangeItself" - {
           test("abc", Valid, subjT = 1.AT)
           test("abc", Invalid, subjT = 2.AT)
           test("todo", Valid, subjI = 3)
           test("todo", Invalid, subjI = 1)
         }
 
-        'caseInsensitive {
+        "caseInsensitive" - {
           test("ABC", Invalid)
           test("ABCD", Valid)
           test("ABC", Valid, subjT = 1.AT)

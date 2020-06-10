@@ -39,15 +39,18 @@ object Message {
 
   case class Style(tipe  : Type           = Type.Default,
                    attr  : Multiple[Attr] = Multiple.empty,
-                   colour: Colour         = Colour.Default,
+                   colour: ColourPlus     = Colour.Default,
                    size  : Size           = Size.Default) {
     val tag = divCls("ui message" <+ tipe <+ attr <+ colour <+ size)
   }
 
   def apply(style: Style, icon: Icon, header: TagMod, content: TagMod): VdomTag =
+    withBody(style, icon, header, <.p(content))
+
+  def withBody(style: Style, icon: Icon, header: TagMod, body: VdomNode): VdomTag =
     style.tag(^.cls := "icon",
       icon.tag,
       <.div(^.cls := "content",
         <.div(^.cls := "header", header),
-        <.p(content)))
+        body))
 }

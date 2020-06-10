@@ -22,7 +22,7 @@ object ReqCodeTest extends TestSuite {
 
   override def tests = Tests {
 
-    'codeValidation {
+    "codeValidation" - {
 
       def testFail(vs: V.State, i: String): Unit = {
         val r = V.code(vs).validity(i)
@@ -37,7 +37,7 @@ object ReqCodeTest extends TestSuite {
         assertEq(r, \/-(exp))
       }
 
-      'simple {
+      "simple" - {
         testPass(vs0, "b")
         testPass(vs0, "1")
         testPass(vs0, "qweas_123")
@@ -46,34 +46,34 @@ object ReqCodeTest extends TestSuite {
         testPass(vs0, "a_")
       }
 
-      'mkLowercase -
+      "mkLowercase" -
         testPass2(vs0, "AB.CD", "ab.cd")
 
-      'squashUnderscores {
+      "squashUnderscores" - {
         testPass2(vs0, "ab__", "ab_")
         testPass2(vs0, "ab__2", "ab_2")
         testPass2(vs0, "ab___.c__2", "ab_.c_2")
       }
 
-      'freeMiddleNode -
+      "freeMiddleNode" -
         testPass(vs0, "aa.b")
 
-      'maxNodes -
+      "maxNodes" -
         testPass(vs0, List.fill(Grammar.reqCode.maxNodes)("x").mkString("."))
 
-      'idempotent -
+      "idempotent" -
         testPass(vs2, "aa.b.c")
 
-      'tombstone -
+      "tombstone" -
         testPass(vs0, "aa.b.e")
 
-      'empty -
+      "empty" -
         testFail(vs0, "")
 
-      'tooManyNodes -
+      "tooManyNodes" -
         testFail(vs0, List.fill(Grammar.reqCode.maxNodes + 1)("x").mkString("."))
 
-      'unique {
+      "unique" - {
         testFail(vs0, "aa")
         testFail(vs0, "aa.b.c")
         testFail(vs0, "aa.b.d")

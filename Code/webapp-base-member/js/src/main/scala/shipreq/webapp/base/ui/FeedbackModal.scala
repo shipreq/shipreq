@@ -7,8 +7,8 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ErrorMsg, OpResult}
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.lib.ModalForm
-import shipreq.webapp.base.protocol.AjaxClient
-import shipreq.webapp.base.protocol.CommonProtocols.{Metadata, SubmitFeedback}
+import shipreq.webapp.base.protocol.ajax.AjaxClient
+import shipreq.webapp.base.protocol.ajax.CommonProtocols.{Metadata, SubmitFeedback}
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
 import shipreq.webapp.base.util.TextMod
 

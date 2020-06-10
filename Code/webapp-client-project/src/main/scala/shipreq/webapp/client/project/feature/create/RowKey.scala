@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.feature.create
 import japgolly.scalajs.react.Reusability
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.{CreateContentCmd, ManualIssueCmd}
+import shipreq.webapp.base.protocol.websocket.{CreateContentCmd, ManualIssueCmd}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.feature.create.{FieldKey => AnyFieldKey}
 
@@ -35,6 +35,7 @@ object RowKey {
     override type Cmd      = CreateContentCmd
     override def foldF[F[_ <: AnyFieldKey]](f: Fold[F]): F[FieldKey] = f.useCase(this)
     override def foldC[F[_]](f: FoldCmd[F]): F[Cmd] = f.useCase(this)
+    @inline def reqTypeId = StaticReqType.UseCase
   }
 
   case object ManualIssue extends RowKey {

@@ -1,7 +1,6 @@
-package shipreq.webapp.base.data.reqtable
+package shipreq.webapp.base.data.savedview
 
 import nyaya.prop._
-import nyaya.test._
 import nyaya.test.PropTest._
 import utest._
 import shipreq.webapp.base.RandomData
@@ -20,18 +19,18 @@ object SortCriteriaTest extends TestSuite {
   val sc1 = SortCriteria(Vector(Code / AscThenBlanks, ReqType / Desc, Title / BlanksThenAsc), Pubid / Desc)
 
   override def tests = Tests {
-    'want {
-      'inconclusive {
-        'new_cb - testWant(sc1, Tags, )
-        'new_ib - testWant(sc1, Tags, )
-        'head_cb1234 - ???
-        'head_ib12   - ???
-        'mid - ???
-        'last - ???
+    "want" - {
+      "inconclusive" - {
+        "new_cb" - testWant(sc1, Tags, )
+        "new_ib" - testWant(sc1, Tags, )
+        "head_cb1234" - ???
+        "head_ib12"   - ???
+        "mid" - ???
+        "last" - ???
       }
-      'conclusive {
-        'same12 - ???
-        'diff - ???
+      "conclusive" - {
+        "same12" - ???
+        "diff" - ???
       }
     }
   }
@@ -67,17 +66,17 @@ object SortCriteriaTest extends TestSuite {
   }
 
   val wantTest = for {
-    cfs  ← RandomData.reqtableData.customFieldColumn.vector
-    gi   = RandomData.reqtableData.ColumnIGen(cfs)
-    scis ← gi.sortCriIs
-    ci   ← gi.columnI
-    cc   ← RandomData.reqtableData.columnC
-    sc   ← RandomData.reqtableData.sortCriteria(scis)
+    cfs  <- RandomData.savedViews.customFieldColumn.vector
+    gi   = RandomData.savedViews.ColumnIGen(cfs)
+    scis <- gi.sortCriIs
+    ci   <- gi.columnI
+    cc   <- RandomData.savedViews.columnC
+    sc   <- RandomData.savedViews.sortCriteria(scis)
   } yield WantTest(sc, ci, cc)
 
   override def tests = Tests {
-    'want {
-      'props - wantTest.mustSatisfyE(_.all)
+    "want" - {
+      "props" - wantTest.mustSatisfyE(_.all)
     }
   }
 }

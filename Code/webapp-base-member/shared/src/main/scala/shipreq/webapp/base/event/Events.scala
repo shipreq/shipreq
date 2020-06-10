@@ -2,38 +2,56 @@ package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
+import scala.collection.immutable.ArraySeq
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable.SavedView
+import shipreq.webapp.base.data.savedview.{ImpGraphConfig, SavedView}
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.text.Text
-import Text.{UseCaseStep => StepTitle, _}
+import Text.{UseCaseStep => _, _}
 
-/**
- * A change to a [[Project]].
- *
- * All [[Event]]s must be readable from the DB. They must deserialise consistently.
- *
- * Only [[ActiveEvent]]s can be written to the DB.
- */
+/** A change to a [[Project]].
+  *
+  * All [[Event]]s must be readable from the DB. They must deserialise consistently.
+  *
+  * Only [[ActiveEvent]]s can be written to the DB.
+  */
 sealed trait Event
 
-/**
-  * Events of which new instances can be created.
-  *
-  * (Events can be retired over time.)
-  */
+/** Events of which new instances can be created. */
 sealed trait ActiveEvent extends Event
 
-object Event {
+/** Events that used to be active but have been retired. They are read-only.
+  *
+  * The are still around because they'll have been saved to the DB and are now part of people's projects' event streams.
+  */
+sealed trait RetiredEvent extends Event
 
-  val toActiveEvent: Event => ActiveEvent = {
-    case a: ActiveEvent => a
-  }
+object Event {
 
   type NonEmptyCustomTextMap = NonEmpty[Map[CustomField.Text.Id, CustomTextField.NonEmptyText]]
 
   /*
+  +===========+
+  | Semantics |
+  +===========+
+
+  - these events are the low-level representation of change
+    they should be fast to apply and have very little logic (if any)
+
+  - in some cases users can't specify dead values, but events can (and should)
+    typical flow is like this:
+
+        [UI] ----> [Cmd with live values only] --------> [MakeEvent] ----> [Event with dead values included]
+
+    which is actually preferred over
+
+        [UI] ----> [Cmd with dead values included] ----> [MakeEvent] ----> [Event with dead values included]
+
+    because it simplifies client/API usage, and ensures that important logic happens on our side (server) under our
+    control meaning it's more dependable from a dev and system pov.
+
+
   +=============+
   | Style Guide |
   +=============+
@@ -44,65 +62,6 @@ object Event {
   - Delete and Restore are separate events.
   - Prefer combination: Create/Delete/Restore
   - Prefer combination: Add/Remove
-
-  +=======+
-  | Cases |
-  +=======+
-
-  case e: Event.ApplicableTagCreate    => ???
-  case e: Event.ApplicableTagUpdate    => ???
-  case e: Event.CodeGroupCreate        => ???
-  case e: Event.CodeGroupsDelete       => ???
-  case e: Event.CodeGroupUpdate        => ???
-  case e: Event.ContentRestore         => ???
-  case e: Event.CustomIssueTypeCreate  => ???
-  case e: Event.CustomIssueTypeDelete  => ???
-  case e: Event.CustomIssueTypeRestore => ???
-  case e: Event.CustomIssueTypeUpdate  => ???
-  case e: Event.CustomReqTypeCreate    => ???
-  case e: Event.CustomReqTypeDelete    => ???
-  case e: Event.CustomReqTypeRestore   => ???
-  case e: Event.CustomReqTypeUpdate    => ???
-  case e: Event.FieldCustomDelete      => ???
-  case e: Event.FieldCustomImpCreate   => ???
-  case e: Event.FieldCustomImpUpdate   => ???
-  case e: Event.FieldCustomRestore     => ???
-  case e: Event.FieldCustomTagCreate   => ???
-  case e: Event.FieldCustomTagUpdate   => ???
-  case e: Event.FieldCustomTextCreate  => ???
-  case e: Event.FieldCustomTextUpdate  => ???
-  case e: Event.FieldReposition        => ???
-  case e: Event.FieldStaticAdd         => ???
-  case e: Event.FieldStaticRemove      => ???
-  case e: Event.GenericReqCreate       => ???
-  case e: Event.GenericReqTitleSet     => ???
-  case e: Event.GenericReqTypeSet      => ???
-  case e: Event.ManualIssueCreate      => ???
-  case e: Event.ManualIssueDelete      => ???
-  case e: Event.ManualIssueUpdate      => ???
-  case e: Event.ProjectNameSet         => ???
-  case e: Event.ProjectTemplateApply   => ???
-  case e: Event.ReqCodesPatch          => ???
-  case e: Event.ReqFieldCustomTextSet  => ???
-  case e: Event.ReqImplicationsPatch   => ???
-  case e: Event.ReqsDelete             => ???
-  case e: Event.ReqTagsPatch           => ???
-  case e: Event.SavedViewCreate        => ???
-  case e: Event.SavedViewDefaultSet    => ???
-  case e: Event.SavedViewDelete        => ???
-  case e: Event.SavedViewUpdate        => ???
-  case e: Event.TagDelete              => ???
-  case e: Event.TagGroupCreate         => ???
-  case e: Event.TagGroupUpdate         => ???
-  case e: Event.TagRestore             => ???
-  case e: Event.UseCaseCreate          => ???
-  case e: Event.UseCaseStepCreate      => ???
-  case e: Event.UseCaseStepDelete      => ???
-  case e: Event.UseCaseStepRestore     => ???
-  case e: Event.UseCaseStepShiftLeft   => ???
-  case e: Event.UseCaseStepShiftRight  => ???
-  case e: Event.UseCaseStepUpdate      => ???
-  case e: Event.UseCaseTitleSet        => ???
   */
 
   // ===================================================================================================================
@@ -129,10 +88,15 @@ object Event {
   // ===================================================================================================================
   // Config: Custom req types
 
-  final case class CustomReqTypeCreate (id: CustomReqTypeId, vs: CustomReqTypeGD.NonEmptyValues) extends ActiveEvent
-  final case class CustomReqTypeUpdate (id: CustomReqTypeId, vs: CustomReqTypeGD.NonEmptyValues) extends ActiveEvent
-  final case class CustomReqTypeDelete (id: CustomReqTypeId)                                     extends ActiveEvent
-  final case class CustomReqTypeRestore(id: CustomReqTypeId)                                     extends ActiveEvent
+  final case class CustomReqTypeCreate    (id: CustomReqTypeId, vs: CustomReqTypeGD.NonEmptyValues) extends ActiveEvent
+  final case class CustomReqTypeUpdate    (id: CustomReqTypeId, vs: CustomReqTypeGD.NonEmptyValues) extends ActiveEvent
+  final case class CustomReqTypeRestore   (id: CustomReqTypeId)                                     extends ActiveEvent
+  final case class CustomReqTypeDeleteHard(id: CustomReqTypeId)                                     extends ActiveEvent
+  final case class CustomReqTypeDeleteSoft(id: CustomReqTypeId)                                     extends ActiveEvent
+
+  final case class CustomReqTypeCreateV1(id: CustomReqTypeId, vs: RetiredGenericData.CustomReqTypeGDv1.NonEmptyValues) extends RetiredEvent
+  final case class CustomReqTypeUpdateV1(id: CustomReqTypeId, vs: RetiredGenericData.CustomReqTypeGDv1.NonEmptyValues) extends RetiredEvent
+  final case class CustomReqTypeDelete  (id: CustomReqTypeId)                                                          extends RetiredEvent
 
   // ===================================================================================================================
   // Config: Tags
@@ -147,25 +111,42 @@ object Event {
   final case class ApplicableTagCreate(id: ApplicableTagId, vs: ApplicableTagGD.NonEmptyValues) extends ActiveEvent
   final case class ApplicableTagUpdate(id: ApplicableTagId, vs: ApplicableTagGD.NonEmptyValues) extends ActiveEvent
 
+  final case class ApplicableTagCreateV1(id: ApplicableTagId, vs: RetiredGenericData.ApplicableTagGDv1.NonEmptyValues) extends RetiredEvent
+  final case class ApplicableTagUpdateV1(id: ApplicableTagId, vs: RetiredGenericData.ApplicableTagGDv1.NonEmptyValues) extends RetiredEvent
+
   // ===================================================================================================================
   // Config: Fields
 
   final case class FieldReposition(id: FieldId, newPos: RelPos[FieldId]) extends ActiveEvent
 
-  final case class FieldStaticAdd   (f: StaticField) extends ActiveEvent
-  final case class FieldStaticRemove(f: StaticField) extends ActiveEvent
+  final case class FieldStaticAdd   (f: StaticField.Optional) extends ActiveEvent
+  final case class FieldStaticRemove(f: StaticField.Optional) extends ActiveEvent
 
   final case class FieldCustomDelete (id: CustomFieldId) extends ActiveEvent
   final case class FieldCustomRestore(id: CustomFieldId) extends ActiveEvent
 
-  final case class FieldCustomTextCreate(id: CustomField.Text.Id, vs: CustomTextFieldGD.NonEmptyValues) extends ActiveEvent
-  final case class FieldCustomTextUpdate(id: CustomField.Text.Id, vs: CustomTextFieldGD.NonEmptyValues) extends ActiveEvent
+  final case class FieldCustomTextCreate(id: CustomField.Text.Id,
+                                         vs: CustomTextFieldGD.NonEmptyValues) extends ActiveEvent
 
-  final case class FieldCustomTagCreate(id: CustomField.Tag.Id, vs: CustomTagFieldGD.NonEmptyValues) extends ActiveEvent
-  final case class FieldCustomTagUpdate(id: CustomField.Tag.Id, vs: CustomTagFieldGD.NonEmptyValues) extends ActiveEvent
+  final case class FieldCustomTagCreate(id   : CustomField.Tag.Id,
+                                        tagId: TagGroupId,
+                                        vs   : CustomTagFieldGD.NonEmptyValues) extends ActiveEvent
 
-  final case class FieldCustomImpCreate(id: CustomField.Implication.Id, vs: CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
-  final case class FieldCustomImpUpdate(id: CustomField.Implication.Id, vs: CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
+
+  final case class FieldCustomImpCreate(id       : CustomField.Implication.Id,
+                                        reqTypeId: ReqTypeId,
+                                        vs       : CustomImpFieldGD.NonEmptyValues) extends ActiveEvent
+
+  final case class FieldCustomImpUpdate (id: CustomField.Implication.Id, vs: CustomImpFieldGD .NonEmptyValues) extends ActiveEvent
+  final case class FieldCustomTagUpdate (id: CustomField.Tag        .Id, vs: CustomTagFieldGD .NonEmptyValues) extends ActiveEvent
+  final case class FieldCustomTextUpdate(id: CustomField.Text       .Id, vs: CustomTextFieldGD.NonEmptyValues) extends ActiveEvent
+
+  final case class FieldCustomTextCreateV1(id: CustomField.Text       .Id, vs: RetiredGenericData.CustomTextFieldGDv1.NonEmptyValues) extends RetiredEvent
+  final case class FieldCustomTextUpdateV1(id: CustomField.Text       .Id, vs: RetiredGenericData.CustomTextFieldGDv1.NonEmptyValues) extends RetiredEvent
+  final case class FieldCustomTagCreateV1 (id: CustomField.Tag        .Id, vs: RetiredGenericData.CustomTagFieldGDv1 .NonEmptyValues) extends RetiredEvent
+  final case class FieldCustomTagUpdateV1 (id: CustomField.Tag        .Id, vs: RetiredGenericData.CustomTagFieldGDv1 .NonEmptyValues) extends RetiredEvent
+  final case class FieldCustomImpCreateV1 (id: CustomField.Implication.Id, vs: RetiredGenericData.CustomImpFieldGDv1 .NonEmptyValues) extends RetiredEvent
+  final case class FieldCustomImpUpdateV1 (id: CustomField.Implication.Id, vs: RetiredGenericData.CustomImpFieldGDv1 .NonEmptyValues) extends RetiredEvent
 
   // ===================================================================================================================
   // Content: Generic requirements
@@ -236,6 +217,11 @@ object Event {
                               codeGroups: Set[ReqCodeGroupId],
                               reason    : DeletionReason.OptionalText) extends ActiveEvent
 
+  object ReqsDelete {
+    def one(reqId: ReqId): ReqsDelete =
+      ReqsDelete(NonEmptySet one reqId, Set.empty, ArraySeq.empty)
+  }
+
   final case class ContentRestore(reqs      : Set[ReqId],
                                   codeGroups: Set[ReqCodeGroupId]) extends ActiveEvent
 
@@ -253,14 +239,26 @@ object Event {
   // ===================================================================================================================
   // Saved Views
 
-  final case class SavedViewCreate(id        : SavedView.Id,
-                                   name      : SavedView.Name,
-                                   columns   : NonEmptyVector[reqtable.Column],
-                                   order     : reqtable.SortCriteria,
-                                   filterDead: FilterDead,
-                                   filter    : Option[Filter.Valid]) extends ActiveEvent
+  final case class SavedViewCreate(id            : SavedView.Id,
+                                   name          : SavedView.Name,
+                                   columns       : NonEmptyVector[savedview.Column],
+                                   order         : savedview.SortCriteria,
+                                   filterDead    : FilterDead,
+                                   filter        : Option[Filter.Valid],
+                                   impGraphConfig: Option[ImpGraphConfig]) extends ActiveEvent
 
   final case class SavedViewUpdate    (id: SavedView.Id, vs: SavedViewGD.NonEmptyValues) extends ActiveEvent
   final case class SavedViewDelete    (id: SavedView.Id)                                 extends ActiveEvent
   final case class SavedViewDefaultSet(id: SavedView.Id)                                 extends ActiveEvent
+
+
+  final case class SavedViewCreateV1(id        : SavedView.Id,
+                                     name      : SavedView.Name,
+                                     columns   : NonEmptyVector[savedview.Column],
+                                     order     : savedview.SortCriteria,
+                                     filterDead: FilterDead,
+                                     filter    : Option[Filter.Valid]) extends RetiredEvent
+
+  final case class SavedViewUpdateV1(id: SavedView.Id,
+                                     vs: RetiredGenericData.SavedViewGDv1.NonEmptyValues) extends RetiredEvent
 }

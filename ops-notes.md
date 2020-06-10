@@ -24,25 +24,33 @@ port=$(sudo docker ps | fgrep webapp | sed -e 's/.*:\([0-9][0-9]*\)->8080.*/\1/'
 
 ### Register an account for someone
 
-` curl http://localhost:$port/ops/register1 -X POST $auth -F email=japgolly@gmail.com`
+```sh
+ curl http://localhost:$port/ops/register1 -X POST $auth -F email=japgolly@gmail.com
+```
 
 ### Download a project as json
 
+ShipReq is #3
+
 ```sh
-id=1
+id=3
  curl http://localhost:$port/ops/project/events -X POST $auth -F id=$id -o /tmp/project-$id.json
-aws s3 mv /tmp/project-$id.json s3://shipreq-tmp
+ wc -l /tmp/project-$id.json
+ aws s3 mv /tmp/project-$id.json s3://shipreq-tmp
 ```
 
-and then locally
+and then locally, with ShipReq local/dev running
 
 ```sh
-aws s3 cp s3://shipreq-tmp/project-3.json .
+id=3
+aws s3 cp s3://shipreq-tmp/project-$id.json .
+ auth="-F secret=Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid"
+ curl -v http://localhost:8080/ops/project/create -X POST $auth -F events='<'project-$id.json -F user=japgolly
 ```
 
 
-ElasticSearch Maintainence
-==========================
+ElasticSearch Maintenance
+=========================
 
 ```sh
 es=https://es.prod.internal:443

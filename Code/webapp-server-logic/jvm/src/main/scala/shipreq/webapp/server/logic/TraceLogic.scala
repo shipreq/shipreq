@@ -1,6 +1,6 @@
 package shipreq.webapp.server.logic
 
-import doobie.imports.ConnectionIO
+import doobie.ConnectionIO
 import scalaz.syntax.monad._
 import scalaz.{Monad, ~>}
 import shipreq.base.ops.Trace

@@ -65,7 +65,7 @@ object EventPropTests extends TestSuite {
   override def tests = Tests {
     RandomData.project.mustSatisfy(prop)(defaultPropSettings
       .setGenSize(4 `JVM|JS` 2)
-      .setSampleSize(7 `JVM|JS` 2)
+      .setSampleSize(10 `JVM|JS` 4)
     )
   }
 }

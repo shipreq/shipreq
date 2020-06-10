@@ -1,0 +1,68 @@
+#!/bin/bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+org=org.postgresql
+art=postgresql
+pkg=org.postgresql.jdbc
+name=TypeInfoCache
+ext=java
+
+pkgDir=${pkg//./\/}
+tgt=base-db/src/main/java/$pkgDir
+hack=$tgt/$name.$ext
+orig=$hack.original
+patch=$hack.patch
+
+ver="$(
+  < project/Dep*.scala \
+  fgrep '"'"$org"'"' \
+  | sed 's/^[^0-9]*//; s/".*//'
+)"
+
+# echo "org: $org"
+# echo "art: $art"
+# echo "ver: $ver"
+# echo "tgt: $tgt"
+
+function update_orig {
+  sources=~/".coursier/cache/v1/https/repo1.maven.org/maven2/${org//./\/}/$art/$ver/$art-$ver-sources.jar"
+  [ ! -e "$sources" ] && echo "Source jar not found: $sources" && exit 1 || true
+  unzip -p "$sources" "$pkgDir/$name.$ext" > "$orig"
+  echo "Updated $orig"
+}
+
+function create_patch {
+  diff -u5 --ignore-all-space --text "$orig" "$hack" \
+    | sed -e '1,2s/\t.*//' \
+    > "$patch" \
+    || [ $? -eq 1 ]
+  echo "Created $patch"
+}
+
+function apply_patch {
+  [ ! -e "$hack" ] || mv "$hack" /tmp
+  cp "$orig" "$hack"
+  patch -u --forward --ignore-whitespace "$hack" "$patch"
+}
+
+cmd_update_orig="update_orig"
+cmd_create_patch="create_patch"
+cmd_apply_patch="apply_patch"
+options="$cmd_update_orig | $cmd_create_patch | $cmd_apply_patch"
+[ $# -ne 1 ] && echo "Usage: $0 ($options)" && exit 1
+
+case "$1" in
+  $cmd_update_orig)
+    update_orig
+    ;;
+  $cmd_create_patch)
+    create_patch
+    ;;
+  $cmd_apply_patch)
+    apply_patch
+    ;;
+  *)
+    echo "Usage: $0 ($options)" && exit 1
+    ;;
+esac

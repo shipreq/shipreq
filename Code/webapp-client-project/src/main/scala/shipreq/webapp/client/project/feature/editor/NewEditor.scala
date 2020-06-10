@@ -8,15 +8,16 @@ import monocle.macros.Lenses
 import scala.annotation.elidable
 import scalaz.~~>
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.VectorTree.LocationOps
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.KeyboardTheme
-import shipreq.webapp.base.protocol.{ManualIssueCmd, ServerSideProcInvoker, UpdateContentCmd}
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -58,7 +59,8 @@ object NewEditor {
       Hooks(Callback.empty, Callback.empty)
 
     implicit val reusability: Reusability[Hooks] = {
-      implicit val x: Reusability[Callback] = Reusability.by((_: Callback).toScalaFn)(Reusability.byRef) // TODO Use Reusability.callbackByRef
+      implicit val x: Reusability[Callback] = Reusability.callbackByRef
+      locally(x) // -Wunused:locals gets it wrong
       Reusability.byRef || Reusability.derive
     }
   }
@@ -79,7 +81,7 @@ object NewEditor {
 
   type ForFields[FK <: FieldKey] = FieldKey.Fold[FK, ForEditor]
 
-  type ForEditor[A, Change] = Ctx[A, Change] ⇒ NewEditor
+  type ForEditor[A, Change] = Ctx[A, Change] => NewEditor
 
   def forRow(static: Static, rowKey: RowKey): ForFields[rowKey.FieldKey] =
     static.internal.perRow(rowKey)
@@ -119,7 +121,7 @@ object NewEditor {
       protected def changeArgs: Args
 
       final override def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement] =
-        // Looks like this could block async but not so. Can't go from edit → async → notAllowed.
+        // Looks like this could block async but not so. Can't go from edit -> async -> notAllowed.
         // Unsafety is allowed here because EditorInstance is never Reusable
         p match {
           case Allow => Some(renderImpl(props(args, as).runNow()))
@@ -172,19 +174,23 @@ object NewEditor {
         f => EditRichText.CodeGroupTitle(r.id, PreviewId(r, f)))
 
       def prepareGR(r: RowKey.GenericReq) = FieldKey.FoldForGenericReq[LogicPerField](
-        _ => EditReqCodes.Multiple(r.id),
-        f => EditRichText.CustomTextField(r.id, f.field, PreviewId(r, f)),
-        f => EditImplications(r.id, f.scope),
-        _ => EditReqType(r.id),
-        f => EditTags(r.id, f.field),
-        f => EditRichText.GenericReqTitle(r.id, PreviewId(r, f)))
+        codes           = _ => EditReqCodes.Multiple(r.id),
+        customTextField = f => EditRichText.CustomTextField(r.id, f.field, PreviewId(r, f)),
+        implications    = f => EditImplications(r.id, f.scope),
+        reqType         = _ => EditReqType(r.id),
+        allTags         = f => EditTags.allTags(r.id),
+        otherTags       = f => EditTags.otherTags(r.id),
+        customFieldTags = f => EditTags.customField(r.id, f.field),
+        title           = f => EditRichText.GenericReqTitle(r.id, PreviewId(r, f)))
 
       def prepareUC(r: RowKey.UseCase) = FieldKey.FoldForUseCase[LogicPerField](
-        _ => EditReqCodes.Multiple(r.id),
-        f => EditRichText.CustomTextField(r.id, f.field, PreviewId(r, f)),
-        f => EditImplications(r.id, f.scope),
-        f => EditTags(r.id, f.field),
-        f => EditRichText.UseCaseTitle(r.id, PreviewId(r, f)))
+        codes           = _ => EditReqCodes.Multiple(r.id),
+        customTextField = f => EditRichText.CustomTextField(r.id, f.field, PreviewId(r, f)),
+        implications    = f => EditImplications(r.id, f.scope),
+        allTags         = f => EditTags.allTags(r.id),
+        otherTags       = f => EditTags.otherTags(r.id),
+        customFieldTags = f => EditTags.customField(r.id, f.field),
+        title           = f => EditRichText.UseCaseTitle(r.id, PreviewId(r, f)))
 
       lazy val forUseCaseSteps = FieldKey.FoldForUseCaseSteps[ForEditor](
         f => logicToPerField(EditUseCaseStep(f.id, PreviewId(RowKey.UseCaseSteps, f))))
@@ -250,7 +256,7 @@ object NewEditor {
     }
 
     def getGenericReq(id: GenericReqId): CallbackOption[GenericReq] =
-      pxProject.toCallback.map(_.content.reqs.genericReqs.get(id)).asCBO
+      pxProject.toCallback.map(_.content.reqs.genericReqs.imap.get(id)).asCBO
 
     def getUseCase(id: UseCaseId): CallbackOption[UseCase] =
       pxProject.toCallback.map(_.content.reqs.useCases.imap.get(id)).asCBO
@@ -585,17 +591,27 @@ object NewEditor {
       override type Args   = Unit
       override type Change = TagEditor.Output
 
-      def apply(id: ReqId, fid: Option[CustomField.Tag.Id]): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
+      def allTags(id: ReqId): InitFn =
+        apply(id, Lookup.all)
+
+      def otherTags(id: ReqId): InitFn =
+        apply(id, Lookup.notUsedInTagFields)
+
+      def customField(id: ReqId, fid: CustomField.Tag.Id): InitFn =
+        apply(id, Lookup.forTagField(fid))
+
+      def apply(id: ReqId, lookupFn: Project => Lookup): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
         import ictx._
 
-        val lookupFn = fid.fold[Project => Lookup](Lookup.notUsedInTagFields)(Lookup.forTagField)
         val pxLookup = pxProject map lookupFn
+        val pxNaTags = pxProject.map(_.naTagsForReq(id))
 
         val pxInit: Px[(Set[ApplicableTagId], String)] =
           for {
             project <- pxProject
             lookup <- pxLookup
-          } yield TagEditor.initialValues(project.content.reqTags(id), project.config, lookup)
+            naTags <- pxNaTags
+          } yield TagEditor.initialValues(project.content.reqTags(id), project.config, lookup, naTags)
 
         val (abort, commitFn) =
           makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqTags(id, _), args.hooks)
@@ -604,12 +620,19 @@ object NewEditor {
           initialData       = pxInit.toCallback.toCBO,
           initalValueOption = ivo)(
           initialValueFn    = _._2)(
-          editor            = i => new State(_, Some(i._1), pxLookup, abort, commitFn))
+          editor            = i => ss => new State(
+            ss            = ss,
+            initialValues = Some(i._1),
+            pxLookup      = pxLookup,
+            pxNaTags      = pxNaTags,
+            abort         = abort,
+            commitFn      = commitFn))
       }
 
       private class State(ss           : StateSnapshot[String],
                           initialValues: Some[Set[ApplicableTagId]],
                           pxLookup     : Px[Lookup],
+                          pxNaTags     : Px[NaTags],
                           abort        : Some[Callback],
                           commitFn     : Some[CommitFn]) extends EditorImpl {
 
@@ -623,8 +646,10 @@ object NewEditor {
         override val props = (_, asyncState) =>
           for {
             lookup <- pxLookup.toCallback
+            naTags <- pxNaTags.toCallback
           } yield TagEditor.Props(
             preEditValue     = initialValues,
+            naTags           = naTags,
             edit             = ss,
             lookup           = lookup,
             asyncStatus      = EditorStatus.async(asyncState),
@@ -658,7 +683,8 @@ object NewEditor {
 
         protected def start(cmd           : T.OptionalText => UpdateContentCmd,
                             initialValueCB: CallbackOption[T.OptionalText],
-                            pid           : PreviewId): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
+                            pid           : PreviewId,
+                            reqId         : Option[ReqId]): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
           import ictx._
 
           val (abort, commitFn) =
@@ -669,7 +695,7 @@ object NewEditor {
               initialValue   <- initialValueCB
               projectWidgets <- args.cbProjectWidgets.toCBO
             } yield {
-              val initialText = projectWidgets.plainText.text(initialValue, RichTextEditor.hardcodedLive, Mandatory.Not)
+              val initialText = projectWidgets.plainText.text(initialValue, RichTextEditor.hardcodedLive, Optional)
               (initialValue, initialText)
             }
 
@@ -677,13 +703,14 @@ object NewEditor {
           initialData       = initCB,
           initalValueOption = ivo)(
           initialValueFn    = _._2)(
-          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, abort, commitFn))
+          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.OptionalText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
                             pid             : PreviewId,
+                            reqId           : Option[ReqId],
                             abort           : Some[Callback],
                             commitFn        : Some[editor.Optional.CommitFn]) extends EditorImpl {
 
@@ -703,6 +730,7 @@ object NewEditor {
               projectWidgets <- projectWidgetsCB
             } yield editor.Optional(
               project          = project,
+              naTags           = project.naTagsForReq(reqId),
               plainTextNoCtx   = plainTextNoCtx,
               textSearch       = textSearch,
               projectWidgets   = projectWidgets,
@@ -727,30 +755,34 @@ object NewEditor {
 
       object CodeGroupTitle extends Base(RichTextEditor.CodeGroupTitle) {
         def apply(id: ReqCodeGroupId, pid: PreviewId): InitFn = start(
-          UpdateContentCmd.SetCodeGroupTitle(id, _),
-          getCodeGroup(id).map(_.title).widen,
-          pid)
+          cmd            = UpdateContentCmd.SetCodeGroupTitle(id, _),
+          initialValueCB = getCodeGroup(id).map(_.title).widen,
+          pid            = pid,
+          reqId          = None)
       }
 
       object CustomTextField extends Base(RichTextEditor.CustomTextField) {
         def apply(id: ReqId, fid: CustomField.Text.Id, pid: PreviewId): InitFn = start(
-          UpdateContentCmd.SetCustomTextField(id, fid, _),
-          pxProject.toCallback.map(p => ReqData.textAt(fid, id).get(p.content.reqText)).toCBO,
-          pid)
+          cmd            = UpdateContentCmd.SetCustomTextField(id, fid, _),
+          initialValueCB = pxProject.toCallback.map(p => ReqData.Text.at(fid, id).get(p.content.reqText)).toCBO,
+          pid            = pid,
+          reqId          = Some(id))
       }
 
       object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle) {
         def apply(id: GenericReqId, pid: PreviewId): InitFn = start(
-          UpdateContentCmd.SetGenericReqTitle(id, _),
-          getGenericReq(id).map(_.title),
-          pid)
+          cmd            = UpdateContentCmd.SetGenericReqTitle(id, _),
+          initialValueCB = getGenericReq(id).map(_.title),
+          pid            = pid,
+          reqId          = Some(id))
       }
 
       object UseCaseTitle extends Base(RichTextEditor.UseCaseTitle) {
         def apply(id: UseCaseId, pid: PreviewId): InitFn = start(
-          UpdateContentCmd.SetUseCaseTitle(id, _),
-          getUseCase(id).map(_.title),
-          pid)
+          cmd            = UpdateContentCmd.SetUseCaseTitle(id, _),
+          initialValueCB = getUseCase(id).map(_.title),
+          pid            = pid,
+          reqId          = Some(id))
       }
     }
 
@@ -770,7 +802,8 @@ object NewEditor {
 
         protected def start(cmd           : T.NonEmptyText => Cmd,
                             initialValueCB: CallbackOption[T.NonEmptyText],
-                            pid           : PreviewId): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
+                            pid           : PreviewId,
+                            reqId         : Option[ReqId]): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
           import ictx._
 
           val (abort, commitFn) =
@@ -789,13 +822,14 @@ object NewEditor {
             initialData       = initCB,
             initalValueOption = ivo)(
             initialValueFn    = _._2)(
-            editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, abort, commitFn))
+            editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.NonEmptyText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
                             pid             : PreviewId,
+                            reqId           : Option[ReqId],
                             abort           : Some[Callback],
                             commitFn        : Some[editor.NonEmpty.CommitFn]) extends EditorImpl {
 
@@ -815,6 +849,7 @@ object NewEditor {
               projectWidgets <- projectWidgetsCB
             } yield editor.NonEmpty(
               project          = project,
+              naTags           = project.naTagsForReq(reqId),
               plainTextNoCtx   = plainTextNoCtx,
               textSearch       = textSearch,
               projectWidgets   = projectWidgets,
@@ -839,9 +874,10 @@ object NewEditor {
 
        object ManualIssue extends Base(RichTextEditor.ManualIssue, sspManualIssue) {
          def apply(id: ManualIssueId, pid: PreviewId): InitFn = start(
-           ManualIssueCmd.Update(id, _),
-           pxProject.toCallback.map(_.manualIssues.imap.need(id).text).toCBO,
-           pid)
+           cmd            = ManualIssueCmd.Update(id, _),
+           initialValueCB = pxProject.toCallback.map(_.manualIssues.imap.need(id).text).toCBO,
+           pid            = pid,
+           reqId          = None)
        }
     }
 

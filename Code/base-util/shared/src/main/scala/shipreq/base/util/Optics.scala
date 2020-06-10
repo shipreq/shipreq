@@ -3,9 +3,10 @@ package shipreq.base.util
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.BiMap
 import monocle._
-import scala.collection.generic.CanBuildFrom
+import scala.collection.Factory
 import scala.collection.mutable.Builder
-import scalaz.{Applicative, Functor}
+import scala.reflect.ClassTag
+import scalaz.{-\/, Applicative, Functor, \/, \/-}
 
 object Optics {
 
@@ -29,20 +30,20 @@ object Optics {
   def biMapIso_![A, B](m: BiMap[A, B]): Iso[A, B] =
     Iso(m.forward.apply)(m.backward.apply)
 
-  def cbfTraversal[M[x] <: Traversable[x], A, N[_], B](implicit cbf: CanBuildFrom[M[A], B, N[B]]): PTraversal[M[A], N[B], A, B] =
+  def cbfTraversal[M[x] <: Iterable[x], A, N[_], B](implicit cbf: Factory[B, N[B]]): PTraversal[M[A], N[B], A, B] =
     new PTraversal[M[A], N[B], A, B] {
       override def modifyF[F[_]](f: A => F[B])(ma: M[A])(implicit F: Applicative[F]): F[N[B]] = {
         type C = Builder[B, N[B]]
         val add: F[B => C => C] = F.pure(b => _ += b)
-        var fc: F[C] = F.point(cbf(ma))
+        var fc: F[C] = F.point(cbf.newBuilder)
         for (a <- ma)
           fc = F.ap(fc)(F.ap(f(a))(add))
         F.map(fc)(_.result())
       }
     }
 
-  def cbfIterable[From, A](implicit cbf: CanBuildFrom[Nothing, A, List[A]]): CanBuildFrom[From, A, Iterable[A]] =
-    collection.breakOut(cbf)
+  def iterableFactory[A]: Factory[A, Iterable[A]] =
+    List
 
   def listPTraversal[A, B]: PTraversal[List[A], List[B], A, B] =
     cbfTraversal[List, A, List, B]
@@ -63,7 +64,7 @@ object Optics {
     setPTraversal[A, A]
 
   def iterablePTraversal[A, B]: PTraversal[Iterable[A], Iterable[B], A, B] =
-    cbfTraversal[Iterable, A, Iterable, B](cbfIterable[Iterable[A], B])
+    cbfTraversal[Iterable, A, Iterable, B](iterableFactory[B])
 
   def iterableTraversal[A]: Traversal[Iterable[A], A] =
     iterablePTraversal[A, A]
@@ -89,4 +90,33 @@ object Optics {
 
   def innerMapValue[A, B, C](a: A, b: B): Lens[Map[A, Map[B, C]], Option[C]] =
     innerMap[A, B, C](a) ^|-> mapValue(b)
+
+  def subtypeLens[C, A <: C: ClassTag](default: => A): Lens[C, A] =
+    Lens[C, A]({
+      case a: A => a
+      case _    => default
+    })(a => _ => a)
+
+  def coproductLens[C, A](attempt: PartialFunction[C, A],
+                          lift   : A => C,
+                          default: => A): Lens[C, A] =
+    Lens[C, A](attempt.applyOrElse(_, (_: C) => default))(a => _ => lift(a))
+
+  def disjunctionLensLeft[L, R](default: => L): Lens[L \/ R, L] =
+    coproductLens[L \/ R, L]({ case -\/(a) => a }, -\/(_), default)
+
+  def disjunctionLensRight[L, R](default: => R): Lens[L \/ R, R] =
+    coproductLens[L \/ R, R]({ case \/-(a) => a }, \/-(_), default)
+
+  def constLens[S, A](value: A): Lens[S, A] =
+    Lens[S, A](_ => value)(_ => identity)
+
+  def lensTuple2_1[A, B]: Lens[(A, B), A] =
+    Lens[(A, B), A](_._1)(a => ab => (a, ab._2))
+
+  def lensTuple2_2[A, B]: Lens[(A, B), B] =
+    Lens[(A, B), B](_._2)(b => ab => (ab._1, b))
+
+  def vectorElementUnsafe[A](idx: Int): Lens[Vector[A], A] =
+    Lens[Vector[A], A](_(idx))(a => _.updated(idx, a))
 }

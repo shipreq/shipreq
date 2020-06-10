@@ -119,6 +119,6 @@ object ProjectHomeTest extends TestSuite {
   }
 
   override def tests = Tests {
-    'projectNameEditing - run(projectNameEditing)
+    "projectNameEditing" - run(projectNameEditing)
   }
 }

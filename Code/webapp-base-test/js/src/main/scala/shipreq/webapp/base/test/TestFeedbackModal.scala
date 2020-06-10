@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import org.scalajs.dom.{Element, document}
 import scalaz.\/
 import shipreq.base.util._
-import shipreq.webapp.base.protocol.CommonProtocols.SubmitFeedback
+import shipreq.webapp.base.protocol.ajax.CommonProtocols.SubmitFeedback
 import shipreq.webapp.base.ui.FeedbackModal
 
 class TestFeedbackModal(initialResponse: Option[ErrorMsg \/ Unit]) {
@@ -17,7 +17,7 @@ class TestFeedbackModal(initialResponse: Option[ErrorMsg \/ Unit]) {
 
   val proc: FeedbackModal.SubmitFn =
     p =>
-      AsyncCallback.point[AsyncCallback[ErrorMsg \/ Unit]] {
+      AsyncCallback.delay[AsyncCallback[ErrorMsg \/ Unit]] {
         attempts :+= p
         nextResponse match {
           case Some(response) => AsyncCallback.pure(response)

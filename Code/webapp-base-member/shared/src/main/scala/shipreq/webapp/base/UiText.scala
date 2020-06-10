@@ -1,9 +1,9 @@
 package shipreq.webapp.base
 
 import scala.collection.compat.IterableOnce
-import shipreq.base.util.{Backwards, Direction, Forwards, LeftRight}
+import shipreq.base.util.LeftRight
 import shipreq.webapp.base.data.ReqType.Mnemonic
-import shipreq.webapp.base.data.{Dead, HashRefKey, Live, StaticField, StaticFieldType}
+import shipreq.webapp.base.data.{Dead, HashRefKey, Live, SpecialBuiltInField}
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.text.{PlainText, Text}
 
@@ -23,72 +23,64 @@ object UiText {
 
   @inline implicit class EnglishIntExt(private val self: Int) extends AnyVal {
     def unitsOf(name: String, pluralised: String = null): String =
-      self + " " + name.pluralise(self, pluralised)
+      self.toString + " " + name.pluralise(self, pluralised)
   }
 
-  def sortedOrClause(cases: IterableOnce[String], limit: Int = Int.MaxValue) = {
-    var a = cases.toArray
-    scala.util.Sorting.quickSort(a)
-    val len = a.length
-    if (len > limit) {
-      a = a.take(limit + 1)
-      a(limit) = s"one of ${len - limit} others"
+  private def sortedSeqClause(cases: IterableOnce[String], conj: String, limit: Int): String = {
+    var a = cases.iterator.toArray
+    a.length match {
+      case 0 => ""
+      case 1 => a(0)
+      case len =>
+        scala.util.Sorting.quickSort(a)
+        if (len > limit) {
+          a = a.take(limit + 1)
+          a(limit) = s"one of ${len - limit} others"
+        }
+        a.dropRight(1).mkString("", ", ", s" $conj ${a.last}")
     }
-    val last = a.length - 1
-    a(last) = "or " + a(last)
-    a.mkString(", ")
   }
+
+  def sortedAndClause(cases: IterableOnce[String], limit: Int = Int.MaxValue): String =
+    sortedSeqClause(cases, "and", limit)
+
+  def sortedOrClause(cases: IterableOnce[String], limit: Int = Int.MaxValue): String =
+    sortedSeqClause(cases, "or", limit)
 
   def unsavedChanges(i: Int): String =
     i.unitsOf("unsaved change")
 
   object ColumnNames {
-    def reqType          = FieldNames.reqType
-    def pubid            = "ID"
-    def id               = "ID"
-    def code             = FieldNames.reqCode
-    def title            = "Title"
-    def tags             = FieldNames.tags
-    def deletionReason   = FieldNames.deletionReason
     def issueCategory    = "Issue Type"
     def issueClass       = "Issue"
     def issueFieldName   = "Field"
     def issueFieldEditor = "Field Editor"
     def issueActions     = "Actions"
-
-    val implications: Direction => String = {
-      case Backwards => "Implied By"
-      case Forwards => "Implies"
-    }
   }
 
   object FieldNames {
     def hashRefKey           = "Key"
     def fieldRefKey          = hashRefKey
-    def reqCode              = "Code"
-    def reqCodes             = "Codes"
-    def reqCodeNode          = "Code node"
+    def reqCodeNode          = "Code part"
     def name                 = "Name"
+    def colour               = "Colour"
     def desc                 = "Description"
     def mnemonic             = "Mnemonic"
-    def mutexChildren        = "Exclusive"
+    def exclusivity          = "Exclusive"
     def fieldType            = "Type"
     def mandatory            = "Mandatory"
-    def applicableReqTypes   = "Req Types"
+    def applicableReqTypes   = "Applicable Req Types"
     def dndDragHandleHeader  = ""
     def usage                = "Usage"
-    def implicationRequired  = "Implication Required"
-    def reqType              = "Type"
-    def tags                 = "Tags"
+    def implication          = "Implication"
     def implications         = "Implications"
-    def implicationGraph     = StaticFieldType.ImplicationGraph.name
     def useCaseStepTreeN     = "Normal Course"
     def useCaseStepTreeA     = "Alternative Courses"
-    def useCaseStepTreeE     = StaticField.ExceptionStepTree.name
-    def useCaseStepFlowGraph = StaticFieldType.StepGraph.name
-    def deletionReason       = "Deletion Reason"
     def pastPubids           = "Past IDs"
+    def pastMnemonics        = "Past Mnemonics"
     def savedViewName        = "Name"
+    def impFieldSource       = "Req Type"
+    def tagFieldSource       = "Tag Group"
   }
 
   object RichText {
@@ -98,7 +90,7 @@ object UiText {
       case Text.InlineIssueDesc => "issue info blocks"
       case Text.CustomTextField => "text fields"
       case Text.UseCaseStep     => "use case steps"
-      case Text.DeletionReason  => FieldNames.deletionReason.toLowerCase.pluralise(2)
+      case Text.DeletionReason  => SpecialBuiltInField.DeletionReason.name.toLowerCase.pluralise(2)
       case Text.ManualIssue     => Issues.looseIssues
     }
   }
@@ -162,17 +154,56 @@ object UiText {
       case IssueCategory.UserDefined => "User-defined"
     }
 
-    def descBlankCustomField     (field: String)    : String = "Mandatory field is blank: " + field
-    def descBlankTitle                              : String = "Title is blank"
-    def descBlankUseCaseStep                        : String = "Use case step is blank"
-    def descConflictingTags      (tag: String)      : String = "Conflicting " + tag + " tags"
-    def descDeadIssueTag         (tag: HashRefKey)  : String = "Deleted issue tag in use: " + PlainText.hashtag(tag)
-    def descDeadRef                                 : String = "Reference to deleted data"
-    def descDeadTag              (tag: HashRefKey)  : String = "Deleted tag in use: " + PlainText.hashtag(tag)
-    def descEmptyCodeGroup                          : String = "Code group has nothing to group"
-    def descImplicationRequired  (reqType: Mnemonic): String = "Implication required for req type: " + reqType.value
-    def descIssueTag             (tag: HashRefKey)  : String = PlainText.hashtag(tag)
-    def descUninhabitableTagField(field: String)    : String = field + " field has no tags"
-    def descManualIssue                             : String = "Manual"
+    def descBlankCustomField(field: String): String =
+      "Mandatory field is blank: " + field
+
+    def descBlankTitle: String =
+      "Title is blank"
+
+    def descBlankUseCaseStep: String =
+      "Use case step is blank"
+
+    def descConflictingTags(tag: String): String =
+      "Conflicting " + tag + " tags"
+
+    def descDeadIssueTag(tag: HashRefKey): String =
+      "Deleted issue tag in use: " + PlainText.hashtag(tag)
+
+    def descDeadRef: String =
+      "Reference to deleted data"
+
+    def descDeadTag(tag: HashRefKey): String =
+      "Deleted tag in use: " + PlainText.hashtag(tag)
+
+    def descEmptyCodeGroup: String =
+      "Code group has nothing to group"
+
+    def descFieldDefaultTagDead(field: String, tag: String): String =
+      s"$field field using deleted tag $tag as a default"
+
+    def descFieldDefaultTagNotApplicable(field: String, tag: String, reqType: String): String =
+      s"$field field defaults to $tag for $reqType, but $tag isn't applicable to $reqType"
+
+    def descFieldDefaultTagUnrelated(field: String, tag: String): String =
+      s"$field field using unrelated tag $tag as a default"
+
+    def descImplicationRequired(reqType: Mnemonic): String =
+      "Implication required for req type: " + reqType.value
+
+    def descIssueTag(tag: HashRefKey): String =
+      PlainText.hashtag(tag)
+
+    def descNonApplicableField(field: String): String =
+      field + " field not applicable to any req types"
+
+    def descNonApplicableTag(tag: String): String =
+      s"Non-applicable tag in use: $tag"
+
+    def descUninhabitableTagField(field: String): String =
+      field + " field has no tags"
+
+    def descManualIssue: String =
+      "Manual"
   }
+
 }

@@ -4,6 +4,7 @@ import io.circe._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.recursion._
 import japgolly.univeq.UnivEq
+import scala.reflect.ClassTag
 import scalaz.Traverse
 import scalaz.std.either._
 
@@ -11,6 +12,12 @@ final case class JsonCodec[A](encoder: Encoder[A], decoder: Decoder[A]) {
 
   def xmap[B](f: A => B)(g: B => A): JsonCodec[B] =
     JsonCodec(encoder.contramap(g), decoder.map(f))
+
+  def narrow[B <: A: ClassTag]: JsonCodec[B] =
+    xmap[B]({
+      case b: B => b
+      case a    => throw new IllegalArgumentException("Illegal supertype: " + a)
+    })(b => b)
 }
 
 object JsonCodec {

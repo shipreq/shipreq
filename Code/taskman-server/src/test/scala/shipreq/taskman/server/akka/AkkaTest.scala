@@ -1,6 +1,6 @@
 package shipreq.taskman.server.akka
 
-import doobie.imports._
+import doobie.implicits._
 import java.util.concurrent.{CountDownLatch, Executors, TimeUnit}
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -17,13 +17,14 @@ import utest.asserts.RetryMax
 object AkkaTest extends TestSuite with HasLogger {
 
   override def tests = Tests {
-    'integrationTest - ServerImplTestHelpers.imperative(false) { helper =>
+
+    "integrationTest" - ServerImplTestHelpers.use { helper =>
       import helper._
 
       logger.info("Akka integration test starting...")
 
       def lookupHistory(id: TaskId): Option[ArchiveIntent] =
-        sql"select result from msg_history where id=${id.value}".query[String].option.transact(xa).unsafeRun().map(_.head).map {
+        (xa ! sql"select result from msg_history where id=${id.value}".query[String].option).map(_.head).map {
           case c if c == Succeeded.resultFlag    => Succeeded
           case c if c == FailAndAbort.resultFlag => FailAndAbort
           case c                                 => sys error s"WTF is '$c'?"
@@ -35,16 +36,18 @@ object AkkaTest extends TestSuite with HasLogger {
       val startTime = System.currentTimeMillis()
 
       try {
+
         // start akka
-        Future(try
-          Server.run(ctx, false)(s => {
-            shutdownLatch.await(10, TimeUnit.SECONDS)
+        Future {
+          try {
+            val s = Server.startAkka(ctx).unsafeRun()
+            shutdownLatch.await(12, TimeUnit.SECONDS)
             s.shutdown()
             Await.result(s.system.whenTerminated, 10.seconds)
-          })
-        catch {
-          case e: Throwable => logger.error("Akka crashed", e)
-        })
+          } catch {
+            case e: Throwable => logger.error("Akka crashed", e)
+          }
+        }
 
         // submit jobs
         val dummy1 = runApi(_.submit(DummyTask("#1: Pass immediately")))
@@ -55,6 +58,7 @@ object AkkaTest extends TestSuite with HasLogger {
         // wait for results
         val expect = List(Succeeded, FailAndAbort, Succeeded).map(Some(_))
         implicit val retryMax = RetryMax(10.seconds)
+        locally(retryMax) // -Wunused:locals gets it wrong here
         eventually {
           List(dummy1, dummy2, dummy3).map(lookupHistory) == expect
         }

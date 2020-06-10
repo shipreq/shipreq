@@ -7,10 +7,12 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{ExternalPubid, ReqTypes}
+import shipreq.webapp.base.ui.Toast
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.RowKey
+import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
+import shipreq.webapp.client.project.widgets.ProjectWidgets
 import NewStuff.State
-import shipreq.webapp.base.ui.Toast
 
 /**
   * Unified, convenience interface to both [[NewButton]] and [[NewForm]].
@@ -55,6 +57,7 @@ object NewStuff {
 final class NewStuff(state        : State,
                      modState     : ModFn[State],
                      routerCtl    : RouterCtl[ExternalPubid],
+                     pw           : ProjectWidgets.NoCtx,
                      toast        : Toast,
                      reqTypes     : ReqTypes,
                      allowRCG     : Permission,
@@ -65,20 +68,20 @@ final class NewStuff(state        : State,
   private val buttonUpdate: Reusable[NewButton.Update] =
     modState.map(f =>
       NewButton.Update(
-        setState = s => f.modState(_.setSelection(s)),
-        create   = s => f.modState(_.toggle(s))))
+        select = s => f.modState(_.setSelection(s)),
+        click  = s => f.modState(_.toggle(s))))
 
   val buttonProps: NewButton.Props =
     state match {
       case State.Open(s) =>
-        var b = NewButton.Props(Some(s), reqTypes, allowRCG, defaultType, Some(buttonUpdate))
+        var b = NewButton.Props(Some(s), reqTypes, allowRCG, pw, defaultType, Some(buttonUpdate))
         // If what we thought was open is no longer acceptable, proceed as if closed
-        if (b.selected.forall(_ !=* s))
+        if (b.dropdownProps.selected.forall(_ !=* s))
           b = b.copy(state = None)
         b
 
       case State.Closed(o) =>
-        NewButton.Props(o, reqTypes, allowRCG, defaultType, Some(buttonUpdate))
+        NewButton.Props(o, reqTypes, allowRCG, pw, defaultType, Some(buttonUpdate))
     }
 
   private val cancel: Callback =
@@ -90,14 +93,15 @@ final class NewStuff(state        : State,
 
         s match {
 
-          case r@RowKey.CodeGroup =>
+          case r: RowKey.CodeGroup.type =>
             Some(NewForm.ForCodeGroup.Props((), activeColumns, create(r), routerCtl, toast, cancel).render)
 
           case r: RowKey.GenericReq =>
-            val rt = reqTypes.custom.need(r.reqTypeId)
-            Some(NewForm.ForGenericReq.Props(rt, activeColumns, create(r), routerCtl, toast, cancel).render)
+            reqTypes.custom.get(r.reqTypeId).map { rt =>
+              NewForm.ForGenericReq.Props(rt, activeColumns, create(r), routerCtl, toast, cancel).render
+            }
 
-          case r@RowKey.UseCase =>
+          case r: RowKey.UseCase.type =>
             Some(NewForm.ForUseCase.Props((), activeColumns, create(r), routerCtl, toast, cancel).render)
 
           case RowKey.ManualIssue =>

@@ -14,22 +14,24 @@ import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.project.app.Style.{issues => *}
-import shipreq.webapp.client.project.feature.{CreateFeature, EditorFeature, RenderFeature}
+import shipreq.webapp.client.project.app.pages.root.Routes
+import shipreq.webapp.client.project.feature.{CreateFeature, EditorFeature}
 import shipreq.webapp.client.project.widgets.{FilterEditor, ProjectWidgets}
 
 object IssuesPage {
 
   final case class StaticProps(pxProject       : Px[Project],
-                               pxRenderFeature : Px[FilterDead => RenderFeature.ToVdom.NoCtx.ForProject],
+                               pxRenderFeature : Px[FilterDead => RenderFeature.ForProject],
                                pxPlainText     : Px[PlainText.ForProject.NoCtx],
                                pxProjectWidgets: Px[ProjectWidgets.NoCtx],
                                pxFilterCompiler: Px[Filter.Valid.Compiler],
+                               routerCtl       : Routes.RouterCtl,
                                cmdInvoker      : Action.Cmd ~=> Callback) {
 
     val pxConfig      = pxProject.map(_.config).withReuse
-    val pxFieldNameFn = pxConfig.map(cfg => Reusable.byRef(Field.nameByIdFromProjectConfig(cfg)))
+    val pxFieldNameFn = pxConfig.map(cfg => Reusable.byRef(cfg.fieldName))
 
-    val component = ScalaComponent.builder[Props]("IssuesPage")
+    val component = ScalaComponent.builder[Props]
       .backend(new Backend(this, _))
       .renderBackend
       .build
@@ -40,6 +42,7 @@ object IssuesPage {
       pxPlainText,
       pxProjectWidgets,
       pxFieldNameFn,
+      routerCtl,
       cmdInvoker)
   }
 
@@ -83,10 +86,12 @@ object IssuesPage {
       } yield f.fold(p.issues)(p.issues.filter)
 
     private val filterUpdateFn: FilterEditor.UpdateFn =
-      (newState, newValue) =>
-        $.props.flatMap(_.state.modState(_.copy(
-          filterEditor = newState,
-          filterValue = newValue)))
+      (newState, newValue, cb) =>
+        $.props.flatMap(_.state.modState(
+          _.copy(
+            filterEditor = newState,
+            filterValue = newValue),
+          cb))
 
     def render(p: Props): VdomElement = {
       val project = pxProject.value()

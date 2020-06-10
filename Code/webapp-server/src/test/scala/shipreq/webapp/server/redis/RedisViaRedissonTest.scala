@@ -1,6 +1,6 @@
 package shipreq.webapp.server.redis
 
-import java.time.Instant
+import java.time._
 import utest._
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.ProjectId
@@ -9,37 +9,61 @@ import shipreq.webapp.server.test.PrepareEnv
 
 object RedisViaRedissonTest extends TestSuite {
 
-  private def reps = 24
+  private def tester(realOnLeft: Boolean) = {
+    var _nextId = Instant.now().getEpochSecond
+    def nextId(): ProjectId = {
+      val id = ProjectId(_nextId)
+      _nextId += 1
+      id
+    }
 
-  override def tests = Tests {
-    'laws {
+    val stateFx = Fx {
+      val id     = nextId()
       val client = PrepareEnv.redissonClient
       val schema = RedisSchema(s"test:${Instant.now()}:")
-      val id     = ProjectId(1)
       val redis  = new RedisViaRedisson(client, schema)
       val inmem  = new Redis.InMemory[Fx]
 
-      val evictSS = () => {
+      val evictSS = Fx {
         inmem.unsafeEvictSnapshot(id)
         client.getKeys.delete(schema.snapshot(id).value)
         ()
       }
 
-      val await = () => {
+      val await = Fx {
         inmem.publishAll.unsafeRun()
         Thread.sleep(10) // Don't remove else published messages can leak into next test
       }
 
-      'left - {
-        val t = new RedisLaws.Tester[Fx](id, redis, id, inmem, evictSS, await)
-        t.testAllLaws(reps)
-      }
-
-      'right - {
-        val t = new RedisLaws.Tester[Fx](id, inmem, id, redis, evictSS, await)
-        t.testAllLaws(reps)
-      }
-
+      RedisLawTester.State(
+        id1           = id,
+        id2           = id,
+        alg1          = if (realOnLeft) redis else inmem,
+        alg2          = if (realOnLeft) inmem else redis,
+        evictSnapshot = evictSS,
+        publish       = await,
+      )
     }
+
+    RedisLawTester(stateFx)
+  }
+
+  override def tests = Tests {
+
+    "laws" - {
+      val s = RedisLawTester.Settings.default.withShrinkLimit(1).copy(reps = 16)
+        // .copy(reps = 1000, shrinkMaxDur = Duration.ofHours(99))
+
+      "left" - {
+        val t = tester(realOnLeft = true)
+        t.testAllLaws(s)
+      }
+
+      "right" - {
+        val t = tester(realOnLeft = false)
+        t.testAllLaws(s)
+      }
+    }
+
   }
 }

@@ -11,16 +11,17 @@ import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{CustomReqType, ExternalPubid, ReqType, StaticReqType}
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.lib.KeyboardTheme
-import shipreq.webapp.base.protocol.CreateContentCmd
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.protocol.websocket.CreateContentCmd
+import shipreq.webapp.base.text.{PlainText, Text}
 import shipreq.webapp.base.ui.Toast
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table => SemTable}
 import shipreq.webapp.client.project.app.Style.reqtable.{creation => *}
 import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.FieldKey
+import shipreq.webapp.client.project.feature.SavedViewFeature.{ColumnLogic, ColumnPlus}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.CloseButton
 
@@ -31,11 +32,11 @@ object NewForm {
   object ForCodeGroup extends NewForm {
     override type Input            = Unit
     override type FK               = FieldKey.ForCodeGroup
-    override val columnToField     = Column.creationFieldCG.getOption
+    override val columnToField     = ColumnLogic.creationFieldCG.getOption
     override val createButtonLabel = Function const NewForm.createButtonLabel(UiText.codeGroup)
     override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
       var _code: Option[FieldKey.Code.Value] = None
-      var title: FieldKey.CodeGroupTitle.Value = Vector.empty
+      var title: FieldKey.CodeGroupTitle.Value = Text.empty
       val fold = FieldKey.FoldForCodeGroup[ValueConsumer](
         f => (v: f.Value) => _code = Some(v),
         f => (v: f.Value) => title = v)
@@ -47,7 +48,7 @@ object NewForm {
   object ForGenericReq extends NewForm {
     override type Input            = CustomReqType
     override type FK               = FieldKey.ForGenericReq
-    override val columnToField     = Column.creationFieldGR.getOption
+    override val columnToField     = ColumnLogic.creationFieldGR.getOption
     override val createButtonLabel = NewForm.createButtonLabel(_)
     override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
       var c = CreateContentCmd.CreateGenericReq.empty(i.id)
@@ -55,7 +56,9 @@ object NewForm {
         codes           = f => (v: f.Value) => c = c.copy(codes = v),
         customTextField = f => (v: f.Value) => c = c.addCustomText(f.field, v),
         implications    = f => (v: f.Value) => c = c.addImps(f.dir, v),
-        tags            = f => (v: f.Value) => c = c.addTags(v),
+        allTags         = f => (v: f.Value) => c = c.addTags(v),
+        otherTags       = f => (v: f.Value) => c = c.addTags(v),
+        customFieldTags = f => (v: f.Value) => c = c.addTags(v),
         title           = f => (v: f.Value) => c = c.copy(title = v))
       o.foreach(_.foldValue(fold))
       Some(c)
@@ -65,7 +68,7 @@ object NewForm {
   object ForUseCase extends NewForm {
     override type Input            = Unit
     override type FK               = FieldKey.ForUseCase
-    override val columnToField     = Column.creationFieldUC.getOption
+    override val columnToField     = ColumnLogic.creationFieldUC.getOption
     override val createButtonLabel = Function const NewForm.createButtonLabel(StaticReqType.UseCase)
     override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
       var c = CreateContentCmd.CreateUseCase.empty
@@ -73,7 +76,9 @@ object NewForm {
         codes           = f => (v: f.Value) => c = c.copy(codes = v),
         customTextField = f => (v: f.Value) => c = c.addCustomText(f.field, v),
         implications    = f => (v: f.Value) => c = c.addImps(f.dir, v),
-        tags            = f => (v: f.Value) => c = c.addTags(v),
+        allTags         = f => (v: f.Value) => c = c.addTags(v),
+        otherTags       = f => (v: f.Value) => c = c.addTags(v),
+        customFieldTags = f => (v: f.Value) => c = c.addTags(v),
         title           = f => (v: f.Value) => c = c.copy(title = v))
       o.foreach(_.foldValue(fold))
       Some(c)
@@ -169,18 +174,10 @@ sealed trait NewForm {
         val pubid = project.content.reqs.need(reqId).pubid.external(project)
 
         p.toast.addWithCtrls { ctrls =>
-          // TODO Simplify after https://github.com/japgolly/scalajs-react/issues/652
-
-          val onClick: ReactMouseEvent => Callback =
-            e =>
-              CallbackOption.unless(ReactMouseEvent targetsNewTab_? e) >>
-                (p.routerCtl.setEH(pubid)(e) >> ctrls.close)
 
           val link =
-            <.a(
+            p.routerCtl.onSetRun(ctrls.close).link(pubid)(
               *.toastLink,
-              ^.href := p.routerCtl.urlFor(pubid).value,
-              ^.onClick ==> onClick,
               PlainText.pubid(pubid))
 
           <.span("Created ", link)
@@ -222,7 +219,7 @@ sealed trait NewForm {
             else
               renderArgsWithoutAutoFocus
           <.td(
-            ^.key := Column.key(cp.column),
+            ^.key := ColumnLogic.key(cp.column),
             e.value.render(renderArgs))
         }
 
@@ -258,7 +255,7 @@ sealed trait NewForm {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("NewForm")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 
@@ -274,7 +271,7 @@ sealed trait NewForm {
           p.whole.toTagMod(col =>
             <.th(*.formHeaderCell, col.name))))
 
-    val Component = ScalaComponent.builder[Props]("Header")
+    val Component = ScalaComponent.builder[Props]
       .render_P(render)
       .configure(shouldComponentUpdate)
       .build

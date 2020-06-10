@@ -30,7 +30,7 @@ object MailGun {
           "text" -> i.content.body ::
           i.envelope.cc.map("cc" -> _.addr.value) :::
           i.envelope.bcc.map("bcc" -> _.addr.value) :::
-          i.envelope.to.list.map("to" -> _.addr.value) :::
+          i.envelope.to.iterator.map("to" -> _.addr.value).toList :::
           props.tagFields
         )
       .responseAsJson[Json]

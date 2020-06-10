@@ -14,7 +14,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
-import shipreq.webapp.base.ui.semantic.{Form, Icon, Input, Message}
+import shipreq.webapp.base.ui.semantic.{Icon, Input, Message}
+import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.util.CallbackHelpers._
@@ -93,17 +94,19 @@ object Register2 {
         .toValidator
         .named(tosName)
 
-    private val fieldPersonName = Form.TextField.highLevel(
-      State.personName,
-      UserValidators.personName.unnamed,
-      m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.name, ^.autoFocus := true, m)),
-      Some(CommmonUiText.userPersonName))
+    private val fieldPersonName =
+      Form.Field.text
+        .withLabel(CommmonUiText.userPersonName)
+        .withEditor(m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.name, ^.autoFocus := true, m)))
+        .withValidator(UserValidators.personName.unnamed)
+        .withStateLens(State.personName)
 
-    private val fieldPassword1 = Form.TextField.highLevel(
-      State.password1,
-      UserValidators.password.unnamed,
-      m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.newPassword, m)),
-      Some(CommmonUiText.password))
+    private val fieldPassword1 =
+      Form.Field.text
+        .withLabel(CommmonUiText.password)
+        .withEditor(m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.newPassword, m)))
+        .withValidator(UserValidators.password.unnamed)
+        .withStateLens(State.password1)
 
     private def renderForm(p: Props, s: State): VdomElement = {
 
@@ -124,25 +127,27 @@ object Register2 {
               Request(p.token, name, username, password, newsletter = s.newsletter)
           }
 
-      val fieldUsername = Form.TextField.highLevel(
-        State.username,
-        usernameValidator.unnamed,
-        m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.username, m)),
-        Some(CommmonUiText.username))
+      val fieldUsername =
+        Form.Field.text
+          .withLabel(CommmonUiText.username)
+          .withEditor(m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.username, m)))
+          .withValidator(usernameValidator.unnamed)
+          .withStateLens(State.username)
 
-      val fieldPassword2 = Form.TextField.highLevel(
-        State.password2,
-        UserValidators.password2(s.password1),
-        m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.newPassword, m)),
-        Some("Confirm password"))
+      val fieldPassword2 =
+        Form.Field.text
+          .withLabel("Confirm password")
+          .withEditor(m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.newPassword, m)))
+          .withValidator(UserValidators.password2(s.password1))
+          .withStateLens(State.password2)
 
       val submitCB: Option[Callback] = {
         def submitIfValid: Composite.Invalidity \/ Callback =
           validator((s.personName, s.username, (s.password1, s.password2), s.tos)).map(req =>
-            asyncW(
+            asyncW.forgetFailure(
               p.submit(req).flatTapSync {
                 case \/-(res) => onResult(req)(res)
-                case -\/(err) => Callback.alert(err.value)
+                case -\/(err) => GeneralTheme.showErrorMsg(err)
               }
             )
           )
@@ -157,26 +162,28 @@ object Register2 {
       val ss = StateSnapshot(s).setStateVia($)
 
       val fieldNewsletter =
-        Form.BasicField(
-          Input.Checkbox.fromStateSnapshot(State.newsletter, ss, "Subscribe to newsletter"))
+        Form.Field.boolean
+          .withLabel("Subscribe to newsletter")
+          .withState(ss zoomStateL State.newsletter)
 
       val fieldTermsOfService =
-        Form.BasicField(
-          Input.Checkbox.fromStateSnapshot(State.tosB, ss, tosLabel),
-          validity = Invalid.when(s.tos.is(Disagree) && s.vux !=* ValidationUX.Off))
+        Form.Field.boolean
+          .withLabel(tosLabel)
+          .withState(ss zoomStateL State.tosB)
+          .withValidity(Invalid.when(s.tos.is(Disagree) && s.vux !=* ValidationUX.Off))
 
       val fieldSubmit =
-        Form.BasicField(
+        Form.Field.around(
           GeneralTheme.submitButton("Create Account", submitCB, inFlight = s.inFlight),
           *.submitCont)
 
-      var fields: NonEmptyVector[Form.Field] =
+      var fields: NonEmptyVector[Form.Field[_]] =
         NonEmptyVector(
-          fieldPersonName(s.vux)(ss),
-          fieldUsername(s.vux)(ss),
-          Form.TwoFields(
-            fieldPassword1(s.vux)(ss),
-            fieldPassword2(s.vux)(ss)),
+          fieldPersonName(ss),
+          fieldUsername(ss),
+          Form.Field.two(
+            fieldPassword1(ss),
+            fieldPassword2(ss)),
           fieldNewsletter,
           fieldTermsOfService,
           fieldSubmit)
@@ -184,7 +191,7 @@ object Register2 {
       if (s.formEnabled is Disabled)
         fields = fields.map(_.disable)
 
-      <.form(*.part1, Form(fields))
+      <.form(*.part1, Form(fields)(s.vux))
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -209,7 +216,7 @@ object Register2 {
       s.response.fold(renderForm(p, s))(renderResult)
   }
 
-  val Component = ScalaComponent.builder[Props]("Register2")
+  val Component = ScalaComponent.builder[Props]
     .initialState(State.init)
     .renderBackend[Backend]
     .build

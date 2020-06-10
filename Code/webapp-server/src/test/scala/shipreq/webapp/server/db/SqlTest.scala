@@ -1,7 +1,9 @@
 package shipreq.webapp.server.db
 
+import japgolly.microlibs.nonempty.NonEmptySet
 import utest._
-import shipreq.base.test.db.SqlTester.test
+import shipreq.base.test.db.TestDb
+import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.server.test.PrepareEnv
 import shipreq.webapp.base.test.UnsafeTypes._
 
@@ -12,65 +14,69 @@ object SqlTest extends TestSuite {
 
   override def tests = Tests {
 
-    'security {
+    "security" - {
       val db = ForSecurity
-      'getUserAndPasswordByEmailSql    - test(db.getUserAndPasswordByEmailSql)
-      'getUserAndPasswordByUsernameSql - test(db.getUserAndPasswordByUsernameSql)
-      'logLoginSuccessSql              - test(db.logLoginSuccessSql)
-      'getProjectOwnerSql              - test(db.getProjectOwnerSql)
+      "getUserAndPasswordByEmailSql"    - TestDb.check(db.getUserAndPasswordByEmailSql)
+      "getUserAndPasswordByUsernameSql" - TestDb.check(db.getUserAndPasswordByUsernameSql)
+      "logLoginSuccessSql"              - TestDb.check(db.logLoginSuccessSql)
+      "getProjectOwnerSql"              - TestDb.check(db.getProjectOwnerSql)
     }
 
-    'verificationTokenReadOnly {
+    "verificationTokenReadOnly" - {
       val db = VerificationTokenReadOnly
-      'getUserRegistrationTokenIssueDateSql - test(db.getUserRegistrationTokenIssueDateSql)
-      'getResetPasswordTokenIssueDateSql    - test(db.getResetPasswordTokenIssueDateSql)
+      "getUserRegistrationTokenIssueDateSql" - TestDb.check(db.getUserRegistrationTokenIssueDateSql)
+      "getResetPasswordTokenIssueDateSql"    - TestDb.check(db.getResetPasswordTokenIssueDateSql)
     }
 
-    'publicSpa {
-      'getUserRegistrationSql               - test(db.getUserRegistrationSql)
-      'createUserPlaceholderSql             - test(db.createUserPlaceholderSql)
-      'updateUserRegistrationTokenSql       - test(db.updateUserRegistrationTokenSql)
-      'sqlRegisterUser                      - test(db.sqlRegisterUser)
-      'sqlInsertUsrd                        - test(db.sqlInsertUsrd)
-      'getPasswordResetStateByEmailSql      - test(db.getPasswordResetStateByEmailSql)
-      'getPasswordResetStateByUsernameSql   - test(db.getPasswordResetStateByUsernameSql)
-      'createResetPasswordTokenSql          - test(db.createResetPasswordTokenSql)
-      'updateResetPasswordTokenOnReissueSql - test(db.updateResetPasswordTokenOnReissueSql)
-      'updateUserPasswordSql                - test(db.updateUserPasswordSql)
+    "publicSpa" - {
+      "getUserRegistrationSql"               - TestDb.check(db.getUserRegistrationSql)
+      "createUserPlaceholderSql"             - TestDb.check(db.createUserPlaceholderSql)
+      "updateUserRegistrationTokenSql"       - TestDb.check(db.updateUserRegistrationTokenSql)
+      "sqlRegisterUser"                      - TestDb.check(db.sqlRegisterUser)
+      "sqlInsertUsrd"                        - TestDb.check(db.sqlInsertUsrd)
+      "getPasswordResetStateByEmailSql"      - TestDb.check(db.getPasswordResetStateByEmailSql)
+      "getPasswordResetStateByUsernameSql"   - TestDb.check(db.getPasswordResetStateByUsernameSql)
+      "createResetPasswordTokenSql"          - TestDb.check(db.createResetPasswordTokenSql)
+      "updateResetPasswordTokenOnReissueSql" - TestDb.check(db.updateResetPasswordTokenOnReissueSql)
+      "updateUserPasswordSql"                - TestDb.check(db.updateUserPasswordSql)
     }
 
-    'getProjectMetaData {
-      'projectMetaDataQuery - test(db.getProjectMetaDataQuery)
+    "getProjectMetaData" - {
+      "projectMetaDataQuery" - TestDb.check(db.getProjectMetaDataQuery)
     }
 
-    'getProjectEvents {
-      'all   - test(GetProjectEventLogic.all)
-      'after - test(GetProjectEventLogic.after)
-      'set1  - test(GetProjectEventLogic.setSubset(Seq(2)))
-      'set2  - test(GetProjectEventLogic.setSubset(Seq(2, 3)))
+    "getProjectEvents" - {
+      val pid = ProjectId(2)
+      "all"   - TestDb.check(GetProjectEventLogic.all(pid))
+      "after" - TestDb.check(GetProjectEventLogic.after(pid, 2))
+      "set1"  - TestDb.check(GetProjectEventLogic.set(pid, NonEmptySet(2)))
+      "set2"  - TestDb.check(GetProjectEventLogic.set(pid, NonEmptySet(2, 3)))
     }
 
-    'saveProjectEvent {
-      'insertEventQuery - test(SaveProjectEventLogic.insertEventQuery)
-      'updateProjectN   - test(SaveProjectEventLogic.updateProjectN)
-      'updateProjectR   - test(SaveProjectEventLogic.updateProjectR)
+    "saveProjectEvent" - {
+      "insertEventQuery" - TestDb.check(SaveProjectEventLogic.insertEventQuery)
+      "updateProjectN"   - TestDb.check(SaveProjectEventLogic.updateProjectN)
+      "updateProjectR"   - TestDb.check(SaveProjectEventLogic.updateProjectR)
     }
 
-    'homeSpa {
-      'createProject                - test(db.createProjectQuery)
-      'getAllProjectMetaDataForUser - test(db.getAllProjectMetaDataForUserQuery)
+    "homeSpa" - {
+      "createProject"                - TestDb.check(DbInterpreter.ForHomeSpa.createProjectQuery)
+      "getAllProjectMetaDataForUser" - TestDb.check(db.getAllProjectMetaDataForUserQuery)
     }
 
-    'projectSpa {
-      'projectSpaInitPage - test(db.projectSpaInitPageQuery)
+    "projectSpa" - {
+      "projectSpaInitPage" - TestDb.check(db.projectSpaInitPageQuery)
     }
 
-    'ops {
+    "ops" - {
       val db = new ForOps("blah")
-      'nowSql        - test(db.nowSql)
-      'userStatsSql  - test(db.userStatsSql)
-      'tableStatsSql - test(db.tableStatsSql)
-      'dbSizeSql     - test(db.dbSizeSql)
+      "nowSql"                 - TestDb.check(db.nowSql)
+      "userStatsSql"           - TestDb.check(db.userStatsSql)
+      "tableStatsSql"          - TestDb.check(db.tableStatsSql)
+      "dbSizeSql"              - TestDb.check(db.dbSizeSql)
+      "userIdByUsernameSql"    - TestDb.check(db.userIdByUsernameSql)
+      "userIdByEmailSql"       - TestDb.check(db.userIdByEmailSql)
+      "insertVerifiedEventSql" - TestDb.check(db.insertVerifiedEventSql)
     }
 
   }

@@ -16,7 +16,7 @@ object TimeAgo {
       $.props >>= (p => $.setState(p.ago()))
 
     lazy val scheduleUpdates: Callback =
-      $.props >>= { m =>
+      $.props.flatMap { m =>
         val diffInMin = Math.abs(m.toEpochSecondD - MomentJs.now().toEpochSecondD) / 60
         val updateInSec =
                if (diffInMin < 2.5)         2 // 0    - 2.5m: update 2 seconds
@@ -40,12 +40,12 @@ object TimeAgo {
         state)
   }
 
-  val Component = ScalaComponent.builder[Props]("TimeAgo")
+  val Component = ScalaComponent.builder[Props]
     .initialStateFromProps(_.ago())
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .configure(TimerSupport.install)
     .componentDidMount(_.backend.scheduleUpdates)
-    .componentWillReceiveProps(i => i.backend.onPropUpdate(i.currentProps, i.nextProps))
+    .componentDidUpdate(i => i.backend.onPropUpdate(i.currentProps, i.currentProps))
     .build
 }

@@ -8,7 +8,7 @@ import shipreq.webapp.base.data.ProjectId
 object ObfuscatorsTest extends TestSuite {
 
   override def tests = Tests {
-    'projectId {
+    "projectId" - {
       def test(i: Int, s: String): Unit =
         assertEq(Obfuscators.projectId.obfuscate(ProjectId(i)).value, s)
       "1" - test(1, "cUZ0")

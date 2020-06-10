@@ -69,12 +69,12 @@ object ApplyEventLogic extends StrictLogging {
 
     apply(trust) { (pid, pao1, events) =>
       for {
-        (res, dur) ← svr.measureDuration(underlying.appendFn(pid, pao1, events))
+        (res, dur) <- svr.measureDuration(underlying.appendFn(pid, pao1, events))
         eventCount = res match {
                        case \/-(pao2) => pao2.ordAsInt - pao1.ordAsInt
                        case -\/(_)    => events.size
                      }
-        _          ← metrics.appliedEvents(eventCount, dur, trust = trust)
+        _          <- metrics.appliedEvents(eventCount, dur, trust = trust)
       } yield {
         if (dur.getSeconds == 0 && dur.getNano < warnIfDurExceedsNs)
           logger.info(s"Applied $eventCount events to project #${pid.value} v${pao1.ordAsInt} in ${dur.conciseDesc}")

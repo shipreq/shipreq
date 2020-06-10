@@ -4,6 +4,7 @@
     -# %meta(http-equiv="refresh" content="1")
     %title CardBoard Req Table | ShipReq
     %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %script{src: "../node_modules/autosize/dist/autosize.js"}
     %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
     %script{src: "../semantic/dist/semantic.js"}
     :css
@@ -113,6 +114,19 @@
         box-shadow: 0px 0px 0px 1px #A3C293 inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
       }
       .item.filter i.filter {color:#2c662d;opacity:1!important}
+
+      #fe,#hide {
+        font: inherit;
+        margin: 0;
+        padding: 0;
+      }
+      #fe { min-width: 32ex }
+      #hide {
+        position: absolute;
+        height: 0;
+        overflow: hidden;
+        white-space: pre;
+      }
 
   %body
 
@@ -264,24 +278,15 @@
         .item.filter
           .ui.left.icon.input.right.action.positive
             %i.icon.filter.positive
-            %input{type: "text", placeholder: "Filter...", value: "qweqwewq"}
+            %span#hide
+            %input#fe(type="text" value="ah ah 123 123 ah ah 123 123 ah ah 123 123 ah ah 123 123 ah ah 123 123 ah ah 123 123")
+            -# %textarea#FE weqr iuy oiuqwe iouyqweriouwqyer iuqweywe r
             .ui.button.icon
               %i.icon.close
             .ui.button.icon
               %i.icon.help.circle
 
         .item
-          -# .ui.right.pointing.dropdown.icon.button
-            %i.icon.columns
-            .menu
-              .item
-                .ui.checkbox
-                  %input{type: "checkbox"}
-                  %label omg
-              .item
-                .ui.checkbox
-                  %input{type: "checkbox", checked: "checked"}
-                  %label omg2
           %button.ui.icon.button#cols-button
             %i.icon.columns
           .ui.popup#cols-popup
@@ -305,61 +310,6 @@
               .ui.checkbox
                 %input{type: "checkbox", checked: "checked"}
                 %label Tags
-
-      -# .ui.menu.borderless
-        .item.sort
-          Sort:
-          %button.ui.button.right.labeled.icon.tiny
-            %i.icon.sort.descending
-            Priority
-          %button.ui.button.right.labeled.icon.tiny
-            %i.icon.sort.ascending
-            ID
-
-        .right.menu
-
-          .item
-            .ui.left.icon.input.right.action
-              %i.icon.filter
-              %input{type: "text", placeholder: "Filter..."}
-              .ui.button.icon
-                %i.icon.help.circle
-
-          .item
-            -# .ui.right.pointing.dropdown.icon.button
-              %i.icon.columns
-              .menu
-                .item
-                  .ui.checkbox
-                    %input{type: "checkbox"}
-                    %label omg
-                .item
-                  .ui.checkbox
-                    %input{type: "checkbox", checked: "checked"}
-                    %label omg2
-            %button.ui.icon.button#cols-button
-              %i.icon.columns
-            .ui.popup#cols-popup
-              %div
-                .ui.checkbox
-                  %input{type: "checkbox"}
-                  %label Actors
-              %div
-                .ui.checkbox
-                  %input{type: "checkbox", checked: "checked"}
-                  %label ID
-              %div
-                .ui.checkbox
-                  %input{type: "checkbox"}
-                  %label Fart
-              %div
-                .ui.checkbox
-                  %input{type: "checkbox", checked: "checked"}
-                  %label Major Feature
-              %div
-                .ui.checkbox
-                  %input{type: "checkbox", checked: "checked"}
-                  %label Tags
 
       -# =============================================================================================
       %table#reqtable.ui.table.celled.compact.unstackable
@@ -409,3 +359,30 @@
         }
       })
     ;
+
+    var fe = document.getElementById("fe");
+    var hide = document.getElementById("hide");
+    // autosize(fe);
+
+    // function resizeInput() {
+    //   $(this).attr('size', $(this).val().length);
+    // }
+    // $(fe)
+    //   // event handler
+    //   .keyup(resizeInput)
+    //   // resize on page load
+    //   .each(resizeInput);
+
+    resize();
+    fe.addEventListener("input", resize);
+
+    var iconWidth = '2.67142857em';
+    function resize() {
+      hide.textContent = fe.value;
+      fe.style.width = `calc(${iconWidth} + ${hide.offsetWidth}px + 4ex)`;
+      var w = fe.style.width;
+      console.log(`Resize: ${hide.offsetWidth} -> [${w}] : ${typeof(w)}`)
+      if (w == '') setTimeout(resize, 1);
+    }
+
+    // setTimeout(resize, 100);

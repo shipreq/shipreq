@@ -1,0 +1,77 @@
+<html><head><title>CardBoard Req Table | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+.ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+.ui.button.basic {background:#fff!important}
+
+.usage {text-align:right !important;}
+.usage.na { background-color: #f5f5f5; padding:4x !important; color: #666;}
+.usage.na::after { content: '–'}
+.usage.one span {visibility:hidden}
+.usage.zero:not(:hover) {color:#4183c4}
+
+/* .ui.menu .item>img:not(.ui) -- width:2.5em */
+/* .ui.menu .item -- padding-top/bottom: 0.928571em */
+/* body - padding: 1rem */
+#navX {height:calc(2 * 0.928571em + 2.5em - 1.55em); background:green}
+#navX {height:2.79rem; margin-bottom:1rem} /* padding is to match body */
+main {
+  xbackground:#fbb;
+  margin-top: 4rem;
+  min-height: calc(100vh - 2 * (0.928571em + 1rem) - 2.5em);
+  min-height: calc(100vh - 2.79rem - 3rem);
+  min-height: calc(100vh - 6rem);
+  display:grid;
+  grid-template-columns: 1fr 2rem 2rem 1fr;
+}
+section.gap2 {
+  border-left: solid 1px #e8e8e8;
+}
+
+#t2 tr.selected td {
+  border-top:solid 1px #3659e2;
+  border-bottom:solid 1px #3659e2;
+}
+
+#t2.has-selection tbody tr:not(.selected) { opacity:.4 }
+#t2 tr { transition: opacity .4s }
+#t2 tr { transition: background .1s ease,color .1s ease; }
+#t2 tr.selected { background-color: #869df91f; }
+#t2 td {cursor:pointer}
+
+.sectionTitle {
+  display:block;
+  margin: 1rem auto 4rem auto;
+  max-width: 60ex;
+  font-size: 120%;
+  text-align: center;
+  font-weight:bold;
+  border-top: solid 1px #ddd;
+  border-bottom: solid 1px #ddd;
+  padding: .7em 0;
+}
+
+#otherSources .sources {
+  display:flex;
+  justify-content: center;
+}
+
+#otherSources .sources > .gap {width:6rem}
+#otherSources .sources .content {margin-bottom:4em}
+#otherSources .sources .header {font-weight:bold; margin-bottom:1em}
+#otherSources .sources ul {padding-left:2px; list-style-position: inside}
+#otherSources .sources li {margin-bottom:.3em; color:#444}
+#otherSources .sources span.sub::before {content:'('}
+#otherSources .sources span.sub::after {content:')'}
+#otherSources .sources span.sub {color:#999; margin-left:1ex}
+#otherSources .sources .body .desc {display:none}
+
+</style></head><body><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Req Table&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="header">Content</div><div class="item">Implication Graph</div><div class="item active">ReqTable</div><div class="header">Configuration</div><div class="item">Fields</div><div class="item">Issues</div><div class="item">Req Types</div><div class="item">Tags</div></div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="member-account.html" class="item">Account</a><div class="item">Logout</div></div></div></div><main><section class="left"><div class="sectionTitle">User-Defined Issue Types</div><div style="display:flex; margin-bottom:2rem"><div><div class="ui button green" id="new"><i class="icon plus"></i>New</div></div><div style="flex-grow:1"></div><div><button class="ui button icon"><i class="icon trash outline large grey"></i></button></div></div><table class="ui celled table has-selection" id="t2"><thead><tr><th>Name</th><th style="width:99%">Description</th><th class="usage">Usage</th></tr></thead><tbody><tr class="selected"><td>#PENDING</td><td>Waiting on external information, or an external event.</td><td title="No reqs use this field" class="usage zero"><a href="#">0 uses</a></td></tr><tr><td>#TODO</td><td>Work needs to be done.</td><td title="No reqs use this field" class="usage zero"><a href="#">0 uses</a></td></tr></tbody></table></section><section class="gap1"></section><section class="gap2"></section><section class="right"><div class="editor"><h2 style="color: #3659e2; margin-bottom:2rem">#PENDING</h2><div class="ui form"><div class="field"><label>Name</label><input type="text" value="PENDING" /></div><div class="field"><label>Description</label><textarea type="text" rows="4">Waiting on external information, or an external event.</textarea></div></div><div style="margin-top:2rem; display:flex"><button style="white-space: nowrap;" class="ui button negative basic"><i class="icon trash"></i>Delete</button><div style="flex-grow:1"></div><button style="margin-right:2em" class="ui button black basic"><i class="icon remove"></i>Close</button><button class="ui button green disabled"><i class="icon plus"></i>Update</button></div></div></section></main></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.dropdown').dropdown();
+//]]>
+</script>
+</html>

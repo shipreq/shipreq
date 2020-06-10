@@ -1,37 +1,44 @@
 package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.vdom.html_<^.{^ => ^^, _}
+import japgolly.univeq._
+import scalacss.internal.ValueT
 import shipreq.webapp.base.CssSettings._
 import shipreq.base.util._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.data.{Dead, Live, StaticField}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.feature.DragToReorderFeature.{Status => DragStatus}
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
-import shipreq.webapp.client.project.widgets._
 
 object Style extends StyleSheet.Inline {
   import dsl._
+  import LeftRight.{Left, Right}
 
   /** Domains */
   object D {
-    val live     = Domain.ofValues[Live]    (Live, Dead)
-    val validity = Domain.ofValues[Validity](Valid, Invalid)
-    val enabled  = Domain.ofValues[Enabled] (Enabled, Disabled)
+    val live      = Domain.ofValues[Live]     (Live, Dead)
+    val validity  = Domain.ofValues[Validity] (Valid, Invalid)
+    val enabled   = Domain.ofValues[Enabled]  (Enabled, Disabled)
+    val leftRight = Domain.ofValues[LeftRight](Left, Right)
 
     @inline def on = BaseStyles.D.on
 
-    val dragStatus = {
-      import DragToReorder._
-      Domain.ofValues[Status](Normal, DragSource, Tombstone)
-    }
+    val dragStatus =
+      Domain.ofValues[DragStatus](DragStatus.allValues.whole: _*)
 
-    val `live * live`     = live *** live
-    val `live * on`       = live *** on
-    val `live * validity` = live *** validity
+    val `enabled * live`         = enabled *** live
+    val `live * live`            = live *** live
+    val `live * on`              = live *** on
+    val `live * validity`        = live *** validity
+    val `live * validity * bool` = live *** validity *** Domain.boolean
 
     val ucStepIndent = Domain.ofRange(0 until StaticField.useCaseStepTrees.iterator.map(_.maxDepth).max)
   }
+
+  final val animSpeedMs = 220
+  protected final val animSpeed = animSpeedMs.toString + "ms"
 
   private def monospace =
     fontFamily :=! "monospace"
@@ -55,6 +62,8 @@ object Style extends StyleSheet.Inline {
 
   private def hasError = errorRedOnRed
 
+  private val lightLineColour = c"#e8e8e8"
+
   private val deadMixin = mixin(
     textDecoration := ^.lineThrough)
 
@@ -76,13 +85,69 @@ object Style extends StyleSheet.Inline {
     // This ↓ needs to be kept in sync with detailTableKey which uses .04 but .06 is required when opacity=0.7
     backgroundColor(rgba(0, 0, 0, .06)))
 
-  val svgGraph = style(
+  private val deadCell = styleS(
+    backgroundColor(c"#f2f2f2"),
+    color(c"#4d4d4d"),
+    opacity(0.7),
+  )
+
+  val semanticFixes = style(
+
+    // When semanticui.Select.apply is used and there isn't an option selected, this fixes it up so that the field
+    // title is at the correct vertical position.
+    //
+    // Example: Field config > new imp field > imp field & checkbox
+    unsafeRoot(".ui.dropdown>.text")(minHeight(0.8 em)),
+  )
+
+  val svgGraphFitToWidth = style(
     unsafeChild("svg")(
       maxWidth(100 %%)))
+
+  val svgGraphError = style(
+    errorRedOnRed)
+
+  val svgGraphInvalid = style(
+    opacity(0.2))
 
   private val selectionCellBase = style(
     width(24.px).important,
     textAlign.center.important)
+
+  private val genericDragStatus: DragStatus => StyleS = {
+    case DragStatus.Normal     => StyleS.empty
+    case DragStatus.Tombstone  => mixin(display.none)
+    case DragStatus.DragSource =>
+      val w = 2 px
+      val s = dashed
+      val c = c"#000"
+      styleS(
+        opacity(.5),
+        border(w, s, c).important,
+        unsafeExt("tr" + _ + " >td")(
+          borderTop(w, s, c).important,
+          borderBottom(w, s, c).important,
+        ),
+        unsafeExt("tr" + _ + " >td:first-child")(
+          borderLeft(w, s, c).important,
+        ),
+        unsafeExt("tr" + _ + " >td:last-child")(
+          borderRight(w, s, c).important,
+        ),
+      )
+  }
+
+  private def genericDragStatus(ds: DragStatus, whenVisible: StyleS): StyleS =
+    styleS(
+      genericDragStatus(ds),
+      ds match {
+        case DragStatus.Normal
+           | DragStatus.DragSource => whenVisible
+        case DragStatus.Tombstone  => StyleS.empty
+      }
+    )
+
+  val usageZero = style(&.not(_.hover)(opacity(0.5)))
 
   val layout = style(
     unsafeRoot(".ui.button")(marginRight(`0`).important))
@@ -102,6 +167,26 @@ object Style extends StyleSheet.Inline {
       padding(4.px).important,
       verticalAlign.top.important,
       (borderLeft :=! "1px solid #2224261a").important) // Without this, rowspan break semantic UI table borders
+
+    // On here means selected
+    // N/A cells should just be specified as Dead
+    def tableCellBase(i: (Live, On)) = styleS(
+      i match {
+        case (Live, Off) => mixin()
+        case (Dead, Off) => deadCell
+        case (Live, On ) => mixin(backgroundColor(hsla(228, 90 %%, 75 %%, .12)))
+        case (Dead, On ) => mixin(backgroundColor(hsla(228, 74 %%, 33 %%, .11)))
+      })
+
+    val `N/A` = style(
+      color(c"#666"),
+      // margin.horizontal(auto),
+    )
+
+    val deadTextStrikeThrough = style(
+      color(c"#999"),
+      textDecoration := "line-through",
+    )
   }
 
   object navBar {
@@ -155,17 +240,54 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
-  object impgraphPage {
+  object reqgraphPage {
 
-    val filterDeadButton = style(
-      textAlign.right)
+    val container = style(
+      display.flex,
+      flexDirection.column,
+      height(100 %%),
+    )
 
     val noContent = style(
       marginTop(1 em))
 
     val graph = style(
-      textAlign.center,
-      margin.horizontal(auto))
+      flexGrow(1))
+
+    val deadDropdownItem = style(
+      textDecoration := "line-through",
+      color(c"#999"))
+
+    val controlsRow2 = style(
+      display.flex,
+      marginTop(1.1 rem),
+      marginBottom(2.3 rem))
+
+    val configContainer = style(
+      display.grid,
+      gridTemplateColumns := "auto auto auto",
+      gridTemplateRows := "auto auto",
+      gridTemplateAreas(
+        "dh lh ch",
+        "de le ce",
+      ),
+      columnGap(1 em))
+
+    val controlsFilter = style(
+      flexGrow(1),
+      marginLeft(1 rem),
+      textAlign.right,
+      unsafeChild("input")(textAlign.left))
+
+    private val configHeader = mixin(
+      fontWeight.bold)
+
+    val configGraphDirHeader = style(gridArea := "dh", configHeader)
+    val configGraphDirEditor = style(gridArea := "de")
+    val configLabelsHeader   = style(gridArea := "lh", configHeader)
+    val configLabelsEditor   = style(gridArea := "le")
+    val configColoursHeader  = style(gridArea := "ch", configHeader)
+    val configColoursEditor  = style(gridArea := "ce")
   }
 
   // ===================================================================================================================
@@ -176,13 +298,6 @@ object Style extends StyleSheet.Inline {
       marginTop(0.4 ex),
       color(c"#aaa"),
       textDecoration := ^.lineThrough)
-
-    // HACK!
-    val fields = style(
-      unsafeChild(">table>*>*>td:nth-child(1)")(padding(1 ex).important, textAlign.center),
-      unsafeChild(">table>*>*>td:nth-child(1) .draghandle:hover")(cursor.grab),
-      unsafeChild(">table>*>*>td:nth-child(4) input")(monospace, width((Grammar.fieldRefKey.length.total.last + 1).ch)),
-      unsafeChild(">table>*>*>td:nth-child(6) button")(marginLeft(1 ex)))
 
     // HACK!
     val issues = style(
@@ -197,20 +312,6 @@ object Style extends StyleSheet.Inline {
       unsafeChild(">table>*>*>td:nth-child(1) input")(monospace, width((Grammar.reqTypeMnemonic.length.total.last + 1).ch)),
       unsafeChild(">table>*>*>td:nth-child(2)")(width(100 %%)),
       unsafeChild(">table>*>*>td:nth-child(2) input")(width(100 %%)))
-
-    // HACK!
-    val tags = style(
-      unsafeChild(">table>*>*>td:nth-child(1)")(width(50 %%)),
-      unsafeChild(">table>*>*>td:nth-child(1) input")(width(100 %%)),
-      unsafeChild(">table>*>*>td:nth-child(2)")(monospace),
-      unsafeChild(">table>*>*>td:nth-child(2) input")(monospace, width((Grammar.hashRefKey.length.total.last + 1).ch)),
-      unsafeChild(">table>*>*>td:nth-child(4)")(width(50 %%)),
-      unsafeChild(">table>*>*>td:nth-child(4) textarea")(width(100 %%)),
-      unsafeChild(">table>*>*>td:nth-child(5)")(whiteSpace.nowrap),
-      unsafeChild(">table>*>*>td:nth-child(5) button+button")(marginLeft(1.ex)),
-      unsafeChild(">table .focusrow>td")(backgroundColor(c"#f0f8ff")),
-      unsafeChild(">section table td+td")(paddingLeft(3 em)),
-    )
   }
 
   // ===================================================================================================================
@@ -223,12 +324,6 @@ object Style extends StyleSheet.Inline {
     object page {
 
       val ctrlHGap = 1.2 ex
-
-      val viewRow = style(display.flex)
-
-      val viewRowSV = style(
-        flexGrow(1),
-        paddingRight(1.rem))
 
       val viewCtrls = style(
         display.flex,
@@ -247,19 +342,9 @@ object Style extends StyleSheet.Inline {
         textAlign.right)
 
       val flexGap = style(flexGrow(1))
-
-      val filterDeadButtonContainer = style(
-        paddingRight(`0`).important)
     }
 
     object creation {
-
-      val buttonOuter = style(
-        marginRight(`0`).important)
-
-      val buttonDropdown = style(
-        color(c"#eee").important,
-        backgroundColor(c"#00a632").important)
 
       val formOuter = style(
         margin(v = pageVGap, h = `0`))
@@ -308,21 +393,19 @@ object Style extends StyleSheet.Inline {
         deadColumnLabel(live),
         cursor.pointer.important, // Because click affects sorting
         (status match {
-          case DragToReorder.Normal => mixin()
-          case DragToReorder.DragSource | DragToReorder.Tombstone => mixin(
-            opacity(.4).important,
-            border(2 px, dashed, c"#779").important)
+          case DragStatus.Normal => mixin()
+          case DragStatus.DragSource
+             | DragStatus.Tombstone =>
+            mixin(
+              opacity(.4).important,
+              border(2 px, dashed, c"#779").important)
         }): StyleS
       )}
 
       private val cellBase = styleF(D.`live * on`)(i => styleS(
         generic.tableDataBase,
-        i match {
-          case (Live, Off) => mixin()
-          case (Dead, Off) => mixin(backgroundColor(c"#f5f5f5"))
-          case (Live, On ) => mixin(backgroundColor(hsla(228, 90 %%, 75 %%, .12)))
-          case (Dead, On ) => mixin(backgroundColor(hsla(228, 74 %%, 33 %%, .11)))
-        }))
+        generic.tableCellBase(i),
+      ))
 
       val dataCell = styleF(D.`live * on`)(i => styleS(
         cellBase(i),
@@ -337,9 +420,7 @@ object Style extends StyleSheet.Inline {
         whiteSpace.nowrap,
         mixinIf(a is Dead)(deadAndNotError)))
 
-      val `N/A` = style(
-        color(c"#666"),
-        margin.horizontal(auto))
+      @inline def `N/A` = generic.`N/A`
     }
 
     object filterEditor {
@@ -368,7 +449,7 @@ object Style extends StyleSheet.Inline {
 
       val dragArea = style(
         display.inlineBlock,
-        paddingRight(10.ex)) // ← Gives a bit more room to drag to tail, rather than outside
+        paddingRight(10.ex)) // <- Gives a bit more room to drag to tail, rather than outside
 
       val draggableCriterion = styleF(D.dragStatus)(status =>
         styleS(
@@ -377,11 +458,7 @@ object Style extends StyleSheet.Inline {
           cursor.pointer, // Because click changes sort direction
           // inlineFlex required below to keep the entire row at the right height
           // inlineBlock adds extra height and causes height differences between filter section & column button
-          (status match {
-            case DragToReorder.Normal     => mixin(display.inlineFlex)
-            case DragToReorder.DragSource => mixin(display.inlineFlex, opacity(.4), border(2 px, dashed, c"#000"))
-            case DragToReorder.Tombstone  => mixin(display.none)
-          }): StyleS
+          genericDragStatus(status, styleS(display.inlineFlex)),
         ))
 
       val criterionBorder = style(
@@ -420,18 +497,28 @@ object Style extends StyleSheet.Inline {
       val sortMethodHalfTop    = style(sortMethodHalf, marginBottom(0.26.em))
       val sortMethodHalfBottom = style(sortMethodHalf)
     }
+  }
 
-    object savedViews {
+  // ===================================================================================================================
+  object savedViews {
 
-      val menu = TagMod(^^.display.flex, ^^.flexWrap.wrap)
+    val viewRow = style(display.flex)
 
-      val activeItem = style(
-        fontWeight._700.important,
-        (boxShadow := "none").important,
-        borderColor(c"#F2711C").important,
-        color(c"#F2711C").important)
+    val viewRowSV = style(
+      flexGrow(1),
+      paddingRight(1.rem))
 
-    }
+    val filterDeadButtonContainer = style(
+      paddingRight(`0`).important)
+
+    val menu = TagMod(^^.display.flex, ^^.flexWrap.wrap)
+
+    val activeItem = style(
+      fontWeight._700.important,
+      (boxShadow := "none").important,
+      borderColor(c"#F2711C").important,
+      color(c"#F2711C").important)
+
   }
 
   // ===================================================================================================================
@@ -684,8 +771,7 @@ object Style extends StyleSheet.Inline {
 //      display.inline,
       whiteSpace.nowrap)
 
-    val na = style(
-      color(c"#666"))
+    @inline val na = generic.`N/A`
 
     val actionButton = style(
       textAlign.left.important,
@@ -696,7 +782,539 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
+  object configShared {
+
+    sealed trait RowState
+    object RowState {
+      case object Disabled extends RowState
+      case object Enabled  extends RowState
+      case object Selected extends RowState
+      case object Dragging extends RowState
+      case object ReadOnly extends RowState
+
+      implicit def univEq: UnivEq[RowState] = UnivEq.derive
+
+      val domain: Domain[RowState] =
+        Domain.ofValues(Disabled, Enabled, Selected, Dragging, ReadOnly)
+
+      val withDragStatus =
+        domain *** D.dragStatus
+
+      val withDragStatusAndLive =
+        withDragStatus *** D.live
+
+      val withLive =
+        domain *** D.live
+    }
+
+    def crudRow(rowState: RowState,
+                dragStatus: DragStatus,
+                bottomBorderColour: ValueT[ValueT.Color] = c"#fff") = mixin(
+      mixinIf(dragStatus != DragStatus.DragSource)(
+        borderTop(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else c"#fff"),
+        borderBottom(solid, 1 px, if (rowState ==* RowState.Selected) c"#3659e2" else bottomBorderColour).important,
+        unsafeExt("tr" + _ + ">td")(
+          mixinIf(rowState ==* RowState.Selected)(
+            borderTop(solid, 1 px, c"#3659e2").important,
+            borderBottom(solid, 1 px, c"#3659e2").important,
+          ),
+        ),
+      ),
+      rowState match {
+        case RowState.Enabled  => styleS(
+          cursor.pointer,
+          &.hover(backgroundColor(c"#fffad7").important),
+        )
+        case RowState.Selected => styleS(
+          backgroundColor(Color("#869df91f")),
+        )
+        case RowState.ReadOnly => styleS(
+          mixinIf(dragStatus != DragStatus.DragSource)(opacity(0.7)),
+        )
+        case RowState.Dragging
+           | RowState.Disabled =>
+          StyleS.empty
+      }
+    )
+  }
+
+  // ===================================================================================================================
+  object fieldConfig {
+    type RowState = configShared.RowState
+    @inline def RowState = configShared.RowState
+
+    val fieldListTable = style(
+      addClassNames("ui", "celled", "table")
+    )
+
+    val fieldListTableRow = styleF(RowState.withDragStatusAndLive) { case ((s, ds), l) => styleS(
+      genericDragStatus(ds),
+      configShared.crudRow(s, ds),
+      mixinIf(l is Dead)(
+        unsafeExt("tr" + _ + ">td")(deadCell),
+      ),
+    )}
+
+    val fieldListTableName = styleF(D.live)(l => styleS(
+      generic.tableCellBase((l, Off)),
+      mixinIf(l is Dead)(textDecoration := "line-through"),
+    ))
+
+    val fieldListTableCell = styleF(D.live)(l => styleS(
+      generic.tableCellBase((l, Off)),
+    ))
+
+    val fieldListTableUsage = styleF(D.live)(l => styleS(
+      generic.tableCellBase((l, Off)),
+      textAlign.right.important,
+    ))
+
+    val fieldListTableDrag = styleF(D.live)(l => styleS(
+      mixinIf(l is Dead)(deadCell),
+      padding(`0`).important,
+      textAlign.center.important,
+    ))
+
+    val dragHandle = styleF(D.`enabled * live`) { case (e, l) => styleS(
+      display.inline,
+      padding(.5 em, 2 ex),
+      mixinIf(e is Enabled)(cursor.grab),
+      mixinIf(e.is(Disabled) && l.is(Dead))(visibility.hidden),
+    )}
+
+    val detailRule = styleF(D.validity)(v => styleS(
+      lineHeight(1.8 em),
+      mixinIf(v is Invalid)(errorRedOnRed),
+    ))
+
+    val detailRuleKey = style(
+      fontWeight.bold,
+    )
+
+    val detailRuleSep = style(
+      margin.horizontal(.7 ex)
+    )
+
+    val fieldListDetailNoOtherTags = style(
+      color(c"#999"),
+    )
+
+    val fieldListDetailOtherTags = style(
+      marginTop(0.2 em),
+    )
+
+    val rulesEditor = style(
+      addClassNames("table", "ui", "single", "line", "table")
+    )
+
+    private val rulesEditorReqTypeColumn = styleS(
+      width(44 ex)
+    )
+
+    val rulesEditorReqTypes = style(
+      rulesEditorReqTypeColumn,
+      unsafeChild(".ui.input")(width(100 %%)),
+    )
+
+    val rulesEditorRule = style(
+    )
+
+    val rulesEditorDefault = style(
+      marginLeft(1.5 ex),
+    )
+
+    val rulesEditorOtherwise = style(
+      rulesEditorReqTypeColumn,
+      paddingLeft(2 ex).important,
+    )
+
+    val rulesEditorButton = style(
+      textAlign.right,
+      width(1 px),
+    )
+
+    val rulesDeadReqTypes = style(
+      rulesEditorReqTypeColumn,
+      color(c"#444"),
+      paddingLeft(2 ex).important,
+    )
+
+    val rulesDeadReqTypesInner = style(
+      color(c"#999"),
+      marginLeft(1 ex),
+    )
+
+    val staticFieldUL = style(
+      color(c"#3f3f3f"),
+      margin.vertical(3 em),
+      fontSize(1.1 rem),
+    )
+
+    val staticFieldLI = style(
+      marginBottom(0.7 em),
+    )
+
+    val staticFieldTagLI = style(
+      marginTop(0.3 em),
+    )
+
+    @inline def `N/A` = generic.`N/A`
+    @inline def editorTitle = tagConfig.editorTitle
+    @inline def fieldListDetailDead = rulesOtherDeadReqType
+    @inline def rulesOtherDeadReqType = generic.deadTextStrikeThrough
+  }
+
+  // ===================================================================================================================
+  object issueConfig {
+
+    val sectionTitle = style(
+        display.block,
+        margin(1.rem, auto, 4.rem, auto),
+        maxWidth(60.ex),
+        fontSize(120 %%),
+        textAlign.center,
+        fontWeight.bold,
+        borderTop(solid, 1.px, c"#ddd"),
+        borderBottom(solid, 1.px, c"#ddd"),
+        padding(.7 em, `0`),
+    )
+
+    val otherSources = style(
+      display.flex,
+      justifyContent.center,
+    )
+
+    val otherSourcesGap = style(
+      width(6 rem),
+    )
+
+    val otherSourcesHeader = style(
+      fontWeight.bold,
+      marginBottom(1 em),
+    )
+
+    val otherSourcesContent = style(
+      marginBottom(4 em),
+    )
+
+    val otherSourcesUL = style(
+      listStylePosition.inside,
+      paddingLeft(2 px),
+    )
+
+    val otherSourcesLI = style(
+      marginBottom(.3 em),
+      color(c"#444")
+    )
+
+    val otherSourcesNone = style(
+      color(c"#444")
+    )
+
+    val otherSourcesSubtext = style(
+      marginLeft(1 ex),
+      color(c"#999"),
+    )
+
+    type RowState = configShared.RowState
+    @inline def RowState = configShared.RowState
+    @inline def editorTitle = tagConfig.editorTitle
+    @inline def listTable      = fieldConfig.fieldListTable
+    @inline def listTableCell  = fieldConfig.fieldListTableCell
+    @inline def listTableRow   = reqTypeConfig.listTableRow
+    @inline def listTableUsage = fieldConfig.fieldListTableUsage
+  }
+
+  // ===================================================================================================================
+  object reqTypeConfig {
+    type RowState = configShared.RowState
+    @inline def RowState = configShared.RowState
+
+    val listTableRow = styleF(RowState.withLive) { case (s, l) => styleS(
+      configShared.crudRow(s, DragStatus.Normal),
+      mixinIf(l is Dead)(
+        unsafeExt("tr" + _ + ">td")(deadCell),
+      ),
+    )}
+
+    val implicationHelp = style(
+      marginLeft(0.45 ex).important,
+      cursor.help,
+    )
+
+    val editorMnemonic = style(
+      display.block,
+      width(30 ex).important,
+    )
+
+    val editorPastMnemonics = style(
+      marginTop(0.65 em),
+    )
+
+    val preEditorMessage = style(
+      marginBottom(2 rem),
+    )
+
+    val notInUseBody = style(
+      lineHeight(1.4285 em),
+      opacity(0.85),
+      margin(.75 em, `0`),
+      unsafeChild("ol")(margin(.35 em, `0`)),
+    )
+
+    @inline def staticReadOnly = preEditorMessage
+    @inline def notInUse       = preEditorMessage
+    @inline def listTable      = fieldConfig.fieldListTable
+    @inline def listTableCell  = fieldConfig.fieldListTableCell
+    @inline def listTableUsage = fieldConfig.fieldListTableUsage
+    @inline def deadMnemonic   = generic.deadTextStrikeThrough
+    @inline def editorTitle    = tagConfig.editorTitle
+  }
+
+  // ===================================================================================================================
+  object tagConfig {
+    type RowState = configShared.RowState
+    @inline def RowState = configShared.RowState
+
+    sealed trait LIState {
+      val topLevel: Boolean
+    }
+
+    object LIState {
+      final case class Group(topLevel: Boolean)                                               extends LIState
+      final case class Tag  (rowState: RowState, topLevel: Boolean, firstAfterGroup: Boolean) extends LIState
+
+      implicit def univEq: UnivEq[LIState] = UnivEq.derive
+
+      import Domain.{boolean => B}
+
+      val domain: Domain[LIState] =
+        Domain.ofValues(
+          B.map(Group).iterator.toSeq ++
+          (RowState.domain *** B *** B).map{case ((a, b), c) => Tag(a, b, c)}.iterator.toSeq
+          : _*
+        )
+
+      val withDragStatus =
+        domain *** D.dragStatus
+    }
+
+    val tagTree = style(
+      margin(`0`),
+      paddingLeft(`0`),
+    )
+
+    val tagSubTree = style(
+      paddingLeft(6.5 ex),
+    )
+
+    private val borderColor = Color("#2224261a")
+
+    private def liGapTop(ds: DragStatus) = mixin(
+      marginTop(1.25 em),
+      mixinIf(ds ==* DragStatus.Normal)(borderTop(solid, 1 px, borderColor)),
+    )
+
+    private def basicTagLI(s: LIState, ds: DragStatus) = mixin(
+      listStyleType := "none",
+      genericDragStatus(ds),
+      s match {
+        case _: LIState.Group => StyleS.empty
+        case _: LIState.Tag =>
+          styleS(
+            paddingTop(.5 em),
+            paddingBottom(.5 em),
+          )
+      },
+    )
+
+    private def basicTagOrGroup(rowState: RowState, ds: DragStatus) = mixin(
+      transition := s"all $animSpeed",
+      mixinIf(rowState ==* RowState.Disabled && ds ==* DragStatus.Normal)(opacity(0.6)),
+    )
+
+    private def tagOrGroup(rowState: RowState,
+                           dragStatus: DragStatus,
+                           bottomBorderColour: ValueT[ValueT.Color] = c"#fff") =
+      configShared.crudRow(rowState, dragStatus, bottomBorderColour)
+
+    val tagTreeLI = styleF(LIState.withDragStatus) { case (s, ds) => styleS(
+      basicTagLI(s, ds),
+      s match {
+        case g: LIState.Group =>
+          styleS(
+            mixinIf(g.topLevel)(&.not(_.firstChild)(liGapTop(ds))),
+          )
+        case t: LIState.Tag =>
+          styleS(
+            mixinIf(t.topLevel && t.firstAfterGroup)(liGapTop(ds)),
+            &.not(_.lastChild)(tagOrGroup(t.rowState, ds, borderColor)),
+            &.lastChild(tagOrGroup(t.rowState, ds)),
+          )
+      },
+    )}
+
+    val editorRelTagLI = styleF(LIState.withDragStatus) { case (s, ds) => styleS(
+      basicTagLI(s, ds),
+      s match {
+        case t: LIState.Tag   => basicTagOrGroup(t.rowState, ds)
+        case _: LIState.Group => StyleS.empty
+      },
+      clear.both,
+    )}
+
+    private def basicTagGroup = mixin(
+      padding(0.4 em, `0`),
+    )
+
+    val editorRelGroup = styleF(RowState.domain)(s => styleS(
+      basicTagGroup,
+      basicTagOrGroup(s, DragStatus.Normal),
+    ))
+
+    val tagTreeGroup = styleF(RowState.domain)(s => styleS(
+      basicTagGroup,
+      tagOrGroup(s, DragStatus.Normal),
+      fontSize(120 %%),
+    ))
+
+    val tagTreeGroupIcon = style(
+      marginRight(0.4 ex).important,
+    )
+
+    val dragHandle = styleF(D.`enabled * live`) { case (e, l) => styleS(
+      display.inline,
+      padding(.5 em, 1 ex, 0.5 em, 2 ex),
+      marginLeft(-2 ex),
+      mixinIf(e is Enabled)(cursor.grab),
+      mixinIf(e.is(Disabled) && l.is(Dead))(visibility.hidden),
+    )}
+
+    val editorTitle = style(
+      color(c"#3659e2"),
+      marginBottom(3 rem),
+    )
+
+    val segmentCheckboxSubtitle = style(
+      marginTop(0.5 em),
+      opacity(0.55),
+    )
+
+    val editorButtons = style(
+      marginTop(2 rem),
+      display.flex,
+      unsafeChild("button:not(:last-child)")(marginRight(2 em).important),
+    )
+
+    val editorButtonGap = style(
+      flexGrow(1),
+    )
+
+    val editorRelRow = style(
+      display.flex,
+      marginTop(1 rem),
+    )
+
+    val editorRelOuter = styleF(D.leftRight)(lr => styleS(
+      width(50 %%),
+      lr match {
+        case Left  => styleS(paddingRight(0.5 rem))
+        case Right => styleS(paddingLeft(0.5 rem))
+      },
+    ))
+
+    val editorRelInner = style(
+      display.flex,
+      flexDirection.column,
+      height(100 %%),
+    )
+
+    val editorRelHeader = styleF(D.enabled)(e => styleS(
+      marginBottom(1 em),
+      mixinIf(e is Disabled)(opacity(0.6)),
+    ))
+
+    val editorRelBody = style(
+      flexGrow(1),
+    )
+
+    val editorRelFooter = style(
+      marginTop(2 em),
+      unsafeChild(".ui.dropdown .menu>.item")( // fuck you Semantic UI
+        paddingTop(0.4 em).important,
+        paddingBottom(0.4 em).important,
+      ),
+    )
+
+    val editorRelDelete = style(
+      margin(-0.5 em, `0`, .5 em, `0`).important,
+      float.right,
+    )
+
+    val editorRelTree = style(
+      margin(t = 0.25 em, r = `0`, b = `0`, l = 2 ex),
+      paddingLeft(`0`),
+    )
+
+    val group = styleF(D.live)(l => styleS(
+      mixinIf(l is Dead)(
+        color(c"#999"),
+        textDecoration := "line-through",
+      )
+    ))
+
+    val editorApTagHeader = style(
+      fontSize(100 %%).important,
+    )
+
+    val usage = style(float.right)
+  }
+
+  // ===================================================================================================================
   object widgets {
+
+    private val noDropdownError = styleS(
+      (color :=! "#0009").important,
+      (background := "#e8e8e8").important,
+      (borderColor :=! "#0000").important,
+    )
+
+    val applicableReqTypesDropdown = style(
+      noDropdownError,
+      unsafeChild(".text")(noDropdownError)
+    )
+
+    val applicableReqTypesEditorFooter = style(
+      marginBottom(0.15 em),
+    )
+
+    val applicableReqTypesEditorDeadRow = style(
+      float.right,
+      color(c"#444"),
+    )
+
+    val applicableReqTypesEditorDeadReqTypes = style(
+      marginLeft(1 ex),
+      color(c"#999"),
+    )
+
+    val applicableReqTypesErrMsg = style(
+      color(rgb(159, 58, 56)),
+      paddingTop(0.15 em),
+      fontSize(92 %%),
+    )
+
+    val colourPicker = style(
+      width(20 ex),
+    )
+
+    val colourPickerPickler = style(
+      marginTop(0.6 em),
+      unsafeChild("input:not([type])")(
+        backgroundColor(c"#fff").important,
+        padding(1 px, `0`).important,
+      ),
+    )
 
     private val refColour = color(c"#2363A1")
 
@@ -732,28 +1350,40 @@ object Style extends StyleSheet.Inline {
       width(11 ex),
       borderRadius(0.3 ex))
 
-    private def tagBase(live: Live) = mixin(
+    private def tagBase(live: Live, helpIconOnHover: Boolean) = mixin(
       mixinIf(live is Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
-      hoverShowsInfo)
+      if (helpIconOnHover)
+        styleS(
+          hoverShowsInfo,
+//          &.not(hasTitle)(cursor.default),
+        )
+      else
+        styleS(
+//          cursor.default,
+        ),
+    )
 
-    private val tagLabelColour: ((Live, Validity)) => String = {
-      case (Live, Valid  ) => "blue"
-      case (Live, Invalid) => ""
-      case (Dead, _      ) => "grey"
+    private val tagLabelColour: Live => String = {
+      case Live => ""
+      case Dead => "grey"
     }
 
     @UsesSemanticUiManually
-    val tag = styleF(D.`live * validity`)(lv => styleS(
-      tagBase(lv._1),
+    val tag = styleF(D.`live * validity * bool`) { case ((live, validity), helpIconOnHover) => styleS(
+      tagBase(live, helpIconOnHover = helpIconOnHover),
       padding(4 px, 6 px).important,
-      mixinIf(lv._2 is Invalid)(hasErrorBackground.important, hasErrorColor.important),
-      addClassName(s"ui label ${tagLabelColour(lv)}")))
+      mixinIf(validity is Invalid)(hasErrorBackground.important, hasErrorColor.important, textDecoration := ^.lineThrough),
+      addClassName(s"ui label ${tagLabelColour(live)}"),
+    )}
 
     val tagInText = styleF(D.`live * validity`){ case (l, v) => styleS(
-      tagBase(l),
-      mixinIf(l is Live)(refColour),
-      mixinIf(l is Dead)(deadMaybeValid(v)))
-    }
+      tagBase(l, helpIconOnHover = true),
+      (l, v) match {
+        case (Live, Valid)   => styleS(refColour)
+        case (Live, Invalid) => styleS(hasError, textDecoration := ^.lineThrough)
+        case (Dead, _)       => deadMaybeValid(v)
+      },
+    )}
 
     val reqTypeShort = styleF(D.live)(a => styleS(
       hoverShowsInfo,
@@ -816,6 +1446,13 @@ object Style extends StyleSheet.Inline {
       marginLeft(0.5 ex),
       reqRef(i)))
 
+    val dropdownButtonOuter = style(
+      marginRight(`0`).important)
+
+    val dropdownButtonGreenDropdown = style(
+      color(c"#eee").important,
+      backgroundColor(c"#00a632").important)
+
     object reqTypeSelector {
       val dropdown = style(
         backgroundColor(BaseStyles.editor.backgroundColor).important,
@@ -829,6 +1466,71 @@ object Style extends StyleSheet.Inline {
 
       val abort = style(
         &.hover(color(c"#DB2828").important))
+    }
+
+    object splitScreen {
+      @inline private def gap = 2 rem
+
+      val maxBodyWidth = "100vh - 6rem"
+
+      val outer = style(
+        minHeight :=! s"calc($maxBodyWidth)",
+        display.flex,
+      )
+
+      val left = style(
+        width(50 %%),
+        paddingRight(gap),
+        borderRight(solid, 1 px, lightLineColour),
+      )
+
+      val right = style(
+        width(50 %%),
+        paddingLeft(gap),
+      )
+    }
+
+    object splitScreenCrud {
+      import splitScreen.maxBodyWidth
+
+      val emptyRight = style(
+        display.flex,
+        flexDirection.column,
+      )
+
+      val emptyRightHeader = style(
+        height :=! s"calc(($maxBodyWidth)/4)",
+      )
+
+      val rightOn = style(
+        height.auto,
+        opacity(1),
+        transition := ("height 0s 0s, opacity " + animSpeed + " 0s"),
+      )
+
+      val rightOff = style(
+        overflow.hidden,
+        height(`0`),
+        opacity(0),
+        transition := ("height 0s " + animSpeed + ", opacity " + animSpeed + " 0s"),
+      )
+
+      val emptyRightBody = style(
+        textAlign.center,
+        fontStyle.italic,
+        color(c"#999"),
+        lineHeight(1.8 em),
+        fontSize(120 %%),
+      )
+
+      val topLeft = style(
+        display.flex,
+        marginBottom(2 rem),
+      )
+
+      val topLeftGrow = style(
+        flexGrow(1),
+      )
     }
   }
 
@@ -871,22 +1573,29 @@ object Style extends StyleSheet.Inline {
     navBar.connected,
     home.cardHeader,
     help.examplesTable,
-    impgraphPage.graph,
+    reqgraphPage.graph,
     cfg.deadMnemonic,
     deletionRestorationForms.main,
     deletionForm.bottomSections,
     issues.rowspanOuter,
+    issueConfig.sectionTitle,
     restorationForm.bottomSection,
-    reqtable.creation.buttonDropdown,
+    reqtable.creation.formOuter,
     reqtable.filterEditor.input(Valid),
     reqtable.sortEditor.dragArea,
     reqtable.page.viewCtrls,
     reqtable.table.selectionColumnHeader,
-    reqtable.savedViews.activeItem,
     reqdetail.detailTable,
     reqdetail.useCaseStep.container,
+    fieldConfig.fieldListTable,
+    reqTypeConfig.implicationHelp,
+    savedViews.activeItem,
+    tagConfig.tagTree,
     widgets.issueDesc,
-    widgets.reqTypeSelector.dropdown)
+    widgets.reqTypeSelector.dropdown,
+    widgets.splitScreen.left,
+    widgets.splitScreenCrud.emptyRight,
+  )
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()
 }

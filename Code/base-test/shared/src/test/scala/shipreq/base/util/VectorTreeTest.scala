@@ -208,9 +208,9 @@ object VectorTreeTest extends TestSuite {
   }
 
   override def tests = Tests {
-    'props { props mustBeSatisfiedBy genIntTree }
+    "props" - { props mustBeSatisfiedBy genIntTree }
 
-    'modifyChildren {
+    "modifyChildren" - {
       def n(value: Int, c: Node[Int]*): Node[Int] = Node(value, c.toVector)
       def r(c: Node[Int]*): VectorTree[Int] = VectorTree(c.toVector)
 
@@ -222,14 +222,14 @@ object VectorTreeTest extends TestSuite {
           expect)
 
       test(          )(Some(r(n(10, n(20, n(30))), n(90))))
-      test(0         )(Some(r(n(1, n(20, n(30))), n(9))))
+      test(Seq(0): _*)(Some(r(n(1, n(20, n(30))), n(9)))) // "Seq(0): _*" because of a bug in -Wunused:locals
       test(0, 0      )(Some(r(n(1, n(2, n(30))), n(9))))
       test(0, 0, 0   )(None)
       test(0, 0, 0, 0)(None)
       test(          )(None, r())
     }
 
-    'partLoc {
+    "partLoc" - {
       val l = Node(1, Vector.empty)
       val d = Node(0, Vector.empty)
 
@@ -283,7 +283,7 @@ object VectorTreeTest extends TestSuite {
         testFilterAndPartLocs(t, m)
       }
 
-      'order {
+      "order" - {
         val plocs = List("0.0", "0.0.0", "0.0.1", "0.1", "X.0", "X.0.0", "X.1", "0.X.0").map(_.xloc)
         assertEq("id", plocs.sorted, plocs)
         assertEq("reverse", plocs.reverse.sorted, plocs)
@@ -292,7 +292,7 @@ object VectorTreeTest extends TestSuite {
     }
 
     // =================================================================================================================
-    'insertAfter {
+    "insertAfter" - {
       import Steps._
 
       def test(at: Location, src: VectorTree[FakeStep], expectedTreeTxt: String): Unit = {

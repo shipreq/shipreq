@@ -31,6 +31,9 @@ object CommonValidation {
     val nonEmpty: Invalidator[String] =
       Invalidator.test(_.nonEmpty, invalidBecauseEmpty)
 
+    def nonEmptyVector[A]: Invalidator[Vector[A]] =
+      Invalidator.test(_.nonEmpty, invalidBecauseEmpty)
+
     def matchesRegex(regex: Pattern): InvalidatorLogic[String] =
       Invalidator.logic(regex.matcher(_).matches)
 
@@ -55,6 +58,9 @@ object CommonValidation {
     /** @param chars Like "0123456789" */
     def blacklistChars(chars: String): InvalidatorLogic[String] =
       blacklistCharRangeRegex(Pattern.quote(chars))
+
+    def blacklistChars(isBlacklisted: Char => Boolean): InvalidatorLogic[String] =
+      Invalidator.logic(_.forall(!isBlacklisted(_)))
 
     def containsRegex(regex: String): InvalidatorLogic[String] =
       matchesRegex(s".*(?:$regex).*".r)
@@ -116,6 +122,14 @@ object CommonValidation {
     def whitelistCharRangeRegex(regexRange: String, errMsg: Invalidity): EndoValidator[String] =
       TextMod.regexReplace(s"[^$regexRange]".r, "").correctLive withInvalidator
         invalidator.whitelistCharRangeRegex(regexRange)(errMsg)
+
+    def blacklistCharRangeRegex(regexRange: String, errMsg: Invalidity): EndoValidator[String] =
+      TextMod.regexReplace(s"[$regexRange]".r, "").correctLive withInvalidator
+        invalidator.blacklistCharRangeRegex(regexRange)(errMsg)
+
+    def blacklistChars(isBlacklisted: Char => Boolean, errMsg: Invalidity): EndoValidator[String] =
+      TextMod.blacklistChars(isBlacklisted).correctLive withInvalidator
+        invalidator.blacklistChars(isBlacklisted)(errMsg)
   }
 
   // ===================================================================================================================
@@ -147,4 +161,6 @@ object CommonValidation {
     endoCorrector.largeText.toCorrector.imapCorrectedZ(TextMod.nonBlank)
     .withAuditor(largeTextLimit.liftOption.toAuditor)
 
+  def option[A]: Validator[Option[A], Option[A], A] =
+    Simple.Validator.option[A, Invalidity](invalidBecauseEmpty)
 }

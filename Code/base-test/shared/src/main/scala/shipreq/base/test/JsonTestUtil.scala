@@ -16,6 +16,8 @@ object JsonTestUtil {
 
   implicit def equalDecodingFailure: Equal[DecodingFailure] = Equal.equalA
 
+  implicit def equalCirceError: Equal[io.circe.Error] = Equal.equalA
+
   implicit final class JsonUtilExtString(private val self: String) extends AnyVal {
     def toJsonOrThrow: Json =
       parse(self) match {
@@ -39,10 +41,13 @@ object JsonTestUtil {
   def assertDecodeOk[A: Decoder: Equal](json: Json, expect: A)(implicit l: Line): Unit =
     assertDecode(json, Right(expect))
 
+  def assertAllDecodeOk[A: Decoder: Equal](json: Seq[String], expect: Seq[A])(implicit l: Line): Unit =
+    assertSeq(json.map(decode[A](_)), expect.map(Right(_)))
+
   def assertRoundTrip[A: Decoder: Encoder: Equal](a: A)(implicit l: Line): Unit =
     assertDecodeOk(a.asJson, a)
 
-  def assertRoundTrips[A: Decoder: Encoder: Equal](as: Traversable[A])(implicit l: Line): Unit = {
+  def assertRoundTrips[A: Decoder: Encoder: Equal](as: Iterable[A])(implicit l: Line): Unit = {
     var i = 0
     for (a <- as) {
       i += 1
@@ -53,9 +58,6 @@ object JsonTestUtil {
 
   def propTestRoundTrip[A: Decoder: Encoder: Equal](g: Gen[A])(implicit l: Line): Unit =
     g.samples().take(propTestSize).foreach(assertRoundTrip(_))
-
-  def loadJsonResFile[A: Decoder](filename: String): A =
-    decode[A](readResourceFile(filename)).needRight
 
   def decoderTester[A: Equal](d: Decoder[A]): JsonDecoderTest[A] =
     new JsonDecoderTest()(d, implicitly)

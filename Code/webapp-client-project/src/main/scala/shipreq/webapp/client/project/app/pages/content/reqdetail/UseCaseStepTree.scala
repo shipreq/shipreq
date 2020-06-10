@@ -5,13 +5,12 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
-import shipreq.webapp.base.protocol.UpdateContentCmd
+import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
 import shipreq.webapp.client.project.app.TestMarker
-import shipreq.webapp.client.project.lib.DataReusability._
 import UseCaseStepFlowText.TextAndFlow
 
 object UseCaseStepTree {
@@ -38,7 +37,7 @@ object UseCaseStepTree {
     @inline def render = Component(this)
   }
 
-  val Component = ScalaComponent.builder[Props]("UseCaseStepTree")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .build
 

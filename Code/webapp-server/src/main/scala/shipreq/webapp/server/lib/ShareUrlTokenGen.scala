@@ -24,7 +24,7 @@ object ShareUrlTokenGen extends Logger {
 
   private val rnd = new Random()
 
-  def nextToken: ShareUrlToken = {
+  def nextToken(): ShareUrlToken = {
     val sb = new StringBuilder(len)
     var i = len
     while (i != 0) {
@@ -34,5 +34,6 @@ object ShareUrlTokenGen extends Logger {
     ShareUrlToken(sb.toString)
   }
 
-  val fn: () => ShareUrlToken = nextToken _
+  val fn: () => ShareUrlToken =
+    () => nextToken()
 }

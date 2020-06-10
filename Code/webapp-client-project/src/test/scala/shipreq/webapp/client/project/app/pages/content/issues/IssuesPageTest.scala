@@ -31,7 +31,7 @@ object IssuesPageTest extends TestSuite {
   override def tests = Tests {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    'edit - runActions(SampleProject6.project)(
+    "edit" - runActions(SampleProject6.project)(
 
       *.emptyAction
       +> rowCount.assert.equal(11)
@@ -122,7 +122,7 @@ object IssuesPageTest extends TestSuite {
     )
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    'manual - runActions(SampleProject6.project)(
+    "manual" - runActions(SampleProject6.project)(
 
       newForm.edit("" -> "blah")
       +> rowCount.assert.equal(12)
@@ -301,7 +301,7 @@ object IssuesPageTest extends TestSuite {
     )
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    'filter - runActions(SampleProject6.project)(
+    "filter" - runActions(SampleProject6.project)(
 
       newForm.edit("omfgomfg #wip")
 

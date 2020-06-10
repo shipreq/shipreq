@@ -1,7 +1,6 @@
 package shipreq.webapp.client.public.pages
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -11,8 +10,8 @@ import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
 import shipreq.webapp.base.feature.AsyncFeature
-import shipreq.webapp.base.lib.BrowserStorage
-import shipreq.webapp.base.protocol.CommonProtocols.Login.Request
+import shipreq.webapp.base.lib.{BrowserStorage, ValidationUX}
+import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login.Request
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic._
@@ -21,6 +20,7 @@ import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.{CommmonUiText, Urls}
 import shipreq.webapp.client.public.Prefetch
 import shipreq.webapp.client.public.Styles.{login => *}
+import shipreq.webapp.base.ui.widgets.Form
 
 object Login {
 
@@ -94,25 +94,25 @@ object Login {
     val usernameOrEmail = req ^|-> Request.Untyped.usernameOrEmail
     val password        = req ^|-> Request.Untyped.password
 
-    def init: State =
+    def empty: State =
       State(Request.Untyped("", ""), true, None, None, None)
+
+    def init: CallbackTo[State] =
+      for {
+        s <- LocalStorage.read
+      } yield empty(s)
   }
 
   final case class ErrorFlash(title: String, content: String)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  private implicit def validationUX = ValidationUX.Off
+
   final class Backend($: BackendScope[Props, Unit]) {
 
     // User is likely to log in - prefetch new resources for next page
     Prefetch.memberHome()
-
-    def readCredentials: Callback =
-      for {
-        s <- LocalStorage.read
-        _ <- $.props.flatMap(_.state.modState(_(s)))
-        _ <- focusForm(3).delayMs(20).toCallback
-      } yield ()
 
     /** Stores the current state in client's local storage according to the remember-me setting */
     val writeCredentials: Callback =
@@ -121,7 +121,10 @@ object Login {
     // Else a user might go to home thinking they've reloaded, and another user might click Login and see the
     // previous user's password populated.
     def clearCredentials: Callback =
-      $.props.flatMap(_.state.setState(State.init))
+      $.props.flatMap(_.state.setState(State.empty))
+
+    def onMount: Callback =
+      focusForm(3).delayMs(20).toCallback
 
     private def focusForm(retries: Int): Callback =
       $.props.flatMap { p =>
@@ -147,7 +150,7 @@ object Login {
         Callback.when(p.formEnabled is Enabled)(
           p.state.value.req.validate match {
             case \/-(req) =>
-              p.asyncW.withOnSuccess(onSuccess =>
+              p.asyncW.onSuccess(onSuccess =>
                 p.attemptLogin(req)
                   .flatTapSync {
                     case \/-(Allow) => onLoginSuccess // onSuccess is deliberately omitted so the form doesn't re-enable before the redirect completes
@@ -192,21 +195,23 @@ object Login {
       )
 
     private val refUser = Ref[html.Input]
-    private val fieldUser = Form.TextField.unvalidated(
-      State.usernameOrEmail,
-      m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.usernameEmail, m, submitOnEnter).withRef(refUser)),
-      Some(CommmonUiText.usernameOrEmail))
+    private val fieldUser =
+      Form.Field.text
+        .withLabel(CommmonUiText.usernameOrEmail)
+        .withEditor(m => Input.Text.icon(Icon.User.tag, <.input.text(^.autoComplete.usernameEmail, m, submitOnEnter).withRef(refUser)))
+        .withStateLens(State.usernameOrEmail)
 
     private val refPassword = Ref[html.Input]
-    private val fieldPassword = Form.TextField.unvalidated(
-      State.password,
-      m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.currentPassword, m, submitOnEnter).withRef(refPassword)),
-      Some(
-        <.div(*.passwordLabel,
-          <.div(CommmonUiText.password),
-          <.a(*.forgotPassword, "Forgot password?", ^.onClick --> onForgotPassword))))
+    private val fieldPassword =
+      Form.Field.text
+        .withLabel(
+          <.div(*.passwordLabel,
+            <.div(CommmonUiText.password),
+            <.a(*.forgotPassword, "Forgot password?", ^.onClick --> onForgotPassword)))
+        .withEditor(m => Input.Text.icon(Icon.Lock.tag, <.input.password(^.autoComplete.currentPassword, m, submitOnEnter).withRef(refPassword)))
+        .withStateLens(State.password)
 
-    private val textFields: NonEmptyVector[StateSnapshot[State] => Form.TextField] =
+    private val textFields: NonEmptyVector[StateSnapshot[State] => Form.Field[String]] =
       NonEmptyVector(fieldUser, fieldPassword)
 
     def render(p: Props): VdomElement =
@@ -221,7 +226,7 @@ object Login {
       val errorMsg: Option[VdomTag] =
         s.errorFlash.map(e => Message(Message.Style(Message.Type.Error), Icon.Ban, e.title, e.content))
 
-      var fields = textFields.map[Form.Field](_ (p.state))
+      var fields = textFields.map[Form.Field[_]](_(p.state))
       if (p.formEnabled is Disabled)
         fields = fields.map(_.disable)
 
@@ -233,12 +238,12 @@ object Login {
           <.div(*.rememberMe, Input.Checkbox.fromStateSnapshot(State.rememberMe, p.state, "Remember me")),
           <.div(*.submitCont, submitButton))
 
-      fields :+= Form.NotAField(bottomRow)
+      fields :+= Form.Field.replacement(bottomRow)
 
       // Using an array so that React preserves the form and input focus
       val array = VdomArray.empty()
       errorMsg.foreach(e => array += e(^.key := "e"))
-      array += Form(fields)(^.key := "f")
+      array += Form(fields).apply(^.key := "f")
 
       <.form(*.part1, array)
     }
@@ -254,9 +259,9 @@ object Login {
             " you'll soon receive an email with a link to reset your password.")))
   }
 
-  val Component = ScalaComponent.builder[Props]("Login")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
-    .componentWillMount(_.backend.readCredentials)
+    .componentDidMount(_.backend.onMount)
     .componentDidUpdate(_.backend.writeCredentials)
     .componentWillUnmount(_.backend.clearCredentials)
     .build

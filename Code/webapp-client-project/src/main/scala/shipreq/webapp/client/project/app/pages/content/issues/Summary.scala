@@ -51,7 +51,7 @@ object Summary {
     <.div(b.prefixWithShowing(s.total, "issue"))
   }
 
-  val Component = ScalaComponent.builder[Props]("Summary")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(shouldComponentUpdate)
     .build

@@ -1,11 +1,11 @@
 package shipreq.webapp.base.data
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.utils.{BiMap, Memo}
 import monocle.{Iso, Traversal}
 import monocle.macros.Lenses
 import nyaya.util.Multimap
+import scala.collection.View
 import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
@@ -14,6 +14,7 @@ import shipreq.webapp.base.text.{Text, UseCaseStepFlowText}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.util.Must._
 import DataImplicits._
+import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
 
 /**
  * The ID of a top-level, or sub- requirement.
@@ -126,6 +127,29 @@ object GenericReq {
     case object NoImpact      extends ImplicitLiveStatus { override def live = Live }
     case object ReqTypeIsDead extends ImplicitLiveStatus { override def live = Dead }
   }
+}
+
+@Lenses
+final case class GenericReqs(imap: GenericReqIMap) {
+
+  private[data] lazy val localCodeRefs =
+    derivation.AtomScan.reqCodeRefs { f =>
+      for (gr <- imap.valuesIterator)
+        f(gr.title)
+    }
+
+  private[data] lazy val localUseCaseStepRefs =
+    derivation.AtomScan.useCaseStepRefs { f =>
+      for (gr <- imap.valuesIterator)
+        f(gr.title)
+    }
+}
+
+object GenericReqs {
+  val empty: GenericReqs =
+    apply(emptyDataMap(GenericReq))
+
+  implicit def univEq: UnivEq[GenericReqs] = UnivEq.derive
 }
 
 // =====================================================================================================================
@@ -395,6 +419,24 @@ final case class UseCases(imap: UseCaseIMap, stepIndex: UseCases.StepIndex, step
 
   def needStep(id: UseCaseStepId): UseCaseStep =
     stepIndex(id).need(imap).need(id)
+
+  private[data] lazy val localCodeRefs =
+    derivation.AtomScan.reqCodeRefs { f =>
+      for (uc <- imap.valuesIterator) {
+        f(uc.title)
+        for (s <- uc.stepIterator)
+          f(s.titleExplicitly)
+      }
+    }
+
+  private[data] lazy val localUseCaseStepRefs =
+    derivation.AtomScan.useCaseStepRefs { f =>
+      for (uc <- imap.valuesIterator) {
+        f(uc.title)
+        for (s <- uc.stepIterator)
+          f(s.titleExplicitly)
+      }
+    }
 }
 
 object UseCases {
@@ -424,10 +466,10 @@ object UseCases {
   def calcStepIndex(imap: UseCaseIMap): StepIndex = {
     var m = emptyStepIndex
     for {
-      uc ← imap.valuesIterator
+      uc <- imap.valuesIterator
       id = uc.id
-      f  ← StaticField.useCaseStepTrees
-      s  ← f.useCaseStepTree.get(uc).valueIterator
+      f  <- StaticField.useCaseStepTrees
+      s  <- f.useCaseStepTree.get(uc).valueIterator
     } m = m.updated(s.id, StepTreeKey(id, f))
     m
   }
@@ -455,7 +497,7 @@ object UseCases {
       u => Stateless(u.imap, u.stepFlow))
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
+// =====================================================================================================================
 // Collective
 
 sealed trait ReqTEquality {
@@ -467,39 +509,42 @@ object Requirements {
     ScalazMacros.deriveEqual
 
   def empty: Requirements =
-    Requirements(emptyDataMap(GenericReq), UseCases.empty, PubidRegister.empty)
+    Requirements(GenericReqs.empty, UseCases.empty, PubidRegister.empty)
 }
 
 @Lenses
-final case class Requirements(genericReqs: GenericReqIMap,
+final case class Requirements(genericReqs: GenericReqs,
                               useCases   : UseCases,
                               pubids     : PubidRegister) {
 
-  def isEmpty = reqIterator.isEmpty
+  def isEmpty = reqIterator().isEmpty
   def nonEmpty = !isEmpty
 
-  def idIterator: Iterator[ReqId] =
-    reqIterator.map(_.id)
+  def idIterator(): Iterator[ReqId] =
+    reqIterator().map(_.id)
 
-  def reqIterator: Iterator[Req] =
-    genericReqs.valuesIterator ++
+  val all: View[Req] =
+    View.fromIteratorProvider(() => reqIterator())
+
+  def reqIterator(): Iterator[Req] =
+    genericReqs.imap.valuesIterator ++
     useCases.imap.valuesIterator
 
   lazy val size: Int =
-    genericReqs.size + useCases.imap.size
+    genericReqs.imap.size + useCases.imap.size
 
   def getUseCaseByPos(pos: ReqTypePos): Option[UseCase] =
     pubids.getUseCaseId(pos) flatMap useCases.imap.get
 
   def get[T <: ReqTypeId](id: ReqIdT[T]): Option[ReqT[T]] =
     id match {
-      case i: GenericReqId => genericReqs.get(i)
+      case i: GenericReqId => genericReqs.imap.get(i)
       case i: UseCaseId    => useCases.imap.get(i)
     }
 
   def need[T <: ReqTypeId](id: ReqIdT[T]): ReqT[T] =
     id match {
-      case i: GenericReqId => genericReqs.need(i)
+      case i: GenericReqId => genericReqs.imap.need(i)
       case i: UseCaseId    => useCases.imap.need(i)
     }
 
@@ -507,15 +552,30 @@ final case class Requirements(genericReqs: GenericReqIMap,
     pubids(id) flatMap get
 
   def needByPubid[T <: ReqTypeId](id: PubidT[T]): ReqT[T] =
-    getReqByPubid(id) mustExistElse s"Req for $id not found."
+    getReqByPubid(id) mustExistElse ErrorMsg(s"Req for $id not found.")
 
   def reqIdByPubid[T <: ReqTypeId](id: PubidT[T]): ReqIdT[T] =
-    pubids(id) mustExistElse s"Req for $id not found."
+    pubids(id) mustExistElse ErrorMsg(s"Req for $id not found.")
 
   lazy val reqsByType: Multimap[ReqTypeId, Vector, Req] =
-    reqIterator.foldLeft(UnivEq.emptyMultimap[ReqTypeId, Vector, Req])((q, r) =>
+    reqIterator().foldLeft(UnivEq.emptyMultimap[ReqTypeId, Vector, Req])((q, r) =>
       q.add(r.reqTypeId, r))
 
   lazy val useCaseStepLabelLookup: UseCaseStepLabelLookup =
     new UseCaseStepLabelLookup(this)
+
+  /** For a given req type, returns the set of requirements that used to be associated with the given req type but
+   * no longer are primarily (hence the term "ex-req").
+   */
+  val exReqs: ReqTypeId => Set[ReqId] =
+    Memo {
+      case _: StaticReqType =>
+        Set.empty
+
+      case id: CustomReqTypeId =>
+        pubids.value(id)
+          .iterator
+          .filter(need(_).reqTypeId !=* id)
+          .toSet
+    }
 }

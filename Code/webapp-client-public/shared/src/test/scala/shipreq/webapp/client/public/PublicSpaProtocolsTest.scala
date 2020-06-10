@@ -16,13 +16,13 @@ object PublicSpaProtocolsTest extends TestSuite {
   override def tests = Tests {
 
     // =================================================================================================================
-    'LandingPage - {
+    "LandingPage" - {
       import PublicSpaProtocols.LandingPage._
 
-      'req - {
+      "req" - {
         import ajax.req.codec
 
-        'roundTrip - {
+        "roundTrip" - {
           val gen = for {
               a <- R.personName
               b <- R.emailAddr
@@ -39,21 +39,21 @@ object PublicSpaProtocolsTest extends TestSuite {
         }
       }
 
-      'res - {
+      "res" - {
         import ajax.res.codec
 
-        'roundTrip - {
+        "roundTrip" - {
           val gen = R.errorMsg \/ Gen.unit
           propTestRoundTrip(codec)(gen)
         }
 
         "v1.0" - {
-          'ok - {
+          "ok" - {
             val bin    = BinaryData.fromHex("D903D77C010000E3D5C6B2")
             val expect = \/-(())
             assertDecodeOk(codec)(bin, expect)
           }
-          'ko - {
+          "ko" - {
             val bin    = BinaryData.fromHex("D903D77C0100010175E3D5C6B2")
             val expect = -\/(ErrorMsg("u"))
             assertDecodeOk(codec)(bin, expect)
@@ -63,13 +63,13 @@ object PublicSpaProtocolsTest extends TestSuite {
     }
 
     // =================================================================================================================
-    'Register1 - {
+    "Register1" - {
       import PublicSpaProtocols.Register1._
 
-      'req - {
+      "req" - {
         import ajax.req.codec
 
-        'roundTrip - {
+        "roundTrip" - {
           val gen = R.emailAddr
           propTestRoundTrip(codec)(gen)
         }
@@ -81,21 +81,21 @@ object PublicSpaProtocolsTest extends TestSuite {
         }
       }
 
-      'res - {
+      "res" - {
         import ajax.res.codec
 
-        'roundTrip - {
+        "roundTrip" - {
           val gen = R.errorMsg \/ Gen.unit
           propTestRoundTrip(codec)(gen)
         }
 
         "v1.0" - {
-          'ok - {
+          "ok" - {
             val bin    = BinaryData.fromHex("3232CE0F01000024423A71")
             val expect = \/-(())
             assertDecodeOk(codec)(bin, expect)
           }
-          'ko - {
+          "ko" - {
             val bin    = BinaryData.fromHex("3232CE0F0100010420685B7124423A71")
             val expect = -\/(ErrorMsg(" h[q"))
             assertDecodeOk(codec)(bin, expect)
@@ -105,13 +105,13 @@ object PublicSpaProtocolsTest extends TestSuite {
     }
 
     // =================================================================================================================
-    'Register2 - {
+    "Register2" - {
       import PublicSpaProtocols.Register2._
 
-      'req - {
+      "req" - {
         import ajax.req.codec
 
-        'roundTrip - {
+        "roundTrip" - {
           val gen = for {
               a <- R.verificationToken
               b <- R.personName
@@ -129,10 +129,10 @@ object PublicSpaProtocolsTest extends TestSuite {
         }
       }
 
-      'res - {
+      "res" - {
         import ajax.res.codec
 
-        'roundTrip - {
+        "roundTrip" - {
           val gens: Vector[Gen[Response]] = AdtMacros.adtValues[Result].whole.map(r => Gen.pure(\/-(r))) :+ R.errorMsg.map(-\/(_))
           val gen = Gen.chooseGen_!(gens)
           propTestRoundTrip(codec)(gen)
@@ -147,13 +147,13 @@ object PublicSpaProtocolsTest extends TestSuite {
     }
 
     // =================================================================================================================
-    'ResetPassword1 - {
+    "ResetPassword1" - {
       import PublicSpaProtocols.ResetPassword1._
 
-      'req - {
+      "req" - {
         import ajax.req.codec
 
-        'roundTrip - {
+        "roundTrip" - {
           val gen = R.username \/ R.emailAddr
           propTestRoundTrip(codec)(gen)
         }
@@ -165,10 +165,10 @@ object PublicSpaProtocolsTest extends TestSuite {
         }
       }
 
-      'res - {
+      "res" - {
         import ajax.res.codec
 
-        'roundTrip - {
+        "roundTrip" - {
           assertRoundTrip(codec)(())
         }
 
@@ -181,13 +181,13 @@ object PublicSpaProtocolsTest extends TestSuite {
     }
 
     // =================================================================================================================
-    'ResetPassword2 - {
+    "ResetPassword2" - {
       import PublicSpaProtocols.ResetPassword2._
 
-      'req - {
+      "req" - {
         import ajax.req.codec
 
-        'roundTrip - {
+        "roundTrip" - {
           val gen = Gen.apply2(Request)(R.verificationToken, R.plainTextPassword)
           propTestRoundTrip(codec)(gen)
         }
@@ -199,10 +199,10 @@ object PublicSpaProtocolsTest extends TestSuite {
         }
       }
 
-      'res - {
+      "res" - {
         import ajax.res.codec
 
-        'roundTrip - {
+        "roundTrip" - {
           val gens: Vector[Gen[Response]] = AdtMacros.adtValues[Result].whole.map(r => Gen.pure(\/-(r))) :+ R.errorMsg.map(-\/(_))
           val gen = Gen.chooseGen_!(gens)
           propTestRoundTrip(codec)(gen)

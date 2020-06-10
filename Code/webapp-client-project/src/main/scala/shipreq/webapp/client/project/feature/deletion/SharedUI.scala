@@ -3,8 +3,6 @@ package shipreq.webapp.client.project.feature.deletion
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
-import shipreq.base.util._
-import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.ui.semantic.{Colour, Icon, Table}
@@ -27,9 +25,9 @@ private[deletion] object SharedUI {
       <.thead(
         <.tr(
           <.th(^.rowSpan := 2, *.reqTableSelCol, selection.total.checkboxAndOnClick),
-          <.th(^.rowSpan := 2, UiText.ColumnNames.pubid),
-          <.th(^.rowSpan := 2, UiText.ColumnNames.title),
-          <.th(^.colSpan := 2, *.reqTableHeaderImpsTop, UiText.ColumnNames.implications(Backwards))),
+          <.th(^.rowSpan := 2, SpecialBuiltInField.Pubid.name),
+          <.th(^.rowSpan := 2, SpecialBuiltInField.Title.name),
+          <.th(^.colSpan := 2, *.reqTableHeaderImpsTop, SpecialBuiltInField.ImplyBackward.name)),
         <.tr(
           <.th(
             *.reqTableHeaderImpsBottomLeft,

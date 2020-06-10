@@ -12,7 +12,8 @@ import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
-import shipreq.webapp.base.ui.semantic.{Form, Icon, Input, Message}
+import shipreq.webapp.base.ui.semantic.{Icon, Input, Message}
+import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.user.{EmailAddr, UserValidators}
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.public.Styles.{register1 => *}
@@ -48,6 +49,8 @@ object Register1 {
       State("", None, false)
   }
 
+  private implicit def validationUX = ValidationUX.Off
+
   final class Backend($: BackendScope[Props, Unit]) {
 
     private def submitCB(p: Props): Option[Callback] =
@@ -55,10 +58,10 @@ object Register1 {
         email <- p.state.value.validated
         if p.state.value.formEnabled is Enabled
       } yield
-        p.asyncW(
+        p.asyncW.forgetFailure(
           p.submit(email).flatTapSync {
             case \/-(_) => $.props.flatMap(_.state.modState(_.copy(submitted = true)))
-            case -\/(e) => Callback.alert(e.value)
+            case -\/(e) => GeneralTheme.showErrorMsg(e)
           }
         )
 
@@ -67,12 +70,12 @@ object Register1 {
 
     private val submitOnEnter = GeneralTheme.submitOnEnter(attemptSubmit)
 
-    private val fieldEmail = Form.TextField.highLevel(
-      State.email,
-      UserValidators.emailAddr.unnamed,
-      m => Input.Text.icon(Icon.Mail.tag, <.input.email(m, ^.autoComplete.email, ^.autoFocus := true, submitOnEnter)),
-      Some(CommmonUiText.emailAddr))(
-      ValidationUX.Off)
+    private val fieldEmail =
+      Form.Field.text
+        .withLabel(CommmonUiText.emailAddr)
+        .withEditor(m => Input.Text.icon(Icon.Mail.tag, <.input.email(m, ^.autoComplete.email, ^.autoFocus := true, submitOnEnter)))
+        .withValidator(UserValidators.emailAddr.unnamed)
+        .withStateLens(State.email)
 
     private def renderForm(p: Props): VdomElement = {
       val s = p.state.value
@@ -82,8 +85,8 @@ object Register1 {
 
       <.form(*.part1,
         Form(
-          fieldEmail(p.state).setEnabled(s.formEnabled),
-          Form.NotAField(<.div(*.submitCont, submitButton))))
+          fieldEmail(p.state).withEnabled(s.formEnabled),
+          Form.Field.replacement(<.div(*.submitCont, submitButton))))
     }
 
     private def renderSuccess: VdomElement =
@@ -114,7 +117,7 @@ object Register1 {
         renderForm(p)
   }
 
-  val Component = ScalaComponent.builder[Props]("Register1")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 }

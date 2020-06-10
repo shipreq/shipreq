@@ -75,10 +75,22 @@ object FieldKey {
     def dir: Direction = ImplicationScope.dir(scope)
   }
 
-  final case class Tags(field: Option[CustomField.Tag.Id]) extends ForAllReqs {
+  case object AllTags extends ForAllReqs {
     override type Value = Set[ApplicableTagId]
-    override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Value] = f.tags(this)
-    override def foldUC[F[_, _]](f: FoldForUseCase   [F]): F[Args, Value] = f.tags(this)
+    override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Value] = f.allTags(this)
+    override def foldUC[F[_, _]](f: FoldForUseCase   [F]): F[Args, Value] = f.allTags(this)
+  }
+
+  case object OtherTags extends ForAllReqs {
+    override type Value = Set[ApplicableTagId]
+    override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Value] = f.otherTags(this)
+    override def foldUC[F[_, _]](f: FoldForUseCase   [F]): F[Args, Value] = f.otherTags(this)
+  }
+
+  final case class CustomFieldTags(field: CustomField.Tag.Id) extends ForAllReqs {
+    override type Value = Set[ApplicableTagId]
+    override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Value] = f.customFieldTags(this)
+    override def foldUC[F[_, _]](f: FoldForUseCase   [F]): F[Args, Value] = f.customFieldTags(this)
   }
 
   case object UseCaseTitle extends ForUseCase {
@@ -119,7 +131,9 @@ object FieldKey {
   case class FoldForGenericReq[F[_, _]](codes          : Codes.type           => F[Codes          .Args, Codes          .Value],
                                         customTextField: CustomTextField      => F[CustomTextField#Args, CustomTextField#Value],
                                         implications   : Implications         => F[Implications   #Args, Implications   #Value],
-                                        tags           : Tags                 => F[Tags           #Args, Tags           #Value],
+                                        otherTags      : OtherTags.type       => F[OtherTags      .Args, OtherTags      .Value],
+                                        allTags        : AllTags.type         => F[AllTags        .Args, AllTags        .Value],
+                                        customFieldTags: CustomFieldTags      => F[CustomFieldTags#Args, CustomFieldTags#Value],
                                         title          : GenericReqTitle.type => F[GenericReqTitle.Args, GenericReqTitle.Value],
                                        ) extends Fold[ForGenericReq, F] {
     override def apply(f: ForGenericReq): F[f.Args, f.Value] = f.foldGR(this)
@@ -128,14 +142,18 @@ object FieldKey {
         codes           = f => t(codes          (f)),
         customTextField = f => t(customTextField(f)),
         implications    = f => t(implications   (f)),
-        tags            = f => t(tags           (f)),
+        otherTags       = f => t(otherTags      (f)),
+        allTags         = f => t(allTags        (f)),
+        customFieldTags = f => t(customFieldTags(f)),
         title           = f => t(title          (f)))
   }
 
   case class FoldForUseCase[F[_, _]](codes          : Codes.type        => F[Codes          .Args, Codes          .Value],
                                      customTextField: CustomTextField   => F[CustomTextField#Args, CustomTextField#Value],
                                      implications   : Implications      => F[Implications   #Args, Implications   #Value],
-                                     tags           : Tags              => F[Tags           #Args, Tags           #Value],
+                                     otherTags      : OtherTags.type    => F[OtherTags      .Args, OtherTags      .Value],
+                                     allTags        : AllTags.type      => F[AllTags        .Args, AllTags        .Value],
+                                     customFieldTags: CustomFieldTags   => F[CustomFieldTags#Args, CustomFieldTags#Value],
                                      title          : UseCaseTitle.type => F[UseCaseTitle   .Args, UseCaseTitle   .Value],
                                     ) extends Fold[ForUseCase, F] {
     override def apply(f: ForUseCase): F[f.Args, f.Value] = f.foldUC(this)
@@ -144,7 +162,9 @@ object FieldKey {
         codes           = f => t(codes          (f)),
         customTextField = f => t(customTextField(f)),
         implications    = f => t(implications   (f)),
-        tags            = f => t(tags           (f)),
+        otherTags       = f => t(otherTags      (f)),
+        allTags         = f => t(allTags        (f)),
+        customFieldTags = f => t(customFieldTags(f)),
         title           = f => t(title          (f)))
   }
 
@@ -198,26 +218,34 @@ object FieldKey {
     case E.GenericReqTitle        => Some(GenericReqTitle)
     case E.Implications(scope)    => Some(Implications(scope))
     case E.ReqType                => None
-    case E.Tags(field)            => Some(Tags(field))
+    case E.AllTags                => Some(AllTags)
+    case E.OtherTags              => Some(OtherTags)
+    case E.CustomFieldTags(field) => Some(CustomFieldTags(field))
   })({
     case Codes                  => E.Codes
     case CustomTextField(field) => E.CustomTextField(field)
     case GenericReqTitle        => E.GenericReqTitle
+    case AllTags                => E.AllTags
+    case OtherTags              => E.OtherTags
     case Implications(scope)    => E.Implications(scope)
-    case Tags(field)            => E.Tags(field)
+    case CustomFieldTags(field) => E.CustomFieldTags(field)
   })
 
   val editorFieldUC = Iso[E.ForUseCase, ForUseCase]({
     case E.Codes                  => Codes
+    case E.AllTags                => AllTags
+    case E.OtherTags              => OtherTags
     case E.CustomTextField(field) => CustomTextField(field)
     case E.Implications(scope)    => Implications(scope)
-    case E.Tags(field)            => Tags(field)
+    case E.CustomFieldTags(field) => CustomFieldTags(field)
     case E.UseCaseTitle           => UseCaseTitle
   })({
     case Codes                  => E.Codes
+    case AllTags                => E.AllTags
+    case OtherTags              => E.OtherTags
     case CustomTextField(field) => E.CustomTextField(field)
     case UseCaseTitle           => E.UseCaseTitle
     case Implications(scope)    => E.Implications(scope)
-    case Tags(field)            => E.Tags(field)
+    case CustomFieldTags(field) => E.CustomFieldTags(field)
   })
 }

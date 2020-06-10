@@ -2,22 +2,26 @@ package shipreq.webapp.base.text
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import org.parboiled2._
-import japgolly.microlibs.nonempty.NonEmptyVector
+import scala.collection.immutable.ArraySeq
+import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Atom => A, MultiLine => ML, Parsers => P}
+import shipreq.webapp.base.text.{Atom => A, Parsers => P}
 
 object Text {
 
   object Equality extends Equality
   trait Equality {
-    @inline implicit final def univEqAnyAtom      [A <: Atom.AnyAtom]: UnivEq[A]         = UnivEq.force
-    @inline implicit final def univEqAnyAtomVector[A <: Atom.AnyAtom]: UnivEq[Vector[A]] = UnivEq.force
+    @inline implicit final def univEqAnyAtom        [A <: Atom.AnyAtom]: UnivEq[A]           = UnivEq.force
+    @inline implicit final def univEqAnyAtomArraySeq[A <: Atom.AnyAtom]: UnivEq[ArraySeq[A]] = UnivEq.force
   }
 
   type Generic = Base with A.Literal
   type AnyOptional = A.Base#OptionalText
   type AnyNonEmpty = A.Base#NonEmptyText
+
+  def empty[A <: Atom.AnyAtom]: ArraySeq[A] =
+    ArraySeq.empty
 
   /** Plain text, or rich text? */
   def isPlain(t: AnyOptional): Boolean =
@@ -26,10 +30,12 @@ object Text {
   @inline def isRich(t: AnyOptional): Boolean =
     !isPlain(t)
 
-  val values: NonEmptyVector[Generic] =
-    AdtMacros.adtValues[Base].map {
-      case a: Base with A.Literal => a
-    }
+  val values: NonEmptyArraySeq[Generic] =
+    NonEmptyArraySeq.fromNEV(
+      AdtMacros.adtValues[Base].map {
+        case a: Base with A.Literal => a
+      }
+    )
 
   implicit def univEqBase: UnivEq[Base] = UnivEq.derive
   implicit def univEqGeneric: UnivEq[Generic] = UnivEq.force // proof is above
@@ -139,7 +145,7 @@ object Text {
       import Grammar.issueDescSurround.{parsing => G}
       val token     = () =>             rule(contentRef | singleLine)
       val inlineEnd = () =>             rule(OWS ~ G.suffix)
-      def inline: Rule1[NonEmptyText] = rule(G.prefix ~ OWS ~ textUntil(token, inlineEnd) ~ popNEV)
+      def inline: Rule1[NonEmptyText] = rule(G.prefix ~ OWS ~ textUntil(token, inlineEnd) ~ popNEA)
     }
 
     override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) = new Parser(p, currentUseCase, i)
@@ -148,15 +154,15 @@ object Text {
     def demo(reqId        : ReqId,
              reqCodeIdA   : ApReqCodeId,
              reqCodeIdG   : ReqCodeGroupId,
-             useCaseStepId: UseCaseStepId): NonEmptyVector[NonEmptyText] =
-      NonEmptyVector(
-        NonEmptyVector(
+             useCaseStepId: UseCaseStepId): NonEmptyArraySeq[NonEmptyText] =
+      NonEmptyArraySeq(
+        NonEmptyArraySeq(
           Literal("Need to finish "), ReqRef(reqId),
           Literal(", "), UseCaseStepRef(useCaseStepId),
           Literal(", "), CodeRef(reqCodeIdA),
           Literal(" and "), CodeRef(reqCodeIdG),
         ),
-        NonEmptyVector(Literal("Ask "), EmailAddress("bob@gmail.com"), Literal(" about "), TeX("e=mc^2")))
+        NonEmptyArraySeq(Literal("Ask "), EmailAddress("bob@gmail.com"), Literal(" about "), TeX("e=mc^2")))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -190,24 +196,24 @@ object Text {
              tagId        : ApplicableTagId,
              issue        : CustomIssueTypeId): NonEmptyText = {
 
-      var uls = NonEmptyVector[ListItem](
-        Vector(Literal("Req: "), ReqRef(reqId)),
-        Vector(Literal("UC Step Req: "), UseCaseStepRef(useCaseStepId)),
-        Vector(Literal("Code: "), CodeRef(reqCodeIdA)),
-        Vector(Literal("Code Group: "), CodeRef(reqCodeIdG)),
-        Vector(Literal("Tag: "), TagRef(tagId)),
-        Vector(Literal("Issue(∅): "), Issue(issue, Vector.empty)))
+      var uls = NonEmptyArraySeq[ListItem](
+        ArraySeq(Literal("Req: "), ReqRef(reqId)),
+        ArraySeq(Literal("UC Step Req: "), UseCaseStepRef(useCaseStepId)),
+        ArraySeq(Literal("Code: "), CodeRef(reqCodeIdA)),
+        ArraySeq(Literal("Code Group: "), CodeRef(reqCodeIdG)),
+        ArraySeq(Literal("Tag: "), TagRef(tagId)),
+        ArraySeq(Literal("Issue(∅): "), Issue(issue, ArraySeq.empty)))
       uls ++= InlineIssueDesc.demo(reqId, reqCodeIdA, reqCodeIdG, useCaseStepId).map(desc =>
-        Vector(Literal("Issue(∃): "), Issue(issue, desc.whole)))
-      uls ++= NonEmptyVector(
-        Vector(),
-        Vector(Literal("Monospace: "), Monospace("""f(x) = {x+1 \over x - 1} + 9\pi^2""")),
-        Vector(Literal("Math: "), TeX("""f(x) = {x+1 \over x - 1} + 9\pi^2""")),
-        Vector(Literal("Email: "), EmailAddress("blah@google.com")),
-        Vector(Literal("Web: "), WebAddress("https://shipreq.com"))
+        ArraySeq(Literal("Issue(∃): "), Issue(issue, desc.whole)))
+      uls ++= NonEmptyArraySeq(
+        ArraySeq(),
+        ArraySeq(Literal("Monospace: "), Monospace("""f(x) = {x+1 \over x - 1} + 9\pi^2""")),
+        ArraySeq(Literal("Math: "), TeX("""f(x) = {x+1 \over x - 1} + 9\pi^2""")),
+        ArraySeq(Literal("Email: "), EmailAddress("blah@google.com")),
+        ArraySeq(Literal("Web: "), WebAddress("https://shipreq.com"))
       )
 
-      NonEmptyVector(
+      NonEmptyArraySeq(
         Literal("Atom demonstration."),
         blankLine,
         Literal("Here we go:"),

@@ -1,10 +1,10 @@
 package shipreq.taskman.api.impl
 
-import doobie.imports._
+import doobie._
 import shipreq.taskman.api._
 
 private[api] class ApiDao(prefix: String) {
-  import DoobieMeta._
+  import TaskmanDoobieCodecs._
 
   private[impl] val createMsgQuery: Query[(Task, Priority), TaskId] =
     Query(s"select ${prefix}create_msg_v01(?::INT2, ?::JSONB, ?::INT2)")

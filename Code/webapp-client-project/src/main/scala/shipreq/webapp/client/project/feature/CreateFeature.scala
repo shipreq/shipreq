@@ -31,7 +31,7 @@ package shipreq.webapp.client.project.feature
   * Render each editor as needed via `CreateFeature.Read.ForEditor#render()`.
   *
   * For each field, use `CreateFeature.Read.ForEditor#value()` to get the field's value, and combine all
-  * results (if valid) to create a [[shipreq.webapp.base.protocol.CreateContentCmd]]. Then pass it to
+  * results (if valid) to create a [[shipreq.webapp.base.protocol.websocket.CreateContentCmd]]. Then pass it to
   * `CreateFeature.ReadWrite.ForRow#create()` in order to get a `Callback` to wire up to a "Create" button.
   */
 object CreateFeature {

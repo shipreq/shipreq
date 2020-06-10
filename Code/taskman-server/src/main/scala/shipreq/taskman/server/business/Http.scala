@@ -107,9 +107,9 @@ object Http {
     def request[I](buildReq: (Request.Builder, I) => Fx[(Request, () => String)]): Http[I, Unit] =
       Http((i, client, log) =>
         for {
-          reqBuilder  ← http.prep((), client, log)
-          (req, body) ← buildReq(reqBuilder, i)
-          _           ← log.request(req, body)
+          reqBuilder  <- http.prep((), client, log)
+          (req, body) <- buildReq(reqBuilder, i)
+          _           <- log.request(req, body)
         } yield req,
         (_, _) => Fx.unit)
 
@@ -122,13 +122,13 @@ object Http {
         (req, () => str)
       })
 
-    def requestAsForm[I](formData: I => TraversableOnce[(String, String)]): Http[I, Unit] =
+    def requestAsForm[I](formData: I => IterableOnce[(String, String)]): Http[I, Unit] =
       request[I]((reqBuilder, i) => Fx {
         val bodyBuilder = new FormBody.Builder()
-        formData(i).foreach(x => bodyBuilder.add(x._1, x._2))
+        formData(i).iterator.foreach(x => bodyBuilder.add(x._1, x._2))
         val body = bodyBuilder.build()
         val req = reqBuilder.method(http.method.value, body).build
-        (req, () => formData(i).toIterator.map(x => s"${x._1}=${x._2}").mkString("{", ", ", "}"))
+        (req, () => formData(i).iterator.map(x => s"${x._1}=${x._2}").mkString("{", ", ", "}"))
       })
   }
 

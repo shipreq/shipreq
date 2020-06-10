@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.editor
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import org.scalajs.dom.ext.KeyCode
 import shipreq.webapp.base.feature.clipboard.ClipboardKeys
@@ -26,7 +25,7 @@ object EditorKeys {
         case KeyCode.F2 | KeyCode.Enter =>
           focusOrStartEditor(editor, e)
 
-        case KeyCode.Backspace =>
+        case KeyCode.Backspace | KeyCode.Delete =>
           editor.setPotentialValue(PotentialValue.Emptiness).getOrEmpty.when_(applicableToOpenAndReplace)
       }
 

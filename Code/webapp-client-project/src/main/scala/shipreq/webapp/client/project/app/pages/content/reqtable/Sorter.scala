@@ -1,13 +1,10 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Optional
-import monocle.function.Index._
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.data.reqtable.{Column => C, SortCriterion => SC}
-import shipreq.webapp.base.sort.{SortMethod => SM}
+import shipreq.webapp.base.data.derivation._
+import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.text.PlainText
 import shipreq.base.util.{Applicable, NotApplicable}
 import shipreq.webapp.base.sort.{Sorter => SorterBase}
@@ -27,7 +24,7 @@ object Sorter {
     def normalisedText(f: PlainText.ForProject.NoCtx => String) =
       DataLogic.normaliseStringForSorting(f(plainText))
 
-    val applicability: Applicability[Column, Row] =
+    val applicability: ProjectApplicability[Column, Row] =
       Row.applicability(p.config.applicability)
 
     @inline def reqTypesToMnemonicOrder =
@@ -130,12 +127,13 @@ object Sorter {
     case c: C.CustomField =>
       c.id match {
         case id: CustomField.Text       .Id => customTextFieldSorter(id, c)
-        case id: CustomField.Tag        .Id => tagSorter(Row.cfTags ^|-? index(id), _.p.dataLogic.tagOrderByPos)
-        case id: CustomField.Implication.Id => pubidVectorSorter(Row.cfImps ^|-? index(id))
+        case id: CustomField.Tag        .Id => tagSorter(Row.cfTag(id), _.p.dataLogic.tagOrderByPos)
+        case id: CustomField.Implication.Id => pubidVectorSorter(Row.cfImp(id))
       }
     case C.Title                            => titleSorter
     case C.Code                             => reqCodeSorter
-    case C.Tags                             => tagSorter(Row.tags, _.p.dataLogic.tagOrderByName)
+    case C.OtherTags                        => tagSorter(Row.otherTags, _.p.dataLogic.tagOrderByName)
+    case C.AllTags                          => tagSorter(Row.allTags, _.p.dataLogic.tagOrderByName)
     case C.Implications(dir)                => pubidVectorSorter(Row.implications(dir))
     case C.DeletionReason                   => deletionReasonSorter
   }
@@ -152,21 +150,8 @@ object Sorter {
     r(sc.method)
   }
 
-  /**
-   * Sort visible data in [[Expansion]]/[[MultiValues]] that won't be sorted by [[SortCriteria]].
-   */
-  def sortUnspecified(view: View): RowModFn = {
-    val fns =
-      view.columns.whole
-        .iterator
-        .filterSubType[C.SortInconclusive]
-        .filterNot(view.isOrdered)
-        .map({
-          case c: C.SortInconclusiveHasBlanks => inconclusiveCB(c)(SM.BlanksThenAsc)
-          case c: C.SortInconclusiveNoBlanks  => inconclusiveIB(c)(SM.Asc)
-        })
-        .map(_.rowModFn)
-
-    consolidateRowModFns(fns)
-  }
+  def orderingForAllTags  (d: DataLogic): Ordering[ApplicableTagId] = d.tagOrderingByName
+  def orderingForOtherTags(d: DataLogic): Ordering[ApplicableTagId] = d.tagOrderingByName
+  def orderingForTagField (d: DataLogic): Ordering[ApplicableTagId] = d.tagOrderingByPos
+  def orderingForImpField (d: DataLogic): Ordering[Pubid          ] = d.pubidOrdering
 }

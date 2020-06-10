@@ -11,20 +11,21 @@ import scala.util.{Failure, Success}
 import scalaz.{-\/, \/-}
 import shipreq.base.util.{ErrorMsg, JsTimers}
 import shipreq.webapp.base.data.{Project, ProjectId, ProjectMetaData}
-import shipreq.webapp.base.event.{EventOrd, EventSeqSummary, VerifiedEvent}
+import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.base.protocol.CommonProtocols.{Metadata, SubmitFeedback}
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.WebSocket.Push
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
-import shipreq.webapp.base.protocol.WebSocket.ReadyState
-import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol.ajax.CommonProtocols.Metadata
+import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.WebSocket.Push
+import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
+import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
+import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.ui.ReauthenticationModal
 import shipreq.webapp.client.project.app.pages.root.ConnectionStatus
 import shipreq.webapp.client.project.app.state.Global.State
 
 abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
-                      onInitFailure: ErrorMsg => Callback) extends Broadcaster[EventSeqSummary.WithProject] {
+                      onInitFailure: ErrorMsg => Callback) extends Broadcaster[ProjectState.Update] {
 
   val reauthModal: ReauthenticationModal
 
@@ -39,7 +40,7 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
 
   final protected def unsafeSetState(s: State): Unit = {
     _state = s
-    _pxProject.refresh()
+    _pxProjectAndOrd.refresh()
   }
 
   final val cbProjectMetaData: CallbackTo[ProjectMetaData] =
@@ -51,16 +52,19 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
   final val pxProjectMetaData: Px[ProjectMetaData] =
     Px.callback(cbProjectMetaData).withReuse.autoRefresh
 
-  final private val _pxProject: Px.ThunkM[Project] = {
+  final private val _pxProjectAndOrd: Px.ThunkM[ProjectAndOrd] = {
     def f() = unsafeState match {
-      case s: State.Active  => s.projectState.project
-      case _: State.Loading => Project.empty
+      case s: State.Active  => s.projectState.projectAndOrd
+      case _: State.Loading => ProjectAndOrd.empty
     }
     Px(f()).withReuse.manualRefresh
   }
 
+  final val pxProjectAndOrd: Px[ProjectAndOrd] =
+    _pxProjectAndOrd
+
   final val pxProject: Px[Project] =
-    _pxProject
+    _pxProjectAndOrd.map(_.project)
 
   final def unsafeProject(): Project =
     pxProject.value()
@@ -206,8 +210,9 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
               unsafeSetState(State.Active(update.newState, staleSince))
 
               // Broadcast changes
-              if (!update.isEmpty)
-                broadcast(update.newEvents.summaryWithProject).runNow()
+              if (update.newlyAppliedEvents.nonEmpty) {
+                broadcast(update).runNow()
+              }
 
               update.newEvents
 
@@ -238,15 +243,15 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
       unsafeState match {
         case s: State.Active =>
           for {
-            staleSince  ← s.staleSince
+            staleSince  <- s.staleSince
             stalePeriod = Duration.between(staleSince, unsafeNow())
-            _           ← Option.when(stalePeriod.isLongerThan(tolerance))(())
-            lastEvent   ← s.projectState.futureEvents.lastOption
+            _           <- Option.when(stalePeriod.isLongerThan(tolerance))(())
+            lastEvent   <- s.projectState.futureEvents.lastOption
             first       = s.projectState.projectAndOrd.nextOrd.value
             last        = lastEvent.ord.value - 1
             got         = s.projectState.futureEvents.iterator.map(_.ord.value).toSet
             missing     = first.to(last).iterator.filterNot(got.contains).map(EventOrd(_)).toSet
-            missingNE   ← NonEmptySet.option(missing)
+            missingNE   <- NonEmptySet.option(missing)
           } yield {
             logger.runNow(_.info {
               val dur = stalePeriod.conciseDesc
@@ -282,7 +287,6 @@ abstract class Global(onFirstLoad  : (Global, InitAppData) => Callback,
   final lazy val sspProjectNameSet        = sspToEvents(WsReqRes.ProjectNameSet)
   final lazy val sspUpdateSavedViews      = sspToEvents(WsReqRes.UpdateSavedViews)
   final lazy val sspUpdateManualIssues    = sspToEvents(WsReqRes.UpdateManualIssues)
-  final lazy val sspFieldMandatorinessMod = sspToEvents(WsReqRes.FieldMandatorinessMod)
   final lazy val sspReqTypeImplicationMod = sspToEvents(WsReqRes.ReqTypeImplicationMod)
 }
 

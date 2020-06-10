@@ -1,0 +1,220 @@
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard Req Table | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      .ui.button.basic {background:#fff!important}
+
+      .is-tag {
+        padding: 4px 6px !important;
+        margin-left: .5ex !important;
+      }
+
+      main {
+        display:flex;
+        margin-top:8rem;
+      }
+
+      section.tags {
+        display:flex;
+        padding-right:8rem;
+      }
+
+      section.tags li {
+        line-height:2.4em;
+      }
+
+      div.palette {
+        display:flex;
+      }
+
+      div.palette > div {
+        margin:0; padding: 13px;
+      }
+
+      /*
+      github
+        - yellow: #fccb00
+        - green: #008b02
+      gitkraken
+        - orange: #f0922b
+
+        2,24,48
+      */
+
+      .c1  { background: hsl(  2,100%,48%) !important; color:#fff!important }
+      .c2  { background: hsl( 26,100%,50%) !important; color:#fff!important }
+      .c3  { background: hsl( 47,100%,51%) !important; color:#000!important }
+      .c4  { background: hsl( 59,100%,48%) !important; color:#000!important }
+      .c5  { background: hsl( 69,100%,47%) !important; color:#000!important }
+      .c6  { background: hsl(121,100%,33%) !important; color:#fff!important }
+      .c7  { background: hsl(180,100%,43%) !important; color:#000!important }
+      .c8  { background: hsl(211,100%,48%) !important; color:#fff!important }
+      .c9  { background: hsl(261,100%,48%) !important; color:#fff!important }
+      .c10 { background: hsl(310,100%,49%) !important; color:#fff!important }
+
+      .d1  { background: hsl(  1, 95%,36%) !important; color:#fff!important }
+      .d2  { background: hsl( 26, 95%,41%) !important; color:#fff!important }
+      .d3  { background: hsl( 47, 95%,43%) !important; color:#000!important }
+      .d4  { background: hsl( 59, 95%,43%) !important; color:#000!important }
+      .d5  { background: hsl( 69, 95%,39%) !important; color:#000!important }
+      .d6  { background: hsl(121, 95%,22%) !important; color:#fff!important }
+      .d7  { background: hsl(180, 95%,32%) !important; color:#fff!important }
+      .d8  { background: hsl(211, 95%,40%) !important; color:#fff!important }
+      .d9  { background: hsl(261, 95%,38%) !important; color:#fff!important }
+      .d10 { background: hsl(310, 95%,38%) !important; color:#fff!important }
+
+      .l1  { background: hsl(  1, 95%,86%) !important; color:#000!important }
+      .l2  { background: hsl( 26, 95%,80%) !important; color:#000!important }
+      .l3  { background: hsl( 47, 88%,70%) !important; color:#000!important }
+      .l4  { background: hsl( 59, 84%,74%) !important; color:#000!important }
+      .l5  { background: hsl( 70, 60%,76%) !important; color:#000!important }
+      .l6  { background: hsl(121, 40%,80%) !important; color:#000!important }
+      .l7  { background: hsl(180, 55%,80%) !important; color:#000!important }
+      .l8  { background: hsl(211, 92%,88%) !important; color:#000!important }
+      .l9  { background: hsl(257, 87%,90%) !important; color:#000!important }
+      .l10 { background: hsl(310, 95%,91%) !important; color:#000!important }
+
+  -# ==================================================================================================================================================
+  -# ==================================================================================================================================================
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "member-home.html"} Projects
+          %i.divider.icon.right.angle
+          %a.section{href: "project-index.html"} CardBoard
+          .ui.dropdown.inline
+            &nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+          %i.divider.icon.right.angle
+          .section // .active
+            .ui.dropdown.inline
+              Req Table
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .header Content
+                .item Implication Graph
+                .item.active ReqTable
+                .header Configuration
+                .item Fields
+                .item Issues
+                .item Req Types
+                .item Tags
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "member-account.html"} Account
+          .item Logout
+
+    %main
+
+      %section.tags
+        %ul
+          %li .ui.label.is-tag.l1 should
+          %li .ui.label.is-tag.l2 should
+          %li .ui.label.is-tag.l3 should
+          %li .ui.label.is-tag.l4 should
+          %li .ui.label.is-tag.l5 should
+          %li .ui.label.is-tag.l6 should
+          %li .ui.label.is-tag.l7 should
+          %li .ui.label.is-tag.l8 should
+          %li .ui.label.is-tag.l9 should
+          %li .ui.label.is-tag.l10 should
+        %ul
+          %li .ui.label.is-tag.c1 should
+          %li .ui.label.is-tag.c2 should
+          %li .ui.label.is-tag.c3 should
+          %li .ui.label.is-tag.c4 should
+          %li .ui.label.is-tag.c5 should
+          %li .ui.label.is-tag.c6 should
+          %li .ui.label.is-tag.c7 should
+          %li .ui.label.is-tag.c8 should
+          %li .ui.label.is-tag.c9 should
+          %li .ui.label.is-tag.c10 should
+        %ul
+          %li .ui.label.is-tag.d1 should
+          %li .ui.label.is-tag.d2 should
+          %li .ui.label.is-tag.d3 should
+          %li .ui.label.is-tag.d4 should
+          %li .ui.label.is-tag.d5 should
+          %li .ui.label.is-tag.d6 should
+          %li .ui.label.is-tag.d7 should
+          %li .ui.label.is-tag.d8 should
+          %li .ui.label.is-tag.d9 should
+          %li .ui.label.is-tag.d10 should
+
+      %section.palette
+
+        %div.palette
+          %div.l1
+          %div.l2
+          %div.l3
+          %div.l4
+          %div.l5
+          %div.l6
+          %div.l7
+          %div.l8
+          %div.l9
+          %div.l10
+        %div.palette
+          %div.c1
+          %div.c2
+          %div.c3
+          %div.c4
+          %div.c5
+          %div.c6
+          %div.c7
+          %div.c8
+          %div.c9
+          %div.c10
+        %div.palette
+          %div.d1
+          %div.d2
+          %div.d3
+          %div.d4
+          %div.d5
+          %div.d6
+          %div.d7
+          %div.d8
+          %div.d9
+          %div.d10
+
+  :javascript
+
+    function lightenDarkenColor(col, amt) {
+        var usePound = false;
+        if (col[0] == "#") {
+            col = col.slice(1);
+            usePound = true;
+        }
+        var num = parseInt(col,16);
+        var r = (num >> 16) + amt;
+        if (r > 255) r = 255;
+        else if  (r < 0) r = 0;
+        var b = ((num >> 8) & 0x00FF) + amt;
+        if (b > 255) b = 255;
+        else if  (b < 0) b = 0;
+        var g = (num & 0x0000FF) + amt;
+        if (g > 255) g = 255;
+        else if (g < 0) g = 0;
+        return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16);
+    }

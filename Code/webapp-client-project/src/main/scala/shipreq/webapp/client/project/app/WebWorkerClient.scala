@@ -1,30 +1,16 @@
 package shipreq.webapp.client.project.app
 
-import japgolly.scalajs.react.Callback
-import japgolly.scalajs.react.Reusability
 import org.scalajs.dom.webworkers.Worker
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.client.ww.api.Client.codec.Reader
 import shipreq.webapp.client.ww.api._
-
-trait WebWorkerClient extends Client[Cmd, Reader] {
-  def postCB[R: Reader](cmd: Cmd[R])(use: R => Callback): Callback =
-    Callback future post(cmd).map(use)
-}
+import shipreq.webapp.client.ww.api.Protocol.Codec.{default => codec}
 
 object WebWorkerClient {
 
-  val Instance: WebWorkerClient = {
-    lazy val worker = new Worker(AssetManifest.webappClientWwJs)
-    lazy val client = Client[Cmd](worker)
-    new WebWorkerClient {
-      override def post[A](cmd: Cmd[A])(implicit readResult: Reader[A]): Future[A] =
-        client.post(cmd)
-    }
-  }
+  type Instance = Client[WebWorkerCmd, codec.Reader]
 
-  implicit def reuse: Reusability[WebWorkerClient] =
-    Reusability.byRef
+  val Instance: Instance = {
+    lazy val worker = new Worker(AssetManifest.webappClientWwJs)
+    Client.default[WebWorkerCmd](worker)
+  }
 }

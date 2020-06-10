@@ -12,6 +12,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.event._
+import shipreq.webapp.base.text.Text
 
 object UseCaseStepTreeTest extends TestSuite {
   import shipreq.webapp.base.data.{StaticField => SF}
@@ -24,7 +25,7 @@ object UseCaseStepTreeTest extends TestSuite {
     BaseUtilGen.counter().map(UseCaseStepId)
 
   val genUseCaseStep: Gen[UseCaseStep] =
-    genUseCaseStepId.map(UseCaseStep(_, Vector.empty, Live))
+    genUseCaseStepId.map(UseCaseStep(_, Text.empty, Live))
 
   def genUseCaseSteps(f: UCF): Gen[UseCaseSteps] =
     RandomData.useCaseSteps(genUseCaseStep, f)(0 to 3)
@@ -34,7 +35,7 @@ object UseCaseStepTreeTest extends TestSuite {
       na <- genUseCaseSteps(SF.NormalAltStepTree)
       e  <- genUseCaseSteps(SF.ExceptionStepTree)
     } yield
-      UseCase(UseCaseId(1), ReqTypePos(1), Vector.empty, na, e, Live)
+      UseCase(UseCaseId(1), ReqTypePos(1), Text.empty, na, e, Live)
 
   val genProject: Gen[Project] =
     genUseCase.map { uc =>

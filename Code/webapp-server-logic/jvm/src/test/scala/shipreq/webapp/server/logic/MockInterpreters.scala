@@ -50,7 +50,7 @@ object MockDb {
                                 lastUpdatedAt: Option[Instant]) {
 
     lazy val project: Project =
-      ApplyEvent.trusted.applyVerified(events)(Project.empty).needRight
+      ApplyEvent.trusted.applyVerified(events)(Project.empty).getOrThrow()
 
     lazy val projectMetaData: ProjectMetaData =
       ProjectMetaData.fromProject(project)(
@@ -225,8 +225,11 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     projects.get(id).map(_.userId)
   }
 
+  private def nextProjectId(): ProjectId =
+    ProjectId(1 + projects.underlyingMap.keysIterator.map(_.value).foldLeft(0L)(_ max _))
+
   override def createProject(id: UserId, initEvents: Vector[ActiveEvent], p: Project) = Name[ProjectId] {
-    val pid = ProjectId(1 + projects.underlyingMap.keysIterator.map(_.value).foldLeft(0L)(_ max _))
+    val pid = nextProjectId()
     addProject(pid, id)(initEvents: _*)
     pid
   }
@@ -278,8 +281,21 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       -\/(DB.SaveProjectEventError.OrdInUse)
   }
 
-  override def inDbTransaction[A](f: Name[A]) = f
-  override def inDbTransaction[A](l: Int, f: Name[A]) = f
+  override def createProject(uid: UserId, events: VerifiedEvent.Seq, project: Project) = Name[ProjectId] {
+    val pid = nextProjectId()
+    addProject(pid, uid)()
+    val entry = projects.need(pid)
+    val newEntry = entry.copy(events = events, lastUpdatedAt = events.lastOption.map(_.createdAt).orElse(Some(Instant.now())))
+    projects = projects + newEntry
+    pid
+  }
+
+  override def getUserId(user: Username \/ EmailAddr) = Name[Option[UserId]] {
+    getUser(user).map(_.id)
+  }
+
+  override def withTransactionLevel[A](l: Int)(f: Name[A]) =
+    f
 
   def assertNoDbChange[A](a: => A): A =
     assertNoChange("assertNoChange:userPlaceholders", userPlaceholders.iterator.map(_.toString).mkString("\n"))(

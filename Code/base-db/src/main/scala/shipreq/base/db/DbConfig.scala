@@ -12,6 +12,9 @@ final case class DbConfig(
   hikariConfig: HikariConfig,
   schema      : Option[String]) {
 
+  def poolSize: Int =
+    hikariConfig.getMaximumPoolSize
+
   def modifyHikariDataSource(f: DataSource => DataSource): Unit =
     hikariConfig.setDataSource(f(hikariConfig.getDataSource))
 }

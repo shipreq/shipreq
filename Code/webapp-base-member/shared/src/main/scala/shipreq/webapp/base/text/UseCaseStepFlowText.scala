@@ -4,7 +4,8 @@ import japgolly.univeq.UnivEq
 import org.parboiled2._
 import scalaz.{-\/, Applicative, Functor, Monoid, \/, \/-}
 import shipreq.base.util.{Backwards, Direction, Forwards}
-import shipreq.webapp.base.data.{ReqTypePos, Requirements, UseCaseStepId, UseCaseStepLabelLookup}
+import shipreq.webapp.base.data.{ReqTypePos, UseCaseStepId}
+import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
 import shipreq.webapp.base.util.ParsingUtil
 
 /**
@@ -167,12 +168,12 @@ object UseCaseStepFlowText {
     implicit def univEq[T: UnivEq, S: UnivEq]: UnivEq[TextAndFlow[T, S]] = UnivEq.derive
   }
 
-  def separateTextAndFlow[T, S](es: TraversableOnce[Elem[T, S]])(implicit M: Monoid[T]): TextAndFlow[T, Vector[S]] = {
+  def separateTextAndFlow[T, S](es: IterableOnce[Elem[T, S]])(implicit M: Monoid[T]): TextAndFlow[T, Vector[S]] = {
     var t = M.zero
     var fwd = Vector.empty[S]
     var bck = Vector.empty[S]
     var dir: Direction = null
-    es foreach {
+    es.iterator foreach {
       case Elem.Text(text) => t = M.append(t, text); dir = null
       case Elem.Arrow(d)   => dir = d
       case Elem.Step(step) => dir match {

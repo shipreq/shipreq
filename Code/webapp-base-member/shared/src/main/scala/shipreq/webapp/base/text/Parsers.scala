@@ -1,12 +1,14 @@
 package shipreq.webapp.base.text
 
 import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.parboiled2.{CharPredicate => CP, _}
-import scalaz.{-\/, \/, \/-}
+import scala.collection.immutable.ArraySeq
+import scalaz.{-\/, \/-}
 import shapeless._
-import shipreq.base.util.Util
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.util.{ParsingUtil, PreProcessed, PreProcessor}
 
@@ -77,8 +79,8 @@ object Parsers {
 
     final type TokenRule = () => Rule1[t.Atom]
 
-    protected val atomsToVector: Seq[t.Atom] => Vector[t.Atom] = input => {
-      var v = Vector.empty[t.Atom]
+    protected val atomsToArraySeq: Seq[t.Atom] => ArraySeq[t.Atom] = input => {
+      var v = ArraySeq.empty[t.Atom]
       var lastIsBlank = false
 
       // Here we ensure that we don't end up with blank lines next to things that don't allow them around themselves.
@@ -106,7 +108,7 @@ object Parsers {
 
     def textUntil(token: TokenRule, end: () => Rule0): Rule1[t.OptionalText] = {
       val endOrToken = () => rule(end() | token())
-      rule(zeroOrMore(token() | literalUntil(endOrToken)) ~ end() ~> atomsToVector)
+      rule(zeroOrMore(token() | literalUntil(endOrToken)) ~ end() ~> atomsToArraySeq)
     }
 
     def text(token: TokenRule): Rule1[t.OptionalText] =
@@ -166,7 +168,8 @@ object Parsers {
       (startIndent, lang, codeTxt, endIndent) => {
         val indent = startIndent min endIndent
         val code =
-          Util.unindentBy(codeTxt, indent)
+          codeTxt
+            .unindent(indent)
             .linesWithSeparators
             .map(_.replaceFirst("[ \r\n]+$", "")) // right-trim all lines
             .dropWhile(_.isEmpty)                 // remove leading blank lines
@@ -188,7 +191,7 @@ object Parsers {
       rule("* " | anyOf("•‣⁃⁌⁍∙○◘◦☙❥❧⦾⦿"))
 
     private def firstLineCodeBlock =
-      rule(codeBlock ~> ((x: t.CodeBlock) => Vector(x)))
+      rule(codeBlock ~> ((x: t.CodeBlock) => ArraySeq(x)))
 
     def listItem(listToken: TokenRule): Rule1[t.ListItem] = {
       val tailLines: TokenRule = () => rule(codeBlock | listToken())
@@ -201,7 +204,7 @@ object Parsers {
       )
     }
 
-    private val combineListItemLines: (Vector[t.Atom], Seq[Vector[t.Atom]]) => t.ListItem = (head, tail) => {
+    private val combineListItemLines: (ArraySeq[t.Atom], Seq[ArraySeq[t.Atom]]) => t.ListItem = (head, tail) => {
       tail.iterator.filter(_.nonEmpty).foldLeft(head) { (q, n) =>
         if (q.lastOption.exists(_.allowBlankLineAfter) && n.headOption.exists(_.allowBlankLineBefore))
           (q :+ t.blankLine) ++ n
@@ -210,14 +213,14 @@ object Parsers {
       }
     }
 
-    private def extraLine(listToken: TokenRule): Rule1[Vector[t.Atom]] =
+    private def extraLine(listToken: TokenRule): Rule1[ArraySeq[t.Atom]] =
       rule(
         (NL ~ extraLine(listToken)) |
         (' ' ~ OWS ~ !bullet ~ textUntil(listToken, untilEOL))
       )
 
      def unorderedList(listToken: TokenRule): Rule1[t.UnorderedList] =
-       rule((BOI | (OWS ~ NL)) ~ listItem(listToken).+ ~ OWSNL ~ popSeqToNEV[t.ListItem] ~> t.UnorderedList)
+       rule((BOI | (OWS ~ NL)) ~ listItem(listToken).+ ~ OWSNL ~ popSeqToNEA[t.ListItem] ~> t.UnorderedList)
   }
 
   trait ContentRef extends Base with UseCaseStepLabel {
@@ -302,7 +305,7 @@ object Parsers {
 
     def issueRef: RuleAB[HashRefTarget, t.Issue] = {
       def id           = popPF[HashRefTarget, CustomIssueTypeId] { case \/-(i) => i.id }
-      def optionalDesc = rule(OWS ~ issueInnerDesc ~> (_.whole) | push(Vector.empty))
+      def optionalDesc = rule(OWS ~ issueInnerDesc ~> (_.whole) | push(ArraySeq.empty))
       rule(run(id) ~ optionalDesc ~> t.Issue)
     }
 
@@ -336,6 +339,6 @@ object Parsers {
     override final val  t: T = _t
     protected val token: TokenRule
     final def optionalText: Rule1[T#OptionalText] = rule(OWS ~ text(token) ~ EOI)
-    final def nonEmptyText: Rule1[T#NonEmptyText] = rule(optionalText ~ popNEV)
+    final def nonEmptyText: Rule1[T#NonEmptyText] = rule(optionalText ~ popNEA)
   }
 }

@@ -1,0 +1,18 @@
+Benchmark        Sample data                                Cnt       ms/op ± error       ops/s ± error
+                                                                                                       
+Read events      shipreq-events-full-1000.json               10      13.154 ± 0.924      76.164 ± 5.038
+Read events      shipreq-events-full-2000.json               10      28.080 ± 0.542      35.617 ± 0.684
+Read events      shipreq-events-full-4000.json               10      64.715 ± 1.262      15.455 ± 0.300
+Read events      shipreq-events-full-10000.json              10     183.709 ± 3.816       5.444 ± 0.114
+Read events      shipreq-events-no_req_codes-1000.json       10      10.186 ± 0.147      98.184 ± 1.414
+Read events      shipreq-events-no_req_codes-2000.json       10      25.891 ± 0.560      38.631 ± 0.829
+Read events      shipreq-events-no_req_codes-4000.json       10      57.125 ± 2.416      17.518 ± 0.739
+Read events      shipreq-events-no_req_codes-10000.json      10     177.811 ± 4.859       5.626 ± 0.152
+Read project     shipreq-events-full-1000.json               10       6.390 ± 0.076     156.509 ± 1.836
+Read project     shipreq-events-full-2000.json               10      12.295 ± 0.359      81.357 ± 2.316
+Read project     shipreq-events-full-4000.json               10      30.885 ± 0.622      32.383 ± 0.657
+Read project     shipreq-events-full-10000.json              10      88.170 ± 3.323      11.348 ± 0.427
+Read project     shipreq-events-no_req_codes-1000.json       10       4.463 ± 0.096     224.124 ± 4.822
+Read project     shipreq-events-no_req_codes-2000.json       10      11.675 ± 0.146      85.656 ± 1.073
+Read project     shipreq-events-no_req_codes-4000.json       10      26.494 ± 0.531      37.750 ± 0.755
+Read project     shipreq-events-no_req_codes-10000.json      10      87.062 ± 2.458      11.490 ± 0.325

@@ -1,0 +1,54 @@
+#!/bin/bash
+cd "$(dirname "$0")/.." || exit 1
+
+usage="Usage: $0 [-f|--force] [-c|--clean]"
+
+force=
+clean=
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -f|--force) force=1 ;;
+    -c|--clean) clean=clean ;;
+    -h|-help|--help)
+      echo "$usage"
+      exit 0
+      ;;
+    *)
+      echo "$usage"
+      echo "Unknown option: $1"
+      exit 1
+  esac
+  shift
+done
+
+target="${SHIPREQ_RELEASE_TARGET:-.}"
+jsPublic="$target/webapp-client-public/js/target/scala-2.13/webapp-client-public-opt.js"
+jsHome="$target/webapp-client-home/target/scala-2.13/webapp-client-home-opt.js"
+jsProject="$target/webapp-client-project/target/scala-2.13/webapp-client-project-opt.js"
+
+# Run SBT if necessary
+updateCmd="sbt -DMODE=release -DemitSourceMaps=1 $clean webapp-server/webappPostProcess"
+echo "Update command: $updateCmd"
+if [ -e "$jsProject" -a -z "$force" ]; then
+  echo "  Skipping..."
+else
+  echo "  Generating..."
+  $updateCmd
+fi
+echo
+
+function go {
+  js="$1"
+  name="$2"
+  base="analysis/$name"
+  echo "Generating $base.* ..."
+  bin/source-map-explorer "$js" --html "$base.html"
+  bin/source-map-explorer "$js" --sort --json "$base.json"
+  bin/source-map-explorer "$js" --tsv  | sed 1d | sort > "$base.tsv"
+}
+
+go "$jsPublic"  spa-public
+go "$jsHome"    spa-home
+go "$jsProject" spa-project
+
+echo "Done."

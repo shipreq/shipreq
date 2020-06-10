@@ -1,0 +1,69 @@
+<html><head><title>CardBoard Req Table | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+.ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+.ui.button.basic {background:#fff!important}
+
+.usage {text-align:right !important;}
+.usage.na { background-color: #f5f5f5; padding:4x !important; color: #666;}
+.usage.na::after { content: '–'}
+.usage.one span {visibility:hidden}
+.usage.zero:not(:hover) {color:#4183c4}
+
+/* .ui.menu .item>img:not(.ui) -- width:2.5em */
+/* .ui.menu .item -- padding-top/bottom: 0.928571em */
+/* body - padding: 1rem */
+#navX {height:calc(2 * 0.928571em + 2.5em - 1.55em); background:green}
+#navX {height:2.79rem; margin-bottom:1rem} /* padding is to match body */
+main {
+  xbackground:#fbb;
+  margin-top: 4rem;
+  min-height: calc(100vh - 2 * (0.928571em + 1rem) - 2.5em);
+  min-height: calc(100vh - 2.79rem - 3rem);
+  min-height: calc(100vh - 6rem);
+  display:grid;
+  grid-template-columns: 1fr 2rem 2rem 1fr;
+}
+section.gap2 {
+  border-left: solid 1px #e8e8e8;
+}
+
+#issueTags {
+}
+
+.sectionTitle {
+  display:block;
+  margin: 1rem auto 4rem auto;
+  max-width: 60ex;
+  font-size: 120%;
+  text-align: center;
+  font-weight:bold;
+  border-top: solid 1px #ddd;
+  border-bottom: solid 1px #ddd;
+  padding: .7em 0;
+}
+
+#otherSources .sources {
+  display:flex;
+  justify-content: center;
+}
+
+#otherSources .sources > .gap {width:6rem}
+#otherSources .sources .content {margin-bottom:4em}
+#otherSources .sources .header {font-weight:bold; margin-bottom:1em}
+#otherSources .sources ul {padding-left:2px; list-style-position: inside}
+#otherSources .sources li {margin-bottom:.3em; color:#444}
+#otherSources .sources span.sub::before {content:'('}
+#otherSources .sources span.sub::after {content:')'}
+#otherSources .sources span.sub {color:#999; margin-left:1ex}
+#otherSources .sources .body .desc {display:none}
+
+</style></head><body><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Req Table&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="header">Content</div><div class="item">Implication Graph</div><div class="item active">ReqTable</div><div class="header">Configuration</div><div class="item">Fields</div><div class="item">Issues</div><div class="item">Req Types</div><div class="item">Tags</div></div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="member-account.html" class="item">Account</a><div class="item">Logout</div></div></div></div><main><section class="left"><div class="sectionTitle">User-Defined Issue Types</div><div style="display:flex; margin-bottom:2rem"><div><div class="ui button green" id="new"><i class="icon plus"></i>New</div></div><div style="flex-grow:1"></div><div><button class="ui button icon"><i class="icon trash outline large grey"></i></button></div></div><div style="margin-top: 2rem" class="ui message info icon"><i class="icon info circle"></i><div class="content"><div class="header">No issue types</div><p>Create new issue types using the button above.</p></div></div></section><section class="gap1"></section><section class="gap2"></section><section class="right" id="otherSources"><div class="sectionTitle">Other Configurable Causes of Issues</div><div class="sources"><div class="left"><div class="content"><div class="header"><a href="#">Exclusive Tag Groups</a></div><div class="body"><div style="color:#444">None.</div></div></div><div class="content"><div class="header"><a href="#">Req Types with Mandatory Implication</a></div><div class="body"><div class="desc">The following req types require implication.When reqs of the following req types with blank "Implied By" fields, are flagged as issues. If you'd like to reconfigure this, do so on the <a href="#">Req Types Config</a> page.</div><ul><li>CO: Constraint</li><li>FR: Functional Requirement</li></ul></div></div></div><div class="gap"></div><div class="right"><div class="content"><div class="header"><a href="#">Mandatory fields</a></div><div class="body"><div class="desc">The following fields are mandatory. Reqs for which these fields are empty, are flagged as issues. If you'd like to reconfigure this, do so on the <a href="#">Field Config</a> page.</div><ul><li>Major Feature<span class="sub">CA and RO excepted</span></li><li>Priority<span class="sub">FR, MF and RO only</span></li><li>Title<span class="sub">built-in</span></li><li>Use Case Step<span class="sub">built-in</span></li></ul></div></div></div></div></section></main></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.dropdown').dropdown();
+//]]>
+</script>
+</html>

@@ -7,18 +7,28 @@ import nyaya.prop.CycleDetector
 import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
+import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import SizeSpec.DisableDefault._
 
 object BaseUtilGen {
 
-  implicit def NevToNonEmptySeq[A] = Gen.ToNonEmptySeq[NonEmptyVector[A], A](_.whole)
-  implicit def NesToNonEmptySeq[A] = Gen.ToNonEmptySeq[NonEmptySet   [A], A](_.whole.toVector)
+  implicit def NeaToNonEmptySeq[A] = Gen.ToNonEmptySeq[NonEmptyArraySeq[A], A](_.whole)
+  implicit def NesToNonEmptySeq[A] = Gen.ToNonEmptySeq[NonEmptySet     [A], A](_.whole.toVector)
+  implicit def NevToNonEmptySeq[A] = Gen.ToNonEmptySeq[NonEmptyVector  [A], A](_.whole)
 
   implicit def BaseUtilGen_GenExt[A](g: Gen[A]) = new BaseUtilGen_GenExt(g.run)
   class BaseUtilGen_GenExt[A](private val _g: Gen.Run[A]) extends AnyVal {
     private implicit def g = Gen(_g)
+
+    def nea(ss: SizeSpec)(implicit ct: ClassTag[A]): Gen[NonEmptyArraySeq[A]] =
+      nea(ct, ss)
+
+    def nea(implicit ct: ClassTag[A], ss: SizeSpec): Gen[NonEmptyArraySeq[A]] = {
+      val single = g map NonEmptyArraySeq.one
+      g.arraySeq(ss).flatMap(vs =>
+        NonEmptyArraySeq.maybe(vs, single)(Gen.pure))
+    }
 
     def nev(implicit ss: SizeSpec): Gen[NonEmptyVector[A]] = {
       val single = g map NonEmptyVector.one
@@ -84,12 +94,6 @@ object BaseUtilGen {
   }
 
   // ===================================================================================================================
-
-  def genISubset[A: UnivEq](g: Gen[NonEmptySet[A]]): Gen[ISubset[A]] =
-    Gen.chooseGen(
-      Gen pure ISubset.All(),
-      g map ISubset.Only.apply,
-      g map ISubset.Not.apply)
 
   def genMTrie[K: UnivEq, V](genK: Gen[K], genV: Gen[V], maxDepth: Int)(implicit ss: SizeSpec): Gen[MTrie.Trie[K, V]] = {
     val valueN   = genV map MTrie.Value[K, V]

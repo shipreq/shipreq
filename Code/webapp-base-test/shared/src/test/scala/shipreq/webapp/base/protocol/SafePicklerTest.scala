@@ -15,8 +15,8 @@ object SafePicklerTest extends TestSuite {
 
   private object Internals {
 
-    val v10 = Version.v10
-    val v11 = Version.fromInts(1, 1)
+    val v10 = Version.v1(0)
+    val v11 = Version.v1(1)
 
     sealed trait Data
     object Data {
@@ -66,7 +66,7 @@ object SafePicklerTest extends TestSuite {
       }
 
     val safePicklerv10: SafePickler[Data] =
-      picklerv10.asV10.withMagicNumbers(123, 456)
+      picklerv10.asV1(0).withMagicNumbers(123, 456)
 
     val safePicklerv11: SafePickler[Data] =
       picklerv11.asVersion(v11).withMagicNumbers(123, 456)
@@ -117,7 +117,7 @@ object SafePicklerTest extends TestSuite {
       assertDecodeOk(safePicklerv11)(bin, data)
     }
 
-    'badHeader - {
+    "badHeader" - {
       val bin = modBin(safePicklerv11.encode(Data.O), 9.toByte +: _)
       val expect = safePicklerv11.header.get
       assertDecodeFailure(safePicklerv11, bin) {
@@ -125,7 +125,7 @@ object SafePicklerTest extends TestSuite {
       }
     }
 
-    'badFooter - {
+    "badFooter" - {
       val bin = modBin(safePicklerv11.encode(Data.O), _.dropRight(1) :+ 9.toByte)
       val expect = safePicklerv11.footer.get
       assertDecodeFailure(safePicklerv11, bin) {
@@ -133,7 +133,7 @@ object SafePicklerTest extends TestSuite {
       }
     }
 
-    'embedded - {
+    "embedded" - {
 
       "w>r (ok)" - {
         val data = Data.A(123)
@@ -149,7 +149,7 @@ object SafePicklerTest extends TestSuite {
         }
       }
 
-      'badOuterFooter - {
+      "badOuterFooter" - {
         val p = embedded(safePicklerv11)
         val bin = modBin(p.encode(Data.O), _.dropRight(1) :+ 9.toByte)
         val expect = p.footer.get

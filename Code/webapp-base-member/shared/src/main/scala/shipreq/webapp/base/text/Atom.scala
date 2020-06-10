@@ -1,8 +1,9 @@
 package shipreq.webapp.base.text
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.NonEmptyVector
 import monocle.Iso
+import scala.collection.immutable.ArraySeq
+import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.{text => T}
@@ -88,17 +89,27 @@ object Atom {
       def allowBlankLineAfter = true
       @inline final def allowBlankLineBefore = allowBlankLineAfter // so far this holds but it might not always
     }
-    final type OptionalText = Vector[Atom]
-    final type NonEmptyText = NonEmptyVector[Atom]
+    final type OptionalText = ArraySeq[Atom]
+    final type NonEmptyText = NonEmptyArraySeq[Atom]
 
     @inline final def empty: OptionalText =
-      Vector.empty
+      ArraySeq.empty
+
+    def apply(as: Atom*): OptionalText =
+      ArraySeq.from(as)
+
+    def nonEmpty(a1: Atom, an: Atom*): NonEmptyText = {
+      val b = ArraySeq.newBuilder[Atom]
+      b += a1
+      b ++= an
+      NonEmptyArraySeq.force(b.result())
+    }
 
     def toOptional(o: Option[NonEmptyText]): OptionalText =
       NonEmptyIso.get(o)
 
     final val NonEmptyIso: Iso[Option[NonEmptyText], OptionalText] =
-      Iso[Option[NonEmptyText], OptionalText](_.fold(Vector.empty[Atom])(_.whole))(NonEmptyVector.option)
+      Iso[Option[NonEmptyText], OptionalText](_.fold(ArraySeq.empty[Atom])(_.whole))(NonEmptyArraySeq.option)
 
     final def supports(g: TypeGroup): Boolean =
       g match {
@@ -137,8 +148,8 @@ object Atom {
   }
 
   trait ListMarkup extends Base {
-    final type ListItem = Vector[Atom]
-    case class UnorderedList(items: NonEmptyVector[ListItem]) extends Atom {
+    final type ListItem = ArraySeq[Atom]
+    case class UnorderedList(items: NonEmptyArraySeq[ListItem]) extends Atom {
       override final def isPlain = false
       override final def containsMultipleLines = (items.length > 1) || items.head.exists(_.containsMultipleLines)
 
@@ -237,7 +248,7 @@ object Atom {
 
   // Prove that UnivEq[Atom] is acceptable.
   // A proof for all atom args should be added here.
-  UnivEq[NonEmptyVector[Vector[String]]]
+  UnivEq[NonEmptyArraySeq[ArraySeq[String]]]
   UnivEq[ApplicableTagId]
   UnivEq[CustomIssueTypeId]
   UnivEq[ReqId]

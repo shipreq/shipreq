@@ -1,0 +1,250 @@
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard Req Table | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      .ui.button.basic {background:#fff!important}
+
+      .is-tag {
+        padding: 4px 6px !important;
+        margin-left: .5ex !important;
+      }
+
+      ul.straytags {margin-bottom:0}
+      ul.straytags li:not(:first-child) {margin-top:0.25em}
+
+      xmain > table {margin-bottom:2rem!important;}
+      main > .left > table {margin-top:0!important;}
+      xmain > .left > table + table {margin-top:10rem!important}
+      xmain > .left > table > tbody > tr:not(.cont) > td:first-child {text-align:center!important; width:1ex}
+      main > .left > table > tbody > tr > td {vertical-align:top;}
+
+      #t2 tr { transition: background .1s ease,color .1s ease; }
+      #t2 tr.selected { background-color: #869df91f; }
+      #t2 td {cursor:pointer}
+
+      /* .ui.menu .item>img:not(.ui) -- width:2.5em */
+      /* .ui.menu .item -- padding-top/bottom: 0.928571em */
+      /* body - padding: 1rem */
+      #navX {height:calc(2 * 0.928571em + 2.5em - 1.55em); background:green}
+      #navX {height:2.79rem; margin-bottom:1rem} /* padding is to match body */
+      main {
+        xbackground:#fbb;
+        margin-top: 4rem;
+        min-height: calc(100vh - 2 * (0.928571em + 1rem) - 2.5em);
+        min-height: calc(100vh - 2.79rem - 3rem);
+        min-height: calc(100vh - 6rem);
+        display:grid;
+        grid-template-columns: 1fr 2rem 2rem 1fr;
+      }
+
+      section.gap2 {
+        border-left: solid 1px #e8e8e8;
+      }
+
+      .settings td { vertical-align:top; }
+      x.settings td:nth-child(3) { text-align:right; width:1px }
+      x.settings td:nth-child(3) button { margin-right:0!important }
+      x.settings td:first-child > .ui.input {width:100%}
+
+      #t2 tr.selected td {
+        border-top:solid 1px #3659e2;
+        border-bottom:solid 1px #3659e2;
+      }
+
+      #t2.has-selection tbody tr:not(.selected) { opacity:.4 }
+      #t2 tr { transition: opacity .4s }
+
+      .right-off {
+        overflow: hidden; height: 0; opacity: 0;
+        transition: height 0s .4s, opacity .4s 0s;
+      }
+      .right-on {
+        height: auto; opacity: 1;
+        transition: height 0s 0s, opacity .4s 0s;
+      }
+
+      .usage {text-align:right !important;}
+      .usage.na { background-color: #f5f5f5; padding:4x !important; color: #666;}
+      .usage.na::after { content: '–'}
+      .usage.one span {visibility:hidden}
+      .usage.zero:not(:hover) {color:#4183c4}
+
+      .dead-mnemonic {color:#999;text-decoration:line-through;}
+
+      .ui.message .body {
+        line-height: 1.4285em;
+        opacity: .85;
+        margin: .75em 0 .75em 0;
+      }
+      .ui.message ol {margin:.35em 0}
+
+  -# ==================================================================================================================================================
+  -# ==================================================================================================================================================
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "member-home.html"} Projects
+          %i.divider.icon.right.angle
+          %a.section{href: "project-index.html"} CardBoard
+          .ui.dropdown.inline
+            &nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+          %i.divider.icon.right.angle
+          .section // .active
+            .ui.dropdown.inline
+              Req Table
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .header Content
+                .item Implication Graph
+                .item.active ReqTable
+                .header Configuration
+                .item Fields
+                .item Issues
+                .item Req Types
+                .item Tags
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "member-account.html"} Account
+          .item Logout
+
+    %main
+
+      %section.left
+
+        -# %div(style="display:flex; margin-bottom:1em")
+          %div(style="flex-grow:1")
+            %h3 All fields
+          %div(style="")
+            %button.ui.button.icon
+              %i.icon.trash.outline.large.grey
+
+        %div(style="display:flex; margin-bottom:2rem")
+          %div
+            .ui.button.green#new
+              %i.icon.plus
+              New
+
+          %div(style="flex-grow:1")
+
+          %div(style="")
+            %button.ui.button.icon
+              %i.icon.trash.outline.large.grey
+
+
+        -# ==================================================================================================================================================
+        %table.ui.celled.table#t2
+          %thead
+            %tr
+              %th Mnemonic
+              %th Name
+              %th
+                Implication
+                %i.icon.help.circle.grey(style="margin-left:0.5ex; cursor:help" title="Determines whether reqs of certain req types need to be implied by other reqs, or not. Implication justifies the existence of reqs, and provides tracability.\\n\\nOptional means a req type is top-level or high-level, and not derived from, or dependent on anything else.\\nMandatory means a req type is always downstream of something else, often because it's the result of analysis. Reqs without valid implication are highlighted as issues.\\n\\nExample: business rule = Optional, because it's a description of the real-world; you don't need to justify it.\\nExample: solution idea = Mandatory, implied by reqs and/or problems it proposes to address.")
+              %th.usage Usage
+          %tbody
+            %tr
+              %td FR
+              %td Functional Requirement
+              %td Mandatory
+              %td.usage(title="86 reqs use this field") %a(href="#") 86 uses
+            %tr
+              %td MF, <span class="dead-mnemonic">MJF</span>
+              %td Major Feature
+              %td Optional
+              %td.usage(title="13 reqs use this field") %a(href="#") 13 uses
+            %tr
+              %td OE
+              %td Use Case
+              %td Optional
+              %td.usage.zero(title="No reqs use this field") %a(href="#") 0 uses
+            %tr#selrow
+              %td UC
+              %td Use Case
+              %td Optional
+              %td.usage(title="4 reqs use this field") %a(href="#") 4 uses
+
+      -# ==================================================================================================================================================
+      %section.gap1
+      %section.gap2
+
+      %section.right
+        .right-off#tageditor
+          %h2(style="color: #3659e2; margin-bottom:2rem") UC: Use Case
+
+          .ui.message.info.icon(style="margin-bottom:2rem")
+            %i.icon.info.circle
+            .content
+              .header Read-only
+              %p This req type is built-in and cannot be removed or modified.
+
+          .ui.form
+
+            .two.fields
+              .field.disabled
+                %label Mnemonic
+                %input(type="text" value="UC" style="width:30ex")
+
+            .field.disabled
+              %label Name
+              %input(type="text" value="Use Case" size=60)
+
+            .field.disabled
+              %label
+                Implication
+                %i.icon.help.circle.grey(style="margin-left:0.5ex; cursor:help" title="Determines whether reqs of certain req types need to be implied by other reqs, or not. Implication justifies the existence of reqs, and provides tracability.\\n\\nOptional means a req type is top-level or high-level, and not derived from, or dependent on anything else.\\nMandatory means a req type is always downstream of something else, often because it's the result of analysis. Reqs without valid implication are highlighted as issues.\\n\\nExample: business rule = Optional, because it's a description of the real-world; you don't need to justify it.\\nExample: solution idea = Mandatory, implied by reqs and/or problems it proposes to address.")
+              %select.ui.dropdown
+                %option Optional
+                %option Mandatory
+
+            .field.disabled
+              %label Description
+              %textarea(type="text" rows=4)
+
+          %div(style="margin-top:2rem; display:flex")
+            %div(style="flex-grow:1")
+            %button.ui.button.black.basic(style="margin-right:2em")
+              %i.icon.remove
+              Close
+
+        .right-on#noeditor(style="display:flex; flex-direction: column; font-size:120%")
+          %div(style="height:calc((100vh - 6rem)/4); xbackground:red")
+          %div(style="text-align:center; font-style:italic; color:#999; line-height: 1.8em")
+            %div This is the req type editor.
+            %div Create a new req type, or select an existing req type to edit it here.
+
+  :javascript
+    $('.ui.dropdown').dropdown();
+    // $('.celled.table').toggleClass('celled');
+
+    function toggle() {
+      $('#t2').toggleClass('has-selection');
+      $('#selrow').toggleClass('selected');
+      $('#noeditor,#tageditor').toggleClass('right-on');
+      $('#noeditor,#tageditor').toggleClass('right-off');
+      $('#new, #t2 button').toggleClass('disabled');
+    }
+
+    $('#t2').click(toggle);
+    toggle()

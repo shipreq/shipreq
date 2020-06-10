@@ -1,6 +1,5 @@
 package shipreq.taskman.server.business
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import io.circe._
 import io.circe.syntax._
@@ -111,7 +110,7 @@ object MailChimp {
         implicit val enc = Encoder.AsObject.instance[BatchSubscribe](i =>
           JsonObject.fromIterable(
             ("id" -> i.listId.value.asJson) ::
-              ("batch" -> Json.arr(i.subs.list.map(s => Json.obj(buildReqSubscription(s): _*)): _*)) ::
+              ("batch" -> Json.arr(i.subs.iterator.map(s => Json.obj(buildReqSubscription(s): _*)).toSeq: _*)) ::
               batchSubscribeStatic))
 
         implicit val dec = decoderBatchSubscribe

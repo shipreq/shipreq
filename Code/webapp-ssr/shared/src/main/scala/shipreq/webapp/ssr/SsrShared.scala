@@ -9,7 +9,7 @@ import shipreq.webapp.base.protocol.binary.v1.BaseData._
   * that can be called from [SsrInterpreter] on the JVM.
   */
 object SsrJsFunctionManifest {
-  final val Public           = "public"
+  final val PublicLoader     = "publicLoader"
   final val HomeSpaLoader    = "homeSpaLoader"
   final val ProjectSpaLoader = "projectSpaLoader"
 }

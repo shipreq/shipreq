@@ -1,32 +1,32 @@
 package shipreq.webapp.server.logic
 
 import japgolly.microlibs.nonempty._
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.util.Multimap
 import scalaz.\/
-import scalaz.syntax.equal._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.{ProjectNameSet => _, _}
+import shipreq.webapp.base.protocol.websocket._
+import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.WsReqRes.{ProjectNameSet => _, _}
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericDataMacros._
 import DataImplicits._
 import Event._
-import ScalaExt._
 import PotentialChange._
+import ScalaExt._
 
 /**
  * Translates commands inputs into [[ActiveEvent]]s.
  */
 object MakeEvent {
 
-  type Result = PotentialChange[String, ActiveEvent]
+  type Result = PotentialChange[ErrorMsg, ActiveEvent]
 
   // ===================================================================================================================
 
-  @inline private implicit class DisjExt[A](private val v: String \/ A) extends AnyVal {
+  @inline private implicit class DisjExt[A](private val v: ErrorMsg \/ A) extends AnyVal {
     @inline def toMakeEventResult(f: A => Result): Result =
       v.fold(Failure(_), f)
   }
@@ -39,6 +39,8 @@ object MakeEvent {
 
   @inline private implicit def autoSuccess(e: ActiveEvent) = Success(e)
 
+  private def fail(s: String) = Failure(ErrorMsg(s))
+
   // ===================================================================================================================
 
   def projectNameSetFn(name: String): Result =
@@ -46,16 +48,7 @@ object MakeEvent {
 
   def reqTypeImplicationMod(input: ReqTypeImplicationMod.RequestType): Result = {
     val (id, imp) = input
-    CustomReqTypeUpdate(id, CustomReqTypeGD.Imp(imp))
-  }
-
-  def fieldMandatorinessMod(input: FieldMandatorinessMod.RequestType): Result = {
-    val m = input._2
-    input._1 match {
-      case id: CustomField.Text       .Id => FieldCustomTextUpdate(id, CustomTextFieldGD.Mandatory(m))
-      case id: CustomField.Tag        .Id => FieldCustomTagUpdate (id, CustomTagFieldGD .Mandatory(m))
-      case id: CustomField.Implication.Id => FieldCustomImpUpdate (id, CustomImpFieldGD .Mandatory(m))
-    }
+    CustomReqTypeUpdate(id, CustomReqTypeGD.Implication(imp))
   }
 
   def updateConfig(cmd: UpdateConfigCmd, project: Project): Result = {
@@ -63,16 +56,15 @@ object MakeEvent {
 
     cmd match {
 
-      case UpdateConfigCmd.CustomIssueTypeCreate(vs) =>
+      case cmd: UpdateConfigCmd.CustomIssueTypeCreate =>
         val id = CustomIssueTypeId(project.idCeilings.customIssueType + 1)
-        import vs._
+        import cmd._
         val values = gdAllValues(CustomIssueTypeGD , "")
         CustomIssueTypeCreate(id, values)
 
       case UpdateConfigCmd.CustomIssueTypeUpdate(id, vs) =>
         project.config.customIssueTypes.attempt(id) toMakeEventResult { cur =>
-          import vs._
-          val vs2 = gdUnequalValues(CustomIssueTypeGD, cur, "")
+          val vs2 = gdUnequalValues2(CustomIssueTypeGD, cur, vs)
           eventIfNonEmpty(vs2)(CustomIssueTypeUpdate(id, _))
         }
 
@@ -82,23 +74,26 @@ object MakeEvent {
       case UpdateConfigCmd.CustomIssueTypeRestore(id) =>
         CustomIssueTypeRestore(id)
 
-      case UpdateConfigCmd.CustomReqTypeCreate(vs) =>
+      case cmd: UpdateConfigCmd.CustomReqTypeCreate =>
         val id = CustomReqTypeId(project.idCeilings.customReqType + 1)
-        import vs._
+        import cmd._
         val values = gdAllValues(CustomReqTypeGD , "")
         CustomReqTypeCreate(id, values)
 
       case UpdateConfigCmd.CustomReqTypeUpdate(id, vs) =>
-        project.config.reqTypes.need(id) match {
-          case cur: CustomReqType =>
-            import vs._
-            val vs2 = gdUnequalValues(CustomReqTypeGD, cur, "")
+        project.config.reqTypes.get(id) match {
+          case Some(cur: CustomReqType) =>
+            val vs2 = gdUnequalValues2(CustomReqTypeGD, cur, vs)
             eventIfNonEmpty(vs2)(CustomReqTypeUpdate(id, _))
-          case f => Failure(s"$f must be a CustomReqType.")
+          case Some(f) => fail(s"$f must be a CustomReqType.")
+          case None    => fail(s"$id not found")
         }
 
-      case UpdateConfigCmd.CustomReqTypeDelete(id) =>
-        CustomReqTypeDelete(id)
+      case UpdateConfigCmd.CustomReqTypeDeleteHard(id) =>
+        CustomReqTypeDeleteHard(id)
+
+      case UpdateConfigCmd.CustomReqTypeDeleteSoft(id) =>
+        CustomReqTypeDeleteSoft(id)
 
       case UpdateConfigCmd.CustomReqTypeRestore(id) =>
         CustomReqTypeRestore(id)
@@ -106,52 +101,48 @@ object MakeEvent {
       case UpdateConfigCmd.FieldUpdateOrder(id, pos) =>
         FieldReposition(id, pos)
 
-      case UpdateConfigCmd.CustomFieldCreate(vs: UpdateConfigCmd.TextFieldValues) =>
-        val _ = vs // used by macros
-        val id = CustomField.Text.Id(nextId)
-        FieldCustomTextCreate(id, gdAllValues(CustomTextFieldGD, "vs"))
-
-      case UpdateConfigCmd.CustomFieldCreate(vs: UpdateConfigCmd.TagFieldValues) =>
-        val _ = vs // used by macros
-        val id = CustomField.Tag.Id(nextId)
-        FieldCustomTagCreate(id, gdAllValues(CustomTagFieldGD, "vs"))
-
-      case UpdateConfigCmd.CustomFieldCreate(vs: UpdateConfigCmd.ImpFieldValues) =>
-        val _ = vs // used by macros
+      case c: UpdateConfigCmd.CustomFieldCreateImp =>
         val id = CustomField.Implication.Id(nextId)
-        FieldCustomImpCreate(id, gdAllValues(CustomImpFieldGD, "vs"))
+        FieldCustomImpCreate(id, c.reqTypeId, gdAllValues(CustomImpFieldGD, "c"))
 
-      case UpdateConfigCmd.CustomFieldUpdateText(id, vs) =>
-        val _ = vs // used by macros
-        project.config.fields.customAttempt(id) toMakeEventResult { cur =>
-          val vs2 = gdUnequalValues(CustomTextFieldGD, cur, "vs")
-          eventIfNonEmpty(vs2)(FieldCustomTextUpdate(id, _))
-        }
+      case c: UpdateConfigCmd.CustomFieldCreateTag =>
+        val id = CustomField.Tag.Id(nextId)
+        FieldCustomTagCreate(id, c.tagId, gdAllValues(CustomTagFieldGD, "c"))
 
-      case UpdateConfigCmd.CustomFieldUpdateTag(id, vs) =>
-        val _ = vs // used by macros
-        project.config.fields.customAttempt(id) toMakeEventResult { cur =>
-          val vs2 = gdUnequalValues(CustomTagFieldGD, cur, "vs")
-          eventIfNonEmpty(vs2)(FieldCustomTagUpdate(id, _))
-        }
+      case c: UpdateConfigCmd.CustomFieldCreateText =>
+        locally(c) // used by macros
+        val id = CustomField.Text.Id(nextId)
+        FieldCustomTextCreate(id, gdAllValues(CustomTextFieldGD, "c"))
 
       case UpdateConfigCmd.CustomFieldUpdateImp(id, vs) =>
-        val _ = vs // used by macros
+        locally(vs) // used by macros
         project.config.fields.customAttempt(id) toMakeEventResult { cur =>
-          val vs2 = gdUnequalValues(CustomImpFieldGD, cur, "vs")
+          val vs2 = gdUnequalValues2(CustomImpFieldGD, cur, vs)
           eventIfNonEmpty(vs2)(FieldCustomImpUpdate(id, _))
         }
 
-      case UpdateConfigCmd.FieldDelete(f: StaticField) =>
+      case UpdateConfigCmd.CustomFieldUpdateTag(id, vs) =>
+        project.config.fields.customAttempt(id) toMakeEventResult { cur =>
+          val vs2 = gdUnequalValues2(CustomTagFieldGD, cur, vs)
+          eventIfNonEmpty(vs2)(FieldCustomTagUpdate(id, _))
+        }
+
+      case UpdateConfigCmd.CustomFieldUpdateText(id, vs) =>
+        project.config.fields.customAttempt(id) toMakeEventResult { cur =>
+          val vs2 = gdUnequalValues2(CustomTextFieldGD, cur, vs)
+          eventIfNonEmpty(vs2)(FieldCustomTextUpdate(id, _))
+        }
+
+      case UpdateConfigCmd.StaticFieldRemove(f) =>
         FieldStaticRemove(f)
 
-      case UpdateConfigCmd.FieldRestore(f: StaticField) =>
+      case UpdateConfigCmd.StaticFieldAdd(f) =>
         FieldStaticAdd(f)
 
-      case UpdateConfigCmd.FieldDelete(id: CustomFieldId) =>
+      case UpdateConfigCmd.CustomFieldDelete(id) =>
         FieldCustomDelete(id)
 
-      case UpdateConfigCmd.FieldRestore(id: CustomFieldId) =>
+      case UpdateConfigCmd.CustomFieldRestore(id) =>
         FieldCustomRestore(id)
 
       case t: UpdateConfigCmd.ToModifyTags =>
@@ -159,85 +150,154 @@ object MakeEvent {
     }
   }
 
-  // TODO tagCrud protocol is crap. Redo it.
+  private final class TagChildrenHelper[T <: TagId](project: Project, tagId: TagId, select: PartialFunction[TagId, T]) {
+    val allChildren = project.config.tags.directChildren(tagId)
+
+    val okChildren: Vector[T] =
+      allChildren
+        .iterator
+        .map(select.lift)
+        .filterDefined
+        .toVector
+
+    val okChildrenSet: Set[TagId] =
+      okChildren.toSet
+
+    val otherChildren: Vector[TagId] =
+      allChildren.filterNot(okChildrenSet.contains)
+  }
+
+  private object TagChildrenHelper {
+    def liveApTags(project: Project, tagId: TagId): TagChildrenHelper[ApplicableTagId] =
+      new TagChildrenHelper(project, tagId, {
+        case id: ApplicableTagId if project.config.tags.needApplicableTag(id).live.is(Live) => id
+      })
+
+    def liveTags(project: Project, tagId: TagId): TagChildrenHelper[TagId] =
+      new TagChildrenHelper(project, tagId, {
+        case id if project.config.tags.tree.need(id).tag.live.is(Live) => id
+      })
+  }
+
+  private final class TagParentsHelper[T <: TagId](project: Project, tagId: TagId, select: TagId => Option[T]) {
+    val allParents = project.config.tags.parents(tagId)
+
+    val okParents: Map[T, Option[TagId]] =
+      allParents
+        .iterator
+        .map { case (id, pos) => select(id).map((_, pos)) }
+        .filterDefined
+        .toMap
+
+    val okParentsSet: Set[T] =
+      okParents.keySet
+
+    private val _okParentsSet: Set[TagId] =
+      okParentsSet.asInstanceOf[Set[TagId]]
+
+    val otherParents: Map[TagId, Option[TagId]] =
+      allParents.view.filterKeys(!_okParentsSet.contains(_)).toMap
+  }
+
+  private object TagParentsHelper {
+
+    @inline def pf[T <: TagId](project: Project, tagId: TagId, select: PartialFunction[TagId, T]): TagParentsHelper[T] =
+      new TagParentsHelper(project, tagId, select.lift)
+
+    def liveTagGroups(project: Project, tagId: TagId): TagParentsHelper[TagGroupId] =
+      pf(project, tagId, {
+        case id: TagGroupId if project.config.tags.needTagGroup(id).live.is(Live) => id
+      })
+  }
+
   private def tagCrud(cmd: UpdateConfigCmd.ToModifyTags, project: Project): Result = {
-    import UpdateConfigCmd.{TagGroupValues, ApplicableTagValues}
     def nextId = project.idCeilings.tag + 1
     cmd match {
 
-      case UpdateConfigCmd.TagCreate(vs) =>
-        val rels = vs.b getOrElse TagInTree.noRelations
-        import rels._
+      case UpdateConfigCmd.ApplicableTagCreate(newValues) =>
+        val id = ApplicableTagId(nextId)
+        ApplicableTagCreate(id, newValues)
 
-        vs.a match {
-          case Some(v: ApplicableTagValues) =>
-            val id = ApplicableTagId(nextId)
-            import v._
-            ApplicableTagCreate(id, gdAllValues(ApplicableTagGD, ""))
+      case UpdateConfigCmd.ApplicableTagUpdate(id, newValues) =>
+        PotentialChange.fromDisjunction(project.config.tags.applicableTag(id)).flatMap { tag =>
+          import ApplicableTagGD._
 
-          case Some(v: TagGroupValues) =>
-            val id = TagGroupId(nextId)
-            import v._
-            TagGroupCreate(id, gdAllValues(TagGroupGD, ""))
+          if (newValues.containsK(Children))
+            fail("You cannot specify ApplicableTag children")
+          else if (Parents.get(newValues).exists(_.value.keysIterator.exists(project.config.tags.tree.need(_).tag.live is Dead)))
+            fail("You cannot specify dead parents")
+          else if (ApplicableReqTypes.get(newValues).exists(_.value.reqTypes.exists(project.config.reqTypes.live(_, Dead) is Dead)))
+            fail("You cannot specify dead req types")
+          else {
 
-          case None => Failure("Values required.")
+            // Update values if necessary, and remove unchanged
+            val b = valueBuilder()
+            newValues.valuesIterator.foreach {
+              case ValueForChildren(_) => () // prevented above
+              case ValueForColour  (v) => b.addIfChanged(Colour)(tag.colour, v)
+              case ValueForDesc    (v) => b.addIfChanged(Desc  )(tag.desc  , v)
+              case ValueForKey     (v) => b.addIfChanged(Key   )(tag.key   , v)
+
+              case ValueForApplicableReqTypes(v) =>
+                val v2 = v.withDeadFrom(tag.applicableReqTypes, project.config.reqTypes)
+                b.addIfChanged(ApplicableReqTypes)(tag.applicableReqTypes, v2)
+
+              case ValueForParents(v) =>
+                val h = TagParentsHelper.liveTagGroups(project, id)
+                val v2 = h.otherParents ++ v
+                b.addIfChanged(Parents)(h.allParents, v2)
+            }
+
+            eventIfNonEmpty(b.values())(ApplicableTagUpdate(id, _))
+          }
         }
 
-      case UpdateConfigCmd.TagUpdate(tagId, vs) =>
-        project.config.tags.tree.get(tagId) match {
-          case Some(tit) =>
+      case UpdateConfigCmd.TagGroupCreate(newValues) =>
+        val id = TagGroupId(nextId)
+        TagGroupCreate(id, newValues)
 
-            var children: Option[TagInTree.Children] = None
-            var parents : Option[TagInTree.Parents]  = None
-            for (rels <- vs.b) {
-              if (tit.children !=* rels.children)
-                children = Some(rels.children)
-              // TODO Shouldn't need to rebuild treeStructure
-              val treeStructure = project.config.tags.tree.mapValues(_.children)
-              val ps = MMTree.Relations.deriveParents(tagId, treeStructure)
-              if (ps !=* rels.parents)
-                parents = Some(rels.parents)
+      case UpdateConfigCmd.TagGroupUpdate(id, newValues) =>
+        PotentialChange.fromDisjunction(project.config.tags.tagGroup(id)).flatMap { tag =>
+          import TagGroupGD._
+
+          if (Children.get(newValues).exists(_.value.exists(project.config.tags.tree.need(_).tag.live is Dead)))
+            fail("You cannot specify dead children")
+          else if (Parents.get(newValues).exists(_.value.keysIterator.exists(project.config.tags.tree.need(_).tag.live is Dead)))
+            fail("You cannot specify dead parents")
+          else {
+
+            // Update values if necessary, and remove unchanged
+            val b = valueBuilder()
+            newValues.valuesIterator.foreach {
+              case ValueForDesc       (v) => b.addIfChanged(Desc       )(tag.desc       , v)
+              case ValueForExclusivity(v) => b.addIfChanged(Exclusivity)(tag.exclusivity, v)
+              case ValueForName       (v) => b.addIfChanged(Name       )(tag.name       , v)
+
+              case ValueForChildren(v) =>
+                val h = TagChildrenHelper.liveTags(project, id)
+                val v2 = h.otherChildren ++ v
+                b.addIfChanged(Children)(h.allChildren, v2)
+
+              case ValueForParents(v) =>
+                val h = TagParentsHelper.liveTagGroups(project, id)
+                val v2 = h.otherParents ++ v
+                b.addIfChanged(Parents)(h.allParents, v2)
             }
 
-            tit.tag match {
-              case cur: ApplicableTag =>
-                import ApplicableTagGD._
-                var us = emptyValues
-                def build = eventIfNonEmpty(us)(ApplicableTagUpdate(cur.id, _))
-                children.foreach(c => us += Children(c))
-                parents .foreach(p => us += Parents (p))
-                vs.a match {
-                  case Some(v: ApplicableTagValues) =>
-                    if (v.name !=* cur.name) us += Name(v.name)
-                    if (v.key  !=* cur.key ) us += Key (v.key)
-                    if (v.desc !=* cur.desc) us += Desc(v.desc)
-                    build
-                  case None =>
-                    build
-                  case Some(_: TagGroupValues) =>
-                    Failure("Cannot apply TagGroup values to an ApplicableTag.")
-                }
+            eventIfNonEmpty(b.values())(TagGroupUpdate(id, _))
+          }
+        }
 
-              case cur: TagGroup =>
-                import TagGroupGD._
-                var us = emptyValues
-                def build = eventIfNonEmpty(us)(TagGroupUpdate(cur.id, _))
-                children.foreach(c => us += Children(c))
-                parents .foreach(p => us += Parents (p))
-                vs.a match {
-                  case Some(v: TagGroupValues) =>
-                    if (v.name          !=* cur.name         ) us += Name         (v.name)
-                    if (v.mutexChildren !=* cur.mutexChildren) us += MutexChildren(v.mutexChildren)
-                    if (v.desc          !=* cur.desc         ) us += Desc         (v.desc)
-                    build
-                  case None =>
-                    build
-                  case Some(_: ApplicableTagValues) =>
-                    Failure("Cannot apply ApplicableTag values to an TagGroup.")
-                }
-
-            }
-          case None => Failure(s"$tagId not found.")
+      case UpdateConfigCmd.TagSetLiveChildrenOrder(tagId, newLiveChildrenOrder) =>
+        val h = TagChildrenHelper.liveApTags(project, tagId)
+        if (h.okChildren ==* newLiveChildrenOrder)
+          Unchanged
+        else if (h.okChildrenSet !=* newLiveChildrenOrder.toSet)
+          fail("Tag group contains different children than specified. Please try again.")
+        else {
+          val newChildren = h.otherChildren ++ newLiveChildrenOrder
+          val values = TagGroupGD.nev(TagGroupGD.ValueForChildren(newChildren))
+          TagGroupUpdate(tagId, values)
         }
 
       case UpdateConfigCmd.TagDelete(id) =>
@@ -261,7 +321,7 @@ object MakeEvent {
     val nextCodeId = reqCodeIdCounter(project)
     cmd match {
       case CreateContentCmd.CreateCodeGroup(code, title) =>
-        val _ = title // used by macros
+        locally(title) // used by macros
 
         def makeEvent(id: ReqCodeGroupId) =
           Success(CodeGroupCreate(id, gdAllValues(CodeGroupGD, "")))
@@ -270,7 +330,7 @@ object MakeEvent {
           case None => makeEvent(nextCodeId.group())
           case Some(d) =>
             if (d.isActive)
-              Failure("Code in use.")
+              fail("Code in use.")
             else
               d.deadGroup match {
                 case Some(dg) => makeEvent(dg.id)
@@ -289,7 +349,7 @@ object MakeEvent {
         for (v <- NonEmptySet.option(i.imps(Backwards))) vs += GenericReqGD.ImpSrcs(v)
         for (v <- NonEmptySet.option(i.imps(Forwards)))  vs += GenericReqGD.ImpTgts(v)
         for (v <- NonEmptySet.option(i.tags))            vs += GenericReqGD.Tags(v)
-        for (v <- NonEmptyVector.option(i.title))        vs += GenericReqGD.Title(v)
+        for (v <- NonEmptyArraySeq.option(i.title))      vs += GenericReqGD.Title(v)
         val id = GenericReqId(project.idCeilings.req + 1)
         GenericReqCreate(id, i.reqType, vs)
 
@@ -304,7 +364,7 @@ object MakeEvent {
         for (v <- NonEmptySet.option(i.imps(Backwards))) vs += UseCaseGD.ImpSrcs(v)
         for (v <- NonEmptySet.option(i.imps(Forwards)))  vs += UseCaseGD.ImpTgts(v)
         for (v <- NonEmptySet.option(i.tags))            vs += UseCaseGD.Tags(v)
-        for (v <- NonEmptyVector.option(i.title))        vs += UseCaseGD.Title(v)
+        for (v <- NonEmptyArraySeq.option(i.title))      vs += UseCaseGD.Title(v)
         val id = UseCaseId(project.idCeilings.req + 1)
         val stepId = UseCaseStepId(project.idCeilings.useCaseStep + 1)
         UseCaseCreate(id, stepId, vs)
@@ -338,7 +398,7 @@ object MakeEvent {
         var r      : Option[Result]                            = None
 
         def fail(err: String): Unit =
-          r = Some(Failure(err))
+          r = Some(Failure(ErrorMsg(err)))
 
         import ReqCode._
         for (c <- cs.value.removed)
@@ -381,7 +441,7 @@ object MakeEvent {
 
       case UpdateContentCmd.RestoreContent(reqs, reqCodes) =>
         if (reqs.isEmpty && reqCodes.isEmpty)
-          Failure("No content specified.")
+          fail("No content specified.")
         else
           ContentRestore(reqs, reqCodes)
 
@@ -403,12 +463,12 @@ object MakeEvent {
     }
 
   def updateSavedViews(cmd: SavedViewCmd, project: Project): Result = {
-    import reqtable._
+    import shipreq.webapp.base.data.savedview._
     cmd match {
 
       case SavedViewCmd.Create(name, view) =>
-        val id = SavedView.Id(project.idCeilings.reqtableView + 1)
-        SavedViewCreate(id, name, view.columns, view.order, view.filterDead, view.filter)
+        val id = SavedView.Id(project.idCeilings.savedView + 1)
+        SavedViewCreate(id, name, view.columns, view.order, view.filterDead, view.filter, view.impGraphConfig)
 
       case SavedViewCmd.Update(id, vs) =>
         SavedViewUpdate(id, vs)

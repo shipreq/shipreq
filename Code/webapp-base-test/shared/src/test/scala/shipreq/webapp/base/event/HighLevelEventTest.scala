@@ -2,6 +2,7 @@ package shipreq.webapp.base.event
 
 import utest._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
 import AutoNES._
@@ -11,12 +12,11 @@ object HighLevelEventTest extends TestSuite {
 
   override def tests = Tests {
 
-    'unusedReqTypeMnemonicsCanBeReclaimed {
-      import NoInitialEvents._
+    "unusedReqTypeMnemonicsCanBeReclaimed" - {
 
       def createReqType(id: CustomReqTypeId, mnemonic: ReqType.Mnemonic, name: String) = {
         import CustomReqTypeGD._
-        CustomReqTypeCreate(id, nev(Mnemonic(mnemonic), Name(name), Imp(ImplicationRequired.Not)))
+        CustomReqTypeCreate(id, nev(Mnemonic(mnemonic), Description(None), Name(name), Implication(Optional)))
       }
 
       def test(p: Project, expect: String): Unit = {
@@ -39,7 +39,7 @@ object HighLevelEventTest extends TestSuite {
 
       val p2 = applyEventsSuccessfully(p1,
         GenericReqCreate(1.GR, 2, GenericReqGD.emptyValues), // → 2:MF 3:FR | MF-1
-        ReqsDelete(1.GR, Set.empty, Vector.empty),           // → 2:MF 3:FR | MF-1!
+        ReqsDelete(1.GR, Set.empty, Text.empty),             // → 2:MF 3:FR | MF-1!
         CustomReqTypeDelete(3),                              // → 2:MF      | MF-1!
         CustomReqTypeDelete(2))                              // → 2:MF!     | MF-1!
 

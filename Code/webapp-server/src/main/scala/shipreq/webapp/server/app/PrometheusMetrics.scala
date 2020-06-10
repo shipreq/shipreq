@@ -91,8 +91,8 @@ object PrometheusMetrics extends HasLogger {
 
     // The following counters are omitted because they are provided by histogram counts
     //
-    // http_requests_total  ← http_response_duration_seconds_count
-    // ws_messages_total    ← ws_message_duration_seconds_count
+    // http_requests_total  <- http_response_duration_seconds_count
+    // ws_messages_total    <- ws_message_duration_seconds_count
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -297,7 +297,7 @@ object PrometheusMetrics extends HasLogger {
         HttpDuration.apply.observe(durationSec)
 
         if (req.getContentLengthLong > 0)
-          HttpIO(CommDir.Recv).inc(req.getContentLengthLong)
+          HttpIO(CommDir.Recv).inc(req.getContentLengthLong.toDouble)
 
         resp.getHeader("Content-Length") match {
           case null =>
@@ -309,7 +309,7 @@ object PrometheusMetrics extends HasLogger {
               logger.info(s"No Content-Length for request: ${req.getMethod} ${req.getRequestURI} ${resp.getStatus}")
           case ParseLong(len) =>
             if (len > 0)
-              HttpIO(CommDir.Send).inc(len)
+              HttpIO(CommDir.Send).inc(len.toDouble)
           case str =>
             logger.warn(s"Unable to parse ${method.value} $path response's Content-Length ($str) as Long.")
         }
@@ -364,14 +364,14 @@ final class PrometheusMetrics extends MetricsLogic[Fx] {
     Fx {
       implicit val msgTypeT = MsgType(msgType)
       WebSocketMessageDuration(success).observe(duration.asSeconds)
-      WebSocketIO.msg(CommDir.Recv, success).inc(bytesIn)
-      WebSocketIO.msg(CommDir.Send, success).inc(bytesOut)
+      WebSocketIO.msg(CommDir.Recv, success).inc(bytesIn.toDouble)
+      WebSocketIO.msg(CommDir.Send, success).inc(bytesOut.toDouble)
     }
 
   override def projectSpaWebSocketPush(bytesOut: Long): Fx[Unit] =
     Fx {
       projectSpaPushes.inc()
-      projectSpaPushIO.inc(bytesOut)
+      projectSpaPushIO.inc(bytesOut.toDouble)
     }
 
   override def projectSpaWebSocketConnected(dur: Duration, result: String) =

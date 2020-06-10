@@ -40,7 +40,7 @@ object Legal {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val Privacy = ScalaComponent.builder[RouterCtl]("Privacy").render_P(implicit rc =>
+  val Privacy = ScalaComponent.builder[RouterCtl].render_P(implicit rc =>
 
     page(
       header(
@@ -131,7 +131,7 @@ object Legal {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  val TermsOfService = ScalaComponent.builder[RouterCtl]("ToS").render_P(implicit rc =>
+  val TermsOfService = ScalaComponent.builder[RouterCtl].render_P(implicit rc =>
 
     page(
       header(

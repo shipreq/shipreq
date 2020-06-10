@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.components.TriStateCheckbox
 import japgolly.univeq.UnivEq
 import monocle.Iso
@@ -41,7 +40,7 @@ object Selection {
   sealed trait Base[A] {
     val selected: Set[A]
 
-    def clearAll(as: TraversableOnce[A]): Selection[A] =
+    def clearAll(as: IterableOnce[A]): Selection[A] =
       Selection(selected -- as)
   }
 

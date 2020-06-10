@@ -62,8 +62,8 @@ object ConsolidatedSeq {
         g => f(groupHead(g)),
         g => groupTail(g).map(f))
 
-    def apply(as: TraversableOnce[A]): ConsolidatedSeq[B] = {
-      val it            = as.toIterator
+    def apply(as: IterableOnce[A]): ConsolidatedSeq[B] = {
+      val it            = as.iterator
       var srcIndexStart = 0
       var group         = 0
       var buffer        = Vector.empty[A]

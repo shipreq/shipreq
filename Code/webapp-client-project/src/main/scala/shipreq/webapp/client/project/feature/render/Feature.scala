@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.feature.render
 
 import japgolly.scalajs.react.{Reusability, Reusable, ~=>}
 import scala.reflect.ClassTag
+import shipreq.base.util.{IfApplicable, NotApplicable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.base.text.ProjectText.{Context => PCtx}
@@ -10,26 +11,26 @@ import shipreq.webapp.client.project.widgets.ViewReqCache
 
 object Feature {
 
-  object ForProject {
-    import japgolly.scalajs.react.vdom.html_<^.VdomTag
+  final case class ForProject[+Ctx <: PCtx, V, Out](private[Feature] val project     : Project,
+                                                    private[Feature] val filterDead  : FilterDead,
+                                                    private[Feature] val viewReqCache: ViewReqCache[Ctx, V],
+                                                    private[Feature] val pt          : ProjectText[Ctx, V],
+                                                    private[Feature] val render      : V ~=> Out,
+                                                    private[Feature] val renderIfApp : IfApplicable[V] ~=> Out,
+                                                   ) {
 
-    type ToVdom[Ctx <: PCtx] = ForProject[Ctx, VdomTag]
-  }
-
-  final case class ForProject[+Ctx <: PCtx, Out](private[Feature] project     : Project,
-                                                 private[Feature] filterDead  : FilterDead,
-                                                 private[Feature] viewReqCache: ViewReqCache[Ctx, Out],
-                                                 private[Feature] pt          : ProjectText[Ctx, Out]) {
-
-    private val reusableSelf = Reusable.explicitly(this)(reusabilityForProject[Ctx, Out])
+    private val reusableSelf = Reusable.explicitly(this)(reusabilityForProject[Ctx, V, Out])
     private val viewReq      = viewReqCache(filterDead)
     private val useCases     = project.content.reqs.useCases
 
-    private def forFields0[FK <: FieldKey](render: FK => Out) =
-      ForFields[Ctx, FK, Out](reusableSelf.withValue(render))
+    private def forFields0[FK <: FieldKey](r: FK => V) =
+      ForFields[Ctx, FK, Out](reusableSelf.withValue(render compose r))
 
-    private def forFields1[A: Reusability : ClassTag, FK <: FieldKey](a: A)(render: FK => Out) =
-      ForFields[Ctx, FK, Out](reusableSelf.tuple(Reusable.implicitly(a)).withValue(render))
+    private def forFields1[A: Reusability : ClassTag, FK <: FieldKey](a: A)(r: FK => V) =
+      ForFields[Ctx, FK, Out](reusableSelf.tuple(Reusable.implicitly(a)).withValue(render compose r))
+
+    private def forFieldsIfApp1[A: Reusability : ClassTag, FK <: FieldKey](a: A)(r: FK => IfApplicable[V]) =
+      ForFields[Ctx, FK, Out](reusableSelf.tuple(Reusable.implicitly(a)).withValue(renderIfApp compose r))
 
     def forCodeGroup(rcg: CodeGroup): ForCodeGroup[Ctx, Out] = {
       lazy val code = project.content.reqCodes.reqCode(rcg.id)
@@ -39,24 +40,20 @@ object Feature {
       }
     }
 
-    def forCodeGroupId(id: ReqCodeGroupId): ForCodeGroup[Ctx, Option[Out]] = {
-      def ok(rcg: CodeGroup): ForCodeGroup[Ctx, Option[Out]] =
-        forCodeGroup(rcg).some
-
+    def forCodeGroupId(id: ReqCodeGroupId): ForCodeGroup[Ctx, Out] =
       project.content.reqCodes.needById(id) match {
-        case ReqCode.ActiveGroup(group, _)               => ok(group)
-        case ReqCode.Inactive(Some(deadGroup), _)        => ok(deadGroup)
-        case ReqCode.ActiveReq(_, _, Some(deadGroup), _) => ok(deadGroup)
+        case ReqCode.ActiveGroup(group, _)               => forCodeGroup(group)
+        case ReqCode.Inactive(Some(deadGroup), _)        => forCodeGroup(deadGroup)
+        case ReqCode.ActiveReq(_, _, Some(deadGroup), _) => forCodeGroup(deadGroup)
         case ReqCode.Inactive(None, _)
-           | ReqCode.ActiveReq(_, _, None, _)            => ForFields.none
+           | ReqCode.ActiveReq(_, _, None, _)            => ForFields.const(Reusable.byRef(NotApplicable.left).map(renderIfApp))
       }
-    }
 
     def forGenericReq(id: GenericReqId): ForGenericReq[Ctx, Out] =
       forReq(id)
 
     def forReq(id: ReqId): ForReq[Ctx, Out] =
-      forFields1[ReqId, FieldKey.ForSomeReq](id)(viewReq(id).render)
+      forFieldsIfApp1[ReqId, FieldKey.ForSomeReq](id)(viewReq(id).render)
 
     def forUseCase(id: UseCaseId): ForUseCase[Ctx, Out] =
       forReq(id)
@@ -90,7 +87,7 @@ object Feature {
     //}
   }
 
-  implicit def reusabilityForProject[Ctx <: PCtx, Out]: Reusability[ForProject[Ctx, Out]] =
+  implicit def reusabilityForProject[Ctx <: PCtx, V, Out]: Reusability[ForProject[Ctx, V, Out]] =
     Reusability.byRef || Reusability.derive
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -98,9 +95,6 @@ object Feature {
   object ForFields {
     def const[Ctx <: PCtx, FK <: FieldKey, Out](value: Reusable[Out]): ForFields[Ctx, FK, Out] =
       apply(value.map(v => _ => v))
-
-    def none[Ctx <: PCtx, FK <: FieldKey, Out]: ForFields[Ctx, FK, Option[Out]] =
-      const(Reusable.by_==(None))
   }
 
   final case class ForFields[+Ctx <: PCtx, -FK <: FieldKey, Out](renderFn: FK ~=> Out) {

@@ -1,8 +1,10 @@
-
-import sbt._, Keys._
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.{crossProject => _, CrossType => _, _}
+import sbt._
+import sbt.Keys._
+import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin
+import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin.autoImport._
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import sbtcrossproject.CrossPlugin.autoImport._
 import sbtcrossproject.CrossProject
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject => _, _}
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import Common._
 import Dependencies._
@@ -24,7 +26,6 @@ object ShipReqBuild {
     Project("root", file("."))
       .configure(Common.jvmSettings)
       .aggregate(base, taskman, webapp, utils, benchmarkJvm, benchmarkJs)
-      .settings(addCommandAlias("dockers", ";root/compile ;taskman-server/docker ;webapp-server/docker"))
 
   /** All JS modules */
   lazy val js =
@@ -56,7 +57,7 @@ object ShipReqBuild {
   lazy val baseUtil =
     crossProject("base-util")
       .configureJvm(Common.jvmSettings)
-      .configureJs(Common.jsSettings(NoDom))
+      .configureJs(Common.jsSettings(UseNode))
       .depsForBoth(
         UnivEq.scalaz ++ scalaz ++ Nyaya.prop ++ Monocle.core ++
         Microlibs.adtMacros ++ Microlibs.nonempty ++ Microlibs.recursion ++
@@ -86,7 +87,7 @@ object ShipReqBuild {
     crossProject("base-test")
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
-      .configureJs(Common.jsSettings(NoDom))
+      .configureJs(Common.jsSettings(UseNode))
       .dependsOn(baseUtil)
       .configureJvm(_.dependsOn(baseDb % Provided))
       .depsForBoth(
@@ -101,14 +102,13 @@ object ShipReqBuild {
   lazy val utils =
     project("utils")
       .configure(Common.jvmSettings)
-      .deps(
-        commonsText ++ Nyaya.test ++
-        testScope(twitterEval))
+      .deps(commonsText ++ Nyaya.test)
       .dependsOn(webappBaseTestJvm)
       .settings(
         connectInput in run  := true,
         fork         in run  := true,
-        javaOptions  in run ++= Seq("-Xmx4g", "-Xss4m"))
+      //javaOptions  in run  += jprofilerAgent(wait = false),
+        javaOptions  in run ++= Seq("-Xmx8g", "-Xss8m"))
 
   object Benchmark {
     def commonSettings: Project => Project =
@@ -120,27 +120,21 @@ object ShipReqBuild {
         .dependsOn(webappServer)
         .configure(Common.jvmSettings)
         .settings(libraryDependencies ++= Seq(
-          "org.scalaz" %% "scalaz-zio" % "1.0-RC5"))
+          "dev.zio" %% "zio" % "1.0.0-RC19"))
         .deps(JJWT.all)
     }
 
     def jsSettings: Project => Project = {
       import org.scalajs.sbtplugin._
-      import ScalaJSPlugin.autoImport._
 
-      val outputJs = "shipreq-benchmark.js"
-
-      _.enablePlugins(ScalaJSPlugin)
-        .dependsOn(webappClientProject)
+      _.enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
+        .dependsOn(webappClientProject, webappClientWw)
         .depsForJs(scalajsBenchmark)
         .configure(
-          Common.jsSettings(NoTests),
-          useMacroParadise)
-        //.settings(
-        //  // skip in packageJSDependencies := false,
-        //  // scalaJSStage in Global := FullOptStage,
-        //  artifactPath in (Compile, fastOptJS) := ((target in Compile).value / outputJs),
-        //  artifactPath in (Compile, fullOptJS) := ((target in Compile).value / outputJs))
+          Common.jsSettings(NoTests))
+        .settings(
+          scalaJSLinkerConfig ~= { _.withSourceMap(true) },
+          skip in packageJSDependencies := false)
     }
   }
 
@@ -149,8 +143,7 @@ object ShipReqBuild {
   lazy val benchmark =
     crossProject("benchmark")
       .configureBoth(Benchmark.commonSettings)
-      .dependsOn(webappBase)
-      .dependsOn(webappBaseTest) // TODO Shouldn't be generating random data, should be using fixed sample
+      .dependsOn(webappBaseTest, webappSampleData)
       .configureJvm(Benchmark.jvmSettings)
       .configureJs(Benchmark.jsSettings)
 }

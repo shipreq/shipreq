@@ -69,7 +69,7 @@ object LoggerJs {
     Callback(runNow(f))
 
   @inline def async(f: => (LoggerJs => Callback)): AsyncCallback[Unit] =
-    AsyncCallback.point(runNow(f))
+    AsyncCallback.delay(runNow(f))
 
   sealed class Dsl {
     @elidable(L) def runNow(f: => (LoggerJs => Callback)): Unit =
@@ -79,7 +79,7 @@ object LoggerJs {
       Callback(runNow(f))
 
     @inline def async(f: => (LoggerJs => Callback)): AsyncCallback[Unit] =
-      AsyncCallback.point(runNow(f))
+      AsyncCallback.delay(runNow(f))
   }
 
   val on: Dsl = new Dsl

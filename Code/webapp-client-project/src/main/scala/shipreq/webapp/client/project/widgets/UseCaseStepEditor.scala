@@ -140,7 +140,14 @@ object UseCaseStepEditor {
     private val pxTextSearch = Px.props($).map(_.textSearch).withReuse.autoRefresh
 
     override val pxAutoComplete =
-      Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(Text.UseCaseStep))
+      for {
+        p  <- pxProject
+        pt <- pxPlainText
+        ts <- pxTextSearch
+      } yield {
+        val naTags = p.config.naTags(StaticReqType.UseCase)
+        AutoComplete.Project.richText(Text.UseCaseStep)(p, naTags, pt, ts)
+      }
 
     val textareaConst: TagMod = {
 
@@ -210,7 +217,7 @@ object UseCaseStepEditor {
   }
 
   val Component =
-    ScalaComponent.builder[Props]("UseCaseStepEditor")
+    ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .configure(
         //Reusability.shouldComponentUpdate,

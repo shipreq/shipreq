@@ -41,21 +41,26 @@ object IssueStats {
       inConfig += 1
 
     is.vector.foreach {
-      case i: Issue.BlankCustomField      => addInReq(i.req.id)
-      case i: Issue.BlankTitle            => addInReq(i.req.id)
-      case i: Issue.BlankUseCaseStep      => addInReq(i.step.useCaseId)
-      case i: Issue.ConflictingTags       => addInReq(i.req.id)
-      case i: Issue.DeadIssueTagInRcg     => addInRcg(i.rcg)
-      case i: Issue.DeadIssueTagInReq     => addInReq(i.req.id)
-      case i: Issue.DeadRefInRcg          => addInRcg(i.rcg)
-      case i: Issue.DeadRefInReq          => addInReq(i.req.id)
-      case i: Issue.DeadTag               => addInReq(i.req.id)
-      case i: Issue.EmptyCodeGroup        => addInRcg(i.rcg)
-      case i: Issue.ImplicationRequired   => addInReq(i.req.id)
-      case i: Issue.IssueTagInRcg         => addInRcg(i.rcg)
-      case i: Issue.IssueTagInReq         => addInReq(i.req.id)
-      case _: Issue.UninhabitableTagField => addInConfig()
-      case _: Issue.ManualIssue           => manual += 1
+      case i: Issue.BlankCustomField             => addInReq(i.req.id)
+      case i: Issue.BlankTitle                   => addInReq(i.req.id)
+      case i: Issue.BlankUseCaseStep             => addInReq(i.step.useCaseId)
+      case i: Issue.ConflictingTags              => addInReq(i.req.id)
+      case i: Issue.DeadIssueTagInRcg            => addInRcg(i.rcg)
+      case i: Issue.DeadIssueTagInReq            => addInReq(i.req.id)
+      case i: Issue.DeadRefInRcg                 => addInRcg(i.rcg)
+      case i: Issue.DeadRefInReq                 => addInReq(i.req.id)
+      case i: Issue.DeadTag                      => addInReq(i.req.id)
+      case i: Issue.EmptyCodeGroup               => addInRcg(i.rcg)
+      case _: Issue.FieldDefaultTagDead          => addInConfig()
+      case _: Issue.FieldDefaultTagNotApplicable => addInConfig()
+      case _: Issue.FieldDefaultTagUnrelated     => addInConfig()
+      case i: Issue.ImplicationRequired          => addInReq(i.req.id)
+      case i: Issue.IssueTagInRcg                => addInRcg(i.rcg)
+      case i: Issue.IssueTagInReq                => addInReq(i.req.id)
+      case _: Issue.ManualIssue                  => manual += 1
+      case _: Issue.NonApplicableField           => addInConfig()
+      case i: Issue.NonApplicableTag             => addInReq(i.req.id)
+      case _: Issue.UninhabitableTagField        => addInConfig()
     }
 
     IssueStats(

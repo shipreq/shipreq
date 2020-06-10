@@ -39,10 +39,10 @@ object IntersectionTest extends TestSuite {
   }
 
   override def tests = Tests {
-    'forwards { domain mustProve Prop.eval(_.eval) }
-    'backwards { domain.map(_.reverse) mustProve Prop.eval(_.eval) }
+    "forwards" - { domain mustProve Prop.eval(_.eval) }
+    "backwards" - { domain.map(_.reverse) mustProve Prop.eval(_.eval) }
 
-    'toOption {
+    "toOption" - {
       val d: Domain[Laws[Int, Option[Char]]] = {
         val i = Domain.ofValues(0, 10)
         val c = Domain.ofValues(Some('0'), Some('a'), None)

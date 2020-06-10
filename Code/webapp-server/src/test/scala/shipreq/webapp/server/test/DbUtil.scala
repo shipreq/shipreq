@@ -1,91 +1,68 @@
 package shipreq.webapp.server.test
 
-import doobie.imports._
-import japgolly.microlibs.utils.AsciiTable
-import org.postgresql.util.PSQLException
+import doobie._
+import doobie.implicits._
 import scala.util.Random
 import shipreq.base.db.DoobieHelpers._
-import shipreq.base.test.db.SingleConnectionXA
+import shipreq.base.test.db._
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.event.ActiveEvent
 import shipreq.webapp.base.user.UserId
+import shipreq.webapp.server.db.DbInterpreter
+import shipreq.webapp.server.logic.DB
+import shipreq.webapp.server.security.SecurityInterpreter
 import WebappServerTestUtil._
 
 object DbUtil {
 
-  val use = TestDb.mapUsage(_.map(xa => Fx(apply(xa))))
-
-  val Random = new Random()
+  private[DbUtil] val Random = new Random()
 }
 
-final case class DbUtil(xa: SingleConnectionXA) {
-  import PrepareEnv.dbAlgebra
+final case class DbUtil(xa: ImperativeXA) {
+
+  lazy val security = {
+    val g = PrepareEnv.global()
+    implicit val t = g.config.server.traceAlgebraFx
+    implicit val c = g.config.server.security
+    implicit val d = DB.ForSecurity.trans(DbInterpreter.ForSecurity)(xa.transZ)
+    new SecurityInterpreter[Fx]()
+  }
+
+  val dbAlgebra = {
+    val g = PrepareEnv.global()
+    implicit val c = g.config.server.security
+    new DbInterpreter()
+  }
 
   private def randomStr: String =
     DbUtil.Random.nextString(32)
 
-  def newProjectId(userId: UserId = getOrCreateUserId(), initEvents: Vector[ActiveEvent] = Vector.empty): ProjectId = {
+  def newProjectId(userId    : UserId              = getOrCreateUserId(),
+                   initEvents: Vector[ActiveEvent] = Vector.empty,
+                  ): ProjectId = {
     val p = applyEventsSuccessfully(Project.empty, initEvents: _*)
     xa ! dbAlgebra.createProject(userId, initEvents, p)
   }
 
   def getOrCreateUserId(): UserId =
-    (xa ! Query0[UserId]("select id from usr where username is not null").option) getOrElse newUserId()
+    (xa ! Query0[UserId]("select id from usr where username is not null limit 1").option) getOrElse newUserId()
 
   def newUserId(): UserId =
     xa ! Query[(String, String), UserId](
       "INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES(?,?,0,0,NOW(),NOW(),NOW()) RETURNING id"
     ).toQuery0((randomStr, randomStr)).unique
 
-  def deleteUser(u: UserId): Unit =
-    xa ! sql"DELETE FROM usr WHERE id=$u".update.execute
 
-  def debugSelect(sql: String): Unit = {
-    val stmt = xa.conn.createStatement()
-    val rs = stmt.executeQuery(sql)
-    val cols = (1 to rs.getMetaData.getColumnCount).toVector
-    var lines = Vector.empty[Vector[String]]
-    def readLine(f: Int => String): Unit =
-      lines :+= cols.map(f)
-    readLine(rs.getMetaData.getColumnName)
-    while (rs.next())
-      readLine(rs.getString)
-    val table = AsciiTable(lines)
-    println(s"\n> $sql\n$table\n")
+  def deleteUser(id: Long): Unit = {
+    xa ! sql"DELETE FROM usrh_name WHERE usr_id = $id".update.run
+    xa ! sql"DELETE FROM usrd WHERE usr_id = $id".update.run
+    xa ! sql"DELETE FROM usr WHERE id = $id".update.execute
   }
 
-  def debugSelectOnError[A](sql: => String)(f: => A): A =
-    try f catch {
-      case t: Throwable =>
-        debugSelect(sql)
-        throw t
-    }
-
-  def countRowsIn(table: DbTable): Int =
-    xa ! table.count
-
-  def countRowsInAllTables(): DbTable.Counts =
-    xa ! DbTable.countAll
-
-  def rowCountChanges[A](fn: => A): (A, Map[DbTable, Int]) = {
-    val before = countRowsInAllTables()
-    val result = fn
-    val after = try {
-      countRowsInAllTables()
-    } catch {
-      case e: PSQLException if e.getMessage.contains("current transaction is aborted") => before
-    }
-    val diff = after - before
-    (result, diff.table)
-  }
-
-  def assertRowCountChanges[A](expectations: (DbTable, Int)*)(fn: => A): A = {
-    val (result, diff) = rowCountChanges(fn)
-    val emap         = expectations.toMap
-    val expectedDiff = DbTable.All.whole.map(t => t -> emap.getOrElse(t, 0)).toMap
-    assertMap(diff, expectedDiff)
-    result
+  def deleteUserByEmail(email: String): Unit = {
+    val id = xa ! sql"SELECT id FROM usr WHERE email = $email".query[Long].option
+    id.foreach(deleteUser)
   }
 
   def lookupConfirmationToken(email: String): Option[String] =

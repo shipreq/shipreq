@@ -8,7 +8,7 @@ import monocle.macros.Lenses
 import shipreq.base.util.Url
 import shipreq.webapp.base.Urls.PublicSpaRoute
 import shipreq.webapp.base.feature.{AsyncFeature, ErrorHandlingFeature}
-import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol.ajax._
 import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.client.public.pages._
 
@@ -24,19 +24,22 @@ object PublicSpa {
 
     val recorder = ErrorHandlingFeature.StateRecorder[State]
 
-    def init: State =
-      State(
-        LandingPage.State.init,
-        Login      .State.init,
-        Register1  .State.init)
+    def init: CallbackTo[State] =
+      for {
+        login <- Login.State.init
+      } yield State(
+        landingPage = LandingPage.State.init,
+        login       = login,
+        register1   = Register1.State.init,
+      )
   }
 }
 
 final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClient.Binary) {
   import PublicSpa._
 
-  val Component = ScalaComponent.builder[Props]("Root")
-    .initialState(State.recorder.getOrElse(State.init))
+  val Component = ScalaComponent.builder[Props]
+    .initialStateCallback(State.recorder.getOrElseCB(State.init))
     .renderBackend[Backend]
     .build
 

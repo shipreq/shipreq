@@ -1,0 +1,39 @@
+#!/bin/bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+src="$(pwd)"
+tgt=/tmp/shipreq-benchmark-js
+[ ! -e $tgt ] && mkdir $tgt
+cd $tgt
+
+function link {
+  f="$(basename "$1")"
+  rm -f "$f"
+  ln -s "$1" "$f"
+}
+
+py="$(basename "$0").py"
+link "$src/bin/$py"
+for f in "$src/webapp-sampledata/jvm/src/main/resources/"*; do
+  link "$f"
+done
+
+fast="${SHIPREQ_TARGET:-$src}"
+link "$src/benchmark/js/fast.html"
+link "$fast/benchmark/js/target/scala-2.13/benchmark-jsdeps.js"
+link "$fast/benchmark/js/target/scala-2.13/benchmark-fastopt.js"
+link "$fast/benchmark/js/target/scala-2.13/benchmark-fastopt.js.map"
+
+full="${SHIPREQ_RELEASE_TARGET:-$src}"
+link "$src/benchmark/js/full.html"
+link "$full/benchmark/js/target/scala-2.13/benchmark-jsdeps.min.js"
+link "$full/benchmark/js/target/scala-2.13/benchmark-opt.js"
+link "$fast/benchmark/js/target/scala-2.13/benchmark-opt.js.map"
+
+echo "> ls -l $tgt"
+ls -l
+
+nohup google-chrome-stable --incognito --user-data-dir=/tmp/chrome-session --enable-benchmarking http://localhost:19191/ & >/dev/null
+
+exec python3 "$py"

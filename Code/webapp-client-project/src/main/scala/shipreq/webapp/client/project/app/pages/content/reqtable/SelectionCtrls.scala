@@ -10,7 +10,7 @@ import scalaz.{-\/, \/-}
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.UpdateContentCmd
+import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text.TextSearch
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -157,7 +157,7 @@ object SelectionCtrls {
 
       private def io(codeGroups: NonEmptySet[ReqCodeGroupId]): Callback = {
         val cmd = UpdateContentCmd.DeleteCodeGroups(codeGroups)
-        val sourceIds: List[Row.SourceId] = cmd.ids.whole.map(Row.SourceId.ForCodeGroup)(collection.breakOut)
+        val sourceIds: List[Row.SourceId] = cmd.ids.iterator.map(Row.SourceId.ForCodeGroup).toList
         runCmd(cmd, sourceIds)
       }
     }
@@ -172,7 +172,7 @@ object SelectionCtrls {
 
       private def io(codeGroups: NonEmptySet[ReqCodeGroupId]): Callback = {
         val cmd = UpdateContentCmd.RestoreContent(Set.empty, codeGroups.whole)
-        val sourceIds: List[Row.SourceId] = cmd.codeGroups.map(Row.SourceId.ForCodeGroup)(collection.breakOut)
+        val sourceIds: List[Row.SourceId] = cmd.codeGroups.iterator.map(Row.SourceId.ForCodeGroup).toList
         runCmd(cmd, sourceIds)
       }
     }
@@ -250,7 +250,7 @@ object SelectionCtrls {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("SelectionCtrls")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(shouldComponentUpdate)
     .build

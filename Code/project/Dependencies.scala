@@ -1,22 +1,20 @@
 import sbt._
 import scala.languageFeature._
 import LibDependency._
-import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.{CrossType => _, crossProject => _, _}
 
 object Dependencies {
 
   object Java {
-    val major = 8
+    val major = 11
   }
 
   object Graal {
-    val ver = "19.3.1"
+    val ver = "20.1.0"
   }
 
   object Scala {
     private val mm = scalaItself(version)
-    def version  = "2.12.10"
+    def version  = "2.13.2"
     val library  = mm("scala-library")
     val reflect  = mm("scala-reflect")
     val compiler = mm("scala-compiler") ++ reflect ++ scalaXml
@@ -26,13 +24,13 @@ object Dependencies {
   }
 
   object Monocle {
-    private val mm = MultiModule.jvmAndJs("com.github.julien-truffaut", "1.6.0")
+    private val mm = MultiModule.jvmAndJs("com.github.julien-truffaut", "1.6.3")
     val core   = mm("monocle-core")
     val macros = mm("monocle-macro") ++ core
   }
 
   object Microlibs {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "2.0")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "2.3")
     val adtMacros  = mm("adt-macros")
     val macroUtils = mm("macro-utils")
     val nonempty   = mm("nonempty")
@@ -44,7 +42,7 @@ object Dependencies {
   }
 
   object Nyaya {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.9.0")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.9.2")
     val util = mm("nyaya-util") ++ scalaz
     val prop = mm("nyaya-prop") ++ scalaz
     val gen  = mm("nyaya-gen")  ++ scalaz
@@ -52,7 +50,7 @@ object Dependencies {
   }
 
   object ScalaGraal {
-    private val ver   = "0.4.0"
+    private val ver   = "0.5.0"
     private val jvm   = MultiModule.scala("com.github.japgolly.scala-graal", ver)
     private val both  = MultiModule.jvmAndJs("com.github.japgolly.scala-graal", ver)
     val core          = jvm("core") ++ graal
@@ -64,7 +62,7 @@ object Dependencies {
   }
 
   object TestState {
-    val Ver = "2.3.0"
+    val Ver = "2.4.1"
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", Ver)
     private val js = MultiModule.js("com.github.japgolly.test-state", Ver)
     val core            = mm("core")
@@ -75,23 +73,22 @@ object Dependencies {
   }
 
   object UnivEq {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.2.0")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.2.1")
     val univeq = mm("univeq")
     val scalaz = mm("univeq-scalaz") ++ univeq ++ Dependencies.scalaz
   }
 
   object React {
-    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.6.0")
+    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.7.0")
     val core    = mm("core")
     val test    = mm("test")
-    val scalaz  = mm("ext-scalaz72").exclude("org.scalaz", "scalaz-concurrent").exclude("org.scalaz", "scalaz-effect")
     val monocle = mm("ext-monocle-scalaz") ++ Monocle.core
     val extra   = mm("extra")
     val most    = core ++ monocle ++ extra
   }
 
   object ScalaCSS {
-    private val mm = MultiModule.js("com.github.japgolly.scalacss", "0.6.0")
+    private val mm = MultiModule.js("com.github.japgolly.scalacss", "0.6.1")
     val core  = mm("core")
     val react = mm("ext-react") ++ core
   }
@@ -109,21 +106,22 @@ object Dependencies {
     val core = mm("logback-classic") ++ mm("logback-core")
 
     val withPlugins = core ++
-      jvmOnly("net.logstash.logback" % "logstash-logback-encoder" % "6.3")
+      jvmOnly("net.logstash.logback" % "logstash-logback-encoder" % "6.4")
   }
 
   object Lift {
-    private val mm = MultiModule.scala("net.liftweb", "3.1.1")
+    private val mm = MultiModule.scala("net.liftweb", "3.4.1")
     val webkit  = mm("lift-webkit") ++ Scala.all // because it contains lift-json
     val testkit = mm("lift-testkit")
   }
 
   object Doobie {
-    private val mm = MultiModule.scala("org.tpolecat", "0.4.1")
-    val core     = mm("doobie-core")
-    val postgres = mm("doobie-postgres")
-    val hikari   = mm("doobie-hikari")
-    val main     = core ++ postgres ++ hikari
+    private val mm = MultiModule.scala("org.tpolecat", "0.9.0")
+    val core          = mm("doobie-core")
+    val postgres      = mm("doobie-postgres")
+    val postgresCirce = mm("doobie-postgres-circe")
+    val hikari        = mm("doobie-hikari")
+    val main          = core ++ postgres ++ postgresCirce ++ hikari
   }
 
   object Circe {
@@ -135,7 +133,7 @@ object Dependencies {
   }
 
   object JJWT {
-    private val mm = MultiModule.java("io.jsonwebtoken", "0.10.8")
+    private val mm = MultiModule.java("io.jsonwebtoken", "0.11.1")
     val api     = mm("jjwt-api")
     val impl    = mm("jjwt-impl") % Runtime
     val jackson = mm("jjwt-jackson") % Runtime
@@ -143,19 +141,19 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.3")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.6")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
 
   object OkHttp {
-    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.7")
+    private val mm = MultiModule.java("com.squareup.okhttp3", "3.14.9")
     val core = mm("okhttp")
     // val urlConnection = mm("okhttp-urlconnection") ++ core
   }
 
   object LibJetty {
-    private def ver = "9.4.26.v20200117"
+    private def ver = "9.4.29.v20200521"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
@@ -175,7 +173,7 @@ object Dependencies {
   }
 
   object Prometheus {
-    private val mm = MultiModule.java("io.prometheus", "0.8.1")
+    private val mm = MultiModule.java("io.prometheus", "0.9.0")
     val client     = mm("simpleclient")
     val hotspot    = mm("simpleclient_hotspot")
     val httpserver = mm("simpleclient_httpserver")
@@ -183,38 +181,34 @@ object Dependencies {
     val servlet    = mm("simpleclient_servlet")
   }
 
-  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.3.0")
-  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "0.9.8")
-  val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "0.2.6")
+  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.7.0")
+  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "1.0.0")
+  val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "1.0.0")
 
-  val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.3.1")
+  val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.3.3")
   val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "1.4.0")
-  val parboiled   = jvmAndJs("org.parboiled",                    "parboiled",   "2.1.8")
+  val parboiled   = jvmAndJs("org.parboiled",                    "parboiled",   "2.2.0")
   val scalaz      = jvmAndJs("org.scalaz",                       "scalaz-core", "7.2.30")
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.3")
-  val μTest       = jvmAndJs("com.lihaoyi",                      "utest",       "0.6.7")
+  val μTest       = jvmAndJs("com.github.japgolly.fork",         "utest",       "1.0.1")
 
-  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.1")
+  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.3")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.8")
-  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.2.4")
-  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.2")
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.4.3")
+  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.5")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
-  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.1.0")
-  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.10")
-  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.12.2")
-  val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "3.1.0")
+  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.2.0")
+  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.13")
+  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.13.0")
+  val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "4.0.1")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.3")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
-  val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.2.0")
-  val twitterEval  = jvmOnly("com.twitter"                %% "util-eval"             % "6.43.0")
+  val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.3.0")
 
   val betterMonadicFor = compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
   val useBetterMonadicFor = (_: Project).settings(addCompilerPlugin(betterMonadicFor))
-
-  val macroParadise = compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
-  val useMacroParadise = (_: Project).settings(addCompilerPlugin(macroParadise))
 
   val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
   val useKindProjector = (_: Project).settings(addCompilerPlugin(kindProjector))

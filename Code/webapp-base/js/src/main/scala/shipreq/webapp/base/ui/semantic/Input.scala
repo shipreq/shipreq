@@ -4,16 +4,48 @@ import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
+import org.scalajs.dom.html
 import shipreq.base.util._
-import shipreq.webapp.base.data.On
+import shipreq.webapp.base.data.{Disabled, Enabled, On}
 
 object Input {
+  private[this] val disabled = ^.cls := "disabled"
+  private[this] val error = ^.cls := "error"
+
   val Base        = divCls("ui input")
-  val Error       = Base(^.cls := "error")
+  val Error       = Base(error)
   val Action      = Base(^.cls := "action")
-  val ActionError = Action(^.cls := "error")
+  val ActionError = Action(error)
+
+  val errorAttr = VdomAttr.devOnly("data-err")
+
+  val validationErr = TagMod(
+    ^.color      := "#9f3a38",
+    ^.paddingTop := "0.15rem",
+    ^.fontSize   := "92%")
 
   object Text {
+
+    def apply(input   : TagMod,
+              enabled : Enabled  = Enabled,
+              validity: Validity = Valid,
+             ): VdomTag =
+      Base(
+        disabled.when(enabled is Disabled),
+        error.when(validity is Invalid),
+        <.input.text(input))
+
+    def withError(input     : TagMod,
+                  error     : Option[VdomTag],
+                  afterInput: VdomNode = EmptyVdom,
+                  enabled   : Enabled = Enabled,
+                 ): TagMod = {
+      val base = TagMod(apply(input, enabled, Valid when error.isEmpty), afterInput)
+      error match {
+        case None      => base
+        case Some(err) => TagMod(base, <.div(errorAttr := "1", validationErr, err))
+      }
+    }
 
     /** Text input with:
       * - icon inside on the left
@@ -29,12 +61,15 @@ object Input {
       * - icon inside on the left
       * - something (usually a button) attached to the right outside
       */
-    def iconAndRightAction(icon: VdomTag, input: VdomTag, right: TagMod, validity: Validity = Valid): VdomTag = {
+    def iconAndRightAction(icon: VdomTag, input: VdomNode, right: TagMod, validity: Validity = Valid): VdomTag = {
       var r = Base(^.cls := "left icon right action", icon, input, right)
       if (validity is Invalid)
         r = r(^.cls := "error")
       r
     }
+
+    def withRightButtons(input: VdomTagOf[html.Input], buttons: VdomTagOf[html.Button]*): VdomTag =
+      <.div(^.cls := "ui action input", input)(buttons: _*)
 
     def loadingDisabled(value: String, icon: Icon = Icon.Search) =
       Base(^.cls := "loading icon",
@@ -42,15 +77,22 @@ object Input {
         icon.tag)
   }
 
+  // ===================================================================================================================
+
   object Checkbox {
 
-    def apply(on: On,
+    def apply(on    : On,
               change: On => Callback,
-              label: TagMod): VdomTag = {
+              label : TagMod): VdomTag =
+      apply(on, change, Some(label))
+
+    def apply(on    : On,
+              change: On => Callback,
+              label : Option[TagMod]): VdomTag = {
       val toggle = change(!on)
       <.div(^.cls := "ui checkbox",
         <.input.checkbox(^.checked := on.is(On), ^.onChange --> toggle),
-        <.label(^.cursor.pointer, ^.onClick --> toggle, label))
+        label.whenDefined(<.label(^.cursor.pointer, ^.onClick --> toggle, _)))
     }
 
     /** Note: DO NOT use this with Reusability.

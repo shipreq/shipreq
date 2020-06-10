@@ -6,9 +6,10 @@ import scalaz.{-\/, \/-, ~~>}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature.AsyncFeature
-import shipreq.webapp.base.protocol.UpdateContentCmd
+import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -113,12 +114,28 @@ object FieldKey {
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.reqType(this)
   }
 
-  final case class Tags(field: Option[CustomField.Tag.Id]) extends ForAllReqs {
+  case object AllTags extends ForAllReqs {
     override type Change = SetDiff.NE[ApplicableTagId]
-    override type RenderFieldKey = RenderFeature.FieldKey.Tags
-    override def forRender = RenderFeature.FieldKey.Tags(field)
-    override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.tags(this)
-    override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.tags(this)
+    override type RenderFieldKey = RenderFeature.FieldKey.AllTags.type
+    override def forRender = RenderFeature.FieldKey.AllTags
+    override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.allTags(this)
+    override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.allTags(this)
+  }
+
+  case object OtherTags extends ForAllReqs {
+    override type Change = SetDiff.NE[ApplicableTagId]
+    override type RenderFieldKey = RenderFeature.FieldKey.OtherTags.type
+    override def forRender = RenderFeature.FieldKey.OtherTags
+    override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.otherTags(this)
+    override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.otherTags(this)
+  }
+
+  final case class CustomFieldTags(field: CustomField.Tag.Id) extends ForAllReqs {
+    override type Change = SetDiff.NE[ApplicableTagId]
+    override type RenderFieldKey = RenderFeature.FieldKey.CustomFieldTags
+    override def forRender = RenderFeature.FieldKey.CustomFieldTags(field)
+    override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.customFieldTags(this)
+    override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.customFieldTags(this)
   }
 
   final case class UseCaseStep(id: UseCaseStepId) extends FieldKey {
@@ -168,7 +185,7 @@ object FieldKey {
   def customField(id: CustomFieldId): FieldKey =
     id match {
       case i: CustomField.Text.Id        => CustomTextField(i)
-      case i: CustomField.Tag.Id         => Tags(Some(i))
+      case i: CustomField.Tag.Id         => CustomFieldTags(i)
       case i: CustomField.Implication.Id => Implications(-\/(i))
     }
 
@@ -210,7 +227,9 @@ object FieldKey {
                                         customTextField: CustomTextField      => F[CustomTextField#Args, CustomTextField#Change],
                                         implications   : Implications         => F[Implications   #Args, Implications   #Change],
                                         reqType        : ReqType.type         => F[ReqType        .Args, ReqType        .Change],
-                                        tags           : Tags                 => F[Tags           #Args, Tags           #Change],
+                                        allTags        : AllTags.type         => F[AllTags        .Args, AllTags        .Change],
+                                        otherTags      : OtherTags.type       => F[OtherTags      .Args, OtherTags      .Change],
+                                        customFieldTags: CustomFieldTags      => F[CustomFieldTags#Args, CustomFieldTags#Change],
                                         title          : GenericReqTitle.type => F[GenericReqTitle.Args, GenericReqTitle.Change],
                                        ) extends Fold[ForGenericReq, F] {
     override def apply(f: ForGenericReq): F[f.Args, f.Change] = f.foldGR(this)
@@ -220,14 +239,18 @@ object FieldKey {
         customTextField = f => t(customTextField(f)),
         implications    = f => t(implications   (f)),
         reqType         = f => t(reqType        (f)),
-        tags            = f => t(tags           (f)),
+        allTags         = f => t(allTags        (f)),
+        otherTags       = f => t(otherTags      (f)),
+        customFieldTags = f => t(customFieldTags(f)),
         title           = f => t(title          (f)))
   }
 
   case class FoldForUseCase[F[_, _]](codes          : Codes.type        => F[Codes          .Args, Codes          .Change],
                                      customTextField: CustomTextField   => F[CustomTextField#Args, CustomTextField#Change],
                                      implications   : Implications      => F[Implications   #Args, Implications   #Change],
-                                     tags           : Tags              => F[Tags           #Args, Tags           #Change],
+                                     allTags        : AllTags.type      => F[AllTags        .Args, AllTags        .Change],
+                                     otherTags      : OtherTags.type    => F[OtherTags      .Args, OtherTags      .Change],
+                                     customFieldTags: CustomFieldTags   => F[CustomFieldTags#Args, CustomFieldTags#Change],
                                      title          : UseCaseTitle.type => F[UseCaseTitle   .Args, UseCaseTitle   .Change],
                                     ) extends Fold[ForUseCase, F] {
     override def apply(f: ForUseCase): F[f.Args, f.Change] = f.foldUC(this)
@@ -236,7 +259,9 @@ object FieldKey {
         codes           = f => t(codes          (f)),
         customTextField = f => t(customTextField(f)),
         implications    = f => t(implications   (f)),
-        tags            = f => t(tags           (f)),
+        allTags         = f => t(allTags        (f)),
+        otherTags       = f => t(otherTags      (f)),
+        customFieldTags = f => t(customFieldTags(f)),
         title           = f => t(title          (f)))
   }
 

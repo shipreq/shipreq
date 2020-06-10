@@ -64,11 +64,11 @@ object Trace {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   object Algebra {
-    def apply[F[_]: Monad](algebras: TraversableOnce[Algebra[F]]): Algebra[F] =
-      if (algebras.isEmpty)
+    def apply[F[_]: Monad](algebras: IterableOnce[Algebra[F]]): Algebra[F] =
+      if (algebras.iterator.isEmpty)
         off
       else
-        algebras.reduce(_ compose _)
+        algebras.iterator.reduce(_ compose _)
 
     def off[F[_]](implicit F: Monad[F]): Algebra[F] { type Span = Unit } =
       new Algebra[F] {
@@ -164,6 +164,7 @@ object Trace {
     final case class ShipReqUserId   (value: Long)      extends Attr(Tag.ShipReqUserId)
 
     val HttpStatus200 = HttpStatusCode(200)
+    val HttpStatus302 = HttpStatusCode(302)
 
     def httpStatusCode(code: Int): HttpStatusCode =
       if (code == 200) HttpStatus200 else HttpStatusCode(code)

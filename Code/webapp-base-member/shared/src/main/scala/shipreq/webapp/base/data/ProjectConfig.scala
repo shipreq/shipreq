@@ -1,11 +1,14 @@
 package shipreq.webapp.base.data
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
 import scalaz.{-\/, Equal, \/-}
+import shipreq.base.util.NotApplicable
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data.derivation._
 
 object ProjectConfig {
   implicit lazy val equality: Equal[ProjectConfig] =
@@ -14,10 +17,29 @@ object ProjectConfig {
   val empty: ProjectConfig = {
     val cit = emptyDataMap(CustomIssueType)
     val rt  = ReqTypes.empty
-    val fs  = FieldSet(emptyDataMap(CustomField), StaticField.values.whole)
+    val fs  = FieldSet.empty
     val ts  = Tags.empty
     ProjectConfig(cit, rt, fs, ts)
   }
+
+  sealed trait TagFieldIssue
+  object TagFieldIssue {
+    final case class DefaultTagDead(tag: ApplicableTag) extends TagFieldIssue
+    final case class DefaultTagNotApplicable(tag: ApplicableTag, reqType: ReqType) extends TagFieldIssue
+    final case class DefaultTagUnrelated(tag: ApplicableTag) extends TagFieldIssue
+  }
+
+  final case class FixedRules[+D, +E](original: FieldReqTypeRules[D],
+                                      fixed   : FieldReqTypeRules[D],
+                                      errors  : Map[Option[ReqTypeId], E])
+
+  object FixedRules {
+    def id[D](r: FieldReqTypeRules[D]): FixedRules[D, Nothing] =
+      apply(r, r, Map.empty)
+  }
+
+  private[ProjectConfig] lazy val fieldNamesLowercase: Set[String] =
+    StaticField.namesLowercase ++ SpecialBuiltInField.namesLowercase
 }
 
 @Lenses
@@ -26,44 +48,204 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
                                fields          : FieldSet,
                                tags            : Tags) {
 
-  @inline def applicability = fields.applicability
+  import ProjectConfig.{FixedRules, TagFieldIssue}
 
-  def customIssueType(id: CustomIssueTypeId): CustomIssueType =
-    customIssueTypes.need(id)
+  // ==========================================================================
+  // Content
 
-  lazy val liveCustomTextFields =
-    fields.customTextFields.filter(_.live(this) is Live)
+  def reqFilter(fd: FilterDead): Req => Boolean =
+    fd.filterFnBy((_: Req).live(reqTypes))
 
-  lazy val liveTagFieldDistribution: TagFieldDistribution.TagIds =
-    TagFieldDistribution(this, _.live(this) is Live)
-
-  def deadTagFieldDistribution(deadTagFilter: CustomField.Tag.Id => Boolean): TagFieldDistribution.TagIds =
-    TagFieldDistribution(this, f => f.live(this) match {
-      case Live => true
-      case Dead => deadTagFilter(f.id)
-    })
+  // ==========================================================================
+  // HashRefs
 
   /** Keys are lowercase */
   lazy val hashRefLookupM: Map[String, HashRefTarget] =
-    ( tags.atagIterator()            .map(t => (t.key.value.toLowerCase, -\/(t))) ++
+    ( tags.applicableTagIterator()   .map(t => (t.key.value.toLowerCase, -\/(t))) ++
       customIssueTypes.valuesIterator.map(t => (t.key.value.toLowerCase, \/-(t)))
     ).toMap
 
   def hashRefLookup(key: String): Option[HashRefTarget] =
     hashRefLookupM.get(key.toLowerCase)
 
-  def live(id: ReqTypeId): Live =
-    reqTypes.need(id).live
+  // ==========================================================================
+  // Fields
 
-  def reqFilter(fd: FilterDead): Req => Boolean =
-    fd.filterFnBy((_: Req).live(reqTypes))
+  val customFieldNonUniqueName: CustomField => String = {
+    case f: CustomField.Text        => f.name
+    case f: CustomField.Tag         => f.name(tags.tree)
+    case f: CustomField.Implication => f.name(reqTypes)
+  }
 
-  lazy val mandatoryLiveCustomFields: CustomField.Lists = {
+  lazy val fieldsByName: Map[String, Field] = {
+    var seenLowercase: Set[String]        = ProjectConfig.fieldNamesLowercase
+    var results      : Map[String, Field] = StaticField.byName
+
+    fields.customFields.valuesIterator.foreach { f =>
+      val name = customFieldNonUniqueName(f)
+
+      val uniqueName = {
+        var i = 2
+        var n = name
+        while (seenLowercase.contains(n.toLowerCase)) {
+          n = name + i
+          i += 1
+        }
+        n
+      }
+
+      seenLowercase += uniqueName.toLowerCase
+      results = results.updated(uniqueName, f)
+    }
+
+    results
+  }
+
+  lazy val fieldsByNameLowercase: Map[String, Field] =
+    fieldsByName.mapKeysNow(_.toLowerCase)
+
+  lazy val fieldName: FieldId => String = {
+    val m: Map[FieldId, String] = fieldsByName.map(x => (x._2.fieldId, x._1))
+    m.apply
+  }
+
+  lazy val liveCustomFields: List[CustomField] =
+    fields.customFields.valuesIterator.filter(_.live(this) is Live).toList
+
+  lazy val liveCustomTextFields: List[CustomField.Text] =
+    fields.customTextFields.filter(_.live(this) is Live)
+
+  lazy val liveCustomTextFieldIdSet: Set[CustomField.Text.Id] =
+    liveCustomTextFields.map(_.id).toSet
+
+  lazy val liveCustomTagFields: List[CustomField.Tag] =
+    fields.customTagFields.filter(_.live(this) is Live)
+
+  lazy val liveOrderedFieldIds: Vector[FieldId] =
+    fields.order.filter(fields.need(_).live(this) is Live)
+
+  lazy val liveCustomFieldsWithMandatory: CustomField.Lists = {
     val m = new CustomField.MutableLists
     for (f <- fields.customFields.valuesIterator)
-      if (f.mandatory.is(Mandatory) && f.live(this).is(Live))
+      if (f.fieldReqTypeRules.containsMandatory && f.live(this).is(Live))
         m += f
     m.result()
+  }
+
+  /** - Dead req types are ignored / unmodified
+    * - Rules that default to dead tags are replaced with Optional
+    * - Rules that default to unrelated tags are replaced with Optional
+    * - Rules that default to non-applicable tags are replaced with Optional
+    */
+  val tagFieldRulesFixedHideDead: CustomField.Tag.Id => FixedRules[ApplicableTagId, TagFieldIssue] =
+    Memo { fieldId =>
+      val field = fields.custom(fieldId)
+      if (field.live(this) is Dead)
+        FixedRules.id(field.fieldReqTypeRules)
+      else {
+        val original = field.fieldReqTypeRules
+        var fixed    = original
+        var errors   = Map.empty[Option[ReqTypeId], TagFieldIssue]
+
+        val okTags: Set[ApplicableTagId] =
+          liveTagFieldDistribution.inField(fieldId)
+
+        lazy val otherwiseReqTypes =
+          reqTypes.liveIds -- original.perReqType.keys
+
+        def check(reqTypeId: Option[ReqTypeId], tagId: ApplicableTagId) = {
+          val tag = tags.needApplicableTag(tagId)
+
+          def addError(err: TagFieldIssue, rt: Option[ReqTypeId] = reqTypeId): Unit = {
+            errors = errors.updated(rt, err)
+            fixed = fixed.setOptional(rt)
+          }
+
+          if (!okTags.contains(tagId))
+            addError(TagFieldIssue.DefaultTagUnrelated(tag))
+          else if (tag.live is Dead)
+            addError(TagFieldIssue.DefaultTagDead(tag))
+          else {
+            val reqTypeIds: Iterable[ReqTypeId] =
+              if (reqTypeId.isDefined) reqTypeId else otherwiseReqTypes
+            for (id <- reqTypeIds)
+              if (tag.applicableReqTypes(id) is NotApplicable) {
+                val rt = reqTypes.need(id)
+                addError(TagFieldIssue.DefaultTagNotApplicable(tag, rt), Some(id))
+              }
+          }
+        }
+
+        original.perReqType.foreach {
+          case ((reqTypeId, FieldReqTypeRules.Resolution.DefaultTo(tagId))) if reqTypes.need(reqTypeId).live is Live =>
+            check(Some(reqTypeId), tagId)
+          case _ =>
+        }
+
+        original.otherwise match {
+          case FieldReqTypeRules.Resolution.DefaultTo(tagId) => check(None, tagId)
+          case _ =>
+        }
+
+        FixedRules(original, fixed, errors)
+      }
+    }
+
+  /** - Dead req types are ignored / unmodified (TODO What)
+    * - Rules that default to unrelated tags are replaced with Optional
+    * - Rules that default to non-applicable tags are replaced with Optional
+    */
+  val tagFieldRulesFixedShowDead: CustomField.Tag.Id => FixedRules[ApplicableTagId, TagFieldIssue] =
+    Memo { fieldId =>
+      import TagFieldIssue._
+      val f = tagFieldRulesFixedHideDead(fieldId)
+      val original = f.original
+      var fixed    = original
+      val errors   = f.errors.filter {
+                       case (reqTypeId, _: DefaultTagUnrelated | _: DefaultTagNotApplicable) =>
+                         fixed = fixed.setOptional(reqTypeId)
+                         true
+                       case (_, _: DefaultTagDead) =>
+                         false
+                     }
+      FixedRules(original, fixed, errors)
+    }
+
+  val fieldRules: FilterDead => ReqTypeId => FieldSetRules =
+    FilterDead.memo {
+
+      case HideDead =>
+        Memo { reqTypeId =>
+          FieldSetRules(
+            imp    = fields.custom(_).fieldReqTypeRules(reqTypeId),
+            tag    = tagFieldRulesFixedHideDead(_).fixed(reqTypeId),
+            text   = fields.custom(_).fieldReqTypeRules(reqTypeId),
+            static = _.fieldReqTypeRules(reqTypeId),
+          )
+        }
+
+      case ShowDead =>
+        Memo { reqTypeId =>
+          FieldSetRules(
+            imp    = fields.custom(_).fieldReqTypeRules(reqTypeId),
+            tag    = tagFieldRulesFixedShowDead(_).fixed(reqTypeId),
+            text   = fields.custom(_).fieldReqTypeRules(reqTypeId),
+            static = _.fieldReqTypeRules(reqTypeId),
+          )
+        }
+    }
+
+  def reqTypesWithRes[D](rules: FieldReqTypeRules[D])(res: FieldReqTypeRules.Resolution[D]): Iterator[ReqType] =
+    reqTypes.all.iterator.filter(rt => rules(rt.reqTypeId) == res)
+
+  val applicability: ProjectApplicability.Default = {
+    val rulesForReqType = fieldRules(HideDead)
+    ProjectApplicability {
+      case f: CustomField.Implication.Id => rulesForReqType(_).imp(f).applicability
+      case f: CustomField.Tag        .Id => rulesForReqType(_).tag(f).applicability
+      case f: CustomField.Text       .Id => rulesForReqType(_).text(f).applicability
+      case f: StaticField                => f.fieldReqTypeRules(_).applicability
+    }
   }
 
   val mostRelevantLiveFieldForTag: TagId => Option[CustomField.Tag] =
@@ -85,4 +267,42 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
 
       direct.orElse(soleParent)
     }
+
+  // ==========================================================================
+  // Req types
+
+  def live(id: ReqTypeId): Live =
+    reqTypes.need(id).live
+
+  // ==========================================================================
+  // Tags
+
+  def tagFieldDistribution(filterDead: FilterDead): TagFieldDistribution.TagIds =
+    filterDead match {
+      case HideDead => liveTagFieldDistribution
+      case ShowDead => deadTagFieldDistribution
+    }
+
+  /** Only live fields considered. All tags, live & dead, included. */
+  lazy val liveTagFieldDistribution: TagFieldDistribution.TagIds =
+    TagFieldDistribution(this, _.live(this) is Live)
+
+  /** All fields considered. All tags, live & dead, included. */
+  lazy val deadTagFieldDistribution: TagFieldDistribution.TagIds =
+    TagFieldDistribution(this, _ => true)
+
+  def deadTagFieldDistribution(deadTagFilter: CustomField.Tag.Id => Boolean): TagFieldDistribution.TagIds =
+    TagFieldDistribution(this, f => f.live(this) match {
+      case Live => true
+      case Dead => deadTagFilter(f.id)
+    })
+
+  def deadTagFieldDistribution(deadTagFilter: Option[CustomField.Tag.Id => Boolean]): TagFieldDistribution.TagIds =
+    deadTagFilter.fold(deadTagFieldDistribution)(deadTagFieldDistribution(_))
+
+  def naTags(id: Option[ReqTypeId]): NaTags =
+    id.fold(NaTags.none)(naTags)
+
+  val naTags: ReqTypeId => NaTags =
+    Memo(NaTags.forReqType(_, this))
 }

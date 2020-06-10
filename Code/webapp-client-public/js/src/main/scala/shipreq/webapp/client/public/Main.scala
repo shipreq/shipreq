@@ -4,7 +4,8 @@ import japgolly.scalajs.react.extra.router.{BaseUrl, Router}
 import japgolly.scalajs.react.vdom.PackageBase._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import shipreq.webapp.base.feature.ErrorHandlingFeature
-import shipreq.webapp.base.protocol.{AjaxClient, ClientSideProcImpl, CommonProtocolsJs}
+import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocolsJs}
+import shipreq.webapp.base.protocol.entrypoint.ClientSideProcImpl
 import shipreq.webapp.client.public.spa._
 
 @JSExportTopLevel(PublicSpaEntryPoint.Name)

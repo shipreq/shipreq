@@ -14,5 +14,8 @@ object Validity extends IsoBool.Object[Validity] {
     Valid when d.isRight
 }
 
-case object Valid extends Validity
+case object Valid extends Validity {
+  val always: Any => Validity = _ => Valid
+}
+
 case object Invalid extends Validity

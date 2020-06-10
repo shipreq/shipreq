@@ -1,11 +1,12 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import monocle.macros.Lenses
 import nyaya.util.Multimap
 import monocle.{Iso, Lens}
 import shipreq.base.util.Optics
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.base.text.{Text => T}
 import shipreq.webapp.base.text.Text.Equality._
 
 /**
@@ -13,34 +14,56 @@ import shipreq.webapp.base.text.Text.Equality._
  */
 object ReqData {
 
-  type Text = Map[CustomField.Text.Id, Map[ReqId, Text.CustomTextField.NonEmptyText]]
+  @Lenses
+  final case class Text(data: Map[CustomField.Text.Id, Map[ReqId, T.CustomTextField.NonEmptyText]]) {
 
-  // Only used in tests
-  def allTextForReq(id: ReqId, text: Text): Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText] =
-    text.iterator
-      .filter(_._2.contains(id))
-      .map(_.map2(_ apply id))
-      .toMap
+    private[data] lazy val localCodeRefs =
+      derivation.AtomScan.reqCodeRefs { f =>
+        for {
+          (_, textByReqId) <- data
+          (_, txt)         <- textByReqId
+        } f(txt.whole)
+      }
 
-  val textOuterIso: Iso[
-      Option[Map[ReqId, Text.CustomTextField.NonEmptyText]],
-             Map[ReqId, Text.CustomTextField.NonEmptyText]] =
-    Optics.nonEmptyMapIso[ReqId, Text.CustomTextField.NonEmptyText]
+    private[data] lazy val localUseCaseStepRefs =
+      derivation.AtomScan.useCaseStepRefs { f =>
+        for {
+          (_, textByReqId) <- data
+          (_, txt)         <- textByReqId
+        } f(txt.whole)
+      }
 
-  def textOuter(id: CustomField.Text.Id): Lens[Text, Map[ReqId, Text.CustomTextField.NonEmptyText]] =
-    Optics.nonEmptyMapValueLens(id, textOuterIso)
+    // Only used in tests
+    def allTextForReq(id: ReqId): Map[CustomField.Text.Id, T.CustomTextField.NonEmptyText] =
+      data.iterator
+        .filter(_._2.contains(id))
+        .map(_.map2(_ apply id))
+        .toMap
 
-  def textInner(id: ReqId): Lens[Map[ReqId, Text.CustomTextField.NonEmptyText], Text.CustomTextField.OptionalText] =
-    Optics.nonEmptyMapValueLens(id, Text.CustomTextField.NonEmptyIso)
+  }
 
-  def textAt(o: CustomField.Text.Id, i: ReqId): Lens[Text, Text.CustomTextField.OptionalText] =
-    textOuter(o) ^|-> textInner(i)
+  object Text {
 
-  def emptyText: Text =
-    Map.empty
+    val empty: Text =
+      apply(Map.empty)
 
-  implicit def equalityText: UnivEq[Text] =
-    UnivEq.univEqMap
+    implicit def univEq: UnivEq[Text] =
+      UnivEq.derive
+
+    private val outerIso: Iso[
+      Option[Map[ReqId, T.CustomTextField.NonEmptyText]],
+      Map[ReqId, T.CustomTextField.NonEmptyText]] =
+      Optics.nonEmptyMapIso[ReqId, T.CustomTextField.NonEmptyText]
+
+    private def outer(id: CustomField.Text.Id): Lens[Text, Map[ReqId, T.CustomTextField.NonEmptyText]] =
+      data ^|-> Optics.nonEmptyMapValueLens(id, outerIso)
+
+    private def inner(id: ReqId): Lens[Map[ReqId, T.CustomTextField.NonEmptyText], T.CustomTextField.OptionalText] =
+      Optics.nonEmptyMapValueLens(id, T.CustomTextField.NonEmptyIso)
+
+    def at(o: CustomField.Text.Id, i: ReqId): Lens[Text, T.CustomTextField.OptionalText] =
+      outer(o) ^|-> inner(i)
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
 

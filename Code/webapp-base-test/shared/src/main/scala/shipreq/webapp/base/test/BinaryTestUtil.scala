@@ -22,14 +22,38 @@ object BinaryTestUtil {
 
   def assertDecodeVia[A, B: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[B])
                                   (f: A => B, g: B => A)(implicit l: Line): Unit = {
+    val actual = p.decode(bin).map(f)
     def info = {
-      val descBin: BinaryData => String = _.describe(4096).filter(_ != ',')
+      val limit = 200
+      val descBin: BinaryData => String = _.describe(limit).filter(_ != ',')
       expect match {
-        case \/-(a) => s"Subject:    ${descBin(bin)}\n        Re-encoded: ${descBin(p.encode(g(a)))}"
+        case \/-(a) =>
+          val bin2 = p.encode(g(a))
+          val (b1, b2) = shrinkUnequalStrings(bin.hex, bin2.hex, limit)
+          val binaryMatches = b1.isEmpty && b2.isEmpty
+          if (binaryMatches) {
+            val (x1, x2) = shrinkUnequalStrings(actual.toString, expect.toString, limit)
+            val toStringMatches = x1.isEmpty && x2.isEmpty
+            if (toStringMatches)
+              descBin(bin)
+            else
+              s"""
+                 |Actual: $x1
+                 |Expect: $x2
+                 |""".stripMargin
+          } else
+            s"""
+               |Subject:    ${bin.length} bytes
+               |            $b1
+               |Re-encoded: ${bin2.length} bytes
+               |            $b2
+               |""".stripMargin
         case -\/(_) => descBin(bin)
       }
     }
-    assertEq(info, p.decode(bin).map(f), expect)
+    // assertEq(info, actual, expect)
+    if (!Equal[SafePickler.Result[B]].equal(actual, expect))
+      fail(info)
   }
 
   def assertDecode[A: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[A])(implicit l: Line): Unit =
@@ -66,17 +90,17 @@ object BinaryTestUtil {
   // Pickler testing
 
   def assertRoundTripP[A](a: A)(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
-    val sp = p.asV10
+    val sp = p.asV1(0)
     assertDecodeOk(sp)(sp.encode(a), a)
   }
 
   def propTestRoundTripP[A](g: Gen[A])(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
-    val sp = p.asV10
+    val sp = p.asV1(0)
     g.samples().take(propTestSize).foreach(assertRoundTrip(sp)(_))
   }
 
-  def assertRoundTripsP[A](as: Traversable[A])(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
-    val sp = p.asV10
+  def assertRoundTripsP[A](as: Iterable[A])(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
+    val sp = p.asV1(0)
     var i = 0
     for (a <- as) {
       i += 1

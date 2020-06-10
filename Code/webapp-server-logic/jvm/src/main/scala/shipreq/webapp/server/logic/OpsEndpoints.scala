@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic
 
 import io.circe._
+import io.circe.parser._
 import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
@@ -9,8 +10,9 @@ import scalaz.syntax.monad._
 import shipreq.base.util.ErrorMsg
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.{Task, TaskId, TaskmanApi}
-import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.base.user.UserValidators
+import shipreq.webapp.base.data.{Project, ProjectId}
+import shipreq.webapp.base.event.{ApplyEvent, VerifiedEvent}
+import shipreq.webapp.base.user.{EmailAddr, UserId, UserValidators, Username}
 import shipreq.webapp.server.logic.dispatch.{ResponseCmd, StatusCode}
 
 trait OpsEndpoints[F[_]] {
@@ -25,6 +27,8 @@ trait OpsEndpoints[F[_]] {
   def sendMail(emailAddr: String): F[ErrorMsg \/ SendMailResult]
 
   def getProjectEvents(pid: ProjectId): F[ResponseCmd]
+
+  def createProject(user: Username \/ EmailAddr, eventsJson: String): F[ResponseCmd]
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -37,6 +41,7 @@ object OpsEndpoints extends HasLogger {
                             svr: Server.Time[F],
                             taskman: TaskmanApi[F]) extends OpsEndpoints[F] {
 
+    import shipreq.webapp.base.protocol.json.v1.Rev1.{decoderVerifiedEvent, encoderVerifiedEvent}
     import WebappTaskmanConverters._
 
     protected def randomToken: F[String]
@@ -71,12 +76,12 @@ object OpsEndpoints extends HasLogger {
     override def sendMail(emailAddrStr: String) =
       UserValidators.emailAddr.named(emailAddrStr).onValid(emailAddr =>
         for {
-          token     ← randomToken
-          now       ← svr.now
+          token     <- randomToken
+          now       <- svr.now
           subj      = "ShipReq send-mail test"
           body      = s"Token: $token\nIssued: ${now.toStringIso8601}"
           msg       = Task.SendDiagEmail(emailAddr.toTaskman, subj, body)
-          r         ← measureDuration(taskman.submit(msg))
+          r         <- measureDuration(taskman.submit(msg))
         } yield \/-(SendMailResult(r._1, r._2, token))
       )
 
@@ -86,7 +91,6 @@ object OpsEndpoints extends HasLogger {
           if (ves.isEmpty)
             ResponseCmd.StatusOnly.NotFound
           else {
-            import shipreq.webapp.base.protocol.json.v1.PostEvents.encoderVerifiedEvent
             val json = ves.iterator.map(_.asJson.noSpacesSortKeys).mkString("[", "\n,", "\n]")
             ResponseCmd.Json(StatusCode.OK, json)
           }
@@ -97,6 +101,33 @@ object OpsEndpoints extends HasLogger {
             "ord"    -> e.ord.value.asJson,
             "reason" -> e.logMsg.asJson)
           ResponseCmd.Json(StatusCode.NotImplemented, json)
+      }
+
+    override def createProject(user: Username \/ EmailAddr, eventsJson: String): F[ResponseCmd] =
+      decodeEvents(eventsJson) match {
+        case \/-(ves) =>
+          db.getUserId(user).flatMap {
+            case Some(uid) =>
+              ApplyEvent.untrusted.applyVerified(ves)(Project.empty) match {
+                case \/-(p) =>
+                  db.createProject(uid, ves, p).map { pid =>
+                    val response = CreateProjectResult(uid, pid)
+                    ResponseCmd.Json(StatusCode.OK, response.toJson)
+                  }
+                case -\/(err) =>
+                  F pure ResponseCmd.Text(StatusCode.Forbidden, err.value)
+              }
+            case None =>
+              F pure ResponseCmd.Text(StatusCode.BadRequest, "User not found")
+          }
+        case -\/(res) =>
+          F pure res
+      }
+
+    private def decodeEvents(jsonStr: String): ResponseCmd \/ VerifiedEvent.Seq =
+      decode[VerifiedEvent.Seq](jsonStr) match {
+        case Right(ves) => \/-(ves)
+        case Left(e) => -\/(ResponseCmd.Text(StatusCode.BadRequest, "Failed to parse event JSON: " + e))
       }
   }
 
@@ -113,7 +144,7 @@ object OpsEndpoints extends HasLogger {
   }
 
   final case class MsgStatusResult(id: TaskId, status: String, archived: Boolean) extends HasJson {
-    def toJson: Json =
+    override def toJson: Json =
       Json.obj(
         "id"       -> id.value.asJson,
         "status"   -> status.asJson,
@@ -121,7 +152,7 @@ object OpsEndpoints extends HasLogger {
   }
 
   final case class SendMailResult(id: TaskId, time: Duration, token: String) extends HasJson {
-    def toJson: Json =
+    override def toJson: Json =
       Json.obj(
         "id"    -> id.value.asJson,
         "token" -> token.asJson,
@@ -129,7 +160,7 @@ object OpsEndpoints extends HasLogger {
   }
 
   final case class UserStats(stats: DB.ForOps.UserStats) extends HasJson {
-    def toJson: Json =
+    override def toJson: Json =
       Json.obj(
         "registered" -> stats.registered.asJson,
         "pending"    -> stats.pendingRegistration.asJson,
@@ -142,7 +173,7 @@ object OpsEndpoints extends HasLogger {
                            tableStats: List[DB.ForOps.TableStat],
                            dbSize    : Long) extends HasJson {
     import DB.ForOps.TableStat
-    def toJson: Json = {
+    override def toJson: Json = {
       val tables = {
         val fields = List.newBuilder[(String, Json)]
         def add(t: TableStat): Unit =
@@ -169,5 +200,12 @@ object OpsEndpoints extends HasLogger {
         "tables"  -> tables,
         "dbSize"  -> dbSize.asJson)
     }
+  }
+
+  final case class CreateProjectResult(userId: UserId, projectId: ProjectId) extends HasJson {
+    override def toJson: Json =
+      Json.obj(
+        "userId"    -> userId.value.asJson,
+        "projectId" -> projectId.value.asJson)
   }
 }

@@ -114,7 +114,7 @@ case class MockOpTransformer1[Op[_], I[_]: Applicative, S <: Op[A]: ClassTag, A]
 // WORKAROUND START
 case class MockOpTransformer1[Op[_], I[_], S, A](ttp: OpTypeProvider[Op], default: A)(implicit I: Applicative[I], S: ClassTag[S], ev: S <:< Op[A])
   extends MockOpTransformerA[Op, I] {
-  val _ = ev
+  locally(ev)
   def soleOp = sole[Op[A]](S.asInstanceOf[ClassTag[Op[A]]]).asInstanceOf[S]
 // WORKAROUND END
 

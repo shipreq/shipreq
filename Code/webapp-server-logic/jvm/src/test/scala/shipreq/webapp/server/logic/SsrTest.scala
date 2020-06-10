@@ -22,7 +22,7 @@ object SsrTest extends TestSuite {
   private implicit def autoUsernameFromString(u: String): Option[Username] =
     Option(u).map(Username(_))
 
-  private val baseUrl = Url.Absolute.Base("https://shipreq.com")
+  private def baseUrl = Url.Absolute.Base("https://shipreq.com")
 
   private lazy val ssr = {
     implicit val trace = Trace.Algebra.off[Fx]
@@ -32,22 +32,22 @@ object SsrTest extends TestSuite {
 
   override def tests = Tests {
 
-    'prepare - {ssr; ()} // so it gets it's own duration in test output
+    "prepare" - {ssr; ()} // so it gets it's own duration in test output
 
-    'public - {
+    "public" - {
 
-      'root - {
+      "root" - {
         def run(username: String = null): String =
           getHtml(ssr.public(Url.Relative("/"), username))
 
-        'anon - {
+        "anon" - {
           val html = run()
           assertContains(html, ">Login<")
           assertContains(html, "Get in touch")
           ()
         }
 
-        'loggedIn - {
+        "loggedIn" - {
           val html = run("gori")
           assertNotContains(html, ">Login<")
           assertContains(html, "@gori")
@@ -56,18 +56,18 @@ object SsrTest extends TestSuite {
         }
       }
 
-      'login - {
+      "login" - {
         def test(username: String = null): Unit = {
           val result = ssr.public(Urls.login, username).unsafeRun()
           assertEq(result, None)
         }
-        'anon     - test()
-        'loggedIn - test("gori")
+        "anon"     - test()
+        "loggedIn" - test("gori")
       }
     }
 
-    'home - {
-      'loader - {
+    "home" - {
+      "loader" - {
         val html = getHtml(ssr.homeSpaLoader(HomeSpaLoaderData(Username("gori"))))
         assertNotContains(html, "Loading...")
         assertContains(html, "Projects")
@@ -76,8 +76,8 @@ object SsrTest extends TestSuite {
       }
     }
 
-    'project - {
-      'loader - {
+    "project" - {
+      "loader" - {
         val html = getHtml(ssr.projectSpaLoader(ProjectSpaLoaderData(Username("gori"), "Stuff")))
         assertContains(html, "Loading...")
         assertContains(html, "Projects")

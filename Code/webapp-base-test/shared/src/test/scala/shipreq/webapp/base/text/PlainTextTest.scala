@@ -2,7 +2,7 @@ package shipreq.webapp.base.text
 
 import sourcecode.Line
 import shipreq.base.test.BaseTestUtil._
-import shipreq.webapp.base.data.{Live, Mandatory}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.SampleProject6._
 import shipreq.webapp.base.test.UnsafeTypes._
 import utest._
@@ -15,22 +15,22 @@ object PlainTextTest extends TestSuite {
 
   private def assertRoundTrip(input: String)(implicit l: Line) = {
     val rich = Text.CustomTextField.parse(project, None)(input)
-    val actual = plainText.text(rich, Live, Mandatory.Not)
+    val actual = plainText.text(rich, Live, Optional)
     assertMultiline(actual, input)
   }
 
   override def tests = Tests {
-    'useCaseStepRefs {
+    "useCaseStepRefs" - {
       val full = s"[UC-$step16_label] and [UC-$step17_label] are dead. [UC-$step19_label] and [UC-$step18_label] are not."
 
-      'noCtx - assertEq(plainText                .reqTitleById(uc1), full)
-      'uc1   - assertEq(plainText.withCtx(ctxUc1).reqTitleById(uc1), full.replaceAll("UC-", ""))
-      'ucN   - assertEq(plainText.withCtx(ctxUc0).reqTitleById(uc1), full.replaceAll("UC-", ""))
+      "noCtx" - assertEq(plainText                .reqTitleById(uc1), full)
+      "uc1"   - assertEq(plainText.withCtx(ctxUc1).reqTitleById(uc1), full.replaceAll("UC-", ""))
+      "ucN"   - assertEq(plainText.withCtx(ctxUc0).reqTitleById(uc1), full.replaceAll("UC-", ""))
     }
 
-    'multilineText {
+    "multilineText" - {
 
-      'combo {
+      "combo" - {
         val input =
           """
             |hehe
@@ -44,7 +44,7 @@ object PlainTextTest extends TestSuite {
         assertRoundTrip(input)
       }
 
-      'ulWithNLs1 {
+      "ulWithNLs1" - {
         val input =
           """
             |ok
@@ -74,7 +74,7 @@ object PlainTextTest extends TestSuite {
         assertRoundTrip(input)
       }
 
-      'ulWithNLs2 {
+      "ulWithNLs2" - {
         val input =
           """
             |* a
@@ -90,7 +90,7 @@ object PlainTextTest extends TestSuite {
         assertRoundTrip(input)
       }
 
-      'ul {
+      "ul" - {
         val input =
           """
             |* a
@@ -100,7 +100,7 @@ object PlainTextTest extends TestSuite {
         assertRoundTrip(input)
       }
 
-      'codeBlock {
+      "codeBlock" - {
         val input =
           """
             |```
@@ -126,7 +126,7 @@ object PlainTextTest extends TestSuite {
         assertRoundTrip(input)
       }
 
-      'ulWithCodeBlocks {
+      "ulWithCodeBlocks" - {
         val input =
           """
             |* ```xxx

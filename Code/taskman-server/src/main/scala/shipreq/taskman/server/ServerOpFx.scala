@@ -1,10 +1,10 @@
 package shipreq.taskman.server
 
-import doobie.imports._
+import doobie._
 import japgolly.clearconfig._
 import java.time.Duration
 import scalaz.~>
-import shipreq.base.db.DbAccess
+import shipreq.base.db.{DbAccessor, XA}
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api._
 import shipreq.taskman.server.logic._
@@ -32,21 +32,24 @@ object ServerOpFx {
 
   object Sql {
     import shipreq.base.db.DoobieHelpers._
-    import shipreq.base.db.DoobieMeta._
+    import shipreq.base.db.BaseDoobieCodecs._
     import shipreq.base.db.SqlHelpers._
-    import shipreq.taskman.api.impl.DoobieMeta._
+    import shipreq.taskman.api.impl.TaskmanDoobieCodecs._
 
     implicit val doobieMetaWorkerId: Meta[WorkerId] =
-      meta1(WorkerId.apply)(_.value)
+      Meta[Short].timap(WorkerId.apply)(_.value)
 
     implicit val doobieMetaNodeId: Meta[NodeId] =
-      meta1(NodeId.apply)(_.value)
+      Meta[Int].timap(NodeId.apply)(_.value)
 
-    implicit val doobieCompositeTaskHeader: Composite[TaskHeader] =
-      composite3(TaskHeader.apply)(h => (h.id, h.priority, h.created))
+    implicit val doobieReadTaskHeader: Read[TaskHeader] =
+      Read.apply3(TaskHeader.apply)
 
-    implicit val doobieCompositeArchiveIntent: Composite[ArchiveIntent] =
-      Composite[(String, Int)].writeOnly(x => (x.resultFlagS, x.failureCountInc))
+    implicit val doobieWriteTaskHeader: Write[TaskHeader] =
+      Write.apply3(h => (h.id, h.priority, h.created))
+
+    implicit val doobieWriteArchiveIntent: Write[ArchiveIntent] =
+      Write.apply2(x => (x.resultFlagS, x.failureCountInc))
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -143,16 +146,16 @@ object ServerOpFx {
       queued match {
         case None =>
           // Empty mem-queue
-          getMsgsAssignNodeZ.toQuery0((node, assignmentTrustPeriod, limit)).list
+          getMsgsAssignNodeZ.toQuery0((node, assignmentTrustPeriod, limit)).to[List]
 
         case Some((memPri, memSize)) =>
           val freeSlots = limit - memSize
           if (freeSlots > 0)
             // Partial mem-queue
-            getMsgsAssignNodeP.toQuery0((assignmentTrustPeriod, limit, freeSlots, memPri, node)).list
+            getMsgsAssignNodeP.toQuery0((assignmentTrustPeriod, limit, freeSlots, memPri, node)).to[List]
           else
             // Full mem-queue
-            getMsgsAssignNodeF.toQuery0((node, assignmentTrustPeriod, memPri, limit)).list
+            getMsgsAssignNodeF.toQuery0((node, assignmentTrustPeriod, memPri, limit)).to[List]
       }
 
     def getMsgAssignWorker(node: NodeId, worker: WorkerId, hdr: TaskHeader): ConnectionIO[Option[TaskDetail]] =
@@ -176,48 +179,47 @@ object ServerOpFx {
       cfgGetQ.toQuery0(k).option
 
     def cfgGetAll: ConnectionIO[List[(String, String)]] =
-      cfgGetAllQ.list
+      cfgGetAllQ.to[List]
   }
 
-  def configSource(dbAccess: DbAccess): ConfigSource[Fx] =
-  // TODO Remove "new "
-    new ConfigSource[Fx](
-      new ConfigSourceName(dbAccess.desc),
-      dbAccess.fx.trans(Dao.cfgGetAll)
+  def configSource(db: DbAccessor, xa: XA): ConfigSource[Fx] =
+    ConfigSource[Fx](
+      ConfigSourceName(db.desc),
+      xa(Dao.cfgGetAll)
         .attemptFx
         .map(_.bimap(_.toString, kvs => ConfigStore.ofMap[Fx](kvs.toMap))))
 }
 
 // =====================================================================================================================
 
-final class ServerOpFx[EA](db: Transactor[Fx], fh: Worker.FailureHandler) extends (ServerOp ~> Fx) {
+final class ServerOpFx(xa: XA, fh: Worker.FailureHandler) extends (ServerOp ~> Fx) {
   import ServerOp._
   import ServerOpFx._
 
-  def getNextNodeId = db trans Dao.getNextNodeId
+  def getNextNodeId = xa(Dao.getNextNodeId)
 
   override def apply[A](op: ServerOp[A]): Fx[A] = op match {
 
     case GetTasksAssignNode(node, limit, trustPeriod, queued) =>
-      db trans Dao.getMsgsAssignNode(node, limit, trustPeriod, queued)
+      xa(Dao.getMsgsAssignNode(node, limit, trustPeriod, queued))
 
     case GetTaskAssignWorker(node, worker, hdr) =>
-      db trans Dao.getMsgAssignWorker(node, worker, hdr)
+      xa(Dao.getMsgAssignWorker(node, worker, hdr))
 
     case ReassignWorker(n, w, m) =>
-      db trans Dao.reassignWorker(n, w, m.id)
+      xa(Dao.reassignWorker(n, w, m.id))
 
     case UpdateTaskSuccess(n, w, m) =>
-      db trans Dao.archiveMsg(n, w, m.id, Succeeded)
+      xa(Dao.archiveMsg(n, w, m.id, Succeeded))
 
     case UpdateTaskRetry(n, w, m, delay) =>
-      db trans Dao.failAndRetry(n, w, m.id, delay)
+      xa(Dao.failAndRetry(n, w, m.id, delay))
 
     case UpdateTaskAbort(n, w, m) =>
-      db trans Dao.archiveMsg(n, w, m.id, FailAndAbort)
+      xa(Dao.archiveMsg(n, w, m.id, FailAndAbort))
 
     case CfgGet(k) =>
-      db trans Dao.cfgGet(k)
+      xa(Dao.cfgGet(k))
 
     case op: NotifySupportWorkerFailed =>
       fh handleFailedWorker op

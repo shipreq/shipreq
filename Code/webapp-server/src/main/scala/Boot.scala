@@ -12,7 +12,7 @@ import net.liftweb.util.Props.RunModes
 import org.redisson.Redisson
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scalaz.syntax.applicative._
-import shipreq.base.db.DbAccess
+import shipreq.base.db.DbAccessor
 import shipreq.base.ops.{JdbcLogging, JdbcMetrics, SqlTracer}
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{Props => ShipReqProps}
@@ -57,14 +57,14 @@ class Boot {
       try {
 
         // Create services
-        val dbAccessF   = submit("initDatabase")(Fx(initDatabase(cfg)))
+        val dbF         = submit("initDatabase")(Fx(initDatabase(cfg)))
         val redisF      = cfg.redis.map(c => submit("initRedis")(Fx(Redisson.create(c.instance))))
         val ssrF        = submit("initSsr")(initSsr(cfg.server))
-        val dbAccess    = Await.result(dbAccessF, timeout)
+        val db          = Await.result(dbF, timeout)
         val redisClient = redisF.map(Await.result(_, timeout))
         val ssr         = Await.result(ssrF, timeout)
         trace("configureLift")(configureLift())
-        Global.Instance = Global.default(dbAccess, redisClient, ssr, cfg)
+        Global.Instance = Global.default(db, redisClient, ssr, cfg)
 
         // Start services
         val f1 = submit("preloadTemplates")(Fx(preloadTemplates()))
@@ -119,7 +119,7 @@ class Boot {
     LiftRules.addToPackages(packageRoot)
 
     // Prevent "stable" func names in test, and speed up generation routine
-    LiftRules.funcNameGenerator = S.generateFuncName _
+    LiftRules.funcNameGenerator = () => S.generateFuncName
 
     // Customise URL paths for built-in resources & AJAX requests
     LiftRules.liftContextRelativePath = WebappConfig.liftCtxPath
@@ -179,7 +179,7 @@ class Boot {
     HttpStatusHandler.init()
   }
 
-  def initDatabase(cfg: ServerConfig): DbAccess = {
+  def initDatabase(cfg: ServerConfig): DbAccessor = {
     val dbCfg = cfg.db
 
     // Hikari
@@ -194,9 +194,9 @@ class Boot {
       sqlTracer = sqlTracer compose t
     dbCfg.modifyHikariDataSource(sqlTracer.inject)
 
-    val access = DbAccess.fromCfg(dbCfg).unsafeRun()
+    val access = DbAccessor.fromCfg(dbCfg).unsafeRun()
     logger.info(s"Connecting to DB: ${access.desc}")
-    access.verifyConnectivity()
+    access.verifyConnectivity.unsafeRun()
     access.migrator.migrate[Fx].unsafeRun()
     access
   }
@@ -237,7 +237,7 @@ class Boot {
       // Duplicating Global :S
       import TraceInterpreter.Implicits._
       implicit val traceAlgebra = cfg.traceAlgebraFx
-      implicit val trace        = TraceLogic.on: TraceInterpreter.ForLift[Fx]
+      implicit val trace        = TraceLogic.on: TraceInterpreter.ForHttp[Fx]
       implicit val server       = trace.injectServer(ServerInterpreter)
       new MinimalSsr[Fx]
     } else

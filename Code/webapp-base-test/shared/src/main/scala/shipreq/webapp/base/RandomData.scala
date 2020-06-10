@@ -1,5 +1,6 @@
 package shipreq.webapp.base
 
+import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.adt_macros.AdtMacros._
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion._
@@ -8,20 +9,19 @@ import japgolly.univeq._
 import java.time.Instant
 import nyaya.gen._
 import nyaya.util._
-import monocle._
+import monocle.{Optional => _, _}
 import monocle.function.Field1.first
 import monocle.function.Field2.second
 import org.parboiled2.CharPredicate
 import scala.annotation.tailrec
+import scala.collection.immutable.ArraySeq
 import scalaz.{-\/, Need, \/-}
 import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
 import scalaz.std.set._
-import scalaz.std.stream._
 import scalaz.std.vector._
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.util._
-import shipreq.base.util.Debug._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.data._
@@ -30,17 +30,20 @@ import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
-import shipreq.webapp.base.util.{GenericData, PreProcessor}
+import shipreq.webapp.base.util.PreProcessor
 import shipreq.webapp.base.user._
 
 // TODO RandomData is inaccurate in that CorrectionParts aren't applied.
 
+object RandomDataSettings {
+  var disableUnicode = false
+}
+
 object RandomData {
+  import RandomDataSettings._
   import DataImplicits._
-  import Field.ApplicableReqTypes
   import MTrie.Ops
   import Optics.Implicits._
-  import ReqType.Mnemonic
   import TestOptics.{customReqTypesLive => _, _}
   import WebappBaseGen._
 
@@ -54,19 +57,24 @@ object RandomData {
 //    val trimRightR = "\\s+$".r
 //    def trimRight(s: String) = trimRightR.replaceAllIn(s, "")
 
-  @tailrec def dropHead[A](v: Vector[A])(f: A => Boolean): Vector[A] =
+  @tailrec def dropHead[A](v: ArraySeq[A])(f: A => Boolean): ArraySeq[A] =
     if (v.nonEmpty && f(v.head))
       dropHead(v.tail)(f)
     else
       v
 
-  @tailrec def dropLast[A](v: Vector[A])(f: A => Boolean): Vector[A] =
+  @tailrec def dropLast[A](v: ArraySeq[A])(f: A => Boolean): ArraySeq[A] =
     if (v.nonEmpty && f(v.last))
       dropLast(v.init)(f)
     else
       v
 
-  private def disableUnicode = false
+  private[this] val charsUpper      = ('A' to 'Z').toArray
+  private[this] val charsLower      = ('a' to 'z').toArray
+  private[this] val charsAlpha      = charsUpper ++ charsLower
+  private[this] val charsAlphaSlash = charsAlpha :+ '/'
+
+  val genAlphaSlash = Gen.chooseArray_!(charsAlphaSlash)
 
   val unicodeChar: Gen[Char] =
     if (disableUnicode)
@@ -88,10 +96,10 @@ object RandomData {
   val unicodeString : Gen[String] = unicodeChar.string
   val unicodeString1: Gen[String] = unicodeChar.string1
 
-//  private val _charPredAllChars = ('\u0001' to '\ud7ff').seq
-  private val _charPredAllChars = ('\u0001' to '\u0100').seq
-//  private val _charPredAllChars = ('\u0020' to '\u0100').seq
-//  private val _charPredAllChars = ('\u0020' to '\u0080').seq
+//  private val _charPredAllChars = ('\u0001' to '\ud7ff')
+  private val _charPredAllChars = ('\u0001' to '\u0100')
+//  private val _charPredAllChars = ('\u0020' to '\u0100')
+//  private val _charPredAllChars = ('\u0020' to '\u0080')
   def charPred(p: CharPredicate): Gen[Char] =
     //Gen.choose_!(_charPredAllChars filter p.apply)
     Gen.chooseArray_!((_charPredAllChars filter p.apply).toArray)
@@ -115,12 +123,12 @@ object RandomData {
   def CaseInsensitive(s: String): CaseInsensitive =
     new CaseInsensitive(s.toLowerCase, s)
 
-  def legalGrammar[G](g: G)(first: G => GrammarSpec.Chars, rest: G => GrammarSpec.Chars): Stream[String] = {
-    val g1 = first(g).toStream.map(_.toString)
-    val gn = rest(g).toStream.map(_.toString)
-    def grow(ss: Stream[String]): Stream[String] = {
-      val x = ss append ss.flatMap(s => gn.map(s + _))
-      x append grow(x)
+  def legalGrammar[G](g: G)(first: G => GrammarSpec.Chars, rest: G => GrammarSpec.Chars): LazyList[String] = {
+    val g1 = first(g).iterator().map(_.toString).to(LazyList)
+    val gn = rest(g).iterator().map(_.toString).to(LazyList)
+    def grow(ss: LazyList[String]): LazyList[String] = {
+      val x = ss #::: ss.flatMap(s => gn.map(s + _))
+      x #::: grow(x)
     }
     grow(g1)
   }
@@ -162,20 +170,26 @@ object RandomData {
 
   def imapToMapLens[K, V] = Lens((_: IMap[K, V]).underlyingMap)(v => _ replaceUnderlying v)
 
+  val desc =
+    unicodeString1.option
+
   val live =
     Gen.choose[Live](Live, Live, Live, Dead)
 
   val on =
     Gen.boolean.map(On.when)
 
+  val applicability: Gen[Applicability] =
+    Gen.boolean.map(Applicable.when)
+
 //  val liveUsually =
 //    Gen.int.map(i => if ((i & 7) == 0) Dead else Live)
 
   val implicationRequired =
-    Gen.choose[ImplicationRequired](ImplicationRequired, ImplicationRequired.Not)
+    Gen.choose[Mandatory](Mandatory, Optional)
 
   val mandatory =
-    Gen.choose[Mandatory](Mandatory, Mandatory.Not)
+    Gen.choose[Mandatory](Mandatory, Optional)
 
   val hashRefKey: Gen[HashRefKey] =
     grammarStr1(Grammar.hashRefKey)(_.firstChar, _.tailChars, _.length) map HashRefKey
@@ -185,6 +199,9 @@ object RandomData {
 
   val filterDead =
     Gen.choose[FilterDead](ShowDead, HideDead)
+
+  val alphaOne =
+    Gen.alpha.map(_.toString)
 
   def obfuscated[A]: Gen[Obfuscated[A]] =
     Gen.alphaNumeric.string(4 to 12).map(Obfuscated.apply[A])
@@ -196,7 +213,7 @@ object RandomData {
       a <- Gen.lower
       b <- Gen.chooseChar('_', 'a' to 'z', '0' to '9').string(x to y)
       c <- Gen.chooseChar('a', 'b' to 'z', '0' to '9')
-    } yield Username(a + b + c)
+    } yield Username("" + a + b + c)
   }
 
   lazy val errorMsg: Gen[ErrorMsg] =
@@ -213,6 +230,26 @@ object RandomData {
 
   lazy val verificationToken: Gen[VerificationToken] =
     Gen.ascii.string(1 to 6).map(VerificationToken.apply)
+
+  lazy val genHexCharLower: Gen[Char] =
+    Gen.chooseChar('a', "bcdef0123456789")
+
+  lazy val genColour: Gen[Colour] =
+    for {
+      i <- Gen.choose(3, 6)
+      h <- genHexCharLower.string(i)
+    } yield Colour.force("#" + h)
+
+  lazy val applicableReqTypes: Gen[ApplicableReqTypes] =
+    applicableReqTypes(reqTypeId.set)
+
+  def applicableReqTypes(r: Set[CustomReqTypeId]): Gen[ApplicableReqTypes] = {
+    val all = r ++ StaticReqType.values.whole
+    applicableReqTypes(Gen.subset(all))
+  }
+
+  def applicableReqTypes(g: Gen[Set[ReqTypeId]]): Gen[ApplicableReqTypes] =
+    Gen.apply2(ApplicableReqTypes.apply)(applicability, g)
 
   // -------------------------------------------------------------------------------------------------------------------
   // Custom issue types
@@ -247,8 +284,11 @@ object RandomData {
   val reqTypeId: Gen[ReqTypeId] =
     Gen.chooseGen(staticReqType, customReqTypeId)
 
-  def customReqTypeName =
-    shortText1
+  val customReqTypeName =
+    unicodeChar.string(Grammar.reqTypeName.length.total).flatMap { s0 =>
+      val s = DataValidators.reqType.name.stateless.corrector.full(s0)
+      if (s.isEmpty) alphaOne else Gen.pure(s)
+    }
 
   val customReqType =
     for {
@@ -256,9 +296,10 @@ object RandomData {
       n  <- customReqTypeName
       mn <- reqTypeMnemonic
       om <- reqTypeMnemonic.set(0 to 10)
-      ir <- implicationRequired
+      d  <- desc
+      i  <- implicationRequired
       a  <- live
-    } yield CustomReqType(id, mn, om - mn, n, ir, a)
+    } yield CustomReqType(id, mn, om - mn, n, d, i, a)
 
   def genCustomReqTypes(g: Gen[List[CustomReqType]]) = {
     def dname = Distinct.str.at(CustomReqType.name)
@@ -292,37 +333,51 @@ object RandomData {
   val tagId: Gen[TagId] =
     Gen.chooseGen(tagGroupId, applicableTagId)
 
-  val mutexChildren =
-    Gen.choose[MutexChildren](MutexChildren, MutexChildren.Not)
+  val exclusivity =
+    Gen.choose[Exclusivity](Exclusive, NonExclusive)
 
-  def tagName =
-    shortText1
+  val tagGroupName: Gen[String] =
+    unicodeChar.string(Grammar.tagGroupName.length.total).flatMap { s0 =>
+      val s = DataValidators.tag.name.stateless.corrector.full(s0)
+      if (s.isEmpty) alphaOne else Gen.pure(s)
+    }
 
   val tagGroup =
-    Gen.apply5(TagGroup.apply)(tagGroupId, tagName, optionalLargeText, mutexChildren, live)
+    Gen.apply5(TagGroup.apply)(tagGroupId, tagGroupName, optionalLargeText, exclusivity, live)
 
-  val applicableTag =
-    Gen.apply5(ApplicableTag.apply)(applicableTagId, tagName, optionalLargeText, hashRefKey, live)
+  def applicableTag(genReqTypeIds: Gen[Set[ReqTypeId]]) =
+    Gen.apply6(ApplicableTag.apply)(
+      applicableTagId, hashRefKey, optionalLargeText, genColour.option, applicableReqTypes(genReqTypeIds), live)
 
-  val tag =
-    Gen.chooseGen[Tag](tagGroup, applicableTag, applicableTag, applicableTag)
+  def tag(genReqTypeIds: Gen[Set[ReqTypeId]]) = {
+    val at = applicableTag(genReqTypeIds)
+    Gen.chooseGen[Tag](tagGroup, at, at, at)
+  }
 
-  val tagAndRels: Gen[(Tag, TagInTree.Relations)] =
+  def tagAndRels(genReqTypeIds: Gen[Set[ReqTypeId]]): Gen[(Tag, TagInTree.Relations)] =
     for {
-      t      ← tag
-      (p, c) ← tagId.set.pair
+      t      <- tag(genReqTypeIds)
+      (p, c) <- tagId.set.pair
     } yield {
       val children = (c - t.id -- p).toVector
-      val parents  = (p - t.id -- c).toStream.map(_ -> none[TagId]).toMap
+      val parents  = (p - t.id -- c).iterator.map(_ -> none[TagId]).toMap
       (t, MMTree.Relations(parents, children))
     }
 
   /** HashRefKey uniqueness enforced in Project, not here */
-  val tags: Gen[List[Tag]] = {
+  def tags(genReqTypeIds: Gen[Set[ReqTypeId]]): Gen[List[Tag]] = {
+    val tagNameL = monocle.Optional[Tag, String]({
+      case t: TagGroup      => Some(t.name)
+      case _: ApplicableTag => None
+    })(n => {
+      case t: TagGroup      => t.copy(name = n)
+      case t: ApplicableTag => t
+    })
+
     val di = distinctId[Tag, TagId]
-    val dn = Distinct.str.at(Tag.name)
+    val dn = Distinct.str.at(tagNameL)
     val d = (di * dn).lift[List]
-    tag.list map d.run
+    tag(genReqTypeIds).list map d.run
   }
 
   type TagTreeStructure = Map[TagId, Vector[TagId]]
@@ -332,16 +387,16 @@ object RandomData {
       Gen.pure(Map.empty)
     else {
       val idset = Gen.subset(tags)
-      idset.map(_.toStream)
+      idset.map(_.toList)
         .flatMap(ks => Gen sequence ks.map(k => idset.map(ids => (k, (ids - k).toVector))))
         .map(s => preventCycles(Tag.CycleDetectors.multimap)(s.toMap))
     }
 
-  val tagTree: Gen[TagTree] =
+  def tagTree(genReqTypeIds: Gen[Set[ReqTypeId]]): Gen[TagTree] =
     for {
-      l ← tags
+      l <- tags(genReqTypeIds)
       m = Tag.IdAccess.mapById(l)
-      s ← tagTreeStructure(m.keySet)
+      s <- tagTreeStructure(m.keySet)
     } yield
       m.values.foldLeft(TagTree.empty)((q, t) =>
         q.add(TagInTree(t, s.getOrElse(t.id, Vector.empty))))
@@ -354,14 +409,58 @@ object RandomData {
   // -------------------------------------------------------------------------------------------------------------------
   // Fields
 
+  def fieldReqTypeRules[D](genReqTypeId: Option[Gen[ReqTypeId]], genDefault: Option[Gen[D]]): Gen[FieldReqTypeRules[D]] = {
+    import FieldReqTypeRules._
+
+    val genRes1 = Gen.pure(Resolution.NotApplicable)
+    val genRes2 = Gen.pure(Resolution.Optional)
+    val genRes3 = Gen.pure(Resolution.Mandatory)
+
+    val genRes: Gen[Resolution[D]] =
+      genDefault match {
+        case Some(gd) =>
+          val genRes4 = gd.map(Resolution.DefaultTo.apply)
+          Gen.chooseGen(genRes1, genRes2, genRes3, genRes4)
+        case None =>
+          Gen.chooseGen(genRes1, genRes2, genRes3)
+      }
+
+    genReqTypeId match {
+      case Some(g) =>
+        for {
+          a <- g.set.mapBy(genRes)(0 to 4)
+          o <- genRes
+        } yield {
+          var seen = Set.empty[ReqTypeId]
+          val byReqTypeId =
+            a.iterator.flatMap { case (res, ids) =>
+              val newIds = ids -- seen
+              if (newIds.isEmpty)
+                Nil
+              else {
+                seen ++= newIds
+                newIds.iterator.map(_ -> res)
+              }
+            }.toMap
+          FieldReqTypeRules(byReqTypeId, o)
+        }
+
+      case None =>
+        genRes.map(FieldReqTypeRules(Map.empty, _))
+    }
+  }
+
+  val fieldName: Gen[String] =
+    unicodeChar.string(Grammar.fieldName.length.total).flatMap { s0 =>
+      val s = DataValidators.field.name.stateless.corrector.full(s0)
+      if (s.isEmpty) alphaOne else Gen.pure(s)
+    }
+
   val staticField: Gen[StaticField] =
     Gen.chooseNE(StaticField.values)
 
-  def applicableReqTypes(r: Set[CustomReqTypeId]): Gen[ApplicableReqTypes] = {
-    val all = StaticReqType.values.whole ++ r
-    val nes = Gen.subset1(all).map(NonEmptySet force _.toSet)
-    genISubset(nes)
-  }
+  val staticFieldOptional: Gen[StaticField.Optional] =
+    Gen.chooseNE(StaticField.optional)
 
   val customFieldTextId =
     id map CustomField.Text.Id
@@ -376,73 +475,70 @@ object RandomData {
     Gen.chooseGen(customFieldTextId, customFieldTagId, customFieldImplicationId)
 
   val fieldRefKey =
-    grammarStr1(Grammar.fieldRefKey)(_.firstChar, _.tailChars, _.length) map FieldRefKey
+    Gen.alpha.string(1 to 4)
 
   def customFieldType =
     Gen.chooseNE(CustomFieldType.values)
 
-  def customFieldText(art: Gen[ApplicableReqTypes]): Gen[CustomField.Text] =
-    Gen.apply6(CustomField.Text.apply)(customFieldTextId, shortText1, fieldRefKey, mandatory, art, live)
+  def customFieldText(rules: Gen[FieldReqTypeRules.ForTextField]): Gen[CustomField.Text] =
+    Gen.apply4(CustomField.Text.apply)(customFieldTextId, fieldName, rules, live)
 
-  def customFieldTag(tagId: Gen[TagId], art: Gen[ApplicableReqTypes]): Gen[CustomField.Tag] =
-    Gen.apply5(CustomField.Tag.apply)(customFieldTagId, tagId, mandatory, art, live)
+  def customFieldTag(tagId: Gen[TagGroupId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[CustomField.Tag] =
+    Gen.apply4(CustomField.Tag.apply)(customFieldTagId, tagId, rules, live)
 
-  def customFieldTagSome(tagIds: Set[TagId], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Tag]] =
+  def customFieldTagSome(tagIds: Set[TagGroupId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[Vector[CustomField.Tag]] =
     Gen.subset(tagIds.toVector).flatMap(ids =>
       Gen sequence ids.map(id =>
-        customFieldTag(Gen pure id, art)))
+        customFieldTag(Gen pure id, rules)))
 
-  def customFieldImplication(reqTypeId: Gen[ReqTypeId], art: Gen[ApplicableReqTypes]): Gen[CustomField.Implication] =
-    Gen.apply5(CustomField.Implication.apply)(customFieldImplicationId, reqTypeId, mandatory, art, live)
+  def customFieldImplication(reqTypeId: Gen[ReqTypeId], rules: Gen[FieldReqTypeRules.ForImpField]): Gen[CustomField.Implication] =
+    Gen.apply4(CustomField.Implication.apply)(customFieldImplicationId, reqTypeId, rules, live)
 
-  def customFieldImplicationSome(reqTypeIds: Set[ReqTypeId], art: Gen[ApplicableReqTypes]): Gen[Vector[CustomField.Implication]] =
+  def customFieldImplicationSome(reqTypeIds: Set[ReqTypeId], rules : Gen[FieldReqTypeRules.ForImpField]): Gen[Vector[CustomField.Implication]] =
     Gen.subset(reqTypeIds.toVector).flatMap(ids =>
       Gen sequence ids.map(id =>
-        customFieldImplication(Gen pure id, art)))
+        customFieldImplication(Gen pure id, rules)))
 
-  def customField(art: Gen[ApplicableReqTypes],
+  def customField(rulesAny: Gen[FieldReqTypeRules[Impossible]],
+                  rulesTag: Gen[FieldReqTypeRules.ForTagField],
                   impFields: Boolean,
                   tagFields: Boolean): Gen[CustomField] = {
-    lazy val txt: Gen[CustomField] = customFieldText(art)
+    lazy val txt: Gen[CustomField] = customFieldText(rulesAny)
     customFieldType.flatMap {
       case CustomFieldType.Text        => txt
-      case CustomFieldType.Tag         => if (tagFields) customFieldTag(tagId, art) else txt
-      case CustomFieldType.Implication => if (impFields) customFieldImplication(reqTypeId, art) else txt
+      case CustomFieldType.Tag         => if (tagFields) customFieldTag(tagGroupId, rulesTag) else txt
+      case CustomFieldType.Implication => if (impFields) customFieldImplication(reqTypeId, rulesAny) else txt
     }
   }
 
-  def customFields(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], art: Gen[ApplicableReqTypes]): Gen[IMap[CustomFieldId, CustomField]] = {
+  def customFields(reqTypeIds: Set[ReqTypeId],
+                   tagIds    : Set[TagGroupId],
+                   rulesAny  : Gen[FieldReqTypeRules[Impossible]],
+                   rulesTag  : Gen[FieldReqTypeRules.ForTagField]): Gen[IMap[CustomFieldId, CustomField]] = {
     val cf = for {
-      f1 <- customField(art, false, false).list
-      f2 <- customFieldTagSome(tagIds, art)
-      f3 <- customFieldImplicationSome(reqTypeIds, art)
+      f1 <- customField(rulesAny, rulesTag, false, false).list
+      f2 <- customFieldTagSome(tagIds, rulesTag)
+      f3 <- customFieldImplicationSome(reqTypeIds, rulesAny)
     } yield f3.toList ::: f2.toList ::: f1
     def id   = distinctId(CustomField.IdAccess, CustomFieldId_T)
     def name = Distinct.str.at(CustomField.independentName)
-    def key  = Distinct.fstr.xmap(FieldRefKey.apply)(_.value).distinct.at(CustomField.key)
-    val dist = (id * name * key).lift[Stream]
-    cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs.toStream))
+    val dist = (id * name).lift[List]
+    cf.map(fs => emptyDataMap(CustomField) ++ dist.run(fs))
   }
 
-  def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], r: Set[CustomReqTypeId]): Gen[FieldSet] =
+  def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId]): Gen[FieldSet] = {
+    val tagGroupIds   = tagIds.iterator.filterSubType[TagGroupId].toSet
+    val genApTagId    = NonEmptySet.option(tagIds.iterator.filterSubType[ApplicableTagId].toSet).map(Gen.chooseNE(_))
+    val genReqTypeId  = NonEmptySet.option(reqTypeIds).map(Gen.chooseNE(_))
+    val rulesAny      = fieldReqTypeRules[Impossible](genReqTypeId, None)
+    val rulesTag      = fieldReqTypeRules(genReqTypeId, genApTagId)
     for {
-      cf           ← customFields(reqTypeIds, tagIds, applicableReqTypes(r))
-      mandatoryIds = cf.keySet.map(f => f: FieldId) ++ StaticField.notDeletable
-      optionalIds  ← Gen.chooseIndexed_!(StaticField.deletable).set
-      order        ← Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
+      cf           <- customFields(reqTypeIds, tagGroupIds, rulesAny, rulesTag)
+      mandatoryIds = cf.keySet.map(f => f: FieldId) ++ StaticField.mandatory.iterator
+      optionalIds  <- Gen.subset(StaticField.optional.whole)
+      order        <- Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
     } yield FieldSet(cf, order)
-
-  def fieldSet2(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId], cReqTypeIds: Set[CustomReqTypeId]): Gen[FieldSet] =
-    Gen.chooseSize flatMap { sz =>
-      def subset[A](as: Set[A]): Gen[Set[A]] =
-        Gen.subset(as).map(_ take sz)
-      for {
-        r <- subset(reqTypeIds)
-        t <- subset(tagIds)
-        c <- subset(cReqTypeIds)
-        x <- fieldSet(r, t, c)
-      } yield x
-    }
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
   // Text
@@ -520,10 +616,10 @@ object RandomData {
       Gen.pure(t.blankLine)
 
     def listItem(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.ListItem] =
-      Gen.pure(g).flatMap(_.value).vector(MaxTextAtoms)
+      Gen.pure(g).flatMap(_.value).arraySeq(MaxTextAtoms)
 
-    def listItems(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[NonEmptyVector[t.ListItem]] =
-      listItem(t)(g).nev(0 to 7)
+    def listItems(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[NonEmptyArraySeq[t.ListItem]] =
+      listItem(t)(g).nea(0 to 7)
 
     def unorderedList(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.UnorderedList] =
       listItems(t)(g) map t.UnorderedList
@@ -549,13 +645,13 @@ object RandomData {
     def plainTextMarkup(implicit t: PlainTextMarkup): Gen[t.Atom] =
       Gen.chooseGen(webAddress, emailAddress, tex, monospace)
 
-    private[this] def singleLineGens(implicit t: SingleLine): NonEmptyVector[Gen[t.Atom]] =
-      NonEmptyVector(literal, plainTextMarkup)
+    private[this] def singleLineGens(implicit t: SingleLine): NonEmptyArraySeq[Gen[t.Atom]] =
+      NonEmptyArraySeq(literal, plainTextMarkup)
 
     /** Probability [0,9] of an increase in recursive depth. */
     val DepthIncrease: Array[Int] = Array(5, 1, 1, 1) `JVM|JS` Array(3, 1)
 
-    private[this] def multiLine(t: MultiLine, depth: Int)(g: Name[Gen[t.Atom]]): NonEmptyVector[Gen.Freq[t.Atom]] = {
+    private[this] def multiLine(t: MultiLine, depth: Int)(g: Name[Gen[t.Atom]]): NonEmptyArraySeq[Gen.Freq[t.Atom]] = {
       var gs = singleLineGens(t).map(g => (9, g))
       gs :+= ((9, blankLine(t)))
       gs :+= ((4, codeBlock(t)))
@@ -566,7 +662,6 @@ object RandomData {
 
     private[this] def multiLinePlusI(t: MultiLine)(plus: Gen.Freq[t.Atom]*): Gen[t.Atom] = {
       type G  = Gen[t.Atom]
-      type IG = Gen.Freq[G]
 
       lazy val lvls: Vector[Need[G]] =
         (0 to DepthIncrease.length)
@@ -600,14 +695,14 @@ object RandomData {
               r: Option[Gen[ReqId]],
               u: Option[Gen[UseCaseStepId]],
               c: Option[Gen[ReqCodeId]])(implicit t: Issue): Gen[t.Issue] =
-      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r, u, c).vector)
+      Gen.apply2(t.Issue)(i, inlineIssueDescAtom(r, u, c).arraySeq)
 
     val isBlankLine: AnyAtom => Boolean = {
       case _: NewLine#BlankLine => true
       case _ => false
     }
 
-    def trimBlankLines[T <: Atom.Base](as: Vector[T#Atom]): Vector[T#Atom] =
+    def trimBlankLines[T <: Atom.Base](as: ArraySeq[T#Atom]): ArraySeq[T#Atom] =
       dropLast(dropHead(as)(isBlankLine))(isBlankLine)
 
     val legalListItemAtom: AnyAtom => Boolean = {
@@ -643,7 +738,7 @@ object RandomData {
     def removeFromLiterals[L <: Literal#Literal](l: L): L =
       l.map(removeFromLiteralsR.replaceAllIn(_, "*$1"))
 
-    def postProcessAtoms[T <: Atom.Base](ctx: AtomCtx)(as0: Vector[T#Atom]): Vector[T#Atom] = {
+    def postProcessAtoms[T <: Atom.Base](ctx: AtomCtx)(as0: ArraySeq[T#Atom]): ArraySeq[T#Atom] = {
       type Blank = NewLine#BlankLine
       type UL    = ListMarkup#UnorderedList
       type Lit   = Literal#Literal
@@ -669,7 +764,7 @@ object RandomData {
         if (v.isEmpty) v else v.init :+ fixLast(v.last)
       }
 
-      as.foldLeft(Vector.empty[T#Atom])((q, a0) => {
+      as.foldLeft(ArraySeq.empty[T#Atom])((q, a0) => {
         import Atom.{PlainTextMarkup => PTM}
 
         val a: T#Atom = a0 match {
@@ -728,12 +823,12 @@ object RandomData {
             case _ => q :+ a
           }
       })
-      .map(fix2) |> trimBlankLines
+      .map(fix2) |> trimBlankLines[T]
     }
 
-    def postProcessAtoms1[T <: Atom.Literal](t: T)(as: NonEmptyVector[T#Atom]): NonEmptyVector[T#Atom] = {
+    def postProcessAtoms1[T <: Atom.Literal](t: T)(as: NonEmptyArraySeq[T#Atom]): NonEmptyArraySeq[T#Atom] = {
       val r = postProcessAtoms(TopLevelAtom)(as.whole)
-      NonEmptyVector.maybe(r, NonEmptyVector[T#Atom](t.Literal("a")))(identity)
+      NonEmptyArraySeq.maybe(r, NonEmptyArraySeq[T#Atom](t.Literal("a")))(identity)
     }
 
     // Specific text types
@@ -744,7 +839,7 @@ object RandomData {
                               i: Option[Gen[CustomIssueTypeId]],
                               a: Option[Gen[ApplicableTagId]]): Gen[t.Atom] = {
       @inline implicit def tt: t.type = t
-      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      val gs = NonEmptyArraySeq newBuilderNE singleLineGens(t)
       gs ++= reqRefs(r, c)
       gs ++= u.map(useCaseStepRef(_))
       gs ++= i.map(issue(_, r, u, c))
@@ -757,7 +852,7 @@ object RandomData {
                               c: Option[Gen[ReqCodeId]],
                               i: Option[Gen[CustomIssueTypeId]]): Gen[CodeGroupTitle.Atom] = {
       @inline implicit def t: CodeGroupTitle.type = CodeGroupTitle
-      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      val gs = NonEmptyArraySeq newBuilderNE singleLineGens(t)
       gs ++= reqRefs(r, c)
       gs ++= u.map(useCaseStepRef(_))
       gs ++= i.map(issue(_, r, u, c))
@@ -772,7 +867,7 @@ object RandomData {
                             u: Option[Gen[UseCaseStepId]],
                             c: Option[Gen[ReqCodeId]]): Gen[InlineIssueDesc.Atom] = {
       @inline implicit def t: InlineIssueDesc.type = InlineIssueDesc
-      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      val gs = NonEmptyArraySeq newBuilderNE singleLineGens(t)
       gs ++= reqRefs(r, c)
       gs ++= u.map(useCaseStepRef(_))
       Gen.chooseGenNE(gs.result())
@@ -822,7 +917,7 @@ object RandomData {
                         i: Option[Gen[CustomIssueTypeId]],
                         a: Option[Gen[ApplicableTagId]]): Gen[UseCaseStep.Atom] = {
       @inline implicit def t: UseCaseStep.type = UseCaseStep
-      val gs = NonEmptyVector newBuilderNE singleLineGens(t)
+      val gs = NonEmptyArraySeq newBuilderNE singleLineGens(t)
       gs ++= reqRefs(r, c)
       gs ++= u.map(useCaseStepRef(_))
       gs ++= i.map(issue(_, r, u, c))
@@ -839,11 +934,11 @@ object RandomData {
   class TextGenExt[T <: text.Atom.Literal](private val _g: Gen.Run[T#Atom]) extends AnyVal {
     private def g = Gen(_g)
 
-    def text       : Gen[T#OptionalText] = g.vector(MaxTextAtoms) map TextGen.postProcessAtoms(TextGen.TopLevelAtom)
-    def text1(t: T): Gen[T#NonEmptyText] = g.nev   (MaxTextAtoms) map TextGen.postProcessAtoms1(t)
+    def text       : Gen[T#OptionalText] = g.arraySeq(MaxTextAtoms) map TextGen.postProcessAtoms(TextGen.TopLevelAtom)
+    def text1(t: T): Gen[T#NonEmptyText] = g.nea     (MaxTextAtoms) map TextGen.postProcessAtoms1(t)
 
-    def ptext       : Gen[T#OptionalText] = g.vector(MaxTextAtomsInProject) map TextGen.postProcessAtoms(TextGen.TopLevelAtom)
-    def ptext1(t: T): Gen[T#NonEmptyText] = g.nev   (MaxTextAtomsInProject) map TextGen.postProcessAtoms1(t)
+    def ptext       : Gen[T#OptionalText] = g.arraySeq(MaxTextAtomsInProject) map TextGen.postProcessAtoms(TextGen.TopLevelAtom)
+    def ptext1(t: T): Gen[T#NonEmptyText] = g.nea     (MaxTextAtomsInProject) map TextGen.postProcessAtoms1(t)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -946,7 +1041,7 @@ object RandomData {
           pr.value(rt).iterator.zipWithIndex.foldLeft(m0) { (m, x) =>
             val id    = x._1.asInstanceOf[GenericReqId]
             val pubid = PubidT(rt, ReqTypePos(x._2 + 1))
-            val grG   = live map (GenericReq(id, pubid, Vector.empty, _))
+            val grG   = live map (GenericReq(id, pubid, Text.empty, _))
             m + grG.run(ctx)
           }
         )
@@ -955,7 +1050,7 @@ object RandomData {
         val uniqueIds = useCaseStepId.unique_!
 
         def stepGL(l: Live) =
-          uniqueIds.map(UseCaseStep(_, Vector.empty, l))
+          uniqueIds.map(UseCaseStep(_, Text.empty, l))
 
         val stepG = live flatMap stepGL
 
@@ -971,7 +1066,7 @@ object RandomData {
             l       <- live
           } yield
             // Root existence guaranteed in useCaseSteps()
-            UseCase(id, pos, Vector.empty, stepsNA, stepsE, l)
+            UseCase(id, pos, Text.empty, stepsNA, stepsE, l)
           m + ucG.run(ctx)
         }
       }
@@ -982,7 +1077,7 @@ object RandomData {
       val stepFlow: UseCases.StepFlow =
         genDigraphBiO(Gen.tryGenChoose(ucStepIds))(implicitly, 0 to 4) run ctx
 
-      Requirements(grs, UseCases.Stateless(ucs, stepFlow).withState, pr)
+      Requirements(GenericReqs(grs), UseCases.Stateless(ucs, stepFlow).withState, pr)
     }
   }
 
@@ -991,7 +1086,7 @@ object RandomData {
                  c   : Option[Gen[ReqCodeId]],
                  i   : Option[Gen[CustomIssueTypeId]],
                  a   : Option[Gen[ApplicableTagId]]): Gen[Requirements] = {
-    val r = Gen.tryGenChoose(reqs.idIterator.toIndexedSeq)
+    val r = Gen.tryGenChoose(reqs.idIterator().toIndexedSeq)
     setReqText(reqs, r, u, c, i, a)
   }
 
@@ -1030,10 +1125,10 @@ object RandomData {
   // Req Data
 
   def reqFieldDataText(cols: Set[CustomField.Text.Id], reqs: Set[ReqId], txt: Gen[Text.CustomTextField.NonEmptyText]): Gen[ReqData.Text] =
-    txt mapByKeySubset reqs mapByKeySubset cols
+    txt.mapByKeySubset(reqs).mapByKeySubset(cols).map(ReqData.Text.apply)
 
   private[this] val emptyATagIdSet = Gen.pure(Set.empty[ApplicableTagId])
-  def reqFieldDataTags(reqs: Traversable[ReqId], tags: Set[ApplicableTagId]): Gen[ReqData.Tags] = {
+  def reqFieldDataTags(reqs: Iterable[ReqId], tags: Set[ApplicableTagId]): Gen[ReqData.Tags] = {
     val rndTags = Gen.chooseGen(Gen.subset(tags), emptyATagIdSet)
     (rndTags mapByKeySubset reqs.toIterable).map(Multimap(_))
 //    subset2(reqs, 1, 0).flatMap(rndTags.mapByEachKey).map(Multimap(_))
@@ -1120,7 +1215,7 @@ object RandomData {
       val reqIdIso: Iso[ReqCodeGroupId, ApReqCodeId] =
         Iso[ReqCodeGroupId, ApReqCodeId](a => ApReqCodeId(a.value))(a => ReqCodeGroupId(a.value))
 
-      val reqCodeDataActiveId = Optional[Data, ApReqCodeId]({
+      val reqCodeDataActiveId = monocle.Optional[Data, ApReqCodeId]({
         case d: ActiveReq   => Some(d.id)
         case d: ActiveGroup => Some(ApReqCodeId(d.id.value))
         case _: Inactive    => None
@@ -1145,7 +1240,7 @@ object RandomData {
       Gen pure emptyReqInactive
 
     private val gEmptyText: Gen[Text.CodeGroupTitle.OptionalText] =
-      Gen pure Vector.empty
+      Gen pure Text.empty
 
     def data(ogLiveReqId: Option[Gen[ReqId]], ogReqId: Option[Gen[ReqId]],
              gGroupText: Gen[Text.CodeGroupTitle.OptionalText] = gEmptyText)(implicit ss: SizeSpec): Gen[Data] =
@@ -1243,9 +1338,9 @@ object RandomData {
       case None => Gen pure DeletionReasons.empty
       case Some(g) =>
         for {
-          reasons  ← gText.vector
-          ids      = reasons.indices.toStream.map(i => Option(DeletionReasonId(i)))
-          idToReqs ← g.set1.fill(reasons.length).map(ids zip _)
+          reasons  <- gText.vector
+          ids      = reasons.indices.iterator.map(i => Option(DeletionReasonId(i)))
+          idToReqs <- g.set1.fill(reasons.length)(List).map(ids.zip)
         } yield {
           var ra = DeletionReasons.emptyReqApplication
           idToReqs.foreach { t =>
@@ -1269,11 +1364,12 @@ object RandomData {
 
   lazy val projectConfig: Gen[ProjectConfig] =
     for {
-      (issues, tags) ← Gen.tuple2(customIssueTypes, tagTree) map distinctHashRefKeys.run
-      reqtypes       ← customReqTypes
+      reqtypes       <- customReqTypes
       reqTypeIds     = StaticReqType.values ++ reqtypes.keys
       reqTypeIdSet   = reqTypeIds.whole.toSet
-      fields         ← fieldSet(reqTypeIdSet, tags.keySet, reqtypes.keySet)
+      genReqTypeIds  = Gen.chooseNE(reqTypeIds).set(0 to 2)
+      (issues, tags) <- Gen.tuple2(customIssueTypes, tagTree(genReqTypeIds)) map distinctHashRefKeys.run
+      fields         <- fieldSet(reqTypeIdSet, tags.keySet)
     } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
 
   def genProject(cfg            : ProjectConfig,
@@ -1283,12 +1379,12 @@ object RandomData {
                  reqImps        : Implications): Gen[Project] = {
     val cissueIds       = cfg.customIssueTypes.keySet
     val cissueIdG       = Gen tryGenChoose cissueIds.toSeq
-    val activeCodeIds   = reqCodes1.trie.allValues.flatMap(_.activeId.toStream)
+    val activeCodeIds   = reqCodes1.trie.allValues.flatMap(_.activeId.iterator)
     val activeCodeIdG   = Gen tryGenChoose activeCodeIds
     val atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
     val atagIdG         = Gen.tryGenChoose(atagIds.toSeq)
     val textColIds      = cfg.fields.customFields.valuesIterator.filterSubType[CustomField.Text].map(_.id).toSet
-    val reqIdSet        = reqsWithoutText.idIterator.toSet
+    val reqIdSet        = reqsWithoutText.idIterator().toSet
     val reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
     def ucStepIds       = reqsWithoutText.useCases.stepIterator.map(_.id)
     val ucStepIdG       = Gen tryGenChoose ucStepIds.toIndexedSeq
@@ -1296,12 +1392,12 @@ object RandomData {
     val delReasonText   = TextGen.deletionReasonAtom(reqIdG, ucStepIdG, activeCodeIdG, atagIdG).text1(Text.DeletionReason)
     val manualIssueText = TextGen.manualIssueAtom(reqIdG, ucStepIdG, activeCodeIdG, atagIdG).text1(Text.ManualIssue)
     for {
-      name       ← projectName
-      reqText    ← reqFieldDataText2(reqIdSet, textColIds, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
-      reqs       ← setReqText(reqsWithoutText, reqIdG, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
-      reqCodes2  ← reqCode.updateGroupText(rcgTitleText)(reqCodes1.trie)
-      dr         ← deletionReasons(reqIdG, delReasonText)
-      mis        ← genManualIssues(manualIssueText)
+      name       <- projectName
+      reqText    <- reqFieldDataText2(reqIdSet, textColIds, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
+      reqs       <- setReqText(reqsWithoutText, reqIdG, ucStepIdG, activeCodeIdG, cissueIdG, atagIdG)
+      reqCodes2  <- reqCode.updateGroupText(rcgTitleText)(reqCodes1.trie)
+      dr         <- deletionReasons(reqIdG, delReasonText)
+      mis        <- genManualIssues(manualIssueText)
       p1         = Project(
                      name,
                      cfg,
@@ -1313,28 +1409,28 @@ object RandomData {
                        reqImps,
                        dr),
                      mis,
-                     reqtable.SavedViews.empty,
+                     savedview.SavedViews.empty,
                      IdCeilings.zero)
-      savedViews ← reqtableData.savedViewsForProject(p1)
-    } yield IdCeilings.supply(ic => p1.copy(reqtableViews = savedViews, idCeilings = ic))
+      savedViews <- savedViews.savedViewsForProject(p1)
+    } yield IdCeilings.supply(ic => p1.copy(savedViews = savedViews, idCeilings = ic))
   }
 
   lazy val project: Gen[Project] =
     for {
-      cfg             ← projectConfig
+      cfg             <- projectConfig
       atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
-      reqCount        ← Gen.chooseSize
-      ucCount         ← Gen.chooseSize map (_ >> 1)
-      reqsWithoutText ← reqsWithoutText(cfg, reqCount, ucCount)
-      reqIdSet        = reqsWithoutText.idIterator.toSet
+      reqCount        <- Gen.chooseSize
+      ucCount         <- Gen.chooseSize map (_ >> 1)
+      reqsWithoutText <- reqsWithoutText(cfg, reqCount, ucCount)
+      reqIdSet        = reqsWithoutText.idIterator().toSet
       reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
-      liveReqIds      = reqsWithoutText.reqIterator.filter(_.live(cfg.reqTypes) is Live).map(_.id)
+      liveReqIds      = reqsWithoutText.reqIterator().filter(_.live(cfg.reqTypes) is Live).map(_.id)
       liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq
       reqCodeDataG    = reqCode.data(liveReqIdG, reqIdG)(0 to (3 `JVM|JS` 2))
-      reqCodes        ← reqCodes(reqCode.trie(reqCodeDataG, 2 `JVM|JS` 2))
-      reqTags         ← reqFieldDataTags(reqIdSet, atagIds)
-      reqImps         ← reqFieldDataImplications(reqIdSet)
-      p               ← genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
+      reqCodes        <- reqCodes(reqCode.trie(reqCodeDataG, 2 `JVM|JS` 2))
+      reqTags         <- reqFieldDataTags(reqIdSet, atagIds)
+      reqImps         <- reqFieldDataImplications(reqIdSet)
+      p               <- genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
     } yield p
 
   lazy val projectAndOrd: Gen[ProjectAndOrd] =
@@ -1380,14 +1476,14 @@ object RandomData {
       lastUpdatedAt = lastUpdatedAt)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  object reqtableData {
-    import reqtable._
+  object savedViews {
+    import shipreq.webapp.base.data.savedview._
 
     def visibleColumns(p: Project): Gen[NonEmptyVector[Column]] =
       for {
-        long ← Gen.long
+        long <- Gen.long
         all  = Column all p.config
-        cols ← Gen shuffle all.whole.toVector
+        cols <- Gen shuffle all.whole.toVector
       } yield {
         var i = long
         val vs = cols.filter(c =>
@@ -1445,7 +1541,7 @@ object RandomData {
         Gen.subset(legalColumnIs.whole).shuffle
 
       def sortCriIs: Gen[Vector[SortCriterion.Inconclusive]] =
-        colIs flatMap reqtableData.sortCriIs
+        colIs flatMap savedViews.sortCriIs
 
       def columnNEV: Gen[NonEmptyVector[Column]] =
         Gen.subset1(legalColumns.whole).shuffle[Vector, Column].map(NonEmptyVector.force)
@@ -1484,13 +1580,48 @@ object RandomData {
       } yield SavedView.Name.validator.stateless.unnamed(d)
         .valueOr(e => sys error s"$e: '${SavedView.Name.validator.stateless.corrector.full(d)}' ← '$d'")
 
+    val impGraphConfigGraphDir: Gen[ImpGraphConfig.GraphDir] =
+      Gen.chooseNE(ImpGraphConfig.GraphDir.values)
+
+    val impGraphConfigLabelFormat: Gen[ImpGraphConfig.LabelFormat] =
+      Gen.chooseNE(ImpGraphConfig.LabelFormat.values)
+
+    def genTagGroupIdFromProject(p: Project): Option[Gen[TagGroupId]] = {
+      val tgs = p.config.tags.tagGroupIterator().map(_.id).toVector
+      NonEmptyVector.maybe(tgs, Option.empty[Gen[TagGroupId]])(x => Some(Gen.chooseNE(x)))
+    }
+
+    def impGraphConfigColoursForProject(p: Project): Gen[ImpGraphConfig.Colours] =
+      impGraphConfigColours(genTagGroupIdFromProject(p))
+
+    def impGraphConfigColours(genTagGroupId: Option[Gen[TagGroupId]]): Gen[ImpGraphConfig.Colours] = {
+      var gens: Vector[Gen[ImpGraphConfig.Colours]] = Vector.empty
+
+      gens :+= Gen.pure(ImpGraphConfig.Colours.ByReqType)
+
+      for (g <- genTagGroupId)
+        gens :+= g.map(ImpGraphConfig.Colours.ByTag)
+
+      Gen.chooseGen_!(gens)
+    }
+
+    def impGraphConfigForProject(p: Project): Gen[ImpGraphConfig] =
+      impGraphConfig(genTagGroupIdFromProject(p))
+
+    def impGraphConfig(genTagGroupId: Option[Gen[TagGroupId]]): Gen[ImpGraphConfig] =
+      Gen.apply3(ImpGraphConfig.apply)(
+        impGraphConfigGraphDir,
+        impGraphConfigLabelFormat,
+        impGraphConfigColours(genTagGroupId))
+
     def viewForProject(p: Project): Gen[View] =
       for {
         d <- filterDead
         c <- visibleColumns(p)
         o <- sortCriteria(c)
         f <- filter.valid.forProject(p).option
-      } yield View(c, o, d, f)
+        x <- impGraphConfigForProject(p).option
+      } yield View(c, o, d, f, x)
 
     def savedViewForProject(p: Project): Gen[SavedView] =
       for {
@@ -1511,56 +1642,58 @@ object RandomData {
       nonEmptySavedViewsForProject(p).option
   }
 
-  // ===================================================================================================================
-  // Protocol
-  object protocol {
-    import shipreq.webapp.base.protocol._
-
-    val reqTypeId: Gen[ReqTypeId] =
-      Gen.chooseGen(customReqTypeId, staticReqType)
-
-    val fieldId: Gen[FieldId] =
-      Gen.chooseGen(customFieldId, staticField)
-
-    val applicableReqTypes: Gen[ApplicableReqTypes] =
-      genISubset(reqTypeId.nes)
-
-    val fieldPosition =
-      fieldId.option
-
-    val textFieldValues =
-      Gen.apply4(UpdateConfigCmd.TextFieldValues.apply)(shortText1, fieldRefKey, mandatory, applicableReqTypes)
-
-    val customFieldValues: Gen[UpdateConfigCmd.CustomFieldValues] =
-      Gen.chooseGen(textFieldValues)
-
-//    object updateConfigCmd {
-//      import UpdateConfigCmd._
-//      val create      : Gen[CustomFieldCreate]       = customFieldValues map Create
-//      val updateValues: Gen[CustomFieldUpdateValues] = Gen.apply2(UpdateValues)(customFieldId, customFieldValues)
-//      val updateOrder : Gen[CustomFieldUpdateOrder]  = Gen.apply2(UpdateOrder)(fieldId, fieldPosition)
-//      val delete      : Gen[CustomFieldDelete]       = fieldId map Delete
-//      val restore     : Gen[CustomFieldRestore]      = fieldId map Restore
-//      val any         : Gen[UpdateConfigCmd]    = Gen.chooseGen(create, updateValues, updateOrder, delete)
-//    }
-
-//    def tagProtocolValues: Tag => TagCrud.Values = {
-//      case TagGroup(_, n, d, mc, _)     => TagCrud.TagGroupValues(n, mc, d)
-//      case ApplicableTag(_, n, d, k, _) => TagCrud.ApplicableTagValues(n, k, d)
-//    }
+//  // ===================================================================================================================
+//  // Protocol
+//  object protocol {
+//    import shipreq.webapp.base.protocol._
+//    import shipreq.webapp.base.protocol.websocket._
 //
-//    val tagCrudInput =
-//      tagAndRels.flatMap(t => {
-//        val a = Gen pure tagProtocolValues(t._1)
-//        val b = Gen pure t._2
-//        a \&/ b
-//      })
-  }
+//    val reqTypeId: Gen[ReqTypeId] =
+//      Gen.chooseGen(customReqTypeId, staticReqType)
+//
+//    val fieldId: Gen[FieldId] =
+//      Gen.chooseGen(customFieldId, staticField)
+//
+//    val applicableReqTypes: Gen[ApplicableReqTypes] =
+//      RandomData.applicableReqTypes(reqTypeId.set)
+//
+//    val fieldPosition =
+//      fieldId.option
+//
+//    val textFieldValues =
+//      Gen.apply4(UpdateConfigCmd.TextFieldValues.apply)(shortText1, fieldRefKey, mandatory, applicableReqTypes)
+//
+//    val customFieldValues: Gen[UpdateConfigCmd.CustomFieldValues] =
+//      Gen.chooseGen(textFieldValues)
+//
+////    object updateConfigCmd {
+////      import UpdateConfigCmd._
+////      val create      : Gen[CustomFieldCreate]       = customFieldValues map Create
+////      val updateValues: Gen[CustomFieldUpdateValues] = Gen.apply2(UpdateValues)(customFieldId, customFieldValues)
+////      val updateOrder : Gen[CustomFieldUpdateOrder]  = Gen.apply2(UpdateOrder)(fieldId, fieldPosition)
+////      val delete      : Gen[CustomFieldDelete]       = fieldId map Delete
+////      val restore     : Gen[CustomFieldRestore]      = fieldId map Restore
+////      val any         : Gen[UpdateConfigCmd]    = Gen.chooseGen(create, updateValues, updateOrder, delete)
+////    }
+//
+////    def tagProtocolValues: Tag => TagCrud.Values = {
+////      case TagGroup(_, n, d, mc, _)     => TagCrud.TagGroupValues(n, mc, d)
+////      case ApplicableTag(_, n, d, k, _) => TagCrud.ApplicableTagValues(n, k, d)
+////    }
+////
+////    val tagCrudInput =
+////      tagAndRels.flatMap(t => {
+////        val a = Gen pure tagProtocolValues(t._1)
+////        val b = Gen pure t._2
+////        a \&/ b
+////      })
+//  }
 
   // ===================================================================================================================
   object routines {
-    import shipreq.webapp.base.protocol._
-    import RandomData.protocol._
+    import shipreq.webapp.base.protocol.entrypoint._
+    import shipreq.webapp.base.protocol.websocket._
+//    import RandomData.protocol._
 
     def projectSpaInitAppData: Gen[ProjectSpaProtocols.InitAppData] =
       for {
@@ -1646,7 +1779,7 @@ object RandomData {
     val regex =
       unicodeString1.map(s => FilterAst.Regex(fixRegex(s)))
 
-    def fixRoot[A, B, C, D, E](f: FilterAst.Fixed[A, B, C, D, E]): FilterAst.Fixed[A, B, C, D, E] =
+    def fixRoot[A, B, C, D, E, F, G](f: FilterAst.Fixed[A, B, C, D, E, F, G]): FilterAst.Fixed[A, B, C, D, E, F, G] =
       f.unfix match {
         case FilterAst.AllOf(a) if a.tail.isEmpty => a.head
         case _ => f
@@ -1675,8 +1808,13 @@ object RandomData {
 
       val attr: Gen[String] =
         Gen.chooseGen(
-          Gen.alpha.string1(1 to 4),
+          genAlphaSlash.string1(1 to 4),
           valid.attr.map(_.name))
+
+      val fieldAttr: Gen[String] =
+        Gen.chooseGen(
+          genAlphaSlash.string1(1 to 4),
+          valid.fieldAttr.map(_.name))
 
       val hasIssue = {
         val ic = Gen.chooseGen(
@@ -1684,6 +1822,9 @@ object RandomData {
           issueCategory.map(FilterAst.issueCategoryToStr))
         Gen.lift2(on, ic.nev(1 to 3))(FilterAst.HasIssue(_, _))
       }
+
+      val fieldProp =
+        Gen.lift2(fieldName, genAlphaSlash.string(1 to 4))(FilterAst.FieldProp(_, _))
 
       val reqType    = reqTypeMnemonic.map(FilterAst.ReqType(_))
       val hashRef    = hashRefKey     .map(FilterAst.HashRef(_))
@@ -1693,7 +1834,7 @@ object RandomData {
       val presence   = attr           .map(FilterAst.Presence(_))
 
       private val flatGens: NonEmptyVector[Gen[PotentialF[Nothing]]] =
-        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, implies, impliedBy, presence, hasIssue)
+        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, implies, impliedBy, presence, hasIssue, fieldProp)
 
       private val flatGen: Gen[PotentialF[Nothing]] =
         Gen.chooseGenNE(flatGens)
@@ -1719,7 +1860,7 @@ object RandomData {
 
     // -----------------------------------------------------------------------------------------------------------------
     object valid {
-      import FilterAst.Attr
+      import FilterAst.{Attr, FieldAttr}
 
       def wholeType(g: Gen[Valid.ReqType]): Gen[WholeType[Valid.ReqType]] =
         g.map(WholeType(_))
@@ -1742,6 +1883,12 @@ object RandomData {
       val attr: Gen[Attr] =
         Gen.chooseNE(Attr.values)
 
+      val fieldAttr: Gen[FieldAttr] =
+        Gen.chooseNE(FieldAttr.values)
+
+      val fieldAttrNoDefault: Gen[FieldAttr] =
+        Gen.choose_!(FieldAttr.values.whole.filterNot(_ == FieldAttr.DefaultInUse))
+
       val hasIssue =
         Gen.lift2(on, issueCategory.nev(1 to 3))(FilterAst.HasIssue(_, _))
 
@@ -1754,13 +1901,31 @@ object RandomData {
       def tag        (g: Gen[ApplicableTagId])  : Gen[ValidF[Nothing]] = g.map(i => FilterAst.HashRef(\/-(i)))
       def customIssue(g: Gen[CustomIssueTypeId]): Gen[ValidF[Nothing]] = g.map(i => FilterAst.HashRef(-\/(i)))
 
+      val specialBuiltInFieldFilterOk: Gen[SpecialBuiltInField.FilterOk] =
+        Gen.chooseNE(SpecialBuiltInField.filterOk)
+
+      def fieldProp(g: Gen[CustomFieldId]): Gen[ValidF[Nothing]] = {
+        val gr = g.map[Valid.Field](\/-(_))
+        val gl = specialBuiltInFieldFilterOk.map[Valid.Field](-\/(_))
+        import SpecialBuiltInField._
+        Gen.chooseGen(gr, gr, gr, gl).flatMap {
+          case \/-(id: CustomField.Tag        .Id  ) => fieldAttr.map(FilterAst.FieldProp(\/-(id), _))
+          case \/-(id: CustomField.Text       .Id  ) => fieldAttrNoDefault.map(FilterAst.FieldProp(\/-(id), _))
+          case \/-(id: CustomField.Implication.Id  ) => fieldAttrNoDefault.map(FilterAst.FieldProp(\/-(id), _))
+          case \/-(f : StaticField                 ) => fieldAttrNoDefault.map(FilterAst.FieldProp(\/-(f), _))
+          case f@ -\/(Title                        ) => Gen.pure(FilterAst.FieldProp(f, FieldAttr.Blank))
+        }
+      }
+
       type FlatGens = NonEmptyVector[Gen[ValidF[Nothing]]]
 
-      def flatGens(gy: Option[Gen[ReqTypeId]],
+      def flatGens(gf: Option[Gen[CustomFieldId]],
+                   gy: Option[Gen[ReqTypeId]],
                    gt: Option[Gen[ApplicableTagId]],
                    gi: Option[Gen[CustomIssueTypeId]]): FlatGens = {
         val greqs = gy.map(reqSpecs)
         NonEmptyVector[Gen[ValidF[Nothing]]](quotedText, simpleText, regex, presence, hasIssue) ++
+          gf.map(fieldProp) ++
           gy.map(reqType) ++
           gt.map(tag) ++
           gi.map(customIssue) ++
@@ -1788,18 +1953,23 @@ object RandomData {
       private def gen(f: FlatGens): Gen[Valid] =
         Recursion.anaM(coalgebra(f))(4 `JVM|JS` 3).map(fixRoot)
 
-      def forProject(p: Project): Gen[Valid] = {
-        val gy: Option[Gen[ReqTypeId]]         = Gen tryGenChoose p.config.reqTypes.all.whole.map(_.reqTypeId)
-        val gt: Option[Gen[ApplicableTagId]]   = Gen tryGenChoose p.config.tags.atagIterator().map(_.id)
-        val gi: Option[Gen[CustomIssueTypeId]] = Gen tryGenChoose p.config.customIssueTypes.keys.toVector
-        gen(flatGens(gy, gt, gi))
+      @inline def forProject(p: Project): Gen[Valid] =
+        forProjectConfig(p.config)
+
+      def forProjectConfig(p: ProjectConfig): Gen[Valid] = {
+        val gf: Option[Gen[CustomFieldId]]     = Gen tryGenChoose p.fields.customFields.keySet
+        val gy: Option[Gen[ReqTypeId]]         = Gen tryGenChoose p.reqTypes.all.whole.map(_.reqTypeId)
+        val gt: Option[Gen[ApplicableTagId]]   = Gen tryGenChoose p.tags.applicableTagIterator().map(_.id)
+        val gi: Option[Gen[CustomIssueTypeId]] = Gen tryGenChoose p.customIssueTypes.keys.toVector
+        gen(flatGens(gf, gy, gt, gi))
       }
 
       lazy val arbitrary: Gen[Valid] = {
+        val gf: Option[Gen[CustomFieldId]]     = Some(customFieldId)
         val gy: Option[Gen[ReqTypeId]]         = Some(reqTypeId)
         val gt: Option[Gen[ApplicableTagId]]   = Some(applicableTagId)
         val gi: Option[Gen[CustomIssueTypeId]] = Some(customIssueTypeId)
-        gen(flatGens(gy, gt, gi))
+        gen(flatGens(gf, gy, gt, gi))
       }
     }
   }
@@ -1808,6 +1978,7 @@ object RandomData {
   object events {
     import shipreq.webapp.base.event._
     import Event._
+    import RetiredGenericData._
 
     val tagChildren: Gen[TagInTree.Children] =
       tagId.vector
@@ -1861,45 +2032,84 @@ object RandomData {
     object customIssueTypeGD extends GenericDataGen(CustomIssueTypeGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Key  => hashRefKey            map Key .apply
-        case Desc => unicodeString1.option map Desc.apply
+        case Key  => hashRefKey map Key .apply
+        case Desc => desc       map Desc.apply
+      }
+    }
+
+    object customReqTypeGDv1 extends GenericDataGen(CustomReqTypeGDv1) {
+      import gd._
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case Name        => customReqTypeName   map Name       .apply
+        case Implication => implicationRequired map Implication.apply
+        case gd.Mnemonic => reqTypeMnemonic     map gd.Mnemonic.apply
       }
     }
 
     object customReqTypeGD extends GenericDataGen(CustomReqTypeGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Name        => unicodeString1      map Name       .apply
-        case Imp         => implicationRequired map Imp        .apply
+        case Name        => customReqTypeName   map Name       .apply
+        case Description => desc                map Description.apply
+        case Implication => implicationRequired map Implication.apply
         case gd.Mnemonic => reqTypeMnemonic     map gd.Mnemonic.apply
       }
     }
 
+    object customTextFieldGDv1 extends GenericDataGen(CustomTextFieldGDv1) {
+      import gd._
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case Name               => fieldName             map Name              .apply
+        case Key                => fieldRefKey           map Key               .apply
+        case Mandatory          => mandatory             map Mandatory         .apply
+        case ApplicableReqTypes => anyApplicableReqTypes map ApplicableReqTypes.apply
+      }
+    }
+
+    object customTagFieldGDv1 extends GenericDataGen(CustomTagFieldGDv1) {
+      import gd._
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case TagId              => tagId                 map TagId             .apply
+        case Mandatory          => mandatory             map Mandatory         .apply
+        case ApplicableReqTypes => anyApplicableReqTypes map ApplicableReqTypes.apply
+      }
+    }
+
+    object customImpFieldGDv1 extends GenericDataGen(CustomImpFieldGDv1) {
+      import gd._
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case ReqTypeId          => reqTypeId             map ReqTypeId         .apply
+        case Mandatory          => mandatory             map Mandatory         .apply
+        case ApplicableReqTypes => anyApplicableReqTypes map ApplicableReqTypes.apply
+      }
+    }
+
+    private lazy val fieldReqTypeRules_ : Gen[FieldReqTypeRules[Impossible]] =
+      fieldReqTypeRules(Some(reqTypeId), None)
+
+    private def fieldReqTypeRulesTag: Gen[FieldReqTypeRules[ApplicableTagId]] =
+      fieldReqTypeRules(Some(reqTypeId), Some(applicableTagId))
+
     object customTextFieldGD extends GenericDataGen(CustomTextFieldGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Name      => unicodeString1        map Name     .apply
-        case Key       => fieldRefKey           map Key      .apply
-        case Mandatory => mandatory             map Mandatory.apply
-        case ReqTypes  => anyApplicableReqTypes map ReqTypes .apply
+        case Name              => fieldName          map Name             .apply
+        case FieldReqTypeRules => fieldReqTypeRules_ map FieldReqTypeRules.apply
       }
     }
 
     object customTagFieldGD extends GenericDataGen(CustomTagFieldGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case TagId     => tagId                 map TagId    .apply
-        case Mandatory => mandatory             map Mandatory.apply
-        case ReqTypes  => anyApplicableReqTypes map ReqTypes .apply
+        case FieldReqTypeRules => fieldReqTypeRulesTag map FieldReqTypeRules.apply
       }
     }
 
     object customImpFieldGD extends GenericDataGen(CustomImpFieldGD) {
       import gd._
+
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case ReqTypeId => reqTypeId             map ReqTypeId.apply
-        case Mandatory => mandatory             map Mandatory.apply
-        case ReqTypes  => anyApplicableReqTypes map ReqTypes .apply
+        case FieldReqTypeRules => fieldReqTypeRules_ map FieldReqTypeRules.apply
       }
     }
 
@@ -1930,30 +2140,42 @@ object RandomData {
     object codeGroupGD extends GenericDataGen(CodeGroupGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Code  => reqCode.value     map Code .apply
+        case Code  => reqCode.value  map Code .apply
         case Title => codeGroupTitle map Title.apply
       }
     }
 
-    object applicableTagGD extends GenericDataGen(ApplicableTagGD) {
+    object applicableTagGDv1 extends GenericDataGen(RetiredGenericData.ApplicableTagGDv1) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
         case Name     => unicodeString1        map Name    .apply
-        case Desc     => unicodeString1.option map Desc    .apply
+        case Desc     => desc                  map Desc    .apply
         case Key      => hashRefKey            map Key     .apply
         case Children => tagChildren           map Children.apply
         case Parents  => tagParents            map Parents .apply
       }
     }
 
+    object applicableTagGD extends GenericDataGen(ApplicableTagGD) {
+      import gd._
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case ApplicableReqTypes => anyApplicableReqTypes map ApplicableReqTypes.apply
+        case Colour             => genColour.option      map Colour            .apply
+        case Desc               => desc                  map Desc              .apply
+        case Key                => hashRefKey            map Key               .apply
+        case Children           => tagChildren           map Children          .apply
+        case Parents            => tagParents            map Parents           .apply
+      }
+    }
+
     object tagGroupGD extends GenericDataGen(TagGroupGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
-        case Name          => unicodeString1        map Name         .apply
-        case Desc          => unicodeString1.option map Desc         .apply
-        case MutexChildren => mutexChildren         map MutexChildren.apply
-        case Children      => tagChildren           map Children     .apply
-        case Parents       => tagParents            map Parents      .apply
+        case Name        => tagGroupName          map Name       .apply
+        case Desc        => desc                  map Desc       .apply
+        case Exclusivity => exclusivity           map Exclusivity.apply
+        case Children    => tagChildren           map Children   .apply
+        case Parents     => tagParents            map Parents    .apply
       }
     }
 
@@ -1966,9 +2188,9 @@ object RandomData {
       }
     }
 
-    object savedViewGD extends GenericDataGen(SavedViewGD) {
+    object savedViewGDv1 extends GenericDataGen(SavedViewGDv1) {
       import gd._
-      import reqtableData._
+      import savedViews._
       private val colNev = customFieldColumn.vector.map(ColumnIGen).flatMap(_.columnNEV)
 
       val genColumns      = colNev
@@ -1986,11 +2208,33 @@ object RandomData {
       }
     }
 
+    object savedViewGD extends GenericDataGen(SavedViewGD) {
+      import gd._
+      import savedViews._
+      private val colNev = customFieldColumn.vector.map(ColumnIGen).flatMap(_.columnNEV)
+
+      val genColumns        = colNev
+      val genFilter         = filter.valid.arbitrary.option
+      val genFilterDead     = filterDead
+      val genName           = savedViewName
+      val genSortCriteria   = colNev.flatMap(sortCriteria)
+      val genImpGraphConfig = impGraphConfig(Some(tagGroupId)).option
+
+      override def valueFor(a: Attr): Gen[Value] = a match {
+        case Columns        => genColumns        map Columns       .apply
+        case Filter         => genFilter         map Filter        .apply
+        case FilterDead     => genFilterDead     map FilterDead    .apply
+        case Name           => genName           map Name          .apply
+        case Order          => genSortCriteria   map Order         .apply
+        case ImpGraphConfig => genImpGraphConfig map ImpGraphConfig.apply
+      }
+    }
+
     val genUseCaseStepCreate: Gen[UseCaseStepCreate] =
       Gen.apply4(UseCaseStepCreate)(useCaseStepId, useCaseId, useCaseStepTreeField, genVectorTreeParLoc)
 
     val genFieldStaticAdd: Gen[FieldStaticAdd] =
-      staticField map FieldStaticAdd
+      staticFieldOptional map FieldStaticAdd
 
     val genProjectTemplate: Gen[ProjectTemplate] =
       Gen.chooseNE(ProjectTemplate.values)
@@ -2001,17 +2245,32 @@ object RandomData {
     val genApplicableTagCreate: Gen[ApplicableTagCreate] =
       Gen.apply2(ApplicableTagCreate)(applicableTagId, applicableTagGD.nonEmptyValues)
 
+    val genApplicableTagCreateV1: Gen[ApplicableTagCreateV1] =
+      Gen.apply2(ApplicableTagCreateV1)(applicableTagId, applicableTagGDv1.nonEmptyValues)
+
+    val genFieldCustomImpCreateV1: Gen[FieldCustomImpCreateV1] =
+      Gen.apply2(FieldCustomImpCreateV1)(customFieldImplicationId, customImpFieldGDv1.nonEmptyValues)
+
     val genFieldCustomImpCreate: Gen[FieldCustomImpCreate] =
-      Gen.apply2(FieldCustomImpCreate)(customFieldImplicationId, customImpFieldGD.nonEmptyValues)
+      Gen.apply3(FieldCustomImpCreate)(customFieldImplicationId, reqTypeId, customImpFieldGD.nonEmptyValues)
 
     val genCustomIssueTypeCreate: Gen[CustomIssueTypeCreate] =
       Gen.apply2(CustomIssueTypeCreate)(customIssueTypeId, customIssueTypeGD.nonEmptyValues)
 
+    val genCustomReqTypeCreateV1: Gen[CustomReqTypeCreateV1] =
+      Gen.apply2(CustomReqTypeCreateV1)(customReqTypeId, customReqTypeGDv1.nonEmptyValues)
+
     val genCustomReqTypeCreate: Gen[CustomReqTypeCreate] =
       Gen.apply2(CustomReqTypeCreate)(customReqTypeId, customReqTypeGD.nonEmptyValues)
 
+    val genFieldCustomTagCreateV1: Gen[FieldCustomTagCreateV1] =
+      Gen.apply2(FieldCustomTagCreateV1)(customFieldTagId, customTagFieldGDv1.nonEmptyValues)
+
     val genFieldCustomTagCreate: Gen[FieldCustomTagCreate] =
-      Gen.apply2(FieldCustomTagCreate)(customFieldTagId, customTagFieldGD.nonEmptyValues)
+      Gen.apply3(FieldCustomTagCreate)(customFieldTagId, tagGroupId, customTagFieldGD.nonEmptyValues)
+
+    val genFieldCustomTextCreateV1: Gen[FieldCustomTextCreateV1] =
+      Gen.apply2(FieldCustomTextCreateV1)(customFieldTextId, customTextFieldGDv1.nonEmptyValues)
 
     val genFieldCustomTextCreate: Gen[FieldCustomTextCreate] =
       Gen.apply2(FieldCustomTextCreate)(customFieldTextId, customTextFieldGD.nonEmptyValues)
@@ -2043,6 +2302,12 @@ object RandomData {
     val genCustomReqTypeDelete: Gen[CustomReqTypeDelete] =
       customReqTypeId map CustomReqTypeDelete
 
+    val genCustomReqTypeDeleteHard: Gen[CustomReqTypeDeleteHard] =
+      customReqTypeId map CustomReqTypeDeleteHard
+
+    val genCustomReqTypeDeleteSoft: Gen[CustomReqTypeDeleteSoft] =
+      customReqTypeId map CustomReqTypeDeleteSoft
+
     val genCustomReqTypeRestore: Gen[CustomReqTypeRestore] =
       customReqTypeId map CustomReqTypeRestore
 
@@ -2050,10 +2315,10 @@ object RandomData {
       reqCode.groupId.nes map CodeGroupsDelete
 
     val genReqsDelete: Gen[ReqsDelete] =
-      Gen.apply3(ReqsDelete)(reqId.nes, reqCode.groupId.set, deletionReason)
+      Gen.apply3(ReqsDelete.apply)(reqId.nes, reqCode.groupId.set, deletionReason)
 
     val genFieldStaticRemove: Gen[FieldStaticRemove] =
-      staticField map FieldStaticRemove
+      staticFieldOptional map FieldStaticRemove
 
     val genTagDelete: Gen[TagDelete] =
       tagId map TagDelete
@@ -2073,11 +2338,11 @@ object RandomData {
     val genReqCodesPatch: Gen[ReqCodesPatch] = {
       val codes = reqCode.apId.set(0 to 3)
       for {
-        id      ← reqId
-        add     ← codes.mapBy(reqCode.value).map(Multimap(_)) // TODO Could have same ID with different codes
+        id      <- reqId
+        add     <- codes.mapBy(reqCode.value).map(Multimap(_)) // TODO Could have same ID with different codes
         addIds  = add.valueIterator.toSet
-        remove  ← codes.map(_ -- addIds)
-        restore ← codes.map(_ -- addIds -- remove)
+        remove  <- codes.map(_ -- addIds)
+        restore <- codes.map(_ -- addIds -- remove)
       } yield ReqCodesPatch(id, remove, restore, add)
     }
 
@@ -2111,17 +2376,32 @@ object RandomData {
     val genApplicableTagUpdate: Gen[ApplicableTagUpdate] =
       Gen.apply2(ApplicableTagUpdate)(applicableTagId, applicableTagGD.nonEmptyValues)
 
+    val genApplicableTagUpdateV1: Gen[ApplicableTagUpdateV1] =
+      Gen.apply2(ApplicableTagUpdateV1)(applicableTagId, applicableTagGDv1.nonEmptyValues)
+
+    val genFieldCustomImpUpdateV1: Gen[FieldCustomImpUpdateV1] =
+      Gen.apply2(FieldCustomImpUpdateV1)(customFieldImplicationId, customImpFieldGDv1.nonEmptyValues)
+
     val genFieldCustomImpUpdate: Gen[FieldCustomImpUpdate] =
       Gen.apply2(FieldCustomImpUpdate)(customFieldImplicationId, customImpFieldGD.nonEmptyValues)
 
     val genCustomIssueTypeUpdate: Gen[CustomIssueTypeUpdate] =
       Gen.apply2(CustomIssueTypeUpdate)(customIssueTypeId, customIssueTypeGD.nonEmptyValues)
 
+    val genCustomReqTypeUpdateV1: Gen[CustomReqTypeUpdateV1] =
+      Gen.apply2(CustomReqTypeUpdateV1)(customReqTypeId, customReqTypeGDv1.nonEmptyValues)
+
     val genCustomReqTypeUpdate: Gen[CustomReqTypeUpdate] =
       Gen.apply2(CustomReqTypeUpdate)(customReqTypeId, customReqTypeGD.nonEmptyValues)
 
+    val genFieldCustomTagUpdateV1: Gen[FieldCustomTagUpdateV1] =
+      Gen.apply2(FieldCustomTagUpdateV1)(customFieldTagId, customTagFieldGDv1.nonEmptyValues)
+
     val genFieldCustomTagUpdate: Gen[FieldCustomTagUpdate] =
       Gen.apply2(FieldCustomTagUpdate)(customFieldTagId, customTagFieldGD.nonEmptyValues)
+
+    val genFieldCustomTextUpdateV1: Gen[FieldCustomTextUpdateV1] =
+      Gen.apply2(FieldCustomTextUpdateV1)(customFieldTextId, customTextFieldGDv1.nonEmptyValues)
 
     val genFieldCustomTextUpdate: Gen[FieldCustomTextUpdate] =
       Gen.apply2(FieldCustomTextUpdate)(customFieldTextId, customTextFieldGD.nonEmptyValues)
@@ -2135,23 +2415,36 @@ object RandomData {
     val genUseCaseStepUpdate: Gen[UseCaseStepUpdate] =
       Gen.apply2(UseCaseStepUpdate)(useCaseStepId, useCaseStepGD.nonEmptyValues)
 
+    val genSavedViewCreateV1: Gen[SavedViewCreateV1] =
+      Gen.apply6(SavedViewCreateV1)(
+        savedViews.savedViewId,
+        savedViewGDv1.genName,
+        savedViewGDv1.genColumns,
+        savedViewGDv1.genSortCriteria,
+        savedViewGDv1.genFilterDead,
+        savedViewGDv1.genFilter)
+
     val genSavedViewCreate: Gen[SavedViewCreate] =
-      Gen.apply6(SavedViewCreate)(
-        reqtableData.savedViewId,
+      Gen.apply7(SavedViewCreate)(
+        savedViews.savedViewId,
         savedViewGD.genName,
         savedViewGD.genColumns,
         savedViewGD.genSortCriteria,
         savedViewGD.genFilterDead,
-        savedViewGD.genFilter)
+        savedViewGD.genFilter,
+        savedViewGD.genImpGraphConfig)
 
     val genSavedViewDefaultSet: Gen[SavedViewDefaultSet] =
-      reqtableData.savedViewId map SavedViewDefaultSet
+      savedViews.savedViewId map SavedViewDefaultSet
 
     val genSavedViewDelete: Gen[SavedViewDelete] =
-      reqtableData.savedViewId map SavedViewDelete
+      savedViews.savedViewId map SavedViewDelete
+
+    val genSavedViewUpdateV1: Gen[SavedViewUpdateV1] =
+      Gen.apply2(SavedViewUpdateV1)(savedViews.savedViewId, savedViewGDv1.nonEmptyValues)
 
     val genSavedViewUpdate: Gen[SavedViewUpdate] =
-      Gen.apply2(SavedViewUpdate)(reqtableData.savedViewId, savedViewGD.nonEmptyValues)
+      Gen.apply2(SavedViewUpdate)(savedViews.savedViewId, savedViewGD.nonEmptyValues)
 
     val genProjectNameSet: Gen[ProjectNameSet] =
       projectName map ProjectNameSet
@@ -2164,60 +2457,78 @@ object RandomData {
 
     val activeEventGens: NonEmptyVector[Gen[ActiveEvent]] =
       valuesForAdt[ActiveEvent, Gen[ActiveEvent]] {
-        case _: ApplicableTagCreate    => genApplicableTagCreate
-        case _: ApplicableTagUpdate    => genApplicableTagUpdate
-        case _: ContentRestore         => genContentRestore
-        case _: CustomIssueTypeCreate  => genCustomIssueTypeCreate
-        case _: CustomIssueTypeDelete  => genCustomIssueTypeDelete
-        case _: CustomIssueTypeRestore => genCustomIssueTypeRestore
-        case _: CustomIssueTypeUpdate  => genCustomIssueTypeUpdate
-        case _: CustomReqTypeCreate    => genCustomReqTypeCreate
-        case _: CustomReqTypeDelete    => genCustomReqTypeDelete
-        case _: CustomReqTypeRestore   => genCustomReqTypeRestore
-        case _: CustomReqTypeUpdate    => genCustomReqTypeUpdate
-        case _: FieldCustomDelete      => genFieldCustomDelete
-        case _: FieldCustomImpCreate   => genFieldCustomImpCreate
-        case _: FieldCustomImpUpdate   => genFieldCustomImpUpdate
-        case _: FieldCustomRestore     => genFieldCustomRestore
-        case _: FieldCustomTagCreate   => genFieldCustomTagCreate
-        case _: FieldCustomTagUpdate   => genFieldCustomTagUpdate
-        case _: FieldCustomTextCreate  => genFieldCustomTextCreate
-        case _: FieldCustomTextUpdate  => genFieldCustomTextUpdate
-        case _: FieldReposition        => genFieldReposition
-        case _: FieldStaticAdd         => genFieldStaticAdd
-        case _: FieldStaticRemove      => genFieldStaticRemove
-        case _: GenericReqCreate       => genGenericReqCreate
-        case _: GenericReqTitleSet     => genGenericReqTitleSet
-        case _: GenericReqTypeSet      => genGenericReqTypeSet
-        case _: ManualIssueCreate      => genManualIssueCreate
-        case _: ManualIssueDelete      => genManualIssueDelete
-        case _: ManualIssueUpdate      => genManualIssueUpdate
-        case _: ProjectNameSet         => genProjectNameSet
-        case _: ProjectTemplateApply   => genProjectTemplateApply
-        case _: CodeGroupCreate        => genCodeGroupCreate
-        case _: CodeGroupsDelete       => genCodeGroupsDelete
-        case _: CodeGroupUpdate        => genCodeGroupUpdate
-        case _: ReqCodesPatch          => genReqCodesPatch
-        case _: ReqFieldCustomTextSet  => genReqFieldCustomTextSet
-        case _: ReqImplicationsPatch   => genReqImplicationsPatch
-        case _: ReqsDelete             => genReqsDelete
-        case _: ReqTagsPatch           => genReqTagsPatch
-        case _: SavedViewCreate        => genSavedViewCreate
-        case _: SavedViewDefaultSet    => genSavedViewDefaultSet
-        case _: SavedViewDelete        => genSavedViewDelete
-        case _: SavedViewUpdate        => genSavedViewUpdate
-        case _: TagDelete              => genTagDelete
-        case _: TagGroupCreate         => genTagGroupCreate
-        case _: TagGroupUpdate         => genTagGroupUpdate
-        case _: TagRestore             => genTagRestore
-        case _: UseCaseCreate          => genUseCaseCreate
-        case _: UseCaseStepCreate      => genUseCaseStepCreate
-        case _: UseCaseStepDelete      => genUseCaseStepDelete
-        case _: UseCaseStepRestore     => genUseCaseStepRestore
-        case _: UseCaseStepShiftLeft   => genUseCaseStepShiftLeft
-        case _: UseCaseStepShiftRight  => genUseCaseStepShiftRight
-        case _: UseCaseStepUpdate      => genUseCaseStepUpdate
-        case _: UseCaseTitleSet        => genUseCaseTitleSet
+        case _: ApplicableTagCreate     => genApplicableTagCreate
+        case _: ApplicableTagUpdate     => genApplicableTagUpdate
+        case _: ContentRestore          => genContentRestore
+        case _: CustomIssueTypeCreate   => genCustomIssueTypeCreate
+        case _: CustomIssueTypeDelete   => genCustomIssueTypeDelete
+        case _: CustomIssueTypeRestore  => genCustomIssueTypeRestore
+        case _: CustomIssueTypeUpdate   => genCustomIssueTypeUpdate
+        case _: CustomReqTypeCreate     => genCustomReqTypeCreate
+        case _: CustomReqTypeDeleteHard => genCustomReqTypeDeleteHard
+        case _: CustomReqTypeDeleteSoft => genCustomReqTypeDeleteSoft
+        case _: CustomReqTypeRestore    => genCustomReqTypeRestore
+        case _: CustomReqTypeUpdate     => genCustomReqTypeUpdate
+        case _: FieldCustomDelete       => genFieldCustomDelete
+        case _: FieldCustomImpCreate    => genFieldCustomImpCreate
+        case _: FieldCustomImpUpdate    => genFieldCustomImpUpdate
+        case _: FieldCustomRestore      => genFieldCustomRestore
+        case _: FieldCustomTagCreate    => genFieldCustomTagCreate
+        case _: FieldCustomTagUpdate    => genFieldCustomTagUpdate
+        case _: FieldCustomTextCreate   => genFieldCustomTextCreate
+        case _: FieldCustomTextUpdate   => genFieldCustomTextUpdate
+        case _: FieldReposition         => genFieldReposition
+        case _: FieldStaticAdd          => genFieldStaticAdd
+        case _: FieldStaticRemove       => genFieldStaticRemove
+        case _: GenericReqCreate        => genGenericReqCreate
+        case _: GenericReqTitleSet      => genGenericReqTitleSet
+        case _: GenericReqTypeSet       => genGenericReqTypeSet
+        case _: ManualIssueCreate       => genManualIssueCreate
+        case _: ManualIssueDelete       => genManualIssueDelete
+        case _: ManualIssueUpdate       => genManualIssueUpdate
+        case _: ProjectNameSet          => genProjectNameSet
+        case _: ProjectTemplateApply    => genProjectTemplateApply
+        case _: CodeGroupCreate         => genCodeGroupCreate
+        case _: CodeGroupsDelete        => genCodeGroupsDelete
+        case _: CodeGroupUpdate         => genCodeGroupUpdate
+        case _: ReqCodesPatch           => genReqCodesPatch
+        case _: ReqFieldCustomTextSet   => genReqFieldCustomTextSet
+        case _: ReqImplicationsPatch    => genReqImplicationsPatch
+        case _: ReqsDelete              => genReqsDelete
+        case _: ReqTagsPatch            => genReqTagsPatch
+        case _: SavedViewCreate         => genSavedViewCreate
+        case _: SavedViewDefaultSet     => genSavedViewDefaultSet
+        case _: SavedViewDelete         => genSavedViewDelete
+        case _: SavedViewUpdate         => genSavedViewUpdate
+        case _: TagDelete               => genTagDelete
+        case _: TagGroupCreate          => genTagGroupCreate
+        case _: TagGroupUpdate          => genTagGroupUpdate
+        case _: TagRestore              => genTagRestore
+        case _: UseCaseCreate           => genUseCaseCreate
+        case _: UseCaseStepCreate       => genUseCaseStepCreate
+        case _: UseCaseStepDelete       => genUseCaseStepDelete
+        case _: UseCaseStepRestore      => genUseCaseStepRestore
+        case _: UseCaseStepShiftLeft    => genUseCaseStepShiftLeft
+        case _: UseCaseStepShiftRight   => genUseCaseStepShiftRight
+        case _: UseCaseStepUpdate       => genUseCaseStepUpdate
+        case _: UseCaseTitleSet         => genUseCaseTitleSet
+      }
+
+    val retiredEventGens: NonEmptyVector[Gen[RetiredEvent]] =
+      valuesForAdt[RetiredEvent, Gen[RetiredEvent]] {
+        case _: ApplicableTagCreateV1   => genApplicableTagCreateV1
+        case _: ApplicableTagUpdateV1   => genApplicableTagUpdateV1
+        case _: CustomReqTypeCreateV1   => genCustomReqTypeCreateV1
+        case _: CustomReqTypeUpdateV1   => genCustomReqTypeUpdateV1
+        case _: CustomReqTypeDelete     => genCustomReqTypeDelete
+        case _: FieldCustomImpCreateV1  => genFieldCustomImpCreateV1
+        case _: FieldCustomImpUpdateV1  => genFieldCustomImpUpdateV1
+        case _: FieldCustomTagCreateV1  => genFieldCustomTagCreateV1
+        case _: FieldCustomTagUpdateV1  => genFieldCustomTagUpdateV1
+        case _: FieldCustomTextCreateV1 => genFieldCustomTextCreateV1
+        case _: FieldCustomTextUpdateV1 => genFieldCustomTextUpdateV1
+        case _: SavedViewCreateV1       => genSavedViewCreateV1
+        case _: SavedViewUpdateV1       => genSavedViewUpdateV1
       }
 
     val activeEvent: Gen[ActiveEvent] =
@@ -2225,7 +2536,8 @@ object RandomData {
 
     val event: Gen[Event] = {
       val gens = valuesForAdt[Event, NonEmptyVector[Gen[Event]]] {
-        case _: ActiveEvent => activeEventGens
+        case _: ActiveEvent  => activeEventGens
+        case _: RetiredEvent => retiredEventGens
       }
       Gen.chooseGenNE(gens flatMap identity)
     }

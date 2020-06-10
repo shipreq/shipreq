@@ -11,8 +11,8 @@ object UrlTest extends TestSuite {
 
   override def tests = Tests {
 
-    'relative {
-      'nullary {
+    "relative" - {
+      "nullary" - {
         def test(u: Relative, noSlash: String): Unit = {
           assertEq(u.relativeUrlNoHeadSlash, noSlash)
           assertEq(u.relativeUrl, "/" + noSlash)
@@ -21,11 +21,11 @@ object UrlTest extends TestSuite {
         "/x"    - test(Relative("/x"), "x")
         "/x/y"  - test(Relative("/x/y"), "x/y")
         "/x/y/" - test(Relative("/x/y/"), "x/y/")
-        'empty  - assertEq(Relative(""), Relative("/"))
-        'head2  - assertEq(Relative("//"), Relative("/"))
+        "empty"  - assertEq(Relative(""), Relative("/"))
+        "head2"  - assertEq(Relative("//"), Relative("/"))
         "x"     - assertEq(Relative("x"), Relative("/x"))
       }
-      'unary {
+      "unary" - {
         def test(p: Relative, prefix: String): String = {
           val u = p.thenParam[Int](_.toString)(123)
           assertEq(u.relativeUrl, s"$prefix/123")
@@ -38,52 +38,52 @@ object UrlTest extends TestSuite {
         "/x/y/"  - test(Relative("/x/y/"), "/x/y")
         "/x/y//" - test(Relative("/x/y//"), "/x/y")
       }
-      '/ {
+      "/" - {
         def test(a: String, b: String)(e: String): Unit = {
           val c = Url.Relative(b)
           assertEq(Url.Relative(a) / c.relativeUrl, Url.Relative(e))
           assertEq(Url.Relative(a) / c.relativeUrlNoHeadSlash, Url.Relative(e))
         }
-        * - test("/", "/")("/")
-        * - test("/a", "/")("/a")
-        * - test("/", "/a")("/a")
-        * - test("/a", "/b")("/a/b")
+        "1" - test("/", "/")("/")
+        "2" - test("/a", "/")("/a")
+        "3" - test("/", "/a")("/a")
+        "4" - test("/a", "/b")("/a/b")
       }
 
-      'isParentOf {
+      "isParentOf" - {
         def test(a: String, b: String, e: Boolean): Unit =
           assertEq(s"$a isParentOf $b", Relative(a).isParentOf(Relative(b)), e)
-        * - test("/abc", "/abc", false)
-        * - test("/abc", "/ab", false)
-        * - test("/abc", "/abc/def", true)
-        * - test("/abc", "/abcdef", false)
-        * - test("/abc/", "/abc", false)
-        * - test("/abc/", "/ab", false)
-        * - test("/abc/", "/abc/def", true)
-        * - test("/abc/", "/abcdef", false)
+        "1" - test("/abc", "/abc", false)
+        "2" - test("/abc", "/ab", false)
+        "3" - test("/abc", "/abc/def", true)
+        "4" - test("/abc", "/abcdef", false)
+        "5" - test("/abc/", "/abc", false)
+        "6" - test("/abc/", "/ab", false)
+        "7" - test("/abc/", "/abc/def", true)
+        "8" - test("/abc/", "/abcdef", false)
       }
 
-      'isEqualToOrParentOf {
+      "isEqualToOrParentOf" - {
         def test(a: String, b: String, e: Boolean): Unit =
           assertEq(s"$a isEqualToOrParentOf $b", Relative(a).isEqualToOrParentOf(Relative(b)), e)
-        * - test("/abc", "/abc", true)
-        * - test("/abc", "/ab", false)
-        * - test("/abc", "/abc/def", true)
-        * - test("/abc", "/abcdef", false)
-        * - test("/abc/", "/abc", true)
-        * - test("/abc/", "/ab", false)
-        * - test("/abc/", "/abc/def", true)
-        * - test("/abc/", "/abcdef", false)
+        "1" - test("/abc", "/abc", true)
+        "2" - test("/abc", "/ab", false)
+        "3" - test("/abc", "/abc/def", true)
+        "4" - test("/abc", "/abcdef", false)
+        "5" - test("/abc/", "/abc", true)
+        "6" - test("/abc/", "/ab", false)
+        "7" - test("/abc/", "/abc/def", true)
+        "8" - test("/abc/", "/abcdef", false)
       }
     }
 
-    'absoluteBase {
-      'noSlash - assertEq(Absolute.Base(googleStr).value, googleStr)
-      'slash - assertEq(Absolute.Base(googleStr + "/").value, googleStr)
+    "absoluteBase" - {
+      "noSlash" - assertEq(Absolute.Base(googleStr).value, googleStr)
+      "slash" - assertEq(Absolute.Base(googleStr + "/").value, googleStr)
     }
 
-    'absolute {
-      'nullary {
+    "absolute" - {
+      "nullary" - {
         def test(r: Relative, path: String): String = {
           val a = google / r
           assertEq(a.absoluteUrl, googleStr + path)
@@ -92,7 +92,7 @@ object UrlTest extends TestSuite {
         "/"  - test(Relative("/"), "")
         "/x" - test(Relative("/x"), "/x")
       }
-      'unary {
+      "unary" - {
         def test(r: Relative, pathPrefix: String): String = {
           val a = google / r.thenParam[Int](_.toString)(123)
           assertEq(a.absoluteUrl, googleStr + pathPrefix + 123)
@@ -101,12 +101,12 @@ object UrlTest extends TestSuite {
         "/"  - test(Relative("/"), "/")
         "/x" - test(Relative("/x"), "/x/")
       }
-      'relative {
-        * - assertEq(Url.Absolute("http://qwe.asd/qwe").relativeUrl.relativeUrl, "/qwe")
-        * - assertEq(Url.Absolute("http://qwe.asd:123/qwe").relativeUrl.relativeUrl, "/qwe")
-        * - assertEq(Url.Absolute("http://qwe.asd/qwe/zxc").relativeUrl.relativeUrl, "/qwe/zxc")
-        * - assertEq(Url.Absolute("http://qwe.asd/").relativeUrl.relativeUrl, "/")
-        * - assertEq(Url.Absolute("http://qwe.asd").relativeUrl.relativeUrl, "/")
+      "relative" - {
+        "1" - assertEq(Url.Absolute("http://qwe.asd/qwe").relativeUrl.relativeUrl, "/qwe")
+        "2" - assertEq(Url.Absolute("http://qwe.asd:123/qwe").relativeUrl.relativeUrl, "/qwe")
+        "3" - assertEq(Url.Absolute("http://qwe.asd/qwe/zxc").relativeUrl.relativeUrl, "/qwe/zxc")
+        "4" - assertEq(Url.Absolute("http://qwe.asd/").relativeUrl.relativeUrl, "/")
+        "5" - assertEq(Url.Absolute("http://qwe.asd").relativeUrl.relativeUrl, "/")
       }
     }
 

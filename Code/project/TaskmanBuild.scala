@@ -1,8 +1,8 @@
 import sbt.{project => _, _}
-import Keys._
+import sbt.Keys._
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import com.typesafe.sbt.packager.universal.UniversalPlugin.autoImport.Universal
-import sbtdocker.DockerPlugin, DockerPlugin.autoImport._
+import sbtdocker.DockerPlugin
 import Common._
 import Dependencies._
 import ShipReqBuild._

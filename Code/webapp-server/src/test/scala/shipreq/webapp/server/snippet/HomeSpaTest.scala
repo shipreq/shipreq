@@ -1,33 +1,33 @@
 package shipreq.webapp.server.snippet
 
-import java.time.Instant
-import utest._
+import shipreq.base.db.scalazDoobieConnectionIO
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.Event.FieldStaticRemove
 import shipreq.webapp.server.logic.{HomeSpaLogic, Obfuscators}
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._
+import utest._
 
 object HomeSpaTest extends TestSuite {
-  implicit def db = PrepareEnv.dbAlgebra
 
   override def tests = Tests {
 
-    'createProject {
+    "createProject" - {
       def test(name: String): Unit =
-        UserFixture.Transaction.runNow { uf =>
+        UserFixture.use { uf =>
           import uf.xa
           val uid = uf.user1.id
+          implicit val db = uf.dbUtil.dbAlgebra
 
           // Confirm starting empty
           assertEq(xa ! db.getAllProjectMetaDataForUser(uid), Nil)
 
           // Create
-          val pi = xa ! HomeSpaLogic.createProject(uid, name, Instant.now())
+          val pi = xa ! HomeSpaLogic.createProject(uid, name)
           val initEvents = 2
 
           val pid = Obfuscators.projectId.deobfuscate(pi.id).toOption.get
-          def events() = (xa ! db.getAllProjectEvents(pid)).needRight.toVector
+          def events() = (xa ! db.getAllProjectEvents(pid)).getOrThrow().toVector
           def loadProject() = applyVerifiedEventSuccessfully(Project.empty, events(): _*)
 
           // Immediate result

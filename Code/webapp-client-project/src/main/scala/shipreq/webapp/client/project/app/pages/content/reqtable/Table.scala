@@ -10,13 +10,15 @@ import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable._
-import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
+import shipreq.webapp.base.data.derivation._
+import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.feature.{AsyncFeature, DragToReorderFeature, TableNavigationFeature}
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.ui.{EditTheme, semantic}
 import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
 import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
-import shipreq.webapp.client.project.widgets.{DragToReorder, NoFilterResults, ProjectWidgets, ViewReq}
+import shipreq.webapp.client.project.feature.SavedViewFeature.{ColumnLogic, ColumnPlus}
+import shipreq.webapp.client.project.widgets.{NoFilterResults, ProjectWidgets, ViewReq}
 import shipreq.webapp.client.project.lib.DataReusability._
 import EditorFeature.FieldKey
 
@@ -51,26 +53,28 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       private val pxPubidFmt: Px[ProjectWidgets.NoCtx#PubidFormat] =
         pxProjectWidgets.map(_.PubidFormat(Plain, *.pubidColumnValue(_), titleFn = _ => None))
 
-      private val pxApplicability: Px[Applicability[Column, Row]] =
+      private val pxProjectApplicability: Px[ProjectApplicability[Column, Row]] =
         pxProjectConfig.map(cfg => Row.applicability(cfg.applicability))
 
       def render(p: Props): VdomElement = {
         pxProjectWidgets.refresh()
         pxProjectConfig.refresh()
 
+        val pc = pxProjectConfig.value()
+
         val header =
           Header.Component(
             Header.Props(
               p.cols,
               p.selection,
-              p.modifyView.map(f => cs => f.modState(_ withColumns cs.map(_.column))),
-              p.modifyView.map(f => c => f.modState(_ orderByColumn c.column))))
+              p.modifyView.map(f => cs => f.modState(_.withColumns(cs.map(_.column), pc))),
+              p.modifyView.map(f => c => f.modState(_.orderByColumn(c.column)))))
 
         def renderMsg(msg: VdomTag): VdomTag =
           NoFilterResults.asTableRow(p.cols.length + 1)
 
         def renderRows(rows: Vector[Row]): VdomArray = {
-          val applicability = pxApplicability.value()
+          val applicability = pxProjectApplicability.value()
           val reqViewInputs: ReqRow.ViewInput = (p.config, p.pw, pxPubidFmt.value())
 
           rows.toVdomArray { genericRow =>
@@ -118,7 +122,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       }
     }
 
-    val Component = ScalaComponent.builder[Props]("ReqTable")
+    val Component = ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .configure(shouldComponentUpdate)
       .build
@@ -137,7 +141,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
     final class Backend($: BackendScope[Props, Unit]) {
 
-      private def setNewOrder(newOrder: Vector[ColumnPlus]): Callback =
+      private def setNewColumns(newOrder: Vector[ColumnPlus]): Callback =
         NonEmptyVector.maybe(newOrder, Callback.empty)(newCols =>
           $.props.flatMap(_ reorder newCols))
 
@@ -146,7 +150,17 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
           case KeyCode.Space => $.props.flatMap(_ clickSort col)
         }.asEventDefault(e)
 
-      private def renderFn(p: Props, content: DragToReorder.Content[ColumnPlus]): VdomElement = {
+      private val columnDND =
+        DragToReorderFeature[ColumnPlus](
+          getData             = $.props.map(_.cols.whole),
+          updateData          = u => setNewColumns(u.newOrder),
+          updateUI            = $.forceUpdate,
+          dragOutsideToRemove = true,
+        )
+
+      def render(p: Props): VdomElement = {
+        val items = columnDND.items()
+
         val selectionCell =
           <.th(
             *.selectionColumnHeader,
@@ -154,7 +168,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
             p.selection.total.checkboxAndOnClick) // TODO *.selectionCheckbox
 
         val cols =
-          content.items.toVdomArray { i =>
+          items.toVdomArray { i =>
             val c = i.data
             val live = c.column match {
               case Column.DeletionReason => Live // Don't render this title with strike-through
@@ -170,20 +184,14 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
           }
 
         <.thead(
-          content.rootMod,
+          columnDND.container,
           <.tr(
             selectionCell,
             cols))
       }
-
-      private val columnDND: DragToReorder[ColumnPlus] =
-        new DragToReorder(setNewOrder, c => $.props.map(renderFn(_, c)))
-
-      def render(p: Props): VdomElement =
-        columnDND.Component(p.cols.whole)
     }
 
-    val Component = ScalaComponent.builder[Props]("Header")
+    val Component = ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .configure(shouldComponentUpdate)
       .build
@@ -216,7 +224,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
                      viewInput       : ViewInput,
                      editor          : RowEditor,
                      cols            : NonEmptyVector[ColumnPlus],
-                     applicability   : Applicability[Column, Row],
+                     applicability   : ProjectApplicability[Column, Row],
                      rowAsync        : AsyncFeature.Read.D0[ErrorMsg],
                      selection       : Selection.OneUI[Row.SourceId]) {
       @inline def render = Component.withKey(row.id.key)(this)
@@ -224,6 +232,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
     implicit final val reusabilityProps: Reusability[Props] = {
       implicit val a = reusabilityRowEditor
+      locally(a) // -Wunused:locals gets it wrong
       Reusability.derive
     }
 
@@ -254,7 +263,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
           def editor = columnEditor(col)
           val cs     = cellStateFn(row.live & colPlus.live)
           val cp     = mkProps(col, Cell.Props(cs, editor, _))
-          Cell.Component.withKey(Column key col)(cp)
+          Cell.Component.withKey(ColumnLogic key col)(cp)
         }
 
       def renderNormal = {
@@ -313,8 +322,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
     override protected val rowToColumnToEditorField =
       _.req.id match {
-        case _: GenericReqId => Column.editorFieldGR.getOption
-        case _: UseCaseId    => Column.editorFieldUC.getOption
+        case _: GenericReqId => ColumnLogic.editorFieldGR.getOption
+        case _: UseCaseId    => ColumnLogic.editorFieldUC.getOption
       }
 
     override protected def reusabilityRowEditor = implicitly
@@ -325,28 +334,30 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       val viewReq = ViewReq.Data(
         req              = row.req,
         live             = row.live,
-        codes            = row.exp.reqCodes,
-        generalTags      = row.mv.tags,
-        customTags       = row.exp.cfTags.getOrElse(_, Vector.empty),
-        conflictingTags  = row.conflictingTags,
-        generalImps      = row.exp.implications.apply,
-        customImps       = row.exp.cfImps.getOrElse(_, Vector.empty),
+        codes            = row.exp.reqCodes.result,
+        allTags          = row.exp.allTags.result,
+        otherTags        = row.exp.otherTags.result,
+        customTags       = row.exp.cfTags.get(_).fold(Vector.empty[ApplicableTagId])(_.result),
+        invalidTags      = row.invalidTags,
+        generalImps      = row.exp.implications(_).result,
+        customImps       = row.exp.cfImps.get(_).fold(Vector.empty[Pubid])(_.result),
         pastPubids       = SortedSet.empty[ExternalPubid], // ReqTable doesn't display pastPubids
         impsAreMandatory = cfg.reqTypes.idsRequiringImplication.contains(row.req.reqTypeId),
-        mandatoryFields  = cfg.mandatoryLiveCustomFields,
+        fieldRules       = row.fieldRules
       ).apply(pw)
 
       def renderCodes: VdomElement =
-        if (row.exp.reqCodeTree.nonEmpty)
-          pw.reqCodeTree(row.exp.reqCodeTree)
+        if (row.exp.reqCodeTree.values.nonEmpty)
+          pw.reqCodeTree(row.exp.reqCodeTree.values)
         else
           viewReq.codes
 
       val view: Column => TagMod = {
-        case Column.CustomField(id)   => viewReq.customField(id)
+        case Column.CustomField(id)   => viewReq.customField(id) getOrElse `n/a`
         case Column.Title             => viewReq.title
         case Column.ReqType           => viewReq.reqType
-        case Column.Tags              => viewReq.tags
+        case Column.OtherTags         => viewReq.otherTags
+        case Column.AllTags           => viewReq.allTags
         case Column.Implications(dir) => viewReq.imps(dir)
         case Column.Code              => renderCodes
         case Column.Pubid             => pubidFmt(row.req)
@@ -365,7 +376,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
     ]("CodeGroupRow") {
 
     override protected val rowToColumnToEditorField =
-      _ => Column.editorFieldCG.getOption
+      _ => ColumnLogic.editorFieldCG.getOption
 
     override protected def reusabilityRowEditor = implicitly
 
@@ -385,7 +396,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         case _: Column.CustomField
            | _: Column.Implications
            | Column.ReqType
-           | Column.Tags
+           | Column.OtherTags
+           | Column.AllTags
            | Column.Pubid
            | Column.DeletionReason  => reusableNA
         case c@ Column.Title        => ret(c, pw.codeGroupTitle(row.group))
@@ -403,10 +415,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
                      view     : Reusable[TagMod])
 
     object Props {
-      implicit val reusability: Reusability[Props] = {
-        implicit val cs: Reusability[CellState] = Reusability.byRef
+      implicit val reusability: Reusability[Props] =
         Reusability.derive
-      }
 
       val `n/a`: On => Props =
         On.memo(on =>
@@ -433,7 +443,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         editor.themedRenderOr(())(p.view))
     }
 
-    val Component = ScalaComponent.builder[Props]("Cell")
+    val Component = ScalaComponent.builder[Props]
       .renderP(render)
       .configure(shouldComponentUpdate)
       .build
@@ -464,7 +474,7 @@ object Table {
     val CellState: On => Live => CellState =
       On.memo(on => Live.memo((_, on)))
 
-    implicit val reusabilityApplicability: Reusability[Applicability[Column, Row]] =
+    implicit val reusabilityProjectApplicability: Reusability[ProjectApplicability[Column, Row]] =
       Reusability.byRef
 
     val `n/a`: VdomTag =

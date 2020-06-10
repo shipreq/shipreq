@@ -5,14 +5,12 @@ import japgolly.scalajs.react.vdom.html_<^._
 object InlineBaseStyles {
 
   final val pageMarginRem = 1
-  final val pageMarginStr = pageMarginRem + "rem"
+  final val pageMarginStr = pageMarginRem.toString + "rem"
 
   val containerLarge = TagMod(
     ^.marginLeft.auto,
     ^.marginRight.auto,
     ^.maxWidth := s"calc(723px + $pageMarginStr + $pageMarginStr)")
-
-  def containerFull = EmptyVdom
 
   object layout {
     val root = TagMod(

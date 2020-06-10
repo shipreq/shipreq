@@ -4,10 +4,12 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop.CycleDetector
-import monocle.Lens
-import monocle.macros.{GenLens, Lenses}
+import monocle.{Lens, Traversal}
+import monocle.macros.Lenses
+import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.base.util.TaggedTypes.TaggedInt
@@ -19,7 +21,7 @@ final case class ApplicableTagId(value: Int) extends TagId with TaggedInt
 
 sealed trait Tag {
   val id     : TagId
-  val name   : String
+  def name   : String
   val desc   : Option[String]
   val live   : Live
   def keyO   : Option[HashRefKey]
@@ -31,36 +33,43 @@ sealed trait Tag {
  *         e.g. “Priority” shouldn't be applicable but its children should.
  */
 @Lenses
-final case class TagGroup(id           : TagGroupId,
-                          name         : String,
-                          desc         : Option[String],
-                          mutexChildren: MutexChildren,
-                          live         : Live) extends Tag {
+final case class TagGroup(id         : TagGroupId,
+                          name       : String,
+                          desc       : Option[String],
+                          exclusivity: Exclusivity,
+                          live       : Live) extends Tag {
   override def keyO = None
   override def tagType = TagType.Group
 }
 
 @Lenses
-final case class ApplicableTag(id  : ApplicableTagId,
-                               name: String,
-                               desc: Option[String],
-                               key : HashRefKey,
-                               live: Live) extends Tag {
+final case class ApplicableTag(id                : ApplicableTagId,
+                               key               : HashRefKey,
+                               desc              : Option[String],
+                               colour            : Option[Colour],
+                               applicableReqTypes: ApplicableReqTypes,
+                               live              : Live) extends Tag {
+  override def name = key.value
   override def keyO = Some(key)
   override def tagType = TagType.Applicable
 }
 
-/**
- * FR-253: BA shall be able to specify that a grouping's children are mutually-exclusive (like an enum or sum-type).
- * FR-254: BA shall be able to track when two or more enum-groupings (FR-253) (or its children) are applied to the same req.
- */
-sealed trait MutexChildren extends IsoBool[MutexChildren] {
-  override final def companion = MutexChildren
-}
-case object MutexChildren extends MutexChildren with IsoBool.Object[MutexChildren] {
-  override def positive = this
-  override def negative = Not
-  case object Not extends MutexChildren
+object ApplicableTag {
+  def v1(id  : ApplicableTagId,
+         name: String,
+         desc: Option[String],
+         key : HashRefKey,
+         live: Live): ApplicableTag = {
+    locally(name) // removed
+    apply(
+      id                 = id,
+      key                = key,
+      desc               = desc,
+      colour             = None,
+      applicableReqTypes = ApplicableReqTypes.empty,
+      live               = live,
+    )
+  }
 }
 
 sealed abstract class TagType(val name: String) { type Data <: Tag }
@@ -79,14 +88,15 @@ object Tag {
     override val unapplyData: AnyRef => Option[Tag] = {case r: Tag => Some(r); case _ => None}
   }
 
-  val name = Lens((_: Tag).name)(n => {
-    case TagGroup(a, _, b, c, d)      => TagGroup(a, n, b, c, d)
-    case ApplicableTag(a, _, b, c, d) => ApplicableTag(a, n, b, c, d)
-  })
+  val applicableTag: monocle.Optional[Tag, ApplicableTag] =
+    monocle.Optional[Tag, ApplicableTag]({
+      case a: ApplicableTag => Some(a)
+      case _                => None
+    })(a => _ => a)
 
   val live = Lens((_: Tag).live)(n => {
-    case TagGroup(a, b, c, d, _)      => TagGroup(a, b, c, d, n)
-    case ApplicableTag(a, b, c, d, _) => ApplicableTag(a, b, c, d, n)
+    case t: TagGroup      => t.copy(live = n)
+    case t: ApplicableTag => t.copy(live = n)
   })
 
   val filterLive: Tag => Boolean =
@@ -114,22 +124,29 @@ object Tag {
 // TagTree ⊂ TagInTree
 
 object TagTree {
+  val traversal: Traversal[TagTree, TagInTree] =
+    IMap.traversal[TagId, TagInTree]
+
   def empty: TagTree = IMap.empty(_.id)
 
   def prettyPrint(tt: TagTree): String = {
     def lookup(id: TagId) = tt.underlyingMap(id)
     val rootIds = tt.values.foldLeft(tt.keySet)(_ -- _.children)
-    val roots = MutableArray(rootIds.iterator.map(lookup)).sortBy(_.tag.name).iterator.toArray // TODO .array should work
+    val roots = MutableArray(rootIds.iterator.map(lookup)).sortBy(_.tag.name.toLowerCase).iterator.toArray // TODO .array should work
     "TagTree\n" +
     nyaya.util.Util.asciiTree(roots)(_.children.map(lookup),
       t => {
         val id = t.id.value
         val isDead = t.tag.live is Dead
         val isMutex = t.tag match {
-          case t: TagGroup      => t.mutexChildren is MutexChildren
+          case t: TagGroup      => t.exclusivity is Exclusive
           case _: ApplicableTag => false
         }
-        s"${t.tag.name} (#$id)${if (isDead) " [DEAD]" else ""}${if (isMutex) " [MUTEX]" else ""}"
+        val name = t.tag match {
+          case t: TagGroup      => t.name
+          case t: ApplicableTag => "#" + t.key.value
+        }
+        s"$name (#$id)${if (isDead) " [DEAD]" else ""}${if (isMutex) " [EXCLUSIVE]" else ""}"
       },
       "  ")
   }
@@ -155,6 +172,7 @@ object TagTree {
   }
 }
 
+@Lenses
 final case class TagInTree(tag: Tag, children: TagInTree.Children) {
   import TagInTree.Children
 
@@ -171,12 +189,12 @@ final case class TagInTree(tag: Tag, children: TagInTree.Children) {
   def hasChild(id: TagId): Boolean =
     children contains id
 
-  def lookupChildren(implicit tt: TagTree): Stream[TagInTree] =
-    children.toStream.map(tt.need)
+  private def lookupChildren()(implicit tt: TagTree): Iterator[TagInTree] =
+    children.iterator.map(tt.need)
 
   /** @return Itself and all reachable children. */
   def transitiveChildren(implicit tt: TagTree): Set[TagId] =
-    TagInTree.transitiveChildren(lookupChildren, Set(id))
+    TagInTree.transitiveChildren(lookupChildren(), Set(id))
 }
 
 object TagInTree {
@@ -192,21 +210,19 @@ object TagInTree {
   val filterLive: TagInTree => Boolean =
     _.tag.live is Live
 
-  val tag      = GenLens[TagInTree](_.tag)
-  val children = GenLens[TagInTree](_.children)
-  val live     = tag ^|-> Tag.live
+  val live = tag ^|-> Tag.live
 
   /** @return Itself and all reachable children. */
-  @tailrec def transitiveChildren(queue: Stream[TagInTree], seen: Set[TagId])(implicit tt: TagTree): Set[TagId] =
+  @tailrec def transitiveChildren(queue: Iterator[TagInTree], seen: Set[TagId])(implicit tt: TagTree): Set[TagId] =
     if (queue.isEmpty)
       seen
     else {
-      val focus = queue.head
+      val focus = queue.next()
       val id = focus.id
       if (seen contains id)
-        transitiveChildren(queue.tail, seen)
+        transitiveChildren(queue, seen)
       else
-        transitiveChildren(queue.tail append focus.lookupChildren, seen + id)
+        transitiveChildren(queue ++ focus.lookupChildren(), seen + id)
     }
 }
 
@@ -221,32 +237,53 @@ object Tags {
 final case class Tags(tree: TagTree) {
   import FlatTag.FilterPolicy
 
-  def atagValidate(id: ApplicableTagId): Option[String] =
+  def validateApplicableTag(id: ApplicableTagId): Option[ErrorMsg] =
+    applicableTag(id) match {
+      case \/-(_) => None
+      case -\/(e) => Some(e)
+    }
+
+  def applicableTag(id: ApplicableTagId): ErrorMsg \/ ApplicableTag =
     tree.get(id) match {
       case Some(tit) => tit.tag match {
-        case _: ApplicableTag => None
-        case t: TagGroup      => Some(s"$t is not an ApplicableTag.")
+        case t: ApplicableTag => \/-(t)
+        case _: TagGroup      => -\/(ErrorMsg(s"$id is a TagGroup."))
       }
-      case None               => Some(s"$id not found.")
+      case None               => -\/(ErrorMsg(s"$id not found."))
     }
 
-  def atag(id: ApplicableTagId): ApplicableTag =
+  def needApplicableTag(id: ApplicableTagId): ApplicableTag =
     tree.need(id).tag match {
       case a: ApplicableTag => a
-      case t: TagGroup      => mustNotHappen(s"$t is not an ApplicableTag.")
+      case t: TagGroup      => mustNotHappen(ErrorMsg(s"$t is not an ApplicableTag."))
     }
 
-  def atagIterator(): Iterator[ApplicableTag] =
+  def applicableTagIterator(): Iterator[ApplicableTag] =
     tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag]
+
+  def tagGroupIterator(): Iterator[TagGroup] =
+    tree.valuesIterator.map(_.tag).filterSubType[TagGroup]
+
+  def tagGroup(id: TagGroupId): ErrorMsg \/ TagGroup =
+    tree.get(id) match {
+      case Some(tit) => tit.tag match {
+        case t: TagGroup      => \/-(t)
+        case _: ApplicableTag => -\/(ErrorMsg(s"$id is an ApplicableTag."))
+      }
+      case None               => -\/(ErrorMsg(s"$id not found."))
+    }
 
   def needTagGroup(id: TagGroupId): TagGroup =
     tree.need(id).tag match {
       case t: TagGroup      => t
-      case a: ApplicableTag => mustNotHappen(s"$a is not a TagGroup.")
+      case a: ApplicableTag => mustNotHappen(ErrorMsg(s"$a is not a TagGroup."))
     }
 
-  lazy val deadATagIds: Set[ApplicableTagId] =
-    atagIterator().filter(_.live is Dead).map(_.id).toSet
+  lazy val deadApplicableTagIds: Set[ApplicableTagId] =
+    applicableTagIterator().filter(_.live is Dead).map(_.id).toSet
+
+  lazy val liveTagGroupIds: Set[TagGroupId] =
+    tagGroupIterator().filter(_.live is Live).map(_.id).toSet
 
   lazy val exclusiveGroups: ApplicableTagId => Set[TagGroupId] = {
     val results = mutable.HashMap.empty[ApplicableTagId, Set[TagGroupId]]
@@ -270,9 +307,9 @@ final case class Tags(tree: TagTree) {
               exclusiveParents
 
             case g: TagGroup =>
-              g.mutexChildren match {
-                case MutexChildren     => exclusiveParents + g.id
-                case MutexChildren.Not => exclusiveParents
+              g.exclusivity match {
+                case Exclusive     => exclusiveParents + g.id
+                case NonExclusive => exclusiveParents
               }
           }
 
@@ -285,8 +322,45 @@ final case class Tags(tree: TagTree) {
     get
   }
 
+  val tagFilter: FilterDead => Tag => Boolean = {
+    case HideDead => Tag.filterLive
+    case ShowDead => _ => true
+  }
+
+  val tagIdFilter: FilterDead => TagId => Boolean = {
+    case HideDead => id => tree.get(id).forall(_.tag.live is Live)
+    case ShowDead => _ => true
+  }
+
+  def applicableTagOrdering(root: TagId, filterDead: FilterDead): Ordering[ApplicableTagId] = {
+    val o = tagOrdering(root, filterDead)
+    o.compare(_, _)
+  }
+
+  def tagOrdering(root: TagId, filterDead: FilterDead): Ordering[TagId] = {
+    val tagOrder =
+      flatRowsWithRoot(root, filterDead)
+        .iterator
+        .zipWithIndex
+        .map { case (t, i) => t.id -> i}
+        .toMap
+    Ordering.by[TagId, Int](tagId => tagOrder.getOrElse(tagId, -tagId.value))
+  }
+
+  def flatRowsWithRoots(roots: Set[TagId], isGood: Tag => Boolean, policy: FilterPolicy): Vector[FlatTag] =
+    FlatTag.flatRows(roots, tree.get(_).get)(isGood, policy)
+
+  def flatRowsWithRoots(roots: Set[TagId], fd: FilterDead): Vector[FlatTag] =
+    fd match {
+      case HideDead => flatRowsWithRoots(roots, Tag.filterLive, FilterPolicy.OmitAnythingWithBadParent)
+      case ShowDead => flatRowsWithRoots(roots, _ => true, FlatTag.FilterPolicy.OmitNothing)
+    }
+
+  def flatRowsWithRoot(root: TagId, fd: FilterDead): Vector[FlatTag] =
+    flatRowsWithRoots(Set.empty[TagId] + root, fd)
+
   def flatRows(isGood: Tag => Boolean, policy: FilterPolicy): Vector[FlatTag] =
-    FlatTag.flatRows(topLevelIds, tree.get(_).get)(isGood, policy)
+    flatRowsWithRoots(topLevelIds, isGood, policy)
 
   def flatRows(fd: FilterDead): Vector[FlatTag] =
     fd match {
@@ -309,4 +383,99 @@ final case class Tags(tree: TagTree) {
   lazy val topLevelIds: Set[TagId] =
     TagTree.topLevelIds(tree)
 
+  lazy val directChildren: Multimap[TagId, Vector, TagId] =
+    Multimap(tree.mapValues(_.children))
+
+  def directApplicableChildren(id: TagId): Vector[ApplicableTagId] =
+    directChildren(id).iterator.filterSubType[ApplicableTagId].toVector
+
+  def directTagGroupChildren(id: TagId): Vector[TagGroupId] =
+    directChildren(id).iterator.filterSubType[TagGroupId].toVector
+
+  lazy val directParents: Multimap[TagId, Set, TagGroupId] =
+    Multimap(
+      directChildren.reverseM[Set]
+        .iterator
+        .map(_.map2(_.iterator.filterSubType[TagGroupId].toSet)) // only TagGroups can have children - soft restriction atm
+        .filter(_._2.nonEmpty)
+        .toMap
+    )
+
+  def parents(subject: TagId): MMTree.Parents[TagId] =
+    MMTree.Relations.deriveParents(subject, directChildren.m)
+
+  def parentsOption(subject: Option[TagId]): MMTree.Parents[TagId] =
+    subject match {
+      case Some(s) => parents(s)
+      case None    => Map.empty
+    }
+
+  def relations(subject: TagId): MMTree.Relations[TagId] =
+    MMTree.Relations(
+      children = directChildren(subject),
+      parents = parents(subject),
+    )
+
+  def relationsOption(subject: Option[TagId]): MMTree.Relations[TagId] =
+    subject match {
+      case Some(s) => relations(s)
+      case None    => MMTree.Relations.empty
+    }
+
+  def recursiveIterator(fd: FilterDead): RecursiveTagIterator =
+    recursiveIterator(topLevelIds, fd)
+
+  def recursiveIterator(root: TagId, fd: FilterDead): RecursiveTagIterator =
+    recursiveIterator(root :: Nil, fd)
+
+  def recursiveIterator(roots: Iterable[TagId], fd: FilterDead): RecursiveTagIterator =
+    new RecursiveTagIterator(this, tagFilter(fd), roots, 0, None)
+
+  def filterLiveChildren(children: TagInTree.Children): TagInTree.Children =
+    children.filter(tree.get(_).forall(_.tag.live is Live))
+
+  def filterLiveParents(parents: TagInTree.Parents): TagInTree.Parents =
+    parents.iterator.filter(kv => tree.get(kv._1).forall(_.tag.live is Live)).toMap
+
+  def sortTagIds(ids: IterableOnce[ApplicableTagId]): Iterator[ApplicableTagId] =
+    MutableArray(ids).sortBySchwartzian(needApplicableTag(_).name).iterator
+}
+
+final class RecursiveTagIterator(tags      : Tags,
+                                 filter    : Tag => Boolean,
+                                 ids       : Iterable[TagId],
+                                 val level : Int,
+                                 val parent: Option[TagGroup]) {
+
+  def isEmpty =
+    applicableTagIterator().isEmpty && orderedGroups.isEmpty
+
+  private lazy val orderedGroups =
+    MutableArray(
+      ids.iterator
+        .filterSubType[TagGroupId]
+        .map(tags.needTagGroup)
+        .filter(filter)
+    )
+      .sortBy(_.name.toLowerCase)
+
+  def tagGroupIterator(): Iterator[TagGroup] =
+    orderedGroups.iterator
+
+  def applicableTagIterator(): Iterator[ApplicableTag] =
+    ids.iterator
+      .filterSubType[ApplicableTagId]
+      .map(tags.needApplicableTag)
+      .filter(filter)
+
+  def applicableTagIdIterator(): Iterator[ApplicableTagId] =
+    applicableTagIterator().map(_.id)
+
+  def nextLevel(g: TagGroup): RecursiveTagIterator =
+    new RecursiveTagIterator(tags, filter, tags.directChildren(g.id), level + 1, Some(g))
+
+  def nextLevelNonEmpty(g: TagGroup): Option[RecursiveTagIterator] = {
+    val n = nextLevel(g)
+    Option.unless(n.isEmpty)(n)
+  }
 }

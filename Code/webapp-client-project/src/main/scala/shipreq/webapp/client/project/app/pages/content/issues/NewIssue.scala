@@ -1,13 +1,12 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.{Closed, Open}
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.protocol.ManualIssueCmd
+import shipreq.webapp.base.protocol.websocket.ManualIssueCmd
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 import shipreq.webapp.client.project.app.Style.{issues => *}
@@ -75,7 +74,7 @@ object NewIssue {
 
   }
 
-  val Component = ScalaComponent.builder[Props]("NewIssue")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

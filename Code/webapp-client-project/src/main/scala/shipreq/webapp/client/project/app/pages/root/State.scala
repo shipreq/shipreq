@@ -4,10 +4,14 @@ import japgolly.scalajs.react._
 import monocle.macros._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.data.{FilterDead, HideDead}
+import shipreq.webapp.base.data.{FilterDead, HideDead, Project}
 import shipreq.webapp.base.feature._
-import shipreq.webapp.base.protocol.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}
+import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}
 import shipreq.webapp.base.ui.{ProjectItem, Toast}
+import shipreq.webapp.client.project.app.pages.config.fields.FieldConfig
+import shipreq.webapp.client.project.app.pages.config.issues.IssueConfig
+import shipreq.webapp.client.project.app.pages.config.tags.TagConfig
+import shipreq.webapp.client.project.app.pages.config.reqtypes.ReqTypeConfig
 import shipreq.webapp.client.project.app.pages.content.{reqdetail, reqtable}
 import shipreq.webapp.client.project.app.pages.content.issues.IssuesPage
 import shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetail
@@ -86,48 +90,79 @@ object AsyncKey {
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 @Lenses
-final case class State(projectName          : ProjectItem.WithEditableName.State,
-                       reqLookup            : String,
-                       create               : CreateFeature.State.ForProject,
-                       createAsync          : AsyncFeature.State.D1[CreateFeature.RowKey, CreateFeature.AsyncError],
-                       edit                 : EditorFeature.State.ForProject,
-                       editAsync            : AsyncFeature.State.D2[EditorFeature.RowKey, AsyncKey, EditorFeature.AsyncError],
-                       savedViewAsync       : AsyncFeature.State.D0[EditorFeature.AsyncError],
-                       preview              : PreviewFeature.State[PreviewId],
-                       filterDead           : FilterDead,
-                       reqTable             : reqtable.ReqTablePage.State,
-                       reqDetail            : ReqDetail.State,
-                       issuesPage           : IssuesPage.State,
-                       toast                : Toast.State,
-                       updateConfigCmdAsync : AsyncFeature.State.D1[UpdateConfigCmd, ErrorMsg],
-                       updateContentCmdAsync: AsyncFeature.State.D1[UpdateContentCmd, ErrorMsg],
-                       manualIssueCmdAsync  : AsyncFeature.State.D1[ManualIssueCmd, ErrorMsg],
-                      )
+final case class State(projectName               : ProjectItem.WithEditableName.State,
+                       reqLookup                 : String,
+                       create                    : CreateFeature.State.ForProject,
+                       createAsync               : AsyncFeature.State.D1[CreateFeature.RowKey, CreateFeature.AsyncError],
+                       edit                      : EditorFeature.State.ForProject,
+                       editAsync                 : AsyncFeature.State.D2[EditorFeature.RowKey, AsyncKey, EditorFeature.AsyncError],
+                       savedViews                : SavedViewFeature.State,
+                       preview                   : PreviewFeature.State[PreviewId],
+                       _filterDead               : FilterDead,
+                       reqTable                  : reqtable.ReqTablePage.State,
+                       reqDetail                 : ReqDetail.State,
+                       issuesPage                : IssuesPage.State,
+                       toast                     : Toast.State,
+                       updateConfigCmdAsync      : AsyncFeature.State.D1[UpdateConfigCmd, ErrorMsg], // TODO eh?
+                       updateContentCmdAsync     : AsyncFeature.State.D1[UpdateContentCmd, ErrorMsg],
+                       manualIssueCmdAsync       : AsyncFeature.State.D1[ManualIssueCmd, ErrorMsg],
+                       fieldConfig               : FieldConfig.State,
+                       fieldConfigAsync          : AsyncFeature.State.D0[ErrorMsg],
+                       tagConfig                 : TagConfig.State,
+                       tagConfigAsync            : AsyncFeature.State.D0[ErrorMsg],
+                       reqTypeConfig             : ReqTypeConfig.State,
+                       reqTypeConfigAsync        : AsyncFeature.State.D0[ErrorMsg],
+                       customIssueTypeConfig     : IssueConfig.State,
+                       customIssueTypeConfigAsync: AsyncFeature.State.D0[ErrorMsg],
+                      ) {
+
+  @inline def filterDead = _filterDead
+
+  def setFilterDead(fd: FilterDead, p: Project): State =
+    if (fd ==* _filterDead)
+      this
+    else
+      copy(
+        _filterDead = fd,
+        savedViews = savedViews.setFilterDead(fd, p),
+      )
+}
 
 object State {
 
   val recorder = ErrorHandlingFeature.StateRecorder[State]
 
-  def init: State =
+  def init(p: Project): State =
     State(
-      projectName           = ProjectItem.WithEditableName.State.init,
-      reqLookup             = "",
-      create                = CreateFeature.State.initForProject,
-      createAsync           = AsyncFeature.State.initD1,
-      edit                  = EditorFeature.State.initForProject,
-      editAsync             = AsyncFeature.State.initD2,
-      savedViewAsync        = AsyncFeature.State.initD0,
-      preview               = PreviewFeature.State.init,
-      filterDead            = HideDead,
-      reqTable              = reqtable.ReqTablePage.State.init,
-      reqDetail             = ReqDetail.initState,
-      issuesPage            = IssuesPage.State.init,
-      toast                 = Toast.State.init,
-      updateConfigCmdAsync  = AsyncFeature.State.initD1,
-      updateContentCmdAsync = AsyncFeature.State.initD1,
-      manualIssueCmdAsync   = AsyncFeature.State.initD1,
+      projectName                = ProjectItem.WithEditableName.State.init,
+      reqLookup                  = "",
+      create                     = CreateFeature.State.initForProject,
+      createAsync                = AsyncFeature.State.initD1,
+      edit                       = EditorFeature.State.initForProject,
+      editAsync                  = AsyncFeature.State.initD2,
+      savedViews                 = SavedViewFeature.State.init(p),
+      preview                    = PreviewFeature.State.init,
+      _filterDead                = p.savedViews.map(_.default.view.filterDead).getOrElse(HideDead),
+      reqTable                   = reqtable.ReqTablePage.State.init,
+      reqDetail                  = ReqDetail.initState,
+      issuesPage                 = IssuesPage.State.init,
+      toast                      = Toast.State.init,
+      updateConfigCmdAsync       = AsyncFeature.State.initD1,
+      updateContentCmdAsync      = AsyncFeature.State.initD1,
+      manualIssueCmdAsync        = AsyncFeature.State.initD1,
+      fieldConfig                = FieldConfig.initState,
+      fieldConfigAsync           = AsyncFeature.State.initD0,
+      tagConfig                  = TagConfig.initState,
+      tagConfigAsync             = AsyncFeature.State.initD0,
+      reqTypeConfig              = ReqTypeConfig.initState,
+      reqTypeConfigAsync         = AsyncFeature.State.initD0,
+      customIssueTypeConfig      = IssueConfig.initState,
+      customIssueTypeConfigAsync = AsyncFeature.State.initD0,
     )
 
   implicit val reusability: Reusability[State] =
     Reusability.byRef
+
+  val savedViewAsync =
+    savedViews ^|-> SavedViewFeature.State.async
 }

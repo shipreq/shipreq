@@ -5,6 +5,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.microlibs.utils.FileUtils
 import java.time.Instant
 import java.util.concurrent.Executors
 import nyaya.gen.{Gen, GenCtx, GenSize, ThreadNumber}
@@ -25,7 +26,7 @@ import shipreq.base.util.BinaryData
  *
  */
 object RedisProtocolTestData {
-  import shipreq.webapp.base.protocol.json.v1.PostEvents._
+  import shipreq.webapp.base.protocol.json.v1.Rev1._
   import RedisProtocol._
 
   private[this] val RowEvent          = "event"
@@ -58,11 +59,14 @@ object RedisProtocolTestData {
   implicit val encoderRow: Encoder[Row] =
     Encoder.forProduct3(RowEvent, RowEventBinary, RowSnapshotBinary)(a => (a.eventJson, a.eventJson, a.snapshotBinary))
 
-  def load(): Vector[Row] =
-    decode[Vector[Row]](readResourceFile("RedisProtocolTestData.json")).needRight
+  def resourceName(ver: Int): String =
+    "RedisProtocolTestData/v%02d.json".format(ver)
+
+  def load(ver: Int): Vector[Row] =
+    decode[Vector[Row]](FileUtils.readResource(resourceName(ver))).getOrThrow()
 
   def main(args: Array[String]): Unit = {
-    val _ = picklerEvent // Ensure the classpath is correct - thanks SBT
+    locally(picklerEvent) // Ensure the classpath is correct - thanks SBT
 
     val events = generateEvents()
     val rows = makeRows(events)
@@ -70,8 +74,10 @@ object RedisProtocolTestData {
     val filename = "/tmp/RedisProtocolTestData.json"
     println(s"Writing to $filename")
     val content = rows.map(prettyPrintJson(_).indent("  ")).mkString("[\n", ",\n", "\n]")
-    writeFile(filename, content)
+    FileUtils.write(filename, content)
     printf("File size: %,d\n", content.length)
+
+    println(s"mv $filename webapp-server-logic/jvm/src/test/resources/${resourceName(2)}")
 
     println("Done")
   }

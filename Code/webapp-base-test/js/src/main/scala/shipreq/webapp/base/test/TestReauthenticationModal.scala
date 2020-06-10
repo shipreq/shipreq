@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import org.scalajs.dom.{Element, document}
 import scalaz.\/
 import shipreq.base.util._
-import shipreq.webapp.base.protocol.CommonProtocols.Login
+import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
 import shipreq.webapp.base.ui.ReauthenticationModal
 import shipreq.webapp.base.user.Username
 
@@ -18,7 +18,7 @@ class TestReauthenticationModal(initialResponse: Option[ErrorMsg \/ Permission])
 
   val proc: ReauthenticationModal.AttemptLogin =
     p =>
-      AsyncCallback.point[AsyncCallback[ErrorMsg \/ Permission]] {
+      AsyncCallback.delay[AsyncCallback[ErrorMsg \/ Permission]] {
         attempts :+= p
         nextResponse match {
           case Some(response) => AsyncCallback.pure(response)

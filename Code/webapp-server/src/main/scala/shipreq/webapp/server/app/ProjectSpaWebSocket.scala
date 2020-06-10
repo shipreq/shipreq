@@ -10,12 +10,12 @@ import shipreq.base.util.FxModule._
 import shipreq.base.util.log.WebappLogFields
 import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.base.Urls
-import shipreq.webapp.base.protocol.WebSocketShared.CloseReason
+import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseReason
 import shipreq.webapp.server.lib.Taskman
 import shipreq.webapp.server.logic.ProjectSpaLogic._
-import shipreq.webapp.server.util.WebSocketUtil
-import shipreq.webapp.server.util.WebSocketUtil.Implicits._
-import shipreq.webapp.server.util.WebSocketUtil.{CloseReasons, UserPropsLens}
+import shipreq.webapp.server.protocol.websocket.WebSocketUtil
+import shipreq.webapp.server.protocol.websocket.WebSocketUtil.Implicits._
+import shipreq.webapp.server.protocol.websocket.WebSocketUtil.{CloseReasons, UserPropsLens}
 
 object ProjectSpaWebSocket extends StrictLogging {
 
@@ -138,12 +138,13 @@ final class ProjectSpaWebSocket extends StrictLogging {
     val static    = staticL.get(userProps)
 
     val fxOnMsgError: MsgError => Fx[Unit] = {
-      case MsgError.SessionExpired              => fxClose(s, CloseReasons.unauthorised)
-      case _: MsgError.ClientMsgDecodingFailure => fxClose(s, CloseReasons.errorParsingMessage)
-      case _: MsgError.RespondError             => fxClose(s, CloseReasons.errorSendingResponse)
+      case MsgError.SessionExpired               => fxClose(s, CloseReasons.unauthorised)
+      case _: MsgError.ClientMsgDecodingFailure  => fxClose(s, CloseReasons.errorParsingMessage)
+      case _: MsgError.RespondError              => fxClose(s, CloseReasons.errorSendingResponse)
+      case _: MsgError.FunctionNoLongerSupported => fxClose(s, CloseReason.clientOutOfDate)
       case _: MsgError.ServerBehindClient
          | _: MsgError.ServerBehindDatabase
-         | _: MsgError.ServerBehindRedis        => fxClose(s, CloseReasons.serverOutOfDate)
+         | _: MsgError.ServerBehindRedis         => fxClose(s, CloseReasons.serverOutOfDate)
     }
 
     if (messageBytes.length == 0) {

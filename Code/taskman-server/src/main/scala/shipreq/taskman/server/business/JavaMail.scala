@@ -1,11 +1,11 @@
 package shipreq.taskman.server.business
 
 import japgolly.clearconfig._
+import japgolly.microlibs.nonempty.NonEmptyVector
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import scala.runtime.AbstractFunction1
 import scalaz.{-\/, Traverse, \/, \/-}
-import scalaz.old.NonEmptyList
 import scalaz.std.list._
 import scalaz.syntax.bind._
 import shipreq.base.util.ArticulateError
@@ -47,14 +47,14 @@ object JavaMail extends HasLogger {
       ConfigValueParser.id
         .mapAttempt(parseN(_).bimap(_.getMessage, _.map(a => Addr(EmailAddr(a.toString), Some(a)))))
 
-    implicit def parseAddrNEL: ConfigValueParser[NonEmptyList[Addr]] =
+    implicit def parseAddrNEL: ConfigValueParser[NonEmptyVector[Addr]] =
       parseAddrN.mapAttempt {
         case Nil    => -\/("At least one address required.")
-        case h :: t => \/-(NonEmptyList.nel(h, t))
+        case h :: t => \/-(NonEmptyVector(h, t.toVector))
       }
 
     def configEnvelopeFront: ConfigDef[EnvelopeFront] =
-      ( ConfigDef.need[NonEmptyList[Addr]]("to") |@|
+      ( ConfigDef.need[NonEmptyVector[Addr]]("to") |@|
         ConfigDef.getOrUse[List[Addr]]("cc", Nil) |@|
         ConfigDef.getOrUse[List[Addr]]("bcc", Nil)
       )(EnvelopeFront)
@@ -89,7 +89,7 @@ final class JavaMail(val mailSession: Session) extends AbstractFunction1[Busines
       m.setSentDate(new java.util.Date)
       ArticulateError.attempt {
         m.setFrom(from)
-        m.setRecipients(Message.RecipientType.TO, to.list.toArray)
+        m.setRecipients(Message.RecipientType.TO, to.iterator.toArray)
         m.setRecipients(Message.RecipientType.CC, cc.toArray)
         m.setRecipients(Message.RecipientType.BCC, bcc.toArray)
         m.setSubject(c.subject, charset)

@@ -5,8 +5,7 @@ import scala.xml.NodeSeq
 import shipreq.base.util.FxModule._
 import shipreq.webapp.client.public.PublicSpaEntryPoint
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.lib.SnippetHelpers
-import shipreq.webapp.server.protocol._
+import shipreq.webapp.server.protocol.entrypoint.ClientSideProcInvoker
 
 object PublicSpa extends SnippetHelpers {
 

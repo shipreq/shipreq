@@ -7,8 +7,8 @@ import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.ajax.TestAjaxClient
 import shipreq.webapp.base.test.TestState.{Result => _, _}
-import shipreq.webapp.base.test._
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.client.public.PublicSpaProtocols.Register2._
 import shipreq.webapp.client.public.PublicSpaTestUtil._
@@ -137,13 +137,13 @@ object Register2Test extends TestSuite {
 
   override def tests = Tests {
 
-    'success - test(
+    "success" - test(
       assertForm(Enabled)
         +> tos.checked.assert(false)
         +> enterValidDetails
         >> success)
 
-    'failureThenSuccess - test(
+    "failureThenSuccess" - test(
       enterValidDetails
         >> username.set("")       +> submitEnabled.assert(Enabled)
         >> clickSubmit            +> username.validity.assert(Invalid) +> reqsSent.assert.noChange
@@ -152,7 +152,7 @@ object Register2Test extends TestSuite {
         >> username.set("okfine") +> submitEnabled.assert(Enabled)
         >> success)
 
-    'remembersTakenUsernames - test(
+    "remembersTakenUsernames" - test(
       enterValidDetails
         >> username.set("hello") +> submitEnabled.assert(Enabled)
         >> submitToUsernameTaken
@@ -165,7 +165,7 @@ object Register2Test extends TestSuite {
         >> username.set("great") +> submitEnabled.assert(Enabled)
         >> success)
 
-    'tosRequired - test(
+    "tosRequired" - test(
       enterValidDetails
         >> tos.uncheck
         >> clickSubmit +> tos.validity.assert(Invalid) +> reqsSent.assert.noChange

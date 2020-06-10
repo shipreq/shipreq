@@ -4,7 +4,7 @@ import utest._
 import shipreq.webapp.base.event.Event.FieldCustomDelete
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.client.project.app.pages.config_old.reqtypes.{CfgReqTypesDsl => CRT}
+import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigTestDsl => CRT}
 import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.pages.content.reqdetail.{ReqDetailTestDsl => RD}
 import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH}
@@ -33,17 +33,17 @@ object ProjectSpaTest extends TestSuite {
       >> testReqDetail(RD.filterDeadToggle)
       >> setPage(Page.ReqTable)
     )
-    .addCheck(RT.filterDead.assert.change.lift)
+    .addCheck(RT.savedViews.filterDead.assert.change.lift)
     .times(3)
 
   /** The Usage links in config screens should configure the ReqTable state appropriately */
   private def cfgUsageLinkToReqTable: *.Actions = (
-    RT.filterText.assert.equal("").lift
+    RT.savedViews.filterText.assert.equal("").lift
       +> setPage(Page.CfgReqTypes)
       >> CRT.clickUsageLink("UC").lift //.updateState(_.copy(page = Page.ReqTable))
       >> setPage(Page.ReqTable) // TODO This shouldn't be needed. It works outside of tests
       +> (
-      RT.filterText.assert.equal("UC")
+      RT.savedViews.filterText.assert.equal("UC")
         & RT.tablePubids.assert.forall("be UC (or code group)", _.matches("^(?:UC-.*|–)$"))
       ).lift)
 
@@ -76,9 +76,9 @@ object ProjectSpaTest extends TestSuite {
   }
 
   override def tests = Tests {
-    'reqTableColumnsSync    - runTest(reqTableColumnsSync   , Page.ReqTable)
-    'reqTableFilterDeadSync - runTest(reqTableFilterDeadSync, Page.ReqTable)
-    'cfgUsageLinkToReqTable - runTest(cfgUsageLinkToReqTable, Page.ReqTable)
-    'unsavedChanges         - runTest(testUnsavedChanges    , Page.Index)
+    "reqTableColumnsSync"    - runTest(reqTableColumnsSync   , Page.ReqTable)
+    "reqTableFilterDeadSync" - runTest(reqTableFilterDeadSync, Page.ReqTable)
+    "cfgUsageLinkToReqTable" - runTest(cfgUsageLinkToReqTable, Page.ReqTable)
+    "unsavedChanges"         - runTest(testUnsavedChanges    , Page.Index)
   }
 }

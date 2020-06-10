@@ -7,6 +7,8 @@ import japgolly.univeq.UnivEq
 sealed abstract class Icon(val clsName: ClassName) {
   final val tag = <.i(^.cls := ("icon " + clsName))
 
+  final def tagNoMargin = tag(^.margin := "0")
+
   def loading                   : Icon.Modified
   def withColour(colour: Colour): Icon.Modified
   def withSize  (size  : Size  ): Icon.Modified
@@ -23,7 +25,6 @@ sealed abstract class Icon(val clsName: ClassName) {
   *     3. shipreq/semantic/prune
   *     4. ./build-parallel
   *     5. cd .. && bin/gen-semantic-icons
-  *     6. New icons will be appended to this file. Cut and paste into object. :/
   */
 object Icon {
 
@@ -42,6 +43,8 @@ object Icon {
     override def withColour(c: Colour) = copy(colour = c)
     override def withSize  (s: Size  ) = copy(size   = s)
   }
+
+  // ===== ICONS START =====
 
   // case object Add                               extends Unmodified("add")
   // case object AddCircle                         extends Unmodified("add circle")
@@ -95,11 +98,11 @@ object Icon {
   // case object ArrowCircleOutlineUp              extends Unmodified("arrow circle outline up")
   // case object ArrowCircleRight                  extends Unmodified("arrow circle right")
   // case object ArrowCircleUp                     extends Unmodified("arrow circle up")
-  // case object ArrowDown                         extends Unmodified("arrow down")
+  case object ArrowDown                         extends Unmodified("arrow down")
   // case object ArrowDownCart                     extends Unmodified("arrow down cart")
-  // case object ArrowLeft                         extends Unmodified("arrow left")
-  // case object ArrowRight                        extends Unmodified("arrow right")
-  // case object ArrowUp                           extends Unmodified("arrow up")
+  case object ArrowLeft                         extends Unmodified("arrow left")
+  case object ArrowRight                        extends Unmodified("arrow right")
+  case object ArrowUp                           extends Unmodified("arrow up")
   // case object Asexual                           extends Unmodified("asexual")
   // case object Asl                               extends Unmodified("asl")
   // case object AslInterpreting                   extends Unmodified("asl interpreting")
@@ -358,7 +361,7 @@ object Icon {
   // case object Flask                             extends Unmodified("flask")
   // case object Flickr                            extends Unmodified("flickr")
   // case object Folder                            extends Unmodified("folder")
-  // case object FolderOpen                        extends Unmodified("folder open")
+  case object FolderOpen                        extends Unmodified("folder open")
   // case object FolderOpenOutline                 extends Unmodified("folder open outline")
   case object FolderOutline                     extends Unmodified("folder outline")
   // case object Font                              extends Unmodified("font")
@@ -944,6 +947,8 @@ object Icon {
   // case object Zoom                              extends Unmodified("zoom")
   // case object ZoomIn                            extends Unmodified("zoom in")
   // case object ZoomOut                           extends Unmodified("zoom out")
+
+  // ===== ICONS END =====
 
   implicit def univEqU: UnivEq[Unmodified] = UnivEq.derive
   implicit def univEqM: UnivEq[Modified  ] = UnivEq.derive

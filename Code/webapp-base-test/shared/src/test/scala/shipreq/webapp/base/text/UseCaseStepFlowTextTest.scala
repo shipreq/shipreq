@@ -96,7 +96,7 @@ object UseCaseStepFlowTextTest extends TestSuite {
 
   override def tests = Tests {
 
-    'spotCheck {
+    "spotCheck" - {
       import Elem._
       val input = " let's try -->1<-- 2 -->3  4. <--- --> 5,6 ,, 7"
       val parsed = UseCaseStepFlowText.parse(input).toList
@@ -109,7 +109,7 @@ object UseCaseStepFlowTextTest extends TestSuite {
       ))
     }
 
-    'prop {
+    "prop" - {
       // genTester.bugHunt(0, 10000)(Prop.eval(_.all))
       genTester.mustSatisfyE(_.all) //(defaultPropSettings.setDebug)
     }

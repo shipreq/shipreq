@@ -10,6 +10,7 @@ import shipreq.webapp.base.text.{Text => T}
 import ApplyEventTestFns._
 import ContentEventTestHelp.CustomTextMap
 import Event._
+import RetiredGenericData._
 
 case class DetachedGenericReq(req       : GenericReq,
                               customText: CustomTextMap,
@@ -22,9 +23,9 @@ object DetachedGenericReq {
   implicit def equality: UnivEq[DetachedGenericReq] = UnivEq.derive
 
   def extract(p: Project, id: GenericReqId): Option[DetachedGenericReq] =
-    p.content.reqs.genericReqs.get(id).map { r =>
+    p.content.reqs.genericReqs.imap.get(id).map { r =>
       val codes      = p.content.reqCodes.activeReqCodesByReqId(id)
-      val customText = ReqData.allTextForReq(id, p.content.reqText)
+      val customText = p.content.reqText.allTextForReq(id)
       val impliedBy  = p.content.implications.backwards(id)
       val implies    = p.content.implications.forwards(id)
       val tags       = p.content.reqTags(id)
@@ -45,7 +46,7 @@ object DetachedUseCase {
   def extract(p: Project, id: UseCaseId): Option[DetachedUseCase] =
     p.content.reqs.useCases.imap.get(id).map { r =>
       val codes      = p.content.reqCodes.activeReqCodesByReqId(id)
-      val customText = ReqData.allTextForReq(id, p.content.reqText)
+      val customText = p.content.reqText.allTextForReq(id)
       val impliedBy  = p.content.implications.backwards(id)
       val implies    = p.content.implications.forwards(id)
       val tags       = p.content.reqTags(id)
@@ -82,31 +83,31 @@ object ContentEventTestHelp {
 
   def createGR(id     : GenericReqId,
                rt     : CustomReqTypeId                = mf,
-               codes  : Set[ApReqCodeId.AndValue]        = ∅,
+               codes  : Set[ApReqCodeId.AndValue]      = ∅,
                title  : T.GenericReqTitle.OptionalText = ∅,
                impSrcs: Set[ReqId]                     = ∅,
                impTgts: Set[ReqId]                     = ∅) = {
     import GenericReqGD._
     var vs = emptyValues
-    NonEmptySet   .maybe(codes,   ())(vs += Codes   (_))
-    NonEmptySet   .maybe(impSrcs, ())(vs += ImpSrcs (_))
-    NonEmptySet   .maybe(impTgts, ())(vs += ImpTgts (_))
-    NonEmptyVector.maybe(title,   ())(vs += Title   (_))
+    NonEmptySet     .maybe(codes,   ())(vs += Codes   (_))
+    NonEmptySet     .maybe(impSrcs, ())(vs += ImpSrcs (_))
+    NonEmptySet     .maybe(impTgts, ())(vs += ImpTgts (_))
+    NonEmptyArraySeq.maybe(title,   ())(vs += Title   (_))
     GenericReqCreate(id, rt, vs)
   }
 
   def createUC(id     : UseCaseId,
                stepId : UseCaseStepId,
-               codes  : Set[ApReqCodeId.AndValue]     = ∅,
+               codes  : Set[ApReqCodeId.AndValue]   = ∅,
                title  : T.UseCaseTitle.OptionalText = ∅,
                impSrcs: Set[ReqId]                  = ∅,
                impTgts: Set[ReqId]                  = ∅) = {
     import UseCaseGD._
     var vs = emptyValues
-    NonEmptySet   .maybe(codes,   ())(vs += Codes   (_))
-    NonEmptySet   .maybe(impSrcs, ())(vs += ImpSrcs (_))
-    NonEmptySet   .maybe(impTgts, ())(vs += ImpTgts (_))
-    NonEmptyVector.maybe(title,   ())(vs += Title   (_))
+    NonEmptySet     .maybe(codes,   ())(vs += Codes   (_))
+    NonEmptySet     .maybe(impSrcs, ())(vs += ImpSrcs (_))
+    NonEmptySet     .maybe(impTgts, ())(vs += ImpTgts (_))
+    NonEmptyArraySeq.maybe(title,   ())(vs += Title   (_))
     UseCaseCreate(id, stepId, vs)
   }
 
@@ -140,7 +141,7 @@ object ContentEventTestHelp {
   // ===================================================================================================================
 
   def assertSoleReqCode(p: Project, code: ReqCode.Value): ReqCode.Data = {
-    val v = p.content.reqCodes.trie.flatStream.toVector
+    val v = p.content.reqCodes.trie.flatIterator().toVector
     assertEq("Trie size", v.size, 1)
     assertEq("Sole req code", v.head._1, code)
     v.head._2
@@ -208,8 +209,8 @@ object ContentEventTestHelp {
   val fr: CustomReqTypeId = 101
   val (createMF, createFR) = {
     import CustomReqTypeGD._
-    ( CustomReqTypeCreate(mf, nev(Mnemonic("MF"), Name("MajFea"), Imp(false)))
-    , CustomReqTypeCreate(fr, nev(Mnemonic("FR"), Name("FunReq"), Imp(false)))
+    ( CustomReqTypeCreate(mf, nev(Mnemonic("MF"), Name("MajFea"), Description(None), Implication(false)))
+    , CustomReqTypeCreate(fr, nev(Mnemonic("FR"), Name("FunReq"), Description(None), Implication(false)))
     )
   }
 
@@ -217,15 +218,15 @@ object ContentEventTestHelp {
   val at2: ApplicableTagId = 12
   val (createAT1, createAT2) = {
     import ApplicableTagGD._
-    ( ApplicableTagCreate(at1, nev(Name("AT #1"), Desc(None), Key("at-one")))
-    , ApplicableTagCreate(at2, nev(Name("AT #2"), Desc(None), Key("at-two")))
+    ( ApplicableTagCreate(at1, nev(Key("at-one"), Desc(None), Colour(None), ApplicableReqTypes(allReqTypes)))
+    , ApplicableTagCreate(at2, nev(Key("at-two"), Desc(None), Colour(None), ApplicableReqTypes(allReqTypes)))
     )
   }
 
   val tg1: TagGroupId = 20
   val createTG1 = {
     import TagGroupGD._
-    TagGroupCreate(tg1, nev(Name("TG #1"), Desc(None), MutexChildren(false)))
+    TagGroupCreate(tg1, nev(Name("TG #1"), Desc(None), Exclusivity(false)))
   }
 
   val createIssueType1 = {
@@ -235,14 +236,14 @@ object ContentEventTestHelp {
   val issueType1 = createIssueType1.id
 
   val createCTF1 = {
-    import CustomTextFieldGD._
-    FieldCustomTextCreate(80, nev(Name("asdf"), Key("qwer"), Mandatory(true), ReqTypes(allReqTypes)))
+    import CustomTextFieldGDv1._
+    FieldCustomTextCreateV1(80, nev(Name("asdf"), Key("qwer"), Mandatory(true), ApplicableReqTypes(allReqTypes)))
   }
   val cf1 = createCTF1.id
 
   val createCTF2 = {
-    import CustomTextFieldGD._
-    FieldCustomTextCreate(81, nev(Name("blurp!"), Key("blurp"), Mandatory(false), ReqTypes(allReqTypes)))
+    import CustomTextFieldGDv1._
+    FieldCustomTextCreateV1(81, nev(Name("blurp!"), Key("blurp"), Mandatory(false), ApplicableReqTypes(allReqTypes)))
   }
   val cf2 = createCTF2.id
 

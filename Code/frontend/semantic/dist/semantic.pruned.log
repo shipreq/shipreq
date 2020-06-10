@@ -1338,10 +1338,10 @@
     54 [remove] i.icon.arrow.circle.outline.up:before
     43 [remove] i.icon.chevron.left:before
     44 [remove] i.icon.chevron.right:before
-    41 [remove] i.icon.arrow.left:before
-    42 [remove] i.icon.arrow.right:before
-    39 [remove] i.icon.arrow.up:before
-    41 [remove] i.icon.arrow.down:before
+    41 [keep  ] i.icon.arrow.left:before
+    42 [keep  ] i.icon.arrow.right:before
+    39 [keep  ] i.icon.arrow.up:before
+    41 [keep  ] i.icon.arrow.down:before
     41 [remove] i.icon.chevron.up:before
     43 [remove] i.icon.chevron.down:before
     45 [remove] i.icon.pointing.right:before
@@ -1396,7 +1396,7 @@
     36 [keep  ] i.icon.trash:before
     43 [remove] i.icon.file.outline:before
     37 [remove] i.icon.folder:before
-    42 [remove] i.icon.folder.open:before
+    42 [keep  ] i.icon.folder.open:before
     48 [keep  ] i.icon.file.text.outline:before
     45 [keep  ] i.icon.folder.outline:before
     50 [remove] i.icon.folder.open.outline:before

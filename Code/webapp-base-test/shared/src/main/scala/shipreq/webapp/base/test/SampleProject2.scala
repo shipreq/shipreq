@@ -1,10 +1,10 @@
 package shipreq.webapp.base.test
 
-import shipreq.webapp.base.data._, DataImplicits._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Text => T, _}
 import shipreq.webapp.base.test.ProjectDsl._
 import shipreq.webapp.base.test.UnsafeTypes._
-import SampleProject.{project => project0, _}
+import SampleProject.{project => project0}
 
 /**
  * Builds on SampleProject #1 to add some content with a tiny bit of rich text.
@@ -21,19 +21,19 @@ object SampleProject2 {
 
     def fr1Desc = {
       import T.GenericReqTitle._
-      Vector(
+      apply(
         EmailAddress("japgolly@gmail.com"), Literal(" is on "), WebAddress("https://github.com"),
-        Literal(" cos of "), ReqRef(mfs(6)), Literal(" "), Issue(1, Vector.empty),
+        Literal(" cos of "), ReqRef(mfs(6)), Literal(" "), Issue(1, T.empty),
         TeX("c = \\pm\\sqrt{a^2 + b^2}")
       )
     }
     def fr2Desc = {
       val tbd = {
         import T.InlineIssueDesc._
-        Vector(Literal("Pending "), ReqRef(mfs(26)))
+        apply(Literal("Pending "), ReqRef(mfs(26)))
       }
       import T.GenericReqTitle._
-      Vector(Issue(2, tbd))
+      apply(Issue(2, tbd))
     }
 
     val contentByDsl = (
@@ -67,7 +67,7 @@ object SampleProject2 {
     + GReq(reqType = mf, id = mfs(28), title = "Entities"                              ).tag(p2)
     + GReq(reqType = fr, title = fr1Desc, codes = Set("uce.sample.1", "uce.sample.1b", "demo.whatever")).impSrc(mfs(12))
     + GReq(reqType = fr, title = fr2Desc, codes = Set("uce.sample.2")).impSrc(mfs(1)).impSrc(mfs(13)).impSrc(mfs(22))
-    + RCGroup("demo", title = Vector(T.CodeGroupTitle.Literal("Demo group header")))
+    + RCGroup("demo", title = T.CodeGroupTitle(T.CodeGroupTitle.Literal("Demo group header")))
     )
 
     contentByDsl ! project0

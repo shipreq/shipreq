@@ -2,11 +2,13 @@ package shipreq.webapp.server.test
 
 import java.time.Duration
 import org.redisson.Redisson
+import shipreq.base.db.{DbAccessor, XA}
 import shipreq.base.test.BaseTestUtil.onceUnit
+import shipreq.base.test.db.{ImperativeXA, TestDb}
 import shipreq.base.util.FxModule._
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.app.{Global, ServerConfig}
-import shipreq.webapp.server.db.{DbInterpreter, StatRecorder}
+import shipreq.webapp.server.db.StatRecorder
 import shipreq.webapp.server.logic.{MetricsLogic, TraceLogic}
 import shipreq.webapp.ssr.SsrOff
 
@@ -24,7 +26,7 @@ object PrepareEnv {
 
   Global.Instance = Global(
     config       = cfg,
-    db           = null,
+    runDB        = null,
     logic        = null,
     metrics      = MetricsLogic.const(Fx.unit),
     ops          = null,
@@ -34,29 +36,37 @@ object PrepareEnv {
     taskman      = null,
     trace        = TraceLogic.off)
 
-  def global() = Global.Instance
+  def global() =
+    Global.Instance
 
   val lift: () => Unit = onceUnit {
     // if (!LiftRules.doneBoot) {
     boot.configureLift()
   }
 
-  def db(): Unit = {
-    TestDb.init()
-    TestDb.useInLift()
-  }
+  val dbOnce = onceUnit(db())
 
+  def db(): Unit =
+    dbVia(TestDb.db)
+
+  def dbVia(db: DbAccessor, xa: Option[XA] = None): Unit =
+    Global.modify { g1 =>
+      val g2 = Global.full(db, xa, None, SsrOff.prepared, g1.config)
+      g1.copy(
+        runDB    = g2.runDB,
+        logic    = g2.logic,
+        ops      = g2.ops,
+        ssr      = g2.ssr,
+        security = g2.security,
+        taskman  = g2.taskman)
+    }
+
+  def dbVia(xa: ImperativeXA): Unit =
+    dbVia(xa.dbAccessor, Some(xa))
+
+  /** Make sure global() is setup first */
   val routes: () => Unit = onceUnit {
-    db()
     boot.initRoutes(global())
-  }
-
-  lazy val dbAlgebra =
-    new DbInterpreter()(global().config.server.security)
-
-  lazy val security = {
-    db()
-    global().security
   }
 
   lazy val redissonClient =

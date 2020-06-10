@@ -1,12 +1,12 @@
 package shipreq.taskman.server
 
+import cats.effect.Resource
 import okhttp3.OkHttpClient
 import japgolly.clearconfig.ConfigSources
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.{ExecutorService, TimeUnit}
 import scalaz.{-\/, \/-}
-import scalaz.syntax.catchable._
-import shipreq.base.db.DbAccess
+import shipreq.base.db._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.TaskmanApi
@@ -17,14 +17,18 @@ import shipreq.taskman.server.logic.business._
 
 object TaskmanCtx {
 
-  def apply(dbAccess: DbAccess, config: TaskmanConfig): TaskmanCtx =
-    apply(dbAccess, config, ServerOpFx.configSource(dbAccess))
+  def apply(db: DbAccessor, config: TaskmanConfig, xa: XA): Resource[Fx, TaskmanCtx] =
+    apply(db, config, xa, ServerOpFx.configSource(db, xa))
 
-  def apply(dbAccess: DbAccess, config: TaskmanConfig, emailTokenSource: ConfigSources[Fx]): TaskmanCtx =
-    new TaskmanCtx(dbAccess, config, emailTokenSource)
+  def apply(db: DbAccessor, config: TaskmanConfig, xa: XA, emailTokenSource: ConfigSources[Fx]): Resource[Fx, TaskmanCtx] =
+    Resource.make(Fx(new TaskmanCtx(db, config, xa, emailTokenSource)))(_.shutdown)
+
 }
 
-final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailTokenSource: ConfigSources[Fx]) extends HasLogger {
+final class TaskmanCtx(val db          : DbAccessor,
+                       val config      : TaskmanConfig,
+                       val xa          : XA,
+                       emailTokenSource: ConfigSources[Fx]) extends HasLogger {
 
   private val (emailTokens, emailTokensReport) =
     TaskmanConfig.mailTokens
@@ -40,7 +44,8 @@ final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailT
   logger.info(s"Config report: (for email tokens)\n${emailTokensReport.full}")
 
   private object async {
-    val (emailExecutorService, emailScheduler) = Async.newPool("email", config.mail.concurrencyMax)
+    val (emailExecutorService, emailScheduler) =
+      Async.newPool("email", config.mail.concurrencyMax)
 
     def each(f: ExecutorService => Unit): Unit =
       f(emailExecutorService)
@@ -62,23 +67,18 @@ final class TaskmanCtx(val dbAccess: DbAccess, val config: TaskmanConfig, emailT
   private val clockClock = Clock.systemUTC()
 
   implicit def trustPeriod   = config.taskman.trustPeriod
-  implicit val taskmanApi    = TaskmanApi.addLogging(TaskmanApiImpl(None).trans(dbAccess.fx.trans))
-  implicit val businessOpFx  = new BusinessOpFx(sendMail, mailchimp, freshdesk, dbAccess.fx, config.shipreq.schema)
-  implicit val serverOpFx    = new ServerOpFx(dbAccess.fx, new Worker.FailureHandler(emails)(businessOpFx))
+  implicit val taskmanApi    = TaskmanApi.addLogging(TaskmanApiImpl(None).trans(xa.transZ))
+  implicit val businessOpFx  = new BusinessOpFx(sendMail, mailchimp, freshdesk, xa.transZ, config.shipreq.schema)
+  implicit val serverOpFx    = new ServerOpFx(xa, new Worker.FailureHandler(emails)(businessOpFx))
   implicit val businessLogic = new BusinessLogic(emails, async.emailScheduler, mailingListId)(businessOpFx)
   implicit val failurePolicy = Failure.failurePolicy
   implicit val clock         = Fx(clockClock.instant())
   implicit val nodeId        = serverOpFx.getNextNodeId.unsafeRun()
 
-  def testConnections(): Unit = {
-    logger debug "Testing connections..."
-    businessOpFx.applyUntimed(BusinessOp.FindShipReqUsers(None)).unsafeRun()
-  }
-
-  def shutdown: Fx[Unit] =
+  private[TaskmanCtx] def shutdown: Fx[Unit] =
     shutdown(Some(Duration ofSeconds 20))
 
-  def shutdown(asyncWait: Option[Duration]): Fx[Unit] =
+  private[TaskmanCtx] def shutdown(asyncWait: Option[Duration]): Fx[Unit] =
     Fx {
       for (p <- asyncWait) {
         val until = Instant.now().plus(p).getNano

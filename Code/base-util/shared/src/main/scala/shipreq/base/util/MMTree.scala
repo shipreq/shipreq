@@ -2,7 +2,7 @@ package shipreq.base.util
 
 import shipreq.base.util.univeq._
 import nyaya.prop.{CycleFree, CycleDetector}
-import scala.collection.GenTraversable
+import scala.collection.Iterable
 import scalaz.\/
 import shipreq.base.util.MMTree.Children
 
@@ -23,7 +23,7 @@ object MMTree {
 
   /**
    * Each key is a parent of the subject node.
-   * Each value is the sibling before which the subject tag should be inserted. (None ⇒ append.)
+   * Each value is the sibling before which the subject tag should be inserted. (None => append.)
    */
   type Parents[I] = Map[I, RelPos[I]]
 
@@ -37,7 +37,7 @@ object MMTree {
    *
    * @tparam I Node id
    */
-  case class Relations[I](parents: Parents[I], children: Children[I]) {
+  final case class Relations[I](parents: Parents[I], children: Children[I]) {
 
     // For testing
     def allReferencedIds: Set[I] =
@@ -70,10 +70,10 @@ object MMTree {
     def safeApply1[I: UnivEq, T](tt: T, id: I)(a: A[I])(implicit T: MMTree[I, T]): (I, I) \/ CycleFree[T] =
       T.cycleDetector cycleFree trustedApply1(tt, id, a)
 
-    def safeApplyN[I: UnivEq, T](tt: T, as: GenTraversable[(I, A[I])])(implicit T: MMTree[I, T]): (I, I) \/ CycleFree[T] =
+    def safeApplyN[I: UnivEq, T](tt: T, as: Iterable[(I, A[I])])(implicit T: MMTree[I, T]): (I, I) \/ CycleFree[T] =
       T.cycleDetector cycleFree trustedApplyN(tt, as)
 
-    def trustedApplyN[I: UnivEq, T](tt: T, as: GenTraversable[(I, A[I])])(implicit T: MMTree[I, T]): T =
+    def trustedApplyN[I: UnivEq, T](tt: T, as: Iterable[(I, A[I])])(implicit T: MMTree[I, T]): T =
       as.foldLeft(tt) { case (t, (id, a)) => trustedApply1(t, id, a) }
 
     def trustedApply1[I: UnivEq, T](tt: T, id: I, a: A[I])(implicit T: MMTree[I, T]): T

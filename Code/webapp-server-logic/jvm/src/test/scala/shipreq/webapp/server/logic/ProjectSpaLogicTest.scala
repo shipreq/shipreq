@@ -7,12 +7,13 @@ import utest._
 import shipreq.base.util.{BinaryData, Direction}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.CreateContentCmd
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
-import shipreq.webapp.base.protocol.WebSocketShared.ReqId
+import shipreq.webapp.base.protocol.websocket._
+import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
+import shipreq.webapp.base.protocol.websocket.WebSocketShared.ReqId
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.text.Text
 import shipreq.webapp.server.logic.ProjectSpaLogic.{WebSocketState => _, _}
 import shipreq.webapp.server.logic.Redis.ProjectSnapshot
 import shipreq.webapp.server.logic.Security.{SessionId, SessionToken}
@@ -46,7 +47,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
   private implicit val eqInitAppData = ScalazMacros.deriveEqual[InitAppData]
 
   private val initAppMsg = WsReqRes.InitApp.AndReq(())
-  private val cmdNewUC = CreateContentCmd.CreateUseCase(Set.empty, Map.empty, Direction.Values.both(Set.empty), Set.empty, Vector.empty)
+  private val cmdNewUC = CreateContentCmd.CreateUseCase(Set.empty, Map.empty, Direction.Values.both(Set.empty), Set.empty, Text.empty)
   private val newUC = WsReqRes.CreateContent.AndReq(cmdNewUC)
 
   private class Tester extends MockInterpreters(_.copy(projectSpa = cfg)) {
@@ -151,7 +152,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
   }
 
   private def sendMsgAndBroadcast(msg: WsReqRes.AndReq, static: WebSocketStatic, state: WebSocketState)(implicit t: Tester): msg.reqRes.ResponseType = {
-    val r = sendMsg(msg, static, state)._1.needRight
+    val r = sendMsg(msg, static, state)._1.getOrThrow()
     t.broadcastAll()
     r
   }
@@ -165,8 +166,8 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
 
   private def onPush(f: VerifiedEvent.NonEmptySeq => Unit): BinaryData => Name[Unit] =
     bin => Name {
-      val value = pushProtocol.codec.decode(bin).needRight
-      val push = value.swap.needRight
+      val value = pushProtocol.codec.decode(bin).getOrThrow()
+      val push = value.swap.getOrThrow()
       f(push)
     }
 
@@ -216,12 +217,12 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
 
   override def tests = Tests {
 
-    'msgName - {
+    "msgName" - {
       val n = WsReqRes.InitApp.name
       assertEq(n, "InitApp")
     }
 
-    'connect {
+    "connect" - {
       implicit val t = new Tester; import t._
       import ConnectRejection._
 
@@ -231,15 +232,15 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
           assertEq(a, expect)
         }
 
-      'noSession        - test(None, p1.id)(-\/(NoSession))
-      'anonymousSession - test(SessionToken.anonymous(), p1.id)(-\/(AnonymousSession))
-      'invalidProjectId - test(user2.token, Obfuscated("!"))(-\/(InvalidProjectId))
-      'projectNotFound  - test(user2.token, ProjectId(23432))(-\/(ProjectNotFound))
-      'accessDenied     - test(user3.token, p1.id)(-\/(AccessDenied))
-      'ok               - test(user2.token, p1.id)(\/-((p1.static.copy(sessionId = user2.token.sessionId, expiresAt = security.expiry()), emptyState)))
+      "noSession"        - test(None, p1.id)(-\/(NoSession))
+      "anonymousSession" - test(SessionToken.anonymous(), p1.id)(-\/(AnonymousSession))
+      "invalidProjectId" - test(user2.token, Obfuscated("!"))(-\/(InvalidProjectId))
+      "projectNotFound"  - test(user2.token, ProjectId(23432))(-\/(ProjectNotFound))
+      "accessDenied"     - test(user3.token, p1.id)(-\/(AccessDenied))
+      "ok"               - test(user2.token, p1.id)(\/-((p1.static.copy(sessionId = user2.token.sessionId, expiresAt = security.expiry()), emptyState)))
     }
 
-    'initApp - {
+    "initApp" - {
       def test(expectCacheWrites: Int, expectFullDbReads: Int)(implicit t: Tester): Unit = {
         import t._
         assertDifference("full db reads", db.loadProjectLog.length)(expectFullDbReads) {
@@ -251,7 +252,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
             assertEq(actual, \/-(expect))
             assert(result._2.isEmpty)
 
-            val cache = redis.read(p1.id).value.needRight
+            val cache = redis.read(p1.id).value.getOrThrow()
             assertEq(cache.ord, Some(p1.latestOrd))
           }
         }
@@ -264,7 +265,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       }}
     }
 
-    'expiry {
+    "expiry" - {
       implicit val t = new Tester; import t._
       val \/-((static, state)) = projectSpa.onConnect(user2.token, p1.id).value
       def twice(f: => Unit) = {f; f}
@@ -289,7 +290,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       }
     }
 
-    'updateProject - {
+    "updateProject" - {
       def test(c: CacheState, expectCacheWrites: Int, expectFullDbReads: Int)(implicit t: Tester): Unit = {
         import t._
         assertDifference(s"[$c] db reads", db.loadProjectLog.length)(expectFullDbReads) {
@@ -301,7 +302,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
             assertEq(s"[$c] response", actual.map(_.map(_.toList.map(_.ord))), \/-(expect))
             assert(result._2.isEmpty)
 
-            val cache = redis.read(p1.id).value.needRight
+            val cache = redis.read(p1.id).value.getOrThrow()
             assertEq(s"[$c] cache state", cache.ord, Some((p1.latestOrd.asEventOrd + 1).asLatest))
           }
         }
@@ -314,43 +315,43 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       }}
     }
 
-    'updatesAndListeners - {
+    "updatesAndListeners" - {
       implicit val t = new Tester; import t._
       val static = p1.static
 
       var recv1     = Vector.empty[VerifiedEvent.NonEmptySeq]
       val subState1 = projectSpa.onOpen(static, emptyState, onPush(recv1 :+= _), _ => ???).value
-      val initData1 = sendMsgAndBroadcast(initAppMsg, static, subState1).needRight
+      val initData1 = sendMsgAndBroadcast(initAppMsg, static, subState1).getOrThrow()
       assertEq("[1]", recv1, Vector.empty)
 
-      val ves1 = sendMsgAndBroadcast(newUC, static, subState1).needRight.needNES
+      val ves1 = sendMsgAndBroadcast(newUC, static, subState1).getOrThrow().needNES
       assertEq("[2]", recv1, Vector(ves1))
 
       var recv2     = Vector.empty[VerifiedEvent.NonEmptySeq]
       val subState2 = projectSpa.onOpen(static, emptyState, onPush(recv2 :+= _), _ => ???).value
-      val initData2 = sendMsgAndBroadcast(initAppMsg, static, subState2).needRight
+      val initData2 = sendMsgAndBroadcast(initAppMsg, static, subState2).getOrThrow()
       assertEq("[3]", recv2, Vector.empty)
       assertEq("[4]", recv1, Vector(ves1))
       assertEq("[5]", initData2.project.ord, Some(initData1.project.nextOrd.asLatest))
       assertEq("[6]", initData2.project.project.content.reqs.size, 1)
 
-      val ves2 = sendMsgAndBroadcast(newUC, static, subState2).needRight.needNES
+      val ves2 = sendMsgAndBroadcast(newUC, static, subState2).getOrThrow().needNES
       assertEq("[7]", recv1, Vector(ves1, ves2))
       assertEq("[8]", recv2, Vector(ves2))
 
-      val ves3 = sendMsgAndBroadcast(newUC, static, subState1).needRight.needNES
+      val ves3 = sendMsgAndBroadcast(newUC, static, subState1).getOrThrow().needNES
       assertEq("[9]", recv1, Vector(ves1, ves2, ves3))
       assertEq("[A]", recv2, Vector(ves2, ves3))
 
       subState1.sub.get.unsubscribe.value
-      val ves4 = sendMsgAndBroadcast(newUC, static, subState2).needRight.needNES
+      val ves4 = sendMsgAndBroadcast(newUC, static, subState2).getOrThrow().needNES
       assertEq("[B]", recv1, Vector(ves1, ves2, ves3))
       assertEq("[C]", recv2, Vector(ves2, ves3, ves4))
     }
 
-    'reconnect - {
+    "reconnect" - {
 
-      'current - {
+      "current" - {
         implicit val t = new Tester; import t._
         assertDifference("db reads", db.loadProjectLog.length)(0) {
           val (\/-(events), newState) = sendMsg(WsReqRes.Reconnect.AndReq(p1.projectAndOrd.ord), p1.static, emptyState)
@@ -359,7 +360,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         }
       }
 
-      'stale - {
+      "stale" - {
         def test(c: CacheState, expectFullDbReads: Int)(implicit t: Tester): Unit = {
           import t._
           import IgnoreEqualityOfVerifiedEventTimestamps._
@@ -379,7 +380,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       }
     }
 
-    'sync - {
+    "sync" - {
       implicit val t = new Tester; import t._
       val ords     = NonEmptySet(1, 3, 666).map(EventOrd(_))
       var recv     = Vector.empty[VerifiedEvent.NonEmptySeq]

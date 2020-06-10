@@ -2,23 +2,19 @@ package shipreq.webapp.client.project.feature.deletion
 
 import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import scalacss.ScalaCssReact._
-import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.UpdateContentCmd.RestoreContent
-import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table}
+import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.RestoreContent
+import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 import shipreq.webapp.client.project.app.Style.{restorationForm => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.Selection
-import shipreq.webapp.client.project.widgets.{ProjectWidgets, Widgets}
+import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 object RestorationForm {
-  import DeletionRestorationLogic.{Data, ReqRow}
+  import DeletionRestorationLogic.Data
 
   final case class Props(data   : Data,
                          widgets: ProjectWidgets.NoCtx,
@@ -57,7 +53,7 @@ object RestorationForm {
 
       val commit: Option[Callback] =
         for {
-          reqs ← NonEmptySet.option(selectedReqs.selected)
+          reqs <- NonEmptySet.option(selectedReqs.selected)
         } yield p.perform(RestoreContent(reqs.whole, Set.empty))
 
       val restoreButton: VdomTag =
@@ -81,7 +77,7 @@ object RestorationForm {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("Restoration")
+  val Component = ScalaComponent.builder[Props]
     .initialStateFromProps(stateInit)
     .renderBackend[Backend]
     .build

@@ -3,128 +3,60 @@ package shipreq.webapp.client.ww
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
+import nyaya.util.Multimap
 import scala.annotation.tailrec
+import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
-import scala.scalajs.js.JSON
-import shipreq.base.util.univeq._
 import shipreq.base.util.VectorTree.PartialLocation
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
+import shipreq.webapp.base.data.savedview.ImpGraphConfig
+import shipreq.webapp.base.data.savedview.ImpGraphConfig.{Colours, GraphDir, LabelFormat}
 import shipreq.webapp.base.text.{PlainText, ProjectText}
-import GraphViz.DOT
-import shipreq.webapp.base.UiText
+import shipreq.webapp.client.ww.GraphViz.DOT
 
 object Graphs {
-
-  private def digraph(f: StringBuilder => Unit): DOT = {
-    implicit val sb = new StringBuilder
-    group("digraph G"){
-      sb append "bgcolor=transparent;"
-      f(sb)
-    }
-    DOT(sb.result())
-  }
-
-  private def group(group: String)(inner: => Unit)(implicit sb: StringBuilder): Unit = {
-    sb append group
-    sb append '{'
-    inner
-    sb append '}'
-  }
-
-  private def attrGroup(attr: String)(inner: => Unit)(implicit sb: StringBuilder): Unit = {
-    sb append '{'
-    sb append attr
-    inner
-    sb append '}'
-  }
-
-  private def attrBlock(inner: => Unit)(implicit sb: StringBuilder): Unit = {
-    sb append '['
-    inner
-    sb append ']'
-  }
-
-  @inline private def escapeAttrValue(s: String): String =
-    JSON.stringify(s)
-
-  private def setLabel(label: String)(implicit sb: StringBuilder): Unit = {
-    sb append "label="
-    sb append escapeAttrValue(label)
-  }
-
-  /** [label="x"] */
-  private def labelAttr(label: String)(implicit sb: StringBuilder): Unit =
-    attrBlock(setLabel(label))
-
-  /** hover text. TITLE in HTML */
-  private def setTooltip(tooltip: String)(implicit sb: StringBuilder): Unit = {
-    sb append "tooltip="
-    sb append escapeAttrValue(UiText.hoverText(tooltip))
-  }
-
-  /*
-  Having flow like `1 -> 2,3,4` works fine in the latest versions of GraphViz, but (sometimes) causes problems with the
-  version used in Viz.js. Instead they need to be broken into `1->2; 1->3; 1->4`.
-
-  This is a graph that causes viz.js problems:
-    digraph G{rankdir=TB;node[style=filled color="#333333"]edge[color="#333333"]node[fillcolor="#91D5BC"]1[label="BL-1"]node[fillcolor="#94DD59"]7[label="CO-1"]8[label="CO-2"]node[fillcolor="#D0A9D4"]5[label="MF-3"]6[label="MF-4"]3[label="MF-1"]4[label="MF-2"]node[fillcolor="#DFB863"]9[label="UC-1"]10[label="UC-2"]11[label="UC-3"]5->6;10->11;9->11,10;3->5,1;11->1;4->5;}
-  */
-//  private def intercalate[A](as: TraversableOnce[A], between: => Unit)(f: A => Unit): Unit = {
-//    var first = true
-//    for (a <- as) {
-//      if (first)
-//        first = false
-//      else
-//        between
-//      f(a)
-//    }
-//  }
-
-  def flowOneToMany[A](fromId: A, toIds: TraversableOnce[A])(id: A => Unit, atEnd: => Unit)(implicit sb: StringBuilder): Unit =
-    for (toId <- toIds) {
-      id(fromId)
-      arrow()
-      id(toId)
-      atEnd
-      eol()
-    }
-
-  def flowS(from: String, dir: Direction, to: String)(implicit sb: StringBuilder): Unit =
-    flowSB(sb append from, dir, sb append to)
-
-  def flowSB(from: => Unit, dir: Direction, to: => Unit)(implicit sb: StringBuilder): Unit =
-    dir match {
-      case Forwards  => from; arrow(); to
-      case Backwards => to  ; arrow(); from
-    }
-
-  def arrow()(implicit sb: StringBuilder): Unit =
-    sb append "->"
-
-  def eol()(implicit sb: StringBuilder): Unit =
-    if (sb.last !=* ';') // Guess what? ;; causes Viz.JS to crash! (GraphViz itself is ok with it.)
-      sb append ';'
-
-  def eolAfterChange(body: => Unit)(implicit sb: StringBuilder): Unit = {
-    val before = sb.length
-    body
-    if (before !=* sb.length)
-      eol()
-  }
-
-  def rankdirLR()(implicit sb: StringBuilder): Unit = sb append "rankdir=LR;"
-  def rankdirTB()(implicit sb: StringBuilder): Unit = sb append "rankdir=TB;"
 
   private type Content = () => Unit
 
   /** Declaration of node(s), and flow(s). */
-  private case class DeclAndFlow[D, F](decl: D, flow: F) {
+  private final case class DeclAndFlow[D, F](decl: D, flow: F) {
     def bimap[DD, FF](d: D => DD, f: F => FF) =
-      new DeclAndFlow(d(decl), f(flow))
+      DeclAndFlow(d(decl), f(flow))
   }
 
   private case class DirectAndIndirect[D, I](direct: D, indirect: I)
+
+  sealed trait Shape {
+    def declareShape: String
+    def style_=(s: String): String
+
+    val styleFilled =
+      style_=("filled")
+
+    val styleMultiColour =
+      style_=(this match {
+        case Shape.Ellipse => "wedged"
+        case Shape.Box     => "striped"
+      })
+  }
+
+  object Shape {
+    case object Ellipse extends Shape {
+      override def declareShape: String =
+        "shape=ellipse"
+      override def style_=(s: String): String =
+        "style=" + s
+    }
+
+    case object Box extends Shape {
+      override def declareShape: String =
+        "shape=box"
+      override def style_=(s: String): String =
+        s"""style="rounded,$s""""
+    }
+  }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
@@ -150,6 +82,7 @@ object Graphs {
     sealed abstract class ImplicitFlow {
       def link(flow: => Set[_]): Boolean
     }
+
     object ImplicitFlow {
 
       /** Always link a node to another. */
@@ -168,19 +101,19 @@ object Graphs {
       }
     }
 
-    digraph { implicit sb =>
+    GraphViz.digraph { implicit b =>
 
       val terminalStyleEnd = " style=filled color=black fontsize=1 height=.3]"
       def startNode(): Unit = {
-        sb append StartNode
-        sb append "[shape=circle tooltip=Start"
-        sb append terminalStyleEnd
+        b append StartNode
+        b append "[shape=circle tooltip=Start"
+        b append terminalStyleEnd
       }
 
       def endNode(): Unit = {
-        sb append EndNode
-        sb append "[shape=doublecircle tooltip=End"
-        sb append terminalStyleEnd
+        b append EndNode
+        b append "[shape=doublecircle tooltip=End"
+        b append terminalStyleEnd
       }
 
       val _nodes = mutable.Map.empty[UseCaseStepId, String]
@@ -195,11 +128,11 @@ object Graphs {
             val node = step.id.value.toString
             register(step.id, node)
             val nodeDOT: Content = () => {
-              sb append node
-              attrBlock {
-                setLabel(label)
-                sb append ' '
-                setTooltip(ptext.text(step.titleA(uc), UseCaseStep.live(uc, ploc), Mandatory))
+              b append node
+              b.attrBlock {
+                b.setLabel(label)
+                b append ' '
+                b.setTooltip(ptext.text(step.titleA(uc), UseCaseStep.live(uc, ploc), Mandatory))
               }
             }
             (ploc, nodeDOT)
@@ -217,12 +150,11 @@ object Graphs {
         execWithAttr(tailAttr, t.result())
       }
 
-      def execWithAttr(attr: String, fs: TraversableOnce[Content]): Unit =
-        if (fs.nonEmpty)
-          attrGroup(attr)(fs.foreach(_()))
+      def execWithAttr(attr: String, fs: IterableOnce[Content]): Unit =
+        if (fs.iterator.nonEmpty)
+          b.attrGroup(attr)(fs.iterator.foreach(_()))
 
       def implicitFlow(steps    : UseCaseSteps,
-                       field    : F,
                        tf       : UseCaseSteps.Tree => Range,
                        fromStart: ImplicitFlow,
                        toEnd    : ImplicitFlow): Unit = {
@@ -232,10 +164,10 @@ object Graphs {
         def handleEnd(): Unit =
           if (prevStep ne null) {
             if (toEnd.link(flow(prevStep.id))) {
-              arrow()
-              sb append EndNode
+              b.arrow()
+              b append EndNode
             }
-            eol()
+            b.eol()
             prevStep = null
           }
 
@@ -246,14 +178,14 @@ object Graphs {
             if (loc.tail.isEmpty) {
               handleEnd()
               if (fromStart.link(flowBack(step.id))) {
-                sb append StartNode
-                arrow()
+                b append StartNode
+                b.arrow()
               }
             } else
               // Flow continuation (1->2->...)
-              arrow()
+              b.arrow()
 
-            sb append node
+            b append node
             prevStep = step
           }
         ).drain()
@@ -268,14 +200,14 @@ object Graphs {
           toStepId <- flow(fromStep.id)
           toNode   <- getNode(toStepId)
         } {
-          flowS(fromNode, Forwards, toNode)
-          eol()
+          b.flowS(fromNode, Forwards, toNode)
+          b.eol()
         }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      rankdirLR()
-      sb append "ranksep=0.28;"
+      b.rankdir(GraphDir.LeftToRight)
+      b append "ranksep=0.28;"
 
       startNode()
       endNode()
@@ -294,11 +226,11 @@ object Graphs {
         "node[fillcolor=tomato style=filled shape=octagon]",
         initSubtreeNodes(stepsE, E, E.treeFilter).map(_._2))
 
-      attrGroup("edge[weight=9]")(
-        implicitFlow(stepsNA, NA, NA.treeFilterN, ImplicitFlow.Force, ImplicitFlow.Force))
+      b.attrGroup("edge[weight=9]")(
+        implicitFlow(stepsNA, NA.treeFilterN, ImplicitFlow.Force, ImplicitFlow.Force))
 
-      eolAfterChange(implicitFlow(stepsNA, NA, NA.treeFilterA, ImplicitFlow.Default, ImplicitFlow.Default))
-      eolAfterChange(implicitFlow(stepsE , E , E .treeFilter , ImplicitFlow.Default, ImplicitFlow.Default))
+      b.eolAfterChange(implicitFlow(stepsNA, NA.treeFilterA, ImplicitFlow.Default, ImplicitFlow.Default))
+      b.eolAfterChange(implicitFlow(stepsE , E .treeFilter , ImplicitFlow.Default, ImplicitFlow.Default))
 
       explicitFlow(stepsNA.tree)
       explicitFlow(stepsE .tree)
@@ -307,43 +239,56 @@ object Graphs {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  private final class ImpHelpers(fd: FilterDead, reqs: Requirements, reqTypes: ReqTypes)(implicit sb: StringBuilder) {
+  private final class ImpHelpers(reqs: Requirements, reqTypes: ReqTypes)(implicit b: GraphViz.Builder) {
     val live: ReqId => Live =
       Memo(reqs.need(_).live(reqTypes))
 
-    val filterIdSet: Set[ReqId] => Set[ReqId] =
-      fd(_)(live)
+    val pubid    : ReqId => String = PlainText.pubidByReqId(_, reqs, reqTypes)
+    val nodeName : ReqId => String = _.value.toString
+    val node     : ReqId => Unit   = id => b.append(id.value)
+    val declareId: ReqId => Unit   = id => b.idAttr(pubid(id))
 
-    val pubid: ReqId => String =
-      PlainText.pubidByReqId(_, reqs, reqTypes)
-
-    val nodeName: ReqId => String = _.value.toString
-    val node    : ReqId => Unit   = sb append _.value
-
-    def declare(ids: TraversableOnce[ReqId]): Unit =
-      for (id <- ids) {
-        node(id)
-        labelAttr(pubid(id))
-        if (live(id) is Dead)
-          sb append """[fillcolor="#dddddd" color="#777777" fontcolor="#666666"]"""
-      }
-
-    def deadLink()(implicit sb: StringBuilder): Unit =
-      sb append """[color="#bbbbbb" style=dashed]"""
+    lazy val reqIdsSortedByPubId = Project.reqIdsSortedByPubId(reqs, reqTypes)
   }
 
-  private def implicationNodeStyle()(implicit sb: StringBuilder): Unit =
-    sb append """node[style=filled color="#333333"]"""
+  private def deadLink()(implicit b: GraphViz.Builder): Unit =
+    b append """[color="#bbbbbb" style=dashed]"""
+
+  private final val blackish = "#222222"
+
+  private def styleSubsequentNodesAsImplications(shape: Shape)(implicit b: GraphViz.Builder): Unit =
+    b append s"""node[${shape.styleFilled} ${shape.declareShape} color="$blackish"]"""
+
+  private def deadNodeStyle()(implicit b: GraphViz.Builder): Unit =
+    b append """[fillcolor="#dddddd" color="#777777" fontcolor="#666666"]"""
+
+  @inline private def deadNodeStyleIfDead(live: Live)(implicit b: GraphViz.Builder): Unit =
+    if (live is Dead) deadNodeStyle()
+
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   def implicationFocused(focus: ReqId, fd: FilterDead, p: Project): DOT =
     implicationFocused(focus, fd, p.content.implications, p.content.reqs, p.config.reqTypes)
 
-  def implicationFocused(focus: ReqId, fd: FilterDead,
-                         imps: Implications.BiDir, reqs: Requirements, reqTypes: ReqTypes): DOT =
-    digraph { implicit sb =>
+  def implicationFocused(focus   : ReqId,
+                         fd      : FilterDead,
+                         imps    : Implications.BiDir,
+                         reqs    : Requirements,
+                         reqTypes: ReqTypes): DOT =
+    GraphViz.digraph { implicit b =>
 
-      val impHelpers = new ImpHelpers(fd, reqs, reqTypes)
+      val impHelpers = new ImpHelpers(reqs, reqTypes)
       import impHelpers._
+
+      def declareNode(id: ReqId): Unit = {
+        node(id)
+        declareId(id)
+        b.labelAttr(pubid(id))
+        deadNodeStyleIfDead(live(id))
+      }
+
+      val filterIdSet: Set[ReqId] => Set[ReqId] =
+        fd(_)(live)
 
       val Focus = "F"
       val focusLive = live(focus)
@@ -355,15 +300,15 @@ object Graphs {
 
         def flow(from: String, fromLive: Live, to: ReqId, unconstrain: Boolean): Content =
           () => {
-            flowS(from, dir, nodeName(to))
+            b.flowS(from, dir, nodeName(to))
 
             if (fromLive.is(Dead) || live(to).is(Dead))
               deadLink()
 
             if (unconstrain)
-              sb append "[constraint=0]"
+              b append "[constraint=0]"
             else
-              eol()
+              b.eol()
           }
 
         @tailrec
@@ -401,108 +346,220 @@ object Graphs {
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      rankdirLR()
-      implicationNodeStyle()
+      b.rankdir(GraphDir.LeftToRight)
+      styleSubsequentNodesAsImplications(Shape.Ellipse)
 
       // Focus
-      sb append Focus
-      sb append """[style=bold fillcolor="#cccccc" """
-      setLabel(pubid(focus))
-      sb append ']'
+      b append Focus
+      b append """[style=bold fillcolor="#cccccc" """
+      b.setLabel(pubid(focus))
+      b append ']'
 
-      sb append """node[fillcolor="#FFEDE2"]""";                           declare(backwards.indirect.decl)
-      attrGroup("""rank=same;node[fillcolor="#FFC19C"]"""                )(declare(backwards.direct  .decl))
-      attrGroup("""rank=same;node[fillcolor="#7692B7" fontcolor=white]""")(declare(forwards .direct  .decl))
-      sb append """node[fillcolor="#D6E1EF"]""";                           declare(forwards .indirect.decl)
+      b append """node[fillcolor="#FFEDE2"]""";
+      backwards.indirect.decl.foreach(declareNode)
 
-      sb append """edge[color="#FFC19C"]"""; backwards.indirect.flow.foreach(_())
-      sb append """edge[color="#C27040"]"""; backwards.direct  .flow.foreach(_())
-      sb append """edge[color="#31537F"]"""; forwards .direct  .flow.foreach(_())
-      sb append """edge[color="#7692B7"]"""; forwards .indirect.flow.foreach(_())
+      b.attrGroup("""rank=same;node[fillcolor="#FFC19C"]""")(
+        backwards.direct.decl.foreach(declareNode))
+
+      b.attrGroup("""rank=same;node[fillcolor="#7692B7" fontcolor=white]""")(
+        forwards.direct.decl.foreach(declareNode))
+
+      b append """node[fillcolor="#D6E1EF"]""";
+      forwards.indirect.decl.foreach(declareNode)
+
+      b append """edge[color="#FFC19C"]"""
+      backwards.indirect.flow.foreach(_ ())
+
+      b append """edge[color="#C27040"]"""
+      backwards.direct.flow.foreach(_ ())
+
+      b append """edge[color="#31537F"]"""
+      forwards.direct.flow.foreach(_ ())
+
+      b append """edge[color="#7692B7"]"""
+      forwards.indirect.flow.foreach(_ ())
     }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  def implicationAll(fd: FilterDead, p: Project): DOT =
-    implicationAll(fd, p.content.implications, p.content.reqs, p.config.reqTypes)
+  private val maxWidth = CharWidths('m') * 28
 
-  def implicationAll(fd: FilterDead,
-                     imps: Implications.BiDir, reqs: Requirements, reqTypes: ReqTypes): DOT =
-    digraph { implicit sb =>
-      val impHelpers = new ImpHelpers(fd, reqs, reqTypes)
+  def implicationAll(project   : Project,
+                     plainText : PlainText.ForProject.NoCtx,
+                     filterDead: FilterDead,
+                     scope     : Option[Set[ReqId]],
+                     config    : ImpGraphConfig): DOT =
+    GraphViz.digraph { implicit b =>
+
+      val imps           = project.content.implications
+      val reqs           = project.content.reqs
+      val reqTypes       = project.config.reqTypes
+      val impHelpers     = new ImpHelpers(reqs, reqTypes)
+      val reqIdFilter    = OptionalBoolFn[ReqId](scope.map(s => s.contains _))
+      val reqIdSetFilter = reqIdFilter.setFilter
+      val reqFilter      = reqIdFilter.contramap[Req](_.id)
+
       import impHelpers._
 
-      // Add to reqTypesWithReqs regardless of live status so that colours don't change when user toggles the
-      // FilterDead setting. Colours jumping around it's a needless cognitive burden when you're trying to analyse
-      // the graph.
-      val reqTypesWithReqs: Map[ReqTypeId, Int] =
-        MutableArray(reqs.reqsByType.keys)
-          .sortBy(reqTypes.order) // Deterministic (and stable until config changes) order of colours
-          .iterator
-          .zipWithIndex
-          .toMap
+      val shape: Shape =
+        config.labelFormat match {
+          case LabelFormat.Pubid         => Shape.Ellipse
+          case LabelFormat.PubidAndTitle => Shape.Box
+        }
+      import shape._
 
-      val reqsByReqType = {
-        var x = reqs.reqsByType
-        if (fd is HideDead)
-          for (rt <- x.keys)
-            x = x.mod(rt, _.filter(_.live(reqTypes) is Live))
-        x
+      val label: ReqId => String =
+        config.labelFormat match {
+
+          case LabelFormat.Pubid =>
+            pubid
+
+          case LabelFormat.PubidAndTitle =>
+            id => {
+              val p = pubid(id)
+              val t = plainText.reqTitleWithoutMarkupById(id)
+              val l = p + "\n" + t
+              WrapText(l, maxWidth)
+            }
+        }
+
+      def declareNodeAttrs(id: ReqId): Unit = {
+        b.append('[')
+        b.setId(pubid(id))
+        b.append(' ')
+        b.setLabel(label(id))
+        b.append(']')
       }
+
+      def declareNodes: () => Unit =
+        config.colours match {
+
+          case Colours.ByReqType => () => {
+
+            // Add to reqTypesWithReqs regardless of live status so that colours don't change when user toggles the
+            // FilterDead setting. Colours jumping around it's a needless cognitive burden when you're trying to analyse
+            // the graph.
+            val reqTypesWithReqs: Map[ReqTypeId, Int] =
+              MutableArray(reqs.reqsByType.keys)
+                .sortBy(reqTypes.order) // Deterministic (and stable until config changes) order of colours
+                .iterator
+                .zipWithIndex
+                .toMap
+
+            val reqsByReqType: Multimap[ReqTypeId, Vector, Req] =
+              reqFilter.value match {
+                case Some(f) =>
+                  var m = reqs.reqsByType
+                  for (rt <- m.keys)
+                    m = m.mod(rt, _.filter(f))
+                  m
+                case None =>
+                  reqs.reqsByType
+              }
+
+            val colourFn =
+              DistinctColours("ffffff", reqTypesWithReqs.size, "ffffff")
+
+            def nodeData =
+              MutableArray(reqsByReqType.iterator)
+                .sortBy(x => reqTypes.order(x._1))
+                .iterator
+
+            def declareNode(id: ReqId): Unit = {
+              node(id)
+              declareNodeAttrs(id)
+              deadNodeStyleIfDead(live(id))
+            }
+
+            for ((reqType, reqs) <- nodeData) {
+              val color = colourFn(reqTypesWithReqs(reqType))
+              b append """node[fillcolor="#"""
+              b append color
+              b append """"]"""
+              for (req <- reqs)
+                declareNode(req.id)
+            }
+          }
+
+          case Colours.ByTag(tagGroupId) => () => {
+
+            val coloursByReqId: Map[ReqId, ArraySeq[Colour]] = {
+              val tags    = project.config.tags
+              val reqTags = project.reqTagsFn(tagGroupId, filterDead)
+              val reqIds  = scope.fold(project.content.reqs.idIterator())(_.iterator)
+              reqIds.map { reqId =>
+                val colours =
+                  reqTags(reqId)
+                    .iterator
+                    .map(tags.needApplicableTag)
+                    .map(t => t.colour.getOrElse(Colour.tagDefault).live(t.live))
+                    .to(ArraySeq)
+                reqId -> colours
+              }.toMap
+            }
+
+            def declareNode(id: ReqId): Unit = {
+              node(id)
+              declareNodeAttrs(id)
+              live(id) match {
+                case Live =>
+                  val colours = coloursByReqId.get(id).filter(_.nonEmpty).getOrElse(ArraySeq(Colour.tagDefault))
+                  val style =
+                    if (colours.length == 1) {
+                      // style=wedged requires at least 2 colours
+                      val c = colours(0)
+                      s"""[$styleFilled fillcolor="${c.`#rrggbb`}" fontcolor="${c.foreground.`#rrggbb`}"]"""
+                    } else {
+                      val fill = colours.iterator.map(_.`#rrggbb`).mkString(":")
+                      val font = Colour.chooseForegroundOverMultipleBackgroundColours(colours)
+                      s"""[$styleMultiColour fillcolor="$fill" fontcolor="${font.`#rrggbb`}"]"""
+                    }
+                  b.append(style)
+                case Dead =>
+                  deadNodeStyle()
+              }
+            }
+
+            for (reqId <- reqIdFilter.iterator(reqIdsSortedByPubId.iterator)) {
+              declareNode(reqId)
+              coloursByReqId
+            }
+          }
+        }
 
       val impReqResult = DataLogic.requiringImplication(reqTypes, imps, reqs)
 
-      val colourFn =
-        DistinctColours("ffffff", reqTypesWithReqs.size, "ffffff")
-
-      def nodeData =
-        MutableArray(reqsByReqType.iterator)
-          .sortBy(x => reqTypes.order(x._1))
-          .iterator
-
-      def flow(fromId: ReqId, fromLive: Live, toIds: TraversableOnce[ReqId], toLive: Live): Unit = {
+      def flow(fromId: ReqId, fromLive: Live, toIds: IterableOnce[ReqId], toLive: Live): Unit = {
         val atEnd: () => Unit =
           fromLive & toLive match {
             case Live => () => ()
             case Dead => () => deadLink()
           }
-        flowOneToMany(fromId, toIds)(node, atEnd())
+        b.flowOneToMany(fromId, toIds)(node, atEnd())
       }
 
       def allFlow(graph: Implications.UniDir): Unit =
-        for ((fromId, toIds) <- graph.iterator) {
-          val fromLive = live(fromId)
-          fd match {
-            case HideDead =>
-              if (fd.filter(fromLive))
-                flow(fromId, fromLive, filterIdSet(toIds), Live)
-            case ShowDead =>
-              val (l, d) = toIds.partition(live(_) is Live)
-              flow(fromId, fromLive, l, Live)
-              flow(fromId, fromLive, d, Dead)
+        for ((fromId, toIds) <- graph.iterator)
+          if (reqIdFilter(fromId)) {
+            val fromLive = live(fromId)
+            val (l, d) = reqIdSetFilter(toIds).partition(live(_) is Live)
+            flow(fromId, fromLive, l, Live)
+            flow(fromId, fromLive, d, Dead)
           }
-        }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      rankdirTB()
-      implicationNodeStyle()
-      sb append """edge[color="#333333"]"""
+      b.rankdir(config.graphDir)
+      styleSubsequentNodesAsImplications(shape)
+      b.append(s"""edge[color="$blackish"]""")
 
-      // Declare nodes
-      for ((reqType, reqs) <- nodeData) {
-        val color = colourFn(reqTypesWithReqs(reqType))
-        sb append """node[fillcolor="#"""
-        sb append color
-        sb append """"]"""
-        declare(reqs.iterator.map(_.id))
-      }
+      declareNodes()
 
       // Implication required
       if (impReqResult.badIds.nonEmpty)
-        attrGroup("edge[color=\"#dd0000\"]") {
-          sb append "R[shape=octagon fillcolor=red fontcolor=white margin=0 fontsize=18 label=\"?\"]"
-          flowOneToMany("R", impReqResult.badIds.iterator map nodeName)(sb append _, ())
+        b.attrGroup("edge[color=\"#dd0000\"]") {
+          b append "R[shape=octagon fillcolor=red fontcolor=white margin=0 fontsize=18 label=\"?\"]"
+          b.flowOneToMany("R", impReqResult.badIds.iterator map nodeName)(b.append, ())
           allFlow(impReqResult.badImpGraph.forwards)
         }
 

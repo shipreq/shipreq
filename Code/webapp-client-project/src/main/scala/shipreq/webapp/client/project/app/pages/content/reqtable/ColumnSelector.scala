@@ -3,13 +3,13 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.semantic.{Button, Icon, Popup}
+import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.widgets.CheckboxList
 
 /**
@@ -91,7 +91,7 @@ object ColumnSelector {
         MutableArray.map(p.available.columns.whole)(c => (c, On when activeColumns.contains(c.column)))
           .sortBy(_._1.name)
           .iterator
-          .to[Vector])
+          .to(Vector))
 
     val items: NonEmptyVector[ColumnCheckboxes.Item] =
       columns.map { case (c, on) =>
@@ -105,7 +105,7 @@ object ColumnSelector {
     ColumnCheckboxes.Props(items, updateFn).render
   }
 
-  val Component = ScalaComponent.builder[Props]("ColumnSelector")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(shouldComponentUpdate)
     .build

@@ -6,6 +6,7 @@ import net.liftweb.util.TimeHelpers._
 import org.eclipse.jetty.server._
 import org.eclipse.jetty.webapp.WebAppContext
 import org.apache.commons.io.FileUtils
+import shipreq.base.util.ThreadUtils
 import shipreq.webapp.base.AssetManifest
 
 object TestJetty extends Jetty(8090)
@@ -32,6 +33,8 @@ class Jetty(val port: Int) extends Logger {
     server foreach stopServer
     server = None
   }
+
+  ThreadUtils.runOnShutdown("LiveTestUtils", shutdown())
 
   private def createTempDir(prefix: String, suffix: String = ""): File = {
     val tmpDir = File.createTempFile(prefix, suffix)
@@ -84,7 +87,7 @@ class Jetty(val port: Int) extends Logger {
     svr
   }
 
-  private def stopServer(s: Server) {
+  private def stopServer(s: Server): Unit = {
     info("Stopping Jetty")
     s.stop()
     s.join()

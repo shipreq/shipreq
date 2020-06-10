@@ -1,0 +1,386 @@
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard Req Table | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      .ui.button.basic {background:#fff!important}
+
+      .is-tag {
+        padding: 4px 6px !important;
+        margin-left: .5ex !important;
+      }
+
+      ul.straytags {margin-bottom:0}
+      ul.straytags li:not(:first-child) {margin-top:0.25em}
+
+      xmain > table {margin-bottom:2rem!important;}
+      main > .left > table {margin-top:0!important;}
+      xmain > .left > table + table {margin-top:10rem!important}
+      main > .left > table > tbody > tr:not(.cont) > td:first-child {text-align:center!important; width:1ex}
+      main > .left > table > tbody > tr > td {vertical-align:top;}
+
+      #t2 tr > *:nth-child(5) { display:none }
+
+      #t2 .rule {
+        line-height:1.8em
+      }
+      #t2 .rule .types, #t2 .rule2 .types {
+        font-weight: bold;
+      }
+      #t2 .rule .types::after { content: " — "; }
+      #t2 .rule2 .types {margin-right: .7ex}
+
+      #t2 tr { transition: background .1s ease,color .1s ease; }
+      #t2 tr.selected { background-color: #869df91f; }
+      #t2 td:not(:first-child) {cursor:pointer}
+
+      /* .ui.menu .item>img:not(.ui) -- width:2.5em */
+      /* .ui.menu .item -- padding-top/bottom: 0.928571em */
+      /* body - padding: 1rem */
+      #navX {height:calc(2 * 0.928571em + 2.5em - 1.55em); background:green}
+      #navX {height:2.79rem; margin-bottom:1rem} /* padding is to match body */
+      main {
+        xbackground:#fbb;
+        margin-top: 4rem;
+        min-height: calc(100vh - 2 * (0.928571em + 1rem) - 2.5em);
+        min-height: calc(100vh - 2.79rem - 3rem);
+        min-height: calc(100vh - 6rem);
+        display:grid;
+        grid-template-columns: 1fr 2rem 2rem 1fr;
+      }
+
+      section.gap2 {
+        border-left: solid 1px #e8e8e8;
+      }
+
+      .settings td { vertical-align:top; }
+      .settings td:nth-child(3) { text-align:right; width:1px }
+      .settings td:nth-child(3) button { margin-right:0!important }
+      .settings td:first-child > .ui.input {width:100%}
+      x.settings td { background-color: #869df90f; }
+      x.settings td {border-top:none!important}
+      .settings tr:last-child td:first-child {padding-left:2ex}
+      x.settings tr:first-child td {padding-top:1.5rem}
+
+      #t2 tr.selected td {
+        border-top:solid 1px #3659e2;
+        border-bottom:solid 1px #3659e2;
+      }
+
+      #t2.has-selection tbody tr:not(.selected) { opacity:.4 }
+      #t2 tr { transition: opacity .4s }
+
+      .right-off {
+        overflow: hidden; height: 0; opacity: 0;
+        transition: height 0s .4s, opacity .4s 0s;
+      }
+      .right-on {
+        height: auto; opacity: 1;
+        transition: height 0s 0s, opacity .4s 0s;
+      }
+
+      #t2 tr.dead td {
+        background-color: #f2f2f2;
+        opacity:0.7;
+        color: #4d4d4d;
+      }
+      #t2 tr.dead td:nth-child(2) {
+        text-decoration: line-through;
+      }
+
+  -# ==================================================================================================================================================
+  -# ==================================================================================================================================================
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "member-home.html"} Projects
+          %i.divider.icon.right.angle
+          %a.section{href: "project-index.html"} CardBoard
+          .ui.dropdown.inline
+            &nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+          %i.divider.icon.right.angle
+          .section // .active
+            .ui.dropdown.inline
+              Req Table
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .header Content
+                .item Implication Graph
+                .item.active ReqTable
+                .header Configuration
+                .item Fields
+                .item Issues
+                .item Req Types
+                .item Tags
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "member-account.html"} Account
+          .item Logout
+
+    %main
+
+      %section.left
+
+        -# %div(style="display:flex; margin-bottom:1em")
+          %div(style="flex-grow:1")
+            %h3 All fields
+          %div(style="")
+            %button.ui.button.icon
+              %i.icon.trash.outline.large.grey
+
+        %div(style="display:flex; margin-bottom:2rem")
+          %div
+            .ui.button.green#new
+              %i.icon.plus
+              New
+
+          %div(style="flex-grow:1")
+
+          %div(style="")
+            %button.ui.button.icon.red.has-popup{data-content: "Showing deleted content."}
+              %i.icon.trash.outline.large.white
+
+
+        -# ==================================================================================================================================================
+        %table.ui.celled.table#t2
+          %thead
+            %tr
+              %th
+              %th Name
+              %th Type
+              %th Details
+              %th
+          %tbody
+            %tr
+              %td ☰
+              %td Implication Graph
+              %td Implication Graph
+              %td
+                .rule
+                  %span.types All
+                  %span.value Visible
+              %td
+            %tr
+              %td ☰
+              %td Normal and Alternate Courses
+              %td Use Case Steps
+              %td
+                .rule2
+                  %span.types UC
+                  %span.value only
+              %td
+            %tr
+              %td ☰
+              %td Exception Courses
+              %td Use Case Steps
+              %td
+                .rule2
+                  %span.types UC
+                  %span.value only
+              %td
+            %tr
+              %td ☰
+              %td Use Case Flow
+              %td Use Case Step Graph
+              %td
+                -# .rule
+                  %span.types UC
+                  %span.value Visible
+                .rule2
+                  %span.types UC
+                  %span.value only
+              %td
+            %tr
+              %td ☰
+              %td Detail
+              %td Text
+              %td
+                .rule
+                  %span.types BR
+                  %span.value Optional
+                .rule
+                  %span.types FR, UC
+                  %span.value Mandatory
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr
+              %td ☰
+              %td Major Feature
+              %td Implication
+              %td
+                .rule
+                  %span.types Not: MF, OE
+                  %span.value Optional
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr.dead#tagrow
+              %td
+              %td Status
+              %td Tag
+              %td
+                .rule
+                  %span.types FR, UC
+                  %span.value Defaults to <div class="ui label brown is-tag">needs_analysis</div>
+                .rule
+                  %span.types IV
+                  %span.value Defaults to <div class="ui label yellow is-tag" style="color:#000!important">needs_more_info</div>
+                .rule
+                  %span.types OE,SI
+                  %span.value Not applicable
+                .rule
+                  %span.types Other
+                  %span.value Optional
+              %td
+                <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
+            %tr
+              %td ☰
+              %td Tags
+              %td Tag
+              %td
+                Displays tags not assigned to a field.
+                -# %ul.straytags
+                  %li .ui.label.is-tag.red migrating
+                  %li .ui.label.is-tag.olive tested
+                  %li .ui.label.is-tag.blue unreleased
+                  %li .ui.label.is-tag.blue v1.0
+                  %li .ui.label.is-tag.blue v1.1
+                %p.straytags
+                  .ui.label.is-tag.red migrating
+                  .ui.label.is-tag.olive tested
+                  .ui.label.is-tag.blue unreleased
+                  .ui.label.is-tag.blue v1.0
+                  .ui.label.is-tag.blue v1.1
+              %td
+
+
+      -# ==================================================================================================================================================
+      %section.gap1
+      %section.gap2
+
+      %section.right
+        .right-off#tageditor
+          -# %h2(style="color: #4059bf; margin-bottom:2rem") Status
+          -# %h2(style="color: #4c6be6; margin-bottom:2rem") Status
+          %h2(style="color: #666; margin-bottom:2rem; text-decoration: line-through;") Status
+
+          .ui.message.negative(style="margin-bottom: 2rem")
+            .header Underlying tag group deleted
+            %p
+              ="This field is effectively deleted because the Status tag group was deleted. "
+              You can restore it on the <a href="#">Tag Config</a> page, in which case this field will be restored automatically.
+
+          %table.ui.single.line.table.settings
+            %thead
+              %tr
+                %th Req Types
+                %th Rules
+                %th
+            %tbody
+              %tr
+                %td
+                  .ui.input.disabled
+                    %input(type="text" value="FR, UC")
+                %td
+                  %select.ui.dropdown.disabled
+                    %option Default to...
+                  .ui.selection.dropdown.disabled(style="margin-left:1.5ex")
+                    %input(type="hidden" value="1")
+                    %i.dropdown.icon
+                    .default.text Select Tag
+                    .menu
+                      .item(data-value="1")
+                        .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                %td
+                  -# <button class="ui button basic disabled negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
+              %tr
+                %td
+                  .ui.input.disabled
+                    %input(type="text" value="IV")
+                %td
+                  %select.ui.dropdown.disabled
+                    %option Default to...
+                  .ui.selection.dropdown.disabled(style="margin-left:1.5ex")
+                    %input(type="hidden" value="1")
+                    %i.dropdown.icon
+                    .default.text Select Tag
+                    .menu
+                      .item(data-value="1")
+                        .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
+                %td
+                  -# <button class="ui button basic disabled negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
+              %tr
+                %td
+                  .ui.input.disabled
+                    %input(type="text" value="OE, SI")
+                %td
+                  %select.ui.dropdown.disabled
+                    %option Not applicable
+                %td
+                  -# <button class="ui button basic disabled negative " style="white-space: nowrap"><i class="icon trash" style="margin:0"></i></button>
+              %tr
+                %td(style="opacity:.5")
+                  %p Other
+                  %p (BR, CO, QA, new)
+                  -# BR, CO, FR, IV, OE, QA, SI, UC
+                %td
+                  %select.ui.dropdown.disabled
+                    %option Optional
+                %td
+                  -# <button class="ui button basic green disabled" style="white-space: nowrap; border-color: #080 !important"><i class="icon plus" style="margin:0"></i></button>
+
+          %div(style="margin-top:2rem; display:flex")
+            -# %button.ui.button.green.disabled(style="margin-right:2em")
+              %i.icon.undo
+              Restore
+            %div(style="flex-grow:1")
+            %button.ui.button.black.basic
+              %i.icon.remove
+              Close
+
+        -# .right-on#noeditor(style="display:flex; align-items: center; justify-content: center")
+          %div(style="text-align:center; font-style:italic; color:#666; line-height: 1.6em; padding-bottom:33vh")
+            %div This is the field editor.
+            %div Create a new field, or select an existing field to edit it here.
+
+        .right-on#noeditor(style="display:flex; flex-direction: column; font-size:120%")
+          %div(style="height:calc((100vh - 6rem)/4); xbackground:red")
+          %div(style="text-align:center; font-style:italic; color:#999; line-height: 1.8em")
+            %div This is the field editor.
+            %div Create a new field, or select an existing field to edit it here.
+
+  :javascript
+    $('.ui.dropdown').dropdown();
+    // $('.celled.table').toggleClass('celled');
+
+    function toggle() {
+      $('#t2').toggleClass('has-selection');
+      $('#tagrow').toggleClass('selected');
+      $('#noeditor,#tageditor').toggleClass('right-on');
+      $('#noeditor,#tageditor').toggleClass('right-off');
+      $('#new, #t2 button').toggleClass('disabled');
+    }
+
+    $('#t2').click(toggle);
+
+    toggle();

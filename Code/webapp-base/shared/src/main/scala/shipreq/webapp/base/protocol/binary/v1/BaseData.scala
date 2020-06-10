@@ -1,36 +1,82 @@
 package shipreq.webapp.base.protocol.binary.v1
 
-import boopickle.ConstPickler
+import boopickle.Decoder
 import boopickle.DefaultBasic._
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.recursion.Fix
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq.UnivEq
+import java.nio.ByteBuffer
 import java.time.Instant
 import monocle.Iso
 import nyaya.util.{MultiValues, Multimap}
+import scala.annotation.nowarn
+import scala.collection.immutable.ArraySeq
+import scala.reflect.ClassTag
 import scalaz.Isomorphism.<=>
 import scalaz.{-\/, Functor, \&/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.Version
+import shipreq.webapp.base.protocol.binary._
 import shipreq.webapp.base.user._
 
 object BaseData {
+
+  /** Used to add a codec version to a binary protocol whilst retaining backwards-compatibility with the unversioned
+    * case.
+    */
+  final val VersionHeader = -99988999
+
+  def writeVersion(ver: Int)(implicit state: PickleState): Unit = {
+    assert(ver > 0) // v1.0 is the default and doesn't need a version header
+    state.enc.writeInt(VersionHeader)
+    state.enc.writeInt(ver)
+  }
+
+  def readByVersion[A](maxSupportedVer: Int)(f: PartialFunction[Int, A])(implicit state: UnpickleState): A = {
+    assert(maxSupportedVer > 0)
+
+    def unsupportedVer(ver: Int): Nothing =
+      throw UnsupportedVersionException(found = Version.v1(ver), maxSupported = Version.v1(maxSupportedVer))
+
+    def readVer(ver: Int): A =
+      f.applyOrElse[Int, A](ver, unsupportedVer)
+
+    state.dec.peek(_.readInt) match {
+      case VersionHeader =>
+        state.dec.readInt
+        val ver = state.dec.readInt
+        if (ver <= 0)
+          throw CorruptData
+        if (ver > maxSupportedVer) // preempt using the partial function in case maxSupportedVer is incorrect
+          unsupportedVer(ver)
+        readVer(ver)
+      case _ =>
+        readVer(0)
+    }
+  }
 
   // ===================================================================================================================
   // Extension classes
 
   implicit final class AnyRefPicklerExt[A <: AnyRef](private val p: Pickler[A]) extends AnyVal {
-    def reuseByUnivEq(implicit ev: UnivEq[A]) = {
-      val _ = ev
+
+    @nowarn("cat=unused")
+    def reuseByUnivEq(implicit ev: UnivEq[A]) =
       new PickleWithReuse[A](p, true)
-    }
 
     def reuseByRef =
       new PickleWithReuse[A](p, false)
 
     def imap[B](iso: Iso[A, B]): Pickler[B] =
       p.xmap(iso.get)(iso.reverseGet)
+
+    def narrow[B <: A: ClassTag]: Pickler[B] =
+      p.xmap[B]({
+        case b: B => b
+        case a    => throw new IllegalArgumentException("Illegal supertype: " + a)
+      })(b => b)
   }
 
   final class PickleWithReuse[A <: AnyRef](p: Pickler[A], byUnivEq: Boolean) extends Pickler[A] {
@@ -63,9 +109,31 @@ object BaseData {
       }
   }
 
+  implicit final class DecoderExt(private val self: Decoder) extends AnyVal {
+    def buf: ByteBuffer =
+      self match {
+        case a: boopickle.DecoderSpeed => a.buf
+        case a: boopickle.DecoderSize  => a.buf
+      }
+
+    def peek[A](f: Decoder => A): A = {
+      val b = buf
+      val p = b.position()
+      try f(self) finally b.position(p)
+    }
+  }
+
   // ===================================================================================================================
   // Polymorphic definitions
   // (non-implicit, "pickle" prefix)
+
+  private object _pickleNothing extends Pickler[AnyRef] {
+    override def pickle(obj: AnyRef)(implicit state: PickleState): Unit = ()
+    override def unpickle(implicit state: UnpickleState): Nothing = throw new RuntimeException("This case is illegal.")
+  }
+
+  def pickleNothing[A <: AnyRef]: Pickler[A] =
+    _pickleNothing.asInstanceOf[Pickler[A]]
 
   def pickleBool[A](iso: Boolean <=> A): Pickler[A] =
     transformPickler(iso.to)(iso.from)
@@ -92,18 +160,18 @@ object BaseData {
         }
     }
 
-  def pickleEnum[V: UnivEq](nev: NonEmptyVector[V]): Pickler[V] =
+  def pickleEnum[V: UnivEq](nev: NonEmptyVector[V], firstValue: Int = 0): Pickler[V] =
     new Pickler[V] {
       private[this] val fromInt = nev.whole
       private[this] val toInt   = nev.whole.mapToOrder
       assert(toInt.size == nev.length, s"Duplicates found in $nev")
       override def pickle(v: V)(implicit state: PickleState): Unit = {
-        val i = toInt(v)
+        val i = toInt(v) + firstValue
         state.enc.writeInt(i)
       }
       override def unpickle(implicit state: UnpickleState): V =
         state.dec.readIntCode match {
-          case Right(i) => fromInt(i)
+          case Right(i) => fromInt(i - firstValue)
           case Left(_)  => throw new IllegalArgumentException("Invalid coding")
         }
     }
@@ -164,30 +232,6 @@ object BaseData {
   def pickleIsoBoolValues[B <: IsoBool[B], A: Pickler]: Pickler[IsoBool.Values[B, A]] =
     transformPickler[IsoBool.Values[B, A], (A, A)](x => IsoBool.Values(pos = x._1, neg = x._2))(x => (x.pos, x.neg))
 
-  def pickleISubset[A: Pickler: UnivEq]: Pickler[ISubset[A]] =
-    new Pickler[ISubset[A]] {
-      import ISubset._
-      private[this] implicit val picklerNES : Pickler[NonEmptySet[A]] = pickleNES
-      private[this] implicit val picklerAll : Pickler[All        [A]] = ConstPickler(All())
-      private[this] implicit val picklerOnly: Pickler[Only       [A]] = transformPickler(Only.apply[A])(_.values)
-      private[this] implicit val picklerNot : Pickler[Not        [A]] = transformPickler(Not.apply[A])(_.values)
-      private[this] final val KeyAll  = 'a'
-      private[this] final val KeyNot  = 'n'
-      private[this] final val KeyOnly = 'o'
-      override def pickle(a: ISubset[A])(implicit state: PickleState): Unit =
-        a match {
-          case b: All [A] => state.enc.writeByte(KeyAll ); state.pickle(b)
-          case b: Not [A] => state.enc.writeByte(KeyNot ); state.pickle(b)
-          case b: Only[A] => state.enc.writeByte(KeyOnly); state.pickle(b)
-        }
-      override def unpickle(implicit state: UnpickleState): ISubset[A] =
-        state.dec.readByte match {
-          case KeyAll  => state.unpickle[All [A]]
-          case KeyNot  => state.unpickle[Not [A]]
-          case KeyOnly => state.unpickle[Only[A]]
-        }
-    }
-
   def pickleLazily[A](f: => Pickler[A]): Pickler[A] = {
     lazy val p = f
     new Pickler[A] {
@@ -215,6 +259,13 @@ object BaseData {
       }
     }
 
+  implicitly[Pickler[Vector[Int]]]
+  def pickleArraySeq[A](implicit pa: Pickler[A], ct: ClassTag[A]): Pickler[ArraySeq[A]] =
+    // Can't use boopickle.BasicPicklers.ArrayPickler here because internally, it uses writeRawInt to write length,
+    // where as IterablePickler uses writeInt. We need to be compatible because we're switching out a Vector for an
+    // ArraySeq in some impls without affecting the codec.
+    boopickle.BasicPicklers.IterablePickler[A, ArraySeq]
+
   def pickleMultimap[K: UnivEq, L[_], V](implicit p: Pickler[Map[K, L[V]]], l: MultiValues[L]): Pickler[Multimap[K, L, V]] =
     p.xmap(Multimap(_))(_.m) // TODO optimise
 
@@ -222,6 +273,9 @@ object BaseData {
     pickleNonEmpty(_.whole)
 
   def pickleNEV[A](implicit p: Pickler[Vector[A]]): Pickler[NonEmptyVector[A]] =
+    pickleNonEmpty(_.whole)
+
+  def pickleNEA[A](implicit p: Pickler[ArraySeq[A]]): Pickler[NonEmptyArraySeq[A]] =
     pickleNonEmpty(_.whole)
 
   def pickleNonEmpty[N, E](f: N => E)(implicit p: Pickler[E], proof: NonEmpty.Proof[E, N]): Pickler[N] =
@@ -317,6 +371,9 @@ object BaseData {
   // ===================================================================================================================
   // Concrete picklers for base data type
   // (implicit lazy vals, "pickler" prefix)
+
+  implicit lazy val picklerImpossible: Pickler[Impossible] =
+    pickleNothing
 
   implicit lazy val picklerDirection: Pickler[Direction] =
     pickleBool(Forwards)

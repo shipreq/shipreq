@@ -1,1 +1,1 @@
-../../../../../frontend/dist/local/webapp-base-test.js
+../../../../../frontend/dist/test/webapp-base-test.js

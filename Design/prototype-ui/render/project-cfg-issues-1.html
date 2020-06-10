@@ -1,0 +1,61 @@
+<html><head><title>CardBoard Req Table | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+.ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+.ui.button.basic {background:#fff!important}
+
+.usage {text-align:right !important;}
+.usage.na { background-color: #f5f5f5; padding:4x !important; color: #666;}
+.usage.na::after { content: '–'}
+.usage.one span {visibility:hidden}
+.usage.zero:not(:hover) {color:#4183c4}
+
+/* .ui.menu .item>img:not(.ui) -- width:2.5em */
+/* .ui.menu .item -- padding-top/bottom: 0.928571em */
+/* body - padding: 1rem */
+#navX {height:calc(2 * 0.928571em + 2.5em - 1.55em); background:green}
+#navX {height:2.79rem; margin-bottom:1rem} /* padding is to match body */
+main {
+  margin-top: 6rem;
+  max-width:120ex;
+  display:block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#issueTags {
+}
+
+.sectionTitle {
+  display:block;
+  margin: 6rem auto 3rem auto;
+  max-width: 60ex;
+  font-size: 120%;
+  text-align: center;
+  border-top: solid 1px #bbb;
+  border-bottom: solid 1px #bbb;
+  padding: .7em 0;
+}
+
+#otherSources .sources {
+  display:flex;
+  justify-content: center;
+}
+
+#otherSources .sources > .content {}
+#otherSources .sources > .gap {width:6rem}
+#otherSources .sources .header {font-weight:bold}
+#otherSources .sources li {margin-bottom:.3em}
+#otherSources .sources span.sub::before {content:'('}
+#otherSources .sources span.sub::after {content:')'}
+#otherSources .sources span.sub {color:#888; margin-left:1ex}
+
+</style></head><body><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Req Table&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="header">Content</div><div class="item">Implication Graph</div><div class="item active">ReqTable</div><div class="header">Configuration</div><div class="item">Fields</div><div class="item">Issues</div><div class="item">Req Types</div><div class="item">Tags</div></div></div></div></div></div><div class="item ui right dropdown simple">@japgolly<div class="menu"><a href="member-account.html" class="item">Account</a><div class="item">Logout</div></div></div></div><main><section id="issueTags"><div class="sectionTitle">User-Defined Issue Types</div><table class="ui celled table" id="t2"><thead><tr><th>Name</th><th>Description</th><th class="usage">Usage</th><th></th></tr></thead><tbody><tr><td>#TODO</td><td>Work needs to be done.</td><td title="No reqs use this field" class="usage zero"><a href="#">0 uses</a></td><td><button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button></td></tr></tbody></table></section><section id="otherSources"><div class="sectionTitle">Other Configurable Causes of Issues</div><div class="sources"><div class="content"><div class="header">Req Types with Mandatory Implication</div><div class="body"><ul><li>CO: Constraint</li><li>FR: Functional Requirement</li></ul></div></div><div class="gap"></div><div class="content"><div class="header">Mandatory fields</div><div class="body"><ul><li>Major Feature<span class="sub">CA and RO excepted</span></li><li>Priority<span class="sub">FR, MF and RO only</span></li><li>Title<span class="sub">built-in</span></li><li>Use Case Step<span class="sub">built-in</span></li></ul></div></div></div></section></main></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.dropdown').dropdown();
+//]]>
+</script>
+</html>

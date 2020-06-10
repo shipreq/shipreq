@@ -4,7 +4,7 @@ import japgolly.univeq._
 import org.scalajs.dom.html
 import shipreq.base.util.LeftRight
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.data.{Dead, Live, ShowDead}
+import shipreq.webapp.base.data.{Dead, Live, ShowDead, StaticField}
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl.NavObs
@@ -27,7 +27,7 @@ object ReqDetailObs {
   }
 
   import UiText.FieldNames._
-  val TreeNames = NAE(useCaseStepTreeN, useCaseStepTreeA, useCaseStepTreeE)
+  val TreeNames = NAE(useCaseStepTreeN, useCaseStepTreeA, StaticField.ExceptionStepTree.name)
 }
 
 final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {
@@ -60,10 +60,16 @@ final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {
 
     val table = root(">table")
 
+    private val rows = table(">tbody").collect1n(">tr")
+
+    val fieldsInOrder: Vector[String] =
+      rows.map(_(">th").innerText)
+
     val fields: Map[String, Field] =
-      table(">tbody").collect1n(">tr")
-        .map(z => z(">th").innerText -> Field(z(">td")))
-        .toMap
+      rows.map(z => z(">th").innerText -> Field(z(">td"))).toMap
+
+    def field(name: String): Field =
+      fields.getOrElse(name, throw new RuntimeException("Field not found: " + name))
 
     case class Field(private[ReqDetailObs] val $: DomZipperJs) {
       val dom       = $.dom
@@ -157,7 +163,7 @@ final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {
       stepRows.reduce(_ ++ _)
 
     private def getTailStepRow(rows: Vector[StepRow]): Option[StepRow] = {
-      val tailStepRows = rows.toIterator.zipWithIndex.filter(_._1.isTailStepRow).toList
+      val tailStepRows = rows.iterator.zipWithIndex.filter(_._1.isTailStepRow).toList
       tailStepRows match {
         case Nil => None
         case (row, i) :: Nil =>

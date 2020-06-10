@@ -89,8 +89,8 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
   override protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): VdomTag =
     renderVector(ids, sepSpace)(id => tagPlain(validity(id))(id))
 
-  override protected def _text(text: AnyOptional, live: Live): VdomTag =
-    <.span(text map textByLive(live): _*)
+  override protected def _text(text: AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity): VdomTag =
+    <.span(text.map(textAtom(live, tagValidity)): _*)
 
   // Keep in sync with PlainText because it's used together for sorting/rendering in ReqTable
   override protected def deletionReasonWhenNoneGiven: VdomTag =
@@ -99,7 +99,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
   // Keep in sync with PlainText because it's used together for sorting/rendering in ReqTable
   override protected def deletionReasonWhenReqTypeIsDead(rt: ReqType): VdomTag =
     <.span(
-      UiText.ColumnNames.reqType + " ",
+      SpecialBuiltInField.ReqType.name + " ",
       reqTypeShort(rt.reqTypeId),
       " is deleted.")
 
@@ -130,7 +130,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
           ref(
             linkOrSpan(req)(*.reqRef(req live project.config.reqTypes)),
             code,
-            plainText reqTitle req)
+            plainText reqTitleWithoutMarkup req)
         }
 
         def toGroup(code: ReqCode.Value, g: CodeGroup): VdomTag =
@@ -152,14 +152,14 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     }
 
   private def issue(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText, liveText: Live): VdomTag =
-    NonEmptyVector.option(desc) match {
+    NonEmptyArraySeq.option(desc) match {
       case None       => issueWithoutDesc(id)(liveText)
       case Some(desc) => issueWithDesc(id, desc, liveText)
     }
 
   private val issueWithoutDesc: CustomIssueTypeId => Live => VdomTag =
     Memo { id =>
-      val issueType = cfg.customIssueType(id)
+      val issueType = cfg.customIssueTypes.need(id)
       Live.memo { liveText =>
         <.span(
           *.issue((liveText, issueType.live)),
@@ -168,11 +168,11 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     }
 
   private def issueWithDesc(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.NonEmptyText, liveText: Live): VdomTag = {
-    val issueType = project.config.customIssueType(id)
+    val issueType = project.config.customIssueTypes.need(id)
     <.span(
       *.issue((liveText, issueType.live)),
       G.hashRefKey.prefix ~ issueType.key.value ~ issueDescSurroundPrefix,
-      text(desc, liveText)(*.issueDesc),
+      text(desc, liveText, Valid.always)(*.issueDesc),
       issueDescSurroundSuffix)
   }
 
@@ -190,21 +190,24 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     gctx match {
       case ProjectText.Context.Req(id) if req.id ==* id => ProjectWidgets.emptySpan
       case ProjectText.Context.None
-           | _: ProjectText.Context.Req                   => reqDetailRC.link(ep)
+         | _: ProjectText.Context.Req                   => reqDetailRC.link(ep)
     }
 
-  private def makeUseCaseStepTextAndFlow[C[x] <: TraversableOnce[x], A](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[A]],
-                                                                        l: Live)
-                                                                       (render: C[A] => TraversableOnce[VdomTag]): VdomTag = {
+  private val ucTagValidity: ApplicableTagId => Validity =
+    project.config.naTags(StaticReqType.UseCase)
 
-    val stepText = text(s.text, l, Mandatory.when(s.flow.forall(_.isEmpty)))
+  private def makeUseCaseStepTextAndFlow[C[x] <: Iterable[x], A](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[A]],
+                                                                 l: Live)
+                                                                (render: C[A] => IterableOnce[VdomTag]): VdomTag = {
+
+    val stepText = text(s.text, l, ucTagValidity, Mandatory.when(s.flow.forall(_.isEmpty)))
 
     def flowClause(dir: Direction): Option[VdomTag] = {
       val flowElements = s flow dir
       Option.unless(flowElements.isEmpty)(
         stepFlowClauseBase(dir)(
           TagMod.fromTraversableOnce(
-            render(flowElements).toIterator.map(t => t: TagMod).intersperse(sepComma))))
+            render(flowElements).iterator.map(t => t: TagMod).intersperse(sepComma))))
     }
 
     val flowsMaybe: Option[VdomTag] =
@@ -222,7 +225,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
 
   private def mkUseCaseStep[A](r: (VdomTag, (Live, Validity), String) => A)(f: UseCaseStep.Focus): A = {
     val label = plainText.useCaseStepLabel(f)
-    val title = UiText.hoverText(plainText.text(f.titleA, f.live, Mandatory))
+    val title = UiText.hoverText(plainText.textWithoutMarkup(f.titleA, f.live))
     val ld = deadValidity(Invalid)(f.live)
     val base = linkOrSpan(f.uc)(^.title := title)
     r(base, ld, label)
@@ -234,56 +237,70 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       case Dead => PubidFormat.validWhenDead
     }
 
-  private val tagInText: Live => ApplicableTagId => VdomTag =
-    Live.memo { liveText =>
-      Memo { (id: ApplicableTagId) =>
-        val tag = project.config.tags.atag(id)
-        val liveTag = tag.live
-        val valid = Invalid.when(liveText.is(Live) && liveTag.is(Dead))
-        tagWithoutStyle(Contextualise, tag)(*.tagInText((liveTag, valid)))
+  private val tagWithoutStyleMemo: Boolean => Contextualise => ApplicableTag => VdomTag =
+    Memo.bool { includeDesc =>
+      Contextualise.memo { c =>
+
+        def render(t: ApplicableTag): VdomTag = {
+          var desc = ""
+          if (includeDesc) {
+            desc = if (t.name.compareToIgnoreCase(t.key.value) == 0) "" else t.name
+            for (d <- t.desc) {
+              if (desc.nonEmpty)
+                desc += "\n\n"
+              desc += d
+            }
+          }
+          val keyTxt = t.key.value
+          val displayTxt = c match {
+            case Contextualise => G.hashRefKey.prefix ~ keyTxt
+            case Plain         => keyTxt
+          }
+          <.span(
+            TagMod.when(desc.nonEmpty)(^.title := desc),
+            displayTxt)
+        }
+
+        val memo = Memo.by((_: ApplicableTag).id)(render)
+
+        tag =>
+          // TagConfig create a fake ApplicableTag with id of -1 to render new tags live before they're saved
+          if (tag.id.value >= 0)
+            memo(tag)
+          else
+            render(tag)
       }
     }
 
-  private def tagWithoutStyle(c: Contextualise, t: ApplicableTag): VdomTag = {
-    var desc = if (t.name.compareToIgnoreCase(t.key.value) == 0) "" else t.name
-    for (d <- t.desc) {
-      if (desc.nonEmpty)
-        desc += "\n\n"
-      desc += d
+  private def tagWithoutStyle(c: Contextualise, t: ApplicableTag, includeDesc: Boolean): VdomTag =
+    tagWithoutStyleMemo(includeDesc)(c)(t)
+
+  private def textAtom(liveText: Live, tagValidity: ApplicableTagId => Validity): Atom.AnyAtom => TagMod = {
+    import Atom._
+    lazy val atom: AnyAtom => TagMod = {
+      case a: Literal         # Literal        => <.span(a.value)
+      case _: NewLine         # BlankLine      => <.div(*.blankLine)
+      case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
+      case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)
+      case a: PlainTextMarkup # Monospace      => <.pre(*.monospace, a.value)
+      case a: PlainTextMarkup # TeX            => katex(a)
+      case a: ContentRef      # ReqRef         => reqRef(liveText)(a.value)
+      case a: ContentRef      # CodeRef        => codeRef(liveText)(a.value)
+      case a: ContentRef      # UseCaseStepRef => useCaseStepRefById(a.value)
+      case a: Issue           # Issue          => issue(a.typ, a.desc, liveText)
+      case a: CodeBlock       # CodeBlock      => CodeBlockWithSyntaxHighlighting(a.language, a.code)
+
+      case a: TagRef          # TagRef         =>
+        val tag = project.config.tags.needApplicableTag(a.value)
+        val valid = tagValidity(tag.id) & Invalid.when(liveText.is(Live) && tag.live.is(Dead))
+        tagWithoutStyle(Contextualise, tag, includeDesc = true)(*.tagInText((tag.live, valid)))
+
+      case a: ListMarkup      # UnorderedList  =>
+        val style = if (a.itemsContainMultipleLines) *.ulSpacious else *.ulCompact
+        <.ul(style, a.items.whole.toTagMod(row => <.li(row toTagMod atom)))
     }
-    val keyTxt = t.key.value
-    val displayTxt = c match {
-      case Contextualise => G.hashRefKey.prefix ~ keyTxt
-      case Plain         => keyTxt
-    }
-    <.span(
-      (^.title := desc).when(desc.nonEmpty),
-      displayTxt)
+    atom
   }
-
-  private val textByLive: Live => Atom.AnyAtom => TagMod =
-    Live.memo { live =>
-      import Atom._
-      lazy val atom: AnyAtom => TagMod = {
-        case a: Literal         # Literal        => <.span(a.value)
-        case _: NewLine         # BlankLine      => <.div(*.blankLine)
-        case a: TagRef          # TagRef         => tagInText(live)(a.value)
-        case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
-        case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)
-        case a: PlainTextMarkup # Monospace      => <.pre(*.monospace, a.value)
-        case a: PlainTextMarkup # TeX            => katex(a)
-        case a: ContentRef      # ReqRef         => reqRef(live)(a.value)
-        case a: ContentRef      # CodeRef        => codeRef(live)(a.value)
-        case a: ContentRef      # UseCaseStepRef => useCaseStepRefById(a.value)
-        case a: Issue           # Issue          => issue(a.typ, a.desc, live)
-        case a: CodeBlock       # CodeBlock      => CodeBlockWithSyntaxHighlighting(a.language, a.code)
-
-        case a: ListMarkup      # UnorderedList  =>
-          val style = if (a.itemsContainMultipleLines) *.ulSpacious else *.ulCompact
-          <.ul(style, a.items.whole.toTagMod(row => <.li(row toTagMod atom)))
-      }
-      atom
-    }
 
   private val useCaseStepRef: UseCaseStep.Focus => VdomTag =
     Memo.by((_: UseCaseStep.Focus).id)(
@@ -297,13 +314,13 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
 
   override def pastPubids(ids: SortedSet[ExternalPubid]): VdomTag =
     renderSeq(
-      ids.toIterator.map(ep => <.span(*.pastPubid, PlainText.pubid(ep))),
+      ids.iterator.map(ep => <.span(*.pastPubid, PlainText.pubid(ep))),
       sepComma)
 
   override def reqCode(c: ReqCode.Value): VdomTag =
     <.pre(*.reqCodeFlat, PlainText reqCode c)
 
-  override def reqCodes(reqCodes: TraversableOnce[ReqCode.Value]): VdomTag =
+  override def reqCodes(reqCodes: IterableOnce[ReqCode.Value]): VdomTag =
     <.div(reqCodes toTagMod reqCode)
 
   override def reqCodeTree(items: Vector[ReqCodeTreeItem]): VdomTag =
@@ -328,24 +345,54 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
 
   val _reqTypeShort: ReqTypeId => VdomTag =
     Memo { id =>
-      val rt = project.config.reqTypes.need(id)
-      <.span(
-        *.reqTypeShort(rt.live),
-        ^.title := rt.name,
-        rt.mnemonic.value)
+      renderReqType(id) { rt =>
+        val title = rt.description match {
+          case Some(desc) => s"${rt.name}\n\n$desc"
+          case None       => rt.name
+        }
+        <.span(
+          *.reqTypeShort(rt.live),
+          ^.title := title,
+          rt.mnemonic.value)
+      }
     }
 
   override def reqTypeFull(id: ReqTypeId): VdomTag =
     _reqTypeFull(id)
 
   val _reqTypeFull: ReqTypeId => VdomTag =
-    id => <.span(plainText.reqTypeFull(id))
+    Memo { id =>
+      renderReqType(id) { rt =>
+        <.span(
+          PlainText.reqTypeFull(rt),
+          rt.description.whenDefined(desc => TagMod(^.title := desc, ^.cursor.help)))
+      }
+    }
+
+  private def renderReqType(id: ReqTypeId)(f: ReqType => VdomTag): VdomTag =
+    project.config.reqTypes.get(id) match {
+      case Some(rt) => f(rt)
+      case None     => <.span("?")
+    }
+
+  private def tagColour(o: Option[Colour], live: Live): TagMod =
+    // Do nothing if Dead because of the *.tag style and tagLabelColour which results in .ui.label.grey for dead tags
+    TagMod.when(live is Live) {
+      val c = o.getOrElse(Colour.tagDefault)
+      TagMod(
+        ^.backgroundColor := c.value,
+        ^.borderColor     := c.value,
+        ^.color           := c.foreground.value,
+      )
+    }
 
   private val tagPlain: Validity => ApplicableTagId => VdomTag =
     Validity.memo { validity =>
       Memo { id =>
-        val tag = project.config.tags.atag(id)
-        tagWithoutStyle(Plain, tag)(*.tag((tag.live, validity)))
+        val tag = project.config.tags.needApplicableTag(id)
+        tagWithoutStyle(Plain, tag, includeDesc = true)(
+          *.tag(((tag.live, validity), true)),
+          tagColour(tag.colour, tag.live))
       }
     }
 
@@ -358,18 +405,34 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     else
       ProjectWidgets(project, plainText withCtx newCtx, reqDetailRC)
 
-
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Public additions not part of ProjectText
 
-  def useCaseStepTextAndMaybeInvalidFlow[C[x] <: Traversable[x]](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[String \/ UseCaseStepId]],
-                                                                 l: Live): VdomTag = {
+  /** Simple here means:
+    *
+    * - title optional
+    * - no cursor:help style if title
+    * - no concept of Validity (Live vs Dead is still respected)
+    * - no contextualisation
+    */
+  def tagSimple(id: ApplicableTagId, includeDesc: Boolean): VdomTag = {
+    val tag = project.config.tags.needApplicableTag(id)
+    tagSimple(tag, includeDesc)
+  }
+
+  def tagSimple(tag: ApplicableTag, includeDesc: Boolean): VdomTag =
+    tagWithoutStyle(Plain, tag, includeDesc = includeDesc)(
+      *.tag(((tag.live, Valid), false)),
+      tagColour(tag.colour, tag.live))
+
+  def useCaseStepTextAndMaybeInvalidFlow[C[x] <: Iterable[x]](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[String \/ UseCaseStepId]],
+                                                              l: Live): VdomTag = {
     /** eg. "1.p" instead of "1.0" */
     def erroneousUseCaseStepRef(s: String): VdomTag =
       <.span(*.erroneousUseCaseStepRef, s)
 
     makeUseCaseStepTextAndFlow(s, l)(
-      _.map(_.fold(erroneousUseCaseStepRef, useCaseFlowElementById))(collection.breakOut))
+      _.map(_.fold(erroneousUseCaseStepRef, useCaseFlowElementById)))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

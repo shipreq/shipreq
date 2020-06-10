@@ -2,20 +2,18 @@ package shipreq.webapp.base.data
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty._
-import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import monocle._
+import monocle.{Lens, Traversal}
 import monocle.macros.{GenLens, Lenses}
 import scala.collection.immutable.ListSet
-import scalaz.{-\/, Equal, \/}
+import scalaz.{-\/, \/}
 import scalaz.std.option.toRight
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.util.Must._
 import shipreq.webapp.base.WebappConfig
-import TaggedTypes.{TaggedInt, TaggedString}
 import IndexLabel._
+import TaggedTypes.TaggedInt
 
 // =====================================================================================================================
 // Types
@@ -25,9 +23,10 @@ sealed abstract class StaticFieldType(name: String) extends FieldType(name)
 sealed abstract class CustomFieldType(name: String) extends FieldType(name)
 
 object StaticFieldType {
-  case object StepTree         extends StaticFieldType("Step Tree")
-  case object StepGraph        extends StaticFieldType("Step Graph")
+  case object UseCaseSteps     extends StaticFieldType("Use Case Steps")
+  case object UseCaseStepGraph extends StaticFieldType("Use Case Step Graph")
   case object ImplicationGraph extends StaticFieldType("Implication Graph")
+  case object Tag              extends StaticFieldType("Tag")
 
   val values: NonEmptyVector[StaticFieldType] =
     AdtMacros.adtValues[StaticFieldType]
@@ -56,39 +55,14 @@ object FieldType {
 // =====================================================================================================================
 // Instances
 
-/**
- * A key by which users can refer to a field.
- */
-final case class FieldRefKey(value: String) extends TaggedString
-
-sealed trait Mandatory extends IsoBool[Mandatory] {
-  override final def companion = Mandatory
-}
-case object Mandatory extends Mandatory with IsoBool.Object[Mandatory] {
-  override def positive = this
-  override def negative = Not
-  case object Not extends Mandatory
-}
-
-sealed trait Deletable extends IsoBool[Deletable] {
-  override final def companion = Deletable
-}
-case object Deletable extends Deletable with IsoBool.Object[Deletable] {
-  override def positive = this
-  override def negative = Not
-  case object Not extends Deletable
-}
-
 /** type [[FieldId]] = [[StaticField]] | [[CustomFieldId]] */
 sealed trait FieldId {
   def foldId[A](s: StaticField => A, c: CustomFieldId => A): A
 }
 
 sealed trait Field {
-  def fieldType: FieldType
-  def reqTypes : Field.ApplicableReqTypes
-  def keyO     : Option[FieldRefKey]
-  def mandatory: Mandatory
+  def fieldType        : FieldType
+  def fieldReqTypeRules: FieldReqTypeRules[Any]
 
   def live(cfg: ProjectConfig): Live
 
@@ -99,42 +73,19 @@ sealed trait Field {
 
   final def fieldId: FieldId =
     fold(s => s, _.id)
-
-  final val applicable: ReqTypeId => Applicable =
-    Applicable fnToThisWhen reqTypes.filter
 }
 
 object Field {
-  type ApplicableReqTypes = ISubset[ReqTypeId]
-
   implicit lazy val applicableReqTypesEquality: UnivEq[ApplicableReqTypes] = implicitly
-
-  def name(reqTypes: ReqTypes, tags: TagTree): Field => String = {
-    val cn: CustomField => String = CustomField.name(reqTypes, tags)
-    val fn: Field       => String = {
-      case f: StaticField => f.name
-      case f: CustomField => cn(f)
-    }
-    fn
-  }
-
-  def nameFromProjectConfig(cfg: ProjectConfig): Field => String =
-    name(cfg.reqTypes, cfg.tags.tree)
-
-  def nameByIdFromProjectConfig(cfg: ProjectConfig): FieldId => String = {
-    val fieldToName = nameFromProjectConfig(cfg)
-    _.foldId(fieldToName, id => fieldToName(cfg.fields.customFields.need(id)))
-  }
 }
 
-import Field.ApplicableReqTypes
+sealed trait StaticField extends Field with FieldId {
+  val name: String
 
-sealed abstract class StaticField(         val name     : String,
-                                  override val fieldType: StaticFieldType,
-                                  override val reqTypes : Field.ApplicableReqTypes,
-                                  override val mandatory: Mandatory,
-                                           val deletable: Deletable,
-                                  override val keyO     : Option[FieldRefKey]) extends Field with FieldId {
+  /** Whether or not this field can be removed from users' field lists. */
+  def existence: Mandatory
+
+  override def fieldReqTypeRules: FieldReqTypeRules[Impossible]
 
   override final def live(cfg: ProjectConfig) = Live
 
@@ -152,20 +103,25 @@ object UseCaseStepLabelFmt {
 }
 
 object StaticField {
-  val useCaseOnly: ApplicableReqTypes =
-    ISubset.Only(NonEmptySet one StaticReqType.UseCase)
+
+  sealed trait Mandatory extends StaticField {
+    override final def existence = shipreq.webapp.base.data.Mandatory
+  }
+
+  sealed trait Optional extends StaticField {
+    override final def existence = shipreq.webapp.base.data.Optional
+  }
+
+  private val useCaseOptionalOnly: FieldReqTypeRules[Impossible] =
+    FieldReqTypeRules.only(StaticReqType.UseCase, FieldReqTypeRules.Resolution.Optional)
 
   @inline final private[this] def T = StaticFieldType
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  sealed abstract class UseCaseStepTree(_name     : String,
-                                        _fieldType: StaticFieldType,
-                                        _reqTypes : Field.ApplicableReqTypes,
-                                        _mandatory: Mandatory,
-                                        _deletable: Deletable,
-                                        _keyO     : Option[FieldRefKey])
-      extends StaticField(_name, _fieldType, _reqTypes, _mandatory, _deletable, _keyO) {
+  sealed abstract class UseCaseStepTree(final val name             : String,
+                                        final val fieldType        : StaticFieldType,
+                                        final val fieldReqTypeRules: FieldReqTypeRules[Impossible]) extends Mandatory {
 
     val treeFilterAll: UseCaseSteps.Tree => Range
     val useCaseSteps: Lens[UseCase, UseCaseSteps]
@@ -237,7 +193,7 @@ object StaticField {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   case object NormalAltStepTree extends UseCaseStepTree(
-      "Normal and Alternate Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None) {
+      "Normal and Alternate Courses", T.UseCaseSteps, useCaseOptionalOnly) {
 
     override val useCaseSteps = GenLens[UseCase](_.stepsNA)
     override val useCaseStepTree = useCaseSteps ^|-> UseCaseSteps.tree
@@ -264,7 +220,7 @@ object StaticField {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   case object ExceptionStepTree extends UseCaseStepTree(
-      "Exception Courses", T.StepTree, useCaseOnly, Mandatory.Not, Deletable.Not, None) {
+      "Exception Courses", T.UseCaseSteps, useCaseOptionalOnly) {
 
     override val useCaseSteps = GenLens[UseCase](_.stepsE)
     override val useCaseStepTree = useCaseSteps ^|-> UseCaseSteps.tree
@@ -289,34 +245,74 @@ object StaticField {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  case object StepGraph extends StaticField(
-    T.StepGraph.name, T.StepGraph, useCaseOnly, Mandatory.Not, Deletable, None)
+  case object StepGraph extends Optional {
+    override val name              = T.UseCaseStepGraph.name
+    override val fieldType         = T.UseCaseStepGraph
+    override val fieldReqTypeRules = useCaseOptionalOnly
+  }
 
-  case object ImplicationGraph extends StaticField(
-    T.ImplicationGraph.name, T.ImplicationGraph, ISubset.All(), Mandatory.Not, Deletable, None)
+  case object ImplicationGraph extends Optional {
+    override val name              = T.ImplicationGraph.name
+    override val fieldType         = T.ImplicationGraph
+    override val fieldReqTypeRules = FieldReqTypeRules.optional
+  }
+
+  case object OtherTags extends Optional {
+    override val name              = "Other Tags"
+    override val fieldType         = T.Tag
+    override val fieldReqTypeRules = FieldReqTypeRules.optional
+  }
+
+  case object AllTags extends Optional {
+    override val name              = "All Tags"
+    override val fieldType         = T.Tag
+    override val fieldReqTypeRules = FieldReqTypeRules.optional
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   // Non lazy causes utest to crash
-  // ORDER MATTERS as this is the default order of fields use in new projects
-  lazy val values: NonEmptyVector[StaticField] =
-    AdtMacros.adtValuesManually[StaticField](
+  lazy val values: NonEmptySet[StaticField] =
+    AdtMacros.adtValues[StaticField].toNES
+
+  lazy val mandatory: NonEmptySet[Mandatory] =
+    AdtMacros.adtValues[Mandatory].toNES
+
+  lazy val optional: NonEmptySet[Optional] =
+    AdtMacros.adtValues[Optional].toNES
+
+  lazy val default: NonEmptyVector[StaticField] = {
+    val nev = NonEmptyVector[StaticField](
+      OtherTags,
       ImplicationGraph,
       NormalAltStepTree,
       ExceptionStepTree,
-      StepGraph)
+      StepGraph,
+    )
+    assert(mandatory.forall(nev.whole.contains))
+    nev
+  }
 
   lazy val useCaseStepTrees: NonEmptyVector[UseCaseStepTree] =
     AdtMacros.adtValuesManually[UseCaseStepTree](NormalAltStepTree, ExceptionStepTree)
 
-  lazy val (deletable, notDeletable) =
-    values.whole.partition(_.deletable is Deletable)
+  lazy val byName: Map[String, StaticField] =
+    values.iterator.map(f => f.name -> f).toMap
 
-  lazy val names: Set[String] =
-    values.iterator.map(_.name).toSet
+  def names: Set[String] =
+    byName.keySet
 
-  implicit def equality: UnivEq[StaticField] = UnivEq.derive
+  lazy val namesLowercase: Set[String] =
+    names.iterator.map(_.toLowerCase).toSet
+
+  implicit def univEqO: UnivEq[Optional   ] = UnivEq.derive
+  implicit def univEqM: UnivEq[Mandatory  ] = UnivEq.derive
+  implicit def univEq : UnivEq[StaticField] = UnivEq.derive
 
   implicit def useCaseStepTreeEquality: UnivEq[UseCaseStepTree] = UnivEq.derive
 }
+
+// █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 sealed abstract class CustomFieldId extends TaggedInt with FieldId {
   final def foldId[A](s: StaticField => A, c: CustomFieldId => A): A = c(this)
@@ -352,19 +348,35 @@ object CustomField {
 
   // -------------------------------------------------------------------------------------------------------------------
   @Lenses
-  case class Text(id            : Text.Id,
-                  name          : String,
-                  key           : FieldRefKey,
-                  mandatory     : Mandatory,
-                  reqTypes      : ApplicableReqTypes,
-                  liveExplicitly: Live) extends CustomField(CustomFieldType.Text) {
-    override def toString = s"CustomField.Text($id, $name, $key, $mandatory, $reqTypes, $liveExplicitly)"
+  final case class Text(id               : Text.Id,
+                        name             : String,
+                        fieldReqTypeRules: FieldReqTypeRules.ForTextField,
+                        liveExplicitly   : Live) extends CustomField(CustomFieldType.Text) {
+    override def toString = s"CustomField.Text($id, $name, $fieldReqTypeRules, $liveExplicitly)"
     override def independentName = Some(name)
-    override def keyO = Some(key)
     override def live(cfg: ProjectConfig) = liveExplicitly
+
+    lazy val fieldReqTypeRulesByResolution =
+      fieldReqTypeRules.byResolution
   }
 
   object Text {
+
+    def v1(id                : Text.Id,
+           name              : String,
+           key               : String,
+           mandatory         : Mandatory,
+           applicableReqTypes: ApplicableReqTypes,
+           liveExplicitly    : Live): Text = {
+      locally(key)
+      apply(
+        id                = id,
+        name              = name,
+        fieldReqTypeRules = FieldReqTypeRules.v1(mandatory, applicableReqTypes),
+        liveExplicitly    = liveExplicitly,
+      )
+    }
+
     final case class Id(value: Int) extends CustomFieldId {
       override def toString = s"CustomField.Text.Id($value)"
     }
@@ -376,24 +388,53 @@ object CustomField {
 
   // -------------------------------------------------------------------------------------------------------------------
   @Lenses
-  case class Tag(id            : Tag.Id,
-                 tagId         : TagId,
-                 mandatory     : Mandatory,
-                 reqTypes      : ApplicableReqTypes,
-                 liveExplicitly: Live) extends CustomField(CustomFieldType.Tag) {
+  final case class Tag(id               : Tag.Id,
+                       tagId            : TagGroupId,
+                       fieldReqTypeRules: FieldReqTypeRules.ForTagField,
+                       liveExplicitly   : Live) extends CustomField(CustomFieldType.Tag) {
 
-    override def toString = s"CustomField.Tag($id, $tagId, $mandatory, $reqTypes, $liveExplicitly)"
+    override def toString = s"CustomField.Tag($id, $tagId, $fieldReqTypeRules, $liveExplicitly)"
     override def independentName = None
-    override def keyO = None
 
     def name(tags: TagTree): String =
       tags.need(tagId).tag.name
 
     override def live(cfg: ProjectConfig) =
       liveExplicitly & cfg.tags.live(tagId)
+
+    lazy val fieldReqTypeRulesByResolution =
+      fieldReqTypeRules.byResolution
   }
 
   object Tag {
+
+    private def castV1TagId(tagId: TagId): TagGroupId =
+      tagId match {
+        case i: TagGroupId      => i
+        case _: ApplicableTagId =>
+          // Safe only because
+          // 1) no data exists in prod with this case
+          // 2) this event is retired so no new data for it will ever be generated
+          throw new UnsupportedOperationException()
+      }
+
+    val tagIdv1: Lens[Tag, TagId] =
+      Lens[Tag, TagId](_.tagId)(id => _.copy(tagId = castV1TagId(id)))
+
+    def v1(id                : Tag.Id,
+           tagId             : TagId,
+           mandatory         : Mandatory,
+           applicableReqTypes: ApplicableReqTypes,
+           liveExplicitly    : Live): Tag = {
+
+      apply(
+        id                = id,
+        tagId             = castV1TagId(tagId),
+        fieldReqTypeRules = FieldReqTypeRules.v1(mandatory, applicableReqTypes),
+        liveExplicitly    = liveExplicitly,
+      )
+    }
+
     final case class Id(value: Int) extends CustomFieldId  {
       override def toString = s"CustomField.Tag.Id($value)"
     }
@@ -405,23 +446,38 @@ object CustomField {
 
   // -------------------------------------------------------------------------------------------------------------------
   @Lenses
-  case class Implication(id            : Implication.Id,
-                         reqTypeId     : ReqTypeId,
-                         mandatory     : Mandatory,
-                         reqTypes      : ApplicableReqTypes,
-                         liveExplicitly: Live) extends CustomField(CustomFieldType.Implication) {
-    override def toString = s"CustomField.Implication($id, $reqTypeId, $mandatory, $reqTypes, $liveExplicitly)"
+  final case class Implication(id               : Implication.Id,
+                               reqTypeId        : ReqTypeId,
+                               fieldReqTypeRules: FieldReqTypeRules.ForImpField,
+                               liveExplicitly   : Live) extends CustomField(CustomFieldType.Implication) {
+    override def toString = s"CustomField.Implication($id, $reqTypeId, $fieldReqTypeRules, $liveExplicitly)"
     override def independentName = None
-    override def keyO = None
 
     def name(reqTypes: ReqTypes): String =
       ReqType.name(reqTypes)(reqTypeId)
 
     override def live(cfg: ProjectConfig) =
       liveExplicitly & cfg.live(reqTypeId)
+
+    lazy val fieldReqTypeRulesByResolution =
+      fieldReqTypeRules.byResolution
   }
 
   object Implication {
+
+    def v1(id                : Implication.Id,
+           reqTypeId         : ReqTypeId,
+           mandatory         : Mandatory,
+           applicableReqTypes: ApplicableReqTypes,
+           liveExplicitly    : Live): Implication = {
+      apply(
+        id                = id,
+        reqTypeId         = reqTypeId,
+        fieldReqTypeRules = FieldReqTypeRules.v1(mandatory, applicableReqTypes),
+        liveExplicitly    = liveExplicitly,
+      )
+    }
+
     final case class Id(value: Int) extends CustomFieldId {
       override def toString = s"CustomField.Implication.Id($value)"
     }
@@ -436,28 +492,17 @@ object CustomField {
 
   // ===================================================================================================================
 
-  val independentName = Optional[CustomField, String](_.independentName)(n => {
-    case Text(a, _, b, c, d, e) => Text(a, n, b, c, d, e)
-    case f: Tag                 => f
-    case f: Implication         => f
+  val independentName = monocle.Optional[CustomField, String](_.independentName)(n => {
+    case Text(a, _, b, c) => Text(a, n, b, c)
+    case f: Tag           => f
+    case f: Implication   => f
   })
 
-  val key = Optional[CustomField, FieldRefKey](_.keyO)(n => {
-    case Text(a, b, _, c, d, e) => Text(a, b, n, c, d, e)
-    case f: Tag                 => f
-    case f: Implication         => f
-  })
-
-  def applicableReqTypes = Lens[CustomField, ApplicableReqTypes](_.reqTypes)(n => {
-    case f: Tag         => f.copy(reqTypes = n)
-    case f: Text        => f.copy(reqTypes = n)
-    case f: Implication => f.copy(reqTypes = n)
-  })
-
-  def mandatory = Lens[CustomField, Mandatory](_.mandatory)(n => {
-    case f: Text        => f.copy(mandatory = n)
-    case f: Tag         => f.copy(mandatory = n)
-    case f: Implication => f.copy(mandatory = n)
+  /** HACK: Default type set to "Any" which is a lie. Safe unless you try to change defaults. */
+  def fieldReqTypeRulesHack = Lens[CustomField, FieldReqTypeRules[Any]](_.fieldReqTypeRules)(n => {
+    case f: Tag         => f.copy(fieldReqTypeRules = n.asInstanceOf[FieldReqTypeRules.ForTagField])
+    case f: Text        => f.copy(fieldReqTypeRules = n.asInstanceOf[FieldReqTypeRules.ForTextField])
+    case f: Implication => f.copy(fieldReqTypeRules = n.asInstanceOf[FieldReqTypeRules.ForImpField])
   })
 
   def liveExplicitly = Lens[CustomField, Live](_.liveExplicitly)(n => {
@@ -465,14 +510,6 @@ object CustomField {
     case f: Tag         => f.copy(liveExplicitly = n)
     case f: Implication => f.copy(liveExplicitly = n)
   })
-
-  def name(reqTypes: ReqTypes, tags: TagTree): CustomField => String = {
-    case f: Text        => f.name
-    case f: Tag         => f.name(tags)
-    case f: Implication => f.name(reqTypes)
-  }
-
-  def nameP(p: Project) = name(p.config.reqTypes, p.config.tags.tree)
 
   implicit def equalImplication: UnivEq[Implication] = UnivEq.derive
   implicit def equalTag        : UnivEq[Tag]         = UnivEq.derive
@@ -523,10 +560,19 @@ object FieldId {
 final case class FieldSet(customFields: FieldSet.CustomFields,
                           order       : FieldSet.Order) {
 
+  def includes(f: StaticField): Boolean =
+    order.contains(f)
+
   def get(id: FieldId): Option[Field] =
     id match {
       case f : StaticField   => if (order contains f) Some(f) else None
       case id: CustomFieldId => customFields get id
+    }
+
+  def need(id: FieldId): Field =
+    id match {
+      case f : StaticField   => f
+      case id: CustomFieldId => customFields need id
     }
 
   lazy val fields: Vector[Field] =
@@ -535,29 +581,29 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
       case id: CustomFieldId => customFields need id
     }
 
-  def staticFieldIterator: Iterator[StaticField] =
-    order.toIterator.filterSubType[StaticField]
+  def idIterator(): Iterator[FieldId] =
+    order.iterator
+
+  def iterator(): Iterator[Field] =
+    idIterator().map(need)
+
+  def staticFieldIterator(): Iterator[StaticField] =
+    order.iterator.filterSubType[StaticField]
 
   def staticFieldSet: ListSet[StaticField] =
-    staticFieldIterator.to
-
-  val applicability: Applicability.Default =
-    Applicability(get(_) match {
-      case Some(f) => f.applicable
-      case None    => Applicable.never
-    })
+    staticFieldIterator().to(ListSet)
 
   def custom[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): D = {
     val f = customFields.need(id)
-    d.unapplyData(f) mustExistElse s"$id associated with wrong type: $f"
+    d.unapplyData(f) mustExistElse ErrorMsg(s"$id associated with wrong type: $f")
   }
 
-  def customAttempt[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): String \/ D =
+  def customAttempt[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): ErrorMsg \/ D =
     customFields.get(id) match {
       case Some(f) =>
-        toRight(d unapplyData f)(s"$id associated with wrong type: $f")
+        toRight(d unapplyData f)(ErrorMsg(s"$id associated with wrong type: $f"))
       case None =>
-        -\/(s"$id not found.")
+        -\/(ErrorMsg(s"$id not found."))
     }
 
   private lazy val splitFields = {
@@ -577,6 +623,9 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
 }
 
 object FieldSet {
+  val empty: FieldSet =
+    FieldSet(emptyCustomFields, StaticField.default.whole)
+
   // TODO FieldSet.Order should be NonEmptyVector.
   type Order = Vector[FieldId]
   type CustomFields = IMap[CustomFieldId, CustomField]
@@ -585,5 +634,5 @@ object FieldSet {
   def customFieldsTraversal: Traversal[CustomFields, CustomField] =
     IMap.traversal[CustomFieldId, CustomField]
 
-  implicit val equality: Equal[FieldSet] = ScalazMacros.deriveEqual
+  implicit def univEq: UnivEq[FieldSet] = UnivEq.derive
 }

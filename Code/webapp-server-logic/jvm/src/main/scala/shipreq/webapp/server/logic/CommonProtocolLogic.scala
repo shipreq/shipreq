@@ -7,7 +7,7 @@ import scalaz.{-\/, Catchable, Monad, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskmanApi, UserId => TaskmanUserId}
-import shipreq.webapp.base.protocol.CommonProtocols
+import shipreq.webapp.base.protocol.ajax.CommonProtocols
 import shipreq.webapp.base.user._
 
 trait CommonProtocolLogic[F[_]] {
@@ -47,7 +47,7 @@ object CommonProtocolLogic extends HasLogger {
       private def resolveUser(token: Security.SessionToken[Any], username: Option[Username]): F[Unit \/ Option[User]] =
         token.authenticatedUser match {
           case Some(u) =>
-            F.pure(\/-(Some(u))) // ← source of truth
+            F.pure(\/-(Some(u))) // <- source of truth
 
           case None =>
             username match {

@@ -2,7 +2,7 @@ package shipreq.base.util
 
 import japgolly.univeq.UnivEq
 import monocle.{Iso, Lens}
-import scala.collection.generic.CanBuildFrom
+import scala.collection.Factory
 import scalaz.Isomorphism.<=>
 import scalaz.{Monoid, Semigroup}
 import IsoBool._
@@ -29,6 +29,9 @@ trait IsoBool[B <: IsoBool[B]] extends (Boolean <=> B) with Product with Seriali
   @inline final def when(cond: Boolean): B =
     if (cond) this else !this
 
+  @inline final def unless(cond: Boolean): B =
+    if (cond) !this else this
+
   final override val from = is(_)
   final override val to   = when(_)
 
@@ -46,6 +49,11 @@ trait IsoBool[B <: IsoBool[B]] extends (Boolean <=> B) with Product with Seriali
 
   final def isoWhen(b: Boolean): Iso[B, Boolean] =
     if (b) Iso(from)(to) else (!this).isoWhen(true)
+
+  final def isoWhen[A <: IsoBool[A]](a: A): Iso[A, B] =
+    Iso[A, B](
+      i => if (i.is(a)) this else !this)(
+      i => if (i.is(this)) a else !a)
 
   final def whenAllAre(bs: B*): B =
     this when bs.forall(is)
@@ -103,9 +111,9 @@ object IsoBool {
         IsoBool.Values(a, a)
       def lens[A](b: B): Lens[Values[A], A] =
         IsoBool.Values.lens(b)
-      def partition[C[_], A](as: TraversableOnce[A])(f: A => B)(implicit cbf: CanBuildFrom[Nothing, A, C[A]]): Values[C[A]] = {
-        val b = Values(_ => cbf())
-        for (a <- as) b(f(a)) += a
+      def partition[C[_], A](as: IterableOnce[A])(f: A => B)(implicit cbf: Factory[A, C[A]]): Values[C[A]] = {
+        val b = Values(_ => cbf.newBuilder)
+        for (a <- as.iterator) b(f(a)) += a
         b.map(_.result())
       }
     }

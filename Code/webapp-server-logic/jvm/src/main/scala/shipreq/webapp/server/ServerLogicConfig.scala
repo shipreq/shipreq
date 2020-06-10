@@ -9,7 +9,7 @@ import scalaz.syntax.applicative._
 import shipreq.base.ops._
 import shipreq.base.util._
 import shipreq.base.util.FxModule._
-import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic, Server}
+import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic}
 
 @Lenses
 final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,

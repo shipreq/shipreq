@@ -63,10 +63,9 @@ object DB {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait Base[F[_]] {
-    def inDbTransaction[A](f: F[A]): F[A]
 
     /** @param level See java.sql.Connection */
-    def inDbTransaction[A](level: Int, f: F[A]): F[A]
+    def withTransactionLevel[A](level: Int)(f: F[A]): F[A]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -212,6 +211,9 @@ object DB {
     val userStats : F[ForOps.UserStats]
     val tableStats: F[List[ForOps.TableStat]]
     val dbSize    : F[Long]
+
+    def getUserId(user: Username \/ EmailAddr): F[Option[UserId]]
+    def createProject(userId: UserId, events: VerifiedEvent.Seq, project: Project): F[ProjectId]
   }
 
   object ForOps {
@@ -228,11 +230,13 @@ object DB {
 
     def trans[F[_], G[_]](f: ForOps[F])(t: F ~> G): ForOps[G] =
       new ForOps[G] {
-        override val now                                            = t(f.now)
-        override val userStats                                      = t(f.userStats)
-        override val tableStats                                     = t(f.tableStats)
-        override val dbSize                                         = t(f.dbSize)
-        override def getProjectEvents(a: ProjectId, b: EventFilter) = t(f.getProjectEvents(a, b))
+        override val now                                                        = t(f.now)
+        override val userStats                                                  = t(f.userStats)
+        override val tableStats                                                 = t(f.tableStats)
+        override val dbSize                                                     = t(f.dbSize)
+        override def getProjectEvents(a: ProjectId, b: EventFilter)             = t(f.getProjectEvents(a, b))
+        override def getUserId(a: Username \/ EmailAddr)                        = t(f.getUserId(a))
+        override def createProject(a: UserId, b: VerifiedEvent.Seq, c: Project) = t(f.createProject(a, b, c))
       }
   }
 

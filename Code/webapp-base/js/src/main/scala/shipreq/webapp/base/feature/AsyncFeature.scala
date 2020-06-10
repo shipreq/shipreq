@@ -2,13 +2,13 @@ package shipreq.webapp.base.feature
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.univeq.UnivEq
 import scala.reflect.ClassTag
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.{Intersection, Optics}
+import shipreq.base.util.{ErrorMsg, Intersection, Optics}
 import shipreq.webapp.base.lib.BaseReusability._
+import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.util.CallbackHelpers._
 
 /** Provides the following functionality around async actions:
@@ -43,6 +43,30 @@ import shipreq.webapp.base.util.CallbackHelpers._
   * - async tasks are run through `Write.D0` so that state is managed
   * - state is inspected when rendering to show the async status to the user
   * - state is inspected to prevent multiple async calls being in flight
+  *
+  *
+  * Specifically, there are two ways of using this.
+  *
+  *
+  * 1. On failure you will present cancel & retry buttons.
+  *
+  *    - In your render fn, pattern-match on `asyncRW.read`.
+  *      When in in progress, disable the view, show a spinning thing.
+  *      When in failed, show the cancel & retry buttons.
+  *
+  *    - Call `asyncRW.write.clearAsyncStatus` from the cancel button
+  *
+  *    - Wrap async tasks in `asyncRW.write`.
+  *      eg. `asyncRW.write(ssp(cmd))`
+  *
+  *
+  * 2. On failure you will notify the user of failure once (eg. popup msg, alert, whatever)
+  *
+  *    - In your render fn, call `AsyncFeature.isInProgress(asyncRW.read)`.
+  *       When in in progress, disable the view, show a spinning thing.
+  *
+  *    - Wrap async tasks in `asyncRW.write.onFailureShowAndForget`.
+  *      eg. `asyncRW.write.onFailureShowAndForget(ssp(cmd))`
   */
 object AsyncFeature {
 
@@ -279,10 +303,20 @@ object AsyncFeature {
   object Write {
 
     sealed trait Injector[-F] {
-      def withOnSuccess[FF <: F, A](f: Callback => AsyncCallback[FF \/ A]): Callback
+      def onSuccess[FF <: F, A](f: Callback => AsyncCallback[FF \/ A]): Callback
+
+      /** Wraps a task so that state becomes in-progress on start, and is cleared at the end.
+        *
+        * It's called `forgetFailure` because normal behaviour on failure would be to set the state to State.Failed,
+        * where as here, we clear it regardless.
+        */
+      def forgetFailure[A](ac: AsyncCallback[A]): Callback
+
+      final def onFailureShowAndForget[A](ac: AsyncCallback[ErrorMsg \/ A]): Callback =
+        forgetFailure(ac.leftFlatTapSync(GeneralTheme.showErrorMsg))
 
       final def apply[FF <: F, A](ac: AsyncCallback[FF \/ A]): Callback =
-        withOnSuccess(s => ac.rightFlatTap(_ => s.asAsyncCallback))
+        onSuccess(s => ac.rightFlatTap(_ => s.asAsyncCallback))
 
       final def clearAsyncStatus: Callback =
         apply[F, Unit](AsyncCallback.pure(\/-(())))
@@ -297,7 +331,13 @@ object AsyncFeature {
           private def onSuccess: Callback =
             clearStatus
 
-          override def withOnSuccess[FF <: F, A](create: Callback => AsyncCallback[FF \/ A]): Callback = {
+          private def onStart: Callback =
+            setState(Some(Status.InProgress))
+
+          override def forgetFailure[A](ac: AsyncCallback[A]): Callback =
+            onStart >> ac.finallyRun(clearStatus.asAsyncCallback).toCallback
+
+          override def onSuccess[FF <: F, A](create: Callback => AsyncCallback[FF \/ A]): Callback = {
 
             val taskS =
               create(onSuccess)
@@ -311,7 +351,7 @@ object AsyncFeature {
             lazy val doIt: Callback =
               // Switching this around breaks tests' MockServer's order of events.
               // i.e. it will call onSuccess which clears the status, and then set it to locked.
-              setState(Some(Status.InProgress)) >> taskSF.toCallback
+              onStart >> taskSF.toCallback
 
             doIt
           }
@@ -319,8 +359,10 @@ object AsyncFeature {
 
       val doNothing: Injector[Any] =
         new Injector[Any] {
-          override def withOnSuccess[FF <: Any, A](f: Callback => AsyncCallback[FF \/ A]): Callback =
+          override def onSuccess[FF <: Any, A](f: Callback => AsyncCallback[FF \/ A]): Callback =
             f(Callback.empty).toCallback
+          override def forgetFailure[A](ac: AsyncCallback[A]): Callback =
+            ac.toCallback
         }
     }
 

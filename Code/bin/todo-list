@@ -13,7 +13,8 @@ esac
 echo "$files" \
   | egrep -v '/_scalate/|vendor|src/it/|/assets/|/webapp/dev/' \
   | egrep -v 'shipreq-gen-deps\.js$' \
+  | fgrep -v 'TypeInfoCache.java' \
   | sort \
-  | xargs fgrep --color=$colour -n TODO \
+  | xargs grep -P --color=$colour -n '(?<!["#])TODO(?!").*' \
   | awk '{match($1,/([a-z_-]+)\/src/,a); if (NR > 1 && a[1] != p[1]) print ""; print} {match($1,/([a-z_-]+)\/src/,p)}'
 

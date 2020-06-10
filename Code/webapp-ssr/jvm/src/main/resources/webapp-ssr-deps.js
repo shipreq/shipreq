@@ -1,1 +1,1 @@
-../../../../../frontend/dist/local/webapp-ssr-deps.js
+../../../../../frontend/dist/ssr/webapp-ssr-deps.js

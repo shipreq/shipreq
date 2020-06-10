@@ -129,7 +129,9 @@ RedisTotalVer ==
         \/ redis.ver + 1 = Min[redis.events]
       Ver ==
         IF redis.events = {} THEN redis.ver ELSE Max[redis.events]
-  IN IF IsComplete THEN Ver ELSE 0
+  IN IF IsComplete
+     THEN Ver
+     ELSE redis.ver \* really this is the largest subset that is complete, i.e. the snapshot + events up to the gap
 
 ------------------------------------------------------------------------------------------------------------------------
 

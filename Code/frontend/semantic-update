@@ -4,4 +4,4 @@ cd "$(dirname "$(readlink -e "$0")")" || exit 1
 
 ./node_modules/.bin/json5 -c semantic.json5 \
   && cd semantic && ../node_modules/semantic-ui/node_modules/.bin/gulp build && cd .. \
-  && echo && shipreq/semantic/prune
+  && echo && src/semantic/prune

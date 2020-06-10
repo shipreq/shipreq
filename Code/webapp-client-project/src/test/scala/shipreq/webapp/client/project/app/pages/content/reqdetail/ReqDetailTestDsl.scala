@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.testutil.TestUtilInternals.quoteStringForDisplay
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
@@ -73,7 +72,13 @@ object ReqDetailTestDsl {
     *.focus("FilterDead").value(_.obs.generic.filterDead)
 
   val visibleFields =
-    *.focus("Visible fields").collection(_.obs.generic.fields.keys)
+    *.focus("Visible fields").collection(_.obs.generic.fieldsInOrder)
+
+  def fieldText(field: String) =
+    *.focus(s"$field field text").value(_.obs.generic.field(field).innerText)
+
+  def fieldEditorValue(field: String) =
+    *.focus(s"$field field editor value").option(_.obs.generic.field(field).editor.map(_.value))
 
   val life =
     *.focus("Life").value(_.obs.generic.live)
@@ -91,7 +96,7 @@ object ReqDetailTestDsl {
     val pubid = *.focus("Pubid").obsAndState(_.generic.pubid, _.pubidStr).assert.equal
 
     val delReasonField = *.focus("DeletedReasons visible")
-      .value(_.obs.generic.fields contains UiText.FieldNames.deletionReason)
+      .value(_.obs.generic.fields contains SpecialBuiltInField.DeletionReason.name)
       .assert.equalBy(_.obs.generic.filterDead is ShowDead)
 
     val filterDeadLocked =
@@ -112,7 +117,6 @@ object ReqDetailTestDsl {
         .assert.not.exists("exist", _.nonEmpty)
 
     val whenLive: *.Invariants = {
-
       *.emptyInvariant
     }
 
@@ -193,7 +197,7 @@ object ReqDetailTestDsl {
 
   private def _editStepText(label: String, old: Option[String], newValue: String): *.Actions =
     ( openEditor(label)
-      +> stepText(label).rename("Initial editor text").assert(old.getOrElse("")).when(_ => old.isDefined) // TODO test-state should support optional assertions
+      +> stepText(label).rename("Initial editor text").assert.equalWhenDefined(old)
       >> setStepTextEditValue(label, newValue)
       >> commitStepTextEdit(label)
     ).group(s"Edit $label text to ${quoteStringForDisplay(newValue)}")
@@ -211,6 +215,32 @@ object ReqDetailTestDsl {
     *.action(s"Abort $label text edit")(KB.Escape simulateKeyDown _.obs.uc.row(label).textEditor.get) +>
       editorCount.assert.decrement
 
+  def changeField(field: String, fromTo: (String, String)): *.Actions =
+    (doubleClickFieldValue(field)
+      +> fieldEditorValue(field).assert.contains(fromTo._1)
+      >> setFieldEditorValue(field, fromTo._2)
+      >> commitFieldEditor(field)
+      ).group(s"Change $field field from '${fromTo._1}' to '${fromTo._2}'")
+
+  def changeField(field: String, editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
+    (fieldText(field).assert(textFromTo._1)
+      +> doubleClickFieldValue(field)
+      +> fieldEditorValue(field).assert.contains(editorFromTo._1)
+      >> setFieldEditorValue(field, editorFromTo._2)
+      >> commitFieldEditor(field)
+      +> fieldText(field).assert(textFromTo._2)
+      ).group(s"Change $field field from '${textFromTo._1}' to '${textFromTo._2}'")
+
+  def changeFieldAndBack(field: String, editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
+    changeField(field, editorFromTo, textFromTo) >> changeField(field, editorFromTo.swap, textFromTo.swap)
+
+  def setFieldEditorValue(field: String, value: String): *.Actions =
+    *.action(s"Set $field editor to '$value'")(SimEvent.Change(value) simulate _.obs.generic.field(field).editor.get)
+
+  def commitFieldEditor(field: String): *.Actions =
+    *.action(s"Commit $field editor")(KB.Enter.ctrl simulateKeyDown _.obs.generic.field(field).editor.get) +>
+      editorCount.assert.decrement
+
   val filterDeadToggle =
     *.action(NameFn {
       case None    => "Toggle FilterDead"
@@ -226,7 +256,7 @@ object ReqDetailTestDsl {
   def hideDead = setFilterDead(HideDead)
   def showDead = setFilterDead(ShowDead)
 
-  val changeLife =
+  val clickDeleteOrRestore =
     *.action(NameFn(_.map(_.obs.generic.live) match {
       case None       => "Change life"
       case Some(Live) => UiText.Life.delete + " req"
@@ -243,7 +273,6 @@ object ReqDetailTestDsl {
     *.action("Hit Cancel")(i => clickEnabled(i.obs.deletionForm.get.cancelButton))
       .updateState(stateMode set Mode.Details)
 
-
   // Hit restore on the restore screen
   def restoreScreenRestore =
     *.action("Hit Restore")(i => clickEnabled(i.obs.restorationForm.get.restoreButton))
@@ -253,6 +282,16 @@ object ReqDetailTestDsl {
   def restoreScreenCancel =
     *.action("Hit Cancel")(i => clickEnabled(i.obs.restorationForm.get.cancelButton))
       .updateState(stateMode set Mode.Details)
+
+  val deleteReq = (
+    clickDeleteOrRestore.updateState(stateMode set Mode.Delete) <+ life.assert(Live) >>
+      deleteScreenDelete +> life.assert(Dead)
+    ).group("Delete req")
+
+  val restoreReq = (
+    clickDeleteOrRestore.updateState(stateMode set Mode.Restore) <+ life.assert(Dead) >>
+      restoreScreenRestore +> life.assert(Live)
+    ).group("Restore req")
 
   val doubleClickTitle =
     *.action("Double-click title")(Simulate doubleClick _.obs.generic.titleDom)

@@ -46,37 +46,37 @@ object ValidationTest extends TestSuite {
 
   override def tests = Tests {
 
-    'common {
+    "common" - {
 
-      'mandatoryShortText {
+      "mandatoryShortText" - {
         val test = Tester(CommonValidation.mandatoryShortText.toValidator)
-        * - test("", "  ", "\n")(fail("blank"))
-        * - test("hello", " hello ", "\n\nhello \n\n")(pass)
-        * - test("hello hello", "\n\nhello\n\nhello\n\n")(pass)
-        * - test("hello great", "hello\n\rgreat")(pass)
-        * - test("x" * WebappConfig.shortTextMaxLength)(pass)
-        * - test("x" * (WebappConfig.shortTextMaxLength + 1))(fail("too large"))
+        "1" - test("", "  ", "\n")(fail("blank"))
+        "2" - test("hello", " hello ", "\n\nhello \n\n")(pass)
+        "3" - test("hello hello", "\n\nhello\n\nhello\n\n")(pass)
+        "4" - test("hello great", "hello\n\rgreat")(pass)
+        "5" - test("x" * WebappConfig.shortTextMaxLength)(pass)
+        "6" - test("x" * (WebappConfig.shortTextMaxLength + 1))(fail("too large"))
       }
 
-      'largeText {
+      "largeText" - {
         val test = Tester(CommonValidation.largeText.toValidator)
-        * - test("", "  ", "\n")(pass)
-        * - test("hello", " hello ", "\n\nhello \n\n")(pass)
-        * - test("hello\n\ngreat", "\n\nhello\n\ngreat\n \n")(pass)
-        * - test("x" * WebappConfig.largeTextMaxLength)(pass)
-        * - test("x" * (WebappConfig.largeTextMaxLength + 1))(fail("too large"))
+        "1" - test("", "  ", "\n")(pass)
+        "2" - test("hello", " hello ", "\n\nhello \n\n")(pass)
+        "3" - test("hello\n\ngreat", "\n\nhello\n\ngreat\n \n")(pass)
+        "4" - test("x" * WebappConfig.largeTextMaxLength)(pass)
+        "5" - test("x" * (WebappConfig.largeTextMaxLength + 1))(fail("too large"))
       }
 
-      'optionalLargeText {
+      "optionalLargeText" - {
         val test = Tester(CommonValidation.optionalLargeText)
-        * - test(none, "  ", "\n")(fail("blank"))
-        * - test("hello", " hello ", "\n\nhello \n\n")(pass)
-        * - test("hello\n\ngreat", "\n\nhello\n\ngreat\n \n")(pass)
-        * - test("x" * WebappConfig.largeTextMaxLength)(pass)
-        * - test("x" * (WebappConfig.largeTextMaxLength + 1))(fail("too large"))
+        "1" - test(none, "  ", "\n")(fail("blank"))
+        "2" - test("hello", " hello ", "\n\nhello \n\n")(pass)
+        "3" - test("hello\n\ngreat", "\n\nhello\n\ngreat\n \n")(pass)
+        "4" - test("x" * WebappConfig.largeTextMaxLength)(pass)
+        "5" - test("x" * (WebappConfig.largeTextMaxLength + 1))(fail("too large"))
       }
 
-      'largeTextSymbols {
+      "largeTextSymbols" - {
         def test(input: String, expect: String): Unit =
           assertEq(CommonValidation.largeText.corrector(input), expect)
 
@@ -88,46 +88,46 @@ object ValidationTest extends TestSuite {
         test("a >= b >= c", "a ≥ b ≥ c")
       }
 
-      'startsWithRegex {
+      "startsWithRegex" - {
         val test = Tester(CommonValidation.invalidator.startsWithRegex("[0-9]:")(Invalidity("no")).toAuditor.toValidator)
-        'pass - test.each("3:", "8:hehe")(pass)
-        'fail - test.each("3", "33:", ":3")(fail("no"))
+        "pass" - test.each("3:", "8:hehe")(pass)
+        "fail" - test.each("3", "33:", ":3")(fail("no"))
       }
 
-      'whitelistCharRangeRegex {
+      "whitelistCharRangeRegex" - {
         val test = Tester(CommonValidation.invalidator.whitelistCharRangeRegex("0-9")(Invalidity("no")).toAuditor.toValidator)
-        'pass - test.each("", "3", "2342")(pass)
-        'fail - test.each("x3", "3x", "x")(fail("no"))
+        "pass" - test.each("", "3", "2342")(pass)
+        "fail" - test.each("x3", "3x", "x")(fail("no"))
       }
 
-      'blacklistCharRangeRegex {
+      "blacklistCharRangeRegex" - {
         val test = Tester(CommonValidation.invalidator.blacklistCharRangeRegex("0-9")(Invalidity("no")).toAuditor.toValidator)
-        'pass - test.each("", "x", "xx sda fjhgkas")(pass)
-        'fail - test.each("3", "x3", "3x", "3x3")(fail("no"))
+        "pass" - test.each("", "x", "xx sda fjhgkas")(pass)
+        "fail" - test.each("3", "x3", "3x", "3x3")(fail("no"))
       }
 
-      'whitelistChars {
+      "whitelistChars" - {
         val test = Tester(CommonValidation.invalidator.whitelistChars("[0")(Invalidity("no")).toAuditor.toValidator)
-        'pass - test.each("", "0", "[", "[0[[0[")(pass)
-        'fail - test.each("0x", "x[", "3", "!", "[0]")(fail("no"))
+        "pass" - test.each("", "0", "[", "[0[[0[")(pass)
+        "fail" - test.each("0x", "x[", "3", "!", "[0]")(fail("no"))
       }
 
-      'blacklistChars {
+      "blacklistChars" - {
         val test = Tester(CommonValidation.invalidator.blacklistChars("[0")(Invalidity("no")).toAuditor.toValidator)
-        'pass - test.each("", "x", "3!")(pass)
-        'fail - test.each("0", "x0", "0x", "[x]")(fail("no"))
+        "pass" - test.each("", "x", "3!")(pass)
+        "fail" - test.each("0", "x0", "0x", "[x]")(fail("no"))
       }
 
-      'containsAlphaAndNumber {
+      "containsAlphaAndNumber" - {
         val test = Tester(CommonValidation.invalidator.containsAlphaAndNumber.toAuditor.toValidator)
-        'pass - test.each("x3","3x","_x_3_", "_3_x_", "_ 3y3 x6x _")(pass)
-        'fail - test.each("", "_", "3", "x", "__3333_", " x")(fail("contain"))
+        "pass" - test.each("x3","3x","_x_3_", "_3_x_", "_ 3y3 x6x _")(pass)
+        "fail" - test.each("", "_", "3", "x", "__3333_", " x")(fail("contain"))
       }
 
-      'endsWithAlpha {
+      "endsWithAlpha" - {
         val test = Tester(CommonValidation.invalidator.endsWithAlpha.toAuditor.toValidator)
-        'pass - test.each("x", "3x", "x  x")(pass)
-        'fail - test.each("", "x3", "3xxx_")(fail("end"))
+        "pass" - test.each("x", "3x", "x  x")(pass)
+        "fail" - test.each("", "x3", "3xxx_")(fail("end"))
       }
 
     } // common

@@ -1,5 +1,7 @@
 package shipreq.webapp.base.event
 
+import scalaz.\/
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.Project
 
 final case class ProjectAndOrd(project: Project, ord: Option[EventOrd.Latest]) {
@@ -27,6 +29,13 @@ final case class ProjectAndOrd(project: Project, ord: Option[EventOrd.Latest]) {
 
   def ordAsInt: Int =
     ord.fold(0)(_.value)
+
+  def applyVerified(ves: VerifiedEvent.NonEmptySeq): ErrorMsg \/ ProjectAndOrd =
+    ApplyEvent.trusted.applyVerified(ves)(project)
+      .map(ProjectAndOrd(_, Some(ves.lastKey.ord.asLatest)))
+
+  def mustApplyVerified(ves: VerifiedEvent.NonEmptySeq): ProjectAndOrd =
+    applyVerified(ves).fold(_.withPrefix("Project update failed. ").throwException(), identity)
 }
 
 object ProjectAndOrd {

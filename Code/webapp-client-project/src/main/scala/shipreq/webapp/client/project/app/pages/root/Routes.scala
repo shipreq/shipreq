@@ -11,7 +11,7 @@ import monocle.macros._
 import scala.annotation.elidable
 import shipreq.base.util.Url
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.{AnalyticsConfig, WebappConfig}
+import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.text.PlainText
@@ -23,11 +23,13 @@ object Routes {
 
   sealed trait Page
   object Page {
-    case object CfgFields   extends Page
-    case object CfgIssues   extends Page
-    case object CfgReqTypes extends Page
-    case object CfgTags     extends Page
-    case object ImpGraph    extends Page
+    sealed abstract class HasStaticTitle(final val title: String) extends Page
+
+    case object CfgFields   extends HasStaticTitle("Field Config")
+    case object CfgIssues   extends HasStaticTitle("Issue Config")
+    case object CfgReqTypes extends HasStaticTitle("Req Type Config")
+    case object CfgTags     extends HasStaticTitle("Tag Config")
+    case object ReqGraph    extends Page
     case object Issues      extends Page
     case object Index       extends Page
     case object ReqTable    extends Page
@@ -49,7 +51,7 @@ object Routes {
       case ReqTable     => "ReqTable" :: Nil
       case ReqDetail(p) => PlainText.pubid(p) :: Nil
       case Issues       => "Issues" :: Nil
-      case ImpGraph     => ProjectIndex.Item.ImpGraph.title :: Nil
+      case ReqGraph     => ProjectIndex.Item.ReqGraph.title :: Nil
       case CfgFields    => "Config " + ProjectIndex.Item.CfgFields  .title :: Nil
       case CfgIssues    => "Config " + ProjectIndex.Item.CfgIssues  .title :: Nil
       case CfgReqTypes  => "Config " + ProjectIndex.Item.CfgReqTypes.title :: Nil
@@ -61,7 +63,7 @@ object Routes {
       CfgIssues,
       CfgReqTypes,
       CfgTags,
-      ImpGraph,
+      ReqGraph,
       Index,
       ReqDetail(ExternalPubid(ReqType.Mnemonic("A"), ReqTypePos(1))),
       ReqTable)
@@ -87,11 +89,10 @@ object Routes {
       def title(p: Page): String =
         WebappConfig.makePageTitle(Page.title(p) :+ rootInstance.unsafeProject().name: _*)
 
-
       ( staticPage(dsl.root       , Page.Index      )
       | staticPage(reqTablePath   , Page.ReqTable   )
       | staticPage("#issues"      , Page.Issues     )
-      | staticPage("#impgraph"    , Page.ImpGraph   )
+      | staticPage("#reqgraph"    , Page.ReqGraph   )
       | staticPage("#cfg/fields"  , Page.CfgFields  )
       | staticPage("#cfg/issues"  , Page.CfgIssues  )
       | staticPage("#cfg/reqtypes", Page.CfgReqTypes)
@@ -111,7 +112,7 @@ object Routes {
         case Page.ReqTable     => root / "reqTable"
         case Page.ReqDetail(_) => root / "reqDetail"
         case Page.Issues       => root / "issues"
-        case Page.ImpGraph     => root / "impGraph"
+        case Page.ReqGraph     => root / "impGraph"
         case Page.CfgFields    => root / "cfg/fields"
         case Page.CfgIssues    => root / "cfg/issues"
         case Page.CfgReqTypes  => root / "cfg/reqTypes"

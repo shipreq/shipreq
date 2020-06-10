@@ -13,7 +13,10 @@ object RawJsonResponse {
     new RawJsonResponse(json, headers, cookies, code)
 }
 
-case class RawJsonResponse(json: RawJsonResponse.RawJson, headers: List[(String, String)], cookies: List[HTTPCookie], code: Int) extends LiftResponse {
+final case class RawJsonResponse(json   : RawJsonResponse.RawJson,
+                                 headers: List[(String, String)],
+                                 cookies: List[HTTPCookie],
+                                 code   : Int) extends LiftResponse {
   def toResponse = {
     val bytes = json.getBytes("UTF-8")
     val h = ("Content-Length", bytes.length.toString) :: ("Content-Type", "application/json; charset=utf-8") :: headers

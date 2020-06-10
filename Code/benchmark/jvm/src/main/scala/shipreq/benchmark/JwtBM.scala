@@ -17,9 +17,9 @@ import org.openjdk.jmh.annotations._
   * [info] JwtBM.encode     hs512  avgt   24  6.184 ± 0.087  us/op
   * [info] JwtBM.encode     hs768  avgt   24  6.135 ± 0.052  us/op
   */
-@Warmup(iterations = 8, time = 1, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 8, time = 1, timeUnit = TimeUnit.SECONDS)
-@Fork(3)
+//@Warmup(iterations = 8, time = 1, timeUnit = TimeUnit.SECONDS)
+//@Measurement(iterations = 8, time = 1, timeUnit = TimeUnit.SECONDS)
+//@Fork(3)
 @State(Scope.Benchmark)
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -59,7 +59,7 @@ object JwtBM {
 
     val key: Key = Keys.hmacShaKeyFor(keyBytes)
     
-    val parser = Jwts.parser().setSigningKey(key)
+    val parser = Jwts.parserBuilder().setSigningKey(key).build()
 
     def encode() = {
       val now = System.currentTimeMillis()

@@ -6,7 +6,7 @@ import nyaya.gen._
 import nyaya.test.PropTest._
 import utest._
 import shipreq.base.test.BaseTestUtil._
-import shipreq.base.util.{Valid, VectorTree}
+import shipreq.base.util.VectorTree
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.RandomData
 import VectorTree.PartialLocation
@@ -14,7 +14,7 @@ import VectorTree.PartialLocation
 object ReqsTest extends TestSuite { // TODO Update for UCs
 
   val oneReqPerReqtypeProp =
-    Prop.distinctC[Vector, ReqId]("Req ID").forall((_: PubidRegister).value.m.values.toStream)
+    Prop.distinctC[Vector, ReqId]("Req ID").forall((_: PubidRegister).value.m.values.toList)
 
   case class PubidRegisterProps(register: PubidRegister, req: ReqIdC, reqType: CustomReqTypeId) {
     val E            = EvalOver(this)
@@ -39,18 +39,18 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
 
   def gen: Gen[PubidRegisterProps] =
     for {
-      reqTypeIds ← RandomData.customReqTypeId.vector1
-      grCount    ← Gen.chooseSize
-      ucCount    ← Gen.chooseSize
-      prAndIds   ← RandomData.pubidRegisterAndIds(reqTypeIds, grCount, ucCount)
-      req        ← Gen.newOrOld(RandomData.genericReqId: Gen[ReqIdC], prAndIds.grIds)
-      reqType    ← Gen.newOrOld(RandomData.customReqTypeId, reqTypeIds)
+      reqTypeIds <- RandomData.customReqTypeId.vector1
+      grCount    <- Gen.chooseSize
+      ucCount    <- Gen.chooseSize
+      prAndIds   <- RandomData.pubidRegisterAndIds(reqTypeIds, grCount, ucCount)
+      req        <- Gen.newOrOld(RandomData.genericReqId: Gen[ReqIdC], prAndIds.grIds)
+      reqType    <- Gen.newOrOld(RandomData.customReqTypeId, reqTypeIds)
     } yield PubidRegisterProps(prAndIds.pr, req, reqType)
 
   override def tests = Tests {
-    'pubidRegister - gen.mustSatisfyE(_.all)
+    "pubidRegister" - gen.mustSatisfyE(_.all)
 
-    'ucStepLabels {
+    "ucStepLabels" - {
       import StaticField.{NormalAltStepTree => N, ExceptionStepTree => E}
       implicit def autoPos(i: Int) = ReqTypePos(i)
       implicit def str2loc(s: String) = PartialLocation.detect(NonEmptyVector force
@@ -62,8 +62,8 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
         assertEq(f.stepLabel(uc, p, UseCaseStepLabelFmt.    `.m`),         exp.replaceFirst("^\\d+", ""))
       }
 
-      'live {
-        'na {
+      "live" - {
+        "na" - {
           test(N, 7, "0",         "7.0")
           test(N, 7, "0.0",       "7.0.1")
           test(N, 7, "0.0.0",     "7.0.1.a")
@@ -71,7 +71,7 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
           test(N, 7, "0.0.0.0.0", "7.0.1.a.i.1")
           test(N, 3, "2.5.6.4.1", "3.2.6.g.v.2")
         }
-        'e {
+        "e" - {
           test(E, 7, "0",       "7.E.1")
           test(E, 7, "0.0",     "7.E.1.a")
           test(E, 7, "0.0.0",   "7.E.1.a.i")
@@ -80,8 +80,8 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
         }
       }
 
-      'dead {
-        'na {
+      "dead" - {
+        "na" - {
           test(N, 7, "X.0",         "7.X.0")
           test(N, 7, "0.X.0",       "7.0.X.1")
           test(N, 7, "0.0.X.0",     "7.0.1.X.a")
@@ -89,7 +89,7 @@ object ReqsTest extends TestSuite { // TODO Update for UCs
           test(N, 7, "0.0.0.0.X.0", "7.0.1.a.i.X.1")
           test(N, 3, "2.5.X.6.4.1", "3.2.6.X.g.v.2")
         }
-        'e {
+        "e" - {
           test(E, 7, "X.0",       "7.E.X.1")
           test(E, 7, "0.X.0",     "7.E.1.X.a")
           test(E, 7, "0.0.X.0",   "7.E.1.a.X.i")

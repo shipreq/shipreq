@@ -1,7 +1,7 @@
 package shipreq.taskman.server.logic.business
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import scalaz.{-\/, \/-, ~>}
-import scalaz.old.NonEmptyList
 import scalaz.syntax.bind._
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
@@ -112,15 +112,15 @@ final class BusinessLogic[F[_]](emails        : Emails,
       get(id) flatMap updateML
 
     def updateML(u: ShipReqUser): Fx[Unit] =
-      run(API.BatchSubscribe(mailingListId, NonEmptyList(subscription(u))))
+      run(API.BatchSubscribe(mailingListId, NonEmptyVector.one(subscription(u))))
 
     def syncToML(sqlCond: Option[String]): Fx[Unit] =
       run(FindShipReqUsers(sqlCond)).map(_ map subscription).flatMap {
         case Nil =>
           Fx(logger info "No users to sync to mailing list.")
         case h :: t =>
-          val ss = NonEmptyList.nel(h, t)
-          Fx(logger info s"Syncing ${ss.size} users to mailing list...") >>
+          val ss = NonEmptyVector(h, t.toVector)
+          Fx(logger info s"Syncing ${ss.length} users to mailing list...") >>
             run(API.BatchSubscribe(mailingListId, ss))
       }
   }

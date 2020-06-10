@@ -5,6 +5,7 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.utils.Memo
 import nyaya.util.Multimap
 import monocle.macros.Lenses
+import scala.collection.immutable.ArraySeq
 import scalaz.{Equal, Order}
 import scalaz.std.string.stringInstance
 import shipreq.base.util._
@@ -65,8 +66,8 @@ object ReqCode {
       NonEmptyVector.force(s.split(sep).iterator.map(Node.applyFn).toVector)
   }
 
-  def debugShowCodes(codes: TraversableOnce[Value]): String =
-    codes.toList
+  def debugShowCodes(codes: IterableOnce[Value]): String =
+    codes.iterator.toList
       .map(Value.toStr(_, '.'))
       .sorted
       .map("\n  - " + _).mkString("")
@@ -102,7 +103,8 @@ object ReqCode {
       }
     }
 
-    implicit val ordering = order.toScalaOrdering
+    implicit val ordering: Ordering[Node] =
+      order.toScalaOrdering
 
     val applyFn: String => Node =
       Memo(new Node(_))
@@ -232,15 +234,34 @@ object CodeGroup {
   implicit def equalBase: UnivEq[CodeGroup]     = UnivEq.derive
 }
 
+// =====================================================================================================================
+
+/** This is currently derived automatically and stored as a lazy val.
+  * On one hand that means it's always correct, but on the other hand it's the biggest bottleneck (by far) of event
+  * application. Eventually this should be manually maintained for speed. It should also be compared to its derivation
+  * in [[DataProp]].
+  */
+final case class ReqCodeManifest(apReqCodesById       : Map[ApReqCodeId, ReqCode.Value],
+                                 reqCodeGroupsById    : Map[ReqCodeGroupId, ReqCode.Value],
+                                 activeReqCodesByReqId: Multimap[ReqId, Set, ReqCode.Value],
+                                 inactiveIdsByReqId   : Multimap[ReqId, Set, ApReqCodeId])
+
+object ReqCodeManifest {
+  implicit def univEq: UnivEq[ReqCodeManifest] = UnivEq.derive
+}
+
 /**
  * All req code data for in a project.
  */
 @Lenses
 final case class ReqCodes(trie: ReqCode.Trie) {
   import ReqCode._
-  import MTrie.Ops
 
-  private lazy val scan = new ReqCodes.Scan(trie)
+  private[data] lazy val scan =
+    new derivation.ReqCodeTrieScan(trie)
+
+  private[this] lazy val manifest =
+    derivation.ReqCodeTrieScan.deriveManifest(trie)
 
   def isEmpty: Boolean =
     trie.isEmpty
@@ -249,7 +270,31 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     trie.lookup(code)
 
   def need(code: Value): Data =
-    get(code) mustExistElse s"No node at reqcode ${code.whole mkString "."}."
+    get(code) mustExistElse ErrorMsg(s"No node at reqcode ${code.whole mkString "."}.")
+
+  def apReqCodesById: Map[ApReqCodeId, Value] =
+    manifest.apReqCodesById
+
+  def reqCodeGroupsById: Map[ReqCodeGroupId, Value] =
+    manifest.reqCodeGroupsById
+
+  def activeReqCodesByReqId: Multimap[ReqId, Set, Value] =
+    manifest.activeReqCodesByReqId
+
+  /** Unlike the active case, the same code can have multiple inactive IDs. */
+  def inactiveIdsByReqId: Multimap[ReqId, Set, ApReqCodeId] =
+    manifest.inactiveIdsByReqId
+
+  /** Active and inactive [[ReqCodeId]]s alike.
+   *
+   * This is needed in addition to [[idSet]] so that [[DataProp]] can detect duplicate IDs.
+   */
+  def idSeq: ArraySeq[ReqCodeId] =
+    scan.idSeq
+
+  /** Active and inactive [[ReqCodeId]]s alike. */
+  lazy val idSet: Set[ReqCodeId] =
+    idSeq.toSet
 
   def getReqCode(id: ReqCodeId): Option[Value] =
     id match {
@@ -258,13 +303,13 @@ final case class ReqCodes(trie: ReqCode.Trie) {
     }
 
   def reqCode(id: ReqCodeId): Value =
-    getReqCode(id) mustExistElse s"No req code associated with $id."
+    getReqCode(id) mustExistElse ErrorMsg(s"No req code associated with $id.")
 
   def getById(id: ReqCodeId): Option[Data] =
     getReqCode(id).flatMap(get)
 
   def needById(id: ReqCodeId): Data =
-    getById(id) mustExistElse s"No reqcode with id #${id.value}."
+    getById(id) mustExistElse ErrorMsg(s"No reqcode with id #${id.value}.")
 
   def liveGroup(id: ReqCodeGroupId): Option[LiveCodeGroup] =
     scan.liveGroupsById.get(id)
@@ -278,86 +323,12 @@ final case class ReqCodes(trie: ReqCode.Trie) {
   /** All groups, dead and live. */
   def groups: List[CodeGroup] =
     scan.groups
-
-  def apReqCodesById: Map[ApReqCodeId, Value] =
-    scan.apReqCodesById
-
-  def reqCodeGroupsById: Map[ReqCodeGroupId, Value] =
-    scan.reqCodeGroupsById
-
-  def activeReqCodesByReqId: Multimap[ReqId, Set, Value] =
-    scan.activeReqCodesByReqId
-
-  /** Unlike the active case, the same code can have multiple inactive IDs. */
-  def inactiveIdsByReqId: Multimap[ReqId, Set, ApReqCodeId] =
-    scan.inactiveIdsByReqId
-
-  /** Active and inactive [[ReqCodeId]]s alike.
-    *
-    * This is needed in addition to [[idSet]] so that [[DataProp]] can detect duplicate IDs.
-    */
-  def idList: List[ReqCodeId] =
-    scan.idList
-
-  /** Active and inactive [[ReqCodeId]]s alike. */
-  def idSet: Set[ReqCodeId] =
-    scan.idSet
 }
 
 object ReqCodes {
+
+  val empty: ReqCodes =
+    ReqCodes(Map.empty)
+
   implicit lazy val equality: Equal[ReqCodes] = ScalazMacros.deriveEqual
-  def empty: ReqCodes = ReqCodes(Map.empty)
-
-  private[ReqCodes] final class Scan(trie: ReqCode.Trie) {
-    import ReqCode._
-
-    private var _activeReqCodesByReqId = UnivEq.emptySetMultimap[ReqId, Value]
-    private var _apReqCodesById        = Map.empty[ApReqCodeId, Value]
-    private var _groups                = List.empty[CodeGroup]
-    private var _idList                = List.empty[ReqCodeId]
-    private var _idSet                 = Set.empty[ReqCodeId]
-    private var _inactiveIdsByReqId    = UnivEq.emptySetMultimap[ReqId, ApReqCodeId]
-    private var _liveGroups            = List.empty[LiveCodeGroup]
-    private var _liveGroupsById        = Map.empty[ReqCodeGroupId, LiveCodeGroup]
-    private var _reqCodeGroupsById     = Map.empty[ReqCodeGroupId, Value]
-
-    trie.foreachPathAndValue { (code, data) =>
-
-      for (id <- data.ids) {
-        _idList ::= id
-        _idSet += id
-        id match {
-          case i: ApReqCodeId    => _apReqCodesById    = _apReqCodesById   .updated(i, code)
-          case i: ReqCodeGroupId => _reqCodeGroupsById = _reqCodeGroupsById.updated(i, code)
-        }
-      }
-
-      _inactiveIdsByReqId ++= data.reqInactive.m
-
-      data match {
-        case d: ActiveReq   =>
-          _activeReqCodesByReqId = _activeReqCodesByReqId.add(d.reqId, code)
-
-        case d: ActiveGroup =>
-          _liveGroupsById = _liveGroupsById.updated(d.id, d.group)
-          _liveGroups ::= d.group
-          _groups ::= d.group
-
-        case _: Inactive    =>
-          ()
-      }
-
-      data.deadGroup.foreach(_groups ::= _)
-    }
-
-    val activeReqCodesByReqId = _activeReqCodesByReqId
-    val apReqCodesById        = _apReqCodesById
-    val groups                = _groups
-    val inactiveIdsByReqId    = _inactiveIdsByReqId
-    val liveGroups            = _liveGroups
-    val liveGroupsById        = _liveGroupsById
-    val idList                = _idList
-    val idSet                 = _idSet
-    val reqCodeGroupsById     = _reqCodeGroupsById
-  }
 }

@@ -87,6 +87,10 @@
         xtransition: height 0s 0s, opacity .4s 0s;
       }
 
+      .right .staticTagField > ul > li {margin-bottom: 0.7em; font-size:105%}
+      .right .staticTagField ul ul {margin-top: 0.4em; padding-bottom: .5em}
+      .right .staticTagField .all {font-weight:bold}
+
   -# ==================================================================================================================================================
   -# ==================================================================================================================================================
   %body
@@ -151,6 +155,8 @@
                 Text field
                 %i.icon.dropdown
                 .menu
+                  .item Built-in: All tags
+                  .item Built-in: Misc tags
                   .item Implication field
                   .item Tag field
                   .item Text field
@@ -255,7 +261,7 @@
                 <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
             %tr
               %td ☰
-              %td Tags
+              %td Misc tags
               %td Tag
               %td
                 Displays tags not assigned to a field.
@@ -349,6 +355,7 @@
             .inline.field
               %label Tag:
               %select.ui.dropdown
+                %option
                 %option Version
           %table.ui.single.line.table.settings
             %thead
@@ -385,11 +392,13 @@
               %select.ui.dropdown
                 %option
                   ="-"
-          .ui.message.negative(style="margin-right: 2rem")
-            .header No tag groups available
-            %p
-              ="In order to create a new tag-based field, you need a tag group that hasn't been assigned to a field yet. "
-              You can create one on the <a href="#">Tag Config</a> page.
+          .ui.message.icon.negative(style="margin-right: 2rem")
+            %i.icon.ban
+            .content
+              .header No tag groups available
+              %p
+                ="In order to create a new tag-based field, you need a tag group that hasn't been assigned to a field yet. "
+                You can create one on the <a href="#">Tag Config</a> page.
           %div(style="margin-top:2rem; display:flex")
             %div(style="flex-grow:1")
             %button.ui.button.black.basic(style="margin-right:2em")
@@ -398,6 +407,54 @@
             -# %button.ui.button.green.disabled
               %i.icon.plus
               Create
+
+        -# ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        %div.staticTagField(style="display:none")
+          %h2(style="color: #3659e2; margin-bottom:2.5rem") All tags
+          %ul
+            %li Displays <span class="all">all</span> tags in a single field, even those the appear in other tag fields.
+            %li Allows users to edit <span class="all">all</span> tags in a single place, regardless of which tag fields the tags are assigned to.
+          -# %ul
+            %li Displays <span class="all">all</span> tags in a single field
+            %li Allows users to edit <span class="all">all</span> tags in a single place
+          %div(style="margin-top:2rem; display:flex")
+            -# %button.ui.button.negative.basic(style="white-space: nowrap;")
+              %i.icon.ban
+              Remove
+            %div(style="flex-grow:1")
+            %button.ui.button.black.basic(style="margin-right:2em")
+              %i.icon.remove
+              Close
+            %button.ui.button.green.basic
+              %i.icon.plus
+              Add
+
+        -# ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        %div.staticTagField(style="display:none")
+          %h2(style="color: #3659e2; margin-bottom:2.5rem") Misc tags
+          %ul
+            %li A field for any miscellaneous tags not assigned to other tag fields.
+            %li
+              There are currently 5 tags that fit this criteria:
+              %ul.straytags
+                %li .ui.label.is-tag.red migrating
+                %li .ui.label.is-tag.olive tested
+                %li .ui.label.is-tag.blue unreleased
+                %li .ui.label.is-tag.blue v1.0
+                %li .ui.label.is-tag.blue v1.1
+            %li
+              When looking at deleted requirements, the following deleted tags are also included:
+              %ul.straytags
+                %li .ui.label.is-tag.dead assigned_to_tin
+                %li .ui.label.is-tag.dead assigned_to_xin
+          %div(style="margin-top:2rem; display:flex")
+            %button.ui.button.negative.basic(style="white-space: nowrap;")
+              %i.icon.ban
+              Remove
+            %div(style="flex-grow:1")
+            %button.ui.button.black.basic
+              %i.icon.remove
+              Close
 
 
   :javascript
@@ -421,4 +478,4 @@
       sel = (sel + 1) % all.length;
       $(all[sel]).show();
     }
-    $($('section.right > *')[0]).show()
+    $($('section.right > *')[1]).show()

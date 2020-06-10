@@ -67,4 +67,7 @@ object TextMod {
 
   def removeTrailingChar(c: Char): Endo[String] =
     Endo(s => if (s.length != 0 && s(0) == c) s.substring(1) else s)
+
+  def blacklistChars(isBlacklisted: Char => Boolean): Endo[String] =
+    Endo(_.filterNot(isBlacklisted))
 }

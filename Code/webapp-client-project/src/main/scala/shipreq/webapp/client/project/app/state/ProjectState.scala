@@ -3,13 +3,10 @@ package shipreq.webapp.client.project.app.state
 import japgolly.microlibs.utils.ConciseIntSetFormat
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.extra.Px
-import java.time.Instant
 import scala.annotation.tailrec
-import scalaz.{-\/, Need, \/-}
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
-import shipreq.webapp.base.event.{ApplyEvent, EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.data.TCB
-import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
 
 /**
@@ -49,16 +46,10 @@ final case class ProjectState(projectAndOrd  : ProjectAndOrd,
     ProjectState.removeConsecutive(pendingEvents, _.immediatelyFollowsLatest(ord)) match {
 
       case Some((ves, remainingFutureEvents)) =>
-        ApplyEvent.trusted.applyVerified(ves)(project) match {
-          case \/-(p2) =>
-            val pao2 = ProjectAndOrd(p2, Some(ves.lastKey.ord.asLatest))
-            val md2  = projectMetaData.applyEvents(ves, p2, Instant.now())
-            val s2   = ProjectState(pao2, md2, remainingFutureEvents)
-            Some(ProjectState.Update(s2, ves.values))
-          case -\/(err) =>
-            // TODO Do more when VerifiedEvent application fails
-            throw new RuntimeException(s"Update failed. $err")
-        }
+        val pao2 = projectAndOrd.mustApplyVerified(ves)
+        val md2 = projectMetaData.applyEvents(ves, pao2.project, ves.last.createdAt)
+        val s2  = ProjectState(pao2, md2, remainingFutureEvents)
+        Some(ProjectState.Update(s2, ves.values))
 
       case None =>
         if (newEvents.isEmpty)
@@ -80,7 +71,6 @@ object ProjectState {
     ProjectState(p, md, VerifiedEvent.Seq.empty)
 
   final case class Update(newState: ProjectState, newlyAppliedEvents: VerifiedEvent.Seq) {
-    def isEmpty   = newlyAppliedEvents.isEmpty
     val newEvents = NewEvents(newlyAppliedEvents, newState.project)
   }
 

@@ -61,6 +61,16 @@ object PublicSpaLogic extends HasLogger {
     issueDate(_).flatMap(f)
   }
 
+  def registrationTokenStatusFn[D[_], F[_] : Monad : Server.Time](db    : DB.ForPublicSpa[D],
+                                                                  runDB : D ~> F,
+                                                                  config: ServerLogicConfig.Security): VerificationToken => F[VerificationToken.Status] =
+    tokenStatusFn(t => runDB(db.getUserRegistrationTokenIssueDate(t)), config.registrationTokenLifespan)
+
+  def passwordResetTokenStatusFn[D[_], F[_] : Monad : Server.Time](db    : DB.ForPublicSpa[D],
+                                                                   runDB : D ~> F,
+                                                                   config: ServerLogicConfig.Security): VerificationToken => F[VerificationToken.Status] =
+    tokenStatusFn(t => runDB(db.getResetPasswordTokenIssueDate(t)), config.passwordResetTokenLifespan)
+
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   def apply[D[_], F[_]](implicit config  : ServerLogicConfig,
@@ -105,7 +115,7 @@ object PublicSpaLogic extends HasLogger {
         private val absUrlRegister2 = config.baseUrl / Urls.PublicSpaRoute.Register2.url
 
         private val getTokenStatus: VerificationToken => F[VerificationToken.Status] =
-          tokenStatusFn(t => runDB(db.getUserRegistrationTokenIssueDate(t)), config.security.registrationTokenLifespan)
+          registrationTokenStatusFn(db, runDB, config.security)
 
         def preRegistrationMsg(email: EmailAddr, u: DB.UserRegistration, now: Instant): D[(Task, Security.Result)] =
           u match {
@@ -132,11 +142,10 @@ object PublicSpaLogic extends HasLogger {
 
         def register1(emailAddrStr: String): F[ErrorMsg \/ TaskId] = {
           def registerInDb(emailAddr: EmailAddr, now: Instant): D[(Task, Security.Result)] =
-            db.inDbTransaction(
-              db.getUserRegistration(emailAddr).flatMap {
-                case None    => onNewUser(emailAddr)
-                case Some(u) => preRegistrationMsg(emailAddr, u, now)
-              })
+            db.getUserRegistration(emailAddr).flatMap {
+              case None    => onNewUser(emailAddr)
+              case Some(u) => preRegistrationMsg(emailAddr, u, now)
+            }
 
           def onNewUser(email: EmailAddr): D[(Task, Security.Result)] =
             db.createUserPlaceholder(email).map(registrationRequestedTask(email, _))
@@ -151,9 +160,9 @@ object PublicSpaLogic extends HasLogger {
             )
 
           for {
-            result ← main
+            result <- main
             secRes = result.fold(_ => Security.Result.Failure, _._2)
-            _      ← metrics.securityEvent(Security.Event.Register1, secRes)
+            _      <- metrics.securityEvent(Security.Event.Register1, secRes)
           } yield result.map(_._1)
         }
 
@@ -247,7 +256,7 @@ object PublicSpaLogic extends HasLogger {
       private[this] object ResetPasswordFns {
 
         private val getTokenStatus: VerificationToken => F[VerificationToken.Status] =
-          tokenStatusFn(t => runDB(db.getResetPasswordTokenIssueDate(t)), config.security.passwordResetTokenLifespan)
+          passwordResetTokenStatusFn(db, runDB, config.security)
 
         private val absUrlRegister2 = config.baseUrl / Urls.PublicSpaRoute.ResetPassword.url
 
@@ -256,8 +265,8 @@ object PublicSpaLogic extends HasLogger {
 
             def resetInDb(now: Instant): D[(Option[Task], Security.Result)] = {
               import DB.PasswordResetState._
-              db.inDbTransaction(Connection.TRANSACTION_SERIALIZABLE,
-                db.getPasswordResetState(user) flatMap {
+              db.withTransactionLevel(Connection.TRANSACTION_SERIALIZABLE)(
+                db.getPasswordResetState(user).flatMap {
 
                   // No token
                   case Some((email, t: NoToken)) =>

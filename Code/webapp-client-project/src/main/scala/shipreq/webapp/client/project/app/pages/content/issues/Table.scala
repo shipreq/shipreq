@@ -1,13 +1,12 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
-import shipreq.base.util.{ConsolidatedSeq, ErrorMsg}
+import shipreq.base.util.{ConsolidatedSeq, ErrorMsg, IfApplicable}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
@@ -15,26 +14,28 @@ import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.lib.DomUtil
 import shipreq.webapp.base.sort.FusedSorters
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.text.{PlainText, Text}
 import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.client.project.app.Style.{issues => *}
-import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
+import shipreq.webapp.client.project.app.pages.root.Routes
+import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.lib.EditorNavParent
 import shipreq.webapp.client.project.widgets.{NoFilterResults, ProjectWidgets}
 
 object Table {
 
   final case class StaticProps(pxProject       : Px[Project],
-                               pxRenderFeature : Px[RenderFeature.ToVdom.NoCtx.ForProject],
+                               pxRenderFeature : Px[RenderFeature.ForProject],
                                pxPlainText     : Px[PlainText.ForProject.NoCtx],
                                pxProjectWidgets: Px[ProjectWidgets.NoCtx],
                                pxFieldNameFn   : Px[FieldId ~=> String],
+                               routerCtl       : Routes.RouterCtl,
                                cmdInvoker      : Action.Cmd ~=> Callback) {
 
     val reusablePxPW  = Reusable.byRef(pxProjectWidgets)
     val pxPubidFormat = pxProjectWidgets.map(_.PubidFormat(Plain, _ => *.pubidColumnValue, titleFn = _ => None))
 
-    val component = ScalaComponent.builder[Props]("Table")
+    val component = ScalaComponent.builder[Props]
       .backend(new Backend(this, _))
       .renderBackend
       .configure(shouldComponentUpdate)
@@ -69,10 +70,11 @@ object Table {
 
   final class RenderPrep(project      : Project,
                          plainText    : PlainText.ForProject.NoCtx,
+                         routerCtl    : Routes.RouterCtl,
                          issues       : Issues,
-                         renderFeature: RenderFeature.ToVdom.NoCtx.ForProject) {
+                         renderFeature: RenderFeature.ForProject) {
     private val sortFn  = sorter.result(new Sorter.Setup(project, plainText))
-    private val toRow   = Row.fromIssue(project, renderFeature)
+    private val toRow   = Row.fromIssue(project, renderFeature, routerCtl)
     val rows            = sortFn(issues.vector.iterator.map(toRow)).iterator.toVector
     val csIssueCategory = TableRow.consolidateIssueCategories(rows.iterator.map(_.issueCategoryDesc))
     val csIssueClass    = TableRow.consolidateIssueClasses   (rows.iterator.map(_.issueClassDesc))
@@ -94,8 +96,8 @@ object Table {
     val csTitles = TableRow.consolidateTitle(groupedRows(csIds, {
       case i: Row.ForReq         => i.req.title
       case i: Row.ForRcg         => i.rcg.title
-      case _: Row.ForConfig      => Vector.empty
-      case _: Row.ForManualIssue => Vector.empty // Don't consolidate manual issue titles
+      case _: Row.ForConfig      => Text.empty
+      case _: Row.ForManualIssue => Text.empty // Don't consolidate manual issue titles
     })((_, _)))
   }
 
@@ -103,7 +105,7 @@ object Table {
     import static.{component => _, _}
 
     private val pxIssues     = Px.props($).map(_.issues).withReuse.autoRefresh
-    private val pxRenderPrep = Px.apply4(pxProject, pxPlainText, pxIssues, pxRenderFeature)(new RenderPrep(_, _, _, _))
+    private val pxRenderPrep = Px.apply4(pxProject, pxPlainText, pxIssues, pxRenderFeature)(new RenderPrep(_, _, routerCtl, _, _))
 
     /** When a user closes a field editor, either
       *
@@ -112,7 +114,7 @@ object Table {
       */
     private def focusAlternateRow(p: EditorNavParent.Props, rowIdx: Int): Callback =
       for {
-        focus <- DomUtil.activeHtmlElement.toCBO
+        focus <- CallbackOption.activeHtmlElement.asCallback
         _     <- CallbackOption.require(focus.isEmpty)
         table <- $.getDOMNode.map(_.toHtml).asCBO
       } yield {
@@ -140,12 +142,11 @@ object Table {
 
             val row = rows(rowIdx)
 
-            val editor: Option[Reusable[EditorNavParent.Props]] =
+            val editor: Option[Reusable[IfApplicable[EditorNavParent.Props]]] =
               row.editor(p.editor, reusablePxPW).map(
                 _.tuple(Reusable.implicitly(rowIdx))
-                  .map(_._1)
-                  .map(p => p.modEditor(_.onClose(focusAlternateRow(p, rowIdx))))
-              )
+                  .map(_._1.map(p =>
+                    p.modEditor(_.onClose(focusAlternateRow(p, rowIdx))))))
 
             val rowProps = TableRow.Props(
               row,
@@ -153,7 +154,7 @@ object Table {
               editor,
               pubidFormat,
               cmdInvoker,
-              p.cmdAsync.filterHolistic(cmd => row.actions.exists(_.cmd ==* cmd)), // for better Reusability
+              p.cmdAsync.filterHolistic(cmd => row.actions.exists(_.cmdOption.exists(_ ==* cmd))), // for better Reusability
               issueCategory = csIssueCategory(rowIdx),
               issueClass    = csIssueClass(rowIdx),
               idBase        = csIds(rowIdx),

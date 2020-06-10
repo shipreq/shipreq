@@ -115,8 +115,8 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
   def locAndValueIterator[B](f: (Location, A) => B): Iterator[B] =
     childrenIterator(ParentLocation.Empty, f)
 
-  def subtreeLocAndValueIterator[B](rootIndices: TraversableOnce[Int], f: (Location, A) => B): Iterator[B] =
-    rootIndices.toIterator.flatMap(i =>
+  def subtreeLocAndValueIterator[B](rootIndices: IterableOnce[Int], f: (Location, A) => B): Iterator[B] =
+    rootIndices.iterator.flatMap(i =>
       children(i).locAndValueIterator(NonEmptyVector one i, f))
 
   def append[B >: A](value: B): VectorTree[B] =
@@ -407,7 +407,7 @@ object VectorTree extends VectorTreeLowPri {
 
     implicit val ordering: Ordering[PartialLocation] =
       new Ordering[PartialLocation] {
-        val byElems = Ordering.Iterable[Int]
+        val byElems = Ordering.Implicits.seqOrdering[Vector, Int]
         override def compare(x: PartialLocation, y: PartialLocation): Int =
           if (x.validity ==* y.validity)
             byElems.compare(x.value.whole, y.value.whole)
@@ -493,7 +493,7 @@ object VectorTree extends VectorTreeLowPri {
       }
 
     final def needAt(pos: Location): Node[A] =
-      at(pos) getOrElse sys.error(s"Node not found at position ${pos.whole mkString "."}.")
+      at(pos) getOrElse ErrorMsg(s"Node not found at position ${pos.whole mkString "."}.").throwException()
 
     final def getAtLocation(pos: Location): Option[A] = {
       val it = pos.iterator
@@ -513,7 +513,7 @@ object VectorTree extends VectorTreeLowPri {
     }
 
     final def needAtLocation(pos: Location): A =
-      getAtLocation(pos) getOrElse sys.error(s"Node not found at position ${pos.whole mkString "."}.")
+      getAtLocation(pos) getOrElse ErrorMsg(s"Node not found at position ${pos.whole mkString "."}.").throwException()
 
     final def valueIterator: Iterator[A] =
       new AbstractIterator[A] {
@@ -694,19 +694,19 @@ object VectorTree extends VectorTreeLowPri {
     * Dimensions of a [[VectorTree]].
     *
     * @param maxLength Largest number of children per parent.
-    * @param maxDepth Root is depth 0, root→children is depth 1, root→children→children is depth 2, etc.
+    * @param maxDepth Root is depth 0, root->children is depth 1, root->children->children is depth 2, etc.
     */
   case class Dims(maxLength: Int, maxDepth: Int) {
     def +(d: Dims): Dims =
       ++(d :: Nil)
 
-    def ++(ds: TraversableOnce[Dims]): Dims =
-      if (ds.isEmpty)
+    def ++(ds: IterableOnce[Dims]): Dims =
+      if (ds.iterator.isEmpty)
         this
       else {
         var ml = maxLength
         var md = maxDepth
-        for (d <- ds) {
+        for (d <- ds.iterator) {
           if (d.maxLength > ml) ml = d.maxLength
           if (d.maxDepth > md) md = d.maxDepth
         }

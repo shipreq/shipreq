@@ -1,14 +1,14 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty._
-import shipreq.base.util.ISubset
+import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.util.GenericDataMacros._
 import Event._
-import Field.ApplicableReqTypes
+import RetiredGenericData._
 
 /**
  * Once a [[ProjectTemplate]] has been used (i.e. an Event exists in the database which refers to it),
@@ -39,61 +39,67 @@ object ProjectTemplate {
       events :+= e
 
     val reqTypeId = new IdCounter(CustomReqTypeId)
-    def reqType(mnemonicStr: String, name: String, imp: ImplicationRequired) = {
-      val mnemonic = ReqType.Mnemonic(mnemonicStr)
+    def reqTypeV1(mnemonicStr: String, name: String, implication: Mandatory) = {
       val id = reqTypeId.next()
-      add(CustomReqTypeCreate(id, gdAllValues(CustomReqTypeGD, "")))
+      add(CustomReqTypeCreateV1(id, CustomReqTypeGDv1(
+        mnemonic    = ReqType.Mnemonic(mnemonicStr),
+        name        = name,
+        implication = implication,
+      )))
       id
     }
 
     val issueTypeId = new IdCounter(CustomIssueTypeId)
     def issueType(keyStr: String, desc: Option[String]): Unit = {
-      val key = HashRefKey(keyStr)
-      add(CustomIssueTypeCreate(issueTypeId.next(), gdAllValues(CustomIssueTypeGD, "")))
+      add(CustomIssueTypeCreate(issueTypeId.next(), CustomIssueTypeGD(
+        key  = HashRefKey(keyStr),
+        desc = desc,
+      )))
     }
 
     val tagId = new IdCounter(identity)
-    def tagGroup(name         : String,
-                 desc         : Option[String],
-                 mutexChildren: MutexChildren,
-                 parents      : TagInTree.Parents  = Map.empty,
-                 children     : TagInTree.Children = Vector.empty) = {
+    def tagGroup(name       : String,
+                 desc       : Option[String],
+                 exclusivity: Exclusivity,
+                 parents    : TagInTree.Parents  = Map.empty,
+                 children   : TagInTree.Children = Vector.empty) = {
       val id = TagGroupId(tagId.next())
       add(TagGroupCreate(id, gdAllValues(TagGroupGD, "")))
       id
     }
-    def applicableTag(name    : String,
-                      desc    : Option[String],
-                      key     : HashRefKey,
-                      parents : TagInTree.Parents  = Map.empty,
-                      children: TagInTree.Children = Vector.empty) = {
+
+    def applicableTagV1(name    : String,
+                        desc    : Option[String],
+                        key     : HashRefKey,
+                        parents : TagInTree.Parents  = Map.empty,
+                        children: TagInTree.Children = Vector.empty) = {
       val id = ApplicableTagId(tagId.next())
-      add(ApplicableTagCreate(id, gdAllValues(ApplicableTagGD, "")))
+      add(ApplicableTagCreateV1(id, gdAllValues(RetiredGenericData.ApplicableTagGDv1, "")))
       id
     }
 
-    val allReqTypes: ApplicableReqTypes = ISubset.All()
+    def allReqTypes = ApplicableReqTypes.empty
     val customFieldId = new IdCounter(identity)
-    def customTextField(name: String, key: FieldRefKey, mandatory: Mandatory, reqTypes: ApplicableReqTypes): Unit = {
+    def customTextField(name: String, key: String, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Text.Id(customFieldId.next())
-      add(FieldCustomTextCreate(id, gdAllValues(CustomTextFieldGD, "")))
+      add(FieldCustomTextCreateV1(id, gdAllValues(CustomTextFieldGDv1, "")))
     }
-    def customTagField(tagId: TagId, mandatory: Mandatory, reqTypes: ApplicableReqTypes): Unit = {
+    def customTagField(tagId: TagId, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Tag.Id(customFieldId.next())
-      add(FieldCustomTagCreate(id, gdAllValues(CustomTagFieldGD, "")))
+      add(FieldCustomTagCreateV1(id, gdAllValues(CustomTagFieldGDv1, "")))
     }
-    def customImpField(reqTypeId: ReqTypeId, mandatory: Mandatory, reqTypes: ApplicableReqTypes): Unit = {
+    def customImpField(reqTypeId: ReqTypeId, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Implication.Id(customFieldId.next())
-      add(FieldCustomImpCreate(id, gdAllValues(CustomImpFieldGD, "")))
+      add(FieldCustomImpCreateV1(id, gdAllValues(CustomImpFieldGDv1, "")))
     }
 
-    val savedViewId = new IdCounter(reqtable.SavedView.Id)
+    val savedViewId = new IdCounter(savedview.SavedView.Id)
     def savedView(name      : String,
-                  columns   : NonEmptyVector[reqtable.Column],
-                  order     : reqtable.SortCriteria,
+                  columns   : NonEmptyVector[savedview.Column],
+                  order     : savedview.SortCriteria,
                   filterDead: FilterDead                      = HideDead,
                   filter    : Option[Filter.Valid]            = None): Unit =
-      add(SavedViewCreate(savedViewId.next(), reqtable.SavedView.Name(name), columns, order, filterDead, filter))
+      add(SavedViewCreateV1(savedViewId.next(), savedview.SavedView.Name(name), columns, order, filterDead, filter))
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -103,40 +109,40 @@ object ProjectTemplate {
       val qb = new QuickBuilder
       import qb._
 
-      val co = reqType("CO", "Constraint",                     ImplicationRequired.Not)
-      val fr = reqType("FR", "Functional Requirement",         ImplicationRequired)
-      val mf = reqType("MF", "Major Feature",                  ImplicationRequired.Not)
-      val oe = reqType("OE", "Operating Environment",          ImplicationRequired.Not)
-      val qa = reqType("QA", "Quality Attribute",              ImplicationRequired)
+    /*val co */reqTypeV1("CO", "Constraint",             Optional)
+    /*val fr */reqTypeV1("FR", "Functional Requirement", Mandatory)
+      val mf = reqTypeV1("MF", "Major Feature",          Optional)
+      val oe = reqTypeV1("OE", "Operating Environment",  Optional)
+    /*val qa */reqTypeV1("QA", "Quality Attribute",      Mandatory)
 
       issueType("TO"+"DO", "Work needs to be done.")
       issueType("PENDING", "Waiting on external information, or an external event.")
 
-      tagGroup("Actors", None, MutexChildren.Not)
+      tagGroup("Actors", None, NonExclusive)
 
-      val must   = applicableTag("Must",   "Requirement is critical to the current delivery timebox in order for it to be a success. If even one MUST requirement is not included, the project delivery should be considered a failure", HashRefKey("must"))
-      val should = applicableTag("Should", "Requirement is important but not necessary for delivery in the current delivery timebox.", HashRefKey("should"))
-      val could  = applicableTag("Could",  "Requirement is desirable but not necessary, and could improve user experience or customer satisfaction for little development cost. These will typically be included if time and resources permit.", HashRefKey("could"))
-      val pri    = tagGroup("Priority", None, MutexChildren, children = Vector(must, should, could))
+      val must   = applicableTagV1("Must",   "Requirement is critical to the current delivery timebox in order for it to be a success. If even one MUST requirement is not included, the project delivery should be considered a failure", HashRefKey("must"))
+      val should = applicableTagV1("Should", "Requirement is important but not necessary for delivery in the current delivery timebox.", HashRefKey("should"))
+      val could  = applicableTagV1("Could",  "Requirement is desirable but not necessary, and could improve user experience or customer satisfaction for little development cost. These will typically be included if time and resources permit.", HashRefKey("could"))
+      val pri    = tagGroup("Priority", None, Exclusive, children = Vector(must, should, could))
 
-      val v10  = applicableTag("Version 1.0", None, HashRefKey("v1.0"))
-      val urel = tagGroup("Unreleased", "Product version in which requirements are planned for implementation.", MutexChildren.Not, children = Vector(v10))
-      val rel  = tagGroup("Released", "Product version in which requirements were implemented.", MutexChildren.Not)
-      val ver  = tagGroup("Version", "Target product version.", MutexChildren.Not, children = Vector(rel, urel))
+      val v10  = applicableTagV1("Version 1.0", None, HashRefKey("v1.0"))
+      val urel = tagGroup("Unreleased", "Product version in which requirements are planned for implementation.", NonExclusive, children = Vector(v10))
+      val rel  = tagGroup("Released", "Product version in which requirements were implemented.", NonExclusive)
+      val ver  = tagGroup("Version", "Target product version.", NonExclusive, children = Vector(rel, urel))
 
-      customTextField("Detail", FieldRefKey("detail"), Mandatory.Not, allReqTypes)
-      customImpField(mf,     Mandatory    , ISubset.Not(NonEmptySet(mf, oe)))
-      customTagField(pri,    Mandatory.Not, allReqTypes)
-      customTagField(ver,    Mandatory.Not, allReqTypes)
+      customTextField("Detail", "detail", Optional,  allReqTypes)
+      customImpField(mf,                  Mandatory, ApplicableReqTypes.blacklist(mf, oe))
+      customTagField(pri,                 Optional,  allReqTypes)
+      customTagField(ver,                 Optional,  allReqTypes)
 
-      import reqtable._, SortCriterion.SyntaxHelpers._
+      import shipreq.webapp.base.data.savedview._, SortCriterion.SyntaxHelpers._
 
       savedView("Default",
-        NonEmptyVector(Column.Pubid, Column.Title, Column.Tags),
+        NonEmptyVector(Column.Pubid, Column.Title, Column.OtherTags),
         SortCriteria(Vector.empty, Column.Pubid / SortMethod.Asc))
 
       savedView("By Code",
-        NonEmptyVector(Column.Code, Column.Pubid, Column.Title, Column.Tags),
+        NonEmptyVector(Column.Code, Column.Pubid, Column.Title, Column.OtherTags),
         SortCriteria(Vector(Column.Code / SortMethod.AscThenBlanks), Column.Pubid / SortMethod.Asc))
 
       qb.events

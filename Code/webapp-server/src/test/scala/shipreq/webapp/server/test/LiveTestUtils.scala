@@ -5,9 +5,12 @@ import net.liftweb.http.LiftRules
 import net.liftweb.http.testing._
 import org.apache.commons.httpclient.{HttpClient, HttpMethodBase}
 import shipreq.base.test.BaseTestUtil._
+import shipreq.base.test.db._
 import shipreq.base.util.FxModule._
+import shipreq.base.util.ThreadUtils
 import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol.Protocol
+import shipreq.webapp.base.protocol.entrypoint.ClientSideProc
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.Security
@@ -15,49 +18,91 @@ import shipreq.webapp.server.logic.Security.SessionRestoreResult
 import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.security.SecurityInterpreter
 
+object LiveTestUtils {
+
+  private val lock = new Object
+
+  private var registered: List[LiveTestUtils] =
+    Nil
+
+  private lazy val registerShutdown: Unit =
+    ThreadUtils.runOnShutdown("LiveTestUtils", shutdown())
+
+  private[LiveTestUtils] def register(l: LiveTestUtils): Unit =
+    lock.synchronized {
+      registerShutdown
+      registered ::= l
+    }
+
+  def shutdown(): Unit =
+    lock.synchronized {
+      registered.foreach(_.shutdown())
+      registered = Nil
+    }
+}
+
 /**
  * A test case that requires connectivity to a running Jetty instance.
  */
-object LiveTestUtils {
+final class LiveTestUtils {
+
+  LiveTestUtils.register(this)
 
   private def jetty = TestJetty
 
+  var xa: ImperativeXA =
+    null
+
   val init: () => Unit = onceUnit {
-    PrepareEnv.db()
-    PrepareEnv.routes()
-    jetty.start()
-    _shutdown = onceUnit {
-      //import Console._
-      //println(s"$BLUE_B$BOLD${WHITE}SHUTTING DOWN!$RESET")
-      jetty.shutdown()
-      TestDb.shutdown()
+    xa = TestDb.acquireRealXA()
+    addShutdownHook {
+      TestDb.releaseRealXA()
+      TestDb.truncateAll()
     }
+
+    PrepareEnv.dbVia(xa)
+    PrepareEnv.routes()
+    PrepareEnv.lift()
+
+    jetty.start()
+    addShutdownHook(jetty.shutdown())
   }
 
-  private var _shutdown: () => Unit =
-    () => ()
+  private var _shutdown: List[Fx[Unit]] =
+    Nil
 
-  def shutdown(): Unit =
-    _shutdown()
+  /** These will be executed in reverse order */
+  private def addShutdownHook(f: => Unit): Unit =
+    _shutdown ::= Fx(f)
+
+  def shutdown(): Unit = {
+    _shutdown.foreach(_.attempt.unsafeRun())
+    _shutdown = Nil
+  }
+
+  lazy val userFixture =
+    UserFixture(xa)
+
+  def dbUtil =
+    userFixture.dbUtil
+
+  implicit def dbAlgebra =
+    dbUtil.dbAlgebra
 
   lazy val testKit: TestKit =
     new TestKit {
       init()
 
-      override def baseUrl = jetty.url
+      override def baseUrl =
+        jetty.url
 
       implicit override def responseCapture(fullUrl: String, httpClient: HttpClient, getter: HttpMethodBase) = {
         getter.setFollowRedirects(false)
         super.responseCapture(fullUrl, httpClient, getter)
       }
     }
-  import testKit.responseCapture
 
-  def newDbConnection() = TestDb.newConnection()
-  lazy val dbUtil = DbUtil(newDbConnection())
-  lazy val userFixture = UserFixture(dbUtil.xa)
-  implicit def dbAlgebra = PrepareEnv.dbAlgebra
-  def xa = userFixture.xa
+  import testKit.responseCapture
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -105,7 +150,7 @@ object LiveTestUtils {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class LiveTestHttpResponse(private val resp: HttpResponse) extends AnyVal {
+  implicit class LiveTestHttpResponse(resp: HttpResponse) {
     def bodyString: String =
       resp.bodyAsString.openOrThrowException(s"Unable to read body from ${resp.body}")
 
@@ -183,7 +228,4 @@ object LiveTestUtils {
         case SessionRestoreResult.None       => None
       }
   }
-
-  implicit def toLiveTestHttpResponse(a: HttpResponse): LiveTestHttpResponse =
-    new LiveTestHttpResponse(a)
 }

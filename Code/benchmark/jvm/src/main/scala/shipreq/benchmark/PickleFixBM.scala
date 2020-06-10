@@ -132,9 +132,6 @@ object PickleFixBM {
   }
 }
 
-@Warmup(iterations = 10)
-@Measurement(iterations = 10)
-@Fork(1)
 @BenchmarkMode(Array(Mode.AverageTime))
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
@@ -150,7 +147,7 @@ class PickleFixBM {
 
   var data: Calc = _
 
-  @Setup def setup = {
+  @Setup def setup() = {
     data = Recursion.ana(gen)(Spec(width, depth))
   }
 

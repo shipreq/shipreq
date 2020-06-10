@@ -9,10 +9,12 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.{ErrorMsg, Retries, Url}
 import shipreq.webapp.base.CssSettings._
 import shipreq.webapp.base.feature.ErrorHandlingFeature
-import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.InitAppData
-import shipreq.webapp.base.protocol.ProjectSpaEntryPoint.InitData
-import shipreq.webapp.base.protocol.{ClientSideProcImpl, CommonProtocolsJs, ProjectSpaEntryPoint, ProjectSpaProtocols, WebSocketClient}
+import shipreq.webapp.base.lib.{ConfirmJs, LoggerJs, PromptJs}
+import shipreq.webapp.base.protocol.ajax.CommonProtocolsJs
+import shipreq.webapp.base.protocol.entrypoint.{ClientSideProcImpl, ProjectSpaEntryPoint}
+import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint.InitData
+import shipreq.webapp.base.protocol.websocket.{ProjectSpaProtocols, WebSocketClient}
+import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.InitAppData
 import shipreq.webapp.base.ui.{BaseStyles, ReauthenticationModal}
 import shipreq.webapp.client.loaders.ProjectSpaLoader
 import shipreq.webapp.client.project.app.pages.root._
@@ -48,7 +50,7 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
 
   private def onLoad(i: InitData)(g: Global, ia: InitAppData): Callback =
     Callback {
-      val root     = new LoadedRoot(i, g)
+      val root     = new LoadedRoot(i, g, ConfirmJs.real, PromptJs.real)
       val baseUrl  = determineBaseUrl(location.href)
       val router   = Router(baseUrl, Routes.routerConfig(root))
       val metadata = CommonProtocolsJs.Metadata.client(i.username, g.projectMetadata(i.projectId))

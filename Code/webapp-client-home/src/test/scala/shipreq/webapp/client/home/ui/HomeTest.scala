@@ -7,8 +7,9 @@ import monocle.macros.Lenses
 import org.scalajs.dom.html
 import utest._
 import shipreq.webapp.base.data.ProjectMetaData
-import shipreq.webapp.base.protocol.{HomeSpaEntryPoint, HomeSpaProtocols}
-import shipreq.webapp.base.test.TestAjaxClient
+import shipreq.webapp.base.protocol.ajax.HomeSpaProtocols
+import shipreq.webapp.base.protocol.entrypoint.HomeSpaEntryPoint
+import shipreq.webapp.base.protocol.ajax.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.user._
@@ -108,7 +109,7 @@ object HomeTest extends TestSuite {
     ReactTestUtils.withRenderedIntoDocument(props.render)(c =>
       plan
         .addInvariants(invariants)
-        .withInitialState(State("", CPState.Blank, ps.map(_.name)(collection.breakOut), 0))
+        .withInitialState(State("", CPState.Blank, ps.iterator.map(_.name).toVector, 0))
         .test(Observer(new HomeObs(_, c.domZipper)))
         .withRef(cp)
         .run()
@@ -125,7 +126,7 @@ object HomeTest extends TestSuite {
   }
 
   override def tests = Tests {
-    'createProject - run(Data.pc)(Plan.action(
+    "createProject" - run(Data.pc)(Plan.action(
       setCPText("    ")
         >> setCPText("Oh and I see and I know, and suddenly I'm on my own, but it's now and it's no, at least it isn't tomorrow. " * 3, CPState.InputError)
         >> setCPText("  ahhhh ness  ", CPState.Ready)

@@ -1,5 +1,6 @@
 package shipreq.benchmark
 
+import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.server.logic._
@@ -13,6 +14,8 @@ import shipreq.webapp.server.logic._
   * [info] ObfuscationBM.obfuscate    thrpt   20  3885.695 ± 95.931  ops/s
   */
 @State(Scope.Benchmark)
+@BenchmarkMode(Array(Mode.AverageTime))
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
 class ObfuscationBM {
   import ObfuscationBM._
 

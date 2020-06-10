@@ -1,7 +1,7 @@
 const
   Webpack = require('webpack'),
   WebpackMerge = require('webpack-merge'),
-  common = require('./common');
+  common = require('./runtime');
 
 const ctx = {
   mode: 'dev',

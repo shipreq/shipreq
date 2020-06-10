@@ -14,7 +14,7 @@ object MicroCacheTest extends TestSuite {
 
   override def tests = Tests {
 
-    'CacheVar {
+    "CacheVar" - {
       def newCacheVar(policy: CachePolicy[Any]) = {
         val f = fn
         val c = CacheVar[Int](policy)
@@ -36,7 +36,7 @@ object MicroCacheTest extends TestSuite {
       }
     }
 
-    'CacheFn {
+    "CacheFn" - {
       def newCacheFn(policy: CachePolicy[Any]) = { val f = fn; CacheFn[Int](f())(policy) }
 
       "NeverExpire policy: should always return the same value" - {

@@ -2,7 +2,7 @@ const
   Webpack = require('webpack'),
   WebpackMerge = require('webpack-merge'),
   TerserPlugin = require('terser-webpack-plugin'),
-  common = require('./common');
+  common = require('./runtime');
 
 const ctx = {
   mode: 'prod',

@@ -81,7 +81,7 @@ object ProjectText {
           d.deadGroup match {
             case Some(g) if g.id ==* id => DeadGroup(code, g)
             case _                      =>
-              def fail = mustNotHappen(s"$id not found in $code: $d")
+              def fail = mustNotHappen(ErrorMsg(s"$id not found in $code: $d"))
               id match {
                 case i: ApReqCodeId =>
                   d.reqInactive.m.find(_._2 contains i) match {
@@ -109,7 +109,7 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): Out
 
-  protected def _text(text: Text.AnyOptional, live: Live): Out
+  protected def _text(text: Text.AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity): Out
 
   protected def deletionReasonWhenNoneGiven: Out
 
@@ -131,7 +131,7 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   def reqCode(c: ReqCode.Value): Out
 
-  def reqCodes(reqCodes: TraversableOnce[ReqCode.Value]): Out
+  def reqCodes(reqCodes: IterableOnce[ReqCode.Value]): Out
 
   def reqCodeTree(items: Vector[ReqCodeTreeItem]): Out
 
@@ -155,7 +155,7 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   protected final val latestDeletionReasonById: ReqId => Option[Out] =
     Memo(id =>
-      project.content.deletionReasons.getLatest(id).map(text(_, Dead)))
+      project.content.deletionReasons.getLatest(id).map(text(_, Dead, Valid.always)))
 
   protected final def memoByReqId = Memo.by[Req, ReqId](_.id)
 
@@ -175,7 +175,7 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   final val codeGroupTitle: CodeGroup => Out =
     Memo.by((_: CodeGroup).id)(g =>
-      text(g.title, g.live, Mandatory.Not))
+      text(g.title, g.live, Valid.always, Optional))
 
   final def customTextField(id: CustomField.Text.Id, req: Req, live: Live, mandatory: Mandatory): Out =
     customTextFieldOption(id)(req).getOrElse[Out] {
@@ -187,11 +187,11 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   final val customTextFieldOption: CustomField.Text.Id => Req => Option[Out] =
     Memo { fid =>
-      project.content.reqText.get(fid) match {
+      project.content.reqText.data.get(fid) match {
         case Some(m) =>
           val liveField = cfg.fields.customFields.need(fid).live(cfg)
           memoByReqId(r =>
-            m.get(r.id).map(text(_, liveField & r.live(cfg.reqTypes))))
+            m.get(r.id).map(text(_, liveField & r.live(cfg.reqTypes), project.naTagsForReq(r))))
         case None =>
           Function const None
       }
@@ -212,7 +212,11 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
           case Live =>
             r.implicitLiveStatus(cfg.reqTypes) match {
               case NoImpact      => NotApplicable // req is live
-              case ReqTypeIsDead => Applicable(deletionReasonWhenReqTypeIsDead(cfg.reqTypes.need(r.pubid.reqTypeId)))
+              case ReqTypeIsDead =>
+                cfg.reqTypes.get(r.pubid.reqTypeId) match {
+                  case Some(rt) => Applicable(deletionReasonWhenReqTypeIsDead(rt))
+                  case None     => NotApplicable
+                }
             }
           case Dead => Applicable(latestReason(r.id))
         }
@@ -236,13 +240,15 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
       _implicationList(ids)
 
   final def manualIssue(text: Text.ManualIssue.NonEmptyText): Out =
-    _text(text.whole, Live)
+    _text(text.whole, Live, Valid.always)
 
-  final val reqTitle: Req => Out =
+  final val reqTitle: Req => Out = {
+    def make(t: Text.AnyOptional, req: Req) = text(t, req.live(cfg.reqTypes), project.naTagsForReq(req), Mandatory)
     memoByReqId {
-      case gr: GenericReq => text(gr.title, gr live cfg.reqTypes, Mandatory)
-      case uc: UseCase    => text(uc.title, uc.liveUC, Mandatory)
+      case gr: GenericReq => make(gr.title, gr)
+      case uc: UseCase    => make(uc.title, uc)
     }
+  }
 
   final def reqTitleById(id: ReqId): Out =
     reqTitle(project.content.reqs.need(id))
@@ -256,14 +262,14 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
     else
       _tagList(ids, validity)
 
-  final def text(text: Text.AnyNonEmpty, live: Live): Out =
-    _text(text.whole, live)
+  final def text(text: Text.AnyNonEmpty, live: Live, tagValidity: ApplicableTagId => Validity): Out =
+    _text(text.whole, live, tagValidity)
 
-  final def text(text: Text.AnyOptional, live: Live, mandatory: Mandatory): Out =
+  final def text(text: Text.AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity, mandatory: Mandatory): Out =
     if (text.isEmpty && live.is(Live) && mandatory.is(Mandatory))
       whenBlankButMandatory
     else
-      _text(text, live)
+      _text(text, live, tagValidity)
 
   final def useCaseStepTextAndFlow(f: UseCaseStep.Focus, fd: FilterDead): Out =
     useCaseStepTextAndFlow(f.textAndFlow(fd), f.live)

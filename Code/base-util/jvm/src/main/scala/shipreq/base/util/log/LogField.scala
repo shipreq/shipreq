@@ -8,6 +8,7 @@ import java.time.Duration
 import java.util.UUID
 import net.logstash.logback.argument.StructuredArgument
 import org.slf4j.MDC
+import scala.annotation.nowarn
 
 sealed abstract class LogField[T <: LogField.Type, @specialized(Long, Boolean) -A] private[log] (final val key: String) { self =>
 
@@ -26,10 +27,9 @@ sealed abstract class LogField[T <: LogField.Type, @specialized(Long, Boolean) -
   final def optional(o: Option[A]): StructuredArgument =
     o.fold(LogField.emptyArg)(apply)
 
-  private final def convInput[T2 <: LogField.Type](t2: T2, i: fieldType.Input)(implicit ev: T =:= T2): t2.Input = {
-    val _ = ev
+  @nowarn("cat=unused")
+  private final def convInput[T2 <: LogField.Type](t2: T2, i: fieldType.Input)(implicit ev: T =:= T2): t2.Input =
     i.asInstanceOf[t2.Input]
-  }
 
   final def mdcUnsafePut(value: A)(implicit ev: T =:= LogField.Text.type): Unit = {
     val str = convInput(LogField.Text, conv(value))
@@ -135,10 +135,10 @@ object LogField {
       generic[UnsafeJson[A]](key, fieldType)
     }
 
-    private val stringMapEncoder: Encoder[Traversable[(String, String)]] =
-      Encoder.instance(i => Json.obj(i.toIterator.map(x => x._1 -> Json.fromString(x._2)).toList: _*))
+    private val stringMapEncoder: Encoder[Iterable[(String, String)]] =
+      Encoder.instance(i => Json.obj(i.iterator.map(x => x._1 -> Json.fromString(x._2)).toList: _*))
 
-    def stringMap(key: String): UnsafeJsonLogField[Traversable[(String, String)]] =
+    def stringMap(key: String): UnsafeJsonLogField[Iterable[(String, String)]] =
       UnsafeJson(key)(stringMapEncoder)
   }
 

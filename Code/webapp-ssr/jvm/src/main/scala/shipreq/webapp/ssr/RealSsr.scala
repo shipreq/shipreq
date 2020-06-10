@@ -9,18 +9,16 @@ object RealSsr {
   import SsrSharedData._
 
   val setup: Expr[Unit] =
-    ReactSsr.Setup(
-      Expr.requireFileOnClasspath("webapp-ssr-deps.js"),
-      Expr.requireFileOnClasspath("webapp-ssr.js"),
-    )
+    ReactSsr.Setup(Expr.requireFileOnClasspath("webapp-ssr-deps.js")) >>
+      Expr.requireFileOnClasspath("webapp-ssr.js").void
 
   val renderPublic: PublicInitData => Expr[String] =
-    Expr.compileFnCall1[PublicInitData](SsrJsFunctionManifest.Public)(_.asString)
+    Expr.fn1[PublicInitData](SsrJsFunctionManifest.PublicLoader).compile(_.asString)
 
   val renderHomeSpaLoader: HomeSpaLoaderData => Expr[String] =
-    Expr.compileFnCall1[HomeSpaLoaderData](SsrJsFunctionManifest.HomeSpaLoader)(_.asString)
+    Expr.fn1[HomeSpaLoaderData](SsrJsFunctionManifest.HomeSpaLoader).compile(_.asString)
 
   val renderProjectSpaLoader: ProjectSpaLoaderData => Expr[String] =
-    Expr.compileFnCall1[ProjectSpaLoaderData](SsrJsFunctionManifest.ProjectSpaLoader)(_.asString)
+    Expr.fn1[ProjectSpaLoaderData](SsrJsFunctionManifest.ProjectSpaLoader).compile(_.asString)
 
 }

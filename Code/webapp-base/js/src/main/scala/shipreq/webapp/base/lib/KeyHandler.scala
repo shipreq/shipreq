@@ -74,9 +74,16 @@ object KeyHandler {
     def toCallbackOption(e: ReactKeyboardEvent): CallbackOption[Unit] =
       CallbackOption.require(satisfiedBy(e))
 
-    def satisfiedBy(e: ReactKeyboardEvent): Boolean =
-      (e.keyCode ==* keyCode) &&
-      ModKeys.All.forall(k => k.isPressed(e) ==* modKeys.contains(k))
+    def satisfiedBy(e: ReactKeyboardEvent): Boolean = {
+
+      // Sometimes e.keyCode is undefined. I've noticed this when Chrome pops up suggestions of usernames it remembers
+      // and I click one.
+      val eventKeyCode: Int =
+        try e.keyCode catch { case _: Throwable => Int.MinValue }
+
+      (eventKeyCode ==* keyCode) &&
+        ModKeys.All.forall(k => k.isPressed(e) ==* modKeys.contains(k))
+    }
 
     def handle(response: Response): KeyHandler =
       KeyHandler(this, response)

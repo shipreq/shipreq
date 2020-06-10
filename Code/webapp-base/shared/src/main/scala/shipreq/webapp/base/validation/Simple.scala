@@ -17,7 +17,9 @@ object Simple {
     def toText(invalidity: Invalidity): String =
       toLines(invalidity).whole.mkString("\n")
 
-    val applicative: Applicative[Invalidity \/ ?] =
+    // ****[  Don't forget there's: GeneralTheme.renderSimpleInvalidity  ]****
+
+    val applicative: Applicative[Invalidity \/ *] =
       Generic.AccumuateErrors.applicativeInstance[Invalidity]
   }
 

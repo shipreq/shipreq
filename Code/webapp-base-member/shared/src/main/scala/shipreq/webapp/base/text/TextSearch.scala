@@ -4,12 +4,16 @@ import scala.collection.immutable.IntMap
 import scalaz.Need
 import shipreq.base.util.{IMap, OptionalBoolFn}
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.algorithm.BoyerMooreHorspool
 import shipreq.webapp.base.data._
 
 object TextSearch {
 
   def apply(project: Project,  plainText: PlainText.ForProject.NoCtx): TextSearch =
     new TextSearch(project, plainText)
+
+  lazy val empty: TextSearch =
+    new TextSearch(Project.empty, PlainText.ForProject.noCtx.empty)
 
   // ===================================================================================================================
 
@@ -47,112 +51,6 @@ object TextSearch {
     @inline def charAt(i: Int): Char = data(i)
   }
 
-  final val CharArrayCutoff = 127
-
-  final class CharToInt(default: Int) {
-    private[this] val array = Array.fill(CharArrayCutoff)(default)
-    private[this] var map   = IntMap.empty[Int]
-
-    def apply(ch: Char): Int = {
-      val i = ch.toInt
-      if (i < CharArrayCutoff)
-        array(i)
-      else
-        map.getOrElse(i, default)
-    }
-
-    def update(ch: Char, v: Int): Unit = {
-      val i = ch.toInt
-      if (i < CharArrayCutoff)
-        array(i) = v
-      else
-        map = map.updated(i, v)
-    }
-  }
-
-//  /**
-//   * Knuth-Morris-Pratt DFA substring search.
-//   *
-//   * "Algorithms, Fourth Edition", pg. 768.
-//   */
-//  final class KMP(pat: Normalised) {
-//    private val M = pat.length
-//
-//    private val emptyV = IntMap.empty[Int]
-//    private val data = Array.fill(M)(emptyV)
-//    private def get(ch: Char, pos: Int): Int =
-//      data(pos).getOrElse(ch, 0)
-//
-//    @inline private def init(): Unit = {
-//      def set(ch: Char, pos: Int)(v: Int): Unit = {
-//        val m = data(pos)
-//        data(pos) = m.updated(ch, v)
-//      }
-//      set(pat.charAt(0), 0)(1)
-//      var x = 0
-//      var j = 1
-//      while (j < M) {
-//        data(j) = data(x)
-//        val ch = pat.charAt(j)
-//        set(ch, j)(j + 1)
-//        x = get(ch, x)
-//        j += 1
-//      }
-//    }
-//    init()
-//
-//    def search(txt: Normalised): Boolean = {
-//      val N = txt.length
-//      var i = 0
-//      var j = 0
-//      while (i < N && j < M) {
-//        j = get(txt charAt i, j)
-//        i += 1
-//      }
-//      j == M
-//    }
-//  }
-
-  /**
-   * Boyer-Moore-Horspool.
-   *
-   * It is a simplification of the Boyer–Moore string search algorithm which is related to the Knuth–Morris–Pratt algorithm.
-   * The algorithm trades space for time in order to obtain an average-case complexity of O(N) on random text,
-   * although it has O(MN) in the worst case, where the length of the pattern is M and the length of the search string is N.
-   */
-  final class BoyerMooreHorspool(pat: Normalised) {
-    private val m = pat.length
-    private val `m - 1` = m - 1
-
-    private val badCharShift = new CharToInt(m)
-    @inline private def init(): Unit = {
-      var i = 0
-      while (i < `m - 1`) {
-        badCharShift(pat charAt i) = `m - 1` - i
-        i += 1
-      }
-    }
-    init()
-
-    def search(txt: Normalised): Boolean = {
-      val n = txt.length
-      if (n > 0) {
-        val stop = n - m
-        var start = 0
-        while (start <= stop) {
-          var index = `m - 1`
-          while (txt.charAt(start + index) == pat.charAt(index)) {
-            if (index == 0)
-              return true
-            index -= 1
-          }
-          start += badCharShift(txt.charAt(start + `m - 1`))
-        }
-      }
-      false
-    }
-  }
-
   // ===================================================================================================================
 
   @inline private implicit def autoNeedValue[A](n: Need[A]): A = n.value
@@ -183,16 +81,16 @@ object TextSearch {
 
   private val searchAll: SearchFn =
     a => IEF(
-      e => a.search(e.title) || a.search(e.textFields),
-      _.title |> a.search,
-      _.title |> a.search,
+      e => a.search(e.title.data) || a.search(e.textFields.data),
+      e => a.search(e.title.data),
+      e => a.search(e.title.data),
     )
 
   private val searchTitles: SearchFn =
     a => IEF(
-      _.title |> a.search,
-      _.title |> a.search,
-      _.title |> a.search,
+      e => a.search(e.title.data),
+      e => a.search(e.title.data),
+      e => a.search(e.title.data),
     )
 
   // Indexes
@@ -227,7 +125,7 @@ object TextSearch {
       if (substr.isEmpty)
         matchEverything
       else {
-        val algo = new BoyerMooreHorspool(norm(substr))
+        val algo = new BoyerMooreHorspool(norm(substr).data)
         val f = newFilter(searchFn(algo))
         s(f)
       }
@@ -246,9 +144,9 @@ object TextSearch {
         manualIssue = i.manualIssue.map[ManualIssueId](f => indexM.get(_) exists f),
       ))(SearchFilter.empty)
 
-    def searchAll(substr: String): Stream[Req] = {
+    def searchAll(substr: String): Iterator[Req] = {
       // whitespace.split(substr).filter(_.nonEmpty)
-      def all = indexR.values.toStream
+      def all = indexR.values.iterator
       search(substr, all filter _.req.toFn)(all).map(_.req)
     }
   }

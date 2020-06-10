@@ -1,0 +1,375 @@
+uce
+.ref.reqs
+.ref.shr
+.subreq.fields
+.subreq.steps
+.tag-ap
+  .add
+  .remove
+  .fields
+fieldset
+  .mandatory
+  .reqtype
+    .all
+    .whitelist
+    .blacklist
+  .zero
+.mod
+  .list
+  .create
+  .update
+    .refs
+    .order
+  .delete
+    .usage-summary
+    .usage-inspect
+    .hard
+    .bin
+  .restore
+    .data
+.types
+  .text
+    .name
+  .tag
+    .unique
+    .mandatory
+    .name
+    .view
+  .implication
+    .unique
+    .name
+    .view
+  .uc.courses
+    .forced
+  .uc.flowgraph
+issues
+  .track
+    .empty.field
+    .empty.step
+    .empty.title
+    .imp.missing
+      .overlap
+    .rcg
+    .ref.dead-issue
+    .ref.dead-req
+    .ref.dead-tag
+    .ref.issue
+    .tag.enum
+    .tag.nokids
+  .highlight
+    .empty.field
+    .empty.step
+    .empty.field
+    .imp.missing
+    .rcg
+    .ref.dead-req
+    .ref.dead-tag
+    .tag.enum.gen
+    .tag.enum.spec
+    .ref.dead-tag-in-txt
+    .tag.issue
+    .tag.issue.dead
+  .inspect
+    .total
+    .breakdown.uc
+    .breakdown.llreq
+    .filter
+    .list
+      .id
+      .title
+      .field
+      .reason
+      .context
+  .tags
+    .ap
+    .supp
+    .loose
+    .refs
+    .type
+      .list
+      .create
+      .update
+        .refs
+  .delete
+    .usage-summary
+    .usage-inspect
+    .restore
+tags
+.contra
+.trans.subreq
+.col.display
+.col.edit
+.col.deleted
+.txt.specify
+.txt.retain
+.txt.deleted.always
+.types
+  .unapplicable
+  .enum
+  .tree
+    .order
+    .many2many
+  .list
+  .create
+  .update
+    .unapplicable
+    .refs
+  .delete
+    .usage-summary
+    .usage-inspect
+    .children
+    .fields
+  .restore
+    .aps
+    .children
+.browse
+  .req-filter
+  .bars
+    .seg-not
+    .seg-parent
+    .seq-child
+    .seq-inspect
+  .top
+  .top-bars
+  .detail
+    .bar
+    .rescope-down
+    .rescope-up
+    .rescope-root
+    .reqs
+      .ord-seg
+      .select
+        .apply
+        .remove
+        .replace
+    .tags
+      .add
+      .edit
+      .delete
+      .restore
+llreq
+.data
+  .id.auto
+  .id.fmt
+  .last-updated
+  .ref.reqs
+  .ref.shr
+  .ref.ucs
+.delete
+  .hide
+  .read
+  .restore
+     .refs
+.reqtypes
+  .list
+  .create
+  .update
+    .refs
+    .mnemonic
+  .delete
+    .usage-summary
+    .reqs
+  .restore
+    .reqs
+.view
+  .rows
+  .table
+  .filters
+  .create
+    .child
+  .uc.semid
+  .columns
+    .desc
+    .ids
+    .impcol-dup
+    .deletion-reason
+    .semid
+       .dup
+       .indent
+       .tree
+    .sorted
+  .editor
+    .copy
+       .selection
+       .semid
+    .cursor
+    .dups
+  .update
+    .refs
+    .reqtype
+      .restore
+      .bulk
+    .semid
+       .0-n
+       .prevent.cyclic
+       .show-all
+      .bulk
+        .no-common
+    .uc.title
+  .delete
+    .cascade
+    .reason
+    .rcgs
+  .restore
+    .data
+    .cascade
+      .show-reason
+    .rcgs
+    .rc-conflict
+      .rcg-merge
+    .req-type
+  .sort
+    .default
+    .on-change
+    .post-change
+    .custom
+       .fields
+       .grouping-order
+       .mult
+       .off
+.refs
+.code.req.parse
+.code.req.disp
+.code.shr.parse
+.code.shr.disp
+.code.short.parse
+.code.short.disp
+.code.change.restore
+.code.change.update
+.code.change.warn
+.pubid.disp
+.pubid.parse
+.rcg
+  .create
+    .suggest
+  .update
+    .children
+    .refs
+  .delete
+  .restore
+  .display.title-blank
+  .display.title-has
+  .display.used
+  .attr.implications
+  .attr.tags
+  .attr.issues
+.token
+  .create
+  .list
+  .update
+    .refs
+  .delete
+    .usage-summary
+    .usage-inspect
+  .use
+    .render
+    .edit
+
+.browse-as-grouping
+.mandatory-bulkset
+.data
+  .mandatoryness
+  .sym
+  .trans
+  .subreq-trans
+  .prevent.refl
+  .prevent.cyclic
+.req
+  .new-auto
+  .edit.src
+  .edit.tgt
+  .view.src
+  .view.tgt
+  .view.del
+  .deletion
+     .prompt-implied
+     .prompt-intersect
+     .trans
+     .select-implied
+  .restore
+     .trans
+     .cascade
+.uc-steps
+  .edit.src
+  .edit.tgt
+  .view.src
+  .view.tgt
+
+.autosave
+.undo-reqs
+.redo
+
+readuc.tag.all
+shares.read.filter
+changelog
+.filter
+  .inc-type
+  .req-type
+     .trans
+  .implied
+     .trans
+  .tag
+    .trans
+    .not
+    .and
+    .or
+  .txt
+revnum
+  .if
+  .onlyif
+  .major
+  .minor
+
+  .count
+  .missing
+  .read-ucs
+  .read-steps
+    .shares
+    .readown
+    .uc-list
+    .add
+    .remove
+    .add
+    .remove
+    .add
+    .remove
+  .copy
+    .discards
+  .copy
+  .refs
+
+    .copy
+
+    .ref.steps
+  .ucs
+.llreq.mod
+  .list
+  .create
+  .update
+    .order
+  .delete
+    .usage-summary
+    .usage-inspect
+    .bin
+  .restore
+    .data
+  .mandatory
+    .grouping
+    .reqtype
+    .warn
+  .extract
+tags.trans.shr
+    .remove
+    .hard
+    .hard
+    .bin
+    .field.no-tag
+    .hard
+    .after
+    .usage-summary
+    .usage-inspect
+    .bin
+    .prevent
+    .ref.invalid
+    .ref.deleted
+    .tag.missing

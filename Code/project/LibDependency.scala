@@ -1,7 +1,6 @@
 import sbt._
 import scala.languageFeature._
-import org.scalajs.sbtplugin.ScalaJSCrossVersion
-import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.{crossProject => _, CrossType => _, _}
+import org.scalajs.sbtplugin.{ScalaJSCrossVersion, ScalaJSPlugin}
 
 object LibDependency {
 

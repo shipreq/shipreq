@@ -12,7 +12,7 @@ object ArticulateErrorTest extends TestSuite {
 
   override def tests = Tests {
 
-    'tag {
+    "tag" - {
       var a = ArticulateError("Stuff failed.")
       assert(!a.isDeterministic)
       a = a.tagDeterministic

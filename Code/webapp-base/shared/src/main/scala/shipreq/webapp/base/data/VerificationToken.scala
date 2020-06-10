@@ -15,5 +15,6 @@ object VerificationToken {
     case object Valid   extends Status
     case object Invalid extends Status
     case object Expired extends Status
+    implicit def univEq: UnivEq[Status] = UnivEq.derive
   }
 }

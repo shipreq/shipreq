@@ -1,8 +1,8 @@
 package shipreq.taskman.server.logic.business
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.univeq.UnivEq
 import shipreq.taskman.api.EmailAddr
-import scalaz.old.NonEmptyList
 
 object MailingList {
 
@@ -54,6 +54,6 @@ object MailingList {
 
     final case class UpdateMember(listId: ListId, sub: Subscription) extends API[UpdateMemberResult]
 
-    final case class BatchSubscribe(listId: ListId, subs: NonEmptyList[Subscription]) extends API[Unit]
+    final case class BatchSubscribe(listId: ListId, subs: NonEmptyVector[Subscription]) extends API[Unit]
   }
 }

@@ -2,11 +2,14 @@ package shipreq.webapp.base.issue
 
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet}
 import nyaya.util.Multimap
+import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import sourcecode.Line
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.event._
+import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
@@ -18,6 +21,7 @@ object IssueDetectorTest extends TestSuite {
   import SampleProject3.{Values => P3, project => p3}
   import SampleProject4.{Values => P4, project => p4}
   import SampleProject6.{Values => P6, project => p6}
+  import SampleProject7.{Values => P7, project => p7}
 
   private lazy val demoId         = p3.content.reqCodes.need("demo").activeId.get.value.RCG
   private lazy val demoWhateverId = p3.content.reqCodes.need("demo.whatever").activeId.get.value.ARC
@@ -42,9 +46,9 @@ object IssueDetectorTest extends TestSuite {
   private def updateReqTags(id: ReqId)(del: ApplicableTagId*)(add: ApplicableTagId*) =
     Event.ReqTagsPatch(id, NonEmpty force SetDiff(removed = del.toSet, added = add.toSet))
 
-  private def updateTagGroup(id: TagGroupId, mutexChildren: MutexChildren) = {
+  private def updateTagGroup(id: TagGroupId, exclusivity: Exclusivity) = {
     import TagGroupGD._
-    Event.TagGroupUpdate(id, nev(MutexChildren(mutexChildren)))
+    Event.TagGroupUpdate(id, nev(Exclusivity(exclusivity)))
   }
 
   private def assertIssues(project: Project)(expected: IssueLite*)(implicit l: Line, f: IssueFilter): Unit =
@@ -61,7 +65,7 @@ object IssueDetectorTest extends TestSuite {
 
 //  private def debugTags(project: Project): Project = {
 //    println(project.config.tags.prettyPrint)
-//    for (r <- project.content.reqs.reqIterator.toList.sortBy(_.id.value)) {
+//    for (r <- project.content.reqs.reqIterator().toList.sortBy(_.id.value)) {
 //      val tags = project.content.reqTags(r.id).map(_.value).toList.sorted.mkString(", ")
 //      val isLive = r.live(project.config.reqTypes) is Dead
 //      println(s"(#${r.id.value}) $tags${if (isLive) " [DEAD]" else ""}")
@@ -131,9 +135,9 @@ object IssueDetectorTest extends TestSuite {
     )
 
     private def makeMfMandatoryForFrAndUc = {
-      val I = CustomImpFieldGD
+      val I = CustomImpFieldGDv1
       val frAndUc = onlyReqTypes(fr, StaticReqType.UseCase)
-      Event.FieldCustomImpUpdate(mfField, I.nev(I.ValueForMandatory(Mandatory), I.ValueForReqTypes(frAndUc)))
+      Event.FieldCustomImpUpdateV1(mfField, I.nev(I.ValueForMandatory(Mandatory), I.ValueForApplicableReqTypes(frAndUc)))
     }
 
     // fr1 <- mf12,19
@@ -171,7 +175,7 @@ object IssueDetectorTest extends TestSuite {
     private implicit val filter = IssueFilter[Issue.ConflictingTags]
 
     def ko() = test(p3)(
-      updateTagGroup(20, MutexChildren),
+      updateTagGroup(20, Exclusive),
       Event.ContentRestore(Set(1119), ∅),
       updateReqTags(1101)()(4),
       updateReqTags(1104)()(2, 24, 25),
@@ -197,9 +201,9 @@ object IssueDetectorTest extends TestSuite {
     def tagInText() = {
       import T.GenericReqTitle.TagRef
       test(p3)(
-        Event.GenericReqTitleSet(1002, Vector(TagRef(P3.priHigh), TagRef(P3.priLow))), // no tags
-        Event.GenericReqTitleSet(1103, Vector(TagRef(P3.priLow))), // + highPri in tags
-        Event.GenericReqTitleSet(1104, Vector(TagRef(P3.priMed))), // + priMed in tags
+        Event.GenericReqTitleSet(1002, ArraySeq(TagRef(P3.priHigh), TagRef(P3.priLow))), // no tags
+        Event.GenericReqTitleSet(1103, ArraySeq(TagRef(P3.priLow))), // + highPri in tags
+        Event.GenericReqTitleSet(1104, ArraySeq(TagRef(P3.priMed))), // + priMed in tags
       )(
         IssueLite.ConflictingTags(1002, P3.priTG, NonEmptySet(Location.Text.Title)),
         IssueLite.ConflictingTags(1103, P3.priTG, NonEmptySet(Location.Tags, Location.Text.Title)),
@@ -220,7 +224,7 @@ object IssueDetectorTest extends TestSuite {
     )()
 
     def inRcg() = test(p3)(
-      Event.CodeGroupUpdate(demoId, CodeGroupGD.ValueForTitle(Vector(T.CodeGroupTitle.ReqRef(P3.frs(2))))),
+      Event.CodeGroupUpdate(demoId, CodeGroupGD.ValueForTitle(ArraySeq(T.CodeGroupTitle.ReqRef(P3.frs(2))))),
       Event.ReqsDelete(NonEmptySet.one(P3.frs(2)), ∅, ∅),
     )(
       IssueLite.DeadRefInRcg(demoId, ContentRef.ReqRef(P3.frs(2)))
@@ -228,8 +232,8 @@ object IssueDetectorTest extends TestSuite {
 
     def toRcg() = test(p3)(
       ContentEventTestHelp.createRCG(987, "haha.boop"),
-      Event.GenericReqTitleSet(1001, Vector(T.GenericReqTitle.CodeRef(987.RCG))),
-      Event.GenericReqTitleSet(1002, Vector(T.GenericReqTitle.CodeRef(demoId))),
+      Event.GenericReqTitleSet(1001, ArraySeq(T.GenericReqTitle.CodeRef(987.RCG))),
+      Event.GenericReqTitleSet(1002, ArraySeq(T.GenericReqTitle.CodeRef(demoId))),
       Event.CodeGroupsDelete(NonEmptySet.one(demoId)),
     )(
       IssueLite.DeadRefInReq(1002, Location.Text.Title, ContentRef.CodeRef(demoId)),
@@ -244,7 +248,7 @@ object IssueDetectorTest extends TestSuite {
     import T.GenericReqTitle.TagRef
 
     def ko() = test(p3)(
-      Event.GenericReqTitleSet(P3.frs(1), Vector(TagRef(P3.priHigh), TagRef(P3.priMed), TagRef(P3.priLow))),
+      Event.GenericReqTitleSet(P3.frs(1), ArraySeq(TagRef(P3.priHigh), TagRef(P3.priMed), TagRef(P3.priLow))),
       Event.TagDelete(P3.priHigh),
       Event.TagDelete(P3.priLow),
     )(
@@ -269,6 +273,102 @@ object IssueDetectorTest extends TestSuite {
     def deadCodeGroup() = test(p3)(
       Event.ReqsDelete(NonEmptySet.one(P3.frs(1)), Set(demoId), ∅),
     )()
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private object FieldDefaultTagDeadTests {
+    private implicit val filter = IssueFilter[Issue.FieldDefaultTagDead]
+    import P7._
+
+    def ko() = test(p7)()(
+      IssueLite.FieldDefaultTagDead(statusField, uat, Set(brs(1), brs(2))),
+      IssueLite.FieldDefaultTagDead(statusField, uat2, Set(frs(1), frs(2))),
+    )
+
+    def otherwise() = test(p7)(
+      Event.FieldCustomTagUpdate(statusField, CustomTagFieldGD(FieldReqTypeRules.defaultTo(uat3).notApplicable(mf))),
+    )(
+      IssueLite.FieldDefaultTagDead(statusField, uat3, Set(brs(1), brs(2), frs(1), frs(2), uc2)),
+    )
+
+    def liveOnly() = test(p7)(
+      Event.FieldCustomDelete(statusField),
+    )()
+
+    def unrelated() = test(p7)(
+      Event.FieldCustomDelete(statusField),
+      Event.TagDelete(priMed),
+    )(
+      IssueLite.FieldDefaultTagDead(priField, priMed, Set(brs(1), brs(2), brs(3))),
+    )
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private object FieldDefaultTagNotApplicableTests {
+    private implicit val filter = IssueFilter[Issue.FieldDefaultTagNotApplicable]
+    import P7._
+
+    def ok() = test(p7)(
+      Event.ApplicableTagUpdate(priHigh, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
+    )()
+
+    def specific() = test(p7)(
+      Event.ApplicableTagUpdate(priMed, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
+    )(
+      IssueLite.FieldDefaultTagNotApplicable(priField, priMed, br),
+    )
+
+    def otherwise() = test(p7)(
+      Event.FieldCustomTagUpdate(priField, CustomTagFieldGD(
+        FieldReqTypeRules.defaultTo(priMed).notApplicable(mf, dd).optional(fr).mandatory(uc, si))),
+      Event.ApplicableTagUpdate(priMed, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
+    )(
+      IssueLite.FieldDefaultTagNotApplicable(priField, priMed, br),
+    )
+
+    def liveReqTypeOnly() = test(p7)(
+      Event.ApplicableTagUpdate(priMed, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
+      Event.CustomReqTypeDeleteSoft(br)
+    )()
+
+    def liveFieldOnly() = test(p7)(
+      Event.ApplicableTagUpdate(priMed, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
+      Event.FieldCustomDelete(priField),
+    )()
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private object FieldDefaultTagUnrelatedTests {
+    private implicit val filter = IssueFilter[Issue.FieldDefaultTagUnrelated]
+    import P7._
+
+    def ko() = test(p7)()(
+      IssueLite.FieldDefaultTagUnrelated(relField, priMed),
+      IssueLite.FieldDefaultTagUnrelated(verField, priLow),
+    )
+
+    def deadTag() = test(p7)(
+      Event.TagDelete(priMed),
+      Event.TagDelete(priLow),
+    )(
+      IssueLite.FieldDefaultTagUnrelated(relField, priMed),
+      IssueLite.FieldDefaultTagUnrelated(verField, priLow),
+    )
+
+    def liveFieldOnly() = test(p7)(
+      Event.FieldCustomDelete(relField),
+      Event.FieldCustomDelete(verField),
+    )()
+
+    def liveReqTypeOnly() = test(p7)(
+      Event.CustomReqTypeDeleteSoft(co),
+      Event.CustomReqTypeDeleteSoft(mf),
+    )(
+      IssueLite.FieldDefaultTagUnrelated(verField, priLow),
+    )
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -301,7 +401,7 @@ object IssueDetectorTest extends TestSuite {
 
     def rcg() = test(p3)(
       delFRs,
-      Event.CodeGroupUpdate(demoId, CodeGroupGD.ValueForTitle(Vector(T.CodeGroupTitle.Issue(1, ∅)))),
+      Event.CodeGroupUpdate(demoId, CodeGroupGD.ValueForTitle(ArraySeq(T.CodeGroupTitle.Issue(1, ∅)))),
     )(
       IssueLite.IssueTagInRcg(demoId, T.CodeGroupTitle.Issue(1, ∅)),
     )
@@ -318,23 +418,63 @@ object IssueDetectorTest extends TestSuite {
 
     def txtField() = test(p3)(
       delFRs,
-      Event.ReqFieldCustomTextSet(P3.mfs(3), P3.descField, Vector(T.CustomTextField.Issue(1, ∅))),
+      Event.ReqFieldCustomTextSet(P3.mfs(3), P3.descField, ArraySeq(T.CustomTextField.Issue(1, ∅))),
     )(
       IssueLite.IssueTagInReq(P3.mfs(3), Location.Text.CustomTextField(P3.descField), T.CustomTextField.Issue(1, ∅)),
     )
 
     def ucs() = test(p6)(
       delFRs,
-      Event.UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(Vector(T.UseCaseStep.Issue(1, ∅)))),
+      Event.UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(ArraySeq(T.UseCaseStep.Issue(1, ∅)))),
     )(
       IssueLite.IssueTagInReq(P6.uc1, Location.Text.UseCaseStep(13), T.UseCaseStep.Issue(1, ∅)),
     )
 
     def deadCtx() = test(p6)(
-      Event.UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(Vector(T.UseCaseStep.Issue(1, ∅)))),
-      Event.ReqFieldCustomTextSet(P3.mfs(3), P3.descField, Vector(T.CustomTextField.Issue(1, ∅))),
+      Event.UseCaseStepUpdate(13, UseCaseStepGD.ValueForTitle(ArraySeq(T.UseCaseStep.Issue(1, ∅)))),
+      Event.ReqFieldCustomTextSet(P3.mfs(3), P3.descField, ArraySeq(T.CustomTextField.Issue(1, ∅))),
       Event.ReqsDelete(NonEmptySet(P3.frs(1), P3.frs(2), P6.uc1), ∅, ∅),
       Event.FieldCustomDelete(P3.descField),
+    )()
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private object NonApplicableFieldTests {
+    private implicit val filter = IssueFilter[Issue.NonApplicableField]
+
+    def onlyLiveFields() = test(p7)(
+      Event.FieldCustomDelete(P7.alternativesField)
+    )()
+
+    def onlyDeadApplicable() = test(p7)(
+      Event.FieldCustomTextUpdate(P7.bizJustField, CustomTextFieldGD("X", FieldReqTypeRules.mandatory.optional(P7.si))),
+    )(IssueLite.NonApplicableField(P7.alternativesField))
+
+    def noRules() = test(p7)(
+      Event.FieldCustomTextUpdate(P7.alternativesField, CustomTextFieldGD("X", FieldReqTypeRules.notApplicable)),
+    )(IssueLite.NonApplicableField(P7.alternativesField))
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private object NonApplicableTagTests {
+    private implicit val filter = IssueFilter[Issue.NonApplicableTag]
+
+    import T.GenericReqTitle.TagRef
+    import P3._
+
+    def ko() = test(p3)(
+      Event.GenericReqTitleSet(frs(1), ArraySeq(TagRef(priHigh), TagRef(priMed))),
+      Event.ApplicableTagUpdate(priHigh, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(uc))),
+    )(
+      IssueLite.NonApplicableTag(frs(1), Location.Text.Title, priHigh),
+    )
+
+    def dead() = test(p3)(
+      Event.GenericReqTitleSet(frs(1), ArraySeq(TagRef(priHigh), TagRef(priMed))),
+      Event.ApplicableTagUpdate(priHigh, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(uc))),
+      Event.TagDelete(priHigh),
     )()
   }
 
@@ -361,10 +501,10 @@ object IssueDetectorTest extends TestSuite {
 
     // Just testing sample projects' states without any modification.
     // In targeted tests below however, we modify projects to elicit specific issues.
-    'sampleProjects {
+    "sampleProjects" - {
       implicit val filter = IssueFilter.any
 
-      'p3 - assertIssues(p3)(
+      "p3" - assertIssues(p3)(
         IssueLite.BlankCustomField(P3.frs(1), P3.priField),
         IssueLite.BlankCustomField(P3.frs(2), P3.priField),
         IssueLite.DeadRefInReq(P3.frs(2), Location.Text.Title, ContentRef.ReqRef(P3.mfs(28))),
@@ -372,7 +512,7 @@ object IssueDetectorTest extends TestSuite {
         IssueLite.IssueTagInReq(P3.frs(2), Location.Text.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
       )
 
-      'p4 - assertIssues(p4)(
+      "p4" - assertIssues(p4)(
         IssueLite.BlankCustomField(P4.frs(1), P4.priField),
         IssueLite.BlankCustomField(P4.frs(2), P4.priField),
         IssueLite.BlankCustomField(P4.uc1, P4.priField),
@@ -381,7 +521,7 @@ object IssueDetectorTest extends TestSuite {
         IssueLite.IssueTagInReq(P4.frs(2), Location.Text.Title, T.GenericReqTitle.Issue(2, SampleProject3.inlineIssueDesc)),
       )
 
-      'p6 - assertIssues(p6)(
+      "p6" - assertIssues(p6)(
         IssueLite.BlankCustomField(P6.frs(1), P6.priField),
         IssueLite.BlankCustomField(P6.frs(2), P6.priField),
         IssueLite.BlankCustomField(P6.uc1, P6.priField),
@@ -396,67 +536,105 @@ object IssueDetectorTest extends TestSuite {
       )
     }
 
-    'Blank {
+    "Blank" - {
       import BlankTests._
-      'title             - title()
-      'ucSteps           - ucSteps()
-      'ucSteps2          - ucSteps2()
-      'emptyStepAndTitle - emptyStepAndTitle()
+      "title"             - title()
+      "ucSteps"           - ucSteps()
+      "ucSteps2"          - ucSteps2()
+      "emptyStepAndTitle" - emptyStepAndTitle()
     }
 
-    'BlankCustomField {
+    "BlankCustomField" - {
       import BlankCustomFieldTests._
-      'notAllReqTypes - notAllReqTypes()
-      'imps1          - imps1()
-      'imps2          - imps2()
+      "notAllReqTypes" - notAllReqTypes()
+      "imps1"          - imps1()
+      "imps2"          - imps2()
     }
 
-    'ConflictingTag {
+    "ConflictingTag" - {
       import ConflictingTagTests._
-      'ko           - ko()
-      'deadTag      - deadTag()
-      'deadTagGroup - deadTagGroup()
-      'tagInText    - tagInText()
+      "ko"           - ko()
+      "deadTag"      - deadTag()
+      "deadTagGroup" - deadTagGroup()
+      "tagInText"    - tagInText()
     }
 
-    'DeadRef {
+    "DeadRef" - {
       import DeadRefTests._
-      'issueDesc - issueDesc()
-      'inRcg     - inRcg()
-      'toRcg     - toRcg()
+      "issueDesc" - issueDesc()
+      "inRcg"     - inRcg()
+      "toRcg"     - toRcg()
     }
 
-    'DeadTag {
+    "DeadTag" - {
       import DeadTagTests._
-      'ko - ko()
+      "ko" - ko()
     }
 
-    'EmptyCodeGroup {
+    "EmptyCodeGroup" - {
       import EmptyCodeGroupTests._
-      'ko            - ko()
-      'deadChild     - deadChild()
-      'deadCodeGroup - deadCodeGroup()
+      "ko"            - ko()
+      "deadChild"     - deadChild()
+      "deadCodeGroup" - deadCodeGroup()
     }
 
-    'ImplicationRequired {
+    "FieldDefaultTagDead" - {
+      import FieldDefaultTagDeadTests._
+      "ko"        - ko()
+      "otherwise" - otherwise()
+      "unrelated" - unrelated()
+      "liveOnly"  - liveOnly()
+    }
+
+    "FieldDefaultTagNotApplicable" - {
+      import FieldDefaultTagNotApplicableTests._
+      "ok"              - ok()
+      "specific"        - specific()
+      "otherwise"       - otherwise()
+      "liveReqTypeOnly" - liveReqTypeOnly()
+      "liveFieldOnly"   - liveFieldOnly()
+    }
+
+    "FieldDefaultTagUnrelated" - {
+      import FieldDefaultTagUnrelatedTests._
+      "ko"              - ko()
+      "deadTag"         - deadTag()
+      "liveFieldOnly"   - liveFieldOnly()
+      "liveReqTypeOnly" - liveReqTypeOnly()
+    }
+
+    "ImplicationRequired" - {
       import ImplicationRequiredTests._
-      'ko - ko()
+      "ko" - ko()
     }
 
-    'IssueTags {
+    "IssueTags" - {
       import IssueTagTests._
-      'rcg       - rcg()
-      'deadIssue - deadIssue()
-      'deadCtx   - deadCtx()
-      'ok        - ok()
-      'txtField  - txtField()
-      'ucs       - ucs()
+      "rcg"       - rcg()
+      "deadIssue" - deadIssue()
+      "deadCtx"   - deadCtx()
+      "ok"        - ok()
+      "txtField"  - txtField()
+      "ucs"       - ucs()
     }
 
-    'UninhabitableTagField {
+    "NonApplicableField" - {
+      import NonApplicableFieldTests._
+      "onlyLiveFields"     - onlyLiveFields()
+      "onlyDeadApplicable" - onlyDeadApplicable()
+      "noRules"            - noRules()
+    }
+
+    "NonApplicableTag" - {
+      import NonApplicableTagTests._
+      "ko"   - ko()
+      "dead" - dead()
+    }
+
+    "UninhabitableTagField" - {
       import UninhabitableTagFieldTests._
-      'ko        - ko()
-      'deadField - deadField()
+      "ko"        - ko()
+      "deadField" - deadField()
     }
   }
 }

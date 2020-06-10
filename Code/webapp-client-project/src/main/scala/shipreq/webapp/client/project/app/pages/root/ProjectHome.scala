@@ -21,7 +21,7 @@ object ProjectHome {
         ProjectIndex.Component(p.index))
   }
 
-  val Component = ScalaComponent.builder[Props]("Home")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .build
 }

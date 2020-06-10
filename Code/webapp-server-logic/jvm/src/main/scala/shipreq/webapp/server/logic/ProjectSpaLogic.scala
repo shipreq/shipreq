@@ -12,9 +12,10 @@ import shipreq.base.util._
 import shipreq.webapp.base.data.{Obfuscated, Project, ProjectId, ProjectMetaData}
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.event.EventOrd.Implicits._
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.WsReqRes.EventResult
-import shipreq.webapp.base.protocol.ProjectSpaProtocols.{InitAppData, WsReqRes}
-import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
+import shipreq.webapp.base.protocol.websocket._
+import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.WsReqRes.EventResult
+import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.user.{User, UserId, Username}
 import shipreq.webapp.server.logic.dispatch.Cookie
@@ -107,6 +108,7 @@ object ProjectSpaLogic extends StrictLogging {
     final case class ServerBehindDatabase(err: DB.ReadProjectEventError) extends MsgError
     final case class ServerBehindRedis(err: SafePickler.DecodingFailure) extends MsgError
     final case class RespondError(err: Throwable) extends MsgError
+    final case class FunctionNoLongerSupported(devDesc: String) extends MsgError
     case object SessionExpired extends MsgError
   }
 
@@ -127,8 +129,7 @@ object ProjectSpaLogic extends StrictLogging {
 
     val webSocketHelper = WebSocketServerHelper(ProjectSpaProtocols.WebSocket(Obfuscated(null)))
 
-    val OnConnect  = Monads.FDisj[F, ConnectRejection]
-    val OnMsgError = Monads.FDisj[F, MsgError]
+    val OnConnect = Monads.FDisj[F, ConnectRejection]
 
     val fUnit = F.pure(())
 
@@ -189,7 +190,7 @@ object ProjectSpaLogic extends StrictLogging {
           trace.newSubSpan("onConnect", span)(_ =>
             security.protect(
               for {
-                (r, dur) ← svr.measureDuration(main(span).value)
+                (r, dur) <- svr.measureDuration(main(span).value)
                 mresult  = r match {
                              case \/-(_)                => "ok"
                              case -\/(NoSession       ) => "NoSession"
@@ -199,7 +200,7 @@ object ProjectSpaLogic extends StrictLogging {
                              case -\/(ProjectNotFound ) => "ProjectNotFound"
                              case -\/(AccessDenied    ) => "AccessDenied"
                            }
-                _        ← metrics.projectSpaWebSocketConnected(dur, mresult)
+                _        <- metrics.projectSpaWebSocketConnected(dur, mresult)
               } yield r
             )))
       }
@@ -278,10 +279,10 @@ object ProjectSpaLogic extends StrictLogging {
           case Some(static) =>
             trace.newSubSpan("onClose", getSpan(static)) { _ =>
               for {
-                dur        ← svr.measureDuration_(main)
-                now        ← svr.now
+                dur        <- svr.measureDuration_(main)
+                now        <- svr.now
                 sessionDur = Duration.between(static.connectedAt, now)
-                _          ← metrics.projectSpaWebSocketClosed(dur, sessionDur)
+                _          <- metrics.projectSpaWebSocketClosed(dur, sessionDur)
               } yield logger.info(s"WebSocket closed after ${sessionDur.conciseDesc}")
             }
           case None =>
@@ -299,6 +300,9 @@ object ProjectSpaLogic extends StrictLogging {
           err match {
             case MsgError.SessionExpired =>
               logger.info("Session expired.")
+
+            case MsgError.FunctionNoLongerSupported(desc) =>
+              logger.warn(s"FunctionNoLongerSupported: $desc")
 
             case MsgError.ClientMsgDecodingFailure(e) =>
               logger.warn(s"Failed to parse message from client: ${descMsg()}", e)
@@ -333,7 +337,6 @@ object ProjectSpaLogic extends StrictLogging {
                              push           : BinaryData => F[Unit],
                              onListenerError: ListenerError => F[Unit],
                              onError        : MsgError => F[Unit]): F[OptionState] = {
-        val M = OnMsgError
 
         val span = getSpan(static)
 
@@ -360,10 +363,10 @@ object ProjectSpaLogic extends StrictLogging {
                   }
                 }
                 for {
-                  _           ← trace.rename("onMessage: " + req.reqRes.name)
+                  _           <- trace.rename("onMessage: " + req.reqRes.name)
                   msgFnIn     = MsgFnIn(req.req, static, state, push, onListenerError)
-                  msgErrOrOut ← msgFold(req.reqRes)(msgFnIn): F[MsgError \/ MsgFnOut[F, req.reqRes.ResponseType]]
-                  result      ← msgErrOrOut match {
+                  msgErrOrOut <- msgFold(req.reqRes)(msgFnIn): F[MsgError \/ MsgFnOut[F, req.reqRes.ResponseType]]
+                  result      <- msgErrOrOut match {
                                      case \/-(msgFnOut) => respondWith(msgFnOut)
                                      case -\/(e)        => handleError(FreeOption.empty, e)
                                    }
@@ -382,10 +385,10 @@ object ProjectSpaLogic extends StrictLogging {
         }
 
         for {
-          (r, dur) ← svr.measureDuration(trace.newSubSpan("onMessage", span)(body(_)))
+          (r, dur) <- svr.measureDuration(trace.newSubSpan("onMessage", span)(body(_)))
           pid      = static.projectId.value
-          _        ← metrics.projectSpaWebSocketMsg(r.msgType, msg.length, r.bytesOut, dur, r.ok)
-          _        ← F.point(logger.info(s"WebSocket for project #$pid processed request in ${dur.conciseDesc}"))
+          _        <- metrics.projectSpaWebSocketMsg(r.msgType, msg.length, r.bytesOut, dur, r.ok)
+          _        <- F.point(logger.info(s"WebSocket for project #$pid processed request in ${dur.conciseDesc}"))
         } yield r.newState
       }
 
@@ -412,7 +415,7 @@ object ProjectSpaLogic extends StrictLogging {
         onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
         onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
         onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
-        onFieldMandatorinessMod = updateProjectI(MakeEvent.fieldMandatorinessMod),
+        onFieldMandatorinessMod = _ => F.pure(-\/(MsgError.FunctionNoLongerSupported("fieldMandatorinessMod"))),
         onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
       )
 
@@ -456,10 +459,10 @@ object ProjectSpaLogic extends StrictLogging {
             step("readDb")(
               for {
                 (mdo, read) <- runDB(
-                                 db.inDbTransaction(for {
+                                 for {
                                    a <- db.getProjectMetaData(pid)
                                    b <- db.getProjectEvents(pid, DB.EventFilter.given(p.ord))
-                                 } yield (a, b))
+                                 } yield (a, b)
                                )
                 result      <- read.traverse(apEvent.append(pid, p, _))
               } yield
@@ -577,11 +580,11 @@ object ProjectSpaLogic extends StrictLogging {
           }
 
         for {
-          newState ← redisSubscribe
-          mdOpt    ← runDB(db.getProjectMetaData(pid))
+          newState <- redisSubscribe
+          mdOpt    <- runDB(db.getProjectMetaData(pid))
           md       = mdOpt.get // This will fail during connection usage after project deleted
           dbLatest = md.latestOrd
-          events   ← if (dbLatest > userOrd)
+          events   <- if (dbLatest > userOrd)
                        loadEvents(dbLatest)
                      else
                        F.pure(\/-(VerifiedEvent.Seq.empty))
@@ -662,10 +665,10 @@ object ProjectSpaLogic extends StrictLogging {
 
           case ReadDb =>
             for {
-              cacheBuilt     ← s.redis.buildNonEmpty(pid)
+              cacheBuilt     <- s.redis.buildNonEmpty(pid)
               p1             = s.local max cacheBuilt
-              newEventsOrErr ← runDB(db.getProjectEvents(pid, DB.EventFilter.given(p1.ord)))
-              result         ← newEventsOrErr match {
+              newEventsOrErr <- runDB(db.getProjectEvents(pid, DB.EventFilter.given(p1.ord)))
+              result         <- newEventsOrErr match {
                                  case \/-(newEvents) => apEvent.append(pid, p1, newEvents) map {
                                    case \/-(p2) => -\/(s.copy(local = p2, status = WriteRedis1(newEvents)))
                                    case -\/(e)  => \/-(Result.Reject(e))
@@ -699,7 +702,7 @@ object ProjectSpaLogic extends StrictLogging {
                 F pure \/-(Result.Ok(VerifiedEvent.Seq.empty))
 
               case PotentialChange.Failure(e) =>
-                F pure \/-(Result.Reject(ErrorMsg(e)))
+                F pure \/-(Result.Reject(e))
             }
 
           case WriteRedis2(newProject, newEvent) =>
@@ -756,12 +759,12 @@ object ProjectSpaLogic extends StrictLogging {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   /** Generates code to paste into ProjectSpaProtocolsTest.scala */
-  private[this] object GenerateUnitTest {
+  protected object GenerateUnitTest {
     import io.circe._
     import io.circe.syntax._
     import org.apache.commons.text.StringEscapeUtils
     import scala.collection.immutable.TreeSet
-    import shipreq.webapp.base.protocol.json.v1.PostEvents.encoderVerifiedEvent
+    import shipreq.webapp.base.protocol.json.v1.Rev1.encoderVerifiedEvent
     import ProjectSpaProtocols.WebSocket
 
     type WSH = WebSocketServerHelper[WebSocket#Req, WebSocket.Push]
@@ -780,17 +783,17 @@ object ProjectSpaLogic extends StrictLogging {
            |}
            |""".stripMargin)
 
-    // InitApp               - Unit                                   - ErrorMsg \/ InitAppData
-    // Reconnect             - Option[EventOrd.Latest]                - VerifiedEvent.Seq
-    // Sync                  - NonEmptySet[EventOrd]                  - Unit
-    // UpdateConfig          - UpdateConfigCmd                        - ErrorMsg \/ VerifiedEvent.Seq
-    // CreateContent         - CreateContentCmd                       - ErrorMsg \/ VerifiedEvent.Seq
-    // UpdateContent         - UpdateContentCmd                       - ErrorMsg \/ VerifiedEvent.Seq
-    // ProjectNameSet        - String                                 - ErrorMsg \/ VerifiedEvent.Seq
-    // UpdateSavedViews      - SavedViewCmd                           - ErrorMsg \/ VerifiedEvent.Seq
-    // UpdateManualIssues    - ManualIssueCmd                         - ErrorMsg \/ VerifiedEvent.Seq
-    // FieldMandatorinessMod - (CustomFieldId, Mandatory)             - ErrorMsg \/ VerifiedEvent.Seq
-    // ReqTypeImplicationMod - (CustomReqTypeId, ImplicationRequired) - ErrorMsg \/ VerifiedEvent.Seq
+    // InitApp               - Unit                         - ErrorMsg \/ InitAppData
+    // Reconnect             - Option[EventOrd.Latest]      - VerifiedEvent.Seq
+    // Sync                  - NonEmptySet[EventOrd]        - Unit
+    // UpdateConfig          - UpdateConfigCmd              - ErrorMsg \/ VerifiedEvent.Seq
+    // CreateContent         - CreateContentCmd             - ErrorMsg \/ VerifiedEvent.Seq
+    // UpdateContent         - UpdateContentCmd             - ErrorMsg \/ VerifiedEvent.Seq
+    // ProjectNameSet        - String                       - ErrorMsg \/ VerifiedEvent.Seq
+    // UpdateSavedViews      - SavedViewCmd                 - ErrorMsg \/ VerifiedEvent.Seq
+    // UpdateManualIssues    - ManualIssueCmd               - ErrorMsg \/ VerifiedEvent.Seq
+    // FieldMandatorinessMod - (CustomFieldId, Mandatory)   - ErrorMsg \/ VerifiedEvent.Seq
+    // ReqTypeImplicationMod - (CustomReqTypeId, Mandatory) - ErrorMsg \/ VerifiedEvent.Seq
 
     private def asJsonStr[A: Encoder](a: A): String =
       "\"\"\"" + a.asJson.noSpacesSortKeys + "\"\"\""

@@ -1,27 +1,31 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
+import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.scalajs.react.test.SimEvent.{Keyboard => KB}
 import nyaya.test.PropTest._
 import utest._
-import shipreq.base.util._
 import shipreq.webapp.base.RandomData
-import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.reqtable._
+import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.event.{Event, GenericReqGD}
+import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.test.SampleProject.Values._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
+import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.test._
 
 object ReqTableTest extends TestSuite {
-  import ReqTableTestDsl._
+  import ReqTableTestDsl.{savedViews => _, _}
+  import ReqTableTestDsl.savedViews.{* => _, _}
 
   PrepareEnv()
 
-  def runTest(plan: *.Plan)(implicit path: utest.framework.TestPath): Unit =
-    runTest(plan withInitialState SampleProject4.project)
+  def runTest(plan: *.Plan, project: Project = SampleProject4.project)(implicit path: utest.framework.TestPath): Unit =
+    runTest(plan withInitialState project)
 
   def runTest(p: *.PlanWithInitialState)(implicit path: utest.framework.TestPath): Unit = {
     import ProjectSpaTestDsl._
@@ -58,7 +62,7 @@ object ReqTableTest extends TestSuite {
     *.genActionsBy("testDeadToggleInvariants")(i =>
         for {
           fd <- RandomData.filterDead
-          ts <- RandomReqTableData.view(i.state, fd, allowFilter = true)
+          ts <- RandomSavedView.view(i.state, fd, allowFilter = true)
         } yield setViewSettings("Apply random view settings", fd, (_, _) => ts) >> filterDeadShowHide)
 
   def testDeadNotEditable =
@@ -160,11 +164,11 @@ object ReqTableTest extends TestSuite {
     ) withInitialState p
   }
 
-  def testTagsColumnEditor = {
-    val p = GReq(reqType = co, title = reqTitleTagRefs(v11, v13, v4x)).tag(wip, uat, v11, v1x, v3x) !
-      SampleProject.project
+  def testOtherTagsColumnEditor = {
+    val p = GReq(reqType = co, title = reqTitleTagRefs(v11, v13, v4x).whole).tag(wip, uat, v11, v1x, v3x) !
+      SampleProject.projectWithOtherTags
 
-    val ce = cellEditor(pubid = "CO-1", col = "Tags")
+    val ce = cellEditor(pubid = "CO-1", col = StaticField.OtherTags.name)
     import ce._
 
     Plan.action(
@@ -182,7 +186,7 @@ object ReqTableTest extends TestSuite {
   }
 
   def testCustomTagColumnEditor = {
-    val p = GReq(reqType = co, title = reqTitleTagRefs(prod, uat3)).tag(wip, uat, v1x, v3x) !
+    val p = GReq(reqType = co, title = reqTitleTagRefs(prod, uat3).whole).tag(wip, uat, v1x, v3x) !
       SampleProject.project
 
     val ce = cellEditor(pubid = "CO-1", col = "Status")
@@ -200,6 +204,8 @@ object ReqTableTest extends TestSuite {
         >> testValid("wip")
         >> testValid("wip defer")
         >> testValid("defer")
+        >> commit
+        +> cellText.assert("defer uat uat3 prod") // dead #uat preserved
     ) withInitialState p
   }
 
@@ -256,10 +262,10 @@ object ReqTableTest extends TestSuite {
 
   val nopMod = ("No change.", (s: String) => s)
 
-  def testNopEdits(pubid: String, col: String): *.Plan =
+  def testNopEdits(pubid: String, col: String) =
     testNopEditsBy(pubid, col)("Trailing whitespace." -> (_ + " "))
 
-  def testNopEditsBy(pubid: String, col: String)(mods: (String, String => String)*): *.Plan = {
+  def testNopEditsBy(pubid: String, col: String)(mods: (String, String => String)*) = {
     val ce = cellEditor(pubid, col)
     import ce._
 
@@ -275,34 +281,40 @@ object ReqTableTest extends TestSuite {
         >> (startEdit >> commitNop).group("Commit without edit.")
         >> (nopMod +: mods).map(nopEdit).combine
         >> (startEdit >> abortEdit +> post).group("Abort.")
-    ) named s"NOP edits: $pubid/$col"
+    ).named(s"NOP edits: $pubid/$col").withInitialState(SampleProject4.projectWithAllAndOtherTags)
   }
 
-  def testKeyboardNavigation = Plan.action(
-    setFocus(_.table.cell(1, 1).domAsHtml)
-      >> press(KB.Down)      +> activeElement.assert.equalBy(_.obs.table.cell(2, 1).dom)
-      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(2, 2).dom)
-      >> press(KB.Up)        +> activeElement.assert.equalBy(_.obs.table.cell(1, 2).dom)
-      >> press(KB.Left)      +> activeElement.assert.equalBy(_.obs.table.cell(1, 1).dom)
-      >> press(KB.End)       +> activeElement.assert.equalBy(_.obs.table.cell(1, -1).dom)
-      >> press(KB.Home)      +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(1))
-      >> press(KB.Left)      +> activeElement.assert.equalBy(_.obs.table.cell(1, -1).dom)
-      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(1))
-      >> press(KB.Down)      +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(2))
-      >> press(KB.End.ctrl)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, -1).dom)
-      >> press(KB.Home.ctrl) +> activeElement.assert.equalBy(_.obs.table.allRowSelectionInput)
-      >> press(KB.Left)      +> activeElement.assert.equalBy(_.obs.table.columnDoms.last.headerCell)
-      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.allRowSelectionInput)
-      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.columnDoms(1).headerCell)
-      >> press(KB.Down)      +> activeElement.assert.equalBy(_.obs.table.cell(0, 1).dom)
-      >> press(KB.Up)        +> activeElement.assert.equalBy(_.obs.table.columnDoms(1).headerCell)
-      >> press(KB.Up)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 1).dom)
-      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).dom)
-      >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // The Title column
-      >> press(KB.F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
-      >> press(KB.Tab)       +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // tab out to cell
-      >> press(KB.F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
-  ) named "Keyboard navigation"
+  def testKeyboardNavigation()(implicit path: utest.framework.TestPath) =
+    runTest(
+      Plan.action(
+        showHideColumn(StaticField.OtherTags.name)
+          +> tableColumns.assert("ID", "Title", StaticField.OtherTags.name)
+          >> setFocus(_.table.cell(1, 1).domAsHtml)
+          >> press(KB.Down)      +> activeElement.assert.equalBy(_.obs.table.cell(2, 1).dom)
+          >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(2, 2).dom)
+          >> press(KB.Up)        +> activeElement.assert.equalBy(_.obs.table.cell(1, 2).dom)
+          >> press(KB.Left)      +> activeElement.assert.equalBy(_.obs.table.cell(1, 1).dom)
+          >> press(KB.End)       +> activeElement.assert.equalBy(_.obs.table.cell(1, -1).dom)
+          >> press(KB.Home)      +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(1))
+          >> press(KB.Left)      +> activeElement.assert.equalBy(_.obs.table.cell(1, -1).dom)
+          >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(1))
+          >> press(KB.Down)      +> activeElement.assert.equalBy(_.obs.table.rowSelectionInput(2))
+          >> press(KB.End.ctrl)  +> activeElement.assert.equalBy(_.obs.table.cell(-1, -1).dom)
+          >> press(KB.Home.ctrl) +> activeElement.assert.equalBy(_.obs.table.allRowSelectionInput)
+          >> press(KB.Left)      +> activeElement.assert.equalBy(_.obs.table.columnDoms.last.headerCell)
+          >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.allRowSelectionInput)
+          >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.columnDoms(1).headerCell)
+          >> press(KB.Down)      +> activeElement.assert.equalBy(_.obs.table.cell(0, 1).dom)
+          >> press(KB.Up)        +> activeElement.assert.equalBy(_.obs.table.columnDoms(1).headerCell)
+          >> press(KB.Up)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 1).dom)
+          >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).dom)
+          >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom)
+          >> press(KB.F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
+          >> press(KB.Tab)       +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // tab out to cell
+          >> press(KB.F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3)("textarea").dom)
+      ) named "Keyboard navigation",
+      SampleProject4.projectWithOtherTags
+    )
 
 //  def newUseCaseWithMinimalColumns: *.Actions = Plan.action(
 //    // select minimal columns
@@ -376,65 +388,348 @@ object ReqTableTest extends TestSuite {
     )
   }
 
+  def testInitialFilter()(implicit path: utest.framework.TestPath) = {
+    val project = applyEventsSuccessfully(SampleProject4.project,
+      Event.SavedViewCreateV1(
+        id         = SavedView.Id(1),
+        name       = SavedView.Name("ewrsd"),
+        columns    = Column.mandatory.toNEV,
+        order      = SortCriteria.byPubidOnly,
+        filterDead = ShowDead,
+        filter     = Some(Filter.Valid.tag(priHigh))
+      ),
+    )
+
+    val plan = Plan.action(
+      *.emptyAction
+        +> filterDead.assert(ShowDead)
+        +> filterText.assert("#pri=high")
+    )
+
+    runTest(plan withInitialState project)
+  }
+
+  def testFieldRules()(implicit path: utest.framework.TestPath) = {
+    val fr1_biz = cellEditor("FR-1", "Business Justification") // perReq > otherwise, opt
+    val fr1_alt = cellEditor("FR-1", "Alternatives") // na
+    val fr1_cmp = cellEditor("FR-1", "Component") // perReq > otherwise, opt
+    val fr1_pri = cellEditor("FR-1", "Priority") // perReq > otherwise, man
+    val fr1_sts = cellEditor("FR-1", "Status") // def:tag:dead
+    val fr1_ver = cellEditor("FR-1", "Version") // def:tag:bad
+
+    val br1_biz = cellEditor("BR-1", "Business Justification") // man
+    val br1_alt = cellEditor("BR-1", "Alternatives") // na
+    val br1_cmp = cellEditor("BR-1", "Component") // na
+    val br1_pri = cellEditor("BR-1", "Priority") // def:tag:ok
+
+    val si1_biz = cellEditor("SI-1", "Business Justification")
+    val si1_alt = cellEditor("SI-1", "Alternatives")
+    val si1_cmp = cellEditor("SI-1", "Component")
+    val si1_pri = cellEditor("SI-1", "Priority")
+    val si1_sts = cellEditor("SI-1", "Status")
+    val si1_ver = cellEditor("SI-1", "Version")
+
+    val plan = Plan.action(
+      showAllColumns(HideDead)
+
+      +> fr1_alt.isNA.assert(true)
+      >> fr1_biz.changeAndBack("" -> "X")
+      >> fr1_cmp.changeAndBack("" -> "X")
+      >> fr1_pri.changeAndBack("" -> "pri=low", "blank" -> "pri=low")
+      >> fr1_sts.changeAndBack("" -> "wip")
+      >> fr1_ver.changeAndBack("" -> "v1.0")
+
+      +> br1_alt.isNA.assert(true)
+      +> br1_cmp.isNA.assert(true)
+      >> br1_biz.changeAndBack("" -> "uiui", "blank" -> "uiui")
+      >> br1_pri.changeAndBack("" -> "pri=low", "pri=med" -> "pri=low")
+
+      >> showAllColumns(ShowDead)
+
+      +> si1_biz.isNA.assert(true)
+      +> si1_alt.cellText.assert("")
+      +> si1_cmp.cellText.assert("")
+      +> si1_pri.cellText.assert("")
+      +> si1_sts.cellText.assert("uat3")
+      +> si1_ver.cellText.assert("")
+
+      +> fr1_alt.isNA.assert(true)
+      +> fr1_biz.cellText.assert("")
+      +> fr1_cmp.cellText.assert("")
+      +> fr1_pri.cellText.assert("blank")
+      >> fr1_sts.changeAndBack("" -> "wip", "uat2" -> "wip")
+      >> fr1_ver.changeAndBack("" -> "v1.0")
+
+      +> br1_alt.isNA.assert(true)
+      +> br1_cmp.isNA.assert(true)
+      +> br1_biz.cellText.assert("blank")
+      >> br1_pri.changeAndBack("" -> "pri=low", "pri=med" -> "pri=low")
+    )
+
+    runTest(plan withInitialState SampleProject7.project)
+  }
+
+  def testFieldRulesAndSorting()(implicit path: utest.framework.TestPath) = {
+    import SampleProject7.Values._
+    import UnsafeTypes._
+
+    val project = applyEventsSuccessfully(
+      SampleProject7.project,
+      Event.ReqTagsPatch(frs(1), nesd()(priLow)),
+      Event.ReqTagsPatch(frs(2), nesd()(priHigh)),
+      Event.GenericReqCreate(frs(3), fr, GenericReqGD.ValueForTitle("poop")),
+    )
+
+    val plan = Plan.action(
+      enterFilter("FR | BR")
+      >> showHideColumn("Priority")
+      >> sortBy("Priority")
+      +> tablePubids.assert.equal("FR-2", "BR-1", "BR-2", "BR-3", "FR-1", "FR-3") // BRs have default of pri=med
+      //                           high    med     med     med     low     blank
+      >> filterDeadToggle
+      +> tablePubids.assert.equal("FR-2", "BR-1", "BR-2", "BR-3", "FR-1", "FR-3") // BRs have default of pri=med
+    )
+
+    runTest(plan withInitialState project)
+  }
+
+  def testFieldRulesAndFilter()(implicit path: utest.framework.TestPath) = {
+    import SampleProject7.Values._
+    import UnsafeTypes._
+
+    val project = applyEventsSuccessfully(
+      SampleProject7.project,
+      Event.ReqTagsPatch(frs(1), nesd()(priMed)),
+      Event.ReqTagsPatch(frs(2), nesd()(priHigh)),
+      Event.GenericReqCreate(frs(3), fr, GenericReqGD.ValueForTitle("poop")),
+      Event.GenericReqCreate(brs(4), br, GenericReqGD.ValueForTags(NonEmptySet(priHigh))),
+    )
+
+    val plan = Plan.action(
+      enterFilter("(FR | BR) #pri=med")
+      +> tablePubids.assert.equalIgnoringOrder("FR-1", "BR-1", "BR-2", "BR-3") // BRs have default of pri=med
+      >> filterDeadToggle
+      +> tablePubids.assert.equalIgnoringOrder("FR-1", "BR-1", "BR-2", "BR-3") // BRs have default of pri=med
+    )
+
+    runTest(plan withInitialState project)
+  }
+
+  def testTagLegality(pubid: String, col: String)(implicit path: utest.framework.TestPath) = {
+    val ce = cellEditor(pubid = pubid, col = col)
+    import ce._
+
+    val noProdInText   = cellText.test("doesn't contain prod")(!_.toLowerCase.contains("prod"))
+    val noProdInEditor = editorValue.test("doesn't contain prod")(!_.toLowerCase.contains("prod"))
+
+    val test = (
+      *.emptyAction
+        +> noProdInText
+        >> startEdit
+        +> noProdInEditor
+        >> testInvalid("prod")
+        >> abortEdit
+      )
+
+    val plan = Plan.action(
+      enterFilter("BR")
+        >> showAllColumns(HideDead) >> test
+        >> setFilterDead(ShowDead) >> test
+        >> enterFilter("#prod") +> tablePubids.assert.not.contains(pubid)
+    )
+
+    runTest(plan withInitialState SampleProject7.project)
+  }
+
+  def testSavedViewsBasic()(implicit path: utest.framework.TestPath) = {
+
+    val assertViewBasic =
+      tableColumns.size.assert(7) &
+      tableColumns.assert("ID", "Req Type", "Implied By", "Title", "Code", "Deletion Reason", "Implies") &
+      filterText.assert("")
+
+    val assertViewA =
+      tableColumns.size.assert(18) &
+      filterText.assert("MF") &
+      filterDead.assert(HideDead)
+
+    val assertViewD =
+      tableColumns.size.assert(20) &
+      filterText.assert("UC") &
+      filterDead.assert(ShowDead)
+
+    val test = (
+      *.emptyAction +> savedViews.assert("> Unsaved view") +> filterText.assert("")
+
+        >> showBuiltInColumnsSortedByPubid
+        +> assertViewBasic
+        >> saveCurrentView("basic")
+        +> savedViews.assert("> * basic")
+        +> assertViewBasic
+
+        >> showAllColumns(HideDead)
+        >> enterFilter("MF")
+        +> assertViewA
+        +> savedViews.assert("* basic", "> Unsaved view")
+        >> saveCurrentView("AAA")
+        +> savedViews.assert("> AAA", "* basic")
+        +> assertViewA
+
+        >> showAllColumns(ShowDead)
+        >> enterFilter("UC")
+        +> assertViewD
+        +> savedViews.assert("AAA", "* basic", "> Unsaved view")
+        >> saveCurrentView("ded")
+        +> savedViews.assert("AAA", "* basic", "> ded")
+        +> assertViewD
+
+        >> selectView("basic")   +> savedViews.assert("AAA", "> * basic", "ded") +> assertViewBasic
+        >> selectView("AAA")     +> savedViews.assert("> AAA", "* basic", "ded") +> assertViewA
+        >> selectView("ded")     +> savedViews.assert("AAA", "* basic", "> ded") +> assertViewD
+        >> setDefaultView("AAA") +> savedViews.assert("* AAA", "basic", "> ded") +> assertViewD
+        >> setDefaultView("ded") +> savedViews.assert("AAA", "basic", "> * ded") +> assertViewD
+        >> selectView("AAA")     +> savedViews.assert("> AAA", "basic", "* ded") +> assertViewA
+      )
+
+    runTest(Plan.action(test) withInitialState SampleProject7.project)
+  }
+
+  def testSavedViewsDeadCol()(implicit path: utest.framework.TestPath) = {
+    val test = (
+      *.emptyAction
+
+        >> showMandatoryColumnsSortedByPubid
+        +> filterDead.assert(HideDead)
+        +> tableColumns.assert("ID", "Title")
+        +> filterText.assert("")
+        >> showHideColumn("Description")
+        >> showHideColumn("Component")
+        +> tableColumns.assert("ID", "Title", "Description", "Component")
+        >> saveCurrentView("yo!")
+        +> savedViews.assert("> * yo!")
+
+        >> receiveExternalEvent(Event.FieldCustomDelete(SampleProject7.Values.descField))
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Component")
+
+        >> receiveExternalEvent(Event.FieldCustomRestore(SampleProject7.Values.descField))
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Description", "Component")
+
+        >> showHideColumn("Priority")
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Description", "Component", "Priority")
+
+        >> receiveExternalEvent(Event.FieldCustomDelete(SampleProject7.Values.descField))
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+
+        >> receiveExternalEvent(Event.FieldCustomRestore(SampleProject7.Values.descField))
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Description", "Component", "Priority")
+
+        >> showHideColumn("Priority")
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Description", "Component")
+
+        >> receiveExternalEvent(Event.FieldCustomDelete(SampleProject7.Values.descField))
+        >> showHideColumn("Priority")
+        +> savedViews.assert("* yo!", "> Unsaved view")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+
+        >> saveAndReplaceView("yo!")
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+
+        >> receiveExternalEvent(Event.FieldCustomRestore(SampleProject7.Values.descField))
+        +> savedViews.assert("> * yo!")
+        +> tableColumns.assert("ID", "Title", "Component", "Priority")
+      )
+
+    runTest(Plan.action(test) withInitialState SampleProject7.project)
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   override def tests = Tests {
-    'initialState - runTest(*.emptyPlan)
-
-    'filter - runTest(Plan.action(testFilter).named("testFilter").withInitialState(SampleProject3.project))
-
-    'dead {
-      'cols - runTest(Plan action testDeadColumns named "testDeadColumns")
-      // 'toggle - runTest(testDeadToggleInvariants) TODO Should dead col stay on but hidden when ShowDead→HideDead?
-      'notEditable - runTest(testDeadNotEditable named "testDeadNotEditable")
+    "initialState" - {
+      "default" - runTest(*.emptyPlan)
+      "filter" - testInitialFilter()
     }
 
-    'editor {
-      'impSrc    - runTest(testImplicationSrcColumnEditor    named "testImplicationSrcColumnEditor"   )
-      'impTgt    - runTest(testImplicationTgtColumnEditor    named "testImplicationTgtColumnEditor"   )
-      'impCol    - runTest(testCustomImplicationColumnEditor named "testCustomImplicationColumnEditor")
-      'tags      - runTest(testTagsColumnEditor              named "testTagsColumnEditor"             )
-      'tagCol    - runTest(testCustomTagColumnEditor         named "testCustomTagColumnEditor"        )
-      'titleIO   - runTest(testEditorTitleIO                 named "testEditorTitleIO"                )
-      'failClear - runTest(testFailureClearedOnEsc           named "testFailureClearedOnEsc"          )
+    "filter" - runTest(Plan.action(testFilter).named("testFilter").withInitialState(SampleProject3.project))
 
-      'nop {
+    "dead" - {
+      "cols" - runTest(Plan action testDeadColumns named "testDeadColumns")
+      // 'toggle - runTest(testDeadToggleInvariants) TODO Should dead col stay on but hidden when ShowDead→HideDead?
+      "notEditable" - runTest(testDeadNotEditable named "testDeadNotEditable")
+    }
+
+    "editor" - {
+      "impSrc"       - runTest(testImplicationSrcColumnEditor    named "testImplicationSrcColumnEditor"   )
+      "impTgt"       - runTest(testImplicationTgtColumnEditor    named "testImplicationTgtColumnEditor"   )
+      "impCol"       - runTest(testCustomImplicationColumnEditor named "testCustomImplicationColumnEditor")
+      "tagsOther"    - runTest(testOtherTagsColumnEditor         named "testOtherTagsColumnEditor"        )
+      "tagsCustom"   - runTest(testCustomTagColumnEditor         named "testCustomTagColumnEditor"        )
+      "titleIO"      - runTest(testEditorTitleIO                 named "testEditorTitleIO"                )
+      "failClear"    - runTest(testFailureClearedOnEsc           named "testFailureClearedOnEsc"          )
+
+      "tagLegality" - {
+        "status"   - testTagLegality("BR-1", "Status")
+        "col"      - testTagLegality("BR-1", StaticField.OtherTags.name)
+        "exStatus" - testTagLegality("BR-2", "Status")
+        "exCol"    - testTagLegality("BR-2", StaticField.OtherTags.name)
+      }
+
+      "nop" - {
         // RCG title
         // RCG code
-        'title    - runTest(testNopEdits("MF-6", ColumnNames.title))
-        'textCol  - runTest(testNopEdits("MF-1", "Description"))
-        'impSrc   - runTest(testNopEdits("MF-1", ColumnNames.implications(Backwards)))
-        'impTgt   - runTest(testNopEdits("MF-1", ColumnNames.implications(Forwards)))
-        'impCol   - runTest(testNopEdits("MF-1", "Major Feature"))
-        'tags     - runTest(testNopEdits("MF-1", ColumnNames.tags))
-        'tagCol   - runTest(testNopEdits("MF-1", "Status"))
-        'reqCodes - runTest(testNopEditsBy("MF-1", ColumnNames.code)("Trailing \\n." -> (_ + "\n")))
+        "title"     - runTest(testNopEdits("MF-6", SpecialBuiltInField.Title.name))
+        "textCol"   - runTest(testNopEdits("MF-1", "Description"))
+        "impSrc"    - runTest(testNopEdits("MF-1", SpecialBuiltInField.ImplyBackward.name))
+        "impTgt"    - runTest(testNopEdits("MF-1", SpecialBuiltInField.ImplyForward.name))
+        "impCol"    - runTest(testNopEdits("MF-1", "Major Feature"))
+        "otherTags" - runTest(testNopEdits("MF-1", StaticField.OtherTags.name))
+        "allTags"   - runTest(testNopEdits("MF-1", StaticField.AllTags.name))
+        "tagCol"    - runTest(testNopEdits("MF-1", "Status"))
+        "reqCodes"  - runTest(testNopEditsBy("MF-1", SpecialBuiltInField.Code.name)("Trailing \\n." -> (_ + "\n")))
       }
     }
 
-    'kbNav - runTest(testKeyboardNavigation)
+    "kbNav" - testKeyboardNavigation()
 
 //    'new {
 //      'useCaseWithMinimalColumns - ???
 //      'codeGroupWithMinimalColumns - ???
 //    }
 
-    'copy - {
-      'title     - runTest(testCopy("MF-1", "Title")("Use Case Editor"))
-      'desc      - runTest(testCopy("UC-1", "Description")("This UC is about eating."))
-      'id        - runTest(testCopy("MF-1", "ID")("MF-1"))
-      'grReqType - runTest(testCopy("MF-1", "Type")("MF"))
-      'ucReqType - runTest(testCopy("UC-1", "Type")("UC"))
-      'imps      - runTest(testCopy("FR-1", "Implies")("CO-2, FR-2"))
-      'tags      - runTest(testCopy("MF-5", "Priority")("pri=high"))
-      'tagsEmpty - runTest(testCopy("MF-2", "Status")(""))
-      'dead      - runTest(testCopy("CO-1", "Title")("Search entities!"))
+    "copy" - {
+      "title"     - runTest(testCopy("MF-1", "Title")("Use Case Editor"))
+      "desc"      - runTest(testCopy("UC-1", "Description")("This UC is about eating."))
+      "id"        - runTest(testCopy("MF-1", "ID")("MF-1"))
+      "grReqType" - runTest(testCopy("MF-1", "Req Type")("MF"))
+      "ucReqType" - runTest(testCopy("UC-1", "Req Type")("UC"))
+      "imps"      - runTest(testCopy("FR-1", "Implies")("CO-2, FR-2"))
+      "tags"      - runTest(testCopy("MF-5", "Priority")("pri=high"))
+      "tagsEmpty" - runTest(testCopy("MF-2", "Status")(""))
+      "dead"      - runTest(testCopy("CO-1", "Title")("Search entities!"))
     }
 
-    'paste - {
-      'closedDesc  - runTest(testPasteClosedDesc)
-      'closedTitle - runTest(testPasteClosedTitle)
-      'openDesc    - runTest(testPasteOpenDesc)
+    "paste" - {
+      "closedDesc"  - runTest(testPasteClosedDesc)
+      "closedTitle" - runTest(testPasteClosedTitle)
+      "openDesc"    - runTest(testPasteOpenDesc)
+    }
+
+    "fieldRules" - {
+      "main"    - testFieldRules()
+      "sorting" - testFieldRulesAndSorting()
+      "filter"  - testFieldRulesAndFilter()
+    }
+
+    "savedViews" - {
+      "basic" - testSavedViewsBasic()
+      "deadCol" - testSavedViewsDeadCol()
     }
   }
 }

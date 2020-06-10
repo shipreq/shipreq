@@ -1,10 +1,12 @@
 package shipreq.webapp.server.app
 
-import doobie.imports.ConnectionIO
+import doobie.ConnectionIO
 import java.util.concurrent.{Executors, TimeUnit}
 import org.redisson.api.RedissonClient
-import shipreq.base.db.DbAccess
+import scalaz.~>
+import shipreq.base.db._
 import shipreq.base.util.FxModule._
+import shipreq.base.util.ThreadUtils
 import shipreq.taskman.api.TaskmanApi
 import shipreq.taskman.api.impl.TaskmanApiImpl
 import shipreq.webapp.server.db.{DbInterpreter, StatRecorder}
@@ -14,7 +16,7 @@ import shipreq.webapp.server.security.SecurityInterpreter
 import shipreq.webapp.ssr.SsrAlgebra
 
 final case class Global(config      : ServerConfig,
-                        db          : DbAccess,
+                        runDB       : ConnectionIO ~> Fx,
                         logic       : ServerLogic[Fx],
                         metrics     : MetricsLogic[Fx],
                         ops         : OpsEndpointInterpreter,
@@ -22,7 +24,7 @@ final case class Global(config      : ServerConfig,
                         ssr         : SsrAlgebra.Prepared[Fx],
                         statRecorder: StatRecorder,
                         taskman     : TaskmanApi[Fx],
-                        trace       : TraceInterpreter.ForLift[Fx]) {
+                        trace       : TraceInterpreter.ForHttp[Fx]) {
 
   val analyticsProxy: AnalyticsProxy =
     config.analyticsProxy.build
@@ -38,12 +40,27 @@ object Global {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def default(dbAccess   : DbAccess,
+  def default(db         : DbAccessor,
               redisClient: Option[RedissonClient],
               ssr        : SsrAlgebra.Prepared[Fx],
-              config     : ServerConfig): Global = {
+              config     : ServerConfig,
+             ): Global =
+    full(
+      db          = db,
+      xaOverride  = None,
+      redisClient = redisClient,
+      ssr         = ssr,
+      config      = config,
+    )
 
-    assert(dbAccess ne null, "DbAccess is null, sir.")
+  def full(db         : DbAccessor,
+           xaOverride : Option[XA],
+           redisClient: Option[RedissonClient],
+           ssr        : SsrAlgebra.Prepared[Fx],
+           config     : ServerConfig,
+          ): Global = {
+
+    assert(db ne null, "DbAccess is null, sir.")
     import TraceInterpreter.Implicits._
 
     implicit def configServer   = config.server
@@ -61,14 +78,23 @@ object Global {
     def t[A](name: String)(a: => A): A =
       traceAlgebra.newSpanImpure("Global:" + name)(_ => a)
 
-    t("default") {
+    t("full") {
+
+      val xa: XA =
+        xaOverride.getOrElse {
+          val (x, xaShutdown) = t("xa") {
+            db.xa.allocated.unsafeRun()
+          }
+          ThreadUtils.runOnShutdownFx("xa", xaShutdown)
+          x
+        }
 
       implicit val trace = t("trace") {
-        TraceLogic.on: TraceInterpreter.ForLift[Fx]
+        TraceLogic.on: TraceInterpreter.ForHttp[Fx]
       }
 
       implicit val runDB = t("runDB") {
-        trace.injectDb(dbAccess.fx.trans)
+        trace.injectDb(xa.transZ)
       }
 
       implicit val statRecorder = t("statRecorder") {
@@ -88,7 +114,7 @@ object Global {
       }
 
       implicit val dbForOps = t("dbForOps") {
-        DB.ForOps.trans(new DbInterpreter.ForOps(dbAccess.databaseName))(runDB)
+        DB.ForOps.trans(new DbInterpreter.ForOps(db.databaseName))(runDB)
       }
 
       implicit val server = t("server") {
@@ -128,7 +154,7 @@ object Global {
 
       Global(
         config       = config,
-        db           = dbAccess,
+        runDB        = runDB,
         logic        = logic,
         metrics      = metrics,
         ops          = ops,

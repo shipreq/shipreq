@@ -1,6 +1,5 @@
 package shipreq.webapp.base.ui
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
@@ -34,7 +33,7 @@ object ReauthenticationModalTest extends TestSuite {
       def dom() = $.getDOMNode.runNow().toHtml.get
     }
 
-    val Component = ScalaComponent.builder[Props]("")
+    val Component = ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .componentDidMount(_.backend.onMount)
       .build
@@ -133,7 +132,7 @@ object ReauthenticationModalTest extends TestSuite {
   override def tests = Tests {
     import Internal._
 
-    'various -
+    "various" -
       runTest(Some(-\/(ErrorMsg("servers down!"))))(
         enterPassword(" omg ")
           +> serverCallCount.assert(0)
@@ -174,7 +173,7 @@ object ReauthenticationModalTest extends TestSuite {
           +> serverLastPassword.assert(Some(" omgOMFG12345 "))
       )
 
-    'inFlight -
+    "inFlight" -
       runTest(None)(
         enterPassword("qweasdzcQWEASDZXC123!@#")
           >> clickLogin

@@ -105,7 +105,7 @@ object Feature {
     }
 
     final case class ForFields[-FK <: FieldKey](_editor    : State.ForFields,
-                                                renderText : RenderFeature.ForFields[ProjectText.Context, RenderFeature.FieldKey, Option[String]],
+                                                renderText : RenderFeature.ToText.AnyCtx.ApplicableOption.ForField[RenderFeature.FieldKey],
                                                 editability: Reusable[Editability.ForFields[FK]],
                                                 async      : AsyncFeature.Read.D1[FieldKey, AsyncError]) {
 
@@ -137,7 +137,7 @@ object Feature {
     type ForManualIssues = ForFields[FieldKey.ManualIssue  ]
 
     final case class ForProject(state      : State.ForProject,
-                                renderText : RenderFeature.ForProject[ProjectText.Context, String],
+                                renderText : RenderFeature.ToText.AnyCtx.ApplicableOption.ForProject,
                                 editability: Editability.ForProject,
                                 async      : AsyncFeature.Read.D2[RowKey, FieldKey, AsyncError]) {
 
@@ -157,7 +157,7 @@ object Feature {
 
       def forGenericReq(id: GenericReqId): ForGenericReq =
          forRow(RowKey.GenericReq(id))(
-           renderText.forGenericReq(id).some.widen(None),
+           renderText.forGenericReq(id).widen(None),
            Reusable.implicitly(editability.forReqs(id)))
 
       def forReq(id: ReqId): ForReq =
@@ -165,17 +165,17 @@ object Feature {
 
       def forUseCase(id: UseCaseId): ForUseCase =
         forRow(RowKey.UseCase(id))(
-          renderText.forUseCase(id).some.widen(None),
+          renderText.forUseCase(id).widen(None),
           Reusable.implicitly(editability.forReqs(id)))
 
       lazy val forUseCaseSteps: ForUseCaseSteps =
         forRow(RowKey.UseCaseSteps)(
-          renderText.forUseCaseSteps.some.widen(None),
+          renderText.forUseCaseSteps.widen(None),
           Reusable.implicitly(editability.forUseCaseSteps))
 
       lazy val forManualIssues: ForManualIssues =
         forRow(RowKey.ManualIssues)(
-          renderText.forManualIssues.some.widen(None),
+          renderText.forManualIssues.widen(None),
           Editability.forManualIssues)
     }
 

@@ -1,59 +1,84 @@
 package shipreq.webapp.server.redis
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
-import java.time.{Duration, Instant}
-import nyaya.gen._
-import scalaz.{Applicative, Equal, Monad, Semigroup, \/}
+import io.circe._
+import japgolly.microlibs.utils.ConciseIntSetFormat
+import java.time.Instant
+import nyaya.gen.Gen
+import scalaz.Semigroup
 import scalaz.syntax.monad._
-import shipreq.base.test.SyncEffect
-import shipreq.base.test.SyncEffect.Ops._
-import shipreq.base.util.Util
-import shipreq.webapp.base.data.{Project, ProjectId}
-import shipreq.webapp.base.event._
+import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.EventOrd.Implicits._
-import shipreq.webapp.base.protocol.binary.SafePickler
+import shipreq.webapp.base.event._
+import shipreq.webapp.base.protocol.json.v1.PostEvents._
+import shipreq.webapp.base.protocol.json.v1.Rev1._
 import shipreq.webapp.server.logic.Redis._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
 object RedisLaws {
+  import RedisLaw.{Logic, Test}
+
+  type E = VerifiedEvent.Seq
+  type S = ProjectSnapshot
+  type O = Option[EventOrd.Latest]
 
   // OPS IN OWN TERMS
   // ================
 
-  val readEvents1 = Law[O]("readEvents1")(o =>
+  val readEvents1 = RedisLaw[O]("readEvents1")(o =>
     readEvents(o) === readEvents(None).map(_.filter(_.ord > o)))
 
-  val readEvents2 = Law[(O, O)]("readEvents2") { case (a, b) =>
+  val readEvents2 = RedisLaw[(O, O)]("readEvents2") { case (a, b) =>
     readEvents(a) ++ readEvents(b) === readEvents(a min b) }
 
-  val writeSnapshot2 = Law[(S, E, S, E)]("writeSnapshot2") { case (s1, e1, s2, e2) =>
-    writeSnapshot(s1, e1) *> writeSnapshot(s2, e2) =-= writeSnapshot(s1 max s2, e1 ++ e2)
+  val writeSnapshot2 = RedisLaw[(S, E, S, E)]("writeSnapshot2") { case (s1, e1, s2, e2) =>
+    val s = s1 max s2
+    val e = e1 ++ e2
+    whenDebugging {
+      log(s"[L] writeSnapshot: ", s1)
+      log(s"      publishOnly: ", e1)
+      log(s"[L] writeSnapshot: ", s2)
+      log(s"      publishOnly: ", e2)
+      log(s"[R] writeSnapshot: ", s)
+      log(s"      publishOnly: ", e)
+    }
+    writeSnapshot(s1, e1) *> writeSnapshot(s2, e2) <-> writeSnapshot(s, e)
   }
 
-  val writeEvents1 = Law[(E, E)]("writeEvents1") { case (c, cp) =>
+  val writeEvents1 = RedisLaw[(E, E)]("writeEvents1") { case (c, cp) =>
     writeEvents(c, cp) === writeEvents(c -- cp, cp) }
 
   // This law doesn't hold because we have a property that we don't allow gaps in cached events
-  // val writeEvents2 = Law[(E, E, E, E)]("writeEvents2") { case (c1, cp1, c2, cp2) =>
+  // val writeEvents2 = RedisLaw[(E, E, E, E)]("writeEvents2") { case (c1, cp1, c2, cp2) =>
   //   writeEvents(c1, cp1) *> writeEvents(c2, cp2) =-= writeEvents(c1 ++ c2, cp1 ++ cp2)
   // }
 
-  val publishEvents1 = Law[(E, E)]("publishEvents1") { case (e1, e2) =>
+  val publishEvents1 = RedisLaw[(E, E)]("publishEvents1") { case (e1, e2) =>
     publishEvents(e1) *> publishEvents(e2) === publishEvents(e1 ++ e2) }
 
   // OPS IN TERMS OF OTHER OPS
   // =========================
 
-  val readEventsAsRead = Law[O]("readEventsAsRead")(o =>
-    readEvents(o) === read.map(_.events.filter(_.ord > o)))
+// This law doesn't hold because we have a property that we don't allow gaps in cached events
+//  val readEventsAsRead = RedisLaw[O]("readEventsAsRead")(o =>
+//    readEvents(o) === read.map(_.events.filter(_.ord > o)))
 
-  val writeSnapshotAndPublish = Law[(S, E)]("writeSnapshotAndPublish") { case (s, e) =>
+  val writeSnapshotAndPublish = RedisLaw[(S, E)]("writeSnapshotAndPublish") { case (s, e) =>
     writeSnapshot(s, e) === publishEvents(e) *> writeSnapshot(s, ∅) }
 
-  val writeEventsAndPublish = Law[(E, E)]("writeEventsAndPublish") { case (c, cp) =>
-    writeEvents(c, cp) === publishEvents(cp) *> writeEvents(c ++ cp, ∅) }
+  val writeEventsAndPublish = RedisLaw[(E, E)]("writeEventsAndPublish") { case (c, cp) =>
+    // co = cache only
+    // cp = cache & publish
+    val co = c -- cp
+    whenDebugging {
+      log(s"[L] cache            : ", c)
+      log(s"    cache and publish: ", cp)
+      log(s"[R] publish          : ", cp)
+      log(s"[R] cache            : ", co ++ cp)
+    }
+    writeEvents(co, cp) === publishEvents(cp) *> writeEvents(co ++ cp, ∅)
+  }
 
-  val publishEventsViaSnapshot = Law[E]("publishEventsViaSnapshot")(e =>
+  val publishEventsViaSnapshot = RedisLaw[E]("publishEventsViaSnapshot")(e =>
     publishEvents(e) === read.flatMap(_.snapshot match {
       case Some(s) => writeSnapshot(s, e).void
       case None    => publishEvents(e)
@@ -62,150 +87,90 @@ object RedisLaws {
   // R/W RELATIONSHIPS
   // =================
 
-  val writeSnapshotAndRead = Law[(S, E)]("writeSnapshotAndRead") { case (s, e) =>
-    val read2 = read.map(r => ProjectCache(r.snapshot.map(_ max s) orElse Some(s), r.events.filter(_.ord > s.ord)))
-    writeSnapshot(s, e) *> read === (read2 <* writeSnapshot(s, e))
-  }
+  // This law doesn't hold because we have a property that we don't allow gaps in cached events
+//  val writeSnapshotAndRead = RedisLaw[(S, E)]("writeSnapshotAndRead") { case (s, e) =>
+//    val read2 = read.map(r => ProjectCache(r.snapshot.map(_ max s) orElse Some(s), r.events.filter(_.ord > s.ord)))
+//    writeSnapshot(s, e) *> read === (read2 <* writeSnapshot(s, e))
+//  }
 
   // This law doesn't hold because we have a property that we don't allow gaps in cached events
-  //  val writeEventsAndRead = Law[(E, E)]("writeEventsAndRead") { case (c, cp) =>
+  //  val writeEventsAndRead = RedisLaw[(E, E)]("writeEventsAndRead") { case (c, cp) =>
   //    writeEvents(c, cp) *> read === (read.map(…) <* writeEvents(c, cp))
   //  }
 
   // ===================================================================================================================
 
-  private def mkTestGens[F[_]: Monad](id1: ProjectId, redis1: ProjectAlgebra[F],
-                                      id2: ProjectId, redis2: ProjectAlgebra[F]) = {
-    var results = List.empty[Gens => Gen[Test[F]]]
-
-    def add[I](law: Law[I])(g: Gens => Gen[I]): Unit =
-      results ::= (g(_).map(law(_)(id1, redis1)(id2, redis2)))
-
-    add(readEvents1)(_.genO)
-    add(readEvents2)(_.genOO)
-    add(writeSnapshot2)(_.genSESE)
-    add(writeEvents1)(_.genEE)
-    add(publishEvents1)(_.genEE)
-    add(readEventsAsRead)(_.genO)
-    add(writeSnapshotAndPublish)(_.genSE)
-    add(writeEventsAndPublish)(_.genEE)
-    add(publishEventsViaSnapshot)(_.genE)
-    add(writeSnapshotAndRead)(_.genSE)
-
-    results
-  }
-
-  // ===================================================================================================================
-
-  trait Logic[A] { self =>
-    def apply[G[_]: Monad]: (ProjectAlgebra[G], ProjectId) => G[A]
-
-    def ++(fb: Logic[A])(implicit A: Semigroup[A]): Logic[A] =
-      for {a <- self; b <- fb} yield A.append(a, b)
-
-    def ===(fb: Logic[A])(implicit e: Equal[A]) =
-      (this, fb, e)
-
-    def =-=(fb: Logic[A]) =
-      ===(fb)(Equal((_, _) => true))
-  }
-
-  implicit val monadLogic: Monad[Logic] = new Monad[Logic] {
-    override def point[A](a: => A): Logic[A] = new Logic[A] {
-      override def apply[G[_]: Monad] = (_, _) => a.point[G]
-    }
-
-    override def map[A, B](fa: Logic[A])(f: A => B): Logic[B] = new Logic[B] {
-      override def apply[G[_]: Monad] = (r, id) => fa.apply[G].apply(r, id).map(f)
-    }
-
-    override def bind[A, B](fa: Logic[A])(f: A => Logic[B]): Logic[B] = new Logic[B] {
-      override def apply[G[_]: Monad] = (r, id) => fa.apply[G].apply(r, id).flatMap(f(_).apply[G].apply(r, id))
-    }
-  }
+  private def ∅ : E = VerifiedEvent.Seq.empty
 
   private implicit val eventSeqInstance: Semigroup[VerifiedEvent.Seq] =
     new Semigroup[VerifiedEvent.Seq] {
       override def append(f1: VerifiedEvent.Seq, f2: => VerifiedEvent.Seq) = f1 ++ f2
     }
 
+  private def publishEvents(e: E): Logic[Unit] =
+    Logic[Unit](_.publishEvents(_, e))
+
+  private def read: Logic[ProjectCache] =
+    Logic[ProjectCache](_.read(_).map(_.getOrThrow()))
+
+  private def readEvents(o: O): Logic[VerifiedEvent.Seq] =
+    Logic[VerifiedEvent.Seq](_.readEvents(_, o).map(_.getOrThrow()))
+
+  private def writeEvents(cacheOnly: E, cacheAndPublish: E): Logic[Boolean] =
+    Logic[Boolean](_.writeEvents(_, cacheOnly, cacheAndPublish))
+
+  private def writeSnapshot(s: S, publishOnly: E): Logic[Boolean] =
+    Logic[Boolean](_.writeSnapshot(_, s, publishOnly))
+
   // ===================================================================================================================
 
-  trait Law[I] { self =>
-    val name: String
-    type O
-    val test: I => (Logic[O], Logic[O], Equal[O])
+  var debug = false
 
-    final def apply[F[_]](i: I)
-                         (id1: ProjectId, r1: ProjectAlgebra[F])
-                         (id2: ProjectId, r2: ProjectAlgebra[F])
-                         (implicit F: Monad[F]): Test[F] = {
-      val g = test(i)
-      new Test[F] {
-        override val name = self.name
-        override val in = i
-        override type O = self.O
-        override val eq = g._3
-        override val lhs = g._1[F].apply(r1, id1)
-        override val rhs = g._2[F].apply(r2, id2)
-      }
+  def withDebugging[A](d: Boolean)(f: => A): A = {
+    val old = debug
+    debug = d
+    try
+      f
+    finally
+      debug = old
+  }
+
+  def whenDebugging(f: => Unit): Unit =
+    if (debug) {
+      f
+      println()
     }
-  }
 
-  trait Test[F[_]] {
-    val name: String
-    val in: Any
-    type O
-    val eq: Equal[O]
-    val lhs: F[O]
-    val rhs: F[O]
-  }
+  def log(prefix: String, e: E): Unit =
+    if (e.isEmpty)
+      println(prefix + "∅")
+    else
+      println(prefix + ConciseIntSetFormat(e.map(_.ord.value)))
 
-  object Law {
-    def apply[A](name: String) = new Dsl[A](name)
-    final class Dsl[A](name: String) { self =>
-      def apply[B](f: A => (Logic[B], Logic[B], Equal[B])): Law[A] =
-        new Law[A] {
-          override val name = self.name
-          override type O = B
-          override val test = f
-        }
-    }
-  }
+  def log(prefix: String, s: S): Unit =
+    println(prefix + s.ord.value)
+
+  def log(prefix: String, c: ProjectCache): Unit =
+    println(s"${prefix}${c.snapshot.fold("∅")(_.ord.value.toString)} + {${ConciseIntSetFormat(c.events.map(_.ord.value))}}")
 
   // ===================================================================================================================
 
-  type E = VerifiedEvent.Seq
-  type S = ProjectSnapshot
-  type O = Option[EventOrd.Latest]
-
-  private def ∅ : E = VerifiedEvent.Seq.empty
-
-  private def publishEvents(e: E): Logic[Unit] = new Logic[Unit] {
-    override def apply[G[_] : Monad] = _.publishEvents(_, e)
+  def projectSnapshotFromOrd(ord: EventOrd): ProjectSnapshot = {
+    val p = Project.empty.copy(name = ord.value.toString)
+    ProjectSnapshot(p, ord.asLatest)
   }
 
-  private def read: Logic[ProjectCache] = new Logic[ProjectCache] {
-    override def apply[G[_] : Monad] = _.read(_).map(_.needRight)
-  }
+  private implicit lazy val encoderProjectSnapshot: Encoder[ProjectSnapshot] =
+    Encoder[EventOrd].contramap(_.ord.asEventOrd)
 
-  private def readEvents(o: O): Logic[VerifiedEvent.Seq] = new Logic[VerifiedEvent.Seq] {
-    override def apply[G[_] : Monad] = _.readEvents(_, o).map(_.needRight)
-  }
-
-  private def writeEvents(c: E, cp: E): Logic[Boolean] = new Logic[Boolean] {
-    override def apply[G[_] : Monad] = _.writeEvents(_, c, cp)
-  }
-
-  private def writeSnapshot(s: S, publishOnly: E): Logic[Boolean] = new Logic[Boolean] {
-    override def apply[G[_] : Monad] = _.writeSnapshot(_, s, publishOnly)
-  }
+  private implicit lazy val decoderProjectSnapshot: Decoder[ProjectSnapshot] =
+    Decoder[EventOrd].map(projectSnapshotFromOrd)
 
   // ===================================================================================================================
 
-  final case class Gens(genO: Gen[O],
-                        genS: Gen[S],
-                        genE: Gen[E]) {
+  final case class DataGenerators(genO: Gen[O],
+                                  genS: Gen[S],
+                                  genE: Gen[E]) {
     val genOO  : Gen[(O, O      )] = Gen.tuple2(genO, genO)
     val genEE  : Gen[(E, E      )] = Gen.tuple2(genE, genE)
     val genSE  : Gen[(S, E      )] = Gen.tuple2(genS, genE)
@@ -213,30 +178,25 @@ object RedisLaws {
     val genEEEE: Gen[(E, E, E, E)] = Gen.tuple4(genE, genE, genE, genE)
   }
 
-  object Gens {
+  object DataGenerators {
     private val genZero = Gen.pure(0)
 
     private def chooseInt(n: Int): Gen[Int] =
       if (n > 0) Gen.chooseInt(n) else genZero
 
-    def apply(rep: Int): Gens = {
-      assert(rep <= 100, "Don't exceed 100 reps. Current formula scales too wildly")
-      
-      // It gives a continually good proportional increase/rep, with a reasonable total size (100 reps = 2,177)
-      val limit = (Math.pow(rep + 1, 1.1) * (Math.pow(rep * 0.1, 1.1) + 1)).toInt
+    private val startTime =
+      Instant.parse("2020-04-15T00:00:00Z")
 
-      val genOrd = Gen.chooseInt(limit).map(EventOrd.first + _)
+    def apply(limit: Int): DataGenerators = {
+
+      val genOrd =
+        Gen.chooseInt(limit).map(EventOrd.first + _)
 
       val genO: Gen[O] =
         Gen.chooseInt(limit + 1).map(i => if (i == 0) None else Some(EventOrd.Latest(i)))
 
       val genS: Gen[S] =
-        for {
-          ord <- genOrd
-        } yield {
-          val p = Project.empty.copy(name = ord.value.toString)
-          ProjectSnapshot(p, ord.asLatest)
-        }
+        genOrd.map(RedisLaws.projectSnapshotFromOrd)
 
       val genE: Gen[E] =
         for {
@@ -244,130 +204,51 @@ object RedisLaws {
           empty <- Gen.chooseInt(8)
           size  <- if (empty == 0) genZero else chooseInt(limit - start.value)
         } yield {
-          val startTime = Instant.now()
           def events =
             (0 until size).iterator.map { i =>
               val ord = start + i
-              VerifiedEvent(ord, Event.ProjectNameSet(ord.value.toString), startTime.plusSeconds(i))
+              VerifiedEvent(ord, Event.ProjectNameSet(ord.value.toString), startTime.plusSeconds(ord.value))
             }
           VerifiedEvent.Seq.empty ++ events
         }
 
-      Gens(genO, genS, genE)
+      apply(genO, genS, genE)
     }
   }
 
   // ===================================================================================================================
 
-  private final class Listener[F[_]](id: ProjectId, r: ProjectAlgebra[F])(implicit F: Applicative[F], S: SyncEffect[F]) {
-    import shipreq.webapp.server.logic.Redis.ListenerError
-    private val s = new collection.mutable.ArrayBuffer[VerifiedEvent]
-    def get() = synchronized(s.toList)
-    def clear() = synchronized(s.clear())
-    private def add(e: ListenerError \/ VerifiedEvent) = F.point[Unit] { synchronized {
-//      val before = get()
-      s += e.needRight
-//      val after = get()
-//      val p =  if (r.toString.contains("Memory")) "<<M>>" else "<<R>>"
-//      println(s"${p} ${before} + ${e} --> ${after}")
-    }}
-    r.subscribe(id, add).unsafeRun()
+  type TestGen = DataGenerators => Gen[Test]
+
+  val testGens: Vector[TestGen] = {
+    var results = List.empty[TestGen]
+
+    def add[I](law: RedisLaw[I])(g: DataGenerators => Gen[I]): Unit =
+      results ::= (g(_).map(Test(law)(_)))
+
+    add(readEvents1)(_.genO)
+    add(readEvents2)(_.genOO)
+    add(writeSnapshot2)(_.genSESE)
+    add(writeEvents1)(_.genEE)
+    add(publishEvents1)(_.genEE)
+    add(writeSnapshotAndPublish)(_.genSE)
+    add(writeEventsAndPublish)(_.genEE)
+    add(publishEventsViaSnapshot)(_.genE)
+
+    results.toVector
   }
 
-  final class Tester[F[_]: Monad: SyncEffect](id1: ProjectId, redis1: ProjectAlgebra[F],
-                                              id2: ProjectId, redis2: ProjectAlgebra[F],
-                                              evictSnapshot: () => Unit,
-                                              publish: () => Unit) {
-
-    private val listener1 = new Listener(id1, redis1)
-    private val listener2 = new Listener(id2, redis2)
-
-    protected implicit val retryMax = utest.asserts.RetryMax(5000.millis.asFiniteDuration)
-    protected implicit val retryInterval = utest.asserts.RetryInterval(5.millis.asFiniteDuration)
-
-    def assertTest(test: Test[F]): Unit = {
-      // Prepare
-      listener1.clear()
-      listener2.clear()
-
-      // Run
-      val o1 = test.lhs.unsafeRun()
-      val o2 = test.rhs.unsafeRun()
-      publish()
-
-      // Test state
-      assertState(test.name)
-
-      // Test laws
-      def p1 = listener1.get().iterator.map(_.ord).toSet
-      def p2 = listener2.get().iterator.map(_.ord).toSet
-      assertEq(s"${test.name} -> result", actual = o1, expect = o2)(test.eq, implicitly)
-      try
-        utest.eventually(p1 === p2)
-      catch {
-        case _: Throwable => assertEq(s"${test.name} -> published", actual = p1, expect = p2)
-      }
+  def fromName(str: String): Option[RedisLaw[_]] =
+    str match {
+      case "readEvents1"              => Some(readEvents1)
+      case "readEvents2"              => Some(readEvents2)
+      case "writeSnapshot2"           => Some(writeSnapshot2)
+      case "writeEvents1"             => Some(writeEvents1)
+      case "publishEvents1"           => Some(publishEvents1)
+      case "writeSnapshotAndPublish"  => Some(writeSnapshotAndPublish)
+      case "writeEventsAndPublish"    => Some(writeEventsAndPublish)
+      case "publishEventsViaSnapshot" => Some(publishEventsViaSnapshot)
+      case _                          => None
     }
-
-    def assertState(name: String): Unit = {
-      // Test state
-      val s1 = redis1.read(id1).unsafeRun().needRight
-      val s2 = redis2.read(id2).unsafeRun().needRight
-      assertEq(s"$name -> redis state", actual = s1, expect = s2)
-
-      // Test invariants
-      val s = s1
-      if (s.events.size > 1) {
-        val ords = s.events.iterator.map(_.ord.value).toList
-        assertEq("no event gaps allowed", actual = ords, expect = Util.partitionConsecutive(ords)._1)
-      }
-      if (s.snapshot.isDefined && s.events.nonEmpty)
-        assertEq("first event",
-          actual = s.events.min.ord.value,
-          expect = s.snapshot.get.ord.value + 1)
-
-    }
-    
-    private val allTestGens =
-      mkTestGens(id1, redis1, id2, redis2)
-
-    private def allTestsIterator(gens            : Int => Gens,
-                                 reps            : Int,
-                                 seed            : Option[Long],
-                                 genEvictSnapshot: Gen[Boolean]): Iterator[Test[F]] = {
-      val genCtx = GenCtx(GenSize.Default, ThreadNumber(0))
-      seed.foreach(genCtx.setSeed)
-      val itEvictSnapshot = genEvictSnapshot.samplesUsing(genCtx)
-      1.to(reps).iterator.flatMap { i =>
-        if (i != 1 && itEvictSnapshot.next()) {
-          evictSnapshot()
-          assertState("evictSnapshot")
-        }
-        val gs = gens(i)
-        val tests = allTestGens.map(_ (gs).samplesUsing(genCtx).next())
-        Gen.shuffle(tests).samplesUsing(genCtx).next()
-      }
-    }
-
-    def testAllLaws(reps : Int          = 100,
-                    gens : Int => Gens  = Gens.apply,
-                    seed : Option[Long] = None,
-                    evict: Double       = 0.1,
-                    debug: Boolean      = false): String = {
-      val genEvictSS = Gen.chooseDouble(0, 1).map(_ < evict)
-      val startTime  = System.nanoTime()
-      val tests      = allTestsIterator(gens, reps, seed, genEvictSS).toArray
-      val lawCount   = allTestGens.size
-      if (debug) println(s"Testing $lawCount Redis laws, $reps times each = ${tests.length} tests")
-      for (i <- tests.indices) {
-        val t = tests(i)
-        if (debug) printf("\n[%4d] %-24s: %s\n", i + 1, t.name, t.in.toString.take(180))
-        assertTest(t)
-      }
-      val endTime = System.nanoTime()
-      val dur     = Duration.ofNanos(endTime - startTime)
-      s"$lawCount Redis laws passed after ${tests.length} tests in ${dur.conciseDesc}."
-    }
-  }
 
 }

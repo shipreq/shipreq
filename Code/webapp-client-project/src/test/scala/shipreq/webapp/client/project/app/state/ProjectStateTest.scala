@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.state
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
+import scala.collection.immutable.TreeSet
 import utest._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
@@ -15,13 +15,13 @@ object ProjectStateTest extends TestSuite {
 
     val genTest: Gen[(ProjectState, Vector[VerifiedEvent], Project, ProjectState)] =
       for {
-        initEventCount    ← Gen.chooseInt(4)
-        totalEvents1      ← Gen.chooseInt(40).map(_ + initEventCount)
+        initEventCount    <- Gen.chooseInt(4)
+        totalEvents1      <- Gen.chooseInt(40).map(_ + initEventCount)
         latestOrd1        = Option.when(totalEvents1 > 0)(EventOrd.Latest(totalEvents1))
         pao1              = ProjectAndOrd(p1, latestOrd1)
         s1                = ProjectState.init(pao1, looseProjectMetaData(p1, eventsTotal = totalEvents1, eventsInit = initEventCount))
-        ((p2, _), ves)    ← RandomEventStream.verifiedEvents(80).run((p1, pao1.nextOrd))
-        batches           ← Gen.batches(ves, 0 to 7)
+        ((p2, _), ves)    <- RandomEventStream.verifiedEvents(80).run((p1, pao1.nextOrd))
+        batches           <- Gen.batches(ves, 0 to 7)
                               .pair.map(x => x._1 ++ x._2) // duplicate all events (in different batches) to test idempotency
                               .shuffle // shuffle to test commutivity
       } yield {
@@ -29,7 +29,7 @@ object ProjectStateTest extends TestSuite {
 //        println(s"Generated ${ves.length} events and ${batches.length} batches starting at #${initialOrd.value + 1}")
 //        batches.foreach(println)
 //        m.addListener((ves, _, s) => Callback(println(s"Adding: $ves, pending: ${s.futureEventRange}")))
-        batches.foreach(b => m.applyEventSeqCB(b.to).runNow())
+        batches.foreach(b => m.applyEventSeqCB(b.to(TreeSet)).runNow())
         (s1, ves, p2, m.state())
       }
 
@@ -37,7 +37,7 @@ object ProjectStateTest extends TestSuite {
 
     assertEq("Total event count", s2.projectMetaData.eventsTotal, s1.projectMetaData.eventsTotal + ves.length)
     assertEq("Init event count", s2.projectMetaData.eventsInit, s1.projectMetaData.eventsInit)
-    assertEq("Future events", s2.futureEvents.keySet.toList, Nil)
+    assertEq("Future events", s2.futureEvents.toList, Nil)
     assertEq("Latest EventOrd", s2.ord, Some(EventOrd.Latest(s2.projectMetaData.eventsTotal)))
     s2.projectMetaData.assertInSyncWith(p2)
     assertEq(s2.project, p2)

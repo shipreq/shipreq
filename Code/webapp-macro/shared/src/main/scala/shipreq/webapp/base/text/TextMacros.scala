@@ -79,20 +79,20 @@ class TextMacroImpls(val c: Context) extends WhiteboxMacroUtils {
     val valMods = if (lazyValDefs.isEmpty) Modifiers() else Modifiers(Flag.LAZY)
 
     val li = if (!needLI) EmptyTree else
-      q"lazy val li: TC[japgolly.microlibs.nonempty.NonEmptyVector[t.ListItem]] = a.lazily(a.nev(a.vec(vec))(vec))"
+      q"lazy val li: TC[shipreq.base.util.NonEmptyArraySeq[t.ListItem]] = a.lazily(a.nea(a.arr(arr, implicitly[ClassTag[t.ListItem]]))(arr))"
 
     val impl = q""" {
-      import _root_.shipreq.webapp.base.text.Atom.Type
       val t = $tTerm
+      val ct = implicitly[ClassTag[t.Atom]]
       ..$valDefs
       ..$lazyValDefs
       $valMods val get: Atom.Type => TC[t.Atom] = {case ..$cases}
       $valMods val all: List[TC[t.Atom]] = ${allVals.foldRight(q"Nil": Tree)((v, l) => q"$v :: $l")}
       $valMods val atom = a.sum(t)(get, all)
-      $valMods val vec  = a.vec(atom)
+      $valMods val arr  = a.arr(atom, ct)
       $li
-      val nev = a.nev(vec)(atom)
-      (atom, vec, nev): (TC[$tTerm.Atom], TC[$tTerm.OptionalText], TC[$tTerm.NonEmptyText])
+      val nea = a.nea(arr)(atom)
+      (atom, arr, nea): (TC[$tTerm.Atom], TC[$tTerm.OptionalText], TC[$tTerm.NonEmptyText])
     } """
 
     debug("\n" + showCode(impl) + "\n")

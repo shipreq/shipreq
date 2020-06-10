@@ -1,35 +1,56 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
 import japgolly.microlibs.nonempty.NonEmptySet
-import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Allow, Deny}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue.{ContentRef, Issue}
-import shipreq.webapp.base.protocol.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}
+import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.base.ui.semantic.{Button, Icon}
+import shipreq.webapp.base.ui.semantic.{Icon, Button => Btn}
 import shipreq.webapp.client.project.app.Style.{issues => *}
+import shipreq.webapp.client.project.app.pages.root.Routes
 
-final case class Action(icon: Icon, label: String, cmd: Action.Cmd) {
-  val button =
-    Enabled.memo { enabled =>
-      Button(
-        tipe = Button.Type.IconAndText(icon, label),
-        state = if (enabled is Enabled) Button.State.Active else Button.State.Disabled,
-      ).tag(*.actionButton)
-    }
+sealed trait Action {
+  def cmdOption: Option[Action.Cmd]
 }
 
 object Action {
+
+  final case class Button(icon: Icon, label: String, cmd: Action.Cmd) extends Action {
+
+    override val cmdOption =
+      Some(cmd)
+
+    val button: Enabled => VdomTag =
+      Enabled.memo { enabled =>
+        Btn(
+          tipe = Btn.Type.IconAndText(icon, label),
+          state = if (enabled is Enabled) Btn.State.Active else Btn.State.Disabled,
+        ).tag(*.actionButton)
+      }
+  }
+
+  final case class Link(routerCtl: Routes.RouterCtl, route: Routes.Page.HasStaticTitle) extends Action {
+
+    override def cmdOption =
+      None
+
+    val render: VdomNode =
+        Btn(
+          tipe = Btn.Type.IconAndText(Icon.Setting, route.title),
+        ).tag(*.actionButton, routerCtl.setOnLinkClick(route))
+  }
+
   type Cmd = ManualIssueCmd \/ UpdateConfigCmd \/ UpdateContentCmd
 }
 
 object Actions {
   import Action.Cmd
 
-  final class Builder(p: Project) {
+  final class Builder(p: Project, routerCtl: Routes.RouterCtl) {
     type Actions = List[Action]
 
     private implicit def singleActionAsList(a: Action): Actions = a :: Nil
@@ -37,14 +58,17 @@ object Actions {
     private implicit def cmdFromUpdateContent(a: UpdateContentCmd): Cmd = \/-(a)
     private implicit def cmdFromManualIssueCmd(a: ManualIssueCmd): Cmd = -\/(-\/(a))
 
-    private def delete(subject: String, cmd: Cmd): Action =
-      Action(Icon.Trash, "Delete " + subject, cmd)
+    private def linkTo(route: Routes.Page.HasStaticTitle): Action =
+      Action.Link(routerCtl, route)
 
-    private def deleteField(f: CustomField.Tag): Action = {
-      val tag = p.config.tags.tree.need(f.tagId).tag
+    private def delete(subject: String, cmd: Cmd): Action =
+      Action.Button(Icon.Trash, "Delete " + subject, cmd)
+
+    private def deleteField(f: CustomField): Action = {
+      val name = p.config.fieldName(f.id)
       delete(
-        tag.name + " field",
-        UpdateConfigCmd.FieldDelete(f.id))
+        name + " field",
+        UpdateConfigCmd.CustomFieldDelete(f.id))
     }
 
     private def deleteReqCodeGroup(g: LiveCodeGroup): Action = {
@@ -55,10 +79,10 @@ object Actions {
     }
 
     private def restore(subject: String, cmd: Cmd): Action =
-      Action(Icon.Undo, "Restore " + subject, cmd)
+      Action.Button(Icon.Undo, "Restore " + subject, cmd)
 
     private def restoreIssueTag(id: CustomIssueTypeId): Actions = {
-      val t = p.config.customIssueType(id)
+      val t = p.config.customIssueTypes.need(id)
       restore(
         PlainText.hashtag(t.key),
         UpdateConfigCmd.CustomIssueTypeRestore(id))
@@ -127,14 +151,21 @@ object Actions {
          | _: Issue.IssueTagInReq
             => Nil
 
+      case _: Issue.FieldDefaultTagDead
+         | _: Issue.FieldDefaultTagNotApplicable
+         | _: Issue.FieldDefaultTagUnrelated
+         | _: Issue.NonApplicableField
+            => linkTo(Routes.Page.CfgFields)
+
       case i: Issue.DeadIssueTagInRcg     => restoreIssueTag(i.issue.typ)
       case i: Issue.DeadIssueTagInReq     => restoreIssueTag(i.issue.typ)
       case i: Issue.DeadRefInRcg          => restoreRefTarget(i.ref)
       case i: Issue.DeadRefInReq          => restoreRefTarget(i.ref)
       case i: Issue.DeadTag               => restoreTag(i.tag)
       case i: Issue.EmptyCodeGroup        => deleteReqCodeGroup(i.rcg)
-      case i: Issue.UninhabitableTagField => deleteField(i.field)
       case i: Issue.ManualIssue           => delete("issue", ManualIssueCmd.Delete(i.issue.id))
+      case _: Issue.NonApplicableTag      => linkTo(Routes.Page.CfgTags)
+      case i: Issue.UninhabitableTagField => deleteField(i.field)
     }
   }
 }

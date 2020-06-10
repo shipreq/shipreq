@@ -2,6 +2,7 @@ package shipreq.webapp.base.protocol.binary
 
 import boopickle.{PickleState, Pickler, UnpickleState}
 import japgolly.univeq._
+import scala.annotation.elidable
 import scala.util.control.NonFatal
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.BinaryData
@@ -130,7 +131,15 @@ object SafePickler {
 
     final case class ExceptionOccurred(localVer   : Version,
                                        exception  : Throwable,
-                                       upstreamVer: Option[Version]) extends DecodingFailure
+                                       upstreamVer: Option[Version]) extends DecodingFailure {
+
+      @elidable(elidable.ASSERTION)
+      private def devOnly(): Unit = {
+        exception.printStackTrace(System.err)
+      }
+
+      devOnly()
+    }
 
     def fromException(localVer: Version, err: Throwable, upstreamVer: Option[Version]): Result[Nothing] =
       err match {
@@ -190,8 +199,7 @@ object SafePickler {
   object ConstructionHelperImplicits {
     implicit class SafePickler_PicklerExt[A](private val self: Pickler[A]) extends AnyVal {
       def asVersion(v: Version): SafePickler[A] = SafePickler(None, None, v, self)
-      def asV10 = asVersion(Version.v10)
-      def asV11 = asVersion(Version.v11)
+      def asV1(minorVer: Int)  : SafePickler[A] = asVersion(Version.v1(minorVer))
     }
 
   }

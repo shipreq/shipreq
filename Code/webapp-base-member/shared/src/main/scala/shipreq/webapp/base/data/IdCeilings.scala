@@ -12,15 +12,14 @@ import shipreq.base.util.univeq._
  * For each value herein, adding one should always produce a never-before-used ID.
  */
 @Lenses
-final case class IdCeilings(
-    customIssueType : Int,
-    customReqType   : Int,
-    customField     : Int,
-    tag             : Int,
-    req             : Int,
-    useCaseStep     : Int,
-    reqCode         : Int,
-    reqtableView    : Int, // i.e. reqtable.SavedView.Id
+final case class IdCeilings(customIssueType : Int,
+                            customReqType   : Int,
+                            customField     : Int,
+                            tag             : Int,
+                            req             : Int,
+                            useCaseStep     : Int,
+                            reqCode         : Int,
+                            savedView       : Int,
     ) {
 
   def update(lens: Lens[IdCeilings, Int], n: Int): IdCeilings = {
@@ -40,11 +39,11 @@ object IdCeilings {
 
   def zero = init(0)
 
-  def maxOf(ts: TraversableOnce[TaggedInt]): Int =
+  def maxOf(ts: IterableOnce[TaggedInt]): Int =
     maxOfF(ts)(_.value)
 
-  def maxOfF[F](ts: TraversableOnce[F])(f: F => Int): Int =
-    ts.foldLeft(0)(_ max f(_))
+  def maxOfF[F](ts: IterableOnce[F])(f: F => Int): Int =
+    ts.iterator.foldLeft(0)(_ max f(_))
 
   /**
    * This should only be used for two reasons:
@@ -59,10 +58,10 @@ object IdCeilings {
       customReqType   = imapKeys(p.config.reqTypes.custom),
       customField     = imapKeys(p.config.fields.customFields),
       tag             = imapKeys(p.config.tags.tree),
-      req             = imapKeys(p.content.reqs.genericReqs) max imapKeys(p.content.reqs.useCases.imap),
+      req             = imapKeys(p.content.reqs.genericReqs.imap) max imapKeys(p.content.reqs.useCases.imap),
       useCaseStep     = maxOfF(p.content.reqs.useCases.stepIterator)(_.id.value),
-      reqCode         = maxOf(p.content.reqCodes.idList),
-      reqtableView    = maxOf(p.reqtableViewIterator.map(_.id)),
+      reqCode         = maxOf(p.content.reqCodes.idSeq),
+      savedView       = maxOf(p.savedViewIterator.map(_.id)),
     )
   }
 

@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
 import nyaya.prop.Prop
 import scala.annotation.elidable
@@ -36,11 +35,11 @@ final case class ProjectMetaData(id           : ProjectId.Public,
   def applyEvent(ve: VerifiedEvent, newProject: Project, when: Instant): ProjectMetaData =
     applyEvents(ve :: Nil, newProject, when)
 
-  def applyEvents(ves: TraversableOnce[VerifiedEvent], newProject: Project, when: Instant): ProjectMetaData =
+  def applyEvents(ves: IterableOnce[VerifiedEvent], newProject: Project, when: Instant): ProjectMetaData =
     ProjectMetaData.fromProject(newProject)(
       id            = id,
       eventsInit    = eventsInit,
-      eventsTotal   = eventsTotal + ves.size,
+      eventsTotal   = eventsTotal + ves.iterator.size,
       createdAt     = createdAt,
       accessedAt    = when,
       lastUpdatedAt = Some(when))

@@ -9,9 +9,9 @@ object ShareUrlTokenGenTest extends TestSuite {
 
   override def tests = Tests {
 
-    'size - assertEq(next.value.length, ShareUrlTokenGen.len)
+    "size" - assertEq(next.value.length, ShareUrlTokenGen.len)
 
-    'random {
+    "random" - {
       val ts = (1 to 100).toList.map(_ => next).distinct
       assert(ts.size > 95)
     }

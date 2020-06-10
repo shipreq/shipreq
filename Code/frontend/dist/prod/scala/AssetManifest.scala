@@ -5,7 +5,7 @@ object AssetManifest {
 
   final case class CDN(href: String, integrity: Option[String])
 
-  def analyticsJs = "/s/062ae3593f4eae24e248760bf0b448fc.js"
+  def analyticsJs = "/s/11670b0e3e1d31a771f7cd5a49d22ab3.js"
 
   def favicon = "/s/286b75985993da80759cbdc5142de4d3.ico"
 
@@ -25,33 +25,33 @@ object AssetManifest {
 
   def loadjs = "/s/9e706a6f7bc551ddf626c15cd76c1c25.js"
 
-  def memberLibBundleJs = "/s/127b8ddf9457de79ec84ba8835981a80.js"
+  def memberLibBundleJs = "/s/bc9a5f308713936e911f4a3fcd0122ba.js"
 
   def prismJsAutoloader = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/plugins/autoloader/prism-autoloader.min.js",
-    integrity = Some("sha256-WIuEtgHNTdrDT2obGtHYz/emxxAj04sJBdMhRjDXd8I="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js",
+    integrity = Some("sha256-3S2PESHNt0YNL65z57WuHPHIv12fibpBDXepyCGHftw="))
 
   def prismJsCore = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/components/prism-core.min.js",
-    integrity = Some("sha256-D05OTvzyl8h0SDpcQF6UNo3gl2rKDMmRuqX8ZZ06pNE="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js",
+    integrity = Some("sha256-9h14mWYYiQGkeAKg2JtijbqApb56kgw57WN6sI6dwH0="))
 
   def prismJsCss = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.19.0/themes/prism.css",
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/themes/prism.css",
     integrity = Some("sha256-LArq5Cddn4QETLgVbBZppSkBLJbL1dhacPVQF/EPH00="))
 
   def reactDomJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.8.6/umd/react-dom.production.min.js",
-    integrity = Some("sha256-qVsF1ftL3vUq8RFOLwPnKimXOLo72xguDliIxeffHRc="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.13.1/umd/react-dom.production.min.js",
+    integrity = Some("sha256-vFt3l+illeNlwThbDUdoPTqF81M8WNSZZZt3HEjsbSU="))
 
   def reactDomServerJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.8.6/umd/react-dom-server.browser.production.min.js",
-    integrity = Some("sha256-vvUAnA9uOVOrF0R+A8bWaInKo0Dck9JqZn3G/s25A0s="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.13.1/umd/react-dom-server.browser.production.min.js",
+    integrity = Some("sha256-fXCNPwvpS8aREogOH9Bf1ZSE+eV8Kpu3bdwfMam3UHU="))
 
   def reactJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react/16.8.6/umd/react.production.min.js",
-    integrity = Some("sha256-3vo65ZXn5pfsCfGM5H55X+SmwJHBlyNHPwRmWAPgJnM="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react/16.13.1/umd/react.production.min.js",
+    integrity = Some("sha256-yUhvEmYVhZ/GGshIQKArLvySDSh6cdmdcIx0spR3UP4="))
 
-  def semanticCss = "/s/b5b8655bc6042a8ed0d96ad25517846e.css"
+  def semanticCss = "/s/1968d59149b0d92a40b166aa61f66559.css"
 
   def semanticCssUrls: List[String] =
     "icons.eot" ::
@@ -62,7 +62,7 @@ object AssetManifest {
     "icons.svg#icons" ::
     Nil
 
-  def semanticJs = "/s/55a80b675cb3672759e0b653fd97cc1c.js"
+  def semanticJs = "/s/69025410fe4d84348335d65928f2033a.js"
 
   def shipreqBannerSvg = "/s/878536f0a4ad0029794669f88dbf5f35.svg"
 
@@ -78,7 +78,9 @@ object AssetManifest {
 
   def tileQuestionSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNTg0IiBoZWlnaHQ9IjM1ODQiIHZpZXdCb3g9IjAgMCAzNTg0IDM1ODQiPjxkZWZzPjxmaWx0ZXIgaWQ9ImEiIHg9Ii0uMDc1IiB3aWR0aD0iMS4xNSIgeT0iLS4wNTQiIGhlaWdodD0iMS4xMDkiIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiI+PGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMjguOTQiLz48L2ZpbHRlcj48ZmlsdGVyIGlkPSJiIiB4PSItLjA3NSIgd2lkdGg9IjEuMTUiIHk9Ii0uMDU0IiBoZWlnaHQ9IjEuMTA5IiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiPjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjI4Ljk0Ii8+PC9maWx0ZXI+PC9kZWZzPjxwYXRoIGQ9Ik0yODgwIDMwNDh2MjQwcTAgMTYtMTIgMjh0LTI4IDEyaC0yNDBxLTE2IDAtMjgtMTJ0LTEyLTI4di0yNDBxMC0xNiAxMi0yOHQyOC0xMmgyNDBxMTYgMCAyOCAxMnQxMiAyOHptMzE2LTYwMHEwIDU0LTE1LjUgMTAxdC0zNSA3Ni41cS0xOS41IDI5LjUtNTUgNTkuNXQtNTcuNSA0My41cS0yMiAxMy41LTYxIDM1LjUtNDEgMjMtNjguNSA2NXQtMjcuNSA2N3EwIDE3LTEyIDMyLjV0LTI4IDE1LjVoLTI0MHEtMTUgMC0yNS41LTE4LjVUMjU2MCAyODg4di00NXEwLTgzIDY1LTE1Ni41dDE0My0xMDguNXE1OS0yNyA4NC01NnQyNS03NnEwLTQyLTQ2LjUtNzR0LTEwNy41LTMycS02NSAwLTEwOCAyOS0zNSAyNS0xMDcgMTE1LTEzIDE2LTMxIDE2LTEyIDAtMjUtOGwtMTY0LTEyNXEtMTMtMTAtMTUuNS0yNXQ1LjUtMjhxMTYwLTI2NiA0NjQtMjY2IDgwIDAgMTYxIDMxdDE0NiA4M3E2NSA1MiAxMDYgMTI3LjV0NDEgMTU4LjV6IiBvcGFjaXR5PSIuMDI1IiBmaWx0ZXI9InVybCgjYSkiLz48cGF0aCBkPSJNMTA4OCAxMjU2djI0MHEwIDE2LTEyIDI4dC0yOCAxMkg4MDhxLTE2IDAtMjgtMTJ0LTEyLTI4di0yNDBxMC0xNiAxMi0yOHQyOC0xMmgyNDBxMTYgMCAyOCAxMnQxMiAyOHptMzE2LTYwMHEwIDU0LTE1LjUgMTAxdC0zNSA3Ni41cS0xOS41IDI5LjUtNTUgNTkuNXQtNTcuNSA0My41cS0yMiAxMy41LTYxIDM1LjUtNDEgMjMtNjguNSA2NXQtMjcuNSA2N3EwIDE3LTEyIDMyLjV0LTI4IDE1LjVIODA0cS0xNSAwLTI1LjUtMTguNVQ3NjggMTA5NnYtNDVxMC04MyA2NS0xNTYuNVQ5NzYgNzg2cTU5LTI3IDg0LTU2dDI1LTc2cTAtNDItNDYuNS03NFQ5MzEgNTQ4cS02NSAwLTEwOCAyOS0zNSAyNS0xMDcgMTE1LTEzIDE2LTMxIDE2LTEyIDAtMjUtOEw0OTYgNTc1cS0xMy0xMC0xNS41LTI1dDUuNS0yOHExNjAtMjY2IDQ2NC0yNjYgODAgMCAxNjEgMzF0MTQ2IDgzcTY1IDUyIDEwNiAxMjcuNXQ0MSAxNTguNXoiIG9wYWNpdHk9Ii4wMjUiIGZpbHRlcj0idXJsKCNiKSIvPjwvc3ZnPg=="
 
-  def vizJs = "/s/89ebc70c1db15261e3688b68ab62b513.js"
+  def vizJs = "/s/9d25a4a11043dc8711c78b8e0b51309c.js"
+
+  def vizWasm = "/s/f3ec0c3500d51e71bf94895c1c50198e.wasm"
 
   def webappClientHomeJs = "/j/h.js"
 

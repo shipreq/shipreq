@@ -1,9 +1,6 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
-import nyaya.gen._
-import nyaya.prop._
 import nyaya.test.PropTest._
 import scalaz.{-\/, \/-}
 import utest._
@@ -162,8 +159,8 @@ object ApplyEventTest extends TestSuite {
 
   override def tests = Tests {
 
-    'applyVerified {
-      'pass {
+    "applyVerified" - {
+      "pass" - {
         import Data1._
         ApplyEvent.untrusted.applyVerified(Vector(ve))(p1) match {
           case \/-(p) => assertEq(p, p2)

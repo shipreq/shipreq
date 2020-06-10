@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import scalaz.\/
-import shipreq.base.util.{ConsolidatedSeq, ErrorMsg}
+import shipreq.base.util.{ConsolidatedSeq, ErrorMsg, IfApplicable}
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.clipboard.ClipboardKeys
@@ -26,7 +26,7 @@ object TableRow {
 
   final case class Props(row             : Row,
                          columns         : NonEmptyVector[Column],
-                         editor          : Option[Reusable[EditorNavParent.Props]],
+                         editor          : Option[Reusable[IfApplicable[EditorNavParent.Props]]],
                          pubidFormat     : ProjectWidgets.NoCtx#PubidFormat,
                          cmdInvoker      : Action.Cmd ~=> Callback,
                          cmdAsync        : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg],
@@ -81,7 +81,7 @@ object TableRow {
           for (base <- p.idBase) {
             val c = row match {
               case r: Row.ForReq         => pubidFormat(r.req)
-              case r: Row.ForRcg         => r.renderer(FieldKey.Code)
+              case r: Row.ForRcg         => r.renderer(FieldKey.Code).getOrElse(na)
               case _: Row.ForConfig      => na
               case _: Row.ForManualIssue => na
             }
@@ -91,10 +91,10 @@ object TableRow {
         case Column.Title =>
           for (base <- p.titleBase) {
             val c = row match {
-              case r: Row.ForGenericReq  => r.renderer(FieldKey.Title)
-              case r: Row.ForUseCase     => r.renderer(FieldKey.Title)
-              case r: Row.ForUseCaseStep => r.ucRenderer(FieldKey.Title)
-              case r: Row.ForRcg         => r.renderer(FieldKey.CodeGroupTitle)
+              case r: Row.ForGenericReq  => r.renderer(FieldKey.Title).getOrElse(na)
+              case r: Row.ForUseCase     => r.renderer(FieldKey.Title).getOrElse(na)
+              case r: Row.ForUseCaseStep => r.ucRenderer(FieldKey.Title).getOrElse(na)
+              case r: Row.ForRcg         => r.renderer(FieldKey.CodeGroupTitle).getOrElse(na)
               case _: Row.ForManualIssue => na // This appears in Field Editor
               case _: Row.ForConfig      => na
             }
@@ -105,7 +105,7 @@ object TableRow {
           addTD(row.fieldOption.flatMap(_.desc).fold(na)(d => d))
 
         case Column.FieldEditor =>
-          p.editor match {
+          p.editor.flatMap(_.value.toOption) match {
             case Some(props) => cells += props.renderWithKey(col.key)
             case None        => addTD(na, allowCopy = false)
           }
@@ -115,16 +115,22 @@ object TableRow {
             if (row.actions.isEmpty)
               na
             else
-              row.actions.mkTagMod(<.br) { a =>
-                import AsyncFeature.Status._
-                val async = p.cmdAsync(a.cmd)
-                def ok = a.button(Enabled)(^.onClick --> p.cmdInvoker(a.cmd))
-                async match {
-                  case None                    => ok
-                  case Some(InProgress)        => a.button(Disabled)
-                  case Some(Failed(err, _, _)) => TagMod(ok, <.br, BaseStyles.errorPointingUp(err.value))
-                }
+              row.actions.mkTagMod(<.br) {
+
+                case a: Action.Button =>
+                  import AsyncFeature.Status._
+                  val async = p.cmdAsync(a.cmd)
+                  def ok = a.button(Enabled)(^.onClick --> p.cmdInvoker(a.cmd))
+                  async match {
+                    case None                    => ok
+                    case Some(InProgress)        => a.button(Disabled)
+                    case Some(Failed(err, _, _)) => TagMod(ok, <.br, BaseStyles.errorPointingUp(err.value))
+                  }
+
+                case a: Action.Link =>
+                  a.render
               }
+
           addTD(content, allowCopy = false)
       }
     }
@@ -132,7 +138,7 @@ object TableRow {
     <.tr(cells)
   }
 
-  val Component = ScalaComponent.builder[Props]("TableRow")
+  val Component = ScalaComponent.builder[Props]
     .render_P(render)
     .configure(shouldComponentUpdate)
     .build

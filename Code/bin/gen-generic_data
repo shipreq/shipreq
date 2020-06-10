@@ -18,7 +18,7 @@ object Gen {
        |  case object $attrName extends Attr {
        |    override type Data = $attrType
        |    override def apply(data: Data) = $valueName(data)
-       |    val dataEquality: Equal[Data] = implicitly[Equal[$attrType]]
+       |    override val dataEquality: Equal[Data] = implicitly[Equal[$attrType]]
        |  }
        |  final case class $valueName(value: $attrName.Data) extends Value {
        |    override val attr: $attrName.type = $attrName
@@ -30,9 +30,14 @@ object Gen {
      """.stripMargin
   }
 
+  def term(s: String): String =
+    s.take(1).toLowerCase + s.drop(1)
+
   def apply(objName: String, init: String = "")(fields: (String, String)*): String = {
     val attrNames = fields.map(_._1).sorted.mkString(", ")
     val initLine = Option(init.replace("\n", "\n  ").trim).filter(_.nonEmpty).fold("")("  " + _ + "\n\n")
+    val allValueArgs = fields.map{case (f,t) => s"${term(f)}: $t"}.mkString(", ")
+    val allValuesConcat = fields.map{case (f,t) => s"ValueFor$f(${term(f)})"}.mkString(" + ")
 
     s"""
       |object $objName extends GenericData {
@@ -47,6 +52,9 @@ object Gen {
       |  @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
       |
       |  override val attrs = NonEmptySet[Attr]($attrNames)
+      |
+      |  def apply($allValueArgs): NonEmptyValues =
+      |    NonEmpty.force(emptyValues + $allValuesConcat)
       |}
     """.stripMargin
   }
@@ -64,39 +72,35 @@ val gens = List(
     "Desc" -> "Option[String]",
   ),
   Gen("CustomReqTypeGD")(
-    "Mnemonic" -> "ReqType.Mnemonic",
-    "Name"     -> "String",
-    "Imp"      -> "ImplicationRequired",
+    "Mnemonic"    -> "ReqType.Mnemonic",
+    "Name"        -> "String",
+    "Implication" -> "Mandatory",
+    "Description" -> "Option[String]",
   ),
   Gen("TagGroupGD")(
-    "Name"          -> "String",
-    "Desc"          -> "Option[String]",
-    "MutexChildren" -> "MutexChildren",
-    "Parents"       -> "TagInTree.Parents",
-    "Children"      -> "TagInTree.Children",
+    "Name"        -> "String",
+    "Desc"        -> "Option[String]",
+    "Exclusivity" -> "Exclusivity",
+    "Parents"     -> "TagInTree.Parents",
+    "Children"    -> "TagInTree.Children",
   ),
   Gen("ApplicableTagGD")(
-    "Name"     -> "String",
-    "Desc"     -> "Option[String]",
-    "Key"      -> "HashRefKey",
-    "Parents"  -> "TagInTree.Parents",
-    "Children" -> "TagInTree.Children",
+    "Key"                -> "HashRefKey",
+    "Desc"               -> "Option[String]",
+    "Colour"             -> "Option[Colour]",
+    "ApplicableReqTypes" -> "ApplicableReqTypes",
+    "Parents"            -> "TagInTree.Parents",
+    "Children"           -> "TagInTree.Children",
   ),
   Gen("CustomTextFieldGD")(
-    "Name"      -> "String",
-    "Key"       -> "FieldRefKey",
-    "Mandatory" -> "Mandatory",
-    "ReqTypes"  -> "Field.ApplicableReqTypes",
+    "Name"              -> "String",
+    "FieldReqTypeRules" -> "FieldReqTypeRules[Impossible]",
   ),
   Gen("CustomTagFieldGD")(
-    "TagId"     -> "TagId",
-    "Mandatory" -> "Mandatory",
-    "ReqTypes"  -> "Field.ApplicableReqTypes",
+    "FieldReqTypeRules" -> "FieldReqTypeRules[ApplicableTagId]",
   ),
   Gen("CustomImpFieldGD")(
-    "ReqTypeId" -> "ReqTypeId",
-    "Mandatory" -> "Mandatory",
-    "ReqTypes"  -> "Field.ApplicableReqTypes",
+    "FieldReqTypeRules" -> "FieldReqTypeRules[Impossible]",
   ),
   """
     |/**
@@ -133,12 +137,13 @@ val gens = List(
     "FlowIn"  -> "SetDiff.NE[UseCaseStepId]",
     "FlowOut" -> "SetDiff.NE[UseCaseStepId]",
   ),
-  Gen("SavedViewGD", init = "import shipreq.webapp.base.filter.Filter.{Valid => ValidFilter}\nimport reqtable._")(
-    "Name"       -> "SavedView.Name",
-    "FilterDead" -> "FilterDead",
-    "Columns"    -> "NonEmptyVector[Column]",
-    "Order"      -> "SortCriteria",
-    "Filter"     -> "Option[ValidFilter]",
+  Gen("SavedViewGD", init = "import shipreq.webapp.base.filter.Filter.{Valid => ValidFilter}\nimport shipreq.webapp.base.data.savedview._")(
+    "Name"           -> "SavedView.Name",
+    "FilterDead"     -> "FilterDead",
+    "Columns"        -> "NonEmptyVector[Column]",
+    "Order"          -> "SortCriteria",
+    "Filter"         -> "Option[ValidFilter]",
+    "ImpGraphConfig" -> "Option[ImpGraphConfig]",
   ),
 )
 
@@ -151,7 +156,7 @@ val content =
      |
      |import japgolly.microlibs.nonempty._
      |import scalaz.{Equal, Order}
-     |import shipreq.base.util.{SetDiff, Util}
+     |import shipreq.base.util._
      |import shipreq.base.util.univeq._
      |import shipreq.webapp.base.data._
      |import shipreq.webapp.base.filter.Filter.Implicits._

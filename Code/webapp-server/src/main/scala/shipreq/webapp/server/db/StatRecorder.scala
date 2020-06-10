@@ -1,7 +1,7 @@
 package shipreq.webapp.server.db
 
 import com.typesafe.scalalogging.StrictLogging
-import doobie.imports.ConnectionIO
+import doobie.ConnectionIO
 import japgolly.clearconfig._
 import java.time.Duration
 import scalaz.~>

@@ -1,8 +1,7 @@
 package shipreq.taskman.server
 
-import doobie.imports._
+import doobie.implicits._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import shipreq.base.util.FxModule._
 import shipreq.taskman.api.{EmailAddr, TaskId, TaskStatus}
 import shipreq.taskman.api.Task.ReRegistrationAttempted
 import shipreq.taskman.server.logic._
@@ -38,12 +37,11 @@ object WorkflowTest extends TestSuite {
   }
 
   private def queryHistory(id: TaskId)(implicit helper: ServerImplTestHelpers) =
-    sql"select result,failure_count from msg_history where id=${id.value}".query[(String, Int)]
-      .option.transact(helper.xa).unsafeRun()
+    helper.xa ! sql"select result,failure_count from msg_history where id=${id.value}".query[(String, Int)].option
 
   override def tests = Tests {
 
-    "fail then pass" - ServerImplTestHelpers.imperative() { implicit helper =>
+    "fail then pass" - ServerImplTestHelpers.use { implicit helper =>
       import helper._
 
       // new
@@ -72,7 +70,7 @@ object WorkflowTest extends TestSuite {
       queryHistory(id) ==> Some(("s", 1))
     }
 
-    "fail+delay then abort" - ServerImplTestHelpers.imperative() { implicit helper =>
+    "fail+delay then abort" - ServerImplTestHelpers.use { implicit helper =>
       import helper._
 
       // new

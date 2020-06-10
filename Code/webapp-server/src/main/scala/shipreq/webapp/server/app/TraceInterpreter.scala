@@ -1,17 +1,16 @@
 package shipreq.webapp.server.app
 
-import net.liftweb.common.{Box, Empty, Failure, Full}
-import net.liftweb.http.LiftResponse
+import net.liftweb.common.Full
 import net.liftweb.http.provider.servlet.HTTPRequestServlet
 import shipreq.base.ops.Trace._
 import shipreq.webapp.server.logic.TraceLogic
+import shipreq.webapp.server.logic.dispatch.{Response, ResponseCmd}
 
 object TraceInterpreter {
 
   type HttpReq = net.liftweb.http.Req
-  type HttpRes = Box[LiftResponse]
 
-  type ForLift[F[_]] = TraceLogic[F, HttpReq, HttpRes]
+  type ForHttp[F[_]] = TraceLogic[F, HttpReq, Response]
 
   object Implicits {
 
@@ -35,18 +34,31 @@ object TraceInterpreter {
         attrs
       }
 
-    implicit val attrForHttpRes: AttrFor[HttpRes] = {
-      case f: Full[LiftResponse] =>
-        val r = f.value.toResponse
-        Attr.httpStatusCode(r.code) ::
-          Attr.HttpResponseSize(r.size) ::
-          Nil
-      case x: Failure =>
-        Attr.httpStatusCode(500) ::
-          x.rootExceptionCause.toList.map(Attr.Error)
-      case Empty =>
-        Nil
-    }
+    implicit val attrForHttpRes: AttrFor[Response] =
+      _.cmd match {
+        case _: ResponseCmd.ServePublicSpa
+           | _: ResponseCmd.ServeHomeSpa
+           | _: ResponseCmd.ProjectSpa.Serve
+        =>
+          Attr.HttpStatus200 :: Nil
 
+        case _: ResponseCmd.Redirect
+           | ResponseCmd.ProjectSpa.NotOwner
+           | ResponseCmd.ProjectSpa.InvalidId
+        =>
+          Attr.HttpStatus302 :: Nil
+
+        case c: ResponseCmd.StatusOnly =>
+          Attr.httpStatusCode(c.status) :: Attr.HttpResponseSize(0) :: Nil
+
+        case c: ResponseCmd.Text =>
+          Attr.httpStatusCode(c.status) :: Attr.HttpResponseSize(c.body.length) :: Nil
+
+        case c: ResponseCmd.Json =>
+          Attr.httpStatusCode(c.status) :: Attr.HttpResponseSize(c.body.length) :: Nil
+
+        case c: ResponseCmd.Binary =>
+          Attr.httpStatusCode(c.status) :: Attr.HttpResponseSize(c.body.length) :: Nil
+      }
   }
 }

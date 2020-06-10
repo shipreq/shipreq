@@ -23,8 +23,8 @@ import shipreq.webapp.client.project.lib.DataReusability._
 
 object ImplicationEditor {
 
-  case class Lookup(legal: Stream[ReqItem], illegal: Map[String, Invalidity]) {
-    lazy val legalm = legal.map(_.mapStrengthL(_.pubidStrNorm)).toMap
+  final case class Lookup(legal: List[ReqItem], illegal: Map[String, Invalidity]) {
+    lazy val legalm = legal.iterator.map(_.mapStrengthL(_.pubidStrNorm)).toMap
 
     def outlaw(isBad: ReqItem => Boolean, rej: ReqItem => Invalidity): Lookup = {
       val (ko, ok) = legal.partition(isBad)
@@ -35,7 +35,7 @@ object ImplicationEditor {
 
   object Lookup {
     def all(p: Project, pt: PlainText.ForProject.AnyCtx): Lookup =
-      Lookup(AutoComplete.Project.reqItems(p, pt), UnivEq.emptyMap)
+      Lookup(AutoComplete.Project.reqItems(p, pt).toList, UnivEq.emptyMap)
 
     def forCustomColumn(p: Project, l: Lookup, fid: CustomField.Implication.Id): Lookup = {
       val f = p.config.fields.custom(fid)
@@ -51,20 +51,23 @@ object ImplicationEditor {
       .map(p.content.reqs.need(_).pubid)
       .sortBySchwartzian(p.dataLogic.pubidSortKeyFn)
       .iterator
-      .to[Vector]
+      .to(Vector)
 
-  def initialValueAndText(initial: Option[(ReqId, Traversable[Pubid])], p: Project, l: Lookup): (Set[ReqId], String) = {
-    val reqs = {
+  def initialValueAndText(initial: Option[(ReqId, Iterable[Pubid])], p: Project, l: Lookup): (Set[ReqId], String) = {
+    val reqs: Iterable[Req] = {
       val legal = initial.foldLeft(l.legal.map(_.reqId).toSet)(_ - _._1)
-      initial.fold(Stream.empty[Pubid])(_._2.toStream)
-        .map(p.content.reqs.needByPubid)
-        .filter(legal contains _.id)
+      initial match {
+        case Some((_, pubIds)) => pubIds.view.map(p.content.reqs.needByPubid).filter(legal contains _.id)
+        case None              => Iterable.empty[Req]
+      }
     }
 
     val text =
-      reqs.map(r => PlainText.pubid(r.pubid, p))
-        .sorted |>
-        Grammar.pubid.seqFormat.merge
+      Grammar.pubid.seqFormat.merge(
+        MutableArray(reqs.iterator.map(r => PlainText.pubid(r.pubid, p)))
+          .sort
+          .iterator()
+      )
 
     (reqs.map(_.id).toSet, text)
   }
@@ -94,7 +97,7 @@ object ImplicationEditor {
 
   type ValidationFn = Lookup => Simple.Validator[String, _, SetDiff[ReqId]]
 
-  private def validator1(l: Lookup): Validator[String, Stream[String], Stream[ReqId]] = {
+  private def validator1(l: Lookup): Validator[String, List[String], List[ReqId]] = {
     val parse: Auditor[String, ReqId] =
       Auditor(s =>
         l.legalm.get(s).map(_.reqId.right) orElse
@@ -188,7 +191,7 @@ object ImplicationEditor {
 //    Reusability.never // TODO Reusability.derive
 
   val Component =
-    ScalaComponent.builder[Props]("ImpEditor")
+    ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .configure(
         //Reusability.shouldComponentUpdate,

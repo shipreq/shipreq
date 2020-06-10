@@ -1,10 +1,10 @@
 package shipreq.taskman.server.logic.business
 
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Instant, ZoneId, ZoneOffset}
 import scalaz.{\/, \/-}
-import scalaz.old.NonEmptyList
 import shipreq.base.util.ScalaExt.StringBuilderExt
 import shipreq.base.util.{ArticulateError, Util}
 import shipreq.taskman.api.{EmailAddr, UserId}
@@ -32,7 +32,7 @@ object Email {
 
   final case class TokenValues(shipreqName: String, loginUrl: String)
 
-  final case class EnvelopeFront(to: NonEmptyList[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
+  final case class EnvelopeFront(to: NonEmptyVector[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
     override def toString =
       Util.quickToString(getClass)(
         _.kv("to", to),
@@ -42,10 +42,10 @@ object Email {
     def from(from: Addr) = Envelope(from, to, cc, bcc)
   }
 
-  final case class Envelope(from: Addr, to: NonEmptyList[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
+  final case class Envelope(from: Addr, to: NonEmptyVector[Addr], cc: List[Addr] = Nil, bcc: List[Addr] = Nil) {
 
     def showTo: String =
-      to.list.iterator.map(_.addr.value).mkString(",")
+      to.iterator.map(_.addr.value).mkString(",")
 
     override def toString =
       Util.quickToString(getClass)(
@@ -154,7 +154,7 @@ final class Emails(ep: Email.EnvelopeProps, tv: Email.TokenValues) {
   type SendOp = BusinessOp.SendEmail
 
   def sendToUser(a: Addr, c: Content): SendOp = {
-    val e = Envelope(publicFrom, NonEmptyList(a), bcc = archiveAddrs)
+    val e = Envelope(publicFrom, NonEmptyVector(a), bcc = archiveAddrs)
     BusinessOp.SendEmail(e, c)
   }
 
@@ -166,7 +166,7 @@ final class Emails(ep: Email.EnvelopeProps, tv: Email.TokenValues) {
   val archiveEnv: Option[Envelope] =
     archiveAddrs match {
       case Nil    => None
-      case h :: t => Some(Envelope(publicFrom, NonEmptyList.nel(h, t)))
+      case h :: t => Some(Envelope(publicFrom, NonEmptyVector(h, t.toVector)))
     }
 
   def archive(c: => Content): Option[SendOp] =

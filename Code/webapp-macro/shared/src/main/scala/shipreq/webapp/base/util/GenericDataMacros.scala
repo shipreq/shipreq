@@ -8,6 +8,9 @@ object GenericDataMacros {
 
   def gdUnequalValues(d: GenericData, ref: Any, ctx: String): d.Values = macro GenericDataMacroImpls.quietUnequalValues
   def _gdUnequalValues(d: GenericData, ref: Any, ctx: String): d.Values = macro GenericDataMacroImpls.debugUnequalValues
+
+  def gdUnequalValues2(d: GenericData, ref: Any, vs: Any): d.Values = macro GenericDataMacroImpls.quietUnequalValues2
+  def _gdUnequalValues2(d: GenericData, ref: Any, vs: Any): d.Values = macro GenericDataMacroImpls.debugUnequalValues2
 }
 
 class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extends MacroUtils {
@@ -100,6 +103,30 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
         var us = $d.emptyValues
         ..${flattenBlocks(stmts.toList)}
         us
+      } """
+
+    if (debug) println("\n" + showCode(impl) + "\n" + sep)
+
+    c.Expr[d.value.Values](impl)
+  }
+
+  def debugUnequalValues2(d: c.Expr[GenericData], ref: c.Expr[Any], vs: c.Expr[Any]) = implUnequalValues2(true )(d, ref, vs)
+  def quietUnequalValues2(d: c.Expr[GenericData], ref: c.Expr[Any], vs: c.Expr[Any]) = implUnequalValues2(false)(d, ref, vs)
+  def implUnequalValues2(debug: Boolean)(d: c.Expr[GenericData], ref: c.Expr[Any], vs: c.Expr[Any]): c.Expr[d.value.Values] = {
+    val D = d.actualType.asInstanceOf[SingleType]
+    val attrsAndValues = resolveAttrsAndValues(debug)(D)
+
+    val stmts = for ((a,v) <- attrsAndValues) yield {
+      val n      = lowerCaseHead(a.name.toString)
+      val refVal = q"$ref.${TermName(n)}"
+      val e      = q"$a.dataEquality"
+      q"$a.get($vs).foreach(v => if ($e.equal($refVal, v.value)) vs2 -= $a)"
+    }
+
+    val impl = q""" {
+        var vs2: $d.Values = $vs
+        ..${flattenBlocks(stmts.toList)}
+        vs2
       } """
 
     if (debug) println("\n" + showCode(impl) + "\n" + sep)

@@ -35,10 +35,18 @@ final case class CompiledFilter(req        : OptionalBoolFn[Req],
 }
 
 object CompiledFilter {
+
   def empty: CompiledFilter =
     apply(
       OptionalBoolFn.empty,
       OptionalBoolFn.empty,
       OptionalBoolFn.empty,
+    )
+
+  def fail: CompiledFilter =
+    apply(
+      OptionalBoolFn.fail,
+      OptionalBoolFn.fail,
+      OptionalBoolFn.fail,
     )
 }

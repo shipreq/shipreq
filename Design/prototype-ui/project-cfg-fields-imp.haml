@@ -284,6 +284,21 @@
                 %th
             %tbody
               %tr
+                %td(style="vertical-align:middle; padding-left:2ex")
+                  %div(style="color:#444")
+                    = "Dead req types: "
+                    %span(style="xtext-decoration:line-through; color:#999") MF
+                    = ", "
+                    %span(style="xtext-decoration:line-through; color:#999") FR
+                  -# %div
+                    %span(style="text-decoration:line-through; color:#999") MF
+                    %span(style="margin-right:1.2ex") ,
+                    %span(style="text-decoration:line-through; color:#999") FR
+                %td
+                  %select.ui.dropdown.disabled
+                    %option Not applicable
+                %td
+              %tr
                 %td
                   .ui.input
                     %input(type="text" value="MF, OE")

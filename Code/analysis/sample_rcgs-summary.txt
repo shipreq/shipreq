@@ -1,0 +1,11 @@
+Reqs        : 375
+Empties     : 6   (1.6%)
+With Codes  : 369 (98.4%)
+All levels  : 1284 total, 277 unique
+
+Level 1: 369 total, 9 unique
+Level 2: 362 total, 47 unique
+Level 3: 320 total, 87 unique
+Level 4: 196 total, 103 unique
+Level 5: 32 total, 26 unique
+Level 6: 5 total, 5 unique

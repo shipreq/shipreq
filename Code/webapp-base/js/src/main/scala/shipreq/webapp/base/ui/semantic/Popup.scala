@@ -90,7 +90,7 @@ object Popup {
           anchorDom.foreach(JQuery(_).popup(p.options)))
     }
 
-    val Component = ScalaComponent.builder[Props]("Name")
+    val Component = ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .componentDidMount(_.backend.applyPopup)
       .componentDidUpdate(_.backend.applyPopup)

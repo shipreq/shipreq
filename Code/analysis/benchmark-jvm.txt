@@ -1,0 +1,214 @@
+# on golly-xps
+benchmark-jvm> jmh:run -prof gc -wi 8 -i 8 -f 3
+
+Benchmark                                                     (depth)  (format)  (method)  (width)  Mode  Cnt         Score         Error   Units
+DispatchBM.catsIO                                                                                   avgt   24        92.329 ±       0.774   us/op
+DispatchBM.catsIO:·gc.alloc.rate                                                                    avgt   24       892.702 ±       7.454  MB/sec
+DispatchBM.catsIO:·gc.alloc.rate.norm                                                               avgt   24     90744.017 ±       0.026    B/op
+DispatchBM.catsIO:·gc.churn.G1_Eden_Space                                                           avgt   24       893.511 ±      12.704  MB/sec
+DispatchBM.catsIO:·gc.churn.G1_Eden_Space.norm                                                      avgt   24     90825.608 ±    1001.040    B/op
+DispatchBM.catsIO:·gc.churn.G1_Old_Gen                                                              avgt   24         0.003 ±       0.001  MB/sec
+DispatchBM.catsIO:·gc.churn.G1_Old_Gen.norm                                                         avgt   24         0.268 ±       0.083    B/op
+DispatchBM.catsIO:·gc.count                                                                         avgt   24       717.000                counts
+DispatchBM.catsIO:·gc.time                                                                          avgt   24       819.000                    ms
+EventBM.trusted                                                                                     avgt   24        33.787 ±       0.431   ms/op
+EventBM.trusted:·gc.alloc.rate                                                                      avgt   24      1282.139 ±      16.331  MB/sec
+EventBM.trusted:·gc.alloc.rate.norm                                                                 avgt   24  47682451.797 ±   67706.192    B/op
+EventBM.trusted:·gc.churn.G1_Eden_Space                                                             avgt   24      1284.282 ±      18.866  MB/sec
+EventBM.trusted:·gc.churn.G1_Eden_Space.norm                                                        avgt   24  47761871.514 ±  329792.255    B/op
+EventBM.trusted:·gc.churn.G1_Old_Gen                                                                avgt   24         0.085 ±       0.011  MB/sec
+EventBM.trusted:·gc.churn.G1_Old_Gen.norm                                                           avgt   24      3144.240 ±     414.005    B/op
+EventBM.trusted:·gc.count                                                                           avgt   24       754.000                counts
+EventBM.trusted:·gc.time                                                                            avgt   24      1057.000                    ms
+EventBM.untrusted                                                                                   avgt   24        49.937 ±       0.252   ms/op
+EventBM.untrusted:·gc.alloc.rate                                                                    avgt   24      1104.171 ±      12.256  MB/sec
+EventBM.untrusted:·gc.alloc.rate.norm                                                               avgt   24  60709699.290 ±  898154.488    B/op
+EventBM.untrusted:·gc.churn.G1_Eden_Space                                                           avgt   24      1103.274 ±      20.409  MB/sec
+EventBM.untrusted:·gc.churn.G1_Eden_Space.norm                                                      avgt   24  60660729.741 ± 1280592.487    B/op
+EventBM.untrusted:·gc.churn.G1_Old_Gen                                                              avgt   24         0.095 ±       0.014  MB/sec
+EventBM.untrusted:·gc.churn.G1_Old_Gen.norm                                                         avgt   24      5214.577 ±     781.881    B/op
+EventBM.untrusted:·gc.count                                                                         avgt   24       648.000                counts
+EventBM.untrusted:·gc.time                                                                          avgt   24       958.000                    ms
+JwtBM.decode                                                                        hs256           avgt   24         4.616 ±       0.032   us/op
+JwtBM.decode:·gc.alloc.rate                                                         hs256           avgt   24      1103.456 ±       6.403  MB/sec
+JwtBM.decode:·gc.alloc.rate.norm                                                    hs256           avgt   24      5608.001 ±       8.888    B/op
+JwtBM.decode:·gc.churn.G1_Eden_Space                                                hs256           avgt   24      1103.727 ±      12.967  MB/sec
+JwtBM.decode:·gc.churn.G1_Eden_Space.norm                                           hs256           avgt   24      5609.500 ±      64.824    B/op
+JwtBM.decode:·gc.churn.G1_Old_Gen                                                   hs256           avgt   24         0.002 ±       0.001  MB/sec
+JwtBM.decode:·gc.churn.G1_Old_Gen.norm                                              hs256           avgt   24         0.010 ±       0.002    B/op
+JwtBM.decode:·gc.count                                                              hs256           avgt   24       777.000                counts
+JwtBM.decode:·gc.time                                                               hs256           avgt   24       899.000                    ms
+JwtBM.decode                                                                        hs512           avgt   24         5.365 ±       0.041   us/op
+JwtBM.decode:·gc.alloc.rate                                                         hs512           avgt   24      1194.477 ±       8.973  MB/sec
+JwtBM.decode:·gc.alloc.rate.norm                                                    hs512           avgt   24      7056.001 ±      15.395    B/op
+JwtBM.decode:·gc.churn.G1_Eden_Space                                                hs512           avgt   24      1196.439 ±      16.525  MB/sec
+JwtBM.decode:·gc.churn.G1_Eden_Space.norm                                           hs512           avgt   24      7067.597 ±      83.588    B/op
+JwtBM.decode:·gc.churn.G1_Old_Gen                                                   hs512           avgt   24         0.002 ±       0.001  MB/sec
+JwtBM.decode:·gc.churn.G1_Old_Gen.norm                                              hs512           avgt   24         0.014 ±       0.005    B/op
+JwtBM.decode:·gc.count                                                              hs512           avgt   24       795.000                counts
+JwtBM.decode:·gc.time                                                               hs512           avgt   24       996.000                    ms
+JwtBM.decode                                                                        hs768           avgt   24         5.338 ±       0.036   us/op
+JwtBM.decode:·gc.alloc.rate                                                         hs768           avgt   24      1205.559 ±       7.017  MB/sec
+JwtBM.decode:·gc.alloc.rate.norm                                                    hs768           avgt   24      7085.334 ±      11.851    B/op
+JwtBM.decode:·gc.churn.G1_Eden_Space                                                hs768           avgt   24      1206.954 ±      13.976  MB/sec
+JwtBM.decode:·gc.churn.G1_Eden_Space.norm                                           hs768           avgt   24      7093.480 ±      68.534    B/op
+JwtBM.decode:·gc.churn.G1_Old_Gen                                                   hs768           avgt   24         0.003 ±       0.001  MB/sec
+JwtBM.decode:·gc.churn.G1_Old_Gen.norm                                              hs768           avgt   24         0.019 ±       0.005    B/op
+JwtBM.decode:·gc.count                                                              hs768           avgt   24       802.000                counts
+JwtBM.decode:·gc.time                                                               hs768           avgt   24      1003.000                    ms
+JwtBM.encode                                                                        hs256           avgt   24        78.785 ±       0.264   us/op
+JwtBM.encode:·gc.alloc.rate                                                         hs256           avgt   24       767.064 ±       2.482  MB/sec
+JwtBM.encode:·gc.alloc.rate.norm                                                    hs256           avgt   24     66541.347 ±      25.828    B/op
+JwtBM.encode:·gc.churn.G1_Eden_Space                                                hs256           avgt   24       771.257 ±       0.258  MB/sec
+JwtBM.encode:·gc.churn.G1_Eden_Space.norm                                           hs256           avgt   24     66906.248 ±     233.809    B/op
+JwtBM.encode:·gc.churn.G1_Old_Gen                                                   hs256           avgt   24         0.460 ±       0.224  MB/sec
+JwtBM.encode:·gc.churn.G1_Old_Gen.norm                                              hs256           avgt   24        39.911 ±      19.508    B/op
+JwtBM.encode:·gc.churn.G1_Survivor_Space                                            hs256           avgt   24         0.468 ±       0.270  MB/sec
+JwtBM.encode:·gc.churn.G1_Survivor_Space.norm                                       hs256           avgt   24        40.657 ±      23.457    B/op
+JwtBM.encode:·gc.count                                                              hs256           avgt   24       456.000                counts
+JwtBM.encode:·gc.time                                                               hs256           avgt   24      1564.000                    ms
+JwtBM.encode                                                                        hs512           avgt   24        79.515 ±       0.238   us/op
+JwtBM.encode:·gc.alloc.rate                                                         hs512           avgt   24       778.477 ±       2.299  MB/sec
+JwtBM.encode:·gc.alloc.rate.norm                                                    hs512           avgt   24     68157.347 ±       5.925    B/op
+JwtBM.encode:·gc.churn.G1_Eden_Space                                                hs512           avgt   24       780.128 ±      12.004  MB/sec
+JwtBM.encode:·gc.churn.G1_Eden_Space.norm                                           hs512           avgt   24     68300.574 ±     973.813    B/op
+JwtBM.encode:·gc.churn.G1_Old_Gen                                                   hs512           avgt   24         0.882 ±       0.193  MB/sec
+JwtBM.encode:·gc.churn.G1_Old_Gen.norm                                              hs512           avgt   24        77.229 ±      16.912    B/op
+JwtBM.encode:·gc.churn.G1_Survivor_Space                                            hs512           avgt   24         0.928 ±       0.209  MB/sec
+JwtBM.encode:·gc.churn.G1_Survivor_Space.norm                                       hs512           avgt   24        81.312 ±      18.308    B/op
+JwtBM.encode:·gc.count                                                              hs512           avgt   24       460.000                counts
+JwtBM.encode:·gc.time                                                               hs512           avgt   24      1608.000                    ms
+JwtBM.encode                                                                        hs768           avgt   24        79.572 ±       0.392   us/op
+JwtBM.encode:·gc.alloc.rate                                                         hs768           avgt   24       778.735 ±       4.014  MB/sec
+JwtBM.encode:·gc.alloc.rate.norm                                                    hs768           avgt   24     68226.681 ±      72.993    B/op
+JwtBM.encode:·gc.churn.G1_Eden_Space                                                hs768           avgt   24       781.988 ±      11.423  MB/sec
+JwtBM.encode:·gc.churn.G1_Eden_Space.norm                                           hs768           avgt   24     68511.532 ±     931.513    B/op
+JwtBM.encode:·gc.churn.G1_Old_Gen                                                   hs768           avgt   24         0.577 ±       0.295  MB/sec
+JwtBM.encode:·gc.churn.G1_Old_Gen.norm                                              hs768           avgt   24        50.566 ±      25.843    B/op
+JwtBM.encode:·gc.churn.G1_Survivor_Space                                            hs768           avgt   24         0.579 ±       0.365  MB/sec
+JwtBM.encode:·gc.churn.G1_Survivor_Space.norm                                       hs768           avgt   24        50.760 ±      32.051    B/op
+JwtBM.encode:·gc.count                                                              hs768           avgt   24       492.000                counts
+JwtBM.encode:·gc.time                                                               hs768           avgt   24      1630.000                    ms
+ObfuscationBM.deobfuscate                                                                           avgt   24       163.579 ±      11.004   us/op
+ObfuscationBM.deobfuscate:·gc.alloc.rate                                                            avgt   24      2290.464 ±     145.399  MB/sec
+ObfuscationBM.deobfuscate:·gc.alloc.rate.norm                                                       avgt   24    415368.035 ±   52199.815    B/op
+ObfuscationBM.deobfuscate:·gc.churn.G1_Eden_Space                                                   avgt   24      2292.972 ±     145.954  MB/sec
+ObfuscationBM.deobfuscate:·gc.churn.G1_Eden_Space.norm                                              avgt   24    415819.970 ±   52280.394    B/op
+ObfuscationBM.deobfuscate:·gc.churn.G1_Old_Gen                                                      avgt   24         0.041 ±       0.008  MB/sec
+ObfuscationBM.deobfuscate:·gc.churn.G1_Old_Gen.norm                                                 avgt   24         7.254 ±       0.921    B/op
+ObfuscationBM.deobfuscate:·gc.count                                                                 avgt   24      1173.000                counts
+ObfuscationBM.deobfuscate:·gc.time                                                                  avgt   24      1551.000                    ms
+ObfuscationBM.obfuscate                                                                             avgt   24       188.298 ±       3.488   us/op
+ObfuscationBM.obfuscate:·gc.alloc.rate                                                              avgt   24      4191.055 ±      78.781  MB/sec
+ObfuscationBM.obfuscate:·gc.alloc.rate.norm                                                         avgt   24    868448.033 ±       0.052    B/op
+ObfuscationBM.obfuscate:·gc.churn.G1_Eden_Space                                                     avgt   24      4192.465 ±      82.256  MB/sec
+ObfuscationBM.obfuscate:·gc.churn.G1_Eden_Space.norm                                                avgt   24    868737.944 ±    4635.368    B/op
+ObfuscationBM.obfuscate:·gc.churn.G1_Old_Gen                                                        avgt   24         0.068 ±       0.023  MB/sec
+ObfuscationBM.obfuscate:·gc.churn.G1_Old_Gen.norm                                                   avgt   24        14.291 ±       4.992    B/op
+ObfuscationBM.obfuscate:·gc.count                                                                   avgt   24      1518.000                counts
+ObfuscationBM.obfuscate:·gc.time                                                                    avgt   24      1837.000                    ms
+PickleFixBM.test3                                                   2                            2  avgt   24         0.557 ±       0.064   us/op
+PickleFixBM.test3:·gc.alloc.rate                                    2                            2  avgt   24      6770.052 ±     250.296  MB/sec
+PickleFixBM.test3:·gc.alloc.rate.norm                               2                            2  avgt   24      4125.334 ±     341.328    B/op
+PickleFixBM.test3:·gc.churn.G1_Eden_Space                           2                            2  avgt   24      6778.273 ±     252.653  MB/sec
+PickleFixBM.test3:·gc.churn.G1_Eden_Space.norm                      2                            2  avgt   24      4130.182 ±     341.196    B/op
+PickleFixBM.test3:·gc.churn.G1_Old_Gen                              2                            2  avgt   24         0.005 ±       0.001  MB/sec
+PickleFixBM.test3:·gc.churn.G1_Old_Gen.norm                         2                            2  avgt   24         0.003 ±       0.001    B/op
+PickleFixBM.test3:·gc.count                                         2                            2  avgt   24      1896.000                counts
+PickleFixBM.test3:·gc.time                                          2                            2  avgt   24      1999.000                    ms
+PickleFixBM.test3                                                   2                            6  avgt   24         3.158 ±       0.128   us/op
+PickleFixBM.test3:·gc.alloc.rate                                    2                            6  avgt   24      5711.087 ±     163.886  MB/sec
+PickleFixBM.test3:·gc.alloc.rate.norm                               2                            6  avgt   24     19824.001 ±     213.314    B/op
+PickleFixBM.test3:·gc.churn.G1_Eden_Space                           2                            6  avgt   24      5716.993 ±     165.064  MB/sec
+PickleFixBM.test3:·gc.churn.G1_Eden_Space.norm                      2                            6  avgt   24     19844.840 ±     240.698    B/op
+PickleFixBM.test3:·gc.churn.G1_Old_Gen                              2                            6  avgt   24         0.007 ±       0.001  MB/sec
+PickleFixBM.test3:·gc.churn.G1_Old_Gen.norm                         2                            6  avgt   24         0.023 ±       0.003    B/op
+PickleFixBM.test3:·gc.count                                         2                            6  avgt   24      1864.000                counts
+PickleFixBM.test3:·gc.time                                          2                            6  avgt   24      2054.000                    ms
+PickleFixBM.test3                                                   6                            2  avgt   24         7.754 ±       0.516   us/op
+PickleFixBM.test3:·gc.alloc.rate                                    6                            2  avgt   24      6815.955 ±     108.511  MB/sec
+PickleFixBM.test3:·gc.alloc.rate.norm                               6                            2  avgt   24     58104.004 ±    2986.402    B/op
+PickleFixBM.test3:·gc.churn.G1_Eden_Space                           6                            2  avgt   24      6825.039 ±     109.882  MB/sec
+PickleFixBM.test3:·gc.churn.G1_Eden_Space.norm                      6                            2  avgt   24     58183.665 ±    3021.083    B/op
+PickleFixBM.test3:·gc.churn.G1_Old_Gen                              6                            2  avgt   24         0.005 ±       0.001  MB/sec
+PickleFixBM.test3:·gc.churn.G1_Old_Gen.norm                         6                            2  avgt   24         0.039 ±       0.004    B/op
+PickleFixBM.test3:·gc.count                                         6                            2  avgt   24      1953.000                counts
+PickleFixBM.test3:·gc.time                                          6                            2  avgt   24      1985.000                    ms
+PickleFixBM.test3                                                   6                            6  avgt   24      4426.861 ±      12.654   us/op
+PickleFixBM.test3:·gc.alloc.rate                                    6                            6  avgt   24      5108.280 ±      14.543  MB/sec
+PickleFixBM.test3:·gc.alloc.rate.norm                               6                            6  avgt   24  24899088.772 ±       1.226    B/op
+PickleFixBM.test3:·gc.churn.G1_Eden_Space                           6                            6  avgt   24      5110.853 ±      25.674  MB/sec
+PickleFixBM.test3:·gc.churn.G1_Eden_Space.norm                      6                            6  avgt   24  24911559.457 ±   91645.647    B/op
+PickleFixBM.test3:·gc.churn.G1_Old_Gen                              6                            6  avgt   24         0.006 ±       0.001  MB/sec
+PickleFixBM.test3:·gc.churn.G1_Old_Gen.norm                         6                            6  avgt   24        30.052 ±       2.928    B/op
+PickleFixBM.test3:·gc.count                                         6                            6  avgt   24      1615.000                counts
+PickleFixBM.test3:·gc.time                                          6                            6  avgt   24      1987.000                    ms
+PropCheck.eval                                                                                      avgt   24         4.865 ±       0.022   ms/op
+PropCheck.eval:·gc.alloc.rate                                                                       avgt   24      1690.348 ±       7.887  MB/sec
+PropCheck.eval:·gc.alloc.rate.norm                                                                  avgt   24   9053638.183 ±    1035.825    B/op
+PropCheck.eval:·gc.churn.G1_Eden_Space                                                              avgt   24      1693.949 ±      15.515  MB/sec
+PropCheck.eval:·gc.churn.G1_Eden_Space.norm                                                         avgt   24   9072898.970 ±   68809.773    B/op
+PropCheck.eval:·gc.churn.G1_Old_Gen                                                                 avgt   24         0.021 ±       0.001  MB/sec
+PropCheck.eval:·gc.churn.G1_Old_Gen.norm                                                            avgt   24       111.825 ±       6.980    B/op
+PropCheck.eval:·gc.count                                                                            avgt   24       993.000                counts
+PropCheck.eval:·gc.time                                                                             avgt   24      1420.000                    ms
+SerialisationEventsBM.read                                                 json                     avgt   24         6.301 ±       0.089   ms/op
+SerialisationEventsBM.read:·gc.alloc.rate                                  json                     avgt   24      1417.214 ±      19.135  MB/sec
+SerialisationEventsBM.read:·gc.alloc.rate.norm                             json                     avgt   24   9829286.464 ±    7060.147    B/op
+SerialisationEventsBM.read:·gc.churn.G1_Eden_Space                         json                     avgt   24      1417.802 ±      24.004  MB/sec
+SerialisationEventsBM.read:·gc.churn.G1_Eden_Space.norm                    json                     avgt   24   9833460.669 ±  106618.889    B/op
+SerialisationEventsBM.read:·gc.churn.G1_Old_Gen                            json                     avgt   24         0.842 ±       0.147  MB/sec
+SerialisationEventsBM.read:·gc.churn.G1_Old_Gen.norm                       json                     avgt   24      5859.456 ±    1070.303    B/op
+SerialisationEventsBM.read:·gc.churn.G1_Survivor_Space                     json                     avgt   24         3.784 ±       0.750  MB/sec
+SerialisationEventsBM.read:·gc.churn.G1_Survivor_Space.norm                json                     avgt   24     26288.732 ±    5214.966    B/op
+SerialisationEventsBM.read:·gc.count                                       json                     avgt   24       849.000                counts
+SerialisationEventsBM.read:·gc.time                                        json                     avgt   24      1783.000                    ms
+SerialisationEventsBM.read                                               binary                     avgt   24         1.966 ±       0.009   ms/op
+SerialisationEventsBM.read:·gc.alloc.rate                                binary                     avgt   24       653.785 ±       6.913  MB/sec
+SerialisationEventsBM.read:·gc.alloc.rate.norm                           binary                     avgt   24   1415326.746 ±    9862.434    B/op
+SerialisationEventsBM.read:·gc.churn.G1_Eden_Space                       binary                     avgt   24       653.588 ±      11.371  MB/sec
+SerialisationEventsBM.read:·gc.churn.G1_Eden_Space.norm                  binary                     avgt   24   1414902.016 ±   21955.828    B/op
+SerialisationEventsBM.read:·gc.churn.G1_Old_Gen                          binary                     avgt   24         0.199 ±       0.075  MB/sec
+SerialisationEventsBM.read:·gc.churn.G1_Old_Gen.norm                     binary                     avgt   24       429.964 ±     161.982    B/op
+SerialisationEventsBM.read:·gc.count                                     binary                     avgt   24       522.000                counts
+SerialisationEventsBM.read:·gc.time                                      binary                     avgt   24       729.000                    ms
+SerialisationEventsBM.write                                                json                     avgt   24         5.513 ±       0.023   ms/op
+SerialisationEventsBM.write:·gc.alloc.rate                                 json                     avgt   24      1054.340 ±       4.376  MB/sec
+SerialisationEventsBM.write:·gc.alloc.rate.norm                            json                     avgt   24   6399625.004 ±       1.520    B/op
+SerialisationEventsBM.write:·gc.churn.G1_Eden_Space                        json                     avgt   24      1055.616 ±      10.636  MB/sec
+SerialisationEventsBM.write:·gc.churn.G1_Eden_Space.norm                   json                     avgt   24   6407357.483 ±   58155.700    B/op
+SerialisationEventsBM.write:·gc.churn.G1_Old_Gen                           json                     avgt   24         1.001 ±       0.051  MB/sec
+SerialisationEventsBM.write:·gc.churn.G1_Old_Gen.norm                      json                     avgt   24      6073.765 ±     306.293    B/op
+SerialisationEventsBM.write:·gc.churn.G1_Survivor_Space                    json                     avgt   24         2.245 ±       0.086  MB/sec
+SerialisationEventsBM.write:·gc.churn.G1_Survivor_Space.norm               json                     avgt   24     13628.158 ±     524.274    B/op
+SerialisationEventsBM.write:·gc.count                                      json                     avgt   24       746.000                counts
+SerialisationEventsBM.write:·gc.time                                       json                     avgt   24      1402.000                    ms
+SerialisationEventsBM.write                                              binary                     avgt   24         2.454 ±       0.052   ms/op
+SerialisationEventsBM.write:·gc.alloc.rate                               binary                     avgt   24       238.203 ±       4.523  MB/sec
+SerialisationEventsBM.write:·gc.alloc.rate.norm                          binary                     avgt   24    643133.762 ±    1544.028    B/op
+SerialisationEventsBM.write:·gc.churn.G1_Eden_Space                      binary                     avgt   24       238.822 ±      10.996  MB/sec
+SerialisationEventsBM.write:·gc.churn.G1_Eden_Space.norm                 binary                     avgt   24    644702.497 ±   25498.881    B/op
+SerialisationEventsBM.write:·gc.churn.G1_Old_Gen                         binary                     avgt   24         0.018 ±       0.010  MB/sec
+SerialisationEventsBM.write:·gc.churn.G1_Old_Gen.norm                    binary                     avgt   24        48.211 ±      27.127    B/op
+SerialisationEventsBM.write:·gc.count                                    binary                     avgt   24       202.000                counts
+SerialisationEventsBM.write:·gc.time                                     binary                     avgt   24       270.000                    ms
+SerialisationProjectBM.read                                                                         avgt   24      1117.329 ±       8.447   us/op
+SerialisationProjectBM.read:·gc.alloc.rate                                                          avgt   24       796.970 ±       4.401  MB/sec
+SerialisationProjectBM.read:·gc.alloc.rate.norm                                                     avgt   24    980528.198 ±   11840.395    B/op
+SerialisationProjectBM.read:·gc.churn.G1_Eden_Space                                                 avgt   24       797.702 ±      15.316  MB/sec
+SerialisationProjectBM.read:·gc.churn.G1_Eden_Space.norm                                            avgt   24    981411.729 ±   21073.390    B/op
+SerialisationProjectBM.read:·gc.churn.G1_Old_Gen                                                    avgt   24         0.184 ±       0.041  MB/sec
+SerialisationProjectBM.read:·gc.churn.G1_Old_Gen.norm                                               avgt   24       227.177 ±      51.341    B/op
+SerialisationProjectBM.read:·gc.count                                                               avgt   24       480.000                counts
+SerialisationProjectBM.read:·gc.time                                                                avgt   24       941.000                    ms
+SerialisationProjectBM.write                                                                        avgt   24      1330.039 ±      17.336   us/op
+SerialisationProjectBM.write:·gc.alloc.rate                                                         avgt   24       349.271 ±       4.262  MB/sec
+SerialisationProjectBM.write:·gc.alloc.rate.norm                                                    avgt   24    511376.233 ±    1484.314    B/op
+SerialisationProjectBM.write:·gc.churn.G1_Eden_Space                                                avgt   24       349.422 ±      11.594  MB/sec
+SerialisationProjectBM.write:·gc.churn.G1_Eden_Space.norm                                           avgt   24    511654.291 ±   16879.538    B/op
+SerialisationProjectBM.write:·gc.churn.G1_Old_Gen                                                   avgt   24         0.026 ±       0.003  MB/sec
+SerialisationProjectBM.write:·gc.churn.G1_Old_Gen.norm                                              avgt   24        38.561 ±       3.899    B/op
+SerialisationProjectBM.write:·gc.count                                                              avgt   24       246.000                counts
+SerialisationProjectBM.write:·gc.time                                                               avgt   24       347.000                    ms
+
+Total time: 11205 s (03:06:45), completed 17 Apr. 2020, 12:17:45 am

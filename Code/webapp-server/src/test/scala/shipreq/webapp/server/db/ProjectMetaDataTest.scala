@@ -1,27 +1,28 @@
 package shipreq.webapp.server.db
 
 import utest._
+import shipreq.base.test.db.TestDb
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd, RandomEventStream, VerifiedEvent}
 import shipreq.webapp.server.logic.Obfuscators
-import shipreq.webapp.server.test.{DbUtil, PrepareEnv}
+import shipreq.webapp.server.test.DbUtil
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
 /** Ensures that ProjectMetaData content always matches project content.
   */
 object ProjectMetaDataTest extends TestSuite {
-  import PrepareEnv.dbAlgebra
 
   override def tests = Tests {
 
-    DbUtil.use().runNow { dbu =>
-      import dbu.xa
+    "test" - TestDb.withImperativeXA { xa =>
+      val dbu = DbUtil(xa)
+      import dbu.dbAlgebra
 
       val uid = dbu.newUserId()
 
       // Do this twice to ensure that other projects' events don't interfere
       for (_ <- 1 to 2) {
-        val (_, ves1, ves2) = RandomEventStream.entireEventStream(50).samples().next()
+        val (_, ves1, ves2) = RandomEventStream.activeOnly.entireEventStream(50).samples().next()
         val initEvents = ves1.length
 
         val pid = dbu.newProjectId(uid, ves1.map(_.event.active))
@@ -31,7 +32,7 @@ object ProjectMetaDataTest extends TestSuite {
           ve.event match {
             case ae: ActiveEvent =>
               val r = xa ! dbAlgebra.saveProjectEvent(pid, EventOrd.fromIndex(idx), ae, p, uid)
-              r.needRight
+              r.getOrThrow()
               ()
             case x =>
               fail("Can't create non-active event: " + x)

@@ -1,6 +1,6 @@
 package shipreq.taskman.api.impl
 
-import doobie.imports._
+import doobie._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api._
 

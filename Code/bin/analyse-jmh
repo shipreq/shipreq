@@ -1,0 +1,38 @@
+#!/bin/bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+JMH_OPTIONS="${JMH_OPTIONS:-}"
+timestamp=$(date +%Y%m%d_%H%M%S)
+machine="$(tr - _ </etc/hostname)"
+dir=../../analysis
+
+bms=(
+  ApplyEventBM
+  DispatchBM
+  JwtBM
+  PropCheckBM
+  SerialisationBinaryEventsBM
+  SerialisationBinaryProjectBM
+  SerialisationJsonEventsBM
+)
+
+[ $# -ne 0 ] && bms=("$@")
+
+cmd=(
+  sbt
+  -DMODE=release
+  -Dsbt.server.autostart=false
+  benchmark-jvm/clean # because it or sbt-jmh isn't very good at handling old state
+)
+
+for bm in "${bms[@]}"; do
+  name="jmh-$machine-$bm-$timestamp"
+  cmd+=("benchmark-jvm/jmh:run $JMH_OPTIONS -prof gc -rf json -rff $dir/$name.json $bm")
+done
+
+for c in "${cmd[@]}"; do
+  echo "> $c"
+done
+
+exec "${cmd[@]}"

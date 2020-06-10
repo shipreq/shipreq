@@ -3,10 +3,14 @@ package shipreq.webapp.base.test
 import japgolly.microlibs.testutil.TestUtil
 import japgolly.microlibs.testutil.TestUtilInternals.quoteStringForDisplay
 import japgolly.scalajs.react.test._
+import japgolly.scalajs.react.vdom.html_<^.VdomAttr
 import org.scalajs.dom.html
 import scalacss.internal.StyleA
-import shipreq.base.util.DebugImplicits
+import teststate.domzipper.DomZipperJsF.Dom
 import teststate.run.Report.AssertionSettings
+import shipreq.base.util.Debug
+import shipreq.webapp.base.data.{Disabled, Enabled}
+import shipreq.webapp.base.lib.DomUtil._
 
 object TestState
  extends teststate.Exports
@@ -14,15 +18,25 @@ object TestState
     with teststate.ExtNyaya
     with teststate.ExtScalaJsReact
     with teststate.ExtScalaz
-    with DebugImplicits {
+    with Debug.Implicits {
 
   type Id[A] = A
 
   type DomZipperTo[A] = DomZipperJsF[Id, A]
 
-  implicit class StyleAExt(private val self: StyleA) extends AnyVal {
+  implicit class TestStateStyleAExt(private val self: StyleA) extends AnyVal {
     def selector: String =
       "." + self.className.value
+  }
+
+  implicit class TestStateElementExt(private val self: html.Element) extends AnyVal {
+    def get(v: VdomAttr[_]): String = {
+      val n = v.attrName
+      if (n.startsWith("data-"))
+        self.dataset.get(n.drop(5)).getOrElse("")
+      else
+        self.attributes.getNamedItem(n).value
+    }
   }
 
 //  implicit val displayTestReq: Display[TestClientProtocol.Req] =
@@ -33,7 +47,6 @@ object TestState
 
   def KB = japgolly.scalajs.react.test.SimEvent.Keyboard
 
-  // TODO Patch TestState to support using custom fail instead of throwing
   def assertTestState(r: Report[String], onFailure: => Unit = ())(implicit as: AssertionSettings, se: DisplayError[String]): Unit =
     r.failureReason match {
       case None =>
@@ -44,6 +57,27 @@ object TestState
         // f.cause.foreach(_.printStackTrace())
         TestUtil.fail(f.failure)
     }
+
+  private val semanticUiClasses: Set[String] =
+    Set("input", "dropdown", "button")
+
+  def collectSemanticUi($: DomZipperJs): DomZipper.DomCollection[DomZipperJsF, Id, Vector, Dom, Dom] =
+    collectSemanticUi($, None)
+
+  def collectSemanticUi($: DomZipperJs, e: Enabled): DomZipper.DomCollection[DomZipperJsF, Id, Vector, Dom, Dom] =
+    collectSemanticUi($, Some(e))
+
+  def collectSemanticUi($: DomZipperJs, e: Option[Enabled]): DomZipper.DomCollection[DomZipperJsF, Id, Vector, Dom, Dom] = {
+    def withUi = semanticUiClasses.iterator.map(".ui." + _)
+    def types: Iterator[String] =
+      e match {
+        case None           => withUi
+        case Some(Enabled)  => withUi.map(sel => s"$sel:not(:disabled):not(.disabled)")
+        case Some(Disabled) => withUi.flatMap(sel => s"$sel:disabled" :: s"$sel.disabled" :: Nil)
+      }
+    $.collect0n(types.mkString(","))
+      .filter(_.domAsHtml.findParent(e => semanticUiClasses.exists(e.classList.contains)).isEmpty)
+  }
 
   // ===================================================================================================================
 
@@ -83,7 +117,7 @@ object TestState
       private def _editCell(old: Option[String], newValue: String, editors: Int): Actions =
         (openEditor
           +> editorCount.assert.increaseBy(editors)
-          +> editorValue.rename("Initial editor value").assert(old.getOrElse("")).when(_ => old.isDefined) // TODO test-state should support optional assertions
+          +> editorValue.rename("Initial editor value").assert.equalWhenDefined(old)
           >> setEditValue(newValue)
           >> commit
           +> editorCount.assert.decreaseBy(editors)

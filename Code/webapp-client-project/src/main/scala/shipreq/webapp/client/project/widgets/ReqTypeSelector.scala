@@ -12,7 +12,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.EditorStatus
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.ui.EditTheme
-import shipreq.webapp.base.ui.semantic._
+import shipreq.webapp.base.ui.semantic.{Dropdown => _, _}
+import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}
 import shipreq.webapp.client.project.feature.editor.{PotentialValue, PotentialValueAcceptor}
 
@@ -42,7 +43,7 @@ object ReqTypeSelector {
   // implicit val reusabilityProps: Reusability[Props] =
   //   Reusability.derive
 
-  private def key(rt: RT): Select.OptionKey =
+  private def key(rt: RT): Dropdown.ItemKey =
     rt.id.value.toString
 
   final class Backend($: BackendScope[Props, Unit]) {
@@ -57,12 +58,11 @@ object ReqTypeSelector {
     def editor(p: Props): VdomElement = {
       val options =
         MutableArray(p.choices.whole)
-          .map(rt => Select.Option(key(rt), rt.fullName, rt))
-          .sort
-          .iterator
-          .to[List]
+          .sortBy(_.fullName)
+          .map(rt => Dropdown.Item(key(rt), rt.fullName, rt))
+          .arraySeq
 
-      val select = Select(options, key(p.edit.value))(p.edit setState _.value)(*.dropdown)
+      val dropdown = Dropdown.Props.Optional(options, Some(key(p.edit.value)), tagMod = *.dropdown)(p.edit setState _.value)
 
       val commitButton = Button(
         tipe = Button.Type.IconOnly(Icon.Checkmark),
@@ -76,25 +76,25 @@ object ReqTypeSelector {
 
       val buttons = Button.group(commitButton, abortButton)(*.buttons)
 
-      <.div(select, buttons)
+      <.div(dropdown.render, buttons)
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("ReqTypeSelector")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     // .configure(Reusability.shouldComponentUpdate)
     .build
 
   // ===================================================================================================================
 
-  def potentialValueAcceptor(choices: Traversable[RT]): PotentialValueAcceptor[RT] =
+  def potentialValueAcceptor(choices: Iterable[RT]): PotentialValueAcceptor[RT] =
     PotentialValueAcceptor {
       case PotentialValue.Clipboard(cd) => parseText(choices, cd.text)
       case PotentialValue.Text(txt)     => parseText(choices, txt)
       case PotentialValue.Emptiness     => None
     }
 
-  private def parseText(choices: Traversable[RT], t: String): Option[RT] = {
+  private def parseText(choices: Iterable[RT], t: String): Option[RT] = {
     val input = Grammar.reqTypeMnemonic.caseInsensitiveParsePost(t.takeWhile(_ != ':').trim)
     choices.find(_.mnemonic.value ==* input)
   }

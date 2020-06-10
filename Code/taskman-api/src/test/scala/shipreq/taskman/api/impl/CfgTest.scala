@@ -1,35 +1,35 @@
 package shipreq.taskman.api.impl
 
-import doobie.imports._
-
+import doobie._
 import utest._
+import shipreq.base.test.db.TestDb
 
-object CfgTest extends TestSuite with ApiImplTestHelpers {
-
-  private lazy val q = Query0[(String, String)]("select k,v from cfg where k in ('a','b') order by 1")
+object CfgTest extends TestSuite {
 
   override def tests = Tests {
+    val api = TaskmanApiImpl(TestDb.db.schema)
+    val q = Query0[(String, String)]("select k,v from cfg where k in ('a','b') order by 1")
 
-    'cfgPut - {
+    "cfgPut" - {
 
-      'insert - {
-        val result = run(xa =>
+      "insert" - {
+        val result = TestDb ! (
           for {
-            _ <- xa.cfgPut("a", "start")
-            _ <- xa.cfgPut("b", "omg")
-            r <- q.list.transact(xa)
+            _ <- api.cfgPut("a", "start")
+            _ <- api.cfgPut("b", "omg")
+            r <- q.to[List]
           } yield r
         )
         assert(result == List(("a", "start"), ("b", "omg")))
       }
 
-      'update - {
-        val result = run(xa =>
+      "update" - {
+        val result = TestDb ! (
           for {
-            _ <- xa.cfgPut("a", "start")
-            _ <- xa.cfgPut("b", "omg")
-            _ <- xa.cfgPut("a", "heheh")
-            r <- q.list.transact(xa)
+            _ <- api.cfgPut("a", "start")
+            _ <- api.cfgPut("b", "omg")
+            _ <- api.cfgPut("a", "heheh")
+            r <- q.to[List]
           } yield r
         )
         assert(result == List(("a", "heheh"), ("b", "omg")))

@@ -7,12 +7,9 @@ import japgolly.microlibs.utils.Memo
 import monocle.Lens
 import monocle.macros.{GenLens, Lenses}
 import scalaz.Order
-import scalaz.std.anyVal.intInstance
-import scalaz.syntax.order._
 import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.util.Must._
 import DataImplicits._
 import ReqType.Mnemonic
 
@@ -25,7 +22,8 @@ sealed trait ReqType {
   def mnemonic    : Mnemonic
   def oldMnemonics: Set[Mnemonic]
   def name        : String
-  def imp         : ImplicationRequired
+  def description : Option[String]
+  def implication : Mandatory
   def live        : Live
 
   def fold[A](s: StaticReqType => A, c: CustomReqType => A): A
@@ -59,14 +57,15 @@ object StaticReqType {
     override def mnemonic     = Mnemonic("UC")
     override def oldMnemonics = UnivEq.emptySet
     override def name         = "Use Case"
-    override def imp          = ImplicationRequired.Not // TODO Should be configurable
+    override def description  = None
+    override def implication  = Optional // TODO Should be configurable
   }
 
   val values: NonEmptyVector[StaticReqType] =
     AdtMacros.adtValues[StaticReqType]
 
   val requiringImplication: Set[StaticReqType] =
-    values.iterator.filter(_.imp is ImplicationRequired).toSet
+    values.iterator.filter(_.implication is Mandatory).toSet
 
   implicit val order = Util.univEqAndArbitraryOrder(values.whole)
 
@@ -84,7 +83,8 @@ final case class CustomReqType(id          : CustomReqTypeId,
                                mnemonic    : Mnemonic,
                                oldMnemonics: Set[Mnemonic],
                                name        : String,
-                               imp         : ImplicationRequired,
+                               description : Option[String],
+                               implication : Mandatory,
                                live        : Live) extends ReqType {
 
   def fullName = s"${mnemonic.value}: $name"
@@ -107,13 +107,32 @@ object CustomReqType {
     override val unapplyData: AnyRef => Option[CustomReqType] = {case r: CustomReqType => Some(r); case _ => None}
   }
 
-  val name        : Lens[CustomReqType, String]              = GenLens[CustomReqType](_.name)
-  val imp         : Lens[CustomReqType, ImplicationRequired] = GenLens[CustomReqType](_.imp)
-  val live        : Lens[CustomReqType, Live]                = GenLens[CustomReqType](_.live)
-  def oldMnemonics: Lens[CustomReqType, Set[Mnemonic]]       = GenLens[CustomReqType](_.oldMnemonics)
+  val name        : Lens[CustomReqType, String]         = GenLens[CustomReqType](_.name)
+  val imp         : Lens[CustomReqType, Mandatory]      = GenLens[CustomReqType](_.implication)
+  val live        : Lens[CustomReqType, Live]           = GenLens[CustomReqType](_.live)
+  def oldMnemonics: Lens[CustomReqType, Set[Mnemonic]]  = GenLens[CustomReqType](_.oldMnemonics)
+
+  val desc: Lens[CustomReqType, Option[String]] =
+    Lens[CustomReqType, Option[String]](_.description)(d => _.copy(description = d.filter(_.nonEmpty)))
 
   val mnemonic: Boolean => Lens[CustomReqType, Mnemonic] =
     Memo.bool(retain => Lens((_: CustomReqType).mnemonic)(m => _.setMnemonic(m, retain)))
+
+  @inline def v1(id          : CustomReqTypeId,
+                 mnemonic    : Mnemonic,
+                 oldMnemonics: Set[Mnemonic],
+                 name        : String,
+                 implication : Mandatory,
+                 live        : Live): CustomReqType =
+    apply(
+      id           = id,
+      mnemonic     = mnemonic,
+      oldMnemonics = oldMnemonics,
+      name         = name,
+      description  = None,
+      implication  = implication,
+      live         = live,
+    )
 }
 
 // =====================================================================================================================
@@ -121,8 +140,19 @@ object CustomReqType {
 @Lenses
 final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
 
+  def live(i: ReqTypeId, whenNotFound: Live): Live =
+    get(i).fold(whenNotFound)(_.live)
+
+  def get(i: ReqTypeId): Option[ReqType] =
+    i.foldId[Option[ReqType]](Some(_), custom.get)
+
   def need(i: ReqTypeId): ReqType =
     i.foldId[ReqType](identity, custom.need)
+
+  lazy val liveIds: Set[ReqTypeId] =
+    (StaticReqType.values.iterator.filter(_.live is Live) ++
+      custom.valuesIterator.filter(_.live is Live).map(_.reqTypeId)
+      ).toSet
 
   lazy val liveCustomReqTypes: Vector[CustomReqType] =
     custom.valuesIterator.filter(_.live is Live).toVector
@@ -130,8 +160,14 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
   lazy val all: NonEmptyVector[ReqType] =
     StaticReqType.values ++ custom.valuesIterator
 
+  lazy val allSortedByMnemonic: NonEmptyVector[ReqType] =
+    NonEmptyVector force all.whole.sortBy(_.mnemonic.value)
+
+  lazy val liveSortedByMnemonic: NonEmptyVector[ReqType] =
+    NonEmptyVector force allSortedByMnemonic.whole.filter(_.live is Live) // UC is always live. NEV.force is fine.
+
   lazy val idsRequiringImplication: Set[ReqTypeId] = {
-    def customIds = custom.valuesIterator.filter(_.imp is ImplicationRequired).map(_.id).toSet
+    def customIds = custom.valuesIterator.filter(_.implication is Mandatory).map(_.id).toSet
     Util.mergeSets(StaticReqType.requiringImplication, customIds)
   }
 
@@ -139,8 +175,8 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
     all.iterator.flatMap(t => t.allMnemonics.iterator.map((_, t))).toMap
 
   lazy val order: Map[ReqTypeId, Int] =
-    MutableArray(all.whole)
-      .sortBySchwartzian(_.mnemonic.value)
+    allSortedByMnemonic
+      .iterator
       .map(_.reqTypeId)
       .iterator
       .zipWithIndex
@@ -155,6 +191,18 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
           case n => n
         }
     }
+
+  def sortIdsByMnemonic(ids: IterableOnce[ReqTypeId]): Iterator[ReqType] =
+    sortByMnemonic(ids.iterator.map(need))
+
+  def sortByMnemonic(rts: IterableOnce[ReqType]): Iterator[ReqType] =
+    MutableArray(rts).sortBy(_.mnemonic.value).iterator
+
+  def mkStringByIds(ids: IterableOnce[ReqTypeId], sep: String): String =
+    mkString(ids.iterator.map(need), sep)
+
+  def mkString(rts: IterableOnce[ReqType], sep: String): String =
+    sortByMnemonic(rts).map(_.mnemonic.value).mkString(sep)
 }
 
 object ReqTypes {

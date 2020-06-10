@@ -4,6 +4,7 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.text.PlainText
@@ -54,7 +55,7 @@ object Layout {
           index :: menu :: req :: Nil
 
         case p =>
-          val activeItem = ProjectIndex.Item.ToPage.reverse getOption p getOrElse sys.error("No breadcrumb menu item for " + p)
+          val activeItem = ProjectIndex.Item.ToPage.reverse getOption p getOrElse ErrorMsg("No breadcrumb menu item for " + p).throwException()
           val menuItems  = ProjectIndex.dropdownItems(Some(activeItem), rc)
           val menu       = Breadcrumb.Item.DropDown(activeItem.iconAndTitle, menuItems)
           index :: menu :: Nil
@@ -110,6 +111,10 @@ object Layout {
 
           case UnsavedChanges.Location.ManualIssues     => "Manual Issue(s)"            -> Page.Issues
           case UnsavedChanges.Location.ProjectName      => "Project Name"               -> Page.Index
+          case UnsavedChanges.Location.FieldConfig      => "Field Editor"               -> Page.CfgFields
+          case UnsavedChanges.Location.IssueConfig      => "Issue Type Editor"          -> Page.CfgIssues
+          case UnsavedChanges.Location.ReqTypeConfig    => "Req Type Editor"            -> Page.CfgReqTypes
+          case UnsavedChanges.Location.TagConfig        => "Tag Editor"                 -> Page.CfgTags
           case UnsavedChanges.Location.ReqCodeGroup(id) => PlainText.reqCodeById(id, p) -> Page.ReqTable
         }.sortBy(_._1).iterator.toList
 
@@ -173,6 +178,7 @@ object Layout {
     MemberLayout.Props(
       navBar,
       <.div(
+        ^.display.flex,
         _,
         Style.layout,
         FilterHelp.modal.render,
@@ -180,7 +186,12 @@ object Layout {
         p.feedbackModal.render,
         p.reauthModal.render,
         RichTextEditorHelp.allRendered,
-        p.content))
+        <.div(
+          ^.flexGrow := "1",
+          p.content
+        )
+      )
+    )
       .render
   }
 

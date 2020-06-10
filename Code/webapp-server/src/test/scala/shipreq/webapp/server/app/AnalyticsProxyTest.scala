@@ -13,8 +13,8 @@ object AnalyticsProxyTest extends TestSuite {
   }
 
   override def tests = Tests {
-    'dev - test("http://localhost:1234/", "https://www.google-analytics.com/analytics.js" -> "http://localhost:1234/www.google-analytics.com/analytics.js")
-    'prodPath - test("https://shipreq.com/ap/", "https://www.google-analytics.com/analytics.js" -> "https://shipreq.com/ap/www.google-analytics.com/analytics.js")
-    'prodHost - test("https://ap.shipreq.com", "https://www.google-analytics.com/analytics.js" -> "https://ap.shipreq.com/www.google-analytics.com/analytics.js")
+    "dev" - test("http://localhost:1234/", "https://www.google-analytics.com/analytics.js" -> "http://localhost:1234/www.google-analytics.com/analytics.js")
+    "prodPath" - test("https://shipreq.com/ap/", "https://www.google-analytics.com/analytics.js" -> "https://shipreq.com/ap/www.google-analytics.com/analytics.js")
+    "prodHost" - test("https://ap.shipreq.com", "https://www.google-analytics.com/analytics.js" -> "https://ap.shipreq.com/www.google-analytics.com/analytics.js")
   }
 }

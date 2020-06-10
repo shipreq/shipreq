@@ -10,9 +10,9 @@ fi
 # ====================================================================================================================
 
 args="$@"
-[ $# -eq 0 ] && args=(dev prod local)
+[ $# -eq 0 ] && args=(dev prod test ssr)
 
-webpack="node_modules/.bin/webpack --color --progress --config"
+webpack="node_modules/.bin/webpack --color --display-reasons --display-modules --progress --config"
 webtamp="node_modules/.bin/webtamp"
 [ -n "$WEBTAMP" ] && webtamp="$WEBTAMP/src/cli.js"
 webtamp="$webtamp --config"
@@ -47,16 +47,26 @@ for mode in ${args[@]}; do
         | fgrep -v 'calculated before minification' \
         | perl -pe 's/: /,/; s/ \(/,/; s/%\)$//' | column -t -s, | sort -k4nr | perl -pe 's/$/%/' \
         > $report
+      echo
+      cat $report
 
       # Done
       echo
       du -sh $target2/serve
       ;;
 
-    local)
-      target=dist/local
+    test)
+      target=dist/test
       rm -rf $target
-      $webpack webpack/local.js || exit $?
+      $webpack webpack/test.js || exit $?
+      echo
+      ls -l $target
+      ;;
+
+    ssr)
+      target=dist/ssr
+      rm -rf $target
+      $webpack webpack/ssr.js || exit $?
       echo
       ls -l $target
       ;;

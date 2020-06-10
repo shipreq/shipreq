@@ -1,10 +1,9 @@
 package shipreq.taskman.server.business
 
-import doobie.imports._
+import doobie.ConnectionIO
 import java.time.Duration
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scalaz.{-\/, \/, \/-, ~>}
-import scalaz.syntax.catchable._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.server.logic.business._
@@ -13,7 +12,7 @@ import shipreq.taskman.server.logic.business.BusinessOp._
 final class BusinessOpFx(sendMailFx   : BusinessOp.SendEmail => Fx[Unit],
                          mailingListFx: MailingList.API ~> Fx,
                          supportFx    : Support.API ~> Fx,
-                         db           : Transactor[Fx],
+                         dbRun        : ConnectionIO ~> Fx,
                          shipreqSchema: Option[String]) extends (BusinessOp ~> Fx) with HasLogger {
 
   private[this] val sri = ShipReqInterface(shipreqSchema)
@@ -37,10 +36,10 @@ final class BusinessOpFx(sendMailFx   : BusinessOp.SendEmail => Fx[Unit],
       case s: SendEmail              => sendMailFx(s)
       case MailingListOp(op)         => mailingListFx(op)
       case SupportOp(op)             => supportFx(op)
-      case FindShipReqUser(-\/(id))  => db.trans(sri.findUserById(id))
-      case FindShipReqUser(\/-(ea))  => db.trans(sri.findUserByEmail(ea))
-      case FindShipReqUsers(None)    => db.trans(sri.findAllUsers)
-      case FindShipReqUsers(Some(c)) => db.trans(sri.findAllUsersW(c))
+      case FindShipReqUser(-\/(id))  => dbRun(sri.findUserById(id))
+      case FindShipReqUser(\/-(ea))  => dbRun(sri.findUserByEmail(ea))
+      case FindShipReqUsers(None)    => dbRun(sri.findAllUsers)
+      case FindShipReqUsers(Some(c)) => dbRun(sri.findAllUsersW(c))
     }
 }
 

@@ -6,7 +6,7 @@ import scalaz.\/-
 import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test._
+import shipreq.webapp.base.protocol.ajax.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.public._
 import shipreq.webapp.client.public.spa._
@@ -105,7 +105,7 @@ object ResetPasswordTest extends TestSuite {
 
   override def tests = Tests {
 
-    'success - test(
+    "success" - test(
       assertForm("", Invalid, "", Invalid, Enabled)
         +> submitEnabled.assert(Disabled)
         +> password1F.assert(Some("Must be between 8 and 255 characters long."))

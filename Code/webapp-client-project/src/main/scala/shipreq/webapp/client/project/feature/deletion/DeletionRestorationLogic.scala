@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.feature.deletion
 import japgolly.microlibs.nonempty._
 import japgolly.univeq._
 import scala.annotation.tailrec
-import scala.collection.TraversableOnce
+import scala.collection.IterableOnce
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
@@ -91,15 +91,15 @@ object DeletionRestorationLogic {
       val reqFilter: Req => Boolean =
         _.live(p.config.reqTypes) is mode.fromState
 
-      def lookupAll(reqIds: TraversableOnce[ReqId]): Array[Req] = {
-        val a = reqIds.toIterator.map(p.content.reqs.need).filter(reqFilter).toArray
+      def lookupAll(reqIds: IterableOnce[ReqId]): Array[Req] = {
+        val a = reqIds.iterator.map(p.content.reqs.need).filter(reqFilter).toArray
         sortReqs(a)
         a
       }
 
       val reqRows = Vector.newBuilder[ReqRow]
 
-      def go(reqIds: TraversableOnce[ReqId], level: Int): Unit =
+      def go(reqIds: IterableOnce[ReqId], level: Int): Unit =
         for (r <- lookupAll(reqIds))
           if (r.allowLiveChange(reqTypes) is Allow) {
 
@@ -192,7 +192,8 @@ object DeletionRestorationLogic {
     }
 
     private def codesOfActiveChildGroups(t: Trie, c: Code): Set[Code] =
-      t.dropPath(c).flatStream
+      t.dropPath(c)
+        .flatIterator()
         .collect { case (code, _: ActiveGroup) => c ++ code }
         .toSet
 
@@ -221,7 +222,7 @@ object DeletionRestorationLogic {
         case Nil => acc
       }
 
-    def actionable(p: Project, directSelRcgCodes: TraversableOnce[Code], actionableReqs: ActionableReqs): ActionableGroups = {
+    def actionable(p: Project, directSelRcgCodes: IterableOnce[Code], actionableReqs: ActionableReqs): ActionableGroups = {
 
       // By "externally" I mean external to this fn/logic. All actionable if this fn did nothing.
       val externallyActionable: List[Code] = {

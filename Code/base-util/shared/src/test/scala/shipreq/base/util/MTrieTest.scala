@@ -19,12 +19,12 @@ object MTrieTest extends TestSuite {
   }
 
   val removeProp =
-    Prop.atom[(Trie, Traversable[Path])]("remove" , i => {
+    Prop.atom[(Trie, Iterable[Path])]("remove" , i => {
       val t1 = i._1
-      val s1 = t1.flatStream.size
-      i._2.toStream.map { p =>
+      val s1 = t1.flatIterator().size
+      i._2.iterator.map { p =>
         val t2 = t1.remove(p)
-        def s2 = t2.flatStream.size
+        def s2 = t2.flatIterator().size
         def d = s2 - s1
         t2.lookup(p) match {
           case Some(_) => Some(s"Removal failed. Δ=$d")
@@ -40,7 +40,7 @@ object MTrieTest extends TestSuite {
   val genPath: Gen[Path] =
     Gen.numeric.string(1 to 3).vector(1 to 3).map(NonEmptyVector.force)
 
-  val removeGen: Gen[(Trie, Traversable[Path])] =
+  val removeGen: Gen[(Trie, Iterable[Path])] =
     for {
       trieKeys <- genPath.vector
       remove1 <- genPath.vector
@@ -52,20 +52,20 @@ object MTrieTest extends TestSuite {
     }
 
   override def tests = Tests {
-    'remove {
-      'l1_all - testRevert(empty,               _.put("x", 6).remove("x"))
-      'l1_sib - testRevert(empty.put("a", 7),   _.put("x", 6).remove("x"))
-      'l1_pr1 - testRevert(empty.put("x.y", 7), _.put("x", 6).remove("x"))
+    "remove" - {
+      "l1_all" - testRevert(empty,               _.put("x", 6).remove("x"))
+      "l1_sib" - testRevert(empty.put("a", 7),   _.put("x", 6).remove("x"))
+      "l1_pr1" - testRevert(empty.put("x.y", 7), _.put("x", 6).remove("x"))
 
-      'l3_all - testRevert(empty,                 _.put("a.b.e", 6).remove("a.b.e"))
-      'l3_sib - testRevert(empty.put("a.b.c", 7), _.put("a.b.e", 6).remove("a.b.e"))
-      'l3_ch2 - testRevert(empty.put("a.b", 7),   _.put("a.b.e", 6).remove("a.b.e"))
-      'l3_ch1 - testRevert(empty.put("a", 7),     _.put("a.b.e", 6).remove("a.b.e"))
-      'l3_pr1 - testRevert(empty.put("a.b.c", 7), _.put("a", 6).remove("a"))
-      'l3_pr2 - testRevert(empty.put("a.b.c", 7), _.put("a.b", 6).remove("a.b"))
-      'l3_pr3 - testRevert(empty.put("a.b.c.d", 7), _.put("a.b.c", 6).remove("a.b.c"))
+      "l3_all" - testRevert(empty,                 _.put("a.b.e", 6).remove("a.b.e"))
+      "l3_sib" - testRevert(empty.put("a.b.c", 7), _.put("a.b.e", 6).remove("a.b.e"))
+      "l3_ch2" - testRevert(empty.put("a.b", 7),   _.put("a.b.e", 6).remove("a.b.e"))
+      "l3_ch1" - testRevert(empty.put("a", 7),     _.put("a.b.e", 6).remove("a.b.e"))
+      "l3_pr1" - testRevert(empty.put("a.b.c", 7), _.put("a", 6).remove("a"))
+      "l3_pr2" - testRevert(empty.put("a.b.c", 7), _.put("a.b", 6).remove("a.b"))
+      "l3_pr3" - testRevert(empty.put("a.b.c.d", 7), _.put("a.b.c", 6).remove("a.b.c"))
 
-      'prop - removeProp.mustBeSatisfiedBy(removeGen)
+      "prop" - removeProp.mustBeSatisfiedBy(removeGen)
     }
   }
 }

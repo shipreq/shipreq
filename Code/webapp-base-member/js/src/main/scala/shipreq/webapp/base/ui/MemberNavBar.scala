@@ -2,7 +2,6 @@ package shipreq.webapp.base.ui
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
@@ -108,7 +107,7 @@ object MemberNavBar {
     }
   }
 
-  val Component = ScalaComponent.builder[Props]("NavBar")
+  val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
     .build

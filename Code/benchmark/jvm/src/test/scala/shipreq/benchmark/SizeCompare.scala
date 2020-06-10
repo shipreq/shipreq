@@ -3,15 +3,15 @@ package shipreq.benchmark
 import java.nio.ByteBuffer
 import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
-import boopickle.PickleImpl
-import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2.picklerProject
+import shipreq.base.util.BinaryData
 
 object SizeCompare {
 
   case class NData(name: String, data: Data)
   implicit def dataFromNData(n: NData) = n.data
+  implicit def dataFromBinaryData(n: BinaryData) = Data(n.unsafeArray)
 
-  case class Data(bytes: Array[Byte]) {
+  final case class Data(bytes: Array[Byte]) {
 
     val size = bytes.length
 
@@ -46,8 +46,8 @@ object SizeCompare {
 //    val j100  = bench("json P100",  upickle.Fns write SampleData.project_100)
 //    val j1000 = bench("json P1000", upickle.Fns write SampleData.project_1000)
 
-    val b100  = bench("bin P100", PickleImpl intoBytes SampleData.project_100)
-//    val b1000 = bench("bin P1000", PickleImpl intoBytes SampleData.project_1000)
+//    val b1000   = bench("bin P1000",  SampleData.`1000`.projectBinary)
+//    val b10000  = bench("bin P10000", SampleData.`10000`.projectBinary)
 
     println(sep)
     println()
@@ -62,8 +62,8 @@ object SizeCompare {
     val (x,y) = (a.size, b.size)
     val sym = if (x < y) "<" else if (x > y) ">" else "="
     val d = Math.abs(x - y)
-    val p1 = x.toDouble / y.toDouble * 100
-    val p2 = y.toDouble / x.toDouble * 100
+//    val p1 = x.toDouble / y.toDouble * 100
+//    val p2 = y.toDouble / x.toDouble * 100
     //  (%3.0f%% : %3.0f%%)
     val dp = d.toDouble / y.toDouble * 100
 //    printf("%-20s %s %-20s by %3.0f%% (%,9d bytes).\n", a.name, sym, b.name, dp, delta)

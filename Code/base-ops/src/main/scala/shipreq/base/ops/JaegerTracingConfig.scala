@@ -2,7 +2,6 @@ package shipreq.base.ops
 
 import io.jaegertracing.Configuration
 import japgolly.clearconfig.internals.ConfigDef
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 
 object JaegerTracingConfig {
 

@@ -1,22 +1,23 @@
 package shipreq.taskman.server
 
-import doobie.imports._
+import cats.instances.all._
+import cats.syntax.all._
+import doobie._
+import doobie.implicits._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import scala.util.Random
-import shipreq.base.db.DoobieMeta._
+import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.TestDb
 import shipreq.taskman.api._
-import shipreq.taskman.api.impl.DoobieMeta._
+import shipreq.taskman.api.impl.TaskmanDoobieCodecs._
 import shipreq.taskman.server.logic.{TaskDetail, TaskHeader, NodeId, WorkerId}
-import scalaz.syntax.applicative._
-import scalaz.syntax.traverse._
 import utest._
-import Task.ReRegistrationAttempted
-import ServerOpFx.Sql._
 
 object ServerOpFxTest extends TestSuite {
+  import Task.ReRegistrationAttempted
+  import ServerOpFx.Sql._
 
   private def dao = ServerOpFx.Dao
   private val n = NodeId(123)
@@ -68,17 +69,17 @@ object ServerOpFxTest extends TestSuite {
           assert(a.isEmpty)
 
       def returnNothingWhenNothingIsAvailable() = {
-        val r = TestDb.runNow(dao.getMsgsAssignNode(n, 2, 2 days, queue))
+        val r = TestDb ! dao.getMsgsAssignNode(n, 2, 2 days, queue)
         assert(r.isEmpty)
       }
 
       def returnUnassignedMsgs() = {
-        val (id, r) = TestDb.runNow(insert() tuple dao.getMsgsAssignNode(n, 2, 2 days, queue))
+        val (id, r) = TestDb ! (insert() product dao.getMsgsAssignNode(n, 2, 2 days, queue))
         assertAllowedReturnOnly(r, id)
       }
 
       def not() = {
-        val r = TestDb.runNow(for {
+        val r = TestDb.!(for {
           a <- insert(created = -16 hours, updated = -15 hours, node = true)
           b <- insert(created = -16 hours, updated = -15 hours, node = true, worker = true)
           r <- dao.getMsgsAssignNode(n, 2, 24 hours, queue)
@@ -87,7 +88,7 @@ object ServerOpFxTest extends TestSuite {
       }
 
       def ignore() = {
-        val (r, a, b) = TestDb.runNow(for {
+        val (r, a, b) = TestDb.!(for {
           a <- insert(created = -16 hours, updated = -15 hours, node = true)
           b <- insert(created = -16 hours, updated = -15 hours, node = true, worker = true)
           r <- dao.getMsgsAssignNode(n, 2, 8 hours, queue)
@@ -96,7 +97,7 @@ object ServerOpFxTest extends TestSuite {
       }
 
       def limit() = {
-        val (r, ids) = TestDb.runNow(for {
+        val (r, ids) = TestDb.!(for {
           ids <- insertP(0, 1, 2, 3, 4, 5, 6)
           r <- dao.getMsgsAssignNode(n, 3, 8 hours, queue)
         } yield (r, ids))
@@ -104,7 +105,7 @@ object ServerOpFxTest extends TestSuite {
       }
 
       def filter() = {
-        val r = TestDb.runNow(insert(effective = 1 minutes) *> dao.getMsgsAssignNode(n, 2, 2.days, queue))
+        val r = TestDb ! insert(effective = 1 minutes) *> dao.getMsgsAssignNode(n, 2, 2.days, queue)
         assert(r.isEmpty)
       }
     }
@@ -132,12 +133,12 @@ object ServerOpFxTest extends TestSuite {
         def insert = insertQ.toQuery0((Some(n), Some(w), 10.minutes, 3.days, 3.days)).unique
 
         "return true" - {
-          val result = TestDb.runNow(insert.flatMap(dao.reassignWorker(n, w, _)))
+          val result = TestDb ! insert.flatMap(dao.reassignWorker(n, w, _))
           assert(result)
         }
 
         "update timestamp" - {
-          val (a, b) = TestDb.runNow(insert.flatMap(timestampBeforeAfter))
+          val (a, b) = TestDb ! insert.flatMap(timestampBeforeAfter)
           assertNotEq(a, b)
         }
       }
@@ -146,11 +147,11 @@ object ServerOpFxTest extends TestSuite {
         def insert = insertQ.toQuery0((Some(n), None, 10.minutes, 3.days, 3.days)).unique
 
         "return false" - {
-          val result = TestDb.runNow(insert.flatMap(dao.reassignWorker(n, w, _)))
+          val result = TestDb ! insert.flatMap(dao.reassignWorker(n, w, _))
           assert(!result)
         }
         "not update timestamp" - {
-          val (a, b) = TestDb.runNow(insert.flatMap(timestampBeforeAfter))
+          val (a, b) = TestDb ! insert.flatMap(timestampBeforeAfter)
           assertEq(a, b)
         }
       }
@@ -161,7 +162,7 @@ object ServerOpFxTest extends TestSuite {
 
       def test(limit: Int, queuedAlready: Int)(pris: Int*)(expectedIndexes: Int*) = {
         val under = List(4,5,6,7,8,9).sorted.reverse
-        val (actual, expect) = TestDb.runNow(
+        val (actual, expect) = TestDb.!(
           for {
             allIds <- insertP(under ++ pris: _*)
             (idsU, idsP) = allIds.splitAt(under.size)
@@ -232,7 +233,7 @@ object ServerOpFxTest extends TestSuite {
         "INSERT INTO msgq(type, data, node, worker, created_at, updated_at, effective_from, priority, priority_base)" +
           "VALUES(?, ?, ?, ?, now()-?, now()-?, now()-?, 5,5) RETURNING id")
 
-      def insert(node: Option[NodeId] = None, worker: Option[WorkerId] = None, msg: Task = defaultTask) = {
+      def insert(node: Option[NodeId], worker: Option[WorkerId] = None, msg: Task = defaultTask) = {
         val d: Duration = 2.days
         insertQ.toQuery0((msg, node, worker, d, d, d)).unique
       }
@@ -243,24 +244,24 @@ object ServerOpFxTest extends TestSuite {
         dao.getMsgAssignWorker(n, w, TaskHeader(id, Priority(5), Instant.now()))
 
       "not assign if msg has been picked up by another node" - {
-        val r = TestDb.runNow(insert(node = Some(NodeId(6789))).flatMap(test))
+        val r = TestDb ! insert(node = Some(NodeId(6789))).flatMap(test)
         assertEq(r, None)
       }
 
       "not assign if msg has been picked up by another worker" - {
-        val r = TestDb.runNow(insert(node = Some(n), worker = Some(WorkerId(6789))).flatMap(test))
+        val r = TestDb ! insert(node = Some(n), worker = Some(WorkerId(6789))).flatMap(test)
         assertEq(r, None)
       }
 
       "deserialise the msg" - {
-        val r = TestDb.runNow(insertAssignedToOwnNode.flatMap(test))
+        val r = TestDb ! insertAssignedToOwnNode.flatMap(test)
         assertMatch(r) {
           case Some(TaskDetail(_, msg, _)) if msg == defaultTask => ()
         }
       }
 
       "assign when unassigned" - {
-        val result = TestDb.runNow(
+        val result = TestDb.!(
           for {
             id <- insertAssignedToOwnNode
             t1 <- test(id)

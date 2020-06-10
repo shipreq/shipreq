@@ -1,6 +1,5 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat
 import java.time.Instant
 import scala.collection.immutable.TreeSet
@@ -36,7 +35,7 @@ object VerifiedEvent {
       s"VerifiedEvent.NonEmptySeq($describeEvents)"
 
     def describeEvents: String =
-      ConciseIntSetFormat(values.toIterator.map(_.ord.value).toSet)
+      ConciseIntSetFormat(values.iterator.map(_.ord.value).toSet)
 
     def values: Seq =
       tail + head

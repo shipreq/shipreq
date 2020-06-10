@@ -1,5 +1,6 @@
 package shipreq.webapp.base.protocol
 
+import japgolly.microlibs.utils.Memo
 import japgolly.univeq._
 
 final case class Version(major: Version.Major, minor: Version.Minor) {
@@ -36,6 +37,10 @@ object Version {
       }
     }
 
-  val v10 = fromInts(1, 0)
-  val v11 = fromInts(1, 1)
+  private val memoV1: Int => Version =
+    Memo.int(minorVer =>
+      Version.fromInts(1, minorVer))
+
+  def v1(minorVer: Int): Version =
+    memoV1(minorVer)
 }

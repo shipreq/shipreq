@@ -11,6 +11,14 @@ object Grammar {
 
   private val whitespace = "\\s+".r
 
+  object fieldName {
+    val length = Length(1 to 48)
+    val chars  = CharBlacklist.dblQuotes // " is used to escape field names in filters
+  }
+
+  @inline def reqTypeName = fieldName
+  @inline def tagGroupName = fieldName
+
   /** [[shipreq.webapp.base.data.ReqType.Mnemonic]] */
   object reqTypeMnemonic {
     val length = Length(1 to 6)
@@ -42,7 +50,7 @@ object Grammar {
 
     val seqFormat = SeqFormat(
       _.trim, "[ ,]+".r.pattern, _.replace("-", "") |> reqTypeMnemonic.caseInsensitiveParsePost, _.isEmpty,
-      _ mkString " ")
+      _.iterator.mkString(" "))
 
     val preprocessor: String => String =
       TextMod.noWhitespace(_).toUpperCase
@@ -63,20 +71,7 @@ object Grammar {
     def firstChar = FirstChar.azAZ09
     val tailChars = new CharWhitelist("_=-", '.', 'A' to 'Z', 'a' to 'z', '0' to '9')("may only consist of letters, numbers, and these symbols: . _ = -")
     val prefix    = "#"
-    val seqFormat = SeqFormat(_.trim, "[# ,]+".r.pattern, "^# *".r.replaceFirstIn(_, ""), _.isEmpty, _ mkString " ")
-  }
-
-  /**
-   * [[shipreq.webapp.base.data.FieldRefKey]]
-   *
-   * DD-20: Field refkeys must match this format: [a-z][a-z0-9_]*
-   *
-   * Must not contain: []{}<>.?"
-   */
-  object fieldRefKey {
-    def length    = hashRefKey.length
-    def firstChar = FirstChar.az
-    def tailChars = CharWhitelist.az09_
+    val seqFormat = SeqFormat(_.trim, "[# ,]+".r.pattern, "^# *".r.replaceFirstIn(_, ""), _.isEmpty, _.iterator.mkString(" "))
   }
 
   /**
@@ -101,7 +96,7 @@ object Grammar {
     /** For parsing a single value into nodes */
     val nodeSeqFormat = SeqFormat(
       whitespace.replaceAllIn(_, ""), quoteCh(nodeSeparator).r.pattern, identity, _ => false,
-      _ mkString nodeSeparator.toString)
+      _.iterator.mkString(nodeSeparator.toString))
   }
 
   val issueDescSurround = Surrounds("{", "}").addInnerForDisplay(" ", " ")

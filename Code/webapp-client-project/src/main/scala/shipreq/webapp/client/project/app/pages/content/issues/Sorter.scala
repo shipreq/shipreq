@@ -4,6 +4,7 @@ import monocle.Optional
 import shipreq.base.util.{Util, Vector1}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.{Sorter => SorterBase}
 import shipreq.webapp.base.text.PlainText

@@ -1,6 +1,5 @@
 package shipreq.webapp.base.ui
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
@@ -34,7 +33,7 @@ object FeedbackModalTest extends TestSuite {
       def dom() = $.getDOMNode.runNow().toHtml.get
     }
 
-    val Component = ScalaComponent.builder[Props]("")
+    val Component = ScalaComponent.builder[Props]
       .renderBackend[Backend]
       .componentDidMount(_.backend.onMount)
       .build
@@ -131,7 +130,7 @@ object FeedbackModalTest extends TestSuite {
   override def tests = Tests {
     import Internal._
 
-    'various -
+    "various" -
       runTest(Some(-\/(ErrorMsg("servers down!"))))(
         enterFeedback(" \n ")
           +> serverCallCount.assert(0)
@@ -172,7 +171,7 @@ object FeedbackModalTest extends TestSuite {
           +> serverLastFeedback.assert(Some("omgOMFG12345"))
       )
 
-    'inFlight -
+    "inFlight" -
       runTest(None)(
         enterFeedback("qweasdzcQWEASDZXC123!@#")
           >> clickSend

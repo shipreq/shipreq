@@ -10,7 +10,7 @@ object RedisProtocol {
 
   val picklerProjectSnapshot: SafePickler[ProjectSnapshot] = {
     import boopickle.DefaultBasic._
-    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2.picklerProject
+    import shipreq.webapp.base.protocol.binary.v1.Rev1.picklerProject
     import shipreq.webapp.base.protocol.binary.v1.PostEvents.picklerEventOrdLatest
 
     val p: Pickler[ProjectSnapshot] =
@@ -26,16 +26,16 @@ object RedisProtocol {
         }
       }
 
-    p.asV10.withMagicNumbers(0x713D305C, 0xB72AC2DE)
+    p.asV1(1).withMagicNumbers(0x713D305C, 0xB72AC2DE)
   }
 
   // ===================================================================================================================
 
   val picklerEvent: SafePickler[VerifiedEvent] = {
-    import shipreq.webapp.base.protocol.binary.v1.PostEvents.picklerVerifiedEvent
+    import shipreq.webapp.base.protocol.binary.v1.Rev1.picklerVerifiedEvent
 
     // no magic numbers - overhead to high proportional to the event size, too frequent
-    picklerVerifiedEvent.asV10
+    picklerVerifiedEvent.asV1(1)
   }
 
 }

@@ -54,7 +54,7 @@ object ApplyEventTestFns {
     // Now apply the last event
     val r = apply.apply1(ev.last)(p1)
     r match {
-      case -\/(e) => assertContainsCI(e, errFrag)
+      case -\/(e) => assertContainsCI(e.value, errFrag)
       case \/-(_) => fail(s"\nFailure expected but didn't occur.\nEvents were:\n${fmtEvents(es)}")
     }
   }
@@ -72,17 +72,22 @@ object ApplyEventTestFns {
     var savedViews       = 0
 
     es foreach {
-      case _: GenericReqCreate      => genericReqs += 1
-      case _: UseCaseCreate         => useCases += 1
-      case _: CustomIssueTypeCreate => customIssueTypes += 1
-      case _: CustomReqTypeCreate   => customReqTypes += 1
-      case _: FieldCustomTextCreate
+      case _: GenericReqCreate        => genericReqs += 1
+      case _: UseCaseCreate           => useCases += 1
+      case _: CustomIssueTypeCreate   => customIssueTypes += 1
+      case _: CustomReqTypeCreateV1
+         | _: CustomReqTypeCreate     => customReqTypes += 1
+      case _: FieldCustomTextCreateV1
+         | _: FieldCustomTextCreate
+         | _: FieldCustomTagCreateV1
          | _: FieldCustomTagCreate
-         | _: FieldCustomImpCreate  => customFields += 1
+         | _: FieldCustomImpCreateV1
+         | _: FieldCustomImpCreate    => customFields += 1
       case _: TagGroupCreate
-         | _: ApplicableTagCreate   => tags += 1
-      case _: CodeGroupCreate    => activeRCGs += 1
-      case e: CodeGroupsDelete   => activeRCGs -= e.ids.size
+         | _: ApplicableTagCreate
+         | _: ApplicableTagCreateV1   => tags += 1
+      case _: CodeGroupCreate         => activeRCGs += 1
+      case e: CodeGroupsDelete        => activeRCGs -= e.ids.size
 
       case ProjectTemplateApply(t) => t match {
         case ProjectTemplate.V1 =>
@@ -101,23 +106,31 @@ object ApplyEventTestFns {
       case r: ContentRestore =>
         activeRCGs += r.codeGroups.size
 
-      case _: SavedViewCreate => savedViews += 1
-      case _: SavedViewDelete => savedViews -= 1
+      case _: SavedViewCreate   => savedViews += 1
+      case _: SavedViewCreateV1 => savedViews += 1
+      case _: SavedViewDelete   => savedViews -= 1
 
       case _: ManualIssueCreate => manualIssues += 1
       case _: ManualIssueDelete => manualIssues -= 1
 
       case _: ApplicableTagUpdate
+         | _: ApplicableTagUpdateV1
          | _: CustomIssueTypeDelete
          | _: CustomIssueTypeRestore
          | _: CustomIssueTypeUpdate
          | _: CustomReqTypeDelete
+         | _: CustomReqTypeDeleteHard
+         | _: CustomReqTypeDeleteSoft
          | _: CustomReqTypeRestore
+         | _: CustomReqTypeUpdateV1
          | _: CustomReqTypeUpdate
          | _: FieldCustomDelete
+         | _: FieldCustomImpUpdateV1
          | _: FieldCustomImpUpdate
          | _: FieldCustomRestore
+         | _: FieldCustomTagUpdateV1
          | _: FieldCustomTagUpdate
+         | _: FieldCustomTextUpdateV1
          | _: FieldCustomTextUpdate
          | _: FieldReposition
          | _: FieldStaticAdd
@@ -132,6 +145,7 @@ object ApplyEventTestFns {
          | _: ReqImplicationsPatch
          | _: ReqTagsPatch
          | _: SavedViewDefaultSet
+         | _: SavedViewUpdateV1
          | _: SavedViewUpdate
          | _: TagDelete
          | _: TagGroupUpdate
@@ -150,7 +164,7 @@ object ApplyEventTestFns {
     assert(cfg.fields.customFields.size <= customFields, "Σ CustomFields")
     assertEq("Σ CustomIssueTypes", cfg.customIssueTypes.size, customIssueTypes)
     assertEq("Σ Tags", tags, cfg.tags.tree.size)
-    assertEq("Σ Generic Reqs", genericReqs, p.content.reqs.genericReqs.size)
+    assertEq("Σ Generic Reqs", genericReqs, p.content.reqs.genericReqs.imap.size)
     assertEq("Σ Use Cases", useCases, p.content.reqs.useCases.imap.size)
     assertEq("Σ Reqs", genericReqs + useCases, p.content.reqs.size)
     assertEq("Σ CodeGroups (active)", activeRCGs, p.content.reqCodes.groups.count(_.live is Live))
@@ -223,25 +237,25 @@ abstract class SharedTests(implicit val init: InitialEvents) extends TestSuite {
     c1 +: es
 
   override def tests = Tests {
-    'create {
-      'one      - assertPass(c1)
-      'two      - assertPass(c1, c2)
-      'zeroId   - assertFail(" id ")          (setId(c1, 0))
-      'negId    - assertFail(" id ")          (setId(c1, -1))
-      'dupId    - assertFail("already exists")(c1, copyId(c2, from = c1))
+    "create" - {
+      "one"      - assertPass(c1)
+      "two"      - assertPass(c1, c2)
+      "zeroId"   - assertFail(" id ")          (setId(c1, 0))
+      "negId"    - assertFail(" id ")          (setId(c1, -1))
+      "dupId"    - assertFail("already exists")(c1, copyId(c2, from = c1))
     }
 
-    'update {
-      'notFound - assertFail("not found")(u1)
-      'dead     - assertFail("dead")     (prepForSoftDelete(sd1, u1): _*)
+    "update" - {
+      "notFound" - assertFail("not found")(u1)
+      "dead"     - assertFail("dead")     (prepForSoftDelete(sd1, u1): _*)
       //'afterHD  - assertFail("not found")(c1, hd1, u1)
     }
 
-    'delete {
-      'okSoft    - assertPass(prepForSoftDelete(sd1): _*)
-      'okRest    - assertPass(prepForSoftDelete(sd1, r1): _*)
-      'okMulti   - assertPass(prepForSoftDelete(sd1, r1, sd1, r1): _*)
-      'notFound  - List(sd1, r1).foreach(d => assertFail("not found")(d))
+    "delete" - {
+      "okSoft"    - assertPass(prepForSoftDelete(sd1): _*)
+      "okRest"    - assertPass(prepForSoftDelete(sd1, r1): _*)
+      "okMulti"   - assertPass(prepForSoftDelete(sd1, r1, sd1, r1): _*)
+      "notFound"  - List(sd1, r1).foreach(d => assertFail("not found")(d))
 
       // All hard-deletion has been removed
       // 'okHard    - assertPass(c1, hd1)

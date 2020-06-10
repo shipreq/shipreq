@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 import org.parboiled2.CharPredicate
 import scala.collection.immutable.NumericRange
 import scala.runtime.AbstractFunction1
-import scalaz.std.stream.streamInstance
+import scalaz.std.list.listInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.validation.CommonValidation
 import shipreq.webapp.base.validation.Simple._
@@ -19,10 +19,12 @@ object GrammarSpec {
     if ("""$()*+-.?[]{|}\""" contains c) "\\" + c else c.toString
 
   class Chars(val chn: String, val ch1: Char, val rs: NumericRange[Char]*) {
-    def toStream: Stream[Char] =
-      ch1 #:: chn.toStream append rs.toStream.flatMap(_.toStream)
+    def iterator(): Iterator[Char] =
+      Iterator.single(ch1) ++ chn.iterator ++ rs.iterator.flatMap(_.iterator)
 
-    final val regex = ((ch1 #:: chn.toStream).map(quoteCh) append rs.toStream.map(r => s"${r.min}-${r.max}")).mkString
+    final val regex =
+      ((Iterator.single(ch1) ++ chn.iterator).map(quoteCh) ++ rs.iterator.map(r => s"${r.min}-${r.max}")).mkString
+
     @inline final def one  = "[" + regex + "]"
     @inline final def not  = "[^" + regex + "]"
     @inline final def *    = "[" + regex + "]*"
@@ -39,6 +41,15 @@ object GrammarSpec {
 
   object CharWhitelist {
     val az09_ = new CharWhitelist("", '_', 'a' to 'z', '0' to '9')("may only consist of letters, numbers, and underscores.")
+  }
+
+  class CharBlacklist(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
+    final val validator: EndoValidator[String] =
+      CommonValidation.endoValidator.blacklistCharRangeRegex(regex, Invalidity(ruleErrMsg))
+  }
+
+  object CharBlacklist {
+    val dblQuotes = new CharBlacklist("", '"')("mustn't contain double quotation marks.")
   }
 
   class FirstChar(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
@@ -97,17 +108,17 @@ object GrammarSpec {
                              sep     : Pattern,
                              normEach: EndoFn[String],
                              ignore  : String => Boolean,
-                             merge   : TraversableOnce[String] => String) {
+                             merge   : IterableOnce[String] => String) {
     def split(input: String): Iterator[String] =
       (input |> normAll |> sep.split).iterator map normEach filterNot ignore
 
-    def stream(input: String): Stream[String] =
-      split(input).toStream
+    def list(input: String): List[String] =
+      split(input).toList
 
-    def corrector: Corrector[String, Stream[String]] =
-      Corrector.full(stream, merge)
+    def corrector: Corrector[String, List[String]] =
+      Corrector.full(list, merge)
 
-    def validator[V](elementAuditor: Auditor[String, V]): Validator[String, Stream[String], Stream[V]] =
-      corrector withAuditor elementAuditor.liftTraverse[Stream]
+    def validator[V](elementAuditor: Auditor[String, V]): Validator[String, List[String], List[V]] =
+      corrector withAuditor elementAuditor.liftTraverse[List]
   }
 }

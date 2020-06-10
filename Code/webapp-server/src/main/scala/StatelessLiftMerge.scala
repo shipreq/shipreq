@@ -23,14 +23,13 @@ package net.liftweb
 package http
 
 import scala.collection.Map
-import scala.collection.mutable.{HashMap, ArrayBuffer, ListBuffer}
+import scala.collection.mutable.{HashMap, ListBuffer}
 import scala.xml._
 
 import net.liftweb.util._
 import net.liftweb.common._
 import net.liftweb.http.js._
   import JsCmds.Noop
-  import JE.{AnonFunc,Call,JsRaw}
 import Helpers._
 
 ///**
@@ -47,7 +46,6 @@ import Helpers._
 //)
 
 final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
-  import self._
 
 //  private def scriptUrl(scriptFile: String) = {
 //    S.encodeURL(s"${LiftRules.liftPath}/$scriptFile")
@@ -81,10 +79,10 @@ final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
     val waitUntil = millis + LiftRules.lazySnippetTimeout.vend.millis
     val stripComments: Boolean = LiftRules.stripComments.vend
 
-    def waitUntilSnippetsDone() {
+    def waitUntilSnippetsDone(): Unit = {
       val myMillis = millis
       snippetHashs.synchronized {
-        if (myMillis >= waitUntil || snippetHashs.isEmpty || !snippetHashs.values.toIterator.contains(Empty)) ()
+        if (myMillis >= waitUntil || snippetHashs.isEmpty || !snippetHashs.values.iterator.contains(Empty)) ()
         else {
           snippetHashs.wait(waitUntil - myMillis)
           waitUntilSnippetsDone()
@@ -124,7 +122,7 @@ final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
     addlHead ++= S.forHead()
     val addlTail = new ListBuffer[Node]
     addlTail ++= S.atEndOfBody()
-    val rewrite = URLRewriter.rewriteFunc
+    // val rewrite = URLRewriter.rewriteFunc
 
     val contextPath: String = S.contextPath
 
@@ -189,14 +187,15 @@ final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
                 node match {
                   case e: Elem if e.label == "node" &&
                                   e.prefix == "lift_deferred" =>
-                    val deferredNodes: Seq[NodesAndEventJs] =
+                    val deferredNodes: Seq[NodesAndEventJs] = {
                       for {
-                        idAttribute <- e.attributes("id").take(1)
+                        idAttribute <- e.attributes("id").iterator.take(1)
                         id = idAttribute.text
                         nodes <- processedSnippets.get(id)
                       } yield {
                         normalizeMergeAndExtractEvents(nodes, startingState)
                       }
+                    }.toSeq
 
                     deferredNodes.foldLeft(soFar.append(normalizedResults))(_ append _)
 
@@ -241,7 +240,7 @@ final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
 //        Text("")
 //      }
     } else {
-      val eventJs =
+//      val eventJs =
         normalizeMergeAndExtractEvents(xhtml, HtmlState(mergeHeadAndTail = true)).js
 
       val htmlKids = new ListBuffer[Node]

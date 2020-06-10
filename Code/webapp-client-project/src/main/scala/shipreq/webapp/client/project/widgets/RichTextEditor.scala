@@ -6,7 +6,9 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
 import shipreq.base.util.{PotentialChange, Validity}
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data
+import shipreq.webapp.base.data.derivation.NaTags
+import shipreq.webapp.base.data.{Optional => _, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
 import shipreq.webapp.base.jsfacade.ScrollIntoViewIfNeeded
@@ -22,6 +24,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
   sealed trait Props {
     val project         : Project
+    val naTags          : NaTags
     val plainTextNoCtx  : PlainText.ForProject.NoCtx
     val textSearch      : TextSearch
     val projectWidgets  : ProjectWidgets.AnyCtx
@@ -40,6 +43,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   // ===================================================================================================================
 
   case class Optional(project         : Project,
+                      naTags          : NaTags,
                       plainTextNoCtx  : PlainText.ForProject.NoCtx,
                       textSearch      : TextSearch,
                       projectWidgets  : ProjectWidgets.AnyCtx,
@@ -72,6 +76,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   // ===================================================================================================================
 
   case class NonEmpty(project         : Project,
+                      naTags          : NaTags,
                       plainTextNoCtx  : PlainText.ForProject.NoCtx,
                       textSearch      : TextSearch,
                       projectWidgets  : ProjectWidgets.AnyCtx,
@@ -114,11 +119,12 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxProject    = Px.props($).map(_.project).withReuse.autoRefresh
+    private val pxNaTags     = Px.props($).map(_.naTags).withReuse.autoRefresh
     private val pxPlainText  = Px.props($).map(_.projectWidgets.plainText).withReuse.autoRefresh
     private val pxTextSearch = Px.props($).map(_.textSearch).withReuse.autoRefresh
 
     override val pxAutoComplete =
-      Px.apply3(pxProject, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(text))
+      Px.apply4(pxProject, pxNaTags, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(text))
 
     private val scrollIntoView: Callback =
       TaskRepeater.millis(
@@ -138,7 +144,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
       val onChange: ReactEventFromTextArea => Callback =
         e => $.props.flatMap(p =>
-          p.status.wrapEdit(p.edit.setStateOption(Some(liveCorrect(e.target.value)), scrollIntoView) >> // TODO https://github.com/japgolly/scalajs-react/issues/653
+          p.status.wrapEdit(p.edit.setState(liveCorrect(e.target.value), scrollIntoView) >>
             p.preview.onEdit(p.wantPreview)))
 
       val onBlur: Callback =
@@ -174,8 +180,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
       def richText: VdomTag =
         p match {
-          case p2: Optional => p.projectWidgets.text(p2.richText, hardcodedLive, Mandatory.Not)
-          case p2: NonEmpty => p.projectWidgets.text(text.toOptional(p2.richTextO), hardcodedLive, Mandatory)
+          case p2: Optional => p.projectWidgets.text(p2.richText, hardcodedLive, p.naTags, data.Optional)
+          case p2: NonEmpty => p.projectWidgets.text(text.toOptional(p2.richTextO), hardcodedLive, p.naTags, Mandatory)
         }
 
       def preview: VdomNode =

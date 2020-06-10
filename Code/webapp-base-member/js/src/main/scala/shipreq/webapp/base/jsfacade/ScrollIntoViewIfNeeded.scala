@@ -5,7 +5,7 @@ import org.scalajs.dom.html
 import scalajs.js.annotation._
 import scalajs.js
 
-@JSGlobal("scrollIntoView.default")
+@JSGlobal("scrollIntoView")
 @js.native
 object ScrollIntoViewIfNeededFacade extends js.Object {
 

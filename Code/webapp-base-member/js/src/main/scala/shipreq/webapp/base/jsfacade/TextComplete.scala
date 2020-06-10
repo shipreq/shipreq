@@ -8,14 +8,20 @@ import scalajs.js
 import TextComplete._
 
 @js.native
-@JSGlobal("TextComplete.default")
-final class TextComplete(editor: Editor, options: Options = js.native) extends js.Any {
+@JSGlobal("TextComplete")
+final class TextComplete(val editor: Editor, options: Options = js.native) extends js.Any {
 
   def register(ss: js.Array[Strategy[_]]): this.type = js.native
+
+  def hide(): this.type = js.native
+
+  def on(event: String, fn: js.Function0[Unit]): this.type = js.native
 
   def trigger(text: String): this.type = js.native
 
   def destroy(destroyEditor: Boolean = true): this.type = js.native
+
+  val _events: _Events = js.native
 
   val dropdown: Dropdown = js.native
 }
@@ -23,15 +29,25 @@ final class TextComplete(editor: Editor, options: Options = js.native) extends j
 object TextComplete {
 
   @js.native
-  sealed trait Editor extends js.Object
+  sealed trait Editor extends js.Object {
+    /** @param options code: ("UP" | "DOWN") */
+    def emitMoveEvent(options: js.Object): Unit = js.native
+    def emitEnterEvent(): Unit = js.native
+    def emitEscEvent(): Unit = js.native
+  }
 
   @js.native
-  @JSGlobal("TextCompleteTA.default")
+  @JSGlobal("TextCompleteTA")
   final class TextArea(element: html.TextArea) extends Editor
 
   @js.native
   sealed trait Dropdown extends js.Object {
     def deactivate(): this.type = js.native
+  }
+
+  @js.native
+  sealed trait _Events extends js.Object {
+    val select: js.UndefOr[js.Object]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -44,9 +60,9 @@ object TextComplete {
     def empty(): MatchData =
       new js.Array[String].asInstanceOf[MatchData]
 
-    def apply(as: TraversableOnce[String], index: js.UndefOr[Int]): MatchData = {
+    def apply(as: IterableOnce[String], index: js.UndefOr[Int]): MatchData = {
       val md = empty()
-      as.foreach(md.push(_))
+      as.iterator.foreach(md.push(_))
       md.index = index
       md
     }
@@ -79,10 +95,10 @@ object TextComplete {
     type Id           = UndefOr[String]
 
     object Search {
-      def apply[A](f: String => TraversableOnce[A]): Search[A] =
+      def apply[A](f: String => IterableOnce[A]): Search[A] =
         (term, cb, _) => {
           val as = new js.Array[A]
-          f(term).foreach(as.push(_))
+          f(term).iterator.foreach(as.push(_))
           cb(as)
         }
     }
@@ -100,13 +116,13 @@ object TextComplete {
     @inline def builder = Step1
 
     object Step1 {
-      def regex(pattern: String, flags: String = "", index: Index = undefined): Step2 = regexp(new RegExp(pattern, flags), index)
-      def regexp(r: RegExp,                          index: Index = undefined): Step2 = new Step2(r, index)
-      def apply(f: String => MatchData,              index: Index = undefined): Step2 = new Step2(f: String --> MatchData, index)
+      def regex(pattern: String, flags: String = "", index: Index = ()): Step2 = regexp(new RegExp(pattern, flags), index)
+      def regexp(r: RegExp,                          index: Index = ()): Step2 = new Step2(r, index)
+      def apply(f: String => MatchData,              index: Index = ()): Step2 = new Step2(f: String --> MatchData, index)
     }
 
     final class Step2(`match`: Match, index: Index) {
-      def search  [A](f: String => TraversableOnce[A]): Step3a[A] = new Step3a(`match`, index, Search(f))
+      def search  [A](f: String => IterableOnce[A]): Step3a[A] = new Step3a(`match`, index, Search(f))
       def replace [A](f: A => String)                 : Step3b[A] = new Step3b[A](`match`, index, Replace apply f)
       def replace2[A](f: A => (String, String))       : Step3b[A] = new Step3b[A](`match`, index, Replace pair f)
     }
@@ -119,7 +135,7 @@ object TextComplete {
 
     final class Step3b[A](`match`: Match, index: Index, replace: Replace[A]) {
       private def ready(search: Search[A]): Ready[A] = new Ready(`match`, index, search, replace, _ => ())
-      def search(f: String => TraversableOnce[A]): Ready[A] = ready(Search(f))
+      def search(f: String => IterableOnce[A]): Ready[A] = ready(Search(f))
     }
 
     final class Ready[A](`match`: Match,

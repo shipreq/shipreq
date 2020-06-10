@@ -7,11 +7,12 @@ import java.time.Instant
 import sourcecode.Line
 import utest._
 import shipreq.base.test.BaseTestUtil._
-import shipreq.base.util.{BinaryData, Deny, Identity, Invalid, Url}
+import shipreq.base.util.{BinaryData, Deny, Invalid, Url}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.binary.SafePickler
-import shipreq.webapp.base.protocol.{CommonProtocols, Protocol}
+import shipreq.webapp.base.protocol.Protocol
+import shipreq.webapp.base.protocol.ajax.CommonProtocols
 import shipreq.webapp.base.user.{EmailAddr, PersonName}
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.ServerLogicConfig
@@ -52,13 +53,22 @@ object DispatchLogicTest extends TestSuite {
     def withConfig(f: ServerLogicConfig => ServerLogicConfig): Tester =
       Tester(mockInterpreters.withConfig(f))
 
-    implicit val traceLogic = TraceLogic.off[Name, TestRequest, TestResponse]
+    implicit val traceLogic = TraceLogic.off[Name, TestRequest, Response]
 
-    val dispatcher = new DispatchLogic[Name, TestRequest, TestResponse](
+    val dispatcher = new DispatchLogic[Name, TestRequest](
       _.toAbstract,
-      (req, res) => Name(TestResponse(res.cmd, res.cookies, patchCookies(req.cookies, res.cookies))))
+      )
 
-    val routeDispatcher = dispatcher.all(testMode = false)
+    def makeRealRes(req: TestRequest, res: Response): Name[TestResponse] =
+      Name(TestResponse(res.cmd, res.cookies, patchCookies(req.cookies, res.cookies)))
+
+    val routeDispatcher: TestRequest => Name[TestResponse] = {
+      val d = dispatcher.all(testMode = false)
+      req => Name {
+        val res = d(req).value
+        makeRealRes(req, res).value
+      }
+    }
 
     db.users ::= user2
     db.users ::= user3
@@ -144,15 +154,15 @@ object DispatchLogicTest extends TestSuite {
     val tester = Tester(new MockInterpreters)
     import tester._, mockInterpreters.{withConfig => _, _}
 
-    'publicSpa {
+    "publicSpa" - {
       import Urls.PublicSpaRoute._
 
-      'nullary - static.foreach(p => assertUnprotected(testRun(ResponseCmd.ServePublicSpa(None), p.url)))
+      "nullary" - static.foreach(p => assertUnprotected(testRun(ResponseCmd.ServePublicSpa(None), p.url)))
 
-      'nonGet - static.foreach(p => testNonGet(p.url))
+      "nonGet" - static.foreach(p => testNonGet(p.url))
 
-      'logIn - {
-        'withSession - {
+      "logIn" - {
+        "withSession" - {
           val u      = user2
           val req    = CommonProtocols.Login.Request(-\/(u.username), user2password)
           val st1    = Security.SessionToken.anonymous()
@@ -162,7 +172,7 @@ object DispatchLogicTest extends TestSuite {
           assertEq(tok, SessionRestoreResult.Success(expect))
         }
 
-        'withoutSession - {
+        "withoutSession" - {
           val u      = user2
           val req    = CommonProtocols.Login.Request(-\/(u.username), user2password)
           val res    = runAjax(CommonProtocols.Login.ajax)(req)._2
@@ -172,57 +182,57 @@ object DispatchLogicTest extends TestSuite {
         }
       }
 
-      'loggedIn {
+      "loggedIn" - {
         implicit def token = user2.token
-        'loginRedirects - assertUnprotected(testRun(ResponseCmd.redirectToMemberHome, Login.url))
-        'nonLoginRenders - static.whole.filter(_ !=* Login).foreach(p =>
+        "loginRedirects" - assertUnprotected(testRun(ResponseCmd.redirectToMemberHome, Login.url))
+        "nonLoginRenders" - static.whole.filter(_ !=* Login).foreach(p =>
           assertUnprotected(testRun(ResponseCmd.ServePublicSpa(token.authenticatedUser), p.url)))
       }
 
-      'loginToMember - List(Urls.memberHome, Urls.project(ProjectId(1))).foreach(url =>
+      "loginToMember" - List(Urls.memberHome, Urls.project(ProjectId(1))).foreach(url =>
         testRun(ResponseCmd.ServePublicSpa(None), s"/login/${url.relativeUrlNoHeadSlash}"))
 
-      'resetPassword2 {
+      "resetPassword2" - {
         publicSpa.ajaxResetPassword1(\/-(user2.emailAddr)).value
 
-        'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, ResetPassword.url(VerificationToken("wwwweeeeeeeeeee33333"))))
-        'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), ResetPassword.url(db.prevToken())))
-        'expired {
+        "invalid" - assertProtected(testRun(ResponseCmd.redirectToPublicHome, ResetPassword.url(VerificationToken("wwwweeeeeeeeeee33333"))))
+        "valid"   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), ResetPassword.url(db.prevToken())))
+        "expired" - {
           forwardTimeToEndOfPasswordResetWindow(Invalid)
           assertProtected(testRun(ResponseCmd.redirectToPublicHome, ResetPassword.url(db.prevToken())))
         }
       }
 
-      'register1 {
-        'enabled {
-          publicSpa.ajaxRegister1(newEmail).value.needRight
+      "register1" - {
+        "enabled" - {
+          publicSpa.ajaxRegister1(newEmail).value.getOrThrow()
         }
-        'disabled {
+        "disabled" - {
           val t2 = withConfig(_.copy(publicRegistration = Deny))
           import t2._, mockInterpreters._
-          publicSpa.ajaxRegister1(newEmail).value.needLeft
+          publicSpa.ajaxRegister1(newEmail).value.getLeftOrThrow()
         }
       }
 
-      'register2 {
-        publicSpa.ajaxRegister1(newEmail).value.needRight
+      "register2" - {
+        publicSpa.ajaxRegister1(newEmail).value.getOrThrow()
 
-        'enabled {
-          'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(VerificationToken("wwwweeeeeeeeeee66666"))))
-          'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), Register2.url(db.prevToken())))
-          'expired {
+        "enabled" - {
+          "invalid" - assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(VerificationToken("wwwweeeeeeeeeee66666"))))
+          "valid"   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), Register2.url(db.prevToken())))
+          "expired" - {
             forwardTimeToEndOfConfirmationWindow(Invalid)
             assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(db.prevToken())))
           }
         }
 
-        'disabled {
+        "disabled" - {
           val t2 = withConfig(_.copy(publicRegistration = Deny))
           import t2._, mockInterpreters._
 
-          'invalid - assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(VerificationToken("wwwweeeeeeeeeee66666"))))
-          'valid   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), Register2.url(db.prevToken())))
-          'expired {
+          "invalid" - assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(VerificationToken("wwwweeeeeeeeeee66666"))))
+          "valid"   - assertProtected(testRun(ResponseCmd.ServePublicSpa(None), Register2.url(db.prevToken())))
+          "expired" - {
             forwardTimeToEndOfConfirmationWindow(Invalid)
             assertProtected(testRun(ResponseCmd.redirectToPublicHome, Register2.url(db.prevToken())))
           }
@@ -230,46 +240,46 @@ object DispatchLogicTest extends TestSuite {
       }
     }
 
-    'memberHomeSpa {
+    "memberHomeSpa" - {
       def urls = spaUrls(Urls.memberHome)
-      'auth   - urls.foreach(testRun(ResponseCmd.ServeHomeSpa(user2.toUser), _)(user2))
-      'anon   - urls.foreach(testNeedAuth)
-      'nonGet - urls.foreach(testNonGet)
+      "auth"   - urls.foreach(testRun(ResponseCmd.ServeHomeSpa(user2.toUser), _)(user2))
+      "anon"   - urls.foreach(testNeedAuth)
+      "nonGet" - urls.foreach(testNonGet)
     }
 
-    'projectSpa {
-      'projectExists {
+    "projectSpa" - {
+      "projectExists" - {
         def urls = spaUrls(Urls.project(pid))
-        'anon     - urls.foreach(testNeedAuth)
-        'auth     - urls.foreach(testRun(ResponseCmd.ProjectSpa.Serve(user2.toUser, pid), _)(user2))
-        'notOwner - urls.foreach(testRun(ResponseCmd.ProjectSpa.NotOwner, _)(user3))
-        'nonGet   - urls.foreach(testNonGet)
+        "anon"     - urls.foreach(testNeedAuth)
+        "auth"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.Serve(user2.toUser, pid), _)(user2))
+        "notOwner" - urls.foreach(testRun(ResponseCmd.ProjectSpa.NotOwner, _)(user3))
+        "nonGet"   - urls.foreach(testNonGet)
       }
-      'noProject {
+      "noProject" - {
         def urls = spaUrls(Urls.project(ProjectId(1324675)))
-        'anon     - urls.foreach(testNeedAuth)
-        'auth     - urls.foreach(testRun(ResponseCmd.ProjectSpa.InvalidId, _)(user2))
-        'nonGet   - urls.foreach(testNonGet)
+        "anon"     - urls.foreach(testNeedAuth)
+        "auth"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.InvalidId, _)(user2))
+        "nonGet"   - urls.foreach(testNonGet)
       }
-      'invalidXId {
+      "invalidXId" - {
         def urls = List("@_@", "@").flatMap(x => spaUrls(s"${Urls.project.prefix.relativeUrl}/$x"))
-        'anon     - urls.foreach(testRun(ResponseCmd.ProjectSpa.InvalidId, _))
-        'auth     - urls.foreach(testRun(ResponseCmd.ProjectSpa.InvalidId, _)(user2))
-        'nonGet   - urls.foreach(testNonGet)
+        "anon"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.InvalidId, _))
+        "auth"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.InvalidId, _)(user2))
+        "nonGet"   - urls.foreach(testNonGet)
       }
     }
 
-    'logout {
+    "logout" - {
       def test(logIn: MockDb.UserEntry = null): Unit = {
         val r = testRun(ResponseCmd.redirectToPublicHome, Urls.logout)(logIn)
         assert(r.authUser.isEmpty)
       }
-      'anon   - test()
-      'auth   - test(user2)
-      'nonGet - testNonGet(Urls.logout)
+      "anon"   - test()
+      "auth"   - test(user2)
+      "nonGet" - testNonGet(Urls.logout)
     }
 
-    'ajax {
+    "ajax" - {
       def test(p             : Protocol.Ajax[SafePickler])
               (pReq          : p.prepReq.Type,
                token         : Option[Security.SessionToken[Instant]])
@@ -307,7 +317,7 @@ object DispatchLogicTest extends TestSuite {
         }
       }
 
-      'landingPage - {
+      "landingPage" - {
         import PublicSpaProtocols.LandingPage._
 
         val req = Request(
@@ -316,31 +326,31 @@ object DispatchLogicTest extends TestSuite {
           Some("yo"),
           true)
 
-        'none - test(ajax)(req, None)(Some(403), None)
-        'auth - test(ajax)(req, Some(user2.token))(None, None)
-        'anon - test(ajax)(req, Some(Security.SessionToken.anonymous().withExpirySoon()))(None, None)
+        "none" - test(ajax)(req, None)(Some(403), None)
+        "auth" - test(ajax)(req, Some(user2.token))(None, None)
+        "anon" - test(ajax)(req, Some(Security.SessionToken.anonymous().withExpirySoon()))(None, None)
       }
 
-      'loginOk - {
+      "loginOk" - {
         import CommonProtocols.Login._
 
         val req = Request(-\/(user2.username), user2password)
 
-        'none - test(ajax)(req, None)(None, Some(user2.token))
-        'anon - {
+        "none" - test(ajax)(req, None)(None, Some(user2.token))
+        "anon" - {
           val st = Security.SessionToken.anonymous().withExpirySoon()
           test(ajax)(req, Some(st))(None, Some(user2.token.withSession(st)))
         }
       }
     }
 
-    'ops {
-      'ok - testRun(ResponseCmd.Text(200, "OK."), "/ops/ok")
+    "ops" - {
+      "ok" - testRun(ResponseCmd.Text(200, "OK."), "/ops/ok")
 
       def register1Url = opsRoot / "register1"
       def register1Params = Map(opsSecretKey -> opsSecretValue.value, "email" -> "a@bc.com")
 
-      'register1 - assertProtected(testRun(
+      "register1" - assertProtected(testRun(
         ResponseCmd.Json(200, Json.obj("taskId" -> 1.asJson)),
         register1Url, Post, None, register1Params))
 
@@ -352,14 +362,14 @@ object DispatchLogicTest extends TestSuite {
       def testKO(url: Url.Relative, method: Method, params: Map[String, String] = Map.empty) =
         assertProtected(testRun(ResponseCmd.StatusOnly(404), url, method, None, params))
 
-      'root      - testKO("/ops", Get)
-      'notFound  - testKO("/ops/what", Get)
-      'notPost   - testKO(register1Url, Get, register1Params)
-      'noSecret  - testKO(register1Url, Post, register1Params - opsSecretKey)
-      'badSecret - testKO(register1Url, Post, register1Params + (opsSecretKey -> "admin"))
+      "root"      - testKO("/ops", Get)
+      "notFound"  - testKO("/ops/what", Get)
+      "notPost"   - testKO(register1Url, Get, register1Params)
+      "noSecret"  - testKO(register1Url, Post, register1Params - opsSecretKey)
+      "badSecret" - testKO(register1Url, Post, register1Params + (opsSecretKey -> "admin"))
     }
 
-    'fallback {
+    "fallback" - {
       val unrecognisedPaths = List[Url.Relative](
         "/fart",
         "/logi",
@@ -374,9 +384,9 @@ object DispatchLogicTest extends TestSuite {
           assertEq("404 shouldn't log user out", r.authUser, Option(logIn).map(_.toUser))
         }
       }
-      'anon   - test()
-      'auth   - test(user2)
-      'nonGet - unrecognisedPaths.foreach(testNonGet)
+      "anon"   - test()
+      "auth"   - test(user2)
+      "nonGet" - unrecognisedPaths.foreach(testNonGet)
     }
 
   }

@@ -1,12 +1,15 @@
 package shipreq.taskman.server.app
 
+import cats.effect.{ExitCode, IO}
 import shipreq.base.util.FxModule._
 
 /**
  * Performs any pending database migrations.
  */
-object DatabaseMigration extends MainTemplate {
+object DatabaseMigration extends TaskmanApp {
 
-  def main(args: Array[String]): Unit =
-    withDatabase(_ => Fx.unit).unsafeRun()
+  override def run(args: List[String]): IO[ExitCode] =
+    for {
+      _ <- withDatabase((_, _) => Fx.unit)
+    } yield ExitCode.Success
 }

@@ -31,12 +31,12 @@ private[tablenav] object Logic {
     case _ => false
   }
 
-  type ParentStream = Stream[(html.Element, Int)]
+  type ParentStream = LazyList[(html.Element, Int)]
 
   def parentsAndIndices(e: html.Element): ParentStream =
     Option(e.parentElement) match {
-      case Some(p) => Stream((e, siblingIndex(e))) append parentsAndIndices(p)
-      case None    => Stream((e, 0))
+      case Some(p) => LazyList((e, siblingIndex(e))) #::: parentsAndIndices(p)
+      case None    => LazyList((e, 0))
     }
 
   implicit class HtmlElementExtX(private val e: html.Element) extends AnyVal {
@@ -87,7 +87,7 @@ private[tablenav] object Logic {
       case _ #:: _ =>
         findRootAndPos(parentStream.tail, focus, expectSubPos = true)
 
-      case Stream.Empty =>
+      case _ =>
         -\/("Unable to determine table structure")
     }
 
@@ -170,8 +170,8 @@ private[tablenav] object Logic {
   def allowMove2A[A](a: A, ob: Option[A])(cell: A => Int, sub: A => Option[PosXY]): Permission =
     Deny.when(sub(a).isEmpty && ob.exists(b => sub(b).isDefined && cell(a) ==* cell(b)))
 
-  def needNev[A](as: TraversableOnce[A], err: => String): F[NonEmptyVector[A]] =
-    NonEmptyVector.maybe[A, F[NonEmptyVector[A]]](as.toVector, -\/(err))(\/-(_))
+  def needNev[A](as: IterableOnce[A], err: => String): F[NonEmptyVector[A]] =
+    NonEmptyVector.maybe[A, F[NonEmptyVector[A]]](as.iterator.toVector, -\/(err))(\/-(_))
 
   def subAt(cell: html.Element, xy: PosXY): Option[html.Element] =
     cellContentsIterator(cell, false)

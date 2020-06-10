@@ -11,7 +11,8 @@ import sourcecode.Line
 import shipreq.base.test._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.json.v1.PostEvents._
+import shipreq.webapp.base.filter._
+import shipreq.webapp.base.protocol.json.v1.Rev1._
 import shipreq.webapp.base.text.Text
 
 trait WebappTestEquality
@@ -19,7 +20,6 @@ trait WebappTestEquality
      with Text.Equality
      with EventEquality
 {
-  implicit def equalityText = ReqData.equalityText
   implicit def equalityTags = ReqData.equalityTags
 
   implicit lazy val equalProjectAndOrd: Equal[ProjectAndOrd] = ScalazMacros.deriveEqual
@@ -62,14 +62,17 @@ trait WebappTestUtil extends BaseTestUtil {
     es.foldLeft(p)(applyEventSuccessfully)
 
   def applyVerifiedEventSuccessfully(p: Project, e: VerifiedEvent): Project =
-    ApplyEvent.untrusted.applyVerified(Vector(e))(p).fold(sys.error, identity)
+    ApplyEvent.untrusted.applyVerified(Vector(e))(p).fold(_.throwException(), identity)
 
   def applyVerifiedEventSuccessfully(p: Project, es: VerifiedEvent*): Project =
     es.foldLeft(p)(applyVerifiedEventSuccessfully)
 
+  def applyVerifiedEventsSuccessfully(p: Project, es: VerifiedEvent.Seq): Project =
+    es.foldLeft(p)(applyVerifiedEventSuccessfully)
+
   def assertEventFails(p: Project, e: Event, errFrag: String = "")(implicit l: Line): Unit =
     ApplyEvent.untrusted.apply1(e)(p) match {
-      case -\/(f) => assertContainsCI(f, errFrag)
+      case -\/(f) => assertContainsCI(f.value, errFrag)
       case \/-(_) => fail(s"Failure expected but didn't occur applying $e")
     }
 
@@ -80,7 +83,10 @@ trait WebappTestUtil extends BaseTestUtil {
 
   implicit final class WebappTestUtilExt_Event(private val self: Event) {
     def active: ActiveEvent =
-      Event.toActiveEvent(self)
+      self match {
+        case a: ActiveEvent => a
+        case r: RetiredEvent => sys.error(s"Not an active event: $r")
+      }
   }
 
 //  implicit def autoSeqIssueToSeqIssueLite(is: Seq[Issue]): Seq[IssueLite] =
@@ -91,10 +97,18 @@ trait WebappTestUtil extends BaseTestUtil {
 
   def assertIssueSet(name: => String, actual: Seq[IssueLite], expect: Seq[IssueLite])(implicit l: Line): Unit = {
     assertSeqIgnoreOrder(name, actual, expect)
-    def norm(i: Seq[IssueLite]) = MutableArray(i).sortBySchwartzian(_.toString).iterator.to[Vector]
+    def norm(i: Seq[IssueLite]) = MutableArray(i).sortBySchwartzian(_.toString).iterator.to(Vector)
     assertSeq(name, norm(actual), norm(expect))
   }
 
   def verifiedEventsFromJson(jsons: String*): VerifiedEvent.Seq =
-    VerifiedEvent.Seq.empty ++ jsons.iterator.map(decode[VerifiedEvent](_).needRight)
+    VerifiedEvent.Seq.empty ++ jsons.iterator.map(decode[VerifiedEvent](_).getOrThrow())
+
+  def parseFilterSuccessfully(cfg: ProjectConfig): String => Filter.Valid = {
+    val validator = FilterAlgebra.validate(cfg)
+    filterTxt => {
+      val pf        = FilterParser.parse(filterTxt).getOrThrow().get
+      Filter.Potential.validate(pf, validator).getOrThrow()
+    }
+  }
 }

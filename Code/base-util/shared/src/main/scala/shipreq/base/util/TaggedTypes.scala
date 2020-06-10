@@ -11,7 +11,7 @@ object TaggedTypes {
     /** The Underlying value type. */
     type U
     def value: U
-    override def hashCode = value.##
+    override def hashCode = value.hashCode
   }
 
   trait PreventToString {
@@ -20,14 +20,21 @@ object TaggedTypes {
       throw ArticulateError(s"${getClass.getSimpleName}($value).toString CALLED.")
   }
 
-  trait TaggedInt    extends TaggedType { final override type U = Int }
-  trait TaggedString extends TaggedType { final override type U = String }
+  trait TaggedInt extends TaggedType {
+    final override type U = Int
+    // Important: keep this is a val. It significantly affects ApplyEventBM
+    final override val hashCode = value.hashCode
+  }
+
+  trait TaggedString extends TaggedType {
+    final override type U = String
+  }
 
   trait TaggedLong extends TaggedType {
     final override type U = Long
     // Tagged longs are usually IDs and usually used as map keys. (hence val)
     // Long arithmetic is super slow in JS. Casting to int before calculating hashcode is faster (says @sjrd)
-    final override val hashCode = value.toInt.##
+    final override val hashCode = value.toInt.hashCode
   }
 
   trait TaggedShort  extends TaggedType {

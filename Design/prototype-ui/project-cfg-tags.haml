@@ -75,6 +75,15 @@
         background-color: #fffad7 !important;
       }
 
+      xa:hover {color:#ef06c4!important}
+      xa:hover {color:#60f!important}
+      xa:hover {color:#4183c4!important; text-decoration: underline; text-decoration-color:#aac7e4}
+
+      .usage {float:right;}
+      x.usage.one a {color:#ef06c4}
+      .usage.one span {visibility:hidden}
+      .usage.zero:not(:hover) {opacity:0.5}
+
   -# ==================================================================================================================================================
   -# ==================================================================================================================================================
   %body
@@ -122,7 +131,7 @@
       %section.left
 
         %div(style="display:flex; margin-bottom:2rem")
-          %div
+          %div(style="flex-grow:1")
             .ui.labeled.button
               %a.ui.button.green
                 %i.icon.plus
@@ -134,8 +143,6 @@
                 .menu
                   .item Tag
                   .item Tag group
-
-          %div(style="flex-grow:1")
 
           %div(style="")
             %button.ui.button.icon
@@ -158,18 +165,23 @@
               %li.tag
                 .drag ☰
                 .ui.label.is-tag.yellow(style="margin:0;color:#000!important") needs_more_info
+                .usage(title="12 reqs use this tag") %a(href="#") 12 uses
               %li.tag
                 .drag ☰
                 .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                .usage.one %a(href="#") 1 use<span>s</span>
               %li.tag
                 .drag ☰
                 .ui.label.is-tag.blue(style="margin:0") analysed
+                .usage(title="47 reqs use this tag") %a(href="#") 47 uses
               %li.tag
                 .drag ☰
                 .ui.label.is-tag.pink(style="margin:0") ready_for_dev
+                .usage.zero(title="No reqs use this tag") %a(href="#") 0 uses
               %li.tag
                 .drag ☰
                 .ui.label.is-tag.olive(style="margin:0; color:#000!important") implemented
+                .usage.zero(title="No reqs use this tag") %a(href="#") 0 uses
 
           %li.group
             %div
@@ -179,12 +191,15 @@
               %li.tag
                 .drag ☰
                 .ui.label.is-tag.red(style="margin:0") must
+                .usage(title="9 reqs use this tag") %a(href="#") 9 uses
               %li.tag
                 .drag ☰
-                .ui.label.is-tag.orange(style="margin:0; xcolor:#000!important") should
+                .ui.label.is-tag.orange(style="margin:0; xcolor:#000!important") should_definately
+                .usage(title="86 reqs use this tag") %a(href="#") 86 uses
               %li.tag
                 .drag ☰
                 .ui.label.is-tag.yellow(style="margin:0; color:#000!important") could
+                .usage.zero(title="No reqs use this tag") %a(href="#") 0 uses
 
           %li.group
             %div
@@ -212,19 +227,24 @@
                   %li.tag
                     .drag ☰
                     .ui.label.is-tag.blue(style="margin:0") v1.0
+                    .usage(title="30 reqs use this tag") %a(href="#") 30 uses
                   %li.tag
                     .drag ☰
                     .ui.label.is-tag.blue(style="margin:0") v1.1
+                    .usage.one %a(href="#") 1 use<span>s</span>
 
                 %li.tag
                   .drag ☰
                   .ui.label.is-tag.blue(style="margin:0") tbd
+                  .usage.zero(title="No reqs use this tag") %a(href="#") 0 uses
 
           %li.tag.first_after_group
             .ui.label.is-tag.blue(style="margin:0") blah1
+            .usage.zero(title="No reqs use this tag") %a(href="#") 0 uses
 
           %li.tag
             .ui.label.is-tag.blue(style="margin:0") blah2
+            .usage.zero(title="No reqs use this tag") %a(href="#") 0 uses
 
       -# ==================================================================================================================================================
       %section.gap1

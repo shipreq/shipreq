@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.app.pages.content.issues
 
 import scalaz.{-\/, \/-}
 import shipreq.base.util.{Backwards, Direction}
-import shipreq.webapp.base.UiText.ColumnNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 
@@ -11,10 +10,10 @@ final case class IssueField[+FK <: FieldKey](key: FK, desc: Option[String])
 object IssueField {
   import DataImplicits._
 
-  val CodeGroupTitle  = IssueField(FieldKey.CodeGroupTitle , Some(ColumnNames.title))
-  val GenericReqTitle = IssueField(FieldKey.GenericReqTitle, Some(ColumnNames.title))
-  val UseCaseTitle    = IssueField(FieldKey.UseCaseTitle   , Some(ColumnNames.title))
-  val Tags            = IssueField(FieldKey.Tags(None)     , Some(ColumnNames.tags))
+  val CodeGroupTitle  = IssueField(FieldKey.CodeGroupTitle , Some(SpecialBuiltInField.Title.name))
+  val GenericReqTitle = IssueField(FieldKey.GenericReqTitle, Some(SpecialBuiltInField.Title.name))
+  val UseCaseTitle    = IssueField(FieldKey.UseCaseTitle   , Some(SpecialBuiltInField.Title.name))
+  val OtherTags       = IssueField(FieldKey.OtherTags      , Some(StaticField.OtherTags.name))
 
   def customField(id: CustomFieldId)(implicit cfg: ProjectConfig): IssueField[FieldKey.ForAllReqs] =
     customField(cfg.fields.customFields.need(id))
@@ -29,7 +28,7 @@ object IssueField {
   def customField(id: CustomField.Text.Id)(implicit cfg: ProjectConfig): IssueField[FieldKey.CustomTextField] =
     customField(cfg.fields.custom(id))
 
-  def customField(id: CustomField.Tag.Id)(implicit cfg: ProjectConfig): IssueField[FieldKey.Tags] =
+  def customField(id: CustomField.Tag.Id)(implicit cfg: ProjectConfig): IssueField[FieldKey.CustomFieldTags] =
     customField(cfg.fields.custom(id))
 
   def customField(id: CustomField.Implication.Id)(implicit cfg: ProjectConfig): IssueField[FieldKey.Implications] =
@@ -38,22 +37,16 @@ object IssueField {
   def customField(f: CustomField.Text): IssueField[FieldKey.CustomTextField] =
     IssueField(FieldKey.CustomTextField(f. id), Some(f.name))
 
-  def customField(f: CustomField.Tag)(implicit cfg: ProjectConfig): IssueField[FieldKey.Tags] =
-    IssueField(FieldKey.Tags(Some(f.id)), Some(f.name(cfg.tags.tree)))
+  def customField(f: CustomField.Tag)(implicit cfg: ProjectConfig): IssueField[FieldKey.CustomFieldTags] =
+    IssueField(FieldKey.CustomFieldTags(f.id), Some(f.name(cfg.tags.tree)))
 
   def customField(f: CustomField.Implication)(implicit cfg: ProjectConfig): IssueField[FieldKey.Implications] =
     IssueField(FieldKey.Implications(-\/(f.id)), Some(f.name(cfg.reqTypes)))
 
   val implications: Direction => IssueField[FieldKey.Implications] =
-    Direction.memo(d => IssueField(FieldKey.Implications(\/-(d)), Some(ColumnNames.implications(d))))
+    Direction.memo(d => IssueField(FieldKey.Implications(\/-(d)), Some(SpecialBuiltInField.implication(d).name)))
 
   def impliedBy = implications(Backwards)
-
-  def tags(id: Option[CustomField.Tag.Id])(implicit cfg: ProjectConfig): IssueField[FieldKey.Tags] =
-    id match {
-      case Some(i) => customField(i)
-      case None    => Tags
-    }
 
   def useCaseStep(id: UseCaseStepId, p: Project): IssueField[FieldKey.UseCaseStep] = {
     val focus = p.content.reqs.useCases.focusStep(id)

@@ -10,7 +10,7 @@ object AutosizeTextarea {
   def apply(tagMods: TagMod*) =
     Component(TagMod(tagMods: _*))
 
-  val Component = ScalaComponent.builder[TagMod]("AutosizeTextarea")
+  val Component = ScalaComponent.builder[TagMod]
     .render_P(<.textarea(_))
     .configure(applyTo(e => e))
     .build
@@ -22,4 +22,12 @@ object AutosizeTextarea {
 
   def applyToChildren[P, C <: Children, S, B](sel: String) =
     applyTo[P, C, S, B](_.querySelectorAll(sel))
+
+  // ===================================================================================================================
+
+  @inline def editor: TagMod => VdomNode =
+    editor()
+
+  def editor(rows: Int = 3): TagMod => VdomNode =
+    t => Component(TagMod(^.rows := rows, t))
 }

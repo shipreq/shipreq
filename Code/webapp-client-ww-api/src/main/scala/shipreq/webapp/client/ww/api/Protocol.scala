@@ -1,18 +1,26 @@
 package shipreq.webapp.client.ww.api
 
+import japgolly.scalajs.react.Callback
 import scalajs.js
-import org.scalajs.dom.console
+import org.scalajs.dom.{Transferable, console}
+import shipreq.base.util.ErrorMsg
 
 object Protocol {
 
-  class Message[+C](val key: Int, val cmd: C) extends js.Object
+  final class Message[+C](val id: Int, val cmd: C) extends js.Object
 
-  trait Codec[E, R[_], W[_]] {
-    final type Encoded   = E
-    final type Reader[A] = R[A]
-    final type Writer[A] = W[A]
+  // Msg sent from server to client to declare that initialisation is complete
+  val Ready = "."
+
+  // ===================================================================================================================
+
+  sealed trait Codec {
+    type Encoded
+    type Reader[A]
+    type Writer[A]
     def encode[A: Writer](input: A): Encoded
     def decode[A: Reader](encoded: Encoded): A
+    def transferables(e: Encoded): js.UndefOr[js.Array[Transferable]]
   }
 
   object Codec {
@@ -20,7 +28,11 @@ object Protocol {
     import scala.scalajs.js.typedarray.TypedArrayBufferOps._
     import boopickle.{PickleImpl, UnpickleImpl, Pickler}
 
-    object Binary extends Codec[ArrayBuffer, Pickler, Pickler] {
+    object Binary extends Codec {
+      override type Encoded   = ArrayBuffer
+      override type Reader[A] = Pickler[A]
+      override type Writer[A] = Pickler[A]
+
       override def encode[A: Pickler](input: A): ArrayBuffer = {
         val bb = PickleImpl.intoBytes(input)
         bb.typedArray().subarray(0, bb.limit).buffer
@@ -30,27 +42,47 @@ object Protocol {
         val bb = TypedArrayBuffer wrap encoded
         UnpickleImpl[A].fromBytes(bb)
       }
+
+      // https://developers.google.com/web/updates/2011/12/Transferable-Objects-Lightning-Fast
+      override def transferables(e: ArrayBuffer): js.UndefOr[js.Array[Transferable]] =
+        js.Array(e: Transferable)
     }
+
+    val default: Binary.type = Binary
   }
 
-  case class OnError(handle: String => Unit) extends AnyVal {
-    @inline def apply(s: String) = handle(s)
+  // ===================================================================================================================
+
+  final case class OnError(handle: ErrorMsg => Callback) extends AnyVal {
+    @inline def apply(e: ErrorMsg) = handle(e)
   }
 
   object OnError {
-    def Console: OnError =
-      OnError(console.error(_))
+    def logToConsole: OnError =
+      OnError(err => Callback(console.error(err)))
   }
 
+  // ===================================================================================================================
+
   trait Interface[M] {
-    def listen(h: Message[M] => Unit, e: OnError): Unit
-    def post(msg: Message[M]): Unit
+    def listen(h: Message[M] => Callback, e: OnError): Callback
+    def post(msg: Message[M]): Callback
   }
 
   object Interface {
-    import org.scalajs.dom.MessageEvent
+    import org.scalajs.dom.{ErrorEvent, MessageEvent}
 
-    def onMessageFn[M](handle: Message[M] => Unit): js.Function1[MessageEvent, Unit] =
-      (e: MessageEvent) => handle(e.data.asInstanceOf[Message[M]])
+    def onErrorFn[M](handle: ErrorMsg => Callback): js.Function1[ErrorEvent, Unit] =
+      (e: ErrorEvent) => handle(ErrorMsg(e.message)).runNow()
+
+    def onMessageFn[M](handle: Message[M] => Callback): js.Function1[MessageEvent, Unit] =
+      (e: MessageEvent) => handle(e.data.asInstanceOf[Message[M]]).runNow()
+
+    def onMessageFn[M](onInit: Callback, handle: Message[M] => Callback): js.Function1[MessageEvent, Unit] =
+      (e: MessageEvent) =>
+        if (Ready == e.data)
+          onInit.runNow()
+        else
+          handle(e.data.asInstanceOf[Message[M]]).runNow()
   }
 }

@@ -1,0 +1,188 @@
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard Req Table | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      .ui.button.basic {background:#fff!important}
+
+      .usage {text-align:right !important;}
+      .usage.na { background-color: #f5f5f5; padding:4x !important; color: #666;}
+      .usage.na::after { content: '–'}
+      .usage.one span {visibility:hidden}
+      .usage.zero:not(:hover) {color:#4183c4}
+
+      /* .ui.menu .item>img:not(.ui) -- width:2.5em */
+      /* .ui.menu .item -- padding-top/bottom: 0.928571em */
+      /* body - padding: 1rem */
+      #navX {height:calc(2 * 0.928571em + 2.5em - 1.55em); background:green}
+      #navX {height:2.79rem; margin-bottom:1rem} /* padding is to match body */
+      main {
+        xbackground:#fbb;
+        margin-top: 4rem;
+        min-height: calc(100vh - 2 * (0.928571em + 1rem) - 2.5em);
+        min-height: calc(100vh - 2.79rem - 3rem);
+        min-height: calc(100vh - 6rem);
+        display:grid;
+        grid-template-columns: 1fr 2rem 2rem 1fr;
+      }
+      section.gap2 {
+        border-left: solid 1px #e8e8e8;
+      }
+
+      #t2 tr.selected td {
+        border-top:solid 1px #3659e2;
+        border-bottom:solid 1px #3659e2;
+      }
+
+      #t2.has-selection tbody tr:not(.selected) { opacity:.4 }
+      #t2 tr { transition: opacity .4s }
+      #t2 tr { transition: background .1s ease,color .1s ease; }
+      #t2 tr.selected { background-color: #869df91f; }
+      #t2 td {cursor:pointer}
+
+      .sectionTitle {
+        display:block;
+        margin: 1rem auto 4rem auto;
+        max-width: 60ex;
+        font-size: 120%;
+        text-align: center;
+        font-weight:bold;
+        border-top: solid 1px #ddd;
+        border-bottom: solid 1px #ddd;
+        padding: .7em 0;
+      }
+
+      #otherSources .sources {
+        display:flex;
+        justify-content: center;
+      }
+
+      #otherSources .sources > .gap {width:6rem}
+      #otherSources .sources .content {margin-bottom:4em}
+      #otherSources .sources .header {font-weight:bold; margin-bottom:1em}
+      #otherSources .sources ul {padding-left:2px; list-style-position: inside}
+      #otherSources .sources li {margin-bottom:.3em; color:#444}
+      #otherSources .sources span.sub::before {content:'('}
+      #otherSources .sources span.sub::after {content:')'}
+      #otherSources .sources span.sub {color:#999; margin-left:1ex}
+      #otherSources .sources .body .desc {display:none}
+
+  -# ==================================================================================================================================================
+  -# ==================================================================================================================================================
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+
+      .item
+        .ui.breadcrumb
+          %a.section{href: "member-home.html"} Projects
+          %i.divider.icon.right.angle
+          %a.section{href: "project-index.html"} CardBoard
+          .ui.dropdown.inline
+            &nbsp;
+            %i.icon.dropdown
+            .menu
+              .item.active CardBoard
+              .item ShipReq
+          %i.divider.icon.right.angle
+          .section // .active
+            .ui.dropdown.inline
+              Req Table
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .header Content
+                .item Implication Graph
+                .item.active ReqTable
+                .header Configuration
+                .item Fields
+                .item Issues
+                .item Req Types
+                .item Tags
+
+      .item.ui.right.dropdown.simple
+        @japgolly
+        -# %i.dropdown.icon
+        .menu
+          %a.item{href: "member-account.html"} Account
+          .item Logout
+
+    %main
+
+      %section.left
+
+        .sectionTitle
+          User-Defined Issue Types
+
+        %div(style="display:flex; margin-bottom:2rem")
+          %div
+            .ui.button.green#new
+              %i.icon.plus
+              New
+
+          %div(style="flex-grow:1")
+
+          %div(style="")
+            %button.ui.button.icon
+              %i.icon.trash.outline.large.grey
+
+        %table.ui.celled.table#t2.has-selection
+          %thead
+            %tr
+              %th Name
+              %th(style="width:99%") Description
+              %th.usage Usage
+          %tbody
+            %tr.selected
+              %td ="#PENDING"
+              %td Waiting on external information, or an external event.
+              %td.usage.zero(title="No reqs use this field") %a(href="#") 0 uses
+            %tr
+              %td ="#TODO"
+              %td Work needs to be done.
+              %td.usage.zero(title="No reqs use this field") %a(href="#") 0 uses
+
+      %section.gap1
+      %section.gap2
+
+      %section.right
+
+        .editor
+
+          %h2(style="color: #3659e2; margin-bottom:2rem") ="#PENDING"
+
+          .ui.form
+            .field
+              %label Name
+              %input(type="text" value="PENDING")
+            .field
+              %label Description
+              %textarea(type="text" rows=4) Waiting on external information, or an external event.
+
+          %div(style="margin-top:2rem; display:flex")
+            %button.ui.button.negative.basic(style="white-space: nowrap;")
+              %i.icon.trash
+              Delete
+            %div(style="flex-grow:1")
+            %button.ui.button.black.basic(style="margin-right:2em")
+              %i.icon.remove
+              Close
+            -# %button.ui.button.basic.green(style="border-color: #080 !important; font-weight: bold !important;")
+            %button.ui.button.green.disabled
+              %i.icon.plus
+              Update
+
+
+
+  :javascript
+    $('.ui.dropdown').dropdown();
