@@ -1,15 +1,15 @@
 package shipreq.taskman.server.logic.business
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import scalaz.{-\/, \/-, ~>}
 import scalaz.syntax.bind._
+import scalaz.{-\/, \/-, ~>}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.Task._
 import shipreq.taskman.api.{EmailAddr, UserId}
+import shipreq.taskman.server.logic.business.BusinessOp._
 import shipreq.taskman.server.logic.{Deliberate, TaskDetail, TaskHeader, Worker}
-import BusinessOp._
 
 final class BusinessLogic[F[_]](emails        : Emails,
                                 emailScheduler: Worker.AsyncScheduler[F],

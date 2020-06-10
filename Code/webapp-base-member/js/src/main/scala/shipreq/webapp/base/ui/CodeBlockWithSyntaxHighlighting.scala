@@ -3,7 +3,7 @@ package shipreq.webapp.base.ui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
-import scalajs.js
+import scala.scalajs.js
 import shipreq.webapp.base.jsfacade.PrismJs
 
 object CodeBlockWithSyntaxHighlighting {

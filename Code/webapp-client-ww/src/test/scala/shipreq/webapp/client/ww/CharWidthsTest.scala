@@ -1,7 +1,7 @@
 package shipreq.webapp.client.ww
 
-import utest._
 import japgolly.microlibs.testutil.TestUtil._
+import utest._
 import utest.framework.TestPath
 
 object CharWidthsTest extends TestSuite {

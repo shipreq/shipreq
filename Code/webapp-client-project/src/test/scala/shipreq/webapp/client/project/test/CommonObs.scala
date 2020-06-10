@@ -1,8 +1,8 @@
 package shipreq.webapp.client.project.test
 
-import shipreq.webapp.base.test.TestState._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
+import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.semantic.JQuery
 
 object CommonObs {

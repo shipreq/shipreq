@@ -4,7 +4,7 @@ import japgolly.univeq.UnivEq
 import scala.collection.immutable.BitSet
 import scala.reflect.ClassTag
 import scalaz.Need
-import TransitiveClosure.Filter
+import shipreq.base.util.TransitiveClosure.Filter
 
 object TransitiveClosure {
   def auto[A: UnivEq: ClassTag](as            : IterableOnce[A])

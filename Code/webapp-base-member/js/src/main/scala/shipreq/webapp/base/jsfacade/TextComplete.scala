@@ -1,11 +1,10 @@
 package shipreq.webapp.base.jsfacade
 
 import org.scalajs.dom.html
-import scalajs.js.annotation._
-import scalajs.js.{RegExp, UndefOr, undefined, |}
-import scalajs.js.{Function1 => -->, Function2 => JsFn2, Function3 => JsFn3}
-import scalajs.js
-import TextComplete._
+import scala.scalajs.js
+import scala.scalajs.js.annotation._
+import scala.scalajs.js.{Function1 => -->, Function2 => JsFn2, Function3 => JsFn3, RegExp, UndefOr, undefined, |}
+import shipreq.webapp.base.jsfacade.TextComplete._
 
 @js.native
 @JSGlobal("TextComplete")

@@ -1,8 +1,8 @@
 package shipreq.base.test
 
-import BaseTestUtil._
 import scala.reflect.ClassTag
 import scalaz.{Applicative, Equal, Name, ~>}
+import shipreq.base.test.BaseTestUtil._
 
 trait OpTypeProvider[Op[_]] {
   def apply[A]: Op[A] => ClassTag[_]

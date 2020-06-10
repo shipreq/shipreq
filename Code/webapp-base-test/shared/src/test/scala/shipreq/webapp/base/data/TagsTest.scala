@@ -1,11 +1,11 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.utils.Memo
-import sourcecode.Line
-import utest._
-import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
+import shipreq.webapp.base.test.UnsafeTypes._
+import sourcecode.Line
+import utest._
 
 object TagsTest extends TestSuite {
 

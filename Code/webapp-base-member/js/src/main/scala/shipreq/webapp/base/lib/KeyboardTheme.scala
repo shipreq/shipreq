@@ -4,8 +4,8 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.lib.KeyHandler._
+import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.ui.BaseStyles.{editorInstructions => *}
 import shipreq.webapp.base.ui.semantic.Icon
 

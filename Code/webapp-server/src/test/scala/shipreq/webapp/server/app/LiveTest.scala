@@ -1,17 +1,17 @@
 package shipreq.webapp.server.app
 
 import scalaz.-\/
-import utest._
 import shipreq.base.test.BaseTestUtil._
-import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
 import shipreq.webapp.base.protocol.entrypoint._
 import shipreq.webapp.base.user.{EmailAddr, PersonName}
+import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
 import shipreq.webapp.client.public.PublicSpaProtocols.LandingPage.Request
 import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.server.logic.{Obfuscators, Security}
 import shipreq.webapp.server.test._
+import utest._
 
 object LiveTest extends TestSuite {
 

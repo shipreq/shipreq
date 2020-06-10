@@ -7,9 +7,9 @@ import org.redisson.api.RScript.Mode
 import org.redisson.api.listener.MessageListener
 import org.redisson.api.{RScript, RedissonClient}
 import org.redisson.client.codec.{ByteArrayCodec, StringCodec}
-import scala.jdk.CollectionConverters._
 import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
+import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
 import scalaz.-\/
 import scalaz.std.option._
@@ -19,8 +19,8 @@ import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.server.logic.Redis
-import shipreq.webapp.server.logic.RedisProtocol._
 import shipreq.webapp.server.logic.Redis.ProjectSnapshot
+import shipreq.webapp.server.logic.RedisProtocol._
 
 object RedisViaRedisson {
 

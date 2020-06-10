@@ -3,13 +3,13 @@ package shipreq.webapp.base.test
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
-import scalaz.{IMap => _, _}
 import scalaz.std.AllInstances._
 import scalaz.syntax.bind._
 import scalaz.syntax.semigroup._
-import shipreq.base.util._
-import MTrie.Ops
+import scalaz.{IMap => _, _}
+import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Atom, Text}
 

@@ -6,9 +6,6 @@ import japgolly.scalajs.react.test._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scala.scalajs.js
-import sourcecode.Line
-import teststate.domzipper.sizzle.Sizzle
-import utest._
 import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data.{Contextualise, Plain, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature.AutoComplete.Strategies
@@ -18,6 +15,9 @@ import shipreq.webapp.base.test.SampleProject3._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, PlainText}
+import sourcecode.Line
+import teststate.domzipper.sizzle.Sizzle
+import utest._
 
 object AutoCompleteTest extends TestSuite {
 

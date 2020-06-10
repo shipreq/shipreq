@@ -1,15 +1,15 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.nonempty._
-import nyaya.prop._
 import nyaya.gen._
+import nyaya.prop._
 import nyaya.test.PropTest._
-import utest._
 import shipreq.base.test.BaseTestUtil._
-import shipreq.base.util.VectorTree
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.VectorTree
+import shipreq.base.util.VectorTree.PartialLocation
 import shipreq.webapp.base.RandomData
-import VectorTree.PartialLocation
+import utest._
 
 object ReqsTest extends TestSuite { // TODO Update for UCs
 

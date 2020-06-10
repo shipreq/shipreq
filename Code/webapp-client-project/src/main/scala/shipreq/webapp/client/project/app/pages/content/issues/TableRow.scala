@@ -6,8 +6,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import scalaz.\/
-import shipreq.base.util.{ConsolidatedSeq, ErrorMsg, IfApplicable}
 import shipreq.base.util.univeq._
+import shipreq.base.util.{ConsolidatedSeq, ErrorMsg, IfApplicable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.clipboard.ClipboardKeys
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}

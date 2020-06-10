@@ -1,8 +1,8 @@
 package shipreq.webapp.base.data
 
 import japgolly.univeq.UnivEq
-import FieldReqTypeRules.Resolution
 import shipreq.base.util.Impossible
+import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 
 final class FieldSetRules(val imp   : CustomField.Implication.Id => Resolution.ForImpField,
                           val tag   : CustomField.Tag        .Id => Resolution.ForTagField,

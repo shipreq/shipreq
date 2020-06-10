@@ -1,8 +1,8 @@
 package shipreq.webapp.server.logic
 
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data.ProjectId
+import utest._
 
 /** Ensures that obfuscation algos don't change - important because they are being used in clients' urls */
 object ObfuscatorsTest extends TestSuite {

@@ -1,7 +1,7 @@
 package shipreq.base.util
 
+import scala.scalajs.js.{UndefOr, undefined}
 import scalaz.{Monoid, Semigroup}
-import scalajs.js.{UndefOr, undefined}
 
 object UndefOrExt {
 

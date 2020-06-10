@@ -4,23 +4,23 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
 import nyaya.prop.{Logic => _, _}
 import nyaya.util.Multimap
-import scalaz.{-\/, Equal, \/, \/-}
 import scalaz.std.AllInstances._
-import utest._
-import shipreq.base.util.univeq._
+import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
-import shipreq.webapp.base.sort.SortMethod
-import shipreq.webapp.base.sort.Sorter.{BlankPlacement, BlanksFirst, BlanksLast, Dir, FlipDir, KeepDir}
-import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch}
-import shipreq.webapp.client.project.test.ClientTestSettings._
-import LogicTestUtil._
-import SortMethod._
-import Text.Equality._
 import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.sort.SortMethod
+import shipreq.webapp.base.sort.SortMethod._
+import shipreq.webapp.base.sort.Sorter.{BlankPlacement, BlanksFirst, BlanksLast, Dir, FlipDir, KeepDir}
+import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch}
+import shipreq.webapp.client.project.app.pages.content.reqtable.LogicTestUtil._
+import shipreq.webapp.client.project.test.ClientTestSettings._
+import utest._
 
 object LogicPropTest extends TestSuite {
   val nop = Eval.pass()

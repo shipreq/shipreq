@@ -4,14 +4,14 @@ import japgolly.clearconfig._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import javax.mail.Session
-import scalaz.{-\/, \/, \/-}
 import scalaz.syntax.applicative._
-import shipreq.base.util.{Retries, RetriesJvm}
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.log.HasLogger
+import shipreq.base.util.{Retries, RetriesJvm}
 import shipreq.taskman.api.{CfgKeys, EmailAddr}
-import shipreq.taskman.server.business._
-import shipreq.taskman.server.business.JavaMail.ConfigValueParsers._
 import shipreq.taskman.server.business.FreshDesk.ConfigValueParsers._
+import shipreq.taskman.server.business.JavaMail.ConfigValueParsers._
+import shipreq.taskman.server.business._
 import shipreq.taskman.server.logic._
 import shipreq.taskman.server.logic.business._
 

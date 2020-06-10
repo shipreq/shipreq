@@ -1,12 +1,12 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.text._
 import shipreq.webapp.base.text.Atom.TypeGroup
 import shipreq.webapp.base.text.Grammar.texTag
+import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.semantic.{Accordion, Modal}
 
 object RichTextEditorHelp {

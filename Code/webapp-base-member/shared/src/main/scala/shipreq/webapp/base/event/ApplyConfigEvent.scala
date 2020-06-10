@@ -5,13 +5,13 @@ import monocle.Traversal
 import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.{DataValidators => V, _}
+import shipreq.webapp.base.event.ApplyEventLib._
+import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.util.GenericData
-import ApplyEventLib._
-import DataImplicits._
-import Event._
 
 trait ApplyConfigEvent {
   this: ApplyEvent =>

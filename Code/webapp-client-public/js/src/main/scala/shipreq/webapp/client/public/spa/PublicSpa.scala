@@ -1,16 +1,16 @@
 package shipreq.webapp.client.public.spa
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import shipreq.base.util.Url
 import shipreq.webapp.base.Urls.PublicSpaRoute
 import shipreq.webapp.base.feature.{AsyncFeature, ErrorHandlingFeature}
 import shipreq.webapp.base.protocol.ajax._
-import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.client.public.pages._
+import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 
 object PublicSpa {
   final case class Props(page: Page, routerCtl: RouterCtl)

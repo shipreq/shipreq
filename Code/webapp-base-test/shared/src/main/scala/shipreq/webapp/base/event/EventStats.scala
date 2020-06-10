@@ -3,7 +3,7 @@ package shipreq.webapp.base.event
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import ApplicableEventGen.ObserveFn
+import shipreq.webapp.base.event.ApplicableEventGen.ObserveFn
 
 object EventStats {
 

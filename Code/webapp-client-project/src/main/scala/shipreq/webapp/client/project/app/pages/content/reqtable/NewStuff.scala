@@ -8,11 +8,11 @@ import japgolly.univeq._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{ExternalPubid, ReqTypes}
 import shipreq.webapp.base.ui.Toast
+import shipreq.webapp.client.project.app.pages.content.reqtable.NewStuff.State
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.RowKey
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.widgets.ProjectWidgets
-import NewStuff.State
 
 /**
   * Unified, convenience interface to both [[NewButton]] and [[NewForm]].

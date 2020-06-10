@@ -1,8 +1,7 @@
 package shipreq.taskman.api
 
-import org.scalacheck.{Gen, Arbitrary}
-import shipreq.taskman.api.{TaskType => T}
-import shipreq.taskman.api.{Task => M}
+import org.scalacheck.{Arbitrary, Gen}
+import shipreq.taskman.api.{Task => M, TaskType => T}
 
 object TestHelpers {
 

@@ -6,11 +6,11 @@ import nyaya.prop._
 import nyaya.test.PropTest._
 import scala.annotation.tailrec
 import scala.util.Random
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.test.UseCaseStepUtils._
-import VectorTree.{apply => _, _}
+import shipreq.base.util.VectorTree.{apply => _, _}
+import utest._
 
 object VectorTreeTest extends TestSuite {
 

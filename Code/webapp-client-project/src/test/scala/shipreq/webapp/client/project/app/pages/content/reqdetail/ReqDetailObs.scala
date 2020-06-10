@@ -9,9 +9,9 @@ import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl.NavObs
 import shipreq.webapp.client.project.app.TestMarker
+import shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetailObs.NAE
+import shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetailTestDsl.Mode
 import shipreq.webapp.client.project.feature.deletion.{DeletionFormObs, RestorationFormObs}
-import ReqDetailTestDsl.Mode
-import ReqDetailObs.NAE
 
 object ReqDetailObs {
 

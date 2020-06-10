@@ -5,10 +5,10 @@ import nyaya.gen.Gen
 import scalaz.{-\/, \/-}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
-import shipreq.webapp.base.{RandomData => R}
 import shipreq.webapp.base.data.VerificationToken
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.user.{EmailAddr, PersonName, PlainTextPassword, Username}
+import shipreq.webapp.base.{RandomData => R}
 import utest._
 
 object PublicSpaProtocolsTest extends TestSuite {

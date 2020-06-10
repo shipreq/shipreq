@@ -5,13 +5,13 @@ import java.time._
 import nyaya.util.Multimap
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
+import shipreq.base.util.ScalaExt._
+import shipreq.base.util.VectorTree.{Location, ParentLocation, PartialLocation}
 import shipreq.base.util._
 import shipreq.base.util.univeq.UnivEq
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Grammar, Text}
-import ScalaExt._
-import VectorTree.{Location, ParentLocation, PartialLocation}
 import shipreq.webapp.base.event._
+import shipreq.webapp.base.text.{Grammar, Text}
 
 final case class MakeEmpty[+A](empty: A) extends AnyVal
 

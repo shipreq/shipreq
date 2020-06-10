@@ -9,17 +9,16 @@ import japgolly.univeq._
 import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import scalaz.\/
-import shipreq.base.util._
 import shipreq.base.util.SafeStringOps._
+import shipreq.base.util._
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Grammar => G, _}
-import shipreq.webapp.base.util.ReqCodeTreeItem
-import shipreq.webapp.base.data.{Contextualise, Plain}
+import shipreq.webapp.base.data.{Contextualise, Plain, _}
 import shipreq.webapp.base.jsfacade.KaTeX
 import shipreq.webapp.base.lib.ClientUtil.{renderSeq, renderVector, sepComma, sepSpace}
 import shipreq.webapp.base.text.Text.AnyOptional
+import shipreq.webapp.base.text.{Grammar => G, _}
 import shipreq.webapp.base.ui.CodeBlockWithSyntaxHighlighting
+import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 
 object ProjectWidgets {

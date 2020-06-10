@@ -1,7 +1,7 @@
 package shipreq.base.util.algorithm
 
-import scala.collection.immutable.ArraySeq
 import japgolly.microlibs.testutil.TestUtil._
+import scala.collection.immutable.ArraySeq
 import utest._
 
 object IterativeDeepeningATest extends TestSuite {

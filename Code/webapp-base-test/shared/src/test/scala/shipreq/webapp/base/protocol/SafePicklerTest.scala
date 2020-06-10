@@ -2,13 +2,13 @@ package shipreq.webapp.base.protocol
 
 import japgolly.univeq.UnivEq
 import scalaz.-\/
-import sourcecode.Line
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.base.test.BinaryTestUtil._
+import sourcecode.Line
+import utest._
 
 object SafePicklerTest extends TestSuite {
   import SafePickler.DecodingFailure

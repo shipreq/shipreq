@@ -1,12 +1,12 @@
 package shipreq.webapp.base.data.derivation
 
 import scalaz.{-\/, \/-}
-import sourcecode.Line
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.SampleProject6
 import shipreq.webapp.base.test.UnsafeTypes._
+import sourcecode.Line
+import utest._
 
 object UseCaseStepLabelLookupTest extends TestSuite {
   import UseCaseStepLabelLookup._

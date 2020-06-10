@@ -5,13 +5,13 @@ import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalagraal._
 import japgolly.scalagraal.util._
+import scalaz.Monad
+import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util.{Permission, Url}
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.ssr._
-import scalaz.Monad
-import scalaz.syntax.monad._
 
 /** SSR interpreter that
   *

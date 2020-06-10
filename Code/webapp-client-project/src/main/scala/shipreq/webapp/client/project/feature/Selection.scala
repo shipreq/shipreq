@@ -1,14 +1,14 @@
 package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra.components.TriStateCheckbox
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import monocle.Iso
 import org.scalajs.dom.html
 import shipreq.webapp.base.data.{Off, On}
+import shipreq.webapp.client.project.feature.Selection._
 import shipreq.webapp.client.project.widgets.Widgets
-import Selection._
 
 /**
  * Data selected by the user.

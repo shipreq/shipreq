@@ -1,11 +1,11 @@
 package shipreq.webapp.base.data.derivation
 
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.LazyVal
 import shipreq.base.util.fp.Monoid
 import shipreq.base.util.fp.Monoid.Implicits._
 import shipreq.webapp.base.data.{Dead, Live}
+import utest._
 
 object LiveDeadStatMapTest extends TestSuite {
 

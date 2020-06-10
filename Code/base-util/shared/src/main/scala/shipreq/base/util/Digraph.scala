@@ -1,10 +1,10 @@
 package shipreq.base.util
 
-import shipreq.base.util.univeq._
 import monocle.Iso
 import nyaya.prop.{CycleDetector => CycleDetectorN, Prop}
 import nyaya.util.Multimap
 import scala.reflect.ClassTag
+import shipreq.base.util.univeq._
 
 /**
   * Directed Graph.

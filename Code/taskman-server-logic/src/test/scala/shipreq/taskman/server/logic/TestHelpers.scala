@@ -1,26 +1,26 @@
 package shipreq.taskman.server.logic
 
 import java.time.{Duration, Instant}
-import org.scalacheck.{Arbitrary, Gen}
 import org.scalacheck.Arbitrary._
+import org.scalacheck.{Arbitrary, Gen}
 import scala.reflect.ClassTag
 import scalaz.Lens.lensg
 import scalaz.{-\/, Endo, Heap, \/, \/-}
+import shipreq.base.test.{MockOpTransformer, MockOpTransformerA, OpTypeProvider}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
-import shipreq.base.test.{MockOpTransformer, MockOpTransformerA, OpTypeProvider}
-import shipreq.taskman.api.{EmailAddr, TaskId, Priority, UserId}
 import shipreq.taskman.api.Task.{LandingPageHit, ReRegistrationAttempted}
-import shipreq.taskman.server.logic.business._
+import shipreq.taskman.api.{EmailAddr, Priority, TaskId, UserId}
+import shipreq.taskman.server.logic.Manager.{JobQueue, PrioritisationOrderZ}
+import shipreq.taskman.server.logic.ServerOp._
+import shipreq.taskman.server.logic.Worker._
+import shipreq.taskman.server.logic.business.BusinessOp._
 import shipreq.taskman.server.logic.business.Email.Addr
-import BusinessOp._
-import ServerOp._
-import Manager.{JobQueue, PrioritisationOrderZ}
-import Worker._
-import MailingList._
-import MailingList.API._
-import Support._
-import Support.API._
+import shipreq.taskman.server.logic.business.MailingList.API._
+import shipreq.taskman.server.logic.business.MailingList._
+import shipreq.taskman.server.logic.business.Support.API._
+import shipreq.taskman.server.logic.business.Support._
+import shipreq.taskman.server.logic.business._
 
 object TestHelpers {
 

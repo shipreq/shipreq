@@ -5,15 +5,15 @@ import monocle.macros.{GenIso, Lenses}
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.VerificationToken
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.protocol.binary._
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
-import shipreq.webapp.base.util.TextMod
+import shipreq.webapp.base.protocol.binary._
 import shipreq.webapp.base.user._
-import shipreq.webapp.base.validation._
+import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.validation.Implicits._
-import shipreq.webapp.base.Urls
+import shipreq.webapp.base.validation._
 
 /**
   * Protocols for the Public SPA / webapp-client-public module.

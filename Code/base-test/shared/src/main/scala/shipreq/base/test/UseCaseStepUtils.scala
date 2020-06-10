@@ -1,10 +1,10 @@
 package shipreq.base.test
 
 import scalaz.Equal
+import shipreq.base.test.BaseTestUtil._
+import shipreq.base.util.IndexLabel._
+import shipreq.base.util.VectorTree.{Children, Node}
 import shipreq.base.util._
-import BaseTestUtil._
-import IndexLabel._
-import VectorTree.{Children, Node}
 
 object UseCaseStepUtils {
 

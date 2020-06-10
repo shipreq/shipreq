@@ -1,10 +1,10 @@
 package shipreq.taskman.api.impl
 
 import doobie._
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.TestDb
 import shipreq.taskman.api.{EmailAddr, Task, TaskId, TaskStatus}
+import utest._
 
 object ApiOpTest extends TestSuite {
 

@@ -10,11 +10,11 @@ import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateConfigCmd, 
 import shipreq.webapp.base.ui.{ProjectItem, Toast}
 import shipreq.webapp.client.project.app.pages.config.fields.FieldConfig
 import shipreq.webapp.client.project.app.pages.config.issues.IssueConfig
-import shipreq.webapp.client.project.app.pages.config.tags.TagConfig
 import shipreq.webapp.client.project.app.pages.config.reqtypes.ReqTypeConfig
-import shipreq.webapp.client.project.app.pages.content.{reqdetail, reqtable}
+import shipreq.webapp.client.project.app.pages.config.tags.TagConfig
 import shipreq.webapp.client.project.app.pages.content.issues.IssuesPage
 import shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetail
+import shipreq.webapp.client.project.app.pages.content.{reqdetail, reqtable}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 

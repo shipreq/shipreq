@@ -7,8 +7,8 @@ import java.time.Duration
 import monocle.macros.Lenses
 import scalaz.syntax.applicative._
 import shipreq.base.ops._
-import shipreq.base.util._
 import shipreq.base.util.FxModule._
+import shipreq.base.util._
 import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic}
 
 @Lenses

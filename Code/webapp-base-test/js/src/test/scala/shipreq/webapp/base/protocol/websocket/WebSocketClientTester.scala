@@ -4,11 +4,9 @@ import boopickle.DefaultBasic._
 import japgolly.scalajs.react._
 import java.time.Duration
 import scalaz.{-\/, \/, \/-}
-import sourcecode.Line
-import utest._
 import shipreq.base.test.JsTestTimers
-import shipreq.base.util._
 import shipreq.base.util.JsExt._
+import shipreq.base.util._
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
@@ -17,6 +15,8 @@ import shipreq.webapp.base.protocol.websocket.FakeWebSocket.Message
 import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.ReqId
 import shipreq.webapp.base.test.WebappTestUtil._
+import sourcecode.Line
+import utest._
 
 object WebSocketClientTester {
 

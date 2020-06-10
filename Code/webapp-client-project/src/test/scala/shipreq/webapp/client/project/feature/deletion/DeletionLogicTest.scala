@@ -1,17 +1,17 @@
 package shipreq.webapp.client.project.feature.deletion
 
-import nyaya.test.DefaultSettings
-import nyaya.test.PropTest._
-import utest._
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import nyaya.test.DefaultSettings
+import nyaya.test.PropTest._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{IMap, Util}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._
-import DeletionRestorationLogic.{Data, GroupRow}
-import UnsafeTypes._
-import WebappTestUtil._
+import shipreq.webapp.client.project.feature.deletion.DeletionRestorationLogic.{Data, GroupRow}
+import utest._
 
 object DeletionLogicTestData {
   import ProjectDsl._

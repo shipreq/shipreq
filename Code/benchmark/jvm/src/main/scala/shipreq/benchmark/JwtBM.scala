@@ -1,10 +1,10 @@
 package shipreq.benchmark
 
 import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.security.Keys
 import java.nio.charset.Charset
 import java.security.Key
 import java.util.concurrent.TimeUnit
-import io.jsonwebtoken.security.Keys
 import org.openjdk.jmh.annotations._
 
 /** [info] Benchmark     (method)  Mode  Cnt  Score   Error  Units

@@ -2,10 +2,9 @@ package shipreq.webapp.base.data
 
 import nyaya.gen._
 import nyaya.prop._
-import nyaya.util._
 import nyaya.test.PropTest._
+import nyaya.util._
 import scalaz.{-\/, \/-}
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.BaseUtilGen
 import shipreq.base.util._
@@ -13,6 +12,7 @@ import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.text.Text
+import utest._
 
 object UseCaseStepTreeTest extends TestSuite {
   import shipreq.webapp.base.data.{StaticField => SF}

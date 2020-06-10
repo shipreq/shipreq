@@ -3,7 +3,7 @@ package shipreq.base.util
 import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.univeq.UnivEq
 import scalaz.{-\/, Equal, \/, \/-}
-import PotentialChange._
+import shipreq.base.util.PotentialChange._
 
 sealed abstract class PotentialChange[+E, +A] {
   final def foreach(f: A => Unit): Unit =

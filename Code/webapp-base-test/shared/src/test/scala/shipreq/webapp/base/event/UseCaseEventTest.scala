@@ -1,14 +1,14 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty._
-import shipreq.webapp.base.WebappConfig
-import utest._
 import shipreq.base.util._
+import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.text.Text
-import shipreq.webapp.base.text.Text.{UseCaseTitle => UCT, UseCaseStep => UCST}
+import shipreq.webapp.base.text.Text.{UseCaseStep => UCST, UseCaseTitle => UCT}
+import utest._
 
 object UseCaseEventTest extends TestSuite {
   import ApplyEventTestFns._

@@ -1,8 +1,8 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
-import scalacss.ScalaCssReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import scalacss.ScalaCssReact._
 import scalacss.StyleA
 import shipreq.base.util.LeftRight
 import shipreq.webapp.base.feature.AsyncFeature

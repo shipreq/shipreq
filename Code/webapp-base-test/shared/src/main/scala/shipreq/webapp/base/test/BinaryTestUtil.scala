@@ -3,11 +3,11 @@ package shipreq.webapp.base.test
 import boopickle.Pickler
 import nyaya.gen.Gen
 import scalaz.{-\/, Equal, \/-}
-import sourcecode.Line
-import shipreq.webapp.base.protocol.binary.SafePickler
-import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.BinaryData
+import shipreq.webapp.base.protocol.binary.SafePickler
+import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
+import sourcecode.Line
 
 object BinaryTestUtil {
 

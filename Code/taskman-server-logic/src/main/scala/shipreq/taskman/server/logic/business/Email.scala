@@ -7,8 +7,8 @@ import java.time.{Instant, ZoneId, ZoneOffset}
 import scalaz.{\/, \/-}
 import shipreq.base.util.ScalaExt.StringBuilderExt
 import shipreq.base.util.{ArticulateError, Util}
-import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.taskman.api.Task.{LandingPageHit, UserFeedbackReceived}
+import shipreq.taskman.api.{EmailAddr, UserId}
 import shipreq.taskman.server.logic.{TaskDetail, TaskHeader}
 
 object Email {

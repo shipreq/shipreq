@@ -3,8 +3,8 @@ package shipreq.base.test.db
 import cats.effect.{Blocker, ContextShift, IO, Resource}
 import cats.syntax.apply._
 import doobie._
-import doobie.implicits._
 import doobie.free.{connection => C}
+import doobie.implicits._
 import doobie.util.Colors
 import doobie.util.testing._
 import doobie.util.transactor.Strategy
@@ -13,11 +13,11 @@ import japgolly.microlibs.testutil.TestUtil._
 import java.sql.Connection
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 import scala.concurrent.ExecutionContext
+import scala.reflect.runtime.universe.TypeTag
 import shipreq.base.db._
 import shipreq.base.util.FxModule._
-import shipreq.base.util.{LockUtils, Props, ThreadUtils}
 import shipreq.base.util.log.HasLogger
-import scala.reflect.runtime.universe.TypeTag
+import shipreq.base.util.{LockUtils, Props, ThreadUtils}
 import sourcecode.Line
 
 object TestDb extends TestDbHelpers with HasLogger {

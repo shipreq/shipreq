@@ -3,13 +3,13 @@ package shipreq.webapp.base.protocol.json.v1
 import nyaya.gen.Gen
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.JsonTestUtil._
-import shipreq.webapp.base.{RandomData => R}
 import shipreq.webapp.base.RandomData.TextGenExt
 import shipreq.webapp.base.event.EventEquality._
 import shipreq.webapp.base.event.RandomEventStream
 import shipreq.webapp.base.protocol.json.JsonCodec.Implicits._
-import shipreq.webapp.base.text.Text._
 import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.base.text.Text._
+import shipreq.webapp.base.{RandomData => R}
 import utest._
 
 object JsonProtocolTest extends TestSuite {

@@ -2,10 +2,10 @@ package shipreq.base.util
 
 import cats.effect.{ContextShift, IO, Timer}
 import com.typesafe.scalalogging.Logger
-import java.util.concurrent.{Executors, LinkedBlockingQueue, ThreadFactory, ThreadPoolExecutor, TimeUnit}
 import java.time.Duration
-import java.util.{Timer => JTimer, TimerTask}
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{Executors, LinkedBlockingQueue, ThreadFactory, ThreadPoolExecutor, TimeUnit}
+import java.util.{Timer => JTimer, TimerTask}
 import scala.concurrent.ExecutionContext
 
 object ThreadUtils {

@@ -1,7 +1,6 @@
 package shipreq.webapp.base.util
 
-import org.scalajs.dom.document
-import org.scalajs.dom.html
+import org.scalajs.dom.{document, html}
 import scala.scalajs.js
 
 object ResourceHintJs {

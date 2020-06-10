@@ -6,10 +6,10 @@ import cats.implicits._
 import doobie._
 import doobie.free.{connection => C}
 import doobie.implicits._
-import scalaz.{\/, -\/, \/-}
 import japgolly.univeq._
 import java.sql.SQLException
 import java.time.{Duration, Instant}
+import scalaz.{-\/, \/, \/-}
 
 object DoobieHelpers {
 

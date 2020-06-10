@@ -3,8 +3,8 @@ package shipreq.webapp.base.issue
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.univeq.UnivEq
-import shipreq.webapp.base.data.{ManualIssue => ManualIssueInstance, _}
 import shipreq.webapp.base.data.derivation._
+import shipreq.webapp.base.data.{ManualIssue => ManualIssueInstance, _}
 import shipreq.webapp.base.text.{Atom, Text}
 
 sealed trait IssueCategory

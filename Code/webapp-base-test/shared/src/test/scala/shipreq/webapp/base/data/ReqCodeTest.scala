@@ -1,13 +1,13 @@
 package shipreq.webapp.base.data
 
 import scalaz.\/-
+import shipreq.base.util.Invalid
+import shipreq.webapp.base.data.DataValidators.{reqCode => V}
+import shipreq.webapp.base.data.ReqCode._
+import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.text.Grammar
 import utest._
-import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.test.UnsafeTypes._
-import ReqCode._
-import DataValidators.{reqCode => V}
-import shipreq.base.util.Invalid
 
 object ReqCodeTest extends TestSuite {
 

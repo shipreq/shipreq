@@ -5,7 +5,7 @@ import monocle.{Iso, Lens}
 import scala.collection.Factory
 import scalaz.Isomorphism.<=>
 import scalaz.{Monoid, Semigroup}
-import IsoBool._
+import shipreq.base.util.IsoBool._
 
 /**
  * Boolean isomorphism.

@@ -2,8 +2,8 @@ package shipreq.webapp.base.jsfacade
 
 import japgolly.scalajs.react.Callback
 import org.scalajs.dom.html
-import scalajs.js.annotation._
-import scalajs.js
+import scala.scalajs.js
+import scala.scalajs.js.annotation._
 
 @JSGlobal("scrollIntoView")
 @js.native

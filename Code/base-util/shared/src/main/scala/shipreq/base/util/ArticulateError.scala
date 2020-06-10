@@ -1,7 +1,7 @@
 package shipreq.base.util
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.stdlib_ext.MutableArray
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.collection.immutable.SortedSet
 import scala.util.control.NonFatal
 import scalaz.{-\/, \&/, \/, \/-}

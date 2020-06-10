@@ -1,9 +1,9 @@
 package shipreq.webapp.base.ui.semantic
 
-import japgolly.univeq._
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.univeq._
 
 object Accordion {
 

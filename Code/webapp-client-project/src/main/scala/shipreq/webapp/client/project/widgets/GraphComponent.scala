@@ -12,8 +12,8 @@ import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.ui.SvgPanZoom
 import shipreq.webapp.client.project.app.{Style, WebWorkerClient}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.ww.api._
 import shipreq.webapp.client.ww.api.WebWorkerCmd.picklerErrorMsgOrSvg
+import shipreq.webapp.client.ww.api._
 
 /**
  * The reusable bits of a component the renders a graph through the WebWorker API.

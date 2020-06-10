@@ -8,8 +8,8 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.protocol._
-import shipreq.webapp.base.protocol.binary._
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
+import shipreq.webapp.base.protocol.binary._
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.validation._
 

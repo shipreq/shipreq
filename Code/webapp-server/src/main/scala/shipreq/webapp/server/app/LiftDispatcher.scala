@@ -2,7 +2,7 @@ package shipreq.webapp.server.app
 
 import com.typesafe.scalalogging.StrictLogging
 import java.nio.charset.Charset
-import net.liftweb.common.{Box, Empty, Full, Failure => BoxFailure}
+import net.liftweb.common.{Box, Empty, Failure => BoxFailure, Full}
 import net.liftweb.http.provider.HTTPCookie
 import net.liftweb.http.{Req => LiftReq, _}
 import net.liftweb.util.Props
@@ -14,8 +14,8 @@ import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user.User
 import shipreq.webapp.base.{Urls, WebappConfig}
 import shipreq.webapp.server.db.DbInterpreter
-import shipreq.webapp.server.logic.{DB, DispatchLogic, dispatch}
 import shipreq.webapp.server.logic.dispatch.Cookie
+import shipreq.webapp.server.logic.{DB, DispatchLogic, dispatch}
 
 object LiftDispatcher {
   object ProjectIdVar extends RequestVar[ProjectId](null)

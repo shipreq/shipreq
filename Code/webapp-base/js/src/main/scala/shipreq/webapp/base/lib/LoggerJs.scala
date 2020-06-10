@@ -4,7 +4,7 @@ import japgolly.scalajs.react.{AsyncCallback, Callback}
 import org.scalajs.dom.console
 import scala.annotation.elidable
 import scala.scalajs.js
-import js.{UndefOr, undefined}
+import scala.scalajs.js.{UndefOr, undefined}
 
 /**
  * Logger that only logs in dev-mode.

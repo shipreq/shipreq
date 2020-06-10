@@ -5,7 +5,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
 import shipreq.webapp.base.data.Enabled
-import Button._
+import shipreq.webapp.base.ui.semantic.Button._
 
 /** http://semantic-ui.com/elements/button.html */
 object Button {

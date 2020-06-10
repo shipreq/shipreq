@@ -2,8 +2,8 @@ package shipreq.taskman.server.business
 
 import japgolly.clearconfig._
 import java.util.Properties
-import scalaz.syntax.applicative._
 import javax.mail.{Authenticator, PasswordAuthentication, Session}
+import scalaz.syntax.applicative._
 import scalaz.{-\/, \/-}
 
 object JavaMailConfig {

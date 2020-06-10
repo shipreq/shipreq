@@ -7,13 +7,13 @@ import japgolly.univeq.UnivEqScalaz._
 import java.time.Instant
 import java.time.temporal.ChronoUnit._
 import scalaz.{-\/, Equal, \/-}
-import sourcecode.Line
 import shipreq.base.test._
-import shipreq.webapp.base.event._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.protocol.json.v1.Rev1._
 import shipreq.webapp.base.text.Text
+import sourcecode.Line
 
 trait WebappTestEquality
   extends BaseTestEquality

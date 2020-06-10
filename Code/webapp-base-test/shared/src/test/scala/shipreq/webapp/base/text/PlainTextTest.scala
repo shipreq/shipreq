@@ -1,10 +1,10 @@
 package shipreq.webapp.base.text
 
-import sourcecode.Line
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.SampleProject6._
 import shipreq.webapp.base.test.UnsafeTypes._
+import sourcecode.Line
 import utest._
 
 object PlainTextTest extends TestSuite {

@@ -6,8 +6,8 @@ import org.scalajs.dom.ext.AjaxException
 import org.scalajs.dom.window.console
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scalaz.\/
-import shipreq.base.util.{BinaryData, ErrorMsg}
 import shipreq.base.util.JsExt._
+import shipreq.base.util.{BinaryData, ErrorMsg}
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.DecodingFailure

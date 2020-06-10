@@ -1,9 +1,9 @@
 package shipreq.base.util
 
-import utest._
 import nyaya.prop._
+import nyaya.test.PropTest._
 import nyaya.test._
-import PropTest._
+import utest._
 
 object IntersectionTest extends TestSuite {
 

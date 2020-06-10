@@ -7,9 +7,9 @@ import monocle._
 import nyaya.prop.Prop
 import scala.annotation.tailrec
 import scala.collection.AbstractIterator
-import scalaz.{Applicative, Equal}
 import scalaz.syntax.equal._
-import VectorTree._
+import scalaz.{Applicative, Equal}
+import shipreq.base.util.VectorTree._
 
 /**
   * An ordered, rooted tree.

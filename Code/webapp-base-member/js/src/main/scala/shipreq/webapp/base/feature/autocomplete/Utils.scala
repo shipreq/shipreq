@@ -2,10 +2,10 @@ package shipreq.webapp.base.feature.autocomplete
 
 import japgolly.microlibs.utils.{Utils => Util}
 import scala.collection.View
-import shipreq.webapp.base.text.GrammarSpec
 import shipreq.webapp.base.data.{Contextualise, Plain}
+import shipreq.webapp.base.feature.autocomplete.Implicits.autoLiftTextCompleteStrategy
 import shipreq.webapp.base.jsfacade.TextComplete.Strategy
-import Implicits.autoLiftTextCompleteStrategy
+import shipreq.webapp.base.text.GrammarSpec
 
 object Utils {
   type Strategies = Vector[Strategy[_]]

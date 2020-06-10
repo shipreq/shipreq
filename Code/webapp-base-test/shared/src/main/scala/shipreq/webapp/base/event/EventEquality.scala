@@ -5,9 +5,9 @@ import java.time.Instant
 import scalaz.Equal
 import scalaz.std.list.listEqual
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.text.Text.Equality._
-import Event._
 
 object EventEquality extends EventEquality
 trait EventEquality {

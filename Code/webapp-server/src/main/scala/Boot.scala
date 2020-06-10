@@ -7,8 +7,8 @@ import japgolly.univeq._
 import java.util.concurrent.Executors
 import net.liftweb.common.Logger
 import net.liftweb.http._
-import net.liftweb.util._
 import net.liftweb.util.Props.RunModes
+import net.liftweb.util._
 import org.redisson.Redisson
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scalaz.syntax.applicative._

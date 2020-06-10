@@ -3,14 +3,14 @@ package shipreq.webapp.base.event
 import japgolly.microlibs.nonempty._
 import monocle.Lens
 import scalaz.std.option.optionInstance
+import shipreq.base.util.MTrie.Ops
 import shipreq.base.util._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.ApplyEventLib._
+import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.text.Text
-import ApplyEventLib._
-import DataImplicits._
-import Event._
-import MTrie.Ops
 
 trait ApplyContentEvent {
   this: ApplyEvent =>

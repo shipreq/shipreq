@@ -3,20 +3,20 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.scalajs.react.test.SimEvent.{Keyboard => KB}
 import nyaya.test.PropTest._
-import utest._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.event.{Event, GenericReqGD}
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.test.SampleProject.Values._
-import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.test._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.test._
+import utest._
 
 object ReqTableTest extends TestSuite {
   import ReqTableTestDsl.{savedViews => _, _}

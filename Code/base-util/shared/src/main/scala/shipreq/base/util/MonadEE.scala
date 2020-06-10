@@ -1,7 +1,7 @@
 package shipreq.base.util
 
 import scalaz.{-\/, Monad, \/, \/-}
-import MonadEE._
+import shipreq.base.util.MonadEE._
 
 /**
   * A monad stack of a monad M, and two error types E and F.

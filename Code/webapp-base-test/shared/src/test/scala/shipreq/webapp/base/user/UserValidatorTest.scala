@@ -1,12 +1,12 @@
 package shipreq.webapp.base.user
 
 import japgolly.microlibs.nonempty.NonEmptySet
-import utest._
 import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Invalid, Valid}
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.validation.Simple._
+import utest._
 
 object UserValidatorTest extends TestSuite {
 

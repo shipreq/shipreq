@@ -9,15 +9,15 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd}
-import shipreq.webapp.base.filter.{CompiledFilter, Filter}
 import shipreq.webapp.base.filter.Filter.Implicits._
+import shipreq.webapp.base.filter.{CompiledFilter, Filter}
 import shipreq.webapp.base.issue.{Issue, Issues}
-import shipreq.webapp.base.user._
-import shipreq.webapp.base.text.{Atom, PlainText, ProjectText, TextSearch}
-import shipreq.webapp.base.text.Text.Equality._
-import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
 import shipreq.webapp.base.jsfacade.MomentJs
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd
+import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
+import shipreq.webapp.base.text.{Atom, PlainText, ProjectText, TextSearch}
+import shipreq.webapp.base.user._
 
 object DataReusability extends DataReusability
 

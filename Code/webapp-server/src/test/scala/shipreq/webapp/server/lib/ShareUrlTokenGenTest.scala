@@ -1,7 +1,7 @@
 package shipreq.webapp.server.lib
 
-import utest._
 import shipreq.base.test.BaseTestUtil._
+import utest._
 
 object ShareUrlTokenGenTest extends TestSuite {
 

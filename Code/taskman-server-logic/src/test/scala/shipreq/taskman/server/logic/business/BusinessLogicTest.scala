@@ -3,10 +3,10 @@ package shipreq.taskman.server.logic.business
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.Task
 import shipreq.taskman.server.logic.TestHelpers._
-import shipreq.taskman.server.logic.{TaskDetail, MockBops}
+import shipreq.taskman.server.logic.business.BusinessOp._
+import shipreq.taskman.server.logic.business.MailingList.API._
+import shipreq.taskman.server.logic.{MockBops, TaskDetail}
 import utest._
-import BusinessOp._
-import MailingList.API._
 
 object BusinessLogicTest extends TestSuite {
 

@@ -1,17 +1,17 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import utest._
+import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.test.UnsafeTypes.autoExtPubid
-import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.base.UiText
-import shipreq.webapp.base.test._
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.client.project.app.pages.root.Routes.Page
+import shipreq.webapp.base.test.UnsafeTypes.autoExtPubid
+import shipreq.webapp.base.test._
+import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
+import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test._
+import utest._
 
 object ReqDetailTest extends TestSuite {
   import ReqDetailTestDsl._

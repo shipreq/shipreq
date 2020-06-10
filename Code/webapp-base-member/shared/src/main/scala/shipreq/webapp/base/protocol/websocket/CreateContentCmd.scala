@@ -1,8 +1,8 @@
 package shipreq.webapp.base.protocol.websocket
 
 import scala.collection.immutable.ArraySeq
-import shipreq.base.util.{Direction, NonEmptyArraySeq}
 import shipreq.base.util.univeq._
+import shipreq.base.util.{Direction, NonEmptyArraySeq}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
 

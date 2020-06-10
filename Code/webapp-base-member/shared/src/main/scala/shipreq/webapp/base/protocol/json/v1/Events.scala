@@ -5,12 +5,12 @@ import io.circe.syntax._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.ParseInt
-import shipreq.base.util._
 import shipreq.base.util.JsonUtil._
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.SavedView
-import shipreq.webapp.base.event._
 import shipreq.webapp.base.event.RetiredGenericData._
+import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.json.JsonCodec
 
 object Events {

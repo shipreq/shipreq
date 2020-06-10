@@ -3,8 +3,8 @@ package shipreq.webapp.base.sort
 import japgolly.microlibs.stdlib_ext.MutableArray
 import monocle.Optional
 import scala.annotation.tailrec
-import scalaz.{-\/, \/, \/-}
 import scalaz.std.option.optionInstance
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.ReqCode
 import shipreq.webapp.base.text.PlainText

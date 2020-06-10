@@ -2,8 +2,8 @@ package shipreq.webapp.server.logic
 
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import scalaz.{-\/, Applicative, Monad, \/, \/-}
 import scalaz.syntax.monad._
+import scalaz.{-\/, Applicative, Monad, \/, \/-}
 import shipreq.base.ops.Trace
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.ProjectId

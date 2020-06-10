@@ -7,7 +7,7 @@ import org.scalajs.dom.html
 import scalaz.Equal
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.lib.DataReusability._
-import CheckboxList._
+import shipreq.webapp.client.project.widgets.CheckboxList._
 
 object CheckboxList {
   final case class RenderItem(checkbox: VdomTagOf[html.Input], label: String)

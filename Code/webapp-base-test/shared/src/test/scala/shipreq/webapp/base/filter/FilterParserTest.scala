@@ -3,20 +3,20 @@ package shipreq.webapp.base.filter
 import japgolly.microlibs.nonempty._
 import nyaya.gen.Gen
 import nyaya.prop._
-import nyaya.test._
 import nyaya.test.PropTestOps._
+import nyaya.test._
 import org.parboiled2.ErrorFormatter
 import scalaz.{-\/, Functor, \/-}
-import utest._
 import shipreq.base.util._
-import shipreq.webapp.base.{RandomData => $}
-import shipreq.webapp.base.data.{HashRefKey, Off, On, ProjectConfig}
 import shipreq.webapp.base.data.ReqType.Mnemonic
-import shipreq.webapp.base.filter._
-import shipreq.webapp.base.filter.Filter.{Potential, Valid}
+import shipreq.webapp.base.data.{HashRefKey, Off, On, ProjectConfig}
 import shipreq.webapp.base.filter.Filter.Implicits._
+import shipreq.webapp.base.filter.Filter.{Potential, Valid}
 import shipreq.webapp.base.filter.IntensionalReqSet._
+import shipreq.webapp.base.filter._
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.{RandomData => $}
+import utest._
 
 object FilterParserTest extends TestSuite {
 

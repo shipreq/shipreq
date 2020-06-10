@@ -4,8 +4,8 @@ import japgolly.univeq.UnivEq
 import org.parboiled2._
 import scalaz.{-\/, Applicative, Functor, Monoid, \/, \/-}
 import shipreq.base.util.{Backwards, Direction, Forwards}
-import shipreq.webapp.base.data.{ReqTypePos, UseCaseStepId}
 import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
+import shipreq.webapp.base.data.{ReqTypePos, UseCaseStepId}
 import shipreq.webapp.base.util.ParsingUtil
 
 /**

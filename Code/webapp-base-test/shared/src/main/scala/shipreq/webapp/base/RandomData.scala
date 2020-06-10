@@ -7,31 +7,31 @@ import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import java.time.Instant
-import nyaya.gen._
-import nyaya.util._
-import monocle.{Optional => _, _}
 import monocle.function.Field1.first
 import monocle.function.Field2.second
+import monocle.{Optional => _, _}
+import nyaya.gen._
+import nyaya.util._
 import org.parboiled2.CharPredicate
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
-import scalaz.{-\/, Need, \/-}
 import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
 import scalaz.std.set._
 import scalaz.std.vector._
+import scalaz.{-\/, Need, \/-}
 import shipreq.base.test.BaseUtilGen._
-import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ProjectAndOrd
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
-import shipreq.webapp.base.util.PreProcessor
 import shipreq.webapp.base.user._
+import shipreq.webapp.base.util.PreProcessor
 
 // TODO RandomData is inaccurate in that CorrectionParts aren't applied.
 

@@ -1,5 +1,6 @@
 package shipreq.webapp.server.logic
 
+import shipreq.base.ops.Trace
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{Allow, Url}
@@ -7,7 +8,6 @@ import shipreq.webapp.base.Urls
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.ssr._
 import utest._
-import shipreq.base.ops.Trace
 
 object SsrTest extends TestSuite {
   import SsrAlgebra._

@@ -1,8 +1,8 @@
 package shipreq.webapp.server.app
 
 import com.typesafe.scalalogging.StrictLogging
-import javax.websocket.{CloseReason => _, _}
 import javax.websocket.server._
+import javax.websocket.{CloseReason => _, _}
 import org.slf4j.MDC
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.BinaryData

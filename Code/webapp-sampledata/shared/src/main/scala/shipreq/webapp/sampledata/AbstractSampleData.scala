@@ -6,8 +6,8 @@ import io.circe.syntax._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{Event, VerifiedEvent}
-import shipreq.webapp.base.protocol.json.v1.Rev1.encoderEvent
 import shipreq.webapp.base.protocol.binary.v1.Rev1.{picklerProject, picklerVerifiedEventSeq}
+import shipreq.webapp.base.protocol.json.v1.Rev1.encoderEvent
 
 abstract class AbstractSampleData(meta: SampleDataMeta, events: Vector[Event]) {
   final override def toString: String = s"SampleData($name)"

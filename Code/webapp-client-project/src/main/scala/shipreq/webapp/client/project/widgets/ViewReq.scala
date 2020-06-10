@@ -6,12 +6,12 @@ import japgolly.scalajs.react.vdom.html_<^.VdomTag
 import scala.collection.immutable.SortedSet
 import scalaz.{-\/, \/-}
 import shipreq.base.util._
+import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
-import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
-import ViewReq._
+import shipreq.webapp.client.project.widgets.ViewReq._
 
 /**
   * Easy means to view/render a requirement.

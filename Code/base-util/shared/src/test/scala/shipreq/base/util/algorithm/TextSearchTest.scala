@@ -1,11 +1,11 @@
 package shipreq.base.util.algorithm
 
+import japgolly.microlibs.testutil.TestUtil._
 import japgolly.microlibs.utils.Memo
 import nyaya.prop._
-import nyaya.test._
 import nyaya.test.PropTest._
+import nyaya.test._
 import utest._
-import japgolly.microlibs.testutil.TestUtil._
 
 abstract class TextSearchTest(search: Array[Char] => Array[Char] => Boolean) extends TestSuite {
 

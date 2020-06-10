@@ -1,7 +1,7 @@
 package shipreq.webapp.base.util
 
 import shipreq.base.util.Util
-import CharSubset.EscapeChars
+import shipreq.webapp.base.util.CharSubset.EscapeChars
 
 /** Scala.JS regex doesn't support Java-style unicode char selectors like "\p{S}".
   *

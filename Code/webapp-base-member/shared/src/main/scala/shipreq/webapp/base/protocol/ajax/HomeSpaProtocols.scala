@@ -1,11 +1,11 @@
 package shipreq.webapp.base.protocol.ajax
 
 import boopickle.DefaultBasic._
-import shipreq.webapp.base.data._
 import shipreq.webapp.base.Urls
-import shipreq.webapp.base.protocol.binary._
-import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.Protocol
+import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
+import shipreq.webapp.base.protocol.binary._
 
 /**
   * Protocols for the Home SPA / webapp-client-home module.

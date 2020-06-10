@@ -1,18 +1,18 @@
 package shipreq.webapp.base.event
 
-import utest._
 import japgolly.microlibs.nonempty.NonEmpty
 import shipreq.webapp.base.data
+import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.event.ApplyEventTestFns._
+import shipreq.webapp.base.event.Event._
+import shipreq.webapp.base.event.NoInitialEvents._
+import shipreq.webapp.base.event.RetiredGenericData.CustomReqTypeGDv1._
+import shipreq.webapp.base.event.RetiredGenericData._
+import shipreq.webapp.base.test.UnsafeTypes.AutoNES._
 import shipreq.webapp.base.test.UnsafeTypes._
-import ApplyEventTestFns._
-import AutoNES._
-import DataImplicits._
-import Event._
-import NoInitialEvents._
-import RetiredGenericData._
-import CustomReqTypeGDv1._
+import shipreq.webapp.base.test.WebappTestUtil._
+import utest._
 
 trait CustomReqTypeEventsV1 {
   val mfName = "Major Feature"

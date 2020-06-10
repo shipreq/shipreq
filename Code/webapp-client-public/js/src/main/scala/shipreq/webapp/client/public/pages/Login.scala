@@ -11,16 +11,16 @@ import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.{BrowserStorage, ValidationUX}
-import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login.Request
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
+import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login.Request
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic._
+import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.user.{EmailAddr, UserValidators, Username}
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.{CommmonUiText, Urls}
 import shipreq.webapp.client.public.Prefetch
 import shipreq.webapp.client.public.Styles.{login => *}
-import shipreq.webapp.base.ui.widgets.Form
 
 object Login {
 

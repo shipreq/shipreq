@@ -2,8 +2,8 @@ package shipreq.webapp.base.jsfacade
 
 import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react._
-import scalajs.js
-import scalajs.js.annotation.JSGlobal
+import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
  * Component-wrapper for collapse animation with react-motion for elements with variable (and dynamic) height.

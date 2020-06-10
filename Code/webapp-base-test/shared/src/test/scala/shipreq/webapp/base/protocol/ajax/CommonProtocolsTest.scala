@@ -2,13 +2,13 @@ package shipreq.webapp.base.protocol.ajax
 
 import nyaya.gen.Gen
 import scalaz.-\/
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data.Obfuscated
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.user.{PlainTextPassword, Username}
 import shipreq.webapp.base.{RandomData => R}
+import utest._
 
 object CommonProtocolsTest extends TestSuite {
   import CommonProtocols.Metadata

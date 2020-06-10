@@ -1,8 +1,8 @@
 package shipreq.webapp.server.security
 
 import com.typesafe.scalalogging.StrictLogging
-import io.jsonwebtoken.{Claims, ExpiredJwtException, JwtParser, Jwts}
 import io.jsonwebtoken.security.{Keys, SignatureException}
+import io.jsonwebtoken.{Claims, ExpiredJwtException, JwtParser, Jwts}
 import japgolly.univeq._
 import java.security.SecureRandom
 import java.time.Instant
@@ -18,9 +18,9 @@ import shipreq.base.util.log.WebappLogFields
 import shipreq.webapp.base.data.Obfuscated
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
-import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.logic.Security.{SessionId, SessionRestoreResult, SessionToken}
 import shipreq.webapp.server.logic._
+import shipreq.webapp.server.logic.dispatch.Cookie
 
 object SecurityInterpreter {
   val cookieName = Cookie.Name("jwt")

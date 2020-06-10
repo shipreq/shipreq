@@ -3,10 +3,10 @@ package shipreq.base.util
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.univeq.UnivEq
 import scala.annotation.tailrec
-import scalaz.{Applicative, Equal, Order, Traverse}
 import scalaz.std.map.mapEqual
 import scalaz.std.option.optionInstance
 import scalaz.syntax.traverse._
+import scalaz.{Applicative, Equal, Order, Traverse}
 
 /**
  * A Trie where each level is a Map of keys to nodes.

@@ -6,22 +6,22 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.{Lens, Optional}
 import scala.annotation.tailrec
 import scalaz.{-\/, Equal, \/-}
-import sourcecode.Line
-import utest._
-import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.event.{UseCaseGD, UseCaseStepGD, Event => E}
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
-import shipreq.webapp.base.issue.IssueCategory
+import shipreq.webapp.base.event.{Event => E, UseCaseGD, UseCaseStepGD}
 import shipreq.webapp.base.filter.Filter
+import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod
-import shipreq.webapp.base.text.{PlainText, Text, TextSearch}
+import shipreq.webapp.base.sort.SortMethod._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._
+import shipreq.webapp.base.text.{PlainText, Text, TextSearch}
 import shipreq.webapp.base.util.ReqCodeTreeItem
-import SortMethod._
-import WebappTestUtil._
+import sourcecode.Line
+import utest._
 
 object LogicTestUtil {
   def codesInRow(r: Row): Vector[ReqCode.Value] =

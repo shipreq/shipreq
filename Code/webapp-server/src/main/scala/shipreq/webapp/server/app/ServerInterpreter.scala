@@ -3,8 +3,8 @@ package shipreq.webapp.server.app
 import java.time.{Duration, Instant}
 import net.liftweb.actor.LAScheduler
 import net.liftweb.common.{MDC => _, _}
-import net.liftweb.http.{Req, S}
 import net.liftweb.http.provider.HTTPRequest
+import net.liftweb.http.{Req, S}
 import scala.concurrent.blocking
 import scalaz.syntax.monad._
 import shipreq.base.util.FxModule._

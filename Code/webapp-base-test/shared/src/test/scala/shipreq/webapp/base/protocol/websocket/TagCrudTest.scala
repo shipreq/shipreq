@@ -1,20 +1,20 @@
 package shipreq.webapp.base.protocol.websocket
 
-import utest._
-import nyaya.prop._
 import nyaya.gen.Gen
+import nyaya.prop._
 import nyaya.test.PropTest._
 import shipreq.base.util.MMTree
+import shipreq.base.util.MMTree.Relations
+import shipreq.base.util.MMTree.Relations.derive
 import shipreq.webapp.base.RandomData
+import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data.FlatTag.FilterPolicy._
+import shipreq.webapp.base.data.FlatTag._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test.{SampleProject => S, TagId_T}
-import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
-import DataImplicits._
-import FlatTag._
-import FilterPolicy._
-import MMTree.Relations
-import Relations.derive
+import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.test.{SampleProject => S, TagId_T}
+import utest._
 
 object TagCrudTest extends TestSuite {
 

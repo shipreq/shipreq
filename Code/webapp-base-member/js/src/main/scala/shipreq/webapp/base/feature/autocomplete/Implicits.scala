@@ -2,9 +2,9 @@ package shipreq.webapp.base.feature.autocomplete
 
 import japgolly.scalajs.react.Reusability
 import org.scalajs.dom.html
+import shipreq.webapp.base.feature.autocomplete.ForComponent.AutoCompletable
+import shipreq.webapp.base.feature.autocomplete.Utils.Strategies
 import shipreq.webapp.base.jsfacade.TextComplete
-import ForComponent.AutoCompletable
-import Utils.Strategies
 
 trait Implicits0 {
 

@@ -3,23 +3,23 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Iso
-import scalaz.{-\/, Equal, \/, \/-}
-import scalaz.std.string.stringInstance
 import scalaz.std.list._
+import scalaz.std.string.stringInstance
 import scalaz.std.vector._
+import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.UiText.FieldNames
+import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.text.{Grammar, PlainText, Text}
 import shipreq.webapp.base.util.TextMod
-import shipreq.webapp.base.validation.{CommonValidation => V, _}
-import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.validation.Implicits._
-import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.base.WebappConfig
-import Uniqueness.Util._
+import shipreq.webapp.base.validation.Simple._
+import shipreq.webapp.base.validation.Uniqueness.Util._
+import shipreq.webapp.base.validation.{CommonValidation => V, _}
 
 object DataValidators {
 

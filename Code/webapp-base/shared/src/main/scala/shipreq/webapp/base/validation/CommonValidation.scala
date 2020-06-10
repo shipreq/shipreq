@@ -4,8 +4,8 @@ import java.util.regex.Pattern
 import scalaz.{-\/, \/-}
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.util.TextMod
-import Simple._
-import Implicits._
+import shipreq.webapp.base.validation.Implicits._
+import shipreq.webapp.base.validation.Simple._
 
 object CommonValidation {
   private implicit def regexToPattern(regex: scala.util.matching.Regex): Pattern = regex.pattern

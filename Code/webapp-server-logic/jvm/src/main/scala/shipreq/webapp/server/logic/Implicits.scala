@@ -1,8 +1,8 @@
 package shipreq.webapp.server.logic
 
 import com.typesafe.scalalogging.Logger
-import java.time.{Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneOffset}
 import scalaz.{-\/, Monad, \/, \/-}
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.validation.{Composite, Simple}

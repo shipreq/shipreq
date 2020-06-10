@@ -1,8 +1,8 @@
 package shipreq.webapp.client.ww.api
 
 import japgolly.scalajs.react.Callback
-import scalajs.js
 import org.scalajs.dom.{Transferable, console}
+import scala.scalajs.js
 import shipreq.base.util.ErrorMsg
 
 object Protocol {

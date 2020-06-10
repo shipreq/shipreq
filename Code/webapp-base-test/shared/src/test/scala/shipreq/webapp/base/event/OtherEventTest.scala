@@ -1,15 +1,15 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import sourcecode.Line
-import utest._
 import shipreq.base.util.Forwards
-import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.sort.SortMethod
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.text.Text
+import sourcecode.Line
+import utest._
 
 object OtherEventTest extends TestSuite {
   import ApplyEventTestFns._

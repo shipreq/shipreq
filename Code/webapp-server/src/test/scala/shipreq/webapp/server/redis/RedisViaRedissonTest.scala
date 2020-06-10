@@ -1,11 +1,11 @@
 package shipreq.webapp.server.redis
 
 import java.time._
-import utest._
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.server.logic.Redis
 import shipreq.webapp.server.test.PrepareEnv
+import utest._
 
 object RedisViaRedissonTest extends TestSuite {
 

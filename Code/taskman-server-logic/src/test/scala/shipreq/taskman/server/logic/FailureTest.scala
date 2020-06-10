@@ -3,11 +3,11 @@ package shipreq.taskman.server.logic
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import shipreq.base.util.ArticulateError
+import shipreq.taskman.server.logic.Failure._
+import shipreq.taskman.server.logic.ServerOp._
+import shipreq.taskman.server.logic.TestHelpers._
+import shipreq.taskman.server.logic.Worker._
 import utest._
-import Failure._
-import ServerOp._
-import TestHelpers._
-import Worker._
 
 object FailureTest extends TestSuite {
 

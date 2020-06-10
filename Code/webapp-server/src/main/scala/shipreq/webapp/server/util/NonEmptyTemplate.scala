@@ -1,9 +1,9 @@
 package shipreq.webapp.server.util
 
 import net.liftweb.http.Templates
-import net.liftweb.util.{ClearClearable, CssSel}
 import net.liftweb.util.Helpers._
-import xml.{Node, NodeSeq}
+import net.liftweb.util.{ClearClearable, CssSel}
+import scala.xml.{Node, NodeSeq}
 
 case class NonEmptyTemplate(content: NodeSeq) {
 

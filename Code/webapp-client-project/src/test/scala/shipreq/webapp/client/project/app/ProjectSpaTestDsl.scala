@@ -10,22 +10,21 @@ import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
-import shipreq.webapp.base.test.SampleProject5
-import shipreq.webapp.base.test._
+import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.test.{SampleProject5, _}
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.pages.config.fields.{FieldConfigObs, FieldConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.issues.{IssueConfigObs, IssueConfigTestDsl}
-import shipreq.webapp.client.project.app.pages.config.tags.{TagConfigObs, TagConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigObs, ReqTypeConfigTestDsl}
+import shipreq.webapp.client.project.app.pages.config.tags.{TagConfigObs, TagConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.content.issues.{IssuesPageObs, IssuesPageTestDsl => IP}
 import shipreq.webapp.client.project.app.pages.content.reqdetail.{ReqDetailObs, ReqDetailTestDsl => RD}
 import shipreq.webapp.client.project.app.pages.content.reqgraph.{ReqGraphObs, ReqGraphTestDsl}
 import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableObs, ReqTableTestDsl => RT}
+import shipreq.webapp.client.project.app.pages.root.LoadedRoot.Props
+import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH, _}
 import shipreq.webapp.client.project.test._
-import LoadedRoot.Props
-import Routes.Page
-import TestState._
 
 object ProjectSpaTestDsl {
 

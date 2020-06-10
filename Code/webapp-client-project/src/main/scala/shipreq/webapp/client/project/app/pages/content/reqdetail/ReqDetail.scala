@@ -9,6 +9,8 @@ import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
+import shipreq.webapp.base.UiText
+import shipreq.webapp.base.data.ExternalPubid.LookupFailure
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{Event, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
@@ -18,15 +20,13 @@ import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.semantic.Header
 import shipreq.webapp.base.ui.{BaseStyles, NoContentMessage}
 import shipreq.webapp.base.util.CallbackHelpers._
-import shipreq.webapp.base.UiText
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.EditorNavParent
+import shipreq.webapp.client.project.widgets.ProjectWidgets.emptySpan
 import shipreq.webapp.client.project.widgets._
-import ExternalPubid.LookupFailure
-import ProjectWidgets.emptySpan
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object ReqDetail {

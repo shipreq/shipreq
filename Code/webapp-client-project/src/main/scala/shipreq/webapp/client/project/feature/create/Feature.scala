@@ -1,8 +1,8 @@
 package shipreq.webapp.client.project.feature.create
 
+import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.MonocleReact._
 import monocle.Iso
 import monocle.macros.Lenses
 import scalaz.\/

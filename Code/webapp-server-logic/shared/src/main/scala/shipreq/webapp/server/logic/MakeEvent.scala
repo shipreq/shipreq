@@ -4,18 +4,18 @@ import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.util.Multimap
 import scalaz.\/
+import shipreq.base.util.PotentialChange._
+import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.WsReqRes.{ProjectNameSet => _, _}
+import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericDataMacros._
-import DataImplicits._
-import Event._
-import PotentialChange._
-import ScalaExt._
 
 /**
  * Translates commands inputs into [[ActiveEvent]]s.

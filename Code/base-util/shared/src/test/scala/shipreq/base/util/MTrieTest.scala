@@ -4,8 +4,8 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import nyaya.gen.Gen
 import nyaya.prop.Prop
 import nyaya.test.PropTest._
+import shipreq.base.util.MTrie.Ops
 import utest._
-import MTrie.Ops
 
 object MTrieTest extends TestSuite {
   val  Trie = new MTrie.Types[String, Int]

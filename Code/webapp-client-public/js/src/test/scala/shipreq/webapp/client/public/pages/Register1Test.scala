@@ -3,14 +3,14 @@ package shipreq.webapp.client.public.pages
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import scalaz.\/-
-import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.client.public.PublicSpaTestUtil.semanticUiDisabled
 import shipreq.webapp.client.public._
 import shipreq.webapp.client.public.spa._
-import PublicSpaTestUtil.semanticUiDisabled
+import utest._
 
 object Register1Tester {
 

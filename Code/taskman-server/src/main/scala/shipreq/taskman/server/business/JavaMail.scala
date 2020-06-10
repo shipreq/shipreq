@@ -5,9 +5,9 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import scala.runtime.AbstractFunction1
-import scalaz.{-\/, Traverse, \/, \/-}
 import scalaz.std.list._
 import scalaz.syntax.bind._
+import scalaz.{-\/, Traverse, \/, \/-}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger

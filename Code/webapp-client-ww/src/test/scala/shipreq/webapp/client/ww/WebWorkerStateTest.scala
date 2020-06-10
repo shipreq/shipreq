@@ -1,13 +1,13 @@
 package shipreq.webapp.client.ww
 
+import japgolly.microlibs.testutil.TestUtil._
 import japgolly.scalajs.react.AsyncCallback
-import sourcecode.Line
-import utest._
+import java.time.Instant
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{Event, EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.test.UnsafeTypes.autoSomeEventOrdLatest
-import japgolly.microlibs.testutil.TestUtil._
-import java.time.Instant
+import sourcecode.Line
+import utest._
 
 object WebWorkerStateTest extends TestSuite {
 

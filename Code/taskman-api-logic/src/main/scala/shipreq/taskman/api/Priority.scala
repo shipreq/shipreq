@@ -1,7 +1,7 @@
 package shipreq.taskman.api
 
 import japgolly.univeq.UnivEq
-import Task._
+import shipreq.taskman.api.Task._
 
 final case class Priority(value: Short) extends AnyVal {
   def inc = Priority((value.toInt + 1).toShort)

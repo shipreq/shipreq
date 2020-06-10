@@ -1,8 +1,8 @@
 package shipreq.base.test
 
+import scala.Console._
+import scala.scalajs.js.Dynamic.global
 import scala.util.Try
-import scalajs.js.Dynamic.global
-import Console._
 
 object JsEnv {
 

@@ -2,9 +2,9 @@ package shipreq.webapp.client.project.app.pages.config
 
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
+import shipreq.webapp.base.test.TestState._
 import teststate.dsl.DisplayFailure
 import teststate.typeclass.Display
-import shipreq.webapp.base.test.TestState._
 
 final case class Buttons[+A](delete : Option[A] = None,
                              restore: Option[A] = None,

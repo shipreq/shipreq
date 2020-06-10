@@ -1,16 +1,16 @@
 package shipreq.webapp.base.event
 
-import utest._
 import japgolly.microlibs.nonempty.NonEmpty
 import shipreq.base.util.NonExclusive
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.{FieldReqTypeRules => FRTR}
+import shipreq.webapp.base.event.ApplyEventTestFns._
+import shipreq.webapp.base.event.Event._
+import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.test.SampleProject
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
-import ApplyEventTestFns._
-import Event._
-import RetiredGenericData._
+import utest._
 
 object CustomFieldEventV1TestHelpers {
   val onlyUC  = onlyReqTypes(StaticReqType.UseCase)

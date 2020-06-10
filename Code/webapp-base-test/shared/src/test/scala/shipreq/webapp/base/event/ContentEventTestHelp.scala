@@ -4,13 +4,13 @@ import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.ApplyEventTestFns._
+import shipreq.webapp.base.event.ContentEventTestHelp.CustomTextMap
+import shipreq.webapp.base.event.Event._
+import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.text.{Text => T}
-import ApplyEventTestFns._
-import ContentEventTestHelp.CustomTextMap
-import Event._
-import RetiredGenericData._
 
 case class DetachedGenericReq(req       : GenericReq,
                               customText: CustomTextMap,

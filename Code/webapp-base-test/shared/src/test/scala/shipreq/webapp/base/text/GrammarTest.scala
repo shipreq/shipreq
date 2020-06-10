@@ -1,9 +1,9 @@
 package shipreq.webapp.base.text
 
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.UnsafeTypes._
+import utest._
 
 object GrammarTest extends TestSuite {
 

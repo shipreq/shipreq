@@ -13,9 +13,9 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 import shipreq.webapp.base.ui.{GeneralTheme, Toast}
-import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.app.Style.{issueConfig => *}
 import shipreq.webapp.client.project.app.pages.root.Routes
+import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.lib.Usage
 import shipreq.webapp.client.project.widgets.{EditorButtons, ProjectWidgets, SplitScreenCrud}
 

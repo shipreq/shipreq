@@ -2,8 +2,8 @@ package shipreq.webapp.client.project.app.pages.config.tags
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
-import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
@@ -17,8 +17,8 @@ import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.base.ui.{GeneralTheme, Toast}
-import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
+import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.lib.Usage
 import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, EditorButtons, ProjectWidgets, SplitScreenCrud}
 

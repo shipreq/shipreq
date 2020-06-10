@@ -4,8 +4,8 @@ import com.typesafe.scalalogging.StrictLogging
 import doobie.ConnectionIO
 import japgolly.clearconfig._
 import java.time.Duration
-import scalaz.~>
 import scalaz.syntax.applicative._
+import scalaz.~>
 import shipreq.base.util.FxModule._
 import shipreq.base.util.ThreadUtils
 

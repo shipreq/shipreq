@@ -4,8 +4,8 @@ import boopickle.DefaultBasic._
 import java.time.Instant
 import nyaya.util.Multimap
 import shipreq.base.util.{Direction, Exclusivity, SetDiff}
-import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{ProjectText, Text}
 
 /** This is all remaining codecs not covered by [[BaseMemberData1]].

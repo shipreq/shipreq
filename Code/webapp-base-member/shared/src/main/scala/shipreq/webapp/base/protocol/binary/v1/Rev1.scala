@@ -4,8 +4,8 @@ import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import java.time.Instant
 import scalaz.\/
 import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.{ImpGraphConfig, SavedView}
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.filter.Filter

@@ -1,9 +1,9 @@
 package shipreq.webapp.client.project.widgets
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._

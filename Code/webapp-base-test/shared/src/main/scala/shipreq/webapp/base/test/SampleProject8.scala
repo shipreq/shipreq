@@ -1,13 +1,13 @@
 package shipreq.webapp.base.test
 
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.filter.{CompiledFilter, Filter, FilterAlgebra}
+import shipreq.webapp.base.test.SampleProject7.{project => project0}
+import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.text._
-import Event._
-import SampleProject7.{project => project0}
-import WebappTestUtil._
-import UnsafeTypes._
 
 object SampleProject8 {
 

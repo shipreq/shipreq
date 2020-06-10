@@ -3,9 +3,9 @@ package shipreq.webapp.server.test
 import java.io.File
 import net.liftweb.common.Logger
 import net.liftweb.util.TimeHelpers._
+import org.apache.commons.io.FileUtils
 import org.eclipse.jetty.server._
 import org.eclipse.jetty.webapp.WebAppContext
-import org.apache.commons.io.FileUtils
 import shipreq.base.util.ThreadUtils
 import shipreq.webapp.base.AssetManifest
 

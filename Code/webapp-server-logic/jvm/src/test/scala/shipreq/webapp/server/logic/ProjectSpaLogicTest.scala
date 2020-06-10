@@ -3,21 +3,21 @@ package shipreq.webapp.server.logic
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import scalaz.{-\/, Equal, Name, \/, \/-}
-import utest._
 import shipreq.base.util.{BinaryData, Direction}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.protocol.websocket._
-import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
-import shipreq.webapp.base.protocol.websocket.WebSocketShared.ReqId
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
+import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
+import shipreq.webapp.base.protocol.websocket.WebSocketShared.ReqId
+import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.server.logic.ProjectSpaLogic.{WebSocketState => _, _}
 import shipreq.webapp.server.logic.Redis.ProjectSnapshot
 import shipreq.webapp.server.logic.Security.{SessionId, SessionToken}
 import shipreq.webapp.server.logic.dispatch.Cookie
+import utest._
 
 object ProjectSpaLogicTestS extends ProjectSpaLogicTest(Config.default.copy(writeEvents = false))
 object ProjectSpaLogicTestE extends ProjectSpaLogicTest(Config.default.copy(writeSnapshots = false))

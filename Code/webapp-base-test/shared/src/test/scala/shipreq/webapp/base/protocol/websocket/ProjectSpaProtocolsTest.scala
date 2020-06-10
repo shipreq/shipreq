@@ -4,17 +4,17 @@ import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import java.time.Instant
 import scalaz.{-\/, Equal, \/, \/-}
-import sourcecode.Line
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event._
 import shipreq.webapp.base.event.EventEquality._
+import shipreq.webapp.base.event._
 import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil.verifiedEventsFromJson
 import shipreq.webapp.base.text.Text
+import sourcecode.Line
 import utest._
 
 /** Tests the stability of Project SPA protocols.

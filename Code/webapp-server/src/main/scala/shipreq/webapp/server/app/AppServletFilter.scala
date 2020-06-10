@@ -14,8 +14,8 @@ import shipreq.webapp.base.Urls
 import shipreq.webapp.base.user.UserId
 import shipreq.webapp.server.db.{ResponseType, StatRecorder}
 import shipreq.webapp.server.lib.Taskman
-import shipreq.webapp.server.logic.{DispatchLogic, Security}
 import shipreq.webapp.server.logic.dispatch.Cookie
+import shipreq.webapp.server.logic.{DispatchLogic, Security}
 
 /** Servlet entry-point into ShipReq (as specified in web.xml).
   *

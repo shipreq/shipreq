@@ -1,18 +1,18 @@
 package shipreq.webapp.client.project.app.pages.config.tags
 
-import utest._
-import utest.framework.TestPath
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ApplicableTagGD, Event}
 import shipreq.webapp.base.test.SampleProject.Values._
 import shipreq.webapp.base.test.SampleProject6
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.config.Buttons
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test.PrepareEnv
+import utest._
+import utest.framework.TestPath
 
 object TagConfigTest extends TestSuite {
   import TagConfigTestDsl._

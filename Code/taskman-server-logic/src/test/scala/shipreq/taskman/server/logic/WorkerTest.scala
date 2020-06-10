@@ -4,7 +4,6 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Clock, Duration, Instant}
 import scala.reflect.ClassTag
 import scalaz.{Endo, Need}
-import utest._
 import shipreq.base.util.FxModule._
 import shipreq.taskman.server.logic.ServerOp._
 import shipreq.taskman.server.logic.TestHelpers._
@@ -12,6 +11,7 @@ import shipreq.taskman.server.logic.Worker.WorkResult._
 import shipreq.taskman.server.logic.Worker._
 import shipreq.taskman.server.logic.business.BusinessOp.{SendEmail, SupportOp}
 import shipreq.taskman.server.logic.business.Support.API.ReportFailure
+import utest._
 
 object WorkerTest extends TestSuite {
 

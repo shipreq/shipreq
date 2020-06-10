@@ -1,8 +1,8 @@
 package shipreq.webapp.client.home
 
 import scala.scalajs.js.annotation.JSExportTopLevel
-import shipreq.webapp.base.CssSettings._
 import scalacss.ScalaCssReact._
+import shipreq.webapp.base.CssSettings._
 import shipreq.webapp.base.feature.ErrorHandlingFeature
 import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocolsJs}
 import shipreq.webapp.base.protocol.entrypoint.{ClientSideProcImpl, HomeSpaEntryPoint}

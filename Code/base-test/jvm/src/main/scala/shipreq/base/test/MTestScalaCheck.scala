@@ -1,8 +1,8 @@
 package shipreq.base.test
 
 import japgolly.microlibs.utils.Memo
-import org.scalacheck.{Prop, Test}
 import org.scalacheck.Test.Parameters
+import org.scalacheck.{Prop, Test}
 import utest._
 
 object MTestScalaCheck {

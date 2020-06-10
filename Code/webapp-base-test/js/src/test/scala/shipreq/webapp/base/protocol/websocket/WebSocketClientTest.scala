@@ -2,12 +2,12 @@ package shipreq.webapp.base.protocol.websocket
 
 import japgolly.scalajs.react.AsyncCallback
 import scala.util.Try
+import shipreq.base.util._
+import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
+import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseCode
+import shipreq.webapp.base.test.WebappTestUtil._
 import sourcecode.Line
 import utest._
-import shipreq.base.util._
-import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseCode
-import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
-import shipreq.webapp.base.test.WebappTestUtil._
 
 object WebSocketClientTest extends TestSuite {
   import WebSocketClientTester._

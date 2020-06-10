@@ -1,10 +1,8 @@
 package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros._
-import japgolly.scalajs.react.{CallbackOption, CallbackTo}
-import japgolly.scalajs.react.Reusable
+import japgolly.scalajs.react.{CallbackOption, CallbackTo, Reusable}
 import scalaz.{-\/, Equal, \/, \/-}
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -13,6 +11,7 @@ import shipreq.webapp.base.event.SavedViewGD
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol.websocket.{SavedViewCmd => Cmd}
 import shipreq.webapp.base.sort.SortMethod
+import utest._
 
 object SavedViewLogicTest extends TestSuite {
   import ViewLogic._

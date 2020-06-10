@@ -3,13 +3,13 @@ package shipreq.webapp.server.logic
 import com.typesafe.scalalogging.StrictLogging
 import io.circe._
 import io.circe.syntax._
-import japgolly.microlibs.utils.Utils
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.ParseLong
+import japgolly.microlibs.utils.Utils
 import japgolly.univeq._
 import java.time.Instant
-import scalaz.{-\/, Monad, \/, \/-}
 import scalaz.syntax.monad._
+import scalaz.{-\/, Monad, \/, \/-}
 import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.webapp.base.Urls
@@ -19,8 +19,8 @@ import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.DecodingFailure
 import shipreq.webapp.base.user._
 import shipreq.webapp.client.public.PublicSpaProtocols
-import shipreq.webapp.server.logic.dispatch.{Request => _, _}
 import shipreq.webapp.server.ServerLogicConfig
+import shipreq.webapp.server.logic.dispatch.{Request => _, _}
 
 /** Usage:
   *

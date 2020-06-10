@@ -12,7 +12,7 @@ import shipreq.webapp.base.user.UserId
 import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.logic.DB
 import shipreq.webapp.server.security.SecurityInterpreter
-import WebappServerTestUtil._
+import shipreq.webapp.server.test.WebappServerTestUtil._
 
 object DbUtil {
 

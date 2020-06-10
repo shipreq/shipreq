@@ -1,10 +1,10 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react.vdom.html_<^._
-import HelpModal._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.filter.FilterAst
 import shipreq.webapp.base.issue.IssueCategory
+import shipreq.webapp.client.project.widgets.HelpModal._
 
 object FilterHelp {
 

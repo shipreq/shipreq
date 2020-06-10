@@ -1,13 +1,13 @@
 package shipreq.taskman.server.logic
 
-import java.time.Duration
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import shipreq.base.util.{?=>, FnWithFallback}
+import java.time.Duration
 import shipreq.base.util.log.HasLogger
-import shipreq.taskman.api.Task.DummyTask
+import shipreq.base.util.{?=>, FnWithFallback}
 import shipreq.taskman.api.Priority
-import ServerOp._
-import Worker.{FailureCtx, FailurePolicy, FailureResponse}
+import shipreq.taskman.api.Task.DummyTask
+import shipreq.taskman.server.logic.ServerOp._
+import shipreq.taskman.server.logic.Worker.{FailureCtx, FailurePolicy, FailureResponse}
 
 object Failure extends HasLogger {
 

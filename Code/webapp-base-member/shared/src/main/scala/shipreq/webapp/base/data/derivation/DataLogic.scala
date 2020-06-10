@@ -8,9 +8,9 @@ import scala.annotation.tailrec
 import shipreq.base.util.Digraph.BiDir
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Atom, Text}
-import DataImplicits._
 
 final class DataLogic(p: Project) {
   import DataLogic._

@@ -3,9 +3,9 @@ package shipreq.webapp.client.project.feature.savedview
 import japgolly.scalajs.react.Key
 import scalaz.{-\/, \/-}
 import shipreq.base.util._
-import shipreq.webapp.base.data.savedview._
-import shipreq.webapp.base.data.savedview.Column._
 import shipreq.webapp.base.data
+import shipreq.webapp.base.data.savedview.Column._
+import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.lib.ReactKeyGen
 import shipreq.webapp.client.project.feature.{CreateFeature, EditorFeature}
 

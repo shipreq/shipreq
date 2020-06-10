@@ -16,11 +16,11 @@ import shipreq.webapp.base.feature.{AsyncFeature, DragToReorderFeature, TableNav
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.ui.{EditTheme, semantic}
 import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
-import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
+import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 import shipreq.webapp.client.project.feature.SavedViewFeature.{ColumnLogic, ColumnPlus}
-import shipreq.webapp.client.project.widgets.{NoFilterResults, ProjectWidgets, ViewReq}
+import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
 import shipreq.webapp.client.project.lib.DataReusability._
-import EditorFeature.FieldKey
+import shipreq.webapp.client.project.widgets.{NoFilterResults, ProjectWidgets, ViewReq}
 
 final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
   import Table._

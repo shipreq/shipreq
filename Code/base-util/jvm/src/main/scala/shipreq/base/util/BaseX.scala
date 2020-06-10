@@ -2,7 +2,7 @@ package shipreq.base.util
 
 import java.math.BigInteger
 import scala.reflect.ClassTag
-import BaseX._
+import shipreq.base.util.BaseX._
 
 object BaseX {
   /** Full range of signed long values + 1 */

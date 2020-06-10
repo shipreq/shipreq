@@ -2,10 +2,10 @@ package shipreq.taskman.server
 
 import doobie.implicits._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import shipreq.taskman.api.{EmailAddr, TaskId, TaskStatus}
 import shipreq.taskman.api.Task.ReRegistrationAttempted
-import shipreq.taskman.server.logic._
+import shipreq.taskman.api.{EmailAddr, TaskId, TaskStatus}
 import shipreq.taskman.server.logic.ServerOp._
+import shipreq.taskman.server.logic._
 import utest._
 
 object WorkflowTest extends TestSuite {

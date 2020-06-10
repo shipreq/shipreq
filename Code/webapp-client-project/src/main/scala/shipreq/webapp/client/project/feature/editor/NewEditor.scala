@@ -20,8 +20,8 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.util.CallbackHelpers._
+import shipreq.webapp.client.project.feature.editor.Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
-import Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 
 /** Interface to start a new editor (if possible).
   * If not all required data is available then the execution of this Callback could result in a no-op.

@@ -1,8 +1,8 @@
 package shipreq.base.util
 
-import utest._
+import shipreq.base.util.ScalaExt._
 import shipreq.base.util.univeq._
-import ScalaExt._
+import utest._
 
 object RelPosTest extends TestSuite {
 

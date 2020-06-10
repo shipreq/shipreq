@@ -1,7 +1,7 @@
 package shipreq.base.util
 
 import japgolly.univeq.UnivEq
-import Trampoline.Default._
+import shipreq.base.util.Trampoline.Default._
 
 sealed abstract class LazyVal[A] {
   def isEvaluated(): Boolean

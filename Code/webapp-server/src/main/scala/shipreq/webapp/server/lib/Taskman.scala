@@ -1,8 +1,8 @@
 package shipreq.webapp.server.lib
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import scala.jdk.CollectionConverters._
 import org.slf4j.MDC
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.Task

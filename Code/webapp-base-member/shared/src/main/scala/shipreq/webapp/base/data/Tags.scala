@@ -3,16 +3,16 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import nyaya.prop.CycleDetector
-import monocle.{Lens, Traversal}
 import monocle.macros.Lenses
+import monocle.{Lens, Traversal}
+import nyaya.prop.CycleDetector
 import nyaya.util.Multimap
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scalaz.{-\/, \/, \/-}
+import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.util.Must._
 
 sealed trait TagId extends TaggedInt

@@ -3,8 +3,8 @@ package shipreq.webapp.base.jsfacade
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticEvent
 import org.scalajs.dom
-import scalajs.js
-import scalajs.js.annotation._
+import scala.scalajs.js
+import scala.scalajs.js.annotation._
 
 // https://github.com/chrvadala/react-svg-pan-zoom/blob/master/docs/documentation.md
 object ReactSvgPanZoom {

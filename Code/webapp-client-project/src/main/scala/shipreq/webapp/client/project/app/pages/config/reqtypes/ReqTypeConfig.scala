@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.pages.config.reqtypes
 
-import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
@@ -16,8 +16,8 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Message}
 import shipreq.webapp.base.ui.{GeneralTheme, Toast}
-import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.app.Style.{reqTypeConfig => *}
+import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.lib.Usage
 import shipreq.webapp.client.project.widgets.{EditorButtons, ProjectWidgets, SplitScreenCrud}
 

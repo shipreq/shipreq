@@ -1,8 +1,8 @@
 package shipreq.webapp.client.loaders
 
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.base.ui.{InlineBaseStyles, MemberLayout, MemberNavBar}
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
+import shipreq.webapp.base.ui.{InlineBaseStyles, MemberLayout, MemberNavBar}
 
 private[loaders] object Loader {
 

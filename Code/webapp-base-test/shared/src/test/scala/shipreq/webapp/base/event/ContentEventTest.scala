@@ -2,19 +2,18 @@ package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty._
 import scalaz.\&/
-import utest._
+import shipreq.base.util.MTrie.Ops
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.event.ApplyEventTestFns._
+import shipreq.webapp.base.event.ContentEventTestHelp._
+import shipreq.webapp.base.event.Event._
+import shipreq.webapp.base.test.UnsafeTypes.AutoNES._
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.webapp.base.text.Grammar
-import shipreq.webapp.base.text.Text
-import ApplyEventTestFns._
-import AutoNES._
-import ContentEventTestHelp._
-import Event._
-import MTrie.Ops
-import Text.{GenericReqTitle => GRT, CustomTextField => CTF, InlineIssueDesc => IID, CodeGroupTitle}
+import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.text.Text.{CodeGroupTitle, CustomTextField => CTF, GenericReqTitle => GRT, InlineIssueDesc => IID}
+import shipreq.webapp.base.text.{Grammar, Text}
+import utest._
 
 // TODO Test atom validity in all events that accept text
 

@@ -2,13 +2,13 @@ package shipreq.webapp.client.project.app
 
 import japgolly.microlibs.nonempty.NonEmptySet
 import java.time.Duration
-import utest._
+import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.event._
 import shipreq.webapp.base.event.Event.ProjectNameSet
+import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.WsReqRes
 import shipreq.webapp.client.project.test.TestGlobal
-import shipreq.base.test.BaseTestUtil._
+import utest._
 
 object GlobalTest extends TestSuite {
 

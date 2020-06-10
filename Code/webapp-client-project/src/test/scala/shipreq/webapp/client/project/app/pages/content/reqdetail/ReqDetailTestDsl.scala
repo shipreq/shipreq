@@ -8,8 +8,8 @@ import org.scalajs.dom.html
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.text.PlainText
 
 object ReqDetailTestDsl {
 

@@ -4,12 +4,11 @@ import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.annotation.tailrec
-import scala.collection.Iterable
-import scala.collection.Factory
+import scala.collection.{Factory, Iterable}
 import scala.reflect.ClassTag
 import scalaz.syntax.semigroup._
-import shipreq.base.util._
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util._
 import shipreq.base.util.fp.Monoid.Implicits._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._

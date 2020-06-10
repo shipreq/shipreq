@@ -1,9 +1,9 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg

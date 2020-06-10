@@ -2,9 +2,9 @@ package shipreq.webapp.base.text
 
 import scala.collection.immutable.IntMap
 import scalaz.Need
-import shipreq.base.util.{IMap, OptionalBoolFn}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.algorithm.BoyerMooreHorspool
+import shipreq.base.util.{IMap, OptionalBoolFn}
 import shipreq.webapp.base.data._
 
 object TextSearch {

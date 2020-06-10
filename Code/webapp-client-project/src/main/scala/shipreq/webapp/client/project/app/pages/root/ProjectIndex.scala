@@ -11,7 +11,7 @@ import shipreq.base.util.Intersection
 import shipreq.webapp.base.issue.IssueCount
 import shipreq.webapp.base.ui.semantic.{Colour, Dropdown, Header, Icon, JQuery, UsesSemanticUiManually}
 import shipreq.webapp.client.project.app.Style.{home => *}
-import Routes.{Page, RouterCtl}
+import shipreq.webapp.client.project.app.pages.root.Routes.{Page, RouterCtl}
 
 object ProjectIndex {
 

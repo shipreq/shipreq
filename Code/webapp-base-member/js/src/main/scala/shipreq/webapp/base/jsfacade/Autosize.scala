@@ -2,8 +2,8 @@ package shipreq.webapp.base.jsfacade
 
 import org.scalajs.dom
 import scala.scalajs.js
-import scala.scalajs.js.|
 import scala.scalajs.js.annotation._
+import scala.scalajs.js.|
 
 /** Automatically adjusts textarea height to fit text.
   *

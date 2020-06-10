@@ -4,8 +4,8 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector
 import scalaz.Monad
 import scalaz.std.option.optionMonoid
-import scalaz.syntax.semigroup._
 import scalaz.syntax.monad._
+import scalaz.syntax.semigroup._
 import shipreq.base.util.Identity
 
 object Trace {

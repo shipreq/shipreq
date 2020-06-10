@@ -1,13 +1,13 @@
 package shipreq.webapp.base.user
 
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.{Invalid, Validity}
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.{CommmonUiText, WebappConfig}
+import shipreq.base.util.{Invalid, Validity}
 import shipreq.webapp.base.util.TextMod
-import shipreq.webapp.base.validation.{CommonValidation => CV, _}
-import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.validation.Implicits._
+import shipreq.webapp.base.validation.Simple._
+import shipreq.webapp.base.validation.{CommonValidation => CV, _}
+import shipreq.webapp.base.{CommmonUiText, WebappConfig}
 
 object UserValidators {
 

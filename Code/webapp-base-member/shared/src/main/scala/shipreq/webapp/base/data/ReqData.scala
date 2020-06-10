@@ -2,12 +2,12 @@ package shipreq.webapp.base.data
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.macros.Lenses
-import nyaya.util.Multimap
 import monocle.{Iso, Lens}
+import nyaya.util.Multimap
 import shipreq.base.util.Optics
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.text.{Text => T}
 import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.base.text.{Text => T}
 
 /**
  * Data attributed to requirements beyond their basic definitions.

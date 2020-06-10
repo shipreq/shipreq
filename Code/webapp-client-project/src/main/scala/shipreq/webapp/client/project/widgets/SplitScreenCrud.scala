@@ -1,9 +1,9 @@
 package shipreq.webapp.client.project.widgets
 
+import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.MonocleReact._
 import monocle.macros.Lenses
 import scala.reflect.ClassTag
 import scalacss.ScalaCssReact._

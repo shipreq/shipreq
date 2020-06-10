@@ -6,9 +6,9 @@ import io.circe.syntax._
 import nyaya.gen.Gen
 import scalaz.Equal
 import scalaz.std.either._
+import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.JsonUtil
 import sourcecode.Line
-import BaseTestUtil._
 
 object JsonTestUtil {
 

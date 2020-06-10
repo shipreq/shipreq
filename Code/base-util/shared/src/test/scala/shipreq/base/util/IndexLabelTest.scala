@@ -1,7 +1,7 @@
 package shipreq.base.util
 
+import shipreq.base.util.IndexLabel._
 import utest._
-import IndexLabel._
 
 object IndexLabelTest extends TestSuite {
 

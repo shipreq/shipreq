@@ -2,8 +2,8 @@ package shipreq.webapp.client.project.app.state
 
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.scalajs.react.extra.{Broadcaster, Px}
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra.{Broadcaster, Px}
 import japgolly.univeq._
 import java.time.{Duration, Instant}
 import org.scalajs.dom.window

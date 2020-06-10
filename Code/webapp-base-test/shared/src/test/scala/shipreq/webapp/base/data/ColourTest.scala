@@ -1,7 +1,7 @@
 package shipreq.webapp.base.data
 
-import sourcecode.Line
 import shipreq.base.test.BaseTestUtil._
+import sourcecode.Line
 import utest._
 
 object ColourTest extends TestSuite {

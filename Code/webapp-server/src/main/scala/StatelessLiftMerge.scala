@@ -22,15 +22,14 @@
 package net.liftweb
 package http
 
+import net.liftweb.common._
+import net.liftweb.http.js.JsCmds.Noop
+import net.liftweb.http.js._
+import net.liftweb.util.Helpers._
+import net.liftweb.util._
 import scala.collection.Map
 import scala.collection.mutable.{HashMap, ListBuffer}
 import scala.xml._
-
-import net.liftweb.util._
-import net.liftweb.common._
-import net.liftweb.http.js._
-  import JsCmds.Noop
-import Helpers._
 
 ///**
 // * Used to track state for LiftMerge's HTML normalization/merging process.

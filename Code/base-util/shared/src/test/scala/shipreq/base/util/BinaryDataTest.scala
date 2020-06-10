@@ -1,7 +1,7 @@
 package shipreq.base.util
 
-import nyaya.gen.Gen
 import japgolly.microlibs.testutil.TestUtil._
+import nyaya.gen.Gen
 import utest._
 
 object BinaryDataTest extends TestSuite {

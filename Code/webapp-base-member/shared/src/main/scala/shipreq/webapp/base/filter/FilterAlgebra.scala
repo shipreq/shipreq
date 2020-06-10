@@ -7,12 +7,12 @@ import japgolly.microlibs.utils.ConciseIntSetFormat
 import japgolly.univeq._
 import java.util.regex.Pattern
 import scala.annotation.tailrec
-import scalaz.{-\/, Functor, Traverse, \/, \/-}
 import scalaz.syntax.traverse1._
+import scalaz.{-\/, Functor, Traverse, \/, \/-}
 import shipreq.base.util.{Applicable, OptionalBoolFn, TransitiveClosure}
 import shipreq.webapp.base.data
-import shipreq.webapp.base.data.{FilterDead, On}
 import shipreq.webapp.base.data.derivation.DataLogic.{IssueLookup, TagLookup}
+import shipreq.webapp.base.data.{FilterDead, On}
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
 

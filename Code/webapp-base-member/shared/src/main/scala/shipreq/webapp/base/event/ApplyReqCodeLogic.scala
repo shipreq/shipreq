@@ -3,15 +3,15 @@ package shipreq.webapp.base.event
 import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
 import scala.annotation.tailrec
+import shipreq.base.util.MTrie.Ops
 import shipreq.base.util._
 import shipreq.base.util.univeq._
+import shipreq.webapp.base.data.ReqCode._
 import shipreq.webapp.base.data.{DataValidators => V, _}
+import shipreq.webapp.base.event.ApplyEventLib._
+import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.validation.Implicits._
-import ApplyEventLib._
-import Event._
-import MTrie.Ops
-import ReqCode._
 
 trait ApplyReqCodeLogic {
   this: ApplyEvent =>

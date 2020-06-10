@@ -1,7 +1,7 @@
 package shipreq.webapp.base.util
 
-import utest._
 import japgolly.microlibs.testutil.TestUtil._
+import utest._
 
 object ReorderTest extends TestSuite {
 

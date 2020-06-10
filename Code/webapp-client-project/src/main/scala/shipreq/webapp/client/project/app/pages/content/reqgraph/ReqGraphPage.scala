@@ -11,12 +11,12 @@ import shipreq.webapp.base.event.ProjectAndOrd
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.ui.NoContentMessage
-import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}
-import shipreq.webapp.client.project.widgets.ImplicationGraph
 import shipreq.webapp.base.ui.semantic.Icon
+import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.app.pages.root.ProjectIndex
 import shipreq.webapp.client.project.feature.SavedViewFeature
+import shipreq.webapp.client.project.widgets.ImplicationGraph
 
 object ReqGraphPage {
 

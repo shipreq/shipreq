@@ -1,19 +1,17 @@
 package shipreq.webapp.client.project.app.pages.root
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.MonocleReact._
-import japgolly.scalajs.react.Reusability
 import japgolly.scalajs.react.extra.router.{RouterCtl => RouterCtl_, _}
-
+import japgolly.scalajs.react.{Callback, Reusability}
 import monocle._
 import monocle.macros._
 import scala.annotation.elidable
 import shipreq.base.util.Url
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
+import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GoogleAnalytics
 

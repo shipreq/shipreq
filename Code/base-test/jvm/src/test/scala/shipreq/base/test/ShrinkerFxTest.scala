@@ -1,8 +1,8 @@
 package shipreq.base.test
 
-import utest._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.Valid
+import utest._
 
 object ShrinkerFxTest extends TestSuite {
   import BaseTestUtil._

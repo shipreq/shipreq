@@ -4,8 +4,8 @@ import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
-import japgolly.scalajs.react._
 import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -16,20 +16,20 @@ import org.scalajs.dom.html
 import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, \/, \/-}
-import scalaz.std.option._
 import scalaz.std.list._
+import scalaz.std.option._
 import scalaz.syntax.traverse._
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
-import shipreq.webapp.base.data.{Colour => _, _}
 import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
+import shipreq.webapp.base.data.{Colour => _, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.lib.ReactKeyGen
 import shipreq.webapp.base.lib.ReactKeyGen.UnivEqImplicits._
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Dropdown => _, _}
-import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.base.ui.widgets.Dropdown
+import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
 
 object ReqTypeRulesEditor {

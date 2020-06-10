@@ -3,10 +3,10 @@ package shipreq.webapp.server.logic
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.sql.Connection
 import java.time.{Duration, Instant}
-import scalaz.{-\/, Catchable, Monad, \/, \/-, ~>}
 import scalaz.std.option.optionInstance
 import scalaz.syntax.monad._
 import scalaz.syntax.std.option._
+import scalaz.{-\/, Catchable, Monad, \/, \/-, ~>}
 import shipreq.base.util._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskId, TaskmanApi}
@@ -15,8 +15,8 @@ import shipreq.webapp.base.data.VerificationToken
 import shipreq.webapp.base.user._
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.ServerLogicConfig
-import WebappTaskmanConverters._
-import Implicits._
+import shipreq.webapp.server.logic.Implicits._
+import shipreq.webapp.server.logic.WebappTaskmanConverters._
 
 trait PublicSpaLogic[F[_]] {
 

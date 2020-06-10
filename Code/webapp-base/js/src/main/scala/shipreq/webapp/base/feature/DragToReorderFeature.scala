@@ -1,8 +1,8 @@
 package shipreq.webapp.base.feature
 
-import japgolly.scalajs.react.{Callback, CallbackTo}
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{Callback, CallbackTo}
 import scalaz.Equal
 import shipreq.base.util.RelPos
 

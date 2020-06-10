@@ -4,9 +4,9 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
-import monocle.{Lens, Traversal}
 import monocle.macros.Lenses
 import monocle.std.option.pSome
+import monocle.{Lens, Traversal}
 import nyaya.util.Multimap
 import scala.collection.compat.immutable.ArraySeq
 import scalaz.Equal

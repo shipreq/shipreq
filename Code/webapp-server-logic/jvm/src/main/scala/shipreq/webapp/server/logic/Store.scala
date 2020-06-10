@@ -6,8 +6,8 @@ import monocle.macros.Lenses
 import scalaz.syntax.monad._
 import scalaz.syntax.std.option._
 import scalaz.{-\/, Applicative, Monad, \/, \/-}
+import shipreq.base.util.FreeOption.Implicits._
 import shipreq.base.util._
-import FreeOption.Implicits._
 
 /**
   * Stores data in memory, indexed by key, with atomic operations.

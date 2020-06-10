@@ -5,9 +5,9 @@ import japgolly.microlibs.utils.Memo
 import japgolly.univeq.UnivEq
 import scala.annotation.{elidable, tailrec}
 import scalaz.{-\/, \/, \/-}
-import shipreq.webapp.base.data._
 import shipreq.webapp.base.UiText.sortedOrClause
 import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.data._
 
 final class UseCaseStepLabelLookup(reqs: Requirements) {
   import UseCaseStepLabelLookup._

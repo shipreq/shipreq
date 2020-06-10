@@ -10,18 +10,18 @@ import nyaya.gen._
 import scala.collection.View
 import scala.reflect.ClassTag
 import scalaz.{Equal, \/}
-import sourcecode.Line
 import shipreq.base.test.JsonTestUtil._
 import shipreq.base.test._
-import shipreq.base.util._
 import shipreq.base.util.FxModule._
+import shipreq.base.util._
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.event._
 import shipreq.webapp.server.logic.Redis._
-import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.redis.RedisLaw.Test
-import shipreq.webapp.server.redis.RedisLaws.DataGenerators
 import shipreq.webapp.server.redis.RedisLawTester._
+import shipreq.webapp.server.redis.RedisLaws.DataGenerators
+import shipreq.webapp.server.test.WebappServerTestUtil._
+import sourcecode.Line
 
 object RedisLawTester {
   import RedisLaw.Test

@@ -1,17 +1,17 @@
 package shipreq.webapp.client.project.app
 
-import utest._
 import shipreq.webapp.base.event.Event.FieldCustomDelete
-import shipreq.webapp.base.test._
+import shipreq.webapp.base.test.SampleProject.Values.priField
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.test._
 import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigTestDsl => CRT}
-import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.pages.content.reqdetail.{ReqDetailTestDsl => RD}
-import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH}
+import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableTestDsl => RT}
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
+import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH}
 import shipreq.webapp.client.project.test._
-import SampleProject.Values.priField
-import UnsafeTypes._
+import utest._
 
 /** These tests all involve changing routes */
 object ProjectSpaTest extends TestSuite {

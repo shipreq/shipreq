@@ -3,8 +3,8 @@ package shipreq.webapp.client.project.app.pages.config.fields
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.data._
 import shipreq.webapp.base.UiText.EnglishIntExt
+import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets

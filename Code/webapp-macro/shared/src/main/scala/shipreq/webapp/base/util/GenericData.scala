@@ -2,9 +2,9 @@ package shipreq.webapp.base.util
 
 import japgolly.microlibs.nonempty._
 import scala.collection.IterableOnce
-import shipreq.base.util.univeq._
 import scalaz.{Equal, Order}
 import shipreq.base.util.IMap
+import shipreq.base.util.univeq._
 
 abstract class GenericData { self =>
 

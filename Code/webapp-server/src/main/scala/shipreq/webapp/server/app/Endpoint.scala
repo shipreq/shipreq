@@ -1,9 +1,9 @@
 package shipreq.webapp.server.app
 
 import japgolly.univeq.UnivEq
+import shipreq.base.util.FreeOption
 import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.WebappConfig.liftCtxPath
-import shipreq.base.util.FreeOption
 import shipreq.webapp.server.logic.DispatchLogic
 
 sealed abstract class Endpoint(final val `type`: String, final val name: String)

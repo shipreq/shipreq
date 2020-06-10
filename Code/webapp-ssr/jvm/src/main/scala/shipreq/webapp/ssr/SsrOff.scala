@@ -1,7 +1,7 @@
 package shipreq.webapp.ssr
 
-import shipreq.base.util.{Permission, Url}
 import scalaz.Applicative
+import shipreq.base.util.{Permission, Url}
 
 final class SsrOff[F[_]]()(implicit F: Applicative[F]) extends SsrAlgebra[F] {
 

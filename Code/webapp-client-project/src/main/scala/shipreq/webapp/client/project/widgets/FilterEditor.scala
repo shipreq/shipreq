@@ -2,16 +2,16 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
 import shipreq.base.util.{Invalid, Valid, Validity}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags
-import shipreq.webapp.base.filter._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
+import shipreq.webapp.base.filter._
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.AutosizeInput

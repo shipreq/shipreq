@@ -4,11 +4,11 @@ import japgolly.microlibs.nonempty._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.Event._
+import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.util.GenericDataMacros._
-import Event._
-import RetiredGenericData._
 
 /**
  * Once a [[ProjectTemplate]] has been used (i.e. an Event exists in the database which refers to it),

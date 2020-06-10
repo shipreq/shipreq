@@ -4,7 +4,7 @@ import java.time.{Duration, Instant}
 import scalaz.{State, StateT, ~>}
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.Priority
-import Source._
+import shipreq.taskman.server.logic.Source._
 
 object Source {
   type S = Instant

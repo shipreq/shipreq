@@ -1,7 +1,6 @@
 package shipreq.benchmark
 
 import cats.effect.IO
-import zio.UIO
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import java.util.concurrent.TimeUnit
@@ -20,6 +19,7 @@ import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.logic.dispatch._
+import zio.UIO
 
 /**
   * > sbt

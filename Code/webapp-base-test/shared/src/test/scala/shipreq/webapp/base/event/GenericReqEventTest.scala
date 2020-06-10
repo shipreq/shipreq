@@ -1,15 +1,15 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty._
-import utest._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.event.ApplyEventTestFns._
+import shipreq.webapp.base.event.ContentEventTestHelp._
+import shipreq.webapp.base.event.Event._
+import shipreq.webapp.base.test.UnsafeTypes.AutoNES._
 import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.text.Text.{GenericReqTitle => GRT}
-import ApplyEventTestFns._
-import AutoNES._
-import ContentEventTestHelp._
-import Event._
+import utest._
 
 object GenericReqEventTest extends TestSuite {
   import GenericReqGD._

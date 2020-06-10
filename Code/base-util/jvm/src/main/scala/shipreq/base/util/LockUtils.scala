@@ -1,7 +1,7 @@
 package shipreq.base.util
 
 import java.util.concurrent.locks.Lock
-import FxModule._
+import shipreq.base.util.FxModule._
 
 object LockUtils {
 

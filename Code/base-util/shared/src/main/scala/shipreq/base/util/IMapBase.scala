@@ -4,10 +4,10 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq.UnivEq
 import scala.annotation.elidable
 import scala.collection.IterableOnce
-import scalaz.{Order, Equal, Foldable}
 import scalaz.std.iterable._
 import scalaz.std.map._
 import scalaz.syntax.foldable._
+import scalaz.{Equal, Foldable, Order}
 
 object IMapBaseV {
   def equality[K: Order, V: Equal, M <: IMapBaseV[K, _, V, M]]: Equal[M] =

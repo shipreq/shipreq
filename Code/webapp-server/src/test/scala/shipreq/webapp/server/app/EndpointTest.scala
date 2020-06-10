@@ -1,9 +1,9 @@
 package shipreq.webapp.server.app
 
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.FreeOption
 import shipreq.webapp.base.AssetManifest
+import utest._
 
 object EndpointTest extends TestSuite {
 

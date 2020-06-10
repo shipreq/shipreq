@@ -5,9 +5,9 @@ import shipreq.base.util.VectorTree
 import shipreq.base.util.VectorTree.{Location => Loc}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.Event
-import shipreq.webapp.base.text._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.text._
 
 /**
  * Builds on SampleProject #3 to add:

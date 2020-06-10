@@ -5,8 +5,8 @@ import io.circe.parser._
 import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
-import scalaz.{-\/, Monad, \/, \/-}
 import scalaz.syntax.monad._
+import scalaz.{-\/, Monad, \/, \/-}
 import shipreq.base.util.ErrorMsg
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.{Task, TaskId, TaskmanApi}

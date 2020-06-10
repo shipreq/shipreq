@@ -1,7 +1,7 @@
 package shipreq.webapp.base.jsfacade
 
-import scalajs.js.annotation._
-import scalajs.js
+import scala.scalajs.js
+import scala.scalajs.js.annotation._
 
 /**
  * KaTeX is a fast, easy-to-use JavaScript library for TeX math rendering on the web.

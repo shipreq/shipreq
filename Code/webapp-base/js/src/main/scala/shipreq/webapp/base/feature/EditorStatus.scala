@@ -4,8 +4,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ErrorMsg, PotentialChange}
+import shipreq.webapp.base.feature.EditorStatus._
 import shipreq.webapp.base.validation.Simple._
-import EditorStatus._
 
 /** Editors in ShipReq can be in a variety of states:
   *

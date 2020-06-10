@@ -2,9 +2,9 @@ package shipreq.webapp.base.lib
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.{raw => _, _}
-import scala.annotation.tailrec
-import scalajs.js
 import org.scalajs.dom._
+import scala.annotation.tailrec
+import scala.scalajs.js
 import shipreq.base.util.Util
 
 object DomUtil {

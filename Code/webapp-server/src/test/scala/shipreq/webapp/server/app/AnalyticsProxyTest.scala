@@ -1,8 +1,8 @@
 package shipreq.webapp.server.app
 
 import shipreq.base.test.BaseTestUtil._
-import utest._
 import shipreq.base.util.Url
+import utest._
 
 object AnalyticsProxyTest extends TestSuite {
 

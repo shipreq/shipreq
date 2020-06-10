@@ -7,8 +7,8 @@ import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
-import scalaz.{BindRec, Monad, \/, \/-}
 import scalaz.syntax.monad._
+import scalaz.{BindRec, Monad, \/, \/-}
 import shipreq.base.ops.Trace
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}

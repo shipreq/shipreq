@@ -3,7 +3,6 @@ package shipreq.webapp.client.public.pages
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import scalaz.\/-
-import utest._
 import shipreq.base.util._
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._
@@ -13,6 +12,7 @@ import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.client.public.PublicSpaProtocols.Register2._
 import shipreq.webapp.client.public.PublicSpaTestUtil._
 import shipreq.webapp.client.public.spa._
+import utest._
 
 object Register2Tester {
 

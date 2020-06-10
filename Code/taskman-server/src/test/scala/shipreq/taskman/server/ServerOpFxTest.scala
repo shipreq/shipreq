@@ -12,7 +12,7 @@ import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db.TestDb
 import shipreq.taskman.api._
 import shipreq.taskman.api.impl.TaskmanDoobieCodecs._
-import shipreq.taskman.server.logic.{TaskDetail, TaskHeader, NodeId, WorkerId}
+import shipreq.taskman.server.logic.{NodeId, TaskDetail, TaskHeader, WorkerId}
 import utest._
 
 object ServerOpFxTest extends TestSuite {

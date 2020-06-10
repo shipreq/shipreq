@@ -1,18 +1,18 @@
 package shipreq.webapp.client.project.app.pages.config.fields
 
-import utest._
-import utest.framework.TestPath
 import shipreq.base.util.Exclusive
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.base.test._
-import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.test._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.config.Buttons
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test.PrepareEnv
+import utest._
+import utest.framework.TestPath
 
 object FieldConfigTest extends TestSuite {
   import FieldConfigTestDsl._

@@ -1,26 +1,25 @@
 package shipreq.webapp.base.text
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.testutil.TestUtilInternals.quoteStringForDisplay
 import java.util.concurrent.atomic.AtomicInteger
-import nyaya.prop.{Atom => _, _}
 import nyaya.gen._
-import nyaya.util._
+import nyaya.prop.{Atom => _, _}
 import nyaya.test.PropTest._
+import nyaya.util._
 import org.parboiled2._
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 import scalaz.Equal
-import utest._
+import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.{RandomData => $}
-import shipreq.webapp.base.test.{ProjectDsl, UnsafeTypes}
-import shipreq.webapp.base.test.{SampleProject6 => SP}
 import shipreq.webapp.base.test.WebappTestUtil._
-import Atom.AnyAtom
-import shipreq.base.util.NonEmptyArraySeq
+import shipreq.webapp.base.test.{ProjectDsl, SampleProject6 => SP, UnsafeTypes}
+import shipreq.webapp.base.text.Atom.AnyAtom
+import shipreq.webapp.base.{RandomData => $}
+import utest._
 
 object ParsersTest extends TestSuite {
 

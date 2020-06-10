@@ -10,18 +10,18 @@ import japgolly.univeq._
 import scala.annotation.tailrec
 import scala.collection.View
 import scala.collection.immutable.ArraySeq
-import scalajs.js.{UndefOr, undefined}
+import scala.scalajs.js.{UndefOr, undefined}
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.util._
 import shipreq.base.util.MTrie.Ops
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
-import shipreq.webapp.base.text.{Atom, Grammar, PlainText, Text, TextSearch}
+import shipreq.webapp.base.feature.autocomplete.Implicits.autoLiftTextCompleteStrategy
+import shipreq.webapp.base.feature.autocomplete.Utils.{Context, Strategies}
 import shipreq.webapp.base.jsfacade.TextComplete.Strategy
+import shipreq.webapp.base.text.{Atom, Grammar, PlainText, Text, TextSearch}
 import shipreq.webapp.base.ui.BaseStyles.{autoComplete => *}
-import Implicits.autoLiftTextCompleteStrategy
-import Utils.{Context, Strategies}
 
 object ProjectStrategies {
   import Atom.TypeGroup

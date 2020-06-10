@@ -2,19 +2,19 @@ package shipreq.webapp.base.data
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.utils.{BiMap, Memo}
-import monocle.{Iso, Traversal}
 import monocle.macros.Lenses
+import monocle.{Iso, Traversal}
 import nyaya.util.Multimap
 import scala.collection.View
 import scalaz.{-\/, Equal, \/, \/-}
-import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
+import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.text.{Text, UseCaseStepFlowText}
-import shipreq.webapp.base.text.Text.Equality._
-import shipreq.webapp.base.util.Must._
-import DataImplicits._
+import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
+import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.base.text.{Text, UseCaseStepFlowText}
+import shipreq.webapp.base.util.Must._
 
 /**
  * The ID of a top-level, or sub- requirement.

@@ -1,19 +1,19 @@
 package shipreq.taskman.server.business
 
-import japgolly.clearconfig._
-import japgolly.univeq._
 import io.circe._
 import io.circe.syntax._
+import japgolly.clearconfig._
+import japgolly.univeq._
 import scalaz.{\/, ~>}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.EmailAddr
+import shipreq.taskman.server.business.FreshDesk._
+import shipreq.taskman.server.business.Http._
 import shipreq.taskman.server.logic.business.Support
 import shipreq.taskman.server.logic.business.Support.API._
 import shipreq.taskman.server.logic.business.Support._
-import Http._
-import FreshDesk._
 
 object FreshDesk {
 

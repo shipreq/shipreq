@@ -4,9 +4,9 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.internal.JsUtil
 import japgolly.univeq._
 import org.scalajs.dom.html
+import shipreq.webapp.base.feature.autocomplete.Implicits._
+import shipreq.webapp.base.feature.autocomplete.Utils.Strategies
 import shipreq.webapp.base.jsfacade.TextComplete
-import Implicits._
-import Utils.Strategies
 
 object ForComponent {
 

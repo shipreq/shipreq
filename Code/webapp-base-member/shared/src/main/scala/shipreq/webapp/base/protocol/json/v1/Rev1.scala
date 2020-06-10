@@ -8,10 +8,10 @@ import japgolly.microlibs.stdlib_ext.ParseInt
 import scalaz.{-\/, \/-}
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
-import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
-import shipreq.webapp.base.event._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.RetiredGenericData._
+import shipreq.webapp.base.event._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol.json.JsonCodec
 

@@ -1,14 +1,14 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import monocle.Optional
+import shipreq.base.util.{Applicable, NotApplicable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
-import shipreq.webapp.base.text.PlainText
-import shipreq.base.util.{Applicable, NotApplicable}
+import shipreq.webapp.base.sort.Sorter._
 import shipreq.webapp.base.sort.{Sorter => SorterBase}
-import SorterBase._
+import shipreq.webapp.base.text.PlainText
 
 object Sorter {
   val Types = new WithTypes[Setup, Row]

@@ -4,8 +4,8 @@ import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.event._
 import shipreq.webapp.base.event.RetiredGenericData._
+import shipreq.webapp.base.event._
 import shipreq.webapp.base.text.Text
 
 object Events {

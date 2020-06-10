@@ -3,13 +3,13 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.utils.Memo
-import nyaya.util.Multimap
 import monocle.macros.Lenses
+import nyaya.util.Multimap
 import scala.collection.immutable.ArraySeq
-import scalaz.{Equal, Order}
 import scalaz.std.string.stringInstance
-import shipreq.base.util._
+import scalaz.{Equal, Order}
 import shipreq.base.util.TaggedTypes._
+import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._

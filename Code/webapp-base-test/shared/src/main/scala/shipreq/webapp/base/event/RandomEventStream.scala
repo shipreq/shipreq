@@ -7,27 +7,26 @@ import java.time.Instant
 import nyaya.gen._
 import nyaya.prop.LogicPropExt
 import nyaya.util.Multimap
-import scalaz.{-\/, BindRec, \/-}
 import scalaz.std.vector.vectorInstance
 import scalaz.syntax.equal._
 import scalaz.syntax.traverse._
+import scalaz.{-\/, BindRec, \/-}
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.test.IncCounter
+import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
+import shipreq.webapp.base.RandomData.{TextGen, TextGenExt, customReqTypeName, desc, exclusivity, fieldName, fieldRefKey, filter, filterDead, genColour, hashRefKey, implicationRequired, mandatory, reqCode, reqTypeMnemonic, tagGroupName, unicodeString1}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.SavedView
+import shipreq.webapp.base.event.ApplicableEventGen.ObserveFn
+import shipreq.webapp.base.event.Event._
+import shipreq.webapp.base.event.RandomEventStream.{ProjectDepGen, State}
+import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.test.DataTestExt._
 import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
-import ApplicableEventGen.ObserveFn
-import Event._
-import RetiredGenericData._
-import RandomData.{genColour, fieldName, fieldRefKey, filter, filterDead, hashRefKey, implicationRequired, mandatory, exclusivity}
-import RandomData.{TextGen, TextGenExt, reqCode, customReqTypeName, desc, reqTypeMnemonic, tagGroupName, unicodeString1}
-import RandomEventStream.{State, ProjectDepGen}
-import ScalaExt._
 
 final case class RandomEventStreamConfig(retiredEvents: Boolean,
                                          reqCodeEvents: Boolean,

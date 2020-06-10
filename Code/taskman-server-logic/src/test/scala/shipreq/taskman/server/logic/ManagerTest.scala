@@ -2,10 +2,10 @@ package shipreq.taskman.server.logic
 
 import org.scalacheck.Prop.propBoolean
 import shipreq.base.test.MTestScalaCheck
-import shipreq.taskman.api.{TaskId, Priority}
+import shipreq.taskman.api.{Priority, TaskId}
+import shipreq.taskman.server.logic.Manager._
+import shipreq.taskman.server.logic.TestHelpers._
 import utest._
-import Manager._
-import TestHelpers._
 
 object ManagerTest extends TestSuite with MTestScalaCheck {
 

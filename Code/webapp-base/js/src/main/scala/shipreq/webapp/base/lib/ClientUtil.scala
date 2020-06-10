@@ -1,8 +1,9 @@
 package shipreq.webapp.base.lib
 
-import japgolly.scalajs.react._, vdom.html_<^._
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 object ClientUtil {
 

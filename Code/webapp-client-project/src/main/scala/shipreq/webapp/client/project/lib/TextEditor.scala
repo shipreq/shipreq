@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.lib
 
-import japgolly.scalajs.react._, vdom.html_<^._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import shipreq.webapp.base.text._
 

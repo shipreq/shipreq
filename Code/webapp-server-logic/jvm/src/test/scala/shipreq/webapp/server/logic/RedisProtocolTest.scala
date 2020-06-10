@@ -4,13 +4,13 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import java.time.Instant
 import nyaya.gen.Gen
 import scalaz.{Equal, \/-}
-import shipreq.webapp.base.{RandomData => R}
+import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data.{Project, StaticField}
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.BinaryTestUtil._
-import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.base.util.BinaryData
+import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.{RandomData => R}
 import utest._
 
 object RedisProtocolTest extends TestSuite {

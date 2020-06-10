@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project
 
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.Reusability
+import japgolly.scalajs.react.{Reusability, _}
 
 package object app {
 

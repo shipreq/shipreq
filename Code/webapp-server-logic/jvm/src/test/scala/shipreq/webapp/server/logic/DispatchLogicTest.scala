@@ -1,25 +1,25 @@
 package shipreq.webapp.server.logic
 
-import scalaz.{-\/, Name, Need, \/-}
 import io.circe._
 import io.circe.syntax._
 import java.time.Instant
-import sourcecode.Line
-import utest._
+import scalaz.{-\/, Name, Need, \/-}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{BinaryData, Deny, Invalid, Url}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.Protocol
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
+import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.user.{EmailAddr, PersonName}
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.ServerLogicConfig
-import shipreq.webapp.server.logic.dispatch._
-import shipreq.webapp.server.logic.dispatch.Method._
 import shipreq.webapp.server.logic.DispatchLogic._
 import shipreq.webapp.server.logic.Security.SessionRestoreResult
+import shipreq.webapp.server.logic.dispatch.Method._
+import shipreq.webapp.server.logic.dispatch._
+import sourcecode.Line
+import utest._
 
 object DispatchLogicTest extends TestSuite {
 

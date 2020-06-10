@@ -6,9 +6,9 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import nyaya.util.Multimap
 import org.scalajs.dom.html
-import scalaz.{-\/, \/-}
 import scalaz.std.option.optionInstance
 import scalaz.syntax.traverse._
+import scalaz.{-\/, \/-}
 import shipreq.base.util.Deny
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.lib.DomUtil._

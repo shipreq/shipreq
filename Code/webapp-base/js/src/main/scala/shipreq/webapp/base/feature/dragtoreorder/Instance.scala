@@ -1,9 +1,9 @@
 package shipreq.webapp.base.feature.dragtoreorder
 
 import japgolly.microlibs.utils.Memo
-import japgolly.univeq._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 import org.scalajs.dom.raw.DragEffect
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.feature.DragToReorderFeature.{Item, Update}

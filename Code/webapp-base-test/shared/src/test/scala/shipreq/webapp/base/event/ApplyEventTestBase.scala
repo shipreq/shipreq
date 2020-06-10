@@ -1,13 +1,13 @@
 package shipreq.webapp.base.event
 
 import scalaz.{-\/, \/-}
-import sourcecode.Line
-import utest.{assert => _, _}
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.ApplyEventTestFns._
+import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.test.WebappTestUtil._
-import ApplyEventTestFns._
-import Event._
+import sourcecode.Line
+import utest.{assert => _, _}
 
 object ApplyEventTestFns {
 

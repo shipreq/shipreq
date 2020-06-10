@@ -1,7 +1,7 @@
 package shipreq.webapp.client.ww
 
-import shipreq.webapp.client.ww.api._
 import shipreq.webapp.client.ww.api.Protocol.Codec.default.Writer
+import shipreq.webapp.client.ww.api._
 
 /**
  * Initialises the WebWorker thread.

@@ -2,8 +2,8 @@ package shipreq.webapp.base.sort
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
-import scalajs.js.{Array => JArray}
-import Sorter._
+import scala.scalajs.js.{Array => JArray}
+import shipreq.webapp.base.sort.Sorter._
 
 final class FusedSorters[Setup, Row](sorters: NonEmptyVector[Sorter[Setup, Row]]) extends Sorter[Setup, Row] {
   private[this] val ss       = sorters.whole

@@ -1,11 +1,11 @@
 package shipreq.webapp.server.db
 
 import japgolly.microlibs.nonempty.NonEmptySet
-import utest._
 import shipreq.base.test.db.TestDb
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.server.test.PrepareEnv
 import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.server.test.PrepareEnv
+import utest._
 
 object SqlTest extends TestSuite {
   import DbInterpreter._

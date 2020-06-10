@@ -1,8 +1,8 @@
 package shipreq.webapp.base.event
 
-import nyaya.util.NyayaUtilAnyExt
 import nyaya.prop._
 import nyaya.test.PropTest._
+import nyaya.util.NyayaUtilAnyExt
 import scalaz.\/-
 import scalaz.std.list.listInstance
 import scalaz.std.vector.vectorInstance
@@ -10,9 +10,9 @@ import shipreq.base.util.DeletionMethod
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.test.DataTestExt._
 import utest._
-import Event._
 
 object EventPropTests extends TestSuite {
 

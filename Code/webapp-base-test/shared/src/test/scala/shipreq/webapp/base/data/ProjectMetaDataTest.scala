@@ -1,9 +1,9 @@
 package shipreq.webapp.base.data
 
 import java.time.Instant
-import utest._
 import shipreq.webapp.base.event.RandomEventStream
 import shipreq.webapp.base.test.WebappTestUtil._
+import utest._
 
 object ProjectMetaDataTest extends TestSuite {
 

@@ -1,7 +1,7 @@
 package shipreq.base.test
 
-import utest._
 import shipreq.base.util.Valid
+import utest._
 
 object ShrinkerTest extends TestSuite {
   import BaseTestUtil._

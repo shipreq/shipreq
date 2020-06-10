@@ -1,12 +1,12 @@
 package shipreq.webapp.server.db
 
-import utest._
 import shipreq.base.test.db.TestDb
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd, RandomEventStream, VerifiedEvent}
 import shipreq.webapp.server.logic.Obfuscators
 import shipreq.webapp.server.test.DbUtil
 import shipreq.webapp.server.test.WebappServerTestUtil._
+import utest._
 
 /** Ensures that ProjectMetaData content always matches project content.
   */

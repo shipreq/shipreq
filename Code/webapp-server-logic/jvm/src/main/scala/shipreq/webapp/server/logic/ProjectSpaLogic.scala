@@ -1,8 +1,8 @@
 package shipreq.webapp.server.logic
 
 import com.typesafe.scalalogging.StrictLogging
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.nonempty.NonEmptySet
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import java.time.{Duration, Instant}
 import scalaz.syntax.monad._
@@ -10,13 +10,13 @@ import scalaz.{-\/, BindRec, Monad, \/, \/-, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Obfuscated, Project, ProjectId, ProjectMetaData}
-import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.event.EventOrd.Implicits._
+import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
-import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.WsReqRes.EventResult
 import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
-import shipreq.webapp.base.protocol.binary.SafePickler
+import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.user.{User, UserId, Username}
 import shipreq.webapp.server.logic.dispatch.Cookie
 

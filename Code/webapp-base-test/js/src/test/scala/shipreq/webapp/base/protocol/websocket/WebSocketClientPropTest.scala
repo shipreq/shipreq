@@ -2,11 +2,11 @@ package shipreq.webapp.base.protocol.websocket
 
 import nyaya.gen._
 import scala.collection.mutable.ArrayBuffer
-import utest._
 import shipreq.base.util._
-import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseCode
 import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
+import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseCode
 import shipreq.webapp.base.test.WebappTestUtil._
+import utest._
 
 object WebSocketClientPropTest extends TestSuite {
   import WebSocketClientTester.debug

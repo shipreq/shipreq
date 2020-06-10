@@ -5,8 +5,8 @@ import cats.instances.int._
 import cats.instances.vector._
 import doobie._
 import doobie.implicits._
-import doobie.postgres.implicits._
 import doobie.postgres.circe.jsonb.implicits._
+import doobie.postgres.implicits._
 import io.circe.Json
 import japgolly.microlibs.nonempty.NonEmptySet
 import java.time.Instant
@@ -14,8 +14,8 @@ import nyaya.gen.Gen
 import org.postgresql.util.PSQLException
 import scala.collection.immutable.SortedSet
 import scalaz.{-\/, \/, \/-}
-import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.BaseDoobieCodecs._
+import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._

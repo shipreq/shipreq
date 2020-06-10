@@ -1,8 +1,8 @@
 package shipreq.webapp.base.data
 
 import scala.collection.Factory
-import shipreq.base.util.{IsoBool, OptionalBoolFn}
 import shipreq.base.util.univeq._
+import shipreq.base.util.{IsoBool, OptionalBoolFn}
 import shipreq.webapp.base.data.derivation._
 
 sealed abstract class FilterDead(final val filterFn: OptionalBoolFn[Live]) extends IsoBool[FilterDead] {

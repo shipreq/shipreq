@@ -4,8 +4,8 @@ import japgolly.univeq._
 import scalaz.Equal
 import scalaz.syntax.equal._
 import shipreq.base.util.OptionalConflict
-import Simple._
-import Implicits._
+import shipreq.webapp.base.validation.Implicits._
+import shipreq.webapp.base.validation.Simple._
 
 object Uniqueness {
 

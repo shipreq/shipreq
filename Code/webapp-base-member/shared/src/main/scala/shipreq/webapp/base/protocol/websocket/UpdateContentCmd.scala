@@ -7,7 +7,7 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.text.Text
-import Text.Equality._
+import shipreq.webapp.base.text.Text.Equality._
 
 /**
  * A command to change a Project's content.

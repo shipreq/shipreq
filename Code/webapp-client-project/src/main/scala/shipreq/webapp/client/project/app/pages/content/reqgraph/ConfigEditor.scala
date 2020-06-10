@@ -1,19 +1,19 @@
 package shipreq.webapp.client.project.app.pages.content.reqgraph
 
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scala.collection.immutable.ArraySeq
+import scalacss.ScalaCssReact._
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.data.{Dead, FilterDead, ProjectConfig, SpecialBuiltInField, TagGroupId, Tags}
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.{Colours, GraphDir, LabelFormat}
+import shipreq.webapp.base.data.{Dead, FilterDead, ProjectConfig, SpecialBuiltInField, TagGroupId, Tags}
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.ui.widgets.Dropdown
-import scalacss.ScalaCssReact._
 import shipreq.webapp.base.ui.semantic.Icon
+import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}
 
 private[reqgraph] object ConfigEditor {

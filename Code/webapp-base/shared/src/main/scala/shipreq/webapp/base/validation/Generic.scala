@@ -2,8 +2,8 @@ package shipreq.webapp.base.validation
 
 import monocle.Iso
 import scalaz.Isomorphism.<=>
-import scalaz.{-\/, Applicative, Semigroup, Traverse, \/, \/-}
 import scalaz.std.vector.vectorInstance
+import scalaz.{-\/, Applicative, Semigroup, Traverse, \/, \/-}
 import shipreq.base.util.{GenTuple, Identity, Valid, Validity}
 
 object Generic {

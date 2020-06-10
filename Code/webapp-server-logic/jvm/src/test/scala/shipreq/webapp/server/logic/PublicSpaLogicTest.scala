@@ -1,7 +1,6 @@
 package shipreq.webapp.server.logic
 
 import scalaz.{-\/, \/, \/-}
-import utest._
 import shipreq.base.util._
 import shipreq.taskman.api.Task
 import shipreq.webapp.base.data.VerificationToken
@@ -9,6 +8,7 @@ import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.user._
 import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.server.ServerLogicConfig
+import utest._
 
 object PublicSpaLogicTest extends TestSuite {
 

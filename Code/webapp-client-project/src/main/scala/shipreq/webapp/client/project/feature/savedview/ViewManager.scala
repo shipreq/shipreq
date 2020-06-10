@@ -10,7 +10,7 @@ import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd
 import shipreq.webapp.base.ui.semantic.Dropdown.JsOptionsOps
-import shipreq.webapp.base.ui.semantic.{Colour, Dropdown, Icon, SemExtAny, Menu => SemUiMenu}
+import shipreq.webapp.base.ui.semantic.{Colour, Dropdown, Icon, Menu => SemUiMenu, SemExtAny}
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.app.Style.{savedViews => *}
 

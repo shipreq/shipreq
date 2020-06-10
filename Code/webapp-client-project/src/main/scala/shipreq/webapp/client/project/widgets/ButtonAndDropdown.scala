@@ -6,8 +6,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import shipreq.webapp.client.project.app.Style.{widgets => *}
 import shipreq.webapp.base.ui.semantic._
+import shipreq.webapp.client.project.app.Style.{widgets => *}
 
 
 /** A button with a dropdown on the right-hand side.

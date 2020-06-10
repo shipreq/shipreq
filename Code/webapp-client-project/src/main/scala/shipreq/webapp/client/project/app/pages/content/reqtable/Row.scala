@@ -1,15 +1,14 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
-import japgolly.scalajs.react.Key
-import japgolly.scalajs.react.Reusability
+import japgolly.scalajs.react.{Key, Reusability}
 import monocle.{Lens, Optional}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview._
-import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.project.feature.EditorFeature.RowKey
 
 sealed trait Row {

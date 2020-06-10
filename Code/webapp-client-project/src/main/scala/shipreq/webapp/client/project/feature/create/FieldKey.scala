@@ -7,8 +7,8 @@ import shipreq.base.util.Direction
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
-import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.feature.editor.{FieldKey => E}
+import shipreq.webapp.client.project.lib.DataReusability._
 
 /**
  * ADT representing all types of fields supported by the editor.

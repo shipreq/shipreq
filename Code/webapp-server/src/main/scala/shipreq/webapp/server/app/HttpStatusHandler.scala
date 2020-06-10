@@ -2,8 +2,8 @@ package shipreq.webapp.server.app
 
 import net.liftweb.http._
 import net.liftweb.util.NamedPF
-import shipreq.base.util.log.HasLogger
 import shipreq.base.util.FxModule._
+import shipreq.base.util.log.HasLogger
 import shipreq.webapp.server.lib.Taskman
 
 /**

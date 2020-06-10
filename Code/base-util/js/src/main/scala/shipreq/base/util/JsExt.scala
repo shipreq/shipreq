@@ -2,8 +2,8 @@ package shipreq.base.util
 
 import org.scalajs.dom.raw.Blob
 import scala.scalajs.js
-import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.scalajs.js.JSConverters._
+import scala.scalajs.js.typedarray.ArrayBuffer
 
 object JsExt {
 

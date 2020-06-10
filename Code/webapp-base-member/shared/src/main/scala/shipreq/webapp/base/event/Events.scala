@@ -8,7 +8,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.{ImpGraphConfig, SavedView}
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.text.Text
-import Text.{UseCaseStep => _, _}
+import shipreq.webapp.base.text.Text.{UseCaseStep => _, _}
 
 /** A change to a [[Project]].
   *

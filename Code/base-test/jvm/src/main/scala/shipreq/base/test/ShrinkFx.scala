@@ -1,7 +1,7 @@
 package shipreq.base.test
 
-import shipreq.base.util._
 import shipreq.base.util.FxModule._
+import shipreq.base.util._
 
 object ShrinkFx {
   import Shrink.DefaultBreadthLimit

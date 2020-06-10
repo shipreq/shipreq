@@ -2,8 +2,8 @@ package shipreq.webapp.base.data.derivation
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
-import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data._
 
 /**
  * Works out which tags are allocated to fields and which are not.

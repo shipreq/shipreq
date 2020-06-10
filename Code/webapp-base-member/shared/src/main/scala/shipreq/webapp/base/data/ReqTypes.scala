@@ -7,11 +7,11 @@ import japgolly.microlibs.utils.Memo
 import monocle.Lens
 import monocle.macros.{GenLens, Lenses}
 import scalaz.Order
-import shipreq.base.util._
 import shipreq.base.util.TaggedTypes._
+import shipreq.base.util._
 import shipreq.base.util.univeq._
-import DataImplicits._
-import ReqType.Mnemonic
+import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data.ReqType.Mnemonic
 
 /** type [[ReqTypeId]] = [[StaticReqType]] | [[CustomReqTypeId]] */
 sealed trait ReqTypeId {

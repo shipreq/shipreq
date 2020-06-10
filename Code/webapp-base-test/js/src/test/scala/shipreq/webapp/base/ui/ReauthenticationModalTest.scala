@@ -1,9 +1,9 @@
 package shipreq.webapp.base.ui
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.test._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
-import japgolly.scalajs.react.test._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.test.TestReauthenticationModal

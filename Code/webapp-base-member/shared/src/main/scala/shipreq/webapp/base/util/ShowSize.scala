@@ -4,7 +4,7 @@ import scala.runtime.AbstractFunction1
 import scalaz.Semigroup
 import scalaz.std.option._
 import scalaz.syntax.semigroup._
-import ShowSize.Node
+import shipreq.webapp.base.util.ShowSize.Node
 
 class ShowSize[A](f: A => Node) extends AbstractFunction1[A, Node] {
   override def apply(a: A): Node = f(a)

@@ -4,8 +4,8 @@ import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.univeq.UnivEq
 import monocle._
-import scalaz.{Applicative, Equal, Order, \/}
 import scalaz.std.option.toRight
+import scalaz.{Applicative, Equal, Order, \/}
 
 object IMap {
   implicit def equality[K: Order, V: Equal]: Equal[IMap[K, V]] =

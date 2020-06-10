@@ -3,8 +3,8 @@ package shipreq.webapp.base.feature
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.window
-import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocols}
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.ReportClientError.ErrorInfo
+import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocols}
 
 /** Wrap top-level components in this in order to catch React errors.
  *

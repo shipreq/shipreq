@@ -14,8 +14,8 @@ import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util.Browser
 import shipreq.webapp.client.project.app.Style
-import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.feature.SavedViewFeature
+import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.feature.savedview.SavedViewTestDsl
 import shipreq.webapp.client.project.test._
 import teststate.domzipper.DomZipper.EditableSel

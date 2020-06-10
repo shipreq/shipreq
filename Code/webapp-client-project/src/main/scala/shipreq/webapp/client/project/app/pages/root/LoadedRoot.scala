@@ -2,16 +2,17 @@ package shipreq.webapp.client.project.app.pages.root
 
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.extra._
+import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.vdom.VdomElement
 import monocle.Lens
 import org.scalajs.dom.window
 import scalaz.{-\/, \/-}
-import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.base.util.univeq._
+import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.webapp.base.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId}
 import shipreq.webapp.base.event.VerifiedEvent
+import shipreq.webapp.base.feature.AsyncFeature.Implicits._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
@@ -21,18 +22,17 @@ import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.ui.{FeedbackModal, ProjectItem, Toast}
 import shipreq.webapp.base.util.CallbackHelpers._
-import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.app._
 import shipreq.webapp.client.project.app.pages._
 import shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetail
 import shipreq.webapp.client.project.app.pages.content.reqtable.ReqTablePage
+import shipreq.webapp.client.project.app.pages.root.LoadedRoot._
+import shipreq.webapp.client.project.app.pages.root.Routes.{Page, RouterCtl}
+import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.Usage
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewReqCache, ViewReqDataCache}
-import AsyncFeature.Implicits._
-import LoadedRoot._
-import Routes.{Page, RouterCtl}
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object LoadedRoot {

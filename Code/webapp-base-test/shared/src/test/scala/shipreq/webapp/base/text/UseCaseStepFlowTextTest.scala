@@ -6,11 +6,11 @@ import nyaya.prop._
 import nyaya.test.PropTest._
 import scalaz.std.list.listInstance
 import scalaz.{-\/, \/, \/-}
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Backwards, Forwards, Util}
+import shipreq.webapp.base.text.UseCaseStepFlowText.Elem
 import shipreq.webapp.base.util.CharSubset
-import UseCaseStepFlowText.Elem
+import utest._
 
 object UseCaseStepFlowTextTest extends TestSuite {
 

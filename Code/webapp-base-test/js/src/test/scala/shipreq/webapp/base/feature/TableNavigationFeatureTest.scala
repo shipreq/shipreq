@@ -1,17 +1,17 @@
 package shipreq.webapp.base.feature
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.test.ReactTestUtils
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalaz.\/-
 import scalaz.syntax.traverse._
-import sourcecode.Line
-import utest._
-import shipreq.webapp.base.lib.DomUtil._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Backwards, Direction, Forwards}
-import tablenav._
+import shipreq.webapp.base.feature.tablenav._
+import shipreq.webapp.base.lib.DomUtil._
+import sourcecode.Line
+import utest._
 
 object TableNavigationFeatureTest extends TestSuite {
   import Axis._

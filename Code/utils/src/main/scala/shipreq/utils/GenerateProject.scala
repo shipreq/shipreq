@@ -6,13 +6,13 @@ import java.nio.file.{Files, Paths}
 import java.time.Instant
 import nyaya.gen._
 import scala.annotation.tailrec
-import shipreq.webapp.base.protocol.binary.v1.Rev1.picklerProject
 import shipreq.base.test.BaseUtilGen._
-import shipreq.webapp.base.data._
-import shipreq.webapp.base.util.ShowSize
-import shipreq.webapp.base.{RandomDataSettings, RandomData => $}
-import DataImplicits._
 import shipreq.base.util.BinaryData
+import shipreq.webapp.base.data.DataImplicits._
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.protocol.binary.v1.Rev1.picklerProject
+import shipreq.webapp.base.util.ShowSize
+import shipreq.webapp.base.{RandomData => $, RandomDataSettings}
 
 object GenerateProject {
 

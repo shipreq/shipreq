@@ -3,17 +3,17 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import monocle.{Lens, Traversal}
 import monocle.macros.{GenLens, Lenses}
+import monocle.{Lens, Traversal}
 import scala.collection.immutable.ListSet
-import scalaz.{-\/, \/}
 import scalaz.std.option.toRight
+import scalaz.{-\/, \/}
+import shipreq.base.util.IndexLabel._
+import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
 import shipreq.base.util.univeq._
-import shipreq.webapp.base.util.Must._
 import shipreq.webapp.base.WebappConfig
-import IndexLabel._
-import TaggedTypes.TaggedInt
+import shipreq.webapp.base.util.Must._
 
 // =====================================================================================================================
 // Types

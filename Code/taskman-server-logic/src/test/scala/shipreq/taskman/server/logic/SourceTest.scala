@@ -2,11 +2,11 @@ package shipreq.taskman.server.logic
 
 import java.time.Duration
 import java.time.temporal.ChronoUnit
-import shipreq.base.util.FxModule._
 import shipreq.base.test.MockOpTransformer1
+import shipreq.base.util.FxModule._
+import shipreq.taskman.server.logic.ServerOp._
+import shipreq.taskman.server.logic.TestHelpers._
 import utest._
-import TestHelpers._
-import ServerOp._
 
 object SourceTest extends TestSuite {
 

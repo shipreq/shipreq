@@ -3,7 +3,7 @@ package shipreq.taskman.server.logic
 import japgolly.univeq.UnivEq
 import java.time.{Duration, Instant}
 import shipreq.base.util.ArticulateError
-import shipreq.taskman.api.{Task, TaskId, Priority}
+import shipreq.taskman.api.{Priority, Task, TaskId}
 
 final case class NodeId(value: Int) extends AnyVal
 

@@ -1,9 +1,9 @@
 package shipreq.utils
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data._
 import shipreq.webapp.sampledata.SampleData
-import shipreq.base.util.FxModule._
 
 object Profile {
 

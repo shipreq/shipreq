@@ -2,13 +2,13 @@ package shipreq.webapp.server.security
 
 import java.time.Duration
 import scalaz.{-\/, Name}
-import utest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
-import shipreq.webapp.server.logic.{MockInterpreters, SimpleEndpoints}
-import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.ServerLogicConfig.Security.JwtSecret
 import shipreq.webapp.server.logic.Security.{SessionRestoreResult, SessionToken}
+import shipreq.webapp.server.logic.dispatch.Cookie
+import shipreq.webapp.server.logic.{MockInterpreters, SimpleEndpoints}
+import utest._
 
 object SecurityInterpreterTest extends TestSuite {
 

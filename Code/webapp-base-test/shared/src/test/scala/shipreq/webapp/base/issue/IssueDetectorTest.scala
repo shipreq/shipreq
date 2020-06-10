@@ -4,16 +4,16 @@ import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet}
 import nyaya.util.Multimap
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
-import sourcecode.Line
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
-import shipreq.webapp.base.event._
 import shipreq.webapp.base.event.RetiredGenericData._
-import shipreq.webapp.base.test._
+import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Text => T}
+import sourcecode.Line
 import utest._
 
 object IssueDetectorTest extends TestSuite {

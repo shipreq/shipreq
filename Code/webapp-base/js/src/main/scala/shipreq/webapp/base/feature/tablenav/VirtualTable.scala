@@ -1,12 +1,11 @@
 package shipreq.webapp.base.feature.tablenav
 
 import japgolly.scalajs.react._
-import org.scalajs.dom.html
-import org.scalajs.dom.raw
+import org.scalajs.dom.{html, raw}
 import scala.annotation.tailrec
 import scala.scalajs.js
+import shipreq.webapp.base.feature.tablenav.Logic.HtmlElementExtX
 import shipreq.webapp.base.lib.DomUtil._
-import Logic.HtmlElementExtX
 
 // NOTE: This only handles rowSpans atm because it's all I need and simpler to handle in isolation
 

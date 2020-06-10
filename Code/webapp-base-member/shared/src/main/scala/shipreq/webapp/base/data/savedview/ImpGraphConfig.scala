@@ -2,8 +2,8 @@ package shipreq.webapp.base.data.savedview
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.univeq.UnivEq
-import ImpGraphConfig._
 import shipreq.base.util.OptionalBoolFn
+import shipreq.webapp.base.data.savedview.ImpGraphConfig._
 import shipreq.webapp.base.data.{FilterDead, Project, Req, ReqId, TagGroupId}
 import shipreq.webapp.base.filter.CompiledFilter
 

@@ -1,8 +1,8 @@
 package shipreq.taskman.api.impl
 
 import doobie._
-import utest._
 import shipreq.base.test.db.TestDb
+import utest._
 
 object CfgTest extends TestSuite {
 

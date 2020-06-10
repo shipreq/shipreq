@@ -1,8 +1,7 @@
 package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react.{Callback, CallbackTo}
-import org.scalajs.dom.document
-import org.scalajs.dom.html
+import org.scalajs.dom.{document, html}
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js.Dynamic
@@ -10,7 +9,7 @@ import scalaz.Applicative
 import scalaz.std.list.listInstance
 import scalaz.syntax.traverse._
 import shipreq.webapp.base.AssetManifest
-import LazyLoader.State
+import shipreq.webapp.base.lib.LazyLoader.State
 
 final class LazyLoader[A](initState: State.Pending[A]) {
 

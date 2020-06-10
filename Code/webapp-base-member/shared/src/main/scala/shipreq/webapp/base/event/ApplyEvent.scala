@@ -4,7 +4,7 @@ import nyaya.prop.LogicPropExt
 import scalaz.{\/, \/-}
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{DataProp, Project}
-import ApplyEventLib._
+import shipreq.webapp.base.event.ApplyEventLib._
 
 object ApplyEvent {
   type Result = ErrorMsg \/ Project

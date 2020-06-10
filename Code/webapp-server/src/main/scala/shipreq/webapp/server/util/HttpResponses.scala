@@ -1,6 +1,6 @@
 package shipreq.webapp.server.util
 
-import net.liftweb.http.{InMemoryResponse, HeaderDefaults, LiftResponse}
+import net.liftweb.http.{HeaderDefaults, InMemoryResponse, LiftResponse}
 
 object HttpResponses {
 

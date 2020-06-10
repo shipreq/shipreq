@@ -3,9 +3,9 @@ package shipreq.taskman.server.business
 import scalaz.\/-
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.JsonTestUtil._
+import shipreq.taskman.server.business.FreshDesk._
 import shipreq.taskman.server.logic.business.Support._
 import utest._
-import FreshDesk._
 
 object FreshDeskTest extends TestSuite {
 

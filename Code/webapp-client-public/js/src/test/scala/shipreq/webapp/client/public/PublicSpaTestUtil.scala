@@ -3,12 +3,12 @@ package shipreq.webapp.client.public
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import scala.annotation.tailrec
-import teststate.data.Id
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.public.spa.{Page, PublicSpa}
+import teststate.data.Id
 
 object PublicSpaTestUtil {
 

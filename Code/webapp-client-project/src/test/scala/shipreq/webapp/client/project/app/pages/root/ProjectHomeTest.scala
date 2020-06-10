@@ -3,12 +3,12 @@ package shipreq.webapp.client.project.app.pages.root
 import japgolly.scalajs.react.test._
 import japgolly.univeq._
 import org.scalajs.dom.html
-import utest._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test._
+import utest._
 
 class ProjectHomeObs($: DomZipperJs) {
   private val projectArea = $(">section", 1 of 2)

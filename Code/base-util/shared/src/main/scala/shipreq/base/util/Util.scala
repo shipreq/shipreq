@@ -6,13 +6,12 @@ import japgolly.microlibs.utils.Memo
 import japgolly.univeq.UnivEq
 import java.net.URL
 import scala.annotation.tailrec
-import scalaz.{-\/, Equal, Order, \/, \/-}
-import scalaz.std.anyVal.intInstance
-import scala.collection.Iterable
-import scala.collection.Factory
 import scala.collection.immutable.{ArraySeq, TreeMap}
+import scala.collection.{Factory, Iterable}
 import scala.util.Try
-import ScalaExt.StringBuilderExt
+import scalaz.std.anyVal.intInstance
+import scalaz.{-\/, Equal, Order, \/, \/-}
+import shipreq.base.util.ScalaExt.StringBuilderExt
 
 object Util {
 

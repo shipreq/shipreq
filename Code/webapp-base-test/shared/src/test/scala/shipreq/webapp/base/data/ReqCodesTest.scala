@@ -3,10 +3,11 @@ package shipreq.webapp.base.data
 import nyaya.gen.Gen
 import nyaya.prop._
 import nyaya.test.PropTest._
-import utest._
-import shipreq.base.util.MTrie, MTrie.Ops
+import shipreq.base.util.MTrie
+import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
+import utest._
 
 object ReqCodesTest extends TestSuite {
   import ReqCode._

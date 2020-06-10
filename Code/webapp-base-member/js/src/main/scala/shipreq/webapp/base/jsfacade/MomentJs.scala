@@ -1,8 +1,8 @@
 package shipreq.webapp.base.jsfacade
 
 import java.time.Instant
+import scala.scalajs.js
 import scala.scalajs.js.annotation._
-import scalajs.js
 
 @js.native
 trait Moment extends js.Object {

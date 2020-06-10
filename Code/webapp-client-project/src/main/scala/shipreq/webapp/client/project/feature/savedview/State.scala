@@ -5,8 +5,8 @@ import monocle.Optional
 import monocle.macros.Lenses
 import monocle.std.option.pSome
 import shipreq.base.util.Valid
-import shipreq.webapp.base.data.{FilterDead, Project, ShowDead}
 import shipreq.webapp.base.data.savedview.View
+import shipreq.webapp.base.data.{FilterDead, Project, ShowDead}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.lib.DataReusability._
