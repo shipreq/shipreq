@@ -38,7 +38,9 @@ object TestState
           else
             Option(self.attributes.getNamedItem(n)).flatMap(x => Option(x.value)).getOrElse("")
         case None =>
-          ErrorMsg(s"html.Element.get(∅) called from ${srcFile.value}:${srcLine.value}").throwException()
+          val msg = s"html.Element.get(∅) called from ${srcFile.value}:${srcLine.value}"
+          println(msg)
+          ErrorMsg(msg).throwException()
       }
   }
 
