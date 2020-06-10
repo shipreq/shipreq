@@ -29,7 +29,6 @@ args=(
 
 sbtDirs=(
   .cache
-  .coursier
   .ivy2
   .sbt
 )
