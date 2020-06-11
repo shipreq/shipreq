@@ -89,7 +89,7 @@ object ReactColor {
       // onSwatchHover - An event handler for onMouseOver on the <Swatch>s within this component. Gives the args (color, event)
     }
 
-    @JSGlobal("GithubPicker.Github")
+    @JSGlobal("GithubPicker")
     @js.native
     object RawComponent extends js.Object
 
@@ -135,7 +135,7 @@ object ReactColor {
       // renderers - Object, Use { canvas: Canvas } with node canvas to do SSR
     }
 
-    @JSGlobal("ChromePicker.Chrome")
+    @JSGlobal("ChromePicker")
     @js.native
     object RawComponent extends js.Object
 
