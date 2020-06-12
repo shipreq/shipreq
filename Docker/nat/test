@@ -1,0 +1,107 @@
+#!/bin/bash
+
+export http_proxy=127.0.0.1:3128
+export https_proxy=127.0.0.1:3128
+iptables="sudo iptables"
+
+function iptable_debug {
+  echo "================================================================================"
+  echo "$1:"
+  echo
+  # $iptables -L INPUT -n -v
+  $iptables -t nat -L PREROUTING -n -v
+  echo
+}
+
+function iptable_configure {
+  cmd=$1
+  iptable_debug "Before"
+  $iptables -t nat $cmd PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3129
+  $iptables -t nat $cmd PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 3130
+
+  # [ $cmd = -A ] && $iptables -t nat -N NO_PROXY
+  # $iptables -t nat $cmd NO_PROXY -d 0.0.0.0/8 -j ACCEPT
+  # $iptables -t nat $cmd NO_PROXY -d 10.0.0.0/8 -j ACCEPT
+  # $iptables -t nat $cmd NO_PROXY -d 127.0.0.0/8 -j ACCEPT
+  # $iptables -t nat $cmd NO_PROXY -d 169.254.0.0/16 -j ACCEPT
+  # $iptables -t nat $cmd NO_PROXY -d 172.16.0.0/12 -j ACCEPT
+  # $iptables -t nat $cmd NO_PROXY -d 192.168.0.0/16 -j ACCEPT
+  # $iptables -t nat $cmd NO_PROXY -d 224.0.0.0/4 -j ACCEPT
+  # $iptables -t nat $cmd NO_PROXY -d 240.0.0.0/4 -j ACCEPT
+  # $iptables -t nat $cmd NO_PROXY -j RETURN
+  # $iptables -t nat $cmd PREROUTING -p tcp --dport 80 -j NO_PROXY
+  # $iptables -t nat $cmd PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3129
+  # $iptables -t nat $cmd PREROUTING -p tcp --dport 443 -j NO_PROXY
+  # $iptables -t nat $cmd PREROUTING -p tcp --dport 443 -j REDIRECT --to-ports 3130
+  # [ $cmd = -D ] && $iptables -t nat -X NO_PROXY
+
+  # $iptables $cmd INPUT -j ACCEPT -p tcp --dport 3128 -m comment --comment "squid http"
+  # $iptables $cmd INPUT -j ACCEPT -p tcp --dport 3129 -m comment --comment "squid http intercept"
+  # $iptables $cmd INPUT -j ACCEPT -p tcp --dport 3130 -m comment --comment "squid https intercept"
+  # $iptables -t nat $cmd PREROUTING -s 192.168.3.0/24 -p tcp --dport 80 -m comment --comment "squid http transparent" -j DNAT --to-destination 192.168.3.40:3129
+  # $iptables -t nat $cmd PREROUTING -s 192.168.3.0/24 -p tcp --dport 443 -m comment --comment "squid https transparent" -j DNAT --to-destination 192.168.3.40:3130
+  # me=172.16.0.1
+  # me=192.168.3.40
+  # src=0.0.0.0/0
+  # $iptables -t nat $cmd PREROUTING -s $src -p tcp --dport 80 -m comment --comment "squid http transparent" -j DNAT --to-destination $me:3129
+  # $iptables -t nat $cmd PREROUTING -s $src -p tcp --dport 443 -m comment --comment "squid https transparent" -j DNAT --to-destination $me:3130
+  # $iptables -t nat $cmd PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3129
+  # $iptables -t nat $cmd PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 3130
+
+  iptable_debug "After"
+}
+
+function testGet {
+  echo "======================== $1 ========================"
+  http -h --timeout 2 --max-redirects 30 "$1"
+  # curl -v "$1" -s -o /dev/null
+}
+
+function runTests {
+  clear
+  testGet http://amazonaws.com/
+  testGet http://twitter.com/
+  testGet https://mailchimp.com
+  testGet https://twitter.com/
+}
+
+case "$1" in
+
+  up)
+    iptable_configure -A
+    ;;
+
+  down)
+    iptable_configure -D
+    ;;
+
+  status)
+    iptable_debug "status"
+    ;;
+
+  run)
+    runTests
+    iptable_debug "After"
+    ;;
+
+  full)
+    iptable_configure -A
+    runTests
+    iptable_configure -D
+    ;;
+
+  "")
+    tmp="$(iptable_debug | fgrep 3129)"
+    if [ -z "$tmp" ]; then
+      exec "$0" full
+    else
+      exec "$0" run
+    fi
+    ;;
+
+  *)
+    echo "Usage: $0 [up | run | status | down | full]"
+    exit 1
+    ;;
+
+esac
