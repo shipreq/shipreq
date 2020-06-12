@@ -3,9 +3,11 @@
 FROM alpine:3.12.0
 
 RUN apk --update --no-cache add \
+      bash \
       ca-certificates \
       openssl \
-      squid
+      squid \
+      vim
 
 EXPOSE 3128 3129 3130
 
