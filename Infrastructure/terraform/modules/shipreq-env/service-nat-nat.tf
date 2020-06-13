@@ -24,6 +24,7 @@ resource "aws_ecs_task_definition" "nat" {
     "cpu": ${local.nat_cluster_cpu.nat},
     "memoryReservation": ${local.nat_cluster_mem_res.nat},
     "healthCheck": {
+      "command": [ "CMD", "/healthcheck" ],
       "startPeriod": 15,
       "interval": 60,
       "timeout": 10,
