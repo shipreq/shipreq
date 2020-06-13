@@ -1,0 +1,20 @@
+#!/bin/bash
+
+export http_proxy=127.0.0.1:3128
+export https_proxy=127.0.0.1:3128
+
+function testGet {
+  echo "======================== $1 ========================"
+  http -h --timeout 2 --max-redirects 30 "$1"
+  # curl -v "$1" -s -o /dev/null
+}
+
+function runTests {
+  clear
+  testGet http://amazonaws.com/
+  testGet http://twitter.com/
+  testGet https://mailchimp.com
+  testGet https://twitter.com/
+}
+
+runTests

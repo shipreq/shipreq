@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export http_proxy=127.0.0.1:3128
-export https_proxy=127.0.0.1:3128
 iptables="sudo iptables"
 
 function iptable_debug {
@@ -16,8 +14,14 @@ function iptable_debug {
 function iptable_configure {
   cmd=$1
   iptable_debug "Before"
-  $iptables -t nat $cmd PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3129
-  $iptables -t nat $cmd PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 3130
+
+  # $iptables -t nat $cmd PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3129
+  # $iptables -t nat $cmd PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 3130
+
+  $iptables -t nat $cmd PREROUTING -p tcp -s 192.168.3.0/24 --dport 80  -j DNAT --to 192.168.3.40:3128
+  $iptables -t nat $cmd PREROUTING -p tcp -s 192.168.3.0/24 --dport 443 -j DNAT --to 192.168.3.40:3129
+  $iptables -t nat $cmd PREROUTING -p tcp --dport 80  -j DNAT --to 192.168.3.40:3128
+  $iptables -t nat $cmd PREROUTING -p tcp --dport 443 -j DNAT --to 192.168.3.40:3129
 
   # [ $cmd = -A ] && $iptables -t nat -N NO_PROXY
   # $iptables -t nat $cmd NO_PROXY -d 0.0.0.0/8 -j ACCEPT
@@ -58,7 +62,6 @@ function testGet {
 }
 
 function runTests {
-  clear
   testGet http://amazonaws.com/
   testGet http://twitter.com/
   testGet https://mailchimp.com
@@ -85,6 +88,7 @@ case "$1" in
     ;;
 
   full)
+    clear
     iptable_configure -A
     runTests
     iptable_configure -D

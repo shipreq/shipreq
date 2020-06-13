@@ -14,9 +14,7 @@ I never managed to get iptables routing working locally so I can't test the ssl-
 Testing build & squid config
 ============================
 
-1. `./test setup`
-2. `make watch` and make edits until happy
-3. `./test teardown`
+1. `make watch` and make edits until happy
 
 
 Testing iptables
@@ -25,5 +23,5 @@ Testing iptables
 I never got this working. Fuck it.
 
 1. In terminal 1: make run
-2. In terminal 2: ./test full
+2. In terminal 2: ./test-iptables
 3. Edit, repeat.

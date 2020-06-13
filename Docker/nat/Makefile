@@ -1,21 +1,38 @@
-.PHONY: default build run exec extract .extract test .test extract_and_test watch
+.PHONY: default build run exec extract .extract test .test extract_and_test watch cert
 
-INPUTS = Dockerfile docker-entrypoint.sh squid.conf domain-whitelist.txt
+SSL = ssl
+
+INPUTS  = Dockerfile docker-entrypoint.sh squid.conf domain-whitelist.txt
+INPUTS += $(SSL)/squid.crt $(SSL)/squid.csr $(SSL)/squid.key $(SSL)/squid.pem
 
 IMAGE = shipreq/nat
 
 CONTAINER = nat
 
-DOCKER_ARGS = \
-  --name $(CONTAINER) \
-  --rm \
-  --net=host
-
-  # -p 3128:3128 \
-  # -p 3129:3129 \
-  # -p 3130:3130
+DOCKER_ARGS  = --name $(CONTAINER)
+DOCKER_ARGS += --rm
+DOCKER_ARGS += --net=host
 
 default: extract
+
+$(SSL)/squid.key:
+	-@mkdir -p $(SSL)
+	cd $(SSL) && openssl genrsa -out squid.key 4096
+	chmod 400 $@
+
+$(SSL)/squid.csr: $(SSL)/squid.key
+	cd $(SSL) && openssl req -new -key squid.key -out squid.csr -subj "/C=XX/ST=XX/L=squid/O=squid/CN=squid"
+	chmod 400 $@
+
+$(SSL)/squid.crt: $(SSL)/squid.csr
+	cd $(SSL) && openssl x509 -req -days 3650 -in squid.csr -signkey squid.key -out squid.crt
+	chmod 400 $@
+
+$(SSL)/squid.pem: $(SSL)/squid.crt
+	cd $(SSL) && cat squid.key squid.crt >> squid.pem
+	chmod 400 $@
+
+$(SSL): $(SSL)/squid.pem
 
 build: $(INPUTS)
 	docker build -t $(IMAGE) .
@@ -40,7 +57,7 @@ extract: | up .extract down
 
 test: | up .test down
 .test:
-	-./test run
+	-./test-proxy
 	-@echo "========================================================================================================================"
 	-@docker logs $(CONTAINER) 2>&1 | sed '0,/.*\(twitter\|amazon\|mailchimp\|google\).*/d; /^[[:space:]]*$$/d' | tee test.log | head -60
 	-@echo "========================================================================================================================"
