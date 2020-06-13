@@ -25,6 +25,7 @@ cat >> ~ec2-user/.bashrc << 'EOB'
   export PS1='\n\[\e[91m[${cluster}-cluster]\e[0m \[\e[32m\]\u@\h: \[\e[33m\]\w\[\e[0m\]\n> '
 EOB
 
+${install_nat_cert}
 ${wait_for_nat}
 yum -y update
 yum -y install htop nc tree

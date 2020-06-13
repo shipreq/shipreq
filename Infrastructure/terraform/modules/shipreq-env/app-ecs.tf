@@ -52,6 +52,7 @@ resource "aws_launch_template" "app" {
   user_data = base64encode(trimspace(templatefile("${path.module}/app-ec2-init.sh", {
     cluster               = aws_ecs_cluster.app.name
     ec2_service_discovery = module.app_ec2_sd.user_data
+    install_nat_cert      = local.install_nat_cert
     wait_for_nat          = local.wait_for_nat
   })))
 
