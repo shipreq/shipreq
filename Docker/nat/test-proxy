@@ -14,7 +14,9 @@ function runTests {
   testGet http://amazonaws.com/
   testGet http://twitter.com/
   testGet https://mailchimp.com
-  testGet https://twitter.com/
+
+  # See README.md as to why this is now disabled
+  # testGet https://twitter.com/
 }
 
 runTests

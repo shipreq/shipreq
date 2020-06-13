@@ -10,9 +10,8 @@ RUN apk --update --no-cache add \
 
 EXPOSE 3128 3129 3130
 
-RUN /usr/lib/squid/security_file_certgen -c -s /var/cache/squid/ssl_db -M 4MB
-
 COPY ./ssl /etc/squid/ssl
+RUN chown -R squid:squid /etc/squid/ssl
 
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 CMD ["/docker-entrypoint.sh"]
@@ -21,3 +20,4 @@ RUN mv /etc/squid/squid.conf /etc/squid/squid.conf.orig
 COPY ./squid.conf /etc/squid/squid.conf
 
 COPY ./domain-whitelist.txt /etc/squid/domain-whitelist.txt
+

@@ -13,6 +13,8 @@ DOCKER_ARGS  = --name $(CONTAINER)
 DOCKER_ARGS += --rm
 DOCKER_ARGS += --net=host
 
+EXPORT = squid.tar.gz
+
 default: extract
 
 $(SSL)/squid.key:
@@ -35,7 +37,7 @@ $(SSL)/squid.pem: $(SSL)/squid.crt
 $(SSL): $(SSL)/squid.pem
 
 build: $(INPUTS)
-	docker build -t $(IMAGE) .
+	docker build --network=host -t $(IMAGE) .
 
 run: build
 	docker run $(DOCKER_ARGS) $(IMAGE)
@@ -66,3 +68,15 @@ extract_and_test: | up .extract .test down
 
 watch:
 	ls -1 Makefile $(INPUTS) ./test | entr -rc make extract_and_test
+
+export:
+	-rm -f /tmp/$(EXPORT)
+	tar cvzf /tmp/$(EXPORT) .
+	aws s3 cp /tmp/$(EXPORT) s3://shipreq-tmp/
+
+import:
+	-rm -f /tmp/$(EXPORT)
+	aws s3 cp s3://shipreq-tmp/$(EXPORT) /tmp/
+	@echo
+	@echo "Extract /tmp/$(EXPORT) yourself"
+	@echo
