@@ -1,0 +1,9 @@
+#!/bin/bash
+
+curl \
+    -s \
+    --fail \
+    -x 127.0.0.1:3128 \
+    -o /dev/null \
+    http://amazonaws.com \
+  || exit 1

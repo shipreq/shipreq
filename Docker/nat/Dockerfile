@@ -16,7 +16,8 @@ RUN chown -R squid:squid /etc/squid/ssl
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 CMD ["/docker-entrypoint.sh"]
 
-RUN mv /etc/squid/squid.conf /etc/squid/squid.conf.orig
-COPY ./squid.conf /etc/squid/squid.conf
+COPY ./healthcheck /healthcheck
+HEALTHCHECK CMD /healthcheck
 
+COPY ./squid.conf           /etc/squid/squid.conf
 COPY ./domain-whitelist.txt /etc/squid/domain-whitelist.txt

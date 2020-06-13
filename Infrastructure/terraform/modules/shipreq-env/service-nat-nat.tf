@@ -22,7 +22,13 @@ resource "aws_ecs_task_definition" "nat" {
     "name": "${var.env}-nat",
     "image": "${data.aws_ecr_repository.nat.repository_url}:${var.nat_image_tag}",
     "cpu": ${local.nat_cluster_cpu.nat},
-    "memoryReservation": ${local.nat_cluster_mem_res.nat}
+    "memoryReservation": ${local.nat_cluster_mem_res.nat},
+    "healthCheck": {
+      "startPeriod": 15,
+      "interval": 60,
+      "timeout": 10,
+      "retries": 2
+    }
   }
 ]
 EOB
