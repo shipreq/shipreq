@@ -80,6 +80,16 @@ variable "elasticsearch_instance_type" {
   type = string
 }
 
+variable "elasticsearch_retention_days" {
+  type = number
+}
+
+variable "elasticsearch_maintenance_cron_schedule" {
+  description = "Cron schedule upon which ES maintenance should be carried out."
+  type        = string
+  default     = "0 19 * * *" # Daily at 19:00 UTC which is 5am +10
+}
+
 variable "elasticsearch_volume_type" {
   type    = string
   default = "gp2"

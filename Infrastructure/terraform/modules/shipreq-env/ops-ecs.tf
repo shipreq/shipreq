@@ -50,12 +50,13 @@ resource "aws_launch_template" "ops" {
   }
 
   user_data = base64encode(trimspace(templatefile("${path.module}/ops-ec2-init.sh", {
-    cluster                     = aws_ecs_cluster.ops.name
-    ec2_service_discovery       = module.ops_ec2_sd.user_data
-    install_prometheus_biz_ebs  = module.ecs_ebs_prometheus_biz.user_data
-    install_prometheus_tech_ebs = module.ecs_ebs_prometheus_tech.user_data
-    install_nat_cert            = local.install_nat_cert
-    wait_for_nat                = local.wait_for_nat
+    cluster                           = aws_ecs_cluster.ops.name
+    ec2_service_discovery             = module.ops_ec2_sd.user_data
+    install_elasticsearch_maintenance = local.install_elasticsearch_maintenance
+    install_nat_cert                  = local.install_nat_cert
+    install_prometheus_biz_ebs        = module.ecs_ebs_prometheus_biz.user_data
+    install_prometheus_tech_ebs       = module.ecs_ebs_prometheus_tech.user_data
+    wait_for_nat                      = local.wait_for_nat
   })))
 
   tag_specifications {

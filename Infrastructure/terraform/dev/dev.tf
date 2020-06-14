@@ -40,6 +40,7 @@ module "shipreq" {
   bastion_public_key                    = file("key-bastion.rsa.pub")
   elasticsearch_enable                  = true
   elasticsearch_instance_type           = "t2.small.elasticsearch"
+  elasticsearch_retention_days          = 45
   elasticsearch_volume_size             = 10
   elasticsearch_volume_type             = "standard" # Save money
   grafana_db_name                       = "grafana"

@@ -39,3 +39,4 @@ EOB
 ${ec2_service_discovery}
 ${install_prometheus_tech_ebs}
 ${install_prometheus_biz_ebs}
+${install_elasticsearch_maintenance}
