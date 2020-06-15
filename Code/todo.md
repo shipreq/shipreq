@@ -2,7 +2,18 @@ v2.2
 ========================================================================================================================
 
 ### Analyse
-* Common workflows
+* Common workflows pt2: SDLC to deployment
+* Derivative tags
+  * eg. MFs default to "not started" if no (implied) children, else take the max of children's tags
+  * might even need a semigroup table/rules
+  * maybe even something like for FRs in #analysed, if children exists, take their max else remain as #analysed
+    which would automate the process of changing all #analysed parents to #implemented after dev is complete
+    and would provide a live view of the real status as
+* Tag aliases - a map of ReqType -> ApTagId. eg #done = FR:#analysed, CO:#implemented -- probably a bad idea because
+  if derivative tags are powerful enough you cover the underlying motivation with it appearing explicit instead of implicit
+  (by that I mean you can see the real value in the column, not see one value and get another.
+  everything in ShipReq should be transparent.)
+  Need analysis: what am I trying to solve? Honestly even if I built this immediately I have a feeling I wouldn't use it (lol)
 * Github integration
 * ImpGraph column in ReqTable
 * Multi user
@@ -25,8 +36,7 @@ v2.2
 * User profile: password
 * User profile: email
 * User profile: newsletter
-* Project deletion
-* Multi user
+* Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
 * Fix: "TODO should be .devOnly but breaks tests in release mode"
@@ -34,8 +44,6 @@ v2.2
 * Markdown: italics
 * Markdown: strike-through
 * Markdown: underline
-* Project deletion. Maybe soft delete with ShowFilterButton. What about unique name constraint?
-* User profile page
 
 
 Backlog (maybe-probably soon)
