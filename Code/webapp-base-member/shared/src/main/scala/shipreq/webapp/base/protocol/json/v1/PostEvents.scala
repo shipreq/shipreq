@@ -16,11 +16,4 @@ object PostEvents {
 
   implicit val encoderEventOrdLatest: Encoder[EventOrd.Latest] =
     Encoder[Int].contramap(_.value)
-
-  // Replaced by v1.1
-  // implicit val decoderVerifiedEvent: Decoder[VerifiedEvent] =
-  //   Decoder.forProduct3("#", "event", "createdAt")(VerifiedEvent.apply)
-  //
-  // implicit val encoderVerifiedEvent: Encoder[VerifiedEvent] =
-  //   Encoder.forProduct3("#", "event", "createdAt")(a => (a.ord, a.event, a.createdAt))
 }

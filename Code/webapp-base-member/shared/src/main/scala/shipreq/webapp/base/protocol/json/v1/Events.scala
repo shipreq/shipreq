@@ -105,51 +105,6 @@ object Events {
     codecNonEmptyMono[Values]
   }
 
-  // Replaced by v1.1
-  // private[v1] implicit val codecCustomImpFieldGD: JsonCodec[CustomImpFieldGD.NonEmptyValues] = {
-  //   import CustomImpFieldGD._
-  //
-  //   implicit val codecValueForMandatory = JsonCodec.xmap(ValueForMandatory.apply)(_.value)
-  //   implicit val codecValueForReqTypeId = JsonCodec.xmap(ValueForReqTypeId.apply)(_.value)
-  //   implicit val codecValueForReqTypes  = JsonCodec.xmap(ValueForReqTypes .apply)(_.value)
-  //
-  //   implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
-  //     case ("mandatory", c) => c.as[ValueForMandatory]
-  //     case ("reqTypeId", c) => c.as[ValueForReqTypeId]
-  //     case ("reqTypes" , c) => c.as[ValueForReqTypes]
-  //   }
-  //
-  //   implicit val encoderValue: Encoder[Value] = Encoder.instance {
-  //     case a: ValueForMandatory => Json.obj("mandatory" -> a.asJson)
-  //     case a: ValueForReqTypeId => Json.obj("reqTypeId" -> a.asJson)
-  //     case a: ValueForReqTypes  => Json.obj("reqTypes"  -> a.asJson)
-  //   }
-  //
-  //   implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
-  //   codecNonEmptyMono[Values]
-  // }
-
-  // Replaced by v1.1
-  // private[v1] implicit val codecCustomIssueTypeGD: JsonCodec[CustomIssueTypeGD.NonEmptyValues] = {
-  //   import CustomIssueTypeGD._
-  //
-  //   implicit val codecValueForDesc = JsonCodec.xmap(ValueForDesc.apply)(_.value)
-  //   implicit val codecValueForKey  = JsonCodec.xmap(ValueForKey .apply)(_.value)
-  //
-  //   implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
-  //     case ("desc", c) => c.as[ValueForDesc]
-  //     case ("key" , c) => c.as[ValueForKey]
-  //   }
-  //
-  //   implicit val encoderValue: Encoder[Value] = Encoder.instance {
-  //     case a: ValueForDesc => Json.obj("desc" -> a.asJson)
-  //     case a: ValueForKey  => Json.obj("key"  -> a.asJson)
-  //   }
-  //
-  //   implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
-  //   codecNonEmptyMono[Values]
-  // }
-
   private[v1] implicit val codecCustomReqTypeGDv1: JsonCodec[CustomReqTypeGDv1.NonEmptyValues] = {
     import CustomReqTypeGDv1._
 
@@ -172,56 +127,6 @@ object Events {
     implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
     codecNonEmptyMono[Values]
   }
-
-  // Replaced by v1.1
-  // private[v1] implicit val codecCustomTagFieldGD: JsonCodec[CustomTagFieldGD.NonEmptyValues] = {
-  //   import CustomTagFieldGD._
-  //
-  //   implicit val codecValueForMandatory          = JsonCodec.xmap(ValueForMandatory.apply)(_.value)
-  //   implicit val codecValueForApplicableReqTypes = JsonCodec.xmap(ValueForApplicableReqTypes .apply)(_.value)
-  //   implicit val codecValueForTagId              = JsonCodec.xmap(ValueForTagId    .apply)(_.value)
-  //
-  //   implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
-  //     case ("mandatory", c) => c.as[ValueForMandatory]
-  //     case ("reqTypes" , c) => c.as[ValueForApplicableReqTypes]
-  //     case ("tagId"    , c) => c.as[ValueForTagId]
-  //   }
-  //
-  //   implicit val encoderValue: Encoder[Value] = Encoder.instance {
-  //     case a: ValueForMandatory => Json.obj("mandatory" -> a.asJson)
-  //     case a: ValueForApplicableReqTypes  => Json.obj("reqTypes"  -> a.asJson)
-  //     case a: ValueForTagId     => Json.obj("tagId"     -> a.asJson)
-  //   }
-  //
-  //   implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
-  //   codecNonEmptyMono[Values]
-  // }
-  //
-  // private[v1] implicit val codecCustomTextFieldGD: JsonCodec[CustomTextFieldGD.NonEmptyValues] = {
-  //   import CustomTextFieldGD._
-  //
-  //   implicit val codecValueForKey                = JsonCodec.xmap(ValueForKey      .apply)(_.value)
-  //   implicit val codecValueForMandatory          = JsonCodec.xmap(ValueForMandatory.apply)(_.value)
-  //   implicit val codecValueForName               = JsonCodec.xmap(ValueForName     .apply)(_.value)
-  //   implicit val codecValueForApplicableReqTypes = JsonCodec.xmap(ValueForApplicableReqTypes .apply)(_.value)
-  //
-  //   implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
-  //     case ("key"      , c) => c.as[ValueForKey]
-  //     case ("mandatory", c) => c.as[ValueForMandatory]
-  //     case ("name"     , c) => c.as[ValueForName]
-  //     case ("reqTypes" , c) => c.as[ValueForApplicableReqTypes]
-  //   }
-  //
-  //   implicit val encoderValue: Encoder[Value] = Encoder.instance {
-  //     case a: ValueForKey       => Json.obj("key"       -> a.asJson)
-  //     case a: ValueForMandatory => Json.obj("mandatory" -> a.asJson)
-  //     case a: ValueForName      => Json.obj("name"      -> a.asJson)
-  //     case a: ValueForApplicableReqTypes  => Json.obj("reqTypes"  -> a.asJson)
-  //   }
-  //
-  //   implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
-  //   codecNonEmptyMono[Values]
-  // }
 
   private[v1] implicit val codecGenericReqGD: JsonCodec[GenericReqGD.Values] = {
     import GenericReqGD._
@@ -253,36 +158,6 @@ object Events {
 
     codecIMap(emptyValues)
   }
-
-  // Replaced by v1.1
-  // private[v1] implicit val codecSavedViewGD: JsonCodec[SavedViewGD.NonEmptyValues] = {
-  //   import SavedViewGD._
-  //
-  //   implicit val codecValueForColumns    = JsonCodec.xmap(ValueForColumns   .apply)(_.value)
-  //   implicit val codecValueForFilter     = JsonCodec.xmap(ValueForFilter    .apply)(_.value)
-  //   implicit val codecValueForFilterDead = JsonCodec.xmap(ValueForFilterDead.apply)(_.value)
-  //   implicit val codecValueForName       = JsonCodec.xmap(ValueForName      .apply)(_.value)
-  //   implicit val codecValueForOrder      = JsonCodec.xmap(ValueForOrder     .apply)(_.value)
-  //
-  //   implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
-  //     case ("columns"   , c) => c.as[ValueForColumns]
-  //     case ("filter"    , c) => c.as[ValueForFilter]
-  //     case ("filterDead", c) => c.as[ValueForFilterDead]
-  //     case ("name"      , c) => c.as[ValueForName]
-  //     case ("order"     , c) => c.as[ValueForOrder]
-  //   }
-  //
-  //   implicit val encoderValue: Encoder[Value] = Encoder.instance {
-  //     case a: ValueForColumns    => Json.obj("columns"    -> a.asJson)
-  //     case a: ValueForFilter     => Json.obj("filter"     -> a.asJson)
-  //     case a: ValueForFilterDead => Json.obj("filterDead" -> a.asJson)
-  //     case a: ValueForName       => Json.obj("name"       -> a.asJson)
-  //     case a: ValueForOrder      => Json.obj("order"      -> a.asJson)
-  //   }
-  //
-  //   implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
-  //   codecNonEmptyMono[Values]
-  // }
 
   private[v1] implicit val codecTagGroupGD: JsonCodec[TagGroupGD.NonEmptyValues] = {
     import TagGroupGD._
@@ -385,19 +260,6 @@ object Events {
     implicit val encoderEventProjectTemplateApply: Encoder[Event.ProjectTemplateApply] =
       Encoder[ProjectTemplate].contramap(_.template)
 
-    // Replaced by v1.1
-    // implicit val decoderEventCustomIssueTypeCreate: Decoder[Event.CustomIssueTypeCreate] =
-    //   Decoder.forProduct2("id", "values")(Event.CustomIssueTypeCreate.apply)
-    //
-    // implicit val encoderEventCustomIssueTypeCreate: Encoder[Event.CustomIssueTypeCreate] =
-    //   Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
-    //
-    // implicit val decoderEventCustomIssueTypeUpdate: Decoder[Event.CustomIssueTypeUpdate] =
-    //   Decoder.forProduct2("id", "values")(Event.CustomIssueTypeUpdate.apply)
-    //
-    // implicit val encoderEventCustomIssueTypeUpdate: Encoder[Event.CustomIssueTypeUpdate] =
-    //   Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
-
     implicit val decoderEventCustomIssueTypeDelete: Decoder[Event.CustomIssueTypeDelete] =
       Decoder[CustomIssueTypeId].map(Event.CustomIssueTypeDelete.apply)
 
@@ -470,25 +332,6 @@ object Events {
     implicit val encoderEventApplicableTagUpdateV1: Encoder[Event.ApplicableTagUpdateV1] =
       Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
 
-    // Replaced by v1.1
-    // implicit val decoderEventFieldReposition: Decoder[Event.FieldReposition] =
-    //   Decoder.forProduct2("id", "newPos")(Event.FieldReposition.apply)
-    //
-    // implicit val encoderEventFieldReposition: Encoder[Event.FieldReposition] =
-    //   Encoder.forProduct2("id", "newPos")(a => (a.id, a.newPos))
-    //
-    // implicit val decoderEventFieldStaticAdd: Decoder[Event.FieldStaticAdd] =
-    //   Decoder[StaticField.Optional].map(Event.FieldStaticAdd.apply)
-    //
-    // implicit val encoderEventFieldStaticAdd: Encoder[Event.FieldStaticAdd] =
-    //   Encoder[StaticField.Optional].contramap(_.f)
-    //
-    // implicit val decoderEventFieldStaticRemove: Decoder[Event.FieldStaticRemove] =
-    //   Decoder[StaticField.Optional].map(Event.FieldStaticRemove.apply)
-    //
-    // implicit val encoderEventFieldStaticRemove: Encoder[Event.FieldStaticRemove] =
-    //   Encoder[StaticField.Optional].contramap(_.f)
-
     implicit val decoderEventFieldCustomDelete: Decoder[Event.FieldCustomDelete] =
       Decoder[CustomFieldId].map(Event.FieldCustomDelete.apply)
 
@@ -501,42 +344,6 @@ object Events {
     implicit val encoderEventFieldCustomRestore: Encoder[Event.FieldCustomRestore] =
       Encoder[CustomFieldId].contramap(_.id)
 
-    // Replaced by v1.1
-    // implicit val decoderEventFieldCustomTextCreate: Decoder[Event.FieldCustomTextCreate] =
-    //   Decoder.forProduct2("id", "values")(Event.FieldCustomTextCreate.apply)
-    //
-    // implicit val encoderEventFieldCustomTextCreate: Encoder[Event.FieldCustomTextCreate] =
-    //   Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
-    //
-    // implicit val decoderEventFieldCustomTextUpdate: Decoder[Event.FieldCustomTextUpdate] =
-    //   Decoder.forProduct2("id", "values")(Event.FieldCustomTextUpdate.apply)
-    //
-    // implicit val encoderEventFieldCustomTextUpdate: Encoder[Event.FieldCustomTextUpdate] =
-    //   Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
-    //
-    // implicit val decoderEventFieldCustomTagCreate: Decoder[Event.FieldCustomTagCreate] =
-    //   Decoder.forProduct2("id", "values")(Event.FieldCustomTagCreate.apply)
-    //
-    // implicit val encoderEventFieldCustomTagCreate: Encoder[Event.FieldCustomTagCreate] =
-    //   Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
-    //
-    // implicit val decoderEventFieldCustomTagUpdate: Decoder[Event.FieldCustomTagUpdate] =
-    //   Decoder.forProduct2("id", "values")(Event.FieldCustomTagUpdate.apply)
-    //
-    // implicit val encoderEventFieldCustomTagUpdate: Encoder[Event.FieldCustomTagUpdate] =
-    //   Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
-    //
-    // implicit val decoderEventFieldCustomImpCreate: Decoder[Event.FieldCustomImpCreate] =
-    //   Decoder.forProduct2("id", "values")(Event.FieldCustomImpCreate.apply)
-    //
-    // implicit val encoderEventFieldCustomImpCreate: Encoder[Event.FieldCustomImpCreate] =
-    //   Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
-    //
-    // implicit val decoderEventFieldCustomImpUpdate: Decoder[Event.FieldCustomImpUpdate] =
-    //   Decoder.forProduct2("id", "values")(Event.FieldCustomImpUpdate.apply)
-    //
-    // implicit val encoderEventFieldCustomImpUpdate: Encoder[Event.FieldCustomImpUpdate] =
-    //   Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
 
     implicit val decoderEventGenericReqCreate: Decoder[Event.GenericReqCreate] =
       Decoder.forProduct3("reqId", "reqTypeId", "values")(Event.GenericReqCreate.apply)
@@ -676,19 +483,6 @@ object Events {
     implicit val encoderEventManualIssueDelete: Encoder[Event.ManualIssueDelete] =
       Encoder[ManualIssueId].contramap(_.id)
 
-    // Replaced by v1.1
-    // implicit val decoderEventSavedViewCreate: Decoder[Event.SavedViewCreate] =
-    //   Decoder.forProduct6("id", "name", "columns", "order", "filterDead", "filter")(Event.SavedViewCreate.apply)
-    //
-    // implicit val encoderEventSavedViewCreate: Encoder[Event.SavedViewCreate] =
-    //   Encoder.forProduct6("id", "name", "columns", "order", "filterDead", "filter")(a => (a.id, a.name, a.columns, a.order, a.filterDead, a.filter))
-    //
-    // implicit val decoderEventSavedViewUpdate: Decoder[Event.SavedViewUpdate] =
-    //   Decoder.forProduct2("id", "values")(Event.SavedViewUpdate.apply)
-    //
-    // implicit val encoderEventSavedViewUpdate: Encoder[Event.SavedViewUpdate] =
-    //   Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
-
     implicit val decoderEventSavedViewDelete: Decoder[Event.SavedViewDelete] =
       Decoder[SavedView.Id].map(Event.SavedViewDelete.apply)
 
@@ -701,121 +495,4 @@ object Events {
     implicit val encoderEventSavedViewDefaultSet: Encoder[Event.SavedViewDefaultSet] =
       Encoder[SavedView.Id].contramap(_.id)
   }
-
-  // ===================================================================================================================
-
-  // Replaced by v1.1
-  // implicit val decoderEvent: Decoder[Event] = decodeSumBySoleKey {
-  //   case ("ApplicableTagCreate"   , c) => c.as[Event.ApplicableTagCreateV1]
-  //   case ("ApplicableTagUpdate"   , c) => c.as[Event.ApplicableTagUpdateV1]
-  //   case ("CodeGroupCreate"       , c) => c.as[Event.CodeGroupCreate]
-  //   case ("CodeGroupUpdate"       , c) => c.as[Event.CodeGroupUpdate]
-  //   case ("CodeGroupsDelete"      , c) => c.as[Event.CodeGroupsDelete]
-  //   case ("ContentRestore"        , c) => c.as[Event.ContentRestore]
-  //   case ("CustomIssueTypeCreate" , c) => c.as[Event.CustomIssueTypeCreate]
-  //   case ("CustomIssueTypeDelete" , c) => c.as[Event.CustomIssueTypeDelete]
-  //   case ("CustomIssueTypeRestore", c) => c.as[Event.CustomIssueTypeRestore]
-  //   case ("CustomIssueTypeUpdate" , c) => c.as[Event.CustomIssueTypeUpdate]
-  //   case ("CustomReqTypeCreate"   , c) => c.as[Event.CustomReqTypeCreate]
-  //   case ("CustomReqTypeDelete"   , c) => c.as[Event.CustomReqTypeDelete]
-  //   case ("CustomReqTypeRestore"  , c) => c.as[Event.CustomReqTypeRestore]
-  //   case ("CustomReqTypeUpdate"   , c) => c.as[Event.CustomReqTypeUpdate]
-  //   case ("FieldCustomDelete"     , c) => c.as[Event.FieldCustomDelete]
-  //   case ("FieldCustomImpCreate"  , c) => c.as[Event.FieldCustomImpCreate]
-  //   case ("FieldCustomImpUpdate"  , c) => c.as[Event.FieldCustomImpUpdate]
-  //   case ("FieldCustomRestore"    , c) => c.as[Event.FieldCustomRestore]
-  //   case ("FieldCustomTagCreate"  , c) => c.as[Event.FieldCustomTagCreate]
-  //   case ("FieldCustomTagUpdate"  , c) => c.as[Event.FieldCustomTagUpdate]
-  //   case ("FieldCustomTextCreate" , c) => c.as[Event.FieldCustomTextCreate]
-  //   case ("FieldCustomTextUpdate" , c) => c.as[Event.FieldCustomTextUpdate]
-  //   case ("FieldReposition"       , c) => c.as[Event.FieldReposition]
-  //   case ("FieldStaticAdd"        , c) => c.as[Event.FieldStaticAdd]
-  //   case ("FieldStaticRemove"     , c) => c.as[Event.FieldStaticRemove]
-  //   case ("GenericReqCreate"      , c) => c.as[Event.GenericReqCreate]
-  //   case ("GenericReqTitleSet"    , c) => c.as[Event.GenericReqTitleSet]
-  //   case ("GenericReqTypeSet"     , c) => c.as[Event.GenericReqTypeSet]
-  //   case ("ManualIssueCreate"     , c) => c.as[Event.ManualIssueCreate]
-  //   case ("ManualIssueDelete"     , c) => c.as[Event.ManualIssueDelete]
-  //   case ("ManualIssueUpdate"     , c) => c.as[Event.ManualIssueUpdate]
-  //   case ("ProjectNameSet"        , c) => c.as[Event.ProjectNameSet]
-  //   case ("ProjectTemplateApply"  , c) => c.as[Event.ProjectTemplateApply]
-  //   case ("ReqCodesPatch"         , c) => c.as[Event.ReqCodesPatch]
-  //   case ("ReqFieldCustomTextSet" , c) => c.as[Event.ReqFieldCustomTextSet]
-  //   case ("ReqImplicationsPatch"  , c) => c.as[Event.ReqImplicationsPatch]
-  //   case ("ReqTagsPatch"          , c) => c.as[Event.ReqTagsPatch]
-  //   case ("ReqsDelete"            , c) => c.as[Event.ReqsDelete]
-  //   case ("SavedViewCreate"       , c) => c.as[Event.SavedViewCreate]
-  //   case ("SavedViewDefaultSet"   , c) => c.as[Event.SavedViewDefaultSet]
-  //   case ("SavedViewDelete"       , c) => c.as[Event.SavedViewDelete]
-  //   case ("SavedViewUpdate"       , c) => c.as[Event.SavedViewUpdate]
-  //   case ("TagDelete"             , c) => c.as[Event.TagDelete]
-  //   case ("TagGroupCreate"        , c) => c.as[Event.TagGroupCreate]
-  //   case ("TagGroupUpdate"        , c) => c.as[Event.TagGroupUpdate]
-  //   case ("TagRestore"            , c) => c.as[Event.TagRestore]
-  //   case ("UseCaseCreate"         , c) => c.as[Event.UseCaseCreate]
-  //   case ("UseCaseStepCreate"     , c) => c.as[Event.UseCaseStepCreate]
-  //   case ("UseCaseStepDelete"     , c) => c.as[Event.UseCaseStepDelete]
-  //   case ("UseCaseStepRestore"    , c) => c.as[Event.UseCaseStepRestore]
-  //   case ("UseCaseStepShiftLeft"  , c) => c.as[Event.UseCaseStepShiftLeft]
-  //   case ("UseCaseStepShiftRight" , c) => c.as[Event.UseCaseStepShiftRight]
-  //   case ("UseCaseStepUpdate"     , c) => c.as[Event.UseCaseStepUpdate]
-  //   case ("UseCaseTitleSet"       , c) => c.as[Event.UseCaseTitleSet]
-  // }
-  //
-  // implicit val encoderEvent: Encoder[Event] = Encoder.instance {
-  //   case a: Event.ApplicableTagCreateV1  => Json.obj("ApplicableTagCreate"    -> a.asJson)
-  //   case a: Event.ApplicableTagUpdateV1  => Json.obj("ApplicableTagUpdate"    -> a.asJson)
-  //   case a: Event.CodeGroupCreate        => Json.obj("CodeGroupCreate"        -> a.asJson)
-  //   case a: Event.CodeGroupUpdate        => Json.obj("CodeGroupUpdate"        -> a.asJson)
-  //   case a: Event.CodeGroupsDelete       => Json.obj("CodeGroupsDelete"       -> a.asJson)
-  //   case a: Event.ContentRestore         => Json.obj("ContentRestore"         -> a.asJson)
-  //   case a: Event.CustomIssueTypeCreate  => Json.obj("CustomIssueTypeCreate"  -> a.asJson)
-  //   case a: Event.CustomIssueTypeDelete  => Json.obj("CustomIssueTypeDelete"  -> a.asJson)
-  //   case a: Event.CustomIssueTypeRestore => Json.obj("CustomIssueTypeRestore" -> a.asJson)
-  //   case a: Event.CustomIssueTypeUpdate  => Json.obj("CustomIssueTypeUpdate"  -> a.asJson)
-  //   case a: Event.CustomReqTypeCreate    => Json.obj("CustomReqTypeCreate"    -> a.asJson)
-  //   case a: Event.CustomReqTypeDelete    => Json.obj("CustomReqTypeDelete"    -> a.asJson)
-  //   case a: Event.CustomReqTypeRestore   => Json.obj("CustomReqTypeRestore"   -> a.asJson)
-  //   case a: Event.CustomReqTypeUpdate    => Json.obj("CustomReqTypeUpdate"    -> a.asJson)
-  //   case a: Event.FieldCustomDelete      => Json.obj("FieldCustomDelete"      -> a.asJson)
-  //   case a: Event.FieldCustomImpCreate   => Json.obj("FieldCustomImpCreate"   -> a.asJson)
-  //   case a: Event.FieldCustomImpUpdate   => Json.obj("FieldCustomImpUpdate"   -> a.asJson)
-  //   case a: Event.FieldCustomRestore     => Json.obj("FieldCustomRestore"     -> a.asJson)
-  //   case a: Event.FieldCustomTagCreate   => Json.obj("FieldCustomTagCreate"   -> a.asJson)
-  //   case a: Event.FieldCustomTagUpdate   => Json.obj("FieldCustomTagUpdate"   -> a.asJson)
-  //   case a: Event.FieldCustomTextCreate  => Json.obj("FieldCustomTextCreate"  -> a.asJson)
-  //   case a: Event.FieldCustomTextUpdate  => Json.obj("FieldCustomTextUpdate"  -> a.asJson)
-  //   case a: Event.FieldReposition        => Json.obj("FieldReposition"        -> a.asJson)
-  //   case a: Event.FieldStaticAdd         => Json.obj("FieldStaticAdd"         -> a.asJson)
-  //   case a: Event.FieldStaticRemove      => Json.obj("FieldStaticRemove"      -> a.asJson)
-  //   case a: Event.GenericReqCreate       => Json.obj("GenericReqCreate"       -> a.asJson)
-  //   case a: Event.GenericReqTitleSet     => Json.obj("GenericReqTitleSet"     -> a.asJson)
-  //   case a: Event.GenericReqTypeSet      => Json.obj("GenericReqTypeSet"      -> a.asJson)
-  //   case a: Event.ManualIssueCreate      => Json.obj("ManualIssueCreate"      -> a.asJson)
-  //   case a: Event.ManualIssueDelete      => Json.obj("ManualIssueDelete"      -> a.asJson)
-  //   case a: Event.ManualIssueUpdate      => Json.obj("ManualIssueUpdate"      -> a.asJson)
-  //   case a: Event.ProjectNameSet         => Json.obj("ProjectNameSet"         -> a.asJson)
-  //   case a: Event.ProjectTemplateApply   => Json.obj("ProjectTemplateApply"   -> a.asJson)
-  //   case a: Event.ReqCodesPatch          => Json.obj("ReqCodesPatch"          -> a.asJson)
-  //   case a: Event.ReqFieldCustomTextSet  => Json.obj("ReqFieldCustomTextSet"  -> a.asJson)
-  //   case a: Event.ReqImplicationsPatch   => Json.obj("ReqImplicationsPatch"   -> a.asJson)
-  //   case a: Event.ReqTagsPatch           => Json.obj("ReqTagsPatch"           -> a.asJson)
-  //   case a: Event.ReqsDelete             => Json.obj("ReqsDelete"             -> a.asJson)
-  //   case a: Event.SavedViewCreate        => Json.obj("SavedViewCreate"        -> a.asJson)
-  //   case a: Event.SavedViewDefaultSet    => Json.obj("SavedViewDefaultSet"    -> a.asJson)
-  //   case a: Event.SavedViewDelete        => Json.obj("SavedViewDelete"        -> a.asJson)
-  //   case a: Event.SavedViewUpdate        => Json.obj("SavedViewUpdate"        -> a.asJson)
-  //   case a: Event.TagDelete              => Json.obj("TagDelete"              -> a.asJson)
-  //   case a: Event.TagGroupCreate         => Json.obj("TagGroupCreate"         -> a.asJson)
-  //   case a: Event.TagGroupUpdate         => Json.obj("TagGroupUpdate"         -> a.asJson)
-  //   case a: Event.TagRestore             => Json.obj("TagRestore"             -> a.asJson)
-  //   case a: Event.UseCaseCreate          => Json.obj("UseCaseCreate"          -> a.asJson)
-  //   case a: Event.UseCaseStepCreate      => Json.obj("UseCaseStepCreate"      -> a.asJson)
-  //   case a: Event.UseCaseStepDelete      => Json.obj("UseCaseStepDelete"      -> a.asJson)
-  //   case a: Event.UseCaseStepRestore     => Json.obj("UseCaseStepRestore"     -> a.asJson)
-  //   case a: Event.UseCaseStepShiftLeft   => Json.obj("UseCaseStepShiftLeft"   -> a.asJson)
-  //   case a: Event.UseCaseStepShiftRight  => Json.obj("UseCaseStepShiftRight"  -> a.asJson)
-  //   case a: Event.UseCaseStepUpdate      => Json.obj("UseCaseStepUpdate"      -> a.asJson)
-  //   case a: Event.UseCaseTitleSet        => Json.obj("UseCaseTitleSet"        -> a.asJson)
-  // }
 }

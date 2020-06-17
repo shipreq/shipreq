@@ -30,10 +30,8 @@ How to evolve binary codecs
 
 * For all obsolete codecs:
 
-  * if they can't be made to compile anymore (eg. required data unavailable)
-    * comment them out
-    * add a comment saying "Replaced by v1.x"
-    * copy the commented-out code to the new `Rev` object
+  * if they can't be made to compile any more (eg. required data unavailable)
+    * move the code to the new `Rev` object and comment them out (for now)
 
   * if they can be made to compile
     * remove the implicit flag; making them explicit-only
@@ -46,14 +44,14 @@ How to evolve binary codecs
   * uncomment and fix them
   * general, non-event data types (eg. `Project` or any constituent) need to be made backward-compatible
     in that you still need to be able to read old versions
-  * change `implicit val`s into `implicit lazy val`s so that Scala.JS doesn't include unneccesarily
-    (not a problem before because non-Rev objects provided neccesary segregation)
+  * change `implicit val`s into `implicit lazy val`s so that Scala.JS doesn't include unnecessarily
+    (not a problem before because non-Rev objects provided necessary segregation)
 
 * Open `RedisProtocolTest.scala`
   * Uncomment `generateTestData`
   * Run `webapp-server-logic-jvm/testOnly -- shipreq.webapp.server.logic.RedisProtocolTest.generateTestData`
   * Move the generated JSON into `webapp-server-logic/jvm/src/test/resources/RedisProtocolTestData/`
-  * Add a new test to the bottom of `'saved`
+  * Add a new test to the bottom of `"saved"`
 
 
 How to evolve JSON codecs
@@ -67,7 +65,7 @@ How to evolve JSON codecs
   * Firstly, remember that GenericData never becomes an obsolete codec so these rules here don't apply.
     See the [event evolution guide](event-evolution.md)
 
-  * if they can't be made to compile anymore (eg. required data unavailable)
+  * if they can't be made to compile any more (eg. required data unavailable)
 
     * if you can still make use of the old v1.x data in a v1.y world ----------------------------
       * comment out the encoder
@@ -97,5 +95,5 @@ How to evolve JSON codecs
 * For all commented-out codecs in `Rev`
   * uncomment and fix them
   * MAKE SURE THAT THEY CAN STILL READ DATA OF THE PREVIOUS VERSION
-  * change `implicit val`s into `implicit lazy val`s so that Scala.JS doesn't include unneccesarily
-    (not a problem before because non-Rev objects provided neccesary segregation)
+  * change `implicit val`s into `implicit lazy val`s so that Scala.JS doesn't include unnecessarily
+    (not a problem before because non-Rev objects provided necessary segregation)
