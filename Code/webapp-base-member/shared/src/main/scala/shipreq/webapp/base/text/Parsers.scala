@@ -47,8 +47,7 @@ object Parsers {
   private val useCaseStepTailChar = CP.AlphaNum ++ ' ' ++ '.'
 
   abstract class Base extends ParsingUtil {
-    type T <: Atom.Base
-    val t: T
+    val t: Atom.Base
     val project: Project
 
     /** Optional whitespace */
@@ -75,7 +74,7 @@ object Parsers {
   // Modules
 
   trait Literal extends Base {
-    override type T <: Atom.Literal
+    override val t: Atom.Literal
 
     final type TokenRule = () => Rule1[t.Atom]
 
@@ -116,7 +115,7 @@ object Parsers {
   }
 
   trait PlainTextMarkup extends Base {
-    override type T <: Atom.PlainTextMarkup
+    override val t: Atom.PlainTextMarkup
 
     def webScheme = rule( (("http" | "ftp") ~ 's'.?) | "sftp" )
 
@@ -139,12 +138,12 @@ object Parsers {
   }
 
   trait NewLine extends Base {
-    override type T <: Atom.NewLine
+    override val t: Atom.NewLine
     def blankLine = rule(OWS ~ NL ~ OWSNL ~ push(t.blankLine))
   }
 
   trait CodeBlock extends Literal {
-    override type T <: Atom.CodeBlock with Atom.Literal
+    override val t: Atom.CodeBlock with Atom.Literal
 
     private val codeBlockEnd = () => rule(
       NL ~ OWS ~ "```" ~ &(OWS ~ (NL | EOI))
@@ -184,7 +183,7 @@ object Parsers {
   }
 
   trait ListMarkup extends Literal with CodeBlock {
-    override type T <: Atom.ListMarkup with Atom.Literal with Atom.NewLine with Atom.CodeBlock
+    override val t: Atom.ListMarkup with Atom.Literal with Atom.NewLine with Atom.CodeBlock
 
     private def bullet: Rule0 =
       // See https://en.wikipedia.org/wiki/Bullet_(typography)
@@ -224,7 +223,7 @@ object Parsers {
   }
 
   trait ContentRef extends Base with UseCaseStepLabel {
-    override type T <: Atom.ContentRef
+    override val t: Atom.ContentRef
 
     import G.reflinkSurround.parsing.{prefix, suffix}
     import ReqCode._
@@ -255,7 +254,7 @@ object Parsers {
   }
 
   trait TagRef extends Base {
-    override type T <: Atom.TagRef
+    override val t: Atom.TagRef
 
     def tagRef = popPF[HashRefTarget, t.TagRef] { case -\/(tag) => t.TagRef(tag.id) }
   }
@@ -300,7 +299,7 @@ object Parsers {
   }
 
   trait Issue extends Base {
-    override type T <: Atom.Issue
+    override val t: Atom.Issue
     import Text.{InlineIssueDesc => I}
 
     def issueRef: RuleAB[HashRefTarget, t.Issue] = {
@@ -317,12 +316,12 @@ object Parsers {
   // ===================================================================================================================
 
   trait SingleLine extends PlainTextMarkup with Literal {
-    override type T <: Atom.SingleLine
+    override val t: Atom.SingleLine
     def singleLine = plainTextMarkup
   }
 
   trait MultiLine extends SingleLine with NewLine with ListMarkup with CodeBlock {
-    override type T <: Atom.MultiLine
+    override val t: Atom.MultiLine
     protected val additionalTokens: TokenRule
 
     final val listToken: TokenRule =
@@ -334,11 +333,9 @@ object Parsers {
 
   // ===================================================================================================================
 
-  abstract class TopBase[_T <: Atom.Literal](_t: _T) extends Literal {
-    override final type T = _T
-    override final val  t: T = _t
+  trait TopBase extends Literal {
     protected val token: TokenRule
-    final def optionalText: Rule1[T#OptionalText] = rule(OWS ~ text(token) ~ EOI)
-    final def nonEmptyText: Rule1[T#NonEmptyText] = rule(optionalText ~ popNEA)
+    final def optionalText: Rule1[t.OptionalText] = rule(OWS ~ text(token) ~ EOI)
+    final def nonEmptyText: Rule1[t.NonEmptyText] = rule(optionalText ~ popNEA)
   }
 }
