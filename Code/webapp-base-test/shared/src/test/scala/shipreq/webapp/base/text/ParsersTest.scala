@@ -13,15 +13,15 @@ import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 import scalaz.{Applicative, Equal}
-import sourcecode.Line
 import shipreq.base.test._
-import shipreq.base.util.{NonEmptyArraySeq, Valid}
 import shipreq.base.util.ScalaExt._
+import shipreq.base.util.{NonEmptyArraySeq, Valid}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.test.{TextShrink, ProjectDsl, UnsafeTypes, SampleProject6 => SP}
+import shipreq.webapp.base.test.{ProjectDsl, SampleProject6 => SP, TextShrink, UnsafeTypes}
 import shipreq.webapp.base.text.Atom.AnyAtom
 import shipreq.webapp.base.{RandomData => $}
+import sourcecode.Line
 import utest._
 
 object ParsersTest extends TestSuite {

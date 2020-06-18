@@ -6,8 +6,8 @@ import scala.collection.immutable.ArraySeq
 import scalaz.Applicative
 import scalaz.Scalaz.Id
 import scalaz.syntax.traverse
-import shipreq.base.util.ScalazExtra.foldableArraySeq
 import shipreq.base.util.NonEmptyArraySeq
+import shipreq.base.util.ScalazExtra.foldableArraySeq
 import shipreq.base.util.Util.ShipReqOpsForArraySeq
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
