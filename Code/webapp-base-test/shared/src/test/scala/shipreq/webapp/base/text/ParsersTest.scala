@@ -297,7 +297,7 @@ object ParsersTest extends TestSuite {
       "whitespace" - {
         "empty"   - test("    ")()
         "lit"     - test("  hehe  ")(L("hehe"))
-        "litMid"  - test("  he   he  ")(L("he   he"))
+        "litMid"  - test("  he   he  ")(L("he he"))
         "email"   - test("  asd@abc.com  ")(T.EmailAddress("asd@abc.com"))
         "li"      - test("*     hehe    \n*     yay    ")(T.UnorderedList(NEA(LI(L("hehe")), LI(L("yay")))))
         "nl"      - test("here\nthere")(L("here"), T.blankLine, L("there"))
@@ -667,7 +667,7 @@ object ParsersTest extends TestSuite {
           )(
           T.Heading1(NonEmptyArraySeq(H.Literal("H1"))),
           T.Literal("#not"),
-          T.Heading1(NonEmptyArraySeq(H.Literal("h1  again"))),
+          T.Heading1(NonEmptyArraySeq(H.Literal("h1 again"))),
           T.Heading2(NonEmptyArraySeq(H.Literal("h2"))),
           T.Heading3(NonEmptyArraySeq(H.Literal("h3"))),
           T.Heading4(NonEmptyArraySeq(H.Literal("h4"))),
@@ -700,7 +700,7 @@ object ParsersTest extends TestSuite {
         )(
           T.Heading1(NonEmptyArraySeq(H.Literal("H1"))),
           T.Literal("#not"),
-          T.Heading1(NonEmptyArraySeq(H.Literal("h1  again"))),
+          T.Heading1(NonEmptyArraySeq(H.Literal("h1 again"))),
           T.Literal("wow"),
           T.Heading1(NonEmptyArraySeq(H.Literal("# nope"))),
           T.Heading3(NonEmptyArraySeq(H.Literal("h3"))),
@@ -715,10 +715,10 @@ object ParsersTest extends TestSuite {
           """
             |# !
             |x !
-            |# h1 tag: #wip, issue: #TODO, ref: [fr1]
+            |# h1 tag: #wip   issue:   #TODO, ref: [fr1]
             |* !
             |# h1   !
-            |  lit with space  !
+            |  lit  with  space  !
             |""".stripMargin.replace("!", "")
         )(
           L("#"),
@@ -727,7 +727,7 @@ object ParsersTest extends TestSuite {
           T.Heading1(NonEmptyArraySeq(
             H.Literal("h1 tag: "),
             H.TagRef(11),
-            H.Literal(", issue: "),
+            H.Literal(" issue: "),
             H.Issue(1, I.empty),
             H.Literal(", ref: "),
             H.ReqRef(frs(1)),

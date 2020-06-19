@@ -50,7 +50,6 @@ v2.2
 
 ### Implement
 * Fix: "TODO should be .devOnly but breaks tests in release mode"
-* Trim consec space in literals (eg. `"asd     qwe"` should be `"asd qwe"`)
 * Rich text preview should be on the right (instead of below) in ReqDetail (and/or) introduce zen mode for multiline editors
 * Markdown: bold
 * Markdown: italics

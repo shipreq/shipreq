@@ -98,6 +98,18 @@ object Parsers {
       rule(hashRefStr ~> (project.config.hashRefLookup _) ~ popOptional)
   }
 
+  private val innerSpaceRegex = "([^ ]) {2,}([^ ])".r
+
+  private def fixLiteralWhiteSpace(input: String): String = {
+    var s = innerSpaceRegex.replaceAllIn(input, "$1 $2")
+    if (s.startsWith("  "))
+      s = " " + s.dropWhile(_ == ' ')
+    while(s.endsWith("  ")) {
+      s = s.dropRight(1)
+    }
+    s
+  }
+
   // ===================================================================================================================
   // Modules
 
@@ -131,7 +143,7 @@ object Parsers {
     }
 
     def literalUntil[O <: HList](stop: () => Rule[HNil, O]): Rule1[t.Literal] =
-      rule(capture(oneOrMore( !stop() ~ ANY )) ~> t.Literal)
+      rule(capture(oneOrMore( !stop() ~ ANY )) ~> ((l: String) => t.Literal(fixLiteralWhiteSpace(l))))
 
     def textUntil(token: TokenRule, end: () => Rule0): Rule1[t.OptionalText] = {
       val endOrToken = () => rule(end() | token())

@@ -181,7 +181,7 @@ object PlainTextTest extends TestSuite {
             |
             |#
             |
-            |# h1  again
+            |# h1 again
             |
             |wow
             |
