@@ -713,6 +713,7 @@ object ParsersTest extends TestSuite {
 
         "combo" - test(
           """
+            |# !
             |x !
             |# h1 tag: #wip, issue: #TODO, ref: [fr1]
             |* !
@@ -720,6 +721,8 @@ object ParsersTest extends TestSuite {
             |  lit with space  !
             |""".stripMargin.replace("!", "")
         )(
+          L("#"),
+          T.blankLine,
           L("x"),
           T.Heading1(NonEmptyArraySeq(
             H.Literal("h1 tag: "),

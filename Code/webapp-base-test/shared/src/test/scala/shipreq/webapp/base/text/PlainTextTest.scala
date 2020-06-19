@@ -152,6 +152,7 @@ object PlainTextTest extends TestSuite {
           """
             | # h1
             | #not
+            |# !
             |  #   h1  again     !
             |      wow
             |
@@ -177,6 +178,8 @@ object PlainTextTest extends TestSuite {
             |# h1
             |
             |#not
+            |
+            |#
             |
             |# h1  again
             |
