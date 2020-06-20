@@ -17,6 +17,7 @@ object PreProcessor {
   private def _fixChar(a: Array[Char], i: Int, c: Char): Unit =
     if (
       c < 32
+        || c == 130 // BREAK PERMITTED HERE (basically blank char)
         || (c >= 55296 && c <= 63743) // invalid + private-use chars
         || (c >= 64976 && c <= 65007) // private-use chars
         || c == 65279 // BOM

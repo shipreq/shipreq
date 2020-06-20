@@ -41,80 +41,93 @@ object Rev2 {
 
     override def nea[A](as: Pickler[ArraySeq[A]])(implicit a: Pickler[A]) = pickleNEA(as)
 
+    override def str: Pickler[String] = implicitly
+
     override def sum[T <: Atom.Base](t: T)(get: Atom.Type => Pickler[t.Atom], all: List[Pickler[t.Atom]]): Pickler[t.Atom] =
       new Pickler[t.Atom] {
         private[this] final val KeyBlankLine      = '0'
+        private[this] final val KeyBold           = 'B'
         private[this] final val KeyCodeBlock      = '{'
         private[this] final val KeyCodeRef        = 'c'
         private[this] final val KeyEmailAddress   = '@'
-        private[this] final val KeyIssue          = 'i'
-        private[this] final val KeyLiteral        = 'l'
-        private[this] final val KeyMonospace      = '`'
-        private[this] final val KeyReqRef         = 'r'
-        private[this] final val KeyTagRef         = 't'
-        private[this] final val KeyTeX            = 'X'
-        private[this] final val KeyUnorderedList  = '*'
-        private[this] final val KeyUseCaseStepRef = 'u'
-        private[this] final val KeyWebAddress     = '/'
         private[this] final val KeyHeading1       = '1'
         private[this] final val KeyHeading2       = '2'
         private[this] final val KeyHeading3       = '3'
         private[this] final val KeyHeading4       = '4'
         private[this] final val KeyHeading5       = '5'
         private[this] final val KeyHeading6       = '6'
+        private[this] final val KeyIssue          = 'i'
+        private[this] final val KeyItalic         = 'I'
+        private[this] final val KeyLiteral        = 'l'
+        private[this] final val KeyMonospace      = '`'
+        private[this] final val KeyReqRef         = 'r'
+        private[this] final val KeyStrikethrough  = '~'
+        private[this] final val KeyTagRef         = 't'
+        private[this] final val KeyTeX            = 'X'
+        private[this] final val KeyUnderline      = '_'
+        private[this] final val KeyUnorderedList  = '*'
+        private[this] final val KeyUseCaseStepRef = 'u'
+        private[this] final val KeyWebAddress     = '/'
+
         override def pickle(a: t.Atom)(implicit state: PickleState): Unit = {
           Atom.Type.of(a) match {
             case t@ Type.Literal        => state.enc.writeByte(KeyLiteral       ); get(t).pickle(a)
             case t@ Type.BlankLine      => state.enc.writeByte(KeyBlankLine     ); get(t).pickle(a)
+            case t@ Type.Bold           => state.enc.writeByte(KeyBold          ); get(t).pickle(a)
             case t@ Type.CodeBlock      => state.enc.writeByte(KeyCodeBlock     ); get(t).pickle(a)
             case t@ Type.CodeRef        => state.enc.writeByte(KeyCodeRef       ); get(t).pickle(a)
             case t@ Type.EmailAddress   => state.enc.writeByte(KeyEmailAddress  ); get(t).pickle(a)
-            case t@ Type.Issue          => state.enc.writeByte(KeyIssue         ); get(t).pickle(a)
-            case t@ Type.Monospace      => state.enc.writeByte(KeyMonospace     ); get(t).pickle(a)
-            case t@ Type.ReqRef         => state.enc.writeByte(KeyReqRef        ); get(t).pickle(a)
-            case t@ Type.TagRef         => state.enc.writeByte(KeyTagRef        ); get(t).pickle(a)
-            case t@ Type.TeX            => state.enc.writeByte(KeyTeX           ); get(t).pickle(a)
-            case t@ Type.UnorderedList  => state.enc.writeByte(KeyUnorderedList ); get(t).pickle(a)
-            case t@ Type.UseCaseStepRef => state.enc.writeByte(KeyUseCaseStepRef); get(t).pickle(a)
-            case t@ Type.WebAddress     => state.enc.writeByte(KeyWebAddress    ); get(t).pickle(a)
             case t@ Type.Heading1       => state.enc.writeByte(KeyHeading1      ); get(t).pickle(a)
             case t@ Type.Heading2       => state.enc.writeByte(KeyHeading2      ); get(t).pickle(a)
             case t@ Type.Heading3       => state.enc.writeByte(KeyHeading3      ); get(t).pickle(a)
             case t@ Type.Heading4       => state.enc.writeByte(KeyHeading4      ); get(t).pickle(a)
             case t@ Type.Heading5       => state.enc.writeByte(KeyHeading5      ); get(t).pickle(a)
             case t@ Type.Heading6       => state.enc.writeByte(KeyHeading6      ); get(t).pickle(a)
+            case t@ Type.Issue          => state.enc.writeByte(KeyIssue         ); get(t).pickle(a)
+            case t@ Type.Italic         => state.enc.writeByte(KeyItalic        ); get(t).pickle(a)
+            case t@ Type.Monospace      => state.enc.writeByte(KeyMonospace     ); get(t).pickle(a)
+            case t@ Type.ReqRef         => state.enc.writeByte(KeyReqRef        ); get(t).pickle(a)
+            case t@ Type.Strikethrough  => state.enc.writeByte(KeyStrikethrough ); get(t).pickle(a)
+            case t@ Type.TagRef         => state.enc.writeByte(KeyTagRef        ); get(t).pickle(a)
+            case t@ Type.TeX            => state.enc.writeByte(KeyTeX           ); get(t).pickle(a)
+            case t@ Type.Underline      => state.enc.writeByte(KeyUnderline     ); get(t).pickle(a)
+            case t@ Type.UnorderedList  => state.enc.writeByte(KeyUnorderedList ); get(t).pickle(a)
+            case t@ Type.UseCaseStepRef => state.enc.writeByte(KeyUseCaseStepRef); get(t).pickle(a)
+            case t@ Type.WebAddress     => state.enc.writeByte(KeyWebAddress    ); get(t).pickle(a)
           }
         }
+
         override def unpickle(implicit state: UnpickleState): t.Atom = {
           state.dec.readByte match {
             case KeyLiteral        => get(Type.Literal       ).unpickle
             case KeyBlankLine      => get(Type.BlankLine     ).unpickle
+            case KeyBold           => get(Type.Bold          ).unpickle
             case KeyCodeBlock      => get(Type.CodeBlock     ).unpickle
             case KeyCodeRef        => get(Type.CodeRef       ).unpickle
             case KeyEmailAddress   => get(Type.EmailAddress  ).unpickle
-            case KeyIssue          => get(Type.Issue         ).unpickle
-            case KeyMonospace      => get(Type.Monospace     ).unpickle
-            case KeyReqRef         => get(Type.ReqRef        ).unpickle
-            case KeyTagRef         => get(Type.TagRef        ).unpickle
-            case KeyTeX            => get(Type.TeX           ).unpickle
-            case KeyUnorderedList  => get(Type.UnorderedList ).unpickle
-            case KeyUseCaseStepRef => get(Type.UseCaseStepRef).unpickle
-            case KeyWebAddress     => get(Type.WebAddress    ).unpickle
             case KeyHeading1       => get(Type.Heading1      ).unpickle
             case KeyHeading2       => get(Type.Heading2      ).unpickle
             case KeyHeading3       => get(Type.Heading3      ).unpickle
             case KeyHeading4       => get(Type.Heading4      ).unpickle
             case KeyHeading5       => get(Type.Heading5      ).unpickle
             case KeyHeading6       => get(Type.Heading6      ).unpickle
+            case KeyIssue          => get(Type.Issue         ).unpickle
+            case KeyItalic         => get(Type.Italic        ).unpickle
+            case KeyMonospace      => get(Type.Monospace     ).unpickle
+            case KeyReqRef         => get(Type.ReqRef        ).unpickle
+            case KeyStrikethrough  => get(Type.Strikethrough ).unpickle
+            case KeyTagRef         => get(Type.TagRef        ).unpickle
+            case KeyTeX            => get(Type.TeX           ).unpickle
+            case KeyUnderline      => get(Type.Underline     ).unpickle
+            case KeyUnorderedList  => get(Type.UnorderedList ).unpickle
+            case KeyUseCaseStepRef => get(Type.UseCaseStepRef).unpickle
+            case KeyWebAddress     => get(Type.WebAddress    ).unpickle
           }
         }
       }
 
     override def blankLine[T <: NewLine](t: T): Pickler[t.BlankLine] =
       ConstPickler(t.blankLine)
-
-    override def literal[T <: Literal](t: T): Pickler[t.Literal] =
-      transformPickler((i: String) => t.Literal(i))(_.value)
 
     override def codeBlock[T <: CodeBlock](t: T): Pickler[t.CodeBlock] =
       new Pickler[t.CodeBlock] {
@@ -128,18 +141,6 @@ object Rev2 {
           t.CodeBlock(language, code)
         }
       }
-
-    override def monospace[T <: PlainTextMarkup](t: T): Pickler[t.Monospace] =
-      transformPickler((i: String) => t.Monospace(i))(_.value)
-
-    override def webAddress[T <: PlainTextMarkup](t: T): Pickler[t.WebAddress] =
-      transformPickler((i: String) => t.WebAddress(i))(_.value)
-
-    override def emailAddress[T <: PlainTextMarkup](t: T): Pickler[t.EmailAddress] =
-      transformPickler((i: String) => t.EmailAddress(i))(_.value)
-
-    override def teX[T <: PlainTextMarkup](t: T): Pickler[t.TeX] =
-      transformPickler((i: String) => t.TeX(i))(_.value)
 
     override def reqRef[T <: ContentRef](t: T): Pickler[t.ReqRef] =
       transformPickler((i: ReqId) => t.ReqRef(i))(_.value)

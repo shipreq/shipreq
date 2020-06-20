@@ -50,11 +50,10 @@ v2.2
 
 ### Implement
 * Fix: "TODO should be .devOnly but breaks tests in release mode"
+* s/headerTitle/headingTitle/
+* Add new protocol stability tests
+* support all kinds of URL schemes in WebAddress
 * Rich text preview should be on the right (instead of below) in ReqDetail (and/or) introduce zen mode for multiline editors
-* Markdown: bold
-* Markdown: italics
-* Markdown: strike-through
-* Markdown: underline
 * Fix bug: commit change -> session expires -> re-auth -> connection re-established but change never completes: stuck spinning around
 
 

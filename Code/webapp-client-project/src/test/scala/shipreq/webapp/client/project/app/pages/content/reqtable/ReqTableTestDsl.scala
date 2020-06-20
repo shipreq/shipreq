@@ -4,7 +4,7 @@ import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
-import shipreq.base.test.BaseTestUtil.quoteStringForDisplay
+import shipreq.base.test.BaseTestUtil.quoteString
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -350,5 +350,5 @@ object ReqTableTestDsl {
     *.action(s"Press ${k.desc}.")(k simulateKeyDownPressUp _.obs.activeElement)
 
   def copyToClipboard(text: String): *.Actions =
-    *.action(s"Copy to clipboard: ${quoteStringForDisplay(text)}")(_ => TestClipboard.writeText(text))
+    *.action(s"Copy to clipboard: ${quoteString(text)}")(_ => TestClipboard.writeText(text))
 }

@@ -52,6 +52,14 @@ object RichTextEditorHelp {
         "* item 1",
         "* item 2"))
 
+  private val styling =
+    Group("Styling")(
+      Example("To make text bold, wrap it in ", code("**"))("**this is bold**"),
+      Example("To make text italic, wrap it in ", code("//"))("//this is italic//"),
+      Example("To underline text, wrap it in ", code("__"))("__this is underlined__"),
+      Example("To strikethrough text, wrap it in ", code("~~"))("~~this is strikethrough~~"),
+    )
+
   private val headings = {
     def eg(n: Int) = {
       val h = "#" * n
@@ -167,6 +175,7 @@ object RichTextEditorHelp {
       customise(lists,       _.supports(TypeGroup.ListMarkup)),
       customise(references,  _.supports(TypeGroup.ContentRef)),
       customise(tags,        _.supports(TypeGroup.TagRef)),
+      customise(styling,     _.supports(TypeGroup.PlainTextMarkup)),
       customise(headings,    _.supports(TypeGroup.Headings)),
       customise(codeBlocks,  _.supports(TypeGroup.CodeBlock)),
       customise(other,       _.supports(TypeGroup.PlainTextMarkup)),
@@ -175,6 +184,9 @@ object RichTextEditorHelp {
 
     HelpModal("Rich Text Editor Help", groups)
   }
+
+
+
 
   private val lookup: Map[Text.Generic, Modal] =
     Text.values.iterator.map(t => t -> create(t)).toMap

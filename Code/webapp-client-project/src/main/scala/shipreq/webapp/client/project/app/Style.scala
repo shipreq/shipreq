@@ -1341,6 +1341,10 @@ object Style extends StyleSheet.Inline {
     def h5 = h1
     def h6 = h1
 
+    val strikethrough = style(textDecoration := "line-through")
+
+    val underline = style(textDecoration := "underline")
+
     val monospace = style(
       display.inline,
       padding(.2 em, .4 em),                                                  // matching github

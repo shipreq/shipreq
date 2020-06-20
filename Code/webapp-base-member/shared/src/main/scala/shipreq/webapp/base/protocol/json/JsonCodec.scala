@@ -45,6 +45,9 @@ object JsonCodec {
       Encoder.instance[Fix[F]](Recursion.cata(enc)(_)),
       Decoder.instance[Fix[F]](Recursion.anaM(dec)(_)))
 
+  lazy val str: JsonCodec[String] =
+    summon
+
   object Implicits {
     implicit def implicitJsonCodecToDecoder[A](implicit c: JsonCodec[A]): Decoder[A] = c.decoder
     implicit def implicitJsonCodecToEncoder[A](implicit c: JsonCodec[A]): Encoder[A] = c.encoder

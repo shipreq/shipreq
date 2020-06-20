@@ -1,5 +1,6 @@
 package shipreq.webapp.base.text
 
+import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.parboiled2.{CharPredicate => CP, _}
@@ -7,13 +8,53 @@ import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 import scalaz.{-\/, \/-}
 import shapeless._
+import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
 import shipreq.webapp.base.text.{Grammar => G}
-import shipreq.webapp.base.util.{ParsingUtil, PreProcessed, PreProcessor}
+import shipreq.webapp.base.util._
 
 object Parsers {
+
+  def fixOptionalText[T <: Atom.Base](text: T#OptionalText): T#OptionalText =
+    if (text.isEmpty)
+      text
+    else
+      fixNonEmptyText(NonEmptyArraySeq.force(text)).whole
+
+  def fixNonEmptyText[T <: Atom.Base](text: T#NonEmptyText): T#NonEmptyText = {
+    val last: Atom.AnyAtom = text.last
+    val newLast: Atom.AnyAtom =
+      last match {
+        case a: Atom.Literal         # Literal               =>
+          val a2 = a.modText(TextMod.noWhitespaceRight.run)
+          if (a2.value.isEmpty)
+            null
+          else
+            a2
+        case a: Atom.Headings        # Heading               => a.modTitle(fixNonEmptyText(_))
+        case a: Atom.PlainTextMarkup # PlainTextMarkupStyled => a.unsafeWithInner(fixNonEmptyText(a.inner))
+        case _: Atom.CodeBlock       # CodeBlock
+           | _: Atom.ContentRef      # CodeRef
+           | _: Atom.ContentRef      # ReqRef
+           | _: Atom.ContentRef      # UseCaseStepRef
+           | _: Atom.Issue           # Issue
+           | _: Atom.ListMarkup      # UnorderedList
+           | _: Atom.NewLine         # BlankLine
+           | _: Atom.PlainTextMarkup # EmailAddress
+           | _: Atom.PlainTextMarkup # Monospace
+           | _: Atom.PlainTextMarkup # TeX
+           | _: Atom.PlainTextMarkup # WebAddress
+           | _: Atom.TagRef          # TagRef                => last
+      }
+    if (newLast eq null)
+      NonEmptyArraySeq.maybe(text.whole.dropRight(1), text)(identity)
+    else if (newLast eq last)
+      text
+    else
+      text.updated(text.length - 1, newLast.asInstanceOf[T#Atom])
+  }
 
   // Because there are special cases, not all whitespace is trimmed.
   // Not all whitespace need be trimmed because the parser already contains space handing - for example, literals are
@@ -38,14 +79,59 @@ object Parsers {
       case SingleLine => PreProcessor.singleLine
     }
 
-  // questionable: :;=?\/
-  val emailCharArray = """!$%*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~""".toCharArray
+  // questionable: :;=?\/*
+  val emailCharArray = """!$%+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~""".toCharArray
   val emailCharL = CP(emailCharArray)
   val emailCharR = emailCharL -- '.'
 
   val webAddressChar = CP.Visible -- ('{' :: '}' :: '[' :: ']' :: '<' :: '>' :: '`' :: Nil)
 
   private val useCaseStepTailChar = CP.AlphaNum ++ ' ' ++ '.'
+
+  sealed abstract class StyleType(markdown: String) {
+    final val prefix = markdown
+    final val suffix = markdown
+  }
+
+  object StyleType {
+    case object Bold          extends StyleType("**")
+    case object Italic        extends StyleType("//")
+    case object Strikethrough extends StyleType("~~")
+    case object Underline     extends StyleType("__")
+
+    def of(t: Atom.PlainTextMarkup # PlainTextMarkupStyled): StyleType =
+      t match {
+        case _: Atom.PlainTextMarkup # Bold          => Bold
+        case _: Atom.PlainTextMarkup # Italic        => Italic
+        case _: Atom.PlainTextMarkup # Strikethrough => Strikethrough
+        case _: Atom.PlainTextMarkup # Underline     => Underline
+      }
+
+    lazy val values = AdtMacros.adtValues[StyleType]
+
+    val isPossibleStart: String => Boolean =
+      s => s.length >= 1 && (s.head match {
+        case '*' | '/' | '~' | '_' => true // single char because it might be __ but the grammar limit stops after the first
+        case _                     => false
+      })
+  }
+
+  final case class StyleCtx(parentsOldestFirst: NonEmptyVector[StyleType]) {
+
+    def latest: StyleType =
+      parentsOldestFirst.last
+
+    def begin(s: StyleType): StyleCtx =
+      StyleCtx(parentsOldestFirst :+ s)
+
+    def allow(s: StyleType): Boolean =
+      !parentsOldestFirst.whole.contains(s)
+  }
+
+  object StyleCtx {
+    def begin(s: StyleType): StyleCtx =
+      apply(NonEmptyVector.one(s))
+  }
 
   abstract class Base extends ParsingUtil {
     val t: Atom.Base
@@ -58,6 +144,10 @@ object Parsers {
     /** Optional whitespace and/or newlines */
     def OWSNL: Rule0 =
       rule(anyOf(" \r\n").*)
+
+    /** Wwhitespace and/or newlines */
+    def WSNL: Rule0 =
+      rule(anyOf(" \r\n").+)
 
     private val isWS: Char => Boolean =
       _ == ' '
@@ -95,13 +185,21 @@ object Parsers {
           .flatMap(project.content.reqs.pubids.apply)
 
     def hashRef: Rule1[HashRefTarget] =
-      rule(hashRefStr ~> (project.config.hashRefLookup _) ~ popOptional)
+      rule(hashRefStr(
+        possibleStop = StyleType.isPossibleStart,
+        parse        = project.config.hashRefLookup))
   }
 
   private val innerSpaceRegex = "([^ ]) {2,}([^ ])".r
 
-  private def fixLiteralWhiteSpace(input: String): String = {
-    var s = innerSpaceRegex.replaceAllIn(input, "$1 $2")
+  def fixLiteralWhiteSpace(input: String): String = {
+    var s = input
+    while({
+      val t = innerSpaceRegex.replaceFirstIn(s, "$1 $2")
+      val changed = s != t
+      s = t
+      changed
+    }) ()
     if (s.startsWith("  "))
       s = " " + s.dropWhile(_ == ' ')
     while(s.endsWith("  ")) {
@@ -157,15 +255,27 @@ object Parsers {
   trait PlainTextMarkup extends Base {
     override val t: Atom.PlainTextMarkup
 
+    // Hack due to https://github.com/sirthias/parboiled2/issues/120
+    // runSubParser can only be used in a method directly in a class, not a trait like this
+    protected def styledInner(s: StyleType): Rule1[t.styled.NonEmptyText]
+
     def webScheme = rule( (("http" | "ftp") ~ 's'.?) | "sftp" )
 
     // TODO ensure webAddress and emailAddress don't follow literal
 
+    protected def stopPlainMarkupAt: Rule0 =
+      rule(test(false))
+
     def webAddress =
-      rule(capture(webScheme ~ "://" ~ webAddressChar.+) ~> t.WebAddress)
+      rule(capture(webScheme ~ "://" ~ (!stopPlainMarkupAt ~ webAddressChar).+) ~> t.WebAddress)
 
     def emailAddress =
-      rule("mailto:".? ~ capture(emailCharL.+ ~ '@' ~ (emailCharR.+ ~ '.').+ ~ emailCharR.+) ~> t.EmailAddress)
+      rule("mailto:".? ~ capture(
+        (!stopPlainMarkupAt ~ emailCharL).+ ~
+          '@' ~
+          ((!stopPlainMarkupAt ~ emailCharR).+ ~ '.').+ ~
+          (!stopPlainMarkupAt ~ emailCharR).+
+      ) ~> t.EmailAddress)
 
     def tex =
       rule(surround(G.texSurround) ~> (_.trim |> t.TeX))
@@ -173,14 +283,75 @@ object Parsers {
     def monospace =
       rule('`' ~ capture(oneOrMore(!('`' | NL | EOI) ~ ANY)) ~ '`' ~> t.Monospace)
 
+    protected def styleCheck(s: StyleType): Rule0 =
+      rule(test(true))
+
+    def style(s: StyleType): Rule1[t.Atom] =
+      rule(styleCheck(s) ~ s.prefix ~ !WSNL ~ styledInner(s) ~> ((i: t.styled.NonEmptyText) => makeStyle(s, i)))
+
+    private def makeStyle(s: StyleType, i: t.styled.NonEmptyText): t.Atom =
+      s match {
+        case StyleType.Bold          => t.Bold         (i)
+        case StyleType.Italic        => t.Italic       (i)
+        case StyleType.Strikethrough => t.Strikethrough(i)
+        case StyleType.Underline     => t.Underline    (i)
+      }
+
+    def styles: Rule1[t.Atom] =
+      rule(
+        style(StyleType.Bold) |
+        style(StyleType.Italic) |
+        style(StyleType.Strikethrough) |
+        style(StyleType.Underline)
+      )
+
     def plainTextMarkup =
-      rule( webAddress | emailAddress | tex | monospace )
+      rule(styles | tex | webAddress | emailAddress | monospace)
+  }
+
+  trait StyledInner extends TopBase with SingleLine {
+    val ctx: StyleCtx
+
+    // unused
+    override final protected val token: TokenRule = () => null
+
+    protected def additionalTokens: Rule1[t.Atom]
+
+    override protected def styleCheck(s: StyleType): Rule0 =
+      rule(test(ctx.allow(s)))
+
+    override protected def stopPlainMarkupAt: Rule0 =
+      rule(ctx.latest.suffix)
+
+    private def stopLiteral =
+      rule(ctx.latest.suffix | NL | EOI | additionalTokens | plainTextMarkup)
+
+    private def literal =
+      rule(literalUntil(() => stopLiteral))
+
+    private def innerToken: Rule1[t.Atom] =
+      rule(additionalTokens | plainTextMarkup | literal)
+
+    final def inline: Rule1[t.NonEmptyText] =
+      rule(oneOrMore(innerToken) ~ ctx.latest.suffix ~ popSeqToNEA)
   }
 
   trait NewLine extends Base {
     override val t: Atom.NewLine
     def blankLine = rule(OWS ~ NL ~ OWSNL ~ push(t.blankLine))
   }
+
+  def processCodeBlockCode(code: String): String =
+    code
+      .linesWithSeparators
+      .map(_.replaceFirst("[ \r\n]+$", "")) // right-trim all lines
+      .dropWhile(_.isEmpty)                 // remove leading blank lines
+      .toArray
+      .reverseIterator
+      .dropWhile(_.isEmpty)                // remove trailing blank lines
+      .toArray
+      .reverseIterator
+      .mkString("\n")
 
   trait CodeBlock extends Literal {
     override val t: Atom.CodeBlock with Atom.Literal
@@ -206,18 +377,7 @@ object Parsers {
     private val buildCodeBlock: (Int, Option[String], String, Int) => t.CodeBlock =
       (startIndent, lang, codeTxt, endIndent) => {
         val indent = startIndent min endIndent
-        val code =
-          codeTxt
-            .unindent(indent)
-            .linesWithSeparators
-            .map(_.replaceFirst("[ \r\n]+$", "")) // right-trim all lines
-            .dropWhile(_.isEmpty)                 // remove leading blank lines
-            .toArray
-            .reverseIterator
-            .dropWhile(_.isEmpty)                // remove trailing blank lines
-            .toArray
-            .reverseIterator
-            .mkString("\n")
+        val code = processCodeBlockCode(codeTxt.unindent(indent))
         t.CodeBlock(lang, code)
       }
   }

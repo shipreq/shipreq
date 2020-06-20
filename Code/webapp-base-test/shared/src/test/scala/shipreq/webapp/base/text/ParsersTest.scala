@@ -17,6 +17,7 @@ import shipreq.base.test._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{NonEmptyArraySeq, Valid}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.{ApplicableTagGD, Event}
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.{ProjectDsl, SampleProject6 => SP, TextShrink, UnsafeTypes}
 import shipreq.webapp.base.text.Atom.AnyAtom
@@ -93,23 +94,29 @@ object ParsersTest extends TestSuite {
         a = f(e)
         val sizeAfter = size()
 
-        def toText(x: ArraySeq[A]): String = x.mkString("(", ", ", ")").asJson.noSpaces
-        val je = toText(e)
-        val ja = toText(a)
+        def pairOfOutput(name: String, f: ArraySeq[A] => String): String = {
+          val es = f(e)
+          val as = f(a)
+          if (es == as)
+            s"""Expect & actual $name:
+               |${quoteString(es)}
+               |""".stripMargin.trim
+          else
+            s"""Expect $name:
+               |${quoteString(es)}
+               |
+               |Actual $name:
+               |${quoteString(as)}
+               |""".stripMargin.trim
+        }
 
         val errMsg =
           s"""====================================================================================================
-             |Expect AST: $je
+             |${pairOfOutput("AST", _.mkString("[", ", ", "]"))}
              |
-             |Actual AST: $ja
+             |${pairOfOutput("text", txt2str)}
              |
-             |Expect text:
-             |${txt2str(e)}%
-             |
-             |Actual text:
-             |${txt2str(a)}%
-             |
-             |Shrink rate: ${(sizeAfter / sizeBefore * 100).toInt}%
+             |Shrink rate: ${((1.0 - sizeAfter / sizeBefore) * 100).toInt}%
              |====================================================================================================
              |""".stripMargin
 
@@ -209,7 +216,7 @@ object ParsersTest extends TestSuite {
       }
     )
 
-  import Text.{CustomTextField => T, InlineIssueDesc => I}
+  import Text.{CustomTextField => T, InlineIssueDesc => I, StyledInnerFull => S}
   val P = {
     import ProjectDsl._
     import UnsafeTypes._
@@ -275,14 +282,14 @@ object ParsersTest extends TestSuite {
         assertEq(s"txt -> parsed -> txt:\n$text2", parse(p)(text2), e)
       }
 
-      def test(text: String)(as: T.Atom*)(implicit l: Line): Unit = {
+      def test(text: String)(as: T.Atom*)(implicit l: Line, p: Project = null): Unit = {
         testWithUcCtx(text, None)(as: _*)
         testWithUcCtx(text, Some(1))(as: _*)
         testWithUcCtx(text, Some(99999))(as: _*)
       }
 
-      def testWithUcCtx(text: String, currentUC: Option[ReqTypePos])(as: T.Atom*)(implicit l: Line): Unit =
-        testT(P, T.parse(_, currentUC), text)(as: _*)
+      def testWithUcCtx(text: String, currentUC: Option[ReqTypePos])(as: T.Atom*)(implicit l: Line, p: Project = null): Unit =
+        testT(Option(p).getOrElse(P), T.parse(_, currentUC), text)(as: _*)
 
       def testLit(text: String)(implicit l: Line): Unit =
         test(text)(T.Literal(text))
@@ -324,6 +331,179 @@ object ParsersTest extends TestSuite {
         "three"     - test("`hi`lo`")(M("hi"), L("lo`"))
         "multiline" - test("`omg\ncool`")(L("`omg"), T.blankLine, L("cool`")) // divergence from markdown
         "escape"    - test("` \\ \\\\ \\` \\\\` `")(M(" \\ \\\\ \\"), L(" \\\\"), M(" ")) // divergence from markdown
+      }
+
+      "styling" - {
+        "bold" - {
+          @inline def SS(i1: S.Atom, in: S.Atom*) = T.Bold(NonEmptyArraySeq(i1, in: _*))
+          "empty"   - test("****")(L("****"))
+          "spaceM"  - test("** **")(L("** **"))
+          "spaceL"  - test("** x**")(L("** x**"))
+          "spaceR"  - test("**x ****x **")(SS(S.Literal("x ")), SS(S.Literal("x")))
+          "words"   - test("**a b c**")(SS(S.Literal("a b c")))
+          "nl"      - test("**a\nc**")(L("**a"), T.blankLine, L("c**"))
+          "heading" - test("**# nope**")(SS(S.Literal("# nope")))
+          "tag"     - test("**#pri=high**")(SS(S.TagRef(2)))
+          "issue"   - test("**#TBD#TBD{ whatever}**")(SS(S.Issue(2, I.empty), S.Issue(2, I(I.Literal("whatever")))))
+          "lit"     - test("hey **there** mate!")(L("hey "), SS(S.Literal("there")), L(" mate!"))
+        }
+        "italic" - {
+          @inline def SS(i1: S.Atom, in: S.Atom*) = T.Italic(NonEmptyArraySeq(i1, in: _*))
+          "empty"   - test("////")(L("////"))
+          "spaceM"  - test("// //")(L("// //"))
+          "spaceL"  - test("// x//")(L("// x//"))
+          "spaceR"  - test("//x ////x //")(SS(S.Literal("x ")), SS(S.Literal("x")))
+          "words"   - test("//a b c//")(SS(S.Literal("a b c")))
+          "nl"      - test("//a\nc//")(L("//a"), T.blankLine, L("c//"))
+          "heading" - test("//# nope//")(SS(S.Literal("# nope")))
+          "tag"     - test("//#pri=high//")(SS(S.TagRef(2)))
+          "issue"   - test("//#TBD#TBD{ whatever}//")(SS(S.Issue(2, I.empty), S.Issue(2, I(I.Literal("whatever")))))
+          "lit"     - test("hey //there// mate!")(L("hey "), SS(S.Literal("there")), L(" mate!"))
+        }
+        "strikethrough" - {
+          @inline def SS(i1: S.Atom, in: S.Atom*) = T.Strikethrough(NonEmptyArraySeq(i1, in: _*))
+          "empty"   - test("~~~~")(L("~~~~"))
+          "spaceM"  - test("~~ ~~")(L("~~ ~~"))
+          "spaceL"  - test("~~ x~~")(L("~~ x~~"))
+          "spaceR"  - test("~~x ~~~~x ~~")(SS(S.Literal("x ")), SS(S.Literal("x")))
+          "words"   - test("~~a b c~~")(SS(S.Literal("a b c")))
+          "nl"      - test("~~a\nc~~")(L("~~a"), T.blankLine, L("c~~"))
+          "heading" - test("~~# nope~~")(SS(S.Literal("# nope")))
+          "tag"     - test("~~#pri=high~~")(SS(S.TagRef(2)))
+          "issue"   - test("~~#TBD#TBD{ whatever}~~")(SS(S.Issue(2, I.empty), S.Issue(2, I(I.Literal("whatever")))))
+          "lit"     - test("hey ~~there~~ mate!")(L("hey "), SS(S.Literal("there")), L(" mate!"))
+        }
+        "underline" - {
+          @inline def SS(i1: S.Atom, in: S.Atom*) = T.Underline(NonEmptyArraySeq(i1, in: _*))
+          "empty"      - test("____")(L("____"))
+          "spaceM"     - test("__ __")(L("__ __"))
+          "spaceL"     - test("__ x__")(L("__ x__"))
+          "spaceR"     - test("__x ____x __")(SS(S.Literal("x ")), SS(S.Literal("x")))
+          "words"      - test("__a b c__")(SS(S.Literal("a b c")))
+          "nl"         - test("__a\nc__")(L("__a"), T.blankLine, L("c__"))
+          "heading"    - test("__# nope__")(SS(S.Literal("# nope")))
+          "tag"        - test("__#pri=high ____#pri=high __")(SS(S.TagRef(2), S.Literal(" ")), SS(S.TagRef(2)))
+          "tag0"       - test("__#pri=high__")(SS(S.TagRef(2)))
+          "tagFirst"   - test("#pri=high__nice__")(T.TagRef(2), SS(S.Literal("nice")))
+          "tagOnly1"   - test("#pri=high__")(T.TagRef(2), T.Literal("__"))
+          "tagOnly2"   - test("#pri=high____")(T.TagRef(2), T.Literal("____"))
+          "issue"      - test("__#TBD#TBD{ whatever}__")(SS(S.Issue(2, I.empty), S.Issue(2, I(I.Literal("whatever")))))
+          "issueFirst" - test("#TBD__nice__")(T.Issue(2, I.empty), SS(S.Literal("nice")))
+          "issueOnly1" - test("#TBD__")(T.Issue(2, I.empty), T.Literal("__"))
+          "issueOnly2" - test("#TBD____")(T.Issue(2, I.empty), T.Literal("____"))
+          "lit"        - test("hey __there__ mate!")(L("hey "), SS(S.Literal("there")), L(" mate!"))
+          "emailOk1"   - test("a__b@c__d.io")(T.EmailAddress("a__b@c__d.io"))
+        //"emailOk2"   - test("__b@c__d.io")(T.EmailAddress("__b@c__d.io"))
+          "email"      - test("__x a__b@c__d.io __")(T.Underline(NonEmptyArraySeq(S.Literal("x a"))), T.EmailAddress("b@c__d.io"), T.Literal(" __"))
+        }
+
+        "combos" - {
+          "seq" - test("__a__**b**~~c ~~ //d//")(
+            T.Underline(NonEmptyArraySeq(S.Literal("a"))),
+            T.Bold(NonEmptyArraySeq(S.Literal("b"))),
+            T.Strikethrough(NonEmptyArraySeq(S.Literal("c "))),
+            T.Literal(" "),
+            T.Italic(NonEmptyArraySeq(S.Literal("d"))),
+          )
+
+          "ok1" - test("__**hehe**__")(
+            T.Underline(NonEmptyArraySeq(
+              S.Bold(NonEmptyArraySeq(
+                S.Literal("hehe"))))))
+
+          "ok2" - test("__**hehe** //it ~~seems~~ to work//__")(
+            T.Underline(NonEmptyArraySeq(
+              S.Bold(NonEmptyArraySeq(
+                S.Literal("hehe"))),
+              S.Literal(" "),
+              S.Italic(NonEmptyArraySeq(
+                S.Literal("it "),
+                S.Strikethrough(NonEmptyArraySeq(
+                  S.Literal("seems"))),
+                S.Literal(" to work"))))))
+
+          "self2" - test("__**hehe** **it __seems__ to work**__")(
+            T.Underline(NonEmptyArraySeq(
+              S.Bold(NonEmptyArraySeq(
+                S.Literal("hehe"))),
+              S.Literal(" "),
+              S.Bold(NonEmptyArraySeq(
+                S.Literal("it __seems__ to work"))))))
+
+          "litMix" - test("x__u__y__U__z")(
+            L("x"),
+            T.Underline(NonEmptyArraySeq(
+              S.Literal("u"),
+            )),
+            L("y"),
+            T.Underline(NonEmptyArraySeq(
+              S.Literal("U"),
+            )),
+            L("z"),
+          )
+
+          "ptm1" - test("**asd@asd.com**")(
+            T.Bold(NonEmptyArraySeq(
+              S.EmailAddress("asd@asd.com"),
+            ))
+          )
+
+          "ptm1b" - test("__asd@as_d.co_m__")(
+            T.Underline(NonEmptyArraySeq(
+              S.EmailAddress("asd@as_d.co_m"),
+            ))
+          )
+
+          "ptm1c" - test("~~x~~x@x.com")(
+            T.Strikethrough(NonEmptyArraySeq(
+              S.Literal("x"),
+            )),
+            T.EmailAddress("x@x.com"),
+          )
+
+          "ptm1w" - test("**email me at asd@asd.com ok!**")(
+            T.Bold(NonEmptyArraySeq(
+              S.Literal("email me at "),
+              S.EmailAddress("asd@asd.com"),
+              S.Literal(" ok!"),
+            ))
+          )
+
+          "ptm2" - test("**__`mono!`__**")(
+            T.Bold(NonEmptyArraySeq(
+              S.Underline(NonEmptyArraySeq(
+                S.Monospace("mono!"),
+              ))
+            ))
+          )
+
+          "ul" - {
+            val id = ApplicableTagId(1237645)
+            val zs = List("z", "Z")
+            for {
+              a <- zs
+              b <- zs
+            } {
+              val vs = ApplicableTagGD(
+                applicableReqTypes = ApplicableReqTypes.empty,
+                children           = Vector.empty,
+                colour             = None,
+                desc               = None,
+                key                = HashRefKey(a),
+                parents            = Map.empty,
+              )
+              implicit val p = applyEventSuccessfully(P, Event.ApplicableTagCreate(id, vs))
+              test(s"* __#${b}__")(
+                T.UnorderedList(NonEmptyArraySeq(
+                  ArraySeq(T.Underline(NonEmptyArraySeq(S.TagRef(id)))))))
+            }
+          }
+
+          "innerWS" - test("**X  Y  ****X  Y  **")(
+            T.Bold(NonEmptyArraySeq(S.Literal("X Y "))),
+            T.Bold(NonEmptyArraySeq(S.Literal("X Y"))), // DataProp requires that last is not allowed to end in whitespace
+          )
+        }
       }
 
       "list" - {

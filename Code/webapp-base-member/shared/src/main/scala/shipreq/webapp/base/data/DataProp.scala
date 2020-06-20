@@ -428,6 +428,10 @@ object DataProp {
       case a: PlainTextMarkup # EmailAddress   => emailAddress(a)
       case a: PlainTextMarkup # Monospace      => monospace(a)
       case a: PlainTextMarkup # TeX            => tex(a)
+      case a: PlainTextMarkup # Bold           => anyText(a.inner.whole)
+      case a: PlainTextMarkup # Italic         => anyText(a.inner.whole)
+      case a: PlainTextMarkup # Underline      => anyText(a.inner.whole)
+      case a: PlainTextMarkup # Strikethrough  => anyText(a.inner.whole)
       case a: ListMarkup      # UnorderedList  => anyTextV(a.items.whole)
       case _: ContentRef      # ReqRef         => nop
       case _: ContentRef      # CodeRef        => nop

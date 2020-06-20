@@ -47,6 +47,7 @@ object Atom {
   sealed abstract class Type(final val group: TypeGroup)
   object Type {
     case object BlankLine      extends Type(TypeGroup.NewLine)
+    case object Bold           extends Type(TypeGroup.PlainTextMarkup)
     case object CodeBlock      extends Type(TypeGroup.CodeBlock)
     case object CodeRef        extends Type(TypeGroup.ContentRef)
     case object EmailAddress   extends Type(TypeGroup.PlainTextMarkup)
@@ -57,11 +58,14 @@ object Atom {
     case object Heading5       extends Type(TypeGroup.Headings)
     case object Heading6       extends Type(TypeGroup.Headings)
     case object Issue          extends Type(TypeGroup.Issue)
+    case object Italic         extends Type(TypeGroup.PlainTextMarkup)
     case object Literal        extends Type(TypeGroup.Literal)
     case object Monospace      extends Type(TypeGroup.PlainTextMarkup)
     case object ReqRef         extends Type(TypeGroup.ContentRef)
+    case object Strikethrough  extends Type(TypeGroup.PlainTextMarkup)
     case object TagRef         extends Type(TypeGroup.TagRef)
     case object TeX            extends Type(TypeGroup.PlainTextMarkup)
+    case object Underline      extends Type(TypeGroup.PlainTextMarkup)
     case object UnorderedList  extends Type(TypeGroup.ListMarkup)
     case object UseCaseStepRef extends Type(TypeGroup.ContentRef)
     case object WebAddress     extends Type(TypeGroup.PlainTextMarkup)
@@ -83,9 +87,13 @@ object Atom {
       case _: ListMarkup      # UnorderedList  => UnorderedList
       case _: Literal         # Literal        => Literal
       case _: NewLine         # BlankLine      => BlankLine
+      case _: PlainTextMarkup # Bold           => Bold
       case _: PlainTextMarkup # EmailAddress   => EmailAddress
+      case _: PlainTextMarkup # Italic         => Italic
       case _: PlainTextMarkup # Monospace      => Monospace
+      case _: PlainTextMarkup # Strikethrough  => Strikethrough
       case _: PlainTextMarkup # TeX            => TeX
+      case _: PlainTextMarkup # Underline      => Underline
       case _: PlainTextMarkup # WebAddress     => WebAddress
       case _: TagRef          # TagRef         => TagRef
     }
@@ -274,48 +282,94 @@ object Atom {
     }
   }
 
-  trait PlainTextMarkup extends Base {
-    sealed trait PlainTextMarkup extends Atom {
-      type Self <: PlainTextMarkup
-      val value: String
-      def copy(title: String): Self
+  trait PlainTextMarkup extends Base { self =>
+
+    /** Type of text that can be styled (i.e. be children of bold/italic/etc) */
+    val styled: Literal
+
+    final type Styled = styled.NonEmptyText
+
+    sealed trait PlainTextMarkupOfString extends Atom {
       override final def isPlain = false
       override final def containsMultipleLines = false
+      type Self <: PlainTextMarkupOfString
+      val value: String
+      def copy(value: String): Self
 
       // For tests
 
-      override def modText(f: String => String): this.type =
+      override final def modText(f: String => String): this.type =
         copy(f(value)).asInstanceOf[this.type]
 
-      override def modTextF[F[_]](f: String => F[String])(implicit F: Applicative[F]): F[this.type] =
+      override final def modTextF[F[_]](f: String => F[String])(implicit F: Applicative[F]): F[this.type] =
         F.map(f(value))(copy(_).asInstanceOf[this.type])
     }
 
+    sealed trait PlainTextMarkupStyled extends Atom {
+      final val parent: self.type = self
+      override final def isPlain = false
+      override final def containsMultipleLines = false
+      type Self <: PlainTextMarkupStyled
+      val inner: Styled
+      def copy(inner: Styled): Self
+
+      // For tests
+
+      override final def modText(f: String => String): this.type =
+        copy(inner.map(_.modText(f))).asInstanceOf[this.type]
+
+      override final def modTextF[F[_]](f: String => F[String])(implicit F: Applicative[F]): F[this.type] =
+        F.map(inner.traverse(_.modTextF(f).asInstanceOf[F[styled.Atom]]))(copy(_).asInstanceOf[this.type])
+
+      final def unsafeWithInner(inner: NonEmptyArraySeq[Base#Atom]): Self =
+        copy(inner.asInstanceOf[Styled])
+    }
+
     /** Web address, like "https://www.google.com" */
-    case class WebAddress(value: String) extends PlainTextMarkup {
+    case class WebAddress(value: String) extends PlainTextMarkupOfString {
       override type Self = WebAddress
       override def copy(title: String) = WebAddress(title)
     }
 
     /** Email address, like "bob@hotmail.com" */
-    case class EmailAddress(value: String) extends PlainTextMarkup {
+    case class EmailAddress(value: String) extends PlainTextMarkupOfString {
       override type Self = EmailAddress
       override def copy(title: String) = EmailAddress(title)
     }
 
     /** Content in TeX format, like "\frac{22}{7}-\pi" */
-    case class TeX(value: String) extends PlainTextMarkup {
+    case class TeX(value: String) extends PlainTextMarkupOfString {
       override type Self = TeX
       override def copy(title: String) = TeX(title)
     }
 
     /** Inline monospace block, like `omg_yes("no")`
      *
-     * @param value Non-empty. Guarded by ParsersTest.
+     * @param value Non-empty. Guarded by DataProp & ParsersTest.
      */
-    case class Monospace(value: String) extends PlainTextMarkup {
+    case class Monospace(value: String) extends PlainTextMarkupOfString {
       override type Self = Monospace
       override def copy(title: String) = Monospace(title)
+    }
+
+    case class Bold(inner: Styled) extends PlainTextMarkupStyled {
+      override type Self = Bold
+      override def copy(inner: Styled) = Bold(inner)
+    }
+
+    case class Italic(inner: Styled) extends PlainTextMarkupStyled {
+      override type Self = Italic
+      override def copy(inner: Styled) = Italic(inner)
+    }
+
+    case class Strikethrough(inner: Styled) extends PlainTextMarkupStyled {
+      override type Self = Strikethrough
+      override def copy(inner: Styled) = Strikethrough(inner)
+    }
+
+    case class Underline(inner: Styled) extends PlainTextMarkupStyled {
+      override type Self = Underline
+      override def copy(inner: Styled) = Underline(inner)
     }
   }
 
@@ -401,13 +455,17 @@ object Atom {
   UnivEq[ReqId]
   UnivEq[UseCaseStepId]
 
+  trait HeadingTitleFull     extends SingleLine with Issue with ContentRef with TagRef
+  trait HeadingTitleNoIssues extends SingleLine            with ContentRef with TagRef
+
+  trait StyledInnerFull       extends SingleLine with Issue with ContentRef with TagRef
+  trait StyledInnerContentRef extends SingleLine            with ContentRef
+  trait StyledInnerNoIssues   extends SingleLine            with ContentRef with TagRef
+  trait StyledInnerNoTags     extends SingleLine with Issue with ContentRef
+
   /** The main title/desc of a top-level requirement. */
   trait ReqTitle extends SingleLine
     with Issue
     with ContentRef
     with TagRef
-
-  trait HeadingTitleFull     extends SingleLine with Issue with ContentRef with TagRef
-  trait HeadingTitleNoIssues extends SingleLine            with ContentRef with TagRef
-
 }

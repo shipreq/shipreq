@@ -93,7 +93,11 @@ object UiText {
       case Text.DeletionReason       => Some(SpecialBuiltInField.DeletionReason.name.toLowerCase.pluralise(2) )
       case Text.ManualIssue          => Some(Issues.looseIssues )
       case Text.HeadingTitleFull
-         | Text.HeadingTitleNoIssues => None
+         | Text.HeadingTitleNoIssues
+         | Text.StyledInnerFull
+         | Text.StyledInnerContentRef
+         | Text.StyledInnerNoIssues
+         | Text.StyledInnerNoTags    => None
     }
   }
 

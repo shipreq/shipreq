@@ -1,6 +1,7 @@
 package shipreq.base.test
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.univeq.UnivEq
 import scala.annotation.tailrec
 import scala.collection.View
 import scala.collection.immutable.{ArraySeq, IndexedSeqOps}
@@ -33,6 +34,11 @@ object Shrinker {
     var self: Shrinker[A] = apply(null)
     self = f(a => RoseTree(a, self.shrink(a)))
     self
+  }
+
+  def constValues[A: UnivEq](values: A*): Shrinker[A] = {
+    val as = values.toSet
+    Shrinker(a => View.fromIteratorProvider(() => (as - a).iterator.map(RoseTree(_, View.empty))))
   }
 
   def iterator[A](f: A => Iterator[RoseTree[A]]): Shrinker[A] =
@@ -127,11 +133,30 @@ object Shrinker {
       }
     }
 
+  def string(sc: Shrinker[Char]): Shrinker[String] =
+    combine(removeChars, shrinkChars(sc))
+
   lazy val string: Shrinker[String] =
     string(char)
 
-  def string(sc: Shrinker[Char]): Shrinker[String] =
-    combine(removeChars, shrinkChars(sc))
+  lazy val nonEmptyRemoveChars: Shrinker[String] =
+    recursive[String] { f =>
+      iterator { root =>
+        if (root.length <= 1)
+          Iterator.empty
+        else
+          root.indices.iterator.map { idx =>
+            val child = root.patch(idx, Nil, 1)
+            f(child)
+          }
+      }
+    }
+
+  def nonEmptyString(sc: Shrinker[Char]): Shrinker[String] =
+    combine(nonEmptyRemoveChars, shrinkChars(sc))
+
+  lazy val nonEmptyString: Shrinker[String] =
+    nonEmptyString(char)
 
   def removeElements[F[x] <: IndexedSeqOps[x, F, F[x]], A]: Shrinker[F[A]] =
     recursive[F[A]] { f =>
