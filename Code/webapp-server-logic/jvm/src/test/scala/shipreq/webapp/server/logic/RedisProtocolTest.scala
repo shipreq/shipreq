@@ -46,8 +46,8 @@ object RedisProtocolTest extends TestSuite {
         }
       }
 
-      "v01" - run(1, false) // Snapshot differs now cos OtherTags has been added to Project.empty and thus the result
-      "v02" - run(2)
+      "v10" - run(0, false) // Snapshot differs now cos OtherTags has been added to Project.empty and thus the result
+      "v11" - run(1)
     }
 
     // =================================================================================================================

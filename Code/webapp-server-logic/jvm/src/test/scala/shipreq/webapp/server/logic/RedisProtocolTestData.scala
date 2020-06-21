@@ -60,13 +60,14 @@ object RedisProtocolTestData {
     Encoder.forProduct3(RowEvent, RowEventBinary, RowSnapshotBinary)(a => (a.eventJson, a.eventJson, a.snapshotBinary))
 
   def resourceName(ver: Int): String =
-    "RedisProtocolTestData/v%02d.json".format(ver)
+    s"RedisProtocolTestData/v1.$ver.json"
 
   def load(ver: Int): Vector[Row] =
     decode[Vector[Row]](FileUtils.readResource(resourceName(ver))).getOrThrow()
 
   def main(args: Array[String]): Unit = {
     locally(picklerEvent) // Ensure the classpath is correct - thanks SBT
+    val ver = picklerEvent.version.minor.value
 
     val events = generateEvents()
     val rows = makeRows(events)
@@ -77,7 +78,7 @@ object RedisProtocolTestData {
     FileUtils.write(filename, content)
     printf("File size: %,d\n", content.length)
 
-    println(s"mv $filename webapp-server-logic/jvm/src/test/resources/${resourceName(2)}")
+    println(s"mv $filename webapp-server-logic/jvm/src/test/resources/${resourceName(ver)}")
 
     println("Done")
   }
