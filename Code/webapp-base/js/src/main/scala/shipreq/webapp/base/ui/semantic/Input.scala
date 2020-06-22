@@ -17,7 +17,7 @@ object Input {
   val Action      = Base(^.cls := "action")
   val ActionError = Action(error)
 
-  val errorAttr = VdomAttr("data-err") // TODO should be .devOnly but breaks tests in release mode
+  val errorAttr = VdomAttr.elidable("data-err")
 
   val validationErr = TagMod(
     ^.color      := "#9f3a38",

@@ -48,7 +48,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* Fix: "TODO should be .devOnly but breaks tests in release mode"
 * Rich text preview should be on the right (instead of below) in ReqDetail (and/or) introduce zen mode for multiline editors
 * Fix bug: commit change -> session expires -> re-auth -> connection re-established but change never completes: stuck spinning around
 
