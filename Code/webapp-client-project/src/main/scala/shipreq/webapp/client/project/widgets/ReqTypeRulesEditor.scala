@@ -13,7 +13,6 @@ import monocle.Lens
 import monocle.macros.Lenses
 import nyaya.util.Multimap
 import org.scalajs.dom.html
-import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
 import scalacss.ScalaCssReact._
 import scalaz.std.list._
@@ -84,7 +83,6 @@ object ReqTypeRulesEditor {
         case Resolution.DefaultTo(_)  => value.legalDefault(legalOptions).map(Resolution.DefaultTo(_))
       }
 
-    @nowarn("cat=unused")
     def resultWhenValidI(implicit ev: D =:= Impossible): Option[FieldReqTypeRules[D]] =
       resultWhenValid(Set.empty)
 
