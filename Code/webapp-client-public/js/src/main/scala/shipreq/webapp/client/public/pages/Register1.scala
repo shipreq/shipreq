@@ -54,16 +54,18 @@ object Register1 {
   final class Backend($: BackendScope[Props, Unit]) {
 
     private def submitCB(p: Props): Option[Callback] =
-      for {
-        email <- p.state.value.validated
-        if p.state.value.formEnabled is Enabled
-      } yield
-        p.asyncW.forgetFailure(
-          p.submit(email).flatTapSync {
-            case \/-(_) => $.props.flatMap(_.state.modState(_.copy(submitted = true)))
-            case -\/(e) => GeneralTheme.showErrorMsg(e)
-          }
-        )
+      if (p.state.value.formEnabled is Disabled)
+        None
+      else
+        for {
+          email <- p.state.value.validated
+        } yield
+          p.asyncW.forgetFailure(
+            p.submit(email).flatTapSync {
+              case \/-(_) => $.props.flatMap(_.state.modState(_.copy(submitted = true)))
+              case -\/(e) => GeneralTheme.showErrorMsg(e)
+            }
+          )
 
     private val attemptSubmit: Callback =
       $.props.flatMap(submitCB(_).getOrEmpty)

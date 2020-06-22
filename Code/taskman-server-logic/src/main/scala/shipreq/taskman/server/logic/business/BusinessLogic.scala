@@ -129,7 +129,7 @@ final class BusinessLogic[F[_]](emails        : Emails,
 
     def apply(m: TaskHeader, l: LandingPageHit): MO = {
       val c = emails.landingPage(m, l)
-      val fx = updateMailingListIfNeeded(l.email, l.name, l.newsletter) >> createSupportTicket(m, l, c)
+      val fx = updateMailingListIfNeeded(l.email, l.name, l.newsletter) >> createSupportTicket(l, c)
       emails.archive(c) match {
         case None     => complete(fx)
         case Some(op) => fx >> sendEmailAsync(op)
@@ -159,7 +159,7 @@ final class BusinessLogic[F[_]](emails        : Emails,
       }
     }
 
-    def createSupportTicket(m: TaskHeader, l: LandingPageHit, c: Email.Content): Fx[Support.TicketId] = {
+    def createSupportTicket(l: LandingPageHit, c: Email.Content): Fx[Support.TicketId] = {
       import Support._
       val from = EmailAddr(s"${l.name} <${l.email.value}>")
       val p = if (l.msg.isDefined) Priority.Medium else Priority.Low

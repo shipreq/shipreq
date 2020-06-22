@@ -70,7 +70,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
     private val keyHandlerBase =
       KeyHandlers.base(
         KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
-        KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality))
+        KeyboardTheme.commitCO($.props.map(_.status.getCommit)))
 
     val textareaConst: TagMod = {
       val updateState: ReactEventFromTextArea => Callback =

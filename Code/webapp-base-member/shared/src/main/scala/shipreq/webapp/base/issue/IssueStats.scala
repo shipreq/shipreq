@@ -2,6 +2,7 @@ package shipreq.webapp.base.issue
 
 import japgolly.univeq.UnivEq
 import nyaya.prop._
+import scala.annotation.nowarn
 import shipreq.webapp.base.data.{LiveCodeGroup, ReqId}
 
 final case class IssueStats(total     : Int,
@@ -34,7 +35,7 @@ object IssueStats {
       }
     }
 
-    @inline def addInRcg(rcg: LiveCodeGroup): Unit =
+    @inline def addInRcg(@nowarn("cat=unused") rcg: LiveCodeGroup): Unit =
       inRcg += 1
 
     @inline def addInConfig(): Unit =

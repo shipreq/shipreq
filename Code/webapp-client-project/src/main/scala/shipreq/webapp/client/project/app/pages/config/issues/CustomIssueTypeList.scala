@@ -30,78 +30,75 @@ private[issues] object CustomIssueTypeList {
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  private val tableHeader =
+    <.thead(
+      <.tr(
+        <.th(FieldNames.hashRefKey),
+        <.th(FieldNames.desc),
+        <.th("Usage", *.listTableUsage(Live)),
+      ))
 
-    private val tableHeader =
-      <.thead(
-        <.tr(
-          <.th(FieldNames.hashRefKey),
-          <.th(FieldNames.desc),
-          <.th("Usage", *.listTableUsage(Live)),
-        ))
+  private def renderEmpty: VdomNode =
+    Message(
+      Message.Style(Message.Type.Info),
+      Icon.InfoCircle,
+      "No issue types",
+      "Create new issue types using the button above.")
 
-    private def renderEmpty: VdomNode =
-      Message(
-        Message.Style(Message.Type.Info),
-        Icon.InfoCircle,
-        "No issue types",
-        "Create new issue types using the button above.")
+  private def renderTable(p: Props, rows: Iterator[CustomIssueType]): VdomNode = {
 
-    private def renderTable(p: Props, rows: Iterator[CustomIssueType]): VdomNode = {
+    val modificationEnabled: Enabled =
+      p.enabled & Enabled.when(p.select.isDefined)
 
-      val modificationEnabled: Enabled =
-        p.enabled & Enabled.when(p.select.isDefined)
-
-      def rowState(id: CustomIssueTypeId): *.RowState =
-        if (p.selected.exists(_ ==* id))
-          *.RowState.Selected
-        else if (modificationEnabled is Disabled)
-          *.RowState.Disabled
-        else
-          *.RowState.Enabled
-
-      def renderRow(i: CustomIssueType): VdomTag = {
-
-        val select: ReactEvent => Option[Callback] =
-          e => p.select.map(_(i.id).asEventDefault(e).void)
-
-        val td = <.td(*.listTableCell(i.live))
-
-        <.tr(
-          *.listTableRow((rowState(i.id), i.live)),
-          ^.key := i.id.value,
-          ^.onClick ==>? select,
-
-          td(i.key.with_#),
-          td(i.desc.whenDefined),
-
-          <.td(
-            *.listTableUsage(i.live),
-            p.usage.customIssueTypeLink(i.id, p.filterDead)))
-      }
-
-      <.table(
-        *.listTable,
-        p.onClickAnywhere.whenDefined(^.onClick --> _),
-        tableHeader,
-        <.tbody(
-          rows.toVdomArray(renderRow)))
-    }
-
-    def render(p: Props): VdomNode = {
-      val rows =
-        MutableArray(p.filterDead.filterFn.iteratorBy(p.customIssueTypes.valuesIterator)(_.live))
-          .sortBy(_.key.value)
-
-      if (rows.isEmpty)
-        renderEmpty
+    def rowState(id: CustomIssueTypeId): *.RowState =
+      if (p.selected.exists(_ ==* id))
+        *.RowState.Selected
+      else if (modificationEnabled is Disabled)
+        *.RowState.Disabled
       else
-        renderTable(p, rows.iterator)
+        *.RowState.Enabled
+
+    def renderRow(i: CustomIssueType): VdomTag = {
+
+      val select: ReactEvent => Option[Callback] =
+        e => p.select.map(_(i.id).asEventDefault(e).void)
+
+      val td = <.td(*.listTableCell(i.live))
+
+      <.tr(
+        *.listTableRow((rowState(i.id), i.live)),
+        ^.key := i.id.value,
+        ^.onClick ==>? select,
+
+        td(i.key.with_#),
+        td(i.desc.whenDefined),
+
+        <.td(
+          *.listTableUsage(i.live),
+          p.usage.customIssueTypeLink(i.id, p.filterDead)))
     }
+
+    <.table(
+      *.listTable,
+      p.onClickAnywhere.whenDefined(^.onClick --> _),
+      tableHeader,
+      <.tbody(
+        rows.toVdomArray(renderRow)))
+  }
+
+  private def render(p: Props): VdomNode = {
+    val rows =
+      MutableArray(p.filterDead.filterFn.iteratorBy(p.customIssueTypes.valuesIterator)(_.live))
+        .sortBy(_.key.value)
+
+    if (rows.isEmpty)
+      renderEmpty
+    else
+      renderTable(p, rows.iterator)
   }
 
   val Component = ScalaComponent.builder[Props]
-    .renderBackend[Backend]
+    .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build
 }

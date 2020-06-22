@@ -5,7 +5,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq._
 import monocle._
 import nyaya.prop.Prop
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.collection.AbstractIterator
 import scalaz.syntax.equal._
 import scalaz.{Applicative, Equal}
@@ -77,7 +77,7 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
    * @return `None` if nothing was changed.
    */
   def modifyChildrenAtA[B >: A](loc: ParentLocation)(f: Children[A] => Option[Children[B]]): Option[VectorTree[B]] =
-    _modifyAt[B, VectorTree[B]](loc :+ 0 asParentLoc)((c, i, n) => f(c))((c, _) => VectorTree(c))
+    _modifyAt[B, VectorTree[B]]((loc :+ 0).asParentLoc)((c, _, _) => f(c))((c, _) => VectorTree(c))
 
   def modifyNodeAt[B >: A](loc: Location)(f: Node[A] => Node[B]): Option[VectorTree[B]] =
     _modifyAt[B, VectorTree[B]](loc.asParentLoc)((c, i, n) => Some(c.updated(i, f(n))))((c, _) => VectorTree(c))
@@ -175,7 +175,9 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
       )
     }
 
-  @inline def shiftLeftV(at: Location, f: Location => Validity): Option[VectorTree[A]] =
+  @inline
+  @nowarn("cat=unused")
+  def shiftLeftV(at: Location, f: Location => Validity): Option[VectorTree[A]] =
     shiftLeft(at)
 
   def shiftLeftIterator[B](f: (Location, A) => B): Iterator[B] =
@@ -448,7 +450,9 @@ object VectorTree extends VectorTreeLowPri {
   def canShiftLeft(at: Location): Permission =
     Allow when (at.length >= 2)
 
-  @inline def canShiftLeftV(at: Location, f: Location => Validity): Permission =
+  @inline
+  @nowarn("cat=unused")
+  def canShiftLeftV(at: Location, f: Location => Validity): Permission =
     canShiftLeft(at)
 
   def canShiftRight(at: Location): Permission =

@@ -1,5 +1,6 @@
 package shipreq.webapp.base.jsfacade
 
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
 
@@ -11,6 +12,7 @@ import scala.scalajs.js.annotation._
  */
 @JSGlobal("katex")
 @js.native
+@nowarn("cat=unused")
 object KaTeX extends js.Object {
 
   //def render(math: String, element: Element): Unit = js.native

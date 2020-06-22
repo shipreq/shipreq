@@ -124,50 +124,48 @@ object ImpFieldEditor {
 
   // ===================================================================================================================
 
-  final class Backend($: BackendScope[Props, Unit]) {
-    def render(p: Props): VdomNode =
-      if (p.isPossible) {
+  private def render(p: Props): VdomNode =
+    if (p.isPossible) {
 
-        val rules =
-          ReqTypeRulesEditor.NoDefault.Component(
-            ReqTypeRulesEditor.Props.noDefaults(
-              state      = p.state.zoomStateL(State.rules),
-              reqTypes   = p.cfg.reqTypes,
-              filterDead = p.filterDead,
-              enabled    = p.enabled))
+      val rules =
+        ReqTypeRulesEditor.NoDefault.Component(
+          ReqTypeRulesEditor.Props.noDefaults(
+            state      = p.state.zoomStateL(State.rules),
+            reqTypes   = p.cfg.reqTypes,
+            filterDead = p.filterDead,
+            enabled    = p.enabled))
 
-        p.state.value match {
+      p.state.value match {
 
-          case _: State.ForUpdate =>
-            <.div(rules)
+        case _: State.ForUpdate =>
+          <.div(rules)
 
-          case s: State.ForCreate =>
+        case s: State.ForCreate =>
 
-            val sourceSelect =
-              Dropdown.Props.Optional[ReqTypeId](
-                items    = p.reqTypeItems,
-                selected = s.reqType.flatMap(p.cfg.reqTypes.get).map(_.mnemonic.value),
-                enabled  = p.enabled)(
-                onChange = o => p.state.setState(s.copy(Some(o.value)))
-              ).render
+          val sourceSelect =
+            Dropdown.Props.Optional[ReqTypeId](
+              items    = p.reqTypeItems,
+              selected = s.reqType.flatMap(p.cfg.reqTypes.get).map(_.mnemonic.value),
+              enabled  = p.enabled)(
+              onChange = o => p.state.setState(s.copy(Some(o.value)))
+            ).render
 
-            val sourceField =
-              Form.Field.ofEditor(sourceSelect)
-                .inline
-                .withLabel(FieldNames.impFieldSource)
-                .withValidated(DataValidators.field.impSource.unnamedFn(p.validatorState)(s.reqType))
-                .withValidationUX(ValidationUX.Highlight)
-                .withEnabled(p.enabled)
+          val sourceField =
+            Form.Field.ofEditor(sourceSelect)
+              .inline
+              .withLabel(FieldNames.impFieldSource)
+              .withValidated(DataValidators.field.impSource.unnamedFn(p.validatorState)(s.reqType))
+              .withValidationUX(ValidationUX.Highlight)
+              .withEnabled(p.enabled)
 
-            <.div(Form(sourceField)(ValidationUX.Full), rules)
-        }
-      } else {
-
-        // Not possible
-        val msg = Shared.noSourcesMsg(FieldNames.impFieldSource, "implication", p.router, Routes.Page.CfgReqTypes)
-        <.div(msg) // Wrap in div for tests
+          <.div(Form(sourceField)(ValidationUX.Full), rules)
       }
-  }
+    } else {
+
+      // Not possible
+      val msg = Shared.noSourcesMsg(FieldNames.impFieldSource, "implication", p.router, Routes.Page.CfgReqTypes)
+      <.div(msg) // Wrap in div for tests
+    }
 
   implicit val reusabilityStateC: Reusability[State.ForCreate] = Reusability.derive
   implicit val reusabilityStateU: Reusability[State.ForUpdate] = Reusability.derive
@@ -175,7 +173,7 @@ object ImpFieldEditor {
   implicit val reusabilityProps : Reusability[Props          ] = Reusability.derive
 
   val Component = ScalaComponent.builder[Props]
-    .renderBackend[Backend]
+    .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build
 }

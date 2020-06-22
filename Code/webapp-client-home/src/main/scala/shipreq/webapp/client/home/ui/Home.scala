@@ -108,7 +108,7 @@ object HomeContent {
     @inline def render = Component(this)
   }
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  final class Backend {
 
     val inputMod: TagMod =
       TagMod(^.placeholder := "New project name", Styles.createProjectInput)

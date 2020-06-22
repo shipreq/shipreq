@@ -2,7 +2,7 @@ package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react.{AsyncCallback, Callback}
 import org.scalajs.dom.console
-import scala.annotation.elidable
+import scala.annotation.{elidable, nowarn}
 import scala.scalajs.js
 import scala.scalajs.js.{UndefOr, undefined}
 
@@ -32,6 +32,7 @@ object LoggerJs {
   private final val L = elidable.INFO
 
   @js.native
+  @nowarn("cat=unused")
   private trait Console2 extends js.Object {
     def debug(message: js.Any, optionalParams: js.Any*): Unit = js.native
     def time(label: String): Unit = js.native

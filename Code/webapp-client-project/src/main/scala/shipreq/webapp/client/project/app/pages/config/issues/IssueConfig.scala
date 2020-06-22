@@ -171,7 +171,7 @@ object IssueConfig {
           submitCmd = submitCmd(p, _, _, _),
           deleteCmd = UpdateConfigCmd.CustomIssueTypeDelete)
 
-      def customIssueTypeEditor(itOption: Option[CustomIssueType], enabled: Enabled) =
+      def customIssueTypeEditor(enabled: Enabled) =
         CustomIssueTypeEditor.Props(
           state   = args.state,
           project = p.project.config,
@@ -181,12 +181,12 @@ object IssueConfig {
       editorType match {
 
         case EditorType.Editor(itOption) =>
-          val editor  = customIssueTypeEditor(itOption, Enabled)
+          val editor  = customIssueTypeEditor(Enabled)
           val buttons = createOrUpdateButtons(itOption.map(_.id)).render
           <.div(header, editor, buttons)
 
         case EditorType.Dead(i) =>
-          val editor = customIssueTypeEditor(Some(i), Disabled)
+          val editor = customIssueTypeEditor(Disabled)
           val buttons = EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.CustomIssueTypeRestore(i.id), _, _)).render
           <.div(header, editor, buttons)
       }

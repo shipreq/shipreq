@@ -323,7 +323,7 @@ trait ApplyReqCodeLogic {
     def restoreBelongingToReqs(reqIds: Set[ReqId]): Eval[Unit] =
       getTrie.flatMap(restoreBelongingToReqsT(_, reqIds)).flatMap(Project.reqCodeTrie.set)
 
-    def restoreGroupAtCodeT(trie: Trie, id: ReqCodeId, code: Value): Eval[Trie] =
+    def restoreGroupAtCodeT(trie: Trie, code: Value): Eval[Trie] =
       needData(trie, code).flatMap {
         case d: Inactive =>
           // ReqCode is available. Restore simply.
@@ -349,7 +349,7 @@ trait ApplyReqCodeLogic {
     def restoreGroupsByIdT(t0: Trie, ids: Iterable[ReqCodeGroupId]): Eval[Trie] =
       needCodeGroups(ids, (_, _)).flatMap(ivs =>
         foldMapBind(t0, ivs)(iv => t =>
-          restoreGroupAtCodeT(t, iv._1, iv._2)))
+          restoreGroupAtCodeT(t, iv._2)))
 
     private def addCodesToReq(target: ReqId, mm: Multimap[ReqCode.Value, Set, ApReqCodeId]): Vector[AddReq] = {
       // Result order is important here

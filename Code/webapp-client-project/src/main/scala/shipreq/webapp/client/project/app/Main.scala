@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.{BaseUrl, Router}
 import java.time.Duration
 import org.scalajs.dom.window.location
+import scala.annotation.nowarn
 import scala.scalajs.js.annotation.JSExportTopLevel
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{ErrorMsg, Retries, Url}
@@ -34,7 +35,7 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
     val protocol  = ProjectSpaProtocols.WebSocket(i.projectId)
     val wsUrlBase = Url.Absolute.Base(location.protocol + "//" + location.host).forWebSocket
     val wsClient  = WebSocketClient.Builder(wsUrlBase, protocol, wsRetries)
-    val global    = Global(reauth, wsClient, onLoad(i), onFailure(i), LoggerJs.on)
+    val global    = Global(reauth, wsClient, (g, _) => onLoad(i, g), onFailure(i), LoggerJs.on)
 
     val keepAliveEvery     = Duration.ofSeconds(21)
     val syncEvery          = Duration.ofSeconds(30)
@@ -48,7 +49,7 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
     global.wsClient.connect.runNow()
   }
 
-  private def onLoad(i: InitData)(g: Global, ia: InitAppData): Callback =
+  private def onLoad(i: InitData, g: Global): Callback =
     Callback {
       val root     = new LoadedRoot(i, g, ConfirmJs.real, PromptJs.real)
       val baseUrl  = determineBaseUrl(location.href)

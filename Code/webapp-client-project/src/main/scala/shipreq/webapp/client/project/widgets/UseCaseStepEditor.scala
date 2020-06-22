@@ -159,7 +159,7 @@ object UseCaseStepEditor {
         LeftRight.mapReduce(shiftStepKeyHandler)(_ + _)
           + saveAndAddKeyCriterion.handle($.props.flatMap(_.saveAndAdd.getOrEmpty))
           + KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort))
-          + KeyboardTheme.commitCO($.props.map(_.status.getCommit), lineCardinality))
+          + KeyboardTheme.commitCO($.props.map(_.status.getCommit)))
 
       val updateState: ReactEventFromTextArea => Callback =
         e => $.props >>= (p =>

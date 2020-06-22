@@ -2,7 +2,7 @@ package shipreq.base.util
 
 import japgolly.microlibs.utils.BiMap
 import monocle._
-import scala.annotation.elidable
+import scala.annotation.{elidable, nowarn}
 import scalaz.Leibniz.===
 import scalaz.{-\/, \/, \/-}
 
@@ -91,6 +91,7 @@ abstract class Intersection[A, B] {
   }
 
   def choiceL[L]: Intersection[L \/ A, L \/ B] = {
+    @nowarn("cat=unused")
     def lift[X, Y](f: X => Option[Y]): L \/ X => Option[L \/ Y] = {
       case l@ -\/(_) => Some(l)
       case \/-(_) => None
@@ -99,6 +100,7 @@ abstract class Intersection[A, B] {
   }
 
   def choiceR[R]: Intersection[A \/ R, B \/ R] = {
+    @nowarn("cat=unused")
     def lift[X, Y](f: X => Option[Y]): X \/ R => Option[Y \/ R] = {
       case r@ \/-(_) => Some(r)
       case -\/(_) => None

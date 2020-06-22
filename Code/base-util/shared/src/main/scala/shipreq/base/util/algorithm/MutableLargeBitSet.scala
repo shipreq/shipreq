@@ -71,10 +71,7 @@ final class MutableLargeBitSet(val bits: Int) {
       .mkString
       .takeRight(bits)
 
-  def fitnessToGoal(goal: MutableLargeBitSet, bits: Int): Double =
-    fitnessToGoal(goal, bits, bits.toDouble)
-
-  def fitnessToGoal(goal: MutableLargeBitSet, bits: Int, bitsD: Double): Double = {
+  def fitnessToGoal(goal: MutableLargeBitSet, bits: Int): Double = {
     var badBits = 0
     var b = 0
     while (b < bits) {

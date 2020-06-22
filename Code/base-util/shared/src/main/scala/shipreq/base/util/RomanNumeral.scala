@@ -18,7 +18,7 @@ object RomanNumeral {
     var n = number
     for (d <- genData) {
       val r = d._1
-      for (i <- 0 until (n / d._2))
+      for (_ <- 0 until (n / d._2))
         sb append r
       n = n % d._2
     }

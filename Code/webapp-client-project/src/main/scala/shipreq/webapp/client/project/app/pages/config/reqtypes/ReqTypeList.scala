@@ -39,70 +39,67 @@ private[reqtypes] object ReqTypeList {
   private def rowKey(f: ReqType): Key =
     f.fold(_.mnemonic.value, _.id.value)
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  private val tableHeader =
+    <.thead(
+      <.tr(
+        <.th(FieldNames.mnemonic),
+        <.th(FieldNames.name),
+        <.th(Shared.implication),
+        <.th("Usage", *.listTableUsage(Live)),
+      ))
 
-    private val tableHeader =
-      <.thead(
-        <.tr(
-          <.th(FieldNames.mnemonic),
-          <.th(FieldNames.name),
-          <.th(Shared.implication),
-          <.th("Usage", *.listTableUsage(Live)),
-        ))
+  private def render(p: Props): VdomNode = {
 
-    def render(p: Props): VdomNode = {
+    val modificationEnabled: Enabled =
+      p.enabled & Enabled.when(p.select.isDefined)
 
-      val modificationEnabled: Enabled =
-        p.enabled & Enabled.when(p.select.isDefined)
+    def rowState(id: ReqTypeId): *.RowState =
+      if (p.selected.exists(_ ==* id))
+        *.RowState.Selected
+      else if (modificationEnabled is Disabled)
+        *.RowState.Disabled
+      else
+        *.RowState.Enabled
 
-      def rowState(id: ReqTypeId): *.RowState =
-        if (p.selected.exists(_ ==* id))
-          *.RowState.Selected
-        else if (modificationEnabled is Disabled)
-          *.RowState.Disabled
-        else
-          *.RowState.Enabled
+    def renderRow(rt: ReqType) = {
+      import rt.{live, reqTypeId => id}
 
-      def renderRow(rt: ReqType) = {
-        import rt.{live, reqTypeId => id}
+      var mnemonics: TagMod =
+        rt.mnemonic.value
 
-        var mnemonics: TagMod =
-          rt.mnemonic.value
+      if (p.filterDead.is(ShowDead) && rt.oldMnemonics.nonEmpty)
+        mnemonics = TagMod(mnemonics, ", ", Shared.renderOldMnemonics(rt))
 
-        if (p.filterDead.is(ShowDead) && rt.oldMnemonics.nonEmpty)
-          mnemonics = TagMod(mnemonics, ", ", Shared.renderOldMnemonics(rt))
+      val select: ReactEvent => Option[Callback] =
+        e => p.select.map(_(id).asEventDefault(e).void)
 
-        val select: ReactEvent => Option[Callback] =
-          e => p.select.map(_(id).asEventDefault(e).void)
+      val td = <.td(*.listTableCell(live))
 
-        val td = <.td(*.listTableCell(live))
+      <.tr(
+        *.listTableRow((rowState(id), live)),
+        ^.key := rowKey(rt),
+        ^.onClick ==>? select,
 
-        <.tr(
-          *.listTableRow((rowState(id), live)),
-          ^.key := rowKey(rt),
-          ^.onClick ==>? select,
+        td(mnemonics),
+        td(rt.name),
+        td(rt.implication.toText),
 
-          td(mnemonics),
-          td(rt.name),
-          td(rt.implication.toText),
-
-          <.td(
-            *.listTableUsage(live),
-            p.usage.reqTypeLink(rt.reqTypeId, p.filterDead)))
-      }
-
-
-      <.table(
-        *.listTable,
-        p.onClickAnywhere.whenDefined(^.onClick --> _),
-        tableHeader,
-        <.tbody(
-          p.reqTypesInScope.whole.toVdomArray(renderRow)))
+        <.td(
+          *.listTableUsage(live),
+          p.usage.reqTypeLink(rt.reqTypeId, p.filterDead)))
     }
+
+
+    <.table(
+      *.listTable,
+      p.onClickAnywhere.whenDefined(^.onClick --> _),
+      tableHeader,
+      <.tbody(
+        p.reqTypesInScope.whole.toVdomArray(renderRow)))
   }
 
   val Component = ScalaComponent.builder[Props]
-    .renderBackend[Backend]
+    .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build
 }

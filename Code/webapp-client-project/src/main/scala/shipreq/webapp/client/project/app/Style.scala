@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.vdom.html_<^.{^ => ^^, _}
 import japgolly.univeq._
+import scala.annotation.nowarn
 import scalacss.internal.ValueT
 import shipreq.base.util._
 import shipreq.webapp.base.CssSettings._
@@ -730,6 +731,8 @@ object Style extends StyleSheet.Inline {
       val ctrlButtonDelete     = style(ctrlButton, &.hover(color(c"#DB2828").important))
       def ctrlButtonRestore    = ctrlButtonInsert
 
+      @inline
+      @nowarn("cat=unused")
       def ctrlButtonShift(d: LeftRight) = ctrlButton
     }
   }

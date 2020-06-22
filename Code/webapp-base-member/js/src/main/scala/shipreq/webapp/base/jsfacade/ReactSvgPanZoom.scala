@@ -3,10 +3,12 @@ package shipreq.webapp.base.jsfacade
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.SyntheticEvent
 import org.scalajs.dom
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
 
 // https://github.com/chrvadala/react-svg-pan-zoom/blob/master/docs/documentation.md
+@nowarn
 object ReactSvgPanZoom {
 
   @js.native sealed trait Action   extends js.Any

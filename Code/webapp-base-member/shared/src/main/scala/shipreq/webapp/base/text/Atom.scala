@@ -2,6 +2,7 @@ package shipreq.webapp.base.text
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import monocle.Iso
+import scala.annotation.nowarn
 import scala.collection.immutable.ArraySeq
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.univeq._

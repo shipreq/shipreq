@@ -4,6 +4,7 @@ import japgolly.scalajs.react.ScalazReact.reusabilityDisjunction
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.raw.{SVGGElement, SVGSVGElement}
+import scala.annotation.nowarn
 import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
@@ -89,6 +90,7 @@ object GraphComponent {
         }
       }
 
+    @nowarn("cat=unused")
     def enrich(p: Props, root: SVGSVGElement): Callback =
       Callback.empty
 

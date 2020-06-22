@@ -5,7 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import scala.annotation.elidable
+import scala.annotation.{elidable, nowarn}
 import scalaz.~~>
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
@@ -59,8 +59,8 @@ object NewEditor {
       Hooks(Callback.empty, Callback.empty)
 
     implicit val reusability: Reusability[Hooks] = {
+      @nowarn("cat=unused")
       implicit val x: Reusability[Callback] = Reusability.callbackByRef
-      locally(x) // -Wunused:locals gets it wrong
       Reusability.byRef || Reusability.derive
     }
   }
@@ -178,8 +178,8 @@ object NewEditor {
         customTextField = f => EditRichText.CustomTextField(r.id, f.field, PreviewId(r, f)),
         implications    = f => EditImplications(r.id, f.scope),
         reqType         = _ => EditReqType(r.id),
-        allTags         = f => EditTags.allTags(r.id),
-        otherTags       = f => EditTags.otherTags(r.id),
+        allTags         = _ => EditTags.allTags(r.id),
+        otherTags       = _ => EditTags.otherTags(r.id),
         customFieldTags = f => EditTags.customField(r.id, f.field),
         title           = f => EditRichText.GenericReqTitle(r.id, PreviewId(r, f)))
 
@@ -187,8 +187,8 @@ object NewEditor {
         codes           = _ => EditReqCodes.Multiple(r.id),
         customTextField = f => EditRichText.CustomTextField(r.id, f.field, PreviewId(r, f)),
         implications    = f => EditImplications(r.id, f.scope),
-        allTags         = f => EditTags.allTags(r.id),
-        otherTags       = f => EditTags.otherTags(r.id),
+        allTags         = _ => EditTags.allTags(r.id),
+        otherTags       = _ => EditTags.otherTags(r.id),
         customFieldTags = f => EditTags.customField(r.id, f.field),
         title           = f => EditRichText.UseCaseTitle(r.id, PreviewId(r, f)))
 

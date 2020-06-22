@@ -252,8 +252,6 @@ private[reqtable] object Logic {
    */
   def gather[C[_]](p             : Project,
                    view          : View,
-                   pt            : PlainText.ForProject.NoCtx,
-                   ts            : TextSearch,
                    filterCompiler: Filter.Valid.Compiler)
                   (implicit cbf: Factory[Row, C[Row]]): C[Row] = {
 
@@ -542,10 +540,9 @@ private[reqtable] object Logic {
   def rowsForTable(p : Project,
                    v : View,
                    pt: PlainText.ForProject.NoCtx,
-                   ts: TextSearch,
                    fc: Filter.Valid.Compiler): Vector[Row] = {
 
-    def r1: Array       [Row] = gather(p, v, pt, ts, fc)
+    def r1: Array       [Row] = gather(p, v, fc)
     def r2: MutableArray[Row] = sorter(p, v, pt)(r1)
     val r3: Vector      [Row] = consolidateAdjacentDups(r2.iterator)
     val r4: Vector      [Row] = if (v.viewReqCodesAsTree) addReqCodeTreeToRows(r3) else r3

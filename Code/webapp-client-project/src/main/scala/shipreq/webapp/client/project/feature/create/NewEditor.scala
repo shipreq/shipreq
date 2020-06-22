@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.feature.create
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
+import scala.annotation.nowarn
 import scalaz.~~>
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -78,7 +79,7 @@ object NewEditor {
             ctx => init(new InternalCtx[A, V](ctx))
         }
 
-      def prepareCG(r: RowKey.CodeGroup.type) = FieldKey.FoldForCodeGroup[LogicPerField](
+      def prepareCG(@nowarn("cat=unused") r: RowKey.CodeGroup.type) = FieldKey.FoldForCodeGroup[LogicPerField](
         _ => EditReqCodes.Single.apply,
         f => EditRichText.CodeGroupTitle(PreviewId(RowKey.CodeGroup, f), None))
 
@@ -86,8 +87,8 @@ object NewEditor {
         codes           = _ => EditReqCodes.Multiple.apply,
         customTextField = f => EditRichText.CustomTextField(PreviewId(r, f), Some(r.reqTypeId)),
         implications    = f => EditImplications(f.scope),
-        otherTags       = f => EditTags.otherTags(r.reqTypeId),
-        allTags         = f => EditTags.allTags(r.reqTypeId),
+        otherTags       = _ => EditTags.otherTags(r.reqTypeId),
+        allTags         = _ => EditTags.allTags(r.reqTypeId),
         customFieldTags = f => EditTags.customField(r.reqTypeId, f.field),
         title           = f => EditRichText.GenericReqTitle(PreviewId(r, f), Some(r.reqTypeId)))
 
@@ -95,8 +96,8 @@ object NewEditor {
         codes           = _ => EditReqCodes.Multiple.apply,
         customTextField = f => EditRichText.CustomTextField(PreviewId(r, f), Some(StaticReqType.UseCase)),
         implications    = f => EditImplications(f.scope),
-        otherTags       = f => EditTags.otherTags(r.reqTypeId),
-        allTags         = f => EditTags.allTags(r.reqTypeId),
+        otherTags       = _ => EditTags.otherTags(r.reqTypeId),
+        allTags         = _ => EditTags.allTags(r.reqTypeId),
         customFieldTags = f => EditTags.customField(r.reqTypeId, f.field),
         title           = f => EditRichText.UseCaseTitle(PreviewId(r, f), Some(StaticReqType.UseCase)))
 

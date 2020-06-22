@@ -87,7 +87,7 @@ object TableNavigationFeatureTest extends TestSuite {
     * LR = Left to Right = header cells on the left, data cells on the right
     */
   object LR {
-    final class Backend($: BackendScope[Unit, Unit]) {
+    final class Backend {
       implicit def renderVirtualLoc(p: VirtualLoc): TagMod = p.toString
       def render: VdomElement =
         <.table(
@@ -218,7 +218,7 @@ object TableNavigationFeatureTest extends TestSuite {
     * TD = TopDown = header row at the top, data below
     */
   object TD {
-    final class Backend($: BackendScope[Unit, Unit]) {
+    final class Backend {
       val subRow = <.div(focusable, TableNavigationFeature.newRow)
       implicit def renderVirtualLoc(p: VirtualLoc): TagMod = p.toString
       def render: VdomElement =
@@ -331,7 +331,7 @@ object TableNavigationFeatureTest extends TestSuite {
     * }}}
     */
   object RowSpans {
-    final class Backend($: BackendScope[Unit, Unit]) {
+    final class Backend {
       private def rs(row: Int, col: Int, span: Int) = <.td(
         focusable,
         (^.rowSpan := span).unless(span == 1),

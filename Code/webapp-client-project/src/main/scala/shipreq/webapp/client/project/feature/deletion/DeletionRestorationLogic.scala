@@ -45,7 +45,7 @@ object DeletionRestorationLogic {
     */
   def forReqs(mode: DeleteOrRestore, project: Project, directlySelectedReqs: NonEmptySet[ReqId]): Data = {
     val actionableReqs = ReqLogic.actionable(mode, project, directlySelectedReqs)
-    val initSelReqs    = ReqLogic.initiallySelected(mode, project, actionableReqs, directlySelectedReqs).whole
+    val initSelReqs    = ReqLogic.initiallySelected(mode, actionableReqs, directlySelectedReqs).whole
     Data(project          = project,
          actionableReqs   = actionableReqs,
          actionableGroups = Vector.empty,
@@ -61,7 +61,7 @@ object DeletionRestorationLogic {
       directlySelectedGroups.map(project.content.reqCodes.reqCode)
 
     val actionableReqs   = ReqLogic.actionable(Delete, project, directlySelectedReqs)
-    val initSelReqs      = ReqLogic.initiallySelected(Delete, project, actionableReqs, directlySelectedReqs).whole
+    val initSelReqs      = ReqLogic.initiallySelected(Delete, actionableReqs, directlySelectedReqs).whole
     val actionableGroups = ReqCodeGroupLogic.actionable(project, directlySelectedCodeGroups, actionableReqs)
     val initSelGroups    = ReqCodeGroupLogic.initiallySelected(project, directlySelectedGroups, actionableGroups, initSelReqs)
 
@@ -118,7 +118,6 @@ object DeletionRestorationLogic {
     }
 
     def initiallySelected(mode          : DeleteOrRestore,
-                          p             : Project,
                           actionableReqs: ActionableReqs,
                           directSel     : NonEmptySet[ReqId]): NonEmptySet[ReqId] = {
 

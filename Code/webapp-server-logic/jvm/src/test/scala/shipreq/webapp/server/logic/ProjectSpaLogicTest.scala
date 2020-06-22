@@ -2,6 +2,7 @@ package shipreq.webapp.server.logic
 
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.scalaz_ext.ScalazMacros
+import scala.annotation.nowarn
 import scalaz.{-\/, Equal, Name, \/, \/-}
 import shipreq.base.util.{BinaryData, Direction}
 import shipreq.webapp.base.data._
@@ -123,6 +124,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
     val h = wsHelper(reqId, msg.reqRes)
     val msgBin = h.protocolCS.codec.encode((reqId, msg))
     var resp: MsgError \/ BinaryData = null
+    @nowarn
     val proc = projectSpa.onMessage(
       static          = static,
       state           = state,

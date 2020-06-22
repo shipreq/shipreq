@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.StrictLogging
 import javax.websocket.server._
 import javax.websocket.{CloseReason => _, _}
 import org.slf4j.MDC
+import scala.annotation.nowarn
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.BinaryData
 import shipreq.base.util.FxModule._
@@ -203,6 +204,7 @@ final class ProjectSpaWebSocket extends StrictLogging {
   }
 
   @OnClose
+  @nowarn("cat=unused")
   def onClose(s: Session, reason: javax.websocket.CloseReason): Unit = withMdc(s, "close") {
     val userProps = s.getUserProperties
     val static    = Option(staticL.get(userProps))

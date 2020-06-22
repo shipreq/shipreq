@@ -27,13 +27,10 @@ object KeyboardTheme {
     */
   @inline def commitCriterion = Criterion.CtrlEnter
 
-  def commitO(commit: => Option[Callback], lc: LineCardinality): KeyHandler = {
-    // LineCardinality is no longer used here but will be kept as an arg for a while longer until confidence in the new
-    // style commit criteria is established.
-    commitCO(CallbackTo(commit), lc)
-  }
+  def commitO(commit: => Option[Callback]): KeyHandler =
+    commitCO(CallbackTo(commit))
 
-  def commitCO(commit: CallbackTo[Option[Callback]], lc: LineCardinality): KeyHandler =
+  def commitCO(commit: CallbackTo[Option[Callback]]): KeyHandler =
     commitCriterion.handle(commit >>= (Callback sequenceOption _))
 
   /** Commit and progress, as in "save and let's move on".

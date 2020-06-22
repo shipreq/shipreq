@@ -100,9 +100,8 @@ object ReqTablePage {
         p  <- pxProject
         v  <- pxActiveView
         pw <- pxProjectWidgets
-        ts <- pxTextSearch
         fc <- pxFilterCompilerFromFD
-      } yield Logic.rowsForTable(p, v, pw.plainText, ts, fc(v.filterDead))
+      } yield Logic.rowsForTable(p, v, pw.plainText, fc(v.filterDead))
 
     val pxRowIdsWithWholeRowAsync: Px[Set[Row.SourceId]] =
       pxProps(_.rowAsync.keySet)

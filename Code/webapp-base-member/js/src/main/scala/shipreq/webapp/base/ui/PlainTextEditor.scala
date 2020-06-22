@@ -40,7 +40,7 @@ object PlainTextEditor {
       val base = {
         val keys =
           KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
-          KeyboardTheme.commitCO($.props.map(_.status.getCommit), SingleLine)
+          KeyboardTheme.commitCO($.props.map(_.status.getCommit))
 
         val onChange = (_: ReactEventFromInput).extract(_.target.value)(t =>
           $.props.flatMap(p =>
@@ -117,67 +117,64 @@ object PlainTextEditor {
     //  implicit val reusabilityProps: Reusability[Props] =
     //    Reusability.derive
 
-    final class Backend($: BackendScope[Props, Unit]) {
+    private def render(p: Props): VdomElement = {
+      val onChange = (_: ReactEventFromInput).extract(_.target.value)(t => p.status.wrapEdit(p updateText t))
 
-      def render(p: Props): VdomElement = {
-        val onChange = (_: ReactEventFromInput).extract(_.target.value)(t => p.status.wrapEdit(p updateText t))
+      def buttonOk       = Button(colour = p.buttonColour)
+      def buttonDisabled = Button(colour = p.buttonColour,  state = Button.State.Disabled)
+      def buttonError    = Button(colour = ColourPlus.Negative, state = Button.State.Disabled)
+      def buttonLoading  = Button(colour = ColourPlus.Primary,  state = Button.State.Loading)
 
-        def buttonOk       = Button(colour = p.buttonColour)
-        def buttonDisabled = Button(colour = p.buttonColour,  state = Button.State.Disabled)
-        def buttonError    = Button(colour = ColourPlus.Negative, state = Button.State.Disabled)
-        def buttonLoading  = Button(colour = ColourPlus.Primary,  state = Button.State.Loading)
+      val input =
+        <.input.text(
+          p.inputMod,
+          ^.value := p.text,
+          ^.onChange ==> onChange)
 
-        val input =
-          <.input.text(
-            p.inputMod,
-            ^.value := p.text,
-            ^.onChange ==> onChange)
+      p.status match {
 
-        p.status match {
-
-          case EditorStatus.Ignore | EditorStatus.Valid(None) =>
+        case EditorStatus.Ignore | EditorStatus.Valid(None) =>
+          <.div(
             <.div(
-              <.div(
-                Input.Action(
-                  input,
-                  buttonDisabled.tag(p.buttonLabel))))
+              Input.Action(
+                input,
+                buttonDisabled.tag(p.buttonLabel))))
 
-          case EditorStatus.Valid(Some(commit)) =>
-            val keys = KeyboardTheme.commitCriterion.handle(commit).toReact
+        case EditorStatus.Valid(Some(commit)) =>
+          val keys = KeyboardTheme.commitCriterion.handle(commit).toReact
+          <.div(
             <.div(
-              <.div(
-                Input.Action(
-                  input(keys),
-                  buttonOk.tag(^.onClick --> commit, p.buttonLabel))))
+              Input.Action(
+                input(keys),
+                buttonOk.tag(^.onClick --> commit, p.buttonLabel))))
 
-          case EditorStatus.InTransit =>
+        case EditorStatus.InTransit =>
+          <.div(
             <.div(
-              <.div(
-                Input.Action(
-                  input(^.disabled := true),
-                  buttonLoading.tag(p.buttonLabel))))
+              Input.Action(
+                input(^.disabled := true),
+                buttonLoading.tag(p.buttonLabel))))
 
-          case EditorStatus.Invalid(err) =>
+        case EditorStatus.Invalid(err) =>
+          <.div(
             <.div(
-              <.div(
-                Input.ActionError(
-                  input,
-                  buttonError.tag(p.buttonLabel))),
-              errorPointingUp(err))
+              Input.ActionError(
+                input,
+                buttonError.tag(p.buttonLabel))),
+            errorPointingUp(err))
 
-          case a: EditorStatus.AsyncError =>
+        case a: EditorStatus.AsyncError =>
+          <.div(
             <.div(
-              <.div(
-                Input.Action(
-                  input,
-                  buttonOk.tag(^.onClick --> a.retry, UiText.buttonRetry))),
-              errorPointingUp(a.err))
-        }
+              Input.Action(
+                input,
+                buttonOk.tag(^.onClick --> a.retry, UiText.buttonRetry))),
+            errorPointingUp(a.err))
       }
     }
 
     val Component = ScalaComponent.builder[Props]
-      .renderBackend[Backend]
+      .render_P(render)
       //    .configure(Reusability.shouldComponentUpdate)
       .build
   }

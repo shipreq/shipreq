@@ -63,12 +63,12 @@ object FieldKey {
 
   def impliedBy = Implications(\/-(Backwards))
 
-  def reqTextLoc(reqId: ReqId, loc: LocationOf.Text.InReq): FieldKey =
-    loc match {
-      case Location.Text.Title                    => Title
-      case Location.Text.CustomTextField(fieldId) => CustomTextField(fieldId)
-      case Location.Text.UseCaseStep(stepId)      => UseCaseStep(stepId)
-    }
+//  def reqTextLoc(reqId: ReqId, loc: LocationOf.Text.InReq): FieldKey =
+//    loc match {
+//      case Location.Text.Title                    => Title
+//      case Location.Text.CustomTextField(fieldId) => CustomTextField(fieldId)
+//      case Location.Text.UseCaseStep(stepId)      => UseCaseStep(stepId)
+//    }
 
   final class Type[F <: FieldKey](implicit ct: ClassTag[F]) {
     def widenFn[G >: F <: FieldKey, A](orig: F => A)(fallback: A): G => A =

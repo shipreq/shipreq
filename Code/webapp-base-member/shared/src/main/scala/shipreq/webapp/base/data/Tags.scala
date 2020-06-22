@@ -7,7 +7,7 @@ import monocle.macros.Lenses
 import monocle.{Lens, Traversal}
 import nyaya.prop.CycleDetector
 import nyaya.util.Multimap
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.collection.mutable
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.TaggedTypes.TaggedInt

@@ -46,42 +46,39 @@ object ReqTypeSelector {
   private def key(rt: RT): Dropdown.ItemKey =
     rt.id.value.toString
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  private def render(p: Props): VdomElement =
+    EditTheme.renderEditor(
+      status       = p.status,
+      editor       = _ => editor(p),
+      readOnlyView = p.edit.value.fullName,
+      instructions = EmptyVdom)
 
-    def render(p: Props): VdomElement =
-      EditTheme.renderEditor(
-        status       = p.status,
-        editor       = _ => editor(p),
-        readOnlyView = p.edit.value.fullName,
-        instructions = EmptyVdom)
+  private def editor(p: Props): VdomElement = {
+    val options =
+      MutableArray(p.choices.whole)
+        .sortBy(_.fullName)
+        .map(rt => Dropdown.Item(key(rt), rt.fullName, rt))
+        .arraySeq
 
-    def editor(p: Props): VdomElement = {
-      val options =
-        MutableArray(p.choices.whole)
-          .sortBy(_.fullName)
-          .map(rt => Dropdown.Item(key(rt), rt.fullName, rt))
-          .arraySeq
+    val dropdown = Dropdown.Props.Optional(options, Some(key(p.edit.value)), tagMod = *.dropdown)(p.edit setState _.value)
 
-      val dropdown = Dropdown.Props.Optional(options, Some(key(p.edit.value)), tagMod = *.dropdown)(p.edit setState _.value)
+    val commitButton = Button(
+      tipe = Button.Type.IconOnly(Icon.Checkmark),
+      state = Button.State.enabledWhen(p.commit.isDefined)
+    ).tag(*.commit, ^.onClick -->? p.commit)
 
-      val commitButton = Button(
-        tipe = Button.Type.IconOnly(Icon.Checkmark),
-        state = Button.State.enabledWhen(p.commit.isDefined)
-      ).tag(*.commit, ^.onClick -->? p.commit)
+    val abortButton = Button(
+      tipe = Button.Type.IconOnly(Icon.Remove),
+      state = Button.State.enabledWhen(p.abort.isDefined)
+    ).tag(*.abort, ^.onClick -->? p.abort)
 
-      val abortButton = Button(
-        tipe = Button.Type.IconOnly(Icon.Remove),
-        state = Button.State.enabledWhen(p.abort.isDefined)
-      ).tag(*.abort, ^.onClick -->? p.abort)
+    val buttons = Button.group(commitButton, abortButton)(*.buttons)
 
-      val buttons = Button.group(commitButton, abortButton)(*.buttons)
-
-      <.div(dropdown.render, buttons)
-    }
+    <.div(dropdown.render, buttons)
   }
 
   val Component = ScalaComponent.builder[Props]
-    .renderBackend[Backend]
+    .render_P(render)
     // .configure(Reusability.shouldComponentUpdate)
     .build
 

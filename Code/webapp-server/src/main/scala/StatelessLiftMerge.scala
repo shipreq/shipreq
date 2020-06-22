@@ -44,6 +44,7 @@ import scala.xml._
 //  mergeHeadAndTail: Boolean // false if we're not doing head/tail merging
 //)
 
+@scala.annotation.nowarn
 final case class StatelessLiftMerge(self: LiftSession) extends AnyVal {
 
 //  private def scriptUrl(scriptFile: String) = {

@@ -225,12 +225,7 @@ object FieldList {
               }
           }
 
-        val usage: TagMod = {
-          def link(f: FieldId) =
-            TagMod(
-              *.fieldListTableUsage(live),
-              p.usage.fieldLink(id, p.filterDead))
-
+        val usage: TagMod =
           id match {
             case StaticField.ImplicationGraph
                | StaticField.StepGraph
@@ -241,9 +236,11 @@ object FieldList {
                | StaticField.OtherTags
                | StaticField.NormalAltStepTree
                | StaticField.ExceptionStepTree
-               => link(id)
+               =>
+                TagMod(
+                  *.fieldListTableUsage(live),
+                  p.usage.fieldLink(id, p.filterDead))
           }
-        }
 
         val select: ReactEvent => Option[Callback] =
           e => p.select.map(_(id).asEventDefault(e).void)

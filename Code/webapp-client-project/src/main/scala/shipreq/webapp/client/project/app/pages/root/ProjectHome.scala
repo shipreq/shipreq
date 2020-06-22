@@ -13,15 +13,12 @@ object ProjectHome {
     @inline def render = Component(this)
   }
 
-  final class Backend($: BackendScope[Props, Unit]) {
-
-    def render(p: Props): VdomElement =
-      <.main(BaseStyles.containerLarge,
-        <.section(Style.home.projectHeader, p.item.render),
-        ProjectIndex.Component(p.index))
-  }
+  private def render(p: Props): VdomElement =
+    <.main(BaseStyles.containerLarge,
+      <.section(Style.home.projectHeader, p.item.render),
+      ProjectIndex.Component(p.index))
 
   val Component = ScalaComponent.builder[Props]
-    .renderBackend[Backend]
+    .render_P(render)
     .build
 }

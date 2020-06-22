@@ -70,44 +70,41 @@ object MemberNavBar {
     Dropdown.Item.Link(
       <.a(^.href := Urls.logout.relativeUrl, "Logout"))
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  private def render(p: Props): VdomElement = {
+    val leftBreadcrumb =
+      Menu.ItemType.Div(
+        Breadcrumb.Props(breadcrumbStyle, p.leftWithDividers).render
+      ).toItem
 
-    def render(p: Props): VdomElement = {
-      val leftBreadcrumb =
-        Menu.ItemType.Div(
-          Breadcrumb.Props(breadcrumbStyle, p.leftWithDividers).render
-        ).toItem
+    val dropdownSendFeedback =
+      p.feedbackModal match {
+        case Some(m) => Dropdown.Item.Div(sendFeedbackRoot(^.onClick --> m.run.toCallback))
+        case None    => Dropdown.Item.Div(sendFeedbackRoot(^.disabled := true), Dropdown.ItemState.Disabled)
+      }
 
-      val dropdownSendFeedback =
-        p.feedbackModal match {
-          case Some(m) => Dropdown.Item.Div(sendFeedbackRoot(^.onClick --> m.run.toCallback))
-          case None    => Dropdown.Item.Div(sendFeedbackRoot(^.disabled := true), Dropdown.ItemState.Disabled)
-        }
+    val rightDropdown =
+      Menu.DropdownType.Simple(
+        p.username.with_@,
+        dropdownSendFeedback :: dropdownLogout :: Nil
+      ).toItem
 
-      val rightDropdown =
-        Menu.DropdownType.Simple(
-          p.username.with_@,
-          dropdownSendFeedback :: dropdownLogout :: Nil
-        ).toItem
+    val leftMenuItems =
+      itemLogo :: leftBreadcrumb :: Nil
 
-      val leftMenuItems =
-        itemLogo :: leftBreadcrumb :: Nil
+    val rightMenuItems =
+      p.right :+ rightDropdown
 
-      val rightMenuItems =
-        p.right :+ rightDropdown
+    val menu = Menu.Props(
+      menuStyle,
+      leftMenuItems,
+      rightMenuItems,
+      dropdownOptions)
 
-      val menu = Menu.Props(
-        menuStyle,
-        leftMenuItems,
-        rightMenuItems,
-        dropdownOptions)
-
-      <.nav(menu.render)
-    }
+    <.nav(menu.render)
   }
 
   val Component = ScalaComponent.builder[Props]
-    .renderBackend[Backend]
+    .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build
 

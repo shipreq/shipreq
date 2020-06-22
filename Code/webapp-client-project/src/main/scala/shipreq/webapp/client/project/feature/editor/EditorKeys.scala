@@ -8,7 +8,7 @@ import shipreq.webapp.base.lib.DomUtil._
 object EditorKeys {
   import Feature.ReadWrite
 
-  def apply[A](editor: ReadWrite.ForEditor[A, Any])(a: A)(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] = {
+  def apply[A](editor: ReadWrite.ForEditor[Nothing, Any])(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] = {
 
     val applicableToOpenAndReplace =
       !(e.altKey || e.ctrlKey || e.metaKey || editor.read.isOpen)

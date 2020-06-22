@@ -1,10 +1,12 @@
 package shipreq.webapp.base.jsfacade
 
 import java.time.Instant
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
 
 @js.native
+@nowarn
 trait Moment extends js.Object {
   val isValid            : Boolean = js.native
   def format()           : String  = js.native
@@ -17,6 +19,7 @@ trait Moment extends js.Object {
 
 @JSGlobal("moment")
 @js.native
+@nowarn
 object Moment extends js.Any {
   def apply(): Moment = js.native
   def apply(epochMillis: Double): Moment = js.native

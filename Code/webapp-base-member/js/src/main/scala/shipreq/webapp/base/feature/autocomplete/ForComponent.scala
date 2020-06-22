@@ -54,7 +54,7 @@ object ForComponent {
       for {
         ctx <- autoCompleteCtx if ctx.strategies.nonEmpty
         tc  <- lowLevelInstall(ctx)(ac).toCBO
-        _   <- addEventListeners(tc, ctx.dom).toCBO
+        _   <- addEventListeners(tc).toCBO
       } yield {
         textComplete = Some(tc)
         textCompletePrev = Some(ctx)
@@ -66,7 +66,7 @@ object ForComponent {
         next <- autoCompleteCtx.asCallback
         same  = prev ==* next
         _    <- (autoCompleteUnmount >> autoCompleteMount).unless(same)
-        _    <- Callback.traverseOption(next)(ctx => addEventListeners(ctx.dom))
+        _    <- Callback.traverseOption(next)(_ => addEventListeners)
       } yield {
         textCompletePrev = next
         if (hideNext) {
@@ -88,13 +88,13 @@ object ForComponent {
     final protected val autoCompleteBlur: Callback =
       Callback(textComplete.foreach(_.dropdown.deactivate())).attempt.void
 
-    final private def addEventListeners(dom: D): Callback =
+    final private val addEventListeners: Callback =
       for {
         tc <- textCompleteCBO
-        _  <- addEventListeners(tc, dom).toCBO
+        _  <- addEventListeners(tc).toCBO
       } yield ()
 
-    final private def addEventListeners(tc: TextComplete, dom: D): Callback =
+    final private def addEventListeners(tc: TextComplete): Callback =
       Callback {
         if (tc._events.select.isEmpty) {
           tc.on("select", () => {

@@ -6,6 +6,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
+import scala.annotation.nowarn
 import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}
@@ -70,9 +71,6 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
               p.modifyView.map(f => cs => f.modState(_.withColumns(cs.map(_.column), pc))),
               p.modifyView.map(f => c => f.modState(_.orderByColumn(c.column)))))
 
-        def renderMsg(msg: VdomTag): VdomTag =
-          NoFilterResults.asTableRow(p.cols.length + 1)
-
         def renderRows(rows: Vector[Row]): VdomArray = {
           val applicability = pxProjectApplicability.value()
           val reqViewInputs: ReqRow.ViewInput = (p.config, p.pw, pxPubidFmt.value())
@@ -112,7 +110,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         val body: TagMod =
           p.mode match {
             case Mode.Normal(rows) => renderRows(rows)
-            case Mode.FilteredOut  => renderMsg(NoFilterResults.render)
+            case Mode.FilteredOut  => NoFilterResults.asTableRow(p.cols.length + 1)
           }
 
         semantic.Table.celledCompactUnstackable(
@@ -231,8 +229,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
     }
 
     implicit final val reusabilityProps: Reusability[Props] = {
+      @nowarn("cat=unused")
       implicit val a = reusabilityRowEditor
-      locally(a) // -Wunused:locals gets it wrong
       Reusability.derive
     }
 
@@ -431,7 +429,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
     type Dom = dom.html.TableCell
 
     def onKeyDown(editor: EditorFeature.ReadWrite.ForEditor[Unit, Any]): ReactKeyboardEventFromHtml => Callback =
-      e => tableNavigationFeature.Keys(e) | EditorFeature.Keys(editor)(())(e)
+      e => tableNavigationFeature.Keys(e) | EditorFeature.Keys(editor)(e)
 
     val cellBase = <.td(^.tabIndex := -1)
 

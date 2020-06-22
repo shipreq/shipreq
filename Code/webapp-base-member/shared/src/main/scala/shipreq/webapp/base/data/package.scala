@@ -1,5 +1,6 @@
 package shipreq.webapp.base
 
+import scala.annotation.nowarn
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -85,6 +86,8 @@ package object data {
   type ReqIdC = ReqIdT[CustomReqTypeId]
   type PubidC = PubidT[CustomReqTypeId]
 
-  @inline final def emptyDataMap[O, D, Id](o: O)(implicit O: ObjDataId[O, D, Id], ev: UnivEq[Id]): IMap[Id, D] =
+  @inline
+  @nowarn("cat=unused")
+  final def emptyDataMap[O, D, Id](o: O)(implicit O: ObjDataId[O, D, Id], ev: UnivEq[Id]): IMap[Id, D] =
     IMap.empty(O.id)
 }

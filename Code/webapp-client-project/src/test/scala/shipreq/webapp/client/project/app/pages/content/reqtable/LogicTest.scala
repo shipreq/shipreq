@@ -4,7 +4,7 @@ import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.{Lens, Optional}
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scalaz.{-\/, Equal, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
@@ -50,11 +50,10 @@ object LogicTestUtil {
       case x => sys.error(s"Not an ApplicableTag: $x")
     }
 
-  def columnState(p: Project, c: Column): NonEmptyVector[Column] =
-    columnState(p, NonEmptyVector one c)
+  def columnState(c: Column): NonEmptyVector[Column] =
+    columnState(NonEmptyVector one c)
 
-  def columnState(p: Project, cs: NonEmptyVector[Column]): NonEmptyVector[Column] =
-    // it's rumoured that an older civilisation did more with this function once...
+  def columnState(cs: NonEmptyVector[Column]): NonEmptyVector[Column] =
     cs
 }
 
@@ -104,7 +103,7 @@ object LogicTest extends TestSuite {
 
   private def gatherSortConsolidate(p: Project, v: View, pt: PlainText.ForProject.NoCtx, ts: TextSearch): Vector[Row] = {
     val fc                    = Filter.Valid.compiler(p, pt, ts, v.filterDead, applyFilterDeadToReqs = false)
-    def r1: Array       [Row] = Logic.gather(p, v, pt, ts, fc)
+    def r1: Array       [Row] = Logic.gather(p, v, fc)
     def r2: MutableArray[Row] = Logic.sorter(p, v, pt)(r1)
     val r3: Vector      [Row] = Logic.consolidateAdjacentDups(r2.iterator)
 
@@ -141,22 +140,22 @@ object LogicTest extends TestSuite {
     testUnsorted2(p, NonEmptyVector one c, f, fd, extract)(expect)
 
   private def testUnsorted2[A: Equal](p: Project, cs: NonEmptyVector[C], f: Filter, fd: FilterDead, extract: Rows => A)(expect: A)(implicit l: Line): Unit = {
-    val v = View(columnState(p, cs), defaultOrder.copy(init = Vector.empty), fd, f, None)
+    val v = View(columnState(cs), defaultOrder.copy(init = Vector.empty), fd, f, None)
     val pc = pcache(p)
     import pc.{pt, ts}
     val r = gatherSortConsolidate(p, v, pt, ts)
     assertEq(extract(r), expect)
   }
 
-  private def viewSortedByCB(p: Project, c: C.SortInconclusiveHasBlanks, sm: ConsiderBlanks, fd: FilterDead, f: Filter): View =
-    View(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveCB(c, sm))), fd, f, None)
+  private def viewSortedByCB(c: C.SortInconclusiveHasBlanks, sm: ConsiderBlanks, fd: FilterDead, f: Filter): View =
+    View(columnState(c), defaultOrder.copy(init = Vector(SC.InconclusiveCB(c, sm))), fd, f, None)
 
   private def testCB[A: Equal](p: Project, c: C.SortInconclusiveHasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)
                               (tests: Seq[(ConsiderBlanks, A)])(implicit l: Line) = {
     val pc = pcache(p)
     import pc.{pt, ts}
     for ((sm, expect) <- tests) {
-      val v = viewSortedByCB(p, c, sm, fd, f)
+      val v = viewSortedByCB(c, sm, fd, f)
       val r = gatherSortConsolidate(p, v, pt, ts)
       assertEq(sm.toString, extract(r), expect)
     }
@@ -175,14 +174,14 @@ object LogicTest extends TestSuite {
   private def allSortsCB(zcount: Int, asc: String, desc: String): Seq[(ConsiderBlanks, String)] =
     allSortsCBA(z, zcount)(_ + sep + _, asc, desc)
 
-  private def viewSortedByIB(p: Project, c: C.SortInconclusiveNoBlanks, sm: IgnoreBlanks, fd: FilterDead, f: Filter): View =
-    View(columnState(p, c), defaultOrder.copy(init = Vector(SC.InconclusiveIB(c, sm))), fd, f, None)
+  private def viewSortedByIB(c: C.SortInconclusiveNoBlanks, sm: IgnoreBlanks, fd: FilterDead, f: Filter): View =
+    View(columnState(c), defaultOrder.copy(init = Vector(SC.InconclusiveIB(c, sm))), fd, f, None)
 
   private def testIB[A: Equal](p: Project, c: C.SortInconclusiveNoBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) = {
     val pc = pcache(p)
     import pc.{pt, ts}
     for ((sm, expect) <- tests) {
-      val v = viewSortedByIB(p, c, sm, fd, f)
+      val v = viewSortedByIB(c, sm, fd, f)
       val r = gatherSortConsolidate(p, v, pt, ts)
       assertEq(sm.toString, extract(r), expect)
     }

@@ -56,16 +56,18 @@ object ResetPassword {
       AsyncFeature.Write.D0.init($ zoomStateL State.async)
 
     def submitCB(props: Props, state: State): Option[Callback] =
-      for {
-        newPassword <- state.validated
-        if state.formEnabled is Enabled
-      } yield
-        asyncW.forgetFailure(
-          props.resetPassword(P.Request(props.token, newPassword)).flatTapSync {
-            case \/-(res) => $.modState(_.copy(response = Some(res)))
-            case -\/(err) => GeneralTheme.showErrorMsg(err)
-          }
-        )
+      if (state.formEnabled is Disabled)
+        None
+      else
+        for {
+          newPassword <- state.validated
+        } yield
+          asyncW.forgetFailure(
+            props.resetPassword(P.Request(props.token, newPassword)).flatTapSync {
+              case \/-(res) => $.modState(_.copy(response = Some(res)))
+              case -\/(err) => GeneralTheme.showErrorMsg(err)
+            }
+          )
 
     val attemptSubmit: Callback =
       $.props.flatMap(p =>

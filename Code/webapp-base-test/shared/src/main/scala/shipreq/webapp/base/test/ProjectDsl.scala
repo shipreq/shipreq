@@ -3,6 +3,7 @@ package shipreq.webapp.base.test
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
+import scala.annotation.nowarn
 import scalaz.std.AllInstances._
 import scalaz.syntax.bind._
 import scalaz.syntax.semigroup._
@@ -62,16 +63,14 @@ object ProjectDslInternals {
     def done: Project =
       IdCeilings.supply { ids =>
         var f = Project.idCeilings set ids
-        f = f compose Project.reqs        .modify(r => succ(r, Requirements(GenericReqs(reqs), r.useCases, pubids)))
-        f = f compose Project.reqCodes    .modify(succ(_, ReqCodes(reqCodeTrie)))
-        f = f compose Project.reqText     .modify(succ(_, text))
-        f = f compose Project.reqTags     .modify(succ(_, tags))
-        f = f compose Project.implications.modify(succ(_, Implications.BiDir(imps)))
+        f = f compose Project.reqs        .modify(r => Requirements(GenericReqs(reqs), r.useCases, pubids))
+        f = f compose Project.reqCodes    .modify(_ => ReqCodes(reqCodeTrie))
+        f = f compose Project.reqText     .modify(_ => text)
+        f = f compose Project.reqTags     .modify(_ => tags)
+        f = f compose Project.implications.modify(_ => Implications.BiDir(imps))
         f(p)
       }
   }
-
-  private def succ[A](old: A, n: A) = n // obsolete. Used to increse Rev
 
   def projectState(p: Project) = ProjectState(p,
     nextId         = p.content.reqs.idIterator().ifelse(_.isEmpty, _ => 1, _.max.value),

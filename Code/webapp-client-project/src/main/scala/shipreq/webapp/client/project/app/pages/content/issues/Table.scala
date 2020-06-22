@@ -112,7 +112,7 @@ object Table {
       * 1) there's still an issue in which case [[EditorNavParent]] refocuses the same cell
       * 2) the issue is resolved and the row disappears in which case this will focus a field editor on an adjacent row
       */
-    private def focusAlternateRow(p: EditorNavParent.Props, rowIdx: Int): Callback =
+    private def focusAlternateRow(rowIdx: Int): Callback =
       for {
         focus <- CallbackOption.activeHtmlElement.asCallback
         _     <- CallbackOption.require(focus.isEmpty)
@@ -146,7 +146,7 @@ object Table {
               row.editor(p.editor, reusablePxPW).map(
                 _.tuple(Reusable.implicitly(rowIdx))
                   .map(_._1.map(p =>
-                    p.modEditor(_.onClose(focusAlternateRow(p, rowIdx))))))
+                    p.modEditor(_.onClose(focusAlternateRow(rowIdx))))))
 
             val rowProps = TableRow.Props(
               row,

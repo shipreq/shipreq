@@ -3,7 +3,7 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.collection.immutable.ArraySeq
 import scala.collection.{IterableOnce, mutable}
 import scala.reflect.ClassTag
@@ -29,6 +29,7 @@ object DataProp {
   def id[T <: TaggedInt] =
     Prop.test[T]("id > 0", _.value > 0)
 
+  @nowarn("cat=unused")
   def dataId[O, D, Id <: TaggedInt](o: O)(implicit O: ObjDataId[O, D, Id]) =
     id[Id].contramap[D](O.id)
 

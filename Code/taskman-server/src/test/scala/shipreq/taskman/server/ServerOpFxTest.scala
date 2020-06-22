@@ -80,8 +80,8 @@ object ServerOpFxTest extends TestSuite {
 
       def not() = {
         val r = TestDb.!(for {
-          a <- insert(created = -16 hours, updated = -15 hours, node = true)
-          b <- insert(created = -16 hours, updated = -15 hours, node = true, worker = true)
+          _ <- insert(created = -16 hours, updated = -15 hours, node = true)
+          _ <- insert(created = -16 hours, updated = -15 hours, node = true, worker = true)
           r <- dao.getMsgsAssignNode(n, 2, 24 hours, queue)
         } yield r)
         assert(r.isEmpty)

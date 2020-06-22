@@ -2,6 +2,7 @@ package shipreq.webapp.base.jsfacade
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.PackageBase._
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
 
@@ -14,6 +15,7 @@ object ReactVirtualized {
     private object component extends js.Any
 
     @js.native
+    @nowarn
     sealed trait Dimensions extends js.Object {
       val width : Double = js.native
       val height: Double = js.native
@@ -22,6 +24,7 @@ object ReactVirtualized {
     type Children = js.Function1[Dimensions, raw.React.Node]
 
     @js.native
+    @nowarn
     trait Props extends js.Object {
       var children: Children = js.native
       // className     : String   // Optional custom CSS class name to attach to root AutoSizer element. This is an advanced property and is not typically necessary.

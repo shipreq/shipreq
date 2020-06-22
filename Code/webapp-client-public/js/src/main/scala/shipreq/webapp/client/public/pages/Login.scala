@@ -6,6 +6,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import org.scalajs.dom.{html, window}
+import scala.annotation.nowarn
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
@@ -248,6 +249,7 @@ object Login {
       <.form(*.part1, array)
     }
 
+    @nowarn("cat=unused")
     private def renderPostPasswordReset(u: Username \/ EmailAddr): VdomElement =
       <.div(*.part2,
         Message(

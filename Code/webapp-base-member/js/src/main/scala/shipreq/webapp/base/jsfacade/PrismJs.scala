@@ -1,11 +1,13 @@
 package shipreq.webapp.base.jsfacade
 
 import org.scalajs.dom.Element
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
 
 @JSGlobal("Prism")
 @js.native
+@nowarn
 object PrismJs extends js.Any {
 
   def highlightElement(element : Element,

@@ -113,65 +113,62 @@ private[reqtypes] object CustomReqTypeEditor {
 
   private implicit def vux = ValidationUX.Full
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  private def render(p: Props): VdomNode = {
+    val s = p.state.value
 
-    def render(p: Props): VdomNode = {
-      val s = p.state.value
+    val mnemonic =
+      Form.Field.text
+        .withLabel(FieldNames.mnemonic)
+        .withState(p.state.zoomStateL(State.mnemonic))
+        .withValidator(DataValidators.reqType.mnemonic.unnamedFn(p.validatorState))
+        .withEnabledAndAutoFocus(p.enabled)
+        .modEditor(f => e => f(TagMod(e, *.editorMnemonic)))
 
-      val mnemonic =
-        Form.Field.text
-          .withLabel(FieldNames.mnemonic)
-          .withState(p.state.zoomStateL(State.mnemonic))
-          .withValidator(DataValidators.reqType.mnemonic.unnamedFn(p.validatorState))
-          .withEnabledAndAutoFocus(p.enabled)
-          .modEditor(f => e => f(TagMod(e, *.editorMnemonic)))
+    def pastMnemonicContent =
+      s.source.map { rt =>
+        <.div(
+          *.editorPastMnemonics,
+          Shared.renderOldMnemonics(rt))
+      }
 
-      def pastMnemonicContent =
-        s.source.map { rt =>
-          <.div(
-            *.editorPastMnemonics,
-            Shared.renderOldMnemonics(rt))
-        }
+    def pastMnemonics =
+      Form.Field
+        .ofEditor(pastMnemonicContent.whenDefined)
+        .withLabel(FieldNames.pastMnemonics)
+        .withEnabled(p.enabled)
 
-      def pastMnemonics =
-        Form.Field
-          .ofEditor(pastMnemonicContent.whenDefined)
-          .withLabel(FieldNames.pastMnemonics)
-          .withEnabled(p.enabled)
+    val mnemonics =
+      p.filterDead match {
+        case HideDead => mnemonic
+        case ShowDead => Form.Field.two(mnemonic, pastMnemonics)
+      }
 
-      val mnemonics =
-        p.filterDead match {
-          case HideDead => mnemonic
-          case ShowDead => Form.Field.two(mnemonic, pastMnemonics)
-        }
+    val name =
+      Form.Field.text
+        .withLabel(FieldNames.name)
+        .withState(p.state.zoomStateL(State.name))
+        .withValidator(DataValidators.reqType.name.unnamedFn(p.validatorState))
+        .withEnabled(p.enabled)
 
-      val name =
-        Form.Field.text
-          .withLabel(FieldNames.name)
-          .withState(p.state.zoomStateL(State.name))
-          .withValidator(DataValidators.reqType.name.unnamedFn(p.validatorState))
-          .withEnabled(p.enabled)
+    val imp =
+      Form.Field.booleanSelect(Mandatory)(_.toText)
+        .withLabel(Shared.implication)
+        .withState(p.state.zoomStateL(State.imp))
+        .withEnabled(p.enabled)
 
-      val imp =
-        Form.Field.booleanSelect(Mandatory)(_.toText)
-          .withLabel(Shared.implication)
-          .withState(p.state.zoomStateL(State.imp))
-          .withEnabled(p.enabled)
+    val desc =
+      Form.Field.text
+        .withEditor(AutosizeTextarea.editor)
+        .withLabel(FieldNames.desc)
+        .withState(p.state.zoomStateL(State.desc))
+        .withValidator(DataValidators.reqType.desc.unnamedFn(p.validatorState))
+        .withEnabled(p.enabled)
 
-      val desc =
-        Form.Field.text
-          .withEditor(AutosizeTextarea.editor)
-          .withLabel(FieldNames.desc)
-          .withState(p.state.zoomStateL(State.desc))
-          .withValidator(DataValidators.reqType.desc.unnamedFn(p.validatorState))
-          .withEnabled(p.enabled)
-
-      Form(mnemonics, name, imp, desc)
-    }
+    Form(mnemonics, name, imp, desc)
   }
 
   val Component = ScalaComponent.builder[Props]
-    .renderBackend[Backend]
+    .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build
 }

@@ -153,56 +153,53 @@ object TagFieldEditor {
 
   // ===================================================================================================================
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  private def render(p: Props): VdomNode =
+    if (p.isPossible) {
 
-    def render(p: Props): VdomNode =
-      if (p.isPossible) {
+      val renderDefault: ApplicableTagId ~=> VdomNode =
+        Reusable.implicitly(p.pw).map(pw => id => pw.tagSimple(id, includeDesc = true))
 
-        val renderDefault: ApplicableTagId ~=> VdomNode =
-          Reusable.implicitly(p.pw).map(pw => id => pw.tagSimple(id, includeDesc = true))
+      val rules =
+        ReqTypeRulesEditor.ApplicableTagDefault.Component(
+          ReqTypeRulesEditor.Props(
+            state         = p.state.zoomStateL(State.rules),
+            reqTypes      = p.cfg.reqTypes,
+            renderDefault = renderDefault,
+            defaults      = p.legalDefaults,
+            filterDead    = p.filterDead,
+            enabled       = p.enabled))
 
-        val rules =
-          ReqTypeRulesEditor.ApplicableTagDefault.Component(
-            ReqTypeRulesEditor.Props(
-              state         = p.state.zoomStateL(State.rules),
-              reqTypes      = p.cfg.reqTypes,
-              renderDefault = renderDefault,
-              defaults      = p.legalDefaults,
-              filterDead    = p.filterDead,
-              enabled       = p.enabled))
+      p.state.value match {
 
-        p.state.value match {
+        case _: State.ForUpdate =>
+          <.div(rules)
 
-          case _: State.ForUpdate =>
-            <.div(rules)
+        case s: State.ForCreate =>
 
-          case s: State.ForCreate =>
+          val sourceSelect =
+            Dropdown.Props.Optional[TagGroupId](
+              items    = p.reqTypeItems,
+              selected = s.tagId.map(p.cfg.tags.needTagGroup(_).name),
+              enabled  = p.enabled)(
+              onChange = o => p.state.setState(s.copy(Some(o.value)))
+            ).render
 
-            val sourceSelect =
-              Dropdown.Props.Optional[TagGroupId](
-                items    = p.reqTypeItems,
-                selected = s.tagId.map(p.cfg.tags.needTagGroup(_).name),
-                enabled  = p.enabled)(
-                onChange = o => p.state.setState(s.copy(Some(o.value)))
-              ).render
+          val sourceField =
+            Form.Field.ofEditor(sourceSelect)
+              .inline
+              .withLabel(FieldNames.tagFieldSource)
+              .withValidated(DataValidators.field.tagGroup.unnamedFn(p.validatorState)(s.tagId))
+              .withValidationUX(ValidationUX.Highlight)
+              .withEnabled(p.enabled)
 
-            val sourceField =
-              Form.Field.ofEditor(sourceSelect)
-                .inline
-                .withLabel(FieldNames.tagFieldSource)
-                .withValidated(DataValidators.field.tagGroup.unnamedFn(p.validatorState)(s.tagId))
-                .withValidationUX(ValidationUX.Highlight)
-                .withEnabled(p.enabled)
-
-            <.div(Form(sourceField)(ValidationUX.Full), rules)
-        }
-      } else {
-
-        // Not possible
-        val msg = Shared.noSourcesMsg(FieldNames.tagFieldSource, "tag", p.router, Routes.Page.CfgTags)
-        <.div(msg) // Wrap in div for tests
+          <.div(Form(sourceField)(ValidationUX.Full), rules)
       }
-  }
+    } else {
+
+      // Not possible
+      val msg = Shared.noSourcesMsg(FieldNames.tagFieldSource, "tag", p.router, Routes.Page.CfgTags)
+      <.div(msg) // Wrap in div for tests
+    }
 
   implicit val reusabilityStateC: Reusability[State.ForCreate] = Reusability.derive
   implicit val reusabilityStateU: Reusability[State.ForUpdate] = Reusability.derive
@@ -210,7 +207,7 @@ object TagFieldEditor {
   implicit val reusabilityProps : Reusability[Props          ] = Reusability.derive
 
   val Component = ScalaComponent.builder[Props]
-    .renderBackend[Backend]
+    .render_P(render)
     .configure(Reusability.shouldComponentUpdate)
     .build
 }

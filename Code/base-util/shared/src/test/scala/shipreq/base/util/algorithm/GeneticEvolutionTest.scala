@@ -132,10 +132,9 @@ object GeneticEvolutionTest extends TestSuite {
       def run(bits  : Int,
                target: Chromosome,
                config: Config): Chromosome = {
-        val bitsD = bits.toDouble
         GeneticEvolution.Binary.solveViaEvolution(
           bits    = bits,
-          fitness = _.fitnessToGoal(target, bits, bitsD),
+          fitness = _.fitnessToGoal(target, bits),
           goal    = 0,
           config  = config,
         )

@@ -64,7 +64,7 @@ object LandingPage {
         "Get in touch !",
         <.span(*.pointAtForm))))
 
-  final class Backend($: BackendScope[Props, Unit]) {
+  final class Backend {
 
     private val fieldName =
       Form.Field.text

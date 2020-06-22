@@ -2,11 +2,13 @@ package shipreq.webapp.base.jsfacade
 
 import japgolly.scalajs.react.Callback
 import org.scalajs.dom.html
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
 
 @JSGlobal("scrollIntoView")
 @js.native
+@nowarn
 object ScrollIntoViewIfNeededFacade extends js.Object {
 
   def apply(node: html.Element, options: Options): Unit = js.native

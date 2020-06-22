@@ -5,6 +5,7 @@ import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.macros.{GenLens, Lenses}
 import monocle.{Lens, Traversal}
+import scala.annotation.nowarn
 import scala.collection.immutable.ListSet
 import scalaz.std.option.toRight
 import scalaz.{-\/, \/}
@@ -179,6 +180,7 @@ object StaticField {
 
     def canDelete(loc: VectorTree.Location): Permission
 
+    @nowarn("cat=unused")
     final def canInsertAfter(loc: VectorTree.Location): Permission =
       // TODO Add a real implementation and make tests generate tree at maxLength
       Allow

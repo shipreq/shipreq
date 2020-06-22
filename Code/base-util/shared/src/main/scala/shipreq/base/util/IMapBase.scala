@@ -2,7 +2,7 @@ package shipreq.base.util
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.univeq.UnivEq
-import scala.annotation.elidable
+import scala.annotation.{elidable, nowarn}
 import scala.collection.IterableOnce
 import scalaz.std.iterable._
 import scalaz.std.map._
@@ -13,10 +13,8 @@ object IMapBaseV {
   def equality[K: Order, V: Equal, M <: IMapBaseV[K, _, V, M]]: Equal[M] =
     Equal.equalBy(_.underlyingMap)
 
-  def univEq[K, VI, VO, I <: IMapBaseV[K, VI, VO, I]](implicit u: UnivEq[Map[K, VO]]): UnivEq[I] = {
-    locally(u)
+  def univEq[K, VI, VO, I <: IMapBaseV[K, VI, VO, I]](implicit @nowarn("cat=unused") u: UnivEq[Map[K, VO]]): UnivEq[I] =
     UnivEq.force
-  }
 }
 
 abstract class IMapBaseV[K: UnivEq, VI, VO, This_ <: IMapBaseV[K, VI, VO, This_]] private[util] (m: Map[K, VO]) {

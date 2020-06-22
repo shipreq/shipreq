@@ -1,13 +1,15 @@
 package shipreq.webapp.base.jsfacade
 
 import org.scalajs.dom.html
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
-import scala.scalajs.js.{Function1 => -->, Function2 => JsFn2, Function3 => JsFn3, RegExp, UndefOr, undefined, |}
+import scala.scalajs.js.{Function1 => -->, Function2 => JsFn2, Function3 => JsFn3, RegExp, UndefOr, |}
 import shipreq.webapp.base.jsfacade.TextComplete._
 
 @js.native
 @JSGlobal("TextComplete")
+@nowarn
 final class TextComplete(val editor: Editor, options: Options = js.native) extends js.Any {
 
   def register(ss: js.Array[Strategy[_]]): this.type = js.native
@@ -28,6 +30,7 @@ final class TextComplete(val editor: Editor, options: Options = js.native) exten
 object TextComplete {
 
   @js.native
+  @nowarn
   sealed trait Editor extends js.Object {
     /** @param options code: ("UP" | "DOWN") */
     def emitMoveEvent(options: js.Object): Unit = js.native
@@ -37,6 +40,7 @@ object TextComplete {
 
   @js.native
   @JSGlobal("TextCompleteTA")
+  @nowarn
   final class TextArea(element: html.TextArea) extends Editor
 
   @js.native
@@ -53,7 +57,7 @@ object TextComplete {
 
   @js.native
   trait MatchData extends js.Array[String] {
-    var index: js.UndefOr[Int] = js.native
+    var index: js.UndefOr[Int]
   }
   object MatchData {
     def empty(): MatchData =
@@ -69,14 +73,14 @@ object TextComplete {
 
   @js.native
   trait Strategy[A] extends js.Object {
-    var `match` : Strategy.Match       = js.native
-    var search  : Strategy.Search  [A] = js.native
-    var replace : Strategy.Replace [A] = js.native
-    var cache   : Strategy.Cache       = js.native
-    var context : Strategy.Context     = js.native
-    var template: Strategy.Template[A] = js.native
-    var index   : Strategy.Index       = js.native
-    var id      : Strategy.Id          = js.native
+    var `match` : Strategy.Match
+    var search  : Strategy.Search  [A]
+    var replace : Strategy.Replace [A]
+    var cache   : Strategy.Cache
+    var context : Strategy.Context
+    var template: Strategy.Template[A]
+    var index   : Strategy.Index
+    var id      : Strategy.Id
   }
 
   object Strategy {

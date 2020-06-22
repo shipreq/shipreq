@@ -53,6 +53,8 @@ object Common {
     "-target:" + Dependencies.Java.major,            // Target platform for object files. ([8],9,10,11,12)
     "-unchecked",                                    // Enable additional warnings where generated code depends on assumptions.
     "-Wconf:msg=may.not.be.exhaustive:e",            // Make non-exhaustive matches errors instead of warnings
+    "-Wdead-code",                                   // Warn when dead code is identified.
+    "-Wunused:explicits",                            // Warn if an explicit parameter is unused.
     "-Wunused:implicits",                            // Warn if an implicit parameter is unused.
     "-Wunused:imports",                              // Warn if an import selector is not referenced.
     "-Wunused:locals",                               // Warn if a local definition is unused.
@@ -89,8 +91,6 @@ object Common {
   )
 /*
     "-Xsource:2.14",                                 // Prepare for Dotty -- Disabled because of warnings in macro-generated code. Fix 3rd-libs first.
-    "-Wdead-code",                                   // Warn when dead code is identified. -- Disabled due to js.native / https://github.com/scala/bug/issues/11942
-    "-Wunused:explicits",                            // Warn if an explicit parameter is unused. -- Disabled due to js.native / https://github.com/scala/bug/issues/11942
 */
 
   def scalacTestFlags = Seq(

@@ -2,6 +2,7 @@ package shipreq.taskman.server.akka
 
 import doobie.implicits._
 import java.util.concurrent.{CountDownLatch, Executors, TimeUnit}
+import scala.annotation.nowarn
 import scala.concurrent._
 import scala.concurrent.duration._
 import shipreq.base.util.FxModule._
@@ -57,8 +58,7 @@ object AkkaTest extends TestSuite with HasLogger {
 
         // wait for results
         val expect = List(Succeeded, FailAndAbort, Succeeded).map(Some(_))
-        implicit val retryMax = RetryMax(10.seconds)
-        locally(retryMax) // -Wunused:locals gets it wrong here
+        @nowarn("cat=unused") implicit val retryMax = RetryMax(10.seconds)
         eventually {
           List(dummy1, dummy2, dummy3).map(lookupHistory) == expect
         }

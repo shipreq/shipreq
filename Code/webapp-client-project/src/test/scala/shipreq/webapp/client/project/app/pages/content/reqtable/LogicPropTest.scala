@@ -4,6 +4,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
 import nyaya.prop.{Logic => _, _}
 import nyaya.util.Multimap
+import scala.annotation.nowarn
 import scalaz.std.AllInstances._
 import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util.ScalaExt._
@@ -39,12 +40,12 @@ object LogicPropTest extends TestSuite {
     val plainText      = PlainText.ForProject.noCtx(p)
     val textSearch     = TextSearch(p, plainText)
     val filterCompiler = Filter.Valid.compiler(p, plainText, textSearch, fd, applyFilterDeadToReqs = false)
-    val gathered       = Logic.gather[Vector](p, v, plainText, textSearch, filterCompiler)
+    val gathered       = Logic.gather[Vector](p, v, filterCompiler)
     val gatheredG      = gathered.iterator.filterSubType[Row.ForReq].toList
     val rowReqCodes    = gathered.flatMap(codesInRow)
     val rowGReqIds     = gatheredG.map(_.req.id).toSet
     val srcGReqIds     = p.content.reqs.idIterator.filterSubType[GenericReqId].filter(expectVisible).toSet
-    val finalRows      = Logic.rowsForTable(p, v, plainText, textSearch, filterCompiler)
+    val finalRows      = Logic.rowsForTable(p, v, plainText, filterCompiler)
     val tableStats     = Logic.stats(p, finalRows)
 
     val expectedVisibleReqCodes = {
@@ -102,6 +103,7 @@ object LogicPropTest extends TestSuite {
       (criRev ∧ sortRev ∧ sortTwice) rename "Universal sort props"
     }
 
+    @nowarn("cat=unused")
     def reverseSortOnReverseCri(origSorted: Vector[Row], revCri: View): EvalL = {
       /*
       def rev[A](c: Column, l: Vector[A]): Vector[A] =
@@ -143,7 +145,7 @@ object LogicPropTest extends TestSuite {
       if (v isVisible c)
         gathered
       else
-        Logic.gather(p, View(columnState(p, c), sc, fd, v.filter, None), plainText, textSearch, filterCompiler)
+        Logic.gather(p, View(columnState(c), sc, fd, v.filter, None), filterCompiler)
 
     def sortCriAndGather(c: SC.Inconclusive) =
       sortCri(c).mapStrengthR(gatherOn(c.column, _))

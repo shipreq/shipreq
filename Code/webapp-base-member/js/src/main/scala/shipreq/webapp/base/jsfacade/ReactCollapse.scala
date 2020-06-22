@@ -18,7 +18,7 @@ object ReactCollapse {
 
   @js.native
   trait Props extends js.Object {
-    var isOpened: Boolean = js.native
+    var isOpened: Boolean
   }
 
   val component = JsComponent[Props, Children.Varargs, Null](RawComp)

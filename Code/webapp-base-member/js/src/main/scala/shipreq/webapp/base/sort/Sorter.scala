@@ -2,7 +2,7 @@ package shipreq.webapp.base.sort
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import monocle.Optional
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scalaz.std.option.optionInstance
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.ScalaExt._
@@ -94,8 +94,8 @@ object Sorter {
          | SortMethod.DescThenBlanks => BlanksLast
     }
 
-    @inline implicit def autoBlanksFirst(a: BlanksThenAsc.type): BlankPlacement = BlanksFirst
-    @inline implicit def autoBlanksLast (a: AscThenBlanks.type): BlankPlacement = BlanksLast
+    @inline @nowarn implicit def autoBlanksFirst(a: BlanksThenAsc.type): BlankPlacement = BlanksFirst
+    @inline @nowarn implicit def autoBlanksLast (a: AscThenBlanks.type): BlankPlacement = BlanksLast
   }
 
   case object BlanksFirst extends BlankPlacement

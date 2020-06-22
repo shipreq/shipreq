@@ -111,7 +111,7 @@ object Sorter {
     })
 
   def deletionReasonSorter: SorterForSMCB =
-    textSorterS(C.DeletionReason, s => pt => {
+    textSorterS(C.DeletionReason, _ => pt => {
       case r: Row.ForReq       => pt.deleteReasonForReq(r.req) getOrElse ""
       case _: Row.ForCodeGroup => pt.deleteReasonForCodeGroup getOrElse ""
     })

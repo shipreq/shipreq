@@ -3,7 +3,7 @@ package shipreq.webapp.base.protocol.websocket
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import japgolly.univeq._
 import org.scalajs.dom.{CloseEvent, Event, MessageEvent, window}
-import scala.annotation.elidable
+import scala.annotation.{elidable, nowarn}
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle
 import scala.scalajs.js.typedarray.ArrayBuffer
@@ -252,6 +252,7 @@ object WebSocketClient {
         setPublicState(newState).runNow()
       }
 
+      @nowarn("cat=unused")
       private def onOpen(e: Event): Unit =
         onOpened()
 

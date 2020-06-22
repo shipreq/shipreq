@@ -1,12 +1,14 @@
 package shipreq.webapp.base.ui.semantic
 
 import org.scalajs.dom.Node
+import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.|
 
 /** Wrapper for JQuery with Semantic UI extensions.
   */
 @js.native
+@nowarn
 trait JQuery extends js.Object {
 
   def is(sel: String): Boolean = js.native

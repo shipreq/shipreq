@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import scala.annotation.nowarn
 import scalaz.{-\/, \/-}
 
 sealed trait Applicability extends IsoBool.WithBoolOps[Applicability] {
@@ -16,7 +17,10 @@ object Applicability extends IsoBool.Object[Applicability] {
 
 case object NotApplicable extends Applicability {
   val left: IfApplicable[Nothing] = -\/(NotApplicable)
-  @inline implicit def autoLeft[A](a: NotApplicable.type): IfApplicable[A] = left
+
+  @inline
+  @nowarn("cat=unused")
+  implicit def autoLeft[A](a: NotApplicable.type): IfApplicable[A] = left
 }
 
 case object Applicable extends Applicability {

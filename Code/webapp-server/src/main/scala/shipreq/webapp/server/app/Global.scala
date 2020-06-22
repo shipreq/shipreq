@@ -3,6 +3,7 @@ package shipreq.webapp.server.app
 import doobie.ConnectionIO
 import java.util.concurrent.{Executors, TimeUnit}
 import org.redisson.api.RedissonClient
+import scala.annotation.nowarn
 import scalaz.~>
 import shipreq.base.db._
 import shipreq.base.util.FxModule._
@@ -33,7 +34,9 @@ final case class Global(config      : ServerConfig,
 object Global {
   var Instance: Global = _
 
-  @inline implicit def autoInstance(g: Global.type): Global = Instance
+  @inline
+  @nowarn("cat=unused")
+  implicit def autoInstance(g: Global.type): Global = Instance
 
   def modify(f: Global => Global): Unit =
     Instance = f(Instance)
