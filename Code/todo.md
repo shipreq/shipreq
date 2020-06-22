@@ -93,6 +93,7 @@ Backlog (eventually)
 * Tag/Implication Browser (aka Distribution manager/console)
 
 ### Functional changes
+* Bug: field editor doesn't fit (and no scroll) when window is left 50% of screen
 * Markdown: Support nested lists
 * Keyboard nav for ReqTablePage (not just the table) (?)
 * Show past IDs in ReqTable
