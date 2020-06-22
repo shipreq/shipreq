@@ -19,7 +19,7 @@ import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.state.{Global, ProjectState}
 import shipreq.webapp.server.logic.{ApplyNewEvent, MakeEvent}
 
-final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) => Callback.empty, _ => Callback.empty) {
+final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) => Callback.empty, _ => Callback.empty, LoggerJs.on) {
 
   override def toString = unsafeState match {
     case Global.State.Active(a, b) => s"TestGlobal(Active($a, $b))"

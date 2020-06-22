@@ -34,7 +34,7 @@ object PublicSpaLogicTest extends TestSuite {
   def assertRegistrationEmailSent(emailAddr: EmailAddr = ea)(implicit t: Tester): Unit = {
     import t._, mockInterpreters._
     val m = taskman.assertLastSubmitted { case m: Task.RegistrationRequested => m }
-    assertEq(m.email.value, ea.value)
+    assertEq(m.email.value, emailAddr.value)
     assertContains(m.verifyEmailUrl, db.prevToken().value)
   }
 

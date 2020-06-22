@@ -36,7 +36,7 @@ final class LazyLoader[A](initState: State.Pending[A]) {
     }
 
   def load(onLoad: A => Callback, runIfAlreadyLoaded: Boolean = true): Callback =
-    this.onLoad(onLoad) >> load
+    this.onLoad(onLoad, runIfAlreadyLoaded) >> load
 
   def load: Callback =
     state flatMap {

@@ -180,7 +180,7 @@ object Dropdown {
     def withDelay(show: js.UndefOr[Int] = js.undefined,
                   hide: js.UndefOr[Int] = js.undefined): JsOptions = {
       val s = show
-      val h = show
+      val h = hide
       o.delay = new Delay {
         override val show = s
         override val hide = h

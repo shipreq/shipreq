@@ -16,7 +16,7 @@ object Shared {
       header  = s"No ${sourceName.toLowerCase}s available",
       content = TagMod(
         s"In order to create a new $fieldTypeName field, you need a ${sourceName.toLowerCase} that hasn't been assigned to a field yet. You can create one on the ",
-        routerCtl.link(Routes.Page.CfgReqTypes),
+        routerCtl.link(page),
         " page."))
 
 }
