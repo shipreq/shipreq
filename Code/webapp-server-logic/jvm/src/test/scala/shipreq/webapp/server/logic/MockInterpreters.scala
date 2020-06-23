@@ -5,7 +5,7 @@ import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import scalaz.syntax.monad._
-import scalaz.{-\/, Catchable, Monad, Name, NaturalTransformation, \/, \/-}
+import scalaz.{-\/, Catchable, Monad, Name, NaturalTransformation, \/, \/-, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.test.JsonTestUtil._
 import shipreq.base.test.SyncEffect
@@ -294,8 +294,8 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     getUser(user).map(_.id)
   }
 
-  override def withTransactionLevel[A](l: Int)(f: Name[A]) =
-    f
+  override def withTransactionLevel[D[_], A](runDB: Name ~> D, level: Int)(f: Name[A]): D[A] =
+    runDB(f)
 
   def assertNoDbChange[A](a: => A): A =
     assertNoChange("assertNoChange:userPlaceholders", userPlaceholders.iterator.map(_.toString).mkString("\n"))(

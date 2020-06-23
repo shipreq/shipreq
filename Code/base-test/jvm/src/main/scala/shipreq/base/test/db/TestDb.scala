@@ -239,6 +239,12 @@ object TestDb extends TestDbHelpers with HasLogger {
     rwlock.writeLock().unlock()
   }
 
+  def withRealXA[A](f: ImperativeXA => A): A =
+    try
+      f(acquireRealXA())
+    finally
+      releaseRealXA()
+
   // ===================================================================================================================
   // SQL checking
 

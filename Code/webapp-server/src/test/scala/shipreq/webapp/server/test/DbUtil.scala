@@ -8,7 +8,7 @@ import shipreq.base.test.db._
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.event.ActiveEvent
-import shipreq.webapp.base.user.UserId
+import shipreq.webapp.base.user.{UserId, Username}
 import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.logic.DB
 import shipreq.webapp.server.security.SecurityInterpreter
@@ -53,6 +53,8 @@ final case class DbUtil(xa: ImperativeXA) {
       "INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES(?,?,0,0,NOW(),NOW(),NOW()) RETURNING id"
     ).toQuery0((randomStr, randomStr)).unique
 
+  def getUsername(id: UserId): Username =
+    xa ! Query[UserId, Username]("SELECT username FROM usr WHERE id=?").toQuery0(id).unique
 
   def deleteUser(id: Long): Unit = {
     xa ! sql"DELETE FROM usrh_name WHERE usr_id = $id".update.run

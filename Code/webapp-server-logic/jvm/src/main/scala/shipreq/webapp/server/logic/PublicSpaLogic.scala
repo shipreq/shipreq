@@ -263,9 +263,9 @@ object PublicSpaLogic extends HasLogger {
         val resetPassword1: PublicSpaProtocols.ResetPassword1.ajax.ServerSideFn[F] =
           security.protectFn { user =>
 
-            def resetInDb(now: Instant): D[(Option[Task], Security.Result)] = {
+            def resetInDb(now: Instant): F[(Option[Task], Security.Result)] = {
               import DB.PasswordResetState._
-              db.withTransactionLevel(Connection.TRANSACTION_SERIALIZABLE)(
+              db.withTransactionLevel(runDB, Connection.TRANSACTION_SERIALIZABLE)(
                 db.getPasswordResetState(user).flatMap {
 
                   // No token
@@ -298,7 +298,7 @@ object PublicSpaLogic extends HasLogger {
 
             for {
               now           <- svr.now
-              (msg, secRes) <- runDB(resetInDb(now))
+              (msg, secRes) <- resetInDb(now)
               _             <- metrics.securityEvent(Security.Event.ResetPassword1, secRes)
               _             <- taskman.submitBulk_(msg)
             } yield ()

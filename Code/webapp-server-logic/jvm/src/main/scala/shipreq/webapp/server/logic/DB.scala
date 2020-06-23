@@ -64,8 +64,13 @@ object DB {
 
   trait Base[F[_]] {
 
-    /** @param level See java.sql.Connection */
-    def withTransactionLevel[A](level: Int)(f: F[A]): F[A]
+    /** Note: This is translated immediately out of F to explicitly clarify the fact that it cannot be composed with
+      * other Fs to form a transaction. This is its own isolated transaction; to attempt otherwise would result in a
+      * "Cannot change transaction isolation level in the middle of a transaction" error from PostgreSQL.
+      *
+      * @param level See java.sql.Connection
+      */
+    def withTransactionLevel[D[_], A](runDB: F ~> D, level: Int)(f: F[A]): D[A]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

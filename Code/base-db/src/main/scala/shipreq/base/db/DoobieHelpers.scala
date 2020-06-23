@@ -29,24 +29,50 @@ object DoobieHelpers {
       } yield (Duration.between(start, end), result)
     }
 
+    def collapseError[B](implicit ev: ConnectionIO[A] =:= ConnectionIO[SQLException \/ B]): ConnectionIO[B] =
+      ev(self).flatMap {
+        case \/-(b) => C.pure(b)
+        case -\/(e) => C.raiseError(e)
+      }
+
+    @inline def inTransaction(on: Boolean): ConnectionIO[A] =
+      withAutoCommit(!on)
+
+    def withAutoCommit(ac: Boolean): ConnectionIO[A] =
+      C.getAutoCommit.flatMap { orig =>
+        // Yes guarantee(setAutoCommit) is called regardless of the original value cos the inner block may also
+        // call setAutoCommit itself.
+        (C.setAutoCommit(ac).whenA(ac != orig) *> self).guarantee(C.setAutoCommit(orig))
+      }
+
     /** "Safe" in the sense that an error rolls back the inner transaction without aborting the outer one. */
-    def inSafeTransaction: ConnectionIO[SQLException \/ A] =
-      for {
-        ac     <- C.getAutoCommit
-        _      <- C.setAutoCommit(false).whenA(ac)
-        sp     <- C.setSavepoint
-        result <- (if (ac) self <* C.commit else self).attemptSql
-        _      <- C.rollback(sp).whenA(result.isLeft)
-        _      <- C.setAutoCommit(true).whenA(ac)
-      } yield \/.fromEither(result)
+    def inSafeTransaction: ConnectionIO[SQLException \/ A] = {
+      val inner: ConnectionIO[SQLException \/ A] =
+        for {
+          sp     <- C.setSavepoint
+          result <- self.attemptSql
+          _      <- C.rollback(sp).whenA(result.isLeft)
+        } yield \/.fromEither(result)
+      inner.inTransaction(true)
+    }
 
     /** @param level See java.sql.Connection */
     def withTransactionLevel(level: Int): ConnectionIO[A] =
+      // This is wrapped in auto-commit=true because if it's not, the following happens:
+      // 1. C.getTransactionIsolation is called
+      // 2. When auto-commit is false, it starts a new transaction
+      // 3. C.setTransactionIsolation is called
+      // 4. Postgres throws "Cannot change transaction isolation level in the middle of a transaction"
       C.getTransactionIsolation.flatMap(orig =>
         if (orig ==* level)
           self
         else
-          (C.setTransactionIsolation(level) *> self).guarantee(C.setTransactionIsolation(orig)))
+          (
+            C.setTransactionIsolation(level) *> C.setAutoCommit(false) *> self <* C.commit
+          ).guarantee(
+            C.setTransactionIsolation(orig)
+          )
+      ).inTransaction(false)
 
     def void: ConnectionIO[Unit] =
       self.map(_ => ())

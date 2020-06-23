@@ -1,8 +1,12 @@
 package shipreq.webapp.server.db
 
+import cats.effect.syntax.all._
+import cats.implicits._
 import doobie._
 import doobie.implicits._
+import java.sql.Connection
 import java.time.{Duration, Instant, LocalDateTime, ZoneOffset}
+import scalaz.-\/
 import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.test.db.{ImperativeXA, TestDb}
 import shipreq.base.util.FxModule._
@@ -92,12 +96,19 @@ object DbTest extends TestSuite {
     }
 
     "user" - {
-      "resetPasswordFns" - TestDb.withImperativeXA { xa =>
+      "resetPasswordFns" - TestDb.withRealXA { xa =>
         implicit val timer = ServerInterpreter
         val dbu = DbUtil(xa)
         val db = dbu.dbAlgebra
         val u = dbu.newUserId()
-        val token = xa ! db.createResetPasswordToken(u)
+        val username = dbu.getUsername(u)
+
+        val realisticSql: Fx[VerificationToken] =
+          db.withTransactionLevel(xa.transZ, Connection.TRANSACTION_SERIALIZABLE)(
+            db.getPasswordResetState(-\/(username)) *> db.createResetPasswordToken(u)
+          )
+
+        val token = realisticSql.unsafeRunSync()
 
         val tokenStatus = PublicSpaLogic.passwordResetTokenStatusFn(db, xa.transZ, Global.config.server.security)
         assertEq(tokenStatus(token).unsafeRun(), VerificationToken.Status.Valid)

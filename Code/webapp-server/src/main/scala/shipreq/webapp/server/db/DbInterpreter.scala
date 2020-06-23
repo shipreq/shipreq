@@ -13,7 +13,7 @@ import java.time.Instant
 import nyaya.gen.Gen
 import org.postgresql.util.PSQLException
 import scala.collection.immutable.SortedSet
-import scalaz.{-\/, \/, \/-}
+import scalaz.{-\/, \/, \/-, ~>}
 import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
@@ -60,8 +60,8 @@ object DbInterpreter {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait Base extends DB.Base[ConnectionIO] {
 
-    override final def withTransactionLevel[A](level: Int)(f: ConnectionIO[A]): ConnectionIO[A] =
-      f.withTransactionLevel(level)
+    override final def withTransactionLevel[D[_], A](runDB: ConnectionIO ~> D, level: Int)(f: ConnectionIO[A]): D[A] =
+      runDB(f.withTransactionLevel(level))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
