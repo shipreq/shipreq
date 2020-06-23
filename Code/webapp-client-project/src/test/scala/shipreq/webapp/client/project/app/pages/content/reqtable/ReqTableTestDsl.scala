@@ -29,6 +29,8 @@ object ReqTableTestDsl {
 
   val * = Dsl[Ref, ReqTableObs, Project]
 
+  val svr = new TestGlobal.TestDslWithObs(*)(_.global, _.global)
+
   def apply(action: *.Actions = *.emptyAction): *.Plan =
     Plan(action, invariants)
 
@@ -74,11 +76,6 @@ object ReqTableTestDsl {
   val selectableColumns = *.focus("Selectable columns").collection(_.obs.columnSelector.allColumns)
 
   val tablePubids = *.focus("Visible pubids").collection(_.obs.table.rowPubids)
-
-  val svrReqs = *.focus("Server requests").value(_.obs.svrReqs.length)
-
-  val svrLastTwoReqs =
-    *.focus("Retry requests").compare(_.obs.svrReqs.last, _.obs.svrReqs.init.last)
 
   val activeElement = *.focus("activeElement").value(_.obs.activeElement)
 
@@ -144,12 +141,12 @@ object ReqTableTestDsl {
     val startEdit = (
       isNA.assert(false)
         +> tryStartEdit
-        +> svrReqs.assert.noChange
+        +> svr.requestCount.assert.noChange
         +> assertState(Editing))
 
     val assertCantStartEdit = (
       tryStartEdit.rename("Attempt to start editor.")
-        +> svrReqs.assert.noChange
+        +> svr.requestCount.assert.noChange
         +> assertNotEditing)
 
     def enterValue(text: String, desc: String = "Enter value") =
@@ -330,16 +327,8 @@ object ReqTableTestDsl {
 
   val logTable = *.print(_.obs.table.entireContent)
 
-  val svrDisableAutoRespond = *.action("Disable auto-respond.")(_.ref.global.disableAutoResponse())
-
-  val svrAutoRespondToLast = *.action("Server responds.")(_.ref.global.autoRespondToLast())
-
-  val svrFailLast = *.action("Fail last server request.")(_.ref.global.failLast())
-
-  val svrAssertLastTwoReqsEqual = svrLastTwoReqs.map(_.req).assert.equal(Equal.by_==, implicitly)
-
   def receiveExternalEvent(e: Event): *.Actions =
-    *.action("Receive external event: " + e)(_.ref.global.applyTestEventsCB(e).void.runNow())
+    svr.receiveExternalEvent(e)
       .updateState(WebappTestUtil.applyEventSuccessfully(_, e))
 
   def setFocus(f: ReqTableObs => html.Element): *.Actions =

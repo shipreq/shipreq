@@ -13,7 +13,7 @@ import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.WsReqRes
 import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.websocket._
-import shipreq.webapp.base.test.TestReauthenticationModal
+import shipreq.webapp.base.test.{TestReauthenticationModal, WebappTestUtil}
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.state.{Global, ProjectState}
@@ -230,6 +230,9 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
 
   unsafeSetState(Global.State.Active(initialProjectState, None))
   wsClient.connect.runNow()
+
+  def obs(): TestGlobal.Obs =
+    TestGlobal.Obs(this)
 }
 
 object TestGlobal {
@@ -241,4 +244,40 @@ object TestGlobal {
     new TestGlobal(ps)
   }
 
+  final case class Obs(g: TestGlobal) {
+    val reqs = g.reqs()
+  }
+
+  import shipreq.webapp.base.test.TestState._
+
+  class TestDsl[R, O, S](final val * : Dsl[Id, R, O, S, String])(getRef: R => TestGlobal) {
+    protected final implicit def autoRef(r: R): TestGlobal =
+      getRef(r)
+
+    val disableAutoResponse =
+      *.action("Disable auto-respond.")(_.ref.disableAutoResponse())
+
+    val autoRespondToLast =
+      *.action("Server responds.")(_.ref.autoRespondToLast())
+
+    val failLastRequest =
+      *.action("Fail last server request.")(_.ref.failLast())
+
+    def receiveExternalEvent(e: Event): *.Actions =
+      *.action("Receive external event: " + e)(_.ref.applyTestEventsCB(e).void.runNow())
+  }
+
+  final class TestDslWithObs[R, O, S](dsl   : Dsl[Id, R, O, S, String])
+                                     (getRef: R => TestGlobal,
+                                      getObs: O => Obs) extends TestDsl(dsl)(getRef) {
+    protected final implicit def autoObs(o: O): Obs =
+      getObs(o)
+
+    val requestCount = *.focus("Server requests").value(_.obs.reqs.length)
+
+    val lastTwoRequests = *.focus("Last two requests").compare(_.obs.reqs.last, _.obs.reqs.init.last)
+
+    val assertLastTwoRequestsAreEqual =
+      lastTwoRequests.map(_.req).assert.equal(Equal.by_==, implicitly)
+  }
 }

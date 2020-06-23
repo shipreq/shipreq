@@ -220,26 +220,26 @@ object ReqTableTest extends TestSuite {
         +> cellText.map(TestUtil.removeEditInstructionText).assert("Incompletions")
         >> enterValue(newValue)
         >> commit
-        +> svrReqs.assert.increment
+        +> svr.requestCount.assert.increment
         +> assertState(Locked)
         >> assertCantStartEdit
       ) group "editChangeCommit"
 
     val fail =
-      svrFailLast +> assertState(Failed) // Should be in failed state after I/O failure
+      svr.failLastRequest +> assertState(Failed) // Should be in failed state after I/O failure
 
     val retry = (
       clickRetry
         +> assertState(Locked)
-        +> svrReqs.assert.increment
-        +> svrAssertLastTwoReqsEqual
+        +> svr.requestCount.assert.increment
+        +> svr.assertLastTwoRequestsAreEqual
       )
 
     val saveSucceeds =
-      svrAutoRespondToLast +> assertState(Normal)
+      svr.autoRespondToLast +> assertState(Normal)
 
     Plan.action(
-      svrDisableAutoRespond >>
+      svr.disableAutoResponse >>
       editChangeCommit >> fail >> retry >> fail >> retry >> saveSucceeds)
   }
 
@@ -248,12 +248,12 @@ object ReqTableTest extends TestSuite {
     import ce._
     val origValue = "Incompletions"
     Plan.action(
-      svrDisableAutoRespond
+      svr.disableAutoResponse
         >> startEdit
         +> editorValue.assert(origValue)
         >> enterValue("boop")
-        >> commit +> svrReqs.assert.increment
-        >> svrFailLast +> assertState(Failed)
+        >> commit +> svr.requestCount.assert.increment
+        >> svr.failLastRequest +> assertState(Failed)
         >> abortEdit
         >> startEdit // This is the key point of the test - it asserts the previous server failure is cleared
         +> editorValue.assert(origValue)
@@ -269,7 +269,7 @@ object ReqTableTest extends TestSuite {
     val ce = cellEditor(pubid, col)
     import ce._
 
-    val post = svrReqs.assert.noChange & assertState(Normal).after
+    val post = svr.requestCount.assert.noChange & assertState(Normal).after
 
     val commitNop = commit +> post
 

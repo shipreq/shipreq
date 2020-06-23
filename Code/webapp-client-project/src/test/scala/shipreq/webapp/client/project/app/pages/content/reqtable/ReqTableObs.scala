@@ -52,14 +52,12 @@ object ReqTableObs {
  *
  * Inspects actual DOM to derive values.
  */
-final class ReqTableObs(global: TestGlobal, $: DomZipperJs) {
+final class ReqTableObs($: DomZipperJs, val global: TestGlobal.Obs) {
   import ReqTableObs._
 
   val activeElement = document.activeElement
 
   val clipboardText = TestClipboard.readText()
-
-  val svrReqs = global.reqs()
 
   val savedViews = SavedViewManagerObs.needIn($)
   val filterDead = FilterDeadButtonObs.needIn($)
