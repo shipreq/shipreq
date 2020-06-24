@@ -4,8 +4,7 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.univeq._
 import monocle.Lens
-import scalaz.Equal
-import scalaz.syntax.equal.ToEqualOps
+import scala.annotation.nowarn
 import shipreq.base.util.Intersection
 import shipreq.webapp.base.jsfacade.ReactCollapse
 import shipreq.webapp.base.lib.DataReusability._
@@ -72,67 +71,129 @@ object PreviewFeature {
     case object NeedOpen   extends Status(true)
     case object NeededOpen extends Status(true)
 
-    implicit def equality: UnivEq[Status] = UnivEq.derive
-    implicit def reusability: Reusability[Status] = Reusability.byUnivEq
-  }
-
-  type State[+Id] = Option[State.FocusData[Id]]
-
-  @inline implicit class StateOps[Id](private val state: State[Id]) extends AnyVal {
-    def filterId(id: Id)(implicit e: Equal[Id]): State[Id] =
-      state.filter(_.key ≟ id)
-
-    def mapId[A](i: Intersection[Id, A]): State[A] =
-      state.flatMap(_ omap i.getOption)
+    implicit def univEq: UnivEq[Status] = UnivEq.derive
+    implicit val reusability: Reusability[Status] = Reusability.byUnivEq
   }
 
   object State {
-    def init: State[Nothing] =
-      None
 
-    final case class FocusData[+K](key: K, status: Status) {
-      def omap[A](f: K => Option[A]): Option[FocusData[A]] =
-        f(key).map(FocusData(_, status))
+    type Single = Option[Status]
+
+    sealed trait Composite[Id] {
+      def iterator(): Iterator[(Id, Status)]
+      def get(id: Id): Single
+      def set(id: Id, s: Single): Composite[Id]
+      def merge[B](c: Composite[B])(i: Intersection[Id, B]): Composite[Id]
+
+      final def mapId[A](i: Intersection[Id, A]): Composite[A] =
+        Composite.Mapped(this, i)
     }
 
-    implicit def reusabilityFocusData[Id: Reusability]: Reusability[FocusData[Id]] =
-      Reusability.derive
+    object Composite {
 
-    def status[Id: Equal](id: Id): Lens[State[Id], Option[Status]] =
-      Lens[State[Id], Option[Status]](
-        _.filterId(id).map(_.status))(
-        newStatus => state => {
-          val updated = newStatus.map(v => State.FocusData(id, v))
-          updated.orElse {
-            // updated=None means that we're clearing state
-            // ...which is fine so long as we don't clear someone else's state
-            state.filter(_.key ≠ id)
+      def init[Id: UnivEq]: Root[Id] =
+        Root(UnivEq.emptyMap)
+
+      final case class Root[Id](previews: Map[Id, Status]) extends Composite[Id] {
+        override def iterator() =
+          previews.iterator
+
+        override def get(id: Id): Single =
+          previews.get(id)
+
+        override def set(id: Id, o: Single): Composite[Id] =
+          o match {
+            case Some(s) => copy(previews.updated(id, s))
+            case None    => copy(previews - id)
           }
-        })
 
-    def intersection[A, B](i: Intersection[A, B]): Lens[State[A], State[B]] =
-      Lens[State[A], State[B]](_.mapId(i))(ob => _ => ob.mapId(i.reverse))
+        override def merge[B](c: Composite[B])(i: Intersection[Id, B]): Composite[Id] = {
+          val m = Map.newBuilder[Id, Status]
+          m ++= c.iterator().flatMap(i.reverse.strengthR[Status].getOption)
+          for (e <- previews.iterator)
+            if (i.getOption(e._1).isEmpty)
+              // A is not part of B. Retain A's values
+              m += e
+          Root(m.result())
+        }
+      }
+
+      private final case class Mapped[A, B](c: Composite[A], i: Intersection[A, B]) extends Composite[B] {
+        override def iterator(): Iterator[(B, Status)] =
+          c.iterator().flatMap(i.strengthR[Status].getOption)
+
+        override def get(id: B): Single =
+          i.reverse.fold(id, c.get)(None)
+
+        override def set(id: B, s: Single): Composite[B] =
+          i.reverse.fold(id, c.set(_, s).mapId(i))(this)
+
+        override def merge[C](cc: Composite[C])(j: Intersection[B, C]): Composite[B] =
+          copy(c.merge(cc)(i <=> j))
+      }
+
+      def at[Id](id: Id): Lens[Composite[Id], Single] =
+        Lens[Composite[Id], Single](_.get(id))(s => _.set(id, s))
+
+      def intersection[A, B](i: Intersection[A, B]): Lens[Composite[A], Composite[B]] =
+        Lens[Composite[A], Composite[B]](_.mapId(i))(b => _.merge(b)(i))
+
+      private def _reusability[Id]: Reusability[Composite[Id]] = {
+        @nowarn("cat=unused") implicit val rd: Reusability[Map[Id, Status]] = Reusability.byRef
+        implicit val rr: Reusability[Root[Id]] = Reusability.derive
+        var r: Reusability[Composite[Id]] = new Reusability(null)
+        r =  Reusability.byRef || Reusability((xx, yy) => xx match {
+            case x: Root[Id] => yy match {
+              case y: Root[Id] => rr.test(x, y)
+              case _           => false
+            }
+            case x: Mapped[_, Id] => yy match {
+              case y: Mapped[_, Id] => (x.i eq y.i) && r.test(x.c.asInstanceOf[Composite[Id]], y.c.asInstanceOf[Composite[Id]])
+              case _                => false
+            }
+          })
+        r
+      }
+
+      private val _reusabilityInstance: Reusability[Composite[Any]] =
+        _reusability[Any]
+
+      implicit def reusability[Id]: Reusability[Composite[Id]] =
+        _reusabilityInstance.asInstanceOf[Reusability[Composite[Id]]]
+    }
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   object Read {
-    final case class Single(status: Option[Status]) extends AnyVal {
+    final case class Single(status: State.Single) extends AnyVal {
       def showPreview(wantOpen: => Boolean): Boolean =
         status.exists(_.show || wantOpen)
     }
 
-    final case class Composite[+Id](state: State[Id]) extends AnyVal
+    object Single {
+      val empty = apply(None)
+    }
 
-    implicit def CompositeOps[Id](r: Composite[Id]): CompositeOps[Id] =
-      new CompositeOps(r.state)
+    sealed trait Composite[Id] {
+      def apply(id: Id): Single
 
-    final class CompositeOps[Id](private val state: State[Id]) extends AnyVal {
-      def apply(id: Id)(implicit e: Equal[Id]): Single =
-        Single(state.filterId(id)(e).map(_.status))
+      final def mapId[A](i: Intersection[Id, A]): Composite[A] =
+        Composite.mapped(this, i)
+    }
 
-      def mapId[A](i: Intersection[Id, A]): Composite[A] =
-        Composite(state.mapId(i))
+    object Composite {
+      def apply[Id](s: State.Composite[Id]): Composite[Id] =
+        new Composite[Id] {
+          override def apply(id: Id): Single =
+            Single(s.get(id))
+        }
+
+      private def mapped[A, B](s: Composite[A], i: Intersection[A, B]): Composite[B] =
+        new Composite[B] {
+          override def apply(b: B): Single =
+            i.reverse.fold(b, s.apply)(Single.empty)
+        }
     }
   }
 
@@ -146,7 +207,7 @@ object PreviewFeature {
     }
 
     object Single {
-      def apply($: StateAccessPure[Option[Status]]): Single = new Single {
+      def apply($: StateAccessPure[State.Single]): Single = new Single {
         import Status._
 
         override def onFocus(wantOpen: Boolean): Callback = {
@@ -179,12 +240,12 @@ object PreviewFeature {
       }
     }
 
-    final case class Composite[Id: Equal]($: StateAccessPure[State[Id]]) {
+    final case class Composite[Id]($: StateAccessPure[State.Composite[Id]]) {
       def apply(id: Id): Single =
-        Single($ zoomStateL State.status(id))
+        Single($ zoomStateL State.Composite.at(id))
 
-      def mapId[A: Equal](i: Intersection[Id, A]): Composite[A] =
-        Composite($ zoomStateL State.intersection(i))
+      def mapId[A](i: Intersection[Id, A]): Composite[A] =
+        Composite($ zoomStateL State.Composite.intersection(i))
 
       def toReadWrite(r: Read.Composite[Id]): ReadWrite.Composite[Id] =
         ReadWrite.Composite(r, this)
@@ -226,11 +287,11 @@ object PreviewFeature {
       lazy val neverShow : Single = const(None)
     }
 
-    final case class Composite[Id: Equal](read: Read.Composite[Id], write: Write.Composite[Id]) {
+    final case class Composite[Id](read: Read.Composite[Id], write: Write.Composite[Id]) {
       def apply(id: Id): Single =
         Single(read(id), write(id))
 
-      def mapId[A: Equal](i: Intersection[Id, A]): Composite[A] =
+      def mapId[A](i: Intersection[Id, A]): Composite[A] =
         Composite(read mapId i, write mapId i)
     }
   }
