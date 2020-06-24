@@ -396,11 +396,12 @@ $.fn.transition = function() {
               .addClass(animationClass)
               .one(animationEnd + '.complete' + eventNamespace, module.complete)
             ;
-            if(settings.useFailSafe) {
-              module.add.failSafe();
-            }
-            module.set.duration(settings.duration);
+            /* golly */ // if(settings.useFailSafe) {
+            /* golly */ //   module.add.failSafe();
+            /* golly */ // }
+            /* golly */ // module.set.duration(settings.duration);
             settings.onStart.call(element);
+            /* golly */ $module.triggerHandler(animationEnd); // taken from add.failSafe
           }
         },
 
@@ -738,7 +739,8 @@ $.fn.transition = function() {
           },
           animate: function() {
             // can transition does not return a value if animation does not exist
-            return (module.can.transition() !== undefined);
+            /* golly */ // return (module.can.transition() !== undefined);
+            /* golly */ return true;
           }
         },
 

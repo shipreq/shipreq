@@ -1,7 +1,36 @@
 #!/bin/bash
 
-cd "$(dirname "$(readlink -e "$0")")" || exit 1
+set -eo pipefail
 
-./node_modules/.bin/json5 -c semantic.json5 \
-  && cd semantic && ../node_modules/semantic-ui/node_modules/.bin/gulp build && cd .. \
-  && echo && src/semantic/prune
+cd "$(dirname "$(readlink -e "$0")")"
+
+# Run via docker if not already
+if [ -z "$SHIPREQ_DEV_NODE" ]; then
+  exec ./exec ./"$(basename "$0")" "$@"
+fi
+
+tmp=semantic-1
+
+function restore_dirs {
+  rm -f semantic
+  mv $tmp semantic
+}
+
+[ ! -e semantic-test ] && [ -e $tmp ] && restore_dirs
+
+./node_modules/.bin/json5 -c semantic.json5
+
+cd semantic
+../node_modules/semantic-ui/node_modules/.bin/gulp build
+cd ..
+
+echo
+mv semantic $tmp
+ln -s semantic-test semantic
+cd semantic
+../node_modules/semantic-ui/node_modules/.bin/gulp build
+cd ..
+restore_dirs
+
+echo
+src/semantic/prune

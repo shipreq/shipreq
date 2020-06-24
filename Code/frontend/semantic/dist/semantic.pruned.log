@@ -246,8 +246,10 @@
     37 [keep  ] a
     43 [keep  ] a:hover
     67 [keep  ] ::-webkit-selection
+    64 [keep  ] ::-moz-selection
     59 [keep  ] ::selection
    113 [keep  ] input::-webkit-selection,textarea::-webkit-selection
+   107 [keep  ] input::-moz-selection,textarea::-moz-selection
     97 [keep  ] input::selection,textarea::selection
     60 [keep  ] body ::-webkit-scrollbar
     73 [keep  ] body ::-webkit-scrollbar-track

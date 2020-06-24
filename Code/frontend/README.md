@@ -33,7 +33,7 @@
 
 Semantic UI is a special beast...
 
-* `semantic/` and `semantic.json` *must* remain in this directory.
+* `semantic/`, `semantic-test/` and `semantic.json` *must* remain in this directory.
   Semantic UI will look for them every time npm runs and think it's not installed otherwise.
 
 * Not all of Semantic UI (which is huge) is used. The desired subset is declared in `semantic.json5`.
@@ -45,3 +45,6 @@ Semantic UI is a special beast...
 
 * After any change to `semantic.json5` or Semantic UI is made,
   `./semantic-update` must be run followed by `./build-parallel`
+
+* `semantic-test/` is identical to `semantic/` except that I've manually modified certain files in
+  `semantic-test/src/definitions/modules/` with changes needed for testing (i.e. SJS tests from SBT).

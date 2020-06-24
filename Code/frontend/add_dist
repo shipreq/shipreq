@@ -1,0 +1,7 @@
+#!/bin/bash
+cd "$(dirname "$0")" || exit 1
+
+exec git add \
+  dist \
+  semantic/dist \
+  semantic-test/dist

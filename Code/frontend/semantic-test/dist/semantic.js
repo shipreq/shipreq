@@ -8570,16 +8570,16 @@ $.fn.modal = function(parameters) {
                 $module.detach().appendTo($dimmer);
               }
               settings.onShow.call(element);
-              if(settings.transition && $.fn.transition !== undefined && $module.transition('is supported')) {
-                module.debug('Showing modal with css animations');
-                $module
-                  .transition({
-                    debug       : settings.debug,
-                    animation   : settings.transition + ' in',
-                    queue       : settings.queue,
-                    duration    : settings.duration,
-                    useFailSafe : true,
-                    onComplete : function() {
+              /* golly */ // if(settings.transition && $.fn.transition !== undefined && $module.transition('is supported')) {
+              /* golly */ //   module.debug('Showing modal with css animations');
+              /* golly */ //   $module
+              /* golly */ //     .transition({
+              /* golly */ //       debug       : settings.debug,
+              /* golly */ //       animation   : settings.transition + ' in',
+              /* golly */ //       queue       : settings.queue,
+              /* golly */ //       duration    : settings.duration,
+              /* golly */ //       useFailSafe : true,
+              /* golly */ //       onComplete : function() {
                       settings.onVisible.apply(element);
                       if(settings.keyboardShortcuts) {
                         module.add.keyboardShortcuts();
@@ -8590,13 +8590,13 @@ $.fn.modal = function(parameters) {
                         module.set.autofocus();
                       }
                       callback();
-                    }
-                  })
-                ;
-              }
-              else {
-                module.error(error.noTransition);
-              }
+              /* golly */ //       }
+              /* golly */ //     })
+              /* golly */ //   ;
+              /* golly */ // }
+              /* golly */ // else {
+              /* golly */ //   module.error(error.noTransition);
+              /* golly */ // }
             }
           }
           else {
@@ -8616,34 +8616,34 @@ $.fn.modal = function(parameters) {
           }
 
           if( module.is.animating() || module.is.active() ) {
-            if(settings.transition && $.fn.transition !== undefined && $module.transition('is supported')) {
+            /* golly */ // if(settings.transition && $.fn.transition !== undefined && $module.transition('is supported')) {
               module.remove.active();
-              $module
-                .transition({
-                  debug       : settings.debug,
-                  animation   : settings.transition + ' out',
-                  queue       : settings.queue,
-                  duration    : settings.duration,
-                  useFailSafe : true,
-                  onStart     : function() {
+            /* golly */ //   $module
+            /* golly */ //     .transition({
+            /* golly */ //       debug       : settings.debug,
+            /* golly */ //       animation   : settings.transition + ' out',
+            /* golly */ //       queue       : settings.queue,
+            /* golly */ //       duration    : settings.duration,
+            /* golly */ //       useFailSafe : true,
+            /* golly */ //       onStart     : function() {
                     if(!module.others.active() && !keepDimmed) {
                       module.hideDimmer();
                     }
                     if(settings.keyboardShortcuts) {
                       module.remove.keyboardShortcuts();
                     }
-                  },
-                  onComplete : function() {
+            /* golly */ //       },
+            /* golly */ //       onComplete : function() {
                     settings.onHidden.call(element);
                     module.restore.focus();
                     callback();
-                  }
-                })
-              ;
-            }
-            else {
-              module.error(error.noTransition);
-            }
+            /* golly */ //       }
+            /* golly */ //     })
+            /* golly */ //   ;
+            /* golly */ // }
+            /* golly */ // else {
+            /* golly */ //   module.error(error.noTransition);
+            /* golly */ // }
           }
         },
 
@@ -12540,11 +12540,12 @@ $.fn.transition = function() {
               .addClass(animationClass)
               .one(animationEnd + '.complete' + eventNamespace, module.complete)
             ;
-            if(settings.useFailSafe) {
-              module.add.failSafe();
-            }
-            module.set.duration(settings.duration);
+            /* golly */ // if(settings.useFailSafe) {
+            /* golly */ //   module.add.failSafe();
+            /* golly */ // }
+            /* golly */ // module.set.duration(settings.duration);
             settings.onStart.call(element);
+            /* golly */ $module.triggerHandler(animationEnd); // taken from add.failSafe
           }
         },
 
@@ -12882,7 +12883,8 @@ $.fn.transition = function() {
           },
           animate: function() {
             // can transition does not return a value if animation does not exist
-            return (module.can.transition() !== undefined);
+            /* golly */ // return (module.can.transition() !== undefined);
+            /* golly */ return true;
           }
         },
 
