@@ -21,10 +21,11 @@ sealed abstract class Icon(val clsName: ClassName) {
   *
   * When a new icon is needed:
   *     1. cd frontend
-  *     2. vim shipreq/semantic/icons-used
-  *     3. shipreq/semantic/prune
-  *     4. ./build-parallel
-  *     5. cd .. && bin/gen-semantic-icons
+  *     2. vim src/semantic/icons-used
+  *     3. src/semantic/prune
+  *     4. git diff semantic/dist/semantic.pruned.log
+  *     5. ./build-parallel
+  *     6. cd .. && bin/gen-semantic-icons
   */
 object Icon {
 
