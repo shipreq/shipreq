@@ -196,6 +196,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
         readOnlyView = richText,
         instructions = instructions,
         style        = p.editorStyle,
+        previewRW    = p.preview,
         preview      = preview)
     }
 

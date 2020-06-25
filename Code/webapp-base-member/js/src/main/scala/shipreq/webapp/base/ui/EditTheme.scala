@@ -65,14 +65,24 @@ object EditTheme {
 
   sealed trait OpenPreview
   object OpenPreview {
-    case object Minimally  extends OpenPreview
-    case object Always     extends OpenPreview
+
+    /** Follows the logic described in [[PreviewFeature]] to only show preview when required, and with minimal change */
+    case object Minimally extends OpenPreview
+
+    /** Preview always shown. */
+    case object Always extends OpenPreview
+
+    /** Preview never shown. */
+    case object Never extends OpenPreview
+
+    /** Preview shown anytime `wantOpen` is `true`. */
     case object WhenWanted extends OpenPreview
-    case object Never      extends OpenPreview
+
+    /** Preview shown by default, and can be manually toggled on/off. */
+    case object ShowWithToggle extends OpenPreview
 
     implicit def univEq: UnivEq[OpenPreview] = UnivEq.derive
     implicit def reusability: Reusability[OpenPreview] = Reusability.by_==
-    val values = AdtMacros.adtValues[OpenPreview]
   }
 
   final case class Style(position: Position, openPreview: OpenPreview)
@@ -94,6 +104,7 @@ object EditTheme {
       readOnlyView = readOnlyView,
       instructions = instructions,
       style        = Style.default,
+      previewRW    = PreviewFeature.ReadWrite.Single.neverShow,
       preview      = EmptyVdom,
     )
 
@@ -102,22 +113,14 @@ object EditTheme {
                    readOnlyView: => VdomNode,
                    instructions: => TagMod,
                    style       : Style,
+                   previewRW   : => PreviewFeature.ReadWrite.Single,
                    preview     : => TagMod): VdomTag = {
 
     status match {
       case EditorStatus.Ignore | EditorStatus.Valid(_) =>
         style.position match {
-
-          case Position.Under =>
-            <.div(
-              editor(Valid),
-              instructions,
-              preview)
-
-          case Position.Right =>
-            <.div(*.textEditorLeftPreviewRight,
-              <.div(editor(Valid), instructions),
-              <.div(preview))
+          case Position.Under => renderActiveUnder(editor, instructions, preview)
+          case Position.Right => renderActiveRight(previewRW, editor, instructions, preview, style.openPreview)
         }
 
       case EditorStatus.Invalid(err) =>
@@ -139,6 +142,46 @@ object EditTheme {
     }
   }
 
+  private def renderActiveUnder(editor      : Validity => VdomElement,
+                                instructions: => TagMod,
+                                preview     : => TagMod): VdomTag =
+    <.div(
+      editor(Valid),
+      instructions,
+      preview)
+
+  private def renderActiveRight(previewRW   : => PreviewFeature.ReadWrite.Single,
+                                editor      : Validity => VdomElement,
+                                instructions: => TagMod,
+                                preview     : => TagMod,
+                                openPreview : OpenPreview): VdomTag = {
+
+    def renderWithPreview: VdomTag =
+      <.div(*.textEditorLeftPreviewRight,
+        <.div(editor(Valid), instructions),
+        <.div(preview))
+
+    def renderWithoutPreview: VdomTag =
+      <.div(editor(Valid), instructions)
+
+    @inline def render(preview: Boolean): VdomTag =
+      if (preview) renderWithPreview else renderWithoutPreview
+
+    def manual(defaultShow: Boolean) = {
+      val show = previewRW.read.showManuallyControlledPreview(defaultShow)
+      val inner = render(preview = show)
+      previewRW.toggleButton(defaultShow = defaultShow)(inner)
+    }
+
+    openPreview match {
+      case OpenPreview.Minimally
+         | OpenPreview.Always
+         | OpenPreview.Never
+         | OpenPreview.WhenWanted     => renderWithPreview
+      case OpenPreview.ShowWithToggle => manual(true)
+    }
+  }
+
   def renderPreview(p       : => PreviewFeature.ReadWrite.Single,
                     style   : Style,
                     wantOpen: => Boolean,
@@ -149,11 +192,18 @@ object EditTheme {
         <.div(*.richTextPreviewBodyOuter,
           <.div(*.richTextPreviewBodyInner(style.position), view)))
 
+    def manual(defaultShow: Boolean) =
+      if (p.read.showManuallyControlledPreview(defaultShow))
+        render
+      else
+        EmptyVdom
+
     style.openPreview match {
-      case OpenPreview.Minimally  => p.reactCollapse(wantOpen)(render)
-      case OpenPreview.Always     => render
-      case OpenPreview.Never      => EmptyVdom
-      case OpenPreview.WhenWanted => PreviewFeature.ReadWrite.Single.show(wantOpen).reactCollapse(wantOpen)(render)
+      case OpenPreview.Minimally      => p.reactCollapse(wantOpen)(render)
+      case OpenPreview.Always         => render
+      case OpenPreview.Never          => EmptyVdom
+      case OpenPreview.WhenWanted     => PreviewFeature.ReadWrite.Single.show(wantOpen).reactCollapse(wantOpen)(render)
+      case OpenPreview.ShowWithToggle => manual(true)
     }
   }
 }

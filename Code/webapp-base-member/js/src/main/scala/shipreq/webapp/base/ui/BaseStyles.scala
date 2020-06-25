@@ -12,11 +12,9 @@ object BaseStyles extends StyleSheet.Inline {
 
   /** Domains */
   object D {
-    val on                   = Domain.ofValues[On](On, Off)
-    val editStylePosition    = Domain.ofValues(EditTheme.Position.values.whole: _*)
-    val editStyleOpenPreview = Domain.ofValues(EditTheme.OpenPreview.values.whole: _*)
-    val editStyle            = (editStylePosition *** editStyleOpenPreview).map((EditTheme.Style.apply _).tupled)
-    val editorStateAndPos    = EditorState.domain *** editStylePosition
+    val on                = Domain.ofValues[On](On, Off)
+    val editStylePosition = Domain.ofValues(EditTheme.Position.values.whole: _*)
+    val editorStateAndPos = EditorState.domain *** editStylePosition
   }
 
   @inline def containerLarge = InlineBaseStyles.containerLarge
@@ -208,6 +206,16 @@ object BaseStyles extends StyleSheet.Inline {
     unsafeChild(">div")(
       width :=! "calc(50% - 0.35rem)"
     )
+  )
+
+  val previewToggleWrapper = style(
+    position.relative)
+
+  val previewToggleButton = style(
+    position.absolute,
+    top(.8 rem),
+    right(.8 rem),
+    zIndex(1000),
   )
 
   val errorPointingUp = Label.Style(Label.Type.PointingUp, Colour.Red).div

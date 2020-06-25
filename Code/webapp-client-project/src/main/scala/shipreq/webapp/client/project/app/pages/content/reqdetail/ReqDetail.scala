@@ -33,7 +33,7 @@ object ReqDetail {
 
   private implicit val tableNavigationFeature = TableNavigationFeature.NoRowSpans
 
-  private val cellEditorStyle = EditTheme.Style(EditTheme.Position.Right, EditTheme.OpenPreview.Always)
+  private val cellEditorStyle = EditTheme.Style(EditTheme.Position.Right, EditTheme.OpenPreview.ShowWithToggle)
 
   def apply(staticProps: StaticProps) =
     ScalaComponent.builder[DynamicProps]

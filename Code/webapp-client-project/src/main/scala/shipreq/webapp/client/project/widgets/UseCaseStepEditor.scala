@@ -218,6 +218,7 @@ object UseCaseStepEditor {
         readOnlyView = richText,
         instructions = instructions(p),
         style        = editorStyle,
+        previewRW    = p.preview,
         preview      = preview)
     }
 

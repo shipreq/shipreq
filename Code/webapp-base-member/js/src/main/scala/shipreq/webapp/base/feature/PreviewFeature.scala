@@ -1,23 +1,30 @@
 package shipreq.webapp.base.feature
 
+import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import monocle.Lens
 import scalaz.Equal
 import scalaz.syntax.equal.ToEqualOps
 import shipreq.base.util.Intersection
 import shipreq.webapp.base.jsfacade.ReactCollapse
+import shipreq.webapp.base.ui.{BaseStyles => *}
+import scalacss.ScalaCssReact._
 import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 
 /** Supplies logic to determine whether or not to show a preview for some rich-text editor.
   *
-  * Preview will be available when:
+  * By default, preview will be available when:
   * - subject has focus
   * - subject wants the preview open
   * - focus has been maintained since preview was opened
   *
+  * Alternatively, you can use [[PreviewFeature.ReadWrite.Single.alwaysShow]] and similar.
+  *
+  * The normal state transition process is shown below.
   *
   *                                    START
   *                                      |
@@ -41,6 +48,9 @@ import shipreq.webapp.base.lib.DataReusability._
   *        |    |                     |    |                       |    |
   *        +----+                     +----+                       +----+
   *    edit !wantOpen              edit wantOpen               edit !wantOpen
+  *
+  * It ignores the [[PreviewFeature.Status.Manual]] state, which can be manually set via
+  * [[PreviewFeature.Write.Single.setManually()]].
   *
   *
   * Usage: Top-Most Component
@@ -69,9 +79,10 @@ object PreviewFeature {
 
   sealed abstract class Status(final val show: Boolean)
   object Status {
-    case object Closed     extends Status(false)
-    case object NeedOpen   extends Status(true)
-    case object NeededOpen extends Status(true)
+    case object Closed                          extends Status(false)
+    case object NeedOpen                        extends Status(true)
+    case object NeededOpen                      extends Status(true)
+    final case class Manual(forceShow: Boolean) extends Status(forceShow)
 
     implicit def equality: UnivEq[Status] = UnivEq.derive
     implicit def reusability: Reusability[Status] = Reusability.byUnivEq
@@ -121,6 +132,12 @@ object PreviewFeature {
     final case class Single(status: Option[Status]) extends AnyVal {
       def showPreview(wantOpen: => Boolean): Boolean =
         status.exists(_.show || wantOpen)
+
+      def showManuallyControlledPreview(defaultShow: Boolean): Boolean =
+        status match {
+          case Some(m: PreviewFeature.Status.Manual) => m.forceShow
+          case _                                     => defaultShow
+        }
     }
 
     final case class Composite[+Id](state: State[Id]) extends AnyVal
@@ -144,6 +161,7 @@ object PreviewFeature {
       def onFocus(wantOpen: Boolean): Callback
       def onEdit(wantOpened: Boolean): Callback
       def onBlur: Callback
+      def setManually(forceShow: Boolean): Callback
     }
 
     object Single {
@@ -151,32 +169,48 @@ object PreviewFeature {
         import Status._
 
         override def onFocus(wantOpen: Boolean): Callback = {
-          val status = if (wantOpen) NeedOpen else Closed
-          $.setState(Some(status))
+          $.modStateOption {
+            case Some(_: Status.Manual) => None
+            case prev =>
+              val newStatus = if (wantOpen) NeedOpen else Closed
+              val noChange = prev.contains(newStatus)
+              Option.unless(noChange)(Some(newStatus))
+          }
         }
 
         override def onEdit(wantedOpen: Boolean): Callback =
-          $.modState { prev =>
-            val status =
-              if (wantedOpen)
-                NeedOpen
-              else prev match {
-                case Some(NeedOpen)
-                   | Some(NeededOpen) => NeededOpen
-                case Some(Closed)
-                   | None             => Closed
-              }
-            Some(status)
+          $.modStateOption {
+            case Some(_: Status.Manual) => None
+            case prev =>
+              val newStatus: Status =
+                if (wantedOpen)
+                  NeedOpen
+                else prev match {
+                  case Some(NeedOpen)
+                     | Some(NeededOpen) => NeededOpen
+                  case Some(Closed)
+                     | None             => Closed
+                  case Some(m: Manual)  => m
+                }
+              val noChange = prev.contains(newStatus)
+              Option.unless(noChange)(Some(newStatus))
           }
 
         override def onBlur: Callback =
-          $.setState(None)
+          $.modStateOption {
+            case Some(_: Status.Manual) => None
+            case _                      => Some(None)
+          }
+
+        override def setManually(forceShow: Boolean): Callback =
+          $.setState(Some(Manual(forceShow = forceShow)))
       }
 
       lazy val doNothing: Single = new Single {
-        override def onFocus(wantOpen: Boolean) = Callback.empty
-        override def onEdit (wantOpen: Boolean) = Callback.empty
-        override def onBlur                     = Callback.empty
+        override def onFocus(wantOpen: Boolean)      = Callback.empty
+        override def onEdit (wantOpen: Boolean)      = Callback.empty
+        override def onBlur                          = Callback.empty
+        override def setManually(forceShow: Boolean) = Callback.empty
       }
     }
 
@@ -198,6 +232,20 @@ object PreviewFeature {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   object ReadWrite {
+
+    private val toggleButtonBase: Boolean => VdomTag =
+      Memo.bool { currentlyShown =>
+        val icon =
+          if (currentlyShown)
+            Icon.AngleDoubleRight
+          else
+            Icon.AngleDoubleLeft
+        Button(
+          tipe = Button.Type.IconOnly(icon),
+          colour = Colour.Blue,
+        ).tag(*.previewToggleButton)
+      }
+
     final case class Single(read: Read.Single, write: Write.Single) {
       def onFocus(wantOpen: Boolean): Callback =
         write.onFocus(wantOpen)
@@ -217,6 +265,18 @@ object PreviewFeature {
 
       def reactCollapse(wantOpen: => Boolean) =
         ReactCollapse(showPreview(wantOpen))
+
+      def toggleButton(defaultShow: Boolean): VdomTag = {
+        val currentlyShown =
+          read.status match {
+            case Some(Status.Manual(show)) => show
+            case _                         => defaultShow
+          }
+
+        <.div(*.previewToggleWrapper,
+          toggleButtonBase(currentlyShown)(
+            ^.onClick --> write.setManually(forceShow = !currentlyShown)))
+      }
     }
 
     object Single {
