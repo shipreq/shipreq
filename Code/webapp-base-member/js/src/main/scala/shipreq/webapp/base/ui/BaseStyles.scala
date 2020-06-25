@@ -202,13 +202,13 @@ object BaseStyles extends StyleSheet.Inline {
     paddingLeft(1 ex).important,
     paddingTop(0.3 em).important,
     paddingBottom(0.3 em).important,
-    (background := c"#89d6e5").important,
+    (background := c"#ccf6ff").important,
     color(c"#0d1516").important)
 
   val richTextPreviewBodyOuter = style(
     padding(1 ex).important,
     addClassNames("ui", "segment"),
-    (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.1)5ex,rgba(137,214,229,.1)10ex)").important)
+    (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.05)5ex,rgba(137,214,229,.05)10ex)").important)
 
   val richTextPreviewBodyInner = style(
     minHeight(1.4 em),
