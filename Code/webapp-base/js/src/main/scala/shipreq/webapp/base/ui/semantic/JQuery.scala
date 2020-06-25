@@ -22,16 +22,14 @@ trait JQuery extends js.Object {
   def modal(): JQuery = js.native
   def modal(command: String): JQuery = js.native
   def modal(command: js.Object): JQuery = js.native
-  def modal(command: String, name: String, value: js.Any): JQuery = js.native
 
   def accordion(command: String = js.native): JQuery = js.native
 
   def popup(options: Popup.Js.Options = js.native): JQuery = js.native
 
   def transition(obj: js.Object): JQuery = js.native
-  def transition(animation: String): JQuery = js.native
-  def transition(animation: String, duration: String): JQuery = js.native
-  def transition(command: String, name: String, value: js.Any): JQuery = js.native
+  def transition(animation: Transition): JQuery = js.native
+  def transition(animation: Transition, duration: String): JQuery = js.native
 }
 
 object JQuery {
