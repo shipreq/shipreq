@@ -545,7 +545,7 @@ object Icon {
   // case object Mastercard                        extends Unmodified("mastercard")
   // case object MastercardCard                    extends Unmodified("mastercard card")
   // case object Maxcdn                            extends Unmodified("maxcdn")
-  // case object Maximize                          extends Unmodified("maximize")
+  case object Maximize                          extends Unmodified("maximize")
   // case object Meanpath                          extends Unmodified("meanpath")
   // case object Medium                            extends Unmodified("medium")
   // case object Medkit                            extends Unmodified("medkit")

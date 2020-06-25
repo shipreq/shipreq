@@ -1236,7 +1236,7 @@
     39 [remove] i.icon.zoom.out:before
     46 [remove] i.icon.resize.vertical:before
     48 [remove] i.icon.resize.horizontal:before
-    39 [remove] i.icon.maximize:before
+    39 [keep  ] i.icon.maximize:before
     35 [remove] i.icon.crop:before
     39 [remove] i.icon.cocktail:before
     35 [remove] i.icon.road:before

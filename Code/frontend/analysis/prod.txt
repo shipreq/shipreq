@@ -1,5 +1,5 @@
   core-js            38.02 KB   88.4%
-<self>               714.86 KB  57.0%
+<self>               714.95 KB  57.0%
   <self>             5.01 KB    11.6%
 lodash               139.84 KB  11.1%
 moment               77.24 KB   6.16%
