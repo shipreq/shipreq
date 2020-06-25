@@ -94,10 +94,12 @@ object EditTheme {
     implicit def reusability: Reusability[Style] = Reusability.byRef || Reusability.derive
   }
 
+  // ===================================================================================================================
+
   def renderEditor(status      : EditorStatus,
                    editor      : Validity => VdomElement,
                    readOnlyView: => VdomNode,
-                   instructions: => TagMod): VdomTag =
+                   instructions: => TagMod): VdomNode =
     renderEditor(
       status       = status,
       editor       = editor,
@@ -114,7 +116,7 @@ object EditTheme {
                    instructions: => TagMod,
                    style       : Style,
                    previewRW   : => PreviewFeature.ReadWrite.Single,
-                   preview     : => TagMod): VdomTag = {
+                   preview     : => TagMod): VdomNode = {
 
     status match {
       case EditorStatus.Ignore | EditorStatus.Valid(_) =>
@@ -142,19 +144,23 @@ object EditTheme {
     }
   }
 
+  // ===================================================================================================================
+
   private def renderActiveUnder(editor      : Validity => VdomElement,
                                 instructions: => TagMod,
-                                preview     : => TagMod): VdomTag =
+                                preview     : => TagMod): VdomNode =
     <.div(
       editor(Valid),
       instructions,
       preview)
 
+  // ===================================================================================================================
+
   private def renderActiveRight(previewRW   : => PreviewFeature.ReadWrite.Single,
                                 editor      : Validity => VdomElement,
                                 instructions: => TagMod,
                                 preview     : => TagMod,
-                                openPreview : OpenPreview): VdomTag = {
+                                openPreview : OpenPreview): VdomNode = {
 
     def renderWithPreview: VdomTag =
       <.div(*.textEditorLeftPreviewRight,
@@ -181,6 +187,8 @@ object EditTheme {
       case OpenPreview.ShowWithToggle => manual(true)
     }
   }
+
+  // ===================================================================================================================
 
   def renderPreview(p       : => PreviewFeature.ReadWrite.Single,
                     style   : Style,

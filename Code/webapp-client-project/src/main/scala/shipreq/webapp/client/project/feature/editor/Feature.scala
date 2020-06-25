@@ -27,7 +27,7 @@ object Feature {
   trait Editor[-Args, +Change] {
 
     /** impure */
-    def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement]
+    def render(p: Permission, as: AsyncState, args: Args): Option[VdomNode]
 
     def change[C >: Change]: CallbackTo[Editor.Change[C]]
 
@@ -94,11 +94,11 @@ object Feature {
         editor.isDefined
 
       /** impure */
-      def render(args: A): Option[VdomElement] =
+      def render(args: A): Option[VdomNode] =
         editor.flatMap(_.render(editability, async, args))
 
       /** impure */
-      def renderOr[B](args: A)(b: => B)(implicit ev: VdomElement => B): B =
+      def renderOr[B](args: A)(b: => B)(implicit ev: VdomNode => B): B =
         render(args).fold(b)(ev)
     }
 
@@ -321,11 +321,11 @@ object Feature {
       def clipboardData = read.clipboardData
 
       /** impure */
-      @inline def render(args: A): Option[VdomElement] =
+      @inline def render(args: A): Option[VdomNode] =
         read.render(args)
 
       /** impure */
-      @inline def renderOr[B](args: A)(b: => B)(implicit ev: VdomElement => B): B =
+      @inline def renderOr[B](args: A)(b: => B)(implicit ev: VdomNode => B): B =
         read.renderOr(args)(b)(ev)
 
       /** 1) Renders the editor if open, or a given view otherwise.

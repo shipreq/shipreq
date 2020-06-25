@@ -109,7 +109,7 @@ object NewEditor {
     trait EditorImpl[Args, Change] extends Editor[Args, Change] {
       protected type Props
       protected val props: (Args, AsyncState) => CallbackTo[Props]
-      protected def renderImpl: Props => VdomElement
+      protected def renderImpl: Props => VdomNode
       protected def changeImpl: Props => Editor.Change[Change]
 
       /** Currently all the editor types calculate their changes in the props. Some props need additional args for their
@@ -122,7 +122,7 @@ object NewEditor {
         */
       protected def changeArgs: Args
 
-      final override def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement] =
+      final override def render(p: Permission, as: AsyncState, args: Args): Option[VdomNode] =
         // Looks like this could block async but not so. Can't go from edit -> async -> notAllowed.
         // Unsafety is allowed here because EditorInstance is never Reusable
         p match {

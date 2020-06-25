@@ -37,7 +37,7 @@ object ReqTypeSelector {
     val status: EditorStatus =
       asyncStatus getOrElse EditorStatus.fromValidatedChange(change)(_ => commit, abort)
 
-    @inline def render: VdomElement = Component(this)
+    @inline def render: VdomNode = Component(this)
   }
 
   // implicit val reusabilityProps: Reusability[Props] =
@@ -46,7 +46,7 @@ object ReqTypeSelector {
   private def key(rt: RT): Dropdown.ItemKey =
     rt.id.value.toString
 
-  private def render(p: Props): VdomElement =
+  private def render(p: Props): VdomNode =
     EditTheme.renderEditor(
       status       = p.status,
       editor       = _ => editor(p),
