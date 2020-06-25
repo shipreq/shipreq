@@ -13,6 +13,8 @@ object BaseStyles extends StyleSheet.Inline {
   /** Domains */
   object D {
     val on = Domain.ofValues[On](On, Off)
+    val editStyle = Domain.ofValues[EditTheme.Style](AdtMacros.adtValues[EditTheme.Style].whole: _*)
+    val editorStateAndStyle = EditorState.domain *** editStyle
   }
 
   @inline def containerLarge = InlineBaseStyles.containerLarge
@@ -140,7 +142,7 @@ object BaseStyles extends StyleSheet.Inline {
   }
   projectItems // eager eval
 
-  val textEditor = styleF(EditorState.domain) { state =>
+  val textEditor = styleF(D.editorStateAndStyle) { case (state, style) =>
     styleS(
       width(100 %%),
       margin(`0`),
@@ -150,7 +152,11 @@ object BaseStyles extends StyleSheet.Inline {
       transition := "color .1s ease,border-color .1s ease",
       fontSize(1 em),
       lineHeight(1.2857),
-      maxHeight(50 vh),
+      style match {
+        case EditTheme.Style.PreviewOnRightOfText => styleS(maxHeight :=! "calc(100vh - 2em)")
+        case EditTheme.Style.PreviewUnderText
+           | EditTheme.Style.OptionalPreviewUnderText => styleS(maxHeight(50 vh))
+      },
       // overflow: scroll - autosize avoids this
       resize.none,
       color(state match {
@@ -192,10 +198,26 @@ object BaseStyles extends StyleSheet.Inline {
     flexGrow(1),
     opacity(0.5))
 
+  val textEditorLeftPreviewRight = style(
+    display.flex,
+    flexWrap.nowrap,
+    alignItems.stretch,
+    justifyContent.spaceBetween,
+    width(100 %%),
+    unsafeChild(">div")(
+      width :=! "calc(50% - 0.35rem)"
+    )
+  )
+
   val errorPointingUp = Label.Style(Label.Type.PointingUp, Colour.Red).div
 
-  val richTextPreview = style(
-    addClassNames("ui", "segments", "raised"))
+  val richTextPreview = styleF(D.editStyle)(s => styleS(
+    s match {
+      case EditTheme.Style.PreviewOnRightOfText => styleS(height(100 %%))
+      case EditTheme.Style.PreviewUnderText
+         | EditTheme.Style.OptionalPreviewUnderText => styleS()
+    },
+    addClassNames("ui", "segments", "raised")))
 
   val richTextPreviewHeader = style(
     addClassNames("ui", "segment", "inverted"),
@@ -210,11 +232,15 @@ object BaseStyles extends StyleSheet.Inline {
     addClassNames("ui", "segment"),
     (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.05)5ex,rgba(137,214,229,.05)10ex)").important)
 
-  val richTextPreviewBodyInner = style(
+  val richTextPreviewBodyInner = styleF(D.editStyle)(s => styleS(
     minHeight(1.4 em),
-    maxHeight(33.33333 vh),
+    s match {
+      case EditTheme.Style.PreviewOnRightOfText => styleS(maxHeight :=! "calc(100vh - (1.4285em + (.3em + 1ex) * 2))")
+      case EditTheme.Style.PreviewUnderText
+         | EditTheme.Style.OptionalPreviewUnderText => styleS(maxHeight(33.33333 vh))
+    },
     overflowY.auto,
-  )
+  ))
 
   private def editorInstructionMarginV = 0.4 em
 

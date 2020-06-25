@@ -38,6 +38,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val status          : EditorStatus
     val wantPreview     : Boolean
     val autoFocus       : Boolean
+    val editorStyle     : EditTheme.Style
   }
 
   // ===================================================================================================================
@@ -53,6 +54,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                       autoFocus       : Boolean,
                       commitFn        : Option[Optional.CommitFn],
                       commitVerb      : String,
+                      editorStyle     : EditTheme.Style,
                       preview         : PreviewFeature.ReadWrite.Single,
                       preEditValue    : Option[text.OptionalText],
                       extraKbShortcuts: KeyboardTheme.Shortcuts,
@@ -86,6 +88,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                       autoFocus       : Boolean,
                       commitFn        : Option[NonEmpty.CommitFn],
                       commitVerb      : String,
+                      editorStyle     : EditTheme.Style,
                       preview         : PreviewFeature.ReadWrite.Single,
                       preEditValue    : Option[text.NonEmptyText],
                       extraKbShortcuts: KeyboardTheme.Shortcuts,
@@ -165,7 +168,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
           textareaConst,
           keys,
           ^.autoFocus  := p.autoFocus)
-        editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, base))
+        editorRef.component(EditTheme.autosizeTextareaProps(p.editorStyle, validity, p.edit.value, base))
       }
 
       def instructions: TagMod =
@@ -185,9 +188,15 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
         }
 
       def preview: VdomNode =
-        EditTheme.renderPreview(p.preview, p.wantPreview, richText)
+        EditTheme.renderPreview(p.preview, p.editorStyle, p.wantPreview, richText)
 
-      EditTheme.renderEditor(p.status, editor, richText, instructions, preview)
+      EditTheme.renderEditor(
+        status       = p.status,
+        editor       = editor,
+        readOnlyView = richText,
+        instructions = instructions,
+        style        = p.editorStyle,
+        preview      = preview)
     }
 
     val onMount: Callback =

@@ -20,6 +20,9 @@ object Feature {
   type AsyncError = ErrorMsg
   type AsyncState = AsyncFeature.Read.D0[AsyncError]
 
+  @inline private def defaultEditorStyle =
+    EditTheme.Style.OptionalPreviewUnderText
+
   /** This is not safe for reusability because implementation calls `CallbackTo#runNow()`. */
   trait Editor[-Args, +Change] {
 
@@ -202,7 +205,7 @@ object Feature {
                     potentialValue  : Option[PotentialValue] = None): Option[Callback] =
         startEditWithArgs(
           state,
-          FreeOption(NewEditor.CreationArgs(pxProjectWidgets, filterDead, potentialValue, hooks)))
+          FreeOption(NewEditor.CreationArgs(pxProjectWidgets, defaultEditorStyle, filterDead, potentialValue, hooks)))
 
       private[Feature] def startEditWithArgs(state: Read.ForAnyEditor,
                                              args : FreeOption[NewEditor.CreationArgs]): Option[Callback] =
@@ -351,6 +354,9 @@ object Feature {
       def onClose(cb: Callback): ForEditor[A, C] =
         copy(creationArgs = creationArgs.map(NewEditor.CreationArgs.onClose.modify(_ >> cb)))
 
+      def withEditorStyle(s: EditTheme.Style): ForEditor[A, C] =
+        copy(creationArgs = creationArgs.map(_.copy(editorStyle = s)))
+
       def withPotentialValue(p: PotentialValue): ForEditor[A, C] =
         copy(creationArgs = creationArgs.map(_.copy(potentialValue = Some(p))))
 
@@ -390,7 +396,7 @@ object Feature {
         ForEditor(
           read(f),
           write.apply(f),
-          FreeOption(NewEditor.CreationArgs(pxProjectWidgets, filterDead, None, NewEditor.Hooks.empty)))
+          FreeOption(NewEditor.CreationArgs(pxProjectWidgets, defaultEditorStyle, filterDead, None, NewEditor.Hooks.empty)))
     }
 
     implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {

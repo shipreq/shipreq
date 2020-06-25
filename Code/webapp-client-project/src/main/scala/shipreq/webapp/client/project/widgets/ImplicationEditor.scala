@@ -164,7 +164,7 @@ object ImplicationEditor {
           textareaConst,
           keys,
           ^.autoFocus  := p.autoFocus)
-        editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, base))
+        editorRef.component(EditTheme.autosizeTextareaProps(EditTheme.Style.OptionalPreviewUnderText, validity, p.edit.value, base))
       }
 
       def instructions: TagMod =

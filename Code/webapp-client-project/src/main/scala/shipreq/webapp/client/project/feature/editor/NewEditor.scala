@@ -19,6 +19,7 @@ import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
+import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.feature.editor.Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -36,6 +37,7 @@ object NewEditor {
 
   @Lenses
   final case class CreationArgs(pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]],
+                                editorStyle     : EditTheme.Style,
                                 filterDead      : FilterDead,
                                 potentialValue  : Option[PotentialValue],
                                 hooks           : Hooks) {
@@ -703,12 +705,13 @@ object NewEditor {
           initialData       = initCB,
           initalValueOption = ivo)(
           initialValueFn    = _._2)(
-          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
+          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, args.editorStyle, pid, reqId, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.OptionalText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
+                            editorStyle     : EditTheme.Style,
                             pid             : PreviewId,
                             reqId           : Option[ReqId],
                             abort           : Some[Callback],
@@ -740,6 +743,7 @@ object NewEditor {
               autoFocus        = true,
               commitFn         = commitFn,
               commitVerb       = commitVerb,
+              editorStyle      = editorStyle,
               preview          = previewRW(pid),
               preEditValue     = initial,
               extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
@@ -822,12 +826,13 @@ object NewEditor {
             initialData       = initCB,
             initalValueOption = ivo)(
             initialValueFn    = _._2)(
-            editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
+            editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, args.editorStyle, pid, reqId, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.NonEmptyText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
+                            editorStyle     : EditTheme.Style,
                             pid             : PreviewId,
                             reqId           : Option[ReqId],
                             abort           : Some[Callback],
@@ -859,6 +864,7 @@ object NewEditor {
               autoFocus        = true,
               commitFn         = commitFn,
               commitVerb       = commitVerb,
+              editorStyle      = editorStyle,
               preview          = previewRW(pid),
               preEditValue     = initial,
               extraKbShortcuts = KeyboardTheme.Shortcuts.empty,

@@ -18,7 +18,7 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.semantic.Header
-import shipreq.webapp.base.ui.{BaseStyles, NoContentMessage}
+import shipreq.webapp.base.ui.{BaseStyles, EditTheme, NoContentMessage}
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
@@ -301,7 +301,7 @@ object ReqDetail {
           renderRowData(rowData(headerDataLive._2), row))
       }
 
-      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       def renderRowTitle(row: Row): VdomNode =
         row match {
@@ -321,13 +321,15 @@ object ReqDetail {
           case Row.Life             => UiText.Life.field
         }
 
-      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
       def renderRowData(cellBase: VdomTag, row: Row): VdomElement = {
         import EditorFeature.FieldKey
 
         def editableCell(key: FieldKey.ForSomeReq): VdomElement = {
-          val editor = reqEditor(key, data.pxProjectWidgets, data.filterDead)
+          val editor =
+            reqEditor(key, data.pxProjectWidgets, data.filterDead)
+              .withEditorStyle(EditTheme.Style.PreviewOnRightOfText)
           EditorNavParent.Props(cellBase, editor, view.editable(key).getOrElse(EmptyVdom))
             .render
         }

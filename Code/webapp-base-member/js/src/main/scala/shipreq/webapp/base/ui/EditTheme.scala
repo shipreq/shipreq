@@ -2,6 +2,7 @@ package shipreq.webapp.base.ui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
@@ -23,9 +24,9 @@ object EditTheme {
   def editableInline(startEdit: Option[Callback]): TagMod =
     startEdit.fold(TagMod.empty)(editableInline(_))
 
-  def autosizeTextareaProps(validity: Validity, value: String, tagMod: TagMod): TagMod =
+  def autosizeTextareaProps(style: Style, validity: Validity, value: String, tagMod: TagMod): TagMod =
     TagMod(
-      BaseStyles.textEditor(validity),
+      BaseStyles.textEditor((validity, style)),
       ^.value := value,
       tagMod)
 
@@ -51,18 +52,54 @@ object EditTheme {
   val spinner: VdomTag =
     Icon.CircleNotched.loading.tag(^.marginRight := "0")
 
+  sealed trait Style
+  object Style {
+    case object OptionalPreviewUnderText extends Style
+    case object PreviewUnderText         extends Style
+    case object PreviewOnRightOfText     extends Style
+
+    implicit def univEq: UnivEq[Style] =
+      UnivEq.derive
+
+    implicit def reusability: Reusability[Style] =
+      Reusability.by_==
+  }
+
+  def renderEditor(status      : EditorStatus,
+                   editor      : Validity => VdomElement,
+                   readOnlyView: => VdomNode,
+                   instructions: => TagMod): VdomTag =
+    renderEditor(
+      status       = status,
+      editor       = editor,
+      readOnlyView = readOnlyView,
+      instructions = instructions,
+      style        = Style.OptionalPreviewUnderText,
+      preview      = EmptyVdom,
+    )
+
   def renderEditor(status      : EditorStatus,
                    editor      : Validity => VdomElement,
                    readOnlyView: => VdomNode,
                    instructions: => TagMod,
-                   preview     : => TagMod = EmptyVdom): VdomTag = {
+                   style       : Style,
+                   preview     : => TagMod): VdomTag = {
 
     status match {
       case EditorStatus.Ignore | EditorStatus.Valid(_) =>
-        <.div(
-          editor(Valid),
-          instructions,
-          preview)
+        style match {
+
+          case Style.OptionalPreviewUnderText | Style.PreviewUnderText =>
+            <.div(
+              editor(Valid),
+              instructions,
+              preview)
+
+          case Style.PreviewOnRightOfText =>
+            <.div(*.textEditorLeftPreviewRight,
+              <.div(editor(Valid), instructions),
+              <.div(preview))
+        }
 
       case EditorStatus.Invalid(err) =>
         <.div(
@@ -77,16 +114,26 @@ object EditTheme {
           preview)
 
       case EditorStatus.InTransit =>
-        <.div(*.textEditor(*.EditorState.InTransit),
+        <.div(*.textEditor((*.EditorState.InTransit, style)),
           <.div(spinner),
           <.div(*.textEditorInTransitValue, readOnlyView))
     }
   }
 
-  def renderPreview(p: PreviewFeature.ReadWrite.Single, wantOpen: => Boolean, view: => VdomNode): VdomNode =
-    p.reactCollapse(wantOpen)(
-      <.div(*.richTextPreview,
+  def renderPreview(p       : => PreviewFeature.ReadWrite.Single,
+                    style   : Style,
+                    wantOpen: => Boolean,
+                    view    : => VdomNode): VdomNode = {
+    def render =
+      <.div(*.richTextPreview(style),
         <.div(*.richTextPreviewHeader, "Preview"),
         <.div(*.richTextPreviewBodyOuter,
-          <.div(*.richTextPreviewBodyInner, view))))
+          <.div(*.richTextPreviewBodyInner(style), view)))
+
+    style match {
+      case Style.OptionalPreviewUnderText => p.reactCollapse(wantOpen)(render)
+      case Style.PreviewUnderText
+         | Style.PreviewOnRightOfText     => render
+    }
+  }
 }
