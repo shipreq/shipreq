@@ -15,7 +15,7 @@ import shipreq.webapp.base.jsfacade.ScrollIntoViewIfNeeded
 import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme, TaskRepeater}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.EditTheme
+import shipreq.webapp.base.ui.{EditTheme, OptionalFullscreen}
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.RichTextEditor.hardcodedLive
@@ -160,7 +160,18 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
         RichTextEditor.minRows(text.lineCardinality))
     }
 
-    def render(p: Props) = {
+    def render(p: Props): VdomNode =
+      renderFn(p)
+
+    private val renderFn: Props => VdomNode =
+      text.lineCardinality match {
+        case SingleLine => _render(_, None)
+        case MultiLine  => p => OptionalFullscreen.Props(ctx => _render(p, Some(ctx))).render
+      }
+
+    private def _render(p: Props, fullscreen: Option[OptionalFullscreen.Ctx]) = {
+
+      val mode = EditTheme.Mode.derive(fullscreen)
 
       def editor(validity: Validity): VdomElement = {
         val keys = keyHandlerBase(p.extraKbShortcuts.keyHandlers)
@@ -168,18 +179,34 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
           textareaConst,
           keys,
           ^.autoFocus  := p.autoFocus)
-        editorRef.component(EditTheme.autosizeTextareaProps(p.editorStyle, validity, p.edit.value, base))
+        val autosizeProps = EditTheme.autosizeTextareaProps(
+          style    = p.editorStyle,
+          mode     = mode,
+          validity = validity,
+          value    = p.edit.value,
+          tagMod   = base)
+        editorRef.component(autosizeProps)
       }
 
       def instructions: TagMod =
-        TagMod.when(p.showInstructions)(
-          KeyboardTheme.Instructions(
-            p.extraKbShortcuts.instructions ::: KeyboardTheme.Instructions.Clauses.forTextEditor(
+        TagMod.when(p.showInstructions) {
+
+          val textEditorInstructions =
+            KeyboardTheme.Instructions.Clauses.forTextEditor(
               text.lineCardinality,
-              commit = p.status.getCommit,
+              commit     = p.status.getCommit,
               commitVerb = p.commitVerb,
-              abort = p.abort),
-            help = Some(RichTextEditorHelp.modalFor(text).show)))
+              abort      = p.abort)
+
+          val clauses =
+            p.extraKbShortcuts.instructions ::: textEditorInstructions
+
+          KeyboardTheme.Instructions(
+            clauses    = clauses,
+            help       = Some(RichTextEditorHelp.modalFor(text).show),
+            fullscreen = fullscreen,
+          )
+        }
 
       def richText: VdomTag =
         p match {
@@ -196,6 +223,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
         readOnlyView = richText,
         instructions = instructions,
         style        = p.editorStyle,
+        mode         = mode,
         previewRW    = p.preview,
         preview      = preview)
     }

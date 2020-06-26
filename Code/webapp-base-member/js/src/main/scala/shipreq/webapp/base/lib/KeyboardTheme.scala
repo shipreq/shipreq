@@ -7,6 +7,7 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.lib.KeyHandler._
 import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.ui.BaseStyles.{editorInstructions => *}
+import shipreq.webapp.base.ui.{EditTheme, OptionalFullscreen}
 import shipreq.webapp.base.ui.semantic.Icon
 
 /**
@@ -85,28 +86,42 @@ object KeyboardTheme {
       }
     }
 
-    private val container : VdomTag = <.div(*.container)
-    private val link      : VdomTag = <.a(*.link)
-    private val clauseCont: VdomTag = <.span(*.clause)
-    private val comma     : TagMod  = ","
-    private val fullStop  : TagMod  = "."
-    private val helpIcon  : VdomTag = Icon.HelpCircle.tag(*.helpIcon)
+    private val link          : VdomTag = <.a(*.link)
+    private val clauseCont    : VdomTag = <.span(*.clause)
+    private val comma         : TagMod  = ","
+    private val fullStop      : TagMod  = "."
+    private val helpIcon      : VdomTag = Icon.HelpCircle.tag(*.helpIcon, ^.title := "help")
+    private val fullscreenIcon: VdomTag = Icon.Maximize.tag(*.fullscreenIcon, ^.title := "fullscreen")
 
     private val renderAtom: Atom => TagMod = {
       case Vdom(v)    => v
       case Link(v, c) => link(^.onClick --> c, v)
     }
 
-    def apply(clauses: IterableOnce[Clause], help: Option[Callback]): VdomTag = {
-      val helpButton =
-        help.whenDefined { h =>
-          val eh = (e: ReactEvent) => e.stopPropagationCB >> e.preventDefaultCB >> h
-          helpIcon(^.onClick ==> eh)
-        }
+    def apply(clauses   : IterableOnce[Clause],
+              help      : Option[Callback],
+              fullscreen: Option[OptionalFullscreen.Ctx]): VdomTag = {
+
+      val buttons: TagMod = {
+
+        val helpButton =
+          help.whenDefined { h =>
+            val eh = preventDefaultAndStopPropagation.andThen(_ >> h)
+            helpIcon(^.onClick ==> eh)
+          }
+
+        val toggleFullscreenButton =
+          fullscreen.whenDefined { ctx =>
+            val eh = preventDefaultAndStopPropagation.andThen(_ >> ctx.toggleFullscreen)
+            fullscreenIcon(^.onClick ==> eh)
+          }
+
+        TagMod(helpButton, toggleFullscreenButton)
+      }
 
       val content: TagMod =
         if (clauses.iterator.isEmpty)
-          helpButton
+          buttons
         else {
           var rendered = Vector.empty[TagMod]
           val it = clauses.iterator
@@ -118,23 +133,31 @@ object KeyboardTheme {
             rendered :+= last
           }
 
-          // Here we add the help button to the last clause.
-          // The reason is that we don't want word-wrapping to occur between the last clause and the help button
+          // Here we add the buttons to the last clause.
+          // The reason is that we don't want word-wrapping to occur between the last clause and the buttons
           // because a lone, tiny help button on its own line looks terrible.
-          rendered = rendered.dropRight(1) :+ last(helpButton)
+          rendered = rendered.dropRight(1) :+ last(buttons)
 
           TagMod.Composite(rendered)
         }
 
-      container(content)
+      val mode = EditTheme.Mode.derive(fullscreen)
+
+      <.div(*.container(mode), content)
     }
 
     def forTextEditor(lc        : LineCardinality,
                       commit    : Option[Callback],
                       commitVerb: String,
                       abort     : Option[Callback],
-                      help      : Option[Callback]): VdomTag =
-      apply(Clauses.forTextEditor(lc, commit = commit, commitVerb = commitVerb, abort = abort), help = help)
+                      help      : Option[Callback],
+                      fullscreen: Option[OptionalFullscreen.Ctx],
+                     ): VdomTag =
+      apply(
+        Clauses.forTextEditor(lc, commit = commit, commitVerb = commitVerb, abort = abort),
+        help = help,
+        fullscreen = fullscreen,
+      )
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

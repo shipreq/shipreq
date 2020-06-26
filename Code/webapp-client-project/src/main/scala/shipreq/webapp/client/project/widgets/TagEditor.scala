@@ -176,7 +176,13 @@ object TagEditor {
           textareaConst,
           keys,
           ^.autoFocus  := p.autoFocus)
-        editorRef.component(EditTheme.autosizeTextareaProps(EditTheme.Style.default, validity, p.edit.value, base))
+        val autosizeProps = EditTheme.autosizeTextareaProps(
+          style    = EditTheme.Style.default,
+          mode     = EditTheme.Mode.Inline,
+          validity = validity,
+          value    = p.edit.value,
+          tagMod   = base)
+        editorRef.component(autosizeProps)
       }
 
       def instructions: TagMod =
@@ -187,7 +193,8 @@ object TagEditor {
               commit = p.status.getCommit,
               commitVerb = p.commitVerb,
               abort = p.abort),
-            help = None))
+            help = None,
+            fullscreen = None))
 
       EditTheme.renderEditor(p.status, editor, p.edit.value, instructions)
     }

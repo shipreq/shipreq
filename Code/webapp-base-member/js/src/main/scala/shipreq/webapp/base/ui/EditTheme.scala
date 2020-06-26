@@ -25,9 +25,13 @@ object EditTheme {
   def editableInline(startEdit: Option[Callback]): TagMod =
     startEdit.fold(TagMod.empty)(editableInline(_))
 
-  def autosizeTextareaProps(style: Style, validity: Validity, value: String, tagMod: TagMod): TagMod =
+  def autosizeTextareaProps(style   : Style,
+                            mode    : Mode,
+                            validity: Validity,
+                            value   : String,
+                            tagMod  : TagMod): TagMod =
     TagMod(
-      BaseStyles.textEditor((validity, style.position)),
+      *.textEditor((validity, style.position, mode)),
       ^.value := value,
       tagMod)
 
@@ -53,6 +57,22 @@ object EditTheme {
   val spinner: VdomTag =
     Icon.CircleNotched.loading.tag(^.marginRight := "0")
 
+  sealed trait Mode
+  object Mode {
+    case object Inline extends Mode
+    case object Fullscreen extends Mode
+
+    def derive(fullscreen: Option[OptionalFullscreen.Ctx]): Mode =
+      if (fullscreen.exists(_.currentlyFullscreen))
+        EditTheme.Mode.Fullscreen
+      else
+        EditTheme.Mode.Inline
+
+    implicit def univEq: UnivEq[Mode] = UnivEq.derive
+    implicit def reusability: Reusability[Mode] = Reusability.by_==
+    def values = AdtMacros.adtValues[Mode]
+  }
+
   sealed trait Position
   object Position {
     case object Under extends Position
@@ -60,7 +80,7 @@ object EditTheme {
 
     implicit def univEq: UnivEq[Position] = UnivEq.derive
     implicit def reusability: Reusability[Position] = Reusability.by_==
-    val values = AdtMacros.adtValues[Position]
+    def values = AdtMacros.adtValues[Position]
   }
 
   sealed trait OpenPreview
@@ -106,6 +126,7 @@ object EditTheme {
       readOnlyView = readOnlyView,
       instructions = instructions,
       style        = Style.default,
+      mode         = Mode.Inline,
       previewRW    = PreviewFeature.ReadWrite.Single.neverShow,
       preview      = EmptyVdom,
     )
@@ -115,6 +136,7 @@ object EditTheme {
                    readOnlyView: => VdomNode,
                    instructions: => TagMod,
                    style       : Style,
+                   mode        : Mode,
                    previewRW   : => PreviewFeature.ReadWrite.Single,
                    preview     : => TagMod): VdomNode = {
 
@@ -122,7 +144,7 @@ object EditTheme {
       case EditorStatus.Ignore | EditorStatus.Valid(_) =>
         style.position match {
           case Position.Under => renderActiveUnder(editor, instructions, preview)
-          case Position.Right => renderActiveRight(previewRW, editor, instructions, preview, style.openPreview)
+          case Position.Right => renderActiveRight(editor, mode, instructions, previewRW, preview, style.openPreview)
         }
 
       case EditorStatus.Invalid(err) =>
@@ -138,7 +160,7 @@ object EditTheme {
           preview)
 
       case EditorStatus.InTransit =>
-        <.div(*.textEditor((*.EditorState.InTransit, style.position)),
+        <.div(*.textEditor((*.EditorState.InTransit, style.position, mode)),
           <.div(spinner),
           <.div(*.textEditorInTransitValue, readOnlyView))
     }
@@ -156,14 +178,15 @@ object EditTheme {
 
   // ===================================================================================================================
 
-  private def renderActiveRight(previewRW   : => PreviewFeature.ReadWrite.Single,
-                                editor      : Validity => VdomElement,
+  private def renderActiveRight(editor      : Validity => VdomElement,
+                                mode        : Mode,
                                 instructions: => TagMod,
+                                previewRW   : => PreviewFeature.ReadWrite.Single,
                                 preview     : => TagMod,
                                 openPreview : OpenPreview): VdomNode = {
 
     def renderWithPreview: VdomTag =
-      <.div(*.textEditorLeftPreviewRight,
+      <.div(*.textEditorLeftPreviewRight(mode),
         <.div(editor(Valid), instructions),
         <.div(preview))
 
