@@ -87,12 +87,12 @@ object ProjectSpaTest extends TestSuite {
 
     val start: *.Actions =
       if (online)
-        (  svr.disableAutoResponse
+        (  global.disableAutoResponse
         >> edit
-        >> svr.expireSession)
+        >> global.expireSession)
       else
-        (  svr.disableAutoResponse
-        >> svr.expireSession
+        (  global.disableAutoResponse
+        >> global.expireSession
         +> reauth.isVisible.assert(true)
         >> reauth.clickCancel
         +> reauth.isVisible.assert(false)
@@ -109,7 +109,7 @@ object ProjectSpaTest extends TestSuite {
         +> RD.titleEditor.isEmpty.assert(true).lift
         +> RD.titleText.assert("alright!").lift
         +> unsavedChanges.assert(0)
-        +> svr.requestCount.assert(1)
+        +> global.requestCount.assert(1)
         )
       else
         (  reauth.clickCancel
@@ -118,11 +118,11 @@ object ProjectSpaTest extends TestSuite {
         +> RD.titleChangeInProgress.assert(false).lift
         +> RD.titleEditor.assert.contains("alright!").lift
         +> unsavedChanges.assert(1)
-        +> svr.requestCount.assert(0)
+        +> global.requestCount.assert(0)
         )
 
     val test: *.Actions =
-      start +> reauth.isVisible.assert(true) >> svr.clearReqs >> svr.enableAutoResponse >> postModal
+      start +> reauth.isVisible.assert(true) >> global.clearReqs >> global.enableAutoResponse >> postModal
 
     runReqDetailTest(test, "MF-1")
   }

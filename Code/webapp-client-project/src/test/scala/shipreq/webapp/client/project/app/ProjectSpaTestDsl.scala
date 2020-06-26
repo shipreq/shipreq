@@ -126,7 +126,7 @@ object ProjectSpaTestDsl {
 
   val * = Dsl[Ref, Obs, TestState]
 
-  val svr = new TestGlobal.TestDslWithObs(*)(_.global, _.global)
+  val global = new TestGlobal.TestDslWithObs(*)(_.global, _.global)
 
   val reauth = new TestReauthenticationModal.TestDsl(*)(_.global.reauthModal)
 
