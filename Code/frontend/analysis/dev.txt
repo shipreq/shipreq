@@ -1,5 +1,5 @@
   core-js                   38.02 KB   88.4%
-<self>                      625.7 KB   41.6%
+<self>                      625.79 KB  41.6%
   <self>                    5.01 KB    11.6%
 lodash                      139.84 KB  9.29%
 react-svg-pan-zoom          102.51 KB  6.81%

@@ -1,3 +1,4 @@
+.angle.double.down
 .angle.double.left
 .angle.double.right
 .angle.right
@@ -49,4 +50,5 @@
 .warning
 .warning.circle
 .warning.sign
+.window.restore
 .write

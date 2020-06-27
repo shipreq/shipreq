@@ -1122,7 +1122,7 @@
     38 [remove] i.icon.podcast:before
     46 [remove] i.icon.window.maximize:before
     46 [remove] i.icon.window.minimize:before
-    45 [remove] i.icon.window.restore:before
+    45 [keep  ] i.icon.window.restore:before
     43 [remove] i.icon.window.close:before
     51 [remove] i.icon.window.close.outline:before
     35 [remove] i.icon.wait:before
@@ -1361,7 +1361,7 @@
     48 [keep  ] i.icon.angle.double.left:before
     49 [keep  ] i.icon.angle.double.right:before
     46 [remove] i.icon.angle.double.up:before
-    48 [remove] i.icon.angle.double.down:before
+    48 [keep  ] i.icon.angle.double.down:before
     41 [remove] i.icon.angle.left:before
     42 [keep  ] i.icon.angle.right:before
     39 [remove] i.icon.angle.up:before
