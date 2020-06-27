@@ -49,10 +49,6 @@ v2.2
 
 ### Implement
 * prompt user to confirm aborting a dirty editor
-* [MAYBE] remember last preview toggle state and use for new editors (eg. if I close one, next new editor should be closed too)
-  a problem with that is there's no way to go from manual back to auto.
-  Maybe just remember the orientation... per screen... per field... now it seems like goldplating for sure.
-  Probably drop this whole idea and implement later if real-world usage proves annoying
 * controls on reqtable
 * preview should never be auto in fullscreen (include in tests)
 * async error & invalid input hardcoded to Under
