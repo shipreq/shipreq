@@ -6,15 +6,16 @@ import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Invalid, Valid}
 import shipreq.webapp.base.feature.PreviewFeature.Position
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.base.ui.BaseStyles
+import shipreq.webapp.base.ui.{BaseStyles, EditTheme}
 import shipreq.webapp.base.ui.semantic.JQuery
 
 object CommonObs {
 
   private object Selectors {
-    val previewButtons = BaseStyles.previewToggleWrapper2.selector + " button"
-    val fullscreen     = BaseStyles.fullscreen.selector
-    val editorInvalid  = ".pointing.red.label"
+    val previewButtons             = BaseStyles.previewToggleWrapper2.selector + " button"
+    val fullscreen                 = BaseStyles.fullscreen.selector
+    val editorInvalid              = ".pointing.red.label"
+    val textEditorLeftPreviewRight = EditTheme.Mode.values.map(BaseStyles.textEditorLeftPreviewRight(_).selector).mkString(",")
   }
 
   // ===================================================================================================================
@@ -118,7 +119,7 @@ object CommonObs {
     final val isFullscreen               = $.exists(Selectors.fullscreen)
     final val isSpinning                 = $.exists(".loading")
     final val hasPreview                 = $.exists(".ui.segments")
-    final val previewIsOnRight           = $.exists(Selector.textEditorLeftPreviewRight)
+    final val previewIsOnRight           = $.exists(Selectors.textEditorLeftPreviewRight)
     final val previewPosition            = Option.when[Position](hasPreview)(if (previewIsOnRight) Position.Right else Position.Under)
 
     private final val previewButtonZippers = $.collect0n(Selectors.previewButtons).zippers

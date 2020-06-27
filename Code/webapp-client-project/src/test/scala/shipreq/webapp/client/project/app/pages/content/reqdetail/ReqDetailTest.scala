@@ -640,8 +640,6 @@ object ReqDetailTest extends TestSuite {
         & f.hasEnabledFullscreenButton.assert(canFS)
         & f.isSpinning.assert(spin)
       )
-      @inline def y = true
-      @inline def n = false
 
       "saveChange" - test("MF-1")(Plan.action(
         global.disableAutoResponse  +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)

@@ -51,6 +51,9 @@ object TestState
 
   def KB = japgolly.scalajs.react.test.SimEvent.Keyboard
 
+  final val y = true
+  final val n = false
+
   def assertTestState(r: Report[String], onFailure: => Unit = ())(implicit as: AssertionSettings, se: DisplayError[String]): Unit =
     r.failureReason match {
       case None =>
@@ -87,14 +90,6 @@ object TestState
       }
     $.collect0n(types.mkString(","))
       .filter(_.domAsHtml.findParent(e => semanticUiClasses.exists(e.classList.contains)).isEmpty)
-  }
-
-  // ===================================================================================================================
-
-  object Selector {
-
-    val textEditorLeftPreviewRight =
-      EditTheme.Mode.values.map(BaseStyles.textEditorLeftPreviewRight(_).selector).mkString(",")
   }
 
   // ===================================================================================================================
