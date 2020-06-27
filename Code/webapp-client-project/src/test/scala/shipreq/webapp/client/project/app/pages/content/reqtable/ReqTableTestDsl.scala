@@ -83,10 +83,6 @@ object ReqTableTestDsl {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private val editorInvalidSel: String =
-    ".pointing.red.label"
-
-  private val naSel = Style.reqtable.table.`N/A`.selector
 
   sealed abstract class CellState
   case object Normal  extends CellState
@@ -99,21 +95,17 @@ object ReqTableTestDsl {
 
   final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc, locDesc: String) {
 
-    private def editorCss = EditableSel
-
     private val cell = *.focus("Subject cell").value(s => s.obs.table.cell(loc(s.obs)))
 
-    val isNA        = cell.map(_.exists(naSel))                      rename "Cell is N/A"
-    val cellText    = cell.map(_.innerText)                          rename "Cell innerText"
-    val editor      = cell.map(_(editorCss).forceDomAs[html.Input])  rename "Editor"
-    val editorValue = editor.map(_.value)                            rename "Editor value"
+    val isNA           = cell.map(_.isNA)           rename "Cell is N/A"
+    val cellText       = cell.map(_.cellText)       rename "Cell innerText"
+    val editorValidity = cell.map(_.editorValidity) rename "Editor validity"
 
-    private val _editing = cell.map(_ exists editorCss)      rename "Editing"
-    private val _locked  = cell.map(_ exists ".loading")     rename "Locked"
+    val editorValue    = *.focus("Editor value").option(cell.run(_).editorValue)
+    val editorError    = *.focus("Editor error").option(cell.run(_).editorError)
 
-    val editorValidity = *.focus("Editor validity").value(Invalid when cell.run(_).exists(editorInvalidSel))
-
-    val editorError = *.focus("Editor error").option(cell.run(_).collect01(editorInvalidSel).innerTexts)
+    private val _editing = cell.map(_.editing) rename "Editing"
+    private val _locked  = cell.map(_.locked)  rename "Locked"
 
     val noEditorError = editorError.assert(None)
 
@@ -133,7 +125,7 @@ object ReqTableTestDsl {
       _editing.assert(false)
 
     val focus =
-      setFocus(o => o.table.cell(loc(o)).domAsHtml).rename("Focus on " + locDesc)
+      setFocus(o => o.table.cell(loc(o)).dom).rename("Focus on " + locDesc)
 
     val tryStartEdit =
       *.action("Start editor.")(Simulate doubleClick cell.run(_).dom)
@@ -150,12 +142,12 @@ object ReqTableTestDsl {
         +> assertNotEditing)
 
     def enterValue(text: String, desc: String = "Enter value") =
-      *.action(s"$desc: ${text.display}")(SimEvent.Change(text) simulate editor.run(_)) +>
-        editorValue.assert(text)
+      *.action(s"$desc: ${text.display}")(SimEvent.Change(text) simulate cell.run(_).editor.get) +>
+        editorValue.assert.contains(text)
 
     def modifyValue(mod: String => String, desc: String = "Modify value") =
       *.chooseAction(desc + ".")(i => {
-        val value1 = editorValue.run(i)
+        val value1 = editorValue.run(i).get
         val value2 = mod(value1)
         enterValue(value2, desc)
       })
@@ -164,10 +156,10 @@ object ReqTableTestDsl {
     def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert(Invalid)
 
     val commit =
-      *.action("Press Ctrl-Enter.")(KB.Enter.ctrl simulateKeyDown editor.run(_)) +> assertNotEditing
+      *.action("Press Ctrl-Enter.")(KB.Enter.ctrl simulateKeyDown cell.run(_).editor.get) +> assertNotEditing
 
     val abortEdit =
-      *.action("Press Escape.")(KB.Escape simulateKeyDown editor.run(_)) +> assertState(Normal)
+      *.action("Press Escape.")(KB.Escape simulateKeyDown cell.run(_).editor.get) +> assertState(Normal)
 
     // These used to be buttons
     def clickRetry = commit
@@ -176,7 +168,7 @@ object ReqTableTestDsl {
     def change(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
       (cellText.assert(textFromTo._1)
         +> startEdit
-        +> editorValue.assert(editorFromTo._1)
+        +> editorValue.assert.contains(editorFromTo._1)
         >> enterValue(editorFromTo._2)
         >> commit
         +> cellText.assert(textFromTo._2)

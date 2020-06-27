@@ -61,6 +61,12 @@ object TestState
         TestUtil.fail(f.failure)
     }
 
+  def editableDomValue(d: html.Element): String =
+    d match {
+      case i: html.Input    => i.value
+      case t: html.TextArea => t.value
+    }
+
   private val semanticUiClasses: Set[String] =
     Set("input", "dropdown", "button")
 
