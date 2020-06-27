@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.app
 
 import shipreq.webapp.base.data.ExternalPubid
 import shipreq.webapp.base.event.Event.FieldCustomDelete
+import shipreq.webapp.base.feature.PreviewFeature.Position
 import shipreq.webapp.base.test.SampleProject.Values.priField
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test.UnsafeTypes._
@@ -130,14 +131,14 @@ object ProjectSpaTest extends TestSuite {
   private def testEditorStyle(): Unit = {
     val pubid = "MF-1"
     val field = "Description"
+    val rd = RD.field(field)
     val ce = RT.cellEditor(pubid, field)
 
     val test: *.Actions = (
       // Open editor in ReqDetail
-      RD.doubleClickFieldValue(field).lift
-      >> RD.setFieldEditorValue(field, "Okay.").lift
-      +> RD.fieldHasPreview(field).assert(true).lift
-      +> RD.fieldPreviewOnRight(field).assert(true).lift
+      rd.doubleClick.lift
+      >> rd.setEditorValue("Okay.").lift
+      +> rd.previewPosition.assert.contains(Position.Right).lift
 
       // Switch to ReqTable
       >> setPage(Page.ReqTable)
@@ -155,10 +156,9 @@ object ProjectSpaTest extends TestSuite {
 
       // Switch to ReqDetail
       >> setPageToReqDetail(pubid, RD.Mode.Details)
-      >> RD.setFieldEditorValue(field, "Wow!").lift
-      +> RD.fieldHasPreview(field).assert(true).lift
-      +> RD.fieldPreviewOnRight(field).assert(true).lift
-      +> RD.fieldHasEnabledFullscreenButton(field).assert(true).lift
+      >> rd.setEditorValue("Wow!").lift
+      +> rd.previewPosition.assert.contains(Position.Right).lift
+      +> rd.hasEnabledFullscreenButton.assert(true).lift
     )
 
     runReqDetailTest(test, pubid)

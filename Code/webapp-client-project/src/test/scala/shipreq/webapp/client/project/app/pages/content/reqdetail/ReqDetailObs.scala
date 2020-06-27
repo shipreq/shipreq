@@ -5,6 +5,7 @@ import org.scalajs.dom.html
 import shipreq.base.util.LeftRight
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{Dead, Live, ShowDead, StaticField}
+import shipreq.webapp.base.test.CommonObs
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.Icon
@@ -30,8 +31,6 @@ object ReqDetailObs {
 
   import UiText.FieldNames._
   val TreeNames = NAE(useCaseStepTreeN, useCaseStepTreeA, StaticField.ExceptionStepTree.name)
-  val previewToggleWrapper = BaseStyles.previewToggleWrapper.selector
-  val fullscreen = BaseStyles.fullscreen.selector
 }
 
 final class ReqDetailObs($: DomZipperJs, val nav: NavObs, val global: TestGlobal.Obs) {
@@ -71,29 +70,18 @@ final class ReqDetailObs($: DomZipperJs, val nav: NavObs, val global: TestGlobal
     val fieldsInOrder: Vector[String] =
       rows.map(_(">th").innerText)
 
+    type Field = CommonObs.Editor
+
     val fields: Map[String, Field] =
-      rows.map(z => z(">th").innerText -> Field(z(">td"))).toMap
+      rows.map(z => z(">th").innerText -> CommonObs.Editor(z(">td"))).toMap
 
     def field(name: String): Field =
       fields.getOrElse(name, throw new RuntimeException("Field not found: " + name))
 
-    case class Field(private[ReqDetailObs] val $: DomZipperJs) {
-      val dom                        = $.dom
-      val innerText                  = $.innerText
-      val editor                     = $.collect01("textarea").domsAs[html.TextArea]
-      val hasPreview                 = $.exists(".ui.segments")
-      val fullscreenButton           = $.collect01("i.icon.maximize").domsAsHtml
-      val hasEnabledFullscreenButton = fullscreenButton.isDefined
-      val isFullscreen               = $.exists(ReqDetailObs.fullscreen)
-      val togglePreviewButton        = $.collect01(ReqDetailObs.previewToggleWrapper).zippers.map(_("button").domAsButton)
-      val isSpinning                 = $.exists(".loading")
-      val previewIsOnRight           = $.exists(Selector.textEditorLeftPreviewRight)
-    }
-
     val lifeRow = fields(UiText.Life.field)
 
     val live: Live = {
-      val t = lifeRow.innerText
+      val t = lifeRow.text
       if (t startsWith UiText.Life.live)
         Live
       else if (t startsWith UiText.Life.dead)

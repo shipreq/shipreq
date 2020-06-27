@@ -47,7 +47,7 @@ object ReqDetailTest extends TestSuite {
 
   // yeah i'm being lazy
   private def testLifeRowInnerText(expect: String) =
-    *.focus("Life row").value(_.obs.generic.lifeRow.innerText).assert(expect)
+    *.focus("Life row").value(_.obs.generic.lifeRow.text).assert(expect)
 
   private val reporterFieldExistence =
     visibleFields.assert.existenceOf("Reporter")(_.obs.generic.filterDead is ShowDead)
@@ -297,11 +297,11 @@ object ReqDetailTest extends TestSuite {
     ))
 
     "editors" - test("UC-1")(Plan(
-      doubleClickTitle                     +> editorCount.assert.beforeAndAfter(0, 1) <+ filterDead.assert(HideDead)
-      >> doubleClickFieldValue("Notes")    +> editorCount.assert(2)
-      >> showDead                          +> editorCount.assert(2)
-      >> doubleClickFieldValue("Reporter") +> editorCount.assert(2) // dead field
-      >> hideDead                          +> editorCount.assert(2)
+      doubleClickTitle                 +> editorCount.assert.beforeAndAfter(0, 1) <+ filterDead.assert(HideDead)
+      >> field("Notes").doubleClick    +> editorCount.assert(2)
+      >> showDead                      +> editorCount.assert(2)
+      >> field("Reporter").doubleClick +> editorCount.assert(2) // dead field
+      >> hideDead                      +> editorCount.assert(2)
     , reporterFieldExistence))
 
     "unsavedDeadChanges" - test("UC-1")(Plan.action(
@@ -313,7 +313,7 @@ object ReqDetailTest extends TestSuite {
         +> editorCount.assert.increaseBy(1)
         +> unsavedChanges.assert.noChange
 
-        >> doubleClickFieldValue("Notes")
+        >> field("Notes").doubleClick
         +> editorCount.assert.increaseBy(1)
         +> unsavedChanges.assert.noChange
 
@@ -321,7 +321,7 @@ object ReqDetailTest extends TestSuite {
         +> editorCount.assert.noChange
         +> unsavedChanges.assert.increaseBy(1)
 
-        >> setFieldEditorValue("Notes", "zzzzzzzzzzzzzzzzz")
+        >> field("Notes").setEditorValue("zzzzzzzzzzzzzzzzz")
         +> editorCount.assert.noChange
         +> unsavedChanges.assert.increaseBy(1)
 
@@ -392,12 +392,12 @@ object ReqDetailTest extends TestSuite {
           "Version",
           StaticField.OtherTags.name,
           StaticField.AllTags.name)
-          +> fieldText("Business Justification").assert("") // perReq > otherwise, opt - no content
-          +> fieldText("Component").assert("") // opt - no content
-          +> fieldText("Released").assert("blank") // man - no content
-          +> fieldText("Priority").assert("blank") // man - no content
-          +> fieldText("Status").assert("") // def:tag:dead - no content - HideDead
-          +> fieldText("Version").assert("") // def:tag:bad - no content - HideDead
+          +> field("Business Justification").text.assert("") // perReq > otherwise, opt - no content
+          +> field("Component").text.assert("") // opt - no content
+          +> field("Released").text.assert("blank") // man - no content
+          +> field("Priority").text.assert("blank") // man - no content
+          +> field("Status").text.assert("") // def:tag:dead - no content - HideDead
+          +> field("Version").text.assert("") // def:tag:bad - no content - HideDead
 
           >> filterDeadToggle
           +> filterDead.assert(ShowDead)
@@ -418,15 +418,15 @@ object ReqDetailTest extends TestSuite {
           "Version",
           StaticField.OtherTags.name,
           StaticField.AllTags.name)
-          +> fieldText("Business Justification").assert("") // perReq > otherwise, opt - no content
-          +> fieldText("Component").assert("") // opt - no content
-          +> fieldText("Priority").assert("blank") // man - no content
-          +> fieldText("Released").assert("blank") // man - no content
-          +> fieldText("Status").assert("uat2") // def:tag:dead - no content - ShowDead
-          +> fieldText("Version").assert("") // def:tag:bad - no content - ShowDead
+          +> field("Business Justification").text.assert("") // perReq > otherwise, opt - no content
+          +> field("Component").text.assert("") // opt - no content
+          +> field("Priority").text.assert("blank") // man - no content
+          +> field("Released").text.assert("blank") // man - no content
+          +> field("Status").text.assert("uat2") // def:tag:dead - no content - ShowDead
+          +> field("Version").text.assert("") // def:tag:bad - no content - ShowDead
 
-          >> changeFieldAndBack("Component", "" -> "X", "" -> "X") // opt - w/ content
-          >> changeFieldAndBack("Priority", "" -> "pri=low", "blank" -> "pri=low") // man - w/ content
+          >> field("Component").changeToAndBack("" -> "X", "" -> "X") // opt - w/ content
+          >> field("Priority").changeToAndBack("" -> "pri=low", "blank" -> "pri=low") // man - w/ content
       ))
 
       // BR
@@ -453,11 +453,11 @@ object ReqDetailTest extends TestSuite {
           "Version",
           StaticField.OtherTags.name,
           StaticField.AllTags.name)
-          +> fieldText("Business Justification").assert("blank") // man - no content
-          +> fieldText("Priority").assert("pri=med") // def:tag:ok - no content
-          +> fieldText("Released").assert("blank") // man - no content
-          +> fieldText("Status").assert("") // perReq > otherwise, def:tag:dead - no content - HideDead
-          +> fieldText("Version").assert("") // def:tag:bad - no content - HideDead
+          +> field("Business Justification").text.assert("blank") // man - no content
+          +> field("Priority").text.assert("pri=med") // def:tag:ok - no content
+          +> field("Released").text.assert("blank") // man - no content
+          +> field("Status").text.assert("") // perReq > otherwise, def:tag:dead - no content - HideDead
+          +> field("Version").text.assert("") // def:tag:bad - no content - HideDead
 
           >> filterDeadToggle
           +> filterDead.assert(ShowDead)
@@ -477,20 +477,20 @@ object ReqDetailTest extends TestSuite {
           "Version",
           StaticField.OtherTags.name,
           StaticField.AllTags.name)
-          +> fieldText("Business Justification").assert("blank") // man - no content
-          +> fieldText("Priority").assert("pri=med") // def:tag:ok - no content
-          +> fieldText("Released").assert("blank") // man - no content
-          +> fieldText("Status").assert("uat") // perReq > otherwise, def:tag:dead - no content - ShowDead
-          +> fieldText("Version").assert("") // def:tag:bad - no content - ShowDead
+          +> field("Business Justification").text.assert("blank") // man - no content
+          +> field("Priority").text.assert("pri=med") // def:tag:ok - no content
+          +> field("Released").text.assert("blank") // man - no content
+          +> field("Status").text.assert("uat") // perReq > otherwise, def:tag:dead - no content - ShowDead
+          +> field("Version").text.assert("") // def:tag:bad - no content - ShowDead
 
-          >> changeFieldAndBack("Priority", "" -> "pri=low", "pri=med" -> "pri=low") // def:tag:ok - w/ content
-          >> changeFieldAndBack("Status", "" -> "wip", "uat" -> "wip") // def:tag:dead - w/ content - ShowDead
-          >> changeFieldAndBack("Version", "" -> "v1.0", "" -> "v1.0") // def:tag:bad - w/ content - ShowDead
+          >> field("Priority").changeToAndBack("" -> "pri=low", "pri=med" -> "pri=low") // def:tag:ok - w/ content
+          >> field("Status").changeToAndBack("" -> "wip", "uat" -> "wip") // def:tag:dead - w/ content - ShowDead
+          >> field("Version").changeToAndBack("" -> "v1.0", "" -> "v1.0") // def:tag:bad - w/ content - ShowDead
 
           >> filterDeadToggle
           +> filterDead.assert(HideDead)
-          >> changeFieldAndBack("Status", "" -> "wip", "" -> "wip") // def:tag:dead - w/ content - HideDead
-          >> changeFieldAndBack("Version", "" -> "v1.0", "" -> "v1.0") // def:tag:bad - w/ content - HideDead
+          >> field("Status").changeToAndBack("" -> "wip", "" -> "wip") // def:tag:dead - w/ content - HideDead
+          >> field("Version").changeToAndBack("" -> "v1.0", "" -> "v1.0") // def:tag:bad - w/ content - HideDead
       ))
 
       // CO
@@ -519,10 +519,10 @@ object ReqDetailTest extends TestSuite {
           "Version",
           StaticField.OtherTags.name,
           StaticField.AllTags.name)
-          +> fieldText("Component").assert("") // perReq > otherwise, opt - no content
-          +> fieldText("Released").assert("v1.0") // def:tag:bad - w/ content - ShowDead
-          +> fieldText("Status").assert("uat") // def:tag:dead - no content - ShowDead
-          +> fieldText("Version").assert("v1.0 v3.x") // def:tag:bad - w/ content - ShowDead
+          +> field("Component").text.assert("") // perReq > otherwise, opt - no content
+          +> field("Released").text.assert("v1.0") // def:tag:bad - w/ content - ShowDead
+          +> field("Status").text.assert("uat") // def:tag:dead - no content - ShowDead
+          +> field("Version").text.assert("v1.0 v3.x") // def:tag:bad - w/ content - ShowDead
 
           >> restoreReq
           +> filterDead.assert(HideDead)
@@ -539,10 +539,10 @@ object ReqDetailTest extends TestSuite {
           "Version",
           StaticField.OtherTags.name,
           StaticField.AllTags.name)
-          +> fieldText("Component").assert("") // opt - no content
-          +> fieldText("Released").assert("v1.0") // def:tag:bad - w/ content - HideDead
-          +> fieldText("Status").assert("") // def:tag:dead - no content - HideDead
-          +> fieldText("Version").assert("v1.0") // def:tag:bad - w/ content - HideDead
+          +> field("Component").text.assert("") // opt - no content
+          +> field("Released").text.assert("v1.0") // def:tag:bad - w/ content - HideDead
+          +> field("Status").text.assert("") // def:tag:dead - no content - HideDead
+          +> field("Version").text.assert("v1.0") // def:tag:bad - w/ content - HideDead
 
           >> filterDeadToggle
           +> filterDead.assert(ShowDead)
@@ -561,10 +561,10 @@ object ReqDetailTest extends TestSuite {
           "Version",
           StaticField.OtherTags.name,
           StaticField.AllTags.name)
-          +> fieldText("Component").assert("") // perReq > otherwise, opt - no content
-          +> fieldText("Released").assert("v1.0") // def:tag:bad - w/ content - ShowDead
-          +> fieldText("Status").assert("uat") // def:tag:dead - no content - ShowDead
-          +> fieldText("Version").assert("v1.0 v3.x") // def:tag:bad - w/ content - ShowDead
+          +> field("Component").text.assert("") // perReq > otherwise, opt - no content
+          +> field("Released").text.assert("v1.0") // def:tag:bad - w/ content - ShowDead
+          +> field("Status").text.assert("uat") // def:tag:dead - no content - ShowDead
+          +> field("Version").text.assert("v1.0 v3.x") // def:tag:bad - w/ content - ShowDead
       ))
 
       "si1" - test("SI-1", SampleProject7.project)(Plan.action(
@@ -587,11 +587,11 @@ object ReqDetailTest extends TestSuite {
           "Version",
           StaticField.OtherTags.name,
           StaticField.AllTags.name)
-          +> fieldText("Component").assert("")
-          +> fieldText("Priority").assert("")
-          +> fieldText("Released").assert("") // dead req with mandatory blank
-          +> fieldText("Status").assert("uat3") // dead req with dead default
-          +> fieldText("Version").assert("") // dead req with bad live default
+          +> field("Component").text.assert("")
+          +> field("Priority").text.assert("")
+          +> field("Released").text.assert("") // dead req with mandatory blank
+          +> field("Status").text.assert("uat3") // dead req with dead default
+          +> field("Version").text.assert("") // dead req with bad live default
       ))
     }
 
@@ -617,57 +617,57 @@ object ReqDetailTest extends TestSuite {
         *.emptyAction
           +> filterDead.assert(HideDead)
           +> visibleFields.assert.not.contains("Status")
-          +> fieldText("Priority").assert("pri=low")
-          +> fieldText(OtherTags.name).assert("misc1 wip")
-          +> fieldText(AllTags.name).assert("misc1 pri=low wip")
+          +> field("Priority").text.assert("pri=low")
+          +> field(OtherTags.name).text.assert("misc1 wip")
+          +> field(AllTags.name).text.assert("misc1 pri=low wip")
 
           >> filterDeadToggle
           +> filterDead.assert(ShowDead)
-          +> fieldText("Priority").assert("pri=high pri=low")
-          +> fieldText("Status").assert("wip defer")
-          +> fieldText(OtherTags.name).assert("misc1 misc2")
-          +> fieldText(AllTags.name).assert("defer misc1 misc2 pri=high pri=low wip")
+          +> field("Priority").text.assert("pri=high pri=low")
+          +> field("Status").text.assert("wip defer")
+          +> field(OtherTags.name).text.assert("misc1 misc2")
+          +> field(AllTags.name).text.assert("defer misc1 misc2 pri=high pri=low wip")
       ))
     }
 
     "fullscreenEditor" - {
-      val f = "Description"
+      val f = field("Description")
       def assert(editors: Int, hasPreview: Boolean, isFS: Boolean, canFS: Boolean, spin: Boolean) = (
         editorCount.assert(editors)
-        & fieldHasPreview(f).assert(hasPreview)
-        & fieldIsFullscreen(f).assert(isFS)
+        & f.hasPreview.assert(hasPreview)
+        & f.isFullscreen.assert(isFS)
         & global.isBrowserFullscreen.assert(isFS)
-        & fieldHasEnabledFullscreenButton(f).assert(canFS)
-        & fieldIsSpinning(f).assert(spin)
+        & f.hasEnabledFullscreenButton.assert(canFS)
+        & f.isSpinning.assert(spin)
       )
       @inline def y = true
       @inline def n = false
 
       "saveChange" - test("MF-1")(Plan.action(
         global.disableAutoResponse  +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
-        >> doubleClickFieldValue(f) +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
-        >> toggleFieldPreview(f)    +> assert(editors = 1, hasPreview = n, isFS = n, canFS = y, spin = n)
-        >> toggleFieldFullscreen(f) +> assert(editors = 1, hasPreview = n, isFS = y, canFS = y, spin = n)
-        >> toggleFieldPreview(f)    +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
-        >> toggleFieldFullscreen(f) +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
-        >> toggleFieldFullscreen(f) +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
-        >> setFieldEditorValue(f, "zxc")
-        >> commitFieldEditor(f)     +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = y)
+        >> f.doubleClick            +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
+        >> f.clickPreviewHide       +> assert(editors = 1, hasPreview = n, isFS = n, canFS = y, spin = n)
+        >> f.toggleFullscreen       +> assert(editors = 1, hasPreview = n, isFS = y, canFS = y, spin = n)
+        >> f.clickPreviewShow       +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
+        >> f.toggleFullscreen       +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
+        >> f.toggleFullscreen       +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
+        >> f.setEditorValue("zxc")  +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
+        >> f.commitEditor           +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = y)
         >> global.autoRespondToLast +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
       ))
 
       "saveNoOp" - test("MF-1")(Plan.action(
-        global.disableAutoResponse  +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
-        >> doubleClickFieldValue(f) +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
-        >> toggleFieldFullscreen(f) +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
-        >> commitFieldEditor(f)     +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
+        global.disableAutoResponse +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
+        >> f.doubleClick           +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
+        >> f.toggleFullscreen      +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
+        >> f.commitEditor          +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
       ))
 
       "cancel" - test("MF-1")(Plan.action(
-        global.disableAutoResponse  +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
-        >> doubleClickFieldValue(f) +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
-        >> toggleFieldFullscreen(f) +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
-        >> abortFieldEditor(f)      +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
+        global.disableAutoResponse +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
+        >> f.doubleClick           +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
+        >> f.toggleFullscreen      +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
+        >> f.abortEditor           +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
       ))
 
     }

@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
 import japgolly.microlibs.testutil.TestUtilInternals.quoteStringForDisplay
+import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
 import nyaya.gen._
@@ -8,6 +9,7 @@ import org.scalajs.dom.html
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.test.CommonObs
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.project.test.TestGlobal
@@ -59,6 +61,8 @@ object ReqDetailTestDsl {
 
   val global = new TestGlobal.TestDslWithObs(*)(identity, _.global)
 
+  val field = Memo((f: String) => new CommonObs.Editor.TestDsl(*, f)(_.generic.field(f)))
+
   def checkErrorReason(e: String) =
     *.focus("Error reason").value(_.obs.error.reason).test(s"contains '$e'")(_ contains e)
 
@@ -76,27 +80,6 @@ object ReqDetailTestDsl {
 
   val visibleFields =
     *.focus("Visible fields").collection(_.obs.generic.fieldsInOrder)
-
-  def fieldText(field: String) =
-    *.focus(s"$field field text").value(_.obs.generic.field(field).innerText)
-
-  def fieldEditorValue(field: String) =
-    *.focus(s"$field field editor value").option(_.obs.generic.field(field).editor.map(_.value))
-
-  def fieldIsFullscreen(field: String) =
-    *.focus(s"$field is fullscreen").value(_.obs.generic.field(field).isFullscreen)
-
-  def fieldHasPreview(field: String) =
-    *.focus(s"$field field has preview").value(_.obs.generic.field(field).hasPreview)
-
-  def fieldHasEnabledFullscreenButton(field: String) =
-    *.focus(s"$field field has enabled fullscreen button").value(_.obs.generic.field(field).hasEnabledFullscreenButton)
-
-  def fieldIsSpinning(field: String) =
-    *.focus(s"$field field has spinner").value(_.obs.generic.field(field).isSpinning)
-
-  def fieldPreviewOnRight(field: String) =
-    *.focus(s"$field preview is on the right").value(_.obs.generic.field(field).previewIsOnRight)
 
   val life =
     *.focus("Life").value(_.obs.generic.live)
@@ -246,37 +229,6 @@ object ReqDetailTestDsl {
     *.action(s"Abort $label text edit")(KB.Escape simulateKeyDown _.obs.uc.row(label).textEditor.get) +>
       editorCount.assert.decrement
 
-  def changeField(field: String, fromTo: (String, String)): *.Actions =
-    (doubleClickFieldValue(field)
-      +> fieldEditorValue(field).assert.contains(fromTo._1)
-      >> setFieldEditorValue(field, fromTo._2)
-      >> commitFieldEditor(field)
-      ).group(s"Change $field field from '${fromTo._1}' to '${fromTo._2}'")
-
-  def changeField(field: String, editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
-    (fieldText(field).assert(textFromTo._1)
-      +> doubleClickFieldValue(field)
-      +> fieldEditorValue(field).assert.contains(editorFromTo._1)
-      >> setFieldEditorValue(field, editorFromTo._2)
-      >> commitFieldEditor(field)
-      +> fieldText(field).assert(textFromTo._2)
-      ).group(s"Change $field field from '${textFromTo._1}' to '${textFromTo._2}'")
-
-  def changeFieldAndBack(field: String, editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
-    changeField(field, editorFromTo, textFromTo) >> changeField(field, editorFromTo.swap, textFromTo.swap)
-
-  def setFieldEditorValue(field: String, value: String): *.Actions =
-    *.action(s"Set $field editor to ${quoteStringForDisplay(value)}")(
-      SimEvent.Change(value) simulate _.obs.generic.field(field).editor.get)
-
-  def commitFieldEditor(field: String): *.Actions =
-    *.action(s"Commit $field editor")(KB.Enter.ctrl simulateKeyDown _.obs.generic.field(field).editor.get) +>
-      editorCount.assert.decrement
-
-  def abortFieldEditor(field: String): *.Actions =
-    *.action(s"Abort $field editor")(KB.Escape simulateKeyDown _.obs.generic.field(field).editor.get) +>
-      editorCount.assert.decrement
-
   lazy val commitTitleEditor: *.Actions =
     *.action("Commit title editor")(KB.Enter.ctrl simulateKeyDown _.obs.generic.titleEditor.get)
     // +> editorCount.assert.decrement
@@ -335,15 +287,6 @@ object ReqDetailTestDsl {
 
   val doubleClickTitle =
     *.action("Double-click title")(Simulate doubleClick _.obs.generic.titleDom)
-
-  def doubleClickFieldValue(field: String) =
-    *.action("Double-click " + field)(Simulate doubleClick _.obs.generic.fields(field).dom)
-
-  def toggleFieldPreview(field: String) =
-    *.action("Toggle preview in " + field)(Simulate click _.obs.generic.fields(field).togglePreviewButton.get)
-
-  def toggleFieldFullscreen(field: String) =
-    *.action("Toggle fullscreen editing in " + field)(Simulate click _.obs.generic.fields(field).fullscreenButton.get)
 
   def setTitleEditValue(newValue: String): *.Actions =
     *.action(s"Set title text to ${quoteStringForDisplay(newValue)}")(
