@@ -49,9 +49,41 @@ v2.2
 
 ### Implement
 * prompt user to confirm aborting a dirty editor
-* fix preview right/under when switching from detail↔table
+* allow users to change preview orientation (regardless of which screen they're on)
+* allow users to hide preview (regardless of which screen they're on)
 * [MAYBE] remember last preview toggle state and use for new editors (eg. if I close one, next new editor should be closed too)
-* [MAYBE] allow preview toggle in req table too
+  a problem with that is there's no way to go from manual back to auto.
+  Maybe just remember the orientation... per screen... per field... now it seems like goldplating for sure.
+  Probably drop this whole idea and implement later if real-world usage proves annoying
+
+#### option 1
+
+open right: need minHeight
+  [ editor ] [ preview (x) ]
+  [ editor ] [ preview (↓) ]
+
+open under
+  [ editor           ]
+  [ preview (→) (x) ]
+
+closed
+  [ editor (↓) (→) ]  (NO)
+or
+  [ editor (o) ]  (YES)
+
+#### option 2: consistent button positions (REJECTED)
+
+open right
+  [ editor ] [ preview (↓) (x) ]
+
+open under
+  [ editor  (x) (→) ]
+  [ preview          ]
+
+closed
+  [ editor (↓) (→) ] or [ editor (o) ]
+
+
 
 Backlog (maybe-probably soon)
 ========================================================================================================================
