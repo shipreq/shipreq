@@ -2,6 +2,7 @@ package shipreq.webapp.base.ui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom.document
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.jsfacade.Screenfull
 import shipreq.webapp.base.ui.{BaseStyles => *}
@@ -28,12 +29,20 @@ object OptionalFullscreen {
   val real: OptionalFullscreen = {
     val browserFullscreenEnter: Callback =
       Callback {
+
+        // Hide scroll bars. Just because we're overlaying a div to the viewport, doesn't mean the rest of the content
+        // thats underneath the overlay, goes away.
+        document.body.style.overflow = "hidden"
+
         if (Screenfull.isEnabled)
           Screenfull.request()
       }
 
     val browserFullscreenExit: Callback =
       Callback {
+
+        document.body.style.overflow = ""
+
         if (Screenfull.isEnabled)
           Screenfull.exit()
       }
