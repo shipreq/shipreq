@@ -87,7 +87,7 @@ object ReqTableTest extends TestSuite {
     import ce._
     // TODO What about an implication cycle with a dead link. Ok? Not ok? What about when when link is undeleted?
     Plan.action(
-      showBuiltInColumnsSortedByPubid +> cellText.assert("MF-12, MF-19")
+      showBuiltInColumnsSortedByPubid +> text.assert("MF-12, MF-19")
         >> startEdit +> editorValue.assert("MF-12") // Should remove dead
         >> testInvalid("MF-28").suffix(" (Dead target)")
         >> testInvalid("MF-19").suffix(" (Dead target)")
@@ -102,7 +102,7 @@ object ReqTableTest extends TestSuite {
     val ce = cellEditor(pubid = "MF-3", col = "Implies")
     import ce._
     Plan.action(
-      showAllColumns +> cellText.assert("FR-4, MF-4")
+      showAllColumns +> text.assert("FR-4, MF-4")
         >> startEdit +> editorValue.assert("FR-4 MF-4")
         >> testInvalid("BR-1").suffix(" (Causes cycle)") // because BR-1 → BR-2 → FR-3 → BR-1
         >> testInvalid("BR-2").suffix(" (Causes cycle)") // because BR-1 → BR-2 → FR-3 → BR-2
@@ -151,7 +151,7 @@ object ReqTableTest extends TestSuite {
       mfs.sorted.map("MF-" + _) mkString sep
 
     Plan.action(
-      showAllColumns +> cellText.assert(mfs(", ", 1, 5, 2, 6, 7, 8, 9, 10, 13))
+      showAllColumns +> text.assert(mfs(", ", 1, 5, 2, 6, 7, 8, 9, 10, 13))
         >> startEdit +> editorValue.assert(mfs(" ", 5, 6)) // Should only show direct & live
         >> testInvalid("MF-4").suffix(" (Dead target)")
         >> testInvalid("MF-8").suffix(" (Dead target)")
@@ -172,7 +172,7 @@ object ReqTableTest extends TestSuite {
     import ce._
 
     Plan.action(
-      showAllColumns +> cellText.assert("v1.3 v1.x v3.x v4.x") // wip & uat in Status col
+      showAllColumns +> text.assert("v1.3 v1.x v3.x v4.x") // wip & uat in Status col
         >> startEdit +> editorValue.assert("v1.1 v1.x") // Should only show direct & live
         >> testInvalid("v0.9").suffix(" (Dead target)")
         >> testInvalid("v3.x").suffix(" (Dead target)")
@@ -193,7 +193,7 @@ object ReqTableTest extends TestSuite {
     import ce._
 
     Plan.action(
-      showAllColumns +> cellText.assert("wip uat uat3 prod")
+      showAllColumns +> text.assert("wip uat uat3 prod")
         >> startEdit +> editorValue.assert("wip") // Should only show direct & live
         >> testInvalid("uat").suffix(" (Dead target)")
         >> testInvalid("uat2").suffix(" (Dead target)")
@@ -205,7 +205,7 @@ object ReqTableTest extends TestSuite {
         >> testValid("wip defer")
         >> testValid("defer")
         >> commit
-        +> cellText.assert("defer uat uat3 prod") // dead #uat preserved
+        +> text.assert("defer uat uat3 prod") // dead #uat preserved
     ) withInitialState p
   }
 
@@ -217,8 +217,8 @@ object ReqTableTest extends TestSuite {
 
     val editChangeCommit = (
       startEdit
-        +> cellText.map(TestUtil.removeEditInstructionText).assert("Incompletions")
-        >> enterValue(newValue)
+        +> text.map(TestUtil.removeEditInstructionText).assert("Incompletions")
+        >> setEditorValue(newValue)
         >> commit
         +> svr.requestCount.assert.increment
         +> assertState(Locked)
@@ -229,7 +229,7 @@ object ReqTableTest extends TestSuite {
       svr.failLastRequest +> assertState(Failed) // Should be in failed state after I/O failure
 
     val retry = (
-      clickRetry
+      commit
         +> assertState(Locked)
         +> svr.requestCount.assert.increment
         +> svr.assertLastTwoRequestsAreEqual
@@ -251,10 +251,10 @@ object ReqTableTest extends TestSuite {
       svr.disableAutoResponse
         >> startEdit
         +> editorValue.assert(origValue)
-        >> enterValue("boop")
+        >> setEditorValue("boop")
         >> commit +> svr.requestCount.assert.increment
         >> svr.failLastRequest +> assertState(Failed)
-        >> abortEdit
+        >> abort
         >> startEdit // This is the key point of the test - it asserts the previous server failure is cleared
         +> editorValue.assert(origValue)
     )
@@ -274,13 +274,13 @@ object ReqTableTest extends TestSuite {
     val commitNop = commit +> post
 
     val nopEdit = (x: (String, String => String)) =>
-      (startEdit >> modifyValue(x._2) >> commitNop) group x._1
+      (startEdit >> modifyEditorValue(x._2) >> commitNop) group x._1
 
     Plan.action(
       showAllColumns
         >> (startEdit >> commitNop).group("Commit without edit.")
         >> (nopMod +: mods).map(nopEdit).combine
-        >> (startEdit >> abortEdit +> post).group("Abort.")
+        >> (startEdit >> abort +> post).group("Abort.")
     ).named(s"NOP edits: $pubid/$col").withInitialState(SampleProject4.projectWithAllAndOtherTags)
   }
 
@@ -340,7 +340,7 @@ object ReqTableTest extends TestSuite {
         >> showAllColumns
         >> cell.focus
         +> cell.assertNotEditing
-        +> cell.cellText.assert("")
+        +> cell.text.assert("")
         >> press(cmdOrCtrl(KB.V))
         +> cell.assertState(Editing)
         +> cell.editorValue.assert(text)
@@ -358,7 +358,7 @@ object ReqTableTest extends TestSuite {
       copyToClipboard(text1)
         >> cell.focus
         +> cell.assertNotEditing
-        +> cell.cellText.assert("Use Case Editor")
+        +> cell.text.assert("Use Case Editor")
         >> press(cmdOrCtrl(KB.V))
         +> cell.assertState(Editing)
         +> cell.editorValue.assert(text2)
@@ -376,7 +376,7 @@ object ReqTableTest extends TestSuite {
         >> showAllColumns
         >> cell.startEdit
         +> cell.editorValue.assert("")
-        >> cell.enterValue("yo")
+        >> cell.setEditorValue("yo")
         +> cell.editorValue.assert("yo")
         >> cell.focus
         >> press(cmdOrCtrl(KB.V))
@@ -433,37 +433,37 @@ object ReqTableTest extends TestSuite {
       showAllColumns(HideDead)
 
       +> fr1_alt.isNA.assert(true)
-      >> fr1_biz.changeAndBack("" -> "X")
-      >> fr1_cmp.changeAndBack("" -> "X")
-      >> fr1_pri.changeAndBack("" -> "pri=low", "blank" -> "pri=low")
-      >> fr1_sts.changeAndBack("" -> "wip")
-      >> fr1_ver.changeAndBack("" -> "v1.0")
+      >> fr1_biz.changeToAndBack("" -> "X")
+      >> fr1_cmp.changeToAndBack("" -> "X")
+      >> fr1_pri.changeToAndBack("" -> "pri=low", "blank" -> "pri=low")
+      >> fr1_sts.changeToAndBack("" -> "wip")
+      >> fr1_ver.changeToAndBack("" -> "v1.0")
 
       +> br1_alt.isNA.assert(true)
       +> br1_cmp.isNA.assert(true)
-      >> br1_biz.changeAndBack("" -> "uiui", "blank" -> "uiui")
-      >> br1_pri.changeAndBack("" -> "pri=low", "pri=med" -> "pri=low")
+      >> br1_biz.changeToAndBack("" -> "uiui", "blank" -> "uiui")
+      >> br1_pri.changeToAndBack("" -> "pri=low", "pri=med" -> "pri=low")
 
       >> showAllColumns(ShowDead)
 
       +> si1_biz.isNA.assert(true)
-      +> si1_alt.cellText.assert("")
-      +> si1_cmp.cellText.assert("")
-      +> si1_pri.cellText.assert("")
-      +> si1_sts.cellText.assert("uat3")
-      +> si1_ver.cellText.assert("")
+      +> si1_alt.text.assert("")
+      +> si1_cmp.text.assert("")
+      +> si1_pri.text.assert("")
+      +> si1_sts.text.assert("uat3")
+      +> si1_ver.text.assert("")
 
       +> fr1_alt.isNA.assert(true)
-      +> fr1_biz.cellText.assert("")
-      +> fr1_cmp.cellText.assert("")
-      +> fr1_pri.cellText.assert("blank")
-      >> fr1_sts.changeAndBack("" -> "wip", "uat2" -> "wip")
-      >> fr1_ver.changeAndBack("" -> "v1.0")
+      +> fr1_biz.text.assert("")
+      +> fr1_cmp.text.assert("")
+      +> fr1_pri.text.assert("blank")
+      >> fr1_sts.changeToAndBack("" -> "wip", "uat2" -> "wip")
+      >> fr1_ver.changeToAndBack("" -> "v1.0")
 
       +> br1_alt.isNA.assert(true)
       +> br1_cmp.isNA.assert(true)
-      +> br1_biz.cellText.assert("blank")
-      >> br1_pri.changeAndBack("" -> "pri=low", "pri=med" -> "pri=low")
+      +> br1_biz.text.assert("blank")
+      >> br1_pri.changeToAndBack("" -> "pri=low", "pri=med" -> "pri=low")
     )
 
     runTest(plan withInitialState SampleProject7.project)
@@ -519,7 +519,7 @@ object ReqTableTest extends TestSuite {
     val ce = cellEditor(pubid = pubid, col = col)
     import ce._
 
-    val noProdInText   = cellText.test("doesn't contain prod")(!_.toLowerCase.contains("prod"))
+    val noProdInText   = text.test("doesn't contain prod")(!_.toLowerCase.contains("prod"))
     val noProdInEditor = editorValue.value.test("doesn't contain prod")(!_.get.toLowerCase.contains("prod"))
 
     val test = (
@@ -528,7 +528,7 @@ object ReqTableTest extends TestSuite {
         >> startEdit
         +> noProdInEditor
         >> testInvalid("prod")
-        >> abortEdit
+        >> abort
       )
 
     val plan = Plan.action(

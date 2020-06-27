@@ -13,12 +13,10 @@ import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util.Browser
-import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.feature.SavedViewFeature
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.feature.savedview.SavedViewTestDsl
 import shipreq.webapp.client.project.test._
-import teststate.domzipper.DomZipper.EditableSel
 
 object ReqTableTestDsl {
   import TestState._
@@ -83,7 +81,6 @@ object ReqTableTestDsl {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-
   sealed abstract class CellState
   case object Normal  extends CellState
   case object Editing extends CellState
@@ -93,21 +90,15 @@ object ReqTableTestDsl {
   def cellEditor(pubid: String, col: String): CellEditor =
     CellEditor(_.table.cellLoc(pubid = pubid, col = col), s"$pubid: $col")
 
-  final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc, locDesc: String) {
+  final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc, locDesc: String)
+      extends CommonObs.Editor.TestDsl(*, locDesc)(o => o.table.cell(loc(o))) {
 
     private val cell = *.focus("Subject cell").value(s => s.obs.table.cell(loc(s.obs)))
 
-    val isNA                = cell.map(_.isNA)                rename "Cell is N/A"
-    val cellText            = cell.map(_.cellText)            rename "Cell innerText"
-    val editorValidity      = cell.map(_.editorValidity)      rename "Editor validity"
-    val previewIsOnRight    = cell.map(_.previewIsOnRight)    rename "Preview is on the right"
-    val hasFullscreenButton = cell.map(_.hasFullscreenButton) rename "Has fullscreen button"
-
-    val editorValue    = *.focus("Editor value").option(cell.run(_).editorValue)
-    val editorError    = *.focus("Editor error").option(cell.run(_).editorError)
+    val isNA = cell.map(_.isNA) rename "Cell is N/A"
 
     private val _editing = cell.map(_.editing) rename "Editing"
-    private val _locked  = cell.map(_.locked)  rename "Locked"
+    private val _locked  = cell.map(_.isSpinning)  rename "Locked"
 
     val noEditorError = editorError.assert(None)
 
@@ -142,46 +133,7 @@ object ReqTableTestDsl {
       tryStartEdit.rename("Attempt to start editor.")
         +> svr.requestCount.assert.noChange
         +> assertNotEditing)
-
-    def enterValue(text: String, desc: String = "Enter value") =
-      *.action(s"$desc: ${text.display}")(SimEvent.Change(text) simulate cell.run(_).editor.get) +>
-        editorValue.assert.contains(text)
-
-    def modifyValue(mod: String => String, desc: String = "Modify value") =
-      *.chooseAction(desc + ".")(i => {
-        val value1 = editorValue.run(i).get
-        val value2 = mod(value1)
-        enterValue(value2, desc)
-      })
-
-    def testValid  (text: String) = enterValue(text, "Enter valid value")   +> editorValidity.assert(Valid)
-    def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert(Invalid)
-
-    val commit =
-      *.action("Press Ctrl-Enter.")(KB.Enter.ctrl simulateKeyDown cell.run(_).editor.get) +> assertNotEditing
-
-    val abortEdit =
-      *.action("Press Escape.")(KB.Escape simulateKeyDown cell.run(_).editor.get) +> assertState(Normal)
-
-    // These used to be buttons
-    def clickRetry = commit
-    def clickAbort = abortEdit
-
-    def change(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
-      (cellText.assert(textFromTo._1)
-        +> startEdit
-        +> editorValue.assert.contains(editorFromTo._1)
-        >> enterValue(editorFromTo._2)
-        >> commit
-        +> cellText.assert(textFromTo._2)
-        ).group(s"Change $locDesc from '${textFromTo._1}' to '${textFromTo._2}'")
-
-    def changeAndBack(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
-      change(editorFromTo, textFromTo) >> change(editorFromTo.swap, textFromTo.swap)
-
-    def changeAndBack(fromTo: (String, String)): *.Actions =
-      changeAndBack(fromTo, fromTo)
-  }
+  } // CellEditor
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Invariants

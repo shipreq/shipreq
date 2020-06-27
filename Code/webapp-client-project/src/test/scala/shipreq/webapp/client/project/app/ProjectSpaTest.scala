@@ -66,13 +66,13 @@ object ProjectSpaTest extends TestSuite {
     >> RT.showAllColumns.lift                                  +> unsavedChanges.assert(1)
     >> mf1t.startEdit.lift                                     +> unsavedChanges.assert(1)
     >> mf1d.startEdit.lift                                     +> unsavedChanges.assert(1)
-    >> mf1t.modifyValue(_ + "  ").lift                         +> unsavedChanges.assert(1)
-    >> mf1t.enterValue("zzzzzzzzzzzzz").lift                   +> unsavedChanges.assert(2)
-    >> mf1d.enterValue("zzzzzzzzzzzzz").lift                   +> unsavedChanges.assert(3)
+    >> mf1t.modifyEditorValue(_ + "  ").lift                   +> unsavedChanges.assert(1)
+    >> mf1t.setEditorValue("zzzzzzzzzzzzz").lift               +> unsavedChanges.assert(2)
+    >> mf1d.setEditorValue("zzzzzzzzzzzzz").lift               +> unsavedChanges.assert(3)
     >> mf1t.commit.lift                                        +> unsavedChanges.assert(2)
     >> mf1d.commit.lift                                        +> unsavedChanges.assert(1)
     >> uc1t.startEdit.lift                                     +> unsavedChanges.assert(1)
-    >> uc1t.enterValue("zzzzzzzzzzzzz").lift                   +> unsavedChanges.assert(2)
+    >> uc1t.setEditorValue("zzzzzzzzzzzzz").lift               +> unsavedChanges.assert(2)
     >> setPageToReqDetail("UC-1", RD.Mode.Details)             +> unsavedChanges.assert(2)
     >> RD.doubleClickStepText("1.0.1").lift                    +> unsavedChanges.assert(2)
     >> RD.setStepTextEditValue("1.0.1", "zzzzzzzzzzzzz").lift  +> unsavedChanges.assert(3)
@@ -144,15 +144,15 @@ object ProjectSpaTest extends TestSuite {
       >> setPage(Page.ReqTable)
       >> RT.showAllColumns.lift
       +> ce.editorValue.assert("Okay.").lift
-      +> ce.previewIsOnRight.assert(false).lift
-      +> ce.hasFullscreenButton.assert(false).lift
+      +> ce.previewPosition.assert.contains(Position.Under).lift
+      +> ce.hasEnabledFullscreenButton.assert(false).lift
 
       // Reopen editor
-      >> ce.abortEdit.lift
+      >> ce.abort.lift
       >> ce.startEdit.lift
-      >> ce.enterValue("Wow!").lift
-      +> ce.previewIsOnRight.assert(false).lift
-      +> ce.hasFullscreenButton.assert(false).lift
+      >> ce.setEditorValue("Wow!").lift
+      +> ce.previewPosition.assert.contains(Position.Under).lift
+      +> ce.hasEnabledFullscreenButton.assert(false).lift
 
       // Switch to ReqDetail
       >> setPageToReqDetail(pubid, RD.Mode.Details)

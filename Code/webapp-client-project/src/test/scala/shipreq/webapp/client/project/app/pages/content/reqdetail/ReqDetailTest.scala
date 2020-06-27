@@ -652,7 +652,7 @@ object ReqDetailTest extends TestSuite {
         >> f.toggleFullscreen       +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
         >> f.toggleFullscreen       +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
         >> f.setEditorValue("zxc")  +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
-        >> f.commitEditor           +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = y)
+        >> f.commit                 +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = y)
         >> global.autoRespondToLast +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
       ))
 
@@ -660,14 +660,14 @@ object ReqDetailTest extends TestSuite {
         global.disableAutoResponse +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
         >> f.doubleClick           +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
         >> f.toggleFullscreen      +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
-        >> f.commitEditor          +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
+        >> f.commit                +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
       ))
 
       "cancel" - test("MF-1")(Plan.action(
         global.disableAutoResponse +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
         >> f.doubleClick           +> assert(editors = 1, hasPreview = y, isFS = n, canFS = y, spin = n)
         >> f.toggleFullscreen      +> assert(editors = 1, hasPreview = y, isFS = y, canFS = y, spin = n)
-        >> f.abortEditor           +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
+        >> f.abort                 +> assert(editors = 0, hasPreview = n, isFS = n, canFS = n, spin = n)
       ))
 
     }

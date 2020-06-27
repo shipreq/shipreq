@@ -50,21 +50,8 @@ object ReqTableObs {
 
   private val naSel = Style.reqtable.table.`N/A`.selector
 
-  private val editorInvalidSel: String =
-    ".pointing.red.label"
-
-  final class Cell($: DomZipperJs) {
-         def dom                 = $.domAsHtml
-    lazy val isNA                = $.exists(naSel)
-    lazy val cellText            = $.innerText
-    lazy val editor              = $.editables01.domsAsHtml
-    lazy val editorValue         = editor.map(editableDomValue)
-         def editing             = editor.isDefined
-    lazy val locked              = $.exists(".loading")
-    lazy val editorValidity      = Invalid when $.exists(editorInvalidSel)
-    lazy val editorError         = $.collect01(editorInvalidSel).innerTexts
-    lazy val previewIsOnRight    = $.exists(Selector.textEditorLeftPreviewRight)
-    lazy val hasFullscreenButton = $.exists("i.icon.maximize")
+  final class Cell($: DomZipperJs) extends CommonObs.Editor($) {
+    lazy val isNA = $.exists(naSel)
   }
 }
 

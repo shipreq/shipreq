@@ -3,6 +3,7 @@ package shipreq.webapp.base.test
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.base.test.BaseTestUtil._
+import shipreq.base.util.{Invalid, Valid}
 import shipreq.webapp.base.feature.PreviewFeature.Position
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.BaseStyles
@@ -13,6 +14,7 @@ object CommonObs {
   private object Selectors {
     val previewButtons = BaseStyles.previewToggleWrapper2.selector + " button"
     val fullscreen     = BaseStyles.fullscreen.selector
+    val editorInvalid  = ".pointing.red.label"
   }
 
   // ===================================================================================================================
@@ -103,33 +105,39 @@ object CommonObs {
 
   // ===================================================================================================================
 
-  final case class Editor($: DomZipperJs) {
-    val dom                        = $.dom
-    val text                       = $.innerText
-    val editor                     = $.editables01.domsAsHtml
-    val editorValue                = editor.map(editableDomValue)
-    val fullscreenButton           = $.collect01("i.icon.maximize").domsAsHtml
-    val hasEnabledFullscreenButton = fullscreenButton.isDefined
-    val isFullscreen               = $.exists(Selectors.fullscreen)
-    val isSpinning                 = $.exists(".loading")
-    val hasPreview                 = $.exists(".ui.segments")
-    val previewIsOnRight           = $.exists(Selector.textEditorLeftPreviewRight)
-    val previewPosition            = Option.when[Position](hasPreview)(if (previewIsOnRight) Position.Right else Position.Under)
+  class Editor(val $: DomZipperJs) {
+    final val dom                        = $.domAsHtml
+    final val text                       = $.innerText
+    final val editor                     = $.editables01.domsAsHtml
+    final def editing                    = editor.isDefined
+    final val editorValue                = editor.map(editableDomValue)
+    final val editorValidity             = Invalid when $.exists(Selectors.editorInvalid)
+    final val editorError                = $.collect01(Selectors.editorInvalid).innerTexts
+    final val fullscreenButton           = $.collect01("i.icon.maximize").domsAsHtml
+    final val hasEnabledFullscreenButton = fullscreenButton.isDefined
+    final val isFullscreen               = $.exists(Selectors.fullscreen)
+    final val isSpinning                 = $.exists(".loading")
+    final val hasPreview                 = $.exists(".ui.segments")
+    final val previewIsOnRight           = $.exists(Selector.textEditorLeftPreviewRight)
+    final val previewPosition            = Option.when[Position](hasPreview)(if (previewIsOnRight) Position.Right else Position.Under)
 
-    private val previewButtonZippers = $.collect0n(Selectors.previewButtons).zippers
-    private def previewButton(sel: String) = previewButtonZippers.find(_.exists(sel)).map(_.domAsButton)
+    private final val previewButtonZippers = $.collect0n(Selectors.previewButtons).zippers
+    private final def previewButton(sel: String) = previewButtonZippers.find(_.exists(sel)).map(_.domAsButton)
 
-    lazy val previewButtons = Editor.PreviewButtons(
+    final lazy val previewButtons = Editor.PreviewButtons(
       show  = previewButton(".icon.restore"),
       hide  = previewButton(".icon.close"),
       right = previewButton(".icon.right"),
       down  = previewButton(".icon.down"))
 
-    lazy val previewButtonExistence =
+    final lazy val previewButtonExistence =
       previewButtons.map(_.isDefined)
   }
 
   object Editor {
+    def apply($: DomZipperJs): Editor =
+      new Editor($)
+
     final case class PreviewButtons[+A](show : A,
                                         hide : A,
                                         down : A,
@@ -150,64 +158,79 @@ object CommonObs {
     class TestDsl[R, O, S](final val * : Dsl[Id, R, O, S, String], field: String)(getObs: O => Editor) {
       protected implicit def autoObs(o: O): Editor = getObs(o)
 
-      val text                       = *.focus("Editor text"                         ).value(_.obs.text)
-      val hasEditor                  = *.focus("Editor exists"                       ).value(_.obs.editorValue.isDefined)
-      val editorValue                = *.focus("Editor value"                        ).option(_.obs.editorValue)
-      val hasEnabledFullscreenButton = *.focus("Editor has enabled fullscreen button").value(_.obs.hasEnabledFullscreenButton)
-      val isFullscreen               = *.focus("Editor is fullscreen"                ).value(_.obs.isFullscreen)
-      val isSpinning                 = *.focus("Editor is spinning"                  ).value(_.obs.isSpinning)
-      val hasPreview                 = *.focus("Editor has preview"                  ).value(_.obs.hasPreview)
-      val previewPosition            = *.focus("Editor preview position"             ).option(_.obs.previewPosition)
-      val previewButtons             = *.focus("Editor preview buttons"              ).value(_.obs.previewButtonExistence)
+      final val text                       = *.focus(field + " editor text"                         ).value(_.obs.text)
+      final val editing                    = *.focus(field + " editing"                             ).value(_.obs.editing)
+      final val editorValue                = *.focus(field + " editor value"                        ).option(_.obs.editorValue)
+      final val editorError                = *.focus(field + " editor error"                        ).option(_.obs.editorError)
+      final val editorValidity             = *.focus(field + " editor validity"                     ).value(_.obs.editorValidity)
+      final val hasEnabledFullscreenButton = *.focus(field + " editor has enabled fullscreen button").value(_.obs.hasEnabledFullscreenButton)
+      final val isFullscreen               = *.focus(field + " editor is fullscreen"                ).value(_.obs.isFullscreen)
+      final val isSpinning                 = *.focus(field + " editor is spinning"                  ).value(_.obs.isSpinning)
+      final val hasPreview                 = *.focus(field + " editor has preview"                  ).value(_.obs.hasPreview)
+      final val previewPosition            = *.focus(field + " editor preview position"             ).option(_.obs.previewPosition)
+      final val previewButtons             = *.focus(field + " editor preview buttons"              ).value(_.obs.previewButtonExistence)
 
-      def doubleClick: *.Actions =
+      final def doubleClick: *.Actions =
         *.action("Double-click " + field)(Simulate doubleClick _.obs.dom)
 
-      def setEditorValue(value: String): *.Actions =
+      final def setEditorValue(value: String): *.Actions =
         *.action(s"Set $field editor to ${quoteString(value)}")(
           SimEvent.Change(value) simulate _.obs.editor.get)
 
-      def commitEditor: *.Actions =
+      final def commit: *.Actions =
         *.action(s"Commit $field editor")(KB.Enter.ctrl simulateKeyDown _.obs.editor.get) +>
-          hasEditor.assert.beforeAndAfter(true, false)
+          editing.assert.beforeAndAfter(true, false)
 
-      def abortEditor: *.Actions =
+      final def abort: *.Actions =
         *.action(s"Abort $field editor")(KB.Escape simulateKeyDown _.obs.editor.get) +>
-          hasEditor.assert.beforeAndAfter(true, false)
+          editing.assert.beforeAndAfter(true, false)
 
-      def change(fromTo: (String, String)): *.Actions =
+      final def change(fromTo: (String, String)): *.Actions =
         (doubleClick
           +> editorValue.assert.contains(fromTo._1)
           >> setEditorValue(fromTo._2)
-          >> commitEditor
+          >> commit
           ).group(s"Change $field field from '${fromTo._1}' to '${fromTo._2}'")
 
-      def change(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
+      final def change(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
         (text.assert(textFromTo._1)
           +> doubleClick
           +> editorValue.assert.contains(editorFromTo._1)
           >> setEditorValue(editorFromTo._2)
-          >> commitEditor
+          >> commit
           +> text.assert(textFromTo._2)
           ).group(s"Change $field field from '${textFromTo._1}' to '${textFromTo._2}'")
 
-      def changeToAndBack(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
+      final def changeToAndBack(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
         change(editorFromTo, textFromTo) >> change(editorFromTo.swap, textFromTo.swap)
 
-      def toggleFullscreen: *.Actions =
+      final def changeToAndBack(fromTo: (String, String)): *.Actions =
+        changeToAndBack(fromTo, fromTo)
+
+      final def toggleFullscreen: *.Actions =
         *.action("Toggle fullscreen editing in " + field)(Simulate click _.obs.fullscreenButton.get)
 
-      def clickPreviewShow: *.Actions =
+      final def clickPreviewShow: *.Actions =
         *.action(s"Click $field preview show")(Simulate click _.obs.previewButtons.show.get)
 
-      def clickPreviewHide: *.Actions =
+      final def clickPreviewHide: *.Actions =
         *.action(s"Click $field preview hide")(Simulate click _.obs.previewButtons.hide.get)
 
-      def clickPreviewDown: *.Actions =
+      final def clickPreviewDown: *.Actions =
         *.action(s"Click $field preview down")(Simulate click _.obs.previewButtons.down.get)
 
-      def clickPreviewRight: *.Actions =
+      final def clickPreviewRight: *.Actions =
         *.action(s"Click $field preview right")(Simulate click _.obs.previewButtons.right.get)
+
+      final def modifyEditorValue(mod: String => String, desc: String = "Modify editor value") =
+        *.chooseAction(desc + ".")(i => {
+          val value1 = editorValue.run(i).get
+          val value2 = mod(value1)
+          setEditorValue(value2)
+        })
+
+      final def testValid  (text: String) = setEditorValue(text).rename(s"Enter valid value: ${quoteString(text)}")   +> editorValidity.assert(Valid)
+      final def testInvalid(text: String) = setEditorValue(text).rename(s"Enter invalid value: ${quoteString(text)}") +> editorValidity.assert(Invalid)
     }
   }
 }
