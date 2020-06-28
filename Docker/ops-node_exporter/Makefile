@@ -1,6 +1,6 @@
-.PHONY: default build run help up down
+.PHONY: default build run help exec up down
 
-INPUTS  = Dockerfile
+INPUTS  = Dockerfile docker-entrypoint.sh
 
 IMAGE = shipreq/ops/node_exporter
 
@@ -16,7 +16,6 @@ DOCKER_ARGS += -v "/:/host:ro,rslave"
 APP_ARGS  = --path.rootfs=/host
 APP_ARGS += --path.procfs=/host/proc
 APP_ARGS += --path.sysfs=/host/sys
-APP_ARGS += '--collector.filesystem.ignored-mount-points=^/(dev|proc|sys|var/lib/docker/.+|host|etc)($$|/)'
 
 default: run
 
@@ -28,6 +27,9 @@ run: build
 
 help: build
 	docker run $(DOCKER_ARGS) $(IMAGE) --help
+
+exec: build
+	docker run $(DOCKER_ARGS) --user root -it --entrypoint /bin/sh $(IMAGE)
 
 up: build
 	-@docker rm -f $(CONTAINER) &>/dev/null
