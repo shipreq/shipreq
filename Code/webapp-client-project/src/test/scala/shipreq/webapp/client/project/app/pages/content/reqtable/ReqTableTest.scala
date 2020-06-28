@@ -17,6 +17,7 @@ import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.test._
 import utest._
+import utest.framework.TestPath
 
 object ReqTableTest extends TestSuite {
   import ReqTableTestDsl.{savedViews => _, _}
@@ -24,10 +25,10 @@ object ReqTableTest extends TestSuite {
 
   PrepareEnv()
 
-  def runTest(plan: *.Plan, project: Project = SampleProject4.project)(implicit path: utest.framework.TestPath): Unit =
+  def runTest(plan: *.Plan, project: Project = SampleProject4.project)(implicit path: TestPath): Unit =
     runTest(plan withInitialState project)
 
-  def runTest(p: *.PlanWithInitialState)(implicit path: utest.framework.TestPath): Unit = {
+  def runTest(p: *.PlanWithInitialState)(implicit path: TestPath): Unit = {
     import ProjectSpaTestDsl._
     ProjectSpaTestDsl.runTest(
       liftReqTableTests(p.plan).asAction(path.value.mkString("ReqTableTest.", ".", "")),
@@ -284,7 +285,7 @@ object ReqTableTest extends TestSuite {
     ).named(s"NOP edits: $pubid/$col").withInitialState(SampleProject4.projectWithAllAndOtherTags)
   }
 
-  def testKeyboardNavigation()(implicit path: utest.framework.TestPath) =
+  def testKeyboardNavigation()(implicit path: TestPath) =
     runTest(
       Plan.action(
         showHideColumn(StaticField.OtherTags.name)
@@ -388,7 +389,7 @@ object ReqTableTest extends TestSuite {
     )
   }
 
-  def testInitialFilter()(implicit path: utest.framework.TestPath) = {
+  def testInitialFilter()(implicit path: TestPath) = {
     val project = applyEventsSuccessfully(SampleProject4.project,
       Event.SavedViewCreateV1(
         id         = SavedView.Id(1),
@@ -409,7 +410,7 @@ object ReqTableTest extends TestSuite {
     runTest(plan withInitialState project)
   }
 
-  def testFieldRules()(implicit path: utest.framework.TestPath) = {
+  def testFieldRules()(implicit path: TestPath) = {
     val fr1_biz = cellEditor("FR-1", "Business Justification") // perReq > otherwise, opt
     val fr1_alt = cellEditor("FR-1", "Alternatives") // na
     val fr1_cmp = cellEditor("FR-1", "Component") // perReq > otherwise, opt
@@ -469,7 +470,7 @@ object ReqTableTest extends TestSuite {
     runTest(plan withInitialState SampleProject7.project)
   }
 
-  def testFieldRulesAndSorting()(implicit path: utest.framework.TestPath) = {
+  def testFieldRulesAndSorting()(implicit path: TestPath) = {
     import SampleProject7.Values._
     import UnsafeTypes._
 
@@ -493,7 +494,7 @@ object ReqTableTest extends TestSuite {
     runTest(plan withInitialState project)
   }
 
-  def testFieldRulesAndFilter()(implicit path: utest.framework.TestPath) = {
+  def testFieldRulesAndFilter()(implicit path: TestPath) = {
     import SampleProject7.Values._
     import UnsafeTypes._
 
@@ -515,7 +516,7 @@ object ReqTableTest extends TestSuite {
     runTest(plan withInitialState project)
   }
 
-  def testTagLegality(pubid: String, col: String)(implicit path: utest.framework.TestPath) = {
+  def testTagLegality(pubid: String, col: String)(implicit path: TestPath) = {
     val ce = cellEditor(pubid = pubid, col = col)
     import ce._
 
@@ -541,7 +542,7 @@ object ReqTableTest extends TestSuite {
     runTest(plan withInitialState SampleProject7.project)
   }
 
-  def testSavedViewsBasic()(implicit path: utest.framework.TestPath) = {
+  def testSavedViewsBasic()(implicit path: TestPath) = {
 
     val assertViewBasic =
       tableColumns.size.assert(7) &
@@ -594,7 +595,7 @@ object ReqTableTest extends TestSuite {
     runTest(Plan.action(test) withInitialState SampleProject7.project)
   }
 
-  def testSavedViewsDeadCol()(implicit path: utest.framework.TestPath) = {
+  def testSavedViewsDeadCol()(implicit path: TestPath) = {
     val test = (
       *.emptyAction
 
@@ -647,6 +648,67 @@ object ReqTableTest extends TestSuite {
       )
 
     runTest(Plan.action(test) withInitialState SampleProject7.project)
+  }
+
+  private def assertPreview(editing: Boolean, preview: String, isFS: Boolean, canFS: Boolean, spin: Boolean)
+                           (implicit f: CellEditor) = {
+    val p = if (preview == "none") "----" else preview
+    (
+      f.editing.assert(editing)
+        & f.hasPreview.assert(p.startsWith("-h") || (preview == "----"))
+        & f.previewButtonsStr.assert(p)
+        & f.isFullscreen.assert(isFS)
+        & global.isBrowserFullscreen.assert(isFS)
+        & f.hasEnabledFullscreenButton.assert(canFS)
+        & f.isSpinning.assert(spin)
+      )
+  }
+
+  private def testTitlePreview()(implicit path: TestPath): Unit = {
+    implicit val ce = cellEditor("MF-1", "Title")
+
+    val test = (
+       ce.doubleClick                +> assertPreview(editing = y, preview = "none", isFS = n, canFS = n, spin = n)
+    >> ce.setEditorValue("**bold**") +> assertPreview(editing = y, preview = "----", isFS = n, canFS = n, spin = n)
+    )
+
+    runTest(Plan.action(test) withInitialState SampleProject3.project)
+  }
+
+  private def testPreviewControls()(implicit path: TestPath): Unit = {
+    implicit val ce = cellEditor("MF-1", "Description")
+
+    val test = (
+      global.disableAutoResponse
+        >> showHideColumn("Description")
+
+        >> ce.doubleClick
+        +> ce.editorValue.assert(Some(""))
+        +> assertPreview(editing = y, preview = "s---", isFS = n, canFS = y, spin = n)
+
+        >> ce.setEditorValue("**bold**")
+        +> assertPreview(editing = y, preview = "-h-r", isFS = n, canFS = y, spin = n)
+
+        >> ce.clickPreviewRight     +> assertPreview(editing = y, preview = "-hd-", isFS = n, canFS = y, spin = n)
+        >> ce.clickPreviewHide      +> assertPreview(editing = y, preview = "s---", isFS = n, canFS = y, spin = n)
+        >> ce.clickPreviewShow      +> assertPreview(editing = y, preview = "-hd-", isFS = n, canFS = y, spin = n)
+        >> ce.clickPreviewDown      +> assertPreview(editing = y, preview = "-h-r", isFS = n, canFS = y, spin = n)
+        >> ce.clickPreviewHide      +> assertPreview(editing = y, preview = "s---", isFS = n, canFS = y, spin = n)
+        >> ce.clickPreviewShow      +> assertPreview(editing = y, preview = "-h-r", isFS = n, canFS = y, spin = n)
+        >> ce.commit                +> assertPreview(editing = n, preview = "none", isFS = n, canFS = n, spin = y)
+        >> global.autoRespondToLast +> assertPreview(editing = n, preview = "none", isFS = n, canFS = n, spin = n)
+
+        // No confirm preview-reset while we're here.
+        // See comments in ReqDetailTest as to why this is important.
+        >> ce.doubleClick
+        +> ce.editorValue.assert(Some("**bold**"))
+        +> assertPreview(editing = y, preview = "-h-r", isFS = n, canFS = y, spin = n)
+
+        >> ce.setEditorValue("")
+        +> assertPreview(editing = y, preview = "s---", isFS = n, canFS = y, spin = n)
+      )
+
+    runTest(Plan.action(test) withInitialState SampleProject3.project)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -725,6 +787,11 @@ object ReqTableTest extends TestSuite {
       "main"    - testFieldRules()
       "sorting" - testFieldRulesAndSorting()
       "filter"  - testFieldRulesAndFilter()
+    }
+
+    "preview" - {
+      "title" - testTitlePreview()
+      "controls" - testPreviewControls()
     }
 
     "savedViews" - {

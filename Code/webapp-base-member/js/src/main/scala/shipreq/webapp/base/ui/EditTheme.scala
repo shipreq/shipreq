@@ -80,6 +80,9 @@ object EditTheme {
     /** Follows the logic described in [[PreviewFeature]] to only show preview when required, and with minimal change */
     case object Minimally extends OpenPreview
 
+    /** Same as [[Minimally]] except that it can be manually toggled on/off. */
+    case object MinimallyWithControls extends OpenPreview
+
     /** Preview always shown. */
     case object Always extends OpenPreview
 
@@ -174,28 +177,28 @@ object EditTheme {
         val renderFn: RenderCmd => RenderResult =
           cmd => {
             import cmd.mode
-            val instructions             = instructionsFn(cmd.fullscreen)
-            def editor(preview: Boolean) = editorFn(Valid, Option.when(preview)(position), mode)
-            def preview                  = renderPreview(position, mode)
+            val instructions                  = instructionsFn(cmd.fullscreen)
+            def editor(allowPreview: Boolean) = editorFn(Valid, Option.when(allowPreview)(position), mode)
+            def preview                       = renderPreview(position, mode)
 
             implicit def noOuter(v: VdomTag): RenderResult =
               RenderResult(identity, v)
 
             def previewRight =
               <.div(*.textEditorLeftPreviewRight(mode),
-                <.div(editor(preview = true), instructions),
+                <.div(editor(allowPreview = true), instructions),
                 <.div(preview))
 
             def previewUnder =
               RenderResult(
-                outer = <.div(*.textEditorTopPreviewUnder(mode), <.div(editor(preview = true), instructions), _),
+                outer = <.div(*.textEditorTopPreviewUnder(mode), <.div(editor(allowPreview = true), instructions), _),
                 inner = <.div(preview)
               )
 
             def noPreview =
-              <.div(editor(preview = false), instructions)
+              <.div(editor(allowPreview = false), instructions)
 
-            if (cmd.preview)
+            if (cmd.allowPreview)
               position match {
                 case Position.Right => previewRight
                 case Position.Under => previewUnder
@@ -209,6 +212,7 @@ object EditTheme {
           defaultPosition    = style.position,
           optionalFullscreen = optionalFullscreen,
           previewRW          = p,
+          previewWantOpen    = previewWantOpen,
           openPreview        = style.openPreview,
         )
 
@@ -237,9 +241,9 @@ object EditTheme {
 
   // ===================================================================================================================
 
-  private final case class RenderCmd(preview   : Boolean,
-                                     mode      : Mode,
-                                     fullscreen: Option[OptionalFullscreen.Ctx])
+  private final case class RenderCmd(allowPreview: Boolean,
+                                     mode        : Mode,
+                                     fullscreen  : Option[OptionalFullscreen.Ctx])
 
   private final case class RenderResult(outer: VdomNode => VdomNode,
                                         inner: VdomTag) {
@@ -250,6 +254,7 @@ object EditTheme {
                            defaultPosition   : Position,
                            optionalFullscreen: Option[OptionalFullscreen],
                            previewRW         : => PreviewFeature.ReadWrite.Single,
+                           previewWantOpen   : => Boolean,
                            openPreview       : OpenPreview): VdomNode = {
 
     def content(fullscreen: Option[OptionalFullscreen.Ctx]): VdomNode = {
@@ -266,11 +271,12 @@ object EditTheme {
       mode match {
         case Mode.Inline =>
           openPreview match {
+            case OpenPreview.MinimallyWithControls => renderWithManualControls(previewWantOpen)
+            case OpenPreview.ShowWithControls      => renderWithManualControls(true)
             case OpenPreview.Minimally
                | OpenPreview.Always
-               | OpenPreview.Never
-               | OpenPreview.WhenWanted       => render(RenderCmd(true, mode, fullscreen)).self
-            case OpenPreview.ShowWithControls => renderWithManualControls(true)
+               | OpenPreview.WhenWanted            => render(RenderCmd(true, mode, fullscreen)).self
+            case OpenPreview.Never                 => render(RenderCmd(false, mode, fullscreen)).self
           }
 
         case Mode.Fullscreen =>
@@ -307,11 +313,12 @@ object EditTheme {
     mode match {
       case Mode.Inline =>
         openPreview match {
-          case OpenPreview.Minimally        => previewRW.reactCollapse(wantOpen)(render)
-          case OpenPreview.Always           => render
-          case OpenPreview.Never            => EmptyVdom
-          case OpenPreview.WhenWanted       => PreviewFeature.ReadWrite.Single.show(wantOpen).reactCollapse(wantOpen)(render)
-          case OpenPreview.ShowWithControls => manual(true)
+          case OpenPreview.Minimally             => previewRW.reactCollapse(wantOpen)(render)
+          case OpenPreview.MinimallyWithControls => manual(wantOpen)
+          case OpenPreview.Always                => render
+          case OpenPreview.Never                 => EmptyVdom
+          case OpenPreview.WhenWanted            => PreviewFeature.ReadWrite.Single.show(wantOpen).reactCollapse(wantOpen)(render)
+          case OpenPreview.ShowWithControls      => manual(true)
         }
 
       case Mode.Fullscreen =>
