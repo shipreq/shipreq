@@ -1,4 +1,4 @@
-FROM prom/prometheus:v2.18.1
+FROM prom/prometheus:v2.19.2
 
 # Because /data will be mounted as root
 USER root
