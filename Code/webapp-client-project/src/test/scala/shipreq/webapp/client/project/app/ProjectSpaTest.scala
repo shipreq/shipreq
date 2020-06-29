@@ -138,27 +138,39 @@ object ProjectSpaTest extends TestSuite {
       // Open editor in ReqDetail
       rd.doubleClick.lift
       >> rd.setEditorValue("Okay.").lift
-      +> rd.previewPosition.assert.contains(Position.Right).lift
+      +> rd.previewPosition.assert(Some(Position.Right)).lift
 
       // Switch to ReqTable
       >> setPage(Page.ReqTable)
       >> RT.showAllColumns.lift
       +> ce.editorValue.assert("Okay.").lift
-      +> ce.previewPosition.assert.contains(Position.Under).lift
-      +> ce.hasEnabledFullscreenButton.assert(false).lift
+      +> ce.previewPosition.assert(None).lift
+      +> ce.hasEnabledFullscreenButton.assert(true).lift
 
       // Reopen editor
       >> ce.abort.lift
       >> ce.startEdit.lift
-      >> ce.setEditorValue("Wow!").lift
-      +> ce.previewPosition.assert.contains(Position.Under).lift
-      +> ce.hasEnabledFullscreenButton.assert(false).lift
+      >> ce.setEditorValue("**Wow!**").lift
+      +> ce.previewPosition.assert(Some(Position.Under)).lift
+      +> ce.hasEnabledFullscreenButton.assert(true).lift
 
       // Switch to ReqDetail
       >> setPageToReqDetail(pubid, RD.Mode.Details)
-      >> rd.setEditorValue("Wow!").lift
-      +> rd.previewPosition.assert.contains(Position.Right).lift
+      >> rd.setEditorValue("**Wow!**").lift
+      +> rd.previewPosition.assert(Some(Position.Right)).lift
       +> rd.hasEnabledFullscreenButton.assert(true).lift
+
+      // Manually hide preview
+      >> rd.clickPreviewHide.lift
+      +> rd.previewPosition.assert(None).lift
+
+      // Switch to ReqTable
+      >> setPage(Page.ReqTable)
+      +> ce.previewPosition.assert(None).lift
+
+      // Switch to ReqDetail
+      >> setPageToReqDetail(pubid, RD.Mode.Details)
+      +> rd.previewPosition.assert(None).lift
     )
 
     runReqDetailTest(test, pubid)
