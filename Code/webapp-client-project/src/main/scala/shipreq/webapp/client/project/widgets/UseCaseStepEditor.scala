@@ -196,20 +196,39 @@ object UseCaseStepEditor {
       } clauses ::=
         Instructions.Clause.keyToAction(shiftKeyCriterion(d).desc)(UiText.useCaseStepShift(d).toLowerCase, cb)
 
-      Instructions(clauses, help = Some(RichTextEditorHelp.modalFor(Text.UseCaseStep).show))
+      Instructions(
+        clauses,
+        help = Some(RichTextEditorHelp.modalFor(Text.UseCaseStep).show),
+        fullscreen = None)
     }
 
     def render(p: Props) = {
-      def editor(validity: Validity): VdomElement =
-        editorRef.component(EditTheme.autosizeTextareaProps(validity, p.edit.value, textareaConst))
+      @inline def editorStyle =
+        EditTheme.Style.default
+
+      def editor(validity: Validity): VdomElement = {
+        val autosizeProps = EditTheme.autosizeTextareaProps(
+          position = None,
+          mode     = EditTheme.Mode.Inline,
+          validity = validity,
+          value    = p.edit.value,
+          tagMod   = textareaConst)
+        editorRef.component(autosizeProps)
+      }
 
       def richText =
         p.projectWidgets.useCaseStepTextAndMaybeInvalidFlow(p.parsed, hardcodedLive)
 
-      def preview =
-        EditTheme.renderPreview(p.preview, p.wantPreview, richText)
-
-      EditTheme.renderEditor(p.status, editor, richText, instructions(p), preview)
+      EditTheme.renderEditor(
+        status          = p.status,
+        editor          = editor,
+        readOnlyView    = richText,
+        instructions    = instructions(p),
+        style           = editorStyle,
+        previewRW       = p.preview,
+        previewWantOpen = p.wantPreview,
+        previewBody     = richText,
+      )
     }
 
     val onMount: Callback =

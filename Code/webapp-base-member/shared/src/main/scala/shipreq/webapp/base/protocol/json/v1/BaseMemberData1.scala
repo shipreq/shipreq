@@ -5,15 +5,12 @@ import io.circe.syntax._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.univeq.UnivEq
 import nyaya.util.Multimap
-import scala.collection.immutable.ArraySeq
-import scala.reflect.ClassTag
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.protocol.json.JsonCodec
 import shipreq.webapp.base.sort.SortMethod
-import shipreq.webapp.base.text.AtomTC
 
 /** This is the minimum set of codecs required for event codecs.
   *
@@ -33,111 +30,6 @@ private[v1] object BaseMemberData1 {
   // ===================================================================================================================
   // Concrete decoders for base data type
   // (implicit lazy vals, "decoder" prefix)
-
-  object AtomCodecs extends AtomTC[JsonCodec] {
-    import shipreq.webapp.base.text._
-    import Atom._
-
-    override def lazily[A](f: => JsonCodec[A]): JsonCodec[A] = codecLazily(f)
-
-    override def arr[A](implicit a: JsonCodec[A], ct: ClassTag[A]) = codecArraySeq
-
-    override def nea[A](as: JsonCodec[ArraySeq[A]])(implicit a: JsonCodec[A]) = codecNEA(as.decoder, as.encoder)
-
-    private[this] final val KeyBlankLine      = "bl"
-    private[this] final val KeyCodeBlock      = "cb"
-    private[this] final val KeyCodeRef        = "code"
-    private[this] final val KeyEmailAddress   = "email"
-    private[this] final val KeyIssue          = "issue"
-    private[this] final val KeyLiteral        = "lit"
-    private[this] final val KeyMonospace      = "mono"
-    private[this] final val KeyReqRef         = "req"
-    private[this] final val KeyTagRef         = "tag"
-    private[this] final val KeyTeX            = "tex"
-    private[this] final val KeyUnorderedList  = "ul"
-    private[this] final val KeyUseCaseStepRef = "ucs"
-    private[this] final val KeyWebAddress     = "web"
-
-    override def sum[T <: Atom.Base](t: T)(get: Atom.Type => JsonCodec[t.Atom], all: List[JsonCodec[t.Atom]]): JsonCodec[t.Atom] = {
-      JsonCodec[t.Atom](
-        Encoder.instance[t.Atom] { a =>
-          Atom.Type.of(a) match {
-            case t@ Type.Literal        => Json.obj(KeyLiteral        -> get(t).encoder(a))
-            case t@ Type.BlankLine      => Json.obj(KeyBlankLine      -> get(t).encoder(a))
-            case t@ Type.CodeBlock      => Json.obj(KeyCodeBlock      -> get(t).encoder(a))
-            case t@ Type.CodeRef        => Json.obj(KeyCodeRef        -> get(t).encoder(a))
-            case t@ Type.EmailAddress   => Json.obj(KeyEmailAddress   -> get(t).encoder(a))
-            case t@ Type.Issue          => Json.obj(KeyIssue          -> get(t).encoder(a))
-            case t@ Type.Monospace      => Json.obj(KeyMonospace      -> get(t).encoder(a))
-            case t@ Type.ReqRef         => Json.obj(KeyReqRef         -> get(t).encoder(a))
-            case t@ Type.TagRef         => Json.obj(KeyTagRef         -> get(t).encoder(a))
-            case t@ Type.TeX            => Json.obj(KeyTeX            -> get(t).encoder(a))
-            case t@ Type.UnorderedList  => Json.obj(KeyUnorderedList  -> get(t).encoder(a))
-            case t@ Type.UseCaseStepRef => Json.obj(KeyUseCaseStepRef -> get(t).encoder(a))
-            case t@ Type.WebAddress     => Json.obj(KeyWebAddress     -> get(t).encoder(a))
-          }
-        },
-        decodeSumBySoleKey[t.Atom] {
-          case (KeyLiteral       , c) => get(Type.Literal       ).decoder.tryDecode(c)
-          case (KeyBlankLine     , c) => get(Type.BlankLine     ).decoder.tryDecode(c)
-          case (KeyCodeBlock     , c) => get(Type.CodeBlock     ).decoder.tryDecode(c)
-          case (KeyCodeRef       , c) => get(Type.CodeRef       ).decoder.tryDecode(c)
-          case (KeyEmailAddress  , c) => get(Type.EmailAddress  ).decoder.tryDecode(c)
-          case (KeyIssue         , c) => get(Type.Issue         ).decoder.tryDecode(c)
-          case (KeyMonospace     , c) => get(Type.Monospace     ).decoder.tryDecode(c)
-          case (KeyReqRef        , c) => get(Type.ReqRef        ).decoder.tryDecode(c)
-          case (KeyTagRef        , c) => get(Type.TagRef        ).decoder.tryDecode(c)
-          case (KeyTeX           , c) => get(Type.TeX           ).decoder.tryDecode(c)
-          case (KeyUnorderedList , c) => get(Type.UnorderedList ).decoder.tryDecode(c)
-          case (KeyUseCaseStepRef, c) => get(Type.UseCaseStepRef).decoder.tryDecode(c)
-          case (KeyWebAddress    , c) => get(Type.WebAddress    ).decoder.tryDecode(c)
-        }
-      )
-    }
-
-    override def blankLine[T <: NewLine](t: T): JsonCodec[t.BlankLine] =
-      JsonCodec.const(t.blankLine)
-
-    override def literal[T <: Literal](t: T): JsonCodec[t.Literal] =
-      JsonCodec.xmap((i: String) => t.Literal(i))(_.value)
-
-    override def codeBlock[T <: CodeBlock](t: T): JsonCodec[t.CodeBlock] =
-      JsonCodec[t.CodeBlock](
-        Encoder.forProduct2[t.CodeBlock, Option[String], String]("lang", "code")(a => (a.language, a.code)),
-        Decoder.forProduct2[t.CodeBlock, Option[String], String]("lang", "code")(t.CodeBlock(_, _)))
-
-    override def webAddress[T <: PlainTextMarkup](t: T): JsonCodec[t.WebAddress] =
-      JsonCodec.xmap((i: String) => t.WebAddress(i))(_.value)
-
-    override def monospace[T <: PlainTextMarkup](t: T): JsonCodec[t.Monospace] =
-      JsonCodec.xmap((i: String) => t.Monospace(i))(_.value)
-
-    override def emailAddress[T <: PlainTextMarkup](t: T): JsonCodec[t.EmailAddress] =
-      JsonCodec.xmap((i: String) => t.EmailAddress(i))(_.value)
-
-    override def teX[T <: PlainTextMarkup](t: T): JsonCodec[t.TeX] =
-      JsonCodec.xmap((i: String) => t.TeX(i))(_.value)
-
-    override def reqRef[T <: ContentRef](t: T): JsonCodec[t.ReqRef] =
-      JsonCodec.xmap((i: ReqId) => t.ReqRef(i))(_.value)
-
-    override def codeRef[T <: ContentRef](t: T): JsonCodec[t.CodeRef] =
-      JsonCodec.xmap((i: ReqCodeId) => t.CodeRef(i))(_.value)
-
-    override def useCaseStepRef[T <: ContentRef](t: T): JsonCodec[t.UseCaseStepRef] =
-      JsonCodec.xmap((i: UseCaseStepId) => t.UseCaseStepRef(i))(_.value)
-
-    override def tagRef[T <: TagRef](t: T): JsonCodec[t.TagRef] =
-      JsonCodec.xmap((i: ApplicableTagId) => t.TagRef(i))(_.value)
-
-    override def issue[T <: Issue](t: T)(implicit h: JsonCodec[Text.InlineIssueDesc.OptionalText]): JsonCodec[t.Issue] =
-      JsonCodec[t.Issue](
-        Encoder.forProduct2[t.Issue, CustomIssueTypeId, Text.InlineIssueDesc.OptionalText]("type", "desc")(a => (a.typ, a.desc)),
-        Decoder.forProduct2[t.Issue, CustomIssueTypeId, Text.InlineIssueDesc.OptionalText]("type", "desc")(t.Issue(_, _)))
-
-    override def unorderedList[T <: ListMarkup](t: T)(implicit h: JsonCodec[NonEmptyArraySeq[t.ListItem]]): JsonCodec[t.UnorderedList] =
-      h.xmap((i: NonEmptyArraySeq[t.ListItem]) => t.UnorderedList(i))(_.items)
-  }
 
   object SavedViewCodecs {
     import shipreq.webapp.base.data.savedview._

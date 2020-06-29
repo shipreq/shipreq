@@ -26,7 +26,9 @@ import shipreq.webapp.base.util.Accessibility
   *
   * 2. Call `.run` to display the modal and collect a conclusion.
   */
-final case class ReauthenticationModal(render: VdomElement, run: AsyncCallback[Permission])
+final case class ReauthenticationModal(id    : String,
+                                       render: VdomElement,
+                                       run   : AsyncCallback[Permission])
 
 @UsesSemanticUiManually
 object ReauthenticationModal {
@@ -115,6 +117,6 @@ object ReauthenticationModal {
         }
     }
 
-    ReauthenticationModal(modalForm.component(), modalForm.run)
+    ReauthenticationModal(modalForm.id, modalForm.component(), modalForm.run)
   }
 }

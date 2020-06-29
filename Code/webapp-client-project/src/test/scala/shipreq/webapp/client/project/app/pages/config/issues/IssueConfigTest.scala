@@ -41,6 +41,7 @@ object IssueConfigTest extends TestSuite {
        setKey("PENDING") +> editorKeyError.assert("Already in use.")
     >> setKey("pending") +> editorKeyError.assert("Already in use.")
     >> setKey(t0d0)      +> editorKeyError.assert("Already in use.")
+    >> setKey("a_")      +> editorKeyError.assert("must end with a letter or number.")
     >> setKey("POOP")    +> editorKeyError.assert.empty
   )
 

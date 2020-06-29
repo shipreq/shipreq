@@ -2,7 +2,7 @@ package shipreq.webapp.base.util
 
 import japgolly.microlibs.nonempty._
 import org.parboiled2._
-import scala.annotation.elidable
+import scala.annotation.{elidable, tailrec}
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scalaz.{\/, \/-}
@@ -112,9 +112,6 @@ abstract class ParsingUtil extends Parser {
   def pushOptional[A](o: Option[A]): Rule1[A] =
     rule(run(test(o.isDefined) ~ push(o.get)))
 
-  def grammarStr[G](g: G)(f: G => FirstChar, w: G => CharWhitelist, l: G => Length): Rule0 =
-    rule( f(g).charPredicate ~ (l(g).minus1 times w(g).charPredicate) )
-
   def nonGreedyCapture(stopAt: () => Rule0): Rule1[String] =
     rule(capture(oneOrMore(!stopAt() ~ ANY)) ~ stopAt())
 
@@ -141,11 +138,64 @@ abstract class ParsingUtil extends Parser {
   def reqTypePos: Rule1[ReqTypePos] =
     rule(int1n ~> ReqTypePos)
 
-  def hashRefStr: Rule1[String] =
-    rule(G.hashRefKey.prefix ~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.tailChars, _.length)))
+  def grammarStr[G](g        : G)
+                   (firstChar: G => FirstChar,
+                    midChar  : G => CharWhitelist,
+                    lastChar : Option[G => LastChar],
+                    getLen   : G => Length): Rule0 = {
+    val len   = getLen(g)
+    val first = firstChar(g).charPredicate
+    val mid   = midChar(g).charPredicate
+    lastChar match {
+      case Some(last) => rule(first ~ len.minus2.times(mid) ~ last(g).charPredicate.?)
+      case None       => rule(first ~ len.minus1.times(mid))
+    }
+  }
+
+  def parseGrammarWithOptionalStop[G, A](g           : G,
+                                         possibleStop: String => Boolean)
+                                        (firstChar   : G => FirstChar,
+                                         midChar     : G => CharWhitelist,
+                                         lastChar    : Option[G => LastChar],
+                                         getLen      : G => Length)
+                                        (parse       : String => Option[A]): Rule1[A] = {
+    val len = getLen(g)
+    val minLen = len.total.head
+    def refRule: Rule0 = grammarStr(g)(firstChar, midChar, lastChar, getLen)
+    rule(
+      run(
+        push(__saveState)
+          ~ capture(refRule)
+          ~> ((start: Parser.Mark, full: String) => {
+          @tailrec def go(s: String): Option[A] =
+            if (s.length < minLen)
+              None
+            else
+              parse(s) match {
+                case ok @ Some(_) =>
+                  __restoreState(start)
+                  s.indices.foreach(_ => __advance())
+                  ok
+                case None =>
+                  minLen.until(s.length).reverseIterator.filter(n => possibleStop(s.drop(n))).nextOption() match {
+                    case Some(n) => go(s.take(n))
+                    case None    => None
+                  }
+              }
+          go(full)
+        }) ~ popOptional[A]
+      )
+    )
+  }
+
+  def hashRefStr[A](possibleStop: String => Boolean, parse: String => Option[A]): Rule1[A] =
+    rule(
+      G.hashRefKey.prefix ~
+      parseGrammarWithOptionalStop(G.hashRefKey, possibleStop)(_.firstChar, _.midChars, Some(_.lastChar), _.length)(parse)
+    )
 
   def hashRefStr_! : Rule1[String] =
-    rule(G.hashRefKey.prefix ~!~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.tailChars, _.length)))
+    rule(G.hashRefKey.prefix ~!~ capture(grammarStr(G.hashRefKey)(_.firstChar, _.midChars, Some(_.lastChar), _.length)))
 
   def indentationLevelSoFar: Rule1[Int] =
     indentationLevelSoFar(0)
@@ -173,6 +223,14 @@ abstract class ParsingUtil extends Parser {
   @elidable(elidable.FINE)
   def debugPrintRemainder: Rule0 =
     rule((capture(ANY.*) ~> ((i: String) => println(s"remainder: [${i.replace("\n", "\\n")}]")) ~ "fail") | test(true))
+
+  @elidable(elidable.FINE)
+  def debugPrintRemainder(name: String): Rule0 =
+    rule((capture(ANY.*) ~> ((i: String) => println(s"remainder ($name): [${i.replace("\n", "\\n")}]")) ~ "fail") | test(true))
+
+  @elidable(elidable.FINE)
+  def debugPrintLatest[A]: RuleAB[A, A] =
+    rule(test(true) ~> ((a: A) => {println("latest: " + a); a}))
 
   @elidable(elidable.FINE)
   def debugPrint(s: => Any): Rule0 =

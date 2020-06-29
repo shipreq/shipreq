@@ -13,10 +13,13 @@ object PlainTextTest extends TestSuite {
   def ctxUc1 = ProjectText.Context.Req(uc1 )
   def ctxUc0 = ProjectText.Context.Req(0.UC)
 
-  private def assertRoundTrip(input: String)(implicit l: Line) = {
+  private def assertRoundTrip(input: String)(implicit l: Line) =
+    assertCorrection(input, input)
+
+  private def assertCorrection(input: String, expect: String)(implicit l: Line) = {
     val rich = Text.CustomTextField.parse(project, None)(input)
     val actual = plainText.text(rich, Live, Optional)
-    assertMultiline(actual, input)
+    assertMultiline(actual.trim, expect.trim)
   }
 
   override def tests = Tests {
@@ -142,6 +145,65 @@ object PlainTextTest extends TestSuite {
             |noice
             |""".stripMargin.trim
         assertRoundTrip(input)
+      }
+
+      "headings" - {
+        val input =
+          """
+            | # h1
+            | #not
+            |# !
+            |  #   h1  again     !
+            |      wow
+            |
+            | # # nope
+            |### h3
+            |
+            |
+            |
+            |#### h4
+            |
+            |
+            |x
+            |
+            |
+            |##### h5
+            |x
+            |###### h6
+            |###### h6b
+            |###### h6c
+            |""".stripMargin.replace("!", "")
+        val expect =
+          """
+            |# h1
+            |
+            |#not
+            |
+            |#
+            |
+            |# h1 again
+            |
+            |wow
+            |
+            |# # nope
+            |
+            |### h3
+            |
+            |#### h4
+            |
+            |x
+            |
+            |##### h5
+            |
+            |x
+            |
+            |###### h6
+            |
+            |###### h6b
+            |
+            |###### h6c
+            |""".stripMargin
+        assertCorrection(input, expect)
       }
     }
   }

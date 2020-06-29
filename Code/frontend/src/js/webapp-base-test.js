@@ -10,4 +10,4 @@ export { default as ReactTestUtils } from 'react-dom/test-utils';
 export { default as TextComplete   } from 'textcomplete/lib/textcomplete';
 export { default as TextCompleteTA } from 'textcomplete/lib/textarea';
 
-export * from './semantic-ui';
+export * from './semantic-ui-test';

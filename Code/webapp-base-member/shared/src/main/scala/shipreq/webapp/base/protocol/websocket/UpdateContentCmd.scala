@@ -53,13 +53,15 @@ object UpdateContentCmd {
   implicit def equalUpdateContentCmd: UnivEq[UpdateContentCmd] = UnivEq.derive
 
   // ===================================================================================================================
-  object CodecsV0 {
+  object CodecsV1 {
     import boopickle.DefaultBasic._
     import shipreq.webapp.base.protocol.binary.v1.BaseData._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
-    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1.AtomPicklers.instances._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
     import shipreq.webapp.base.protocol.binary.v1.Events._
+    import shipreq.webapp.base.protocol.binary.v1.Rev2._
+    import shipreq.webapp.base.protocol.binary.v1.Rev2.AtomPicklers.instances._
+    // REMEMBER: Don't forget to increment `CodecsVn` if you change these
 
     private implicit val picklerPatchReqTags: Pickler[PatchReqTags] =
       new Pickler[PatchReqTags] {

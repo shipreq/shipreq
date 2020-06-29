@@ -9,8 +9,8 @@ import scalaz.syntax.monad._
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.EventOrd.Implicits._
 import shipreq.webapp.base.event._
+import shipreq.webapp.base.protocol.json.v1.Latest._
 import shipreq.webapp.base.protocol.json.v1.PostEvents._
-import shipreq.webapp.base.protocol.json.v1.Rev1._
 import shipreq.webapp.server.logic.Redis._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 

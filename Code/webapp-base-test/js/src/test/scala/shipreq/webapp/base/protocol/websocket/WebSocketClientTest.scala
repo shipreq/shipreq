@@ -129,12 +129,14 @@ object WebSocketClientTest extends TestSuite {
 
       client.connect.runNow()
       ws().close(CloseCode.unauthorised)
-      sendMsg()
+      sendMsg() // fails
+      assertEq(ws().pendingResponse().length, 0)
+
       nextReauthResult = () => Allow
       sendMsg()
       ws().open()
       server.respondToNextPending() // The bug used to be here in that it would try to send the first request even though it had already been failed
-      assertEq(ws().responsesPending(), false)
+      assertEq(ws().pendingResponse().length, 1)
     }
 
   }

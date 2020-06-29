@@ -20,7 +20,7 @@ import shipreq.webapp.base.protocol.ajax.CommonProtocolsJs
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
-import shipreq.webapp.base.ui.{FeedbackModal, ProjectItem, Toast}
+import shipreq.webapp.base.ui.{FeedbackModal, OptionalFullscreen, ProjectItem, Toast}
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.app._
 import shipreq.webapp.client.project.app.pages._
@@ -39,10 +39,11 @@ object LoadedRoot {
   case class Props(page: Page, routerCtl: RouterCtl)
 }
 
-final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
-                       global      : Global,
-                       confirmJs   : ConfirmJs,
-                       promptJs    : PromptJs) {
+final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
+                       global            : Global,
+                       confirmJs         : ConfirmJs,
+                       promptJs          : PromptJs,
+                       optionalFullscreen: OptionalFullscreen) {
 
   val pxProjectAndOrd = global.pxProjectAndOrd
   val pxProject       = global.pxProject
@@ -162,7 +163,8 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
           previewW.mapId(PreviewId.ToCreate),
           pxProject,
           pxProjectWidgets,
-          pxTextSearch),
+          pxTextSearch,
+        ),
         $ zoomStateL State.create,
         createAsyncW,
         sspCreateContent,
@@ -180,6 +182,7 @@ final class LoadedRoot(initPageData: ProjectSpaEntryPoint.InitData,
           pxTextSearch,
           sspUpdateContent,
           sspUpdateManualIssuesE,
+          optionalFullscreen,
         ),
         $ zoomStateL State.edit,
         editAsyncW.mapKey1(AsyncKey.ToEditor))

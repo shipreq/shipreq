@@ -25,7 +25,6 @@ import shipreq.webapp.client.project.widgets.{NoFilterResults, ProjectWidgets, V
 
 final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
   import Table._
-  import Shared._
 
   private val tableNavigationFeature = TableNavigationFeature.NoRowSpans
 
@@ -198,9 +197,9 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   private sealed abstract class RowTemplate[
-        FK         <: FieldKey.Nullary,
-        _RowData   <: Row              : Reusability,
-        _ViewInput                     : Reusability,
+        FK         <: FieldKey,
+        _RowData   <: Row      : Reusability,
+        _ViewInput             : Reusability,
       ](displayName: String) {
 
     protected val rowToColumnToEditorField: RowData => Column => Option[FK]
@@ -275,7 +274,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
         val colCells = mkColumnCells(col =>
           columnToEditorField(col) match {
-            case Some(f) => p.editor(f, rootPxProjectWidgets, p.filterDead)
+            case Some(f) => p.editor(f, rootPxProjectWidgets, p.filterDead).withArgs(editorArgs(f))
             case None    => EditorFeature.ReadWrite.ForEditor.doNothing
           })
 
@@ -463,23 +462,24 @@ object Table {
       Reusability.derive
   }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  type CellState = (Live, On)
 
-  object Shared {
+  val CellState: On => Live => CellState =
+    On.memo(on => Live.memo((_, on)))
 
-    type CellState = (Live, On)
+  implicit val reusabilityProjectApplicability: Reusability[ProjectApplicability[Column, Row]] =
+    Reusability.byRef
 
-    val CellState: On => Live => CellState =
-      On.memo(on => Live.memo((_, on)))
+  val `n/a`: VdomTag =
+    <.span(*.`N/A`, "–")
 
-    implicit val reusabilityProjectApplicability: Reusability[ProjectApplicability[Column, Row]] =
-      Reusability.byRef
+  val reusableNA: Reusable[TagMod] =
+    Reusable.byRef(`n/a`)
 
-    val `n/a`: VdomTag =
-      <.span(*.`N/A`, "–")
-
-    val reusableNA: Reusable[TagMod] =
-      Reusable.byRef(`n/a`)
-  }
+  val editorArgs =
+    FieldKey.allArgs(
+      customTextField = EditTheme.Style.default.copy(openPreview = EditTheme.OpenPreview.MinimallyWithControls),
+      useCaseStep     = FieldKey.UseCaseStep.Args.empty,
+    )
 }
 

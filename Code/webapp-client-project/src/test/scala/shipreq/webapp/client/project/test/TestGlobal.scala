@@ -12,14 +12,16 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.WsReqRes
 import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
+import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseCode
 import shipreq.webapp.base.protocol.websocket._
-import shipreq.webapp.base.test.TestReauthenticationModal
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.test._
+import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.state.{Global, ProjectState}
 import shipreq.webapp.server.logic.{ApplyNewEvent, MakeEvent}
 
-final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) => Callback.empty, _ => Callback.empty, LoggerJs.on) {
+final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) => Callback.empty, _ => Callback.empty, LoggerJs.off) {
 
   override def toString = unsafeState match {
     case Global.State.Active(a, b) => s"TestGlobal(Active($a, $b))"
@@ -28,11 +30,11 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
 
   val reauth = TestReauthenticationModal(Some(\/-(Allow)))
 
+  val optionalFullscreen = TestOptionalFullscreen()
+
   val username = Username("nimander")
 
   override val reauthModal = reauth.modal(username)
-
-  override protected val logger = LoggerJs.off
 
   override protected def unsafeNow() = now
   var now = Instant.now()
@@ -158,6 +160,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
   }
   def disableAutoResponse() = setAutoRespond(false)
   def enableAutoResponse() = setAutoRespond(true)
+  def clearReqs(): Unit = _reqs = Vector.empty
 
   def autoRespondToLast(): Unit = {
     val req = _reqs.last
@@ -241,4 +244,58 @@ object TestGlobal {
     new TestGlobal(ps)
   }
 
+  import shipreq.webapp.base.test.TestState._
+
+  final class Obs($: DomZipperJs, g: TestGlobal) {
+    val reqs                = g.reqs()
+    val reauthModal         = TestReauthenticationModal.Obs(g.reauthModal.id)($.parent.parent, g.reauth)
+    val fullscreenCount     = $.collect0n(BaseStyles.fullscreen.selector).size
+    val isBrowserFullscreen = g.optionalFullscreen.currentlyFullscreen
+  }
+
+  class TestDsl[R, O, S](final val * : Dsl[Id, R, O, S, String])(getRef: R => TestGlobal) {
+    protected final implicit def autoRef(r: R): TestGlobal =
+      getRef(r)
+
+    val clearReqs =
+      *.action("Server: Clear requests.")(_.ref.clearReqs())
+
+    val disableAutoResponse =
+      *.action("Server: Disable auto-respond.")(_.ref.disableAutoResponse())
+
+    val enableAutoResponse =
+      *.action("Server: Enable auto-respond.")(_.ref.enableAutoResponse())
+
+    val autoRespondToLast =
+      *.action("Server responds.")(_.ref.autoRespondToLast())
+
+    val failLastRequest =
+      *.action("Fail last server request.")(_.ref.failLast())
+
+    def receiveExternalEvent(e: Event): *.Actions =
+      *.action("Receive external event: " + e)(_.ref.applyTestEventsCB(e).void.runNow())
+
+    def disconnect(code: CloseCode): *.Actions =
+      *.action("Disconnect with " + code)(_.ref.ws().close(code))
+
+    val expireSession: *.Actions =
+      disconnect(CloseCode.unauthorised).rename("Expire session")
+  }
+
+  final class TestDslWithObs[R, O, S](dsl   : Dsl[Id, R, O, S, String])
+                                     (getRef: R => TestGlobal,
+                                      getObs: O => Obs) extends TestDsl(dsl)(getRef) {
+    protected final implicit def autoObs(o: O): Obs =
+      getObs(o)
+
+    val fullscreenCount = *.focus("Fullscreen elements").value(_.obs.fullscreenCount)
+
+    val isBrowserFullscreen = *.focus("Browser is fullscreen").value(_.obs.isBrowserFullscreen)
+
+    val requestCount = *.focus("Server requests").value(_.obs.reqs.length)
+
+    val lastTwoRequests = *.focus("Last two requests").compare(_.obs.reqs.last, _.obs.reqs.init.last)
+
+    val assertLastTwoRequestsAreEqual = lastTwoRequests.map(_.req).assert.equal(Equal.by_==, implicitly)
+  }
 }

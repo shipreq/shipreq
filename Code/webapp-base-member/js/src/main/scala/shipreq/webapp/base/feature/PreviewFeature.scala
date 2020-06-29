@@ -1,22 +1,30 @@
 package shipreq.webapp.base.feature
 
+import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+import java.time.Duration
 import monocle.Lens
-import scalaz.Equal
-import scalaz.syntax.equal.ToEqualOps
+import scala.annotation.nowarn
+import scalacss.ScalaCssReact._
 import shipreq.base.util.Intersection
 import shipreq.webapp.base.jsfacade.ReactCollapse
 import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Transition}
+import shipreq.webapp.base.ui.{BaseStyles => *, OnlyVisibleOnMouseMove}
 
 /** Supplies logic to determine whether or not to show a preview for some rich-text editor.
   *
-  * Preview will be available when:
+  * By default, preview will be available when:
   * - subject has focus
   * - subject wants the preview open
   * - focus has been maintained since preview was opened
   *
+  * Alternatively, you can use [[PreviewFeature.ReadWrite.Single.alwaysShow]] and similar.
+  *
+  * The normal state transition process is shown below.
   *
   *                                    START
   *                                      |
@@ -40,6 +48,9 @@ import shipreq.webapp.base.lib.DataReusability._
   *        |    |                     |    |                       |    |
   *        +----+                     +----+                       +----+
   *    edit !wantOpen              edit wantOpen               edit !wantOpen
+  *
+  * It ignores the [[PreviewFeature.Status.Manual]] state, which can be manually set via
+  * [[PreviewFeature.Write.Single.setManually()]].
   *
   *
   * Usage: Top-Most Component
@@ -66,73 +77,158 @@ import shipreq.webapp.base.lib.DataReusability._
   */
 object PreviewFeature {
 
-  sealed abstract class Status(final val show: Boolean)
-  object Status {
-    case object Closed     extends Status(false)
-    case object NeedOpen   extends Status(true)
-    case object NeededOpen extends Status(true)
+  sealed trait Position
+  object Position {
+    case object Right extends Position
+    case object Under extends Position
 
-    implicit def equality: UnivEq[Status] = UnivEq.derive
-    implicit def reusability: Reusability[Status] = Reusability.byUnivEq
+    implicit def univEq: UnivEq[Position] = UnivEq.derive
+    implicit val reusability: Reusability[Position] = Reusability.byUnivEq
+    def values = AdtMacros.adtValues[Position]
   }
 
-  type State[+Id] = Option[State.FocusData[Id]]
+  sealed abstract class Status(final val show: Boolean)
+  object Status {
+    case object Closed                                    extends Status(false)
+    case object NeedOpen                                  extends Status(true)
+    case object NeededOpen                                extends Status(true)
+    final case class Manual(open: Boolean, pos: Position) extends Status(open)
 
-  @inline implicit class StateOps[Id](private val state: State[Id]) extends AnyVal {
-    def filterId(id: Id)(implicit e: Equal[Id]): State[Id] =
-      state.filter(_.key ≟ id)
-
-    def mapId[A](i: Intersection[Id, A]): State[A] =
-      state.flatMap(_ omap i.getOption)
+    implicit def univEq: UnivEq[Status] = UnivEq.derive
+    implicit val reusability: Reusability[Status] = Reusability.byUnivEq
   }
 
   object State {
-    def init: State[Nothing] =
-      None
 
-    final case class FocusData[+K](key: K, status: Status) {
-      def omap[A](f: K => Option[A]): Option[FocusData[A]] =
-        f(key).map(FocusData(_, status))
+    type Single = Option[Status]
+
+    sealed trait Composite[Id] {
+      def iterator(): Iterator[(Id, Status)]
+      def get(id: Id): Single
+      def set(id: Id, s: Single): Composite[Id]
+      def merge[B](c: Composite[B])(i: Intersection[Id, B]): Composite[Id]
+
+      final def mapId[A](i: Intersection[Id, A]): Composite[A] =
+        Composite.Mapped(this, i)
     }
 
-    implicit def reusabilityFocusData[Id: Reusability]: Reusability[FocusData[Id]] =
-      Reusability.derive
+    object Composite {
 
-    def status[Id: Equal](id: Id): Lens[State[Id], Option[Status]] =
-      Lens[State[Id], Option[Status]](
-        _.filterId(id).map(_.status))(
-        newStatus => state => {
-          val updated = newStatus.map(v => State.FocusData(id, v))
-          updated.orElse {
-            // updated=None means that we're clearing state
-            // ...which is fine so long as we don't clear someone else's state
-            state.filter(_.key ≠ id)
+      def init[Id: UnivEq]: Root[Id] =
+        Root(UnivEq.emptyMap)
+
+      final case class Root[Id](previews: Map[Id, Status]) extends Composite[Id] {
+        override def iterator() =
+          previews.iterator
+
+        override def get(id: Id): Single =
+          previews.get(id)
+
+        override def set(id: Id, o: Single): Composite[Id] =
+          o match {
+            case Some(s) => copy(previews.updated(id, s))
+            case None    => copy(previews - id)
           }
-        })
 
-    def intersection[A, B](i: Intersection[A, B]): Lens[State[A], State[B]] =
-      Lens[State[A], State[B]](_.mapId(i))(ob => _ => ob.mapId(i.reverse))
+        override def merge[B](c: Composite[B])(i: Intersection[Id, B]): Composite[Id] = {
+          val m = Map.newBuilder[Id, Status]
+          m ++= c.iterator().flatMap(i.reverse.strengthR[Status].getOption)
+          for (e <- previews.iterator)
+            if (i.getOption(e._1).isEmpty)
+              // A is not part of B. Retain A's values
+              m += e
+          Root(m.result())
+        }
+      }
+
+      private final case class Mapped[A, B](c: Composite[A], i: Intersection[A, B]) extends Composite[B] {
+        override def iterator(): Iterator[(B, Status)] =
+          c.iterator().flatMap(i.strengthR[Status].getOption)
+
+        override def get(id: B): Single =
+          i.reverse.fold(id, c.get)(None)
+
+        override def set(id: B, s: Single): Composite[B] =
+          i.reverse.fold(id, c.set(_, s).mapId(i))(this)
+
+        override def merge[C](cc: Composite[C])(j: Intersection[B, C]): Composite[B] =
+          copy(c.merge(cc)(i <=> j))
+      }
+
+      def at[Id](id: Id): Lens[Composite[Id], Single] =
+        Lens[Composite[Id], Single](_.get(id))(s => _.set(id, s))
+
+      def intersection[A, B](i: Intersection[A, B]): Lens[Composite[A], Composite[B]] =
+        Lens[Composite[A], Composite[B]](_.mapId(i))(b => _.merge(b)(i))
+
+      private def _reusability[Id]: Reusability[Composite[Id]] = {
+        @nowarn("cat=unused") implicit val rd: Reusability[Map[Id, Status]] = Reusability.byRef
+        implicit val rr: Reusability[Root[Id]] = Reusability.derive
+        var r: Reusability[Composite[Id]] = new Reusability(null)
+        r =  Reusability.byRef || Reusability((xx, yy) => xx match {
+            case x: Root[Id] => yy match {
+              case y: Root[Id] => rr.test(x, y)
+              case _           => false
+            }
+            case x: Mapped[_, Id] => yy match {
+              case y: Mapped[_, Id] => (x.i eq y.i) && r.test(x.c.asInstanceOf[Composite[Id]], y.c.asInstanceOf[Composite[Id]])
+              case _                => false
+            }
+          })
+        r
+      }
+
+      private val _reusabilityInstance: Reusability[Composite[Any]] =
+        _reusability[Any]
+
+      implicit def reusability[Id]: Reusability[Composite[Id]] =
+        _reusabilityInstance.asInstanceOf[Reusability[Composite[Id]]]
+    }
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   object Read {
-    final case class Single(status: Option[Status]) extends AnyVal {
+    final case class Single(status: State.Single) extends AnyVal {
       def showPreview(wantOpen: => Boolean): Boolean =
         status.exists(_.show || wantOpen)
+
+      def showManuallyControlledPreview(default: Boolean): Boolean =
+        status match {
+          case Some(m: Status.Manual) => m.show
+          case _                      => default
+        }
+
+      def position(default: Position): Position =
+        status match {
+          case Some(m: Status.Manual) => m.pos
+          case _                      => default
+        }
     }
 
-    final case class Composite[+Id](state: State[Id]) extends AnyVal
+    object Single {
+      val empty = apply(None)
+    }
 
-    implicit def CompositeOps[Id](r: Composite[Id]): CompositeOps[Id] =
-      new CompositeOps(r.state)
+    sealed trait Composite[Id] {
+      def apply(id: Id): Single
 
-    final class CompositeOps[Id](private val state: State[Id]) extends AnyVal {
-      def apply(id: Id)(implicit e: Equal[Id]): Single =
-        Single(state.filterId(id)(e).map(_.status))
+      final def mapId[A](i: Intersection[Id, A]): Composite[A] =
+        Composite.mapped(this, i)
+    }
 
-      def mapId[A](i: Intersection[Id, A]): Composite[A] =
-        Composite(state.mapId(i))
+    object Composite {
+      def apply[Id](s: State.Composite[Id]): Composite[Id] =
+        new Composite[Id] {
+          override def apply(id: Id): Single =
+            Single(s.get(id))
+        }
+
+      private def mapped[A, B](s: Composite[A], i: Intersection[A, B]): Composite[B] =
+        new Composite[B] {
+          override def apply(b: B): Single =
+            i.reverse.fold(b, s.apply)(Single.empty)
+        }
     }
   }
 
@@ -143,48 +239,73 @@ object PreviewFeature {
       def onFocus(wantOpen: Boolean): Callback
       def onEdit(wantOpened: Boolean): Callback
       def onBlur: Callback
+      def clear: Callback
+      def setManually(m: Status.Manual): Callback
     }
 
     object Single {
-      def apply($: StateAccessPure[Option[Status]]): Single = new Single {
+      def apply($: StateAccessPure[State.Single]): Single = new Single {
         import Status._
 
         override def onFocus(wantOpen: Boolean): Callback = {
-          val status = if (wantOpen) NeedOpen else Closed
-          $.setState(Some(status))
+          $.modStateOption {
+            case Some(_: Manual) => None
+            case prev =>
+              val newStatus = if (wantOpen) NeedOpen else Closed
+              val noChange = prev.contains(newStatus)
+              Option.unless(noChange)(Some(newStatus))
+          }
         }
 
         override def onEdit(wantedOpen: Boolean): Callback =
-          $.modState { prev =>
-            val status =
-              if (wantedOpen)
-                NeedOpen
-              else prev match {
-                case Some(NeedOpen)
-                   | Some(NeededOpen) => NeededOpen
-                case Some(Closed)
-                   | None             => Closed
-              }
-            Some(status)
+          $.modStateOption {
+            case Some(_: Manual) => None
+            case prev =>
+              val newStatus: Status =
+                if (wantedOpen)
+                  NeedOpen
+                else prev match {
+                  case Some(NeedOpen)
+                     | Some(NeededOpen) => NeededOpen
+                  case Some(Closed)
+                     | None             => Closed
+                  case Some(m: Manual)  => m
+                }
+              val noChange = prev.contains(newStatus)
+              Option.unless(noChange)(Some(newStatus))
           }
 
         override def onBlur: Callback =
-          $.setState(None)
+          $.modStateOption {
+            case Some(_: Manual) => None
+            case _               => Some(None)
+          }
+
+        override def clear: Callback =
+          $.modStateOption {
+            case Some(_) => Some(None)
+            case None    => None
+          }
+
+        override def setManually(m: Manual): Callback =
+          $.setState(Some(m))
       }
 
       lazy val doNothing: Single = new Single {
-        override def onFocus(wantOpen: Boolean) = Callback.empty
-        override def onEdit (wantOpen: Boolean) = Callback.empty
-        override def onBlur                     = Callback.empty
+        override def onFocus(wantOpen: Boolean)    = Callback.empty
+        override def onEdit (wantOpen: Boolean)    = Callback.empty
+        override def onBlur                        = Callback.empty
+        override def clear                         = Callback.empty
+        override def setManually(m: Status.Manual) = Callback.empty
       }
     }
 
-    final case class Composite[Id: Equal]($: StateAccessPure[State[Id]]) {
+    final case class Composite[Id]($: StateAccessPure[State.Composite[Id]]) {
       def apply(id: Id): Single =
-        Single($ zoomStateL State.status(id))
+        Single($ zoomStateL State.Composite.at(id))
 
-      def mapId[A: Equal](i: Intersection[Id, A]): Composite[A] =
-        Composite($ zoomStateL State.intersection(i))
+      def mapId[A](i: Intersection[Id, A]): Composite[A] =
+        Composite($ zoomStateL State.Composite.intersection(i))
 
       def toReadWrite(r: Read.Composite[Id]): ReadWrite.Composite[Id] =
         ReadWrite.Composite(r, this)
@@ -197,6 +318,25 @@ object PreviewFeature {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   object ReadWrite {
+
+    private object ManualControls {
+      private def button(tip: String, icon: Icon) =
+        Button(
+          tipe = Button.Type.IconOnly(icon),
+          colour = Colour.Blue,
+        ).tag(^.title := tip)
+
+      val show  = button("Show preview", Icon.WindowRestore)
+      val hide  = button("Hide preview", Icon.Close)
+      val down  = button("Move down"   , Icon.AngleDoubleDown)
+      val right = button("Move right"  , Icon.AngleDoubleRight)
+
+      val wrapper1 = <.div(*.previewToggleWrapper1)
+      val wrapper2 = <.div(*.previewToggleWrapper2)
+
+      val decay = Duration.ofMillis(1200)
+    }
+
     final case class Single(read: Read.Single, write: Write.Single) {
       def onFocus(wantOpen: Boolean): Callback =
         write.onFocus(wantOpen)
@@ -211,26 +351,71 @@ object PreviewFeature {
       def onBlur: Callback =
         write.onBlur
 
+      def clear: Callback =
+        write.clear
+
       def showPreview(wantOpen: => Boolean): Boolean =
         read.showPreview(wantOpen)
 
       def reactCollapse(wantOpen: => Boolean) =
         ReactCollapse(showPreview(wantOpen))
+
+      def manualControls(defaultPosition      : Position,
+                         previewIsShown       : Boolean,
+                         showControlsInitially: Boolean): VdomTag = {
+        import Status.Manual
+
+        val position =
+          read.status match {
+            case Some(m: Manual) => m.pos
+            case _               => defaultPosition
+          }
+
+        val manualControls: VdomTag = {
+          def setOnClick(m: Manual) = ^.onClick --> write.setManually(m)
+          val inner: TagMod =
+            if (previewIsShown) {
+              val hide  = ManualControls.hide (setOnClick(Manual(false, position)))
+              def down  = ManualControls.down (setOnClick(Manual(true, Position.Under)))
+              def right = ManualControls.right(setOnClick(Manual(true, Position.Right)))
+              position match {
+                case Position.Right => TagMod(*.previewButtonsWhenRight, hide, down)
+                case Position.Under => TagMod(*.previewButtonsWhenUnder, right, hide)
+              }
+            } else
+              ManualControls.show(setOnClick(Manual(true, position)))
+          ManualControls.wrapper2(inner)
+        }
+
+        val props =
+          OnlyVisibleOnMouseMove.Props(
+            content       = manualControls,
+            transition    = Transition.fade,
+            direction     = Transition.Direction.left,
+            decay         = ManualControls.decay,
+            showInitially = showControlsInitially,
+          )
+
+        ManualControls.wrapper1(props.render)
+      }
     }
 
     object Single {
       def const(status: Option[Status]): Single =
         Single(Read.Single(status), Write.Single.doNothing)
 
+      def show(show: Boolean): Single =
+        if (show) alwaysShow else neverShow
+
       lazy val alwaysShow: Single = const(Some(Status.NeedOpen))
       lazy val neverShow : Single = const(None)
     }
 
-    final case class Composite[Id: Equal](read: Read.Composite[Id], write: Write.Composite[Id]) {
+    final case class Composite[Id](read: Read.Composite[Id], write: Write.Composite[Id]) {
       def apply(id: Id): Single =
         Single(read(id), write(id))
 
-      def mapId[A: Equal](i: Intersection[Id, A]): Composite[A] =
+      def mapId[A](i: Intersection[Id, A]): Composite[A] =
         Composite(read mapId i, write mapId i)
     }
   }

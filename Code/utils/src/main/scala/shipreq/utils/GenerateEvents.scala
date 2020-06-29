@@ -7,7 +7,7 @@ import java.time.Instant
 import shipreq.utils.UtilUtils._
 import shipreq.webapp.base.RandomDataSettings
 import shipreq.webapp.base.event.{RandomEventStream, RandomEventStreamConfig}
-import shipreq.webapp.base.protocol.json.v1.Rev1._
+import shipreq.webapp.base.protocol.json.v1.Latest._
 
 object GenerateEvents {
 

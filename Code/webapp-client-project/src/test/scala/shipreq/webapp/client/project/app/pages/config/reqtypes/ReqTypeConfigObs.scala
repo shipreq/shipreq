@@ -3,10 +3,10 @@ package shipreq.webapp.client.project.app.pages.config.reqtypes
 import japgolly.univeq._
 import org.scalajs.dom.html
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.test.CommonObs._
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.pages.config.Buttons
-import shipreq.webapp.client.project.test.CommonObs._
 import shipreq.webapp.client.project.test.TestConfirmJs
 
 object ReqTypeConfigObs {

@@ -6,16 +6,13 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.text.Text
 
 object Events {
   import boopickle.DefaultBasic._
   import BaseData._
   import BaseMemberData1._
-  import BaseMemberData1.AtomPicklers.instances._
   import BaseMemberData1.SavedViewPicklers._
 
-  implicit val picklerEventNonEmptyCustomTextMap    : Pickler[Event.NonEmptyCustomTextMap      ] = pickleNonEmptyMono
   implicit val picklerNonEmptySetApplicableTagId    : Pickler[NonEmptySet[ApplicableTagId]     ] = pickleNES
   implicit val picklerNonEmptySetReqCodeGroupId     : Pickler[NonEmptySet[ReqCodeGroupId]      ] = pickleNES
   implicit val picklerNonEmptySetApReqCodeIdAndValue: Pickler[NonEmptySet[ApReqCodeId.AndValue]] = pickleNES
@@ -75,32 +72,6 @@ object Events {
             case KeyKey      => state.unpickle[ValueForKey]
             case KeyName     => state.unpickle[ValueForName]
             case KeyParents  => state.unpickle[ValueForParents]
-          }
-      }
-
-    val values: Pickler[Values] = pickleIMap(emptyValues)
-    pickleNonEmptyMono[Values](values, implicitly)
-  }
-
-  implicit val pickleCodeGroupGD: Pickler[CodeGroupGD.NonEmptyValues] = {
-    import CodeGroupGD._
-
-    implicit val picklerValueForCode  = transformPickler(ValueForCode .apply)(_.value)
-    implicit val picklerValueForTitle = transformPickler(ValueForTitle.apply)(_.value)
-
-    implicit val picklerValue: Pickler[Value] =
-      new Pickler[Value] {
-        private[this] final val KeyCode  = 'C'
-        private[this] final val KeyTitle = 'T'
-        override def pickle(a: Value)(implicit state: PickleState): Unit =
-          a match {
-            case b: ValueForCode  => state.enc.writeByte(KeyCode ); state.pickle(b)
-            case b: ValueForTitle => state.enc.writeByte(KeyTitle); state.pickle(b)
-          }
-        override def unpickle(implicit state: UnpickleState): Value =
-          state.dec.readByte match {
-            case KeyCode  => state.unpickle[ValueForCode ]
-            case KeyTitle => state.unpickle[ValueForTitle]
           }
       }
 
@@ -258,47 +229,6 @@ object Events {
     pickleNonEmptyMono[Values](values, implicitly)
   }
 
-  implicit val pickleGenericReqGD: Pickler[GenericReqGD.Values] = {
-    import GenericReqGD._
-
-    implicit val picklerValueForCodes      = transformPickler(ValueForCodes     .apply)(_.value)
-    implicit val picklerValueForCustomText = transformPickler(ValueForCustomText.apply)(_.value)
-    implicit val picklerValueForImpSrcs    = transformPickler(ValueForImpSrcs   .apply)(_.value)
-    implicit val picklerValueForImpTgts    = transformPickler(ValueForImpTgts   .apply)(_.value)
-    implicit val picklerValueForTags       = transformPickler(ValueForTags      .apply)(_.value)
-    implicit val picklerValueForTitle      = transformPickler(ValueForTitle     .apply)(_.value)
-
-    implicit val picklerValue: Pickler[Value] =
-      new Pickler[Value] {
-        private[this] final val KeyCodes      = 'C'
-        private[this] final val KeyCustomText = 'X'
-        private[this] final val KeyImpSrcs    = '>'
-        private[this] final val KeyImpTgts    = '<'
-        private[this] final val KeyTags       = '#'
-        private[this] final val KeyTitle      = 'T'
-        override def pickle(a: Value)(implicit state: PickleState): Unit =
-          a match {
-            case b: ValueForCodes      => state.enc.writeByte(KeyCodes     ); state.pickle(b)
-            case b: ValueForCustomText => state.enc.writeByte(KeyCustomText); state.pickle(b)
-            case b: ValueForImpSrcs    => state.enc.writeByte(KeyImpSrcs   ); state.pickle(b)
-            case b: ValueForImpTgts    => state.enc.writeByte(KeyImpTgts   ); state.pickle(b)
-            case b: ValueForTags       => state.enc.writeByte(KeyTags      ); state.pickle(b)
-            case b: ValueForTitle      => state.enc.writeByte(KeyTitle     ); state.pickle(b)
-          }
-        override def unpickle(implicit state: UnpickleState): Value =
-          state.dec.readByte match {
-            case KeyCodes      => state.unpickle[ValueForCodes]
-            case KeyCustomText => state.unpickle[ValueForCustomText]
-            case KeyImpSrcs    => state.unpickle[ValueForImpSrcs]
-            case KeyImpTgts    => state.unpickle[ValueForImpTgts]
-            case KeyTags       => state.unpickle[ValueForTags]
-            case KeyTitle      => state.unpickle[ValueForTitle]
-          }
-      }
-
-    pickleIMap(emptyValues)
-  }
-
   implicit val pickleTagGroupGD: Pickler[TagGroupGD.NonEmptyValues] = {
     import TagGroupGD._
 
@@ -330,77 +260,6 @@ object Events {
             case KeyExclusivity => state.unpickle[ValueForExclusivity]
             case KeyName        => state.unpickle[ValueForName]
             case KeyParents     => state.unpickle[ValueForParents]
-          }
-      }
-
-    val values: Pickler[Values] = pickleIMap(emptyValues)
-    pickleNonEmptyMono[Values](values, implicitly)
-  }
-
-  implicit val pickleUseCaseGD: Pickler[UseCaseGD.Values] = {
-    import UseCaseGD._
-
-    implicit val picklerValueForCodes      = transformPickler(ValueForCodes     .apply)(_.value)
-    implicit val picklerValueForCustomText = transformPickler(ValueForCustomText.apply)(_.value)
-    implicit val picklerValueForImpSrcs    = transformPickler(ValueForImpSrcs   .apply)(_.value)
-    implicit val picklerValueForImpTgts    = transformPickler(ValueForImpTgts   .apply)(_.value)
-    implicit val picklerValueForTags       = transformPickler(ValueForTags      .apply)(_.value)
-    implicit val picklerValueForTitle      = transformPickler(ValueForTitle     .apply)(_.value)
-
-    implicit val picklerValue: Pickler[Value] =
-      new Pickler[Value] {
-        private[this] final val KeyCodes      = 'C'
-        private[this] final val KeyCustomText = 'X'
-        private[this] final val KeyImpSrcs    = '>'
-        private[this] final val KeyImpTgts    = '<'
-        private[this] final val KeyTags       = '#'
-        private[this] final val KeyTitle      = 'T'
-        override def pickle(a: Value)(implicit state: PickleState): Unit =
-          a match {
-            case b: ValueForCodes      => state.enc.writeByte(KeyCodes     ); state.pickle(b)
-            case b: ValueForCustomText => state.enc.writeByte(KeyCustomText); state.pickle(b)
-            case b: ValueForImpSrcs    => state.enc.writeByte(KeyImpSrcs   ); state.pickle(b)
-            case b: ValueForImpTgts    => state.enc.writeByte(KeyImpTgts   ); state.pickle(b)
-            case b: ValueForTags       => state.enc.writeByte(KeyTags      ); state.pickle(b)
-            case b: ValueForTitle      => state.enc.writeByte(KeyTitle     ); state.pickle(b)
-          }
-        override def unpickle(implicit state: UnpickleState): Value =
-          state.dec.readByte match {
-            case KeyCodes      => state.unpickle[ValueForCodes]
-            case KeyCustomText => state.unpickle[ValueForCustomText]
-            case KeyImpSrcs    => state.unpickle[ValueForImpSrcs]
-            case KeyImpTgts    => state.unpickle[ValueForImpTgts]
-            case KeyTags       => state.unpickle[ValueForTags]
-            case KeyTitle      => state.unpickle[ValueForTitle]
-          }
-      }
-
-    pickleIMap(emptyValues)
-  }
-
-  implicit val pickleUseCaseStepGD: Pickler[UseCaseStepGD.NonEmptyValues] = {
-    import UseCaseStepGD._
-
-    implicit val picklerValueForFlowIn  = transformPickler(ValueForFlowIn .apply)(_.value)
-    implicit val picklerValueForFlowOut = transformPickler(ValueForFlowOut.apply)(_.value)
-    implicit val picklerValueForTitle   = transformPickler(ValueForTitle  .apply)(_.value)
-
-    implicit val picklerValue: Pickler[Value] =
-      new Pickler[Value] {
-        private[this] final val KeyFlowIn  = '<'
-        private[this] final val KeyFlowOut = '>'
-        private[this] final val KeyTitle   = 'T'
-        override def pickle(a: Value)(implicit state: PickleState): Unit =
-          a match {
-            case b: ValueForFlowIn  => state.enc.writeByte(KeyFlowIn ); state.pickle(b)
-            case b: ValueForFlowOut => state.enc.writeByte(KeyFlowOut); state.pickle(b)
-            case b: ValueForTitle   => state.enc.writeByte(KeyTitle  ); state.pickle(b)
-          }
-        override def unpickle(implicit state: UnpickleState): Value =
-          state.dec.readByte match {
-            case KeyFlowIn  => state.unpickle[ValueForFlowIn]
-            case KeyFlowOut => state.unpickle[ValueForFlowOut]
-            case KeyTitle   => state.unpickle[ValueForTitle]
           }
       }
 
@@ -623,21 +482,6 @@ object Events {
       }
     }
 
-  private[v1] implicit val picklerEventGenericReqCreate: Pickler[Event.GenericReqCreate] =
-    new Pickler[Event.GenericReqCreate] {
-      override def pickle(a: Event.GenericReqCreate)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.rt)
-        state.pickle(a.vs)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.GenericReqCreate = {
-        val id = state.unpickle[GenericReqId]
-        val rt = state.unpickle[CustomReqTypeId]
-        val vs = state.unpickle[GenericReqGD.Values]
-        Event.GenericReqCreate(id, rt, vs)
-      }
-    }
-
   private[v1] implicit val picklerEventGenericReqTypeSet: Pickler[Event.GenericReqTypeSet] =
     new Pickler[Event.GenericReqTypeSet] {
       override def pickle(a: Event.GenericReqTypeSet)(implicit state: PickleState): Unit = {
@@ -648,47 +492,6 @@ object Events {
         val id    = state.unpickle[GenericReqId]
         val value = state.unpickle[CustomReqTypeId]
         Event.GenericReqTypeSet(id, value)
-      }
-    }
-
-  private[v1] implicit val picklerEventGenericReqTitleSet: Pickler[Event.GenericReqTitleSet] =
-    new Pickler[Event.GenericReqTitleSet] {
-      override def pickle(a: Event.GenericReqTitleSet)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.value)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.GenericReqTitleSet = {
-        val id    = state.unpickle[GenericReqId]
-        val value = state.unpickle[Text.GenericReqTitle.OptionalText]
-        Event.GenericReqTitleSet(id, value)
-      }
-    }
-
-  private[v1] implicit val picklerEventUseCaseCreate: Pickler[Event.UseCaseCreate] =
-    new Pickler[Event.UseCaseCreate] {
-      override def pickle(a: Event.UseCaseCreate)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.stepId)
-        state.pickle(a.vs)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.UseCaseCreate = {
-        val id     = state.unpickle[UseCaseId]
-        val stepId = state.unpickle[UseCaseStepId]
-        val vs     = state.unpickle[UseCaseGD.Values]
-        Event.UseCaseCreate(id, stepId, vs)
-      }
-    }
-
-  private[v1] implicit val picklerEventUseCaseTitleSet: Pickler[Event.UseCaseTitleSet] =
-    new Pickler[Event.UseCaseTitleSet] {
-      override def pickle(a: Event.UseCaseTitleSet)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.value)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.UseCaseTitleSet = {
-        val id    = state.unpickle[UseCaseId]
-        val value = state.unpickle[Text.UseCaseTitle.OptionalText]
-        Event.UseCaseTitleSet(id, value)
       }
     }
 
@@ -709,19 +512,6 @@ object Events {
       }
     }
 
-  private[v1] implicit val picklerEventUseCaseStepUpdate: Pickler[Event.UseCaseStepUpdate] =
-    new Pickler[Event.UseCaseStepUpdate] {
-      override def pickle(a: Event.UseCaseStepUpdate)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.vs)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.UseCaseStepUpdate = {
-        val id = state.unpickle[UseCaseStepId]
-        val vs = state.unpickle[UseCaseStepGD.NonEmptyValues]
-        Event.UseCaseStepUpdate(id, vs)
-      }
-    }
-
   private[v1] implicit val picklerEventUseCaseStepShiftLeft: Pickler[Event.UseCaseStepShiftLeft] =
     transformPickler(Event.UseCaseStepShiftLeft.apply)(_.id)
 
@@ -733,32 +523,6 @@ object Events {
 
   private[v1] implicit val picklerEventUseCaseStepRestore: Pickler[Event.UseCaseStepRestore] =
     transformPickler(Event.UseCaseStepRestore.apply)(_.id)
-
-  private[v1] implicit val picklerEventCodeGroupCreate: Pickler[Event.CodeGroupCreate] =
-    new Pickler[Event.CodeGroupCreate] {
-      override def pickle(a: Event.CodeGroupCreate)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.vs)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.CodeGroupCreate = {
-        val id = state.unpickle[ReqCodeGroupId]
-        val vs = state.unpickle[CodeGroupGD.NonEmptyValues]
-        Event.CodeGroupCreate(id, vs)
-      }
-    }
-
-  private[v1] implicit val picklerEventCodeGroupUpdate: Pickler[Event.CodeGroupUpdate] =
-    new Pickler[Event.CodeGroupUpdate] {
-      override def pickle(a: Event.CodeGroupUpdate)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.vs)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.CodeGroupUpdate = {
-        val id = state.unpickle[ReqCodeGroupId]
-        val vs = state.unpickle[CodeGroupGD.NonEmptyValues]
-        Event.CodeGroupUpdate(id, vs)
-      }
-    }
 
   private[v1] implicit val picklerEventCodeGroupsDelete: Pickler[Event.CodeGroupsDelete] =
     transformPickler(Event.CodeGroupsDelete.apply)(_.ids)
@@ -808,36 +572,6 @@ object Events {
       }
     }
 
-  private[v1] implicit val picklerEventReqFieldCustomTextSet: Pickler[Event.ReqFieldCustomTextSet] =
-    new Pickler[Event.ReqFieldCustomTextSet] {
-      override def pickle(a: Event.ReqFieldCustomTextSet)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.fid)
-        state.pickle(a.value)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.ReqFieldCustomTextSet = {
-        val id    = state.unpickle[ReqId]
-        val fid   = state.unpickle[CustomField.Text.Id]
-        val value = state.unpickle[Text.CustomTextField.OptionalText]
-        Event.ReqFieldCustomTextSet(id, fid, value)
-      }
-    }
-
-  private[v1] implicit val picklerEventReqsDelete: Pickler[Event.ReqsDelete] =
-    new Pickler[Event.ReqsDelete] {
-      override def pickle(a: Event.ReqsDelete)(implicit state: PickleState): Unit = {
-        state.pickle(a.reqs)
-        state.pickle(a.codeGroups)
-        state.pickle(a.reason)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.ReqsDelete = {
-        val reqs       = state.unpickle[NonEmptySet[ReqId]]
-        val codeGroups = state.unpickle[Set[ReqCodeGroupId]]
-        val reason     = state.unpickle[Text.DeletionReason.OptionalText]
-        Event.ReqsDelete(reqs, codeGroups, reason)
-      }
-    }
-
   private[v1] implicit val picklerEventContentRestore: Pickler[Event.ContentRestore] =
     new Pickler[Event.ContentRestore] {
       override def pickle(a: Event.ContentRestore)(implicit state: PickleState): Unit = {
@@ -848,32 +582,6 @@ object Events {
         val reqs       = state.unpickle[Set[ReqId]]
         val codeGroups = state.unpickle[Set[ReqCodeGroupId]]
         Event.ContentRestore(reqs, codeGroups)
-      }
-    }
-
-  private[v1] implicit val picklerEventManualIssueCreate: Pickler[Event.ManualIssueCreate] =
-    new Pickler[Event.ManualIssueCreate] {
-      override def pickle(a: Event.ManualIssueCreate)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.text)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.ManualIssueCreate = {
-        val id   = state.unpickle[ManualIssueId]
-        val text = state.unpickle[Text.ManualIssue.NonEmptyText]
-        Event.ManualIssueCreate(id, text)
-      }
-    }
-
-  private[v1] implicit val picklerEventManualIssueUpdate: Pickler[Event.ManualIssueUpdate] =
-    new Pickler[Event.ManualIssueUpdate] {
-      override def pickle(a: Event.ManualIssueUpdate)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.text)
-      }
-      override def unpickle(implicit state: UnpickleState): Event.ManualIssueUpdate = {
-        val id   = state.unpickle[ManualIssueId]
-        val text = state.unpickle[Text.ManualIssue.NonEmptyText]
-        Event.ManualIssueUpdate(id, text)
       }
     }
 

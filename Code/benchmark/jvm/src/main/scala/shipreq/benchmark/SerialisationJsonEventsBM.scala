@@ -9,7 +9,7 @@ import shipreq.webapp.base.event.Event
 import shipreq.webapp.sampledata.SampleData
 
 object SerialisationJsonEventsBM {
-  import shipreq.webapp.base.protocol.json.v1.Rev1._
+  import shipreq.webapp.base.protocol.json.v1.Latest._
 
   val jsonEnc = Encoder[Vector[Event]]
   val jsonDec = Decoder[Vector[Event]]

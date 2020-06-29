@@ -14,9 +14,9 @@ import utest._
 
 object JsonProtocolTest extends TestSuite {
   import BaseMemberData1._
-  import AtomCodecs.instances._
-  import Rev1.SavedViewCodecs._
-  import Rev1._
+  import Latest._
+  import Latest.SavedViewCodecs._
+  import Latest.AtomCodecs.instances._
 
   private implicit def autoSomeG[A](g: Gen[A]): Option[Gen[A]] = Some(g)
 
@@ -34,6 +34,7 @@ object JsonProtocolTest extends TestSuite {
       "GenericReqTitle" - propTestRoundTrip(R.TextGen.genericReqTitleAtom(gr, gu, gc, gi, ga).text)
       "InlineIssueDesc" - propTestRoundTrip(R.TextGen.inlineIssueDescAtom(gr, gu, gc        ).text)
       "CustomTextField" - propTestRoundTrip(R.TextGen.customTextFieldAtom(gr, gu, gc, gi, ga).text1(CustomTextField))
+      "DeletionReason"  - propTestRoundTrip(R.TextGen.deletionReasonAtom (gr, gu, gc,     ga).text1(DeletionReason))
     }
 
     "event" - assertRoundTrips(RandomEventStream.sampleEventStreamWithProjects.map(_._1.event))

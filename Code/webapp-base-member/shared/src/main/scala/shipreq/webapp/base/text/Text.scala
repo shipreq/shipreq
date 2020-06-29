@@ -2,11 +2,14 @@ package shipreq.webapp.base.text
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import org.parboiled2._
+import scala.annotation.{elidable, nowarn}
 import scala.collection.immutable.ArraySeq
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.Parsers.{StyleCtx, StyleType}
 import shipreq.webapp.base.text.{Atom => A, Parsers => P}
+import shipreq.webapp.base.util.TextMod
 
 object Text {
 
@@ -57,7 +60,8 @@ object Text {
     final def parse(p: Project, currentUseCase: Option[ReqTypePos])(text: String): OptionalText = {
       val pp = parser(p, currentUseCase)(text)
 //      try
-        pp.optionalText.run().get
+      val t = pp.optionalText.run().get
+      Parsers.fixOptionalText(t)
 //      catch {
 //        case e: ParseError =>
 //          println(pp.formatError(e, new ErrorFormatter(showTraces = true, traceCutOff = 500)))
@@ -66,7 +70,7 @@ object Text {
     }
 
     final def parseNonEmpty(p: Project, currentUseCase: Option[ReqTypePos])(text: String): Option[NonEmptyText] =
-      parser(p, currentUseCase)(text).nonEmptyText.run().toOption
+      parser(p, currentUseCase)(text).nonEmptyText.run().toOption.map(Parsers.fixNonEmptyText(_))
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -78,8 +82,212 @@ object Text {
   // - Parsing rules in top-level text objects and Parsers
   // - RandomData
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Heading titles
+
+  object HeadingTitleFull extends Base
+      with A.HeadingTitleFull { self =>
+
+    override val styled: StyledInnerFull.type = StyledInnerFull
+
+    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) =
+      new Parser(p, currentUseCase, i)
+
+    final class Parser(override val project       : Project,
+                       override val currentUseCase: Option[ReqTypePos],
+                       override val input         : ParserInput) extends P.TopBase
+        with P.SingleLine
+        with P.Issue
+        with P.ContentRef
+        with P.TagRef
+        with P.HeadingTitle {
+
+      override val t: self.type = self
+
+      def hashToken =
+        rule(hashRef ~ (tagRef | issueRef))
+
+      override val token = () =>
+        rule(hashToken | contentRef | singleLine)
+
+      override protected def issueInnerDesc =
+        rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(styled.parserI2(project, currentUseCase, StyleCtx.begin(s))(_).inline))
+    }
+  }
+
+  object HeadingTitleNoIssues extends Base
+      with A.HeadingTitleNoIssues { self =>
+
+    override val styled: StyledInnerNoIssues.type = StyledInnerNoIssues
+
+    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) =
+      new Parser(p, currentUseCase, i)
+
+    final class Parser(override val project       : Project,
+                       override val currentUseCase: Option[ReqTypePos],
+                       override val input         : ParserInput) extends P.TopBase
+        with P.SingleLine
+        with P.ContentRef
+        with P.TagRef
+        with P.HeadingTitle {
+
+      override val t: self.type = self
+
+      def hashToken =
+        rule(hashRef ~ tagRef)
+
+      override val token = () =>
+        rule(hashToken | contentRef | singleLine)
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(styled.parserI2(project, currentUseCase, StyleCtx.begin(s))(_).inline))
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // StyledInners
+
+  sealed abstract class StyledInner extends Base with A.Literal {
+
+    @nowarn
+    final override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput): Parser = {
+      @elidable(elidable.FINEST) def fail(): Nothing =
+        throw new UnsupportedOperationException("You can't call parserI on StyledInners. Call parserI2 instead.")
+      fail()
+      null.asInstanceOf[Parser]
+    }
+
+    def parserI2(p: Project, currentUseCase: Option[ReqTypePos], ctx: StyleCtx)(i: ParserInput): Parser
+  }
+
+  object StyledInnerFull extends StyledInner
+      with A.StyledInnerFull { self =>
+
+    override val styled: this.type = this
+
+    def parserI2(p: Project, currentUseCase: Option[ReqTypePos], ctx: StyleCtx)(i: ParserInput) =
+      new Parser(p, currentUseCase, ctx, i)
+
+    final class Parser(override val project       : Project,
+                       override val currentUseCase: Option[ReqTypePos],
+                       override val ctx           : StyleCtx,
+                       override val input         : ParserInput) extends P.StyledInner
+        with P.Issue
+        with P.ContentRef
+        with P.TagRef {
+
+      override val t: self.type = self
+
+      def hashToken =
+        rule(hashRef ~ (tagRef | issueRef))
+
+      override protected def additionalTokens =
+        rule(hashToken | contentRef)
+
+      override protected def issueInnerDesc =
+        rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(parserI2(project, currentUseCase, ctx.begin(s))(_).inline))
+    }
+  }
+
+  object StyledInnerNoTags extends StyledInner
+      with A.StyledInnerNoTags { self =>
+
+    override val styled: this.type = this
+
+    override def parserI2(p: Project, currentUseCase: Option[ReqTypePos], ctx: StyleCtx)(i: ParserInput) =
+      new Parser(p, currentUseCase, ctx, i)
+
+    final class Parser(override val project       : Project,
+                       override val currentUseCase: Option[ReqTypePos],
+                       override val ctx           : StyleCtx,
+                       override val input         : ParserInput) extends P.StyledInner
+      with P.Issue
+      with P.ContentRef {
+
+      override val t: self.type = self
+
+      def hashToken =
+        rule(hashRef ~ issueRef)
+
+      override protected def additionalTokens =
+        rule(hashToken | contentRef)
+
+      override protected def issueInnerDesc =
+        rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(parserI2(project, currentUseCase, ctx.begin(s))(_).inline))
+    }
+  }
+
+  object StyledInnerNoIssues extends StyledInner
+      with A.StyledInnerNoIssues { self =>
+
+    override val styled: this.type = this
+
+    override def parserI2(p: Project, currentUseCase: Option[ReqTypePos], ctx: StyleCtx)(i: ParserInput) =
+      new Parser(p, currentUseCase, ctx, i)
+
+    final class Parser(override val project       : Project,
+                       override val currentUseCase: Option[ReqTypePos],
+                       override val ctx           : StyleCtx,
+                       override val input         : ParserInput) extends P.StyledInner
+      with P.ContentRef
+      with P.TagRef {
+
+      override val t: self.type = self
+
+      def hashToken =
+        rule(hashRef ~ tagRef)
+
+      override protected def additionalTokens: Rule1[t.Atom] =
+        rule(hashToken | contentRef)
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(parserI2(project, currentUseCase, ctx.begin(s))(_).inline))
+    }
+  }
+
+  object StyledInnerContentRef extends StyledInner
+      with A.StyledInnerContentRef { self =>
+
+    override val styled: this.type = this
+
+    override def parserI2(p: Project, currentUseCase: Option[ReqTypePos], ctx: StyleCtx)(i: ParserInput) =
+      new Parser(p, currentUseCase, ctx, i)
+
+    final class Parser(override val project       : Project,
+                       override val currentUseCase: Option[ReqTypePos],
+                       override val ctx           : StyleCtx,
+                       override val input         : ParserInput) extends P.StyledInner
+      with P.ContentRef {
+
+      override val t: self.type = self
+
+      override protected def additionalTokens =
+        contentRef
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(parserI2(project, currentUseCase, ctx.begin(s))(_).inline))
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Titles
+
   sealed abstract class ReqTitle extends Base with A.ReqTitle {
     self: A.Literal =>
+
+    override val styled: StyledInnerFull.type = StyledInnerFull
+
+    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) =
+      new Parser(p, currentUseCase, i)
 
     final class Parser(override val project       : Project,
                        override val currentUseCase: Option[ReqTypePos],
@@ -89,16 +297,21 @@ object Text {
         with P.ContentRef
         with P.TagRef {
 
-      override val t: self.type             = self
-               def hashToken                = rule(hashRef ~ (tagRef | issueRef))
-      override val token                    = () => rule(hashToken | contentRef | singleLine)
-      override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
+      override val t: self.type = self
+
+      def hashToken =
+        rule(hashRef ~ (tagRef | issueRef))
+
+      override val token = () =>
+        rule(hashToken | contentRef | singleLine)
+
+      override protected def issueInnerDesc =
+        rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(styled.parserI2(project, currentUseCase, StyleCtx.begin(s))(_).inline))
     }
-
-    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) = new Parser(p, currentUseCase, i)
   }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   /**
    * A "generic-req title", not a "generic req-title".
@@ -109,11 +322,17 @@ object Text {
   object UseCaseTitle extends ReqTitle
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   // Doesn't extend ReqTitle because Tags are prohibited in RCGs.
   object CodeGroupTitle extends Base
       with A.SingleLine
       with A.Issue
       with A.ContentRef { self =>
+
+    override val styled: StyledInnerNoTags.type = StyledInnerNoTags
+
+    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) =
+      new Parser(p, currentUseCase, i)
 
     final class Parser(override val project       : Project,
                        override val currentUseCase: Option[ReqTypePos],
@@ -122,19 +341,31 @@ object Text {
         with P.Issue
         with P.ContentRef {
 
-      override val t: self.type             = self
-               def hashToken                = rule(hashRef ~ issueRef)
-      override val token                    = () => rule(hashToken | contentRef | singleLine)
-      override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
-    }
+      override val t: self.type = self
 
-    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) = new Parser(p, currentUseCase, i)
+      def hashToken =
+        rule(hashRef ~ issueRef)
+
+      override val token = () =>
+        rule(hashToken | contentRef | singleLine)
+
+      override protected def issueInnerDesc =
+        rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(styled.parserI2(project, currentUseCase, StyleCtx.begin(s))(_).inline))
+    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object InlineIssueDesc extends Base
       with A.SingleLine
       with A.ContentRef { self =>
+
+    override val styled: StyledInnerContentRef.type = StyledInnerContentRef
+
+    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) =
+      new Parser(p, currentUseCase, i)
 
     final class Parser(override val project       : Project,
                        override val currentUseCase: Option[ReqTypePos],
@@ -143,13 +374,21 @@ object Text {
         with P.ContentRef {
 
       import Grammar.issueDescSurround.{parsing => G}
-      override val t: self.type                = self
-      override val token                       = () => rule(contentRef | singleLine)
-               val inlineEnd                   = () => rule(OWS ~ G.suffix)
-               def inline: Rule1[NonEmptyText] = rule(G.prefix ~ OWS ~ textUntil(token, inlineEnd) ~ popNEA)
-    }
 
-    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) = new Parser(p, currentUseCase, i)
+      override val t: self.type = self
+
+      override val token = () =>
+        rule(contentRef | singleLine)
+
+      val inlineEnd = () =>
+        rule(OWS ~ G.suffix)
+
+      def inline: Rule1[NonEmptyText] =
+        rule(G.prefix ~ OWS ~ textUntil(token, inlineEnd) ~ popNEA)
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(styled.parserI2(project, currentUseCase, StyleCtx.begin(s))(_).inline))
+    }
 
     /** Issue descs that demonstrate all types of inner atoms. */
     def demo(reqId        : ReqId,
@@ -173,21 +412,38 @@ object Text {
       with A.ContentRef
       with A.TagRef { self =>
 
+    override val headingTitle: HeadingTitleFull.type = HeadingTitleFull
+    override val styled: StyledInnerFull.type = StyledInnerFull
+
+    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) =
+      new Parser(p, currentUseCase, i)
+
     final class Parser(override val project       : Project,
                        override val currentUseCase: Option[ReqTypePos],
                        override val input         : ParserInput) extends P.TopBase
         with P.MultiLine
         with P.Issue
         with P.ContentRef
-        with P.TagRef {
+        with P.TagRef
+        with P.Headings {
 
-      override           val t: self.type     = self
-                         def hashToken        = rule(hashRef ~ (tagRef | issueRef))
-      override protected val additionalTokens = () => rule(hashToken | contentRef)
-      override protected def issueInnerDesc   = rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
+      override val t: self.type = self
+
+      def hashToken =
+        rule(hashRef ~ (tagRef | issueRef))
+
+      override protected val additionalTokens = () =>
+        rule(hashToken | contentRef)
+
+      override protected def issueInnerDesc =
+        rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
+
+      override protected def headingTitle =
+        rule(runSubParser(self.headingTitle.parserI(project, currentUseCase)(_).inline))
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(styled.parserI2(project, currentUseCase, StyleCtx.begin(s))(_).inline))
     }
-
-    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) = new Parser(p, currentUseCase, i)
 
     /** A text value that demonstrates all types of atoms. */
     def demo(reqId        : ReqId,
@@ -218,7 +474,14 @@ object Text {
         Literal("Atom demonstration."),
         blankLine,
         Literal("Here we go:"),
-        UnorderedList(uls))
+        UnorderedList(uls),
+        Heading1(NonEmptyArraySeq(HeadingTitleFull.Literal("H1"))),
+        Heading2(NonEmptyArraySeq(HeadingTitleFull.Literal("H2"))),
+        Heading3(NonEmptyArraySeq(HeadingTitleFull.Literal("H3"))),
+        Heading4(NonEmptyArraySeq(HeadingTitleFull.Literal("H4"))),
+        Heading5(NonEmptyArraySeq(HeadingTitleFull.Literal("H5"))),
+        Heading6(NonEmptyArraySeq(HeadingTitleFull.Literal("H6"))),
+      )
     }
   }
 
@@ -229,6 +492,11 @@ object Text {
       with A.ContentRef
       with A.TagRef { self =>
 
+    override val styled: StyledInnerFull.type = StyledInnerFull
+
+    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) =
+      new Parser(p, currentUseCase, i)
+
     final class Parser(override val project       : Project,
                        override val currentUseCase: Option[ReqTypePos],
                        override val input         : ParserInput) extends P.TopBase
@@ -237,13 +505,20 @@ object Text {
         with P.ContentRef
         with P.TagRef {
 
-      override           val t: self.type   = self
-                         def hashToken      = rule(hashRef ~ (tagRef | issueRef))
-      override           val token          = () => rule(hashToken | contentRef | singleLine)
-      override protected def issueInnerDesc = rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
-    }
+      override val t: self.type = self
 
-    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) = new Parser(p, currentUseCase, i)
+      def hashToken =
+        rule(hashRef ~ (tagRef | issueRef))
+
+      override val token = () =>
+        rule(hashToken | contentRef | singleLine)
+
+      override protected def issueInnerDesc =
+        rule(runSubParser(InlineIssueDesc.parserI(project, currentUseCase)(_).inline))
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(styled.parserI2(project, currentUseCase, StyleCtx.begin(s))(_).inline))
+    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -252,19 +527,34 @@ object Text {
       with A.ContentRef
       with A.TagRef { self =>
 
+    override val headingTitle: HeadingTitleNoIssues.type = HeadingTitleNoIssues
+    override val styled: StyledInnerNoIssues.type = StyledInnerNoIssues
+
+    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) =
+      new Parser(p, currentUseCase, i)
+
     final class Parser(override val project       : Project,
                        override val currentUseCase: Option[ReqTypePos],
                        override val input         : ParserInput) extends P.TopBase
         with P.MultiLine
         with P.ContentRef
-        with P.TagRef {
+        with P.TagRef
+        with P.Headings {
 
-      override           val t: self.type     = self
-                         def hashToken        = rule(hashRef ~ tagRef)
-      override protected val additionalTokens = () => rule(hashToken | contentRef)
+      override val t: self.type = self
+
+      def hashToken =
+        rule(hashRef ~ tagRef)
+
+      override protected val additionalTokens = () =>
+        rule(hashToken | contentRef)
+
+      override protected def headingTitle =
+        rule(runSubParser(HeadingTitleNoIssues.parserI(project, currentUseCase)(_).inline))
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(styled.parserI2(project, currentUseCase, StyleCtx.begin(s))(_).inline))
     }
-
-    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) = new Parser(p, currentUseCase, i)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -273,18 +563,33 @@ object Text {
       with A.ContentRef
       with A.TagRef { self =>
 
+    override val headingTitle: HeadingTitleNoIssues.type = HeadingTitleNoIssues
+    override val styled: StyledInnerNoIssues.type = StyledInnerNoIssues
+
+    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) =
+      new Parser(p, currentUseCase, i)
+
     final class Parser(override val project       : Project,
                        override val currentUseCase: Option[ReqTypePos],
                        override val input         : ParserInput) extends P.TopBase
         with P.MultiLine
         with P.ContentRef
-        with P.TagRef {
+        with P.TagRef
+        with P.Headings {
 
-      override           val t: self.type     = self
-                         def hashToken        = rule(hashRef ~ tagRef)
-      override protected val additionalTokens = () => rule(hashToken | contentRef)
+      override val t: self.type = self
+
+      def hashToken =
+        rule(hashRef ~ tagRef)
+
+      override protected val additionalTokens = () =>
+        rule(hashToken | contentRef)
+
+      override protected def headingTitle =
+        rule(runSubParser(HeadingTitleNoIssues.parserI(project, currentUseCase)(_).inline))
+
+      override protected def styledInner(s: StyleType) =
+        rule(runSubParser(styled.parserI2(project, currentUseCase, StyleCtx.begin(s))(_).inline))
     }
-
-    override protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput) = new Parser(p, currentUseCase, i)
   }
 }

@@ -11,7 +11,7 @@ object ShrinkerFxTest extends TestSuite {
 
     "vectorRemoveOne" - {
       def validity(as: Vector[Int]) = Valid.when(as.sum < 100)
-      val result = ShrinkFx(Vector(1, 3, 5, 8, 70, 3, 80))(Shrinker.vectorRemoveOne, _.length, x => Fx.pure(validity(x))).unsafeRunSync()
+      val result = ShrinkFx(Vector(1, 3, 5, 8, 70, 3, 80))(Shrinker.removeElements, _.length, x => Fx.pure(validity(x))).unsafeRunSync()
       assertEq(result, Vector(70, 80))
     }
 

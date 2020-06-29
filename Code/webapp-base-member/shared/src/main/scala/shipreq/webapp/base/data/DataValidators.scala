@@ -104,10 +104,11 @@ object DataValidators {
 
     // DD-18: Hashtag-like refkeys (groupings, incmp) must match this format: /[A-Za-z0-9][A-Za-z0-9_-=.]*/
     val hashRefKey: Composite.Stateful[State, String, String, HashRefKey] =
-      G.tailChars.validator
+      G.midChars.validator
         .append(G.length.validator)
         .prependCorrector(TextMod.noWhitespace.correctFull)
         .mapInvalidator(i => V.invalidator.nonEmpty.whenValid(G.firstChar.invalidator merge i))
+        .mapInvalidator(i => V.invalidator.nonEmpty.whenValid(G.lastChar.invalidator merge i))
         .toValidator
         .mapValid(HashRefKey.apply)
         .named(FieldNames.hashRefKey)

@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import shipreq.webapp.base.data.Project
-import shipreq.webapp.base.protocol.binary.v1.Rev1.picklerProject
+import shipreq.webapp.base.protocol.binary.v1.Latest.picklerProject
 import shipreq.webapp.sampledata.SampleData
 
 object SerialisationBinaryProjectBM {

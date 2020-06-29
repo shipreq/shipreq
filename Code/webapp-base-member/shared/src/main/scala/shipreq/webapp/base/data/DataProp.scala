@@ -429,6 +429,10 @@ object DataProp {
       case a: PlainTextMarkup # EmailAddress   => emailAddress(a)
       case a: PlainTextMarkup # Monospace      => monospace(a)
       case a: PlainTextMarkup # TeX            => tex(a)
+      case a: PlainTextMarkup # Bold           => anyText(a.inner.whole)
+      case a: PlainTextMarkup # Italic         => anyText(a.inner.whole)
+      case a: PlainTextMarkup # Underline      => anyText(a.inner.whole)
+      case a: PlainTextMarkup # Strikethrough  => anyText(a.inner.whole)
       case a: ListMarkup      # UnorderedList  => anyTextV(a.items.whole)
       case _: ContentRef      # ReqRef         => nop
       case _: ContentRef      # CodeRef        => nop
@@ -436,6 +440,12 @@ object DataProp {
       case a: Issue           # Issue          => anyText(a.desc)
       case _: TagRef          # TagRef         => nop
       case _: CodeBlock       # CodeBlock      => nop
+      case a: Headings        # Heading1       => anyText(a.title.whole)
+      case a: Headings        # Heading2       => anyText(a.title.whole)
+      case a: Headings        # Heading3       => anyText(a.title.whole)
+      case a: Headings        # Heading4       => anyText(a.title.whole)
+      case a: Headings        # Heading5       => anyText(a.title.whole)
+      case a: Headings        # Heading6       => anyText(a.title.whole)
     } rename "AnyAtom"
 
     lazy val anyText: Prop[Text.AnyOptional] =

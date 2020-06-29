@@ -10,6 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.text._
+import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.client.project.feature.create.Feature.{AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
@@ -62,12 +63,14 @@ object NewEditor {
     }
 
     final val ShowInstructions = true
+
+    @inline def editorStyle = EditTheme.Style(PreviewFeature.Position.Under, EditTheme.OpenPreview.WhenWanted)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private final class Internal(static: Static) {
-    import Internal.ShowInstructions
+    import Internal.{ShowInstructions, editorStyle}
     import static._
 
     val perRow: RowKey.Fold[ForFields] = {
@@ -326,21 +329,23 @@ object NewEditor {
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- pxProjectWidgets.toCallback
             } yield editor.Optional(
-              project          = project,
-              naTags           = project.config.naTags(reqTypeId),
-              plainTextNoCtx   = plainTextNoCtx,
-              textSearch       = textSearch,
-              projectWidgets   = projectWidgets,
-              edit             = ss,
-              asyncStatus      = EditorStatus.async(asyncState),
-              abort            = args.abort,
-              autoFocus        = args.autoFocus,
-              commitFn         = args.commitFn,
-              commitVerb       = args.commitVerb,
-              preview          = previewRW(pid),
-              preEditValue     = None,
-              extraKbShortcuts = args.extraKbShortcuts,
-              showInstructions = ShowInstructions)
+              project            = project,
+              naTags             = project.config.naTags(reqTypeId),
+              plainTextNoCtx     = plainTextNoCtx,
+              textSearch         = textSearch,
+              projectWidgets     = projectWidgets,
+              edit               = ss,
+              asyncStatus        = EditorStatus.async(asyncState),
+              abort              = args.abort,
+              autoFocus          = args.autoFocus,
+              commitFn           = args.commitFn,
+              commitVerb         = args.commitVerb,
+              editorStyle        = editorStyle,
+              preview            = previewRW(pid),
+              preEditValue       = None,
+              extraKbShortcuts   = args.extraKbShortcuts,
+              showInstructions   = ShowInstructions,
+              optionalFullscreen = None)
         }
       }
 
@@ -375,21 +380,23 @@ object NewEditor {
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- pxProjectWidgets.toCallback
             } yield editor.NonEmpty(
-              project          = project,
-              naTags           = project.config.naTags(reqTypeId),
-              plainTextNoCtx   = plainTextNoCtx,
-              textSearch       = textSearch,
-              projectWidgets   = projectWidgets,
-              edit             = ss,
-              asyncStatus      = EditorStatus.async(asyncState),
-              abort            = args.abort,
-              autoFocus        = args.autoFocus,
-              commitFn         = args.commitFn,
-              commitVerb       = args.commitVerb,
-              preview          = previewRW(pid),
-              preEditValue     = None,
-              extraKbShortcuts = args.extraKbShortcuts,
-              showInstructions = ShowInstructions)
+              project            = project,
+              naTags             = project.config.naTags(reqTypeId),
+              plainTextNoCtx     = plainTextNoCtx,
+              textSearch         = textSearch,
+              projectWidgets     = projectWidgets,
+              edit               = ss,
+              asyncStatus        = EditorStatus.async(asyncState),
+              abort              = args.abort,
+              autoFocus          = args.autoFocus,
+              commitFn           = args.commitFn,
+              commitVerb         = args.commitVerb,
+              editorStyle        = editorStyle,
+              preview            = previewRW(pid),
+              preEditValue       = None,
+              extraKbShortcuts   = args.extraKbShortcuts,
+              showInstructions   = ShowInstructions,
+              optionalFullscreen = None)
         }
       }
 

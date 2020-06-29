@@ -1,9 +1,9 @@
 package shipreq.webapp.client.project.app.pages.content.reqgraph
 
+import shipreq.webapp.base.test.CommonObs.Dropdown
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}
 import shipreq.webapp.client.project.feature.savedview._
-import shipreq.webapp.client.project.test.CommonObs.Dropdown
 
 final class ReqGraphObs($: DomZipperJs) {
 

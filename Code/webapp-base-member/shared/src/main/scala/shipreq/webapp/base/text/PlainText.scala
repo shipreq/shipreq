@@ -155,6 +155,30 @@ object PlainText {
         val nextIdx = idx + 1
         val nextIsEmpty = nextIdx == atoms.length
         import Atom._
+
+        def heading(markup: String, title: Headings#HeadingTitle) = {
+          val line = {
+            val t = nestedText("", "", live, title.whole, includeMarkup)
+            if (!includeMarkup)
+              t
+            else if (t.isEmpty)
+              markup
+            else
+              markup ~ ' ' ~ t
+          }
+          val prefix = if (acc.isEmpty || acc.endsWith("\n\n")) "" else "\n\n"
+          val suffix = if (nextIsEmpty) "" else "\n\n"
+          prefix ~ line ~ suffix
+        }
+
+        def style(markup: String, innerText: NonEmptyArraySeq[AnyAtom]) = {
+          val inner = nestedText("", "", live, innerText.whole, includeMarkup)
+          if (includeMarkup)
+            markup ~ inner ~ markup
+          else
+            inner
+        }
+
         val cur = atoms(idx) match {
           case a: Literal         # Literal        => a.value
           case _: NewLine         # BlankLine      => "\n\n" ~ indent
@@ -167,6 +191,16 @@ object PlainText {
           case a: PlainTextMarkup # TeX            => G.texSurround(a.value)
           case a: PlainTextMarkup # WebAddress     => a.value
           case a: TagRef          # TagRef         => tagRef(a.value)
+          case a: Headings        # Heading1       => heading("#", a.title)
+          case a: Headings        # Heading2       => heading("##", a.title)
+          case a: Headings        # Heading3       => heading("###", a.title)
+          case a: Headings        # Heading4       => heading("####", a.title)
+          case a: Headings        # Heading5       => heading("#####", a.title)
+          case a: Headings        # Heading6       => heading("######", a.title)
+          case a: PlainTextMarkup # Bold           => style("**", a.inner)
+          case a: PlainTextMarkup # Italic         => style("//", a.inner)
+          case a: PlainTextMarkup # Strikethrough  => style("~~", a.inner)
+          case a: PlainTextMarkup # Underline      => style("__", a.inner)
 
           // ---------------------------------------------------------------------------------------------------------
           case a: ListMarkup      # UnorderedList  =>

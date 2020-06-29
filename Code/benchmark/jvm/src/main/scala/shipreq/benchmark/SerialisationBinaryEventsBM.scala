@@ -9,7 +9,7 @@ import shipreq.webapp.sampledata.SampleData
 object SerialisationBinaryEventsBM {
   import boopickle.DefaultBasic._
   import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
-  import shipreq.webapp.base.protocol.binary.v1.Rev1._
+  import shipreq.webapp.base.protocol.binary.v1.Latest._
 
   val binCodec = implicitly[Pickler[Vector[Event]]].asV1(0).withMagicNumbers(123, 456)
 }

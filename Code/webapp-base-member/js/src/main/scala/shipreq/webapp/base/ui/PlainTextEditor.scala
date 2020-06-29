@@ -58,10 +58,11 @@ object PlainTextEditor {
 
         def instructions = KeyboardTheme.Instructions.forTextEditor(
           SingleLine,
-          commit = p.status.getCommit,
+          commit     = p.status.getCommit,
           commitVerb = KeyboardTheme.Instructions.defaultCommitVerb,
-          abort = p.abort,
-          help = None)
+          abort      = p.abort,
+          help       = None,
+          fullscreen = None)
 
         def renderWithError(err: TagMod) =
           <.div(

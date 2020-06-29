@@ -2,7 +2,6 @@ v2.2
 ========================================================================================================================
 
 ### Plan
-* Do the markdown tasks
 * Add old interviews to ShipReq
 * Do new interviews for [Derivative tags] and [Github integration]
   * Don't forget to make it analog instead of digital (eg. imagine Dinko, he'll likely want to see a percentage; not just red for 1.9 weeks then suddenly green)
@@ -49,12 +48,7 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* Markdown: bold
-* Markdown: italics
-* Markdown: strike-through
-* Markdown: underline
-* Markdown: headings
-* Fix bug: commit change -> session expires -> re-auth -> connection re-established but change never completes: stuck spinning around
+* prompt user to confirm aborting a dirty editor
 
 
 Backlog (maybe-probably soon)

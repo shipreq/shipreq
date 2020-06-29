@@ -103,7 +103,7 @@ object Menu {
     def withOnClick(getDOMNode: CallbackOption[Node], cb: Callback): Item = {
       val onClick: ReactEvent => Callback =
         e => Callback.when(e.target == e.currentTarget)(
-          cb >> getDOMNode.map(Dropdown.jquery(_).dropdown("hide")))
+          cb >> getDOMNode.map(Dropdown.jquery(_).dropdown("hide")).void)
       copy(tagMod = TagMod(tagMod, ^.onClick ==> onClick))
     }
   }
@@ -131,8 +131,10 @@ object Menu {
       for {
         o <- dropdownOptions
         n <- $.getDOMNode.map(_.toElement).asCBO
-      } yield
+      } yield {
         Dropdown.jquery(n).dropdown(o)
+        ()
+      }
 
     def disableDropdown: Callback =
       $.getDOMNode.map(_.toElement.foreach(Dropdown.jquery(_).dropdown("hide")))

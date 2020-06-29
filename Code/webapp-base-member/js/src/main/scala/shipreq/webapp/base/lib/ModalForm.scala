@@ -24,7 +24,7 @@ abstract class ModalForm[A](name             : String,
                             ) {
   import ModalForm.SetState
 
-  private val id = Modal.nextId()
+  val id = Modal.nextId()
 
   private var onCompletion = Callback.empty
   private var lastResult = initalResult
@@ -43,7 +43,7 @@ abstract class ModalForm[A](name             : String,
   private lazy val modalInitProps       = js.Dynamic.literal(onHidden = onHide.toJsFn)
   private lazy val modalInit            = Callback(JQuery.byId(id).modal(modalInitProps))
   private      val modalShow            = Callback(JQuery.byId(id).modal("show"))
-  private      val modalHide            = CallbackTo(JQuery(rootDom.querySelector("#" + id)).modal("hide"))
+  private      val modalHide            = Callback(JQuery(rootDom.querySelector("#" + id)).modal("hide"))
 
   private val submitAsync: Option[ReactEvent] => AsyncCallback[Unit] = {
     val doIt = AsyncCallback.lazily(justSubmit).flatMap {

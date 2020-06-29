@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import scala.collection.View
 import scala.collection.immutable.ArraySeq
 import scalaz.{Applicative, Foldable, Monoid}
 
@@ -74,4 +75,12 @@ object ScalazExtra {
         fa.forall(p)
     }
 
+  implicit lazy val applicativeView = new Applicative[View] {
+    override def point[A](a: => A): View[A] = View(a)
+    override def ap[A, B](fa: => View[A])(ff: => View[A => B]): View[B] =
+      for {
+        a <- fa
+        f <- ff
+      } yield f(a)
+  }
 }

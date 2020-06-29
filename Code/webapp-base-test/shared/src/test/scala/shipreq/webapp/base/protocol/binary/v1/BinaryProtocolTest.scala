@@ -12,9 +12,9 @@ import shipreq.webapp.base.{RandomData => R}
 import utest._
 
 object BinaryProtocolTest extends TestSuite {
-  import BaseMemberData1.AtomPicklers.instances._
-  import Rev1._
-  import Rev1.SavedViewPicklers._
+  import Latest._
+  import Latest.AtomPicklers.instances._
+  import Latest.SavedViewPicklers._
 
   private implicit def autoSomeG[A](g: Gen[A]): Option[Gen[A]] = Some(g)
 
@@ -32,6 +32,7 @@ object BinaryProtocolTest extends TestSuite {
       "GenericReqTitle" - propTestRoundTripP(R.TextGen.genericReqTitleAtom(gr, gu, gc, gi, ga).text)
       "InlineIssueDesc" - propTestRoundTripP(R.TextGen.inlineIssueDescAtom(gr, gu, gc        ).text)
       "CustomTextField" - propTestRoundTripP(R.TextGen.customTextFieldAtom(gr, gu, gc, gi, ga).text1(CustomTextField))
+      "DeletionReason"  - propTestRoundTripP(R.TextGen.deletionReasonAtom (gr, gu, gc,     ga).text1(DeletionReason))
     }
 
     "event" - assertRoundTripsP(RandomEventStream.sampleEventStreamWithProjects.map(_._1))

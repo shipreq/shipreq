@@ -11,6 +11,8 @@ object TextMod {
 
   def regexReplace(regex: Regex, repl: String) = Endo[String](regex.replaceAllIn(_, repl))
 
+  def regexReplaceFirst(regex: Regex, repl: String) = Endo[String](regex.replaceFirstIn(_, repl))
+
   private[this] def symbol(from: String, to: String) =
     Endo(CharSubset.PunctuationOrSymbol.notAroundReplaceAll(from, to))
 
@@ -28,6 +30,9 @@ object TextMod {
 
   val whitespaceRegex: Regex =
     (CharSubset.Whitespace.regexChar + "+").r
+
+  val rightWhitespaceRegex: Regex =
+    (CharSubset.Whitespace.regexChar + "+$").r
 
   // TODO do properly with unicode
   val onlyAllowSpacesAsWhitespace =
@@ -47,6 +52,9 @@ object TextMod {
 
   val noWhitespace =
     regexReplace(whitespaceRegex, "")
+
+  val noWhitespaceRight =
+    regexReplaceFirst(rightWhitespaceRegex, "")
 
   val squashUnderscores =
     regexReplace("__+".r, "_")

@@ -1336,6 +1336,18 @@ object Style extends StyleSheet.Inline {
       unsafeChild(">li")(
         marginBottom(blankLineHeight)))
 
+    private val heading = mixin(marginBottom(0.3 em))
+    val h1 = style(heading)
+    def h2 = h1
+    def h3 = h1
+    def h4 = h1
+    def h5 = h1
+    def h6 = h1
+
+    val strikethrough = style(textDecoration := "line-through")
+
+    val underline = style(textDecoration := "underline")
+
     val monospace = style(
       display.inline,
       padding(.2 em, .4 em),                                                  // matching github

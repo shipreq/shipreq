@@ -5,13 +5,16 @@ import org.scalajs.dom.html
 import shipreq.base.util.LeftRight
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{Dead, Live, ShowDead, StaticField}
+import shipreq.webapp.base.test.CommonObs
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl.NavObs
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetailObs.NAE
 import shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetailTestDsl.Mode
 import shipreq.webapp.client.project.feature.deletion.{DeletionFormObs, RestorationFormObs}
+import shipreq.webapp.client.project.test.TestGlobal
 
 object ReqDetailObs {
 
@@ -30,7 +33,7 @@ object ReqDetailObs {
   val TreeNames = NAE(useCaseStepTreeN, useCaseStepTreeA, StaticField.ExceptionStepTree.name)
 }
 
-final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {
+final class ReqDetailObs($: DomZipperJs, val nav: NavObs, val global: TestGlobal.Obs) {
 
   private val errorRoot = $.failToOption(".ui.error.message")
 
@@ -49,8 +52,10 @@ final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {
     val pubid = headerRow(">*", 1 of 3).innerText.replace(":", "").trim
 
     private val title = headerRow(">*", 2 of 3)
-    val titleDom = title.domAsHtml
-    val titleEditor = title.collect01("textarea").domsAs[html.TextArea]
+    val titleDom      = title.domAsHtml
+    val titleEditor   = title.collect01("textarea").domsAs[html.TextArea]
+    val titleSpinning = title.exists(".loading")
+    val titleText     = titleDom.textContent
 
     val filterDeadButton = headerRow(">*", 3 of 3)("button").domAs[html.Button]
 
@@ -65,22 +70,18 @@ final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {
     val fieldsInOrder: Vector[String] =
       rows.map(_(">th").innerText)
 
+    type Field = CommonObs.Editor
+
     val fields: Map[String, Field] =
-      rows.map(z => z(">th").innerText -> Field(z(">td"))).toMap
+      rows.map(z => z(">th").innerText -> CommonObs.Editor(z(">td"))).toMap
 
     def field(name: String): Field =
       fields.getOrElse(name, throw new RuntimeException("Field not found: " + name))
 
-    case class Field(private[ReqDetailObs] val $: DomZipperJs) {
-      val dom       = $.dom
-      val innerText = $.innerText
-      val editor    = $.collect01("textarea").domsAs[html.TextArea]
-    }
-
     val lifeRow = fields(UiText.Life.field)
 
     val live: Live = {
-      val t = lifeRow.innerText
+      val t = lifeRow.text
       if (t startsWith UiText.Life.live)
         Live
       else if (t startsWith UiText.Life.dead)
@@ -180,6 +181,9 @@ final class ReqDetailObs($: DomZipperJs, val nav: NavObs) {
 
   val editables =
     $.editables0n.doms
+
+  val spinnerCount =
+    $.collect0n(".loading").size
 
   val mode: Mode =
     if (errorRoot.isDefined)

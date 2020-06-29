@@ -8,9 +8,10 @@ import java.net.URL
 import scala.annotation.tailrec
 import scala.collection.immutable.{ArraySeq, TreeMap}
 import scala.collection.{Factory, Iterable}
+import scala.reflect.ClassTag
 import scala.util.Try
 import scalaz.std.anyVal.intInstance
-import scalaz.{-\/, Equal, Order, \/, \/-}
+import scalaz.{-\/, Applicative, Equal, Order, \/, \/-}
 import shipreq.base.util.ScalaExt.StringBuilderExt
 
 object Util {
@@ -302,4 +303,18 @@ object Util {
     else
       y.foldLeft(x)((q, a) =>
         if (x.exists(e.equal(_, a))) q else q :+ a)
+
+  implicit class ShipReqOpsForArraySeq[A](private val self: ArraySeq[A]) extends AnyVal {
+    def traverse[G[_], B: ClassTag](f: A => G[B])(implicit G: Applicative[G]): G[ArraySeq[B]] = {
+      if (self.isEmpty)
+        G.pure(ArraySeq.empty[B])
+      else {
+        val gh = f(self.head)
+        val gz = G.map(gh)(_ => ArraySeq.empty[B])
+        val gt = self.tail.foldLeft(gz)((q, a) => G.apply2(q, f(a))(_ :+ _))
+        G.apply2(gh, gt)(_ +: _)
+      }
+    }
+  }
+
 }

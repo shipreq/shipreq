@@ -10,7 +10,7 @@ object ShrinkerTest extends TestSuite {
 
     "vectorRemoveOne" - {
       def validity(as: Vector[Int]) = Valid.when(as.sum < 100)
-      val result = Shrink(Vector(1, 3, 5, 8, 70, 3, 80))(Shrinker.vectorRemoveOne, _.length, validity)
+      val result = Shrink(Vector(1, 3, 5, 8, 70, 3, 80))(Shrinker.removeElements, _.length, validity)
       assertEq(result, Vector(70, 80))
     }
 

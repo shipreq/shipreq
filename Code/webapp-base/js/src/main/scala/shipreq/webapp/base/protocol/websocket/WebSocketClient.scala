@@ -98,11 +98,11 @@ object WebSocketClient {
       timers            : JsTimers,
       logger            : LoggerJs.Dsl) extends WebSocketClient[ReqRes] { self =>
 
-    private val requestManager: RequestManager[ReqId, Protocol.AndValue[SafePickler], Protocol[SafePickler]] =
+    private val requestManager: RequestManager[ReqId, Protocol.AndValue[SafePickler], Request[ReqRes]] =
       RequestManager.arrayStore
 
     private val protocolSC: Protocol.Of[SafePickler, ServerToClient[Push]] =
-      mkProtocolSC(requestManager.getState)
+      mkProtocolSC(requestManager.get(_).runNow().map(_.state.prep.response))
 
     /** All state for the WebSocket client.
       *
@@ -153,10 +153,14 @@ object WebSocketClient {
           state.scheduled.foreach(timers.clearTimeout)
           val i = unsafeNewInstance()
           state = state.copy(instance = i, scheduled = None)
-          if (i.isDefined)
-            state = state.copy(retries = connectionRetries)
-          else
-            unsafeScheduleReconnect()
+          i match {
+            case Some(_) =>
+              state = state.copy(retries = connectionRetries)
+              for (e <- requestManager.getAll.runNow())
+                resend(e.reqId, e.state).runNow()
+            case None =>
+              unsafeScheduleReconnect()
+          }
         }
 
       val reauthoriseAndReconnect: Callback =
@@ -267,7 +271,7 @@ object WebSocketClient {
         while (queueOldestToNewest.nonEmpty) {
           val (reqId, payload) = queueOldestToNewest.head
 
-          if (requestManager.getState(reqId).isDefined)
+          if (requestManager.get(reqId).runNow().isDefined)
             try
               ws.send(payload.toArrayBuffer)
             catch {
@@ -391,20 +395,27 @@ object WebSocketClient {
       }
     }
 
-    override def send(p: ReqRes)(request: p.RequestType): CallbackTo[AsyncCallback[p.ResponseType]] = {
-      type R = CallbackTo[AsyncCallback[p.ResponseType]]
+    override def send(p: ReqRes)(request: p.RequestType): CallbackTo[AsyncCallback[p.ResponseType]] =
+      _send(Request(p)(request))
 
-      def addToQueue: R = {
-        val prep = p.prepareSend(request)
-        requestManager.newRequest(prep.response).flatMap { case (reqId, callback) =>
-          CallbackTo {
-            val msgValue = (reqId, prep.request)
-            val msgBin   = protocolCS.codec.encode(msgValue)
-            queueOldestToNewest :+= ((reqId, msgBin))
-            callback.map(_.unsafeForceType[p.ResponseType].value)
-          }
+    private def _send(request: Request[ReqRes]): CallbackTo[AsyncCallback[request.p.ResponseType]] =
+      _sendGeneric(request) {
+        requestManager.newRequest(request).flatMap { case (reqId, promise) =>
+          _addToQueue(reqId, request)(promise)
         }
       }
+
+    def resend(reqId: ReqId, request: Request[ReqRes]): CallbackTo[AsyncCallback[request.p.ResponseType]] =
+      _sendGeneric(request) {
+        requestManager.get(reqId).flatMap {
+          case Some(e) => _addToQueue(reqId, request)(e.promise)
+          case None    => _send(request)
+        }
+      }
+
+    private def _sendGeneric(request: Request[ReqRes])
+                            (addToQueue: => CallbackTo[AsyncCallback[request.p.ResponseType]]): CallbackTo[AsyncCallback[request.p.ResponseType]] = {
+      type R = CallbackTo[AsyncCallback[request.p.ResponseType]]
 
       def rejectImmediately(error: Throwable): R =
         CallbackTo.pure(AsyncCallback.throwException(error))
@@ -420,6 +431,16 @@ object WebSocketClient {
       }
     }
 
+    private def _addToQueue(reqId  : ReqId,
+                            request: Request[ReqRes])
+                           (promise: AsyncCallback[Protocol.AndValue[SafePickler]]): CallbackTo[AsyncCallback[request.p.ResponseType]] =
+      CallbackTo {
+        val msgValue = (reqId, request.prep.request)
+        val msgBin   = protocolCS.codec.encode(msgValue)
+        queueOldestToNewest :+= ((reqId, msgBin))
+        promise.map(_.unsafeForceType[request.p.ResponseType].value)
+      }
+
     override def invoker(p: ReqRes): ServerSideProcInvoker[p.RequestType, ErrorMsg, p.ResponseType] =
       ServerSideProcInvoker.fromSimple(send(p)(_))
   }
@@ -431,41 +452,74 @@ object WebSocketClient {
 
   // ===================================================================================================================
 
+  private sealed trait Request[ReqRes <: Protocol.RequestResponse[SafePickler]] {
+    val p: ReqRes
+    val req: p.RequestType
+
+    final lazy val prep = p.prepareSend(req)
+  }
+
+  private object Request {
+    type Aux[ReqRes <: Protocol.RequestResponse[SafePickler], P <: ReqRes] = Request[ReqRes] { val p: P }
+
+    def apply[ReqRes <: Protocol.RequestResponse[SafePickler]](p: ReqRes)(req: p.RequestType): Aux[ReqRes, p.type] = {
+      val _p: p.type = p
+      val _req = req
+      new Request[ReqRes] {
+        override val p: _p.type = _p
+        override val req = _req
+      }
+    }
+  }
+
+  // ===================================================================================================================
+
   private trait RequestManager[Id, A, S] {
     def newRequest(state: S): CallbackTo[(Id, AsyncCallback[A])]
-    def getState(id: Id): Option[S]
+    def get(id: Id): CallbackTo[Option[RequestManager.StateEntry[A, S]]]
+    def getAll: CallbackTo[List[RequestManager.StateEntry[A, S]]]
     def complete(id: Id, a: Try[A]): Callback
     def completeAll(t: Try[A]): CallbackTo[List[Throwable]]
     def remove(id: Id): Callback
   }
 
   private object RequestManager {
+
+    final case class StateEntry[A, S](reqId   : ReqId,
+                                      state   : S,
+                                      complete: Try[A] => Callback,
+                                      promise : AsyncCallback[A])
+
     private final class ArrayStore[A, S] extends RequestManager[ReqId, A, S] {
       private var prevId = 0
       private var size = 0
-      private var state = new js.Array[js.UndefOr[(S, Try[A] => Callback)]]
+      private var state = new js.Array[js.UndefOr[StateEntry[A, S]]]
 
-      private def get(id: ReqId): Option[(S, Try[A] => Callback)] = {
+      private def unsafeGet(id: ReqId): Option[StateEntry[A, S]] = {
         // console.log("GET: ", state.asInstanceOf[js.Array[js.Any]])
         val e = state(id.value)
         e.toOption
       }
 
+      override def get(id: ReqId) =
+        CallbackTo(unsafeGet(id))
+
+      override val getAll =
+        CallbackTo(state.iterator.flatMap(_.toList).toList)
+
       override def newRequest(s: S): CallbackTo[(ReqId, AsyncCallback[A])] =
         CallbackTo {
           prevId += 1
           val id = prevId
+          val reqId = ReqId(id)
           val (ac, tryToCb) = AsyncCallback.promise[A].runNow()
-          state(id) = (s, tryToCb)
+          state(id) = StateEntry(reqId, s, tryToCb, ac)
           size += 1
-          (ReqId(id), ac)
+          (reqId, ac)
         }
 
-      override def getState(id: ReqId): Option[S] =
-        get(id).map(_._1)
-
-      private def unsafeGetAndRemove(reqId: ReqId): Option[(S, Try[A] => Callback)] = {
-        val r = get(reqId)
+      private def unsafeGetAndRemove(reqId: ReqId): Option[StateEntry[A, S]] = {
+        val r = unsafeGet(reqId)
         if (r.isDefined) {
           assert(size > 0, s"WebSocketClient.RequestManager: size=$size, reqId=${reqId.value}, state=$state")
           size -= 1
@@ -479,15 +533,15 @@ object WebSocketClient {
 
       override def complete(reqId: ReqId, a: Try[A]): Callback =
         Callback {
-          for ((_, f) <- unsafeGetAndRemove(reqId))
-            f(a).runNow()
+          for (e <- unsafeGetAndRemove(reqId))
+            e.complete(a).runNow()
         }
 
       override def completeAll(t: Try[A]): CallbackTo[List[Throwable]] =
         CallbackTo {
           // Extract handlers
           var l = List.empty[Try[A] => Callback]
-          state.forEachJs(_.foreach(l ::= _._2))
+          state.forEachJs(_.foreach(l ::= _.complete))
 
           // Clear state
           state = new js.Array

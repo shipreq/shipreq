@@ -399,7 +399,7 @@ final case class RedisLawTester[F <: ProjectAlgebra[Fx], G <: ProjectAlgebra[Fx]
 
       val justEvictSnapshot = View(RoseTree(Cmd.EvictSnapshot))
 
-      Shrinker.vectorShrinkElement(Shrinker {
+      Shrinker.shrinkElements(Shrinker {
         case cmd @ Cmd.RunTest(test) =>
 
           def shrinkOption[A](o: Option[Test.Aux[A]], s: Shrinker[A]) =
@@ -429,7 +429,7 @@ final case class RedisLawTester[F <: ProjectAlgebra[Fx], G <: ProjectAlgebra[Fx]
 
     val shrinker: Shrinker[Vector[Cmd]] =
       Shrinker.combine(
-        Shrinker.vectorRemoveOne,
+        Shrinker.removeElements,
         elementShrinker,
       )
 

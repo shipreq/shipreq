@@ -30,7 +30,7 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
   override def extensions()     = ""
   override def readyState()     = _readyState
   def sent()                    = _sent
-  def responsesPending()        = _pendingResponse.nonEmpty
+  def pendingResponse()         = _pendingResponse
 
   def open(): Unit =
     readyState() match {
@@ -129,7 +129,7 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
     }
 
   def respondToNextPending(respondWith: Message => Message): Unit =
-    if (responsesPending()) {
+    if (_pendingResponse.nonEmpty) {
       val i = _pendingResponse.head
       _pendingResponse = _pendingResponse.tail
       val o = respondWith(i)

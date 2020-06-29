@@ -16,7 +16,7 @@ import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint.InitData
 import shipreq.webapp.base.protocol.entrypoint.{ClientSideProcImpl, ProjectSpaEntryPoint}
 import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.InitAppData
 import shipreq.webapp.base.protocol.websocket.{ProjectSpaProtocols, WebSocketClient}
-import shipreq.webapp.base.ui.{BaseStyles, ReauthenticationModal}
+import shipreq.webapp.base.ui.{BaseStyles, OptionalFullscreen, ReauthenticationModal}
 import shipreq.webapp.client.loaders.ProjectSpaLoader
 import shipreq.webapp.client.project.app.pages.root._
 import shipreq.webapp.client.project.app.state.Global
@@ -51,7 +51,7 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
 
   private def onLoad(i: InitData, g: Global): Callback =
     Callback {
-      val root     = new LoadedRoot(i, g, ConfirmJs.real, PromptJs.real)
+      val root     = new LoadedRoot(i, g, ConfirmJs.real, PromptJs.real, OptionalFullscreen.real)
       val baseUrl  = determineBaseUrl(location.href)
       val router   = Router(baseUrl, Routes.routerConfig(root))
       val metadata = CommonProtocolsJs.Metadata.client(i.username, g.projectMetadata(i.projectId))

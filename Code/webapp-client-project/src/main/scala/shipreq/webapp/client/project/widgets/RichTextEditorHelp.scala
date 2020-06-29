@@ -52,6 +52,24 @@ object RichTextEditorHelp {
         "* item 1",
         "* item 2"))
 
+  private val styling =
+    Group("Styling")(
+      Example("To make text bold, wrap it in ", code("**"))("**this is bold**"),
+      Example("To make text italic, wrap it in ", code("//"))("//this is italic//"),
+      Example("To underline text, wrap it in ", code("__"))("__this is underlined__"),
+      Example("To strikethrough text, wrap it in ", code("~~"))("~~this is strikethrough~~"),
+    )
+
+  private val headings = {
+    def eg(n: Int) = {
+      val h = "#" * n
+      Example("Begin a line with ", code(h + " "), s" to create a level $n heading.")(h + " Heading level " + n)
+    }
+    Group("Headings")(
+      eg(1), (2 to 6).iterator.map(eg).toSeq: _*
+    )
+  }
+
   private val codeBlocks =
     Group("Code blocks")(
       Example(
@@ -142,7 +160,7 @@ object RichTextEditorHelp {
             Text.values
               .iterator
               .filter(criteria)
-              .map(UiText.RichText.descPlural)
+              .flatMap(UiText.RichText.descPlural)
               .toList
               .distinct
               .sorted
@@ -153,25 +171,28 @@ object RichTextEditorHelp {
     }
 
     val groups = NonEmptyVector[Group](
-      customise(issues, _.supports(TypeGroup.Issue)),
-      customise(lists, _.supports(TypeGroup.ListMarkup)),
-      customise(references, _.supports(TypeGroup.ContentRef)),
-      customise(tags, _.supports(TypeGroup.TagRef)),
-      customise(codeBlocks, _.supports(TypeGroup.CodeBlock)),
-      customise(other, _.supports(TypeGroup.PlainTextMarkup)),
+      customise(issues,      _.supports(TypeGroup.Issue)),
+      customise(lists,       _.supports(TypeGroup.ListMarkup)),
+      customise(references,  _.supports(TypeGroup.ContentRef)),
+      customise(tags,        _.supports(TypeGroup.TagRef)),
+      customise(styling,     _.supports(TypeGroup.PlainTextMarkup)),
+      customise(headings,    _.supports(TypeGroup.Headings)),
+      customise(codeBlocks,  _.supports(TypeGroup.CodeBlock)),
+      customise(other,       _.supports(TypeGroup.PlainTextMarkup)),
       customise(useCaseFlow, _ ==* Text.UseCaseStep),
     )
 
     HelpModal("Rich Text Editor Help", groups)
   }
 
+
+
+
   private val lookup: Map[Text.Generic, Modal] =
     Text.values.iterator.map(t => t -> create(t)).toMap
 
   val allRendered: TagMod =
     TagMod(lookup.valuesIterator.map(_.render).toList: _*)
-
-  // TODO code block help
 
   def modalFor(text: Text.Generic): Modal =
     lookup(text)

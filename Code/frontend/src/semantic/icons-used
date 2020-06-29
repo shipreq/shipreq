@@ -1,3 +1,4 @@
+.angle.double.down
 .angle.double.left
 .angle.double.right
 .angle.right
@@ -29,6 +30,7 @@
 .lock
 .mail
 .mail.outline
+.maximize
 .plug
 .plus
 .remove
@@ -48,4 +50,5 @@
 .warning
 .warning.circle
 .warning.sign
+.window.restore
 .write

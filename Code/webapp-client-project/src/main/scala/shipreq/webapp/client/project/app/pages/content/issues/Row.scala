@@ -8,8 +8,10 @@ import shipreq.webapp.base.UiText.{Issues => UI}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.issue._
+import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.feature.EditorFeature
+import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 import shipreq.webapp.client.project.lib.EditorNavParent
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
@@ -27,6 +29,12 @@ sealed trait Row {
 
 object Row {
 
+  val editorArgs =
+    FieldKey.allArgs(
+      customTextField = EditTheme.Style.default.copy(openPreview = EditTheme.OpenPreview.MinimallyWithControls),
+      useCaseStep     = FieldKey.UseCaseStep.Args.empty,
+    )
+
   sealed trait ForReq extends Row {
     val req: Req
   }
@@ -38,7 +46,7 @@ object Row {
                                  renderer      : RenderFeature.ForGenericReq,
                                  actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
-    override val editor = (e, pw) => Some(renderEditable(field.key)(renderer, e.forGenericReq(req.id), (), pw))
+    override val editor = (e, pw) => Some(renderEditable(field.key)(renderer, e.forGenericReq(req.id), editorArgs(field.key), pw))
   }
 
   final case class ForUseCase(issue         : Issue,
@@ -48,7 +56,7 @@ object Row {
                               renderer      : RenderFeature.ForUseCase,
                               actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
-    override val editor = (e, pw) => Some(renderEditable(field.key)(renderer, e.forUseCase(req.id), (), pw))
+    override val editor = (e, pw) => Some(renderEditable(field.key)(renderer, e.forUseCase(req.id), editorArgs(field.key), pw))
   }
 
   final case class ForUseCaseStep(issue         : Issue,
@@ -73,7 +81,7 @@ object Row {
 
     override val editor = (e, pw) =>
       fieldOption.map { f =>
-        renderEditable(f.key)(renderer, e.forCodeGroup(rcg.id), (), pw)
+        renderEditable(f.key)(renderer, e.forCodeGroup(rcg.id), editorArgs(f.key), pw)
       }
   }
 

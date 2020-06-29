@@ -84,14 +84,20 @@ object UiText {
   }
 
   object RichText {
-    val descPlural: Text.Base => String = {
-      case _: Text.ReqTitle     => "req titles"
-      case Text.CodeGroupTitle  => s"${UiText.codeGroup.toLowerCase} titles"
-      case Text.InlineIssueDesc => "issue info blocks"
-      case Text.CustomTextField => "text fields"
-      case Text.UseCaseStep     => "use case steps"
-      case Text.DeletionReason  => SpecialBuiltInField.DeletionReason.name.toLowerCase.pluralise(2)
-      case Text.ManualIssue     => Issues.looseIssues
+    val descPlural: Text.Base => Option[String] = {
+      case _: Text.ReqTitle          => Some("req titles" )
+      case Text.CodeGroupTitle       => Some(s"${UiText.codeGroup.toLowerCase} titles" )
+      case Text.InlineIssueDesc      => Some("issue info blocks" )
+      case Text.CustomTextField      => Some("text fields" )
+      case Text.UseCaseStep          => Some("use case steps" )
+      case Text.DeletionReason       => Some(SpecialBuiltInField.DeletionReason.name.toLowerCase.pluralise(2) )
+      case Text.ManualIssue          => Some(Issues.looseIssues )
+      case Text.HeadingTitleFull
+         | Text.HeadingTitleNoIssues
+         | Text.StyledInnerFull
+         | Text.StyledInnerContentRef
+         | Text.StyledInnerNoIssues
+         | Text.StyledInnerNoTags    => None
     }
   }
 

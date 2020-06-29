@@ -95,7 +95,7 @@ object WebSocketClientPropTest extends TestSuite {
           add(wsClosing)
           add(wsClose)
           add(wsPush)
-          if (ws().responsesPending()) addProc("ws.respond", server.respondToNextPending())
+          if (ws().pendingResponse().nonEmpty) addProc("ws.respond", server.respondToNextPending())
 
         case Some(ReadyState.Closing) =>
           add(wsClose)

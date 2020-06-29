@@ -37,20 +37,13 @@ object ProjectSpaProtocols {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   // When any of these change, bump the minor version of safePicklerWsReqResAndReq
-  import CreateContentCmd.CodecsV0._
-  import ManualIssueCmd.CodecsV0._
+  import CreateContentCmd.CodecsV1._
+  import ManualIssueCmd.CodecsV1._
   import SavedViewCmd.CodecsV1._
   import UpdateConfigCmd.CodecsV1._
-  import UpdateContentCmd.CodecsV0._
+  import UpdateContentCmd.CodecsV1._
 
   private object Codecs {
-    import boopickle.DefaultBasic.unitPickler
-    import shipreq.webapp.base.protocol.binary.v1.BaseData._
-    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
-    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
-    import shipreq.webapp.base.protocol.binary.v1.PostEvents._
-    import shipreq.webapp.base.protocol.binary.v1.Rev1._
-
     val safePicklerWsReqResAndReq: SafePickler[WsReqRes.AndReq] = {
       import WsReqRes._
 
@@ -76,9 +69,19 @@ object ProjectSpaProtocols {
         }
 
       pickler
-        .asV1(1)
+        .asV1(2)
         .withMagicNumbers(0x1DB44559, 0x53562938)
     }
+
+    // When any of these change, bump responseVersion
+    import boopickle.DefaultBasic.unitPickler
+    import shipreq.webapp.base.protocol.binary.v1.BaseData._
+    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
+    import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
+    import shipreq.webapp.base.protocol.binary.v1.PostEvents._
+    import shipreq.webapp.base.protocol.binary.v1.Rev2._
+
+    protected final val responseVersion = 2
 
     implicit val picklerInitAppData: Pickler[InitAppData] =
       new Pickler[InitAppData] {
@@ -95,9 +98,6 @@ object ProjectSpaProtocols {
 
     implicit val picklerInitAppRes: Pickler[ErrorMsg \/ InitAppData] =
       pickleDisj
-
-    implicit def picklerVerifiedEventSeq: Pickler[VerifiedEvent.Seq] =
-      shipreq.webapp.base.protocol.binary.v1.Rev1.picklerVerifiedEventSeq
 
     implicit val picklerOptionEventOrdLatest: Pickler[Option[EventOrd.Latest]] =
       optionPickler
@@ -120,8 +120,6 @@ object ProjectSpaProtocols {
 
     implicit val safePicklerUnit: SafePickler[Unit] =
       unitPickler.asV1(0) // no magic numbers because no data
-
-    protected final val responseVersion = 1
 
     implicit val safePicklerInitAppRes: SafePickler[ErrorMsg \/ InitAppData] =
       picklerInitAppRes

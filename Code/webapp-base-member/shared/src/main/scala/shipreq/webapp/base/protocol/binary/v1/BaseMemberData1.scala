@@ -1,16 +1,12 @@
 package shipreq.webapp.base.protocol.binary.v1
 
-import boopickle.ConstPickler
 import boopickle.DefaultBasic._
 import japgolly.univeq.UnivEq
 import nyaya.util.Multimap
-import scala.collection.immutable.ArraySeq
-import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod
-import shipreq.webapp.base.text.AtomTC
 
 /** This is the minimum set of codecs required for event codecs.
   *
@@ -29,127 +25,6 @@ object BaseMemberData1 {
   // ===================================================================================================================
   // Concrete picklers for base data type
   // (implicit lazy vals, "pickler" prefix)
-
-  object AtomPicklers extends AtomTC[Pickler] {
-    import shipreq.webapp.base.text._
-    import Atom._
-
-    override def lazily[A](f: => Pickler[A]): Pickler[A] = pickleLazily(f)
-
-    override def arr[A](implicit a: Pickler[A], ct: ClassTag[A]) = pickleArraySeq[A]
-
-    override def nea[A](as: Pickler[ArraySeq[A]])(implicit a: Pickler[A]) = pickleNEA(as)
-
-    override def sum[T <: Atom.Base](t: T)(get: Atom.Type => Pickler[t.Atom], all: List[Pickler[t.Atom]]): Pickler[t.Atom] =
-      new Pickler[t.Atom] {
-        private[this] final val KeyBlankLine      = '0'
-        private[this] final val KeyCodeBlock      = '{'
-        private[this] final val KeyCodeRef        = 'c'
-        private[this] final val KeyEmailAddress   = '@'
-        private[this] final val KeyIssue          = 'i'
-        private[this] final val KeyLiteral        = 'l'
-        private[this] final val KeyMonospace      = '`'
-        private[this] final val KeyReqRef         = 'r'
-        private[this] final val KeyTagRef         = 't'
-        private[this] final val KeyTeX            = 'X'
-        private[this] final val KeyUnorderedList  = '*'
-        private[this] final val KeyUseCaseStepRef = 'u'
-        private[this] final val KeyWebAddress     = '/'
-        override def pickle(a: t.Atom)(implicit state: PickleState): Unit = {
-          Atom.Type.of(a) match {
-            case t@ Type.Literal        => state.enc.writeByte(KeyLiteral       ); get(t).pickle(a)
-            case t@ Type.BlankLine      => state.enc.writeByte(KeyBlankLine     ); get(t).pickle(a)
-            case t@ Type.CodeBlock      => state.enc.writeByte(KeyCodeBlock     ); get(t).pickle(a)
-            case t@ Type.CodeRef        => state.enc.writeByte(KeyCodeRef       ); get(t).pickle(a)
-            case t@ Type.EmailAddress   => state.enc.writeByte(KeyEmailAddress  ); get(t).pickle(a)
-            case t@ Type.Issue          => state.enc.writeByte(KeyIssue         ); get(t).pickle(a)
-            case t@ Type.Monospace      => state.enc.writeByte(KeyMonospace     ); get(t).pickle(a)
-            case t@ Type.ReqRef         => state.enc.writeByte(KeyReqRef        ); get(t).pickle(a)
-            case t@ Type.TagRef         => state.enc.writeByte(KeyTagRef        ); get(t).pickle(a)
-            case t@ Type.TeX            => state.enc.writeByte(KeyTeX           ); get(t).pickle(a)
-            case t@ Type.UnorderedList  => state.enc.writeByte(KeyUnorderedList ); get(t).pickle(a)
-            case t@ Type.UseCaseStepRef => state.enc.writeByte(KeyUseCaseStepRef); get(t).pickle(a)
-            case t@ Type.WebAddress     => state.enc.writeByte(KeyWebAddress    ); get(t).pickle(a)
-          }
-        }
-        override def unpickle(implicit state: UnpickleState): t.Atom = {
-          state.dec.readByte match {
-            case KeyLiteral        => get(Type.Literal       ).unpickle
-            case KeyBlankLine      => get(Type.BlankLine     ).unpickle
-            case KeyCodeBlock      => get(Type.CodeBlock     ).unpickle
-            case KeyCodeRef        => get(Type.CodeRef       ).unpickle
-            case KeyEmailAddress   => get(Type.EmailAddress  ).unpickle
-            case KeyIssue          => get(Type.Issue         ).unpickle
-            case KeyMonospace      => get(Type.Monospace     ).unpickle
-            case KeyReqRef         => get(Type.ReqRef        ).unpickle
-            case KeyTagRef         => get(Type.TagRef        ).unpickle
-            case KeyTeX            => get(Type.TeX           ).unpickle
-            case KeyUnorderedList  => get(Type.UnorderedList ).unpickle
-            case KeyUseCaseStepRef => get(Type.UseCaseStepRef).unpickle
-            case KeyWebAddress     => get(Type.WebAddress    ).unpickle
-          }
-        }
-      }
-
-    override def blankLine[T <: NewLine](t: T): Pickler[t.BlankLine] =
-      ConstPickler(t.blankLine)
-
-    override def literal[T <: Literal](t: T): Pickler[t.Literal] =
-      transformPickler((i: String) => t.Literal(i))(_.value)
-
-    override def codeBlock[T <: CodeBlock](t: T): Pickler[t.CodeBlock] =
-      new Pickler[t.CodeBlock] {
-        override def pickle(a: t.CodeBlock)(implicit state: PickleState): Unit = {
-          state.pickle(a.language)
-          state.pickle(a.code)
-        }
-        override def unpickle(implicit state: UnpickleState): t.CodeBlock = {
-          val language = state.unpickle[Option[String]]
-          val code     = state.unpickle[String]
-          t.CodeBlock(language, code)
-        }
-      }
-
-    override def monospace[T <: PlainTextMarkup](t: T): Pickler[t.Monospace] =
-      transformPickler((i: String) => t.Monospace(i))(_.value)
-
-    override def webAddress[T <: PlainTextMarkup](t: T): Pickler[t.WebAddress] =
-      transformPickler((i: String) => t.WebAddress(i))(_.value)
-
-    override def emailAddress[T <: PlainTextMarkup](t: T): Pickler[t.EmailAddress] =
-      transformPickler((i: String) => t.EmailAddress(i))(_.value)
-
-    override def teX[T <: PlainTextMarkup](t: T): Pickler[t.TeX] =
-      transformPickler((i: String) => t.TeX(i))(_.value)
-
-    override def reqRef[T <: ContentRef](t: T): Pickler[t.ReqRef] =
-      transformPickler((i: ReqId) => t.ReqRef(i))(_.value)
-
-    override def codeRef[T <: ContentRef](t: T): Pickler[t.CodeRef] =
-      transformPickler((i: ReqCodeId) => t.CodeRef(i))(_.value)
-
-    override def useCaseStepRef[T <: ContentRef](t: T): Pickler[t.UseCaseStepRef] =
-      transformPickler((i: UseCaseStepId) => t.UseCaseStepRef(i))(_.value)
-
-    override def tagRef[T <: TagRef](t: T): Pickler[t.TagRef] =
-      transformPickler((i: ApplicableTagId) => t.TagRef(i))(_.value)
-
-    override def issue[T <: Issue](t: T)(implicit h: Pickler[Text.InlineIssueDesc.OptionalText]): Pickler[t.Issue] =
-      new Pickler[t.Issue] {
-        override def pickle(a: t.Issue)(implicit state: PickleState): Unit = {
-          state.pickle(a.typ)
-          state.pickle(a.desc)
-        }
-        override def unpickle(implicit state: UnpickleState): t.Issue = {
-          val typ  = state.unpickle[CustomIssueTypeId]
-          val desc = state.unpickle[Text.InlineIssueDesc.OptionalText]
-          t.Issue(typ, desc)
-        }
-      }
-
-    override def unorderedList[T <: ListMarkup](t: T)(implicit h: Pickler[NonEmptyArraySeq[t.ListItem]]): Pickler[t.UnorderedList] =
-      transformPickler((i: NonEmptyArraySeq[t.ListItem]) => t.UnorderedList(i))(_.items)
-  }
 
   object SavedViewPicklers {
     import shipreq.webapp.base.data.savedview._

@@ -12,6 +12,7 @@ import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test.{SampleProject5, _}
+import shipreq.webapp.base.ui.{OnlyVisibleOnMouseMove, OptionalFullscreen}
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.pages.config.fields.{FieldConfigObs, FieldConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.issues.{IssueConfigObs, IssueConfigTestDsl}
@@ -52,21 +53,21 @@ object ProjectSpaTestDsl {
       val inner = $(">div")(">div:nth-child(2)>*")
       val nav = new NavObs($(">nav"), inner)
 
-      val empty: Obs = {
+      val base: Obs = {
         val e = Left("Chosen page is: " + nav.page)
-        Obs(global.unsafeProject(), nav, e, e, e, e, e, e, e, e, e)
+        Obs($, global.unsafeProject(), new TestGlobal.Obs($, global), nav, e, e, e, e, e, e, e, e, e)
       }
 
       nav.page match {
-        case Page.Index        => empty.copy(home        = Try(new ProjectHomeObs(inner)))
-        case Page.CfgReqTypes  => empty.copy(cfgReqTypes = Try(new ReqTypeConfigObs(inner, confirmJs)))
-        case Page.CfgFields    => empty.copy(cfgFields   = Try(new FieldConfigObs(inner)))
-        case Page.CfgIssues    => empty.copy(cfgIssues   = Try(new IssueConfigObs(inner)))
-        case Page.CfgTags      => empty.copy(cfgTags     = Try(new TagConfigObs(inner)))
-        case Page.ReqTable     => empty.copy(reqTable    = Try(new ReqTableObs(global, inner)))
-        case Page.ReqDetail(_) => empty.copy(reqDetail   = Try(new ReqDetailObs(inner, nav)))
-        case Page.Issues       => empty.copy(issues      = Try(new IssuesPageObs(inner)))
-        case Page.ReqGraph     => empty.copy(reqGraph    = Try(new ReqGraphObs(inner)))
+        case Page.Index        => base.copy(home        = Try(new ProjectHomeObs(inner)))
+        case Page.CfgReqTypes  => base.copy(cfgReqTypes = Try(new ReqTypeConfigObs(inner, confirmJs)))
+        case Page.CfgFields    => base.copy(cfgFields   = Try(new FieldConfigObs(inner)))
+        case Page.CfgIssues    => base.copy(cfgIssues   = Try(new IssueConfigObs(inner)))
+        case Page.CfgTags      => base.copy(cfgTags     = Try(new TagConfigObs(inner)))
+        case Page.ReqTable     => base.copy(reqTable    = Try(new ReqTableObs(inner, base.global)))
+        case Page.ReqDetail(_) => base.copy(reqDetail   = Try(new ReqDetailObs(inner, nav, base.global)))
+        case Page.Issues       => base.copy(issues      = Try(new IssuesPageObs(inner)))
+        case Page.ReqGraph     => base.copy(reqGraph    = Try(new ReqGraphObs(inner)))
       }
     }
   }
@@ -105,7 +106,9 @@ object ProjectSpaTestDsl {
       nav.collect01(".icon.edit").zippers.fold(0)(_.parent("span").innerText.toInt)
   }
 
-  final case class Obs(project    : Project,
+  final case class Obs($          : DomZipperJs,
+                       project    : Project,
+                       global     : TestGlobal.Obs,
                        nav        : NavObs,
                        home       : Maybe[ProjectHomeObs],
                        cfgFields  : Maybe[FieldConfigObs],
@@ -123,6 +126,10 @@ object ProjectSpaTestDsl {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   val * = Dsl[Ref, Obs, TestState]
+
+  val global = new TestGlobal.TestDslWithObs(*)(_.global, _.global)
+
+  val reauth = new TestReauthenticationModal.TestDsl(*)(_.global.reauthModal)
 
   implicit lazy val transformPH =
     PH.*.transformer
@@ -144,7 +151,7 @@ object ProjectSpaTestDsl {
 
   implicit lazy val transformRD =
     RD.*.transformer
-      .mapR[Ref](_ => ())
+      .mapR[Ref](_.global)
       .pmapO[Obs](_.reqDetail)
       .mapS[TestState](s => RD.TestState(s.project, s.detailState))((s, d) => TestState(s.page, d.project, d.state))
 
@@ -204,7 +211,8 @@ object ProjectSpaTestDsl {
   private val invariants: *.Invariants =
     pageInvariants.when(i => i.obs.nav.page ==* i.state.page) &
     *.focus("Page").obsAndState(_.nav.page, _.page).assert.equal &
-    *.focus("Project name in NavBar").obsAndState(_.nav.projectName, _.project.name).assert.equal
+    *.focus("Project name in NavBar").obsAndState(_.nav.projectName, _.project.name).assert.equal &
+    global.fullscreenCount.test(_ + " should be ≤ 1")(_ <= 1)
 
   val unsavedChanges = *.focus("unsaved changes").value(_.obs.nav.unsavedChanges)
 
@@ -264,11 +272,13 @@ object ProjectSpaTestDsl {
                           rd        : RD.State = RD.unspecifiedState,
                           assertPass: Boolean = true): Report[String] = {
 
+    OnlyVisibleOnMouseMove.allowHide = false
+
     val global       = TestGlobal(project)
     val confirmJs    = TestConfirmJs()
     val promptJs     = TestPromptJs()
     val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name)
-    val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs)
+    val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs, global.optionalFullscreen)
     val rc           = MockRouterCtl[Page]()
     val init         = TestState(page, global.unsafeProject(), rd)
 

@@ -44,6 +44,8 @@ object ProjectHomeTestDsl {
 
   val * = Dsl[TestGlobal, ProjectHomeObs, Project]
 
+  val svr = new TestGlobal.TestDsl(*)(identity)
+
   val invariants: *.Invariants =
     *.focus("Req count").obsAndState(_.reqCount, _.liveReqCount).assert.equal &
     *.focus("Changes").value(_.obs.changes).test(_ + " must be positive.")(_ >= 0) &
@@ -85,11 +87,6 @@ object ProjectHomeTestDsl {
     *.action("Edit project name: " + text.display)(SimEvent.Change(text) simulate _.obs.projectNameEditInput.get) +>
     editValue.assert(text)
 
-  val serverDontAutoRespond =
-    *.action("Prevent server auto-responding")(_.ref.disableAutoResponse())
-
-  val serverAutoRespondToLast =
-    *.action("Server responds")(_.ref.autoRespondToLast())
 }
 
 // =====================================================================================================================
@@ -100,7 +97,7 @@ object ProjectHomeTest extends TestSuite {
   PrepareEnv()
 
   def projectNameEditing: *.Actions = (
-    serverDontAutoRespond
+    svr.disableAutoResponse
     >> startEdit
     >> setEditValue("") +> editHasError.assert(true)
     >> commitEdit +> editValue.assert.noChange
@@ -109,7 +106,7 @@ object ProjectHomeTest extends TestSuite {
     >> startEdit >> commitEdit +> editorOpen.assert(false)
     >> startEdit >> setEditValue("  omg fine  ")
     >> commitEdit +> editorDisabled.assert(true)
-    >> serverAutoRespondToLast.updateState(_.copy(name = "omg fine")) +> editorOpen.assert(false)
+    >> svr.autoRespondToLast.updateState(_.copy(name = "omg fine")) +> editorOpen.assert(false)
     >> startEdit >> abortEdit
   )
 

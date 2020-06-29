@@ -69,7 +69,8 @@ object Grammar {
   object hashRefKey {
     val length    = Length(1 to 20)
     def firstChar = FirstChar.azAZ09
-    val tailChars = new CharWhitelist("_=-", '.', 'A' to 'Z', 'a' to 'z', '0' to '9')("may only consist of letters, numbers, and these symbols: . _ = -")
+    val midChars  = new CharWhitelist("_=-", '.', 'A' to 'Z', 'a' to 'z', '0' to '9')("may only consist of letters, numbers, and these symbols: . _ = -")
+    def lastChar  = LastChar.azAZ09 // avoids Parser ambiguity with Underscore
     val prefix    = "#"
     val seqFormat = SeqFormat(_.trim, "[# ,]+".r.pattern, "^# *".r.replaceFirstIn(_, ""), _.isEmpty, _.iterator.mkString(" "))
   }

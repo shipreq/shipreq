@@ -246,8 +246,10 @@
     37 [keep  ] a
     43 [keep  ] a:hover
     67 [keep  ] ::-webkit-selection
+    64 [keep  ] ::-moz-selection
     59 [keep  ] ::selection
    113 [keep  ] input::-webkit-selection,textarea::-webkit-selection
+   107 [keep  ] input::-moz-selection,textarea::-moz-selection
     97 [keep  ] input::selection,textarea::selection
     60 [keep  ] body ::-webkit-scrollbar
     73 [keep  ] body ::-webkit-scrollbar-track
@@ -1120,7 +1122,7 @@
     38 [remove] i.icon.podcast:before
     46 [remove] i.icon.window.maximize:before
     46 [remove] i.icon.window.minimize:before
-    45 [remove] i.icon.window.restore:before
+    45 [keep  ] i.icon.window.restore:before
     43 [remove] i.icon.window.close:before
     51 [remove] i.icon.window.close.outline:before
     35 [remove] i.icon.wait:before
@@ -1234,7 +1236,7 @@
     39 [remove] i.icon.zoom.out:before
     46 [remove] i.icon.resize.vertical:before
     48 [remove] i.icon.resize.horizontal:before
-    39 [remove] i.icon.maximize:before
+    39 [keep  ] i.icon.maximize:before
     35 [remove] i.icon.crop:before
     39 [remove] i.icon.cocktail:before
     35 [remove] i.icon.road:before
@@ -1359,7 +1361,7 @@
     48 [keep  ] i.icon.angle.double.left:before
     49 [keep  ] i.icon.angle.double.right:before
     46 [remove] i.icon.angle.double.up:before
-    48 [remove] i.icon.angle.double.down:before
+    48 [keep  ] i.icon.angle.double.down:before
     41 [remove] i.icon.angle.left:before
     42 [keep  ] i.icon.angle.right:before
     39 [remove] i.icon.angle.up:before

@@ -64,13 +64,26 @@ object GrammarSpec {
     val azAZ09 = new FirstChar("", '0', '1' to '9', 'a' to 'z', 'A' to 'Z')("must start with a letter or number.")
   }
 
+  class LastChar(chn: String, ch1: Char, rs: NumericRange[Char]*)(ruleErrMsg: String) extends Chars(chn, ch1, rs: _*) {
+    final val invalidator: Invalidator[String] =
+      CommonValidation.invalidator.endsWithRegex(one)(Invalidity(ruleErrMsg))
+  }
+
+  object LastChar {
+  //val az     = new LastChar("",             'a', 'b' to 'z')            ("must end with a letter.")
+  //val azAZ   = new LastChar("",             'a', 'b' to 'z', 'A' to 'Z')("must end with a letter.")
+  //val az09   = new LastChar("", '0', '1' to '9', 'a' to 'z')            ("must end with a letter or number.")
+    val azAZ09 = new LastChar("", '0', '1' to '9', 'a' to 'z', 'A' to 'Z')("must end with a letter or number.")
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   case class Length(total: Range.Inclusive) {
     final val validator: EndoValidator[String] =
       CommonValidation.endoValidator.lengthInRange(total)
 
-    val minus1   = (total.min - 1) to (total.max - 1)
+    val minus1   = (total.min - 1).max(0) to (total.max - 1).max(0)
+    val minus2   = (total.min - 2).max(0) to (total.max - 2).max(0)
     def regexMod = s"{${total.min},${total.max}}"
   }
 

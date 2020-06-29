@@ -6,7 +6,7 @@ import scala.collection.immutable.ArraySeq
 import scala.collection.{AbstractIterator, Factory}
 import scala.math.Ordering
 import scala.reflect.ClassTag
-import scalaz.Semigroup
+import scalaz.{Apply, Semigroup, Traverse1}
 
 final class NonEmptyArraySeq[+A] private[NonEmptyArraySeq](val whole: ArraySeq[A]) {
   override def toString = "NonEmpty" + whole.toString
@@ -217,6 +217,20 @@ final class NonEmptyArraySeq[+A] private[NonEmptyArraySeq](val whole: ArraySeq[A
 
   def to[B](factory: Factory[A, B]): B =
     factory.fromSpecific(whole)
+
+  def traverse[G[_], B: ClassTag](f: A => G[B])(implicit ap: Apply[G]): G[NonEmptyArraySeq[B]] = {
+    val gh = f(head)
+    if (tail.isEmpty)
+      ap.map(gh)(NonEmptyArraySeq.one)
+    else {
+      val gz = ap.map(gh)(_ => ArraySeq.empty[B])
+      val gt = tail.foldLeft(gz)((q, a) => ap.apply2(q, f(a))(_ :+ _))
+      ap.apply2(gh, gt)((h, t) => NonEmptyArraySeq.force(h +: t))
+    }
+  }
+
+  def updated[AA >: A](idx: Int, value: AA): NonEmptyArraySeq[AA] =
+    NonEmptyArraySeq.force(whole.updated(idx, value))
 }
 
 // =====================================================================================================================
@@ -339,11 +353,11 @@ object NonEmptyArraySeq extends NonEmptyArraySeqImplicits0 {
 //      else {
 //        val gz = ap.map(gh)(_ => ArraySeq.empty[B])
 //        val gt = fa.tail.foldLeft(gz)((q, a) => ap.apply2(q, f(a))(_ :+ _))
-//        ap.apply2(gh, gt)(new NonEmptyArraySeq(_, _))
+//        ap.apply2(gh, gt)((h, t) => force(h +: t))
 //      }
 //    }
 //  }
-//
+
 //  object Sole {
 //    def unapply[A](v: NonEmptyArraySeq[A]) = new Unapply(v)
 //    final class Unapply[A](val v: NonEmptyArraySeq[A]) extends AnyVal {

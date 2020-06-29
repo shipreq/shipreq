@@ -7,7 +7,10 @@ object Shrink {
 
   val DefaultBreadthLimit = 3
 
-  def apply[A](a           : A)
+  /**
+   * @param validity Continues to shrink while result is Invalid
+   */
+  def apply[A](initialValue: A)
               (shrinker    : Shrinker[A],
                size        : A => Int,
                validity    : A => Validity,
@@ -29,7 +32,7 @@ object Shrink {
       if (child ne root) go(child) else root.value
     }
 
-    go(shrinker.start(a))
+    go(shrinker.start(initialValue))
   }
 
   private[test] def chooseSmallest[A](root: A, rootSize: Int, candidates: IterableOnce[(A, Int)]): A = {

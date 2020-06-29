@@ -10,7 +10,7 @@ import shipreq.base.test.BaseUtilGen._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.protocol.binary.v1.Rev1.picklerProject
+import shipreq.webapp.base.protocol.binary.v1.Latest.picklerProject
 import shipreq.webapp.base.util.ShowSize
 import shipreq.webapp.base.{RandomData => $, RandomDataSettings}
 

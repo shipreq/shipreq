@@ -271,23 +271,48 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       }
     }
 
+  private val h1            = <.h1(*.h1)
+  private val h2            = <.h2(*.h2)
+  private val h3            = <.h3(*.h3)
+  private val h4            = <.h4(*.h4)
+  private val h5            = <.h5(*.h5)
+  private val h6            = <.h6(*.h6)
+  private val bold          = <.strong
+  private val italic        = <.em
+  private val strikethrough = <.span(*.strikethrough)
+  private val underline     = <.span(*.underline)
+
   private def tagWithoutStyle(c: Contextualise, t: ApplicableTag, includeDesc: Boolean): VdomTag =
     tagWithoutStyleMemo(includeDesc)(c)(t)
 
   private def textAtom(liveText: Live, tagValidity: ApplicableTagId => Validity): Atom.AnyAtom => TagMod = {
     import Atom._
+
+    def wrapped(tag: VdomTag, inner: NonEmptyArraySeq[Atom.AnyAtom]) =
+      tag(inner.whole.toTagMod(atom))
+
     lazy val atom: AnyAtom => TagMod = {
       case a: Literal         # Literal        => <.span(a.value)
-      case _: NewLine         # BlankLine      => <.div(*.blankLine)
-      case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
-      case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)
-      case a: PlainTextMarkup # Monospace      => <.pre(*.monospace, a.value)
-      case a: PlainTextMarkup # TeX            => katex(a)
-      case a: ContentRef      # ReqRef         => reqRef(liveText)(a.value)
-      case a: ContentRef      # CodeRef        => codeRef(liveText)(a.value)
-      case a: ContentRef      # UseCaseStepRef => useCaseStepRefById(a.value)
-      case a: Issue           # Issue          => issue(a.typ, a.desc, liveText)
       case a: CodeBlock       # CodeBlock      => CodeBlockWithSyntaxHighlighting(a.language, a.code)
+      case a: ContentRef      # CodeRef        => codeRef(liveText)(a.value)
+      case a: ContentRef      # ReqRef         => reqRef(liveText)(a.value)
+      case a: ContentRef      # UseCaseStepRef => useCaseStepRefById(a.value)
+      case a: Headings        # Heading1       => wrapped(h1, a.title)
+      case a: Headings        # Heading2       => wrapped(h2, a.title)
+      case a: Headings        # Heading3       => wrapped(h3, a.title)
+      case a: Headings        # Heading4       => wrapped(h4, a.title)
+      case a: Headings        # Heading5       => wrapped(h5, a.title)
+      case a: Headings        # Heading6       => wrapped(h6, a.title)
+      case a: Issue           # Issue          => issue(a.typ, a.desc, liveText)
+      case _: NewLine         # BlankLine      => <.div(*.blankLine)
+      case a: PlainTextMarkup # Bold           => wrapped(bold, a.inner)
+      case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)
+      case a: PlainTextMarkup # Italic         => wrapped(italic, a.inner)
+      case a: PlainTextMarkup # Monospace      => <.pre(*.monospace, a.value)
+      case a: PlainTextMarkup # Strikethrough  => wrapped(strikethrough, a.inner)
+      case a: PlainTextMarkup # TeX            => katex(a)
+      case a: PlainTextMarkup # Underline      => wrapped(underline, a.inner)
+      case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
 
       case a: TagRef          # TagRef         =>
         val tag = project.config.tags.needApplicableTag(a.value)
