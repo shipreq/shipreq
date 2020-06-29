@@ -37,7 +37,6 @@ object NewEditor {
 
   @Lenses
   final case class CreationArgs(pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]],
-                                editorStyle     : EditTheme.Style,
                                 filterDead      : FilterDead,
                                 potentialValue  : Option[PotentialValue],
                                 hooks           : Hooks) {
@@ -684,12 +683,27 @@ object NewEditor {
       import shipreq.webapp.base.text._
       import shipreq.webapp.client.project.widgets.RichTextEditor
 
-      abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForChangeType {
+      case class AbstractArgs[A](style: A => EditTheme.Style, changeArg: A)
+
+      object AbstractArgs {
+        def const(style: EditTheme.Style): AbstractArgs[Unit] =
+          apply(_ => style, ())
+
+        val constDefault: AbstractArgs[Unit] =
+          const(EditTheme.Style.default)
+
+        val dynamicStyle: AbstractArgs[EditTheme.Style] =
+          apply(
+            identity,
+            EditTheme.Style.default) // <-- doesn't affect change calculation
+      }
+
+      abstract class Base[T <: Text.Generic, A](val editor: RichTextEditor[T], aa: AbstractArgs[A]) extends ForChangeType {
         val T: editor.text.type = editor.text
 
         import editor.potentialValueAcceptor
 
-        override type Args   = Unit
+        override type Args   = A
         override type Change = T.OptionalText
 
         protected def start(cmd           : T.OptionalText => UpdateContentCmd,
@@ -714,13 +728,12 @@ object NewEditor {
           initialData       = initCB,
           initalValueOption = ivo)(
           initialValueFn    = _._2)(
-          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, args.editorStyle, pid, reqId, abort, commitFn))
+          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.OptionalText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
-                            editorStyle     : EditTheme.Style,
                             pid             : PreviewId,
                             reqId           : Option[ReqId],
                             abort           : Some[Callback],
@@ -731,9 +744,9 @@ object NewEditor {
 
           override type Props = editor.Optional
           override def renderImpl = _.render
-          override def changeArgs = ()
+          override def changeArgs = aa.changeArg
           override def changeImpl = _.validated
-          override val props = (_, asyncState) =>
+          override val props = (args, asyncState) =>
             for {
               previewRW      <- previewW.toReadWriteCB
               project        <- pxProject.toCallback
@@ -752,7 +765,7 @@ object NewEditor {
               autoFocus          = true,
               commitFn           = commitFn,
               commitVerb         = commitVerb,
-              editorStyle        = editorStyle,
+              editorStyle        = aa.style(args),
               preview            = previewRW(pid),
               preEditValue       = initial,
               extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
@@ -767,7 +780,7 @@ object NewEditor {
         }
       }
 
-      object CodeGroupTitle extends Base(RichTextEditor.CodeGroupTitle) {
+      object CodeGroupTitle extends Base(RichTextEditor.CodeGroupTitle, AbstractArgs.constDefault) {
         def apply(id: ReqCodeGroupId, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetCodeGroupTitle(id, _),
           initialValueCB = getCodeGroup(id).map(_.title).widen,
@@ -775,7 +788,7 @@ object NewEditor {
           reqId          = None)
       }
 
-      object CustomTextField extends Base(RichTextEditor.CustomTextField) {
+      object CustomTextField extends Base(RichTextEditor.CustomTextField, AbstractArgs.dynamicStyle) {
         def apply(id: ReqId, fid: CustomField.Text.Id, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetCustomTextField(id, fid, _),
           initialValueCB = pxProject.toCallback.map(p => ReqData.Text.at(fid, id).get(p.content.reqText)).toCBO,
@@ -783,7 +796,7 @@ object NewEditor {
           reqId          = Some(id))
       }
 
-      object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle) {
+      object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle, AbstractArgs.constDefault) {
         def apply(id: GenericReqId, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetGenericReqTitle(id, _),
           initialValueCB = getGenericReq(id).map(_.title),
@@ -791,7 +804,7 @@ object NewEditor {
           reqId          = Some(id))
       }
 
-      object UseCaseTitle extends Base(RichTextEditor.UseCaseTitle) {
+      object UseCaseTitle extends Base(RichTextEditor.UseCaseTitle, AbstractArgs.constDefault) {
         def apply(id: UseCaseId, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetUseCaseTitle(id, _),
           initialValueCB = getUseCase(id).map(_.title),
@@ -804,14 +817,16 @@ object NewEditor {
     object EditRichTextNonEmpty {
       import shipreq.webapp.base.text._
       import shipreq.webapp.client.project.widgets.RichTextEditor
+      import EditRichText.AbstractArgs
 
-      abstract class Base[T <: Text.Generic, Cmd](val editor: RichTextEditor[T],
-                                                  ssp: ServerSideProcInvoker[Cmd, ErrorMsg, Any]) extends ForChangeType {
+      abstract class Base[T <: Text.Generic, Cmd, A](val editor: RichTextEditor[T],
+                                                     aa: AbstractArgs[A],
+                                                     ssp: ServerSideProcInvoker[Cmd, ErrorMsg, Any]) extends ForChangeType {
         val T: editor.text.type = editor.text
 
         import editor.potentialValueAcceptor
 
-        override type Args   = Unit
+        override type Args   = A
         override type Change = T.NonEmptyText
 
         protected def start(cmd           : T.NonEmptyText => Cmd,
@@ -836,13 +851,12 @@ object NewEditor {
             initialData       = initCB,
             initalValueOption = ivo)(
             initialValueFn    = _._2)(
-            editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, args.editorStyle, pid, reqId, abort, commitFn))
+            editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.NonEmptyText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
-                            editorStyle     : EditTheme.Style,
                             pid             : PreviewId,
                             reqId           : Option[ReqId],
                             abort           : Some[Callback],
@@ -853,9 +867,9 @@ object NewEditor {
 
           override type Props = editor.NonEmpty
           override def renderImpl = _.render
-          override def changeArgs = ()
+          override def changeArgs = aa.changeArg
           override def changeImpl = _.validated
-          override val props = (_, asyncState) =>
+          override val props = (args, asyncState) =>
             for {
               previewRW      <- previewW.toReadWriteCB
               project        <- pxProject.toCallback
@@ -874,7 +888,7 @@ object NewEditor {
               autoFocus          = true,
               commitFn           = commitFn,
               commitVerb         = commitVerb,
-              editorStyle        = editorStyle,
+              editorStyle        = aa.style(args),
               preview            = previewRW(pid),
               preEditValue       = initial,
               extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
@@ -889,7 +903,7 @@ object NewEditor {
         }
       }
 
-       object ManualIssue extends Base(RichTextEditor.ManualIssue, sspManualIssue) {
+       object ManualIssue extends Base(RichTextEditor.ManualIssue, AbstractArgs.constDefault, sspManualIssue) {
          def apply(id: ManualIssueId, pid: PreviewId): InitFn = start(
            cmd            = ManualIssueCmd.Update(id, _),
            initialValueCB = pxProject.toCallback.map(_.manualIssues.imap.need(id).text).toCBO,

@@ -11,6 +11,7 @@ import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text.Text
+import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.lib.DataReusability._
 
@@ -31,13 +32,14 @@ sealed trait FieldKey {
   def forRender: RenderFieldKey
 
   @inline final def cast2[F[_], G[_, _], A, B](f: F[G[A, B]]) = f.asInstanceOf[F[G[Args, Change]]]
+
+  def fold[F[_, _]](f: FieldKey.FoldAll[F]): F[Args, Change]
 }
 
 object FieldKey {
 
   /** Fields apply to one or more type of reqs */
   sealed trait ForSomeReq extends FieldKey {
-    override final type Args = Unit
     override type RenderFieldKey <: RenderFeature.FieldKey.ForSomeReq
   }
 
@@ -47,7 +49,6 @@ object FieldKey {
   }
 
   sealed trait ForCodeGroup extends FieldKey {
-    override final type Args = Unit
     override type RenderFieldKey <: RenderFeature.FieldKey.ForCodeGroup
     def foldCG[F[_, _]](f: FoldForCodeGroup[F]): F[Args, Change]
   }
@@ -63,77 +64,97 @@ object FieldKey {
   }
 
   case object Code extends ForCodeGroup {
+    override type Args = Unit
     override type Change = ReqCode.Value
     override type RenderFieldKey = RenderFeature.FieldKey.Code.type
     override def forRender = RenderFeature.FieldKey.Code
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.code(this)
     override def foldCG[F[_, _]](f: FoldForCodeGroup[F]): F[Args, Change] = f.code(this)
   }
 
   case object CodeGroupTitle extends ForCodeGroup {
+    override type Args = Unit
     override type Change = Text.CodeGroupTitle.OptionalText
     override type RenderFieldKey = RenderFeature.FieldKey.CodeGroupTitle.type
     override def forRender = RenderFeature.FieldKey.CodeGroupTitle
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.titleCG(this)
     override def foldCG[F[_, _]](f: FoldForCodeGroup[F]): F[Args, Change] = f.title(this)
   }
 
   case object Codes extends ForAllReqs {
+    override type Args = Unit
     override type Change = SetDiff.NE[ReqCode.Value]
     override type RenderFieldKey = RenderFeature.FieldKey.Codes.type
     override def forRender = RenderFeature.FieldKey.Codes
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.codes(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.codes(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.codes(this)
   }
 
   final case class CustomTextField(field: CustomField.Text.Id) extends ForAllReqs {
+    override type Args = EditTheme.Style
     override type Change = Text.CustomTextField.OptionalText
     override type RenderFieldKey = RenderFeature.FieldKey.CustomTextField
     override def forRender = RenderFeature.FieldKey.CustomTextField(field)
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.customTextField(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.customTextField(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.customTextField(this)
   }
 
   case object GenericReqTitle extends ForGenericReq {
+    override type Args = Unit
     override type Change = Text.GenericReqTitle.OptionalText
     override type RenderFieldKey = RenderFeature.FieldKey.Title.type
     override def forRender = RenderFeature.FieldKey.Title
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.titleGR(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.title(this)
   }
 
   final case class Implications(scope: ImplicationScope) extends ForAllReqs {
+    override type Args = Unit
     override type Change = SetDiff.NE[ReqId]
     override type RenderFieldKey = RenderFeature.FieldKey.Implications
     override def forRender = RenderFeature.FieldKey.Implications(scope)
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.implications(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.implications(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.implications(this)
   }
 
   case object ReqType extends ForGenericReq {
+    override type Args = Unit
     override type Change = CustomReqType
     override type RenderFieldKey = RenderFeature.FieldKey.ReqType.type
     override def forRender = RenderFeature.FieldKey.ReqType
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.reqType(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.reqType(this)
   }
 
   case object AllTags extends ForAllReqs {
+    override type Args = Unit
     override type Change = SetDiff.NE[ApplicableTagId]
     override type RenderFieldKey = RenderFeature.FieldKey.AllTags.type
     override def forRender = RenderFeature.FieldKey.AllTags
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.allTags(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.allTags(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.allTags(this)
   }
 
   case object OtherTags extends ForAllReqs {
+    override type Args = Unit
     override type Change = SetDiff.NE[ApplicableTagId]
     override type RenderFieldKey = RenderFeature.FieldKey.OtherTags.type
     override def forRender = RenderFeature.FieldKey.OtherTags
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.otherTags(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.otherTags(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.otherTags(this)
   }
 
   final case class CustomFieldTags(field: CustomField.Tag.Id) extends ForAllReqs {
+    override type Args = Unit
     override type Change = SetDiff.NE[ApplicableTagId]
     override type RenderFieldKey = RenderFeature.FieldKey.CustomFieldTags
     override def forRender = RenderFeature.FieldKey.CustomFieldTags(field)
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.customFieldTags(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.customFieldTags(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.customFieldTags(this)
   }
@@ -143,6 +164,7 @@ object FieldKey {
     override type Change = UseCaseStepGD.NonEmptyValues
     override type RenderFieldKey = RenderFeature.FieldKey.UseCaseStep
     override def forRender = RenderFeature.FieldKey.UseCaseStep(id)
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.useCaseStep(this)
     def foldUCS[F[_, _]](f: FoldForUseCaseSteps[F]): F[Args, Change] = f.step(this)
   }
 
@@ -159,9 +181,11 @@ object FieldKey {
   }
 
   case object UseCaseTitle extends ForUseCase {
+    override type Args = Unit
     override type Change = Text.UseCaseTitle.OptionalText
     override type RenderFieldKey = RenderFeature.FieldKey.Title.type
     override def forRender = RenderFeature.FieldKey.Title
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.titleUC(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.title(this)
   }
 
@@ -170,6 +194,7 @@ object FieldKey {
     override type Change = Text.ManualIssue.NonEmptyText
     override type RenderFieldKey = RenderFeature.FieldKey.ManualIssue
     override def forRender = RenderFeature.FieldKey.ManualIssue(id)
+    override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.manualIssue(this)
     def foldMI[F[_, _]](f: FoldForManualIssues[F]): F[Args, Change] = f.text(this)
   }
 
@@ -198,7 +223,7 @@ object FieldKey {
 //      case Location.Text.UseCaseStep(stepId)      => UseCaseStep(stepId)
 //    }
 
-  def reqTitle(id: ReqId): ForSomeReq =
+  def reqTitle(id: ReqId): ForSomeReq { type Args = Unit } =
     id match {
       case _: GenericReqId => GenericReqTitle
       case _: UseCaseId    => UseCaseTitle
@@ -207,10 +232,45 @@ object FieldKey {
   type Aux[A, C] = FieldKey { type Args = A; type Change = C }
   type Nullary = FieldKey { type Args = Unit }
 
+  // ===================================================================================================================
+
   /** This shit is required to workaround Scala failing to be check exhaustivity when pattern-matching on Aux */
   trait Fold[-FK <: FieldKey, F[_, _]] {
     def apply(f: FK): F[f.Args, f.Change]
     def map[G[_, _]](t: F ~~> G): Fold[FK, G]
+  }
+
+  case class FoldAll[F[_, _]](allTags        : AllTags.type         => F[AllTags        .Args, AllTags        .Change],
+                              code           : Code.type            => F[Code           .Args, Code           .Change],
+                              codes          : Codes.type           => F[Codes          .Args, Codes          .Change],
+                              customFieldTags: CustomFieldTags      => F[CustomFieldTags#Args, CustomFieldTags#Change],
+                              customTextField: CustomTextField      => F[CustomTextField#Args, CustomTextField#Change],
+                              implications   : Implications         => F[Implications   #Args, Implications   #Change],
+                              manualIssue    : ManualIssue          => F[ManualIssue    #Args, ManualIssue    #Change],
+                              otherTags      : OtherTags.type       => F[OtherTags      .Args, OtherTags      .Change],
+                              reqType        : ReqType.type         => F[ReqType        .Args, ReqType        .Change],
+                              titleCG        : CodeGroupTitle.type  => F[CodeGroupTitle .Args, CodeGroupTitle .Change],
+                              titleGR        : GenericReqTitle.type => F[GenericReqTitle.Args, GenericReqTitle.Change],
+                              titleUC        : UseCaseTitle.type    => F[UseCaseTitle   .Args, UseCaseTitle   .Change],
+                              useCaseStep    : UseCaseStep          => F[UseCaseStep    #Args, UseCaseStep    #Change],
+                             ) extends Fold[FieldKey, F] {
+    override def apply(f: FieldKey): F[f.Args, f.Change] = f.fold(this)
+    override def map[G[_, _]](t: F ~~> G): FoldAll[G] =
+      FoldAll(
+        allTags         = f => t(allTags        (f)),
+        code            = f => t(code           (f)),
+        codes           = f => t(codes          (f)),
+        customFieldTags = f => t(customFieldTags(f)),
+        customTextField = f => t(customTextField(f)),
+        implications    = f => t(implications   (f)),
+        manualIssue     = f => t(manualIssue    (f)),
+        otherTags       = f => t(otherTags      (f)),
+        reqType         = f => t(reqType        (f)),
+        titleCG         = f => t(titleCG        (f)),
+        titleGR         = f => t(titleGR        (f)),
+        titleUC         = f => t(titleUC        (f)),
+        useCaseStep     = f => t(useCaseStep    (f)),
+      )
   }
 
   case class FoldForCodeGroup[F[_, _]](code : Code          .type => F[Code          .Args, Code          .Change],
@@ -277,6 +337,8 @@ object FieldKey {
       FoldForManualIssues(f => t(text(f)))
   }
 
+  // ===================================================================================================================
+
   final class Type[F <: FieldKey](implicit ct: ClassTag[F]) {
     def widenFn[G >: F <: FieldKey, A](orig: F => A)(fallback: A): G => A =
       g => if (ct.runtimeClass.isInstance(g))
@@ -289,4 +351,31 @@ object FieldKey {
   implicit val typeUC : Type[ForUseCase]    = new Type
   implicit val typeMI : Type[ManualIssue]   = new Type
   implicit val typeUCS: Type[UseCaseStep]   = new Type
+
+  // ===================================================================================================================
+
+  type AllArgsF[A, C] = A
+
+  type AllArgs = FoldAll[AllArgsF]
+
+  private val noArgs = (_: Any) => ()
+
+  def allArgs(customTextField: CustomTextField#Args,
+              useCaseStep    : UseCaseStep.Args): AllArgs =
+    FoldAll[AllArgsF](
+      code            = noArgs,
+      allTags         = noArgs,
+      codes           = noArgs,
+      customFieldTags = noArgs,
+      customTextField = _ => customTextField,
+      implications    = noArgs,
+      manualIssue     = noArgs,
+      otherTags       = noArgs,
+      reqType         = noArgs,
+      titleCG         = noArgs,
+      titleGR         = noArgs,
+      titleUC         = noArgs,
+      useCaseStep     = _ => useCaseStep,
+    )
+
 }
