@@ -711,6 +711,29 @@ object ReqTableTest extends TestSuite {
     runTest(Plan.action(test) withInitialState SampleProject3.project)
   }
 
+  private def testPreviewFullscreen()(implicit path: TestPath): Unit = {
+    implicit val ce = cellEditor("MF-1", "Description")
+
+    val startEditing = ce.doubleClick +> ce.editorValue.assert(Some(""))
+
+    val test = (
+      global.disableAutoResponse
+        >> showHideColumn("Description")
+        >> startEditing               +> assertPreview(editing = y, preview = "s---", isFS = n, canFS = y, spin = n)
+        >> ce.toggleFullscreen        +> assertPreview(editing = y, preview = "-h-r", isFS = y, canFS = y, spin = n)
+        >> ce.unfocusEditor           +> assertPreview(editing = y, preview = "-h-r", isFS = y, canFS = y, spin = n)
+        >> ce.toggleFullscreen        +> assertPreview(editing = y, preview = "s---", isFS = n, canFS = y, spin = n)
+        >> ce.setEditorValue("**x**") +> assertPreview(editing = y, preview = "-h-r", isFS = n, canFS = y, spin = n)
+        >> ce.toggleFullscreen        +> assertPreview(editing = y, preview = "-h-r", isFS = y, canFS = y, spin = n)
+        >> ce.clickPreviewRight       +> assertPreview(editing = y, preview = "-hd-", isFS = y, canFS = y, spin = n)
+        >> ce.toggleFullscreen        +> assertPreview(editing = y, preview = "-hd-", isFS = n, canFS = y, spin = n)
+        >> ce.clickPreviewHide        +> assertPreview(editing = y, preview = "s---", isFS = n, canFS = y, spin = n)
+        >> ce.toggleFullscreen        +> assertPreview(editing = y, preview = "s---", isFS = y, canFS = y, spin = n)
+      )
+
+    runTest(Plan.action(test) withInitialState SampleProject3.project)
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   override def tests = Tests {
@@ -792,6 +815,7 @@ object ReqTableTest extends TestSuite {
     "preview" - {
       "title" - testTitlePreview()
       "controls" - testPreviewControls()
+      "fullscreen" - testPreviewFullscreen()
     }
 
     "savedViews" - {

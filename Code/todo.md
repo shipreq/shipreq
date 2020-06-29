@@ -49,8 +49,6 @@ v2.2
 
 ### Implement
 * prompt user to confirm aborting a dirty editor
-* controls on reqtable
-* preview should never be auto in fullscreen (include in tests)
 * async error & invalid input hardcoded to Under
 
 

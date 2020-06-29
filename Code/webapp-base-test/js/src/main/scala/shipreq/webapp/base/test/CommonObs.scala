@@ -219,6 +219,9 @@ object CommonObs {
       final def changeToAndBack(fromTo: (String, String)): *.Actions =
         changeToAndBack(fromTo, fromTo)
 
+      final def unfocusEditor: *.Actions =
+        *.action("Unfocus editor in " + field)(Simulate blur _.obs.editor.get)
+
       final def toggleFullscreen: *.Actions =
         *.action("Toggle fullscreen editing in " + field)(Simulate click _.obs.fullscreenButton.get)
 
