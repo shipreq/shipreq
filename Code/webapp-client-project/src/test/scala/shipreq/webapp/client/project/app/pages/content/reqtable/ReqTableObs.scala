@@ -60,7 +60,7 @@ object ReqTableObs {
  *
  * Inspects actual DOM to derive values.
  */
-final class ReqTableObs($: DomZipperJs, val global: TestGlobal.Obs, val confirmJs: TestConfirmJs.Obs) {
+final class ReqTableObs($: DomZipperJs, val global: TestGlobal.Obs) {
   import ReqTableObs._
 
   val activeElement = document.activeElement

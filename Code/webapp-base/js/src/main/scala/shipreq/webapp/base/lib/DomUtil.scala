@@ -190,27 +190,4 @@ object DomUtil {
    */
   def siblingAtOffset(e: html.Element, offset: Int) =
     siblingAt(e, _ + offset)
-
-  def focus(e: Element): Callback =
-    Callback {
-      window.focus()
-      println("FOCUS.1: " + document.activeElement)
-      for (h <- e.domToHtml)
-        h.focus()
-      println("FOCUS.2: " + document.activeElement)
-    }.attempt.void
-
-  lazy val unfocus: Callback =
-    Callback {
-      document.activeElement match {
-        case f: html.Element if f != document.body => f.blur()
-        case _                                     => ()
-      }
-//      window.focus()
-      window.blur()
-//      document.body.focus()
-    }.attempt.void
-
-  def refocus(e: Element): Callback =
-    unfocus.delayMs(500).toCallback >> focus(e).delayMs(500).toCallback
 }

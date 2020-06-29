@@ -15,7 +15,7 @@ import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.TextSearch
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
-import shipreq.webapp.base.ui.EditTheme
+import shipreq.webapp.base.ui.{EditTheme, OptionalFullscreen}
 import shipreq.webapp.client.project.app.Style.{deletionForm => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.Selection
@@ -54,7 +54,6 @@ object DeletionForm {
         edit               = StateSnapshot.withReuse(s.reason)(setReason),
         asyncStatus        = None,
         abort              = None,
-        abortConfirmation  = None,
         autoFocus          = true,
         commitFn           = None,
         commitVerb         = "",

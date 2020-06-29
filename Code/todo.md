@@ -48,6 +48,7 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
+* prompt user to confirm aborting a dirty editor
 
 
 Backlog (maybe-probably soon)

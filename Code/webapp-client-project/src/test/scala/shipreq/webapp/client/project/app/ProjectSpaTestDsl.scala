@@ -55,13 +55,7 @@ object ProjectSpaTestDsl {
 
       val base: Obs = {
         val e = Left("Chosen page is: " + nav.page)
-        Obs(
-          $,
-          global.unsafeProject(),
-          new TestGlobal.Obs($, global),
-          new TestConfirmJs.Obs(confirmJs),
-          nav,
-          e, e, e, e, e, e, e, e, e)
+        Obs($, global.unsafeProject(), new TestGlobal.Obs($, global), nav, e, e, e, e, e, e, e, e, e)
       }
 
       nav.page match {
@@ -70,7 +64,7 @@ object ProjectSpaTestDsl {
         case Page.CfgFields    => base.copy(cfgFields   = Try(new FieldConfigObs(inner)))
         case Page.CfgIssues    => base.copy(cfgIssues   = Try(new IssueConfigObs(inner)))
         case Page.CfgTags      => base.copy(cfgTags     = Try(new TagConfigObs(inner)))
-        case Page.ReqTable     => base.copy(reqTable    = Try(new ReqTableObs(inner, base.global, base.confirmJs)))
+        case Page.ReqTable     => base.copy(reqTable    = Try(new ReqTableObs(inner, base.global)))
         case Page.ReqDetail(_) => base.copy(reqDetail   = Try(new ReqDetailObs(inner, nav, base.global)))
         case Page.Issues       => base.copy(issues      = Try(new IssuesPageObs(inner)))
         case Page.ReqGraph     => base.copy(reqGraph    = Try(new ReqGraphObs(inner)))
@@ -115,7 +109,6 @@ object ProjectSpaTestDsl {
   final case class Obs($          : DomZipperJs,
                        project    : Project,
                        global     : TestGlobal.Obs,
-                       confirmJs  : TestConfirmJs.Obs,
                        nav        : NavObs,
                        home       : Maybe[ProjectHomeObs],
                        cfgFields  : Maybe[FieldConfigObs],
@@ -152,7 +145,7 @@ object ProjectSpaTestDsl {
 
   implicit lazy val transformRT =
     RT.*.transformer
-      .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.savedViews, r.global, r.promptJs, r.confirmJs))
+      .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.savedViews, r.global, r.promptJs))
       .pmapO[Obs](_.reqTable)
       .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
 
