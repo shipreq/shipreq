@@ -12,7 +12,7 @@ locals {
       cadvisor        = local.versions_common.cadvisor
       filebeat        = "git-10f2f46aad4df3ea32622dad2ff3e8eef4d0a81a"
       node_exporter   = local.versions_common.node_exporter
-      shipreq         = "git-c212c96397f5474256ffbdff475a64addb8b2865"
+      shipreq         = "git-55287b2f6b9a3f8fb11fd673995ebcb96e0dfd8d"
     }
 
     bastion = {
