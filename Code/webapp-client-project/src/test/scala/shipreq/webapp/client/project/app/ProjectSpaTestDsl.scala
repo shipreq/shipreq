@@ -12,6 +12,7 @@ import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test.{SampleProject5, _}
+import shipreq.webapp.base.ui.{OnlyVisibleOnMouseMove, OptionalFullscreen}
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.pages.config.fields.{FieldConfigObs, FieldConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.issues.{IssueConfigObs, IssueConfigTestDsl}
@@ -64,7 +65,7 @@ object ProjectSpaTestDsl {
         case Page.CfgIssues    => base.copy(cfgIssues   = Try(new IssueConfigObs(inner)))
         case Page.CfgTags      => base.copy(cfgTags     = Try(new TagConfigObs(inner)))
         case Page.ReqTable     => base.copy(reqTable    = Try(new ReqTableObs(inner, base.global)))
-        case Page.ReqDetail(_) => base.copy(reqDetail   = Try(new ReqDetailObs(inner, nav)))
+        case Page.ReqDetail(_) => base.copy(reqDetail   = Try(new ReqDetailObs(inner, nav, base.global)))
         case Page.Issues       => base.copy(issues      = Try(new IssuesPageObs(inner)))
         case Page.ReqGraph     => base.copy(reqGraph    = Try(new ReqGraphObs(inner)))
       }
@@ -126,7 +127,7 @@ object ProjectSpaTestDsl {
 
   val * = Dsl[Ref, Obs, TestState]
 
-  val svr = new TestGlobal.TestDslWithObs(*)(_.global, _.global)
+  val global = new TestGlobal.TestDslWithObs(*)(_.global, _.global)
 
   val reauth = new TestReauthenticationModal.TestDsl(*)(_.global.reauthModal)
 
@@ -150,7 +151,7 @@ object ProjectSpaTestDsl {
 
   implicit lazy val transformRD =
     RD.*.transformer
-      .mapR[Ref](_ => ())
+      .mapR[Ref](_.global)
       .pmapO[Obs](_.reqDetail)
       .mapS[TestState](s => RD.TestState(s.project, s.detailState))((s, d) => TestState(s.page, d.project, d.state))
 
@@ -210,7 +211,8 @@ object ProjectSpaTestDsl {
   private val invariants: *.Invariants =
     pageInvariants.when(i => i.obs.nav.page ==* i.state.page) &
     *.focus("Page").obsAndState(_.nav.page, _.page).assert.equal &
-    *.focus("Project name in NavBar").obsAndState(_.nav.projectName, _.project.name).assert.equal
+    *.focus("Project name in NavBar").obsAndState(_.nav.projectName, _.project.name).assert.equal &
+    global.fullscreenCount.test(_ + " should be ≤ 1")(_ <= 1)
 
   val unsavedChanges = *.focus("unsaved changes").value(_.obs.nav.unsavedChanges)
 
@@ -270,11 +272,13 @@ object ProjectSpaTestDsl {
                           rd        : RD.State = RD.unspecifiedState,
                           assertPass: Boolean = true): Report[String] = {
 
+    OnlyVisibleOnMouseMove.allowHide = false
+
     val global       = TestGlobal(project)
     val confirmJs    = TestConfirmJs()
     val promptJs     = TestPromptJs()
     val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name)
-    val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs)
+    val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs, global.optionalFullscreen)
     val rc           = MockRouterCtl[Page]()
     val init         = TestState(page, global.unsafeProject(), rd)
 

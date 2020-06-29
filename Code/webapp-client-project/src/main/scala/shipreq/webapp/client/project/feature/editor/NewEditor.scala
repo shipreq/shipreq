@@ -19,7 +19,7 @@ import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.EditTheme
+import shipreq.webapp.base.ui.{EditTheme, OptionalFullscreen}
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.feature.editor.Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -37,7 +37,6 @@ object NewEditor {
 
   @Lenses
   final case class CreationArgs(pxProjectWidgets: Reusable[Px[ProjectWidgets.AnyCtx]],
-                                editorStyle     : EditTheme.Style,
                                 filterDead      : FilterDead,
                                 potentialValue  : Option[PotentialValue],
                                 hooks           : Hooks) {
@@ -67,13 +66,17 @@ object NewEditor {
     }
   }
 
-  final case class Static(previewW        : PreviewFeature.Write.Composite[PreviewId],
-                          pxProject       : Px[Project],
-                          pxPlainTextNoCtx: Px[PlainText.ForProject.NoCtx],
-                          pxTextSearch    : Px[TextSearch],
-                          sspUpdateContent: ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
-                          sspManualIssue  : ServerSideProcInvoker[ManualIssueCmd, ErrorMsg, Any],
+  final case class Static(previewW          : PreviewFeature.Write.Composite[PreviewId],
+                          pxProject         : Px[Project],
+                          pxPlainTextNoCtx  : Px[PlainText.ForProject.NoCtx],
+                          pxTextSearch      : Px[TextSearch],
+                          sspUpdateContent  : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
+                          sspManualIssue    : ServerSideProcInvoker[ManualIssueCmd, ErrorMsg, Any],
+                          optionalFullscreen: OptionalFullscreen,
                          ) {
+
+    val someOptionalFullscreen =
+      Some(optionalFullscreen)
 
     private[NewEditor] val internal = new Internal(this)
   }
@@ -109,7 +112,7 @@ object NewEditor {
     trait EditorImpl[Args, Change] extends Editor[Args, Change] {
       protected type Props
       protected val props: (Args, AsyncState) => CallbackTo[Props]
-      protected def renderImpl: Props => VdomElement
+      protected def renderImpl: Props => VdomNode
       protected def changeImpl: Props => Editor.Change[Change]
 
       /** Currently all the editor types calculate their changes in the props. Some props need additional args for their
@@ -122,7 +125,7 @@ object NewEditor {
         */
       protected def changeArgs: Args
 
-      final override def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement] =
+      final override def render(p: Permission, as: AsyncState, args: Args): Option[VdomNode] =
         // Looks like this could block async but not so. Can't go from edit -> async -> notAllowed.
         // Unsafety is allowed here because EditorInstance is never Reusable
         p match {
@@ -212,19 +215,24 @@ object NewEditor {
     final class InternalCtx[A, C](val ctx: Ctx[A, C]) {
       import ctx._
 
-      def abort(hooks: Hooks): Callback =
-        stateAccess.setState(None, asyncFeature.clearAsyncStatus >> hooks.onClose)
+      def abort(hooks: Hooks, previewId: Option[PreviewId]): Callback = {
+        val onClose: Callback =
+          Callback.traverseOption(previewId)(previewW(_).clear) >> asyncFeature.clearAsyncStatus >> hooks.onClose
+        stateAccess.setState(None, onClose)
+      }
 
       def commit[Cmd](ssp: ServerSideProcInvoker[Cmd, ErrorMsg, Any])
-                     (cmd: Cmd, hooks: Hooks): Callback =
+                     (cmd: Cmd, hooks: Hooks, previewId: Option[PreviewId]): Callback =
         asyncFeature(
-          ssp(cmd)
-            .rightFlatTap(_ => abort(hooks).asAsyncCallback)
+          ssp(cmd).rightFlatTap(_ => abort(hooks, previewId).asAsyncCallback)
         )
 
       def makeAbortCommitFn[Cmd, B](ssp: ServerSideProcInvoker[Cmd, ErrorMsg, Any])
-                                   (cmd: B => Cmd, hooks: Hooks): (Some[Callback], Some[B ~=> Callback]) =
-        (Some(abort(hooks)), Some(Reusable.fn(v => commit(ssp)(cmd(v), hooks))))
+                                   (cmd: B => Cmd, hooks: Hooks, previewId: Option[PreviewId]): (Some[Callback], Some[B ~=> Callback]) =
+        (
+          Some(abort(hooks, previewId)),
+          Some(Reusable.fn(v => commit(ssp)(cmd(v), hooks, previewId)))
+        )
 
       /** Creates a Callback that when invoked, will initialise and start an editor.
         *
@@ -336,7 +344,7 @@ object NewEditor {
         }
 
         val (abort, commitFn) =
-          makeAbortCommitFn(sspUpdateContent)((t: RT) => UpdateContentCmd.SetGenericReqType(id, t.id), args.hooks)
+          makeAbortCommitFn(sspUpdateContent)((t: RT) => UpdateContentCmd.SetGenericReqType(id, t.id), args.hooks, None)
 
         for {
           req      <- getGenericReq(id)
@@ -376,7 +384,7 @@ object NewEditor {
             pxProject.toCallback.map(_.content.reqCodes.activeReqCodesByReqId(id))
 
           val (abort, commitFn) =
-            makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqCodes(id, _), args.hooks)
+            makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqCodes(id, _), args.hooks, None)
 
         startWithStateSnapshot(
           initialData       = initialValuesCB.toCBO,
@@ -431,7 +439,7 @@ object NewEditor {
             pxProject.toCallback.map(_.content.reqCodes.reqCode(id)).toCBO
 
           val (abort, commitFn) =
-            makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.SetCodeGroupCode(id, _), args.hooks)
+            makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.SetCodeGroupCode(id, _), args.hooks, None)
 
         startWithStateSnapshot(
           initialData       = initialValueCB,
@@ -527,7 +535,7 @@ object NewEditor {
         Internal.init(potentialValueAcceptor) { ivo => args =>
 
           val (abort, commitFn) =
-            makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchImplications(id, dir, _), args.hooks)
+            makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchImplications(id, dir, _), args.hooks, None)
 
         startWithStateSnapshot(
           initialData       = pxInit.toCallback.toCBO,
@@ -616,7 +624,7 @@ object NewEditor {
           } yield TagEditor.initialValues(project.content.reqTags(id), project.config, lookup, naTags)
 
         val (abort, commitFn) =
-          makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqTags(id, _), args.hooks)
+          makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqTags(id, _), args.hooks, None)
 
         startWithStateSnapshot(
           initialData       = pxInit.toCallback.toCBO,
@@ -675,12 +683,27 @@ object NewEditor {
       import shipreq.webapp.base.text._
       import shipreq.webapp.client.project.widgets.RichTextEditor
 
-      abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForChangeType {
+      case class AbstractArgs[A](style: A => EditTheme.Style, changeArg: A)
+
+      object AbstractArgs {
+        def const(style: EditTheme.Style): AbstractArgs[Unit] =
+          apply(_ => style, ())
+
+        val constDefault: AbstractArgs[Unit] =
+          const(EditTheme.Style.default)
+
+        val dynamicStyle: AbstractArgs[EditTheme.Style] =
+          apply(
+            identity,
+            EditTheme.Style.default) // <-- doesn't affect change calculation
+      }
+
+      abstract class Base[T <: Text.Generic, A](val editor: RichTextEditor[T], aa: AbstractArgs[A]) extends ForChangeType {
         val T: editor.text.type = editor.text
 
         import editor.potentialValueAcceptor
 
-        override type Args   = Unit
+        override type Args   = A
         override type Change = T.OptionalText
 
         protected def start(cmd           : T.OptionalText => UpdateContentCmd,
@@ -690,7 +713,7 @@ object NewEditor {
           import ictx._
 
           val (abort, commitFn) =
-            makeAbortCommitFn(sspUpdateContent)(cmd, args.hooks)
+            makeAbortCommitFn(sspUpdateContent)(cmd, args.hooks, Some(pid))
 
           val initCB =
             for {
@@ -705,13 +728,12 @@ object NewEditor {
           initialData       = initCB,
           initalValueOption = ivo)(
           initialValueFn    = _._2)(
-          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, args.editorStyle, pid, reqId, abort, commitFn))
+          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.OptionalText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
-                            editorStyle     : EditTheme.Style,
                             pid             : PreviewId,
                             reqId           : Option[ReqId],
                             abort           : Some[Callback],
@@ -722,9 +744,9 @@ object NewEditor {
 
           override type Props = editor.Optional
           override def renderImpl = _.render
-          override def changeArgs = ()
+          override def changeArgs = aa.changeArg
           override def changeImpl = _.validated
-          override val props = (_, asyncState) =>
+          override val props = (args, asyncState) =>
             for {
               previewRW      <- previewW.toReadWriteCB
               project        <- pxProject.toCallback
@@ -732,22 +754,23 @@ object NewEditor {
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- projectWidgetsCB
             } yield editor.Optional(
-              project          = project,
-              naTags           = project.naTagsForReq(reqId),
-              plainTextNoCtx   = plainTextNoCtx,
-              textSearch       = textSearch,
-              projectWidgets   = projectWidgets,
-              edit             = ss,
-              asyncStatus      = EditorStatus.async(asyncState),
-              abort            = abort,
-              autoFocus        = true,
-              commitFn         = commitFn,
-              commitVerb       = commitVerb,
-              editorStyle      = editorStyle,
-              preview          = previewRW(pid),
-              preEditValue     = initial,
-              extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
-              showInstructions = true)
+              project            = project,
+              naTags             = project.naTagsForReq(reqId),
+              plainTextNoCtx     = plainTextNoCtx,
+              textSearch         = textSearch,
+              projectWidgets     = projectWidgets,
+              edit               = ss,
+              asyncStatus        = EditorStatus.async(asyncState),
+              abort              = abort,
+              autoFocus          = true,
+              commitFn           = commitFn,
+              commitVerb         = commitVerb,
+              editorStyle        = aa.style(args),
+              preview            = previewRW(pid),
+              preEditValue       = initial,
+              extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
+              showInstructions   = true,
+              optionalFullscreen = someOptionalFullscreen)
 
           override def clipboardData: Option[ClipboardData] =
             Some(ClipboardData(ss.value))
@@ -757,7 +780,7 @@ object NewEditor {
         }
       }
 
-      object CodeGroupTitle extends Base(RichTextEditor.CodeGroupTitle) {
+      object CodeGroupTitle extends Base(RichTextEditor.CodeGroupTitle, AbstractArgs.constDefault) {
         def apply(id: ReqCodeGroupId, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetCodeGroupTitle(id, _),
           initialValueCB = getCodeGroup(id).map(_.title).widen,
@@ -765,7 +788,7 @@ object NewEditor {
           reqId          = None)
       }
 
-      object CustomTextField extends Base(RichTextEditor.CustomTextField) {
+      object CustomTextField extends Base(RichTextEditor.CustomTextField, AbstractArgs.dynamicStyle) {
         def apply(id: ReqId, fid: CustomField.Text.Id, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetCustomTextField(id, fid, _),
           initialValueCB = pxProject.toCallback.map(p => ReqData.Text.at(fid, id).get(p.content.reqText)).toCBO,
@@ -773,7 +796,7 @@ object NewEditor {
           reqId          = Some(id))
       }
 
-      object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle) {
+      object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle, AbstractArgs.constDefault) {
         def apply(id: GenericReqId, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetGenericReqTitle(id, _),
           initialValueCB = getGenericReq(id).map(_.title),
@@ -781,7 +804,7 @@ object NewEditor {
           reqId          = Some(id))
       }
 
-      object UseCaseTitle extends Base(RichTextEditor.UseCaseTitle) {
+      object UseCaseTitle extends Base(RichTextEditor.UseCaseTitle, AbstractArgs.constDefault) {
         def apply(id: UseCaseId, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetUseCaseTitle(id, _),
           initialValueCB = getUseCase(id).map(_.title),
@@ -794,14 +817,16 @@ object NewEditor {
     object EditRichTextNonEmpty {
       import shipreq.webapp.base.text._
       import shipreq.webapp.client.project.widgets.RichTextEditor
+      import EditRichText.AbstractArgs
 
-      abstract class Base[T <: Text.Generic, Cmd](val editor: RichTextEditor[T],
-                                                  ssp: ServerSideProcInvoker[Cmd, ErrorMsg, Any]) extends ForChangeType {
+      abstract class Base[T <: Text.Generic, Cmd, A](val editor: RichTextEditor[T],
+                                                     aa: AbstractArgs[A],
+                                                     ssp: ServerSideProcInvoker[Cmd, ErrorMsg, Any]) extends ForChangeType {
         val T: editor.text.type = editor.text
 
         import editor.potentialValueAcceptor
 
-        override type Args   = Unit
+        override type Args   = A
         override type Change = T.NonEmptyText
 
         protected def start(cmd           : T.NonEmptyText => Cmd,
@@ -811,7 +836,7 @@ object NewEditor {
           import ictx._
 
           val (abort, commitFn) =
-            makeAbortCommitFn(ssp)(cmd, args.hooks)
+            makeAbortCommitFn(ssp)(cmd, args.hooks, Some(pid))
 
           val initCB =
             for {
@@ -826,13 +851,12 @@ object NewEditor {
             initialData       = initCB,
             initalValueOption = ivo)(
             initialValueFn    = _._2)(
-            editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, args.editorStyle, pid, reqId, abort, commitFn))
+            editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.NonEmptyText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
-                            editorStyle     : EditTheme.Style,
                             pid             : PreviewId,
                             reqId           : Option[ReqId],
                             abort           : Some[Callback],
@@ -843,9 +867,9 @@ object NewEditor {
 
           override type Props = editor.NonEmpty
           override def renderImpl = _.render
-          override def changeArgs = ()
+          override def changeArgs = aa.changeArg
           override def changeImpl = _.validated
-          override val props = (_, asyncState) =>
+          override val props = (args, asyncState) =>
             for {
               previewRW      <- previewW.toReadWriteCB
               project        <- pxProject.toCallback
@@ -853,22 +877,23 @@ object NewEditor {
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- projectWidgetsCB
             } yield editor.NonEmpty(
-              project          = project,
-              naTags           = project.naTagsForReq(reqId),
-              plainTextNoCtx   = plainTextNoCtx,
-              textSearch       = textSearch,
-              projectWidgets   = projectWidgets,
-              edit             = ss,
-              asyncStatus      = EditorStatus.async(asyncState),
-              abort            = abort,
-              autoFocus        = true,
-              commitFn         = commitFn,
-              commitVerb       = commitVerb,
-              editorStyle      = editorStyle,
-              preview          = previewRW(pid),
-              preEditValue     = initial,
-              extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
-              showInstructions = true)
+              project            = project,
+              naTags             = project.naTagsForReq(reqId),
+              plainTextNoCtx     = plainTextNoCtx,
+              textSearch         = textSearch,
+              projectWidgets     = projectWidgets,
+              edit               = ss,
+              asyncStatus        = EditorStatus.async(asyncState),
+              abort              = abort,
+              autoFocus          = true,
+              commitFn           = commitFn,
+              commitVerb         = commitVerb,
+              editorStyle        = aa.style(args),
+              preview            = previewRW(pid),
+              preEditValue       = initial,
+              extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
+              showInstructions   = true,
+              optionalFullscreen = someOptionalFullscreen)
 
           override def clipboardData: Option[ClipboardData] =
             Some(ClipboardData(ss.value))
@@ -878,7 +903,7 @@ object NewEditor {
         }
       }
 
-       object ManualIssue extends Base(RichTextEditor.ManualIssue, sspManualIssue) {
+       object ManualIssue extends Base(RichTextEditor.ManualIssue, AbstractArgs.constDefault, sspManualIssue) {
          def apply(id: ManualIssueId, pid: PreviewId): InitFn = start(
            cmd            = ManualIssueCmd.Update(id, _),
            initialValueCB = pxProject.toCallback.map(_.manualIssues.imap.need(id).text).toCBO,
@@ -904,7 +929,7 @@ object NewEditor {
           // Below you'll see that we're filtering flow to create visibleFlow
           // There's no need to re-insert invisibleFlow here because flow is passed as a SetDiff
           // meaning that regardless of what the actual flow is, we only send what the user changes.
-          Reusable.fn(v => commit(sspUpdateContent)(UpdateContentCmd.UpdateUseCaseStep(id, v), args.hooks))
+          Reusable.fn(v => commit(sspUpdateContent)(UpdateContentCmd.UpdateUseCaseStep(id, v), args.hooks, Some(pid)))
 
         val pxStepFocus: Px[UseCaseStep.Focus] =
           pxProject.map(_.content.reqs.useCases.focusStep(id))
@@ -927,7 +952,7 @@ object NewEditor {
           initialData       = pxInit.toCallback.toCBO,
           initalValueOption = ivo)(
           initialValueFn    = _._2)(
-          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pxStepFocus.toCallback, pid, abort(args.hooks), commitFn))
+          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pxStepFocus.toCallback, pid, abort(args.hooks, Some(pid)), commitFn))
       }
 
       private class State(ss              : StateSnapshot[String],

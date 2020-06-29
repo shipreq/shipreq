@@ -6,6 +6,7 @@ import scala.concurrent.duration._
 import shipreq.base.util.Validity
 import shipreq.webapp.base.CssSettings._
 import shipreq.webapp.base.data.{Off, On}
+import shipreq.webapp.base.feature.PreviewFeature.Position
 import shipreq.webapp.base.ui.semantic.{Colour, Label}
 
 object BaseStyles extends StyleSheet.Inline {
@@ -13,9 +14,16 @@ object BaseStyles extends StyleSheet.Inline {
 
   /** Domains */
   object D {
-    val on                = Domain.ofValues[On](On, Off)
-    val editStylePosition = Domain.ofValues(EditTheme.Position.values.whole: _*)
-    val editorStateAndPos = EditorState.domain *** editStylePosition
+    val on                 = Domain.ofValues[On](On, Off)
+    val editorMode         = Domain.ofValues(EditTheme.Mode.values.whole: _*)
+    val previewPosition    = Domain.ofValues(Position.values.whole: _*)
+    val editorPosMode      = previewPosition *** editorMode
+    val editorStatePosMode = (EditorState.domain *** previewPosition.option *** editorMode).map { case ((a, b), c) => (a, b, c) }
+  }
+
+  object ZIndex {
+    final val fullscreen          = 1000
+    final val previewToggleButton = 1001
   }
 
   @inline def containerLarge = InlineBaseStyles.containerLarge
@@ -93,7 +101,7 @@ object BaseStyles extends StyleSheet.Inline {
   focus // eager eval
 
   object editor {
-    val backgroundColor = c"#fffad7" // = rgba(255, 227, 58, .2)
+    val backgroundColor = c"#fffce5"
     val borderColor = rgba(239, 207, 9, .6)
   }
   editor // eager eval
@@ -143,7 +151,11 @@ object BaseStyles extends StyleSheet.Inline {
   }
   projectItems // eager eval
 
-  val textEditor = styleF(D.editorStateAndPos) { case (state, pos) =>
+  private val fullscreenEditorAndPreviewHeight =
+    "calc(50vh - (" + editorInstructions.heightEm + "em / 2) - " + fullscreenPaddingEx + "ex)"
+
+  val textEditor = styleF(D.editorStatePosMode) { case (state, pos, mode) =>
+    import EditTheme.Mode
     styleS(
       width(100 %%),
       margin(`0`),
@@ -153,9 +165,25 @@ object BaseStyles extends StyleSheet.Inline {
       transition := "color .1s ease,border-color .1s ease",
       fontSize(1 em),
       lineHeight(1.2857),
-      pos match {
-        case EditTheme.Position.Right => styleS(maxHeight :=! "calc(100vh - 2em)")
-        case EditTheme.Position.Under => styleS(maxHeight(50 vh))
+      (mode, pos) match {
+
+        case (Mode.Inline, Some(Position.Right)) =>
+          val h = "calc(100vh - " + (editorInstructions.heightEm + editorInstructions.marginEm) + "em)"
+          styleS(maxHeight :=! h)
+
+        case (Mode.Inline, Some(Position.Under)) =>
+          styleS(maxHeight(50 vh))
+
+        case (Mode.Inline, None) =>
+          styleS(maxHeight(90 vh))
+
+        case (Mode.Fullscreen, None | Some(Position.Right)) =>
+          val h = "calc(100vh - " + editorInstructions.heightEm + "em - 2 * (" + fullscreenPaddingEx + "ex))"
+          styleS(minHeight :=! h, maxHeight :=! h, height :=! h)
+
+        case (Mode.Fullscreen, Some(Position.Under)) =>
+          val h = fullscreenEditorAndPreviewHeight
+          styleS(minHeight :=! h, maxHeight :=! h, height :=! h)
       },
       // overflow: scroll - autosize avoids this
       resize.none,
@@ -182,12 +210,14 @@ object BaseStyles extends StyleSheet.Inline {
         case EditorState.Invalid   => c"#E0B4B4"
       }),
       mixinIf(state ==* EditorState.InTransit)(display.flex),
-      &.focus(
-        (state match {
-          case EditorState.Valid     => focus.glowBorder
-          case EditorState.Invalid   => styleS(boxShadow := "0 0 1ex rgba(224,180,180,.5)")
-          case EditorState.InTransit => styleS()
-        }): StyleS
+      mixinIf(mode != EditTheme.Mode.Fullscreen)(
+        &.focus(
+          (state match {
+            case EditorState.Valid     => focus.glowBorder
+            case EditorState.Invalid   => styleS(boxShadow := "0 0 1ex rgba(224,180,180,.5)")
+            case EditorState.InTransit => styleS()
+          }): StyleS
+        )
       )
     )
   }
@@ -198,7 +228,20 @@ object BaseStyles extends StyleSheet.Inline {
     flexGrow(1),
     opacity(0.5))
 
-  val textEditorLeftPreviewRight = style(
+  val textEditorTopPreviewUnder = styleF(D.editorMode)(mode => styleS(
+    display.flex,
+    flexDirection.column,
+    flexWrap.nowrap,
+    alignItems.stretch,
+    justifyContent.spaceBetween,
+    width(100 %%),
+    mode match {
+      case EditTheme.Mode.Inline     => styleS()
+      case EditTheme.Mode.Fullscreen => styleS(height(100 %%))
+    }
+  ))
+
+  val textEditorLeftPreviewRight = styleF(D.editorMode)(mode => styleS(
     display.flex,
     flexWrap.nowrap,
     alignItems.stretch,
@@ -206,28 +249,79 @@ object BaseStyles extends StyleSheet.Inline {
     width(100 %%),
     unsafeChild(">div")(
       width :=! "calc(50% - 0.35rem)"
-    )
-  )
+    ),
+    mode match {
+      case EditTheme.Mode.Inline     => styleS()
+      case EditTheme.Mode.Fullscreen => styleS(height :=! s"calc(100vh - 2 * (" + fullscreenPaddingEx + "ex))")
+    }
+  ))
 
-  val previewToggleWrapper = style(
+  val previewToggleWrapper1 = style(
     position.relative)
 
-  val previewToggleButton = style(
+  val previewToggleWrapper2 = style(
     position.absolute,
     animationDuration(400 millis),
     top(.8 rem),
     right(.8 rem),
-    zIndex(1000),
+    zIndex(ZIndex.previewToggleButton),
+  )
+
+  private val previewButtonGap = 1.em
+
+  val previewButtonsWhenRight = style(
+    display.flex,
+    flexDirection.column,
+    unsafeChild(">*")(
+      &.not(_.firstChild)(
+        marginTop(previewButtonGap)
+      )
+    )
+  )
+
+  val previewButtonsWhenUnder = style(
+    unsafeChild(">*")(
+      &.not(_.firstChild)(
+        marginLeft(previewButtonGap)
+      )
+    )
+  )
+
+  private final val fullscreenPaddingEx = 1
+
+  val fullscreen = style(
+    position.fixed,
+    top(`0`),
+    left(`0`),
+    width(100 vw),
+    height(100 vh),
+    maxWidth(100 vw),
+    maxHeight(100 vh),
+    padding(fullscreenPaddingEx.ex),
+    background := "#fff",
+    zIndex(ZIndex.fullscreen),
   )
 
   val errorPointingUp = Label.Style(Label.Type.PointingUp, Colour.Red).div
 
-  val richTextPreview = styleF(D.editStylePosition)(pos => styleS(
+  val errorAndInstructions = styleF(D.previewPosition)(pos => styleS(
+    display.flex,
+    justifyContent.spaceBetween,
     pos match {
-      case EditTheme.Position.Right => styleS(height(100 %%))
-      case EditTheme.Position.Under => styleS()
+      case Position.Right => styleS()
+      case Position.Under => styleS(marginBottom(1 em))
+    }
+  ))
+
+  val richTextPreview = styleF(D.editorPosMode) { case (pos, mode) => styleS(
+    (pos, mode) match {
+      case (Position.Right, _)                         => styleS(height(100 %%))
+      case (Position.Under, EditTheme.Mode.Inline)     => styleS()
+      case (Position.Under, EditTheme.Mode.Fullscreen) => styleS(height :=! fullscreenEditorAndPreviewHeight)
     },
-    addClassNames("ui", "segments", "raised")))
+    (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.05)5ex,rgba(137,214,229,.05)10ex)").important,
+    addClassNames("ui", "segments", "raised"),
+  )}
 
   val richTextPreviewHeader = style(
     addClassNames("ui", "segment", "inverted"),
@@ -239,30 +333,36 @@ object BaseStyles extends StyleSheet.Inline {
 
   val richTextPreviewBodyOuter = style(
     padding(1 ex).important,
-    addClassNames("ui", "segment"),
-    (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.05)5ex,rgba(137,214,229,.05)10ex)").important)
+    (background := "#0000").important,
+    addClassNames("ui", "segment"))
 
-  val richTextPreviewBodyInner = styleF(D.editStylePosition)(pos => styleS(
+  val richTextPreviewBodyInner = styleF(D.previewPosition)(pos => styleS(
     minHeight(1.4 em),
     pos match {
-      case EditTheme.Position.Right => styleS(maxHeight :=! "calc(100vh - (1.4285em + (.3em + 1ex) * 2))")
-      case EditTheme.Position.Under => styleS(maxHeight(33.33333 vh))
+      case Position.Right => styleS(maxHeight :=! "calc(100vh - (1.4285em + (.3em + 1ex) * 2))")
+      case Position.Under => styleS(maxHeight(33.33333 vh))
     },
     overflowY.auto,
   ))
-
-  private def editorInstructionMarginV = 0.4 em
 
   // ctrl-enter to save, esc to cancel.
   object editorInstructions {
     private def textColour = color(c"#a4a6a8")
 
-    val container = style(
+    private[BaseStyles] final val heightEm = 1.5
+
+    private[BaseStyles] final val marginEm = 0.4
+
+    val container = styleF(D.editorMode)(mode => styleS(
       fontSize(0.75 rem),
-      lineHeight(1.5 em),
+      lineHeight(heightEm.em),
       textColour,
       textAlign.right,
-      marginBottom(editorInstructionMarginV))
+      mode match {
+        case EditTheme.Mode.Fullscreen => styleS()
+        case EditTheme.Mode.Inline     => styleS(marginBottom(marginEm.em))
+      },
+    ))
 
     val clause = style(
       display.inlineBlock, // prevent word-wrap in the middle of a clause
@@ -286,6 +386,8 @@ object BaseStyles extends StyleSheet.Inline {
       marginRight(`0`).important,
       cursor.pointer,
       &.hover(color(hoverColour)))
+
+    val fullscreenIcon = helpIcon
   }
 
   val autoComplete = new AutoComplete

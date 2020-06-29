@@ -21,10 +21,11 @@ sealed abstract class Icon(val clsName: ClassName) {
   *
   * When a new icon is needed:
   *     1. cd frontend
-  *     2. vim shipreq/semantic/icons-used
-  *     3. shipreq/semantic/prune
-  *     4. ./build-parallel
-  *     5. cd .. && bin/gen-semantic-icons
+  *     2. vim src/semantic/icons-used
+  *     3. src/semantic/prune
+  *     4. git diff semantic/dist/semantic.pruned.log
+  *     5. ./build-parallel
+  *     6. cd .. && bin/gen-semantic-icons
   */
 object Icon {
 
@@ -77,7 +78,7 @@ object Icon {
   // case object Anchor                            extends Unmodified("anchor")
   // case object Android                           extends Unmodified("android")
   // case object Angellist                         extends Unmodified("angellist")
-  // case object AngleDoubleDown                   extends Unmodified("angle double down")
+  case object AngleDoubleDown                   extends Unmodified("angle double down")
   case object AngleDoubleLeft                   extends Unmodified("angle double left")
   case object AngleDoubleRight                  extends Unmodified("angle double right")
   // case object AngleDoubleUp                     extends Unmodified("angle double up")
@@ -544,7 +545,7 @@ object Icon {
   // case object Mastercard                        extends Unmodified("mastercard")
   // case object MastercardCard                    extends Unmodified("mastercard card")
   // case object Maxcdn                            extends Unmodified("maxcdn")
-  // case object Maximize                          extends Unmodified("maximize")
+  case object Maximize                          extends Unmodified("maximize")
   // case object Meanpath                          extends Unmodified("meanpath")
   // case object Medium                            extends Unmodified("medium")
   // case object Medkit                            extends Unmodified("medkit")
@@ -914,7 +915,7 @@ object Icon {
   // case object WindowCloseOutline                extends Unmodified("window close outline")
   // case object WindowMaximize                    extends Unmodified("window maximize")
   // case object WindowMinimize                    extends Unmodified("window minimize")
-  // case object WindowRestore                     extends Unmodified("window restore")
+  case object WindowRestore                     extends Unmodified("window restore")
   // case object Windows                           extends Unmodified("windows")
   // case object Winner                            extends Unmodified("winner")
   // case object Wizard                            extends Unmodified("wizard")

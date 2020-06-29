@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
 import japgolly.microlibs.testutil.TestUtilInternals.quoteStringForDisplay
+import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
 import nyaya.gen._
@@ -8,8 +9,10 @@ import org.scalajs.dom.html
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.test.CommonObs
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.client.project.test.TestGlobal
 
 object ReqDetailTestDsl {
 
@@ -54,7 +57,11 @@ object ReqDetailTestDsl {
 
   val stateMode = TestState.state ^|-> State.mode
 
-  val * = Dsl[Unit, ReqDetailObs, TestState]
+  val * = Dsl[TestGlobal, ReqDetailObs, TestState]
+
+  val global = new TestGlobal.TestDslWithObs(*)(identity, _.global)
+
+  val field = Memo((f: String) => new CommonObs.Editor.TestDsl(*, f)(_.generic.field(f)))
 
   def checkErrorReason(e: String) =
     *.focus("Error reason").value(_.obs.error.reason).test(s"contains '$e'")(_ contains e)
@@ -74,17 +81,14 @@ object ReqDetailTestDsl {
   val visibleFields =
     *.focus("Visible fields").collection(_.obs.generic.fieldsInOrder)
 
-  def fieldText(field: String) =
-    *.focus(s"$field field text").value(_.obs.generic.field(field).innerText)
-
-  def fieldEditorValue(field: String) =
-    *.focus(s"$field field editor value").option(_.obs.generic.field(field).editor.map(_.value))
-
   val life =
     *.focus("Life").value(_.obs.generic.live)
 
   val editorCount =
     *.focus("Editor count").value(_.obs.editables.length)
+
+  val spinnerCount =
+    *.focus("Spinner count").value(_.obs.spinnerCount)
 
   val titleChangeInProgress =
     *.focus("Title change is in progress").value(_.obs.generic.titleSpinning)
@@ -158,7 +162,8 @@ object ReqDetailTestDsl {
     *.point("unsavedChanges ≤ editors") { x =>
       val u = unsavedChanges.run(x)
       val e = editorCount.run(x)
-      Option.unless(u <= e)(s"unsavedChanges ($u) must be ≤ editorCount ($e)")
+      val s = spinnerCount.run(x)
+      Option.unless(u <= (e + s))(s"unsavedChanges ($u) must be ≤ editorCount ($e) + spinnerCount ($s)")
     }
 
   private def clickEnabled(b: html.Button): Unit = {
@@ -224,32 +229,6 @@ object ReqDetailTestDsl {
     *.action(s"Abort $label text edit")(KB.Escape simulateKeyDown _.obs.uc.row(label).textEditor.get) +>
       editorCount.assert.decrement
 
-  def changeField(field: String, fromTo: (String, String)): *.Actions =
-    (doubleClickFieldValue(field)
-      +> fieldEditorValue(field).assert.contains(fromTo._1)
-      >> setFieldEditorValue(field, fromTo._2)
-      >> commitFieldEditor(field)
-      ).group(s"Change $field field from '${fromTo._1}' to '${fromTo._2}'")
-
-  def changeField(field: String, editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
-    (fieldText(field).assert(textFromTo._1)
-      +> doubleClickFieldValue(field)
-      +> fieldEditorValue(field).assert.contains(editorFromTo._1)
-      >> setFieldEditorValue(field, editorFromTo._2)
-      >> commitFieldEditor(field)
-      +> fieldText(field).assert(textFromTo._2)
-      ).group(s"Change $field field from '${textFromTo._1}' to '${textFromTo._2}'")
-
-  def changeFieldAndBack(field: String, editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
-    changeField(field, editorFromTo, textFromTo) >> changeField(field, editorFromTo.swap, textFromTo.swap)
-
-  def setFieldEditorValue(field: String, value: String): *.Actions =
-    *.action(s"Set $field editor to '$value'")(SimEvent.Change(value) simulate _.obs.generic.field(field).editor.get)
-
-  def commitFieldEditor(field: String): *.Actions =
-    *.action(s"Commit $field editor")(KB.Enter.ctrl simulateKeyDown _.obs.generic.field(field).editor.get) +>
-      editorCount.assert.decrement
-
   lazy val commitTitleEditor: *.Actions =
     *.action("Commit title editor")(KB.Enter.ctrl simulateKeyDown _.obs.generic.titleEditor.get)
     // +> editorCount.assert.decrement
@@ -309,16 +288,9 @@ object ReqDetailTestDsl {
   val doubleClickTitle =
     *.action("Double-click title")(Simulate doubleClick _.obs.generic.titleDom)
 
-  def doubleClickFieldValue(field: String) =
-    *.action("Double-click " + field)(Simulate doubleClick _.obs.generic.fields(field).dom)
-
   def setTitleEditValue(newValue: String): *.Actions =
     *.action(s"Set title text to ${quoteStringForDisplay(newValue)}")(
       SimEvent.Change(newValue) simulate _.obs.generic.titleEditor.get)
-
-  def setFieldEditValue(field: String, newValue: String): *.Actions =
-    *.action(s"Set $field to ${quoteStringForDisplay(newValue)}")(
-      SimEvent.Change(newValue) simulate _.obs.generic.fields(field).editor.get)
 
   val randomUseCaseStepAction: *.Actions = {
 

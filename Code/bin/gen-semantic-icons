@@ -7,7 +7,7 @@ cd "$(dirname "$(readlink -e "$0")")/.."
 # To camel-case
 x='s/^([^!]*)[ _-]([a-z])/$1\u$2/g;'
 
-d=frontend/shipreq/semantic
+d=frontend/src/semantic
 t=./webapp-base/js/src/main/scala/shipreq/webapp/base/ui/semantic/Icon.scala
 tmp=/tmp/icons.scala
 
@@ -37,3 +37,7 @@ sed -n '/===== ICONS END =====/,$p' < $t >> $tmp
 
 mv $tmp $t
 echo "Updated: $t"
+
+echo
+git diff -- $t
+

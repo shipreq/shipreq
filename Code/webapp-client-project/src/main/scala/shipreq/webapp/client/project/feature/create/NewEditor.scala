@@ -64,7 +64,7 @@ object NewEditor {
 
     final val ShowInstructions = true
 
-    @inline def editorStyle = EditTheme.Style(EditTheme.Position.Under, EditTheme.OpenPreview.WhenWanted)
+    @inline def editorStyle = EditTheme.Style(PreviewFeature.Position.Under, EditTheme.OpenPreview.WhenWanted)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -329,22 +329,23 @@ object NewEditor {
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- pxProjectWidgets.toCallback
             } yield editor.Optional(
-              project          = project,
-              naTags           = project.config.naTags(reqTypeId),
-              plainTextNoCtx   = plainTextNoCtx,
-              textSearch       = textSearch,
-              projectWidgets   = projectWidgets,
-              edit             = ss,
-              asyncStatus      = EditorStatus.async(asyncState),
-              abort            = args.abort,
-              autoFocus        = args.autoFocus,
-              commitFn         = args.commitFn,
-              commitVerb       = args.commitVerb,
-              editorStyle      = editorStyle,
-              preview          = previewRW(pid),
-              preEditValue     = None,
-              extraKbShortcuts = args.extraKbShortcuts,
-              showInstructions = ShowInstructions)
+              project            = project,
+              naTags             = project.config.naTags(reqTypeId),
+              plainTextNoCtx     = plainTextNoCtx,
+              textSearch         = textSearch,
+              projectWidgets     = projectWidgets,
+              edit               = ss,
+              asyncStatus        = EditorStatus.async(asyncState),
+              abort              = args.abort,
+              autoFocus          = args.autoFocus,
+              commitFn           = args.commitFn,
+              commitVerb         = args.commitVerb,
+              editorStyle        = editorStyle,
+              preview            = previewRW(pid),
+              preEditValue       = None,
+              extraKbShortcuts   = args.extraKbShortcuts,
+              showInstructions   = ShowInstructions,
+              optionalFullscreen = None)
         }
       }
 
@@ -379,22 +380,23 @@ object NewEditor {
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- pxProjectWidgets.toCallback
             } yield editor.NonEmpty(
-              project          = project,
-              naTags           = project.config.naTags(reqTypeId),
-              plainTextNoCtx   = plainTextNoCtx,
-              textSearch       = textSearch,
-              projectWidgets   = projectWidgets,
-              edit             = ss,
-              asyncStatus      = EditorStatus.async(asyncState),
-              abort            = args.abort,
-              autoFocus        = args.autoFocus,
-              commitFn         = args.commitFn,
-              commitVerb       = args.commitVerb,
-              editorStyle      = editorStyle,
-              preview          = previewRW(pid),
-              preEditValue     = None,
-              extraKbShortcuts = args.extraKbShortcuts,
-              showInstructions = ShowInstructions)
+              project            = project,
+              naTags             = project.config.naTags(reqTypeId),
+              plainTextNoCtx     = plainTextNoCtx,
+              textSearch         = textSearch,
+              projectWidgets     = projectWidgets,
+              edit               = ss,
+              asyncStatus        = EditorStatus.async(asyncState),
+              abort              = args.abort,
+              autoFocus          = args.autoFocus,
+              commitFn           = args.commitFn,
+              commitVerb         = args.commitVerb,
+              editorStyle        = editorStyle,
+              preview            = previewRW(pid),
+              preEditValue       = None,
+              extraKbShortcuts   = args.extraKbShortcuts,
+              showInstructions   = ShowInstructions,
+              optionalFullscreen = None)
         }
       }
 

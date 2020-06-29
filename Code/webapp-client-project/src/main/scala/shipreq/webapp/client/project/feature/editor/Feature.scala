@@ -20,20 +20,32 @@ object Feature {
   type AsyncError = ErrorMsg
   type AsyncState = AsyncFeature.Read.D0[AsyncError]
 
-  @inline private def defaultEditorStyle =
-    EditTheme.Style.default
-
   /** This is not safe for reusability because implementation calls `CallbackTo#runNow()`. */
-  trait Editor[-Args, +Change] {
+  trait Editor[-Args, +Change] { self =>
 
     /** impure */
-    def render(p: Permission, as: AsyncState, args: Args): Option[VdomElement]
+    def render(p: Permission, as: AsyncState, args: Args): Option[VdomNode]
 
     def change[C >: Change]: CallbackTo[Editor.Change[C]]
 
     def clipboardData: Option[ClipboardData]
 
     def setPotentialValue(p: PotentialValue): Option[Callback]
+
+    final def withArgs(args: Args): Editor[Unit, Change] =
+      new Editor[Unit, Change] {
+        override def render(p: Permission, as: AsyncState, u: Unit) =
+          self.render(p, as, args)
+
+        override def change[C >: Change] =
+          self.change
+
+        override def clipboardData =
+          self.clipboardData
+
+        override def setPotentialValue(p: PotentialValue) =
+          self.setPotentialValue(p)
+      }
   }
 
   object Editor {
@@ -84,6 +96,9 @@ object Feature {
                                        editability               : Permission,
                                        async                     : AsyncState) {
 
+      def withArgs(args: A): ForEditor[Unit, C] =
+        copy(editor.map(_.withArgs(args)))
+
       def clipboardData: Option[ClipboardData] =
         editor match {
           case None    => renderText.value().map(ClipboardData.apply)
@@ -94,11 +109,11 @@ object Feature {
         editor.isDefined
 
       /** impure */
-      def render(args: A): Option[VdomElement] =
+      def render(args: A): Option[VdomNode] =
         editor.flatMap(_.render(editability, async, args))
 
       /** impure */
-      def renderOr[B](args: A)(b: => B)(implicit ev: VdomElement => B): B =
+      def renderOr[B](args: A)(b: => B)(implicit ev: VdomNode => B): B =
         render(args).fold(b)(ev)
     }
 
@@ -205,7 +220,7 @@ object Feature {
                     potentialValue  : Option[PotentialValue] = None): Option[Callback] =
         startEditWithArgs(
           state,
-          FreeOption(NewEditor.CreationArgs(pxProjectWidgets, defaultEditorStyle, filterDead, potentialValue, hooks)))
+          FreeOption(NewEditor.CreationArgs(pxProjectWidgets, filterDead, potentialValue, hooks)))
 
       private[Feature] def startEditWithArgs(state: Read.ForAnyEditor,
                                              args : FreeOption[NewEditor.CreationArgs]): Option[Callback] =
@@ -321,11 +336,11 @@ object Feature {
       def clipboardData = read.clipboardData
 
       /** impure */
-      @inline def render(args: A): Option[VdomElement] =
+      @inline def render(args: A): Option[VdomNode] =
         read.render(args)
 
       /** impure */
-      @inline def renderOr[B](args: A)(b: => B)(implicit ev: VdomElement => B): B =
+      @inline def renderOr[B](args: A)(b: => B)(implicit ev: VdomNode => B): B =
         read.renderOr(args)(b)(ev)
 
       /** 1) Renders the editor if open, or a given view otherwise.
@@ -354,11 +369,11 @@ object Feature {
       def onClose(cb: Callback): ForEditor[A, C] =
         copy(creationArgs = creationArgs.map(NewEditor.CreationArgs.onClose.modify(_ >> cb)))
 
-      def withEditorStyle(s: EditTheme.Style): ForEditor[A, C] =
-        copy(creationArgs = creationArgs.map(_.copy(editorStyle = s)))
-
       def withPotentialValue(p: PotentialValue): ForEditor[A, C] =
         copy(creationArgs = creationArgs.map(_.copy(potentialValue = Some(p))))
+
+      def withArgs(args: A): ForEditor[Unit, C] =
+        copy(read.withArgs(args))
 
       val setPotentialValueFnIfAllowed: Option[PotentialValue => Option[Callback]] =
         SetValueDecision(read) match {
@@ -396,7 +411,7 @@ object Feature {
         ForEditor(
           read(f),
           write.apply(f),
-          FreeOption(NewEditor.CreationArgs(pxProjectWidgets, defaultEditorStyle, filterDead, None, NewEditor.Hooks.empty)))
+          FreeOption(NewEditor.CreationArgs(pxProjectWidgets, filterDead, None, NewEditor.Hooks.empty)))
     }
 
     implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {

@@ -90,7 +90,13 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
           textareaConst,
           keys,
           ^.autoFocus  := p.autoFocus)
-        editorRef.component(EditTheme.autosizeTextareaProps(EditTheme.Style.default, validity, p.edit.value, base))
+        val autosizeProps = EditTheme.autosizeTextareaProps(
+          position = Some(EditTheme.Style.default.position),
+          mode     = EditTheme.Mode.Inline,
+          validity = validity,
+          value    = p.edit.value,
+          tagMod   = base)
+        editorRef.component(autosizeProps)
       }
 
       def instructions: TagMod =
@@ -101,7 +107,8 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
               commit = p.status.getCommit,
               commitVerb = p.commitVerb,
               abort = p.abort),
-            help = None))
+            help = None,
+            fullscreen = None))
 
       EditTheme.renderEditor(p.status, editor, p.edit.value, instructions)
     }

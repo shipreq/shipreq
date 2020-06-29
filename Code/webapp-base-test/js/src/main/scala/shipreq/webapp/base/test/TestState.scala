@@ -9,6 +9,7 @@ import scalacss.internal.StyleA
 import shipreq.base.util.{Debug, ErrorMsg}
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.lib.DomUtil._
+import shipreq.webapp.base.ui.{BaseStyles, EditTheme}
 import teststate.domzipper.DomZipperJsF.Dom
 import teststate.run.Report.AssertionSettings
 
@@ -50,6 +51,9 @@ object TestState
 
   def KB = japgolly.scalajs.react.test.SimEvent.Keyboard
 
+  final val y = true
+  final val n = false
+
   def assertTestState(r: Report[String], onFailure: => Unit = ())(implicit as: AssertionSettings, se: DisplayError[String]): Unit =
     r.failureReason match {
       case None =>
@@ -59,6 +63,12 @@ object TestState
         as.onFail.print(r)
         // f.cause.foreach(_.printStackTrace())
         TestUtil.fail(f.failure)
+    }
+
+  def editableDomValue(d: html.Element): String =
+    d match {
+      case i: html.Input    => i.value
+      case t: html.TextArea => t.value
     }
 
   private val semanticUiClasses: Set[String] =

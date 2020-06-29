@@ -13,7 +13,7 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.ExternalPubid.LookupFailure
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{Event, ProjectAndOrd, VerifiedEvent}
-import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
+import shipreq.webapp.base.feature.{AsyncFeature, PreviewFeature, TableNavigationFeature}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text._
@@ -33,7 +33,7 @@ object ReqDetail {
 
   private implicit val tableNavigationFeature = TableNavigationFeature.NoRowSpans
 
-  private val cellEditorStyle = EditTheme.Style(EditTheme.Position.Right, EditTheme.OpenPreview.ShowWithToggle)
+  private val bigTextEditorStyle = EditTheme.Style(PreviewFeature.Position.Right, EditTheme.OpenPreview.ShowWithControls)
 
   def apply(staticProps: StaticProps) =
     ScalaComponent.builder[DynamicProps]
@@ -328,9 +328,9 @@ object ReqDetail {
       def renderRowData(cellBase: VdomTag, row: Row): VdomElement = {
         import EditorFeature.FieldKey
 
-        def editableCell(key: FieldKey.ForSomeReq): VdomElement = {
-          val editor = reqEditor(key, data.pxProjectWidgets, data.filterDead).withEditorStyle(cellEditorStyle)
-          EditorNavParent.Props(cellBase, editor, view.editable(key).getOrElse(EmptyVdom)).render
+        def editableCell(key: FieldKey.ForSomeReq)(arg: key.Args): VdomElement = {
+          val editor = reqEditor(key, data.pxProjectWidgets, data.filterDead)
+          EditorNavParent.Props(cellBase, editor, arg, view.editable(key).getOrElse(EmptyVdom)).render
         }
 
         def nonDirectlyEditorNavParent(t: TagMod): VdomElement =
@@ -343,25 +343,25 @@ object ReqDetail {
 
         row match {
           case Row.CustomField(id: CustomField.Text.Id) =>
-            editableCell(FieldKey.CustomTextField(id))
+            editableCell(FieldKey.CustomTextField(id))(bigTextEditorStyle)
 
           case Row.CustomField(id: CustomField.Tag.Id) =>
-            editableCell(FieldKey.CustomFieldTags(id))
+            editableCell(FieldKey.CustomFieldTags(id))(())
 
           case Row.CustomField(id: CustomField.Implication.Id) =>
-            editableCell(FieldKey.Implications(-\/(id)))
+            editableCell(FieldKey.Implications(-\/(id)))(())
 
           case Row.Codes =>
-            editableCell(FieldKey.Codes)
+            editableCell(FieldKey.Codes)(())
 
           case Row.ReqType =>
-            editableCell(FieldKey.ReqType)
+            editableCell(FieldKey.ReqType)(())
 
           case Row.OtherTags =>
-            editableCell(FieldKey.OtherTags)
+            editableCell(FieldKey.OtherTags)(())
 
           case Row.AllTags =>
-            editableCell(FieldKey.AllTags)
+            editableCell(FieldKey.AllTags)(())
 
           case Row.DeletionReason =>
             nonDirectlyEditorNavParent(view.deletionReason getOrElse emptySpan)

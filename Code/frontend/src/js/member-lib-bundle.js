@@ -11,6 +11,10 @@ export { default as TextComplete   } from 'textcomplete/lib/textcomplete';
 export { default as TextCompleteTA } from 'textcomplete/lib/textarea';
 export { default as tinycolor      } from 'tinycolor2/tinycolor';
 
+// screenfull
+import * as screenfull from 'screenfull';
+export { screenfull };
+
 // react-svg-pan-zoom
 import ReactSVGPanZoom from 'react-svg-pan-zoom/build-es/viewer';
 import { fitToViewer } from 'react-svg-pan-zoom/build-es/features/zoom';
@@ -31,4 +35,4 @@ const RSPZ = {
 export { RSPZ };
 
 // Paste the following into web console for quick testing.
-// console.log("G: ", {autosize, ChromePicker, clipboard, GithubPicker, HRP, moment, ReactCollapse, RSPZ, RVAS, scrollIntoView, TextComplete, TextCompleteTA, tinycolor})
+// console.log("G: ", {autosize, ChromePicker, clipboard, GithubPicker, HRP, moment, ReactCollapse, RSPZ, RVAS, scrollIntoView, screenfull, TextComplete, TextCompleteTA, tinycolor})

@@ -1,8 +1,10 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
+import japgolly.microlibs.utils.Memo
 import org.parboiled2.ParseError
 import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.{document, html}
+import shipreq.base.util.Invalid
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.lib.DomUtil._
@@ -41,9 +43,15 @@ object ReqTableObs {
     }
   }
 
-  case class ContentSummary(rows: Int, reqs: Int, reqBreakdown: Option[String], other: Option[String]) {
+  final case class ContentSummary(rows: Int, reqs: Int, reqBreakdown: Option[String], other: Option[String]) {
     val reqBreakdownResult: Option[Int] = reqBreakdown.map(calc)
     val rowBreakdownResult: Int         = reqs + other.fold(0)(calc)
+  }
+
+  private val naSel = Style.reqtable.table.`N/A`.selector
+
+  final class Cell($: DomZipperJs) extends CommonObs.Editor($) {
+    lazy val isNA = $.exists(naSel)
   }
 }
 
@@ -214,10 +222,7 @@ final class ReqTableObs($: DomZipperJs, val global: TestGlobal.Obs) {
     def rowIndexByPubid(pubid: String): Int =
       findIndex(pubid, rowPubids, s"Row with pubid [$pubid] not found.")
 
-    def cell(loc: CellLoc): DomZipperJs =
-      cell(row = loc.row, col = loc.col)
-
-    def cell(row: Int, col: Int): DomZipperJs = {
+    def cellZipper(row: Int, col: Int): DomZipperJs = {
       var c = col
       if (c < 0) c += columns.length
       var r = row
@@ -225,14 +230,28 @@ final class ReqTableObs($: DomZipperJs, val global: TestGlobal.Obs) {
       tbody(s">tr:nth-child(${r + 1}) >td:nth-child(${c + 1})")
     }
 
-    def cell(pubid: String, col: String): DomZipperJs =
+    private val cellMemo: Int => Int => Cell =
+      Memo.int { row =>
+        Memo.int { col =>
+          val z = cellZipper(row, col)
+          new Cell(z)
+        }
+      }
+
+    def cell(row: Int, col: Int): Cell =
+      cellMemo(row)(col)
+
+    def cell(loc: CellLoc): Cell =
+      cell(row = loc.row, col = loc.col)
+
+    def cell(pubid: String, col: String): Cell =
       cell(cellLoc(pubid, col))
 
     def cellLoc(pubid: String, col: String): CellLoc =
       CellLoc(row = rowIndexByPubid(pubid), columnIndex(col))
 
     def rowSelectionInput(row: Int): html.Input =
-      cell(row, 0)("input[type=checkbox]").domAs[html.Input]
+      cellZipper(row, 0)("input[type=checkbox]").domAs[html.Input]
 
     lazy val allRowSelectionInput: html.Input =
       columnDoms(0).zipper("input[type=checkbox]").domAs[html.Input]

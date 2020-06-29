@@ -13,12 +13,10 @@ import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util.Browser
-import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.feature.SavedViewFeature
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.feature.savedview.SavedViewTestDsl
 import shipreq.webapp.client.project.test._
-import teststate.domzipper.DomZipper.EditableSel
 
 object ReqTableTestDsl {
   import TestState._
@@ -29,7 +27,7 @@ object ReqTableTestDsl {
 
   val * = Dsl[Ref, ReqTableObs, Project]
 
-  val svr = new TestGlobal.TestDslWithObs(*)(_.global, _.global)
+  val global = new TestGlobal.TestDslWithObs(*)(_.global, _.global)
 
   def apply(action: *.Actions = *.emptyAction): *.Plan =
     Plan(action, invariants)
@@ -83,11 +81,6 @@ object ReqTableTestDsl {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private val editorInvalidSel: String =
-    ".pointing.red.label"
-
-  private val naSel = Style.reqtable.table.`N/A`.selector
-
   sealed abstract class CellState
   case object Normal  extends CellState
   case object Editing extends CellState
@@ -97,23 +90,15 @@ object ReqTableTestDsl {
   def cellEditor(pubid: String, col: String): CellEditor =
     CellEditor(_.table.cellLoc(pubid = pubid, col = col), s"$pubid: $col")
 
-  final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc, locDesc: String) {
-
-    private def editorCss = EditableSel
+  final case class CellEditor(loc: ReqTableObs => ReqTableObs.CellLoc, locDesc: String)
+      extends CommonObs.Editor.TestDsl(*, locDesc)(o => o.table.cell(loc(o))) {
 
     private val cell = *.focus("Subject cell").value(s => s.obs.table.cell(loc(s.obs)))
 
-    val isNA        = cell.map(_.exists(naSel))                      rename "Cell is N/A"
-    val cellText    = cell.map(_.innerText)                          rename "Cell innerText"
-    val editor      = cell.map(_(editorCss).forceDomAs[html.Input])  rename "Editor"
-    val editorValue = editor.map(_.value)                            rename "Editor value"
+    val isNA = cell.map(_.isNA) rename "Cell is N/A"
 
-    private val _editing = cell.map(_ exists editorCss)      rename "Editing"
-    private val _locked  = cell.map(_ exists ".loading")     rename "Locked"
-
-    val editorValidity = *.focus("Editor validity").value(Invalid when cell.run(_).exists(editorInvalidSel))
-
-    val editorError = *.focus("Editor error").option(cell.run(_).collect01(editorInvalidSel).innerTexts)
+    private val _editing = cell.map(_.editing) rename "Editing"
+    private val _locked  = cell.map(_.isSpinning)  rename "Locked"
 
     val noEditorError = editorError.assert(None)
 
@@ -133,7 +118,7 @@ object ReqTableTestDsl {
       _editing.assert(false)
 
     val focus =
-      setFocus(o => o.table.cell(loc(o)).domAsHtml).rename("Focus on " + locDesc)
+      setFocus(o => o.table.cell(loc(o)).dom).rename("Focus on " + locDesc)
 
     val tryStartEdit =
       *.action("Start editor.")(Simulate doubleClick cell.run(_).dom)
@@ -141,53 +126,14 @@ object ReqTableTestDsl {
     val startEdit = (
       isNA.assert(false)
         +> tryStartEdit
-        +> svr.requestCount.assert.noChange
+        +> global.requestCount.assert.noChange
         +> assertState(Editing))
 
     val assertCantStartEdit = (
       tryStartEdit.rename("Attempt to start editor.")
-        +> svr.requestCount.assert.noChange
+        +> global.requestCount.assert.noChange
         +> assertNotEditing)
-
-    def enterValue(text: String, desc: String = "Enter value") =
-      *.action(s"$desc: ${text.display}")(SimEvent.Change(text) simulate editor.run(_)) +>
-        editorValue.assert(text)
-
-    def modifyValue(mod: String => String, desc: String = "Modify value") =
-      *.chooseAction(desc + ".")(i => {
-        val value1 = editorValue.run(i)
-        val value2 = mod(value1)
-        enterValue(value2, desc)
-      })
-
-    def testValid  (text: String) = enterValue(text, "Enter valid value")   +> editorValidity.assert(Valid)
-    def testInvalid(text: String) = enterValue(text, "Enter invalid value") +> editorValidity.assert(Invalid)
-
-    val commit =
-      *.action("Press Ctrl-Enter.")(KB.Enter.ctrl simulateKeyDown editor.run(_)) +> assertNotEditing
-
-    val abortEdit =
-      *.action("Press Escape.")(KB.Escape simulateKeyDown editor.run(_)) +> assertState(Normal)
-
-    // These used to be buttons
-    def clickRetry = commit
-    def clickAbort = abortEdit
-
-    def change(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
-      (cellText.assert(textFromTo._1)
-        +> startEdit
-        +> editorValue.assert(editorFromTo._1)
-        >> enterValue(editorFromTo._2)
-        >> commit
-        +> cellText.assert(textFromTo._2)
-        ).group(s"Change $locDesc from '${textFromTo._1}' to '${textFromTo._2}'")
-
-    def changeAndBack(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
-      change(editorFromTo, textFromTo) >> change(editorFromTo.swap, textFromTo.swap)
-
-    def changeAndBack(fromTo: (String, String)): *.Actions =
-      changeAndBack(fromTo, fromTo)
-  }
+  } // CellEditor
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Invariants
@@ -328,7 +274,7 @@ object ReqTableTestDsl {
   val logTable = *.print(_.obs.table.entireContent)
 
   def receiveExternalEvent(e: Event): *.Actions =
-    svr.receiveExternalEvent(e)
+    global.receiveExternalEvent(e)
       .updateState(WebappTestUtil.applyEventSuccessfully(_, e))
 
   def setFocus(f: ReqTableObs => html.Element): *.Actions =

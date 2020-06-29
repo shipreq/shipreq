@@ -14,8 +14,8 @@ import shipreq.webapp.base.feature.PreviewFeature
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.TextSearch
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
+import shipreq.webapp.base.ui.{EditTheme, OptionalFullscreen}
 import shipreq.webapp.client.project.app.Style.{deletionForm => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.Selection
@@ -46,22 +46,23 @@ object DeletionForm {
 
     private def reasonEditorProps(p: Props, s: State): RichTextEditor.DeletionReason.Optional =
       RichTextEditor.DeletionReason.Optional(
-        project          = p.data.project,
-        naTags           = NaTags.none,
-        plainTextNoCtx   = p.widgets.plainText,
-        textSearch       = p.textSearch,
-        projectWidgets   = p.widgets,
-        edit             = StateSnapshot.withReuse(s.reason)(setReason),
-        asyncStatus      = None,
-        abort            = None,
-        autoFocus        = true,
-        commitFn         = None,
-        commitVerb       = "",
-        editorStyle      = EditTheme.Style.default,
-        preview          = PreviewFeature.ReadWrite.Single.alwaysShow,
-        preEditValue     = None,
-        extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
-        showInstructions = true)
+        project            = p.data.project,
+        naTags             = NaTags.none,
+        plainTextNoCtx     = p.widgets.plainText,
+        textSearch         = p.textSearch,
+        projectWidgets     = p.widgets,
+        edit               = StateSnapshot.withReuse(s.reason)(setReason),
+        asyncStatus        = None,
+        abort              = None,
+        autoFocus          = true,
+        commitFn           = None,
+        commitVerb         = "",
+        editorStyle        = EditTheme.Style.default,
+        preview            = PreviewFeature.ReadWrite.Single.alwaysShow,
+        preEditValue       = None,
+        extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
+        showInstructions   = true,
+        optionalFullscreen = None)
 
     private def renderReqTable(p: Props, selectedReqs: Selection[ReqId]): VdomElement =
       SharedUI.reqTable(

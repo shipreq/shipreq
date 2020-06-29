@@ -6,6 +6,12 @@ import scalaz.{-\/, \/, \/-}
 
 object CallbackHelpers {
 
+  def mergeOptionalCallbacks(a: Option[Callback], b: Option[Callback]): Option[Callback] =
+    if (a.isDefined && b.isDefined)
+      Some(a.get >> b.get)
+    else
+      a orElse b
+
   final class HelperAsyncCallbackDisj[E, A](private val underlying: (Try[E \/ A] => Callback) => Callback) extends AnyVal {
     @inline private def self: AsyncCallback[E \/ A] =
       AsyncCallback(underlying)

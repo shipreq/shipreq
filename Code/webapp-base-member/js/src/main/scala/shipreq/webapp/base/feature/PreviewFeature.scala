@@ -1,6 +1,6 @@
 package shipreq.webapp.base.feature
 
-import japgolly.microlibs.utils.Memo
+import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -77,12 +77,22 @@ import shipreq.webapp.base.ui.{BaseStyles => *, OnlyVisibleOnMouseMove}
   */
 object PreviewFeature {
 
+  sealed trait Position
+  object Position {
+    case object Right extends Position
+    case object Under extends Position
+
+    implicit def univEq: UnivEq[Position] = UnivEq.derive
+    implicit val reusability: Reusability[Position] = Reusability.byUnivEq
+    def values = AdtMacros.adtValues[Position]
+  }
+
   sealed abstract class Status(final val show: Boolean)
   object Status {
-    case object Closed                          extends Status(false)
-    case object NeedOpen                        extends Status(true)
-    case object NeededOpen                      extends Status(true)
-    final case class Manual(forceShow: Boolean) extends Status(forceShow)
+    case object Closed                                    extends Status(false)
+    case object NeedOpen                                  extends Status(true)
+    case object NeededOpen                                extends Status(true)
+    final case class Manual(open: Boolean, pos: Position) extends Status(open)
 
     implicit def univEq: UnivEq[Status] = UnivEq.derive
     implicit val reusability: Reusability[Status] = Reusability.byUnivEq
@@ -183,10 +193,16 @@ object PreviewFeature {
       def showPreview(wantOpen: => Boolean): Boolean =
         status.exists(_.show || wantOpen)
 
-      def showManuallyControlledPreview(defaultShow: Boolean): Boolean =
+      def showManuallyControlledPreview(default: Boolean): Boolean =
         status match {
-          case Some(m: PreviewFeature.Status.Manual) => m.forceShow
-          case _                                     => defaultShow
+          case Some(m: Status.Manual) => m.show
+          case _                      => default
+        }
+
+      def position(default: Position): Position =
+        status match {
+          case Some(m: Status.Manual) => m.pos
+          case _                      => default
         }
     }
 
@@ -223,7 +239,8 @@ object PreviewFeature {
       def onFocus(wantOpen: Boolean): Callback
       def onEdit(wantOpened: Boolean): Callback
       def onBlur: Callback
-      def setManually(forceShow: Boolean): Callback
+      def clear: Callback
+      def setManually(m: Status.Manual): Callback
     }
 
     object Single {
@@ -232,7 +249,7 @@ object PreviewFeature {
 
         override def onFocus(wantOpen: Boolean): Callback = {
           $.modStateOption {
-            case Some(_: Status.Manual) => None
+            case Some(_: Manual) => None
             case prev =>
               val newStatus = if (wantOpen) NeedOpen else Closed
               val noChange = prev.contains(newStatus)
@@ -242,7 +259,7 @@ object PreviewFeature {
 
         override def onEdit(wantedOpen: Boolean): Callback =
           $.modStateOption {
-            case Some(_: Status.Manual) => None
+            case Some(_: Manual) => None
             case prev =>
               val newStatus: Status =
                 if (wantedOpen)
@@ -260,19 +277,26 @@ object PreviewFeature {
 
         override def onBlur: Callback =
           $.modStateOption {
-            case Some(_: Status.Manual) => None
-            case _                      => Some(None)
+            case Some(_: Manual) => None
+            case _               => Some(None)
           }
 
-        override def setManually(forceShow: Boolean): Callback =
-          $.setState(Some(Manual(forceShow = forceShow)))
+        override def clear: Callback =
+          $.modStateOption {
+            case Some(_) => Some(None)
+            case None    => None
+          }
+
+        override def setManually(m: Manual): Callback =
+          $.setState(Some(m))
       }
 
       lazy val doNothing: Single = new Single {
-        override def onFocus(wantOpen: Boolean)      = Callback.empty
-        override def onEdit (wantOpen: Boolean)      = Callback.empty
-        override def onBlur                          = Callback.empty
-        override def setManually(forceShow: Boolean) = Callback.empty
+        override def onFocus(wantOpen: Boolean)    = Callback.empty
+        override def onEdit (wantOpen: Boolean)    = Callback.empty
+        override def onBlur                        = Callback.empty
+        override def clear                         = Callback.empty
+        override def setManually(m: Status.Manual) = Callback.empty
       }
     }
 
@@ -295,28 +319,23 @@ object PreviewFeature {
 
   object ReadWrite {
 
-    private val toggleButtonBase: Boolean => VdomTag =
-      Memo.bool { currentlyShown =>
-        val icon =
-          if (currentlyShown)
-            Icon.AngleDoubleRight
-          else
-            Icon.AngleDoubleLeft
-
-        val tip =
-          if (currentlyShown)
-            "Hide preview"
-          else
-            "Show preview"
-
+    private object ManualControls {
+      private def button(tip: String, icon: Icon) =
         Button(
           tipe = Button.Type.IconOnly(icon),
           colour = Colour.Blue,
-        ).tag(*.previewToggleButton, ^.title := tip)
-      }
+        ).tag(^.title := tip)
 
-    private val toggleButtonDecay =
-      Duration.ofMillis(1200)
+      val show  = button("Show preview", Icon.WindowRestore)
+      val hide  = button("Hide preview", Icon.Close)
+      val down  = button("Move down"   , Icon.AngleDoubleDown)
+      val right = button("Move right"  , Icon.AngleDoubleRight)
+
+      val wrapper1 = <.div(*.previewToggleWrapper1)
+      val wrapper2 = <.div(*.previewToggleWrapper2)
+
+      val decay = Duration.ofMillis(1200)
+    }
 
     final case class Single(read: Read.Single, write: Write.Single) {
       def onFocus(wantOpen: Boolean): Callback =
@@ -332,34 +351,52 @@ object PreviewFeature {
       def onBlur: Callback =
         write.onBlur
 
+      def clear: Callback =
+        write.clear
+
       def showPreview(wantOpen: => Boolean): Boolean =
         read.showPreview(wantOpen)
 
       def reactCollapse(wantOpen: => Boolean) =
         ReactCollapse(showPreview(wantOpen))
 
-      def toggleButton(defaultShow: Boolean): VdomTag = {
-        val currentlyShown =
+      def manualControls(defaultPosition      : Position,
+                         previewIsShown       : Boolean,
+                         showControlsInitially: Boolean): VdomTag = {
+        import Status.Manual
+
+        val position =
           read.status match {
-            case Some(Status.Manual(show)) => show
-            case _                         => defaultShow
+            case Some(m: Manual) => m.pos
+            case _               => defaultPosition
           }
 
-        val toggleButton =
-          toggleButtonBase(currentlyShown)(
-            ^.onClick --> write.setManually(forceShow = !currentlyShown))
+        val manualControls: VdomTag = {
+          def setOnClick(m: Manual) = ^.onClick --> write.setManually(m)
+          val inner: TagMod =
+            if (previewIsShown) {
+              val hide  = ManualControls.hide (setOnClick(Manual(false, position)))
+              def down  = ManualControls.down (setOnClick(Manual(true, Position.Under)))
+              def right = ManualControls.right(setOnClick(Manual(true, Position.Right)))
+              position match {
+                case Position.Right => TagMod(*.previewButtonsWhenRight, hide, down)
+                case Position.Under => TagMod(*.previewButtonsWhenUnder, right, hide)
+              }
+            } else
+              ManualControls.show(setOnClick(Manual(true, position)))
+          ManualControls.wrapper2(inner)
+        }
 
-        val fadeProps =
+        val props =
           OnlyVisibleOnMouseMove.Props(
-            content       = toggleButton,
+            content       = manualControls,
             transition    = Transition.fade,
             direction     = Transition.Direction.left,
-            decay         = toggleButtonDecay,
-            showInitially = currentlyShown,
+            decay         = ManualControls.decay,
+            showInitially = showControlsInitially,
           )
 
-        <.div(*.previewToggleWrapper,
-          fadeProps.render)
+        ManualControls.wrapper1(props.render)
       }
     }
 

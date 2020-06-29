@@ -48,7 +48,7 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* Rich text preview should be on the right (instead of below) in ReqDetail (and/or) introduce zen mode for multiline editors
+* prompt user to confirm aborting a dirty editor
 
 
 Backlog (maybe-probably soon)
