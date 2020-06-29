@@ -304,6 +304,15 @@ object BaseStyles extends StyleSheet.Inline {
 
   val errorPointingUp = Label.Style(Label.Type.PointingUp, Colour.Red).div
 
+  val errorAndInstructions = styleF(D.previewPosition)(pos => styleS(
+    display.flex,
+    justifyContent.spaceBetween,
+    pos match {
+      case Position.Right => styleS()
+      case Position.Under => styleS(marginBottom(1 em))
+    }
+  ))
+
   val richTextPreview = styleF(D.editorPosMode) { case (pos, mode) => styleS(
     (pos, mode) match {
       case (Position.Right, _)                         => styleS(height(100 %%))

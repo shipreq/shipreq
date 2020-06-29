@@ -49,7 +49,6 @@ v2.2
 
 ### Implement
 * prompt user to confirm aborting a dirty editor
-* async error & invalid input hardcoded to Under
 
 
 Backlog (maybe-probably soon)

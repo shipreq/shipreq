@@ -167,56 +167,70 @@ object EditTheme {
         body        = previewBody,
       )
 
+    def renderActive(error: Option[TagMod]) = {
+      val p              = previewRW
+      val instructionsFn = instructions
+      val editorFn       = editor
+      val position       = p.read.position(style.position)
+
+      val renderFn: RenderCmd => RenderResult =
+        cmd => {
+          import cmd.mode
+          val instructions                  = instructionsFn(cmd.fullscreen)
+          def editor(allowPreview: Boolean) = editorFn(Valid, Option.when(allowPreview)(position), mode)
+          def preview                       = renderPreview(position, mode)
+
+          val errorAndInstructions: TagMod =
+            error match {
+              case None    => instructions
+              case Some(e) => <.div(*.errorAndInstructions(position), *.errorPointingUp(e), instructions)
+            }
+
+          implicit def noOuter(v: VdomTag): RenderResult =
+            RenderResult(identity, v)
+
+          def previewRight =
+            <.div(*.textEditorLeftPreviewRight(mode),
+              <.div(editor(allowPreview = true), errorAndInstructions),
+              <.div(preview))
+
+          def previewUnder =
+            RenderResult(
+              outer = <.div(*.textEditorTopPreviewUnder(mode), <.div(editor(allowPreview = true), errorAndInstructions), _),
+              inner = <.div(preview)
+            )
+
+          def noPreview =
+            <.div(editor(allowPreview = false), errorAndInstructions)
+
+          if (cmd.allowPreview)
+            position match {
+              case Position.Right => previewRight
+              case Position.Under => previewUnder
+            }
+          else
+            noPreview
+        }
+
+      this.renderActive(
+        render             = renderFn,
+        defaultPosition    = style.position,
+        optionalFullscreen = optionalFullscreen,
+        previewRW          = p,
+        previewWantOpen    = previewWantOpen,
+        openPreview        = style.openPreview,
+      )
+    }
+
     status match {
       case EditorStatus.Ignore | EditorStatus.Valid(_) =>
-        val p              = previewRW
-        val instructionsFn = instructions
-        val editorFn       = editor
-        val position       = p.read.position(style.position)
-
-        val renderFn: RenderCmd => RenderResult =
-          cmd => {
-            import cmd.mode
-            val instructions                  = instructionsFn(cmd.fullscreen)
-            def editor(allowPreview: Boolean) = editorFn(Valid, Option.when(allowPreview)(position), mode)
-            def preview                       = renderPreview(position, mode)
-
-            implicit def noOuter(v: VdomTag): RenderResult =
-              RenderResult(identity, v)
-
-            def previewRight =
-              <.div(*.textEditorLeftPreviewRight(mode),
-                <.div(editor(allowPreview = true), instructions),
-                <.div(preview))
-
-            def previewUnder =
-              RenderResult(
-                outer = <.div(*.textEditorTopPreviewUnder(mode), <.div(editor(allowPreview = true), instructions), _),
-                inner = <.div(preview)
-              )
-
-            def noPreview =
-              <.div(editor(allowPreview = false), instructions)
-
-            if (cmd.allowPreview)
-              position match {
-                case Position.Right => previewRight
-                case Position.Under => previewUnder
-              }
-            else
-              noPreview
-          }
-
-        renderActive(
-          render             = renderFn,
-          defaultPosition    = style.position,
-          optionalFullscreen = optionalFullscreen,
-          previewRW          = p,
-          previewWantOpen    = previewWantOpen,
-          openPreview        = style.openPreview,
-        )
+        renderActive(None)
 
       case EditorStatus.Invalid(err) =>
+        // This is (still) hardcoded to display the preview under text.
+        // Since adding the ability to control the preview and its position, the only places it's used are custom text
+        // fields which are never invalid. Therefore I'm choosing to upgrading this logic to consider Style until later
+        // when (if) it's actually needed.
         val mode = Mode.Inline
         val pos = Position.Under
         <.div(
@@ -224,18 +238,18 @@ object EditTheme {
           *.errorPointingUp(err),
           renderPreview(pos, mode))
 
-      case EditorStatus.AsyncError(err, _, _) =>
-        val mode = Mode.Inline
-        val pos = Position.Under
-        <.div(
-          editor(Valid, Some(pos), mode),
-          *.errorPointingUp(err),
-          renderPreview(pos, mode))
-
       case EditorStatus.InTransit =>
-        <.div(*.textEditor((*.EditorState.InTransit, None, Mode.Inline)),
+        // This is correct and guarded by tests in ReqDetailTest that confirm fullscreen is closed on commit, and that
+        // the fullscreen button is disabled.
+        val mode = Mode.Inline
+        <.div(*.textEditor((*.EditorState.InTransit, None, mode)),
           <.div(spinner),
           <.div(*.textEditorInTransitValue, readOnlyView))
+
+      case EditorStatus.AsyncError(err, _, _) =>
+        // As described above, this is safe in that we don't have to worry about fullscreen css;
+        // it's always Mode.Inline here.
+        renderActive(Some(err))
     }
   }
 
