@@ -1328,7 +1328,7 @@ object Style extends StyleSheet.Inline {
 
     val ulCompact = style(
       ul,
-      margin(`0`, `0`, blankLineHeight, `0`))
+      margin(blankLineHeight, `0`))
 
     val ulSpacious = style(
       ul,

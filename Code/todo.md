@@ -52,7 +52,6 @@ v2.2
 * detail: move delete to right
 * detail: add new button to type
 * inc margin of uls
-* insert/retain space between text and ul (plain text)
 
 
 Backlog (maybe-probably soon)

@@ -203,22 +203,21 @@ object PlainText {
           case a: PlainTextMarkup # Underline      => style("__", a.inner)
 
           // ---------------------------------------------------------------------------------------------------------
-          case a: ListMarkup      # UnorderedList  =>
+          case a: ListMarkup # UnorderedList  =>
             val nextIndent = indent + "  "
 
-            val prefix: String => String =
-              if (a.itemsContainMultipleLines)
-                q =>
-                  if (q.isEmpty)
-                    (if (acc.isEmpty) bullet else "\n\n" ~ bullet)
-                  else
-                    q ~ "\n\n" ~ bullet
-              else
-                q =>
-                  if (q.isEmpty && acc.isEmpty)
-                    bullet
-                  else
-                    q ~ "\n" ~ bullet
+            val prefix: String => String = {
+              val gapBetweenBullets =
+                if (a.itemsContainMultipleLines)
+                  "\n\n"
+                else
+                  "\n"
+              q =>
+                if (q.isEmpty)
+                  (if (acc.isEmpty) bullet else "\n\n" ~ bullet)
+                else
+                  q ~ gapBetweenBullets ~ bullet
+            }
 
             val r = a.items.foldLeft("")((q, li) => nestedText(prefix(q), nextIndent, live, li, includeMarkup))
 

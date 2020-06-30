@@ -36,9 +36,13 @@ object PlainTextTest extends TestSuite {
       "combo" - {
         val input =
           """
+            |* a
+            |* b
+            |
             |hehe
             |
             |ok
+            |
             |* a
             |* b
             |
