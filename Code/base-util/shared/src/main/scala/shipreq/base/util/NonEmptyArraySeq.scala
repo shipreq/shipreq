@@ -6,7 +6,7 @@ import scala.collection.immutable.ArraySeq
 import scala.collection.{AbstractIterator, Factory}
 import scala.math.Ordering
 import scala.reflect.ClassTag
-import scalaz.{Apply, Semigroup, Traverse1}
+import scalaz.{Apply, Semigroup}
 
 final class NonEmptyArraySeq[+A] private[NonEmptyArraySeq](val whole: ArraySeq[A]) {
   override def toString = "NonEmpty" + whole.toString

@@ -4,9 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.{BaseUrl, Router}
 import java.time.Duration
 import org.scalajs.dom.window.location
-import scala.annotation.nowarn
 import scala.scalajs.js.annotation.JSExportTopLevel
-import scalacss.ScalaCssReact._
 import shipreq.base.util.{ErrorMsg, Retries, Url}
 import shipreq.webapp.base.CssSettings._
 import shipreq.webapp.base.feature.ErrorHandlingFeature
@@ -14,7 +12,6 @@ import shipreq.webapp.base.lib.{ConfirmJs, LoggerJs, PromptJs}
 import shipreq.webapp.base.protocol.ajax.CommonProtocolsJs
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint.InitData
 import shipreq.webapp.base.protocol.entrypoint.{ClientSideProcImpl, ProjectSpaEntryPoint}
-import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.InitAppData
 import shipreq.webapp.base.protocol.websocket.{ProjectSpaProtocols, WebSocketClient}
 import shipreq.webapp.base.ui.{BaseStyles, OptionalFullscreen, ReauthenticationModal}
 import shipreq.webapp.client.loaders.ProjectSpaLoader

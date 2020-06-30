@@ -21,8 +21,6 @@ object Rev1 {
   import BaseData._
   import BaseMemberData1._
   import Events._
-  import Events.EventData._
-  import PostEvents._
 
   // ===================================================================================================================
 

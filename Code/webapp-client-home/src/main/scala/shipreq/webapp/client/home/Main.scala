@@ -1,7 +1,6 @@
 package shipreq.webapp.client.home
 
 import scala.scalajs.js.annotation.JSExportTopLevel
-import scalacss.ScalaCssReact._
 import shipreq.webapp.base.CssSettings._
 import shipreq.webapp.base.feature.ErrorHandlingFeature
 import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocolsJs}

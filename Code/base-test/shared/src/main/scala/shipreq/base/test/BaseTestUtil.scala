@@ -1,7 +1,6 @@
 package shipreq.base.test
 
 import io.circe.syntax._
-import japgolly.microlibs.testutil.TestUtilInternals
 import scalaz.std.string.stringInstance
 import scalaz.{Equal, Order}
 import shipreq.base.util.Debug

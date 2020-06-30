@@ -7,7 +7,6 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{Dead, Live, ShowDead, StaticField}
 import shipreq.webapp.base.test.CommonObs
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl.NavObs
 import shipreq.webapp.client.project.app.TestMarker

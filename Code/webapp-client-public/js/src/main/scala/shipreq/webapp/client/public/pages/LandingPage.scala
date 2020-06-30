@@ -15,7 +15,6 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.ui.widgets.Form
-import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.{AssetManifest, WebappConfig}
 import shipreq.webapp.client.public.PublicSpaProtocols.LandingPage.Request
 import shipreq.webapp.client.public.Styles.{landingPage => *}

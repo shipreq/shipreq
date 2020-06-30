@@ -4,7 +4,7 @@ import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.{Lens, Optional}
-import scala.annotation.{nowarn, tailrec}
+import scala.annotation.tailrec
 import scalaz.{-\/, Equal, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
@@ -14,7 +14,6 @@ import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.event.{Event => E, UseCaseGD, UseCaseStepGD}
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.issue.IssueCategory
-import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._

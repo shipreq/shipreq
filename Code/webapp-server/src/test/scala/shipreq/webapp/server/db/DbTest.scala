@@ -1,6 +1,5 @@
 package shipreq.webapp.server.db
 
-import cats.effect.syntax.all._
 import cats.implicits._
 import doobie._
 import doobie.implicits._

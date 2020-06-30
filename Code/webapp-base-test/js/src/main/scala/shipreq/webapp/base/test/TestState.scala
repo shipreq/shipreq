@@ -9,7 +9,6 @@ import scalacss.internal.StyleA
 import shipreq.base.util.{Debug, ErrorMsg}
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.lib.DomUtil._
-import shipreq.webapp.base.ui.{BaseStyles, EditTheme}
 import teststate.domzipper.DomZipperJsF.Dom
 import teststate.run.Report.AssertionSettings
 

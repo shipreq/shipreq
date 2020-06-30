@@ -1,7 +1,6 @@
 package shipreq.webapp.base.event
 
 import java.time.Instant
-import nyaya.test.PropTest._
 import scalaz.{-\/, \/-}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data._

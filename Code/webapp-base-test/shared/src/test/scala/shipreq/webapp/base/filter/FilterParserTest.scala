@@ -7,7 +7,6 @@ import nyaya.test.PropTestOps._
 import nyaya.test._
 import org.parboiled2.ErrorFormatter
 import scalaz.{-\/, Functor, \/-}
-import shipreq.base.util._
 import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.data.{HashRefKey, Off, On, ProjectConfig}
 import shipreq.webapp.base.filter.Filter.Implicits._

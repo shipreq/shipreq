@@ -6,7 +6,6 @@ import nyaya.prop._
 import nyaya.test.PropTest._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.VectorTree
 import shipreq.base.util.VectorTree.PartialLocation
 import shipreq.webapp.base.RandomData
 import utest._

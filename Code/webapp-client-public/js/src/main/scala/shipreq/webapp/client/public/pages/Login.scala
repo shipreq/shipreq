@@ -18,7 +18,6 @@ import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.user.{EmailAddr, UserValidators, Username}
-import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.{CommmonUiText, Urls}
 import shipreq.webapp.client.public.Prefetch
 import shipreq.webapp.client.public.Styles.{login => *}

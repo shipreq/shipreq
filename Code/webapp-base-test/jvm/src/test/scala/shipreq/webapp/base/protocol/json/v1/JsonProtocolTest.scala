@@ -13,7 +13,6 @@ import shipreq.webapp.base.{RandomData => R}
 import utest._
 
 object JsonProtocolTest extends TestSuite {
-  import BaseMemberData1._
   import Latest._
   import Latest.SavedViewCodecs._
   import Latest.AtomCodecs.instances._

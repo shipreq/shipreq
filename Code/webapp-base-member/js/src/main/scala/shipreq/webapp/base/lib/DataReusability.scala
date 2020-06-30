@@ -3,7 +3,6 @@ package shipreq.webapp.base.lib
 import japgolly.scalajs.react._
 import java.time.Duration
 import scala.annotation.nowarn
-import scala.collection.immutable.ArraySeq
 import scalaz.Equal
 import shipreq.base.util._
 import shipreq.base.util.univeq._

@@ -1,6 +1,5 @@
 package shipreq.webapp.base.text
 
-import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.testutil.TestUtilInternals.quoteStringForDisplay
 import java.util.concurrent.atomic.AtomicInteger
@@ -12,8 +11,7 @@ import org.parboiled2._
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
-import scalaz.{Applicative, Equal}
-import shipreq.base.test._
+import scalaz.Equal
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{NonEmptyArraySeq, Valid}
 import shipreq.webapp.base.data._

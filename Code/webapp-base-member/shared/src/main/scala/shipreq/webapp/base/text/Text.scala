@@ -9,7 +9,6 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Parsers.{StyleCtx, StyleType}
 import shipreq.webapp.base.text.{Atom => A, Parsers => P}
-import shipreq.webapp.base.util.TextMod
 
 object Text {
 

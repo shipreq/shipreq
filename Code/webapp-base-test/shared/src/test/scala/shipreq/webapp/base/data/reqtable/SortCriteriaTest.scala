@@ -3,10 +3,7 @@ package shipreq.webapp.base.data.savedview
 import nyaya.prop._
 import nyaya.test.PropTest._
 import shipreq.webapp.base.RandomData
-import shipreq.webapp.base.data.savedview.Column._
 import shipreq.webapp.base.data.savedview.SortCriterion._
-import shipreq.webapp.base.sort.SortMethod
-import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.test.WebappTestUtil._
 import utest._
 

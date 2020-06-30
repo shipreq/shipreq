@@ -6,7 +6,7 @@ import nyaya.util.Multimap
 import shipreq.base.util.{Direction, Exclusivity, SetDiff}
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{ProjectText, Text}
+import shipreq.webapp.base.text.ProjectText
 
 /** This is all remaining codecs not covered by [[BaseMemberData1]].
   *

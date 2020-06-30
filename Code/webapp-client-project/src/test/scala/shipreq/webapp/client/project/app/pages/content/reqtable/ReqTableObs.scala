@@ -4,7 +4,6 @@ import japgolly.microlibs.utils.Memo
 import org.parboiled2.ParseError
 import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.{document, html}
-import shipreq.base.util.Invalid
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.lib.DomUtil._

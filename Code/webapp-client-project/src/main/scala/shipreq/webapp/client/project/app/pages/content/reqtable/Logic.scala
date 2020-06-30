@@ -16,7 +16,7 @@ import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.filter.{CompiledFilter, Filter}
 import shipreq.webapp.base.sort.FusedSorters
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.ReqCodeTreeItem
 
 /*

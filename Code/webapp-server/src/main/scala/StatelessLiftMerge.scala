@@ -24,7 +24,6 @@ package http
 
 import net.liftweb.common._
 import net.liftweb.http.js.JsCmds.Noop
-import net.liftweb.http.js._
 import net.liftweb.util.Helpers._
 import net.liftweb.util._
 import scala.collection.Map
