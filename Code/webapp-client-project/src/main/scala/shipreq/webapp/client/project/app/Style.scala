@@ -1320,7 +1320,7 @@ object Style extends StyleSheet.Inline {
 
     private val refColour = color(c"#2363A1")
 
-    private def blankLineHeight = 0.6 em
+    private def blankLineHeight = 0.8 em
 
     val blankLine = style(display.block, height(blankLineHeight))
 

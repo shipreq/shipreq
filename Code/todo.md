@@ -51,7 +51,6 @@ v2.2
 * prompt user to confirm aborting a dirty editor
 * detail: move delete to right
 * detail: add new button to type
-* inc margin of uls
 
 
 Backlog (maybe-probably soon)
