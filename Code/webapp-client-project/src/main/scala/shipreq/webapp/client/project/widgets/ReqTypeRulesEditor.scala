@@ -291,9 +291,6 @@ final class ReqTypeRulesEditor[D: Reusability: UnivEq](allowDefaults: Boolean, k
         r <- pxReqTypes
       } yield s.validation(r)
 
-    private val rowAutoComplete: Int => RowAutoComplete =
-      Memo.int(new RowAutoComplete(_))
-
     private val pxAllText: Px[String] =
       Px.props($).map(_.state.value.perReqType.iterator.map(_.text).mkString(" ")).withReuse.autoRefresh
 
@@ -304,17 +301,14 @@ final class ReqTypeRulesEditor[D: Reusability: UnivEq](allowDefaults: Boolean, k
       } yield vali.stringValidator.corrector(text).iterator.flatMap(_.toOption).toSet
       ).withReuse
 
-    private class RowAutoComplete(i: Int) {
+    private val pxAutoComplete: Px[AutoComplete.Strategies] =
+      for {
+        rt <- pxReqTypes
+        ex <- pxReqTypesInAllText
+      } yield AutoComplete.Project.reqTypeMnemonics(rt, ex)
 
-      private val pxAutoComplete: Px[AutoComplete.Strategies] =
-        for {
-          rt <- pxReqTypes
-          ex <- pxReqTypesInAllText
-        } yield AutoComplete.Project.reqTypeMnemonics(rt, ex)
-
-      val render =
-        AutoComplete.InputComponent(pxAutoComplete.toCallback) _
-    }
+    private val renderWithAutoComplete =
+      AutoComplete.InputComponent(pxAutoComplete.toCallback) _
 
     private val header =
       <.thead(
@@ -409,7 +403,6 @@ final class ReqTypeRulesEditor[D: Reusability: UnivEq](allowDefaults: Boolean, k
         val row          = s.perReqType(idx)
         val lens         = perReqTypeLens(idx)
         val ss           = p.state.zoomStateL(lens)
-        val autoComplete = rowAutoComplete(idx)
 
         def onChange(e: ReactEventFromInput): Callback = {
           val t = validation.stringValidator.corrector.live(e.target.value)
@@ -419,7 +412,7 @@ final class ReqTypeRulesEditor[D: Reusability: UnivEq](allowDefaults: Boolean, k
         val reqTypesValidated = validation.results(idx)
 
         val reqTypes =
-          autoComplete.render(autoCompletion =>
+          renderWithAutoComplete(autoCompletion =>
             <.div(
               *.rulesEditorReqTypes,
               Input.Text.withError(
