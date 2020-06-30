@@ -22,8 +22,8 @@ sealed abstract class LifeButton(status: String, button: Button) {
 
   def withStatusOnLeft(onClick: Callback): TagMod =
     TagMod(
-      justStatus(^.marginRight := "1em"),
-      apply(onClick))
+      justStatus,
+      apply(onClick)(^.float.right))
 
   def withStatusOnLeft(onClick: Option[Callback]): TagMod =
     onClick.fold[TagMod](justStatus)(withStatusOnLeft)
