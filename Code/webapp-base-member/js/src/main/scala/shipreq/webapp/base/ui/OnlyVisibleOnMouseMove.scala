@@ -45,6 +45,9 @@ object OnlyVisibleOnMouseMove {
         decaying = None)
   }
 
+  private def rateLimit(c: Callback): Callback =
+    c.rateLimitMs(100).void
+
   final class Backend($: BackendScope[Props, State]) {
 
     private var mounted = false
@@ -72,7 +75,7 @@ object OnlyVisibleOnMouseMove {
 
     private val mods: TagMod =
       TagMod(
-        ^.onMouseMove ==> (stopPropagation(_) >> show),
+        ^.onMouseMove ==> (stopPropagation(_) >> rateLimit(show)),
         ^.onMouseLeave ==> (stopPropagation(_) >> decay))
 
     def render(p: Props, s: State): VdomNode = {
@@ -91,7 +94,7 @@ object OnlyVisibleOnMouseMove {
 
     val onMount: Callback = {
       val setMounted           = Callback { mounted = true }
-      val mouseListener        = (show >> decay).when_(mounted)
+      val mouseListener        = rateLimit(show >> decay).when_(mounted)
       val installMouseListener = hackySetMouseMoveListener(mouseListener.toJsFn1)
       val startDecay           = $.state.flatMap(s => Callback.when(s.show)(decay))
       setMounted >> installMouseListener >> startDecay
