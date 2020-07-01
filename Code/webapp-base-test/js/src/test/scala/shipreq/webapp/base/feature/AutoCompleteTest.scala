@@ -32,7 +32,8 @@ object AutoCompleteTest extends TestSuite {
       <.textarea(
         ^.value := state,
         ^.onChange ==> change,
-        ^.onBlur --> autoCompleteBlur,
+        ^.onBlur --> autoCompleteOnBlur,
+        ^.onClick ==> autoCompleteOnClick,
       ).withRef(domRef)
     }
 
