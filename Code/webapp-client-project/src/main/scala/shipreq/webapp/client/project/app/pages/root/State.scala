@@ -106,6 +106,7 @@ final case class State(projectName               : ProjectItem.WithEditableName.
                        updateConfigCmdAsync      : AsyncFeature.State.D1[UpdateConfigCmd, ErrorMsg], // TODO eh?
                        updateContentCmdAsync     : AsyncFeature.State.D1[UpdateContentCmd, ErrorMsg],
                        manualIssueCmdAsync       : AsyncFeature.State.D1[ManualIssueCmd, ErrorMsg],
+                       newReqAsync               : AsyncFeature.State.D0[ErrorMsg],
                        fieldConfig               : FieldConfig.State,
                        fieldConfigAsync          : AsyncFeature.State.D0[ErrorMsg],
                        tagConfig                 : TagConfig.State,
@@ -150,6 +151,7 @@ object State {
       updateConfigCmdAsync       = AsyncFeature.State.initD1,
       updateContentCmdAsync      = AsyncFeature.State.initD1,
       manualIssueCmdAsync        = AsyncFeature.State.initD1,
+      newReqAsync                = AsyncFeature.State.initD0,
       fieldConfig                = FieldConfig.initState,
       fieldConfigAsync           = AsyncFeature.State.initD0,
       tagConfig                  = TagConfig.initState,

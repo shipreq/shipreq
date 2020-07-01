@@ -686,6 +686,10 @@ object Style extends StyleSheet.Inline {
       padding(`0`, 1 ex),
       whiteSpace.nowrap)
 
+    val reqTypeRow  = style(display.flex)
+    val reqTypeRowL = style(flexGrow(1))
+    val reqTypeRowR = style(background := "#fff", marginLeft(0.6 rem))
+
     object useCaseStep {
 
       val container = style(

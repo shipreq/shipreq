@@ -41,6 +41,7 @@ object Button {
     implicit def univEq: UnivEq[State] = UnivEq.derive
     def enabledWhen(e: Boolean): State = if (e) Default else Disabled
     @inline def disabledWhen(d: Boolean): State = enabledWhen(!d)
+    def loadingWhen(e: Boolean): State = if (e) Loading else Default
   }
 
   def group(bs: VdomTagOf[html.Button]*) =

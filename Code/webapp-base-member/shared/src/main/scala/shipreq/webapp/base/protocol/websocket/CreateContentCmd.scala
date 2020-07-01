@@ -12,6 +12,12 @@ import shipreq.webapp.base.text.Text
 sealed trait CreateContentCmd
 object CreateContentCmd {
 
+  def empty(reqTypeId: ReqTypeId): CreateContentCmd =
+    reqTypeId match {
+      case StaticReqType.UseCase => CreateUseCase.empty
+      case rt: CustomReqTypeId   => CreateGenericReq.empty(rt)
+    }
+
   final case class CreateGenericReq(codes     : Set[ReqCode.Value],
                                     customText: Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText],
                                     imps      : Direction.Values[Set[ReqId]],

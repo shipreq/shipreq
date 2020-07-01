@@ -49,7 +49,6 @@ v2.2
 
 ### Implement
 * prompt user to confirm aborting a dirty editor
-* detail: add new button to type
 
 
 Backlog (maybe-probably soon)

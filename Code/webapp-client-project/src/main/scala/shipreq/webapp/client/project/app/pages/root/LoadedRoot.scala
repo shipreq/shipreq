@@ -190,6 +190,9 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     private val rowAsyncW: AsyncFeature.Write.D1[EditorFeature.RowKey, ErrorMsg] =
       editAsyncW.withKey1(AsyncKey.WholeReq)
 
+    private val newReqAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
+      AsyncFeature.Write.D0.init($ zoomStateL State.newReqAsync)
+
     private val savedViewAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.savedViewAsync)
 
@@ -305,6 +308,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
     private val reqDetail = ReqDetail(ReqDetail.StaticProps(
       sspUpdateContent      = sspUpdateContent,
+      sspCreateContent      = sspCreateContent,
       reqDetailRC           = reqDetailRC,
       webWorker             = webWorkerClient,
       pxProjectAndOrd       = pxProjectAndOrd,
@@ -452,11 +456,13 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
         case Page.ReqDetail(pubid) =>
           val props = ReqDetail.DynamicProps(
-            extPubid   = pubid,
-            filterDead = filterDeadSS,
-            reqProps   = reqDetailReqPropsFn(s),
-            editorUCS  = editRW.forUseCaseSteps,
-            state      = StateSnapshot.withReuse(s.reqDetail)(reqDetailSetState))
+            extPubid    = pubid,
+            filterDead  = filterDeadSS,
+            reqProps    = reqDetailReqPropsFn(s),
+            editorUCS   = editRW.forUseCaseSteps,
+            state       = StateSnapshot.withReuse(s.reqDetail)(reqDetailSetState),
+            newReqAsync = AsyncFeature.ReadWrite.D0(newReqAsyncW, s.newReqAsync),
+          )
           reqDetail(props)
 
         case Page.ReqGraph =>
