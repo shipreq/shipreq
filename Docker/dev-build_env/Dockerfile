@@ -33,6 +33,8 @@ RUN pacman -Sy --noconfirm --needed \
       file \
       git \
       htop \
+      java-environment-common \
+      java-runtime-common \
       parallel \
       pigz \
       procps \
@@ -41,6 +43,9 @@ RUN pacman -Sy --noconfirm --needed \
       unzip \
       which \
       zip
+
+RUN sed -i 's/^COMPRESSXZ/#COMPRESSXZ/' /etc/makepkg.conf \
+ && echo 'COMPRESSXZ=(xz -c -z - --threads=0)' >> /etc/makepkg.conf
 
 #########
 # Graal #
@@ -60,6 +65,13 @@ RUN n=jdk11-graalvm-bin \
 ########
 
 ENV NODE_PATH=/root/.npm/lib/node_modules
+
+# Workaround https://bugs.archlinux.org/task/63547
+RUN cd /etc \
+ && cp pacman.conf pacman.conf.tmp \
+ && echo -e '[testing]\nInclude = /etc/pacman.d/mirrorlist\n[community-testing]\nInclude = /etc/pacman.d/mirrorlist\n' >> pacman.conf \
+ && pacman -Sy --noconfirm --needed libnghttp2 \
+ && mv pacman.conf.tmp pacman.conf
 
 RUN pacman -Sy --noconfirm --needed npm nodejs \
  && npm config set prefix /root/.npm \
@@ -88,8 +100,9 @@ RUN cd /usr/local/bin \
 RUN mkdir /tmp/scala \
  && cd /tmp/scala \
  && mkdir project \
- && echo 'sbt.version=1.3.12' > project/build.properties \
- && echo 'scalaVersion := "2.13.2"' > build.sbt \
+ && echo 'sbt.version=1.3.13' > project/build.properties \
+ && echo 'scalaVersion := "2.13.3"' > build.sbt \
+ && echo 'object Build{}' > project/Build.scala \
  && echo 'object M{}' > M.scala \
  && sbt test \
  && cd / \
@@ -100,7 +113,7 @@ RUN mkdir /tmp/scala \
 #############
 
 # Needed for ECR login
-RUN pacman -Syu --noconfirm --needed aws-cli
+RUN pacman -Sy --noconfirm --needed aws-cli
 
 COPY strip-ansi /bin
 COPY .bashrc /root/.bashrc
