@@ -327,6 +327,8 @@ object Feature {
 
     type ForAnyEditor = ForEditor[Nothing, Any]
 
+    type For[FK <: FieldKey] = ForEditor[FK#Args, FK#Change]
+
     final case class ForEditor[-A, +C](read        : Read.ForEditor[A, C],
                                        write       : Write.ForEditor,
                                        creationArgs: FreeOption[NewEditor.CreationArgs]) {

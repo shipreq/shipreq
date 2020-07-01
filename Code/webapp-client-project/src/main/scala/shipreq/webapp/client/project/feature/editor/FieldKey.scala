@@ -18,7 +18,7 @@ import shipreq.webapp.client.project.lib.DataReusability._
  * ADT representing all types of fields supported by the editor.
  * Meant to be used as a key for some given content (e.g. for requirement FR-1).
  */
-sealed trait FieldKey {
+sealed trait FieldKey { self =>
 
   /** Arguments required for every .render call */
   type Args
@@ -33,6 +33,14 @@ sealed trait FieldKey {
   @inline final def cast2[F[_], G[_, _], A, B](f: F[G[A, B]]) = f.asInstanceOf[F[G[Args, Change]]]
 
   def fold[F[_, _]](f: FieldKey.FoldAll[F]): F[Args, Change]
+
+  final type AndArgs = FieldKey.AndArgs { val key: self.type }
+
+  final def andArgs(a: Args): AndArgs =
+    new FieldKey.AndArgs {
+      override val key: self.type = self
+      override val args = a
+    }
 }
 
 object FieldKey {
@@ -88,6 +96,7 @@ object FieldKey {
     override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.codes(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.codes(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.codes(this)
+    val noArgs = andArgs(())
   }
 
   final case class CustomTextField(field: CustomField.Text.Id) extends ForAllReqs {
@@ -119,6 +128,11 @@ object FieldKey {
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.implications(this)
   }
 
+  object Implications {
+    val byDir: Direction => Implications =
+      Direction.memo(dir => apply(\/-(dir)))
+  }
+
   case object ReqType extends ForGenericReq {
     override type Args = Unit
     override type Change = CustomReqType
@@ -136,6 +150,7 @@ object FieldKey {
     override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.allTags(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.allTags(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.allTags(this)
+    val noArgs = andArgs(())
   }
 
   case object OtherTags extends ForAllReqs {
@@ -146,6 +161,7 @@ object FieldKey {
     override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.otherTags(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.otherTags(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.otherTags(this)
+    val noArgs = andArgs(())
   }
 
   final case class CustomFieldTags(field: CustomField.Tag.Id) extends ForAllReqs {
@@ -377,4 +393,28 @@ object FieldKey {
       useCaseStep     = _ => useCaseStep,
     )
 
+  // ===================================================================================================================
+
+  sealed trait AndArgs {
+    val key: FieldKey
+    val args: key.Args
+
+//    final override def hashCode: Int =
+//      fieldKey.hashCode * 31 + args.hashCode
+//
+//    final override def equals(obj: Any): Boolean =
+//      obj match {
+//        case x: AndArgs => fieldKey == x.fieldKey && args == x.args
+//        case _          => false
+//      }
+  }
+
+  object AndArgs {
+//    implicit def univEq: UnivEq[AndArgs] = UnivEq.force
+
+    implicit val reusability: Reusability[AndArgs] = {
+      val args: Reusability[FieldKey#Args] = Reusability.by_==
+      Reusability.byRef || Reusability((x, y) => (x.key == y.key) && args.test(x.args, y.args))
+    }
+  }
 }

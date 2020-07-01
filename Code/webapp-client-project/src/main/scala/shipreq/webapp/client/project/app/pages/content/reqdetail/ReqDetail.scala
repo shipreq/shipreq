@@ -13,16 +13,17 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.ExternalPubid.LookupFailure
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{Event, ProjectAndOrd, VerifiedEvent}
-import shipreq.webapp.base.feature.{AsyncFeature, PreviewFeature, TableNavigationFeature}
+import shipreq.webapp.base.feature.{AsyncFeature, PreviewFeature}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{CreateContentCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.semantic.{Button, Colour => SColour, Header, Icon}
+import shipreq.webapp.base.ui.semantic.Header
 import shipreq.webapp.base.ui.{EditTheme, NoContentMessage}
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.app.state.NewEvents
+import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.EditorNavParent
@@ -31,8 +32,7 @@ import shipreq.webapp.client.project.widgets._
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object ReqDetail {
-
-  private implicit val tableNavigationFeature = TableNavigationFeature.NoRowSpans
+  import Shared.tableNavigationFeature
 
   private val bigTextEditorStyle = EditTheme.Style(PreviewFeature.Position.Right, EditTheme.OpenPreview.ShowWithControls)
 
@@ -107,8 +107,16 @@ object ReqDetail {
 
     val pubidText = PlainText.pubid(req.pubid, project)
 
-    val viewData: ViewReq.Data =
+    private val viewData: ViewReq.Data =
       viewReqDataCache(filterDead)(req.id)
+
+    val pxView: Px[Reusable[ViewReq[VdomTag]]] =
+      pxProjectWidgets.value.map { pw =>
+        Reusable.ap(
+          Reusable.byRef(viewData),
+          Reusable.byRef(pw),
+        )(_(_).copy(fmtReqTypeShort = false))
+      }
 
     val useCaseData: Option[UseCaseData] =
       req match {
@@ -193,7 +201,7 @@ object ReqDetail {
       for {
         data      <- cbData
         props     <- $.props.toCBO
-        key       = EditorFeature.FieldKey.UseCaseStep(id)
+        key       = FieldKey.UseCaseStep(id)
         editor    = props.editorUCS(key, data.pxProjectWidgets, data.filterDead)
         ref       <- CallbackTo(useCaseStepRefs.get(id)).asCBO
         component <- ref.get
@@ -219,9 +227,6 @@ object ReqDetail {
       )(*.errorCont)
     }
 
-    private val impRowSubBase =
-      <.td(*.generalImpsSide, ^.tabIndex := -1)
-
     def render(p: DynamicProps): VdomElement =
       <.main(
         p.state.value renderOrElse {
@@ -237,23 +242,17 @@ object ReqDetail {
     private val headerStyle: Live => Header.Style =
       Live.memo(l => Header.Style(Header.Type.H1, other = *.headerText(l)))
 
-    private val rowHeader: Live => VdomTag =
-      Live.memo(l => <.th(*.detailTableKey(l)))
-
-    private val rowData: Live => VdomTag =
-      Live.memo(l =>
-        <.td(
-          *.detailTableValue(l),
-          ^.tabIndex := -1))
-
     private def renderDetail(props: DynamicProps, data: Data): VdomElement = {
       import data.{project, req, pubidText}
 
-      val pw        = data.pxProjectWidgets.value()
-      val reqProps  = props.reqProps(req.id)
-      val reqEditor = reqProps.editor
-      val fieldName = pxProjectConfig.value().fieldName
-      val view      = data.viewData(pw).copy(fmtReqTypeShort = false)
+      val pw           = data.pxProjectWidgets.value()
+      val reusableView = data.pxView.value()
+      val view         = reusableView.value
+      val reqProps     = props.reqProps(req.id)
+      val fieldName    = pxProjectConfig.value().fieldName
+
+      def reqEditor(fk: FieldKey.ForSomeReq): EditorFeature.ReadWrite.For[fk.type] =
+        reqProps.editor(fk, data.pxProjectWidgets, data.filterDead)
 
       def renderHeader: VdomElement = {
         val hstyle = headerStyle(data.live)
@@ -264,8 +263,7 @@ object ReqDetail {
             Header(hstyle, pubidText + ":")),
 
           <.div(*.headerTitle,
-            reqEditor(EditorFeature.FieldKey.reqTitle(req.id), data.pxProjectWidgets, data.filterDead)
-              .themedRenderOr(())(
+            reqEditor(FieldKey.reqTitle(req.id)).themedRenderOr(())(
                 Header(hstyle, view.title))),
 
           <.div(*.headerFilterDeadButton,
@@ -279,191 +277,134 @@ object ReqDetail {
 
       def renderRow(row: Row): VdomElement = {
 
-        val headerDataLive: (Live, Live) =
-          row match {
-            case Row.Codes
-               | Row.ReqType
-               | Row.OtherTags
-               | Row.AllTags
-               | Row.Implications
-               | Row.ImplicationGraph
-               | Row.UseCaseStepsN
-               | Row.UseCaseStepsA
-               | Row.UseCaseStepsE
-               | Row.StepGraph        => (Live, data.live)
-            case Row.DeletionReason
-               | Row.PastPubids       => (Live, Dead)
-            case Row.Life             => (Live, Live) // When req is dead, [Restore] should be highlighted is active
-            case Row.CustomField(id)  =>
-              val l = project.config.fields.customFields.need(id).live(project.config)
-              (l, data.live & l)
-          }
+        def genericEditableRow(name      : String,
+                               headerLive: Live = Live,
+                               dataLive  : Live = data.live,
+                               field     : FieldKey.ForSomeReq#AndArgs) =
+          GenericEditableRow.Props(
+            row        = row,
+            name       = name,
+            headerLive = headerLive,
+            dataLive   = dataLive,
+            field      = field,
+            editor     = reqEditor(field.key),
+            view       = reusableView,
+          ).render
 
-        <.tr(
-          ^.key := row.key,
-          rowHeader(headerDataLive._1)(renderRowTitle(row)),
-          renderRowData(rowData(headerDataLive._2), row))
-      }
+        def withoutReusability(name      : String,
+                               headerLive: Live = Live,
+                               dataLive  : Live = data.live)
+                              (f         : Shared.DataCell => VdomNode) =
+          Shared.renderRow(
+            row        = row,
+            name       = name,
+            headerLive = headerLive,
+            dataLive   = dataLive,
+          )(f)
 
-      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-      def renderRowTitle(row: Row): VdomNode =
-        row match {
-          case Row.CustomField(id)  => fieldName(id)
-          case Row.Codes            => SpecialBuiltInField.Codes.name
-          case Row.ReqType          => SpecialBuiltInField.ReqType.name
-          case Row.OtherTags        => StaticField.OtherTags.name
-          case Row.AllTags          => StaticField.AllTags.name
-          case Row.Implications     => UiText.FieldNames.implications
-          case Row.ImplicationGraph => StaticField.ImplicationGraph.name
-          case Row.UseCaseStepsN    => UiText.FieldNames.useCaseStepTreeN
-          case Row.UseCaseStepsA    => UiText.FieldNames.useCaseStepTreeA
-          case Row.UseCaseStepsE    => StaticField.ExceptionStepTree.name
-          case Row.DeletionReason   => SpecialBuiltInField.DeletionReason.name
-          case Row.StepGraph        => StaticField.StepGraph.name
-          case Row.PastPubids       => UiText.FieldNames.pastPubids
-          case Row.Life             => UiText.Life.field
-        }
-
-      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-      def renderRowData(cellBase: VdomTag, row: Row): VdomElement = {
-        import EditorFeature.FieldKey
-
-        def editableCell(key: FieldKey.ForSomeReq)(arg: key.Args): VdomElement = {
-          val editor = reqEditor(key, data.pxProjectWidgets, data.filterDead)
-          EditorNavParent.Props(cellBase, editor, arg, view.editable(key).getOrElse(EmptyVdom)).render
-        }
-
-        def nonDirectlyEditableNavParent(t: TagMod): VdomElement =
-          cellBase(tableNavigationFeature.onKeyDown, t)
-
-        def useCaseStepsCell(f: UseCaseData => UseCaseStepTree.StepData): VdomElement = {
+        def useCaseStepsCell(name: String, f: UseCaseData => UseCaseStepTree.StepData) = {
           val d = data.useCaseData.get
-          nonDirectlyEditableNavParent(renderStepTree(d, f(d)))
+          withoutReusability(name)(_.nonDirectlyEditableNavParent(renderStepTree(d, f(d))))
         }
 
         row match {
-          case Row.CustomField(id: CustomField.Text.Id) =>
-            editableCell(FieldKey.CustomTextField(id))(bigTextEditorStyle)
 
-          case Row.CustomField(id: CustomField.Tag.Id) =>
-            editableCell(FieldKey.CustomFieldTags(id))(())
-
-          case Row.CustomField(id: CustomField.Implication.Id) =>
-            editableCell(FieldKey.Implications(-\/(id)))(())
-
-          case Row.Codes =>
-            editableCell(FieldKey.Codes)(())
-
-          case Row.OtherTags =>
-            editableCell(FieldKey.OtherTags)(())
-
-          case Row.AllTags =>
-            editableCell(FieldKey.AllTags)(())
-
-          case Row.DeletionReason =>
-            nonDirectlyEditableNavParent(view.deletionReason getOrElse emptySpan)
-
-          case Row.PastPubids =>
-            nonDirectlyEditableNavParent(view.pastPubids)
-
-          case Row.Implications =>
-            def renderHalf(dir: Direction) = {
-              val key = FieldKey.Implications(\/-(dir))
-              val editor = reqEditor(key, data.pxProjectWidgets, data.filterDead)
-              EditorNavParent.Props(impRowSubBase, editor, view.editable(key).getOrElse(EmptyVdom))
-                .render
-            }
-            nonDirectlyEditableNavParent(
-              <.table(
-                TableNavigationFeature.nestedTable,
-                *.generalImpsCont,
-                <.tbody(
-                  <.tr(
-                    renderHalf(Backwards),
-                    <.td(*.generalImpsMiddle, s"→ $pubidText →"),
-                    renderHalf(Forwards)))))
-
-          case Row.ImplicationGraph =>
-            nonDirectlyEditableNavParent(
-              ImplicationGraph.Props.FocusReq(
-                ord         = data.ord,
-                focus       = req.id,
-                filterDead  = data.filterDead,
-                project     = project,
-                plainText   = data.pxPlainText.value(),
-                reqDetailRC = reqDetailRC,
-                webWorker   = webWorker
-              ).render)
-
-          case Row.UseCaseStepsN =>
-            useCaseStepsCell(_.stepsN)
-
-          case Row.UseCaseStepsA =>
-            useCaseStepsCell(_.stepsA)
-
-          case Row.UseCaseStepsE =>
-            useCaseStepsCell(_.stepsE)
-
-          case Row.StepGraph =>
-            val ucId = data.useCaseData.get.uc.id
-            nonDirectlyEditableNavParent(UseCaseStepFlowGraph.Props(data.ord, ucId, pw.ctx, webWorker).render)
+          case Row.CustomField(id) =>
+            val l = project.config.fields.customFields.need(id).live(project.config)
+            val field: FieldKey.ForSomeReq#AndArgs =
+              id match {
+                case id: CustomField.Text.Id        => FieldKey.CustomTextField(id).andArgs(bigTextEditorStyle)
+                case id: CustomField.Tag.Id         => FieldKey.CustomFieldTags(id).andArgs(())
+                case id: CustomField.Implication.Id => FieldKey.Implications(-\/(id)).andArgs(())
+              }
+            genericEditableRow(
+              name       = fieldName(id),
+              headerLive = l,
+              dataLive   = data.live & l,
+              field      = field,
+            )
 
           case Row.ReqType =>
-            val fkey = FieldKey.ReqType
-
-            val editor =
-              reqEditor(fkey, data.pxProjectWidgets, data.filterDead)
-                .themedRenderOr(())(view.editable(fkey).getOrElse(EmptyVdom))
-
-            def newButton = {
-              val async = props.newReqAsync
-
-              val newReq: Callback =
-                Callback.byName {
-                  val cmd = CreateContentCmd.empty(req.reqTypeId)
-                  async.write.onFailureShowAndForget(
-                    sspCreateContent(cmd).rightFlatTapSync(newEvents =>
-                      Callback.traverseOption(newEvents.summary.newReqIds.headOption) { reqId =>
-                        import newEvents.project
-                        val pubid = project.content.reqs.need(reqId).pubid.external(project)
-                        reqDetailRC.set(pubid)
-                      }
-                    )
-                  )
-                }
-
-              val asyncInProgress =
-                AsyncFeature.isInProgress(async.read)
-
-              Button(
-                tipe = Button.Type.BasicIconAndText(Icon.Plus, "New " + data.reqType.mnemonic.value),
-                state = Button.State.loadingWhen(asyncInProgress),
-                colour = SColour.Green,
-              ).tag(^.onClick --> newReq.unless_(asyncInProgress))
-            }
-
-            data.live match {
-              case Live =>
-                nonDirectlyEditableNavParent(
-                  <.div(*.reqTypeRow,
-                    <.div(*.reqTypeRowL, editor),
-                    <.div(*.reqTypeRowR, newButton)))
-
-              case Dead =>
-                nonDirectlyEditableNavParent(editor)
-            }
+            ReqTypeRow.Props(
+              reqType          = data.reqType,
+              live             = data.live,
+              filterDead       = data.filterDead,
+              editor           = reqEditor(FieldKey.ReqType),
+              view             = reusableView,
+              newReqAsync      = props.newReqAsync,
+              sspCreateContent = sspCreateContent,
+              reqDetailRC      = reqDetailRC,
+            ).render
 
           case Row.Life =>
-            nonDirectlyEditableNavParent(
-              data.live match {
-                case Live =>
-                  LifeButton.Delete withStatusOnLeft delete(req.id)
-                case Dead =>
-                  LifeButton.Restore.withStatusOnLeft(
-                    req.allowLiveChange(project.config.reqTypes) option restore(req.id))
-              })
+            LifeRow.Props(
+              reqId           = req.id,
+              live            = data.live,
+              allowLiveChange = req.allowLiveChange(project.config.reqTypes),
+              delete          = deleteFn,
+              restore         = restoreFn,
+            ).render
+
+          case Row.Implications =>
+            ImplicationsRow.Props(
+              pubidText = pubidText,
+              live      = data.live,
+              editorF   = reqEditor(FieldKey.Implications.byDir(Forwards)),
+              editorB   = reqEditor(FieldKey.Implications.byDir(Backwards)),
+              view      = reusableView,
+            ).render
+
+          case Row.OtherTags =>
+            genericEditableRow(
+              name  = StaticField.OtherTags.name,
+              field = FieldKey.OtherTags.noArgs,
+            )
+
+          case Row.AllTags =>
+            genericEditableRow(
+              name  = StaticField.AllTags.name,
+              field = FieldKey.AllTags.noArgs,
+            )
+
+          case Row.ImplicationGraph =>
+            withoutReusability(StaticField.ImplicationGraph.name) { cell =>
+              cell.nonDirectlyEditableNavParent(
+                ImplicationGraph.Props.FocusReq(
+                  ord         = data.ord,
+                  focus       = req.id,
+                  filterDead  = data.filterDead,
+                  project     = project,
+                  plainText   = data.pxPlainText.value(),
+                  reqDetailRC = reqDetailRC,
+                  webWorker   = webWorker
+                ).render)
+            }
+
+          case Row.UseCaseStepsN => useCaseStepsCell(UiText.FieldNames.useCaseStepTreeN, _.stepsN)
+          case Row.UseCaseStepsA => useCaseStepsCell(UiText.FieldNames.useCaseStepTreeA, _.stepsA)
+          case Row.UseCaseStepsE => useCaseStepsCell(StaticField.ExceptionStepTree.name, _.stepsE)
+
+          case Row.StepGraph =>
+            withoutReusability(UiText.FieldNames.pastPubids) { cell =>
+              val ucId = data.useCaseData.get.uc.id
+              cell.nonDirectlyEditableNavParent(UseCaseStepFlowGraph.Props(data.ord, ucId, pw.ctx, webWorker).render)
+            }
+
+          case Row.Codes =>
+            genericEditableRow(
+              name  = SpecialBuiltInField.Codes.name,
+              field = FieldKey.Codes.noArgs,
+            )
+
+          case Row.DeletionReason =>
+            withoutReusability(SpecialBuiltInField.DeletionReason.name) { cell =>
+              cell.nonDirectlyEditableNavParent(view.deletionReason getOrElse emptySpan)
+            }
+
+          case Row.PastPubids =>
+            withoutReusability(UiText.FieldNames.pastPubids, dataLive = Dead) { cell =>
+              cell.nonDirectlyEditableNavParent(view.pastPubids)
+            }
         }
       }
 
@@ -472,7 +413,7 @@ object ReqDetail {
         val addCmdRunner = AsyncFeature.Runner.D1(reqProps.async.read, runAddAndEditNewUseCaseStep(req.id))
 
         val renderBody: UseCaseStepTree.RenderBodyFn = args => {
-          import EditorFeature.FieldKey.UseCaseStep
+          import FieldKey.UseCaseStep
           import args.id
 
           val editor = props.editorUCS(UseCaseStep(id), data.pxProjectWidgets, data.filterDead)
@@ -536,7 +477,7 @@ object ReqDetail {
         Some(Modal(props.render))
       } >>= setModal
 
-    def restore(id: ReqId): Callback =
+    private def restore(id: ReqId): Callback =
       CallbackTo {
         def run(cmd: UpdateContentCmd): Callback = runActionNoAsync(cmd) >> clearModal
         import Px.AutoValue._
@@ -544,6 +485,9 @@ object ReqDetail {
         val props = DeletionFeature.RestorationFormProps(data, pxProjectWidgetsNoCtx, run, clearModal)
         Some(Modal(props.render))
       } >>= setModal
+
+    private val deleteFn = Reusable.fn(delete _)
+    private val restoreFn = Reusable.fn(restore _)
 
   } // Backend
 }
