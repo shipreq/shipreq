@@ -786,13 +786,13 @@
           "size": 934
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/js/WrappedDictionary.scala": {
-          "size": 39
+          "size": 15
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/runtime/Compat.scala": {
           "size": 243
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/runtime/WrappedVarArgs.scala": {
-          "size": 3009
+          "size": 3021
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/linker-private-library/org/scalajs/linker/runtime/RuntimeLong.scala": {
           "size": 11570
@@ -900,7 +900,7 @@
           "size": 2202
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/Iterator.scala": {
-          "size": 5283
+          "size": 5334
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/LinearSeq.scala": {
           "size": 1668
@@ -936,10 +936,10 @@
           "size": 1888
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashMap.scala": {
-          "size": 11289
+          "size": 11238
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashSet.scala": {
-          "size": 11911
+          "size": 11935
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Iterable.scala": {
           "size": 294
@@ -948,7 +948,7 @@
           "size": 5473
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/List.scala": {
-          "size": 6803
+          "size": 6791
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/ListSet.scala": {
           "size": 1899

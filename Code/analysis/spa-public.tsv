@@ -255,9 +255,9 @@ https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-coll
 https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/js/ArrayOps.scala	502
 https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/js/JSConverters.scala	192
 https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/js/WrappedArray.scala	934
-https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/js/WrappedDictionary.scala	39
+https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/js/WrappedDictionary.scala	15
 https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/runtime/Compat.scala	243
-https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/runtime/WrappedVarArgs.scala	3009
+https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/runtime/WrappedVarArgs.scala	3021
 https:/raw.githubusercontent.com/scala-js/v1.1.0/linker-private-library/org/scalajs/linker/runtime/RuntimeLong.scala	11570
 https:/raw.githubusercontent.com/scala-js/v1.1.0/scalalib/overrides-2.13/scala/Array.scala	1456
 https:/raw.githubusercontent.com/scala-js/v1.1.0/scalalib/overrides-2.13/scala/collection/immutable/Range.scala	5607
@@ -274,11 +274,11 @@ https:/raw.githubusercontent.com/scala/v2.13.2/collection/BuildFrom.scala	327
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/Factory.scala	1095
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/Hashing.scala	208
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/ChampCommon.scala	1888
-https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashMap.scala	11289
-https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashSet.scala	11911
+https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashMap.scala	11238
+https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashSet.scala	11935
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Iterable.scala	294
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/LazyList.scala	5473
-https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/List.scala	6803
+https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/List.scala	6791
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/ListSet.scala	1899
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Map.scala	8296
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Seq.scala	1318
@@ -291,7 +291,7 @@ https:/raw.githubusercontent.com/scala/v2.13.2/collection/IndexedSeq.scala	1085
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/IndexedSeqView.scala	2303
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/IterableOnce.scala	2202
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/Iterable.scala	1081
-https:/raw.githubusercontent.com/scala/v2.13.2/collection/Iterator.scala	5283
+https:/raw.githubusercontent.com/scala/v2.13.2/collection/Iterator.scala	5334
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/LinearSeq.scala	1668
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/Map.scala	1121
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/AnyRefMap.scala	3823
