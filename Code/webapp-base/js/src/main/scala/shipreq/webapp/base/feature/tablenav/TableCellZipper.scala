@@ -97,7 +97,7 @@ final class TableCellZipper(val focus: html.Element)(implicit tableStyle: TableS
                   case None    => Iterator.empty
                 }
               else
-                MutableArray(mm.keys).sort.iterator.map(NonEmptyVector force mm(_))
+                MutableArray(mm.keys).sort.iterator().map(NonEmptyVector force mm(_))
             }
 
           tableCellsInReverse

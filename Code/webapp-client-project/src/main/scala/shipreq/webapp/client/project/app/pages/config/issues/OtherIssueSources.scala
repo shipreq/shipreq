@@ -41,7 +41,7 @@ object OtherIssueSources {
             .filter(liveReqTypes.contains)
             .filter(fieldRules(_)(f.fieldId).isMandatory == mandatory)
             .map(config.reqTypes.need(_).mnemonic)
-        ).sortBy(_.value).iterator
+        ).sortBy(_.value).iterator()
 
       config.fields.iterator().filter(_.live(config) is Live).flatMap { f =>
 
@@ -88,7 +88,7 @@ object OtherIssueSources {
         else
           <.ul(
             *.otherSourcesUL,
-            MutableArray(data).sortBy(sortBy).iterator.toTagMod(a => <.li(*.otherSourcesLI, render(a))))
+            MutableArray(data).sortBy(sortBy).iterator().toTagMod(a => <.li(*.otherSourcesLI, render(a))))
 
       <.div(*.otherSourcesContent,
         <.div(*.otherSourcesHeader, p.router.link(page)(title)),

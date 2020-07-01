@@ -21,7 +21,7 @@ private[app] trait TaskmanApp extends IOApp with HasLogger {
 
   protected def withDatabase[A](f: (DbAccessor, XA) => Fx[A]): Fx[A] = {
     for {
-      (cfg, report) <- DbConfig.config.withReport.run(Props.sources).map(_.getOrDie)
+      (cfg, report) <- DbConfig.config.withReport.run(Props.sources).map(_.getOrDie())
       _             <- Fx(logger.info(s"Config report:\n${report.full}"))
       db            <- initDb(cfg)
       _             <- db.verifyConnectivity
@@ -34,7 +34,7 @@ private[app] trait TaskmanApp extends IOApp with HasLogger {
     val readConfig = (DbConfig.config tuple TaskmanConfig.config).withReport.run(Props.sources)
 
     for {
-      ((dbCfg, taskmanCfg), report) <- readConfig.map(_.getOrDie)
+      ((dbCfg, taskmanCfg), report) <- readConfig.map(_.getOrDie())
       _                             <- Fx(logger.info(s"Config report:\n${report.full}"))
       db                            <- initDb(dbCfg)
       _                             <- db.verifyConnectivity

@@ -3,6 +3,7 @@ package shipreq.webapp.base.filter
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion.Fix
 import org.parboiled2.{Parser => _, _}
+import scala.annotation.nowarn
 import scala.util.{Failure, Success}
 import scalaz.{-\/, \/, \/-}
 import shipreq.webapp.base.data
@@ -92,6 +93,8 @@ object FilterParser {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+@nowarn("msg=Auto-application.*deprecated")
 private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
   import FilterParser._
 

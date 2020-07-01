@@ -4,7 +4,6 @@ import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
 import scala.annotation.tailrec
 import shipreq.base.util.MTrie.Ops
-import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.ReqCode._
 import shipreq.webapp.base.data.{DataValidators => V, _}

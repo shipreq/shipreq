@@ -2,20 +2,12 @@ package shipreq.webapp.base.protocol.json.v1
 
 import io.circe._
 import io.circe.syntax._
-import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty._
-import japgolly.microlibs.stdlib_ext.ParseInt
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
-import scalaz.{-\/, \/-}
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
-import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.savedview.SavedView
-import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol.json.JsonCodec
 import shipreq.webapp.base.text.AtomTC
 
@@ -27,10 +19,7 @@ object Rev2 {
   import Events._
   import Events.EventData._
   import PostEvents._
-  import BaseMemberData1.SavedViewCodecs._
-  import Rev1._
   import Rev1.EventData._
-  import Rev1.SavedViewCodecs._
 
   object AtomCodecs extends AtomTC[JsonCodec] {
     import shipreq.webapp.base.text._

@@ -187,19 +187,19 @@ object DataProp {
     type T = Requirements
 
     def ids =
-      id[ReqId].forall((_: T).idIterator)
+      id[ReqId].forall((_: T).idIterator())
 
     def idsUnique =
-      uniqueNonNegIntsT[List, ReqId]("req IDs").contramap[T](_.idIterator.toList)
+      uniqueNonNegIntsT[List, ReqId]("req IDs").contramap[T](_.idIterator().toList)
 
     def reqPubidsInRegister =
-      Prop.forall((_: T).reqIterator)(t =>
+      Prop.forall((_: T).reqIterator())(t =>
         Prop.equal[Req]("Req's pubid refers to itself in the Pubid register")(
           _.id.some,
           r => t.pubids(r.pubid)))
 
     def pubidsResolveToReqs =
-      Prop.whitelist[T]("Pubid register")(_.idIterator.toSet, _.pubids.value.valueIterator)
+      Prop.whitelist[T]("Pubid register")(_.idIterator().toSet, _.pubids.value.valueIterator)
 
     def pubidReqTypeAssociations = {
       import StaticReqType._
@@ -532,8 +532,8 @@ object DataProp {
       def validReqTypeIds = whitelist(_._2.reqTypeIds) _
       def validTagIds     = whitelist(_._2.tagIds) _
 
-      (  validReqTypeIds("Field.fieldReqTypeRules.reqTypes",
-          _.fields.customFields.valuesIterator.flatMap(_.fieldReqTypeRules.perReqType.keys))
+      ( validReqTypeIds("Field.fieldReqTypeRules.reqTypes",
+         _.fields.customFields.valuesIterator.flatMap(_.fieldReqTypeRules.perReqType.keys))
 
       ∧ validTagIds("Field.fieldReqTypeRules.defaults",
         p => fields.filteredFields({ case t: CustomField.Tag => t.fieldReqTypeRules})(p.fields)
@@ -543,7 +543,7 @@ object DataProp {
         p => fields.filteredFields({ case t: CustomField.Tag => t.tagId})(p.fields))
 
       ∧ validReqTypeIds("CustomField.Implication.reqTypeIds",
-          p => fields.filteredFields({ case t: CustomField.Implication => t.reqTypeId})(p.fields))
+        p => fields.filteredFields({ case t: CustomField.Implication => t.reqTypeId})(p.fields))
 
       ∧ validReqTypeIds("ApplicableTag.applicableReqTypes",
         _.tags.applicableTagIterator().flatMap(_.applicableReqTypes.reqTypes))

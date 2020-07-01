@@ -37,7 +37,7 @@ object Modal {
 
     val component =
       ScalaComponent.builder.static("Modal")(render)
-        .componentDidMount($ => Callback(JQuery($.getDOMNode.asElement).modal()))
+        .componentDidMount($ => Callback(JQuery($.getDOMNode.asElement()).modal()))
         .build
 
     val show = Callback(JQuery.byId(id).modal("show"))

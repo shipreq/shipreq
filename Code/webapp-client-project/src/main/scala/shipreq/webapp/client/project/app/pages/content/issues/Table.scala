@@ -12,7 +12,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.lib.DomUtil
 import shipreq.webapp.base.sort.FusedSorters
 import shipreq.webapp.base.text.{PlainText, Text}
 import shipreq.webapp.base.ui.semantic
@@ -75,7 +74,7 @@ object Table {
                          renderFeature: RenderFeature.ForProject) {
     private val sortFn  = sorter.result(new Sorter.Setup(project, plainText))
     private val toRow   = Row.fromIssue(project, renderFeature, routerCtl)
-    val rows            = sortFn(issues.vector.iterator.map(toRow)).iterator.toVector
+    val rows            = sortFn(issues.vector.iterator.map(toRow)).iterator().toVector
     val csIssueCategory = TableRow.consolidateIssueCategories(rows.iterator.map(_.issueCategoryDesc))
     val csIssueClass    = TableRow.consolidateIssueClasses   (rows.iterator.map(_.issueClassDesc))
 

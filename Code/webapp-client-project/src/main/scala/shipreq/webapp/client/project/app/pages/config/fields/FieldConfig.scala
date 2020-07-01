@@ -142,7 +142,7 @@ object FieldConfig {
         val unusedItems: Vector[dropdownButton.Item] =
           MutableArray(unusedStaticFields)
             .sortBy(_.name)
-            .iterator
+            .iterator()
             .map(NewFieldType.Static(_).item)
             .toVector
 

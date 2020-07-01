@@ -274,7 +274,7 @@ object Redis extends StrictLogging {
           } queue.enqueue((p, e))
         }
       def unsafeDequeue() =
-        synchronized(Option.when(queue.nonEmpty)(queue.dequeue))
+        synchronized(Option.when(queue.nonEmpty)(queue.dequeue()))
     }
   }
 

@@ -7,7 +7,7 @@ import monocle.macros.Lenses
 import monocle.{Lens, Traversal}
 import nyaya.prop.CycleDetector
 import nyaya.util.Multimap
-import scala.annotation.{nowarn, tailrec}
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.TaggedTypes.TaggedInt
@@ -132,7 +132,7 @@ object TagTree {
   def prettyPrint(tt: TagTree): String = {
     def lookup(id: TagId) = tt.underlyingMap(id)
     val rootIds = tt.values.foldLeft(tt.keySet)(_ -- _.children)
-    val roots = MutableArray(rootIds.iterator.map(lookup)).sortBy(_.tag.name.toLowerCase).iterator.toArray // TODO .array should work
+    val roots = MutableArray(rootIds.iterator.map(lookup)).sortBy(_.tag.name.toLowerCase).iterator().toArray // TODO .array should work
     "TagTree\n" +
     nyaya.util.Util.asciiTree(roots)(_.children.map(lookup),
       t => {
@@ -438,7 +438,7 @@ final case class Tags(tree: TagTree) {
     parents.iterator.filter(kv => tree.get(kv._1).forall(_.tag.live is Live)).toMap
 
   def sortTagIds(ids: IterableOnce[ApplicableTagId]): Iterator[ApplicableTagId] =
-    MutableArray(ids).sortBySchwartzian(needApplicableTag(_).name).iterator
+    MutableArray(ids).sortBySchwartzian(needApplicableTag(_).name).iterator()
 }
 
 final class RecursiveTagIterator(tags      : Tags,
@@ -460,7 +460,7 @@ final class RecursiveTagIterator(tags      : Tags,
       .sortBy(_.name.toLowerCase)
 
   def tagGroupIterator(): Iterator[TagGroup] =
-    orderedGroups.iterator
+    orderedGroups.iterator()
 
   def applicableTagIterator(): Iterator[ApplicableTag] =
     ids.iterator

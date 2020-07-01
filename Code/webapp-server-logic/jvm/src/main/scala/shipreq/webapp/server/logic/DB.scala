@@ -167,7 +167,7 @@ object DB {
     final case class ExcludeUpTo(ord: EventOrd) extends EventFilter
     final case class Set(ords: NonEmptySet[EventOrd]) extends EventFilter
 
-    def given(alreadyGot: Option[EventOrd.Latest]): EventFilter =
+    def after(alreadyGot: Option[EventOrd.Latest]): EventFilter =
       alreadyGot match {
         case Some(ord) => ExcludeUpTo(ord)
         case None      => IncludeAll

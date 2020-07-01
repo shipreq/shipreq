@@ -116,7 +116,7 @@ object Layout {
           case UnsavedChanges.Location.ReqTypeConfig    => "Req Type Editor"            -> Page.CfgReqTypes
           case UnsavedChanges.Location.TagConfig        => "Tag Editor"                 -> Page.CfgTags
           case UnsavedChanges.Location.ReqCodeGroup(id) => PlainText.reqCodeById(id, p) -> Page.ReqTable
-        }.sortBy(_._1).iterator.toList
+        }.sortBy(_._1).iterator().toList
 
       apply(changes, locs, rc)
     }

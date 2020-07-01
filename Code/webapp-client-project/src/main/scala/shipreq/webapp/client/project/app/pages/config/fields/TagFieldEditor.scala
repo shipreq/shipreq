@@ -37,7 +37,7 @@ object TagFieldEditor {
         val flatRows = cfg.tags.flatRowsWithRoot(id, HideDead)
         MutableArray(flatRows.iterator.map(_.tag).filterSubType[ApplicableTag])
           .sortBy(_.name)
-          .iterator
+          .iterator()
           .map(_.id)
     }
   }
@@ -58,7 +58,7 @@ object TagFieldEditor {
     private[TagFieldEditor] lazy val reqTypeItems: ArraySeq[Dropdown.Item[TagGroupId]] =
       MutableArray(legalTagGroups.iterator.map(cfg.tags.needTagGroup))
         .sortBy(_.name)
-        .iterator
+        .iterator()
         .map(t => Dropdown.Item(t.id.value.toString, t.name, t.id))
         .to(ArraySeq)
 

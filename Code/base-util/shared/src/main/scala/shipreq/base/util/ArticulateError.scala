@@ -131,7 +131,7 @@ object ArticulateError {
       addSection("Hints", showItems(hints))
 
     if (tags.nonEmpty)
-      addSection("Tags", showItems(MutableArray(tags.iterator.map(_.toString)).sort.iterator))
+      addSection("Tags", showItems(MutableArray(tags.iterator.map(_.toString)).sort.iterator()))
 
     sections.mkString("\n\n")
   }

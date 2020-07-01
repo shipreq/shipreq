@@ -458,7 +458,7 @@ final case class RedisLawTester[F <: ProjectAlgebra[Fx], G <: ProjectAlgebra[Fx]
     for (cmd <- cmds)
       if (failures.isEmpty())
         apply(cmd)
-    Invalid when failures.nonEmpty
+    Invalid when failures.nonEmpty()
   }
 
   def reset() =

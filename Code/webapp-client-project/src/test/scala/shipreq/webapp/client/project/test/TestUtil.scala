@@ -26,7 +26,7 @@ object TestUtil extends WebappTestUtil with WebappTestEquality {
   }
 
   implicit def autodomnode(c: GenericComponent.MountedRaw) =
-    ReactDOM.findDOMNode(c.raw).get.asElement
+    ReactDOM.findDOMNode(c.raw).get.asElement()
 
   val nopJsFn: js.Function0[js.Any] = () => ((): js.Any)
 

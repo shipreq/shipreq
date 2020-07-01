@@ -21,7 +21,7 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text.TextSearch
 import shipreq.webapp.base.ui.semantic.Icon
-import shipreq.webapp.base.ui.{BaseStyles, NoContentMessage, Toast}
+import shipreq.webapp.base.ui.{NoContentMessage, Toast}
 import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.feature._

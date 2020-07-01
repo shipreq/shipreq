@@ -3,7 +3,6 @@ package shipreq.webapp.base.test
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
-import scala.annotation.nowarn
 import scalaz.std.AllInstances._
 import scalaz.syntax.bind._
 import scalaz.syntax.semigroup._

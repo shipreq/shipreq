@@ -14,11 +14,10 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.filter.Filter
-import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.sort.Sorter.{BlankPlacement, BlanksFirst, BlanksLast, Dir, FlipDir, KeepDir}
 import shipreq.webapp.base.text.Text.Equality._
-import shipreq.webapp.base.text.{Atom, PlainText, Text, TextSearch}
+import shipreq.webapp.base.text.{Atom, PlainText, TextSearch}
 import shipreq.webapp.client.project.app.pages.content.reqtable.LogicTestUtil._
 import shipreq.webapp.client.project.test.ClientTestSettings._
 import utest._
@@ -44,7 +43,7 @@ object LogicPropTest extends TestSuite {
     val gatheredG      = gathered.iterator.filterSubType[Row.ForReq].toList
     val rowReqCodes    = gathered.flatMap(codesInRow)
     val rowGReqIds     = gatheredG.map(_.req.id).toSet
-    val srcGReqIds     = p.content.reqs.idIterator.filterSubType[GenericReqId].filter(expectVisible).toSet
+    val srcGReqIds     = p.content.reqs.idIterator().filterSubType[GenericReqId].filter(expectVisible).toSet
     val finalRows      = Logic.rowsForTable(p, v, plainText, filterCompiler)
     val tableStats     = Logic.stats(p, finalRows)
 
@@ -96,9 +95,9 @@ object LogicPropTest extends TestSuite {
     def universalSort = {
       val revOrder  = v.order.reverse
       val revCri    = v.copy(order = revOrder)
-      val sorted    = Logic.sorter(p, v, plainText)(gathered).iterator.to(Vector)
+      val sorted    = Logic.sorter(p, v, plainText)(gathered).iterator().to(Vector)
       def criRev    = E.equal("cri.rev.rev = cri", revOrder.reverse, v.order)
-      def sortTwice = E.equal("sort.sort = sort", Logic.sorter(p, v, plainText)(sorted).iterator.to(Vector), sorted)
+      def sortTwice = E.equal("sort.sort = sort", Logic.sorter(p, v, plainText)(sorted).iterator().to(Vector), sorted)
       def sortRev   = reverseSortOnReverseCri(sorted, revCri)
       (criRev ∧ sortRev ∧ sortTwice) rename "Universal sort props"
     }
@@ -152,7 +151,7 @@ object LogicPropTest extends TestSuite {
 
     def sortBy(c: SC.Inconclusive): Vector[Row] = {
       val (sc, input) = sortCriAndGather(c)
-      Logic.sorter(p, newTableSettingsForSort(sc), plainText)(input).iterator.to(Vector)
+      Logic.sorter(p, newTableSettingsForSort(sc), plainText)(input).iterator().to(Vector)
     }
 
     def newTableSettingsForSort(sc: SortCriteria): View =
@@ -200,7 +199,7 @@ object LogicPropTest extends TestSuite {
 
     def sortByPubid: IndivSortIB = (sm, dir) => {
       val sc     = SortCriteria(Vector.empty, SC.Conclusive(C.Pubid, sm))
-      val sorted = Logic.sorter(p, newTableSettingsForSort(sc), plainText)(gathered).iterator.to(Vector)
+      val sorted = Logic.sorter(p, newTableSettingsForSort(sc), plainText)(gathered).iterator().to(Vector)
       val na     = ("", -1)
       val pubids = sorted.map {
         case r: Row.ForReq       => pubidExtract(p)(r.req.pubid)

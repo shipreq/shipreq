@@ -123,7 +123,7 @@ object FilterEditor {
 
           MutableArray(projectFields ++ specialFields)
             .sort
-            .iterator
+            .iterator()
             .map(FilterAlgebra.quoteFieldName)
             .toArray
         }

@@ -1,6 +1,5 @@
 package shipreq.webapp.base
 
-import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.adt_macros.AdtMacros._
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion._
@@ -29,7 +28,6 @@ import shipreq.webapp.base.event.ProjectAndOrd
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.Parsers.StyleType
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.util.PreProcessor

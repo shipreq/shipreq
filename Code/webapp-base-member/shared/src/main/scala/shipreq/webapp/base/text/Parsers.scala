@@ -15,6 +15,7 @@ import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.util._
 
+@nowarn("msg=Auto-application.*deprecated")
 object Parsers {
 
   def fixOptionalText[T <: Atom.Base](text: T#OptionalText): T#OptionalText =

@@ -30,7 +30,7 @@ private[reqtypes] object Shared {
   def renderOldMnemonics(rt: ReqType): TagMod =
     MutableArray(rt.oldMnemonics.iterator.map(_.value))
       .sort
-      .iterator
+      .iterator()
       .map(mnemonic => <.span(*.deadMnemonic, mnemonic))
       .mkTagMod(", ")
 }

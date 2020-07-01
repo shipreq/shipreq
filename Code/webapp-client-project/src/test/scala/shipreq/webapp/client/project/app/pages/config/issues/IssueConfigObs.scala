@@ -20,7 +20,7 @@ object IssueConfigObs {
     val sources = $.collect1n(selOtherSourcesContent).map(new OtherSource(_))
 
     lazy val consolidation: String =
-      MutableArray(sources).sortBy(_.header).iterator.map(s =>
+      MutableArray(sources).sortBy(_.header).iterator().map(s =>
         s.header + "\n" + s.items.iterator.map("  * " + _).mkString("\n")
       ).mkString("\n\n")
   }

@@ -52,7 +52,7 @@ object DbTable {
     def toTable: String =
       AsciiTable(
         List("TABLE", "ROWS" ) ::
-        MutableArray(asMap.iterator.map(r => r._1.name :: r._2.toString :: Nil)).sortBy(_.head).iterator.toList)
+        MutableArray(asMap.iterator.map(r => r._1.name :: r._2.toString :: Nil)).sortBy(_.head).iterator().toList)
   }
 
   def countAll(tables: IterableOnce[DbTable]): ConnectionIO[Counts] =

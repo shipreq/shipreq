@@ -99,7 +99,7 @@ final class DeletionProps(mode: DeleteOrRestore,
         val impSrcToTgtTC2 =
           p2.content.implications.transitiveClosure(
             Forwards,
-            p2.content.reqs.idIterator,
+            p2.content.reqs.idIterator(),
             id => p2.content.reqs.need(id).allowLiveChange(p2.config.reqTypes) match {
               case Allow =>
                 def isInput = input.contains(id)

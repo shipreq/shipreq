@@ -177,7 +177,6 @@ object OtherEventTest extends TestSuite {
 
       "createV1" - {
         import ImplicitsV1._
-        import SavedViewGDv1._
 
         "valid" - {
           def test(evs: SavedViewCreateV1*)(sv: SavedViews.NonEmpty): Unit = {
@@ -219,7 +218,6 @@ object OtherEventTest extends TestSuite {
 
       "create" - {
         import ImplicitsV2._
-        import SavedViewGD._
 
         "valid" - {
           def test(evs: SavedViewCreate*)(sv: SavedViews.NonEmpty): Unit = {
@@ -342,7 +340,6 @@ object OtherEventTest extends TestSuite {
 
       "defaultSet" - {
         import ImplicitsV2._
-        import SavedViewGD._
 
         def test(evs: Event*)(id: SavedView.Id)(expect: SavedViews.NonEmpty): Unit = {
           val p = _assertPass(evs :+ SavedViewDefaultSet(id): _*)

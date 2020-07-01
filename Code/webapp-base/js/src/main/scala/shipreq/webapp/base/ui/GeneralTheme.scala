@@ -26,7 +26,7 @@ object GeneralTheme {
     if (i.tail.isEmpty)
       render1(i.head)
     else
-      <.div(MutableArray(i.whole).sort.iterator.map(render1).intersperse(<.br).toTagMod)
+      <.div(MutableArray(i.whole).sort.iterator().map(render1).intersperse(<.br).toTagMod)
   }
 
   def submitButton(title: String, submitCB: Option[Callback], inFlight: Boolean): VdomTagOf[html.Button] = {

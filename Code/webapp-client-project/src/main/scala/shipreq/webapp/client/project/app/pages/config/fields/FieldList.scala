@@ -151,7 +151,7 @@ object FieldList {
 
               val key: TagMod =
                 types
-                  .iterator
+                  .iterator()
                   .map[VdomNode] { rt =>
                     val m = rt.mnemonic.value
                     if (rt.live is Live) m else <.span(*.fieldListDetailDead, m)
@@ -162,7 +162,7 @@ object FieldList {
 
               (sortKey, renderDetailRule(key, value))
             }
-          }.sortBy(_._1).iterator.map(_._2).toTagMod
+          }.sortBy(_._1).iterator().map(_._2).toTagMod
 
         val other =
           renderDetailRule("Other", renderRes(rules.otherwise), validity)

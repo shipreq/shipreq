@@ -421,7 +421,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     }
 
   override def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[AnyOptional, Set[UseCaseStepId]], live: Live): VdomTag =
-    makeUseCaseStepTextAndFlow(step, live)(useCaseFlowElementsById(_).iterator)
+    makeUseCaseStepTextAndFlow(step, live)(useCaseFlowElementsById(_).iterator())
 
   override def withCtx[Ctx2 <: ProjectText.Context](newCtx: Ctx2): ProjectWidgets[Ctx2] =
     if (newCtx ==* ctx)

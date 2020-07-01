@@ -442,7 +442,7 @@ object Graphs {
             val reqTypesWithReqs: Map[ReqTypeId, Int] =
               MutableArray(reqs.reqsByType.keys)
                 .sortBy(reqTypes.order) // Deterministic (and stable until config changes) order of colours
-                .iterator
+                .iterator()
                 .zipWithIndex
                 .toMap
 
@@ -463,7 +463,7 @@ object Graphs {
             def nodeData =
               MutableArray(reqsByReqType.iterator)
                 .sortBy(x => reqTypes.order(x._1))
-                .iterator
+                .iterator()
 
             def declareNode(id: ReqId): Unit = {
               node(id)

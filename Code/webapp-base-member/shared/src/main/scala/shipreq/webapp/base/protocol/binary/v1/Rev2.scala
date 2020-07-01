@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol.binary.v1
 
 import boopickle.{ConstPickler, DefaultBasic}
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
+import japgolly.microlibs.nonempty.NonEmptySet
 import java.time.Instant
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
@@ -9,12 +9,7 @@ import scalaz.\/
 import shipreq.base.util.{ErrorMsg, NonEmptyArraySeq}
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.savedview.{ImpGraphConfig, SavedView}
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.filter.Filter
-import shipreq.webapp.base.protocol.Version
-import shipreq.webapp.base.protocol.binary.UnsupportedVersionException
-import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.text.{AtomTC, Text}
 
 /** v1.2 */
@@ -23,7 +18,6 @@ object Rev2 {
   import BaseData._
   import Events._
   import BaseMemberData1._
-  import BaseMemberData1.SavedViewPicklers._
   import BaseMemberData2._
   import PostEvents._
   import Rev1._

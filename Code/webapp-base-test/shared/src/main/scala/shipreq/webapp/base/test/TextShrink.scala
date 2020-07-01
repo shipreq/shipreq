@@ -5,8 +5,8 @@ import shipreq.base.test._
 import shipreq.base.util.ScalazExtra.applicativeView
 import shipreq.base.util.{NonEmptyArraySeq, Validity}
 import shipreq.webapp.base.RandomData.{TextGen => $}
+import shipreq.webapp.base.text.Atom
 import shipreq.webapp.base.text.Atom.AnyAtom
-import shipreq.webapp.base.text.{Atom, Parsers}
 
 object TextShrink {
 

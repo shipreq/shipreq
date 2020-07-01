@@ -461,7 +461,7 @@ object ProjectSpaLogic extends StrictLogging {
                 (mdo, read) <- runDB(
                                  for {
                                    a <- db.getProjectMetaData(pid)
-                                   b <- db.getProjectEvents(pid, DB.EventFilter.given(p.ord))
+                                   b <- db.getProjectEvents(pid, DB.EventFilter.after(p.ord))
                                  } yield (a, b)
                                )
                 result      <- read.traverse(apEvent.append(pid, p, _))
@@ -548,7 +548,7 @@ object ProjectSpaLogic extends StrictLogging {
 
         def loadEventsFromDb(o: Option[EventOrd.Latest]): F[MsgError \/ VerifiedEvent.Seq] =
           step("readDb")(
-            runDB(db.getProjectEvents(pid, DB.EventFilter.given(o)))
+            runDB(db.getProjectEvents(pid, DB.EventFilter.after(o)))
               .map(_.leftMap(MsgError.ServerBehindDatabase)))
 
         def loadEvents(dbLatest: Option[EventOrd.Latest]): F[MsgError \/ VerifiedEvent.Seq] =
@@ -667,7 +667,7 @@ object ProjectSpaLogic extends StrictLogging {
             for {
               cacheBuilt     <- s.redis.buildNonEmpty(pid)
               p1             = s.local max cacheBuilt
-              newEventsOrErr <- runDB(db.getProjectEvents(pid, DB.EventFilter.given(p1.ord)))
+              newEventsOrErr <- runDB(db.getProjectEvents(pid, DB.EventFilter.after(p1.ord)))
               result         <- newEventsOrErr match {
                                  case \/-(newEvents) => apEvent.append(pid, p1, newEvents) map {
                                    case \/-(p2) => -\/(s.copy(local = p2, status = WriteRedis1(newEvents)))

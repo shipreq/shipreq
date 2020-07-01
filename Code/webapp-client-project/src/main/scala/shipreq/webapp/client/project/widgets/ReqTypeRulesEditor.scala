@@ -24,7 +24,6 @@ import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 import shipreq.webapp.base.data.{Colour => _, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.lib.ReactKeyGen
-import shipreq.webapp.base.lib.ReactKeyGen.ReusabilityImplicits._
 import shipreq.webapp.base.lib.ReactKeyGen.UnivEqImplicits._
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Dropdown => _, _}
@@ -180,7 +179,7 @@ object ReqTypeRulesEditor {
           }
         )
           .sortBySchwartzian(x => cfg.reqTypes.sortIdsByMnemonic(x.ids.whole).mkString(","))
-          .iterator
+          .iterator()
           .toList
 
       val rows: Vector[PerReqType[D]] =
@@ -191,7 +190,7 @@ object ReqTypeRulesEditor {
             .filter(_.text.nonEmpty)
         )
           .sortBy(_.text)
-          .iterator
+          .iterator()
           .toVector
 
       val otherwise =
@@ -444,7 +443,7 @@ final class ReqTypeRulesEditor[D: Reusability: UnivEq](allowDefaults: Boolean, k
               .filter(rt => !s.allDead.contains(rt.reqTypeId))
           )
             .sortBy(_.mnemonic.value)
-            .iterator
+            .iterator()
             .map[VdomNode](rt =>
               if (rt.live is Live) rt.mnemonic.value else <.span(*.rulesOtherDeadReqType, rt.mnemonic.value))
             .++(Iterator.single[VdomNode](otherNew))

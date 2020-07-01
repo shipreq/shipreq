@@ -1,6 +1,5 @@
 package shipreq.webapp.base.text
 
-import scala.collection.immutable.IntMap
 import scalaz.Need
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.algorithm.BoyerMooreHorspool
@@ -167,7 +166,7 @@ final class TextSearch(project: Project,  plainText: PlainText.ForProject.NoCtx)
         ))
         IndexEntryR(r, title, textFields)
       }
-      project.content.reqs.reqIterator map each
+      project.content.reqs.reqIterator() map each
     }
 
     def indexValuesG: Iterator[IndexEntryG] = {

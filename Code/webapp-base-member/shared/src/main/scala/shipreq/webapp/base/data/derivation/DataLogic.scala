@@ -113,7 +113,7 @@ final class DataLogic(p: Project) {
       .|>(MutableArray.apply)
       .sortBySchwartzian(_.key.value |> normaliseStringForSorting)
       .map(_.id)
-      .iterator
+      .iterator()
       .mapToOrder
 
   lazy val tagOrderingByName: Ordering[ApplicableTagId] =

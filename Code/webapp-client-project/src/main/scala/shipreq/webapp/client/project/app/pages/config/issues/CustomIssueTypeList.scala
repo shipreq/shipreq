@@ -94,7 +94,7 @@ private[issues] object CustomIssueTypeList {
     if (rows.isEmpty)
       renderEmpty
     else
-      renderTable(p, rows.iterator)
+      renderTable(p, rows.iterator())
   }
 
   val Component = ScalaComponent.builder[Props]

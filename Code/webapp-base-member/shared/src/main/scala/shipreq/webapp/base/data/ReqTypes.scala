@@ -196,7 +196,7 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
     sortByMnemonic(ids.iterator.map(need))
 
   def sortByMnemonic(rts: IterableOnce[ReqType]): Iterator[ReqType] =
-    MutableArray(rts).sortBy(_.mnemonic.value).iterator
+    MutableArray(rts).sortBy(_.mnemonic.value).iterator()
 
   def mkStringByIds(ids: IterableOnce[ReqTypeId], sep: String): String =
     mkString(ids.iterator.map(need), sep)

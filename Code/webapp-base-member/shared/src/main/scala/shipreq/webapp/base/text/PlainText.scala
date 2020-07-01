@@ -346,7 +346,7 @@ object PlainText {
           if (ids.nonEmpty) {
             if (sb.nonEmpty) sb append ' '
             sb append UseCaseStepFlowText.AsciiArrows(d)
-            for (ref <- useCaseFlowElementsById(ids).iterator) {
+            for (ref <- useCaseFlowElementsById(ids).iterator()) {
               sb append ' '
               sb append ref
             }

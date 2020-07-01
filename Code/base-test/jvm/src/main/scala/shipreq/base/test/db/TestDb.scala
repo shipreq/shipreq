@@ -259,7 +259,7 @@ object TestDb extends TestDbHelpers with HasLogger {
 
   private def checkImpl(args: AnalysisArgs)(implicit l: Line): Unit =
     unsafeUseXa(mutex = false) { xa =>
-      val report = analyzeIO(args, xa).unsafeRunSync
+      val report = analyzeIO(args, xa).unsafeRunSync()
       def reportText = formatReport(args, report, Colors.Ansi).padLeft("  ").toString
       if (!report.succeeded)
         fail(reportText)

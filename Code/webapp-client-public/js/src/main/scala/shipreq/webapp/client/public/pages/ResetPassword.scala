@@ -16,7 +16,6 @@ import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Icon, Input, Message}
 import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.user.{PlainTextPassword, UserValidators}
-import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.public.PublicSpaProtocols.{ResetPassword2 => P}
 import shipreq.webapp.client.public.Styles.{resetPassword => *}
 

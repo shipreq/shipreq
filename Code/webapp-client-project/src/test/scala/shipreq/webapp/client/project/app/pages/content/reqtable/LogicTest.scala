@@ -4,7 +4,7 @@ import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.{Lens, Optional}
-import scala.annotation.{nowarn, tailrec}
+import scala.annotation.tailrec
 import scalaz.{-\/, Equal, \/-}
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
@@ -14,7 +14,6 @@ import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.event.{Event => E, UseCaseGD, UseCaseStepGD}
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.issue.IssueCategory
-import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._
@@ -105,7 +104,7 @@ object LogicTest extends TestSuite {
     val fc                    = Filter.Valid.compiler(p, pt, ts, v.filterDead, applyFilterDeadToReqs = false)
     def r1: Array       [Row] = Logic.gather(p, v, fc)
     def r2: MutableArray[Row] = Logic.sorter(p, v, pt)(r1)
-    val r3: Vector      [Row] = Logic.consolidateAdjacentDups(r2.iterator)
+    val r3: Vector      [Row] = Logic.consolidateAdjacentDups(r2.iterator())
 
 //    def renderReq(reqId: ReqId) = PlainText.pubidByReqId(reqId, p)
 //    def renderTags(tagIds: Vector[ApplicableTagId]) = pt.tagList(tagIds, Live, !Mandatory, Valid.always)

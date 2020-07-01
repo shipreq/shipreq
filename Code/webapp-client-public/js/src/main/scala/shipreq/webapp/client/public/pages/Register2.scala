@@ -18,7 +18,6 @@ import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Icon, Input, Message}
 import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.user._
-import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.validation.Implicits._
 import shipreq.webapp.base.validation.{Composite, Simple}
 import shipreq.webapp.base.{CommmonUiText, Urls, WebappConfig}

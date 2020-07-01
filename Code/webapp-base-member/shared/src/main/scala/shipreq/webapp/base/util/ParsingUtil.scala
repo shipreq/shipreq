@@ -2,7 +2,7 @@ package shipreq.webapp.base.util
 
 import japgolly.microlibs.nonempty._
 import org.parboiled2._
-import scala.annotation.{elidable, tailrec}
+import scala.annotation.{elidable, nowarn, tailrec}
 import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scalaz.{\/, \/-}
@@ -53,6 +53,7 @@ object ParsingUtil {
   val toInt = (_: String).toInt
 }
 
+@nowarn("msg=Auto-application.*deprecated")
 abstract class ParsingUtil extends Parser {
   import ParsingUtil._
 

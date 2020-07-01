@@ -71,7 +71,6 @@ object Common {
     "-Xlint:infer-any",                              // A type argument was inferred as Any.
     "-Xlint:missing-interpolator",                   // A string literal appears to be missing an interpolator id.
     "-Xlint:nonlocal-return",                        // A return statement used an exception for flow control.
-    "-Xlint:nullary-override",                       // Non-nullary `def f()` overrides nullary `def f`.
     "-Xlint:nullary-unit",                           // `def f: Unit` looks like an accessor; add parens to look side-effecting.
     "-Xlint:option-implicit",                        // Option.apply used an implicit view.
     "-Xlint:poly-implicit-overload",                 // Parameterized overloaded implicit methods are not visible as view bounds.

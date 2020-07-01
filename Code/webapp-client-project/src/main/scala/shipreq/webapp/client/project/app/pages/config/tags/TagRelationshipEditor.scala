@@ -169,7 +169,7 @@ object TagRelationshipEditor {
       val animating    = s.dead.nonEmpty
       val enabled      = p.enabled & Disabled.when(animating)
       val sortedGroups = MutableArray(s.groups).sortBySchwartzian(p.hypotheticalTags.needTagGroup(_).name)
-      val allOrdered   = sortedGroups.iterator.toVector ++ s.tags
+      val allOrdered   = sortedGroups.iterator().toVector ++ s.tags
       val items        = VdomArray.empty()
       val it           = p.hypotheticalTags.recursiveIterator(allOrdered, p.filterDead)
 

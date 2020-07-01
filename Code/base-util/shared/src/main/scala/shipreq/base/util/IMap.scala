@@ -59,9 +59,9 @@ final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapB
     val max = 10
     val keyDesc =
       if (keyArray.length > max)
-        keyArray.iterator.take(max).mkString("{", ", ", ", ... }")
+        keyArray.iterator().take(max).mkString("{", ", ", ", ... }")
       else
-        keyArray.iterator.mkString("{", ", ", "}")
+        keyArray.iterator().mkString("{", ", ", "}")
     ErrorMsg(s"Value not found for $k.\nKeys = $keyDesc")
   }
 
