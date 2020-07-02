@@ -15,14 +15,23 @@ object PreProcessor {
   type FixChar = (Array[Char], Int) => Unit
 
   private def _fixChar(a: Array[Char], i: Int, c: Char): Unit =
-    if (
-      c < 32
-        || c == 130 // BREAK PERMITTED HERE (basically blank char)
-        || (c >= 55296 && c <= 63743) // invalid + private-use chars
-        || (c >= 64976 && c <= 65007) // private-use chars
-        || c == 65279 // BOM
-        || c >= 65534 // private-use chars (ffff is special to Parboiled)
-    ) a(i) = ' '
+    c match {
+
+      case '\u0085'    // NEL: Next Line
+         | '\u2028'    // LS : Line Separator
+         | '\u2029' => // PS : Paragraph Separator
+        a(i) = '\n'
+
+      case _ =>
+        if (
+          c < 32
+            || c == 130 // BREAK PERMITTED HERE (basically blank char)
+            || (c >= 55296 && c <= 63743) // invalid + private-use chars
+            || (c >= 64976 && c <= 65007) // private-use chars
+            || c == 65279 // BOM
+            || c >= 65534 // private-use chars (ffff is special to Parboiled)
+        ) a(i) = ' '
+    }
 
   val fixCharSingleLine: FixChar =
     (a, i) => _fixChar(a, i, a(i))
