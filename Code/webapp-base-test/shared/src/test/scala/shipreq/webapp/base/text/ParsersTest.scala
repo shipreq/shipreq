@@ -86,6 +86,8 @@ object ParsersTest extends TestSuite {
       if (a == e)
         E.pass
       else {
+        println("Parser error found - shrinking...")
+
         def size(): Double = e.toString.length + a.toString.length
         val sizeBefore = size()
         e = TextShrink(e)(ee => Valid.when(f(ee) == ee))
@@ -1013,6 +1015,14 @@ object ParsersTest extends TestSuite {
           T.UnorderedList(NonEmptyArraySeq(ArraySeq.empty)),
           T.Heading1(NonEmptyArraySeq(H.Literal("h1"))),
           L("lit with space"),
+        )
+
+        "ulBug" - test("#### a\n    • b\n    • c\n")(
+          T.Heading4(NonEmptyArraySeq(H.Literal("a"))),
+          T.UnorderedList(NonEmptyArraySeq(
+            ArraySeq(L("b")),
+            ArraySeq(L("c")),
+          ))
         )
       }
 

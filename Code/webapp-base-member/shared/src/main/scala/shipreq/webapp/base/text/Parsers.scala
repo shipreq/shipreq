@@ -424,7 +424,7 @@ object Parsers {
       )
 
     private def genericList(lead: () => Rule0, listToken: TokenRule): Rule1[NonEmptyArraySeq[t.ListItem]] =
-      rule((OWS ~ NL).? ~ startOfLine ~ listItem(lead, listToken).+ ~ OWSNL ~ popSeqToNEA[t.ListItem])
+      rule(startOfLineAfterOWS ~ listItem(lead, listToken).+ ~ OWSNL ~ popSeqToNEA[t.ListItem])
 
     private def orderedList(listToken: TokenRule): Rule1[t.OrderedList] = {
       def lead: Rule0 = rule(CP.Digit.+ ~ ". ")
@@ -438,7 +438,7 @@ object Parsers {
     }
 
     def listMarkup(listToken: TokenRule): Rule1[t.ListBase] =
-      rule(orderedList(listToken) | unorderedList(listToken))
+      rule(OWSNL ~ (orderedList(listToken) | unorderedList(listToken)))
   }
 
   trait ContentRef extends Base with UseCaseStepLabel {
