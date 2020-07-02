@@ -10,12 +10,19 @@ import shipreq.webapp.base.text.GrammarSpec
 object Utils {
   type Strategies = Vector[Strategy[_]]
 
-  final class Context(val prefixRegex: String,
-                      val suffixRegex: String,
-                      val applyContext: String => String) {
+  final class Context(val prefixRegex : String,
+                      val suffixRegex : String,
+                      val applyContext: String => String,
+                      val prefixGroups: Int) {
 
     // Util.regexEscapeAndWrap turns empty strings into (?:) which is fine
     // val acSuffix = if (suffixRegex.isEmpty) "$" else suffixRegex + "?$"
+
+    private val prefixCapture1 =
+      1.to(prefixGroups).iterator.map("$" + _.toString).mkString
+
+    private val prefixCapture2 =
+      prefixCapture1 + "$" + (prefixGroups + 1).toString
 
     def apply[A](mainRegex     : String,
                  replacementA  : A => String,
@@ -24,14 +31,14 @@ object Utils {
 
       case Contextualise =>
         rest(Strategy.builder
-          .regex(s"$prefixRegex$mainRegex$suffixRegex?$$", index = 1)
-          .replace(s => applyContext(replacementA(s)) + replacementEnd))
+          .regex(s"$prefixRegex$mainRegex$suffixRegex?$$", index = 1 + prefixGroups)
+          .replace(s => prefixCapture1 + applyContext(replacementA(s)) + replacementEnd))
           .result()
 
       case Plain =>
         rest(Strategy.builder
-          .regex(s"(^|\\s)$prefixRegex?$mainRegex$suffixRegex?$$", index = 2)
-          .replace(s => "$1" + replacementA(s) + replacementEnd))
+          .regex(s"(^|\\s)$prefixRegex?$mainRegex$suffixRegex?$$", index = 2 + prefixGroups)
+          .replace(s => prefixCapture2 + replacementA(s) + replacementEnd))
           .result()
     }
   }
@@ -39,11 +46,15 @@ object Utils {
   object Context {
     def apply(s: GrammarSpec.Surrounds): Context = {
       val (a, b) = s.parsing.regexEscapeAndWrap
-      new Context(a, b, s.display.apply)
+      new Context(a, b, s.display.apply, 0)
     }
 
     def literal(pre: String, suf: String): Context =
-      new Context(Util regexEscapeAndWrap pre, Util regexEscapeAndWrap suf, pre + _ + suf)
+      new Context(
+        prefixRegex  = Util regexEscapeAndWrap pre,
+        suffixRegex  = Util regexEscapeAndWrap suf,
+        applyContext = pre + _ + suf,
+        prefixGroups = 0)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

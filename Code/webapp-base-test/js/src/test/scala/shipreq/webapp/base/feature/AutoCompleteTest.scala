@@ -223,6 +223,7 @@ object AutoCompleteTest extends TestSuite {
       "mid"        - quickTestSuggestionsAndSelection("#DO")("TODO")("#TODO")
       "noSyntax"   - quickTestSuggestions("T")()
       "filterDead" - quickTestSuggestions("#D")("TBD", "TODO") // PENDING is dead
+      "heading"    - quickTestSuggestions("##")()
     }
 
     "tagC" - {

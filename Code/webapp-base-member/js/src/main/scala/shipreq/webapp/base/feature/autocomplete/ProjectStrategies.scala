@@ -58,12 +58,20 @@ object ProjectStrategies {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // #ISSUE #TAG
 
-  private val hashtagContext = Context.literal(Grammar.hashRefKey.prefix, "")
+  private val hashtagContext = {
+    assert(Grammar.hashRefKey.prefix == "#")
+    new Context(
+      prefixRegex  = "(^|[^#])#",
+      suffixRegex  = "",
+      applyContext = "#" + _,
+      prefixGroups = 1,
+    )
+  }
 
   def hashtag(legal: IterableOnce[HashRefKey]): Contextualise => Strategies = {
     import Grammar.{hashRefKey => G}
     // ↓ `- 2` cos 1 is already firstChar, and another 1 is unnecessary in that if the tag is complete, there's nothing to suggest
-    val mainRegex = s"(|${G.firstChar.one}${G.midChars.one}{0,${G.length.total.max - 2}})$$"
+    val mainRegex = s"(|${G.firstChar.one}${G.midChars.one}{0,${G.length.total.max - 2}})"
     val terms     = ArraySeq unsafeWrapArray MutableArray(legal.iterator.map(_.value)).sort.array
     val searchFn  = Utils.caseInsensitiveContains(terms)
     hashtagContext[String](mainRegex, Identity.apply, "", _.search(searchFn))

@@ -48,7 +48,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* autocomplete should go away after `##`
 * multiline headings (?)
 * remove margins when headings right next to each other (same level, or next is smaller)
 * `What kind of incompletions are there?\n    *  Empty fields` <-- first bullet not matching (from interview 3)

@@ -87,7 +87,7 @@ object TextComplete {
 
     /** Used by Replace to represent replacement values before & after the cursor */
     type StringPair   = js.Array[String]
-    type Term         = String
+    type Term         = js.UndefOr[String]
     type Match        = RegExp | (String --> MatchData) | Null
     type Search  [ A] = JsFn3[Term, (js.Array[A] --> Unit), MatchData, Unit]
     type Replace [-A] = A --> (StringPair | String | Null)
@@ -101,7 +101,8 @@ object TextComplete {
       def apply[A](f: String => IterableOnce[A]): Search[A] =
         (term, cb, _) => {
           val as = new js.Array[A]
-          f(term).iterator.foreach(as.push(_))
+          val t = term.getOrElse("")
+          f(t).iterator.foreach(as.push(_))
           cb(as)
         }
     }
