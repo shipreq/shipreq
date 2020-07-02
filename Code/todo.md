@@ -48,6 +48,14 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
+* autocomplete should go away after `##`
+* implication autocomplete should except self
+* multiline headings (?)
+* remove margins when headings right next to each other (same level, or next is smaller)
+* `What kind of incompletions are there?\n    *  Empty fields` <-- first bullet not matching (from interview 3)
+* If validation fails due to DataProp, raise a support ticket (once) and display a different error msg
+* s/\t(etc)/ /g as live correction
+* bug parsing `* //a //`
 * revise async
   * req detail uses singleton for new
   * req detail should use req row for deletion
