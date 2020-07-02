@@ -14,13 +14,13 @@ object PreProcessor {
 
   type FixChar = (Array[Char], Int) => Unit
 
-  private def _fixChar(a: Array[Char], i: Int, c: Char): Unit =
+  private def _fixChar(a: Array[Char], i: Int, c: Char, nl: Char): Unit =
     c match {
 
       case '\u0085'    // NEL: Next Line
          | '\u2028'    // LS : Line Separator
          | '\u2029' => // PS : Paragraph Separator
-        a(i) = '\n'
+        a(i) = nl
 
       case _ =>
         if (
@@ -34,13 +34,13 @@ object PreProcessor {
     }
 
   val fixCharSingleLine: FixChar =
-    (a, i) => _fixChar(a, i, a(i))
+    (a, i) => _fixChar(a, i, a(i), ' ')
 
   val fixCharMultiLine: FixChar =
     (a, i) =>
       (a(i): @switch) match {
           case '\n' | '\r' => ()
-          case c => _fixChar(a, i, c)
+          case c => _fixChar(a, i, c, '\n')
         }
 
   type CanTrim = (Array[Char], Int) => Boolean
