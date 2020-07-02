@@ -154,8 +154,8 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     private val previewW: PreviewFeature.Write.Composite[PreviewId] =
       PreviewFeature.Write.Composite($ zoomStateL State.preview)
 
-    private val createAsyncW: AsyncFeature.Write.D1[CreateFeature.RowKey, ErrorMsg] =
-      AsyncFeature.Write.D1.init($ zoomStateL State.createAsync)
+    private val newReqAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
+      AsyncFeature.Write.D0.init($ zoomStateL State.newReqAsync)
 
     private val createW: CreateFeature.Write.ForProject =
       CreateFeature.Write.ForProject(
@@ -166,7 +166,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
           pxTextSearch,
         ),
         $ zoomStateL State.create,
-        createAsyncW,
+        newReqAsyncW,
         sspCreateContent,
         sspUpdateManualIssues)
 
@@ -189,9 +189,6 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
     private val rowAsyncW: AsyncFeature.Write.D1[EditorFeature.RowKey, ErrorMsg] =
       editAsyncW.withKey1(AsyncKey.WholeReq)
-
-    private val newReqAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
-      AsyncFeature.Write.D0.init($ zoomStateL State.newReqAsync)
 
     private val savedViewAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.savedViewAsync)
@@ -355,7 +352,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
     def render(p: Props, s: State): VdomElement = {
       lazy val editAsyncState = s.editAsync.toRead
-      def createR          = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.createAsync.toRead)
+      def createR          = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.newReqAsync)
       def createRW         = createW.toReadWrite(createR)
       def editR            = EditorFeature.Read.ForProject(s.edit, renderFeature, pxEditEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
       def editRW           = editW.toReadWrite(editR)

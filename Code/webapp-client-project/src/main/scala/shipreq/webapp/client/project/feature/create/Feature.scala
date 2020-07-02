@@ -115,9 +115,9 @@ object Feature {
 
     final case class ForProject(state      : State.ForProject,
                                 editability: Editability.ForProject,
-                                async      : AsyncFeature.Read.D1[RowKey, AsyncError]) {
+                                async      : AsyncFeature.Read.D0[AsyncError]) {
       def apply(r: RowKey): ForFields[r.FieldKey] =
-        ForFields(state(r), editability(r), async(r))
+        ForFields(state(r), editability(r), async)
     }
   }
 
@@ -148,7 +148,7 @@ object Feature {
 
     final case class ForProject(static              : NewEditor.Static,
                                 stateAccess         : StateAccessPure[State.ForProject],
-                                async               : AsyncFeature.Write.D1[RowKey, AsyncError],
+                                async               : AsyncFeature.Write.D0[AsyncError],
                                 sspCreateContent    : ServerSideProcInvoker[CreateContentCmd, ErrorMsg, NewEvents],
                                 sspCreateManualIssue: ServerSideProcInvoker[ManualIssueCmd, ErrorMsg, NewEvents],
                                ) {
@@ -166,7 +166,7 @@ object Feature {
         ForRow[row.FieldKey, row.Cmd](
           stateAccess.zoomStateL(State.ForProject.untyped ^|-> Optics.mapValueEmpty(row, State.ForFields.empty)(_.isEmpty)),
           NewEditor.forRow(static, row),
-          async(row),
+          async,
           foldCmd(row))
 
       @inline def toReadWrite(r: Read.ForProject): ReadWrite.ForProject =

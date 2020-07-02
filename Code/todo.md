@@ -48,10 +48,7 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* revise async
-  * req detail uses singleton for new
-  * req detail should use req row for deletion
-  * create feature is indexed by type - should just be a singleton (and the same one as req detail)
+* req detail deletion should use WholeReq async
 * prompt user to confirm aborting a dirty editor
 
 
