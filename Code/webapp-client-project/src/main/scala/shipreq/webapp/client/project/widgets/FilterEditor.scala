@@ -48,14 +48,14 @@ object FilterEditor {
   private val autoCompleteKeywords: AutoComplete.Strategy =
     AutoComplete.Strategy.builder
       .regex("""(^|[^\w:])([a-z]+)$""", index = 2)
-      .search(AutoComplete.Utils caseInsensitiveStartsWith Seq("field", "has", "no", "implies", "impliedBy"))
+      .search(AutoComplete.Query caseInsensitiveStartsWith Seq("field", "has", "no", "implies", "impliedBy"))
       .replace("$1" + _ + ":")
       .result()
 
   private val autoCompletePresenceLackAttr: AutoComplete.Strategy =
     AutoComplete.Strategy.builder
       .regex("""\b((?:has|no):)([a-z]*)$""", index = 2)
-      .search(AutoComplete.Utils caseInsensitiveStartsWith FilterAst.Attr.values.iterator.map(_.name).toSeq)
+      .search(AutoComplete.Query caseInsensitiveStartsWith FilterAst.Attr.values.iterator.map(_.name).toSeq)
       .replace("$1" + _ + " ")
       .result()
 
@@ -63,7 +63,7 @@ object FilterEditor {
     val values = IssueCategory.values.iterator.map(FilterAst.issueCategoryToStr).toSeq
     AutoComplete.Strategy.builder
       .regex("""\b(has:issue:-?(?:[a-z]+?,)*)([a-z]*)$""", index = 2)
-      .search(AutoComplete.Utils caseInsensitiveStartsWith values)
+      .search(AutoComplete.Query caseInsensitiveStartsWith values)
       .replace("$1" + _ + " ")
       .result()
   }
@@ -94,11 +94,11 @@ object FilterEditor {
       pxProject.map { p =>
 
         val hashtags = AutoComplete.Project.hashtag(
-          p,
-          ShowDead,
-          issues = true,
-          tags = true,
-          naTags = NaTags.none)(
+          project    = p,
+          filterDead = ShowDead,
+          issues     = true,
+          tags       = true,
+          naTags     = NaTags.none)(
           Contextualise)
 
         val fieldNames = {
@@ -131,7 +131,7 @@ object FilterEditor {
         val autoCompleteFieldName =
           AutoComplete.Strategy.builder
             .regex("""\b(field:)([a-z]*)$""", index = 2)
-            .search(AutoComplete.Utils caseInsensitiveStartsWith fieldNames)
+            .search(AutoComplete.Query caseInsensitiveStartsWith fieldNames)
             .replace("$1" + _)
             .result()
 

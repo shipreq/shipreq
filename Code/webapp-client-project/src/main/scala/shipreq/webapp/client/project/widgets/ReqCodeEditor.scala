@@ -65,7 +65,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
     private val pxTrie = Px.props($).map(_.trie).withReuse.autoRefresh
 
     override val pxAutoComplete = pxTrie.map(t =>
-      AutoComplete.Project.reqCode.prefixes(t))
+      AutoComplete.Project.reqCodePrefixes(t))
 
     private val keyHandlerBase =
       KeyHandlers.base(

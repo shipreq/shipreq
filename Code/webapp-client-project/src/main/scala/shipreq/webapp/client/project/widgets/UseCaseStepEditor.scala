@@ -146,7 +146,7 @@ object UseCaseStepEditor {
         ts <- pxTextSearch
       } yield {
         val naTags = p.config.naTags(StaticReqType.UseCase)
-        AutoComplete.Project.richText(Text.UseCaseStep)(p, naTags, pt, ts)
+        AutoComplete.Project.richText(Text.UseCaseStep, p, naTags, pt, ts)
       }
 
     val textareaConst: TagMod = {

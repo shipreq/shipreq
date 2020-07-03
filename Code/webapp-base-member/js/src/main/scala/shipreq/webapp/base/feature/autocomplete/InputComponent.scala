@@ -3,14 +3,15 @@ package shipreq.webapp.base.feature.autocomplete
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
+import shipreq.webapp.base.feature.autocomplete.strategies.Strategies
 
 object InputComponent {
   import Implicits._
 
-  @inline def apply(autoComplete: CallbackTo[Utils.Strategies])(render: TagMod => VdomNode): VdomElement =
+  @inline def apply(autoComplete: CallbackTo[Strategies])(render: TagMod => VdomNode): VdomElement =
     Component(Props(render, autoComplete))
 
-  final case class Props(render: TagMod => VdomNode, autoComplete: CallbackTo[Utils.Strategies])
+  final case class Props(render: TagMod => VdomNode, autoComplete: CallbackTo[Strategies])
 
   final class Backend($: BackendScope[Props, Unit]) extends ForComponent.Backend[html.Input] {
 

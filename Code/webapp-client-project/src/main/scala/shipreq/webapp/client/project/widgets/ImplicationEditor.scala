@@ -11,7 +11,7 @@ import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.{Plain, _}
-import shipreq.webapp.base.feature.AutoCompleteFeature.AutoComplete.Project.ReqItem
+import shipreq.webapp.base.feature.AutoCompleteFeature.AutoComplete.Project.{ReqItem, ReqItems}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.EditorStatus
 import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme}
@@ -23,14 +23,14 @@ import shipreq.webapp.client.project.lib.DataReusability._
 
 object ImplicationEditor {
 
-  final case class Lookup(legal                : List[ReqItem],
+  final case class Lookup(legal                : ReqItems,
                           illegal              : Map[String, Invalidity],
                           excludeFromSuggestion: Set[ReqId]) {
 
     lazy val legalm: Map[String, ReqItem] =
       legal.iterator.map(_.mapStrengthL(_.pubidStrNorm)).toMap
 
-    lazy val suggestions: Iterable[ReqItem] =
+    lazy val suggestions: ReqItems =
       if (excludeFromSuggestion.isEmpty)
         legal
       else
@@ -48,7 +48,7 @@ object ImplicationEditor {
 
   object Lookup {
     def all(p: Project, pt: PlainText.ForProject.AnyCtx): Lookup =
-      Lookup(AutoComplete.Project.reqItems(p, pt).toList, UnivEq.emptyMap, UnivEq.emptySet)
+      Lookup(AutoComplete.Project.reqItems(p, pt), UnivEq.emptyMap, UnivEq.emptySet)
 
     def forCustomColumn(p: Project, l: Lookup, fid: CustomField.Implication.Id): Lookup = {
       val f = p.config.fields.custom(fid)
@@ -149,7 +149,7 @@ object ImplicationEditor {
         l <- pxLookup
         s <- pxTextSearch
       } yield
-        AutoComplete.Project.req(s, l.suggestions, Plain)
+        AutoComplete.Project.req(l.suggestions, s)(Plain)
 
     @inline private def lineCardinality = SingleLine
 

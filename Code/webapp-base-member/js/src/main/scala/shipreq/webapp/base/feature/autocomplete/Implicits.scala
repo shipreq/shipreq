@@ -3,7 +3,7 @@ package shipreq.webapp.base.feature.autocomplete
 import japgolly.scalajs.react.Reusability
 import org.scalajs.dom.html
 import shipreq.webapp.base.feature.autocomplete.ForComponent.AutoCompletable
-import shipreq.webapp.base.feature.autocomplete.Utils.Strategies
+import shipreq.webapp.base.feature.autocomplete.strategies.Strategies
 import shipreq.webapp.base.jsfacade.TextComplete
 
 trait Implicits0 {
@@ -24,7 +24,4 @@ trait Implicits extends Implicits0 {
 
   implicit val autoCompletableTextarea: AutoCompletable[html.TextArea] =
     AutoCompletable(new TextComplete.TextArea(_))
-
-  implicit def autoLiftTextCompleteStrategy(s: TextComplete.Strategy[_]): Strategies =
-    (Vector.empty: Strategies) :+ s
 }

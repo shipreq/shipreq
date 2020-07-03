@@ -148,7 +148,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     private val pxTextSearch = Px.props($).map(_.textSearch).withReuse.autoRefresh
 
     override val pxAutoComplete =
-      Px.apply4(pxProject, pxNaTags, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(text))
+      Px.apply4(pxProject, pxNaTags, pxPlainText, pxTextSearch)(AutoComplete.Project.richText(text, _, _, _, _))
 
     private val scrollIntoView: Callback =
       TaskRepeater.millis(

@@ -68,11 +68,12 @@ object AutoCompleteFeature extends autocomplete.Implicits {
     type BackendTA                  = Backend[html.TextArea]
     type Ctx[D]                     = autocomplete.ForComponent.Ctx[D]
     val  Ctx                        = autocomplete.ForComponent.Ctx
-    val  Project                    = autocomplete.ProjectStrategies
+    val  Project                    = autocomplete.strategies.ProjectStrategies
     val  Strategy                   = TextComplete.Strategy
     type Strategy                   = TextComplete.Strategy[_]
-    type Strategies                 = autocomplete.Utils.Strategies
-    val  Utils                      = autocomplete.Utils
+    type Strategies                 = autocomplete.strategies.Strategies
+    type Query[A]                   = autocomplete.strategies.Query[A]
+    val  Query                      = autocomplete.strategies.Query
     val  InputComponent             = autocomplete.InputComponent
 
     def install[P, C <: Children, S, B <: Backend[D], D <: html.Element : AutoCompletable] =
