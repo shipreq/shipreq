@@ -47,7 +47,7 @@ parseCloc a = parse $ listToMaybe $ filter (isPrefixOf "Scala") $ lines a
 ------------------------------------------------------------------------------------------------------------------------
 -- Stats gathering
 
-groups = ["base", "taskman", "webapp", "utils"]
+groups = ["base", "benchmark", "taskman", "utils", "webapp"]
 pathPrefixes = ["", "shared/", "jvm/", "js/"]
 mainPaths = fmap (++"src/main/scala") pathPrefixes
 testPaths = fmap (++"src/test/scala") pathPrefixes
