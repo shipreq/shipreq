@@ -54,6 +54,7 @@ object DeletionForm {
         edit               = StateSnapshot.withReuse(s.reason)(setReason),
         asyncStatus        = None,
         abort              = None,
+        abortConfirmation  = None,
         autoFocus          = true,
         commitFn           = None,
         commitVerb         = "",

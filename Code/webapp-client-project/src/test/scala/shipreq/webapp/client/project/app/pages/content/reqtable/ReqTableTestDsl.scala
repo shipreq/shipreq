@@ -22,12 +22,15 @@ object ReqTableTestDsl {
   import TestState._
 
   final case class Ref(savedViewState: StateAccessImpure[SavedViewFeature.State],
-                       global: TestGlobal,
-                       promptJs: TestPromptJs)
+                       global        : TestGlobal,
+                       promptJs      : TestPromptJs,
+                       confirmJs     : TestConfirmJs)
 
   val * = Dsl[Ref, ReqTableObs, Project]
 
   val global = new TestGlobal.TestDslWithObs(*)(_.global, _.global)
+
+  val confirmJs = new TestConfirmJs.TestDsl(*)(_.confirmJs, _.confirmJs)
 
   def apply(action: *.Actions = *.emptyAction): *.Plan =
     Plan(action, invariants)

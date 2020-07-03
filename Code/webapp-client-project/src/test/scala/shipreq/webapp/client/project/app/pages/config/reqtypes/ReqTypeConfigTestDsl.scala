@@ -74,5 +74,5 @@ object ReqTypeConfigTestDsl {
     *.action(s"Click new button")(Simulate click _.obs.newButton)
 
   def setConfirmResponse(b: Boolean): *.Actions =
-    *.action("Set next confirm response to " + b)(_.ref.response = b)
+    *.action("Set next confirm response to " + b)(_.ref.nextResponse = b)
 }

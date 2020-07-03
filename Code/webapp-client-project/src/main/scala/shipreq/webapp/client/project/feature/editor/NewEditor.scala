@@ -15,7 +15,7 @@ import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.lib.KeyboardTheme
+import shipreq.webapp.base.lib.{ConfirmJs, KeyboardTheme}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
@@ -70,10 +70,14 @@ object NewEditor {
                           pxProject         : Px[Project],
                           pxPlainTextNoCtx  : Px[PlainText.ForProject.NoCtx],
                           pxTextSearch      : Px[TextSearch],
+                          confirmJs         : ConfirmJs,
                           sspUpdateContent  : ServerSideProcInvoker[UpdateContentCmd, ErrorMsg, Any],
                           sspManualIssue    : ServerSideProcInvoker[ManualIssueCmd, ErrorMsg, Any],
                           optionalFullscreen: OptionalFullscreen,
                          ) {
+
+    val someConfirmJs =
+      Some(confirmJs)
 
     val someOptionalFullscreen =
       Some(optionalFullscreen)
@@ -765,6 +769,7 @@ object NewEditor {
               edit               = ss,
               asyncStatus        = EditorStatus.async(asyncState),
               abort              = abort,
+              abortConfirmation  = someConfirmJs,
               autoFocus          = true,
               commitFn           = commitFn,
               commitVerb         = commitVerb,
@@ -888,6 +893,7 @@ object NewEditor {
               edit               = ss,
               asyncStatus        = EditorStatus.async(asyncState),
               abort              = abort,
+              abortConfirmation  = someConfirmJs,
               autoFocus          = true,
               commitFn           = commitFn,
               commitVerb         = commitVerb,

@@ -199,8 +199,7 @@ object CommonObs {
           editing.assert.beforeAndAfter(true, false)
 
       final def abort: *.Actions =
-        *.action(s"Abort $field editor")(KB.Escape simulateKeyDown _.obs.editor.get) +>
-          editing.assert.beforeAndAfter(true, false)
+        *.action(s"Abort $field editor")(KB.Escape simulateKeyDown _.obs.editor.get)
 
       final def change(fromTo: (String, String)): *.Actions =
         (doubleClick

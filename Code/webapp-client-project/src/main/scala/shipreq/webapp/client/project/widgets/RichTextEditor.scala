@@ -12,7 +12,7 @@ import shipreq.webapp.base.data.{Optional => _, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
 import shipreq.webapp.base.jsfacade.ScrollIntoViewIfNeeded
-import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme, TaskRepeater}
+import shipreq.webapp.base.lib.{ConfirmJs, KeyHandlers, KeyboardTheme, TaskRepeater}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.{EditTheme, OptionalFullscreen}
@@ -32,6 +32,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val edit              : StateSnapshot[String]
     val asyncStatus       : Option[EditorStatus.Async]
     val abort             : Option[Callback]
+    val abortConfirmation : Option[ConfirmJs]
     val commitVerb        : String
     val preview           : PreviewFeature.ReadWrite.Single
     val extraKbShortcuts  : KeyboardTheme.Shortcuts
@@ -41,6 +42,20 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val autoFocus         : Boolean
     val editorStyle       : EditTheme.Style
     val optionalFullscreen: Option[OptionalFullscreen]
+
+    def validated: PotentialChange[Any, Any]
+
+    final lazy val abortWithConfirmation: Option[Callback] =
+      abort.map { actuallyAbort =>
+        abortConfirmation.filter(_ => validated.isChanged) match {
+          case None          => actuallyAbort
+          case Some(confirm) =>
+            for {
+              yes <- confirm("Are you sure you want to discard your unsaved changes?")
+              _   <- actuallyAbort.when(yes)
+            } yield ()
+        }
+      }
   }
 
   // ===================================================================================================================
@@ -53,6 +68,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                       edit              : StateSnapshot[String],
                       asyncStatus       : Option[EditorStatus.Async],
                       abort             : Option[Callback],
+                      abortConfirmation : Option[ConfirmJs],
                       autoFocus         : Boolean,
                       commitFn          : Option[Optional.CommitFn],
                       commitVerb        : String,
@@ -68,7 +84,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val parseResult = DataValidators.genericRichText(plainTextNoCtx).audit(richText)
     val validated   = PotentialChange.fromDisjunction(parseResult).ignoreOption(preEditValue)
     def commit      = (t: text.OptionalText) => commitFn.map(_ apply t)
-    val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
+    val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abortWithConfirmation)
     val wantPreview = Text isRich richText
 
     def render: VdomElement = Component(this)
@@ -88,6 +104,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                       edit              : StateSnapshot[String],
                       asyncStatus       : Option[EditorStatus.Async],
                       abort             : Option[Callback],
+                      abortConfirmation : Option[ConfirmJs],
                       autoFocus         : Boolean,
                       commitFn          : Option[NonEmpty.CommitFn],
                       commitVerb        : String,
@@ -103,7 +120,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val parseResult = DataValidators.genericRichTextNonEmpty(text, plainTextNoCtx).audit(richTextO)
     val validated   = PotentialChange.fromDisjunction(parseResult).ignoreOption(preEditValue)
     def commit      = (t: text.NonEmptyText) => commitFn.map(_ apply t)
-    val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abort)
+    val status      = asyncStatus getOrElse EditorStatus.fromValidatedChange(validated)(commit, abortWithConfirmation)
     val wantPreview = richTextO.exists(Text isRich _.whole)
 
     def render: VdomElement = Component(this)
@@ -142,7 +159,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
     private val keyHandlerBase =
       KeyHandlers.base(
-        KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
+        KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abortWithConfirmation)) +
         KeyboardTheme.commitCO($.props.map(_.status.getCommit)))
 
     val textareaConst: TagMod = {
@@ -204,7 +221,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
               text.lineCardinality,
               commit     = p.status.getCommit,
               commitVerb = p.commitVerb,
-              abort      = p.abort)
+              abort      = p.abortWithConfirmation)
 
           val clauses =
             p.extraKbShortcuts.instructions ::: textEditorInstructions

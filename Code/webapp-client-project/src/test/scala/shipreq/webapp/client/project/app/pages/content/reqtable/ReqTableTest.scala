@@ -765,6 +765,44 @@ object ReqTableTest extends TestSuite {
     runTest(Plan.action(test) withInitialState SampleProject3.project)
   }
 
+  private def testAbortionConfirmation()(implicit path: TestPath): Unit = {
+    implicit val ce = cellEditor("MF-1", "Description")
+
+    val test = (
+      global.disableAutoResponse
+        >> confirmJs.setNextResponse(false)
+        >> showHideColumn("Description")
+
+        >> ce.doubleClick
+        +> ce.editorValue.assert(Some(""))
+        >> ce.setEditorValue("      ")
+        >> ce.commit
+        +> confirmJs.calls.assert(0)
+        +> ce.editing.assert(false)
+
+        >> ce.doubleClick
+        +> ce.editorValue.assert(Some(""))
+        >> ce.setEditorValue("      ")
+        >> ce.abort
+        +> confirmJs.calls.assert(0)
+        +> ce.editing.assert(false)
+
+        >> ce.doubleClick
+        +> ce.editorValue.assert(Some(""))
+        >> ce.setEditorValue("zxc")
+        >> ce.abort.rename("Abort and say no")
+        +> confirmJs.calls.assert.increment
+        +> ce.editing.assert(true)
+
+        >> confirmJs.setNextResponse(true)
+        >> ce.abort.rename("Abort and say yes")
+        +> confirmJs.calls.assert.increment
+        +> ce.editing.assert(false)
+      )
+
+    runTest(Plan.action(test) withInitialState SampleProject3.project)
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   override def tests = Tests {
@@ -811,6 +849,8 @@ object ReqTableTest extends TestSuite {
         "tagCol"    - runTest(testNopEdits("MF-1", "Status"))
         "reqCodes"  - runTest(testNopEditsBy("MF-1", SpecialBuiltInField.Code.name)("Trailing \\n." -> (_ + "\n")))
       }
+
+      "abortionConfirmation" - testAbortionConfirmation()
     }
 
     "kbNav" - testKeyboardNavigation()
