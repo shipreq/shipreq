@@ -2,7 +2,6 @@ v2.2
 ========================================================================================================================
 
 ### Plan
-* Add old interviews to ShipReq
 * Do new interviews for [Derivative tags] and [Github integration]
   * Don't forget to make it analog instead of digital (eg. imagine Dinko, he'll likely want to see a percentage; not just red for 1.9 weeks then suddenly green)
   * Agile workflow for free! Create sprint, imply everything in scope, sprint automatically updates!
@@ -48,6 +47,9 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
+* don't keep suggesting a ref after I've entered a `]` (eg.`[MF-7]`)
+* parse ◦ as a bullet
+* heading margin consolidation should only be of headings at the same level
 * prompt user to confirm aborting a dirty editor
 
 
