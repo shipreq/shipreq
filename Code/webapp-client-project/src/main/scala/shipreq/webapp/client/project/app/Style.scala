@@ -1350,12 +1350,19 @@ object Style extends StyleSheet.Inline {
       ),
     )
 
-    val heading = style(
+    private def heading = style(
       marginBottom(0.3 em),
       unsafeExt(self => s"$self + $self")(
         marginTop(-0.3 em),
       )
     )
+
+    val h1 = heading
+    val h2 = heading
+    val h3 = heading
+    val h4 = heading
+    val h5 = heading
+    val h6 = heading
 
     val strikethrough = style(textDecoration := "line-through")
 

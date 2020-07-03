@@ -271,12 +271,12 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       }
     }
 
-  private val h1            = <.h1(*.heading)
-  private val h2            = <.h2(*.heading)
-  private val h3            = <.h3(*.heading)
-  private val h4            = <.h4(*.heading)
-  private val h5            = <.h5(*.heading)
-  private val h6            = <.h6(*.heading)
+  private val h1            = <.h1(*.h1)
+  private val h2            = <.h2(*.h2)
+  private val h3            = <.h3(*.h3)
+  private val h4            = <.h4(*.h4)
+  private val h5            = <.h5(*.h5)
+  private val h6            = <.h6(*.h6)
   private val bold          = <.strong
   private val italic        = <.em
   private val strikethrough = <.span(*.strikethrough)
