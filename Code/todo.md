@@ -47,7 +47,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* parse ◦ as a bullet
 * heading margin consolidation should only be of headings at the same level
 * prompt user to confirm aborting a dirty editor
 
