@@ -34,8 +34,6 @@ object ReqItem {
 /** [REF] */
 private[strategies] object RefStrategies {
 
-  private final val MaxResults = 10
-
   final case class Candidate(title: String, replacement: String, render: () => VdomNode) {
     def renderToStr: String =
       ReactDOMServer.renderToStaticMarkup(render())

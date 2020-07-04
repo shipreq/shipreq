@@ -58,8 +58,8 @@ private[strategies] object ReqCodeStrategies {
         MutableArray(r).sort.map((path, _)).arraySeq
       }
 
-      val searchFn: Query[A] =
-        Query.ignorePerfectMatch(searchFn0)(_ ==* _._2)
+      val searchFn: String => IterableOnce[A] =
+        Query.ignorePerfectMatch(searchFn0)(_ ==* _._2).andThen(_.iterator.take(MaxResults))
 
       val replace: A => String =
         a => (a._1.map(_.value) :+ a._2).mkString(G.nodeSeparator.toString)
@@ -89,14 +89,15 @@ private[strategies] object ReqCodeStrategies {
         go(NonEmptyVector one path.head, path.tail)
       }
 
-      val searchFn: Query[String] = term =>
+      val searchFn: String => IterableOnce[String] = term =>
         MutableArray(
           activePaths.iterator.map(isMatch(term, _))
             .filterDefined
             .toSet)
           .map(PlainText.reqCode)
           .sort
-          .arraySeq
+          .iterator()
+          .take(MaxResults)
 
       Context.reflink[String](mainRegex, identity, "", _.search(searchFn))(contextualise)
     }

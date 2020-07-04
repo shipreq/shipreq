@@ -9,4 +9,6 @@ package object strategies extends strategies.QueryModule {
   implicit def autoLiftTextCompleteStrategy(s: Strategy[_]): Strategies =
     (Vector.empty: Strategies) :+ s
 
+  private[strategies] final val MaxResults = 10
+
 }

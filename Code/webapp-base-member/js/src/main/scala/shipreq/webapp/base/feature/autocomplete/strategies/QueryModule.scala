@@ -45,7 +45,7 @@ trait QueryModule {
       val os = View.from(options.iterator.map(s => (norm(s), s)))
       term => {
         val t2 = norm(term)
-        os.filter(o => cmp(o._1, t2)).map(_._2)
+        os.filter(o => cmp(o._1, t2)).take(MaxResults).map(_._2)
       }
     }
 

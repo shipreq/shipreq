@@ -1,7 +1,6 @@
 package shipreq.webapp.base.feature.autocomplete.strategies
 
 import japgolly.microlibs.stdlib_ext.MutableArray
-import scala.collection.immutable.ArraySeq
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
@@ -14,7 +13,7 @@ private[strategies] object HashtagStrategies {
     import Grammar.{hashRefKey => G}
     // ↓ `- 2` cos 1 is already firstChar, and another 1 is unnecessary in that if the tag is complete, there's nothing to suggest
     val mainRegex = s"(|${G.firstChar.one}${G.midChars.one}{0,${G.length.total.max - 2}})"
-    val terms     = ArraySeq unsafeWrapArray MutableArray(candidates.iterator.map(_.value)).sort.array
+    val terms     = MutableArray(candidates.iterator.map(_.value)).sort.arraySeq
     val searchFn  = Query.caseInsensitiveContains(terms)
     Context.hashtag[String](mainRegex, Identity.apply, "", _.search(searchFn))
   }
