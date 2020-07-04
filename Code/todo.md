@@ -52,6 +52,9 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
+* Bug: req table -> edit empty custom-text-field -> type "* " -> dom replaced, cursor reset, no preview slide down animation
+* inc max autocomplete results to 12
+* allow title focus in ReqDetail
 
 
 Backlog (maybe-probably soon)
