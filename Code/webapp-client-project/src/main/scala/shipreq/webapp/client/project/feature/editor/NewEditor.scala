@@ -309,7 +309,6 @@ object NewEditor {
         import ictx._, ctx._
 
         case class State(initialValue: Some[RT],
-                         editorIds   : EditTheme.Ids,
                          editValue   : RT,
                          pxChoices   : Px[NonEmptySet[RT]],
                          abort       : Some[Callback],
@@ -329,7 +328,6 @@ object NewEditor {
               choices <- pxChoices.toCallback
             } yield ReqTypeSelector.Props(
               initialValue = initialValue,
-              editorIds    = editorIds,
               edit         = ss,
               choices      = choices,
               asyncStatus  = EditorStatus.async(asyncState),
@@ -349,8 +347,6 @@ object NewEditor {
             }
         }
 
-        val editorIds = EditTheme.Ids()
-
         val (abort, commitFn) =
           makeAbortCommitFn(sspUpdateContent)((t: RT) => UpdateContentCmd.SetGenericReqType(id, t.id), args.hooks, None)
 
@@ -367,14 +363,7 @@ object NewEditor {
                             i       <- CallbackOption.liftOption(pva.accept(pv))
                           } yield i
                       }
-        } yield State(
-          initialValue = Some(current),
-          editorIds    = editorIds,
-          editValue    = initial,
-          pxChoices    = pxChoices,
-          abort        = abort,
-          commitFn     = commitFn,
-        )
+        } yield State(Some(current), initial, pxChoices, abort, commitFn)
       }
     }
 
@@ -401,27 +390,17 @@ object NewEditor {
           val (abort, commitFn) =
             makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqCodes(id, _), args.hooks, None)
 
-          val editorIds = EditTheme.Ids()
-
-          startWithStateSnapshot(
-            initialData       = initialValuesCB.toCBO,
-            initalValueOption = ivo)(
-            initialValueFn    = ReqCodeEditor.Multiple.seqFmt merge _.toVector.map(PlainText.reqCode).sorted)(
-            editor            = initialValues => ss => new State(
-                                  ss        = ss,
-                                  editorIds = editorIds,
-                                  initial   = Some(initialValues),
-                                  abort     = abort,
-                                  commitFn  = commitFn,
-                                )
-          )
+        startWithStateSnapshot(
+          initialData       = initialValuesCB.toCBO,
+          initalValueOption = ivo)(
+          initialValueFn    = ReqCodeEditor.Multiple.seqFmt merge _.toVector.map(PlainText.reqCode).sorted)(
+          editor            = initialValues => new State(_, Some(initialValues), abort, commitFn))
         }
 
-        private class State(ss       : StateSnapshot[String],
-                            editorIds: EditTheme.Ids,
-                            initial  : Some[Set[ReqCode.Value]],
-                            abort    : Some[Callback],
-                            commitFn : Some[RCE.CommitFn]) extends EditorImpl {
+        private class State(ss      : StateSnapshot[String],
+                            initial : Some[Set[ReqCode.Value]],
+                            abort   : Some[Callback],
+                            commitFn: Some[RCE.CommitFn]) extends EditorImpl {
 
           override type Props = RCE.Props
           override def renderImpl = _.render
@@ -431,7 +410,6 @@ object NewEditor {
             for {
               trie <- trieCB
             } yield RCE.Props(
-              editorIds        = editorIds,
               edit             = ss,
               initialValue     = initial,
               trie             = trie,
@@ -467,27 +445,17 @@ object NewEditor {
           val (abort, commitFn) =
             makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.SetCodeGroupCode(id, _), args.hooks, None)
 
-          val editorIds = EditTheme.Ids()
-
-          startWithStateSnapshot(
-            initialData       = initialValueCB,
-            initalValueOption = ivo)(
-            initialValueFn    = PlainText.reqCode)(
-            editor            = initialValues => ss => new State(
-                                  ss        = ss,
-                                  editorIds = editorIds,
-                                  initial   = Some(initialValues),
-                                  abort     = abort,
-                                  commitFn  = commitFn,
-                                )
-          )
+        startWithStateSnapshot(
+          initialData       = initialValueCB,
+          initalValueOption = ivo)(
+          initialValueFn    = PlainText.reqCode)(
+          editor            = i => new State(_, Some(i), abort, commitFn))
         }
 
-        private class State(ss       : StateSnapshot[String],
-                            editorIds: EditTheme.Ids,
-                            initial  : Some[ReqCode.Value],
-                            abort    : Some[Callback],
-                            commitFn : Some[RCE.CommitFn]) extends EditorImpl {
+        private class State(ss      : StateSnapshot[String],
+                            initial : Some[ReqCode.Value],
+                            abort   : Some[Callback],
+                            commitFn: Some[RCE.CommitFn]) extends EditorImpl {
 
           @elidable(elidable.FINER)
           override def toString = s"EditReqCodes(${ss.value})"
@@ -500,7 +468,6 @@ object NewEditor {
             for {
               trie <- trieCB
             } yield RCE.Props(
-              editorIds        = editorIds,
               edit             = ss,
               initialValue     = initial,
               trie             = trie,
@@ -577,27 +544,15 @@ object NewEditor {
           val (abort, commitFn) =
             makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchImplications(id, dir, _), args.hooks, None)
 
-          val editorIds = EditTheme.Ids()
-
-          startWithStateSnapshot(
-            initialData       = pxInit.toCallback.toCBO,
-            initalValueOption = ivo)(
-            initialValueFn    = _._2)(
-            editor            = _ => ss => new State(
-                                  ss          = ss,
-                                  editorIds   = editorIds,
-                                  pxLookup    = pxLookup,
-                                  pxValFn     = pxValFn,
-                                  pxCorrector = pxCorrector,
-                                  abort       = abort,
-                                  commitFn    = commitFn,
-                                )
-          )
+        startWithStateSnapshot(
+          initialData       = pxInit.toCallback.toCBO,
+          initalValueOption = ivo)(
+          initialValueFn    = _._2)(
+          editor            = _ => new State(_, pxLookup, pxValFn, pxCorrector, abort, commitFn))
         }
       }
 
       private class State(ss         : StateSnapshot[String],
-                          editorIds  : EditTheme.Ids,
                           pxLookup   : Px[Lookup],
                           pxValFn    : Px[ValidationFn],
                           pxCorrector: Px[String => String],
@@ -620,7 +575,6 @@ object NewEditor {
             valFn      <- pxValFn.toCallback
             textSearch <- pxTextSearch.toCallback
           } yield ImplicationEditor.Props(
-            editorIds        = editorIds,
             edit             = ss,
             lookup           = lookup,
             validationFn     = valFn,
@@ -679,27 +633,21 @@ object NewEditor {
         val (abort, commitFn) =
           makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqTags(id, _), args.hooks, None)
 
-        val editorIds = EditTheme.Ids()
-
         startWithStateSnapshot(
           initialData       = pxInit.toCallback.toCBO,
           initalValueOption = ivo)(
           initialValueFn    = _._2)(
           editor            = i => ss => new State(
-                                ss            = ss,
-                                editorIds     = editorIds,
-                                initialValues = Some(i._1),
-                                pxLookup      = pxLookup,
-                                pxNaTags      = pxNaTags,
-                                abort         = abort,
-                                commitFn      = commitFn,
-                              )
-        )
+            ss            = ss,
+            initialValues = Some(i._1),
+            pxLookup      = pxLookup,
+            pxNaTags      = pxNaTags,
+            abort         = abort,
+            commitFn      = commitFn))
       }
 
       private class State(ss           : StateSnapshot[String],
                           initialValues: Some[Set[ApplicableTagId]],
-                          editorIds    : EditTheme.Ids,
                           pxLookup     : Px[Lookup],
                           pxNaTags     : Px[NaTags],
                           abort        : Some[Callback],
@@ -717,7 +665,6 @@ object NewEditor {
             lookup <- pxLookup.toCallback
             naTags <- pxNaTags.toCallback
           } yield TagEditor.Props(
-            editorIds        = editorIds,
             preEditValue     = initialValues,
             naTags           = naTags,
             edit             = ss,
@@ -784,29 +731,16 @@ object NewEditor {
               (initialValue, initialText)
             }
 
-          val editorIds = EditTheme.Ids()
-
-          startWithStateSnapshot(
-            initialData       = initCB,
-            initalValueOption = ivo)(
-            initialValueFn    = _._2)(
-            editor            = i => ss => new State(
-                                  ss               = ss,
-                                  initial          = Some(i._1),
-                                  projectWidgetsCB = args.cbProjectWidgets,
-                                  editorIds        = editorIds,
-                                  pid              = pid,
-                                  reqId            = reqId,
-                                  abort            = abort,
-                                  commitFn         = commitFn,
-                                )
-          )
+        startWithStateSnapshot(
+          initialData       = initCB,
+          initalValueOption = ivo)(
+          initialValueFn    = _._2)(
+          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.OptionalText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
-                            editorIds       : EditTheme.Ids,
                             pid             : PreviewId,
                             reqId           : Option[ReqId],
                             abort           : Some[Callback],
@@ -827,7 +761,6 @@ object NewEditor {
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- projectWidgetsCB
             } yield editor.Optional(
-              editorIds          = editorIds,
               project            = project,
               naTags             = project.naTagsForReq(reqId),
               plainTextNoCtx     = plainTextNoCtx,
@@ -922,29 +855,16 @@ object NewEditor {
               (initialValue, initialText)
             }
 
-          val editorIds = EditTheme.Ids()
-
           startWithStateSnapshot(
             initialData       = initCB,
             initalValueOption = ivo)(
             initialValueFn    = _._2)(
-            editor            = i => ss => new State(
-                                  ss               = ss,
-                                  initial          = Some(i._1),
-                                  projectWidgetsCB = args.cbProjectWidgets,
-                                  editorIds        = editorIds,
-                                  pid              = pid,
-                                  reqId            = reqId,
-                                  abort            = abort,
-                                  commitFn         = commitFn,
-                                )
-          )
+            editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
         }
 
         private class State(ss              : StateSnapshot[String],
                             initial         : Some[T.NonEmptyText],
                             projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
-                            editorIds       : EditTheme.Ids,
                             pid             : PreviewId,
                             reqId           : Option[ReqId],
                             abort           : Some[Callback],
@@ -965,7 +885,6 @@ object NewEditor {
               textSearch     <- pxTextSearch.toCallback
               projectWidgets <- projectWidgetsCB
             } yield editor.NonEmpty(
-              editorIds          = editorIds,
               project            = project,
               naTags             = project.naTagsForReq(reqId),
               plainTextNoCtx     = plainTextNoCtx,
@@ -1038,30 +957,17 @@ object NewEditor {
             (initialValue, initialText)
           }
 
-        val editorIds = EditTheme.Ids()
-
         startWithStateSnapshot(
           initialData       = pxInit.toCallback.toCBO,
           initalValueOption = ivo)(
           initialValueFn    = _._2)(
-          editor            = i => ss => new State(
-                                ss               = ss,
-                                initial          = Some(i._1),
-                                projectWidgetsCB = args.cbProjectWidgets,
-                                stepFocusCB      = pxStepFocus.toCallback,
-                                editorIds        = editorIds,
-                                pid              = pid,
-                                abort            = abort(args.hooks, Some(pid)),
-                                commitFn         = commitFn,
-                              )
-        )
+          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pxStepFocus.toCallback, pid, abort(args.hooks, Some(pid)), commitFn))
       }
 
       private class State(ss              : StateSnapshot[String],
                           initial         : Some[UseCaseStepEditor.InitialValue],
                           projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
                           stepFocusCB     : CallbackTo[UseCaseStep.Focus],
-                          editorIds       : EditTheme.Ids,
                           pid             : PreviewId,
                           abort           : Callback,
                           commitFn        : UseCaseStepEditor.CommitFn) extends EditorImpl {
@@ -1097,7 +1003,6 @@ object NewEditor {
                     UpdateContentCmd.addUseCaseStepAfter(step).map(run))))
 
             UseCaseStepEditor.Props(
-              editorIds      = editorIds,
               project        = project,
               plainTextNoCtx = plainTextNoCtx,
               textSearch     = textSearch,

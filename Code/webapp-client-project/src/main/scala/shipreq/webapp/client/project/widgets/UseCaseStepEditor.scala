@@ -41,7 +41,6 @@ object UseCaseStepEditor {
   type CommitFn = UseCaseStepGD.NonEmptyValues ~=> Callback
 
   final case class Props(project        : Project,
-                         editorIds      : EditTheme.Ids,
                          plainTextNoCtx : PlainText.ForProject.NoCtx,
                          textSearch     : TextSearch,
                          projectWidgets : ProjectWidgets.AnyCtx,
@@ -222,7 +221,6 @@ object UseCaseStepEditor {
         p.projectWidgets.useCaseStepTextAndMaybeInvalidFlow(p.parsed, hardcodedLive)
 
       EditTheme.renderEditor(
-        ids             = p.editorIds,
         status          = p.status,
         editor          = editor,
         readOnlyView    = richText,

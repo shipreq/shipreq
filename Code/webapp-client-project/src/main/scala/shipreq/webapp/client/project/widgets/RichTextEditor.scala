@@ -24,7 +24,6 @@ import shipreq.webapp.client.project.widgets.RichTextEditor.hardcodedLive
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
 
   sealed trait Props {
-    val editorIds         : EditTheme.Ids
     val project           : Project
     val naTags            : NaTags
     val plainTextNoCtx    : PlainText.ForProject.NoCtx
@@ -62,7 +61,6 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   // ===================================================================================================================
 
   case class Optional(project           : Project,
-                      editorIds         : EditTheme.Ids,
                       naTags            : NaTags,
                       plainTextNoCtx    : PlainText.ForProject.NoCtx,
                       textSearch        : TextSearch,
@@ -99,7 +97,6 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   // ===================================================================================================================
 
   case class NonEmpty(project           : Project,
-                      editorIds         : EditTheme.Ids,
                       naTags            : NaTags,
                       plainTextNoCtx    : PlainText.ForProject.NoCtx,
                       textSearch        : TextSearch,
@@ -243,7 +240,6 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
         }
 
       EditTheme.renderEditor(
-        ids                = p.editorIds,
         status             = p.status,
         optionalFullscreen = optionalFullscreen,
         editor             = editor,

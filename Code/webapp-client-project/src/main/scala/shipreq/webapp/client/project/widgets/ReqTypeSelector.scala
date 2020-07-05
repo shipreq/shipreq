@@ -23,7 +23,6 @@ object ReqTypeSelector {
 
   final case class Props(initialValue: Option[RT],
                          edit        : StateSnapshot[RT],
-                         editorIds   : EditTheme.Ids,
                          choices     : NonEmptySet[RT],
                          asyncStatus : Option[EditorStatus.Async],
                          abort       : Option[Callback],
@@ -49,7 +48,6 @@ object ReqTypeSelector {
 
   private def render(p: Props): VdomNode =
     EditTheme.renderEditor(
-      ids          = p.editorIds,
       status       = p.status,
       editor       = _ => editor(p),
       readOnlyView = p.edit.value.fullName,

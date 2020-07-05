@@ -150,12 +150,10 @@ object NewEditor {
 
         override type Value = FieldKey.Codes.Value
 
-        def apply: InitFn = {
-          val editorIds = EditTheme.Ids()
-          _.startWithStateSnapshot("")(new State(_, editorIds))
-        }
+        def apply: InitFn =
+          _.startWithStateSnapshot("")(new State(_))
 
-        private class State(ss: StateSnapshot[String], editorIds: EditTheme.Ids) extends EditorImpl {
+        private class State(ss: StateSnapshot[String]) extends EditorImpl {
           override type Props = RCE.Props
           override def renderImpl = _.render
           override def valueImpl = _.parseResult
@@ -163,7 +161,6 @@ object NewEditor {
             for {
               trie <- trieCB
             } yield RCE.Props(
-              editorIds        = editorIds,
               edit             = ss,
               initialValue     = None,
               trie             = trie,
@@ -182,12 +179,10 @@ object NewEditor {
 
         override type Value = FieldKey.Code.Value
 
-        def apply: InitFn = {
-          val editorIds = EditTheme.Ids()
-          _.startWithStateSnapshot("")(new State(_, editorIds))
-        }
+        def apply: InitFn =
+          _.startWithStateSnapshot("")(new State(_))
 
-        private class State(ss: StateSnapshot[String], editorIds: EditTheme.Ids) extends EditorImpl {
+        private class State(ss: StateSnapshot[String]) extends EditorImpl {
           override type Props = RCE.Props
           override def renderImpl = _.render
           override def valueImpl = _.parseResult
@@ -195,7 +190,6 @@ object NewEditor {
             for {
               trie <- trieCB
             } yield RCE.Props(
-              editorIds        = editorIds,
               edit             = ss,
               initialValue     = None,
               trie             = trie,
@@ -237,20 +231,10 @@ object NewEditor {
       private def start(dir: Direction, pxLookup: Px[Lookup]): InitFn = ictx => {
         import ictx._
         val pxValFn: Px[ValidationFn] = pxProject.map(ImplicationEditor.validationFn(_, None, Set.empty, dir))
-        val editorIds = EditTheme.Ids()
-        startWithStateSnapshot("")(ss => new State(
-          ss        = ss,
-          editorIds = editorIds,
-          pxLookup  = pxLookup,
-          pxValFn   = pxValFn,
-        ))
+        startWithStateSnapshot("")(new State(_, pxLookup, pxValFn))
       }
 
-      private class State(ss       : StateSnapshot[String],
-                          editorIds: EditTheme.Ids,
-                          pxLookup : Px[Lookup],
-                          pxValFn  : Px[ValidationFn]) extends EditorImpl {
-
+      private class State(ss: StateSnapshot[String], pxLookup: Px[Lookup], pxValFn: Px[ValidationFn]) extends EditorImpl {
         override type Props = ImplicationEditor.Props
         override def renderImpl = _.render
         override def valueImpl = _.parseResult.map(_.added)
@@ -260,7 +244,6 @@ object NewEditor {
             valFn      <- pxValFn.toCallback
             textSearch <- pxTextSearch.toCallback
           } yield ImplicationEditor.Props(
-            editorIds        = editorIds,
             edit             = ss,
             lookup           = lookup,
             validationFn     = valFn,
@@ -293,22 +276,12 @@ object NewEditor {
 
       def apply(reqTypeId: ReqTypeId, lookupFn: Project => Lookup): InitFn = ictx => {
         import ictx._
-        val pxLookup  = pxProject map lookupFn
-        val pxNaTags  = pxProject.map(_.config.naTags(reqTypeId))
-        val editorIds = EditTheme.Ids()
-        startWithStateSnapshot("")(ss => new State(
-          ss        = ss,
-          editorIds = editorIds,
-          pxLookup  = pxLookup,
-          pxNaTags  = pxNaTags,
-        ))
+        val pxLookup = pxProject map lookupFn
+        val pxNaTags = pxProject.map(_.config.naTags(reqTypeId))
+        startWithStateSnapshot("")(new State(_, pxLookup, pxNaTags))
       }
 
-      private class State(ss       : StateSnapshot[String],
-                          editorIds: EditTheme.Ids,
-                          pxLookup : Px[Lookup],
-                          pxNaTags : Px[NaTags]) extends EditorImpl {
-
+      private class State(ss: StateSnapshot[String], pxLookup: Px[Lookup], pxNaTags: Px[NaTags]) extends EditorImpl {
         override type Props = TagEditor.Props
         override def renderImpl = _.render
         override def valueImpl = _.parseResultSet
@@ -317,7 +290,6 @@ object NewEditor {
             lookup <- pxLookup.toCallback
             naTags <- pxNaTags.toCallback
           } yield TagEditor.Props(
-            editorIds        = editorIds,
             preEditValue     = None,
             naTags           = naTags,
             edit             = ss,
@@ -342,21 +314,10 @@ object NewEditor {
 
         override type Value = T.OptionalText
 
-        def apply(pid: PreviewId, reqTypeId: Option[ReqTypeId]): InitFn = {
-          val editorIds = EditTheme.Ids()
-          _.startWithStateSnapshot("")(ss => new State(
-            ss        = ss,
-            editorIds = editorIds,
-            pid       = pid,
-            reqTypeId = reqTypeId,
-          ))
-        }
+        def apply(pid: PreviewId, reqTypeId: Option[ReqTypeId]): InitFn =
+          _.startWithStateSnapshot("")(new State(_, pid, reqTypeId))
 
-        private class State(ss       : StateSnapshot[String],
-                            editorIds: EditTheme.Ids,
-                            pid      : PreviewId,
-                            reqTypeId: Option[ReqTypeId]) extends EditorImpl {
-
+        private class State(ss: StateSnapshot[String], pid: PreviewId, reqTypeId: Option[ReqTypeId]) extends EditorImpl {
           override type Props = editor.Optional
           override def renderImpl = _.render
           override def valueImpl = _.parseResult
@@ -369,7 +330,6 @@ object NewEditor {
               projectWidgets <- pxProjectWidgets.toCallback
             } yield editor.Optional(
               project            = project,
-              editorIds          = editorIds,
               naTags             = project.config.naTags(reqTypeId),
               plainTextNoCtx     = plainTextNoCtx,
               textSearch         = textSearch,
@@ -406,20 +366,10 @@ object NewEditor {
 
         override type Value = T.NonEmptyText
 
-        def apply(pid: PreviewId, reqTypeId: Option[ReqTypeId]): InitFn = {
-          val editorIds = EditTheme.Ids()
-          _.startWithStateSnapshot("")(ss => new State(
-            ss        = ss,
-            editorIds = editorIds,
-            pid       = pid,
-            reqTypeId = reqTypeId,
-          ))
-        }
+        def apply(pid: PreviewId, reqTypeId: Option[ReqTypeId]): InitFn =
+          _.startWithStateSnapshot("")(new State(_, pid, reqTypeId))
 
-        private class State(ss       : StateSnapshot[String],
-                            editorIds: EditTheme.Ids,
-                            pid      : PreviewId,
-                            reqTypeId: Option[ReqTypeId]) extends EditorImpl {
+        private class State(ss: StateSnapshot[String], pid: PreviewId, reqTypeId: Option[ReqTypeId]) extends EditorImpl {
           override type Props = editor.NonEmpty
           override def renderImpl = _.render
           override def valueImpl = _.parseResult
@@ -432,7 +382,6 @@ object NewEditor {
               projectWidgets <- pxProjectWidgets.toCallback
             } yield editor.NonEmpty(
               project            = project,
-              editorIds          = editorIds,
               naTags             = project.config.naTags(reqTypeId),
               plainTextNoCtx     = plainTextNoCtx,
               textSearch         = textSearch,
