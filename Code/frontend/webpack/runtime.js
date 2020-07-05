@@ -12,6 +12,12 @@ const config = ({ mode }) => ({
     'semantic'         : `./src/semantic/require-${mode}`,
   },
 
+  externals: {
+    'react'           : 'React',
+    'react-dom'       : 'ReactDOM',
+    'react-dom/server': 'ReactDOMServer',
+  },
+
   output: {
     path: `/tmp/shipreq.webpack.${mode}`,
     filename: '[name].js',
