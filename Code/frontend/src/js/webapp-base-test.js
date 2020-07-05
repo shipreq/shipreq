@@ -7,6 +7,8 @@ export { default as ReactDOM       } from 'react-dom';
 export { default as ReactDOMServer } from 'react-dom/server';
 export { default as ReactTestUtils } from 'react-dom/test-utils';
 
+export { default as autosize       } from 'autosize';
+export { default as ReactCollapse  } from 'react-collapse';
 export { default as TextComplete   } from 'textcomplete/lib/textcomplete';
 export { default as TextCompleteTA } from 'textcomplete/lib/textarea';
 
