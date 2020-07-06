@@ -141,6 +141,12 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   val potentialValueAcceptor: PotentialValueAcceptor[String] =
     PotentialValueAcceptor.correct(liveCorrect)
 
+  private val layoutPosition: EditTheme.Layout => Option[PreviewFeature.Position] =
+    text.lineCardinality match {
+      case SingleLine => _.position
+      case MultiLine  => _.positionIfShown
+    }
+
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxProject    = Px.props($).map(_.project).withReuse.autoRefresh
     private val pxNaTags     = Px.props($).map(_.naTags).withReuse.autoRefresh
@@ -193,9 +199,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
     private def _render(p: Props, optionalFullscreen: Option[OptionalFullscreen]): VdomNode = {
 
-      def editor(validity: Validity,
-                 position: Option[PreviewFeature.Position],
-                 mode    : EditTheme.Mode): VdomElement = {
+      def editor(layout: EditTheme.Layout, validity: Validity): VdomElement = {
         val keys = keyHandlerBase(p.extraKbShortcuts.keyHandlers)
 
         val base = TagMod(
@@ -204,8 +208,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
           ^.autoFocus  := p.autoFocus)
 
         val autosizeProps = EditTheme.autosizeTextareaProps(
-          mode     = mode,
-          position = position,
+          mode     = layout.mode,
+          position = layoutPosition(layout),
           validity = validity,
           value    = p.edit.value,
           tagMod   = base)

@@ -696,17 +696,18 @@ object ReqTableTest extends TestSuite {
         >> ce.clickPreviewDown      +> assertPreview(editing = y, preview = "-h-r", isFS = n, canFS = y, spin = n)
         >> ce.clickPreviewHide      +> assertPreview(editing = y, preview = "s---", isFS = n, canFS = y, spin = n)
         >> ce.clickPreviewShow      +> assertPreview(editing = y, preview = "-h-r", isFS = n, canFS = y, spin = n)
+        >> ce.setEditorValue("w")   +> assertPreview(editing = y, preview = "-h-r", isFS = n, canFS = y, spin = n)
         >> ce.commit                +> assertPreview(editing = n, preview = "none", isFS = n, canFS = n, spin = y)
         >> global.autoRespondToLast +> assertPreview(editing = n, preview = "none", isFS = n, canFS = n, spin = n)
 
         // No confirm preview-reset while we're here.
         // See comments in ReqDetailTest as to why this is important.
         >> ce.doubleClick
-        +> ce.editorValue.assert(Some("**bold**"))
-        +> assertPreview(editing = y, preview = "-h-r", isFS = n, canFS = y, spin = n)
-
-        >> ce.setEditorValue("")
+        +> ce.editorValue.assert(Some("w"))
         +> assertPreview(editing = y, preview = "s---", isFS = n, canFS = y, spin = n)
+
+        >> ce.setEditorValue("**bold**")
+        +> assertPreview(editing = y, preview = "-h-r", isFS = n, canFS = y, spin = n)
       )
 
     runTest(Plan.action(test) withInitialState SampleProject3.project)

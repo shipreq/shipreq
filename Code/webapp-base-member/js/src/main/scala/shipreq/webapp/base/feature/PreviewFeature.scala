@@ -191,7 +191,11 @@ object PreviewFeature {
   object Read {
     final case class Single(status: State.Single) extends AnyVal {
       def showPreview(wantOpen: => Boolean): Boolean =
-        status.exists(_.show || wantOpen)
+        status match {
+          case Some(m: Status.Manual) => m.show
+          case Some(s)                => s.show || wantOpen
+          case None                   => false
+        }
 
       def isManual: Boolean =
         status match {
