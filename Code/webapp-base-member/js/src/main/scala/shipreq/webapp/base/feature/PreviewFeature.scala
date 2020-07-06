@@ -191,7 +191,17 @@ object PreviewFeature {
   object Read {
     final case class Single(status: State.Single) extends AnyVal {
       def showPreview(wantOpen: => Boolean): Boolean =
-        status.exists(_.show || wantOpen)
+        status match {
+          case Some(m: Status.Manual) => m.show
+          case Some(s)                => s.show || wantOpen
+          case None                   => false
+        }
+
+      def isManual: Boolean =
+        status match {
+          case Some(_: Status.Manual) => true
+          case _                      => false
+        }
 
       def showManuallyControlledPreview(default: Boolean): Boolean =
         status match {
@@ -279,7 +289,9 @@ object PreviewFeature {
           $.modStateOption {
             case Some(_: Manual) => None
             case _               => Some(None)
-          }
+          }.delayMs(100).toCallback // This delay is so that when EditTheme.OpenPreview is MinimallyWithControls and a
+                                    // user clicks move-right, there is enough time for the move-right button to receive
+                                    // the click before the preview animates into non-existence.
 
         override def clear: Callback =
           $.modStateOption {

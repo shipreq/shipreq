@@ -250,6 +250,12 @@ object CommonObs {
 
       final def testValid  (text: String) = setEditorValue(text).rename(s"Enter valid value: ${quoteString(text)}")   +> editorValidity.assert(Valid)
       final def testInvalid(text: String) = setEditorValue(text).rename(s"Enter invalid value: ${quoteString(text)}") +> editorValidity.assert(Invalid)
+
+      final def debugPrintInnerHTML: *.Actions =
+        *.action("debugPrintInnerHTML")(x => println(s"\n${x.obs.dom.innerHTML}\n"))
+
+      final def debugPrintOuterHTML: *.Actions =
+        *.action("debugPrintOuterHTML")(x => println(s"\n${x.obs.dom.outerHTML}\n"))
     }
   }
 }

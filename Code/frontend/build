@@ -9,8 +9,10 @@ fi
 
 # ====================================================================================================================
 
+valid_targets=(dev prod test ssr)
+
 args="$@"
-[ $# -eq 0 ] && args=(dev prod test ssr)
+[ $# -eq 0 ] && args="${valid_targets[@]}"
 
 webpack="node_modules/.bin/webpack --color --display-reasons --display-modules --progress --config"
 webtamp="node_modules/.bin/webtamp"
@@ -71,7 +73,9 @@ for mode in ${args[@]}; do
       ls -l $target
       ;;
 
-    *) echo What?
+    *)
+      echo What?
+      echo "Valid targets are: ${valid_targets[@]}"
   esac
   echo
 done

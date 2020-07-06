@@ -5,6 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
+import scala.annotation.elidable
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
@@ -110,7 +111,109 @@ object EditTheme {
 
   // ===================================================================================================================
 
-  /** helper for no preview or fullscreen */
+  final case class Layout(mode    : Mode,
+                          preview : Option[Layout.Preview],
+                          controls: Option[Layout.Controls]) {
+
+    def position: Option[Position] =
+      preview.map(_.position)
+
+    def positionIfShown: Option[Position] =
+      preview.filter(_.isShown).map(_.position)
+  }
+
+  object Layout {
+    final case class Preview(position   : Position,
+                             isShown    : Boolean,
+                             collapsible: Boolean) {
+      @elidable(elidable.INFO)
+      override def toString = s"Preview($position, isShown = $isShown, collapsible = $collapsible)"
+    }
+
+    final case class Controls(around               : Controls.Around,
+                              showControlsInitially: Boolean)
+    object Controls {
+
+      sealed trait Around
+      object Around {
+        case object Editor  extends Around
+        case object Preview extends Around
+      }
+    }
+  }
+
+  private def determineLayout(style          : Style,
+                              previewRW      : PreviewFeature.ReadWrite.Single,
+                              previewWantOpen: => Boolean,
+                              fullscreen     : Option[OptionalFullscreen.Ctx]): Layout = {
+    import Layout.Controls.Around
+
+    val mode = Mode.derive(fullscreen)
+
+    mode match {
+      case Mode.Inline =>
+        style.openPreview match {
+
+          case OpenPreview.Minimally =>
+            val show    = previewRW.read.showPreview(previewWantOpen)
+            val preview = Layout.Preview(position = style.position, isShown = show, collapsible = true)
+            Layout(mode, Some(preview), None)
+
+          case OpenPreview.MinimallyWithControls =>
+            val show        = previewRW.read.showPreview(previewWantOpen)
+            val position    = previewRW.read.position(style.position)
+            val around      = if (show) Around.Preview else Around.Editor
+            val controls    = Some(Layout.Controls(around, showControlsInitially = false))
+            val preview     =
+              if (previewRW.read.isManual)
+                Option.when(show)(Layout.Preview(position, isShown = show, collapsible = false))
+              else
+                Some(Layout.Preview(position, isShown = show, collapsible = true))
+            Layout(mode, preview, controls)
+
+          case OpenPreview.ShowWithControls =>
+            val show     = previewRW.read.showManuallyControlledPreview(true)
+            val position = previewRW.read.position(style.position)
+            val preview  = Option.when(show)(Layout.Preview(position, isShown = show, collapsible = false))
+            val around   = if (show) Around.Preview else Around.Editor
+            val controls = Some(Layout.Controls(around, showControlsInitially = true))
+            Layout(mode, preview, controls)
+
+          case OpenPreview.WhenWanted =>
+            val show    = previewRW.read.showPreview(previewWantOpen)
+            val preview = Layout.Preview(style.position, isShown = show, collapsible = false)
+            Layout(mode, Some(preview), None)
+
+          case OpenPreview.Always =>
+            val preview = Layout.Preview(style.position, isShown = true, collapsible = false)
+            Layout(mode, Some(preview), None)
+
+          case OpenPreview.Never =>
+            Layout(mode, None, None)
+        }
+
+      case Mode.Fullscreen =>
+        val defaultShow: Boolean =
+          style.openPreview match {
+            case OpenPreview.Minimally
+               | OpenPreview.MinimallyWithControls
+               | OpenPreview.WhenWanted
+               | OpenPreview.ShowWithControls
+               | OpenPreview.Always                => true
+            case OpenPreview.Never                 => false
+          }
+        val show     = previewRW.read.showManuallyControlledPreview(defaultShow)
+        val position = previewRW.read.position(style.position)
+        val preview  = Option.when(show)(Layout.Preview(position, isShown = show, collapsible = false))
+        val around   = if (show) Around.Preview else Around.Editor
+        val controls = Some(Layout.Controls(around, showControlsInitially = false))
+        Layout(mode, preview, controls)
+    }
+  }
+
+  // ===================================================================================================================
+
+  /** no preview or fullscreen */
   def renderEditor(status      : EditorStatus,
                    editor      : Validity => VdomElement,
                    readOnlyView: => VdomNode,
@@ -126,19 +229,19 @@ object EditTheme {
       previewBody     = EmptyVdom,
     )
 
-  /** helper for no fullscreen */
+  /** no fullscreen */
   def renderEditor(status            : EditorStatus,
                    editor            : Validity => VdomElement,
                    readOnlyView      : => VdomNode,
                    instructions      : => TagMod,
                    style             : Style,
-                   previewRW         : => PreviewFeature.ReadWrite.Single,
+                   previewRW         : PreviewFeature.ReadWrite.Single,
                    previewWantOpen   : => Boolean,
                    previewBody       : => VdomNode): VdomNode =
     renderEditor(
       status             = status,
       optionalFullscreen = None,
-      editor             = (v, _, _) => editor(v),
+      editor             = (_, v) => editor(v),
       readOnlyView       = readOnlyView,
       instructions       = _ => instructions,
       style              = style,
@@ -147,78 +250,44 @@ object EditTheme {
       previewBody        = previewBody,
     )
 
+
+  /** full */
   def renderEditor(status            : EditorStatus,
                    optionalFullscreen: Option[OptionalFullscreen],
-                   editor            : (Validity, Option[Position], Mode) => VdomElement,
+                   editor            : (Layout, Validity) => VdomElement,
                    readOnlyView      : => VdomNode,
                    instructions      : Option[OptionalFullscreen.Ctx] => TagMod,
                    style             : Style,
-                   previewRW         : => PreviewFeature.ReadWrite.Single,
+                   previewRW         : PreviewFeature.ReadWrite.Single,
                    previewWantOpen   : => Boolean,
                    previewBody       : => VdomNode): VdomNode = {
 
-    def renderPreview(position: Position, mode: Mode) =
-      this.renderPreview(
-        previewRW   = previewRW,
-        position    = position,
-        openPreview = style.openPreview,
-        mode        = mode,
-        wantOpen    = previewWantOpen,
-        body        = previewBody,
-      )
-
     def renderActive(error: Option[TagMod]) = {
-      val p              = previewRW
-      val instructionsFn = instructions
-      val editorFn       = editor
-      val position       = p.read.position(style.position)
+      def go(fullscreen: Option[OptionalFullscreen.Ctx]): VdomNode = {
 
-      val renderFn: RenderCmd => RenderResult =
-        cmd => {
-          import cmd.mode
-          val instructions                  = instructionsFn(cmd.fullscreen)
-          def editor(allowPreview: Boolean) = editorFn(Valid, Option.when(allowPreview)(position), mode)
-          def preview                       = renderPreview(position, mode)
+        val layout =
+          determineLayout(
+            style           = style,
+            previewRW       = previewRW,
+            previewWantOpen = previewWantOpen,
+            fullscreen      = fullscreen,
+          )
 
-          val errorAndInstructions: TagMod =
-            error match {
-              case None    => instructions
-              case Some(e) => <.div(*.errorAndInstructions(position), *.errorPointingUp(e), instructions)
-            }
+        this.renderActive(
+          editorFn        = editor,
+          defaultPosition = style.position,
+          instructions    = instructions(fullscreen),
+          previewRW       = previewRW,
+          previewBody     = previewBody,
+          layout          = layout,
+          error           = error,
+        )
+      }
 
-          def renderWithPreviewRight =
-            RenderResult.noOuter(
-              <.div(*.textEditorLeftPreviewRight(mode),
-                <.div(editor(allowPreview = true), errorAndInstructions),
-                <.div(preview)))
-
-          def renderWithPreviewUnder =
-            RenderResult(
-              outer = <.div(*.textEditorTopPreviewUnder(mode), <.div(editor(allowPreview = true), errorAndInstructions), _),
-              inner = <.div(preview)
-            )
-
-          def renderWithoutPreview =
-            RenderResult.noOuter(
-              <.div(editor(allowPreview = false), errorAndInstructions))
-
-          if (cmd.allowPreview)
-            position match {
-              case Position.Under => renderWithPreviewUnder
-              case Position.Right => renderWithPreviewRight
-            }
-          else
-            renderWithoutPreview
-        }
-
-      this.renderActive(
-        render             = renderFn,
-        defaultPosition    = style.position,
-        optionalFullscreen = optionalFullscreen,
-        previewRW          = p,
-        previewWantOpen    = previewWantOpen,
-        openPreview        = style.openPreview,
-      )
+      optionalFullscreen match {
+        case None    => go(None)
+        case Some(f) => f(ctx => go(Some(ctx)))
+      }
     }
 
     status match {
@@ -226,22 +295,7 @@ object EditTheme {
         renderActive(None)
 
       case EditorStatus.Invalid(err) =>
-        // This is (still) hardcoded to display the preview under text.
-        // Since adding the ability to control the preview and its position, the only places it's used are custom text
-        // fields which are never invalid. Therefore I'm choosing to upgrading this logic to consider Style until later
-        // when (if) it's actually needed.
-        val mode = Mode.Inline
-        val pos = Position.Under
-
-        // Two divs here because the textarea is two-divs in when rendering without error.
-        // If only one div here, React doesn't realise the textarea is the same, and so it destroys the first and
-        // creates a new one which causes the cursor to reset to the beginning of the line, meaning that if a user
-        // tries to type "mf6 mf7" it becomes "f7 mf6m".
-        <.div(
-          <.div(
-            editor(Invalid, Some(pos), mode), // TODO add error background
-            *.errorPointingUp(err),
-            renderPreview(pos, mode)))
+        renderActive(Some(err))
 
       case EditorStatus.InTransit =>
         // This is correct and guarded by tests in ReqDetailTest that confirm fullscreen is closed on commit, and that
@@ -260,97 +314,163 @@ object EditTheme {
 
   // ===================================================================================================================
 
-  private final case class RenderCmd(mode        : Mode,
-                                     fullscreen  : Option[OptionalFullscreen.Ctx],
-                                     allowPreview: Boolean)
+  private def renderActive(editorFn       : (Layout, Validity) => VdomElement,
+                           defaultPosition: Position,
+                           instructions   : TagMod,
+                           previewRW      : PreviewFeature.ReadWrite.Single,
+                           previewBody    : => VdomNode,
+                           layout         : Layout,
+                           error          : Option[TagMod]): VdomNode = {
+    import Layout._
+    import Layout.Controls.Around
+    import Position._
 
-  private final case class RenderResult(outer: VdomNode => VdomNode,
-                                        inner: VdomTag) {
-    def self = outer(inner)
-  }
+    val validity = Valid.when(error.isEmpty)
+    val editor   = editorFn(layout, validity)
 
-  private object RenderResult {
-    def noOuter(inner: VdomTag): RenderResult =
-      apply(identity, inner)
-  }
+    def renderPreview(position: Position, mode: Mode) =
+      this.renderPreview(position, mode, previewBody)
 
-  private def renderActive(render            : RenderCmd => RenderResult,
-                           defaultPosition   : Position,
-                           optionalFullscreen: Option[OptionalFullscreen],
-                           previewRW         : => PreviewFeature.ReadWrite.Single,
-                           previewWantOpen   : => Boolean,
-                           openPreview       : OpenPreview): VdomNode = {
-
-    def content(fullscreen: Option[OptionalFullscreen.Ctx]): VdomNode = {
-      val mode = Mode.derive(fullscreen)
-
-      def renderWithManualControls(defaultShow: Boolean, showControlsInitially: Boolean) = {
-        val show  = previewRW.read.showManuallyControlledPreview(defaultShow)
-        val cmd   = RenderCmd(mode, fullscreen, allowPreview = show)
-        val rr    = render(cmd)
-        val inner = previewRW.manualControls(
-                      defaultPosition       = defaultPosition,
-                      previewIsShown        = show,
-                      showControlsInitially = showControlsInitially,
-                    )(rr.inner)
-        rr.outer(inner)
+    def errorAndInstructions(position: Position): TagMod =
+      error match {
+        case None    => instructions
+        case Some(e) => <.div(*.errorAndInstructions(position), *.errorPointingUp(e), instructions)
       }
 
-      mode match {
-        case Mode.Inline =>
-          openPreview match {
-            case OpenPreview.MinimallyWithControls => renderWithManualControls(defaultShow = previewWantOpen, showControlsInitially = false)
-            case OpenPreview.ShowWithControls      => renderWithManualControls(defaultShow = true, showControlsInitially = true)
-            case OpenPreview.Minimally
-               | OpenPreview.Always
-               | OpenPreview.WhenWanted            => render(RenderCmd(mode, fullscreen, allowPreview = true)).self
-            case OpenPreview.Never                 => render(RenderCmd(mode, fullscreen, allowPreview = false)).self
-          }
+    layout match {
 
-        case Mode.Fullscreen =>
-          renderWithManualControls(defaultShow = true, showControlsInitially = false)
-      }
-    }
+      // Preview under, no controls
+      case Layout(mode, Some(Preview(pos @ Under, previewShown, collapsible)), None) =>
+        val preview = renderPreview(pos, mode)
 
-    optionalFullscreen match {
-      case None    => content(None)
-      case Some(f) => f(ctx => content(Some(ctx)))
-    }
-  }
+        val collapsiblePreview: VdomNode =
+          if (collapsible)
+            previewRW.reactCollapse(previewShown)(preview)
+          else
+            preview
 
-  // ===================================================================================================================
+        <.div(*.textEditorTopPreviewUnder(mode),
+          <.div(^.key := "e",
+            editor,
+            errorAndInstructions(pos)),
+          <.div(^.key := "p",
+            collapsiblePreview))
 
-  private def renderPreview(previewRW  : => PreviewFeature.ReadWrite.Single,
-                            position   : Position,
-                            openPreview: OpenPreview,
-                            mode       : Mode,
-                            wantOpen   : => Boolean,
-                            body       : => VdomNode): VdomNode = {
-    def render =
-      <.div(*.richTextPreview((position, mode)),
-        <.div(*.richTextPreviewHeader, "Preview"),
-        <.div(*.richTextPreviewBodyOuter,
-          <.div(*.richTextPreviewBodyInner(position), body)))
+      // Preview under, with controls
+      case Layout(mode, Some(Preview(pos @ Under, previewShown, collapsible)), Some(Controls(around, showControlsInitially))) =>
+        val preview = renderPreview(pos, mode)
 
-    def manual(defaultShow: Boolean) =
-      if (previewRW.read.showManuallyControlledPreview(defaultShow))
-        render
-      else
-        EmptyVdom
+        val collapsiblePreview: VdomNode =
+          if (collapsible)
+            previewRW.reactCollapse(previewShown)(preview)
+          else
+            preview
 
-    mode match {
-      case Mode.Inline =>
-        openPreview match {
-          case OpenPreview.Minimally             => previewRW.reactCollapse(wantOpen)(render)
-          case OpenPreview.MinimallyWithControls => manual(wantOpen)
-          case OpenPreview.Always                => render
-          case OpenPreview.Never                 => EmptyVdom
-          case OpenPreview.WhenWanted            => PreviewFeature.ReadWrite.Single.show(wantOpen).reactCollapse(wantOpen)(render)
-          case OpenPreview.ShowWithControls      => manual(true)
+        val previewControls =
+          previewRW.manualControls(
+            defaultPosition       = pos,
+            previewIsShown        = previewShown,
+            showControlsInitially = showControlsInitially,
+          )
+
+        around match {
+
+          case Around.Editor =>
+            <.div(*.textEditorTopPreviewUnder(mode),
+              previewControls(^.key := 1,
+                <.div(^.key := "e",
+                  editor,
+                  errorAndInstructions(pos))),
+              <.div(^.key := "2",
+                <.div(^.key := "p",
+                  collapsiblePreview)))
+
+          case Around.Preview =>
+            <.div(*.textEditorTopPreviewUnder(mode),
+              <.div(^.key := 1,
+                <.div(^.key := "e",
+                  editor,
+                  errorAndInstructions(pos))),
+              previewControls(^.key := 2,
+                <.div(^.key := "p",
+                  collapsiblePreview)))
         }
 
-      case Mode.Fullscreen =>
-        manual(true)
+      // Preview right, with controls
+      case Layout(mode, Some(Preview(pos @ Right, previewShown, _)), Some(Controls(around, showControlsInitially))) =>
+        val preview = renderPreview(pos, mode)
+
+        val previewControls =
+          previewRW.manualControls(
+            defaultPosition       = pos,
+            previewIsShown        = previewShown,
+            showControlsInitially = showControlsInitially,
+          )
+
+        around match {
+
+          case Around.Editor =>
+            <.div(*.textEditorLeftPreviewRight(mode),
+              previewControls(^.key := 1,
+                <.div(^.key := "e",
+                  editor,
+                  errorAndInstructions(pos))),
+              <.div(^.key := "2",
+                <.div(^.key := "p",
+                  preview)))
+
+          case Around.Preview =>
+            <.div(*.textEditorLeftPreviewRight(mode),
+              <.div(^.key := 1,
+                <.div(^.key := "e",
+                  editor,
+                  errorAndInstructions(pos))),
+              previewControls(^.key := 2,
+                <.div(^.key := "p",
+                  ^.display.inline,
+                  preview)))
+        }
+
+      // Preview right, without controls
+      case Layout(mode, Some(Preview(pos @ Right, true, _)), None) =>
+        val preview = renderPreview(pos, mode)
+
+        <.div(*.textEditorLeftPreviewRight(mode),
+          <.div(
+            editor,
+            errorAndInstructions(pos)),
+          <.div(
+            preview))
+
+      // Preview manually off
+      case Layout(mode, None, Some(Controls(_, showControlsInitially))) =>
+        val previewControls =
+          previewRW.manualControls(
+            defaultPosition       = defaultPosition,
+            previewIsShown        = false,
+            showControlsInitially = showControlsInitially,
+          )
+
+        <.div(*.textEditorTopPreviewUnder(mode),
+          previewControls(^.key := 1,
+            <.div(^.key := "e",
+              editor,
+              errorAndInstructions(defaultPosition))))
+
+      // No preview or controls
+      case Layout(_, None, None)
+         | Layout(_, Some(Preview(Right, false, _)), None) =>
+        <.div(
+          editor,
+          errorAndInstructions(defaultPosition))
     }
   }
+
+  private def renderPreview(position   : Position,
+                            mode       : Mode,
+                            body       : => VdomNode): VdomNode =
+    <.div(*.richTextPreview((position, mode)),
+      <.div(*.richTextPreviewHeader, "Preview"),
+      <.div(*.richTextPreviewBodyOuter,
+        <.div(*.richTextPreviewBodyInner(position), body)))
 }
