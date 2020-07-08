@@ -3,11 +3,11 @@ Building
 
 This is built on AWS. Trigger it via:
 
-    aws codebuild start-build --project-name images
+    make publish
 
 You can also do a local build by running:
 
-    ./build-all-local
+    make build-local
 
 
 Contents
