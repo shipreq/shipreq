@@ -13,11 +13,22 @@ You can also do a local build by running:
 Contents
 ========
 
-* `ops-portal` - Web server that serves a portal for ops staff, and reverse-proxied access to ops services.
-
-* `shipreq-base` - The base image upon which Shipreq Webapp & Taskman run.
-
-* `shipreq-build` - A dev environment with everything needed to compile, test and build Shipreq Webapp & Taskman.
+* `analytics_proxy`       - A proxy server for analytics services (like Google Analytics) to avoid ad-blockers. Hosted at `ap.shipreq.com`.
+* `dev-build_env`         - A dev environment with everything needed to compile, test and build Shipreq Webapp & Taskman.
+* `dev-node`              - A consistent, local-platform-independent Node in a container for use by `Code/frontend`.
+* `dev-postgres`          - Postgres with the HLL extension enabled for use in local dev & test environments.
+* `nat`                   - The NAT image that servces internet traffic to everything on private subnets/clusters.
+* `ops-cadvisor`          - Collects metrics about running Docker containers and serves them to Prometheus.
+* `ops-ecs_exporter`      - Collects metrics about ECS and serves them to Prometheus.
+* `ops-filebeat`          - Collects logging output from Docker containers and sends them to ElasticSearch.
+* `ops-grafana`           - xxx
+* `ops-node_exporter`     - Collects metrics about the EC2s on which everything is running, and serves them to Prometheus.
+* `ops-portal`            - Web server that serves a portal for ops staff, and reverse-proxied access to ops services. It's served by the bastion.
+* `ops-postgres_exporter` - Collects business metrics from the DB (i.e. contains custom SQL queries) and serves them to Prometheus.
+* `ops-prometheus-biz`    - The Prometheus service that collects and retains business metrics.
+* `ops-prometheus-tech`   - The Prometheus service that collects and retains tech/ops metrics.
+* `ops-squid_exporter`    - Collects metrics from the NAT and serves them to Prometheus.
+* `shipreq-base`          - The base image upon which real Shipreq Webapp & Taskman services run.
 
 
 Strategy
