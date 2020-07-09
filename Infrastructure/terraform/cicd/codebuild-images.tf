@@ -10,6 +10,10 @@ resource "aws_codebuild_project" "images" {
     image           = "aws/codebuild/amazonlinux2-x86_64-standard:1.0-1.13.0" # aws codebuild list-curated-environment-images
     privileged_mode = true
 
+    environment_variable {
+      name  = "DOCKER_BUILDKIT"
+      value = "1"
+    }
 
     environment_variable {
       name  = "ANALYTICS_PROXY_URL"

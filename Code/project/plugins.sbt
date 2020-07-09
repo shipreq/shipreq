@@ -7,6 +7,6 @@ addSbtPlugin("org.scala-js"       % "sbt-jsdependencies"        % "1.0.1")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs-env-phantomjs" % "1.0.0")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs"               % "1.1.0")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"                   % "0.3.7")
-addSbtPlugin("se.marcuslonnberg"  % "sbt-docker"                % "1.5.0")
+addSbtPlugin("se.marcuslonnberg"  % "sbt-docker"                % "1.6.0")
 
 libraryDependencies += "org.scala-js" %% "scalajs-env-jsdom-nodejs" % "1.1.0"

@@ -12,17 +12,25 @@ resource "aws_codebuild_project" "shipreq" {
     privileged_mode             = true
 
     environment_variable {
+      name  = "DOCKER_BUILDKIT"
+      value = "1"
+    }
+
+    environment_variable {
       name  = "BASE_IMAGE_URL"
       value = data.aws_ecr_repository.shipreq_base.repository_url
     }
+
     environment_variable {
       name  = "DEV_POSTGRES_IMAGE_URL"
       value = aws_ecr_repository.shipreq_dev_postgres.repository_url
     }
+
     environment_variable {
       name  = "WEBAPP_IMAGE_URL"
       value = data.aws_ecr_repository.webapp.repository_url
     }
+
     environment_variable {
       name  = "TASKMAN_IMAGE_URL"
       value = data.aws_ecr_repository.taskman.repository_url
