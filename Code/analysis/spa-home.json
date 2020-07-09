@@ -462,13 +462,13 @@
           "size": 168
         },
         "https:/raw.githubusercontent.com/japgolly/scalajs-react/v1.7.3/core/component/Js.scala": {
-          "size": 1816
+          "size": 1776
         },
         "https:/raw.githubusercontent.com/japgolly/scalajs-react/v1.7.3/core/component/JsBaseComponentTemplate.scala": {
           "size": 924
         },
         "https:/raw.githubusercontent.com/japgolly/scalajs-react/v1.7.3/core/component/JsFn.scala": {
-          "size": 758
+          "size": 798
         },
         "https:/raw.githubusercontent.com/japgolly/scalajs-react/v1.7.3/core/component/JsForwardRef.scala": {
           "size": 139
@@ -735,13 +735,13 @@
           "size": 172
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/javalib/java/nio/HeapByteBuffer.scala": {
-          "size": 553
+          "size": 602
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/javalib/java/nio/ReadOnlyBufferException.scala": {
           "size": 126
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/javalib/java/nio/TypedArrayByteBuffer.scala": {
-          "size": 978
+          "size": 929
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/javalib/java/util/Arrays.scala": {
           "size": 7284
@@ -834,7 +834,7 @@
           "size": 248
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/library/src/main/scala-new-collections/scala/scalajs/runtime/WrappedVarArgs.scala": {
-          "size": 7887
+          "size": 7901
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/linker-private-library/org/scalajs/linker/runtime/RuntimeLong.scala": {
           "size": 11835
@@ -846,10 +846,10 @@
           "size": 4082
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/scalalib/overrides-2.13/scala/collection/immutable/Range.scala": {
-          "size": 6237
+          "size": 6223
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/scalalib/overrides-2.13/scala/collection/mutable/ArrayBuilder.scala": {
-          "size": 1201
+          "size": 1199
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.0/scalalib/overrides-2.13/scala/collection/mutable/Buffer.scala": {
           "size": 52
@@ -978,25 +978,25 @@
           "size": 22
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/ArraySeq.scala": {
-          "size": 7635
+          "size": 7657
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/ChampCommon.scala": {
           "size": 1921
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashMap.scala": {
-          "size": 12913
+          "size": 13070
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashSet.scala": {
-          "size": 13025
+          "size": 12870
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Iterable.scala": {
           "size": 302
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/LazyList.scala": {
-          "size": 5973
+          "size": 5963
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/List.scala": {
-          "size": 6628
+          "size": 6638
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/ListMap.scala": {
           "size": 3702
@@ -1050,7 +1050,7 @@
           "size": 3324
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ArraySeq.scala": {
-          "size": 6502
+          "size": 6480
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/Builder.scala": {
           "size": 434
