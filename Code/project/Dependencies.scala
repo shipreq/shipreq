@@ -182,7 +182,7 @@ object Dependencies {
     val servlet    = mm("simpleclient_servlet")
   }
 
-  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.7.0")
+  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.8.0")
   val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "1.0.0")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "1.0.0")
 
@@ -196,13 +196,13 @@ object Dependencies {
   val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.3")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.8")
-  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.4.3")
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.5.0")
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.5")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.3.1")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.14")
-  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.13.1")
+  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.13.2")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "4.0.1")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.3")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
