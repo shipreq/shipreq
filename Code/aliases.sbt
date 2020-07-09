@@ -40,3 +40,7 @@ addCommandAlias("jsSizes",
 
 addCommandAlias("dockers",
   ";root/compile ;taskman-server/docker ;webapp-server/docker")
+
+// See https://github.com/rtimush/sbt-updates#usage-as-project-plugin
+addCommandAlias("deps",
+  ";dependencyUpdates; reload plugins; dependencyUpdates; reload return")

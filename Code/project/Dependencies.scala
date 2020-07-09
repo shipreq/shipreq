@@ -1,4 +1,5 @@
 import sbt._
+import sbt.librarymanagement.ModuleFilter
 import scala.languageFeature._
 import LibDependency._
 
@@ -213,7 +214,26 @@ object Dependencies {
   val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
   val useKindProjector = (_: Project).settings(addCompilerPlugin(kindProjector))
 
-//  import sbt.Keys._
-//  def useLocalJar(filename: String) =
-//    (_: Project).settings(unmanagedJars in Compile += file("lib").getAbsoluteFile / filename)
+  val updateExclusions: ModuleFilter = {
+    def matchesRegex(r: String) = new PatternFilter(r.r.pattern)
+    def containsRegex(r: String) = matchesRegex(s".*(?:$r).*")
+    def fn(f: String => Boolean) = new SimpleFilter(f)
+    var filters = moduleFilter(NothingFilter)
+
+    // Scalaz: 7.2.x only
+    filters |= moduleFilter("org.scalaz", revision = fn(!_.startsWith("7.2.")))
+    filters |= moduleFilter("com.github.julien-truffaut", revision = fn(!_.startsWith("1.6.")))
+
+    // OkHTTP
+    filters |= moduleFilter("com.squareup.okhttp3", revision = fn(!_.startsWith("3.")))
+
+    // Jetty: stable only
+    filters |= moduleFilter("org.eclipse.jetty", revision = containsRegex("alpha|beta"))
+
+    // Jetty javax APIs
+    filters |= moduleFilter("javax.servlet", "javax.servlet-api", fn(!_.startsWith("3.")))
+    filters |= moduleFilter("javax.websocket", "javax.websocket-api", "1.1")
+
+    filters
+  }
 }

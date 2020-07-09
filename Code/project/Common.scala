@@ -1,5 +1,6 @@
 import sbt._
 import sbt.Keys._
+import com.timushev.sbt.updates.UpdatesPlugin.autoImport._
 import com.typesafe.sbt.GitPlugin.autoImport._
 import java.nio.file.{Files, Path}
 import org.scalajs.jsenv.Input
@@ -173,6 +174,7 @@ object Common {
       scalacOptions              ++= scalacFlags,
       testFrameworks              := List(new TestFramework("utest.runner.Framework")),
     //cancelable in Global        := true, // Allows ctrl-c to kill apps started with run without exiting SBT
+      dependencyUpdatesFilter     -= Dependencies.updateExclusions,
       minForcegcInterval          := 3.minutes,
       target                      := redirectTargetDir(target.value))
     .configure(
