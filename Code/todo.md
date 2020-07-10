@@ -52,7 +52,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* If a user selects a bunch of text and presses ctrl-c, it is instead handled by the focused cell
 * Add ability to switch a multi-line editor to use a monospace font
 * NewForm state shouldn't be scoped by req type!
 

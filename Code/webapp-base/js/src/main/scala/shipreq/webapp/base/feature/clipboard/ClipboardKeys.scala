@@ -2,6 +2,7 @@ package shipreq.webapp.base.feature.clipboard
 
 import japgolly.scalajs.react._
 import org.scalajs.dom.ext.KeyCode
+import org.scalajs.dom.window
 import scala.util.Try
 import shipreq.webapp.base.lib.DomUtil.asEventDefaultWhenTargetsCell
 import shipreq.webapp.base.util.{Browser, TextMod}
@@ -24,12 +25,18 @@ object ClipboardKeys {
           _    <- Clipboard.instance.write(data).toCallback
         } yield ()
 
+      /** If the user has selected a portion on the text in the cell, or even the text of a bunch of cells,
+        * that text should be copied to the clipboard (i.e. the default behaviour if we don't catch the event).
+        */
+      def nothingIsSelected(): Boolean =
+        window.getSelection().isCollapsed
+
       asEventDefaultWhenTargetsCell(e)(
         Browser.cmdOrCtrlKeyCodeSwitch(e) {
-          case KeyCode.C => copy
+          case KeyCode.C if nothingIsSelected() => copy
         } |
         CallbackOption.keyCodeSwitch(e, ctrlKey = true) {
-          case KeyCode.Insert => copy
+          case KeyCode.Insert if nothingIsSelected() => copy
         }
       )
     }
