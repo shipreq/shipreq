@@ -19,18 +19,13 @@ object Editability {
     ForProject(cfg)
 
   final case class ForProject(cfg: ProjectConfig) {
-    def apply(r: RowKey.AndId): ForFields[r.row.FieldKey] =
-      r.foldFK(
-        codeGroup   = _ => ForCodeGroup,
-        req         = x => forReq(x.id),
-        manualIssue = _ => ForManualIssue,
-      )
-
-    def forReq(reqTypeId: ReqTypeId): ForFields[FieldKey.ForSomeReq] =
-      (reqTypeId match {
-        case StaticReqType.UseCase => forUseCase
-        case id: CustomReqTypeId   => forGenericReq(id)
-      }).asInstanceOf[ForFields[FieldKey.ForSomeReq]] // stopped caring. fix in scala 3
+    def apply(r: RowKey): ForFields[r.FieldKey] =
+      r.foldF(RowKey.Fold(
+        _ => ForCodeGroup,
+        x => forGenericReq(x.reqTypeId),
+        _ => forUseCase,
+        _ => ForManualIssue,
+      ))
 
     def forGenericReq(reqTypeId: CustomReqTypeId): ForFields[FieldKey.ForGenericReq] =
       ForFields.via(

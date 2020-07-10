@@ -117,7 +117,6 @@ final case class State(projectName               : ProjectItem.WithEditableName.
                        customIssueTypeConfigAsync: AsyncFeature.State.D0[ErrorMsg],
                       ) {
 
-  println(create)
   @inline def filterDead = _filterDead
 
   def setFilterDead(fd: FilterDead, p: Project): State =

@@ -11,7 +11,7 @@ import scalacss.ScalaCssReact._
 import scalaz.{-\/, \/-}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.savedview._
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.{CustomReqType, ExternalPubid, ReqType, StaticReqType}
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.websocket.CreateContentCmd
 import shipreq.webapp.base.text.{PlainText, Text}
@@ -44,26 +44,6 @@ object NewForm {
       for {code <- _code} yield CreateContentCmd.CreateCodeGroup(code, title)
     }
   }
-
-//  object ForReq extends NewForm {
-//    override type Input            = ReqTypeId
-//    override type FK               = FieldKey.ForSomeReq
-//    override val columnToField     = ColumnLogic.creationFieldGR.getOption
-//    override val createButtonLabel = NewForm.createButtonLabel(_)
-//    override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
-//      var c = CreateContentCmd.CreateGenericReq.empty(i.id)
-//      val fold = FieldKey.FoldForGenericReq[ValueConsumer](
-//        codes           = f => (v: f.Value) => c = c.copy(codes = v),
-//        customTextField = f => (v: f.Value) => c = c.addCustomText(f.field, v),
-//        implications    = f => (v: f.Value) => c = c.addImps(f.dir, v),
-//        allTags         = f => (v: f.Value) => c = c.addTags(v),
-//        otherTags       = f => (v: f.Value) => c = c.addTags(v),
-//        customFieldTags = f => (v: f.Value) => c = c.addTags(v),
-//        title           = f => (v: f.Value) => c = c.copy(title = v))
-//      o.foreach(_.foldValue(fold))
-//      Some(c)
-//    }
-//  }
 
   object ForGenericReq extends NewForm {
     override type Input            = CustomReqType

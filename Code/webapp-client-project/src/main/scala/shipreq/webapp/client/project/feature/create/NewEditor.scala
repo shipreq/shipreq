@@ -35,8 +35,8 @@ object NewEditor {
 
   type ForEditor[Args, Value] = Ctx[Args, Value] => Editor[Args, Value]
 
-  def forRow(static: Static, row: RowKey.AndId): ForFields[row.row.FieldKey] =
-    static.internal.forRow(row)
+  def forRow(static: Static, rowKey: RowKey): ForFields[rowKey.FieldKey] =
+    static.internal.perRow(rowKey)
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
@@ -73,7 +73,7 @@ object NewEditor {
     import Internal.{ShowInstructions, editorStyle}
     import static._
 
-    def forRow(rowKeyAndId: RowKey.AndId): ForFields[rowKeyAndId.row.FieldKey] = {
+    val perRow: RowKey.Fold[ForFields] = {
       type LogicPerField[Args, Value] = InternalCtx[Args, Value] => Internal.Init[Args, Value]
 
       val logicToPerField: LogicPerField ~~> ForEditor =
@@ -86,37 +86,32 @@ object NewEditor {
         _ => EditReqCodes.Single.apply,
         f => EditRichText.CodeGroupTitle(PreviewId(RowKey.CodeGroup, f), None))
 
-      def prepareGR(reqTypeId: ReqTypeId) = FieldKey.FoldForGenericReq[LogicPerField](
+      def prepareGR(r: RowKey.GenericReq) = FieldKey.FoldForGenericReq[LogicPerField](
         codes           = _ => EditReqCodes.Multiple.apply,
-        customTextField = f => EditRichText.CustomTextField(PreviewId(RowKey.Req, f), Some(reqTypeId)),
+        customTextField = f => EditRichText.CustomTextField(PreviewId(r, f), Some(r.reqTypeId)),
         implications    = f => EditImplications(f.scope),
-        otherTags       = _ => EditTags.otherTags(reqTypeId),
-        allTags         = _ => EditTags.allTags(reqTypeId),
-        customFieldTags = f => EditTags.customField(reqTypeId, f.field),
-        title           = f => EditRichText.GenericReqTitle(PreviewId(RowKey.Req, f), Some(reqTypeId)))
+        otherTags       = _ => EditTags.otherTags(r.reqTypeId),
+        allTags         = _ => EditTags.allTags(r.reqTypeId),
+        customFieldTags = f => EditTags.customField(r.reqTypeId, f.field),
+        title           = f => EditRichText.GenericReqTitle(PreviewId(r, f), Some(r.reqTypeId)))
 
-      def prepareUC = FieldKey.FoldForUseCase[LogicPerField](
+      def prepareUC(r: RowKey.UseCase.type) = FieldKey.FoldForUseCase[LogicPerField](
         codes           = _ => EditReqCodes.Multiple.apply,
-        customTextField = f => EditRichText.CustomTextField(PreviewId(RowKey.Req, f), Some(StaticReqType.UseCase)),
+        customTextField = f => EditRichText.CustomTextField(PreviewId(r, f), Some(StaticReqType.UseCase)),
         implications    = f => EditImplications(f.scope),
-        otherTags       = _ => EditTags.otherTags(StaticReqType.UseCase),
-        allTags         = _ => EditTags.allTags(StaticReqType.UseCase),
-        customFieldTags = f => EditTags.customField(StaticReqType.UseCase, f.field),
-        title           = f => EditRichText.UseCaseTitle(PreviewId(RowKey.Req, f), Some(StaticReqType.UseCase)))
+        otherTags       = _ => EditTags.otherTags(r.reqTypeId),
+        allTags         = _ => EditTags.allTags(r.reqTypeId),
+        customFieldTags = f => EditTags.customField(r.reqTypeId, f.field),
+        title           = f => EditRichText.UseCaseTitle(PreviewId(r, f), Some(StaticReqType.UseCase)))
 
       def prepareMI(r: RowKey.ManualIssue.type) = FieldKey.FoldForManualIssue[LogicPerField](
         f => EditRichTextNonEmpty.ManualIssue(PreviewId(r, f), None))
 
-      def prepareReq(r: RowKey.Req.AndId): FieldKey.Fold[FieldKey.ForSomeReq, LogicPerField] =
-        (r.id match {
-          case reqTypeId: CustomReqTypeId => prepareGR(reqTypeId)
-          case StaticReqType.UseCase      => prepareUC
-        }).asInstanceOf[FieldKey.Fold[FieldKey.ForSomeReq, LogicPerField]] // so hard to care. fix in Scala 3.
-
-      rowKeyAndId.foldFK[ForFields](
-        codeGroup   = r => prepareCG(r.row).map(logicToPerField),
-        req         = r => prepareReq(r).map(logicToPerField),
-        manualIssue = r => prepareMI(r.row).map(logicToPerField),
+      RowKey.Fold[ForFields](
+        codeGroup   = prepareCG(_).map(logicToPerField),
+        genericReq  = prepareGR(_).map(logicToPerField),
+        useCase     = prepareUC(_).map(logicToPerField),
+        manualIssue = prepareMI(_).map(logicToPerField),
       )
     }
 

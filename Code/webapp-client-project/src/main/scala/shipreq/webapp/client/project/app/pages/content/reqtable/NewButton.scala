@@ -9,9 +9,9 @@ import shipreq.webapp.base.data.ReqTypes
 import shipreq.webapp.client.project.feature.CreateFeature.RowKey
 import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, ProjectWidgets}
 
-object NewButton extends ButtonAndDropdown.Types[RowKey.AndId] {
+object NewButton extends ButtonAndDropdown.Types[RowKey] {
 
-  type State = Option[RowKey.AndId]
+  type State = Option[RowKey]
 
   @inline def initState: State =
     None
@@ -20,6 +20,7 @@ object NewButton extends ButtonAndDropdown.Types[RowKey.AndId] {
                          reqTypes: ReqTypes,
                          allowRCG: Permission,
                          pw      : ProjectWidgets.NoCtx,
+                         default : Option[RowKey],
                          update  : Option[Reusable[Update]]) {
 
     private lazy val items: NonEmptyVector[Item] = {
@@ -28,13 +29,13 @@ object NewButton extends ButtonAndDropdown.Types[RowKey.AndId] {
         reqTypes.liveSortedByMnemonic.map(rt =>
           Item(
             key              = rt.mnemonic.value,
-            value            = RowKey.Req.andId(rt.reqTypeId),
+            value            = RowKey.req(rt.reqTypeId),
             renderInButton   = pw.reqTypeShort(rt.reqTypeId),
             renderInDropdown = pw.reqTypeFull(rt.reqTypeId),
           ))
 
       if (allowRCG is Allow)
-        items :+= Item(".cg", RowKey.CodeGroup.andId, UiText.codeGroup)
+        items :+= Item(".cg", RowKey.CodeGroup, UiText.codeGroup)
 
       items
     }

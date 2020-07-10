@@ -116,8 +116,8 @@ object Feature {
     final case class ForProject(state      : State.ForProject,
                                 editability: Editability.ForProject,
                                 async      : AsyncFeature.Read.D0[AsyncError]) {
-      def apply(r: RowKey.AndId): ForFields[r.row.FieldKey] =
-        ForFields(state(r.row), editability(r), async)
+      def apply(r: RowKey): ForFields[r.FieldKey] =
+        ForFields(state(r), editability(r), async)
     }
   }
 
@@ -157,16 +157,17 @@ object Feature {
 
       private val foldCmd = RowKey.FoldCmd[SSP](
         codeGroup   = _ => sspCreateContent,
-        req         = _ => sspCreateContent,
+        genericReq  = _ => sspCreateContent,
+        useCase     = _ => sspCreateContent,
         manualIssue = _ => sspCreateManualIssue,
       )
 
-      def apply(r: RowKey.AndId): ForRow[r.row.FieldKey, r.row.Cmd] =
-        ForRow[r.row.FieldKey, r.row.Cmd](
-          stateAccess.zoomStateL(State.ForProject.untyped ^|-> Optics.mapValueEmpty(r.row, State.ForFields.empty)(_.isEmpty)),
-          NewEditor.forRow(static, r),
+      def apply(row: RowKey): ForRow[row.FieldKey, row.Cmd] =
+        ForRow[row.FieldKey, row.Cmd](
+          stateAccess.zoomStateL(State.ForProject.untyped ^|-> Optics.mapValueEmpty(row, State.ForFields.empty)(_.isEmpty)),
+          NewEditor.forRow(static, row),
           async,
-          foldCmd(r.row))
+          foldCmd(row))
 
       @inline def toReadWrite(r: Read.ForProject): ReadWrite.ForProject =
         ReadWrite.ForProject(r, this)
@@ -194,7 +195,7 @@ object Feature {
     }
 
     final case class ForProject(read: Read.ForProject, write: Write.ForProject) {
-      def apply(r: RowKey.AndId): ForRow[r.row.FieldKey, r.row.Cmd] =
+      def apply(r: RowKey): ForRow[r.FieldKey, r.Cmd] =
         ForRow(read(r), write(r))
     }
   }

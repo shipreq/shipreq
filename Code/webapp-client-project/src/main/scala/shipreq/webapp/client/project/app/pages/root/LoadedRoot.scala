@@ -385,7 +385,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
         case Page.Issues =>
           val state    = issuesPageSS(s)
-          val creator  = createRW(CreateFeature.RowKey.ManualIssue.andId)
+          val creator  = createRW(CreateFeature.RowKey.ManualIssue)
           val cmdAsync = s.manualIssueCmdAsync.toRead
                            .either(s.updateConfigCmdAsync.toRead)
                            .either(s.updateContentCmdAsync.toRead)

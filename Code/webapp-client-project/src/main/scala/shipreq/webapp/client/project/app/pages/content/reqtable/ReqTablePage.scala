@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import japgolly.microlibs.nonempty.NonEmptyVector
+import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -160,6 +161,19 @@ object ReqTablePage {
 
     val reqTable = new Table(pxProjectWidgets)
 
+    // Not Px because we don't want it to jitter.
+    // Just choose a nice default once per view and stick with it.
+    val defaultNewType: Option[CreateFeature.RowKey] = {
+      val p = pxProject.value()
+      MutableArray(p.config.reqTypes.all.iterator.filter(_.live is Live))
+        .map(t => (t, p.reqTypeCount(t.reqTypeId).live))
+        .sortBy(_._2)
+        .array
+        .lastOption
+        .filter(_._2 > 0)
+        .map(x => CreateFeature.RowKey.req(x._1.reqTypeId))
+    }
+
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     def render(p: Props): VdomElement = {
@@ -220,6 +234,7 @@ object ReqTablePage {
         toast,
         project.config.reqTypes,
         Allow when activeView.viewCodeGroups,
+        defaultNewType,
         p.create,
         newFormColumns,
       )
