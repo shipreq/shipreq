@@ -20,7 +20,6 @@ object NewButton extends ButtonAndDropdown.Types[RowKey] {
                          reqTypes: ReqTypes,
                          allowRCG: Permission,
                          pw      : ProjectWidgets.NoCtx,
-                         default : Option[RowKey],
                          update  : Option[Reusable[Update]]) {
 
     private lazy val items: NonEmptyVector[Item] = {

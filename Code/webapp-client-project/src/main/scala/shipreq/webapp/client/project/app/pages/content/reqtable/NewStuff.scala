@@ -61,7 +61,6 @@ final class NewStuff(state        : State,
                      toast        : Toast,
                      reqTypes     : ReqTypes,
                      allowRCG     : Permission,
-                     defaultType  : Option[RowKey],
                      create       : CreateFeature.ReadWrite.ForProject,
                      activeColumns: NonEmptyVector[ColumnPlus]) {
 
@@ -74,14 +73,14 @@ final class NewStuff(state        : State,
   val buttonProps: NewButton.Props =
     state match {
       case State.Open(s) =>
-        var b = NewButton.Props(Some(s), reqTypes, allowRCG, pw, defaultType, Some(buttonUpdate))
+        var b = NewButton.Props(Some(s), reqTypes, allowRCG, pw, Some(buttonUpdate))
         // If what we thought was open is no longer acceptable, proceed as if closed
         if (b.dropdownProps.selected.forall(_ !=* s))
           b = b.copy(state = None)
         b
 
       case State.Closed(o) =>
-        NewButton.Props(o, reqTypes, allowRCG, pw, defaultType, Some(buttonUpdate))
+        NewButton.Props(o, reqTypes, allowRCG, pw, Some(buttonUpdate))
     }
 
   private val cancel: Callback =
