@@ -224,7 +224,7 @@ object Dependencies {
     filters |= moduleFilter("org.scalaz", revision = fn(!_.startsWith("7.2.")))
     filters |= moduleFilter("com.github.julien-truffaut", revision = fn(!_.startsWith("1.6.")))
 
-    // OkHTTP
+    // OkHTTP: 3.x only
     filters |= moduleFilter("com.squareup.okhttp3", revision = fn(!_.startsWith("3.")))
 
     // Jetty: stable only
