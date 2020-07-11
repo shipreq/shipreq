@@ -65,10 +65,23 @@ final class NewStuff(state        : State,
                      activeColumns: NonEmptyVector[ColumnPlus]) {
 
   private val buttonUpdate: Reusable[NewButton.Update] =
-    modState.map(f =>
+    modState.map { f =>
+
+      def selectRow(next: RowKey): Callback = {
+        val prev: Option[RowKey] =
+          state match {
+            case State.Open(k)   => Some(k)
+            case State.Closed(o) => o
+          }
+        val retainState = create.selectWithRetention(prev, next)
+        val select      = f.modStateAsync(_.setSelection(next))
+        (retainState >> select).toCallback
+      }
+
       NewButton.Update(
-        select = s => create.selectWithRetention(s) >> f.modState(_.setSelection(s)),
-        click  = s => f.modState(_.toggle(s))))
+        select = selectRow,
+        click = s => f.modState(_.toggle(s)))
+    }
 
   val buttonProps: NewButton.Props =
     state match {

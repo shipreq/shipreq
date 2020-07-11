@@ -840,6 +840,7 @@ object ReqTableTest extends TestSuite {
     val B = "Business Justification"
     val C = "Component"
     // Type B C
+    // BR   y n
     // CO   n y
     // FR   y y
     // UC   y n
@@ -847,27 +848,35 @@ object ReqTableTest extends TestSuite {
     val test = (
       showHideColumn(B)
       >> showHideColumn(C)
-      >> newFormButton.dropdown.select("CO: Constraint")
+      +> newFormFields.assert()
+
       >> newFormButton.click
+      +> newFormButton.dropdown.text.assert("BR")
+      +> newFormFields.assert(T, B)
+      >> newFormEditor(T).setEditorValue("T")
+      >> newFormEditor(B).setEditorValue("B")
+
+      >> newFormButton.dropdown.select("CO: Constraint")
       +> newFormButton.dropdown.text.assert("CO")
       +> newFormFields.assert(T, C)
-      >> newFormEditor(T).setEditorValue("T")
+      +> newFormEditor(T).editorValue.assert("T")
+      >> newFormEditor(T).setEditorValue("T2")
       >> newFormEditor(C).setEditorValue("C")
 
       >> newFormButton.dropdown.select("UC: Use Case")
       +> newFormButton.dropdown.text.assert("UC")
       +> newFormFields.assert(T, B)
-      +> newFormEditor(T).editorValue.assert("T")
-      +> newFormEditor(B).editorValue.assert("")
-      >> newFormEditor(B).setEditorValue("B")
+      +> newFormEditor(T).editorValue.assert("T2")
+      +> newFormEditor(B).editorValue.assert("B")
+      >> newFormEditor(B).setEditorValue("B2")
 
       >> newFormButton.dropdown.select("FR: Functional Requirement")
       +> newFormButton.dropdown.text.assert("FR")
       +> newFormFields.assert(T, B, C)
-      +> newFormEditor(T).editorValue.assert("T")
-      +> newFormEditor(B).editorValue.assert("B")
+      +> newFormEditor(T).editorValue.assert("T2")
+      +> newFormEditor(B).editorValue.assert("B2")
       +> newFormEditor(C).editorValue.assert("C")
-      >> newFormEditor(T).setEditorValue("T2")
+      >> newFormEditor(T).setEditorValue("T3")
 
       >> showHideColumn("Code")
       >> sortBy("Code")
@@ -876,7 +885,7 @@ object ReqTableTest extends TestSuite {
       >> newFormButton.dropdown.select("CO: Constraint")
       +> newFormButton.dropdown.text.assert("CO")
       +> newFormFields.assert("Code", T, C)
-      +> newFormEditor(T).editorValue.assert("T2")
+      +> newFormEditor(T).editorValue.assert("T3")
       +> newFormEditor(C).editorValue.assert("C")
     )
     runTest(Plan.action(test) withInitialState SampleProject7.project)

@@ -5,6 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Iso
 import monocle.macros.Lenses
+import scala.annotation.elidable
 import scala.reflect.ClassTag
 import scalaz.\/
 import shipreq.base.util._
@@ -40,7 +41,7 @@ object Feature {
     type State
     val stateType: ClassTag[State]
     val state: State
-    def setState(state: State): Callback
+    def withState(state: State): Editor[Args, Value]
   }
 
   object Editor {
@@ -76,6 +77,18 @@ object Feature {
 
     @Lenses
     final case class ForProject(untyped: Map[RowKey, ForFields[FieldKey]], selectionHistory: Vector[RowKey]) {
+
+      @elidable(elidable.INFO)
+      override def toString: String = {
+        def fs(s: State.ForFields[FieldKey]) = s.untyped.iterator.map { case (f, e) => s"\n                FieldKey.$f -> ${e.state},"}.mkString
+        val u = untyped.iterator.map { case (r, vs) => s"\n              RowKey.$r -> ${fs(vs)}"}.mkString
+        s"""
+          |CreateFeature.State.ForProject(
+          |  untyped = Map($u)
+          |  history = $selectionHistory)
+          |""".stripMargin.trim
+      }
+
       def apply(r: RowKey): ForFields[r.FieldKey] =
         untyped.get(r) match {
           case Some(f) => f
@@ -204,18 +217,15 @@ object Feature {
         *
         * See `ReqTableTest.new.state` for the scenario this enables.
         */
-      def selectWithRetention(rowKey: RowKey): Callback = {
+      def selectWithRetention(prevRowKey: Option[RowKey], rowKey: RowKey): AsyncCallback[Unit] = {
+        type RowState = State.ForFields[FieldKey]
+
         val currentState       = read.state
-        val historyWithoutSelf = currentState.selectionHistory.filter(_ !=* rowKey)
+        val historyWithoutSelf = currentState.selectionHistory.filterNot(r => prevRowKey.contains(r) || (r ==* rowKey)) ++ prevRowKey
         val newHistory         = historyWithoutSelf :+ rowKey
 
-        def copyState(srcEditor: Editor[Nothing, Any],
-                      tgtField : rowKey.FieldKey): Callback = {
-          val tgtEditor = currentState(rowKey)(tgtField).getOrElse(write(rowKey).startEditor(tgtField))
-          Callback.traverseOption(tgtEditor.stateType.unapply(srcEditor.state))(tgtEditor.setState)
-        }
-
-        var result = write.stateAccess.modState(_.copy(selectionHistory = newHistory))
+        var rowModifications: RowState => RowState =
+          r => r
 
         // This is inefficient but it's also O(|reqTypes|) which is tiny
         for {
@@ -223,10 +233,21 @@ object Feature {
           srcState              <- currentState.untyped.get(srcRow)
           (srcField, srcEditor) <- srcState.untyped
           tgtField              <- rowKey.convertField(srcField)
+        } {
+          val tgtEditor = currentState(rowKey)(tgtField).getOrElse(write(rowKey).startEditor(tgtField))
+          for (tgtState <- tgtEditor.stateType.unapply(srcEditor.state)) {
+            val tgtEditor2 = tgtEditor.withState(tgtState)
+            rowModifications = rowModifications.andThen(s => s.copy(s.untyped.updated(tgtField, tgtEditor2)))
+          }
         }
-          result = result >> copyState(srcEditor, tgtField)
 
-        result
+        write.stateAccess.modStateAsync { s1 =>
+          val s2 = s1.copy(selectionHistory = newHistory)
+          val r1 = s2.untyped.getOrElse(rowKey, State.ForFields.empty)
+          val r2 = rowModifications(r1)
+          val s3 = s2.copy(s2.untyped.updated(rowKey, r2))
+          s3
+        }
       }
     }
   }
