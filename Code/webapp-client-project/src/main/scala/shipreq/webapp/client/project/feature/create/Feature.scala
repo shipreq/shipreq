@@ -5,6 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Iso
 import monocle.macros.Lenses
+import scala.reflect.ClassTag
 import scalaz.\/
 import shipreq.base.util._
 import shipreq.base.util.univeq._
@@ -35,17 +36,16 @@ object Feature {
   trait Editor[-Args, +Value] {
     def render(as: AsyncState, args: Args)(): VdomElement
     def value(args: Args): Editor.Value[Value]
+
+    type State
+    val stateType: ClassTag[State]
+    val state: State
+    def setState(state: State): Callback
   }
 
   object Editor {
     type Invalidity = shipreq.webapp.base.validation.Simple.Invalidity
     type Value[+A] = Invalidity \/ A
-
-    def fromCallback[A, V](cb: CallbackTo[Editor[A, V]]): Editor[A, V] =
-      new Editor[A, V] {
-        override def render(as: AsyncState, args: A)() = cb.runNow().render(as, args)()
-        override def value(args: A) = cb.runNow().value(args)
-      }
   }
 
   /** Id used for [[shipreq.webapp.base.feature.PreviewFeature]] */
@@ -75,7 +75,7 @@ object Feature {
     }
 
     @Lenses
-    final case class ForProject(untyped: Map[RowKey, ForFields[FieldKey]]) {
+    final case class ForProject(untyped: Map[RowKey, ForFields[FieldKey]], selectionHistory: Vector[RowKey]) {
       def apply(r: RowKey): ForFields[r.FieldKey] =
         untyped.get(r) match {
           case Some(f) => f
@@ -83,8 +83,10 @@ object Feature {
         }
     }
 
-    val initForProject: ForProject =
-      ForProject(UnivEq.emptyMap)
+    object ForProject {
+      val init: ForProject =
+        ForProject(UnivEq.emptyMap, Vector.empty)
+    }
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -137,7 +139,7 @@ object Feature {
         rowEditors(field)(ctx)
       }
 
-      /** Initiates a call to the server to create content for this row. */
+      /** Send a request to the server to create the content for this row. */
       def create(cmd      : Cmd,
                  onSuccess: NewEvents => Callback = _ => Callback.empty): Callback =
         async(ssp(cmd).rightFlatTap(onSuccess(_).asAsyncCallback))
@@ -197,6 +199,35 @@ object Feature {
     final case class ForProject(read: Read.ForProject, write: Write.ForProject) {
       def apply(r: RowKey): ForRow[r.FieldKey, r.Cmd] =
         ForRow(read(r), write(r))
+
+      /** This preserves state of editors when users change the req type.
+        *
+        * See `ReqTableTest.new.state` for the scenario this enables.
+        */
+      def selectWithRetention(rowKey: RowKey): Callback = {
+        val currentState       = read.state
+        val historyWithoutSelf = currentState.selectionHistory.filter(_ !=* rowKey)
+        val newHistory         = historyWithoutSelf :+ rowKey
+
+        def copyState(srcEditor: Editor[Nothing, Any],
+                      tgtField : rowKey.FieldKey): Callback = {
+          val tgtEditor = currentState(rowKey)(tgtField).getOrElse(write(rowKey).startEditor(tgtField))
+          Callback.traverseOption(tgtEditor.stateType.unapply(srcEditor.state))(tgtEditor.setState)
+        }
+
+        var result = write.stateAccess.modState(_.copy(selectionHistory = newHistory))
+
+        // This is inefficient but it's also O(|reqTypes|) which is tiny
+        for {
+          srcRow                <- historyWithoutSelf
+          srcState              <- currentState.untyped.get(srcRow)
+          (srcField, srcEditor) <- srcState.untyped
+          tgtField              <- rowKey.convertField(srcField)
+        }
+          result = result >> copyState(srcEditor, tgtField)
+
+        result
+      }
     }
   }
 }

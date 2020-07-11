@@ -34,7 +34,7 @@ object NewButton extends ButtonAndDropdown.Types[RowKey] {
           ))
 
       if (allowRCG is Allow)
-        items :+= Item(".cg", RowKey.CodeGroup, UiText.codeGroup)
+        items :+= Item(".cg", RowKey.CodeGroup, <.span(UiText.codeGroup))
 
       items
     }

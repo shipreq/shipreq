@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.feature.create
 
 import japgolly.scalajs.react.Reusability
 import monocle.{Iso, Prism}
+import scala.annotation.nowarn
 import scalaz.~~>
 import shipreq.base.util.Direction
 import shipreq.base.util.univeq._
@@ -180,6 +181,10 @@ object FieldKey {
   sealed trait AndValue[+FK <: FieldKey, F[_, _]] {
     val field: FK
     val value: F[field.Args, field.Value]
+
+    @nowarn("cat=unused")
+    final def unsafeSyncField[FKK >: FK <: FieldKey](f: FKK): f.AndValue[F] =
+      this.asInstanceOf[f.AndValue[F]]
 
     final def withValue[G[_, _]](a: G[field.Args, field.Value]): AndValue[field.type, G] =
       AndValue(field)(a)

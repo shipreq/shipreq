@@ -875,7 +875,7 @@ object ReqTableTest extends TestSuite {
 
       >> newFormButton.dropdown.select("CO: Constraint")
       +> newFormButton.dropdown.text.assert("CO")
-      +> newFormFields.assert(T, C)
+      +> newFormFields.assert("Code", T, C)
       +> newFormEditor(T).editorValue.assert("T2")
       +> newFormEditor(C).editorValue.assert("C")
     )

@@ -137,7 +137,7 @@ object State {
     State(
       projectName                = ProjectItem.WithEditableName.State.init,
       reqLookup                  = "",
-      create                     = CreateFeature.State.initForProject,
+      create                     = CreateFeature.State.ForProject.init,
       newReqAsync                = AsyncFeature.State.initD0,
       edit                       = EditorFeature.State.initForProject,
       editAsync                  = AsyncFeature.State.initD2,

@@ -67,7 +67,7 @@ final class NewStuff(state        : State,
   private val buttonUpdate: Reusable[NewButton.Update] =
     modState.map(f =>
       NewButton.Update(
-        select = s => f.modState(_.setSelection(s)),
+        select = s => create.selectWithRetention(s) >> f.modState(_.setSelection(s)),
         click  = s => f.modState(_.toggle(s))))
 
   val buttonProps: NewButton.Props =

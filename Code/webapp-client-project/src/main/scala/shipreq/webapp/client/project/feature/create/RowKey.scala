@@ -12,6 +12,12 @@ sealed abstract class RowKey {
   type Cmd
   def foldF[F[_ <: AnyFieldKey]](f: RowKey.Fold[F]): F[FieldKey]
   def foldC[F[_]](f: RowKey.FoldCmd[F]): F[Cmd]
+
+  /** "convert" and not "narrow" because this also maps FieldKeys from one domain to another.
+    *
+    *  Eg. GenericReqTitle <--> UseCaseTitle
+    */
+  val convertField: AnyFieldKey => Option[FieldKey]
 }
 
 object RowKey {
@@ -21,6 +27,10 @@ object RowKey {
     override type Cmd      = CreateContentCmd
     override def foldF[F[_ <: AnyFieldKey]](f: Fold[F]): F[FieldKey] = f.codeGroup(this)
     override def foldC[F[_]](f: FoldCmd[F]): F[Cmd] = f.codeGroup(this)
+    override val convertField = {
+      case f: FieldKey.ForCodeGroup => Some(f)
+      case _                        => None
+    }
   }
 
   final case class GenericReq(reqTypeId: CustomReqTypeId) extends RowKey {
@@ -28,6 +38,12 @@ object RowKey {
     override type Cmd      = CreateContentCmd
     override def foldF[F[_ <: AnyFieldKey]](f: Fold[F]): F[FieldKey] = f.genericReq(this)
     override def foldC[F[_]](f: FoldCmd[F]): F[Cmd] = f.genericReq(this)
+    override val convertField = {
+      case f: FieldKey.ForGenericReq  => Some(f)
+      case FieldKey.UseCaseTitle      => Some(FieldKey.GenericReqTitle)
+      case _: FieldKey.ForCodeGroup
+         | _: FieldKey.ForManualIssue => None
+    }
   }
 
   case object UseCase extends RowKey {
@@ -35,6 +51,12 @@ object RowKey {
     override type Cmd      = CreateContentCmd
     override def foldF[F[_ <: AnyFieldKey]](f: Fold[F]): F[FieldKey] = f.useCase(this)
     override def foldC[F[_]](f: FoldCmd[F]): F[Cmd] = f.useCase(this)
+    override val convertField = {
+      case f: FieldKey.ForUseCase     => Some(f)
+      case FieldKey.GenericReqTitle   => Some(FieldKey.UseCaseTitle)
+      case _: FieldKey.ForCodeGroup
+         | _: FieldKey.ForManualIssue => None
+    }
     @inline def reqTypeId = StaticReqType.UseCase
   }
 
@@ -43,6 +65,10 @@ object RowKey {
     override type Cmd      = ManualIssueCmd
     override def foldF[F[_ <: AnyFieldKey]](f: Fold[F]): F[FieldKey] = f.manualIssue(this)
     override def foldC[F[_]](f: FoldCmd[F]): F[Cmd] = f.manualIssue(this)
+    override val convertField = {
+      case f: FieldKey.ForManualIssue => Some(f)
+      case _                          => None
+    }
   }
 
   @inline implicit def equality: UnivEq[RowKey] =

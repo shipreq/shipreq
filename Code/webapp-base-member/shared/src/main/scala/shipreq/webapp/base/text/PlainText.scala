@@ -19,6 +19,8 @@ import shipreq.webapp.base.util.ReqCodeTreeItem
  */
 object PlainText {
 
+  type NoCtx  = ProjectText[ProjectText.Context.None, String]
+
   object ForProject {
     type AnyCtx = ForProject[ProjectText.Context]
     type NoCtx  = ForProject[ProjectText.Context.None]

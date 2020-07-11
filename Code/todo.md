@@ -52,7 +52,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* NewForm state shouldn't be scoped by req type!
 
 
 Backlog (maybe-probably soon)

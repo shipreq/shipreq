@@ -171,6 +171,11 @@ object NewEditor {
               commitVerb       = args.commitVerb,
               extraKbShortcuts = args.extraKbShortcuts,
               showInstructions = ShowInstructions)
+
+          override type State             = String
+          override val stateType          = implicitly
+          override val state              = ss.value
+          override def setState(s: State) = ss.setState(s)
         }
       }
 
@@ -200,6 +205,11 @@ object NewEditor {
               commitVerb       = args.commitVerb,
               extraKbShortcuts = args.extraKbShortcuts,
               showInstructions = ShowInstructions)
+
+          override type State             = String
+          override val stateType          = implicitly
+          override val state              = ss.value
+          override def setState(s: State) = ss.setState(s)
         }
       }
     }
@@ -255,6 +265,11 @@ object NewEditor {
             textSearch       = textSearch,
             extraKbShortcuts = args.extraKbShortcuts,
             showInstructions = ShowInstructions)
+
+        override type State             = String
+        override val stateType          = implicitly
+        override val state              = ss.value
+        override def setState(s: State) = ss.setState(s)
       }
     }
 
@@ -301,6 +316,11 @@ object NewEditor {
             commitVerb       = args.commitVerb,
             extraKbShortcuts = args.extraKbShortcuts,
             showInstructions = ShowInstructions)
+
+        override type State             = String
+        override val stateType          = implicitly
+        override val state              = ss.value
+        override def setState(s: State) = ss.setState(s)
       }
     }
 
@@ -347,6 +367,11 @@ object NewEditor {
               extraKbShortcuts   = args.extraKbShortcuts,
               showInstructions   = ShowInstructions,
               optionalFullscreen = None)
+
+          override type State             = String
+          override val stateType          = implicitly
+          override val state              = ss.value
+          override def setState(s: State) = ss.setState(s)
         }
       }
 
@@ -399,6 +424,11 @@ object NewEditor {
               extraKbShortcuts   = args.extraKbShortcuts,
               showInstructions   = ShowInstructions,
               optionalFullscreen = None)
+
+          override type State             = String
+          override val stateType          = implicitly
+          override val state              = ss.value
+          override def setState(s: State) = ss.setState(s)
         }
       }
 
