@@ -52,7 +52,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* Prune ECR
 
 
 Backlog (maybe-probably soon)
