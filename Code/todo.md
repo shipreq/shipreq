@@ -52,6 +52,8 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
+* Prune ECR
+* reduce prometheus backups (too expensive)
 
 
 Backlog (maybe-probably soon)
