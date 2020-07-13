@@ -63,7 +63,7 @@ import shipreq.webapp.base.util.CallbackHelpers._
   * 2. On failure you will notify the user of failure once (eg. popup msg, alert, whatever)
   *
   *    - In your render fn, call `AsyncFeature.isInProgress(asyncRW.read)`.
-  *       When in in progress, disable the view, show a spinning thing.
+  *      When in progress, disable the view, show a spinning thing.
   *
   *    - Wrap async tasks in `asyncRW.write.onFailureShowAndForget`.
   *      eg. `asyncRW.write.onFailureShowAndForget(ssp(cmd))`
@@ -495,7 +495,11 @@ object AsyncFeature {
 
   object ReadWrite {
 
-    final case class D0[F](write: Write.D0[F], read: Read.D0[F])
+    final case class D0[F](write: Write.D0[F], read: Read.D0[F]) {
+
+      @inline def isInProgress: Boolean =
+        AsyncFeature.isInProgress(read)
+    }
 
     final case class D1[K, F](write: Write.D1[K, F], read: Read.D1[K, F]) {
       def apply(k: K): D0[F] =

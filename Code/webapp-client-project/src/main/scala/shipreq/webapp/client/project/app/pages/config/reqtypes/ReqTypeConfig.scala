@@ -46,7 +46,7 @@ object ReqTypeConfig {
                         ) {
 
     val asyncInProgress: Boolean =
-      AsyncFeature.isInProgress(async.read)
+      async.isInProgress
 
     val filterDeadOverride: Option[FilterDead] =
       state.value.filterDead.overrideIfDeadOption(

@@ -52,7 +52,7 @@ object FieldConfig {
                         ) {
 
     val asyncInProgress: Boolean =
-      AsyncFeature.isInProgress(async.read)
+      async.isInProgress
 
     private[FieldConfig] def lifeOf(id: FieldId): Live =
       project.config.fields.need(id).live(project.config)

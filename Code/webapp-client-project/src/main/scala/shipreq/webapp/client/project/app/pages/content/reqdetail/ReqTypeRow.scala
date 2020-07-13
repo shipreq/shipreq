@@ -66,7 +66,7 @@ private[reqdetail] object ReqTypeRow {
         }
 
       val asyncInProgress =
-        AsyncFeature.isInProgress(async.read)
+        async.isInProgress
 
       Button(
         tipe   = Button.Type.BasicIconAndText(Icon.Plus, "New " + p.reqType.mnemonic.value),
