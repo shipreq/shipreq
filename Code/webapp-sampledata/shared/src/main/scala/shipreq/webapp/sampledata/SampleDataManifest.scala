@@ -32,20 +32,20 @@ trait SampleDataManifest[D] { self =>
     def load(size: Int, projectConfigHash: Int, projectContentHash: Int): D =
       self.load(SampleDataMeta(s"sampledata-full-$size.json", false, projectConfigHash, projectContentHash))
 
-    lazy val  `1000`: D = load( 1000,   -15975327, -1910444130)
-    lazy val  `2000`: D = load( 2000,   454447920, -1851467186)
-    lazy val  `4000`: D = load( 4000,   106265614, -1357390324)
-    lazy val `10000`: D = load(10000, -1981610195, -1390028356)
+    lazy val  `1000`: D = load( 1000,  1452203069, -2018537233)
+    lazy val  `2000`: D = load( 2000, -2100690608,  1677984964)
+    lazy val  `4000`: D = load( 4000, -1398041708, -1511276617)
+    lazy val `10000`: D = load(10000, -1195563770, -1832283493)
   }
 
   object noReqCodes {
     def load(size: Int, projectConfigHash: Int, projectContentHash: Int): D =
       self.load(SampleDataMeta(s"sampledata-no_req_codes-$size.json", false, projectConfigHash, projectContentHash))
 
-    lazy val  `1000`: D = load( 1000,  251955416, -2078654579)
-    lazy val  `2000`: D = load( 2000,  325713993,   682764916)
-    lazy val  `4000`: D = load( 4000, 2107620222, -1415010622)
-    lazy val `10000`: D = load(10000,  355316401,  -392124681)
+    lazy val  `1000`: D = load( 1000,  -763717055,  1377465625)
+    lazy val  `2000`: D = load( 2000, -1376499562,    29101933)
+    lazy val  `4000`: D = load( 4000,  -665692199, -1605087212)
+    lazy val `10000`: D = load(10000,  -679426977,   729017725)
   }
 
   lazy val all: Vector[D] =
