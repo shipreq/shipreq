@@ -30,7 +30,7 @@ trait SampleDataManifest[D] { self =>
 
   object full {
     def load(size: Int, projectConfigHash: Int, projectContentHash: Int): D =
-      self.load(SampleDataMeta(s"shipreq-events-full-$size.json", false, projectConfigHash, projectContentHash))
+      self.load(SampleDataMeta(s"sampledata-full-$size.json", false, projectConfigHash, projectContentHash))
 
     lazy val  `1000`: D = load( 1000,   -15975327, -1910444130)
     lazy val  `2000`: D = load( 2000,   454447920, -1851467186)
@@ -40,7 +40,7 @@ trait SampleDataManifest[D] { self =>
 
   object noReqCodes {
     def load(size: Int, projectConfigHash: Int, projectContentHash: Int): D =
-      self.load(SampleDataMeta(s"shipreq-events-no_req_codes-$size.json", false, projectConfigHash, projectContentHash))
+      self.load(SampleDataMeta(s"sampledata-no_req_codes-$size.json", false, projectConfigHash, projectContentHash))
 
     lazy val  `1000`: D = load( 1000,  251955416, -2078654579)
     lazy val  `2000`: D = load( 2000,  325713993,   682764916)

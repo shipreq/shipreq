@@ -47,7 +47,7 @@ object GenerateEvents {
         .map(_.asJson.noSpacesSortKeys)
         .mkString("[", "\n,", "\n]")
 
-    val filename = s"/tmp/shipreq-events-$qty-${Instant.now().toString.filter(_.isDigit)}.json"
+    val filename = s"/tmp/sampledata-$qty-${Instant.now().toString.filter(_.isDigit)}.json"
     println(s"Writing to $filename")
     FileUtils.write(filename, json)
 
