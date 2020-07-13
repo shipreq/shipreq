@@ -142,7 +142,7 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.6")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.7")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
@@ -193,7 +193,7 @@ object Dependencies {
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.3")
   val μTest       = jvmAndJs("com.github.japgolly.fork",         "utest",       "1.0.1")
 
-  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.3")
+  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.4")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.8")
   val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.5.0")
