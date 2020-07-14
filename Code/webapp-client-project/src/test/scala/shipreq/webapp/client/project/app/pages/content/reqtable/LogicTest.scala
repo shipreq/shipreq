@@ -386,51 +386,101 @@ object LogicTest extends TestSuite {
   }
 
   def testCustomImpField(): Unit = {
-    // Expected MFs per row
-    // MF-1 ⇐
-    // MF-2 ⇐
-    // MF-3 ⇐
-    // MF-4 ⇐ 3
-    // MF-5 ⇐ 3
-    // BR-1 ⇐
-    // BR-2 ⇐
-    // FR-1 ⇐ 1
-    // FR-2 ⇐ 1,2
-    // FR-3 ⇐ 1,2
-    // FR-4 ⇐ 3
-    // FR-5 ⇐ 3
-    // FR-6 ⇐ 3,4
     val p   = SampleImplicationGraph.project
     val fmt = rowToCustomImpTxt(p, mfField)
-    testCB(p, mfField, None, ShowDead, fmt)(allSortsCB(2,
+    /*
+    1
+    FR1 - 1,2
+    FR2 - 1,2
+    FR3 - 1,2
+    MF1 - 1
+
+    2
+    BR1 - 2,3,4,5
+    FR1 - 1,2
+    FR2 - 1,2
+    FR3 - 1,2
+    MF2 - 2
+
+    3
+    BR1 - 2,3,4,5
+    BR2 - 3,4,5
+    FR4 - 3,5
+    FR5 - 3,5
+    FR6 - 3,4
+    MF3 - 3,4,5
+    MF4 - 3,4
+    MF5 - 3,5
+
+    4
+    BR1 - 2,3,4,5
+    BR2 - 3,4,5
+    FR6 - 3,4
+    MF3 - 3,4,5
+    MF4 - 3,4
+
+    5
+    BR1 - 2,3,4,5
+    BR2 - 3,4,5
+    FR4 - 3,5
+    FR5 - 3,5
+    MF3 - 3,4,5
+    MF5 - 3,5
+    */
+    testCB(p, mfField, None, ShowDead, fmt)(allSortsCB(
+      zcount = 1,
       asc  = """
                |MF-1>FR-1
                |MF-1>FR-2
                |MF-1>FR-3
                |MF-1>MF-1
+               |MF-2>BR-1
+               |MF-2>FR-1
                |MF-2>FR-2
                |MF-2>FR-3
                |MF-2>MF-2
+               |MF-3>BR-1
+               |MF-3>BR-2
                |MF-3>FR-4
                |MF-3>FR-5
                |MF-3>FR-6
                |MF-3>MF-3
                |MF-3>MF-4
                |MF-3>MF-5
+               |MF-4>BR-1
+               |MF-4>BR-2
                |MF-4>FR-6
+               |MF-4>MF-3
                |MF-4>MF-4
+               |MF-5>BR-1
+               |MF-5>BR-2
+               |MF-5>FR-4
+               |MF-5>FR-5
+               |MF-5>MF-3
                |MF-5>MF-5
              """.stripMargin.replace("\n", sep).trim,
       desc = """
+               |MF-5>BR-1
+               |MF-5>BR-2
+               |MF-5>FR-4
+               |MF-5>FR-5
+               |MF-5>MF-3
                |MF-5>MF-5
+               |MF-4>BR-1
+               |MF-4>BR-2
                |MF-4>FR-6
+               |MF-4>MF-3
                |MF-4>MF-4
+               |MF-3>BR-1
+               |MF-3>BR-2
                |MF-3>FR-4
                |MF-3>FR-5
                |MF-3>FR-6
                |MF-3>MF-3
                |MF-3>MF-4
                |MF-3>MF-5
+               |MF-2>BR-1
+               |MF-2>FR-1
                |MF-2>FR-2
                |MF-2>FR-3
                |MF-2>MF-2

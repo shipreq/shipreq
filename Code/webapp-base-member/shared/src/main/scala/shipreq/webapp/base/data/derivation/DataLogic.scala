@@ -133,6 +133,7 @@ final class DataLogic(p: Project) {
   lazy val tagOrderingByPos: Ordering[ApplicableTagId] =
     Ordering.by(tagOrderByPos)
 
+  // See https://shipreq.com/project/d6My#reqs/IV-26 for an explanation of this logic.
   val customFieldImps: FilterDead => CustomField.Implication.Id => ReqId => Set[Pubid] =
     FilterDead.memoLazy { fd =>
       val filter = p.config.reqFilter(fd)
@@ -145,27 +146,16 @@ final class DataLogic(p: Project) {
         val subjectType = field.reqTypeId
         val backwards = p.content.implications.backwards
 
-        // TODO consider different collection types (2x LongMaps?) - BM & check JS size
         type MutableSet = mutable.Set[ReqId]
         type MutableMap = mutable.Map[ReqId, MutableSet]
         @inline def newSet(): MutableSet = mutable.Set.empty
         @inline def newMap(): MutableMap = mutable.Map.empty
 
-//        val stateBySrc = newMap()
-//        val stateByTgt = newMap()
         val state = newMap()
 
         def add(id: ReqId, fieldValue: ReqId): Unit = {
-          @inline def addTo(m: MutableMap, k: ReqId, v: ReqId): Unit =
-            m.getOrElseUpdate(k, newSet())  += v
-          addTo(state, id, fieldValue)
+          state.getOrElseUpdate(id, newSet()) += fieldValue
         }
-//        def add(src: ReqId, tgt: ReqId): Unit = {
-//          @inline def addTo(m: MutableMap, k: ReqId, v: ReqId): Unit =
-//            m.getOrElseUpdate(k, newSet())  += v
-//          addTo(stateBySrc, src, tgt)
-//          addTo(stateByTgt, tgt, src)
-//        }
 
         def addBackwards(fieldValue: ReqId): Unit = {
           def go(id: ReqId): Unit = {
@@ -182,9 +172,10 @@ final class DataLogic(p: Project) {
         def addForwards(fieldValue: ReqId, start: ReqId, internal: ReqId => Boolean): Unit = {
           def go(id: ReqId, allowSameType: Boolean): Unit = {
             @inline def hasDifferentType = p.content.reqs.need(id).reqTypeId != subjectType
-
             if (allowSameType || hasDifferentType) {
-              // TODO optimise: avoid traversing the same branches
+              // Ideally this should be optimised by avoid traversal of the same branches.
+              // However even in JS, we can't even break 500 ns here so screw it.
+              // It can be done later if it ever becomes necessary.
 
               add(id, fieldValue)
 
