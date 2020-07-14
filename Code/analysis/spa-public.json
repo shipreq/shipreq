@@ -699,13 +699,13 @@
           "size": 162
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/HeapByteBuffer.scala": {
-          "size": 506
+          "size": 456
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/ReadOnlyBufferException.scala": {
           "size": 112
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/TypedArrayByteBuffer.scala": {
-          "size": 873
+          "size": 923
         },
         "https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/util/Arrays.scala": {
           "size": 4573
@@ -936,10 +936,10 @@
           "size": 1922
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashMap.scala": {
-          "size": 11058
+          "size": 10967
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashSet.scala": {
-          "size": 11702
+          "size": 11676
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Iterable.scala": {
           "size": 288
@@ -969,7 +969,7 @@
           "size": 2652
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Vector.scala": {
-          "size": 46876
+          "size": 46993
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/WrappedString.scala": {
           "size": 1039
@@ -979,9 +979,6 @@
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ArrayBuffer.scala": {
           "size": 2452
-        },
-        "https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ArrayDeque.scala": {
-          "size": 12
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ArraySeq.scala": {
           "size": 6159
@@ -1008,7 +1005,7 @@
           "size": 152
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ListBuffer.scala": {
-          "size": 1159
+          "size": 1171
         },
         "https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/Map.scala": {
           "size": 319

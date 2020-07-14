@@ -226,9 +226,9 @@ https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/ByteBuffer.sca
 https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/ByteOrder.scala	529
 https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/GenBuffer.scala	808
 https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/GenHeapBuffer.scala	162
-https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/HeapByteBuffer.scala	506
+https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/HeapByteBuffer.scala	456
 https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/ReadOnlyBufferException.scala	112
-https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/TypedArrayByteBuffer.scala	873
+https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/nio/TypedArrayByteBuffer.scala	923
 https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/util/Arrays.scala	4573
 https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/util/concurrent/atomic/AtomicInteger.scala	188
 https:/raw.githubusercontent.com/scala-js/v1.1.1/javalib/java/util/Formattable.scala	24
@@ -274,8 +274,8 @@ https:/raw.githubusercontent.com/scala/v2.13.2/collection/BuildFrom.scala	251
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/Factory.scala	1002
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/Hashing.scala	195
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/ChampCommon.scala	1922
-https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashMap.scala	11058
-https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashSet.scala	11702
+https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashMap.scala	10967
+https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/HashSet.scala	11676
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Iterable.scala	288
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/LazyList.scala	5349
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/List.scala	6694
@@ -285,7 +285,7 @@ https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Seq.scala	12
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Set.scala	5374
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/SortedSet.scala	24
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Stream.scala	2652
-https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Vector.scala	46876
+https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/Vector.scala	46993
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/immutable/WrappedString.scala	1039
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/IndexedSeq.scala	1053
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/IndexedSeqView.scala	2210
@@ -296,7 +296,6 @@ https:/raw.githubusercontent.com/scala/v2.13.2/collection/LinearSeq.scala	1615
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/Map.scala	1085
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/AnyRefMap.scala	3726
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ArrayBuffer.scala	2452
-https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ArrayDeque.scala	12
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ArraySeq.scala	6159
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/Builder.scala	389
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/GrowableBuilder.scala	234
@@ -305,7 +304,7 @@ https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/HashMap.scala	
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ImmutableBuilder.scala	127
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/IndexedSeq.scala	155
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/Iterable.scala	152
-https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ListBuffer.scala	1159
+https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/ListBuffer.scala	1171
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/Map.scala	319
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/Seq.scala	22
 https:/raw.githubusercontent.com/scala/v2.13.2/collection/mutable/StringBuilder.scala	1117
