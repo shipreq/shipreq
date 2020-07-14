@@ -54,7 +54,6 @@ v2.2
 ### Implement
 * [FR-21] Implication graph #must include external implication sources
 * [FR-22] User #must be able to filter by imp-field values
-* Add / after #
 
 
 Backlog (maybe-probably soon)
