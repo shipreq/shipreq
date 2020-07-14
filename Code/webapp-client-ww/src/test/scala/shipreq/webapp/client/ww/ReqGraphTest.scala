@@ -12,7 +12,7 @@ import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.ww.GraphViz.DOT
 import utest._
 
-object ReqGraphGraphTest extends TestSuite {
+object ReqGraphTest extends TestSuite {
   import GraphTestUtil._
   import SampleImplicationGraph._
 

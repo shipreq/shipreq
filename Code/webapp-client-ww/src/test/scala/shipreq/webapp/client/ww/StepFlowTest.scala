@@ -9,7 +9,7 @@ import shipreq.webapp.base.text.ProjectText
 import shipreq.webapp.client.ww.GraphViz.DOT
 import utest._
 
-object StepFlowGraphTest extends TestSuite {
+object StepFlowTest extends TestSuite {
   import GraphTestUtil._
 
   override def tests = Tests {

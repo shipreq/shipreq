@@ -5,7 +5,7 @@ import shipreq.webapp.base.test._
 import shipreq.webapp.client.ww.GraphViz.DOT
 import utest._
 
-object ImplicationGraphGraphTest extends TestSuite {
+object ImplicationGraphTest extends TestSuite {
   import GraphTestUtil._
 
   override def tests = Tests {
