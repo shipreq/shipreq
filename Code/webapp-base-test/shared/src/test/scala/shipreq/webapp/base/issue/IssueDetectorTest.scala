@@ -146,6 +146,7 @@ object IssueDetectorTest extends TestSuite {
     def imps1() = test(p4)(
       makeMfMandatoryForFrAndUc,
       Event.ReqImplicationsPatch(frs(2), Backwards, nesd[ReqId](mfs(1), mfs(13), mfs(22), frs(1))()),
+      Event.ReqImplicationsPatch(frs(2), Forwards, nesd[ReqId](mfs(27))()),
       Event.ReqImplicationsPatch(uc1, Backwards, nesd[ReqId]()(frs(1))),
     )(
       IssueLite.BlankCustomField(frs(1), priField),

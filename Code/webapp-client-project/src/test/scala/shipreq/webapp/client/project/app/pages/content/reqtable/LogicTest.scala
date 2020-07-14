@@ -593,9 +593,40 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterDeadCustomImps(): Unit = {
+    // One of the most important aspects of this test is that when a req in the req chain is Dead,
+    // 1. it's included because it's immediately relevant
+    // 2. it's not transitive because it's Dead and those links no longer hold
+
+    /*
+    digraph G {
+      rankdir=LR
+      MF1 [label="MF-1ᵒ"]
+      MF2 [label="MF-2ˣ"]
+      MF3 [label="MF-3ᵒ"]
+      MF4 [label="MF-4ˣ"]
+      MF5 [label="MF-5ᵒ"]
+      MF6 [label="MF-6ᵒ"]
+      MF7 [label="MF-7ˣ"]
+      MF8 [label="MF-8ˣ"]
+      CO1 [label="CO-1ᵒ"]
+      CO2 [label="CO-2ᵒ"]
+      CO3 [label="CO-3ˣ"]
+      CO4 [label="CO-4ˣ"]
+      FR1 [label="FR-1ᵒ"]
+      FR2 [label="FR-2ᵒ"]
+      MF1 -> MF5 -> FR1
+      MF2 -> MF6 -> FR1
+      MF3 -> MF7 -> FR1
+      MF4 -> MF8 -> FR1
+      MF1 -> CO1 -> FR2
+      MF2 -> CO2 -> FR2
+      MF3 -> CO3 -> FR2
+      MF4 -> CO4 -> FR2
+    }
+     */
     val p = (
       // MF-1ᵒ → MF-5ᵒ → FR-1
-      // MF-2ˣ → MF-6ᵒ → FR-1 <-- difficult case - it should be displayed as its part of (a chain with ShowDead)
+      // MF-2ˣ → MF-6ᵒ → FR-1 <-- difficult case - it should be displayed as its part of [a chain with ShowDead]
       // MF-3ᵒ → MF-7ˣ → FR-1 <-- important case - shouldn't hold for FR-1 even in ShowDead
       // MF-4ˣ → MF-8ˣ → FR-1
       GReq(reqType = mf, id = 1) +
@@ -608,7 +639,7 @@ object LogicTest extends TestSuite {
       GReq(reqType = mf, id = 8, live = Dead).impSrc(4) +
       GReq(reqType = fr, id = 91).impSrc(5, 6, 7, 8) +
       // MF-1ᵒ → CO-1ᵒ → FR-2
-      // MF-2ˣ → CO-2ᵒ → FR-2 <-- difficult case - it should be displayed as its part of (a chain with ShowDead)
+      // MF-2ˣ → CO-2ᵒ → FR-2 <-- difficult case - it should be displayed as its part of [a chain with ShowDead]
       // MF-3ᵒ → CO-3ˣ → FR-2 <-- important case - shouldn't hold for FR-2 even in ShowDead
       // MF-4ˣ → CO-4ˣ → FR-2
       GReq(reqType = co, id = 11).impSrc(1) +
@@ -622,16 +653,16 @@ object LogicTest extends TestSuite {
 
     testUnsorted(p, c, None, ShowDead, fmt)(
       s"""
-        |MF-1>CO-1
-        |MF-2>CO-2
-        |MF-3>CO-3
-        |MF-4>CO-4
+        |MF-1,MF-2>CO-1
+        |MF-1,MF-2>CO-2
+        |MF-1,MF-2,MF-3>CO-3
+        |MF-1,MF-2,MF-4>CO-4
         |MF-1,MF-2,MF-5,MF-6,MF-7,MF-8>FR-1
         |MF-1,MF-2>FR-2
-        |MF-1>MF-1
-        |MF-2>MF-2
-        |MF-3>MF-3
-        |MF-4>MF-4
+        |MF-1,MF-5>MF-1
+        |MF-2,MF-6>MF-2
+        |MF-3,MF-7>MF-3
+        |MF-4,MF-8>MF-4
         |MF-1,MF-5>MF-5
         |MF-2,MF-6>MF-6
         |MF-3,MF-7>MF-7
@@ -641,10 +672,10 @@ object LogicTest extends TestSuite {
     testUnsorted(p, c, None, HideDead, fmt)(
       s"""
         |MF-1>CO-1
-        |$z
+        |MF-1>CO-2
         |MF-1,MF-5,MF-6>FR-1
         |MF-1>FR-2
-        |MF-1>MF-1
+        |MF-1,MF-5>MF-1
         |MF-3>MF-3
         |MF-1,MF-5>MF-5
         |MF-6>MF-6
