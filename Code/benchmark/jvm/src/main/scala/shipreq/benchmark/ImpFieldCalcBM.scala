@@ -31,5 +31,5 @@ class ImpFieldCalcBM {
     fieldId = p.config.fields.customImpFields.headOption.get.id
   }
 
-  @Benchmark def calculation = p.dataLogic.customFieldImps(HideDead)(fieldId)(reqId)
+  @Benchmark def calculation = p.dataLogic.customFieldImps(HideDead)(fieldId).getPubids(reqId)
 }

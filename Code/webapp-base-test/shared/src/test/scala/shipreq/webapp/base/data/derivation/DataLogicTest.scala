@@ -19,7 +19,7 @@ object DataLogicTest extends TestSuite {
     val actual =
       MutableArray(
         project.liveReqIterator().map { req =>
-          val values = MutableArray(data(req.id).iterator.map(_.pos.value)).sort.mkString(",")
+          val values = MutableArray(data.getPubids(req.id).iterator.map(_.pos.value)).sort.mkString(",")
           val reqType = project.config.reqTypes.need(req.reqTypeId).mnemonic.value
           s"$reqType${req.pubid.pos.value} - $values".trim
         }

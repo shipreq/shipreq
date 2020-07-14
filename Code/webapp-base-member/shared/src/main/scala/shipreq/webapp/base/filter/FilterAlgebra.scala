@@ -386,7 +386,7 @@ object FilterAlgebra {
 
         case (FieldAttr.Blank, \/-(f: CustomField.Implication.Id)) =>
           val imps = p.dataLogic.customFieldImps(ShowDead)(f)
-          fieldApplicableReqOnly(f)(req => imps(req.id).isEmpty)
+          fieldApplicableReqOnly(f)(req => imps.getReqIds(req.id).isEmpty)
 
         case (FieldAttr.Blank, \/-(f: CustomField.Tag.Id)) =>
           val scope = p.config.tagFieldDistribution(filterDead).inField(f)

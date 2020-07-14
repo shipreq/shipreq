@@ -12,7 +12,7 @@ final case class ImpFieldCalcBM(data: BenchmarkData) {
     BenchmarkData
       .newProject(deep = false)
       .map(p => (p, p.config.fields.customImpFields.headOption.get.id))
-      .apply("Calculation") { case (p, fieldId) => p.dataLogic.customFieldImps(HideDead)(fieldId)(reqId) }
+      .apply("Calculation") { case (p, fieldId) => p.dataLogic.customFieldImps(HideDead)(fieldId).getPubids(reqId) }
 
   val suite    = Suite("ImpField calculation")(bm)
   val guiSuite = GuiSuite(suite, data.guiParam)

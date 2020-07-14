@@ -205,7 +205,7 @@ object ViewReq {
         customTags       = customTags,
         invalidTags      = project.invalidTagsPerReq(id),
         generalImps      = generalImps,
-        customImps       = fid => sortPubids(customImpLookup(fid)(id)),
+        customImps       = fid => sortPubids(customImpLookup(fid).getPubids(id)),
         pastPubids       = pastPubids,
         impsAreMandatory = cfg.reqTypes.idsRequiringImplication.contains(req.reqTypeId),
         fieldRules       = cfg.fieldRules(filterDead)(req.reqTypeId),

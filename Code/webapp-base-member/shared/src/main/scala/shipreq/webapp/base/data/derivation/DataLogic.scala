@@ -234,9 +234,7 @@ final class DataLogic(p: Project) {
 object DataLogic {
 
   final case class CustomImpFieldValues(getReqIds: ReqId => Set[ReqId],
-                                        getPubids: ReqId => Set[Pubid]) {
-    def apply(reqId: ReqId): Set[Pubid] = getPubids(reqId) // TODO delete
-  }
+                                        getPubids: ReqId => Set[Pubid])
 
   private[this] val defaultOnly = Location.FieldDefault :: Nil
 
