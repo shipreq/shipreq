@@ -5,7 +5,7 @@ import shipreq.webapp.base.test.ProjectDsl._
 import shipreq.webapp.base.test.UnsafeTypes._
 
 /**
- * mf1 → fr1 ̉↘
+ * mf1 → fr1 ↘
  *             fr2 → fr3
  *     ↗ mf2 ↗
  * br1             ↗ mf4 → fr6

@@ -1,6 +1,7 @@
 package shipreq.webapp.client.ww
 
 import japgolly.microlibs.utils.Memo
+import scala.annotation.tailrec
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
 
@@ -71,4 +72,30 @@ private[ww] object GraphUtil {
 
   @inline def deadNodeStyleIfDead(live: Live)(implicit b: GraphViz.Builder): Unit =
     if (live is Dead) deadNodeStyle()
+
+  /** Traverses a graph processing each node once.
+    *
+    * Root nodes are also processed.
+    *
+    * @param process 1. Mutate some external state to record the A.
+    *                2. Return the argument node's child-nodes.
+    */
+  def mutableGraphTraversal[A](roots: Set[A])(process: A => Set[A]): Unit = {
+    @tailrec
+    def go(queue: List[A], queueNext: Set[A], seen: Set[A]): Unit =
+      queue match {
+        case Nil =>
+          if (queueNext.nonEmpty)
+            go(queueNext.toList, Set.empty, seen)
+
+        case fromId :: queue2 =>
+          if (seen.contains(fromId))
+            go(queue2, queueNext, seen)
+          else {
+            val toIds = process(fromId)
+            go(queue2, queueNext ++ toIds, seen + fromId)
+          }
+      }
+    go(Nil, roots, Set.empty)
+  }
 }

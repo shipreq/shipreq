@@ -28,7 +28,7 @@ object GraphTestUtil {
     val a = normaliseDOT(actual)
     if (a != e) {
       println()
-      println(actual.content)
+      println(a)
       println()
       assertMultiline(actual = a, expect = e)
     }

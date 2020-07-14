@@ -5,8 +5,8 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
 import scalaz.{-\/, Equal, \/-}
-import shipreq.base.util.NotApplicable
 import shipreq.base.util.univeq._
+import shipreq.base.util.{Applicable, NotApplicable}
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.derivation._
 
@@ -246,6 +246,11 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
       case f: CustomField.Text       .Id => rulesForReqType(_).text(f).applicability
       case f: StaticField                => f.fieldReqTypeRules(_).applicability
     }
+  }
+
+  def fieldsForReqTypeIterator(reqTypeId: ReqTypeId, filterDead: FilterDead): Iterator[Field] = {
+    val liveFilter = filterDead.filterFnBy((_: Field) live this)
+    fields.fields.iterator.filter(f => liveFilter(f) && applicability(reqTypeId, f.fieldId).is(Applicable))
   }
 
   val mostRelevantLiveFieldForTag: TagId => Option[CustomField.Tag] =

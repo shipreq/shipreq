@@ -28,22 +28,28 @@ object DataLogicTest extends TestSuite {
     assertMultiline(actual, expect)
   }
 
-  // https://shipreq.com/project/d6My#reqs/IV-26
-  private def testImpFieldLogicV2_IV26(): Unit = {
-    import SampleImplicationGraph2._
-    assertImpFields(project, mfField, mfFieldValues)
-  }
-
-  private def testImpFieldLogicV2_SIG(): Unit = {
+  private def testImpFieldLogicV2_SIG1(): Unit = {
     import SampleImplicationGraph.Values.mfField
     import SampleImplicationGraph._
     assertImpFields(project, mfField, mfFieldValues)
   }
 
+  private def testImpFieldLogicV2_SIG2(): Unit = {
+    import SampleImplicationGraph2._
+    assertImpFields(project, mfField, mfFieldValues)
+  }
+
+  private def testImpFieldLogicV2_SIG3(): Unit = {
+    import SampleImplicationGraph3._
+    assertImpFields(project, mfField, mfFieldValues)
+  }
+
   override def tests = Tests {
+    // https://shipreq.com/project/d6My#/reqs/IV-26
     "impFieldLogicV2" - {
-      "IV-26" - testImpFieldLogicV2_IV26()
-      "SIG" - testImpFieldLogicV2_SIG()
+      "SIG1" - testImpFieldLogicV2_SIG1()
+      "SIG2" - testImpFieldLogicV2_SIG2()
+      "SIG3" - testImpFieldLogicV2_SIG3()
     }
   }
 }

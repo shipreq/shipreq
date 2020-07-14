@@ -134,7 +134,7 @@ final class DataLogic(p: Project) {
     Ordering.by(tagOrderByPos)
 
   // See https://shipreq.com/project/d6My#reqs/IV-26 for an explanation of this logic.
-  val customFieldImps: FilterDead => CustomField.Implication.Id => ReqId => Set[Pubid] =
+  val customFieldImps: FilterDead => CustomField.Implication.Id => CustomImpFieldValues =
     FilterDead.memoLazy { fd =>
       val filter = p.config.reqFilter(fd)
 
@@ -200,17 +200,23 @@ final class DataLogic(p: Project) {
             addForwards(fieldValue, id, i => everythingBackwards.contains(i) || everythingForwards.contains(i))
         }
 
-        Memo { id =>
-          state.get(id) match {
-            case Some(s) =>
-              val result = s.iterator.map(p.content.reqs.need(_).pubid).toSet
-              state.update(id, null) // free memory
-              result
+        val getReqIds: ReqId => Set[ReqId] =
+          Memo { id =>
+            state.get(id) match {
+              case Some(s) =>
+                val result = s.toSet
+                state.update(id, null) // free memory
+                result
 
-            case None =>
-              Set.empty
+              case None =>
+                Set.empty
+            }
           }
-        }
+
+        val getPubids: ReqId => Set[Pubid] =
+          getReqIds.andThen(_.map(p.content.reqs.need(_).pubid))
+
+        CustomImpFieldValues(getReqIds, getPubids)
       }
     }
 
@@ -226,6 +232,11 @@ final class DataLogic(p: Project) {
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 object DataLogic {
+
+  final case class CustomImpFieldValues(getReqIds: ReqId => Set[ReqId],
+                                        getPubids: ReqId => Set[Pubid]) {
+    def apply(reqId: ReqId): Set[Pubid] = getPubids(reqId) // TODO delete
+  }
 
   private[this] val defaultOnly = Location.FieldDefault :: Nil
 

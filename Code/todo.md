@@ -52,7 +52,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* [FR-21] Implication graph #must include external implication sources
 * [FR-22] User #must be able to filter by imp-field values
 
 
