@@ -20,19 +20,17 @@ resource "aws_s3_bucket_public_access_block" "billing" {
   restrict_public_buckets = true
 }
 
-data "aws_billing_service_account" "main" {}
-
+// https://docs.aws.amazon.com/cur/latest/userguide/cur-s3.html
 resource "aws_s3_bucket_policy" "billing" {
   bucket = aws_s3_bucket.billing.id
   policy = <<EOB
 {
-  "Version": "2008-10-17",
+  "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "AllowCURBillingACLPolicy",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "${data.aws_billing_service_account.main.arn}"
+        "Service": "billingreports.amazonaws.com"
       },
       "Action": [
         "s3:GetBucketAcl",
@@ -41,13 +39,12 @@ resource "aws_s3_bucket_policy" "billing" {
       "Resource": "${aws_s3_bucket.billing.arn}"
     },
     {
-      "Sid": "AllowCURPutObject",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::386209384616:root"
+        "Service": "billingreports.amazonaws.com"
       },
       "Action": "s3:PutObject",
-      "Resource": "arn:aws:s3:::${aws_s3_bucket.billing.id}/*"
+      "Resource": "${aws_s3_bucket.billing.arn}/*"
     }
   ]
 }
