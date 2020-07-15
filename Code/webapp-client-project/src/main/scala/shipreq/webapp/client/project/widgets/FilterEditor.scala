@@ -79,6 +79,53 @@ object FilterEditor {
       case -\/(_) => (Invalid, None)
     }
 
+  private[widgets] def autoCompleteStrategies(p: Project): AutoComplete.Strategies = {
+
+    val hashtags = AutoComplete.Project.hashtag(
+      project    = p,
+      filterDead = ShowDead,
+      issues     = true,
+      tags       = true,
+      naTags     = NaTags.none)(
+      Contextualise)
+
+    val fieldNames = {
+      def projectFields =
+        p.config.fieldsByName
+          .iterator
+          .filter(_._2 match {
+            case _: CustomField
+               | StaticField.AllTags
+               | StaticField.OtherTags
+               | StaticField.NormalAltStepTree
+               | StaticField.ExceptionStepTree
+            => true
+            case StaticField.ImplicationGraph
+               | StaticField.StepGraph
+            => false
+          })
+          .map(_._1)
+
+      def specialFields =
+        SpecialBuiltInField.filterOk.iterator.map(_.name)
+
+      MutableArray(projectFields ++ specialFields)
+        .sort
+        .iterator()
+        .map(FilterAlgebra.quoteFieldName)
+        .toArray
+    }
+
+    val autoCompleteFieldName =
+      AutoComplete.Strategy.builder
+        .regex("""\b(field:)([a-z]*)$""", index = 2)
+        .search(AutoComplete.Query caseInsensitiveStartsWith fieldNames)
+        .replace("$1" + _)
+        .result()
+
+    hashtags :+ autoCompleteFieldName :+ autoCompletePresenceLackAttr :+ autoCompleteHasIssue :+ autoCompleteKeywords
+  }
+
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.BackendI {
 
     private val pxProject: Px[Project] =
@@ -91,52 +138,7 @@ object FilterEditor {
       pxProjectConfig.map(FilterAlgebra.validate)
 
     private val pxAutoComplete: Px[AutoComplete.Strategies] =
-      pxProject.map { p =>
-
-        val hashtags = AutoComplete.Project.hashtag(
-          project    = p,
-          filterDead = ShowDead,
-          issues     = true,
-          tags       = true,
-          naTags     = NaTags.none)(
-          Contextualise)
-
-        val fieldNames = {
-          def projectFields =
-            p.config.fieldsByName
-              .iterator
-              .filter(_._2 match {
-                case _: CustomField
-                   | StaticField.AllTags
-                   | StaticField.OtherTags
-                   | StaticField.NormalAltStepTree
-                   | StaticField.ExceptionStepTree
-                   => true
-                case StaticField.ImplicationGraph
-                   | StaticField.StepGraph
-                   => false
-              })
-            .map(_._1)
-
-          def specialFields =
-            SpecialBuiltInField.filterOk.iterator.map(_.name)
-
-          MutableArray(projectFields ++ specialFields)
-            .sort
-            .iterator()
-            .map(FilterAlgebra.quoteFieldName)
-            .toArray
-        }
-
-        val autoCompleteFieldName =
-          AutoComplete.Strategy.builder
-            .regex("""\b(field:)([a-z]*)$""", index = 2)
-            .search(AutoComplete.Query caseInsensitiveStartsWith fieldNames)
-            .replace("$1" + _)
-            .result()
-
-        hashtags :+ autoCompleteFieldName :+ autoCompletePresenceLackAttr :+ autoCompleteHasIssue :+ autoCompleteKeywords
-      }
+      pxProject.map(autoCompleteStrategies)
 
     private val helpButton: VdomTag =
       Button(tipe = Button.Type.IconOnly(Icon.HelpCircle))
