@@ -3,7 +3,7 @@ package shipreq.webapp.base.feature.autocomplete.strategies
 import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.data.{Contextualise, Plain, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
-import shipreq.webapp.base.feature.autocomplete.strategies.AutoCompleteTestUtil._
+import shipreq.webapp.base.feature.autocomplete.strategies.AutoCompleteTestData._
 import shipreq.webapp.base.feature.autocomplete.strategies._
 import shipreq.webapp.base.test.SampleProject3._
 import shipreq.webapp.base.text.Text
