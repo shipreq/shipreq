@@ -66,7 +66,7 @@ object FilterAlgebra {
       case Regex         (text)              => '/' ~ text.replace("/", "\\/") ~ '/'
       case ReqType       (value)             => value.value
       case HashRef       (text)              => Grammar.hashRefKey.prefix ~ text.value
-      case FieldProp     (field, attr)       => "field:" ~ quoteFieldName(field) ~ ":" ~ attr
+      case FieldProp     (field, attr)       => "field:" ~ quoteFieldName(field) ~ "=" ~ attr
       case HasIssue      (on, criteria)      => "has:issue:" ~ (if (on is On) "" else "-") ~ criteria.mkString(",")
       case ImpliesAnyOf  (reqs)              => "implies:" ~ fmtReqs(reqs, ',')
       case ImpliedByAnyOf(reqs)              => "impliedBy:" ~ fmtReqs(reqs, ',')

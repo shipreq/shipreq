@@ -191,11 +191,12 @@ object FilterParserTest extends TestSuite {
     }
 
     "field" - {
-      "na"         - test("field:poop:n/a",     fieldProp("poop", "n/a"))
-      "default"    - test("field:poop:default", fieldProp("poop", "default"))
-      "blank"      - test("field:poop:blank",   fieldProp("poop", "blank"))
-      "quoteSpace" - test("field:\"a b\":xx",   fieldProp("a b", "xx"))
-      "quoteColon" - test("field:\"a:b\":xx",   fieldProp("a:b", "xx"))
+      "na"         - test("field:poop=n/a",     fieldProp("poop", "n/a"))
+      "default"    - test("field:poop=default", fieldProp("poop", "default"))
+      "blank"      - test("field:poop=blank",   fieldProp("poop", "blank"))
+      "quoteSpace" - test("field:\"a b\"=xx",   fieldProp("a b", "xx"))
+      "quoteColon" - test("field:\"a:b\"=xx",   fieldProp("a:b", "xx"))
+      "quoteEqual" - test("field:\"a=b\"=xx",   fieldProp("a=b", "xx"))
     }
 
     "hasIssue" - {

@@ -138,22 +138,23 @@ object FilterHelp {
 
       Example(
         "To find requirements that are blank for some field, enter ",
-        code("field:<NAME>:blank"), " and replace ", code("<NAME>"), " with the real field name."
-      )("field:Priority:blank"),
+        code("field:<NAME>=blank"), " and replace ", code("<NAME>"), " with the real field name."
+      )("field:Priority=blank"),
 
       Example(
         "To find requirements that are using default field value, enter ",
-        code("field:<NAME>:default"), " and replace ", code("<NAME>"), " with the real field name."
-      )("field:Priority:default"),
+        code("field:<NAME>=default"), " and replace ", code("<NAME>"), " with the real field name."
+      )("field:Priority=default"),
 
       Example(
         "To find requirements to which some field isn't applicable, enter ",
-        code("field:<NAME>:n/a"), " and replace ", code("<NAME>"), " with the real field name."
-      )("field:Priority:n/a"),
+        code("field:<NAME>=n/a"), " and replace ", code("<NAME>"), " with the real field name."
+      )("field:Priority=n/a"),
 
       Example(
-        "If your field name contains a colon (", code(":"), "), wrap the field name in quotes."
-      )("field:\"Foo: Bar\":blank"),
+        "If your field name contains spaces, an equals (", code("="), "), or a colon (", code(":"),
+        "), wrap the field name in quotes."
+      )("field:\"Foo Bar\"=blank"),
     ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
