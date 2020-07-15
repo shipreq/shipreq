@@ -11,6 +11,7 @@ import scalaz.syntax.traverse1._
 import scalaz.{-\/, Functor, Traverse, \/, \/-}
 import shipreq.base.util.{Applicable, OptionalBoolFn, TransitiveClosure}
 import shipreq.webapp.base.data
+import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.derivation.DataLogic.{IssueLookup, TagLookup}
 import shipreq.webapp.base.data.{FilterDead, On}
 import shipreq.webapp.base.issue.Issues
@@ -154,7 +155,7 @@ object FilterAlgebra {
 
           val nameLower = fieldName.toLowerCase
           def tryL      = SpecialBuiltInField.filterOkByNameLowercase.get(nameLower).map(-\/(_))
-          def tryR      = cfg.fieldsByNameLowercase.get(nameLower).map(\/-(_))
+          def tryR      = cfg.fieldsByNameLowercaseWithFilterAliases.get(nameLower).map(\/-(_))
 
           def blankOnly(f: Valid.Field, name: String): String \/ Valid =
             attr match {
@@ -200,6 +201,23 @@ object FilterAlgebra {
     def convReqSet(x: Valid.ReqSet): Potential.ReqSet =
       x.map(Functor[IntensionalReqSet].map(_)(convReqType))
 
+    val fieldName: data.FieldId => String = {
+      @inline def default = cfg.fieldName
+
+      {
+        case id: data.CustomField.Implication.Id =>
+          val f     = cfg.fields.custom(id)
+          val alias = cfg.reqTypes.need(f.reqTypeId).mnemonic.value
+          cfg.fieldsByNameLowercaseWithFilterAliases.get(alias.toLowerCase) match {
+            case Some(f2) if f2.fieldId !=* id => default(id)
+            case _                             => alias
+          }
+
+        case id =>
+          default(id)
+      }
+    }
+
     {
       case HashRef       (\/-(id)) => Potential(HashRef       (cfg.tags.needApplicableTag(id).key))
       case HashRef       (-\/(id)) => Potential(HashRef       (cfg.customIssueTypes.need(id).key))
@@ -209,7 +227,7 @@ object FilterAlgebra {
       case Reqs          (reqs)    => Potential(Reqs          (convReqSet(reqs)))
       case ReqType       (id)      => Potential(ReqType       (convReqType(id)))
       case HasIssue      (on, c)   => Potential(HasIssue      (on, c.map(FilterAst.issueCategoryToStr)))
-      case FieldProp     (f, a)    => Potential(FieldProp     (f.fold(_.name, cfg.fieldName), a.name))
+      case FieldProp     (f, a)    => Potential(FieldProp     (f.fold(_.name, fieldName), a.name))
       case c: Regex                => Potential(c)
       case c: Text                 => Potential(c)
       case c: Not  [Potential]     => Potential(c)

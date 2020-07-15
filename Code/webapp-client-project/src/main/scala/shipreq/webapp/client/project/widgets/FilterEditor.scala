@@ -132,7 +132,18 @@ object FilterEditor {
             => false
           })
           .map { case (name, field) =>
-            FieldSuggestion(name)
+            def value: String =
+              field match {
+                case f: CustomField.Implication =>
+                  val reqType = p.config.reqTypes.need(f.reqTypeId).mnemonic.value
+                  if (allNames.contains(reqType))
+                    name
+                  else
+                    reqType
+                case _ =>
+                  name
+              }
+            FieldSuggestion(name, value)
           }
 
       MutableArray(projectFields ++ specialFields)

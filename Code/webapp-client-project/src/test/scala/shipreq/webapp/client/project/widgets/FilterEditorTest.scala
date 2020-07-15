@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.widgets
 
-import utest._
 import shipreq.webapp.base.test._
+import utest._
 
 object FilterEditorTest extends TestSuite {
 
@@ -28,6 +28,7 @@ object FilterEditorTest extends TestSuite {
         "simple"   - assertSuggestionsAndSelectionFor("field:pri")("Priority")("field:Priority")
         "middle"   - assertSuggestionsAndSelectionFor("field:tes")("Notes")("field:Notes")
         "quotes"   - assertSuggestionsAndSelectionFor("field:OTH")("Other Tags")("field:\"Other Tags\"")
+        "impField" - assertSuggestionsAndSelectionFor("field:maj")("Major Feature")("field:MF")
 
       }
 

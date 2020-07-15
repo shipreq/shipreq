@@ -3,9 +3,11 @@ package shipreq.webapp.base.filter
 import scalaz.{-\/, \/-}
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.data.SpecialBuiltInField._
+import shipreq.webapp.base.event.{CustomTextFieldGD, Event}
 import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._
+import sourcecode.Line
 import utest._
 
 object ValidFilterTest extends TestSuite {
@@ -13,14 +15,19 @@ object ValidFilterTest extends TestSuite {
   private val PF = Filter.Potential
   private val VF = Filter.Valid
 
-  private def assertTranslation(pf: Filter.Potential, p: Project = SampleProject6.project)(expect: Filter.Valid): Unit =
+  private def assertTranslation(pf: Filter.Potential, p: Project = SampleProject6.project)(expect: Filter.Valid)(implicit l: Line): Unit =
     assertEq(Filter.Potential.validate(pf, FilterAlgebra.validate(p.config)), \/-(expect))
 
-  private def assertTranslationFails(pf: Filter.Potential, p: Project = SampleProject6.project)(errFrag: String): Unit =
+  private def assertTranslationFails(pf: Filter.Potential, p: Project = SampleProject6.project)(errFrag: String)(implicit l: Line): Unit =
     Filter.Potential.validate(pf, FilterAlgebra.validate(p.config)) match {
       case -\/(e) => assertContainsCI(e, errFrag)
       case \/-(v) => fail(s"Expected an error containing '$errFrag'. Got: $v")
     }
+
+  private def assertValidToText(vf: Filter.Valid, p: Project = SampleProject6.project)(expect: String)(implicit l: Line): Unit = {
+    val text = Filter.Valid.toText(p.config, vf)
+    assertEq(text, expect)
+  }
 
   override def tests = Tests {
     import UnsafeTypes._
@@ -36,6 +43,20 @@ object ValidFilterTest extends TestSuite {
         "exact" - assertTranslation(PF.fieldProp("Description", "blank"))(VF.fieldProp(\/-(descField), Blank))
         "caseWrong" - assertTranslation(PF.fieldProp("descriPTION", "blank"))(VF.fieldProp(\/-(descField), Blank))
         "title" - assertTranslation(PF.fieldProp("TITLE", "BLANK"))(VF.fieldProp(-\/(Title), Blank))
+        "impField" - assertTranslation(PF.fieldProp("MF", "BLANK"))(VF.fieldProp(\/-(mfField), Blank))
+      }
+    }
+
+    "validToText" - {
+      "field" - {
+        "title"     - assertValidToText(VF.fieldProp(-\/(Title), Blank))("field:Title=blank")
+        "customTxt" - assertValidToText(VF.fieldProp(\/-(descField), Blank))("field:Description=blank")
+        "customImp" - assertValidToText(VF.fieldProp(\/-(mfField), Blank))("field:MF=blank")
+        "quotes"    - {
+          val e = Event.FieldCustomTextUpdate(descField, CustomTextFieldGD.nev(CustomTextFieldGD.ValueForName("ok good")))
+          val p = applyEventsSuccessfully(SampleProject6.project, e)
+          assertValidToText(VF.fieldProp(\/-(descField), Blank), p)("field:\"ok good\"=blank")
+        }
       }
     }
 

@@ -101,8 +101,23 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
     results
   }
 
-  lazy val fieldsByNameLowercase: Map[String, Field] =
-    fieldsByName.mapKeysNow(_.toLowerCase)
+  lazy val fieldsByNameLowercaseWithFilterAliases: Map[String, Field] = {
+    val norm: String => String = _.toLowerCase
+
+    var m = fieldsByName.mapKeysNow(norm)
+
+    // Add aliases that can be used in filter expressions
+    fields.customFields.valuesIterator.foreach {
+      case f: CustomField.Implication =>
+        val alias = norm(reqTypes.need(f.reqTypeId).mnemonic.value)
+        if (!m.contains(alias))
+          m = m.updated(alias, f)
+      case _ =>
+        ()
+    }
+
+    m
+  }
 
   lazy val fieldName: FieldId => String = {
     val m: Map[FieldId, String] = fieldsByName.map(x => (x._2.fieldId, x._1))
