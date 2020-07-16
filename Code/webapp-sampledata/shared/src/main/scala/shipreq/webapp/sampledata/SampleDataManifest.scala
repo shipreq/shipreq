@@ -1,40 +1,71 @@
 package shipreq.webapp.sampledata
 
-final case class SampleDataMeta(filename: String, projectConfigHash: Int, projectContentHash: Int)
+import io.circe.Json
+import japgolly.microlibs.testutil.TestUtilImplicits._
+import shipreq.webapp.base.event.{Event, VerifiedEvent}
+import shipreq.webapp.base.protocol.json.v1.Latest._
+
+final case class SampleDataMeta(filename: String,
+                                verifiedEvents: Boolean,
+                                projectConfigHash: Int,
+                                projectContentHash: Int) {
+
+  val decode: Json => Vector[Event] =
+    if (verifiedEvents)
+      _.as[VerifiedEvent.Seq].getOrThrow().iterator.map(_.event).toVector
+    else
+      _.as[Vector[Event]].getOrThrow()
+
+  def annotateExceptions[A](a: => A): A =
+    try
+      a
+    catch {
+      case t: Throwable =>
+        throw new RuntimeException(s"Error in $filename", t)
+    }
+}
 
 trait SampleDataManifest[D] { self =>
   protected def load(meta: SampleDataMeta): D
 
   object full {
     def load(size: Int, projectConfigHash: Int, projectContentHash: Int): D =
-      self.load(SampleDataMeta(s"shipreq-events-full-$size.json", projectConfigHash, projectContentHash))
+      self.load(SampleDataMeta(s"sampledata-full-$size.json", false, projectConfigHash, projectContentHash))
 
-    lazy val  `1000`: D = load( 1000,   -15975327, -1910444130)
-    lazy val  `2000`: D = load( 2000,   454447920, -1851467186)
-    lazy val  `4000`: D = load( 4000,   106265614, -1357390324)
-    lazy val `10000`: D = load(10000, -1981610195, -1390028356)
+    lazy val  `1000`: D = load( 1000,  1452203069, -2018537233)
+    lazy val  `2000`: D = load( 2000, -2100690608,  1677984964)
+    lazy val  `4000`: D = load( 4000, -1398041708, -1511276617)
+    lazy val `10000`: D = load(10000, -1195563770, -1832283493)
   }
 
   object noReqCodes {
     def load(size: Int, projectConfigHash: Int, projectContentHash: Int): D =
-      self.load(SampleDataMeta(s"shipreq-events-no_req_codes-$size.json", projectConfigHash, projectContentHash))
+      self.load(SampleDataMeta(s"sampledata-no_req_codes-$size.json", false, projectConfigHash, projectContentHash))
 
-    lazy val  `1000`: D = load( 1000,  251955416, -2078654579)
-    lazy val  `2000`: D = load( 2000,  325713993,   682764916)
-    lazy val  `4000`: D = load( 4000, 2107620222, -1415010622)
-    lazy val `10000`: D = load(10000,  355316401,  -392124681)
+    lazy val  `1000`: D = load( 1000,  -763717055,  1377465625)
+    lazy val  `2000`: D = load( 2000, -1376499562,    29101933)
+    lazy val  `4000`: D = load( 4000,  -665692199, -1605087212)
+    lazy val `10000`: D = load(10000,  -679426977,   729017725)
+  }
+
+  object real {
+    def load(size: Int, projectConfigHash: Int, projectContentHash: Int): D =
+      self.load(SampleDataMeta(s"shipreq-events-real-$size.json", true, projectConfigHash, projectContentHash))
+
+    lazy val `582`: D = load(582, -376644927, 1214255403)
   }
 
   lazy val all: Vector[D] =
     Vector(
-      full. `1000`,
-      full. `2000`,
-      full. `4000`,
-      full.`10000`,
+      full      . `1000`,
+      full      . `2000`,
+      full      . `4000`,
+      full      .`10000`,
       noReqCodes. `1000`,
       noReqCodes. `2000`,
       noReqCodes. `4000`,
       noReqCodes.`10000`,
+      real      .  `582`,
     )
 
   def byParams(`type`: String, size: String): D =
@@ -47,6 +78,14 @@ trait SampleDataManifest[D] { self =>
       case ("no_req_codes",  "2000") => noReqCodes. `2000`
       case ("no_req_codes",  "4000") => noReqCodes. `4000`
       case ("no_req_codes", "10000") => noReqCodes.`10000`
+      case ("real",           "582") => real      .  `582`
       case _                         => ???
+    }
+
+  private val idFmt = "(.+):(.+)".r
+
+  def byId(id: String): D =
+    id match {
+      case idFmt(t, s) => byParams(t, s)
     }
 }

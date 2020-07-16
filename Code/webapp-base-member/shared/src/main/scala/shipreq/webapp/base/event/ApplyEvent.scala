@@ -1,7 +1,7 @@
 package shipreq.webapp.base.event
 
 import nyaya.prop.LogicPropExt
-import scalaz.{\/, \/-}
+import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{DataProp, Project}
 import shipreq.webapp.base.event.ApplyEventLib._
@@ -39,19 +39,29 @@ final class ApplyEvent(implicit val trust: Trust)
 
   import ApplyEvent.{Events, Result}
 
-  def apply1(event: Event)(p: Project): Result =
-    applyOneSafely(event).exec(p)
-
   def apply(events: Events)(p: Project): Result =
-    applyAllSafely(events).exec(p)
+    safelyApply(events).exec(p)
 
-  def applyVerified(ves: IterableOnce[VerifiedEvent])(p: Project): Result =
-    if (ves.iterator.isEmpty)
+  def apply1(event: Event)(p: Project): Result =
+    safelyApply1(event).exec(p)
+
+  def applyVerified(ves: VerifiedEvent.Seq)(p: Project): Result =
+    if (ves.isEmpty)
       \/-(p)
     else
-      applyAllSafely(ves.iterator.map(_.event)).exec(p)
+      applyVerified(VerifiedEvent.NonEmptySeq.force(ves))(p)
+
+  def applyVerified(ves: VerifiedEvent.NonEmptySeq)(p: Project): Result =
+    safelyApply(ves.iterator.map(_.event)).exec(p) match {
+      case ok @ \/-(_) => ok
+      case -\/(_)      => Eval.foldMapRun(ves)(safelyApplyVerified1).exec(p)
+    }
+
+  def applyVerified1(event: VerifiedEvent)(p: Project): Result =
+    safelyApplyVerified1(event).exec(p)
 
   // ===================================================================================================================
+  // Safe
 
   private val validateDataProps: Eval[Unit] =
     whenUntrusted {
@@ -65,22 +75,35 @@ final class ApplyEvent(implicit val trust: Trust)
       }
     }
 
-  private def safely(apply: Eval[Unit]): Eval[Unit] =
-    (apply >> validateDataProps).catchErrors(onError)
+  private val safely: Eval[Unit] => Eval[Unit] = {
+    val onError: Throwable => ErrorMsg =
+      e => {
+        val msg = Option(e.getMessage).filter(_.nonEmpty)
+        ErrorMsg(msg getOrElse s"Error occurred: $e")
+      }
+    i => (i >> validateDataProps).catchErrors(onError)
+  }
 
-  // -------------------------------------------------------------------------------------------------------------------
+  private def safelyApply(events: Events): Eval[Unit] =
+    safely(unsafelyApply(events))
 
-  private def applyAllSafely(events: Events): Eval[Unit] =
-    safely(applyAllUnsafely(events))
+  private def safelyApply1(event: Event): Eval[Unit] =
+    safely(unsafelyApply1(event))
 
-  private def applyAllUnsafely(events: Events): Eval[Unit] =
-//    events.iterator.foldLeft(Eval.unit)((q, e) => q >> Eval.restack(applyOneUnsafely(e)))
-    Eval.foldMapRun(events)(applyOneUnsafely)
+  private def safelyApplyVerified1(ve: VerifiedEvent): Eval[Unit] = {
+    val onFailure: ErrorMsg => Eval[Unit] =
+      err => Eval.fail(err.withPrefix(s"[#${ve.ord.value}] "))
+    safelyApply1(ve.event).handleFailure(onFailure)
+  }
 
-  private def applyOneSafely(event: Event): Eval[Unit] =
-    safely(applyOneUnsafely(event))
+  // ===================================================================================================================
+  // Unsafe
 
-  private def applyOneUnsafely(event: Event): Eval[Unit] = {
+  private def unsafelyApply(events: Events): Eval[Unit] =
+    // events.iterator.foldLeft(Eval.unit)((q, e) => q >> Eval.restack(unsafelyApply1(e)))
+    Eval.foldMapRun(events)(unsafelyApply1)
+
+  private def unsafelyApply1(event: Event): Eval[Unit] = {
     import Event._
     event match {
       case e: ApplicableTagCreate     => ApplicableTagEvents     applyCreate                e
@@ -150,14 +173,7 @@ final class ApplyEvent(implicit val trust: Trust)
       case e: UseCaseStepShiftRight   => UseCaseEvents           applyStepShiftRight        e
       case e: UseCaseStepUpdate       => UseCaseEvents           applyStepUpdate            e
       case e: UseCaseTitleSet         => UseCaseEvents           applyTitleSet              e
-      case e: ProjectTemplateApply    => safely(applyAllUnsafely(e.template.events))
+      case e: ProjectTemplateApply    => safelyApply(e.template.events)
     }
   }
-
-  private val onError: Throwable => ErrorMsg =
-    e => {
-      val msg = Option(e.getMessage).filter(_.nonEmpty)
-      ErrorMsg(msg getOrElse s"Error occurred: $e")
-    }
-
 }

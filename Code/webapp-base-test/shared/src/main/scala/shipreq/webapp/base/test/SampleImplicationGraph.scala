@@ -5,14 +5,33 @@ import shipreq.webapp.base.test.ProjectDsl._
 import shipreq.webapp.base.test.UnsafeTypes._
 
 /**
- * mf1 → fr1 ̉↘
+ * mf1 → fr1 ↘
  *             fr2 → fr3
  *     ↗ mf2 ↗
  * br1             ↗ mf4 → fr6
  *     ↘ br2 → mf3
  *                 ↘ fr4 → fr5 → mf5
+ * fr7
  */
 object SampleImplicationGraph {
+
+  def mfFieldValues =
+    """
+      |BR1 - 2,3,4,5
+      |BR2 - 3,4,5
+      |FR1 - 1,2
+      |FR2 - 1,2
+      |FR3 - 1,2
+      |FR4 - 3,5
+      |FR5 - 3,5
+      |FR6 - 3,4
+      |FR7 -
+      |MF1 - 1
+      |MF2 - 2
+      |MF3 - 3,4,5
+      |MF4 - 3,4
+      |MF5 - 3,5
+      |""".stripMargin.trim
 
   val mf1: GenericReqId = 11
   val mf2: GenericReqId = 12
@@ -29,10 +48,14 @@ object SampleImplicationGraph {
   val fr4: GenericReqId = 34
   val fr5: GenericReqId = 35
   val fr6: GenericReqId = 36
+  val fr7: GenericReqId = 37
+
+  type Values = SampleProject.Values
+  val Values  = SampleProject.Values
 
   lazy val projectDsl = {
     def t(i: GenericReqId, rt: CustomReqTypeId, tgts: ReqId*) = GReq(id = i, reqType = rt, impTgts = tgts.toSet)
-    import SampleProject.Values._
+    import Values._
 
     ( t(mf1, mf, fr1)
     + t(mf2, mf, fr2)
@@ -49,6 +72,7 @@ object SampleImplicationGraph {
     + t(fr4, fr, fr5)
     + t(fr5, fr, mf5)
     + t(fr6, fr)
+    + t(fr7, fr)
     )
   }
 

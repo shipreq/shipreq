@@ -6,7 +6,6 @@ import japgolly.microlibs.testutil.TestUtilImplicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Ajax
 import shipreq.webapp.base.event.Event
-import shipreq.webapp.base.protocol.json.v1.Latest.decoderEvent
 
 final case class SampleData(meta: SampleDataMeta, events: Vector[Event]) extends AbstractSampleData(meta, events) {
   override val hashCode = meta.hashCode
@@ -29,7 +28,9 @@ object SampleData extends SampleDataManifest[AsyncCallback[SampleData]] {
 
   override protected def load(meta: SampleDataMeta): AsyncCallback[SampleData] =
     loadJsonFromResource(meta.filename)
-      .map(_.as[Vector[Event]].getOrThrow())
+      .map(meta.decode)
       .map(SampleData(meta, _))
+      .attemptTry
+      .map(t => meta.annotateExceptions(t.get))
       .memo()
 }

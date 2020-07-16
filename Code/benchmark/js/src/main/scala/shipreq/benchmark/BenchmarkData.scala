@@ -30,4 +30,6 @@ object BenchmarkData {
   val verifiedEventsBinary = Benchmark.setup[SampleData, ByteBuffer       ](_.verifiedEventsBinary.toNewByteBuffer)
   val project              = Benchmark.setup[SampleData, Project          ](_.project)
   val projectBinary        = Benchmark.setup[SampleData, ByteBuffer       ](_.projectBinary.toNewByteBuffer)
+
+  def newProject(deep: Boolean = true) = Benchmark.setup[SampleData, Project](_.newProject(deep))
 }

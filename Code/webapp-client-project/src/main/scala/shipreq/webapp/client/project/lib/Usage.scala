@@ -56,13 +56,15 @@ final class Usage(p: Project, router: SpecialRouterCtl) {
       case StaticField.AllTags
          | StaticField.OtherTags
          | StaticField.ImplicationGraph =>
-        not(fieldProp(f, Blank))
+        not(fieldProp(f, FieldCriteria.Attr(Blank)))
 
       case _: CustomFieldId
          | StaticField.NormalAltStepTree
          | StaticField.ExceptionStepTree
          | StaticField.StepGraph =>
-        not(anyOf(fieldProp(f, Blank), fieldProp(f, NotApplicable)))
+        not(anyOf(
+          fieldProp(f, FieldCriteria.Attr(Blank)),
+          fieldProp(f, FieldCriteria.Attr(NotApplicable))))
     }
   }
 

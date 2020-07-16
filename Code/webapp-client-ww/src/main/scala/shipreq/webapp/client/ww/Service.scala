@@ -21,14 +21,14 @@ object Service extends Server.Service[WebWorkerCmd] {
         for {
           _ <- state.await(ord)
           p <- state.acProject
-          x <- Graphs.useCaseStepFlow(id, p, ctx).toSvg
+          x <- UseCaseStepFlow(id, p, ctx).toSvg
         } yield x
 
       case GraphReqImplications(ord, focus, filterDead) =>
         for {
           _ <- state.await(ord)
           p <- state.acProject
-          x <- Graphs.implicationFocused(focus, filterDead, p).toSvg
+          x <- ImplicationGraph(focus, filterDead, p).toSvg
         } yield x
 
       case GraphAllImplications(ord, filterDead, scope, config) =>
@@ -36,7 +36,7 @@ object Service extends Server.Service[WebWorkerCmd] {
           _  <- state.await(ord)
           p  <- state.acProject
           pt <- state.acPlainText
-          x  <- Graphs.implicationAll(p, pt, filterDead, scope, config).toSvg
+          x  <- ReqGraph(p, pt, filterDead, scope, config).toSvg
         } yield x
 
     }

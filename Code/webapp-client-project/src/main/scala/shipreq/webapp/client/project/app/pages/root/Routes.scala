@@ -79,7 +79,7 @@ object Routes {
       def staticPage(route: StaticDsl.Route[Unit], page: Page) =
         staticRoute(route, page) ~> renderR(r => render(page, r))
 
-      val reqTablePath = "#reqs"
+      val reqTablePath = "#/reqs"
 
       def reqDetailRoute =
         dynamicRouteCT(reqTablePath / remainingPath.pmapL(Page.ReqDetail.stringPrism)) ~> dynPage autoCorrect
@@ -87,16 +87,39 @@ object Routes {
       def title(p: Page): String =
         WebappConfig.makePageTitle(Page.title(p) :+ rootInstance.unsafeProject().name: _*)
 
-      ( staticPage(dsl.root       , Page.Index      )
-      | staticPage(reqTablePath   , Page.ReqTable   )
-      | staticPage("#issues"      , Page.Issues     )
-      | staticPage("#reqgraph"    , Page.ReqGraph   )
-      | staticPage("#cfg/fields"  , Page.CfgFields  )
-      | staticPage("#cfg/issues"  , Page.CfgIssues  )
-      | staticPage("#cfg/reqtypes", Page.CfgReqTypes)
-      | staticPage("#cfg/tags"    , Page.CfgTags    )
+      val normalisation =
+        rewritePathF { path =>
+          var p = path.value
+
+          // Ensure that a slash is between the leading hash and whatever-else
+          if (p.length > 1 && p(0) == '#' && p(1) != '/')
+            p = "#/" + p.drop(1)
+
+          // Consolidate slashes
+          if (p.contains("//"))
+            p = p.replaceAll("/{2,}", "/")
+
+          // Remove trailing slash
+          if (p.endsWith("/"))
+            p = p.dropRight(1)
+
+          // Rewrite old cfg paths
+          if (p.startsWith("#cfg/"))
+            p = "#/config/" + p.drop(5)
+
+          Option.when(p != path.value)(redirectToPath(p)(SetRouteVia.HistoryReplace))
+        }
+
+      ( staticPage(dsl.root           , Page.Index      )
+      | staticPage(reqTablePath       , Page.ReqTable   )
+      | staticPage("#/issues"         , Page.Issues     )
+      | staticPage("#/reqgraph"       , Page.ReqGraph   )
+      | staticPage("#/config/fields"  , Page.CfgFields  )
+      | staticPage("#/config/issues"  , Page.CfgIssues  )
+      | staticPage("#/config/reqtypes", Page.CfgReqTypes)
+      | staticPage("#/config/tags"    , Page.CfgTags    )
+      | normalisation
       | reqDetailRoute
-      | trimSlashes
       ).notFound(redirectToPage(Page.Index)(SetRouteVia.HistoryReplace))
         .setTitle(title)
         .onPostRender(trackPage)

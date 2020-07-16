@@ -31,6 +31,7 @@ import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
 object FilterAlgebra {
   import Filter._
   import FilterAst._
+  import Filter.Valid.FieldCriteria
 
   val isFieldNameUnquotedChar: Char => Boolean = {
     case ':' | '=' | '"' => false
@@ -132,34 +133,25 @@ object FilterAlgebra {
         case _: Throwable => -\/(s"Invalid regex: /$regex/")
       }
 
-    // explicit types here because IntelliJ is a piece of shit
-    val alg: PotentialF[Valid] => String \/ Valid = {
-      case HashRef       (key)   => byHashTag(key)
-      case ImpliesAnyOf  (reqs)  => byReqSet(reqs, ImpliesAnyOf.apply)
-      case ImpliedByAnyOf(reqs)  => byReqSet(reqs, ImpliedByAnyOf.apply)
-      case Reqs          (reqs)  => byReqSet(reqs, Reqs.apply)
-      case Presence      (attr)  => byAttr(attr, Presence.apply)
-      case HasIssue      (on, c) => c.traverse1(FilterAst.issueCategoryFromStr).map(Valid.hasIssue(on, _))
-      case Regex         (regex) => byRegex(regex)
-      case ReqType       (mn)    => lookupReqType(mn).map(rt => Valid(ReqType(rt.reqTypeId)))
-      case c: Text               => \/-(Valid(c))
-      case c: Not  [Valid]       => \/-(Valid(c))
-      case c: AllOf[Valid]       => \/-(Valid(c))
-      case c: AnyOf[Valid]       => \/-(Valid(c))
+    def byField(fieldName: String, criteriaText: String): R = {
+      import FieldAttr._
+      import data._
 
-      case FieldProp(fieldName, attrStr) =>
-        import FieldAttr._
-        import data._
-        lookupFieldAttr(attrStr) { attr =>
+      type ParsedField = SpecialBuiltInField.FilterOk \/ Field
+      val parsedField: Option[ParsedField] = {
+        val nameLower = fieldName.toLowerCase
+        def tryL      = SpecialBuiltInField.filterOkByNameLowercase.get(nameLower).map(-\/(_))
+        def tryR      = cfg.fieldsByNameLowercaseWithFilterAliases.get(nameLower).map(\/-(_))
+        tryL orElse tryR
+      }
+
+      def parseAsAttr(field: ParsedField): R =
+        lookupFieldAttr(criteriaText) { attr =>
           import SpecialBuiltInField._
-
-          val nameLower = fieldName.toLowerCase
-          def tryL      = SpecialBuiltInField.filterOkByNameLowercase.get(nameLower).map(-\/(_))
-          def tryR      = cfg.fieldsByNameLowercaseWithFilterAliases.get(nameLower).map(\/-(_))
 
           def blankOnly(f: Valid.Field, name: String): String \/ Valid =
             attr match {
-              case Blank         => \/-(Valid(FieldProp(f, attr)))
+              case Blank         => \/-(Valid(FieldProp(f, FieldCriteria.Attr(attr))))
               case DefaultInUse  => -\/(s"$name doesn't have defaults")
               case NotApplicable => -\/(s"$name is always applicable")
             }
@@ -167,26 +159,65 @@ object FilterAlgebra {
           def noDefault(f: Valid.Field, name: String): String \/ Valid =
             attr match {
               case Blank
-                 | NotApplicable => \/-(Valid(FieldProp(f, attr)))
+                 | NotApplicable => \/-(Valid(FieldProp(f, FieldCriteria.Attr(attr))))
               case DefaultInUse  => -\/(s"$name doesn't have defaults")
             }
 
           // Keep FilterEditor pxAutoComplete in sync with below
-          (tryL orElse tryR, attr) match {
-            case (Some(\/-(f: CustomField))                       , Blank | NotApplicable) => \/-(Valid(FieldProp(\/-(f.id), attr)))
-            case (Some(\/-(f: CustomField.Tag))                   , DefaultInUse         ) => \/-(Valid(FieldProp(\/-(f.id), attr)))
-            case (Some(\/-(_: CustomField.Text))                  , DefaultInUse         ) => -\/("Text fields don't have defaults.")
-            case (Some(\/-(_: CustomField.Implication))           , DefaultInUse         ) => -\/("Implication fields don't have defaults.")
-            case (Some(-\/(f: Title.type))                        , _                    ) => blankOnly(-\/(f), f.name)
-            case (Some(\/-(f: StaticField.OtherTags.type))        , _                    ) => blankOnly(\/-(f), f.name)
-            case (Some(\/-(f: StaticField.AllTags.type))          , _                    ) => blankOnly(\/-(f), f.name)
-            case (Some(\/-(f: StaticField.NormalAltStepTree.type)), _                    ) => noDefault(\/-(f), f.name)
-            case (Some(\/-(f: StaticField.ExceptionStepTree.type)), _                    ) => noDefault(\/-(f), f.name)
-            case (Some(\/-(StaticField.ImplicationGraph))         , _                    )
-               | (Some(\/-(StaticField.StepGraph))                , _                    ) => -\/(s"$fieldName can't be used here.")
-            case (None                                            , _                    ) => -\/(s"Unknown field: '$fieldName'")
+          (field, attr) match {
+            case (\/-(f: CustomField)                       , Blank | NotApplicable) => \/-(Valid(FieldProp(\/-(f.id), FieldCriteria.Attr(attr))))
+            case (\/-(f: CustomField.Tag)                   , DefaultInUse         ) => \/-(Valid(FieldProp(\/-(f.id), FieldCriteria.Attr(attr))))
+            case (\/-(_: CustomField.Text)                  , DefaultInUse         ) => -\/("Text fields don't have defaults.")
+            case (\/-(_: CustomField.Implication)           , DefaultInUse         ) => -\/("Implication fields don't have defaults.")
+            case (-\/(f: Title.type)                        , _                    ) => blankOnly(-\/(f), f.name)
+            case (\/-(f: StaticField.OtherTags.type)        , _                    ) => blankOnly(\/-(f), f.name)
+            case (\/-(f: StaticField.AllTags.type)          , _                    ) => blankOnly(\/-(f), f.name)
+            case (\/-(f: StaticField.NormalAltStepTree.type), _                    ) => noDefault(\/-(f), f.name)
+            case (\/-(f: StaticField.ExceptionStepTree.type), _                    ) => noDefault(\/-(f), f.name)
+            case (\/-(StaticField.ImplicationGraph)         , _                    )
+               | (\/-(StaticField.StepGraph)                , _                    ) => -\/(s"$fieldName can't be used here.")
           }
         }
+
+      def parseAsPoses(field: ParsedField): R =
+        field match {
+          case \/-(f: CustomField.Implication) =>
+            FilterParser.parseNumberRange(criteriaText) match {
+              case \/-(ints) =>
+                \/-(Valid(FieldProp(\/-(f.id), FieldCriteria.ReqTypePosSet(ints.map(ReqTypePos)))))
+              case -\/(_) =>
+                -\/(s"$criteriaText isn't a legal set of req numbers.")
+            }
+          case _ =>
+            -\/(s"You can't specify values for $fieldName.")
+        }
+
+      parsedField match {
+        case Some(field) =>
+          if (criteriaText.exists(_.isDigit))
+            parseAsPoses(field)
+          else
+            parseAsAttr(field)
+        case None =>
+          -\/(s"Unknown field: '$fieldName'")
+      }
+    }
+
+    // explicit types here because IntelliJ is a piece of shit
+    val alg: PotentialF[Valid] => String \/ Valid = {
+      case HashRef       (key)          => byHashTag(key)
+      case ImpliesAnyOf  (reqs)         => byReqSet(reqs, ImpliesAnyOf.apply)
+      case ImpliedByAnyOf(reqs)         => byReqSet(reqs, ImpliedByAnyOf.apply)
+      case Reqs          (reqs)         => byReqSet(reqs, Reqs.apply)
+      case Presence      (attr)         => byAttr(attr, Presence.apply)
+      case HasIssue      (on, c)        => c.traverse1(FilterAst.issueCategoryFromStr).map(Valid.hasIssue(on, _))
+      case Regex         (regex)        => byRegex(regex)
+      case ReqType       (mn)           => lookupReqType(mn).map(rt => Valid(ReqType(rt.reqTypeId)))
+      case c: Text                      => \/-(Valid(c))
+      case c: Not  [Valid]              => \/-(Valid(c))
+      case c: AllOf[Valid]              => \/-(Valid(c))
+      case c: AnyOf[Valid]              => \/-(Valid(c))
+      case f: FieldProp[String, String] => byField(f.field, f.criteria)
     }
 
     alg
@@ -218,6 +249,11 @@ object FilterAlgebra {
       }
     }
 
+    val fieldCriteria: FieldCriteria => String = {
+      case FieldCriteria.Attr(a)          => a.name
+      case FieldCriteria.ReqTypePosSet(s) => ConciseIntSetFormat(s.iterator.map(_.value).toSet)
+    }
+
     {
       case HashRef       (\/-(id)) => Potential(HashRef       (cfg.tags.needApplicableTag(id).key))
       case HashRef       (-\/(id)) => Potential(HashRef       (cfg.customIssueTypes.need(id).key))
@@ -227,7 +263,7 @@ object FilterAlgebra {
       case Reqs          (reqs)    => Potential(Reqs          (convReqSet(reqs)))
       case ReqType       (id)      => Potential(ReqType       (convReqType(id)))
       case HasIssue      (on, c)   => Potential(HasIssue      (on, c.map(FilterAst.issueCategoryToStr)))
-      case FieldProp     (f, a)    => Potential(FieldProp     (f.fold(_.name, fieldName), a.name))
+      case FieldProp     (f, c)    => Potential(FieldProp     (f.fold(_.name, fieldName), fieldCriteria(c)))
       case c: Regex                => Potential(c)
       case c: Text                 => Potential(c)
       case c: Not  [Potential]     => Potential(c)
@@ -255,19 +291,19 @@ object FilterAlgebra {
       ss.reduceMapLeft1(lookupReqSubset)(_ ++ _)
 
     {
-      case ImpliesAnyOf  (reqs)                       => Extensional(ImpliesAnyOf  (lookupReqSet(reqs)))
-      case ImpliedByAnyOf(reqs)                       => Extensional(ImpliedByAnyOf(lookupReqSet(reqs)))
-      case Reqs          (reqs)                       => Extensional(Reqs          (lookupReqSet(reqs)))
-      case c: Regex                                   => Extensional(c)
-      case c: Text                                    => Extensional(c)
-      case c: FieldProp[Valid.Field, Valid.FieldAttr] => Extensional(c)
-      case c: HashRef  [Valid.HashTag]                => Extensional(c)
-      case c: Presence [Valid.Attr]                   => Extensional(c)
-      case c: HasIssue [Valid.IssueCat]               => Extensional(c)
-      case c: ReqType  [Valid.ReqType]                => Extensional(c)
-      case c: Not      [Extensional]                  => Extensional(c)
-      case c: AllOf    [Extensional]                  => Extensional(c)
-      case c: AnyOf    [Extensional]                  => Extensional(c)
+      case ImpliesAnyOf  (reqs)                           => Extensional(ImpliesAnyOf  (lookupReqSet(reqs)))
+      case ImpliedByAnyOf(reqs)                           => Extensional(ImpliedByAnyOf(lookupReqSet(reqs)))
+      case Reqs          (reqs)                           => Extensional(Reqs          (lookupReqSet(reqs)))
+      case c: Regex                                       => Extensional(c)
+      case c: Text                                        => Extensional(c)
+      case c: FieldProp[Valid.Field, Valid.FieldCriteria] => Extensional(c)
+      case c: HashRef  [Valid.HashTag]                    => Extensional(c)
+      case c: Presence [Valid.Attr]                       => Extensional(c)
+      case c: HasIssue [Valid.IssueCat]                   => Extensional(c)
+      case c: ReqType  [Valid.ReqType]                    => Extensional(c)
+      case c: Not      [Extensional]                      => Extensional(c)
+      case c: AllOf    [Extensional]                      => Extensional(c)
+      case c: AnyOf    [Extensional]                      => Extensional(c)
     }
   }
 
@@ -394,68 +430,83 @@ object FilterAlgebra {
           reqOnly(r => r.reqTypeId ==* rt || exReqs.contains(r.id))
       }
 
-    def byFieldProp(fieldArg: Filter.Valid.Field, attr: FieldAttr): CompiledFilter = {
+    def byFieldProp(fieldArg: Filter.Valid.Field, criteria: FieldCriteria): CompiledFilter = {
       import FieldReqTypeRules.Resolution
-      (attr, fieldArg) match {
+      import FieldAttr._
 
-        case (FieldAttr.NotApplicable, \/-(id)) =>
+      (criteria, fieldArg) match {
+
+        case (FieldCriteria.ReqTypePosSet(posSet), \/-(id: CustomField.Implication.Id)) =>
+          val criteria = posSet.whole
+          val lookup = p.dataLogic.customFieldImps(filterDead)(id)
+          reqOnly(req => lookup.getPubids(req.id).exists(pubid => criteria.contains(pubid.pos)))
+
+        case (FieldCriteria.Attr(NotApplicable), \/-(id)) =>
           val field = p.config.fields.need(id)
           val na = p.config.reqTypesWithRes(field.fieldReqTypeRules)(Resolution.NotApplicable).map(_.reqTypeId).toSet
           reqOnly(req => na.contains(req.reqTypeId))
 
-        case (FieldAttr.Blank, \/-(f: CustomField.Text.Id)) =>
+        case (FieldCriteria.Attr(Blank), \/-(f: CustomField.Text.Id)) =>
           val text = p.content.reqTextFor(f)
           fieldApplicableReqOnly(f)(req => !text.contains(req.id))
 
-        case (FieldAttr.Blank, \/-(f: CustomField.Implication.Id)) =>
+        case (FieldCriteria.Attr(Blank), \/-(f: CustomField.Implication.Id)) =>
           val imps = p.dataLogic.customFieldImps(ShowDead)(f)
-          fieldApplicableReqOnly(f)(req => imps(req.id).isEmpty)
+          fieldApplicableReqOnly(f)(req => imps.getReqIds(req.id).isEmpty)
 
-        case (FieldAttr.Blank, \/-(f: CustomField.Tag.Id)) =>
+        case (FieldCriteria.Attr(Blank), \/-(f: CustomField.Tag.Id)) =>
           val scope = p.config.tagFieldDistribution(filterDead).inField(f)
           fieldApplicableReqOnly(f)(req => tagLookup(req.id).all.intersect(scope).isEmpty)
 
-        case (FieldAttr.DefaultInUse, \/-(f: CustomField.Tag.Id)) =>
+        case (FieldCriteria.Attr(DefaultInUse), \/-(f: CustomField.Tag.Id)) =>
           val fieldDefaultApplied = p.fieldDefaultApplied(f, filterDead)
           fieldApplicableReqOnly(f)(req => fieldDefaultApplied(req.id))
 
-        case (FieldAttr.Blank, -\/(SpecialBuiltInField.Title)) =>
+        case (FieldCriteria.Attr(Blank), -\/(SpecialBuiltInField.Title)) =>
           make(
             req         = _.title.isEmpty,
             codeGroup   = _.title.isEmpty,
             manualIssue = fail,
           )
 
-        case (FieldAttr.Blank, \/-(StaticField.OtherTags)) =>
+        case (FieldCriteria.Attr(Blank), \/-(StaticField.OtherTags)) =>
           val scope = p.config.tagFieldDistribution(filterDead).notUsedInFields
           reqOnly(req => tagLookup(req.id).all.intersect(scope).isEmpty)
 
-        case (FieldAttr.Blank, \/-(StaticField.AllTags)) =>
+        case (FieldCriteria.Attr(Blank), \/-(StaticField.AllTags)) =>
           byTag(_.isEmpty)
 
-        case (FieldAttr.Blank, \/-(StaticField.NormalAltStepTree)) =>
+        case (FieldCriteria.Attr(Blank), \/-(StaticField.NormalAltStepTree)) =>
           ucOnly { uc =>
             filterDead.filterFn.iteratorBy(uc.stepsNA.tree.valueIterator)(_.liveIgnoringUC(uc.stepsNA))
               .drop(1)
               .isEmpty
           }
 
-        case (FieldAttr.Blank, \/-(StaticField.ExceptionStepTree)) =>
+        case (FieldCriteria.Attr(Blank), \/-(StaticField.ExceptionStepTree)) =>
           ucOnly { uc =>
             filterDead.filterFn.iteratorBy(uc.stepsE.tree.valueIterator)(_.liveIgnoringUC(uc.stepsE))
               .isEmpty
           }
 
-        case (FieldAttr.NotApplicable, -\/(SpecialBuiltInField.Title)) =>
+        case (FieldCriteria.Attr(NotApplicable), -\/(SpecialBuiltInField.Title)) =>
           reqOnly(fail)
 
-        case (FieldAttr.Blank,
+        case (FieldCriteria.ReqTypePosSet(_),
+                 -\/(_)
+               | \/-(_: CustomField.Tag.Id)
+               | \/-(_: CustomField.Text.Id)
+               | \/-(_: StaticField)
+             ) =>
+               reqOnly(fail)
+
+        case (FieldCriteria.Attr(Blank),
                  \/-(StaticField.ImplicationGraph)
                | \/-(StaticField.StepGraph)
              ) =>
                reqOnly(fail)
 
-        case (FieldAttr.DefaultInUse,
+        case (FieldCriteria.Attr(DefaultInUse),
                  -\/(SpecialBuiltInField.Title)
                | \/-(StaticField.AllTags)
                | \/-(StaticField.OtherTags)
@@ -504,17 +555,17 @@ object FilterAlgebra {
       if (isBad) -\/(false) else \/-(ok)
 
     {
-      case a: Text                                   => \/-(Valid(a))
-      case a: Regex                                  => \/-(Valid(a))
-      case a: Presence      [Valid.Attr]             => \/-(Valid(a))
-      case a: HasIssue      [Valid.IssueCat]         => \/-(Valid(a))
-      case a: HashRef       [Valid.HashTag]          => \/-(Valid(a))
-      case a: ImpliesAnyOf  [Valid.ReqSet]           => \/-(Valid(a))
-      case a: ImpliedByAnyOf[Valid.ReqSet]           => \/-(Valid(a))
-      case a: Reqs          [Valid.ReqSet]           => \/-(Valid(a))
-      case a: ReqType       [Valid.ReqType]          => check1(reqTypes.contains(a.reqType), Valid(a))
-      case a: FieldProp     [Valid.Field, FieldAttr] => a.field.fold(_ => \/-(Valid(a)), f => check1(fields.contains(f), Valid(a)))
-      case a: Not           [Boolean \/ Valid]       => a.clause.fold(b => -\/(!b), c => \/-(Valid(Not(c))))
+      case a: Text                                       => \/-(Valid(a))
+      case a: Regex                                      => \/-(Valid(a))
+      case a: Presence      [Valid.Attr]                 => \/-(Valid(a))
+      case a: HasIssue      [Valid.IssueCat]             => \/-(Valid(a))
+      case a: HashRef       [Valid.HashTag]              => \/-(Valid(a))
+      case a: ImpliesAnyOf  [Valid.ReqSet]               => \/-(Valid(a))
+      case a: ImpliedByAnyOf[Valid.ReqSet]               => \/-(Valid(a))
+      case a: Reqs          [Valid.ReqSet]               => \/-(Valid(a))
+      case a: ReqType       [Valid.ReqType]              => check1(reqTypes.contains(a.reqType), Valid(a))
+      case a: FieldProp     [Valid.Field, FieldCriteria] => a.field.fold(_ => \/-(Valid(a)), f => check1(fields.contains(f), Valid(a)))
+      case a: Not           [Boolean \/ Valid]           => a.clause.fold(b => -\/(!b), c => \/-(Valid(Not(c))))
 
       case a: AnyOf[Boolean \/ Valid] =>
         val as = (a.head +: a.tail.whole).iterator.map(_.toOption).filterDefined.toVector

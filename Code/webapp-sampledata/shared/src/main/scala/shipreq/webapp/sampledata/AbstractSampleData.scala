@@ -27,10 +27,14 @@ abstract class AbstractSampleData(meta: SampleDataMeta, events: Vector[Event]) {
   lazy val verifiedEventsBinary: BinaryData =
     BinaryData.unsafeFromByteBuffer(PickleImpl intoBytes verifiedEvents)
 
-  lazy val project: Project = {
-    val p = SampleDataUtil.applyVerifiedEventsSuccessfully(Project.empty, verifiedEvents)
-    p
-  }
+  def newProject(deep: Boolean = true): Project =
+    if (deep)
+      meta.annotateExceptions(SampleDataUtil.applyVerifiedEventsSuccessfully(Project.empty, verifiedEvents))
+    else
+      project.copy()
+
+  lazy val project: Project =
+    newProject()
 
   lazy val projectBinary: BinaryData =
     BinaryData.unsafeFromByteBuffer(PickleImpl intoBytes project)

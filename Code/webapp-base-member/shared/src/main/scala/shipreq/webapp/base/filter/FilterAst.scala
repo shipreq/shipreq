@@ -9,13 +9,13 @@ import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.On
 import shipreq.webapp.base.issue.IssueCategory
 
-sealed trait FilterAst[+Attr, +Field, +FieldAttr, +IssueCat, +HashTag, +ReqSet, +ReqType, +F]
+sealed trait FilterAst[+Attr, +Field, +FieldCriteria, +IssueCat, +HashTag, +ReqSet, +ReqType, +F]
 
 object FilterAst {
   final case class Text             (text: String, quoteChar: Option[Char]) extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
   final case class Regex            (text: String)                          extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
   final case class Presence      [A](attr: A)                               extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class FieldProp  [A, B](field: A, attr: B)                     extends FilterAst[Nothing, A      , B      , Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class FieldProp  [A, B](field: A, criteria: B)                 extends FilterAst[Nothing, A      , B      , Nothing, Nothing, Nothing, Nothing, Nothing]
   final case class HasIssue      [A](on: On, criteria: NonEmptyVector[A])   extends FilterAst[Nothing, Nothing, Nothing, A      , Nothing, Nothing, Nothing, Nothing]
   final case class HashRef       [A](value: A)                              extends FilterAst[Nothing, Nothing, Nothing, Nothing, A      , Nothing, Nothing, Nothing]
   final case class ImpliesAnyOf  [A](reqs: A)                               extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, A      , Nothing, Nothing]
@@ -94,40 +94,40 @@ object FilterAst {
   def univEqFix[A: UnivEq, B: UnivEq, C: UnivEq, D: UnivEq, E: UnivEq, F: UnivEq, G: UnivEq]: UnivEq[Fixed[A, B, C, D, E, F, G]] =
     UnivEq.deriveFix[Fix, λ[X => FilterAst[A, B, C, D, E, F, G, X]]]
 
-  def traverse[Attr, Field, FieldAttr, IssueCat, HashTag, ReqSet, RT]: Traverse[FilterAst[Attr, Field, FieldAttr, IssueCat, HashTag, ReqSet, RT, *]] =
-    new Traverse[FilterAst[Attr, Field, FieldAttr, IssueCat, HashTag, ReqSet, RT, *]] {
-      type F[A] = FilterAst[Attr, Field, FieldAttr, IssueCat, HashTag, ReqSet, RT, A]
+  def traverse[Attr, Field, FieldCriteria, IssueCat, HashTag, ReqSet, RT]: Traverse[FilterAst[Attr, Field, FieldCriteria, IssueCat, HashTag, ReqSet, RT, *]] =
+    new Traverse[FilterAst[Attr, Field, FieldCriteria, IssueCat, HashTag, ReqSet, RT, *]] {
+      type F[A] = FilterAst[Attr, Field, FieldCriteria, IssueCat, HashTag, ReqSet, RT, A]
 
       override def map[A, B](fa: F[A])(f: A => B): F[B] = fa match {
-        case c: Text                             => c
-        case c: Regex                            => c
-        case c: Presence      [Attr]             => c
-        case c: HasIssue      [IssueCat]         => c
-        case c: HashRef       [HashTag]          => c
-        case c: ImpliesAnyOf  [ReqSet]           => c
-        case c: ImpliedByAnyOf[ReqSet]           => c
-        case c: Reqs          [ReqSet]           => c
-        case c: ReqType       [RT]               => c
-        case c: FieldProp     [Field, FieldAttr] => c
-        case c: Not           [A]                => Not  (f(c.clause))
-        case c: AllOf         [A]                => AllOf(c.clauses map f)
-        case c: AnyOf         [A]                => AnyOf(f(c.head), c.tail map f)
+        case c: Text                                 => c
+        case c: Regex                                => c
+        case c: Presence      [Attr]                 => c
+        case c: HasIssue      [IssueCat]             => c
+        case c: HashRef       [HashTag]              => c
+        case c: ImpliesAnyOf  [ReqSet]               => c
+        case c: ImpliedByAnyOf[ReqSet]               => c
+        case c: Reqs          [ReqSet]               => c
+        case c: ReqType       [RT]                   => c
+        case c: FieldProp     [Field, FieldCriteria] => c
+        case c: Not           [A]                    => Not  (f(c.clause))
+        case c: AllOf         [A]                    => AllOf(c.clauses map f)
+        case c: AnyOf         [A]                    => AnyOf(f(c.head), c.tail map f)
       }
 
       override def traverseImpl[G[_], A, B](fa: F[A])(f: A => G[B])(implicit G: Applicative[G]): G[F[B]] = fa match {
-        case c: Text                             => G pure c
-        case c: Regex                            => G pure c
-        case c: Presence      [Attr]             => G pure c
-        case c: HasIssue      [IssueCat]         => G pure c
-        case c: HashRef       [HashTag]          => G pure c
-        case c: ImpliesAnyOf  [ReqSet]           => G pure c
-        case c: ImpliedByAnyOf[ReqSet]           => G pure c
-        case c: Reqs          [ReqSet]           => G pure c
-        case c: ReqType       [RT]               => G pure c
-        case c: FieldProp     [Field, FieldAttr] => G pure c
-        case c: Not           [A]                => G.map(f(c.clause))(Not(_))
-        case c: AllOf         [A]                => G.map(Traverse1[NonEmptyVector].traverse1(c.clauses)(f))(AllOf(_))
-        case c: AnyOf         [A]                => G.apply2(f(c.head), Traverse1[NonEmptyVector].traverse1(c.tail)(f))(AnyOf(_, _))
+        case c: Text                                 => G pure c
+        case c: Regex                                => G pure c
+        case c: Presence      [Attr]                 => G pure c
+        case c: HasIssue      [IssueCat]             => G pure c
+        case c: HashRef       [HashTag]              => G pure c
+        case c: ImpliesAnyOf  [ReqSet]               => G pure c
+        case c: ImpliedByAnyOf[ReqSet]               => G pure c
+        case c: Reqs          [ReqSet]               => G pure c
+        case c: ReqType       [RT]                   => G pure c
+        case c: FieldProp     [Field, FieldCriteria] => G pure c
+        case c: Not           [A]                    => G.map(f(c.clause))(Not(_))
+        case c: AllOf         [A]                    => G.map(Traverse1[NonEmptyVector].traverse1(c.clauses)(f))(AllOf(_))
+        case c: AnyOf         [A]                    => G.apply2(f(c.head), Traverse1[NonEmptyVector].traverse1(c.tail)(f))(AnyOf(_, _))
       }
     }
 
@@ -136,12 +136,12 @@ object FilterAst {
   trait Dsl {
     type Attr
     type Field
-    type FieldAttr
+    type FieldCriteria
     type IssueCat
     type HashTag
     type ReqSet
     type ReqType
-    final type F[A] = FilterAst[Attr, Field, FieldAttr, IssueCat, HashTag, ReqSet, ReqType, A]
+    final type F[A] = FilterAst[Attr, Field, FieldCriteria, IssueCat, HashTag, ReqSet, ReqType, A]
 
     def apply         (f: F[Fix[F]])                         : Fix[F] = Fix[F](f)
     def text          (text: String)                         : Fix[F] = Fix[F](Text          (text, None))
@@ -149,7 +149,7 @@ object FilterAst {
     def text          (text: String, quoteChar: Option[Char]): Fix[F] = Fix[F](Text          (text, quoteChar))
     def regex         (text: String)                         : Fix[F] = Fix[F](Regex         (text))
     def presence      (attr: Attr)                           : Fix[F] = Fix[F](Presence      (attr))
-    def fieldProp     (field: Field, attr: FieldAttr)        : Fix[F] = Fix[F](FieldProp     (field, attr))
+    def fieldProp     (field: Field, attr: FieldCriteria)    : Fix[F] = Fix[F](FieldProp     (field, attr))
     def hasIssue      (on: On, h: IssueCat, t: IssueCat*)    : Fix[F] = Fix[F](HasIssue      (on, NonEmptyVector(h, t.toVector)))
     def hasIssue      (on: On, c: NonEmptyVector[IssueCat])  : Fix[F] = Fix[F](HasIssue      (on, c))
     def hashRef       (value: HashTag)                       : Fix[F] = Fix[F](HashRef       (value))

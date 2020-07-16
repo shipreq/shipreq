@@ -4,7 +4,7 @@ import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion.Fix
 import org.parboiled2.{Parser => _, _}
 import scala.annotation.nowarn
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 import scalaz.{-\/, \/, \/-}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.ReqType.Mnemonic
@@ -23,12 +23,15 @@ object FilterParser {
 
   def parsePreProcessed(input: PreProcessed): Result = {
     val parser = new FilterParser(input.value)
-    parser.main.run() match {
-      case Success(f)             => \/-(f)
+    parseResult(parser.main.run(), parser)
+  }
+
+  private def parseResult[A](t: Try[A], parser: FilterParser): Failure \/ A =
+    t match {
+      case Success(a)             => \/-(a)
       case Failure(e: ParseError) => -\/(ParseException(e, parser.formatError(e, _)))
       case Failure(e: Throwable)  => -\/(GeneralException(e))
     }
-  }
 
   type Result = Failure \/ Option[Potential]
 
@@ -41,8 +44,16 @@ object FilterParser {
       formatter(ef)
   }
 
+  def parseNumberRange(input: String): Failure \/ NonEmptySet[Int] = {
+    val parser = new FilterParser(input)
+    parseResult(parser.numberRangeAsFullString.run(), parser)
+  }
+
   val attrChar =
-    CharPredicate.Alpha ++ CharPredicate.from(_ == '/')
+    CharPredicate.AlphaNum ++ CharPredicate.from {
+      case '/' | ',' | '-' => true
+      case _               => false
+    }
 
   val fieldNameUnquotedChar =
     CharPredicate.from(c => (c != EOI) && FilterAlgebra.isFieldNameUnquotedChar(c))
@@ -110,6 +121,9 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
   /** 1,3,5-9,12 */
   def numberRange: Rule1[NonEmptySet[Int]] =
     rule((numberRangeElement + ',') ~> flattenIntSets1)
+
+  def numberRangeAsFullString: Rule1[NonEmptySet[Int]] =
+    rule(numberRange ~ EOI)
 
   /** 1 or {1,3,5-9,12} */
   def numberOrRange: Rule1[NonEmptySet[Int]] =

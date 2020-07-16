@@ -15,6 +15,7 @@ import shipreq.webapp.base.filter.IntensionalReqSet._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.{RandomData => $}
+import sourcecode.Line
 import utest._
 
 object FilterParserTest extends TestSuite {
@@ -79,7 +80,7 @@ object FilterParserTest extends TestSuite {
     case -\/(e: FilterParser.ParseException)   => println(e.format(new ErrorFormatter(showTraces = true))); fail("Parser failed.")
   }
 
-  private def test(str: String, exp: Option[Potential]): Unit =
+  private def test(str: String, exp: Option[Potential])(implicit l: Line): Unit =
     assertEq(s"[$str]", toOption(FilterParser.parse(str)), exp)
 
   private def testFail(str: String): Unit =
@@ -197,6 +198,8 @@ object FilterParserTest extends TestSuite {
       "quoteSpace" - test("field:\"a b\"=xx",   fieldProp("a b", "xx"))
       "quoteColon" - test("field:\"a:b\"=xx",   fieldProp("a:b", "xx"))
       "quoteEqual" - test("field:\"a=b\"=xx",   fieldProp("a=b", "xx"))
+      "pos1"       - test("field:X=1",          fieldProp("X", "1"))
+      "posM"       - test("field:n=1,3,5-9,40", fieldProp("n", "1,3,5-9,40"))
     }
 
     "hasIssue" - {

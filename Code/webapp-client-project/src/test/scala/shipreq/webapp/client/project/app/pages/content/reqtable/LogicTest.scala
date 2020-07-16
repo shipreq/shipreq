@@ -65,10 +65,14 @@ object LogicTest extends TestSuite {
   import UnsafeTypes._
   import SampleProject7.Values._
   import shipreq.webapp.base.filter.Filter.{Valid => F}
+  import shipreq.webapp.base.filter.Filter.Valid.FieldCriteria
   import shipreq.webapp.base.filter.FilterAst.Attr.{AnyIssue, AnyTag}
   import shipreq.webapp.base.filter.FilterAst.FieldAttr
   import shipreq.webapp.base.filter.IntensionalReqSet._
   import LogicTestUtil._
+
+  private implicit def liftFieldAttr(a: FieldAttr): FieldCriteria =
+    FieldCriteria.Attr(a)
 
   private      def P1  = SampleProject.project
   private      def P3  = SampleProject3.project
@@ -386,51 +390,101 @@ object LogicTest extends TestSuite {
   }
 
   def testCustomImpField(): Unit = {
-    // Expected MFs per row
-    // MF-1 ⇐
-    // MF-2 ⇐
-    // MF-3 ⇐
-    // MF-4 ⇐ 3
-    // MF-5 ⇐ 3
-    // BR-1 ⇐
-    // BR-2 ⇐
-    // FR-1 ⇐ 1
-    // FR-2 ⇐ 1,2
-    // FR-3 ⇐ 1,2
-    // FR-4 ⇐ 3
-    // FR-5 ⇐ 3
-    // FR-6 ⇐ 3,4
     val p   = SampleImplicationGraph.project
     val fmt = rowToCustomImpTxt(p, mfField)
-    testCB(p, mfField, None, ShowDead, fmt)(allSortsCB(2,
+    /*
+    1
+    FR1 - 1,2
+    FR2 - 1,2
+    FR3 - 1,2
+    MF1 - 1
+
+    2
+    BR1 - 2,3,4,5
+    FR1 - 1,2
+    FR2 - 1,2
+    FR3 - 1,2
+    MF2 - 2
+
+    3
+    BR1 - 2,3,4,5
+    BR2 - 3,4,5
+    FR4 - 3,5
+    FR5 - 3,5
+    FR6 - 3,4
+    MF3 - 3,4,5
+    MF4 - 3,4
+    MF5 - 3,5
+
+    4
+    BR1 - 2,3,4,5
+    BR2 - 3,4,5
+    FR6 - 3,4
+    MF3 - 3,4,5
+    MF4 - 3,4
+
+    5
+    BR1 - 2,3,4,5
+    BR2 - 3,4,5
+    FR4 - 3,5
+    FR5 - 3,5
+    MF3 - 3,4,5
+    MF5 - 3,5
+    */
+    testCB(p, mfField, None, ShowDead, fmt)(allSortsCB(
+      zcount = 1,
       asc  = """
                |MF-1>FR-1
                |MF-1>FR-2
                |MF-1>FR-3
                |MF-1>MF-1
+               |MF-2>BR-1
+               |MF-2>FR-1
                |MF-2>FR-2
                |MF-2>FR-3
                |MF-2>MF-2
+               |MF-3>BR-1
+               |MF-3>BR-2
                |MF-3>FR-4
                |MF-3>FR-5
                |MF-3>FR-6
                |MF-3>MF-3
                |MF-3>MF-4
                |MF-3>MF-5
+               |MF-4>BR-1
+               |MF-4>BR-2
                |MF-4>FR-6
+               |MF-4>MF-3
                |MF-4>MF-4
+               |MF-5>BR-1
+               |MF-5>BR-2
+               |MF-5>FR-4
+               |MF-5>FR-5
+               |MF-5>MF-3
                |MF-5>MF-5
              """.stripMargin.replace("\n", sep).trim,
       desc = """
+               |MF-5>BR-1
+               |MF-5>BR-2
+               |MF-5>FR-4
+               |MF-5>FR-5
+               |MF-5>MF-3
                |MF-5>MF-5
+               |MF-4>BR-1
+               |MF-4>BR-2
                |MF-4>FR-6
+               |MF-4>MF-3
                |MF-4>MF-4
+               |MF-3>BR-1
+               |MF-3>BR-2
                |MF-3>FR-4
                |MF-3>FR-5
                |MF-3>FR-6
                |MF-3>MF-3
                |MF-3>MF-4
                |MF-3>MF-5
+               |MF-2>BR-1
+               |MF-2>FR-1
                |MF-2>FR-2
                |MF-2>FR-3
                |MF-2>MF-2
@@ -543,9 +597,40 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterDeadCustomImps(): Unit = {
+    // One of the most important aspects of this test is that when a req in the req chain is Dead,
+    // 1. it's included because it's immediately relevant
+    // 2. it's not transitive because it's Dead and those links no longer hold
+
+    /*
+    digraph G {
+      rankdir=LR
+      MF1 [label="MF-1ᵒ"]
+      MF2 [label="MF-2ˣ"]
+      MF3 [label="MF-3ᵒ"]
+      MF4 [label="MF-4ˣ"]
+      MF5 [label="MF-5ᵒ"]
+      MF6 [label="MF-6ᵒ"]
+      MF7 [label="MF-7ˣ"]
+      MF8 [label="MF-8ˣ"]
+      CO1 [label="CO-1ᵒ"]
+      CO2 [label="CO-2ᵒ"]
+      CO3 [label="CO-3ˣ"]
+      CO4 [label="CO-4ˣ"]
+      FR1 [label="FR-1ᵒ"]
+      FR2 [label="FR-2ᵒ"]
+      MF1 -> MF5 -> FR1
+      MF2 -> MF6 -> FR1
+      MF3 -> MF7 -> FR1
+      MF4 -> MF8 -> FR1
+      MF1 -> CO1 -> FR2
+      MF2 -> CO2 -> FR2
+      MF3 -> CO3 -> FR2
+      MF4 -> CO4 -> FR2
+    }
+     */
     val p = (
       // MF-1ᵒ → MF-5ᵒ → FR-1
-      // MF-2ˣ → MF-6ᵒ → FR-1 <-- difficult case - it should be displayed as its part of (a chain with ShowDead)
+      // MF-2ˣ → MF-6ᵒ → FR-1 <-- difficult case - it should be displayed as its part of [a chain with ShowDead]
       // MF-3ᵒ → MF-7ˣ → FR-1 <-- important case - shouldn't hold for FR-1 even in ShowDead
       // MF-4ˣ → MF-8ˣ → FR-1
       GReq(reqType = mf, id = 1) +
@@ -558,7 +643,7 @@ object LogicTest extends TestSuite {
       GReq(reqType = mf, id = 8, live = Dead).impSrc(4) +
       GReq(reqType = fr, id = 91).impSrc(5, 6, 7, 8) +
       // MF-1ᵒ → CO-1ᵒ → FR-2
-      // MF-2ˣ → CO-2ᵒ → FR-2 <-- difficult case - it should be displayed as its part of (a chain with ShowDead)
+      // MF-2ˣ → CO-2ᵒ → FR-2 <-- difficult case - it should be displayed as its part of [a chain with ShowDead]
       // MF-3ᵒ → CO-3ˣ → FR-2 <-- important case - shouldn't hold for FR-2 even in ShowDead
       // MF-4ˣ → CO-4ˣ → FR-2
       GReq(reqType = co, id = 11).impSrc(1) +
@@ -572,16 +657,16 @@ object LogicTest extends TestSuite {
 
     testUnsorted(p, c, None, ShowDead, fmt)(
       s"""
-        |MF-1>CO-1
-        |MF-2>CO-2
-        |MF-3>CO-3
-        |MF-4>CO-4
+        |MF-1,MF-2>CO-1
+        |MF-1,MF-2>CO-2
+        |MF-1,MF-2,MF-3>CO-3
+        |MF-1,MF-2,MF-4>CO-4
         |MF-1,MF-2,MF-5,MF-6,MF-7,MF-8>FR-1
         |MF-1,MF-2>FR-2
-        |MF-1>MF-1
-        |MF-2>MF-2
-        |MF-3>MF-3
-        |MF-4>MF-4
+        |MF-1,MF-5>MF-1
+        |MF-2,MF-6>MF-2
+        |MF-3,MF-7>MF-3
+        |MF-4,MF-8>MF-4
         |MF-1,MF-5>MF-5
         |MF-2,MF-6>MF-6
         |MF-3,MF-7>MF-7
@@ -591,10 +676,10 @@ object LogicTest extends TestSuite {
     testUnsorted(p, c, None, HideDead, fmt)(
       s"""
         |MF-1>CO-1
-        |$z
+        |MF-1>CO-2
         |MF-1,MF-5,MF-6>FR-1
         |MF-1>FR-2
-        |MF-1>MF-1
+        |MF-1,MF-5>MF-1
         |MF-3>MF-3
         |MF-1,MF-5>MF-5
         |MF-6>MF-6
@@ -983,6 +1068,14 @@ object LogicTest extends TestSuite {
     testFilter(P7, F.fieldProp(\/-(mfField), FieldAttr.Blank))("BR-1  BR-2  BR-3  UC-1  UC-2", "")
   }
 
+  def testFilterImpFieldPos(): Unit = {
+    // Filter by field:MF=2
+    import SampleImplicationGraph2._
+    testFilter(project, F.fieldProp(\/-(mfField), FieldCriteria.ReqTypePosSet(NonEmptySet(2))))(
+      "FB-1  IV-1  IV-2  MF-2  MF-3  UC-2",
+      "UC-1")
+  }
+
   def testFilterTagFieldNA(): Unit = {
     testFilter(P7, F.fieldProp(\/-(priField), FieldAttr.NotApplicable))("", "CO-1  CO-2")
 
@@ -1326,6 +1419,7 @@ object LogicTest extends TestSuite {
       "implyNothing"         - testFilterImplyNothing()
       "impFieldNA"           - testFilterImpFieldNA()
       "impFieldBlank"        - testFilterImpFieldBlank()
+      "impFieldPos"          - testFilterImpFieldPos()
       "textFieldNA"          - testFilterTextFieldNA()
       "textFieldBlank"       - testFilterTextFieldBlank()
       "tagFieldNA"           - testFilterTagFieldNA()

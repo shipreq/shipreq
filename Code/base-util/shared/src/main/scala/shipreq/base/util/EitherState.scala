@@ -53,6 +53,12 @@ object EitherState {
             }
       )
 
+    def handleFailure(f: E => Self[A]): Self[A] =
+      Instance(self(_).flatMap {
+        case ok @ (_, \/-(_)) => Trampoline.pure(ok)
+        case (s, -\/(e))      => f(e).self(s)
+      })
+
     def run(s: S): (S, E \/ A) =
       Trampoline.run(self(s))
 

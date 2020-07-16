@@ -7,6 +7,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.event._
 
+/** v1.1 */
 object Events {
   import boopickle.DefaultBasic._
   import BaseData._

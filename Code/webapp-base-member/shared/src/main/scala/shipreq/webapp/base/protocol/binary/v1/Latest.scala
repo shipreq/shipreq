@@ -6,13 +6,13 @@ package shipreq.webapp.base.protocol.binary.v1
   */
 object Latest {
 
-  @inline implicit def picklerEvent                    = Rev3.picklerEvent
-  @inline implicit def picklerProject                  = Rev3.picklerProject
-  @inline implicit def picklerProjectAndOrd            = Rev3.picklerProjectAndOrd
-  @inline implicit def picklerVerifiedEvent            = Rev3.picklerVerifiedEvent
-  @inline implicit def picklerVerifiedEventSeq         = Rev3.picklerVerifiedEventSeq
-  @inline implicit def picklerVerifiedEventNonEmptySeq = Rev3.picklerVerifiedEventNonEmptySeq
+  @inline implicit def picklerEvent                    = Rev4.picklerEvent
+  @inline implicit def picklerProject                  = Rev4.picklerProject
+  @inline implicit def picklerProjectAndOrd            = Rev4.picklerProjectAndOrd
+  @inline implicit def picklerVerifiedEvent            = Rev4.picklerVerifiedEvent
+  @inline implicit def picklerVerifiedEventSeq         = Rev4.picklerVerifiedEventSeq
+  @inline implicit def picklerVerifiedEventNonEmptySeq = Rev4.picklerVerifiedEventNonEmptySeq
 
   val AtomPicklers      = Rev3.AtomPicklers
-  val SavedViewPicklers = Rev1.SavedViewPicklers
+  val SavedViewPicklers = Rev4.SavedViewPicklers
 }

@@ -134,7 +134,7 @@ private[reqtable] object Logic {
     customFieldExpander(
       view,
       ap,
-      p.dataLogic.customFieldImps(fd),
+      p.dataLogic.customFieldImps(fd)(_).getPubids,
       Some(Sorter.orderingForImpField(p.dataLogic)))
 
   private def impExpander(dir      : Direction,

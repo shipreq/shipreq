@@ -29,6 +29,7 @@ object Main {
         BenchmarkGUI.renderMenu(body, baseUrl = baseUrl, engineOptions = engineOptions, guiOptions = guiOptions)(
           ApplyEventBM         (bd).guiSuite,
           BinarySerialisationBM(bd).guiSuite,
+          ImpFieldCalcBM       (bd).guiSuite,
         )
 
     async.toCallback.runNow()

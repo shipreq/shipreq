@@ -4,6 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros._
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.microlibs.utils.ConciseIntSetFormat
 import japgolly.univeq._
 import java.time.Instant
 import monocle.function.Field1.first
@@ -2154,7 +2155,10 @@ object RandomData {
       val fieldAttr: Gen[String] =
         Gen.chooseGen(
           genAlphaSlash.string1(1 to 4),
-          valid.fieldAttr.map(_.name))
+          valid.fieldAttr.map {
+            case Valid.FieldCriteria.Attr(a) => a.name
+            case Valid.FieldCriteria.ReqTypePosSet(s) => ConciseIntSetFormat(s.iterator.map(_.value).toSet)
+          })
 
       val hasIssue = {
         val ic = Gen.chooseGen(
@@ -2201,6 +2205,7 @@ object RandomData {
     // -----------------------------------------------------------------------------------------------------------------
     object valid {
       import FilterAst.{Attr, FieldAttr}
+      import Valid.FieldCriteria
 
       def wholeType(g: Gen[Valid.ReqType]): Gen[WholeType[Valid.ReqType]] =
         g.map(WholeType(_))
@@ -2223,11 +2228,17 @@ object RandomData {
       val attr: Gen[Attr] =
         Gen.chooseNE(Attr.values)
 
-      val fieldAttr: Gen[FieldAttr] =
-        Gen.chooseNE(FieldAttr.values)
+      val fieldAttr: Gen[FieldCriteria] =
+        Gen.chooseNE(FieldAttr.values).map(FieldCriteria.Attr)
 
-      val fieldAttrNoDefault: Gen[FieldAttr] =
-        Gen.choose_!(FieldAttr.values.whole.filterNot(_ == FieldAttr.DefaultInUse))
+      val fieldAttrNoDefault: Gen[FieldCriteria] =
+        Gen.choose_!(FieldAttr.values.whole.filterNot(_ == FieldAttr.DefaultInUse)).map(FieldCriteria.Attr)
+
+      val impFieldCriteria: Gen[FieldCriteria] =
+        Gen.chooseGen_!(
+          FieldAttr.values.whole.filterNot(_ == FieldAttr.DefaultInUse).map(FieldCriteria.Attr).map(Gen.pure) :+
+            Gen.chooseInt(20).map(ReqTypePos).nes(1 to 6, implicitly).map(FieldCriteria.ReqTypePosSet)
+        )
 
       val hasIssue =
         Gen.lift2(on, issueCategory.nev(1 to 3))(FilterAst.HasIssue(_, _))
@@ -2251,9 +2262,9 @@ object RandomData {
         Gen.chooseGen(gr, gr, gr, gl).flatMap {
           case \/-(id: CustomField.Tag        .Id  ) => fieldAttr.map(FilterAst.FieldProp(\/-(id), _))
           case \/-(id: CustomField.Text       .Id  ) => fieldAttrNoDefault.map(FilterAst.FieldProp(\/-(id), _))
-          case \/-(id: CustomField.Implication.Id  ) => fieldAttrNoDefault.map(FilterAst.FieldProp(\/-(id), _))
+          case \/-(id: CustomField.Implication.Id  ) => impFieldCriteria.map(FilterAst.FieldProp(\/-(id), _))
           case \/-(f : StaticField                 ) => fieldAttrNoDefault.map(FilterAst.FieldProp(\/-(f), _))
-          case f@ -\/(Title                        ) => Gen.pure(FilterAst.FieldProp(f, FieldAttr.Blank))
+          case f@ -\/(Title                        ) => Gen.pure(FilterAst.FieldProp(f, FieldCriteria.Attr(FieldAttr.Blank)))
         }
       }
 

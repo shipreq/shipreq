@@ -6,12 +6,12 @@ package shipreq.webapp.base.protocol.json.v1
   */
 object Latest {
 
-  @inline implicit def decoderEvent         = Rev3.decoderEvent
-  @inline implicit def encoderEvent         = Rev3.encoderEvent
-  @inline implicit def decoderVerifiedEvent = Rev3.decoderVerifiedEvent
-  @inline implicit def encoderVerifiedEvent = Rev3.encoderVerifiedEvent
+  @inline implicit def decoderEvent         = Rev4.decoderEvent
+  @inline implicit def encoderEvent         = Rev4.encoderEvent
+  @inline implicit def decoderVerifiedEvent = Rev4.decoderVerifiedEvent
+  @inline implicit def encoderVerifiedEvent = Rev4.encoderVerifiedEvent
 
   val AtomCodecs      = Rev3.AtomCodecs
-  val SavedViewCodecs = Rev1.SavedViewCodecs
+  val SavedViewCodecs = Rev4.SavedViewCodecs
 
 }

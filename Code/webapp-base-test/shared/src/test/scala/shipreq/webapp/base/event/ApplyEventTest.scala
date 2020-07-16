@@ -21,7 +21,7 @@ object ApplyEventTest extends TestSuite {
   }
 
   def assertApplicationFailure(vef: VerifiedEvent, p1: Project): Unit =
-    ApplyEvent.untrusted.applyVerified(Vector(vef))(p1) match {
+    ApplyEvent.untrusted.applyVerified1(vef)(p1) match {
       case \/-(_) => fail(s"applyVerified passed when it shouldn't have.")
       case -\/(_) => ()
     }
@@ -161,7 +161,7 @@ object ApplyEventTest extends TestSuite {
     "applyVerified" - {
       "pass" - {
         import Data1._
-        ApplyEvent.untrusted.applyVerified(Vector(ve))(p1) match {
+        ApplyEvent.untrusted.applyVerified1(ve)(p1) match {
           case \/-(p) => assertEq(p, p2)
           case -\/(e) => fail(s"applyVerified failed: $e")
         }

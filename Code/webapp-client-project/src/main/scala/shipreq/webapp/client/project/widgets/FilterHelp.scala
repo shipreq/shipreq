@@ -21,6 +21,17 @@ object FilterHelp {
           code(FilterAst.issueCategoryToStr(c)),
           " for issues of type: ", UiText.Issues.category(c).toLowerCase()))
 
+  private val impFieldValuesEg =
+    Example(
+      "To filter requirements by the values in an implication field, type ",
+      code("field:<NAME>=<VALUES>"), ", replacing ", code("<NAME>"), " with the field name or mnemonic, and ",
+      code("<VALUES>"), " with the numbers of matching requirements.",
+      <.br, <.br,
+      "You can specify multiple requirements by separating the numbers by commas, and/or using a dash for an inclusive range."
+    )(
+      "field:MF=2",
+      "field:MF=1,3,6-9")
+
   val modal = HelpModal("Filter Help", Groups(
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -131,6 +142,7 @@ object FilterHelp {
         code("impliedBy:MF-1 impliedBy:MF-2"), " will match anything implied by ", <.em("both"), " MF-1 and MF-2."
       )("impliedBy:MF-1 impliedBy:MF-2"),
 
+      impFieldValuesEg,
     ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -155,6 +167,8 @@ object FilterHelp {
         "If your field name contains spaces, an equals (", code("="), "), or a colon (", code(":"),
         "), wrap the field name in quotes."
       )("field:\"Foo Bar\"=blank"),
+
+      impFieldValuesEg,
     ),
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

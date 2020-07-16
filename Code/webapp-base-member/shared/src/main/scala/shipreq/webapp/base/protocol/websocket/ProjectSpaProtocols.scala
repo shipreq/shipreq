@@ -36,12 +36,13 @@ object ProjectSpaProtocols {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  // When any of these change, bump the minor version of safePicklerWsReqResAndReq
+  // When any of these change, bump the minor version of wsrrVersion
   import CreateContentCmd.CodecsV2._
   import ManualIssueCmd  .CodecsV2._
-  import SavedViewCmd    .CodecsV1._
+  import SavedViewCmd    .CodecsV2._
   import UpdateConfigCmd .CodecsV1._
   import UpdateContentCmd.CodecsV2._
+  private final val wsrrVersion = 4
 
   private object Codecs {
     val safePicklerWsReqResAndReq: SafePickler[WsReqRes.AndReq] = {
@@ -69,7 +70,7 @@ object ProjectSpaProtocols {
         }
 
       pickler
-        .asV1(3)
+        .asV1(wsrrVersion)
         .withMagicNumbers(0x1DB44559, 0x53562938)
     }
 
@@ -79,9 +80,8 @@ object ProjectSpaProtocols {
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
     import shipreq.webapp.base.protocol.binary.v1.PostEvents._
-    import shipreq.webapp.base.protocol.binary.v1.Rev3._
-
-    protected final val responseVersion = 3
+    import shipreq.webapp.base.protocol.binary.v1.Rev4._
+    protected final val responseVersion = 4
 
     implicit val picklerInitAppData: Pickler[InitAppData] =
       new Pickler[InitAppData] {

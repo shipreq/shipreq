@@ -16,7 +16,7 @@ object GenerateEvents {
 
 
     def die(): Nothing = {
-      System.err.println("Usage: this <size> [all|no-req-codes]")
+      System.err.println("Usage: this <size> <full|no_req_codes>")
       System.exit(1)
       ???
     }
@@ -27,17 +27,19 @@ object GenerateEvents {
         case _                 => die()
       }
 
+    val `type` = args.lift(1).getOrElse(die())
+
     val config: RandomEventStreamConfig =
-      args.lift(1) match {
-        case Some("all"         ) => RandomEventStreamConfig.default.copy(reqCodeEvents = true)
-        case Some("no-req-codes") => RandomEventStreamConfig.default.copy(reqCodeEvents = false)
-        case _                    => die()
+      `type` match {
+        case "full"         => RandomEventStreamConfig.default.copy(reqCodeEvents = true)
+        case "no_req_codes" => RandomEventStreamConfig.default.copy(reqCodeEvents = false)
+        case _              => die()
       }
 
     RandomDataSettings.disableUnicode = true
 
     val events =
-      logTime(s"Generating $qty events...") {
+      logTime(s"Generating ${`type`} $qty events...") {
         RandomEventStream.withConfig(config).justEntireEventStream(qty).sample().take(qty).map(_.event)
       }
 
@@ -47,7 +49,7 @@ object GenerateEvents {
         .map(_.asJson.noSpacesSortKeys)
         .mkString("[", "\n,", "\n]")
 
-    val filename = s"/tmp/shipreq-events-$qty-${Instant.now().toString.filter(_.isDigit)}.json"
+    val filename = s"/tmp/sampledata-${`type`}-$qty-${Instant.now().toString.filter(_.isDigit)}.json"
     println(s"Writing to $filename")
     FileUtils.write(filename, json)
 

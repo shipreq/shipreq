@@ -25,7 +25,7 @@ object IssueDetectors {
         val byField = ctx.project.dataLogic.customFieldImps(HideDead)
         f => {
           val imps = byField(f.id)
-          imps(_).isEmpty
+          imps.getReqIds(_).isEmpty
         }
       }
 

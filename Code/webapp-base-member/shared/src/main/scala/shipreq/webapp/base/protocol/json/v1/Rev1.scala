@@ -3,16 +3,14 @@ package shipreq.webapp.base.protocol.json.v1
 import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
+import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.ParseInt
-import scalaz.{-\/, \/-}
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.protocol.json.JsonCodec
 
 /** v1.1 */
@@ -207,229 +205,8 @@ object Rev1 {
 
     implicit val encoderImpGraphConfig: Encoder[ImpGraphConfig] =
       Encoder.forProduct3("graphDir", "labelFormat", "colours")(a => (a.graphDir, a.labelFormat, a.colours))
-
-    implicit val decoderView: Decoder[View] =
-      Decoder.instance { c =>
-        for {
-          columns        <- c.get[NonEmptyVector[Column]]("columns")
-          order          <- c.get[SortCriteria          ]("order")
-          filterDead     <- c.get[FilterDead            ]("filterDead")
-          filter         <- c.get[Option[Filter.Valid]  ]("filter")
-          impGraphConfig <- c.get[Option[ImpGraphConfig]]("impGraphConfig")
-        } yield View(columns, order, filterDead, filter, impGraphConfig)
-      }
-
-    implicit val encoderView: Encoder[View] =
-      Encoder.instance(value => Json.obj(
-        "columns"        -> value.columns       .asJson,
-        "order"          -> value.order         .asJson,
-        "filterDead"     -> value.filterDead    .asJson,
-        "filter"         -> value.filter        .asJson,
-        "impGraphConfig" -> value.impGraphConfig.asJson,
-      ).dropNullValues)
-
-    implicit val decoderSavedView: Decoder[SavedView] =
-      Decoder.forProduct3("id", "name", "view")(SavedView.apply)
-
-    implicit val encoderSavedView: Encoder[SavedView] =
-      Encoder.forProduct3("id", "name", "view")(a => (a.id, a.name, a.view))
-
-    implicit val codecSavedViewsND: JsonCodec[SavedViews.NonDefault] =
-      codecIMap(SavedViews.emptyNonDefault)
-
-    implicit val decoderSavedViews: Decoder[SavedViews.NonEmpty] =
-      Decoder.forProduct2("default", "nonDefault")(SavedViews.NonEmpty.apply)
-
-    implicit val encoderSavedViews: Encoder[SavedViews.NonEmpty] =
-      Encoder.forProduct2("default", "nonDefault")(a => (a.default, a.nonDefault))
   }
 
-  import SavedViewCodecs._
-
-  // ===================================================================================================================
-
-  private[this] object FilterAstKeys {
-    final val KeyAstAllOf          = "all"
-    final val KeyAstAnyOf          = "any"
-    final val KeyAstHasIssue       = "issue"
-    final val KeyAstHashRef        = "hash"
-    final val KeyAstFieldProp      = "field"
-    final val KeyAstImpliedByAnyOf = "impBy"
-    final val KeyAstImpliesAnyOf   = "imp"
-    final val KeyAstNot            = "not"
-    final val KeyAstPresence       = "has"
-    final val KeyAstRegex          = "regex"
-    final val KeyAstReqType        = "reqType"
-    final val KeyAstReqs           = "reqs"
-    final val KeyAstText           = "text"
-  }
-
-  implicit lazy val codecValidFilter: JsonCodec[Filter.Valid] = {
-    import shipreq.webapp.base.filter.{IntensionalReqSet, FilterAst}
-    import Filter._
-    import Filter.Implicits._
-    import FilterAstKeys._
-
-    implicit val codecNonEmptySetInt: JsonCodec[NonEmptySet[Int]] =
-      codecNES
-
-    implicit def decoderIRSetWhole[RT: Decoder]: Decoder[IntensionalReqSet.WholeType[RT]] =
-      Decoder[RT].map(IntensionalReqSet.WholeType.apply[RT])
-
-    implicit def encoderIRSetWhole[RT: Encoder]: Encoder[IntensionalReqSet.WholeType[RT]] =
-      Encoder[RT].contramap(_.reqType)
-
-    implicit def decoderIRSetSome[RT: Decoder]: Decoder[IntensionalReqSet.SomeOfType[RT]] =
-      Decoder.forProduct2("reqType", "numbers")(IntensionalReqSet.SomeOfType.apply[RT])
-
-    implicit def encoderIRSetSome[RT: Encoder]: Encoder[IntensionalReqSet.SomeOfType[RT]] =
-      Encoder.forProduct2("reqType", "numbers")(a => (a.reqType, a.numbers))
-
-    def decoderIRSet[RT](implicit d1: Decoder[IntensionalReqSet.SomeOfType[RT]], d2: Decoder[IntensionalReqSet.WholeType[RT]]): Decoder[IntensionalReqSet[RT]] = decodeSumBySoleKey {
-      case ("some" , c) => c.as[IntensionalReqSet.SomeOfType[RT]]
-      case ("whole", c) => c.as[IntensionalReqSet.WholeType[RT]]
-    }
-
-    def encoderIRSet[RT](implicit e1: Encoder[IntensionalReqSet.SomeOfType[RT]], e2: Encoder[IntensionalReqSet.WholeType[RT]]): Encoder[IntensionalReqSet[RT]] = Encoder.instance {
-      case a: IntensionalReqSet.SomeOfType[RT] => Json.obj("some"  -> a.asJson)
-      case a: IntensionalReqSet.WholeType[RT]  => Json.obj("whole" -> a.asJson)
-    }
-
-    implicit lazy val codecValidHashTag: JsonCodec[Valid.HashTag] =
-      codecDisj[CustomIssueTypeId, ApplicableTagId]
-
-    implicit lazy val codecValidField: JsonCodec[Valid.Field] = {
-      val encoder =
-        Encoder.instance[Valid.Field] {
-          case \/-(f)                         => f.asJson
-          case -\/(SpecialBuiltInField.Title) => Json.fromString("title")
-        }
-
-      val decFieldId = decoderFieldId.map[Valid.Field](\/-(_))
-
-      val decBuiltIn = Decoder[String].emap[Valid.Field] {
-        case "title" => Right(-\/(SpecialBuiltInField.Title))
-        case x       => Left("Unknown field: " + x)
-      }
-
-      JsonCodec(encoder, decFieldId or decBuiltIn)
-    }
-
-    implicit val codecValidIssueCatNEV: JsonCodec[NonEmptyVector[Valid.IssueCat]] =
-      codecNEV
-
-    implicit val codecValidReqSubset: JsonCodec[Valid.ReqSubset] =
-      JsonCodec(encoderIRSet, decoderIRSet)
-
-    implicit val codecValidReqSet: JsonCodec[Valid.ReqSet] =
-      codecNEV
-
-    implicit lazy val codecFilterAstAttr: JsonCodec[FilterAst.Attr] =
-      JsonCodec.enumAdt(AdtMacros.adtIsoSet[FilterAst.Attr, String] {
-        case FilterAst.Attr.AnyIssue => "issue"
-        case FilterAst.Attr.AnyTag   => "tag"
-      })
-
-    implicit lazy val codecFilterAstFieldAttr: JsonCodec[FilterAst.FieldAttr] =
-      JsonCodec.enumAdt(AdtMacros.adtIsoSet[FilterAst.FieldAttr, String] {
-        case FilterAst.FieldAttr.Blank         => "blank"
-        case FilterAst.FieldAttr.NotApplicable => "n/a"
-        case FilterAst.FieldAttr.DefaultInUse  => "default"
-      })
-
-    implicit val decoderFilterAstText: Decoder[FilterAst.Text] =
-      Decoder.forProduct2("text", "quote")(FilterAst.Text.apply)
-
-    implicit val encoderFilterAstText: Encoder[FilterAst.Text] =
-      Encoder.forProduct2("text", "quote")(a => (a.text, a.quoteChar))
-
-    implicit val codecFilterAstRegex: JsonCodec[FilterAst.Regex] =
-      JsonCodec.xmap(FilterAst.Regex.apply)(_.text)
-
-    implicit val codecFilterAstPresence: JsonCodec[FilterAst.Presence[Valid.Attr]] =
-      JsonCodec.xmap(FilterAst.Presence.apply[Valid.Attr])(_.attr)
-
-    implicit val decoderFilterAstHasIssue: Decoder[FilterAst.HasIssue[Valid.IssueCat]] =
-      Decoder.forProduct2("on", "criteria")(FilterAst.HasIssue.apply)
-
-    implicit val encoderFilterAstHasIssue: Encoder[FilterAst.HasIssue[Valid.IssueCat]] =
-      Encoder.forProduct2("on", "criteria")(a => (a.on, a.criteria))
-
-    implicit val decoderFilterAstFieldProp: Decoder[FilterAst.FieldProp[Valid.Field, Valid.FieldAttr]] =
-      Decoder.forProduct2("field", "attr")(FilterAst.FieldProp.apply)
-
-    implicit val encoderFilterAstFieldProp: Encoder[FilterAst.FieldProp[Valid.Field, Valid.FieldAttr]] =
-      Encoder.forProduct2("field", "attr")(a => (a.field, a.attr))
-
-    implicit val decoderFilterAstHashRef: Decoder[FilterAst.HashRef[Valid.HashTag]] =
-      Decoder[Valid.HashTag].map(FilterAst.HashRef.apply)
-
-    implicit val encoderFilterAstHashRef: Encoder[FilterAst.HashRef[Valid.HashTag]] =
-      Encoder[Valid.HashTag].contramap(_.value)
-
-    implicit val decoderFilterAstImpliesAnyOf: Decoder[FilterAst.ImpliesAnyOf[Valid.ReqSet]] =
-      Decoder[Valid.ReqSet].map(FilterAst.ImpliesAnyOf.apply)
-
-    implicit val encoderFilterAstImpliesAnyOf: Encoder[FilterAst.ImpliesAnyOf[Valid.ReqSet]] =
-      Encoder[Valid.ReqSet].contramap(_.reqs)
-
-    implicit val decoderFilterAstImpliedByAnyOf: Decoder[FilterAst.ImpliedByAnyOf[Valid.ReqSet]] =
-      Decoder[Valid.ReqSet].map(FilterAst.ImpliedByAnyOf.apply)
-
-    implicit val encoderFilterAstImpliedByAnyOf: Encoder[FilterAst.ImpliedByAnyOf[Valid.ReqSet]] =
-      Encoder[Valid.ReqSet].contramap(_.reqs)
-
-    implicit val decoderFilterAstReqs: Decoder[FilterAst.Reqs[Valid.ReqSet]] =
-      Decoder[Valid.ReqSet].map(FilterAst.Reqs.apply)
-
-    implicit val encoderFilterAstReqs: Encoder[FilterAst.Reqs[Valid.ReqSet]] =
-      Encoder[Valid.ReqSet].contramap(_.reqs)
-
-    implicit val decoderFilterAstReqType: Decoder[FilterAst.ReqType[Valid.ReqType]] =
-      Decoder[Valid.ReqType].map(FilterAst.ReqType.apply)
-
-    implicit val encoderFilterAstReqType: Encoder[FilterAst.ReqType[Valid.ReqType]] =
-      Encoder[Valid.ReqType].contramap(_.reqType)
-
-    JsonCodec.fix[ValidF]({
-      case a: FilterAst.Text                                         => Json.obj(KeyAstText           -> a.asJson)
-      case a: FilterAst.Regex                                        => Json.obj(KeyAstRegex          -> a.asJson)
-      case a: FilterAst.Presence      [Valid.Attr]                   => Json.obj(KeyAstPresence       -> a.asJson)
-      case a: FilterAst.FieldProp     [Valid.Field, Valid.FieldAttr] => Json.obj(KeyAstFieldProp      -> a.asJson)
-      case a: FilterAst.HasIssue      [Valid.IssueCat]               => Json.obj(KeyAstHasIssue       -> a.asJson)
-      case a: FilterAst.HashRef       [Valid.HashTag]                => Json.obj(KeyAstHashRef        -> a.asJson)
-      case a: FilterAst.ImpliesAnyOf  [Valid.ReqSet]                 => Json.obj(KeyAstImpliesAnyOf   -> a.asJson)
-      case a: FilterAst.ImpliedByAnyOf[Valid.ReqSet]                 => Json.obj(KeyAstImpliedByAnyOf -> a.asJson)
-      case a: FilterAst.Reqs          [Valid.ReqSet]                 => Json.obj(KeyAstReqs           -> a.asJson)
-      case a: FilterAst.ReqType       [Valid.ReqType]                => Json.obj(KeyAstReqType        -> a.asJson)
-      case FilterAst.Not              (clause)                       => Json.obj(KeyAstNot            -> clause)
-      case FilterAst.AllOf            (clauses)                      => Json.obj(KeyAstAllOf          -> Json.arr(clauses.whole: _*))
-      case FilterAst.AnyOf            (head, tail)                   => Json.obj(KeyAstAnyOf          -> Json.arr(head +: tail.whole: _*))
-    }, decoderFnSumBySoleKey {
-      case (KeyAstText          , c) => c.as[FilterAst.Text]
-      case (KeyAstRegex         , c) => c.as[FilterAst.Regex]
-      case (KeyAstPresence      , c) => c.as[FilterAst.Presence      [Valid.Attr]]
-      case (KeyAstFieldProp     , c) => c.as[FilterAst.FieldProp     [Valid.Field, Valid.FieldAttr]]
-      case (KeyAstHasIssue      , c) => c.as[FilterAst.HasIssue      [Valid.IssueCat]]
-      case (KeyAstHashRef       , c) => c.as[FilterAst.HashRef       [Valid.HashTag]]
-      case (KeyAstImpliesAnyOf  , c) => c.as[FilterAst.ImpliesAnyOf  [Valid.ReqSet]]
-      case (KeyAstImpliedByAnyOf, c) => c.as[FilterAst.ImpliedByAnyOf[Valid.ReqSet]]
-      case (KeyAstReqs          , c) => c.as[FilterAst.Reqs          [Valid.ReqSet]]
-      case (KeyAstReqType       , c) => c.as[FilterAst.ReqType       [Valid.ReqType]]
-      case (KeyAstNot           , c) => Right(FilterAst.Not(c))
-
-      case (KeyAstAllOf, c) =>
-        val c1 = c.downArray
-        val cn = Iterator.iterate(c1)(_.right).takeWhile(_.succeeded).toVector
-        Right(FilterAst.AllOf(NonEmptyVector(c1, cn)))
-
-      case (KeyAstAnyOf, c) =>
-        val c1 = c.downArray
-        val c2 = c1.right
-        val cn = Iterator.iterate(c2)(_.right).takeWhile(_.succeeded).toVector
-        Right(FilterAst.AnyOf(c1, NonEmptyVector(c2, cn)))
-    })
-  }
 
   // ===================================================================================================================
 
@@ -776,67 +553,6 @@ object Rev1 {
     codecNonEmptyMono[Values]
   }
 
-  private[v1] implicit lazy val codecSavedViewGDv1: JsonCodec[SavedViewGDv1.NonEmptyValues] = {
-    import SavedViewGDv1._
-
-    implicit val codecValueForColumns    = JsonCodec.xmap(ValueForColumns   .apply)(_.value)
-    implicit val codecValueForFilter     = JsonCodec.xmap(ValueForFilter    .apply)(_.value)
-    implicit val codecValueForFilterDead = JsonCodec.xmap(ValueForFilterDead.apply)(_.value)
-    implicit val codecValueForName       = JsonCodec.xmap(ValueForName      .apply)(_.value)
-    implicit val codecValueForOrder      = JsonCodec.xmap(ValueForOrder     .apply)(_.value)
-
-    implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
-      case ("columns"   , c) => c.as[ValueForColumns]
-      case ("filter"    , c) => c.as[ValueForFilter]
-      case ("filterDead", c) => c.as[ValueForFilterDead]
-      case ("name"      , c) => c.as[ValueForName]
-      case ("order"     , c) => c.as[ValueForOrder]
-    }
-
-    implicit val encoderValue: Encoder[Value] = Encoder.instance {
-      case a: ValueForColumns    => Json.obj("columns"    -> a.asJson)
-      case a: ValueForFilter     => Json.obj("filter"     -> a.asJson)
-      case a: ValueForFilterDead => Json.obj("filterDead" -> a.asJson)
-      case a: ValueForName       => Json.obj("name"       -> a.asJson)
-      case a: ValueForOrder      => Json.obj("order"      -> a.asJson)
-    }
-
-    implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
-    codecNonEmptyMono[Values]
-  }
-
-  private[v1] implicit lazy val codecSavedViewGD: JsonCodec[SavedViewGD.NonEmptyValues] = {
-    import SavedViewGD._
-
-    implicit val codecValueForColumns        = JsonCodec.xmap(ValueForColumns       .apply)(_.value)
-    implicit val codecValueForFilter         = JsonCodec.xmap(ValueForFilter        .apply)(_.value)
-    implicit val codecValueForFilterDead     = JsonCodec.xmap(ValueForFilterDead    .apply)(_.value)
-    implicit val codecValueForName           = JsonCodec.xmap(ValueForName          .apply)(_.value)
-    implicit val codecValueForOrder          = JsonCodec.xmap(ValueForOrder         .apply)(_.value)
-    implicit val codecValueForImpGraphConfig = JsonCodec.xmap(ValueForImpGraphConfig.apply)(_.value)
-
-    implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
-      case ("columns"       , c) => c.as[ValueForColumns]
-      case ("filter"        , c) => c.as[ValueForFilter]
-      case ("filterDead"    , c) => c.as[ValueForFilterDead]
-      case ("name"          , c) => c.as[ValueForName]
-      case ("order"         , c) => c.as[ValueForOrder]
-      case ("impGraphConfig", c) => c.as[ValueForImpGraphConfig]
-    }
-
-    implicit val encoderValue: Encoder[Value] = Encoder.instance {
-      case a: ValueForColumns        => Json.obj("columns"        -> a.asJson)
-      case a: ValueForFilter         => Json.obj("filter"         -> a.asJson)
-      case a: ValueForFilterDead     => Json.obj("filterDead"     -> a.asJson)
-      case a: ValueForName           => Json.obj("name"           -> a.asJson)
-      case a: ValueForOrder          => Json.obj("order"          -> a.asJson)
-      case a: ValueForImpGraphConfig => Json.obj("impGraphConfig" -> a.asJson)
-    }
-
-    implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
-    codecNonEmptyMono[Values]
-  }
-
   object EventData {
     implicit val decoderEventApplicableTagCreate: Decoder[Event.ApplicableTagCreate] =
       Decoder.forProduct2("id", "values")(Event.ApplicableTagCreate.apply)
@@ -860,32 +576,6 @@ object Rev1 {
       Decoder.forProduct2("id", "values")(Event.CustomIssueTypeUpdate.apply)
 
     implicit val encoderEventCustomIssueTypeUpdate: Encoder[Event.CustomIssueTypeUpdate] =
-      Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
-
-    implicit val decoderEventSavedViewCreateV1: Decoder[Event.SavedViewCreateV1] =
-      Decoder.forProduct6("id", "name", "columns", "order", "filterDead", "filter")(Event.SavedViewCreateV1.apply)
-
-    implicit val encoderEventSavedViewCreateV1: Encoder[Event.SavedViewCreateV1] =
-      Encoder.forProduct6("id", "name", "columns", "order", "filterDead", "filter")(a => (a.id, a.name, a.columns, a.order, a.filterDead, a.filter))
-
-    implicit val decoderEventSavedViewUpdateV1: Decoder[Event.SavedViewUpdateV1] =
-      Decoder.forProduct2("id", "values")(Event.SavedViewUpdateV1.apply)
-
-    implicit val encoderEventSavedViewUpdateV1: Encoder[Event.SavedViewUpdateV1] =
-      Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
-
-    implicit val decoderEventSavedViewCreate: Decoder[Event.SavedViewCreate] =
-      Decoder.forProduct7("id", "name", "columns", "order", "filterDead", "filter", "impGraphConfig")(
-        Event.SavedViewCreate.apply)
-
-    implicit val encoderEventSavedViewCreate: Encoder[Event.SavedViewCreate] =
-      Encoder.forProduct7("id", "name", "columns", "order", "filterDead", "filter", "impGraphConfig")(
-        a => (a.id, a.name, a.columns, a.order, a.filterDead, a.filter, a.impGraphConfig))
-
-    implicit val decoderEventSavedViewUpdate: Decoder[Event.SavedViewUpdate] =
-      Decoder.forProduct2("id", "values")(Event.SavedViewUpdate.apply)
-
-    implicit val encoderEventSavedViewUpdate: Encoder[Event.SavedViewUpdate] =
       Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
 
     implicit val decoderEventFieldCustomTextCreateV1: Decoder[Event.FieldCustomTextCreateV1] =
