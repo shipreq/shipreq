@@ -2,7 +2,7 @@ resource "aws_codebuild_project" "images" {
   name         = "images"
   description  = "All docker images built from Dockerfiles"
   service_role = aws_iam_role.images.arn
-  tags         = local.default_tags
+  tags         = merge(local.default_tags, { Name = "images" })
 
   environment {
     type            = "LINUX_CONTAINER"

@@ -2,7 +2,7 @@ resource "aws_codebuild_project" "shipreq" {
   name         = "shipreq"
   description  = "Taskman & Webapp"
   service_role = aws_iam_role.shipreq.arn
-  tags         = local.default_tags
+  tags         = merge(local.default_tags, { Name = "shipreq" })
 
   environment {
     type                        = "LINUX_CONTAINER"
