@@ -44,12 +44,18 @@ object DataLogicTest extends TestSuite {
     assertImpFields(project, mfField, mfFieldValues)
   }
 
+  private def testImpFieldLogicV2_SIG3b(): Unit = {
+    import SampleImplicationGraph3._
+    assertImpFields(VariantB.project, mfField, VariantB.mfFieldValues)
+  }
+
   override def tests = Tests {
     // https://shipreq.com/project/d6My#/reqs/IV-26
     "impFieldLogicV2" - {
-      "SIG1" - testImpFieldLogicV2_SIG1()
-      "SIG2" - testImpFieldLogicV2_SIG2()
-      "SIG3" - testImpFieldLogicV2_SIG3()
+      "SIG1"  - testImpFieldLogicV2_SIG1()
+      "SIG2"  - testImpFieldLogicV2_SIG2()
+      "SIG3"  - testImpFieldLogicV2_SIG3()
+      "SIG3b" - testImpFieldLogicV2_SIG3b()
     }
   }
 }

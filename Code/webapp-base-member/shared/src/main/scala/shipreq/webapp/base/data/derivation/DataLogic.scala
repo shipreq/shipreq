@@ -204,7 +204,14 @@ final class DataLogic(p: Project) {
           Memo { id =>
             state.get(id) match {
               case Some(s) =>
-                val result = s.toSet
+                val reqTypeId = p.content.reqs.need(id).reqTypeId
+                val result: Set[ReqId] =
+                  field.fieldReqTypeRules(reqTypeId) match {
+                    case Resolution.Optional
+                       | Resolution.Mandatory     => s.toSet
+                    case Resolution.NotApplicable => Set.empty
+                    case Resolution.DefaultTo(x)  => x.impossible
+                  }
                 state.update(id, null) // free memory
                 result
 
