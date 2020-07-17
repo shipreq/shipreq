@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import scalaz.{Equal, Name}
 import shipreq.base.util.{BinaryData, Direction}

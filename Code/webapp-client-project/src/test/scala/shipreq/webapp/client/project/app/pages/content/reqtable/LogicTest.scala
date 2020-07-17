@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
-import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.{Lens, Optional}

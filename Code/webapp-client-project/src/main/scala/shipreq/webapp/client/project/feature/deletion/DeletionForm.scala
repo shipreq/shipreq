@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.deletion
 
-import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._

@@ -1,7 +1,6 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.adt_macros.AdtMacros._
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.{StaticLookupFn, Utils}
 import shipreq.webapp.base.event.Event._

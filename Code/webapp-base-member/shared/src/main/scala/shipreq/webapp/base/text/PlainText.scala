@@ -1,6 +1,5 @@
 package shipreq.webapp.base.text
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import scala.collection.immutable.SortedSet

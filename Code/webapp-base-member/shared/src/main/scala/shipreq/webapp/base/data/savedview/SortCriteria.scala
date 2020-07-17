@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data.savedview
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import monocle.macros.Lenses
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data.savedview.SortCriterion.SyntaxHelpers._

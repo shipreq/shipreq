@@ -1,6 +1,5 @@
 package shipreq.webapp.base.filter
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.webapp.base.data.SpecialBuiltInField._
 import shipreq.webapp.base.data.{Project, ReqTypePos}
 import shipreq.webapp.base.event.{CustomTextFieldGD, Event}

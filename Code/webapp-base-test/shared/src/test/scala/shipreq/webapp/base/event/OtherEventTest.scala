@@ -1,6 +1,5 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.Forwards
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._

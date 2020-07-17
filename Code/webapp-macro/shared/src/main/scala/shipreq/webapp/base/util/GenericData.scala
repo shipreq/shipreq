@@ -1,6 +1,6 @@
 package shipreq.webapp.base.util
 
-import japgolly.microlibs.nonempty._
+import japgolly.microlibs.nonempty.NonEmpty
 import scala.collection.IterableOnce
 import scalaz.{Equal, Order}
 import shipreq.base.util.IMap

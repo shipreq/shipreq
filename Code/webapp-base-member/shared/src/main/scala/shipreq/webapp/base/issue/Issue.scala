@@ -1,7 +1,6 @@
 package shipreq.webapp.base.issue
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.{ManualIssue => ManualIssueInstance, _}
 import shipreq.webapp.base.text.{Atom, Text}

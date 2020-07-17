@@ -2,7 +2,7 @@ package shipreq.webapp.base.protocol.json.v1
 
 import io.circe._
 import io.circe.syntax._
-import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet, NonEmptyVector}
+import japgolly.microlibs.nonempty.NonEmpty
 import nyaya.util.{MultiValues, Multimap}
 import scala.reflect.ClassTag
 import shipreq.base.util.JsonUtil._

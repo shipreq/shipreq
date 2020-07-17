@@ -1,6 +1,5 @@
 package shipreq.webapp.base.user
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Invalid, Valid}

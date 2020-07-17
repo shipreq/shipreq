@@ -1,7 +1,6 @@
 package shipreq.webapp.base.text
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.parboiled2.{CharPredicate => CP, _}
 import shapeless._

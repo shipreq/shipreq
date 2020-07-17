@@ -1,6 +1,5 @@
 package shipreq.webapp.base.protocol.websocket
 
-import japgolly.microlibs.nonempty._
 import shipreq.base.util.VectorTree.LocationOps
 import shipreq.base.util._
 import shipreq.webapp.base.data._

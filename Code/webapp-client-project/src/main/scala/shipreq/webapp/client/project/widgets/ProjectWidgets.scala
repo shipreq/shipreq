@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react.extra.router.RouterCtl

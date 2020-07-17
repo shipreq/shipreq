@@ -1,6 +1,5 @@
 package shipreq.webapp.base.sort
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
 import scala.scalajs.js.{Array => JArray}
 import shipreq.webapp.base.sort.Sorter._

@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.savedview
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.{Px, StateSnapshot}
 import japgolly.scalajs.react.vdom.html_<^._

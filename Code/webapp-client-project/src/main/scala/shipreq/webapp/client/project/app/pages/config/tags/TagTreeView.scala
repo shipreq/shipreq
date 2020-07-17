@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.config.tags
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

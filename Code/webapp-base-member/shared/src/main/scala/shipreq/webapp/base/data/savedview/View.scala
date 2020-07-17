@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data.savedview
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import monocle.macros.Lenses
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.Filter

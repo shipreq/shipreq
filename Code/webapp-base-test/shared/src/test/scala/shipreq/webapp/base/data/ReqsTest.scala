@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.microlibs.nonempty._
 import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._

@@ -1,7 +1,6 @@
 package shipreq.webapp.server.logic
 
 import com.typesafe.scalalogging.StrictLogging
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import scalaz.syntax.monad._

@@ -1,6 +1,5 @@
 package shipreq.webapp.server.db
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.base.test.db.TestDb
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.test.UnsafeTypes._

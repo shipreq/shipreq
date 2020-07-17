@@ -1,7 +1,6 @@
 package shipreq.webapp.base.filter
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.recursion.Fix
 import japgolly.microlibs.utils.StaticLookupFn
 import scalaz.{Applicative, Traverse, Traverse1}

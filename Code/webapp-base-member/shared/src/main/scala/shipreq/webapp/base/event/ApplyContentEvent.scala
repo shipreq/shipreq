@@ -1,6 +1,6 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.nonempty._
+import japgolly.microlibs.nonempty.NonEmpty
 import monocle.Lens
 import scalaz.std.option.optionInstance
 import shipreq.base.util.MTrie.Ops

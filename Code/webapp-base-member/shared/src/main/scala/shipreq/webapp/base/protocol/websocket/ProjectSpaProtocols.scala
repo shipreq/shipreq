@@ -2,7 +2,6 @@ package shipreq.webapp.base.protocol.websocket
 
 import boopickle.DefaultBasic._
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.utils.StaticLookupFn
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.Urls

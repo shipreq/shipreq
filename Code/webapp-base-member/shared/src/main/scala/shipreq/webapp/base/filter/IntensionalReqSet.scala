@@ -1,6 +1,5 @@
 package shipreq.webapp.base.filter
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import scalaz.{Applicative, Traverse}
 
 sealed trait IntensionalReqSet[+RT] {

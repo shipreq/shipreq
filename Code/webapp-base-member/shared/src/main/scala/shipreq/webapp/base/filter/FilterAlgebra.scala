@@ -1,6 +1,5 @@
 package shipreq.webapp.base.filter
 
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat

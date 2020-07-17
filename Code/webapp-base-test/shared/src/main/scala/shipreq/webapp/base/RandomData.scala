@@ -1,7 +1,7 @@
 package shipreq.webapp.base
 
 import japgolly.microlibs.adt_macros.AdtMacros._
-import japgolly.microlibs.nonempty._
+import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat

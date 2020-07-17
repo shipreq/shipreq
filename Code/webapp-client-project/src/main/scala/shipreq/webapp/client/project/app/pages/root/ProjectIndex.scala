@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.pages.root
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scala.scalajs.js

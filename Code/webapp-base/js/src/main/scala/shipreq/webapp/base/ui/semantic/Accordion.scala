@@ -1,6 +1,5 @@
 package shipreq.webapp.base.ui.semantic
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 object Accordion {

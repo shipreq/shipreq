@@ -3,7 +3,6 @@ package shipreq.webapp.server.logic
 import com.typesafe.scalalogging.StrictLogging
 import io.circe._
 import io.circe.syntax._
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.ParseLong
 import japgolly.microlibs.utils.Utils
 import java.time.Instant

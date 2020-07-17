@@ -1,6 +1,6 @@
 package shipreq.webapp.base.test
 
-import japgolly.microlibs.nonempty._
+import japgolly.microlibs.nonempty.NonEmpty
 import java.time._
 import nyaya.util.Multimap
 import scala.reflect.ClassTag

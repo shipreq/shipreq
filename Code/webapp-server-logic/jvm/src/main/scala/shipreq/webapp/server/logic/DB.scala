@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import java.time.Instant
 import scalaz.~>
 import shipreq.webapp.base.data._

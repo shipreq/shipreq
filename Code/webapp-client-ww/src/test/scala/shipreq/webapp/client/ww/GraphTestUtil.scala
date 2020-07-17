@@ -1,6 +1,5 @@
 package shipreq.webapp.client.ww
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.test.WebappTestUtil._

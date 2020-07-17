@@ -1,6 +1,5 @@
 package shipreq.webapp.client.public.pages
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot

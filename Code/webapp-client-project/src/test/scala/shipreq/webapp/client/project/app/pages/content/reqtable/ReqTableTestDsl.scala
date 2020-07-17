@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
-import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html

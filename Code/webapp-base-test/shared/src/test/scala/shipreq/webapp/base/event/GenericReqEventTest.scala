@@ -1,6 +1,6 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.nonempty._
+import japgolly.microlibs.nonempty.NonEmpty
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ApplyEventTestFns._
 import shipreq.webapp.base.event.ContentEventTestHelp._

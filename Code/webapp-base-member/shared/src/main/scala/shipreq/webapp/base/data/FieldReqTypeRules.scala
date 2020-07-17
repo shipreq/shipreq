@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Traversal
 import scalaz.Applicative

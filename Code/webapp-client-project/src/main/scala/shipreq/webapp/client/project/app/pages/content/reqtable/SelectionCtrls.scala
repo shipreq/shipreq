@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
-import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.window

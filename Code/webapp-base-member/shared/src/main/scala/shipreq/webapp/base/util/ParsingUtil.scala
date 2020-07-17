@@ -1,6 +1,5 @@
 package shipreq.webapp.base.util
 
-import japgolly.microlibs.nonempty._
 import org.parboiled2._
 import scala.reflect.ClassTag
 import shapeless._

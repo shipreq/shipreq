@@ -25,6 +25,12 @@ abstract class PredefShared
   final val  \/-         = scalaz.\/-
   final val  -\/         = scalaz.-\/
 
+  final type NonEmptySet[A] = japgolly.microlibs.nonempty.NonEmptySet[A]
+  final val  NonEmptySet    = japgolly.microlibs.nonempty.NonEmptySet
+
+  final type NonEmptyVector[+A] = japgolly.microlibs.nonempty.NonEmptyVector[A]
+  final val  NonEmptyVector     = japgolly.microlibs.nonempty.NonEmptyVector
+
   @inline
   @scala.annotation.nowarn("cat=unused")
   final implicit def univEqMultimap[K, L[_], V](implicit ev: UnivEq[Map[K, L[V]]]): UnivEq[Multimap[K, L, V]] =

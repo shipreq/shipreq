@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.savedview
 
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.scalajs.react._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._

@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.deletion
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen._
 import nyaya.prop._

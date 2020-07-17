@@ -3,7 +3,6 @@ package shipreq.webapp.base.protocol.json.v1
 import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import shipreq.base.util.JsonUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.RetiredGenericData._

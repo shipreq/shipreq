@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Iso
 import scalaz.Equal

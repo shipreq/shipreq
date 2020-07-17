@@ -1,6 +1,6 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.nonempty._
+import japgolly.microlibs.nonempty.NonEmpty
 import scalaz.\&/
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util._

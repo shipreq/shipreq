@@ -1,6 +1,5 @@
 package shipreq.webapp.base.sort
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util.Util
 /** The method by which data should be sorted.
   *

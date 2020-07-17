@@ -3,7 +3,6 @@ package shipreq.webapp.server.logic
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.FileUtils
 import java.time.Instant

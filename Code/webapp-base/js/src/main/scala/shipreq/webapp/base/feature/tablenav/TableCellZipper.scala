@@ -1,6 +1,5 @@
 package shipreq.webapp.base.feature.tablenav
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.util.Multimap

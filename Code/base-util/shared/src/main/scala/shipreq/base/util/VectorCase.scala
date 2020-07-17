@@ -1,7 +1,5 @@
 package shipreq.base.util
 
-import japgolly.microlibs.nonempty.NonEmptyVector
-
 /**
  * Pattern matching on Vectors.
  */

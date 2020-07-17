@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.deletion
 
-import japgolly.microlibs.nonempty._
 import scala.collection.IterableOnce
 import shipreq.base.util._
 import shipreq.webapp.base.data._

@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import japgolly.microlibs.nonempty._
+import japgolly.microlibs.nonempty.NonEmpty
 import scala.collection.{AbstractIterator, Factory}
 import scala.math.Ordering
 import scala.reflect.ClassTag

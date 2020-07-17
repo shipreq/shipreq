@@ -1,6 +1,5 @@
 package shipreq.webapp.base.feature.tablenav
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import scalaz.Applicative
 import scalaz.Scalaz.Id
 import shipreq.base.util.{Allow, Permission, Util}

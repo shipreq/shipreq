@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import java.time.Duration
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data.Project

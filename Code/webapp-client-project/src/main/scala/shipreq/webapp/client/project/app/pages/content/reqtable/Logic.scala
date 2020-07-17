@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
-import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.collection.{Factory, Iterable}
@@ -458,7 +457,7 @@ private[reqtable] object Logic {
 
   def mkReqCodeTreeItem(prevV: ReqCode.Value, prevI: ReqCodeTreeItem, cur: ReqCode.Value): ReqCodeTreeItem = {
     import ReqCodeTreeItem._
-    import VectorCase._
+    import VectorCase.{Empty, NonEmpty}
 
     @tailrec
     def go(ci: Vector[Indent], cv: ReqCode.Value)(pi: Vector[Indent], pv: ReqCode.Value): ReqCodeTreeItem =

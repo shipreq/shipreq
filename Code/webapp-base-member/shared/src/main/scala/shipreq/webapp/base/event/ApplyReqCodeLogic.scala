@@ -1,6 +1,5 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
 import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data.ReqCode._

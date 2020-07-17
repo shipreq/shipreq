@@ -1,6 +1,5 @@
 package shipreq.webapp.base.test
 
-import japgolly.microlibs.nonempty._
 import nyaya.gen._
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.util.ScalaExt._

@@ -1,6 +1,5 @@
 package shipreq.webapp.base.validation
 
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import scalaz.Applicative
 
 object Simple {

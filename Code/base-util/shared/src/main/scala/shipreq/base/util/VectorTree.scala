@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle._
 import nyaya.prop.Prop

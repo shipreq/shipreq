@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.feature.savedview
 
-import japgolly.microlibs.nonempty.{NonEmpty, NonEmptyVector}
+import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import monocle.Lens

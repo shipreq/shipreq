@@ -1,6 +1,5 @@
 package shipreq.webapp.base.filter
 
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.recursion._
 import scalaz.Traverse
 import shipreq.base.util.Identity

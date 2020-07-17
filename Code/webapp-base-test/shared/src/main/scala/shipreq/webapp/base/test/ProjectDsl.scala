@@ -1,6 +1,5 @@
 package shipreq.webapp.base.test
 
-import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
 import scalaz.std.AllInstances._

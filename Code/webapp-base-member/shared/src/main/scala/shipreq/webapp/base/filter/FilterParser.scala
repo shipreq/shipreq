@@ -1,6 +1,5 @@
 package shipreq.webapp.base.filter
 
-import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion.Fix
 import org.parboiled2.{Parser => _, _}
 import scala.util.{Failure, Success, Try}

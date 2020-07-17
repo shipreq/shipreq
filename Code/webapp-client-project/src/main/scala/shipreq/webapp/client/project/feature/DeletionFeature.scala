@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import shipreq.webapp.base.data.{Project, ReqId}
 
 object DeletionFeature {

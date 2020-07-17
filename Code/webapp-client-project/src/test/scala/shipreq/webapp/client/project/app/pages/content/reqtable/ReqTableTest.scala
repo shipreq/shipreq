@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.scalajs.react.test.SimEvent.{Keyboard => KB}
 import nyaya.test.PropTest._
 import shipreq.base.util.{Invalid, Valid}

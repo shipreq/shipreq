@@ -1,6 +1,5 @@
 package shipreq.webapp.base.protocol.binary.v1
 
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import java.time.Instant
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._

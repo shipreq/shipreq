@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.root
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react.extra.router.{RouterCtl => RouterCtl_, _}
 import japgolly.scalajs.react.{Callback, Reusability}

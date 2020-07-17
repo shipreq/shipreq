@@ -8,7 +8,6 @@ import doobie.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
 import io.circe.Json
-import japgolly.microlibs.nonempty.NonEmptySet
 import java.time.Instant
 import nyaya.gen.Gen
 import org.postgresql.util.PSQLException

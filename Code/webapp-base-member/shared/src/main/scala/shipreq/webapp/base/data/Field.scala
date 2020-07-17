@@ -1,7 +1,6 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.macros.{GenLens, Lenses}
 import monocle.{Lens, Traversal}

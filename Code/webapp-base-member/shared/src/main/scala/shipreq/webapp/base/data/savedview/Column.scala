@@ -1,7 +1,6 @@
 package shipreq.webapp.base.data.savedview
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._

@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html

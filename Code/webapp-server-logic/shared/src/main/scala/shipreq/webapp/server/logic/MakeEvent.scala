@@ -1,6 +1,6 @@
 package shipreq.webapp.server.logic
 
-import japgolly.microlibs.nonempty._
+import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.util.Multimap
 import shipreq.base.util.PotentialChange._

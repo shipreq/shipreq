@@ -1,6 +1,5 @@
 package shipreq.taskman.server.logic.business
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import scalaz.syntax.bind._
 import scalaz.~>
 import shipreq.base.util.ArticulateError

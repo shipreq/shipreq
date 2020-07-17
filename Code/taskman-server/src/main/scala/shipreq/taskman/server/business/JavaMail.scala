@@ -1,7 +1,6 @@
 package shipreq.taskman.server.business
 
 import japgolly.clearconfig._
-import japgolly.microlibs.nonempty.NonEmptyVector
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import scala.runtime.AbstractFunction1

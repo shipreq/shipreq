@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._

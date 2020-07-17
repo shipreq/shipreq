@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.deletion
 
-import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._

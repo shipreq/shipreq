@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._

@@ -1,6 +1,5 @@
 package shipreq.webapp.base.feature.autocomplete.strategies
 
-import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.{Utils => Util}

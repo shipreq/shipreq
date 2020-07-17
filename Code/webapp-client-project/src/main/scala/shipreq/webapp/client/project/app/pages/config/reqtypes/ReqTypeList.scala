@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.config.reqtypes
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._

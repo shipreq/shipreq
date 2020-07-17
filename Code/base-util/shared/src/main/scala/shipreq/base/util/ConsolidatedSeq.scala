@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 object ConsolidatedSeq {
 
   object Logic {

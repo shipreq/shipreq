@@ -1,6 +1,5 @@
 package shipreq.webapp.base.protocol.binary.v1
 
-import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.base.data._

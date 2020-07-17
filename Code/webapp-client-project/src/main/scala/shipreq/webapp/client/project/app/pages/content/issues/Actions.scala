@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
-import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Allow, Deny}

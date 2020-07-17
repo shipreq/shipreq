@@ -1,6 +1,5 @@
 package shipreq.webapp.base.test
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.Event

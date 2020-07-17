@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 /**
  * Record data as an effect for later retrieval. Mutable.
  *

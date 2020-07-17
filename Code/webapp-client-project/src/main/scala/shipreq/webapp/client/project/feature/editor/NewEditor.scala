@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.feature.editor
 
-import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._

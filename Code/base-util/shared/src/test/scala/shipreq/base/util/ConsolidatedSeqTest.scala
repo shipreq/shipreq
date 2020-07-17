@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.testutil.TestUtil._
 import utest._
 

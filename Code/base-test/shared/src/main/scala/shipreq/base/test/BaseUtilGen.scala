@@ -1,6 +1,6 @@
 package shipreq.base.test
 
-import japgolly.microlibs.nonempty._
+import japgolly.microlibs.nonempty.NonEmpty
 import java.util.concurrent.atomic.AtomicInteger
 import nyaya.gen._
 import nyaya.prop.CycleDetector
