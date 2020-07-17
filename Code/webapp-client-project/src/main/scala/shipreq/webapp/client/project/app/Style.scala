@@ -39,7 +39,7 @@ object Style extends StyleSheet.Inline {
   protected final val animSpeed = animSpeedMs.toString + "ms"
 
   private def monospace =
-    fontFamily :=! "monospace"
+    BaseStyles.monospace
 
   private val hasErrorBackground =
     backgroundColor(c"#fee")
@@ -1583,32 +1583,49 @@ object Style extends StyleSheet.Inline {
 
   object help {
 
-    private val descCls = "_d"
-    private val sampleCls = "_s"
-
     @UsesSemanticUiManually
-    val examplesTable = style(
+    val table = style(
       addClassNames("ui", "celled", "table"),
-      marginBottom(1 em),
-      unsafeChild("tr:nth-child(odd)  td." + sampleCls)(backgroundColor(c"#fffde8")),
-      unsafeChild("tr:nth-child(even) td." + sampleCls)(backgroundColor(c"#def2fc")),
-      unsafeChild("tr:nth-child(odd)  td." + descCls)(backgroundColor(c"#fcf8e3")),
-      unsafeChild("tr:nth-child(even) td." + descCls)(backgroundColor(c"#d9edf7")))
+      display.block,
+      maxHeight :=! "calc(100vh - 7rem - 3rem - 3.93rem)", // 7=modal margin, 3.93=modal header, 3=modal body
+      overflowY.auto,
+    )
 
-    val exampleDesc = style(
-      addClassNames(descCls))
+    val groupHeader = styleF(D.enabled)(enabled => styleS(
+      fontSize(115 %%),
+      fontWeight.bold,
+      backgroundColor(
+        enabled match {
+          case Enabled  => c"#222"
+          case Disabled => c"#888"
+        }
+      ),
+      color(c"#fff"),
+    ))
 
-    val exampleDescCode = style(
-      padding(0.1 em, 0.5 ex),
-      margin.vertical(0.5 ex),
-      fontFamily :=! "monospace", // TODO :=! ???
-      backgroundColor(c"#fff"))
+    val groupNA = style(
+      marginLeft(1 ex),
+      opacity(0.6))
 
-    val exampleSample = style(
-      addClassNames(sampleCls),
-      fontFamily :=! "monospace",
+    val cellNA = style(
+      backgroundColor(c"#ddd"),
+      opacity(0.85))
+
+    val rowText = style(
+      background := "#f0fbff",
+    )
+
+    val rowExamples = style(
+      background := "#f0fbff",
+      monospace,
       whiteSpace.nowrap,
       color(c"#f39"))
+
+    val code = style(
+      padding(0.1 em, 0.5 ex),
+      margin.vertical(0.5 ex),
+      monospace,
+      backgroundColor(c"#fff"))
   }
 
   // ===================================================================================================================
@@ -1617,7 +1634,7 @@ object Style extends StyleSheet.Inline {
     generic.table,
     navBar.connected,
     home.cardHeader,
-    help.examplesTable,
+    help.table,
     reqgraphPage.graph,
     cfg.deadMnemonic,
     deletionRestorationForms.main,

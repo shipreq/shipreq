@@ -49,7 +49,7 @@
     //"feed",
     //"item",
     "statistic",   // Used in projects index (/), and each project's home (/project/ABC)
-    "accordion",   // Used for rich-text editor help, and filter help.
+    //"accordion",
     "checkbox",    // Used in public pages (eg. login, register), user profile page
     "dimmer",      // Used in [Req Lookup] card in project menu (/project/ABC).
     "dropdown",    // Used in top-right of all logged-in pages

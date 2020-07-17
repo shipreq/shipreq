@@ -51,7 +51,7 @@ object AssetManifest {
     href = "https://cdnjs.cloudflare.com/ajax/libs/react/16.13.1/umd/react.production.min.js",
     integrity = Some("sha256-yUhvEmYVhZ/GGshIQKArLvySDSh6cdmdcIx0spR3UP4="))
 
-  def semanticCss = "/s/4022291d4bd4ccb5d83e1562e2fbf3e8.css"
+  def semanticCss = "/s/6ad0d2cad4c7ccbcea990ce9776583ea.css"
 
   def semanticCssUrls: List[String] =
     "icons.eot" ::
@@ -62,7 +62,7 @@ object AssetManifest {
     "icons.svg#icons" ::
     Nil
 
-  def semanticJs = "/s/8ab75080d9a1778d724d4ec772391b36.js"
+  def semanticJs = "/s/7d56748313c82dfe1e914a78c4c72f95.js"
 
   def shipreqBannerSvg = "/s/878536f0a4ad0029794669f88dbf5f35.svg"
 

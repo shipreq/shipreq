@@ -5,32 +5,32 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.text.Atom.TypeGroup
 import shipreq.webapp.base.text.Grammar.texTag
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.semantic.{Accordion, Modal}
+import shipreq.webapp.base.ui.semantic.Modal
 
 object RichTextEditorHelp {
   import HelpModal._
 
   private val references =
     Group("References")(
-      Example(
+      Row(
         "Requirements can be referenced by putting the ID inside square brackets.")(
         "[FR-3]"),
 
-      Example(
+      Row(
         "Use case steps can be referenced by putting the use case ID and step number, inside square brackets.")(
         "[UC-2.0.3.a]"),
 
-      Example(
+      Row(
         "Codes can be referenced by putting the code inside square brackets.")(
         "[backend.backup.times]"))
 
   private val issues =
     Group("Issues")(
-      Example(
+      Row(
         "Issues can be declared in text by typing a hash (", code("#"), ") followed by the issue.")(
         "#TODO"),
 
-      Example(
+      Row(
         "More information may be attached to an issue by appending", <.br,
         code("{"), ", the text, and a final ", code("}"), " to the issue tag."
       )(
@@ -38,18 +38,18 @@ object RichTextEditorHelp {
 
   private val tags =
     Group("Tags")(
-      Example(
+      Row(
         "Tags can be declared in text by typing a hash (", code("#"), ") followed by the tag.")(
         "#uat"))
 
   private val lists =
     Group("Lists")(
-      Example(
+      Row(
         "A list of bullet points can be created by starting new lines with an asterisk (", code("*"), ") followed by a space."
       )(
         "* item 1",
         "* item 2"),
-      Example(
+      Row(
         "A numbered list can be created by starting new lines with a number, followed by a dot and a space.",
         <.br,
         "The numbers themselves don't matter; they'll be automatically replaced to reflect their order when you save."
@@ -61,16 +61,16 @@ object RichTextEditorHelp {
 
   private val styling =
     Group("Styling")(
-      Example("To make text bold, wrap it in ", code("**"))("**this is bold**"),
-      Example("To make text italic, wrap it in ", code("//"))("//this is italic//"),
-      Example("To underline text, wrap it in ", code("__"))("__this is underlined__"),
-      Example("To strikethrough text, wrap it in ", code("~~"))("~~this is strikethrough~~"),
+      Row("To make text bold, wrap it in ", code("**"))("**this is bold**"),
+      Row("To make text italic, wrap it in ", code("//"))("//this is italic//"),
+      Row("To underline text, wrap it in ", code("__"))("__this is underlined__"),
+      Row("To strikethrough text, wrap it in ", code("~~"))("~~this is strikethrough~~"),
     )
 
   private val headings = {
     def eg(n: Int) = {
       val h = "#" * n
-      Example("Begin a line with ", code(h + " "), s" to create a level $n heading.")(h + " Heading level " + n)
+      Row("Begin a line with ", code(h + " "), s" to create a level $n heading.")(h + " Heading level " + n)
     }
     Group("Headings")(
       eg(1), (2 to 6).iterator.map(eg).toSeq: _*
@@ -79,7 +79,7 @@ object RichTextEditorHelp {
 
   private val codeBlocks =
     Group("Code blocks")(
-      Example(
+      Row(
         "To create a block of code, wrap it between lines of ", code("```"), ".",
       )(
         <.div(
@@ -96,7 +96,7 @@ object RichTextEditorHelp {
         )
       ),
 
-      Example(
+      Row(
         "If you'd like to use syntax highlighting, specify the code language after the first ", code("```"), "."
       )(
         <.div(
@@ -113,7 +113,7 @@ object RichTextEditorHelp {
 
   private val useCaseFlow =
     Group("Use Case flow")(
-      Example(
+      Row(
         "Flow between use case steps can be specified by adding arrows ", code("-->"), " and/or ", code("<--"),
         " to the end of a step, followed by the target use case steps.",
         <.br, <.br,
@@ -128,19 +128,19 @@ object RichTextEditorHelp {
 
   private val other =
     Group("Other")(
-      Example(
+      Row(
         "To mark part of a line as monospace or code, wrap it with ", code("`"), ".",
       )("`like_this`"),
 
-      Example(
+      Row(
         "URLs are detected automatically, and presented as links.")(
         "https://google.com"),
 
-      Example(
+      Row(
         "Emails are detected automatically, and presented as links.")(
         "bob.loblaw@ad-law-firm.com"),
 
-      Example(
+      Row(
         "Mathematical expressions can be entered in TeX format, by surrounding in ", <.br, code(s"<$texTag>…</$texTag>"), ".",
         <.br, <.br,
         "For more detail, see ",
@@ -156,12 +156,7 @@ object RichTextEditorHelp {
       if (criteria(t))
         group
       else {
-        val title = <.span(
-          ^.opacity := "0.6",
-          group.title, " (not applicable here)")
-
-        val content = <.div(
-          ^.opacity := "0.85",
+        val explanation = TagMod(
           "This is only supported in the following locations:",
           <.ul(
             Text.values
@@ -172,8 +167,7 @@ object RichTextEditorHelp {
               .distinct
               .sorted
               .map(<.li(_)): _*))
-
-        Accordion.Item(title, content)
+        group.notApplicable(explanation)
       }
     }
 

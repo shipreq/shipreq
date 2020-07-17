@@ -22,7 +22,7 @@ object FilterHelp {
           " for issues of type: ", UiText.Issues.category(c).toLowerCase()))
 
   private val impFieldValuesEg =
-    Example(
+    Row(
       "To filter requirements by the values in an implication field, type ",
       code("field:<NAME>=<VALUES>"), ", replacing ", code("<NAME>"), " with the field name or mnemonic, and ",
       code("<VALUES>"), " with the numbers of matching requirements.",
@@ -37,12 +37,12 @@ object FilterHelp {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Text")(
 
-      Example(
+      Row(
         "To find requirements that contain a certain word somewhere in its text, just type the word you're looking for." +
           " This is case-insensitive, so it doesn't matter whether text is upper-case or lower-case."
       )("dividend"),
 
-      Example(
+      Row(
         "To search for a phrase or sequence of words, surround the search phrase with one of the following:",
         <.ol(
           <.li("quotation marks (", code("\""), ")"),
@@ -51,7 +51,7 @@ object FilterHelp {
         "As above, this is case-insensitive, so it doesn't matter whether text is upper-case or lower-case."
       )("\"next day\"", "'next day'", "`next day`"),
 
-      Example(
+      Row(
         "Advanced users can also use ",
         <.a(^.href := "http://www.regular-expressions.info/", "regular expressions"),
         " to filter requirement text. Unlike above, this is case-sensitive unless you specify the case-insensitivity flag: ",
@@ -63,17 +63,17 @@ object FilterHelp {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Requirements & Types")(
 
-      Example(
+      Row(
         "To filter by the type of requirements, enter the type's mnemonic (in upper-case)."
       )("FR", "UC"),
 
-      Example(
+      Row(
         "To select a specific requirement, enter its ID (in upper-case).",
         <.br,
         <.br, "Note: If you want to specify a requirements ID as text, either use lower-case or wrap it as a phrase.",
       )("FR-30", "UC-6"),
 
-      Example(
+      Row(
         "To specify a number of specific requirements of the same type, surround the numbers with braces ", code("{…}"),
         " and separate by commas. You can also use a dash for an inclusive range."
       )("FR-{1,3,5,7}", "FR-{10-20}"),
@@ -83,12 +83,12 @@ object FilterHelp {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Issues & Tags")(
 
-      Example(
+      Row(
         "To find requirements that have a certain user-defined issue or tag, enter ", code("#"),
         " followed by the issue or tag."
       )("#draft"),
 
-      Example(
+      Row(
         "To find requirements that simply have any tag, or have any kind of issue, enter ", code("has:"),
         " followed by either:",
         <.ul(
@@ -97,7 +97,7 @@ object FilterHelp {
         // "As above, this is case-insensitive, so it doesn't matter whether text is upper-case or lower-case."
       )("has:issue", "has:tag"),
 
-      Example(
+      Row(
         "You can also search for requirements that have specific types of issues using ", code("has:issue:"),
         " and then some of the following separated by a comma (with no spaces in between):",
         <.ul(issueCatLIs),
@@ -115,25 +115,25 @@ object FilterHelp {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Implication")(
 
-      Example(
+      Row(
         "To filter requirements by their implications, start with ", code("implies:"), " or ", code("impliedBy:"),
         ", then enter a list of requirements seperated by a comma (with no spaces in between)."
       )("impliedBy:MF-3", "implies:CO-3,FR-20"),
 
-      Example(
+      Row(
         "To specify a type of subject (eg. show me everything implied by BR business rules), just enter the req-type."
       )("impliedBy:BR"),
 
-      Example(
+      Row(
         "To specify a number of subjects of the same type, surround the numbers with braces ", code("{…}"),
         " and separate by commas. You can also use a dash for an inclusive range."
       )("implies:FR-{1,3,5,7}", "implies:FR-{10-20}"),
 
-      Example(
+      Row(
         "All means of specifying subsets of requirements, can be combined by separating with commas."
       )("impliedBy:MF,FR-{1-10,20,24},CO-7"),
 
-      Example(
+      Row(
         "When multiple requirements are specified, the filter matches when ", <.em("any"),
         " parts match. To require that ", <.em("all"), " parts match instead of ", <.em("any"), ", use multiple terms.",
         <.br,
@@ -148,22 +148,22 @@ object FilterHelp {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Fields")(
 
-      Example(
+      Row(
         "To find requirements that are blank for some field, enter ",
         code("field:<NAME>=blank"), " and replace ", code("<NAME>"), " with the real field name."
       )("field:Priority=blank"),
 
-      Example(
+      Row(
         "To find requirements that are using default field value, enter ",
         code("field:<NAME>=default"), " and replace ", code("<NAME>"), " with the real field name."
       )("field:Priority=default"),
 
-      Example(
+      Row(
         "To find requirements to which some field isn't applicable, enter ",
         code("field:<NAME>=n/a"), " and replace ", code("<NAME>"), " with the real field name."
       )("field:Priority=n/a"),
 
-      Example(
+      Row(
         "If your field name contains spaces, an equals (", code("="), "), or a colon (", code(":"),
         "), wrap the field name in quotes."
       )("field:\"Foo Bar\"=blank"),
@@ -174,18 +174,18 @@ object FilterHelp {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Negation & Multiple Filters")(
 
-      Example(
+      Row(
         "To negate a clause, prefix it with a minus ", code("-"), ".", <.br,
         "This works for anything, including text searches."
       )("-dividend", "-'next day'", "-#draft", "-has:issue", "-impliedBy:MF", "-(#v1.0 #released)"),
 
-      Example(
+      Row(
         "To combine multiple filters so that they ", <.em("all"),
         " must match, separate them by a space. Optionally, you can wrap them in parenthesis ", code("(…)"),
         " and treat it as a single filter (which allows you to do things like negate the whole thing)."
       )("#v1.0 #released", "(#v1.0 #released)"),
 
-      Example(
+      Row(
         "You can also combine multiple filters so that if ", <.em("any"), " match, the whole filter matches.", <.br,
         "To do so, separate the filters by pipes ", code("|"), ".", <.br,
         "For example, ", code("#v1.0 | #v1.1"), " will match:",
@@ -202,7 +202,7 @@ object FilterHelp {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     Group("Examples")(
 
-      Example(
+      Row(
         "This example selects all requirements that",
         <.ul(
           <.li("have a ", code("#released"), " tag, and…"),

@@ -4,32 +4,65 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.ui.semantic.{Accordion, Modal}
+import shipreq.webapp.base.data.{Disabled, Enabled}
+import shipreq.webapp.base.ui.semantic.Modal
 import shipreq.webapp.client.project.app.Style.{help => *}
 
 object HelpModal {
-  type Groups  = NonEmptyVector[Group]
-  type Group   = Accordion.Item
-  type Example = VdomTagOf[html.TableRow]
 
-  def apply(modalHeader: VdomNode, groups: Groups): Modal =
-    Modal(modalHeader, Accordion.Component(groups))
+  type TR = VdomTagOf[html.TableRow]
 
-  def Groups(g1: Group, gn: Group*): NonEmptyVector[Group] =
+  type Groups = NonEmptyVector[Group]
+
+  def Groups(g1: Group, gn: Group*): Groups =
     NonEmptyVector(g1, gn.toVector)
 
-  def Group(title: VdomNode)(e1: Example, en: Example*): Group = {
-    val content = <.table(*.examplesTable, <.tbody(e1 +: en: _*))
-    Accordion.Item(title, content)
+  // -------------------------------------------------------------------------------------------------------------------
+
+  final class Group(title: VdomNode, rows: Vector[TR], enabled: Enabled) {
+
+    val vdom: Vector[TR] = {
+      val groupRow = <.tr(<.td(^.colSpan := 2, *.groupHeader(enabled), title))
+      groupRow +: rows
+    }
+
+    def notApplicable(explanation: TagMod): Group = {
+      val newTitle = <.span(title, <.span(*.groupNA, " (not applicable here)"))
+      val content  = <.tr(<.td(^.colSpan := 2, *.cellNA, explanation))
+      new Group(newTitle, Vector(content), Disabled)
+    }
   }
 
-  def Example(desc: TagMod*)(sample1: VdomNode, sampleN: VdomNode*): Example =
-    <.tr(
-      exampleDesc(desc: _*),
-      exampleSample((sample1 +: sampleN).iterator.map(s => s: TagMod).intersperse(<.br).toTagMod))
+  object Group {
+    def apply(title: VdomNode)(r1: Row, rn: Row*): Group =
+      new Group(title, (r1 +: rn.toVector).map(_.row), Enabled)
+  }
 
-  private val exampleDesc = <.td(*.exampleDesc)
-  private val exampleSample = <.td(*.exampleSample)
+  // -------------------------------------------------------------------------------------------------------------------
 
-  val code = <.code(*.exampleDescCode)
+  final class Row(val row: TR)
+
+  object Row {
+    private val rowText = <.td(*.rowText)
+    private val rowExamples = <.td(*.rowExamples)
+
+    def apply(text: TagMod*)(sample1: VdomNode, sampleN: VdomNode*): Row =
+      new Row(
+        <.tr(
+          rowText(text: _*),
+          rowExamples((sample1 +: sampleN).iterator.map(s => s: TagMod).intersperse(<.br).toTagMod)
+        )
+      )
+  }
+
+  // ===================================================================================================================
+
+  def apply(modalHeader: VdomNode, groups: Groups): Modal = {
+    val tbody = <.tbody(groups.iterator.flatMap(_.vdom).toSeq: _*)
+    val table = <.table(*.table, tbody)
+    Modal(modalHeader, table)
+  }
+
+  val code = <.code(*.code)
 }
+

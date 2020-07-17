@@ -58,7 +58,6 @@ v2.2
   Maybe even add support for options eg. `html:render`, `dot:render`
   Render by fit to width (or other option?)
   Don't require digraph X{}
-* Get rid of accordions in help
 
 
 

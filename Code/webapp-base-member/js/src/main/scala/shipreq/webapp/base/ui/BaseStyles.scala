@@ -32,7 +32,7 @@ object BaseStyles extends StyleSheet.Inline {
   val pageMargin = InlineBaseStyles.pageMarginRem.rem
 
   // https://stackoverflow.com/questions/38781089/font-family-monospace-monospace
-  private val monospace = fontFamily :=! "monospace, monospace"
+  val monospace = fontFamily :=! "monospace, monospace"
 
   sealed abstract class EditorState extends Product with Serializable
   object EditorState {
