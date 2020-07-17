@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol.websocket
 
+import org.scalajs.dom.raw
 import org.scalajs.dom.raw.{Blob, CloseEvent, Event, MessageEvent, MessageEventInit}
-import org.scalajs.dom.{console, raw}
 import scala.scalajs.js
 import scala.scalajs.js.typedarray
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}

@@ -59,7 +59,6 @@ v2.2
   Render by fit to width (or other option?)
   Don't require digraph X{}
 * Get rid of accordions in help
-* Make my own Predef - add console to JS, nowarn, ArraySeq
 
 
 

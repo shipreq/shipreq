@@ -1,7 +1,6 @@
 package shipreq.webapp.base.protocol.ajax
 
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
-import org.scalajs.dom.console
 import scala.util.{Failure, Success, Try}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.ErrorMsg
