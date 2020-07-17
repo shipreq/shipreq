@@ -1,6 +1,5 @@
 package shipreq.webapp.base.test
 
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 
 object DataTestExt {

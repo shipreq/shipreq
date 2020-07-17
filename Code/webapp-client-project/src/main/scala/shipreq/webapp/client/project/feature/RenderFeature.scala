@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react.Reusable
 import japgolly.scalajs.react.vdom.html_<^.VdomTag
-import scalaz.\/-
 import shipreq.base.util.IfApplicable
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.ProjectText

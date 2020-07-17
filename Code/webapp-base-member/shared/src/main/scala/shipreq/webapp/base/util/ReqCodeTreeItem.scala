@@ -1,6 +1,5 @@
 package shipreq.webapp.base.util
 
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.ReqCode
 
 /**

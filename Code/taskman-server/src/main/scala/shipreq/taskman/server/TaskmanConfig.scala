@@ -5,7 +5,6 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import javax.mail.Session
 import scalaz.syntax.applicative._
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.log.HasLogger
 import shipreq.base.util.{Retries, RetriesJvm}
 import shipreq.taskman.api.{CfgKeys, EmailAddr}

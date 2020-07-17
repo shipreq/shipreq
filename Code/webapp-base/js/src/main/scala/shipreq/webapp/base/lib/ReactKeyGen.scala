@@ -1,8 +1,6 @@
 package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react.{Key, Reusability}
-import japgolly.univeq.UnivEq
-
 /**
  * Generate React keys.
  */

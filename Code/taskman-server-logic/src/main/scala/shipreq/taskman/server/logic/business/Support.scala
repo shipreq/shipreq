@@ -1,6 +1,5 @@
 package shipreq.taskman.server.logic.business
 
-import japgolly.univeq.UnivEq
 import shipreq.taskman.api.EmailAddr
 
 object Support {

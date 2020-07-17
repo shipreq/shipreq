@@ -1,7 +1,7 @@
 package shipreq.webapp.base.validation
 
 import japgolly.microlibs.nonempty.NonEmptySet
-import scalaz.{-\/, Equal, \/, \/-}
+import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.WebappConfig

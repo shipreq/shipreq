@@ -2,9 +2,7 @@ package shipreq.webapp.base.protocol.ajax
 
 import boopickle.DefaultBasic._
 import monocle.macros.{GenIso, Lenses}
-import scalaz.\/
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.protocol._

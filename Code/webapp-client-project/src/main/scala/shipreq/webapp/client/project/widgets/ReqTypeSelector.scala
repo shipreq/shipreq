@@ -7,7 +7,6 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.PotentialChange
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.EditorStatus
 import shipreq.webapp.base.text.Grammar

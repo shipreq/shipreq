@@ -4,7 +4,6 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._
-import scala.annotation.tailrec
 import scala.util.Random
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.BaseUtilGen._

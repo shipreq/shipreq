@@ -4,11 +4,9 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import nyaya.util.Multimap
-import scala.annotation.tailrec
 import scala.collection.mutable
 import shipreq.base.util.Digraph.BiDir
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Atom, Text}

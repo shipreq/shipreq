@@ -2,7 +2,6 @@ package shipreq.webapp.base.protocol
 
 import japgolly.scalajs.react._
 import org.scalajs.dom.ext.AjaxException
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ErrorMsg, Identity}
 import shipreq.webapp.base.util.CallbackHelpers._
 

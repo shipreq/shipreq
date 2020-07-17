@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
-import japgolly.univeq.UnivEq
 import monocle.Lens
 import monocle.macros.GenLens
 import scalaz.{Equal, Semigroup}

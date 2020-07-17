@@ -1,7 +1,5 @@
 package shipreq.webapp.base.lib
 
-import japgolly.univeq.UnivEq
-import scalaz.\/
 import shipreq.base.util
 
 /** Description of the user experience regarding validation of data that they've supplied,

@@ -5,7 +5,6 @@ import scalaz.Monoid
 import scalaz.std.map._
 import scalaz.syntax.semigroup._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.ReqCodeTreeItem
 

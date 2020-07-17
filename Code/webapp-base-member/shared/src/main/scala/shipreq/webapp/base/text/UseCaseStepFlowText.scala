@@ -1,9 +1,7 @@
 package shipreq.webapp.base.text
 
-import japgolly.univeq.UnivEq
 import org.parboiled2._
-import scala.annotation.nowarn
-import scalaz.{-\/, Applicative, Functor, Monoid, \/, \/-}
+import scalaz.{Applicative, Functor, Monoid}
 import shipreq.base.util.{Backwards, Direction, Forwards}
 import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
 import shipreq.webapp.base.data.{ReqTypePos, UseCaseStepId}

@@ -2,7 +2,6 @@ package shipreq.webapp.base.protocol.binary.v1
 
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import java.time.Instant
-import scalaz.\/
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.{ImpGraphConfig, SavedView}

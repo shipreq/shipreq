@@ -1,7 +1,6 @@
 package shipreq.webapp.base.test
 
 import japgolly.microlibs.nonempty.NonEmptySet
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.{ManualIssue => ManualIssueInstance, _}
 import shipreq.webapp.base.issue._

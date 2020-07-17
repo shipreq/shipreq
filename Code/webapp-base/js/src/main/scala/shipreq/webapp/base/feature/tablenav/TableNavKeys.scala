@@ -4,7 +4,6 @@ import japgolly.scalajs.react._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.html
-import scala.annotation.elidable
 import shipreq.webapp.base.lib.DomUtil._
 
 final class TableNavKeys(implicit ts: TableStyle) {

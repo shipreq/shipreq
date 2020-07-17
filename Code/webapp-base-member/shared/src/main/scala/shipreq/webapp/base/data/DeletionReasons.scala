@@ -2,7 +2,6 @@ package shipreq.webapp.base.data
 
 import nyaya.util.Multimap
 import shipreq.base.util.TaggedTypes.TaggedInt
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DeletionReasons.ReqApplication
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.DeletionReason

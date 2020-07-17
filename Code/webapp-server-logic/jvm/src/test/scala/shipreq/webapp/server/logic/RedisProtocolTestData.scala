@@ -9,7 +9,6 @@ import japgolly.microlibs.utils.FileUtils
 import java.time.Instant
 import java.util.concurrent.Executors
 import nyaya.gen.{Gen, GenCtx, GenSize, ThreadNumber}
-import scala.annotation.tailrec
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import shipreq.base.util.BinaryData

@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
 import shipreq.webapp.base.test.WebappTestUtil._

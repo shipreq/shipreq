@@ -4,7 +4,6 @@ import japgolly.microlibs.utils.Memo
 import monocle.Traversal
 import scala.reflect.ClassTag
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.{DataValidators => V, _}
 import shipreq.webapp.base.event.ApplyEventLib._

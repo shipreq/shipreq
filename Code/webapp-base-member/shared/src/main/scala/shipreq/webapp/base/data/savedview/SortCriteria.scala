@@ -2,9 +2,7 @@ package shipreq.webapp.base.data.savedview
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import monocle.macros.Lenses
-import scala.annotation.tailrec
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.savedview.SortCriterion.SyntaxHelpers._
 import shipreq.webapp.base.data.savedview.SortCriterion._
 import shipreq.webapp.base.sort.SortMethod

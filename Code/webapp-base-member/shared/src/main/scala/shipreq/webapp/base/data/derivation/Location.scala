@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data.derivation
 
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data._
 
 // =====================================================================================================================

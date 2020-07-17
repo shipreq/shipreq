@@ -3,10 +3,9 @@ package shipreq.webapp.base.test
 import io.circe.parser._
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.univeq.UnivEqScalaz._
 import java.time.Instant
 import java.time.temporal.ChronoUnit._
-import scalaz.{-\/, Equal, \/-}
+import scalaz.Equal
 import shipreq.base.test._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._

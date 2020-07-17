@@ -6,10 +6,9 @@ import io.circe.syntax._
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.ParseLong
 import japgolly.microlibs.utils.Utils
-import japgolly.univeq._
 import java.time.Instant
+import scalaz.Monad
 import scalaz.syntax.monad._
-import scalaz.{-\/, Monad, \/, \/-}
 import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.webapp.base.Urls

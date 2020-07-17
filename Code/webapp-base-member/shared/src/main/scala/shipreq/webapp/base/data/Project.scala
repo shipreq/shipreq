@@ -8,10 +8,8 @@ import monocle.macros.Lenses
 import monocle.std.option.pSome
 import monocle.{Lens, Traversal}
 import nyaya.util.Multimap
-import scala.collection.compat.immutable.ArraySeq
 import scalaz.Equal
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.issue.{Issue, IssueTracker}
 

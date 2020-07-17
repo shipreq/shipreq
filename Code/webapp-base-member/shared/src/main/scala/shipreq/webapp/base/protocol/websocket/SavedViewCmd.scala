@@ -1,6 +1,5 @@
 package shipreq.webapp.base.protocol.websocket
 
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.event.SavedViewGD
 

@@ -1,7 +1,5 @@
 package shipreq.webapp.server.logic.dispatch
 
-import japgolly.univeq.UnivEq
-
 final case class Cookie(name       : Cookie.Name,
                         value      : String,
                         maxAgeInSec: Option[Int],

@@ -4,8 +4,6 @@ import japgolly.microlibs.nonempty._
 import scala.collection.IterableOnce
 import scalaz.{Equal, Order}
 import shipreq.base.util.IMap
-import shipreq.base.util.univeq._
-
 abstract class GenericData { self =>
 
   // This really just so that Intellij doesn't highlight EVERYTHING red.

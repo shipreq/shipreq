@@ -6,7 +6,6 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.CustomIssueTypeGD

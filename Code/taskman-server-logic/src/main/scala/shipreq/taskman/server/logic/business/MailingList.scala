@@ -1,7 +1,6 @@
 package shipreq.taskman.server.logic.business
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import japgolly.univeq.UnivEq
 import shipreq.taskman.api.EmailAddr
 
 object MailingList {

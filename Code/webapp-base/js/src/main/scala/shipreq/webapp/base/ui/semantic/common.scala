@@ -1,7 +1,5 @@
 package shipreq.webapp.base.ui.semantic
 
-import japgolly.univeq.UnivEq
-
 sealed abstract class ColourPlus(c: ClassName) extends HasClass(c)
 object ColourPlus {
   @inline def Default: ColourPlus = Colour.Default

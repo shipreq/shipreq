@@ -2,8 +2,6 @@ package shipreq.webapp.base.data
 
 import java.time.Instant
 import nyaya.prop.Prop
-import scala.annotation.elidable
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.event._
 
 /**

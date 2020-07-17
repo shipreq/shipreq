@@ -1,7 +1,6 @@
 package shipreq.webapp.client.ww
 
 import japgolly.microlibs.utils.Memo
-import scala.annotation.tailrec
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText
 

@@ -1,6 +1,5 @@
 package shipreq.webapp.base.test
 
-import scala.collection.immutable.ArraySeq
 import shipreq.base.test._
 import shipreq.base.util.ScalazExtra.applicativeView
 import shipreq.base.util.{NonEmptyArraySeq, Validity}

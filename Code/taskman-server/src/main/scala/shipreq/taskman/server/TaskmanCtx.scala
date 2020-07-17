@@ -5,7 +5,6 @@ import japgolly.clearconfig.ConfigSources
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.{ExecutorService, TimeUnit}
 import okhttp3.OkHttpClient
-import scalaz.{-\/, \/-}
 import shipreq.base.db._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger

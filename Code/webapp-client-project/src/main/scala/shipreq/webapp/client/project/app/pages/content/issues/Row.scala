@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.app.pages.content.issues
 
 import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{Key, Reusability, Reusable}
-import scalaz.{-\/, \/-}
 import shipreq.base.util.IfApplicable
 import shipreq.webapp.base.UiText.{Issues => UI}
 import shipreq.webapp.base.data._

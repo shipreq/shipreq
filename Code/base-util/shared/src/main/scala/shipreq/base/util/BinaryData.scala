@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import japgolly.univeq.UnivEq
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.util.Arrays

@@ -2,7 +2,6 @@ package shipreq.webapp.client.public
 
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
-import scala.annotation.tailrec
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax.TestAjaxClient

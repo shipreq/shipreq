@@ -5,10 +5,8 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import monocle.Lens
 import monocle.macros.Lenses
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ErrorMsg, Invalid}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature

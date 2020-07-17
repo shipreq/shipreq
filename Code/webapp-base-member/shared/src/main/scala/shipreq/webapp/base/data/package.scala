@@ -1,10 +1,6 @@
 package shipreq.webapp.base
 
-import scala.annotation.nowarn
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
-import shipreq.base.util.univeq._
-
 package object data {
 
   // ----------------------------------------------------------------------------------------------

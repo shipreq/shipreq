@@ -2,8 +2,6 @@ package shipreq.webapp.base.ui.semantic
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
-
 /** http://semantic-ui.com/views/statistic.html */
 object Statistic {
 

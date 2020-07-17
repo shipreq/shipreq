@@ -3,7 +3,6 @@ package shipreq.webapp.base.data.savedview
 import monocle.macros.Lenses
 import scalaz.Equal
 import shipreq.base.util.TaggedTypes.TaggedInt
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.validation.Implicits._
 import shipreq.webapp.base.validation.Simple._

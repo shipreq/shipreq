@@ -1,7 +1,6 @@
 package shipreq.webapp.base.ui.semantic
 
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
 
 /** http://semantic-ui.com/elements/header.html */

@@ -2,10 +2,7 @@ package shipreq.base.util
 
 import japgolly.microlibs.utils.BiMap
 import monocle._
-import scala.annotation.{elidable, nowarn}
 import scalaz.Leibniz.===
-import scalaz.{-\/, \/, \/-}
-
 /**
   * +--------+     +--------+     +--------+
   * |        |     |        |     |        |

@@ -2,7 +2,6 @@ package shipreq.webapp.base.ui.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import scala.collection.compat.immutable.ArraySeq
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.lib.ReactKeyGen

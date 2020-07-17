@@ -5,7 +5,7 @@ import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import scalaz.syntax.monad._
-import scalaz.{-\/, Catchable, Monad, Name, NaturalTransformation, \/, \/-, ~>}
+import scalaz.{Catchable, Monad, Name, NaturalTransformation, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.test.JsonTestUtil._
 import shipreq.base.test.SyncEffect

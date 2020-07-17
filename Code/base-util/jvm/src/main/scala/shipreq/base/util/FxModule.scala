@@ -6,7 +6,7 @@ import cats.effect.IO.ioEffect
 import java.time.{Duration, Instant}
 import scala.collection.Factory
 import scala.concurrent.blocking
-import scalaz.{-\/, BindRec, Catchable, Monad, \/, \/-}
+import scalaz.{BindRec, Catchable, Monad}
 
 /**
   * The chosen target for algebra interpretation.

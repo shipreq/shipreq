@@ -1,7 +1,5 @@
 package shipreq.taskman.api
 
-import japgolly.univeq.UnivEq
-
 sealed trait TaskStatus {
   def isArchived: Boolean
 }

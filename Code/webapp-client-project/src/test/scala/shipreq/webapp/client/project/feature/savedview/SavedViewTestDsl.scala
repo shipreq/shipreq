@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.scalajs.react.test.{SimEvent, Simulate}
-import japgolly.univeq._
 import shipreq.webapp.base.data.FilterDead
 import shipreq.webapp.base.data.savedview.SavedView
 import shipreq.webapp.base.test.TestState._

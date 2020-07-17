@@ -4,8 +4,6 @@ import io.circe.syntax._
 import scalaz.std.string.stringInstance
 import scalaz.{Equal, Order}
 import shipreq.base.util.Debug
-import shipreq.base.util.univeq._
-
 object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
 
   final class BaseTestUtilOpsAny[A](private val a: A) extends AnyVal {

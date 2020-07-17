@@ -4,7 +4,6 @@ import nyaya.gen.Gen
 import nyaya.prop._
 import nyaya.test.PropTest._
 import shipreq.base.util.MTrie.Ops
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import utest._
 

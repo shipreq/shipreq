@@ -5,8 +5,6 @@ import japgolly.clearconfig._
 import javax.sql.DataSource
 import org.postgresql.ds.PGSimpleDataSource
 import scalaz.syntax.apply._
-import scalaz.{-\/, \/, \/-}
-
 final case class DbConfig(
   pgDataSource: PGSimpleDataSource,
   hikariConfig: HikariConfig,

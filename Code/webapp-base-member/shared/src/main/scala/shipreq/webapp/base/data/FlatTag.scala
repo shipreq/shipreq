@@ -2,8 +2,6 @@ package shipreq.webapp.base.data
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
-import shipreq.base.util.univeq._
-
 final case class FlatTag(tag: Tag, depth: Int, parentPath: Vector[TagId], status: FlatTag.Status) {
   @inline def id: TagId = tag.id
 

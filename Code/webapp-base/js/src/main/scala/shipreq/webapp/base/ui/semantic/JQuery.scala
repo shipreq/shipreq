@@ -1,7 +1,6 @@
 package shipreq.webapp.base.ui.semantic
 
 import org.scalajs.dom.Node
-import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.|
 

@@ -6,7 +6,6 @@ import javax.servlet._
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import net.liftweb.http.LiftFilter
 import org.slf4j.MDC
-import scala.annotation.tailrec
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.TaskmanApi

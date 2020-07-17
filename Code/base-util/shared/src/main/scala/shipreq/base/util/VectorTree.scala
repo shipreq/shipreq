@@ -2,10 +2,8 @@ package shipreq.base.util
 
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq._
 import monocle._
 import nyaya.prop.Prop
-import scala.annotation.{nowarn, tailrec}
 import scala.collection.AbstractIterator
 import scalaz.syntax.equal._
 import scalaz.{Applicative, Equal}

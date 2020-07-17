@@ -3,9 +3,7 @@ package shipreq.webapp.base.feature
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
-import japgolly.univeq.UnivEq
 import scala.reflect.ClassTag
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ErrorMsg, Intersection, Optics}
 import shipreq.webapp.base.lib.BaseReusability._
 import shipreq.webapp.base.ui.GeneralTheme

@@ -1,6 +1,5 @@
 package shipreq.taskman.api
 
-import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.JsonTestUtil._
 import utest._
 

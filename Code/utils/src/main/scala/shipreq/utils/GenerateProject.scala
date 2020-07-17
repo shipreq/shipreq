@@ -5,7 +5,6 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.nio.file.{Files, Paths}
 import java.time.Instant
 import nyaya.gen._
-import scala.annotation.tailrec
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data.DataImplicits._

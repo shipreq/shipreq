@@ -3,8 +3,6 @@ package shipreq.webapp.base.feature.autocomplete.strategies
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
-import scala.collection.immutable.ArraySeq
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.{Grammar, PlainText, TextSearch}

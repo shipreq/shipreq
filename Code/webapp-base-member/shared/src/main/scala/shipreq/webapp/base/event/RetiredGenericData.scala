@@ -3,7 +3,6 @@ package shipreq.webapp.base.event
 import japgolly.microlibs.nonempty._
 import scalaz.{Equal, Order}
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.util._

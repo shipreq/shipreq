@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import scalaz.{-\/, Monad, \/, \/-}
+import scalaz.Monad
 
 /** Using monad transformers directly, or manually stacking monads is
   * fucking verbose and annoying as hell - very hard to read/write in Scala.

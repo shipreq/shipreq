@@ -2,10 +2,8 @@ package shipreq.webapp.client.project.feature.create
 
 import japgolly.scalajs.react.Reusability
 import monocle.{Iso, Prism}
-import scala.annotation.nowarn
 import scalaz.~~>
 import shipreq.base.util.Direction
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.client.project.feature.editor.{FieldKey => E}

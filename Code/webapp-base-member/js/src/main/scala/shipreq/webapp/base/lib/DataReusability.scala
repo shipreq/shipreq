@@ -2,10 +2,8 @@ package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react._
 import java.time.Duration
-import scala.annotation.nowarn
 import scalaz.Equal
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig

@@ -8,9 +8,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import monocle.macros.Lenses
-import scala.collection.immutable.ArraySeq
 import shipreq.base.util.PotentialChange
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.CustomTagFieldGD

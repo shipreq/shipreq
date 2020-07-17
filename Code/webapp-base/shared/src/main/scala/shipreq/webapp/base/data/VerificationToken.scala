@@ -1,7 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.univeq.UnivEq
-
 /**
   * Corresponds to either `confirmation_token` or `reset_password_token` in the DB.
   */

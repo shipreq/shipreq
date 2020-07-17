@@ -5,7 +5,6 @@ import japgolly.scalajs.react.Reusability
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import scalaz.\/-
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.filter._

@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.{Colour, DataValidators}
 import shipreq.webapp.base.jsfacade.ReactColor

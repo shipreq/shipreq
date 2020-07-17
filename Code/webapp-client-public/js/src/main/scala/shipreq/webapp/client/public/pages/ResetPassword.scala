@@ -6,7 +6,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import scalaz.{-\/, \/-}
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Disabled, Enabled, VerificationToken}
 import shipreq.webapp.base.feature.AsyncFeature

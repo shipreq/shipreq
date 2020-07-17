@@ -1,6 +1,5 @@
 package shipreq.webapp.base.validation
 
-import japgolly.univeq._
 import scalaz.Equal
 import scalaz.syntax.equal._
 import shipreq.base.util.OptionalConflict

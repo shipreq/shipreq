@@ -4,11 +4,9 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
 import nyaya.prop.{Logic => _, _}
 import nyaya.util.Multimap
-import scala.annotation.nowarn
+import scalaz.Equal
 import scalaz.std.AllInstances._
-import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._

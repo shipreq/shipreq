@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.app
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
-import japgolly.univeq._
 import monocle.macros.Lenses
 import scala.util.{Failure, Success, Try}
 import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project}

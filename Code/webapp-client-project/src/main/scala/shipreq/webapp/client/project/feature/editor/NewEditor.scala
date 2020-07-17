@@ -5,7 +5,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import scala.annotation.{elidable, nowarn}
 import scalaz.~~>
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._

@@ -8,7 +8,6 @@ import nyaya.prop.{Atom => _, _}
 import nyaya.test.PropTest._
 import nyaya.util._
 import org.parboiled2._
-import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 import scalaz.Equal

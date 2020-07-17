@@ -2,7 +2,6 @@ package shipreq.webapp.base.filter
 
 import japgolly.microlibs.nonempty.NonEmptySet
 import scalaz.{Applicative, Traverse}
-import shipreq.base.util.univeq.UnivEq
 
 sealed trait IntensionalReqSet[+RT] {
   val reqType: RT

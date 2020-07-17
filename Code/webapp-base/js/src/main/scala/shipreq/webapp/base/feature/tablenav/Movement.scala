@@ -1,9 +1,8 @@
 package shipreq.webapp.base.feature.tablenav
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import scala.annotation.tailrec
+import scalaz.Applicative
 import scalaz.Scalaz.Id
-import scalaz.{-\/, Applicative, \/, \/-}
 import shipreq.base.util.{Allow, Permission, Util}
 
 sealed trait Axis

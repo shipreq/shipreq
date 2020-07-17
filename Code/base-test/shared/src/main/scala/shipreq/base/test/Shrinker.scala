@@ -1,9 +1,7 @@
 package shipreq.base.test
 
-import japgolly.univeq.UnivEq
-import scala.annotation.tailrec
 import scala.collection.View
-import scala.collection.immutable.{ArraySeq, IndexedSeqOps}
+import scala.collection.immutable.IndexedSeqOps
 import shipreq.base.util.NonEmptyArraySeq
 
 final case class Shrinker[A](shrink: A => View[RoseTree[A]]) extends AnyVal {

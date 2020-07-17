@@ -4,7 +4,6 @@ import japgolly.microlibs.adt_macros.AdtMacros._
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.{StaticLookupFn, Utils}
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.event.Event._
 
 final case class EventName private[EventName] (value: String)

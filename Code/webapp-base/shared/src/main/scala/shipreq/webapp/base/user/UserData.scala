@@ -1,7 +1,5 @@
 package shipreq.webapp.base.user
 
-import japgolly.univeq.UnivEq
-import scalaz.{-\/, \/, \/-}
 import shipreq.webapp.base.data.Obfuscated
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

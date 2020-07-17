@@ -1,7 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.univeq._
-import scala.annotation.elidable
 import shipreq.base.util._
 
 // Not a case class because even though I wrote my own apply method in the object,

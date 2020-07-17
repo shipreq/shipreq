@@ -3,7 +3,6 @@ package bootstrap.liftweb
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
 import japgolly.clearconfig._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq._
 import java.util.concurrent.Executors
 import net.liftweb.common.Logger
 import net.liftweb.http._

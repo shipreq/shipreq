@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{BaseX, Valid, Validity}
 import shipreq.webapp.base.data.Obfuscated
 

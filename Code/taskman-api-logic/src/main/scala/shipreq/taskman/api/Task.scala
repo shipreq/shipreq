@@ -1,7 +1,5 @@
 package shipreq.taskman.api
 
-import japgolly.univeq.UnivEq
-
 /**
  * A datum that can be sent to the Taskman server and meaningfully processed.
  */

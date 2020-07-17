@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.taskman.api.Task
 import shipreq.webapp.base.data.VerificationToken

@@ -1,7 +1,5 @@
 package shipreq.webapp.base.user
 
-import scalaz.{-\/, \/, \/-}
-import shipreq.base.util.univeq._
 import shipreq.base.util.{Invalid, Validity}
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.validation.Implicits._

@@ -4,7 +4,6 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data.{Colour => _, _}
 import shipreq.webapp.base.ui.semantic.{Icon, Message}

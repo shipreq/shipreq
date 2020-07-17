@@ -3,7 +3,6 @@ package shipreq.webapp.server.app
 import doobie.ConnectionIO
 import java.util.concurrent.{Executors, TimeUnit}
 import org.redisson.api.RedissonClient
-import scala.annotation.nowarn
 import scalaz.~>
 import shipreq.base.db._
 import shipreq.base.util.FxModule._

@@ -5,8 +5,6 @@ import scala.collection.mutable.Builder
 import shipreq.base.util.LazyVal
 import shipreq.base.util.fp.Monoid
 import shipreq.base.util.fp.Monoid.Implicits._
-import shipreq.base.util.univeq._
-
 /**
  * A collection of stats mapped by a key.
  */

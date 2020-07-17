@@ -1,7 +1,5 @@
 package shipreq.webapp.base.text
 
-import scala.annotation.nowarn
-import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import shipreq.base.util.NonEmptyArraySeq
 

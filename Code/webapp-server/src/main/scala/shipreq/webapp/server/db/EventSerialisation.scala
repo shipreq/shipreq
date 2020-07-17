@@ -2,7 +2,6 @@ package shipreq.webapp.server.db
 
 import io.circe._
 import io.circe.syntax._
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.JsonUtil
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.json.v1.Events.EventData._

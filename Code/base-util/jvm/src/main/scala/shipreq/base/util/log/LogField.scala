@@ -3,7 +3,6 @@ package shipreq.base.util.log
 import com.fasterxml.jackson.core.JsonGenerator
 import io.circe.syntax._
 import io.circe.{Encoder, Json}
-import japgolly.univeq._
 import java.time.Duration
 import java.util.UUID
 import net.logstash.logback.argument.StructuredArgument

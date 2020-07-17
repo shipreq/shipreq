@@ -4,7 +4,6 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{ExternalPubid, ReqTypes}
 import shipreq.webapp.base.ui.Toast

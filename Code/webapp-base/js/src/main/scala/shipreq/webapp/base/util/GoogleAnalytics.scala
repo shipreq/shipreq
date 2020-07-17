@@ -1,7 +1,6 @@
 package shipreq.webapp.base.util
 
 import japgolly.scalajs.react.{Callback, CallbackOption, CallbackTo}
-import japgolly.univeq._
 import scala.scalajs.js
 import shipreq.base.util.Url
 import shipreq.webapp.base.AnalyticsConfig._

@@ -1,6 +1,5 @@
 package shipreq.taskman.server.logic.business
 
-import scalaz.\/
 import shipreq.base.util.Util.simpleNameMemo
 import shipreq.taskman.api.{EmailAddr, UserId}
 

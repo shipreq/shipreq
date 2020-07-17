@@ -56,9 +56,9 @@ object ShipReqBuild {
   lazy val basePredefJs  = basePredef.js
   lazy val basePredef =
     crossProject("base-predef")
-      .depsForBoth(UnivEq.scalaz ++ scalaz)
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
+      .depsForBoth(UnivEq.scalaz ++ scalaz ++ Nyaya.prop ++ Microlibs.nonempty)
       .settings(
         scalacOptions ~= (_.filterNot(_.startsWith("-Yimports:")) :+ "-Yimports:scala"),
         test := (()))

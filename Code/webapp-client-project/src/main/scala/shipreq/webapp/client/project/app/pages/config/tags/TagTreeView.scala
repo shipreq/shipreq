@@ -4,7 +4,6 @@ import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data._

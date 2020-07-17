@@ -1,7 +1,6 @@
 package shipreq.webapp.base.feature.clipboard
 
 import japgolly.scalajs.react._
-import japgolly.univeq.UnivEq
 import scala.scalajs.js
 
 object Clipboard {

@@ -2,7 +2,6 @@ package shipreq.base.util
 
 import japgolly.microlibs.testutil.TestUtil._
 import nyaya.gen.Gen
-import scalaz.{-\/, \/-}
 import utest._
 
 object UtilTest extends TestSuite {

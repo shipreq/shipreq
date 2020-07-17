@@ -2,7 +2,6 @@ package shipreq.webapp.base.ui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import shipreq.webapp.base.data.Svg
 import shipreq.webapp.base.jsfacade.{ReactSvgPanZoom, ReactVirtualized}
 

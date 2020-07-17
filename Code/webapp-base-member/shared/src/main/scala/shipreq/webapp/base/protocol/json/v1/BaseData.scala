@@ -3,11 +3,8 @@ package shipreq.webapp.base.protocol.json.v1
 import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet, NonEmptyVector}
-import japgolly.univeq._
 import nyaya.util.{MultiValues, Multimap}
-import scala.collection.compat.immutable.ArraySeq
 import scala.reflect.ClassTag
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data._

@@ -4,7 +4,6 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.lib.DataReusability._

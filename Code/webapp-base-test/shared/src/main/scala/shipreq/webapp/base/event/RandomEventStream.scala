@@ -7,15 +7,14 @@ import java.time.Instant
 import nyaya.gen._
 import nyaya.prop.LogicPropExt
 import nyaya.util.Multimap
+import scalaz.BindRec
 import scalaz.std.vector.vectorInstance
 import scalaz.syntax.equal._
 import scalaz.syntax.traverse._
-import scalaz.{-\/, BindRec, \/-}
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.test.IncCounter
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.RandomData.{TextGen, TextGenExt, customReqTypeName, desc, exclusivity, fieldName, fieldRefKey, filter, filterDead, genColour, hashRefKey, implicationRequired, mandatory, reqCode, reqTypeMnemonic, tagGroupName, unicodeString1}
 import shipreq.webapp.base.data._

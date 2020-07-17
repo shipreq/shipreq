@@ -1,8 +1,6 @@
 package shipreq.base.util.algorithm
 
 import java.util.Random
-import scala.annotation.{elidable, tailrec}
-
 final class MutableLargeBitSet(val bits: Int) {
   import MutableLargeBitSet.BitsPerBlock
 

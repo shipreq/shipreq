@@ -1,6 +1,5 @@
 package shipreq.webapp.base.event
 
-import scalaz.{-\/, \/-}
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ApplyEventTestFns._

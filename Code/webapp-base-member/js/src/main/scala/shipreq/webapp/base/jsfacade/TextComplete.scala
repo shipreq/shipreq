@@ -1,7 +1,6 @@
 package shipreq.webapp.base.jsfacade
 
 import org.scalajs.dom.html
-import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
 import scala.scalajs.js.{Function1 => -->, Function2 => JsFn2, Function3 => JsFn3, RegExp, UndefOr, |}

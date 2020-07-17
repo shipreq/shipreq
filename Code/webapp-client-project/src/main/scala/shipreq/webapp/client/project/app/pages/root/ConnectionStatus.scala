@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.pages.root
 
 import japgolly.scalajs.react.Reusability
-import japgolly.univeq.UnivEq
 import shipreq.base.util.IsoBool
 
 sealed trait ConnectionStatus extends IsoBool[ConnectionStatus] {

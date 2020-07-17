@@ -1,6 +1,5 @@
 package shipreq.taskman.server.logic
 
-import japgolly.univeq.UnivEq
 import java.time.{Duration, Instant}
 import shipreq.base.util.ArticulateError
 import shipreq.taskman.api.{Priority, Task, TaskId}

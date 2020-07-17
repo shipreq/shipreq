@@ -3,7 +3,6 @@ package shipreq.webapp.base.protocol.json
 import io.circe._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.recursion._
-import japgolly.univeq.UnivEq
 import scala.reflect.ClassTag
 import scalaz.Traverse
 import scalaz.std.either._

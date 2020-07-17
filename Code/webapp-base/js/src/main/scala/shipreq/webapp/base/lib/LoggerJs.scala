@@ -2,7 +2,6 @@ package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react.{AsyncCallback, Callback}
 import org.scalajs.dom.console
-import scala.annotation.{elidable, nowarn}
 import scala.scalajs.js
 import scala.scalajs.js.{UndefOr, undefined}
 

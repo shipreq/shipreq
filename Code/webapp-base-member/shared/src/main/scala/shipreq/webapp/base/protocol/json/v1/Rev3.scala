@@ -2,7 +2,6 @@ package shipreq.webapp.base.protocol.json.v1
 
 import io.circe._
 import io.circe.syntax._
-import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._

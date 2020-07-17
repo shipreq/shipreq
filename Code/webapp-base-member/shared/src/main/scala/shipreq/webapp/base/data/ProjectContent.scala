@@ -5,7 +5,6 @@ import monocle.Lens
 import monocle.macros.Lenses
 import scalaz.Equal
 import shipreq.base.util.Util
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.util.ShowSize
 

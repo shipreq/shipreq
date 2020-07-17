@@ -1,8 +1,6 @@
 package shipreq.base.util
 
 import japgolly.microlibs.nonempty._
-import japgolly.univeq.UnivEq
-import scala.collection.immutable.ArraySeq
 import scala.collection.{AbstractIterator, Factory}
 import scala.math.Ordering
 import scala.reflect.ClassTag

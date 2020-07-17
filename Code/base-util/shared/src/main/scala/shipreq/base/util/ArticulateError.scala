@@ -4,7 +4,7 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.collection.immutable.SortedSet
 import scala.util.control.NonFatal
-import scalaz.{-\/, \&/, \/, \/-}
+import scalaz.\&/
 
 /** An error intended to be articulate and comprehensible.
   *

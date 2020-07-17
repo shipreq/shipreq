@@ -6,7 +6,7 @@ import monocle._
 import scala.collection.Factory
 import scala.collection.mutable.Builder
 import scala.reflect.ClassTag
-import scalaz.{-\/, Applicative, Functor, \/, \/-}
+import scalaz.{Applicative, Functor}
 
 object Optics {
 

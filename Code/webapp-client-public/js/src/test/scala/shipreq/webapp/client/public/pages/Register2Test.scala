@@ -2,7 +2,6 @@ package shipreq.webapp.client.public.pages
 
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
-import scalaz.\/-
 import shipreq.base.util._
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._

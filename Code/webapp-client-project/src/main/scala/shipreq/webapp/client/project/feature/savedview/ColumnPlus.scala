@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.scalajs.react._
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.lib.DataReusability._

@@ -5,7 +5,7 @@ import org.scalacheck.Arbitrary._
 import org.scalacheck.{Arbitrary, Gen}
 import scala.reflect.ClassTag
 import scalaz.Lens.lensg
-import scalaz.{-\/, Endo, Heap, \/, \/-}
+import scalaz.{Endo, Heap}
 import shipreq.base.test.{MockOpTransformer, MockOpTransformerA, OpTypeProvider}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._

@@ -2,7 +2,6 @@ package shipreq.webapp.base.ui.semantic
 
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
 import shipreq.webapp.base.data.Enabled
 import shipreq.webapp.base.ui.semantic.Button._

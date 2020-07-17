@@ -2,8 +2,6 @@ package shipreq.base.util
 
 import io.circe._
 import japgolly.microlibs.utils.StaticLookupFn
-import japgolly.univeq.UnivEq
-
 object JsonUtil {
 
   implicit def univEqJsonObject: UnivEq[JsonObject] = UnivEq.force

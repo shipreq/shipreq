@@ -10,7 +10,7 @@ import scala.concurrent.{Await, Future}
 import scalaz.Free.Trampoline
 import scalaz.std.function.function0Instance
 import scalaz.syntax.monad._
-import scalaz.{Monad, Name, Need, \/, \/-}
+import scalaz.{Monad, Name, Need}
 import shipreq.base.util._
 import shipreq.taskman.api.TaskId
 import shipreq.webapp.base.Urls

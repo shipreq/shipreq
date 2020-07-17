@@ -3,7 +3,6 @@ package shipreq.webapp.client.public.spa
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import shipreq.webapp.base.Urls.PublicSpaRoute.Login
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.base.{AssetManifest, WebappConfig}

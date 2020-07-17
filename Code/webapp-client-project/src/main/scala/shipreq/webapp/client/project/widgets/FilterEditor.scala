@@ -5,9 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
-import scala.collection.immutable.ArraySeq
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, \/-}
 import shipreq.base.util.{Invalid, Valid, Validity}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags

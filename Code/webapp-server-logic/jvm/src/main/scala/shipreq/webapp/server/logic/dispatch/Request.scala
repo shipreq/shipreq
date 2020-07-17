@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic.dispatch
 
-import japgolly.univeq.UnivEq
 import scalaz.Need
 import shipreq.base.util.{BinaryData, Url}
 

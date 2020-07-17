@@ -2,13 +2,11 @@ package shipreq.webapp.server.logic
 
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq._
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import scala.annotation.tailrec
 import scalaz.syntax.monad._
-import scalaz.{BindRec, Monad, \/, \/-}
+import scalaz.{BindRec, Monad}
 import shipreq.base.ops.Trace
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}

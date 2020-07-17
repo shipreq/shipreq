@@ -5,7 +5,6 @@ import monocle.macros.Lenses
 import monocle.{Iso, Lens}
 import nyaya.util.Multimap
 import shipreq.base.util.Optics
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text.{Text => T}
 

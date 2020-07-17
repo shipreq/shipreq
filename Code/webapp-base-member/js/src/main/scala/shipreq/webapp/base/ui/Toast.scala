@@ -3,7 +3,6 @@ package shipreq.webapp.base.ui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import java.time.Duration
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data.{Off, On}

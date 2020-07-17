@@ -3,10 +3,7 @@ package shipreq.webapp.base.feature.tablenav
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.ReactExt_DomNode
-import japgolly.univeq._
 import org.scalajs.dom.{ClientRect, html}
-import scala.annotation.tailrec
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Deny, Permission}
 import shipreq.webapp.base.lib.DomUtil._
 

@@ -2,13 +2,9 @@ package shipreq.webapp.base.util
 
 import japgolly.microlibs.nonempty._
 import org.parboiled2._
-import scala.annotation.{elidable, nowarn, tailrec}
-import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
-import scalaz.{\/, \/-}
 import shapeless._
 import shipreq.base.util.NonEmptyArraySeq
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{ReqType, ReqTypePos}
 import shipreq.webapp.base.text.GrammarSpec._
 import shipreq.webapp.base.text.{Grammar => G}

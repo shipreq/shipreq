@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.config.fields
 
-import japgolly.univeq._
 import org.scalajs.dom.html
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.CommonObs

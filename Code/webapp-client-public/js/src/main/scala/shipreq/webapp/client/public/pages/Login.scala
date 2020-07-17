@@ -6,8 +6,6 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import org.scalajs.dom.{html, window}
-import scala.annotation.nowarn
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
 import shipreq.webapp.base.feature.AsyncFeature

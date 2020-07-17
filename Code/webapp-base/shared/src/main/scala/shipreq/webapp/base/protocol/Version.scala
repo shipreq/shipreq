@@ -1,8 +1,6 @@
 package shipreq.webapp.base.protocol
 
 import japgolly.microlibs.utils.Memo
-import japgolly.univeq._
-
 final case class Version(major: Version.Major, minor: Version.Minor) {
   override def toString = verStr
   def verNum = s"${major.value}.${minor.value}"

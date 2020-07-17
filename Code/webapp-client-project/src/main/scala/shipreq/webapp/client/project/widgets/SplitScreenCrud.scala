@@ -7,7 +7,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scala.reflect.ClassTag
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, \/, \/-}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.client.project.app.Style.widgets.{splitScreenCrud => *}

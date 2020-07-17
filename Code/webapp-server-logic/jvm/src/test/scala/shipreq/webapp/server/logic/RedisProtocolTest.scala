@@ -3,7 +3,7 @@ package shipreq.webapp.server.logic
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import java.time.Instant
 import nyaya.gen.Gen
-import scalaz.{Equal, \/-}
+import scalaz.Equal
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data.{Project, StaticField}
 import shipreq.webapp.base.event._

@@ -1,8 +1,6 @@
 package shipreq.webapp.base.ui.semantic
 
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
-
 /** http://semantic-ui.com/collections/message.html */
 object Message {
 

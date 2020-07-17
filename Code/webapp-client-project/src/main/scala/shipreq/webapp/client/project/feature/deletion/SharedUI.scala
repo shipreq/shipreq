@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.feature.deletion
 
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.PlainText

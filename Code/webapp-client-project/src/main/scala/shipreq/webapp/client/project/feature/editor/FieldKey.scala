@@ -2,9 +2,8 @@ package shipreq.webapp.client.project.feature.editor
 
 import japgolly.scalajs.react.Reusability
 import scala.reflect.ClassTag
-import scalaz.{-\/, \/-, ~~>}
+import scalaz.~~>
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature.AsyncFeature

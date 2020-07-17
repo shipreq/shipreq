@@ -3,7 +3,6 @@ package shipreq.webapp.client.public.spa
 import japgolly.scalajs.react.extra.router.{RouterCtl => _, _}
 import japgolly.scalajs.react.{Callback, Reusability}
 import shipreq.base.util.Url
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.Urls.PublicSpaRoute
 import shipreq.webapp.base.data.VerificationToken
 import shipreq.webapp.base.lib.BaseReusability._

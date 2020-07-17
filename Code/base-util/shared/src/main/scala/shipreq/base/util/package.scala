@@ -1,7 +1,5 @@
 package shipreq.base
 
-import scalaz.\/
-
 package object util {
 
   type ?=>[A, B] = FnWithFallback[A, B]

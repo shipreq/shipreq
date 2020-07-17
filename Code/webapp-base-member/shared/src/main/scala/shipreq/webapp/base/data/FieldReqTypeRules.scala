@@ -2,7 +2,6 @@ package shipreq.webapp.base.data
 
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq.UnivEq
 import monocle.Traversal
 import scalaz.Applicative
 import shipreq.base.util.{Applicability, Applicable, Impossible, NotApplicable => NA}

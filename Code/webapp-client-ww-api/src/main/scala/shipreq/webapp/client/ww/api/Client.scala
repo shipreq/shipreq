@@ -1,7 +1,6 @@
 package shipreq.webapp.client.ww.api
 
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo, Reusability}
-import japgolly.univeq._
 import org.scalajs.dom.window.navigator
 import scala.scalajs.LinkingInfo.productionMode
 import scala.util.Try

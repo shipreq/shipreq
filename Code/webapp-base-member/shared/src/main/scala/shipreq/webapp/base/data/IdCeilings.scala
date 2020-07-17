@@ -4,8 +4,6 @@ import monocle.Lens
 import monocle.macros.Lenses
 import shipreq.base.util.IMap
 import shipreq.base.util.TaggedTypes.TaggedInt
-import shipreq.base.util.univeq._
-
 /**
  * A record of the largest values used (although not necessarily in-use) as IDs. A high-water mark.
  *

@@ -6,10 +6,9 @@ import monocle.macros.Lenses
 import monocle.{Iso, Traversal}
 import nyaya.util.Multimap
 import scala.collection.View
-import scalaz.{-\/, Equal, \/, \/-}
+import scalaz.Equal
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
 import shipreq.webapp.base.text.Text.Equality._

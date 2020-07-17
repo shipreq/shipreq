@@ -6,7 +6,7 @@ import java.time.{Duration, Instant}
 import scalaz.std.option.optionInstance
 import scalaz.syntax.monad._
 import scalaz.syntax.std.option._
-import scalaz.{-\/, Catchable, Monad, \/, \/-, ~>}
+import scalaz.{Catchable, Monad, ~>}
 import shipreq.base.util._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskId, TaskmanApi}

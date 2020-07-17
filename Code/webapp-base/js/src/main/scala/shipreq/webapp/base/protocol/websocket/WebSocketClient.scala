@@ -1,14 +1,11 @@
 package shipreq.webapp.base.protocol.websocket
 
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
-import japgolly.univeq._
 import org.scalajs.dom.{CloseEvent, Event, MessageEvent, window}
-import scala.annotation.{elidable, nowarn}
 import scala.scalajs.js
 import scala.scalajs.js.timers.SetTimeoutHandle
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success, Try}
-import scalaz.{-\/, \/-}
 import shipreq.base.util.JsExt._
 import shipreq.base.util._
 import shipreq.webapp.base.lib.LoggerJs

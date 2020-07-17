@@ -6,7 +6,6 @@ import doobie._
 import doobie.implicits._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.AsciiTable
-import japgolly.univeq._
 import shipreq.base.db.DoobieHelpers._
 
 final case class DbTable(name: String) {

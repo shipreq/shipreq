@@ -4,8 +4,6 @@ import boopickle.DefaultBasic._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.utils.StaticLookupFn
-import japgolly.univeq.UnivEq
-import scalaz.\/
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data._

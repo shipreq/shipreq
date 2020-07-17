@@ -5,16 +5,13 @@ import boopickle.DefaultBasic._
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.recursion.Fix
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq.UnivEq
 import java.nio.ByteBuffer
 import java.time.Instant
 import monocle.Iso
 import nyaya.util.{MultiValues, Multimap}
-import scala.annotation.nowarn
-import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scalaz.Isomorphism.<=>
-import scalaz.{-\/, Functor, \&/, \/, \/-}
+import scalaz.{Functor, \&/}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.Version

@@ -1,7 +1,5 @@
 package shipreq.webapp.base.feature.dragtoreorder
 
-import japgolly.univeq._
-
 private[dragtoreorder] final case class DragState[A](items       : Vector[A],
                                                      dragSource  : Int,
                                                      dragLoc     : DragLoc,

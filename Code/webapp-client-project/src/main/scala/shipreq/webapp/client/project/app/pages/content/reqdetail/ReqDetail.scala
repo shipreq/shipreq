@@ -5,11 +5,9 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.ExternalPubid.LookupFailure

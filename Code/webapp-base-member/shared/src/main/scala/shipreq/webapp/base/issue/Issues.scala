@@ -1,7 +1,6 @@
 package shipreq.webapp.base.issue
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data.{ReqCodeGroupId, ReqId}
 import shipreq.webapp.base.filter.CompiledFilter
 

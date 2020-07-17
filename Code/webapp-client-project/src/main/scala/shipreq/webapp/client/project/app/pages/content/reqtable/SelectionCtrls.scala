@@ -3,10 +3,8 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import org.scalajs.dom.window
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, \/-}
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._

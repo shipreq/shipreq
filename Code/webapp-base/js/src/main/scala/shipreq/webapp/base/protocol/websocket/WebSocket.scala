@@ -2,7 +2,6 @@ package shipreq.webapp.base.protocol.websocket
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.utils.StaticLookupFn
-import japgolly.univeq.UnivEq
 import org.scalajs.dom.raw
 import org.scalajs.dom.raw.{Blob, CloseEvent, Event, MessageEvent}
 import scala.scalajs.js

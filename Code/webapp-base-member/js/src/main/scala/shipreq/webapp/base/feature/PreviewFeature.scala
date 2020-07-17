@@ -4,10 +4,8 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import java.time.Duration
 import monocle.Lens
-import scala.annotation.nowarn
 import scalacss.ScalaCssReact._
 import shipreq.base.util.Intersection
 import shipreq.webapp.base.lib.DataReusability._

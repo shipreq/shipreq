@@ -7,11 +7,9 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
 import monocle.Lens
 import scala.reflect.ClassTag
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ErrorMsg, Optics, PotentialChange}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature

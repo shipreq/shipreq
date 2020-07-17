@@ -1,8 +1,6 @@
 package shipreq.webapp.client.project.app
 
 import japgolly.scalajs.react.vdom.html_<^.{^ => ^^, _}
-import japgolly.univeq._
-import scala.annotation.nowarn
 import scalacss.internal.ValueT
 import shipreq.base.util._
 import shipreq.webapp.base.CssSettings._

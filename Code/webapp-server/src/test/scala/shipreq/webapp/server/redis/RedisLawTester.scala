@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import nyaya.gen._
 import scala.collection.View
 import scala.reflect.ClassTag
-import scalaz.{Equal, \/}
+import scalaz.Equal
 import shipreq.base.test.JsonTestUtil._
 import shipreq.base.test._
 import shipreq.base.util.FxModule._

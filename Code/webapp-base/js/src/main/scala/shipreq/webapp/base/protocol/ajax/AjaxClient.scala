@@ -5,7 +5,6 @@ import japgolly.scalajs.react.{AsyncCallback, CallbackTo}
 import org.scalajs.dom.ext.AjaxException
 import org.scalajs.dom.window.console
 import scala.scalajs.js.typedarray.ArrayBuffer
-import scalaz.\/
 import shipreq.base.util.JsExt._
 import shipreq.base.util.{BinaryData, ErrorMsg}
 import shipreq.webapp.base.protocol._

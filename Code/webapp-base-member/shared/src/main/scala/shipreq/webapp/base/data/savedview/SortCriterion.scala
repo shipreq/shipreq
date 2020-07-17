@@ -1,7 +1,6 @@
 package shipreq.webapp.base.data.savedview
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.sort.SortMethod
 
 /** A combination of [[Column]] and [[SortMethod]], which is a single criterion in [[SortCriteria]].

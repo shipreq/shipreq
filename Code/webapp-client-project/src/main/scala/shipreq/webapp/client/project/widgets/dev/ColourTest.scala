@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.widgets.dev
 
 import japgolly.scalajs.react.vdom.html_<^._
-import scala.annotation.elidable
 import shipreq.webapp.base.data.Colour
 
 /** This renders a table of colours to compare black & white foregrounds.

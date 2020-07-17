@@ -1,7 +1,5 @@
 package shipreq.webapp.base.protocol
 
-import japgolly.univeq.UnivEq
-import scalaz.-\/
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.protocol.binary.SafePickler

@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import japgolly.univeq.UnivEq
 import shipreq.base.util.Trampoline.Default._
 
 sealed abstract class LazyVal[A] {

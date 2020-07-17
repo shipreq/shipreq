@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
 import japgolly.scalajs.react.Reusability
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.lib.BaseReusability._
 
 sealed abstract class Column(final val key: String)

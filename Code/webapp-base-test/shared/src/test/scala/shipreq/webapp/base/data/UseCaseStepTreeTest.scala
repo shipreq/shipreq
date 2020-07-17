@@ -4,7 +4,6 @@ import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._
 import nyaya.util._
-import scalaz.{-\/, \/-}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.BaseUtilGen
 import shipreq.base.util._

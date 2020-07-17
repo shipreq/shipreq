@@ -3,9 +3,8 @@ package shipreq.webapp.base.event
 import japgolly.microlibs.utils.Utils
 import monocle._
 import scala.reflect.ClassTag
-import scalaz.{-\/, Equal, \/, \/-}
+import scalaz.Equal
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.SavedView
 import shipreq.webapp.base.text.PlainText

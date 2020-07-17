@@ -1,6 +1,5 @@
 package shipreq.webapp.server.app
 
-import japgolly.univeq.UnivEq
 import shipreq.base.util.FreeOption
 import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.WebappConfig.liftCtxPath

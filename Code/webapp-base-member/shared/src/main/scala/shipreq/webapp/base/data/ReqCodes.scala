@@ -5,12 +5,10 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
 import nyaya.util.Multimap
-import scala.collection.immutable.ArraySeq
 import scalaz.std.string.stringInstance
 import scalaz.{Equal, Order}
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.util.Must._

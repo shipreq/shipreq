@@ -1,7 +1,5 @@
 package shipreq.webapp.base.feature.tablenav
 
-import japgolly.univeq.UnivEq
-
 // =====================================================================================================================
 
 final case class RealPos(tr: Int, child: Int)

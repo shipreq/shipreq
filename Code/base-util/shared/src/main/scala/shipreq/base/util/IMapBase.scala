@@ -1,8 +1,6 @@
 package shipreq.base.util
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq.UnivEq
-import scala.annotation.{elidable, nowarn}
 import scala.collection.IterableOnce
 import scalaz.std.iterable._
 import scalaz.std.map._

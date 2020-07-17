@@ -1,7 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.univeq._
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.TaggedTypes.TaggedString
 
 /**

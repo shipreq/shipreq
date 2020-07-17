@@ -1,7 +1,6 @@
 package shipreq.webapp.base.event
 
 import nyaya.prop.LogicPropExt
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{DataProp, Project}
 import shipreq.webapp.base.event.ApplyEventLib._

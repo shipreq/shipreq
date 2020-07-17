@@ -5,7 +5,6 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
-import scalaz.\/
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.lib.KeyHandler.Criterion

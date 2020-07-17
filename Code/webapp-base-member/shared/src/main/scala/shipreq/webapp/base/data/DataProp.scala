@@ -3,15 +3,11 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
-import scala.annotation.{nowarn, tailrec}
-import scala.collection.immutable.ArraySeq
 import scala.collection.{IterableOnce, mutable}
 import scala.reflect.ClassTag
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
-import scalaz.{-\/, \/-}
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.filter._

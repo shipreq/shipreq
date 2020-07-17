@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.feature.editor
 
 import japgolly.scalajs.react.{Reusability, Reusable}
-import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.lib.DataReusability._

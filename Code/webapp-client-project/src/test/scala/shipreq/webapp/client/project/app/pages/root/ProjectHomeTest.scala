@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.pages.root
 
 import japgolly.scalajs.react.test._
-import japgolly.univeq._
 import org.scalajs.dom.html
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.test.TestState._

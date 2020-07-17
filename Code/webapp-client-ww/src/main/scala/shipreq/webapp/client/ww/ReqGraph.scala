@@ -2,7 +2,6 @@ package shipreq.webapp.client.ww
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import nyaya.util.Multimap
-import scala.collection.immutable.ArraySeq
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._

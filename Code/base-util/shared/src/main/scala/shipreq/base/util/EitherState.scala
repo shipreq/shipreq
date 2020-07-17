@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import scalaz.{-\/, Monad, \/, \/-}
+import scalaz.Monad
 
 /** Either monad + state monad stack.
   *

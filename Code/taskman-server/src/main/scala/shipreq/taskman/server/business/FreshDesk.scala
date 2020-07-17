@@ -3,8 +3,7 @@ package shipreq.taskman.server.business
 import io.circe._
 import io.circe.syntax._
 import japgolly.clearconfig._
-import japgolly.univeq._
-import scalaz.{\/, ~>}
+import scalaz.~>
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger

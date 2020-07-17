@@ -1,7 +1,6 @@
 package shipreq.webapp.base.ui
 
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
 import scala.collection.immutable.ListSet
 
 package object semantic {

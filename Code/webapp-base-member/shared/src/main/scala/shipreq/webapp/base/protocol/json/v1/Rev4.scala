@@ -4,7 +4,6 @@ import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
-import scalaz.{-\/, \/-}
 import shipreq.base.util.JsonUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.RetiredGenericData._

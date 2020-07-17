@@ -1,7 +1,5 @@
 package shipreq.taskman.api
 
-import japgolly.univeq.UnivEq
-
 final case class TaskId(value: Long)
 object TaskId {
   implicit def univEq: UnivEq[TaskId] = UnivEq.derive

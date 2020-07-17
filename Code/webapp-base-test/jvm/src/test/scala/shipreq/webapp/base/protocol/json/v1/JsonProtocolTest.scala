@@ -1,7 +1,6 @@
 package shipreq.webapp.base.protocol.json.v1
 
 import nyaya.gen.Gen
-import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.JsonTestUtil._
 import shipreq.webapp.base.RandomData.TextGenExt
 import shipreq.webapp.base.event.EventEquality._

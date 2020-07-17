@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import japgolly.univeq.UnivEq
 import monocle.{Iso, Lens}
 import scala.collection.Factory
 import scalaz.Isomorphism.<=>

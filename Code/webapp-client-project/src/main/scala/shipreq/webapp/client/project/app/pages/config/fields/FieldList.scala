@@ -6,7 +6,6 @@ import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd.FieldUpdateOrder

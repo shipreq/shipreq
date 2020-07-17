@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.app.pages.root
 import japgolly.scalajs.react._
 import monocle.macros._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.{FilterDead, HideDead, Project}
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}

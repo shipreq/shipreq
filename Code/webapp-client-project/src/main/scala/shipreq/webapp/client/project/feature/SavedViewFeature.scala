@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.feature
 
 import japgolly.scalajs.react.Reusability
 import japgolly.scalajs.react.vdom.VdomElement
-import scala.annotation.nowarn
 import shipreq.webapp.base.data.savedview.{SavedView, View}
 import shipreq.webapp.base.data.{FilterDead, Project, ReqId}
 import shipreq.webapp.base.lib.DataReusability._

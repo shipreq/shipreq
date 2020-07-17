@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.feature.editor
 
 import japgolly.scalajs.react.Reusability
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.feature.clipboard.{ClipboardCodec, ClipboardData}
 

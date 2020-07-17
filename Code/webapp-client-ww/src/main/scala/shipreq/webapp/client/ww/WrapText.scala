@@ -1,7 +1,5 @@
 package shipreq.webapp.client.ww
 
-import scala.collection.immutable.ArraySeq
-
 object WrapText {
 
   def apply(text: String, maxWidth: Double): String = {

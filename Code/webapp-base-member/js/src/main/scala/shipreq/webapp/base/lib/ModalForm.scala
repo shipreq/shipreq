@@ -5,7 +5,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, raw}
 import scala.scalajs.js
 import scala.util.Success
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.ui.semantic.{JQuery, Modal, UsesSemanticUiManually}

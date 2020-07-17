@@ -5,8 +5,6 @@ import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.VdomElement
 import org.scalajs.dom.document
 import org.scalajs.dom.raw.SVGSVGElement
-import scala.annotation.nowarn
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.{Colours, LabelFormat}

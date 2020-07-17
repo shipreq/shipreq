@@ -3,15 +3,13 @@ package shipreq.base.util
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
-import japgolly.univeq.UnivEq
 import java.net.URL
-import scala.annotation.tailrec
-import scala.collection.immutable.{ArraySeq, TreeMap}
+import scala.collection.immutable.TreeMap
 import scala.collection.{Factory, Iterable}
 import scala.reflect.ClassTag
 import scala.util.Try
 import scalaz.std.anyVal.intInstance
-import scalaz.{-\/, Applicative, Equal, Order, \/, \/-}
+import scalaz.{Applicative, Equal, Order}
 import shipreq.base.util.ScalaExt.StringBuilderExt
 
 object Util {

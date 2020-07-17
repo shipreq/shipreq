@@ -1,8 +1,6 @@
 package shipreq.webapp.base.protocol.websocket
 
 import boopickle.DefaultBasic._
-import japgolly.univeq.UnivEq
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.Util
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler

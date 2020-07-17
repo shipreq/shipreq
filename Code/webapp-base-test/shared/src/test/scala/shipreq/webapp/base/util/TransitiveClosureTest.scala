@@ -4,7 +4,6 @@ import nyaya.prop._
 import nyaya.test.PropTest._
 import scalaz.std.list._
 import shipreq.base.util.TransitiveClosure
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import utest._

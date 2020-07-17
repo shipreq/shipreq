@@ -3,14 +3,13 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Iso
+import scalaz.Equal
 import scalaz.std.list._
 import scalaz.std.string.stringInstance
 import scalaz.std.vector._
-import scalaz.{-\/, Equal, \/, \/-}
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data.ReqType.Mnemonic

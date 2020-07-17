@@ -1,8 +1,5 @@
 package shipreq.base.util
 
-import scala.annotation.nowarn
-import scalaz.{-\/, \/-}
-
 sealed trait Applicability extends IsoBool.WithBoolOps[Applicability] {
   override final def companion = Applicability
 }

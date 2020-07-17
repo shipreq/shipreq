@@ -1,11 +1,9 @@
 package shipreq.webapp.client.ww
 
 import japgolly.scalajs.react.AsyncCallback
-import japgolly.univeq._
 import org.scalajs.dom.webworkers.DedicatedWorkerGlobalScope
 import scala.scalajs.js
 import scala.scalajs.js.JSON
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Backwards, Direction, ErrorMsg, Forwards}
 import shipreq.webapp.base.data.Svg
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.GraphDir

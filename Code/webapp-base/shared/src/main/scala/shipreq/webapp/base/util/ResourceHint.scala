@@ -1,7 +1,5 @@
 package shipreq.webapp.base.util
 
-import japgolly.univeq._
-
 /** Browser support:
   *
   * Preconnect  - everyone except Safari && MS

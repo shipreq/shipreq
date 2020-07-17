@@ -1,7 +1,5 @@
 package shipreq.webapp.base.feature.dragtoreorder
 
-import japgolly.univeq.UnivEq
-
 /** Where the drag cursor is currently located. */
 private[dragtoreorder] sealed trait DragLoc
 

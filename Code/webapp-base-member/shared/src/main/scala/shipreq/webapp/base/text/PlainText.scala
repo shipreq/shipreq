@@ -3,11 +3,9 @@ package shipreq.webapp.base.text
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
-import scala.annotation.tailrec
-import scala.collection.immutable.{ArraySeq, SortedSet}
+import scala.collection.immutable.SortedSet
 import shipreq.base.util.SafeStringOps._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Atom.AnyAtom
 import shipreq.webapp.base.text.GrammarSpec.Surrounds

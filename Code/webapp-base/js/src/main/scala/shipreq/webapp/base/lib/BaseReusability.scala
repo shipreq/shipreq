@@ -4,8 +4,6 @@ import japgolly.microlibs.nonempty._
 import japgolly.scalajs.react._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
-import shipreq.base.util.univeq._
-
 object BaseReusability extends BaseReusability {
 
   final class ReusabilityObjExt(private val r: Reusability.type) extends AnyVal {

@@ -6,7 +6,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import monocle.macros.Lenses
 import org.scalajs.dom.document
 import scalacss.ScalaCssReact._

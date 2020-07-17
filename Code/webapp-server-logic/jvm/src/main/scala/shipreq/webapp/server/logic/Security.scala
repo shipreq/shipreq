@@ -1,10 +1,9 @@
 package shipreq.webapp.server.logic
 
 import com.typesafe.scalalogging.StrictLogging
-import japgolly.univeq.UnivEq
 import java.time.Instant
 import java.util.UUID
-import scalaz.{Monad, \/}
+import scalaz.Monad
 import shipreq.webapp.base.user._
 import shipreq.webapp.server.logic.dispatch.Cookie
 

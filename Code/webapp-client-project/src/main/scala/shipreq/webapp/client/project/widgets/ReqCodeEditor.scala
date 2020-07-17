@@ -3,9 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import scalaz.\/
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataValidators.{reqCode => V}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AutoCompleteFeature._

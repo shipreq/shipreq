@@ -4,7 +4,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.test.TestFeedbackModal
 import shipreq.webapp.base.test.TestState._

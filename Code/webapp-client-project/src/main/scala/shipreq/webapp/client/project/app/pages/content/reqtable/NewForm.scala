@@ -5,10 +5,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
-import scala.annotation.tailrec
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, \/-}
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.data.{CustomReqType, ExternalPubid, ReqType, StaticReqType}

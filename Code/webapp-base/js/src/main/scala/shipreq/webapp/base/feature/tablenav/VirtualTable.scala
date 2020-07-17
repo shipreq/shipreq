@@ -2,7 +2,6 @@ package shipreq.webapp.base.feature.tablenav
 
 import japgolly.scalajs.react._
 import org.scalajs.dom.{html, raw}
-import scala.annotation.tailrec
 import scala.scalajs.js
 import shipreq.webapp.base.feature.tablenav.Logic.HtmlElementExtX
 import shipreq.webapp.base.lib.DomUtil._

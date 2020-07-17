@@ -1,12 +1,65 @@
 package shipreq
 
 import java.lang.CharSequence
-import scala.annotation.elidable
+import nyaya.util.{MultiValues, Multimap}
 import scala.annotation.elidable.ASSERTION
 import scala.collection.{ArrayOps, StringOps, immutable}
 
+abstract class PredefShared
+  extends PredefScala
+     with japgolly.univeq.UnivEqScalaz
+     with japgolly.univeq.UnivEqExports {
+
+  final type elidable = scala.annotation.elidable
+  final val  elidable = scala.annotation.elidable
+  final type nowarn   = scala.annotation.nowarn
+  final type tailrec  = scala.annotation.tailrec
+
+  final type ArraySeq[+A] = scala.collection.immutable.ArraySeq[A]
+  final val  ArraySeq     = scala.collection.immutable.ArraySeq
+
+  final type \/ [+A, +B] = scalaz.\/[A, B]
+  final type \/-[+A]     = scalaz.\/-[A]
+  final type -\/[+A]     = scalaz.-\/[A]
+  final val  \/          = scalaz.\/
+  final val  \/-         = scalaz.\/-
+  final val  -\/         = scalaz.-\/
+
+  @inline
+  @scala.annotation.nowarn("cat=unused")
+  final implicit def univEqMultimap[K, L[_], V](implicit ev: UnivEq[Map[K, L[V]]]): UnivEq[Multimap[K, L, V]] =
+    UnivEq.force
+
+  @inline
+  @scala.annotation.nowarn("cat=unused")
+  final implicit def UnivEqObjExt(self: UnivEq.type) =
+    new PredefShared.UnivEqObjExt(UnivEq)
+}
+
+object PredefShared {
+  import japgolly.univeq._
+
+  // Copied from Shapeless
+  trait =:!=[A, B]
+  def _unexpected : Nothing = sys.error("Unexpected invocation")
+  implicit def _neq[A, B] : A =:!= B = null.asInstanceOf[A =:!= B] //new =:!=[A, B] {}
+  implicit def _neqAmbig1[A] : A =:!= A = _unexpected
+  implicit def _neqAmbig2[A] : A =:!= A = _unexpected
+
+  class UnivEqObjExt(private val self: UnivEq.type) extends AnyVal {
+    @inline def emptySetMultimap[K: UnivEq, V: UnivEq] =
+      Multimap.empty[K, immutable.Set, V]
+
+    @scala.annotation.nowarn("cat=unused")
+    @inline def emptyMultimap[K: UnivEq, L[_] : MultiValues, V](implicit ev: L[V] =:!= immutable.Set[V]) =
+      Multimap.empty[K, L, V]
+  }
+}
+
+// =====================================================================================================================
+
 // Scala's Predef LowPriorityImplicits without extending LowPriorityImplicits2
-abstract class LowPriorityImplicits {
+sealed abstract class LowPriorityImplicits {
   @inline implicit final def predefByteWrapper              (x: Byte)               = scala.Predef.byteWrapper     (x)
   @inline implicit final def predefShortWrapper             (x: Short)              = scala.Predef.shortWrapper    (x)
   @inline implicit final def predefIntWrapper               (x: Int)                = scala.Predef.intWrapper      (x)
@@ -29,7 +82,7 @@ abstract class LowPriorityImplicits {
   @inline implicit final def predefWrapString               (s: java.lang.String)   = scala.Predef.wrapString      (s)
 }
 
-abstract class PredefShared extends LowPriorityImplicits {
+sealed abstract class PredefScala extends LowPriorityImplicits {
 
 //  @inline final def classOf[T]: Class[T] = scala.Predef.classOf[T]
 //
@@ -58,33 +111,23 @@ abstract class PredefShared extends LowPriorityImplicits {
 
   // assertions ---------------------------------------------------------
 
-  @elidable(ASSERTION)
+  @scala.annotation.elidable(ASSERTION)
   @inline
   final def assert(assertion: Boolean): Unit =
     if (!assertion)
       throw new java.lang.AssertionError("assertion failed")
 
-  @elidable(ASSERTION)
+  @scala.annotation.elidable(ASSERTION)
   @inline
   final def assert(assertion: Boolean, message: => Any): Unit =
     if (!assertion)
       throw new java.lang.AssertionError("assertion failed: "+ message)
 
-//  def require(requirement: Boolean): Unit = {
-//    if (!requirement)
-//      throw new IllegalArgumentException("requirement failed")
-//  }
-//
-//  @inline final def require(requirement: Boolean, message: => Any): Unit = {
-//    if (!requirement)
-//      throw new IllegalArgumentException("requirement failed: "+ message)
-//  }
-
   @inline final def ??? : Nothing = throw new NotImplementedError
 
   // implicit classes -----------------------------------------------------
 
-  @inline final implicit def predefArrowAssoc[A](a: A): PredefShared.ArrowAssoc[A] = new PredefShared.ArrowAssoc(a)
+  @inline final implicit def predefArrowAssoc[A](a: A): PredefScala.ArrowAssoc[A] = new PredefScala.ArrowAssoc(a)
 
   implicit final class SeqCharSequence(sequenceOfChars: scala.collection.IndexedSeq[Char]) extends CharSequence {
     def length: Int                                     = sequenceOfChars.length
@@ -146,10 +189,8 @@ abstract class PredefShared extends LowPriorityImplicits {
   @inline final implicit def predefConforms[A]: A => A = <:<.refl
 }
 
-object PredefShared {
-
+object PredefScala {
   final class ArrowAssoc[A](private val self: A) extends AnyVal {
     @inline def ->[B](y: B): (A, B) = (self, y)
   }
-
 }

@@ -1,6 +1,5 @@
 package shipreq.webapp.base.issue
 
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data._
 
 trait IssueDetector {

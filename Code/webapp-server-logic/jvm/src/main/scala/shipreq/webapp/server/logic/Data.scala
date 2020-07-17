@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import japgolly.univeq.UnivEq
 import java.util.Base64
 
 final case class PasswordHash(value: String) extends AnyVal

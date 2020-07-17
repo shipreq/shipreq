@@ -4,8 +4,7 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
-import scalaz.{-\/, Equal, \/-}
-import shipreq.base.util.univeq._
+import scalaz.Equal
 import shipreq.base.util.{Applicable, NotApplicable}
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.derivation._

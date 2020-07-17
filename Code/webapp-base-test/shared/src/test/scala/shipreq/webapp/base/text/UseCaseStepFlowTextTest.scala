@@ -5,7 +5,6 @@ import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._
 import scalaz.std.list.listInstance
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Backwards, Forwards, Util}
 import shipreq.webapp.base.text.UseCaseStepFlowText.Elem

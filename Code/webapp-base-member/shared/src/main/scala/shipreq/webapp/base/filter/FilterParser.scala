@@ -3,9 +3,7 @@ package shipreq.webapp.base.filter
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.recursion.Fix
 import org.parboiled2.{Parser => _, _}
-import scala.annotation.nowarn
 import scala.util.{Failure, Success, Try}
-import scalaz.{-\/, \/, \/-}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.data.{Off, On}

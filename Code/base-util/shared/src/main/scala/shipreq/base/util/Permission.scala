@@ -1,7 +1,5 @@
 package shipreq.base.util
 
-import scalaz.{-\/, \/, \/-}
-
 sealed abstract class Permission extends IsoBool.WithBoolOps[Permission] {
   override final def companion = Permission
 

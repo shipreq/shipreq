@@ -1,7 +1,6 @@
 package shipreq.webapp.server.logic
 
 import scalaz.syntax.equal._
-import scalaz.{-\/, \/-}
 import shipreq.base.util.PotentialChange._
 import shipreq.base.util.{ErrorMsg, PotentialChange}
 import shipreq.webapp.base.data.Project

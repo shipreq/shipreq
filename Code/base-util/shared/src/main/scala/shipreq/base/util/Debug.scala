@@ -4,8 +4,6 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.AsciiTable
 import java.time.Duration
-import scala.annotation.tailrec
-
 object Debug {
 
   def printStackTrace(filter: String = "shipreq"): Unit = {

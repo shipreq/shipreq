@@ -4,7 +4,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{ErrorMsg, PotentialChange}
 import shipreq.webapp.base.data.{Colour => _, _}
 import shipreq.webapp.base.feature.AsyncFeature

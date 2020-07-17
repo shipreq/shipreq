@@ -3,7 +3,6 @@ package shipreq.webapp.base.protocol.websocket
 import boopickle.DefaultBasic._
 import japgolly.scalajs.react._
 import java.time.Duration
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.test.JsTestTimers
 import shipreq.base.util.JsExt._
 import shipreq.base.util._

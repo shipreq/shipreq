@@ -2,7 +2,7 @@ package shipreq.webapp.server.logic
 
 import japgolly.microlibs.nonempty.NonEmptySet
 import java.time.Instant
-import scalaz.{\/, ~>}
+import scalaz.~>
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ActiveEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.base.user._

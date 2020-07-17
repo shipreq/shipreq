@@ -1,8 +1,7 @@
 package shipreq.base.util
 
 import japgolly.microlibs.nonempty.NonEmpty
-import japgolly.univeq.UnivEq
-import scalaz.{-\/, Equal, \/, \/-}
+import scalaz.Equal
 import shipreq.base.util.PotentialChange._
 
 sealed abstract class PotentialChange[+E, +A] {
@@ -124,8 +123,6 @@ object PotentialChange {
 
   implicit def univEq[E: UnivEq, A: UnivEq]: UnivEq[PotentialChange[E, A]] =
     UnivEq.derive
-
-  import scalaz.{\/, \/-, -\/}
 
   def fromDisjunction[E, A](d: E \/ A): PotentialChange[E, A] =
     d match {

@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import scalaz.\/-
 import shipreq.base.util.Invalid
 import shipreq.webapp.base.data.DataValidators.{reqCode => V}
 import shipreq.webapp.base.data.ReqCode._

@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data.{FilterDead, HideDead, ShowDead}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.SummaryUI

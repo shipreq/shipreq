@@ -1,7 +1,6 @@
 package shipreq.base.util
 
 import japgolly.microlibs.nonempty.NonEmpty
-import japgolly.univeq.UnivEq
 import nyaya.util.Multimap
 
 /**

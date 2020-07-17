@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.config
 
-import japgolly.univeq.UnivEq
 import org.scalajs.dom.html
 import shipreq.webapp.base.test.TestState._
 import teststate.dsl.DisplayFailure

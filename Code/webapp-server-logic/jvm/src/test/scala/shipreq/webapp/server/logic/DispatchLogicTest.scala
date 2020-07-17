@@ -3,7 +3,7 @@ package shipreq.webapp.server.logic
 import io.circe._
 import io.circe.syntax._
 import java.time.Instant
-import scalaz.{-\/, Name, Need, \/-}
+import scalaz.{Name, Need}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{BinaryData, Deny, Invalid, Url}
 import shipreq.webapp.base.Urls

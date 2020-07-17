@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic
 
-import scalaz.{-\/, \/-}
 import shipreq.base.util.PotentialChange._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._

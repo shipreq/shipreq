@@ -1,8 +1,6 @@
 package shipreq.webapp.base.feature.dragtoreorder
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.univeq.UnivEq
-
 sealed trait Status
 
 object Status {

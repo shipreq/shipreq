@@ -2,7 +2,6 @@ package shipreq.webapp.base.jsfacade
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.PackageBase._
-import scala.annotation.nowarn
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
 

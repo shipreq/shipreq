@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.feature.render
 
 import japgolly.scalajs.react.Reusability
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.feature.render.{FieldKey => AnyFieldKey}
 import shipreq.webapp.client.project.lib.DataReusability._

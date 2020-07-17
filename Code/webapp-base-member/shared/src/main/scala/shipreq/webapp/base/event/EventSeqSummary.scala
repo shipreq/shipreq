@@ -1,7 +1,6 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.univeq._
 import shipreq.base.util.Util.mergeSets
 import shipreq.webapp.base.data._
 

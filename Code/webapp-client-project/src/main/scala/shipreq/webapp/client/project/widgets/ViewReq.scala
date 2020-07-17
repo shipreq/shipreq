@@ -4,7 +4,6 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react.vdom.html_<^.VdomTag
 import scala.collection.immutable.SortedSet
-import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 import shipreq.webapp.base.data._

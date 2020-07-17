@@ -1,7 +1,6 @@
 package shipreq.base.test
 
 import java.time.Instant
-import scala.annotation.tailrec
 import scala.scalajs.js.timers.{SetIntervalHandle, SetTimeoutHandle}
 import scala.util.Try
 import shipreq.base.util.JsTimers

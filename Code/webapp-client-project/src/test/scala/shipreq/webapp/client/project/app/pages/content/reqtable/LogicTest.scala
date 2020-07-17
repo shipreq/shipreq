@@ -4,8 +4,7 @@ import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.{Lens, Optional}
-import scala.annotation.tailrec
-import scalaz.{-\/, Equal, \/-}
+import scalaz.Equal
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.data._

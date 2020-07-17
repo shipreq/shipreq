@@ -1,6 +1,5 @@
 package shipreq.webapp.base.protocol.websocket
 
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.data.ManualIssueId
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._

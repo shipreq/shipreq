@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 import japgolly.scalajs.react.{Key, Reusability}
 import monocle.{Lens, Optional}
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview._

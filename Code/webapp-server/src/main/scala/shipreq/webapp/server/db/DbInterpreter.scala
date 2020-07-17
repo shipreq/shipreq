@@ -13,7 +13,7 @@ import java.time.Instant
 import nyaya.gen.Gen
 import org.postgresql.util.PSQLException
 import scala.collection.immutable.SortedSet
-import scalaz.{-\/, \/, \/-, ~>}
+import scalaz.~>
 import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._

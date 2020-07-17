@@ -1,7 +1,7 @@
 package shipreq.base.util.log
 
 import org.slf4j.MDC
-import scalaz.{-\/, Catchable, Monad, \/-}
+import scalaz.{Catchable, Monad}
 import shipreq.base.util.FxModule._
 
 final class MdcValues(private val values: Map[String, String]) extends AnyVal {

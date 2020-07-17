@@ -1,8 +1,6 @@
 package shipreq.base.util.algorithm
 
 import java.util.{Comparator, Random}
-import scala.annotation.tailrec
-
 object GeneticEvolution {
 
   object Binary {

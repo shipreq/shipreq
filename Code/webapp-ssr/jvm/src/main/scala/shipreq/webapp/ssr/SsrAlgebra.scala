@@ -1,6 +1,5 @@
 package shipreq.webapp.ssr
 
-import japgolly.univeq.UnivEq
 import scala.xml.XML
 import shipreq.base.util.{Permission, Url}
 import shipreq.webapp.base.user.Username

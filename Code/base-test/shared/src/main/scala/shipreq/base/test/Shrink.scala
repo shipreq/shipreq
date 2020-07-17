@@ -1,6 +1,5 @@
 package shipreq.base.test
 
-import scala.annotation.tailrec
 import shipreq.base.util._
 
 object Shrink {

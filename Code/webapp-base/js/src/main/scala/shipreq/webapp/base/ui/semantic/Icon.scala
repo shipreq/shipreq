@@ -1,8 +1,6 @@
 package shipreq.webapp.base.ui.semantic
 
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
-
 /** http://semantic-ui.com/elements/icon.html */
 sealed abstract class Icon(val clsName: ClassName) {
   final val tag = <.i(^.cls := ("icon " + clsName))

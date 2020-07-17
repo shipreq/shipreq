@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
 import japgolly.scalajs.react.Reusability
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.UseCaseStepId
 import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.lib.DataReusability._

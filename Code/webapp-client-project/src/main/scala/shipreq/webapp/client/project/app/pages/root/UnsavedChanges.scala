@@ -3,8 +3,6 @@ package shipreq.webapp.client.project.app.pages.root
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react.{CallbackTo, Reusability}
-import japgolly.univeq._
-import scalaz.{-\/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._

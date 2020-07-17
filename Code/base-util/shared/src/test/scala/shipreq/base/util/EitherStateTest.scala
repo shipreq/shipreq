@@ -1,7 +1,6 @@
 package shipreq.base.util
 
 import japgolly.microlibs.testutil.TestUtil._
-import scalaz.\/-
 import utest._
 
 object EitherStateTest extends TestSuite {

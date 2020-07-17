@@ -5,11 +5,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Iso
 import monocle.macros.Lenses
-import scala.annotation.elidable
 import scala.reflect.ClassTag
-import scalaz.\/
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{CreateContentCmd, ManualIssueCmd}

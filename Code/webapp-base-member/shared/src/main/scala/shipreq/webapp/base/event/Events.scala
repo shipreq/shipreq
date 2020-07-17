@@ -2,7 +2,6 @@ package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty._
 import nyaya.util.Multimap
-import scala.collection.immutable.ArraySeq
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.{ImpGraphConfig, SavedView}

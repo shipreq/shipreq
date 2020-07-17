@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
-import japgolly.univeq._
 import org.scalajs.dom.html
 import shipreq.base.util.LeftRight
 import shipreq.webapp.base.UiText

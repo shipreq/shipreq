@@ -2,7 +2,6 @@ package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import scala.collection.immutable.ListSet
 import shipreq.webapp.base.lib.KeyHandler._
 

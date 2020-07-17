@@ -6,9 +6,7 @@ import japgolly.scalajs.react.extra.router.{RouterCtl => RouterCtl_, _}
 import japgolly.scalajs.react.{Callback, Reusability}
 import monocle._
 import monocle.macros._
-import scala.annotation.elidable
 import shipreq.base.util.Url
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.lib.DataReusability._

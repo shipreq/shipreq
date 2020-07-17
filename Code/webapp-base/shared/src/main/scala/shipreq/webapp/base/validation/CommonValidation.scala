@@ -1,7 +1,6 @@
 package shipreq.webapp.base.validation
 
 import java.util.regex.Pattern
-import scalaz.{-\/, \/-}
 import shipreq.webapp.base.WebappConfig
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.base.validation.Implicits._

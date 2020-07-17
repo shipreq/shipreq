@@ -1,6 +1,5 @@
 package shipreq.webapp.base.feature.autocomplete.strategies
 
-import scala.collection.immutable.ArraySeq
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.jsfacade.TextComplete.Strategy

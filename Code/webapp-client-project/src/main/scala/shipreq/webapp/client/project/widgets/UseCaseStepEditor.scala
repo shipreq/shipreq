@@ -4,14 +4,12 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.ext.KeyCode
-import scalaz.\/
 import scalaz.std.option.optionInstance
 import scalaz.std.string.stringInstance
 import scalaz.std.vector._
 import scalaz.syntax.traverse._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD

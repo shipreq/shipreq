@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.widgets.dev
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, html}
-import scala.annotation.elidable
 import shipreq.webapp.base.lib.DomUtil._
 
 /** This component renders all chars, measures their widths, and prints the results to the console.

@@ -2,7 +2,7 @@ package shipreq.webapp.base.test
 
 import boopickle.Pickler
 import nyaya.gen.Gen
-import scalaz.{-\/, Equal, \/-}
+import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.protocol.binary.SafePickler

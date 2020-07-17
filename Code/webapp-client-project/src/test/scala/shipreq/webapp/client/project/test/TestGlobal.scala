@@ -4,7 +4,6 @@ import japgolly.scalajs.react.test.SimEvent
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import java.time.{Duration, Instant}
 import org.scalajs.dom.document
-import scalaz.{-\/, \/-}
 import shipreq.base.util.JsExt._
 import shipreq.base.util.{Allow, ErrorMsg, JsTimers, PotentialChange, Retries}
 import shipreq.webapp.base.data.Project

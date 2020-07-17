@@ -9,7 +9,6 @@ import monocle.macros.{GenLens, Lenses}
 import scalaz.Order
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.ReqType.Mnemonic
 

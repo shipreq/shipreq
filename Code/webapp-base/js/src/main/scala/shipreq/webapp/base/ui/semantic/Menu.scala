@@ -2,7 +2,6 @@ package shipreq.webapp.base.ui.semantic
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
 import org.scalajs.dom.{Node, html}
 import shipreq.webapp.base.ui.semantic.{Dropdown => SDropdown}
 

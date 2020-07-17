@@ -3,7 +3,7 @@ package shipreq.webapp.server.logic
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat
 import scalaz.syntax.monad._
-import scalaz.{-\/, Catchable, Monad, \/, \/-}
+import scalaz.{Catchable, Monad}
 import shipreq.base.util._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskmanApi, UserId => TaskmanUserId}

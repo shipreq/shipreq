@@ -2,9 +2,8 @@ package shipreq.webapp.base.filter
 
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.recursion._
-import scalaz.{-\/, Traverse, \/, \/-}
+import scalaz.Traverse
 import shipreq.base.util.Identity
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.{FilterDead, HideDead, Req, ReqTypePos}
 import shipreq.webapp.base.issue.IssueCategory

@@ -2,10 +2,7 @@ package shipreq.webapp.base.text
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import org.parboiled2._
-import scala.annotation.{elidable, nowarn}
-import scala.collection.immutable.ArraySeq
 import shipreq.base.util.NonEmptyArraySeq
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Parsers.{StyleCtx, StyleType}
 import shipreq.webapp.base.text.{Atom => A, Parsers => P}

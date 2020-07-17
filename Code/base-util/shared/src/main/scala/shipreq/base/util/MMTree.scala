@@ -2,9 +2,7 @@ package shipreq.base.util
 
 import nyaya.prop.{CycleDetector, CycleFree}
 import scala.collection.Iterable
-import scalaz.\/
 import shipreq.base.util.MMTree.Children
-import shipreq.base.util.univeq._
 
 /**
  * Many-to-Many Tree typeclass.

@@ -1,7 +1,5 @@
 package shipreq.webapp.base.ui.semantic
 
-import japgolly.univeq.UnivEq
-
 object Label {
 
 //  sealed abstract class Dir(cls: ClassName) extends HasClass(cls)

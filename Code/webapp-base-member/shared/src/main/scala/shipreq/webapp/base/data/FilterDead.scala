@@ -1,7 +1,6 @@
 package shipreq.webapp.base.data
 
 import scala.collection.Factory
-import shipreq.base.util.univeq._
 import shipreq.base.util.{IsoBool, OptionalBoolFn}
 import shipreq.webapp.base.data.derivation._
 

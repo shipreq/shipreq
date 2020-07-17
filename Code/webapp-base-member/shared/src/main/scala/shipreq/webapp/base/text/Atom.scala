@@ -2,13 +2,10 @@ package shipreq.webapp.base.text
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import monocle.Iso
-import scala.annotation.nowarn
-import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import scalaz.Applicative
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.Util.ShipReqOpsForArraySeq
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.{text => T}
 

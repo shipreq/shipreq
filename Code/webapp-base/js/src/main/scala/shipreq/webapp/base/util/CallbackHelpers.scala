@@ -2,8 +2,6 @@ package shipreq.webapp.base.util
 
 import japgolly.scalajs.react._
 import scala.util.Try
-import scalaz.{-\/, \/, \/-}
-
 object CallbackHelpers {
 
   def mergeOptionalCallbacks(a: Option[Callback], b: Option[Callback]): Option[Callback] =

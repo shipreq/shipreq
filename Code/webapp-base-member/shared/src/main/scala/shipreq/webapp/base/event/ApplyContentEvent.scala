@@ -5,7 +5,6 @@ import monocle.Lens
 import scalaz.std.option.optionInstance
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ApplyEventLib._

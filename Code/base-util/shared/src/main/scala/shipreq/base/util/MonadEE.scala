@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import scalaz.{-\/, Monad, \/, \/-}
+import scalaz.Monad
 import shipreq.base.util.MonadEE._
 
 /**

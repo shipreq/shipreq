@@ -1,7 +1,6 @@
 package shipreq.base.util
 
 import scala.collection.View
-import scala.collection.immutable.ArraySeq
 import scalaz.{Applicative, Foldable, Monoid}
 
 object ScalazExtra {

@@ -1,10 +1,7 @@
 package shipreq.webapp.base.protocol.binary
 
 import boopickle.{PickleState, Pickler, UnpickleState}
-import japgolly.univeq._
-import scala.annotation.elidable
 import scala.util.control.NonFatal
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.protocol.Version
 import shipreq.webapp.base.protocol.Version.ordering.mkOrderingOps

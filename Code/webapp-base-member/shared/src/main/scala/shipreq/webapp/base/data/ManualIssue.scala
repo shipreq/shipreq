@@ -1,6 +1,5 @@
 package shipreq.webapp.base.data
 
-import japgolly.univeq.UnivEq
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.base.text.Text.Equality._

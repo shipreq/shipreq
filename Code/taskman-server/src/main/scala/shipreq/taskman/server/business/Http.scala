@@ -5,14 +5,12 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq._
 import java.nio.charset.Charset
 import java.time.Duration
 import okhttp3._
 import okio.Buffer
 import scala.util.control.NonFatal
 import scalaz.syntax.bind._
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.TaskmanLogFields
 import shipreq.base.util.{ArticulateError, Identity}

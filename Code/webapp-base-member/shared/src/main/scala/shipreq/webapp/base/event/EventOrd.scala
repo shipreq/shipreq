@@ -1,7 +1,5 @@
 package shipreq.webapp.base.event
 
-import japgolly.univeq._
-
 /** Event ordinal.
   *
   * The order of an event in an event stream.

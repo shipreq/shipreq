@@ -2,7 +2,6 @@ package shipreq.webapp.base.test
 
 import japgolly.scalajs.react._
 import org.scalajs.dom.{Element, document}
-import scalaz.\/
 import shipreq.base.util._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.SubmitFeedback
 import shipreq.webapp.base.ui.FeedbackModal

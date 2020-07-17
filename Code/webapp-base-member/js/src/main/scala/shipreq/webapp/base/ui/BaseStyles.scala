@@ -1,7 +1,6 @@
 package shipreq.webapp.base.ui
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.univeq._
 import scala.concurrent.duration._
 import shipreq.base.util.Validity
 import shipreq.webapp.base.CssSettings._

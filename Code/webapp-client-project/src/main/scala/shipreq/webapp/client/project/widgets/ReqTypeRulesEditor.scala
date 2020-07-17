@@ -8,17 +8,14 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import monocle.Lens
 import monocle.macros.Lenses
 import nyaya.util.Multimap
 import org.scalajs.dom.html
-import scala.collection.immutable.ArraySeq
 import scalacss.ScalaCssReact._
 import scalaz.std.list._
 import scalaz.std.option._
 import scalaz.syntax.traverse._
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util._
 import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 import shipreq.webapp.base.data.{Colour => _, _}

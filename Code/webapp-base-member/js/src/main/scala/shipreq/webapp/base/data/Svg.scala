@@ -2,7 +2,6 @@ package shipreq.webapp.base.data
 
 import japgolly.scalajs.react.Reusability
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
 import shipreq.webapp.base.jsfacade.HtmlReactParser
 
 final case class Svg(content: String) {

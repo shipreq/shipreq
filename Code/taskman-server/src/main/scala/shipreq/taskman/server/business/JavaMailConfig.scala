@@ -4,8 +4,6 @@ import japgolly.clearconfig._
 import java.util.Properties
 import javax.mail.{Authenticator, PasswordAuthentication, Session}
 import scalaz.syntax.applicative._
-import scalaz.{-\/, \/-}
-
 object JavaMailConfig {
 
   private def get[A](n1: String)(implicit prefix: Prefix, p: ConfigValueParser[A]): ConfigDef[Properties => Unit] = {

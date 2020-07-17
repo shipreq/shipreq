@@ -3,7 +3,6 @@ package shipreq.webapp.base.test
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test.Simulate
 import org.scalajs.dom.{Element, document}
-import scalaz.\/
 import shipreq.base.util._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
 import shipreq.webapp.base.test.TestState._

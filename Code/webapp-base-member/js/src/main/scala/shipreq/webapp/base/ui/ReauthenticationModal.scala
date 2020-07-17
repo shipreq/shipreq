@@ -3,7 +3,6 @@ package shipreq.webapp.base.ui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Allow, Deny, ErrorMsg, Permission}
 import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.lib.ModalForm

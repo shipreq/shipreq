@@ -1,11 +1,10 @@
 package shipreq.webapp.server.logic
 
-import japgolly.univeq._
 import java.util.concurrent.ConcurrentHashMap
 import monocle.macros.Lenses
 import scalaz.syntax.monad._
 import scalaz.syntax.std.option._
-import scalaz.{-\/, Applicative, Monad, \/, \/-}
+import scalaz.{Applicative, Monad}
 import shipreq.base.util.FreeOption.Implicits._
 import shipreq.base.util._
 

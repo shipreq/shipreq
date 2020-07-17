@@ -1,6 +1,5 @@
 package shipreq.webapp.server.app
 
-import scalaz.-\/
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.protocol.ajax.CommonProtocols

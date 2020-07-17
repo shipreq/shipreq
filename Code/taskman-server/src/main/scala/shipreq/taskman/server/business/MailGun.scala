@@ -2,7 +2,6 @@ package shipreq.taskman.server.business
 
 import io.circe.Json
 import scala.runtime.AbstractFunction1
-import scalaz.\/-
 import scalaz.syntax.bind._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger

@@ -2,7 +2,6 @@ package shipreq.webapp.base.protocol.binary.v1
 
 import boopickle.{ConstPickler, DefaultBasic}
 import japgolly.microlibs.nonempty.NonEmptySet
-import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.webapp.base.data.DataImplicits._

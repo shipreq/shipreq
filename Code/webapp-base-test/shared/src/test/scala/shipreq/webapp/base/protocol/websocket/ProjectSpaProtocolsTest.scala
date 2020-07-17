@@ -3,7 +3,7 @@ package shipreq.webapp.base.protocol.websocket
 import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.scalaz_ext.ScalazMacros
 import java.time.Instant
-import scalaz.{-\/, Equal, \/, \/-}
+import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data._

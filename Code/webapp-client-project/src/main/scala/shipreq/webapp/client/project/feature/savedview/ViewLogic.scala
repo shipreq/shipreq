@@ -3,10 +3,8 @@ package shipreq.webapp.client.project.feature.savedview
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptyVector}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
-import japgolly.univeq._
 import monocle.Lens
 import monocle.macros.Lenses
-import scalaz.\/
 import shipreq.base.util.PotentialChange
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.SavedView.{Id, Name}

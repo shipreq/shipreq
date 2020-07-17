@@ -8,7 +8,6 @@ import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.UiText.FieldNames
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.TagGroupGD

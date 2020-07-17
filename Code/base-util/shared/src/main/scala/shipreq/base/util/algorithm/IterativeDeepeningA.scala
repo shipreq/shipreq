@@ -1,7 +1,5 @@
 package shipreq.base.util.algorithm
 
-import scala.annotation.tailrec
-
 /** Iterative Deepening A*
   *
   * IDA* is guaranteed to find the shortest path leading from the given start node to any goal node in the problem graph,

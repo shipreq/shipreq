@@ -4,7 +4,6 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import scala.scalajs.js
 import scalacss.ScalaCssReact._
 import shipreq.base.util.Intersection

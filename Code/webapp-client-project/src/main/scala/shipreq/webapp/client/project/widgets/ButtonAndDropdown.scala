@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.widgets
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.lib.DomUtil._

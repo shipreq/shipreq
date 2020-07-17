@@ -5,13 +5,9 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.{Utils => Util}
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
-import scala.annotation.tailrec
 import scala.collection.View
-import scala.collection.immutable.ArraySeq
 import scala.scalajs.js.{UndefOr, undefined}
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data.ReqCode.{ActiveGroup, ActiveReq, Node, Trie, Value => Path}
 import shipreq.webapp.base.data._

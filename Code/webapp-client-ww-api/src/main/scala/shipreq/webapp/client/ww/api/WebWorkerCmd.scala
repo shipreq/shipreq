@@ -2,7 +2,6 @@ package shipreq.webapp.client.ww.api
 
 import boopickle.ConstPickler
 import boopickle.DefaultBasic._
-import scalaz.\/
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig

@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.app.pages.content.issues
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Allow, Deny}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue.{ContentRef, Issue}

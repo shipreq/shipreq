@@ -3,7 +3,6 @@ package shipreq.webapp.client.project.feature.create
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import scala.annotation.nowarn
 import scala.reflect.ClassTag
 import scalaz.~~>
 import shipreq.base.util._

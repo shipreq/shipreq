@@ -6,7 +6,6 @@ import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.base.test.BaseTestUtil.quoteString
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.event.Event

@@ -1,8 +1,6 @@
 package shipreq.base.util
 
 import japgolly.microlibs.nonempty.NonEmptyVector
-import japgolly.univeq.UnivEq
-import scala.annotation.tailrec
 import scalaz.std.map.mapEqual
 import scalaz.std.option.optionInstance
 import scalaz.syntax.traverse._

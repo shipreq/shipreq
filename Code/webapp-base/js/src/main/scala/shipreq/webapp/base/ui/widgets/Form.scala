@@ -5,10 +5,7 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
 import monocle.{Iso, Lens}
-import scala.collection.compat.immutable.ArraySeq
-import scalaz.{-\/, \/, \/-}
 import shipreq.base.util.{Identity, IsoBool, Validity}
 import shipreq.webapp.base.data.{Disabled, Enabled, On}
 import shipreq.webapp.base.lib.ValidationUX

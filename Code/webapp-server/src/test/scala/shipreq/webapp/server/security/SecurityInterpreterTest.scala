@@ -1,7 +1,7 @@
 package shipreq.webapp.server.security
 
 import java.time.Duration
-import scalaz.{-\/, Name}
+import scalaz.Name
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
 import shipreq.webapp.server.ServerLogicConfig.Security.JwtSecret

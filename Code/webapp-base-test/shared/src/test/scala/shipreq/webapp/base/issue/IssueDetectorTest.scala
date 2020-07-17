@@ -2,7 +2,6 @@ package shipreq.webapp.base.issue
 
 import japgolly.microlibs.nonempty.{NonEmpty, NonEmptySet}
 import nyaya.util.Multimap
-import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.webapp.base.data._

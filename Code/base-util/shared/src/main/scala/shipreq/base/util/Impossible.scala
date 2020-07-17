@@ -1,8 +1,5 @@
 package shipreq.base.util
 
-import japgolly.univeq.UnivEq
-import scala.annotation.elidable
-
 /** Unfortunately using `Nothing` results in Scala 2 behaving differently and having lots of problems wrt implicit
   * resolution and type inference.
   *

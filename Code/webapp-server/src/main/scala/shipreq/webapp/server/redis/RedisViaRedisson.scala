@@ -8,11 +8,9 @@ import org.redisson.api.listener.MessageListener
 import org.redisson.api.{RScript, RedissonClient}
 import org.redisson.client.codec.{ByteArrayCodec, StringCodec}
 import scala.Predef.classOf
-import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
-import scalaz.-\/
 import scalaz.std.option._
 import scalaz.syntax.traverse._
 import shipreq.base.util.FxModule._

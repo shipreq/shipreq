@@ -3,10 +3,9 @@ package shipreq.webapp.server.logic
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.univeq._
 import java.time.{Duration, Instant}
 import scalaz.syntax.monad._
-import scalaz.{-\/, BindRec, Monad, \/, \/-, ~>}
+import scalaz.{BindRec, Monad, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.taskman.api.{Task, TaskmanApi, UserId => TaskmanUserId}

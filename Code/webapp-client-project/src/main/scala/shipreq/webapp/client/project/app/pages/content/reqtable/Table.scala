@@ -6,7 +6,6 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import org.scalajs.dom.ext.KeyCode
-import scala.annotation.nowarn
 import scala.collection.immutable.SortedSet
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}

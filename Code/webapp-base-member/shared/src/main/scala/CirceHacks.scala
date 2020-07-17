@@ -1,6 +1,5 @@
 package io.circe
 
-import scala.collection.immutable.ArraySeq
 import scala.reflect.ClassTag
 
 object CirceHacks extends MidPriorityEncoders {

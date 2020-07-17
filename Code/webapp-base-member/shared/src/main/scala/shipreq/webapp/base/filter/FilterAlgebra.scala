@@ -4,11 +4,9 @@ import japgolly.microlibs.nonempty.{NonEmptySet, NonEmptyVector}
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat
-import japgolly.univeq._
 import java.util.regex.Pattern
-import scala.annotation.tailrec
 import scalaz.syntax.traverse1._
-import scalaz.{-\/, Functor, Traverse, \/, \/-}
+import scalaz.{Functor, Traverse}
 import shipreq.base.util.{Applicable, OptionalBoolFn, TransitiveClosure}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.DataImplicits._

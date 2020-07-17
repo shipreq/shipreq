@@ -2,7 +2,6 @@ package shipreq.webapp.base
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import shipreq.base.util.Url
-import shipreq.base.util.univeq.UnivEq
 import shipreq.webapp.base.data._
 
 object Urls {

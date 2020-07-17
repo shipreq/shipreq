@@ -7,8 +7,6 @@ import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.vdom.VdomElement
 import monocle.Lens
 import org.scalajs.dom.window
-import scalaz.{-\/, \/-}
-import shipreq.base.util.univeq._
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.webapp.base.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId}
 import shipreq.webapp.base.event.VerifiedEvent

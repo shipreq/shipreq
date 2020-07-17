@@ -1,6 +1,5 @@
 package shipreq.webapp.base.event
 
-import scalaz.\/
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.Project
 

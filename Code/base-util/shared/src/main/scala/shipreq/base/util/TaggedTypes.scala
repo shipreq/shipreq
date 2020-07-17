@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import japgolly.univeq.UnivEq
 import scalaz.Order
 import scalaz.std.anyVal.{intInstance, longInstance, shortInstance}
 import scalaz.std.string.stringInstance

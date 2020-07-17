@@ -2,9 +2,7 @@ package shipreq.webapp.server.logic
 
 import japgolly.microlibs.nonempty.NonEmptySet
 import japgolly.microlibs.scalaz_ext.ScalazMacros
-import scala.annotation.nowarn
-import scala.collection.immutable.ArraySeq
-import scalaz.{-\/, Equal, Name, \/, \/-}
+import scalaz.{Equal, Name}
 import shipreq.base.util.{BinaryData, Direction}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._

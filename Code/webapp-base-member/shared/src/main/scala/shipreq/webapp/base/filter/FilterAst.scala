@@ -4,8 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.recursion.Fix
 import japgolly.microlibs.utils.StaticLookupFn
-import scalaz.{Applicative, Traverse, Traverse1, \/}
-import shipreq.base.util.univeq._
+import scalaz.{Applicative, Traverse, Traverse1}
 import shipreq.webapp.base.data.On
 import shipreq.webapp.base.issue.IssueCategory
 

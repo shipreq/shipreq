@@ -4,7 +4,6 @@ import japgolly.microlibs.nonempty.NonEmptyVector
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Instant, ZoneId, ZoneOffset}
-import scalaz.{\/, \/-}
 import shipreq.base.util.ScalaExt.StringBuilderExt
 import shipreq.base.util.{ArticulateError, Util}
 import shipreq.taskman.api.Task.{LandingPageHit, UserFeedbackReceived}

@@ -1,8 +1,6 @@
 package shipreq.webapp.base.issue
 
-import japgolly.univeq.UnivEq
 import nyaya.prop._
-import scala.annotation.nowarn
 import shipreq.webapp.base.data.{LiveCodeGroup, ReqId}
 
 final case class IssueStats(total     : Int,

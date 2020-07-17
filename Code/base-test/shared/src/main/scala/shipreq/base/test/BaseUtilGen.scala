@@ -5,12 +5,9 @@ import java.util.concurrent.atomic.AtomicInteger
 import nyaya.gen._
 import nyaya.prop.CycleDetector
 import nyaya.util.Multimap
-import scala.annotation.tailrec
 import scala.collection.AbstractIterator
 import scala.reflect.ClassTag
 import shipreq.base.util._
-import shipreq.base.util.univeq._
-
 object BaseUtilGen {
 
   implicit def NeaToNonEmptySeq[A] = Gen.ToNonEmptySeq[NonEmptyArraySeq[A], A](_.whole)

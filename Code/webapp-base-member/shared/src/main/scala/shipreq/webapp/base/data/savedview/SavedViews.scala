@@ -4,8 +4,6 @@ import monocle.Traversal
 import monocle.macros.Lenses
 import scalaz.Applicative
 import shipreq.base.util.IMap
-import shipreq.base.util.univeq._
-
 object SavedViews {
 
   type Optional = Option[NonEmpty]

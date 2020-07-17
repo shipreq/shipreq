@@ -1,7 +1,6 @@
 package shipreq.webapp.client.project.app.pages.config.issues
 
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.univeq._
 import org.scalajs.dom.html
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.CommonObs._

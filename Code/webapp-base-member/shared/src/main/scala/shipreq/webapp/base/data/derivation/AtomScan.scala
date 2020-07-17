@@ -1,9 +1,7 @@
 package shipreq.webapp.base.data.derivation
 
-import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import shipreq.base.util.fp.Monoid.Implicits._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.Atom._
 import shipreq.webapp.base.text.Text

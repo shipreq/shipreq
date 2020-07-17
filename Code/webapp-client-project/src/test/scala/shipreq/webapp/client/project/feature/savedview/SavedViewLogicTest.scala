@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.feature.savedview
 
 import japgolly.microlibs.scalaz_ext.ScalazMacros._
 import japgolly.scalajs.react.{CallbackOption, CallbackTo, Reusable}
-import scalaz.{-\/, Equal, \/, \/-}
+import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data._

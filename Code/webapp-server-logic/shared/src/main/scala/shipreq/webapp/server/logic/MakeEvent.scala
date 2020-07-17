@@ -3,11 +3,9 @@ package shipreq.webapp.server.logic
 import japgolly.microlibs.nonempty._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.util.Multimap
-import scalaz.\/
 import shipreq.base.util.PotentialChange._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
-import shipreq.base.util.univeq._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.Event._

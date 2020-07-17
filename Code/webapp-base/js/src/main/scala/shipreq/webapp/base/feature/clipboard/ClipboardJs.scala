@@ -1,7 +1,6 @@
 package shipreq.webapp.base.feature.clipboard
 
 import org.scalajs.dom.window.navigator
-import scala.annotation.nowarn
 import scala.scalajs.js
 
 /** Facades for the clipboard-polyfill JS library. */
