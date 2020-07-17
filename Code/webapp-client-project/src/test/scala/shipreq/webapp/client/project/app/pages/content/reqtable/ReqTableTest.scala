@@ -959,7 +959,7 @@ object ReqTableTest extends TestSuite {
     "copy" - {
       "title"     - runTest(testCopy("MF-1", "Title")("Use Case Editor"))
       "desc"      - runTest(testCopy("UC-1", "Description")("This UC is about eating."))
-      "id"        - runTest(testCopy("MF-1", "ID")("MF-1"))
+      "id"        - runTest(testCopy("MF-1", "ID")("[MF-1] Use Case Editor"))
       "grReqType" - runTest(testCopy("MF-1", "Req Type")("MF"))
       "ucReqType" - runTest(testCopy("UC-1", "Req Type")("UC"))
       "imps"      - runTest(testCopy("FR-1", "Implies")("CO-2, FR-2"))

@@ -13,8 +13,10 @@ import shipreq.base.util.{Applicable, ErrorMsg, NotApplicable}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview._
+import shipreq.webapp.base.feature.clipboard.ClipboardData
 import shipreq.webapp.base.feature.{AsyncFeature, DragToReorderFeature, TableNavigationFeature}
 import shipreq.webapp.base.lib.DomUtil._
+import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.ui.{EditTheme, semantic}
 import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
@@ -23,22 +25,23 @@ import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.{NoFilterResults, ProjectWidgets, ViewReq}
 
-final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
+final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
+                  pxPlainText         : Px[PlainText.ForProject.NoCtx]) {
   import Table._
 
   private val tableNavigationFeature = TableNavigationFeature.NoRowSpans
 
   object Whole {
 
-    case class Props(mode            : Mode,
-                     cols            : NonEmptyVector[ColumnPlus],
-                     selection       : RowSelectionVisible,
-                     editor          : EditorFeature.ReadWrite.ForProject,
-                     rowAsync        : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
-                     config          : ProjectConfig,
-                     pw              : ProjectWidgets.NoCtx,
-                     filterDead      : FilterDead,
-                     modifyView      : ModFn[View]) {
+    case class Props(mode      : Mode,
+                     cols      : NonEmptyVector[ColumnPlus],
+                     selection : RowSelectionVisible,
+                     editor    : EditorFeature.ReadWrite.ForProject,
+                     rowAsync  : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
+                     config    : ProjectConfig,
+                     pw        : ProjectWidgets.NoCtx,
+                     filterDead: FilterDead,
+                     modifyView: ModFn[View]) {
       @inline def render = Component(this)
     }
 
@@ -208,6 +211,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
 
     protected def viewMaker(row: RowData, vi: ViewInput): Column => Reusable[TagMod]
 
+    protected def pubidClipboardData(row: RowData, vi: ViewInput): Option[() => ClipboardData]
+
     // ↑ abstract
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     // ↓ concrete
@@ -263,6 +268,14 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
           Cell.Component.withKey(ColumnLogic key col)(cp)
         }
 
+      def nopEditorFor(col: Column): EditorFeature.ReadWrite.ForEditor[Any, Nothing] = {
+        import EditorFeature.ReadWrite.ForEditor.{doNothing => empty}
+        col match {
+          case Column.Pubid => empty.withClipboardDataOption(pubidClipboardData(p.row, p.viewInput))
+          case _            => empty
+        }
+      }
+
       def renderNormal = {
         val selCell =
           selBase(
@@ -275,14 +288,14 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
         val colCells = mkColumnCells(col =>
           columnToEditorField(col) match {
             case Some(f) => p.editor(f, rootPxProjectWidgets, p.filterDead).withArgs(editorArgs(f))
-            case None    => EditorFeature.ReadWrite.ForEditor.doNothing
+            case None    => nopEditorFor(col)
           })
 
         rowBase(selCell, colCells)
       }
 
       def renderLocked = {
-        val colCells = mkColumnCells(_ => EditorFeature.ReadWrite.ForEditor.doNothing)
+        val colCells = mkColumnCells(nopEditorFor)
         rowBase(selBase(EditTheme.spinner), colCells)
       }
 
@@ -362,6 +375,14 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       }
       c => reusabilityView.reusable((row, vi, c)).map(_ => view(c))
     }
+
+    override protected def pubidClipboardData(row: RowData, vi: ViewInput): Option[() => ClipboardData] =
+      Some(() => {
+        val pt       = pxPlainText.value()
+        val pubid    = PlainText.pubid(row.req.pubid, vi._1.reqTypes)
+        val title    = pt.reqTitleWithoutMarkup(row.req)
+        ClipboardData(s"[$pubid] $title")
+      })
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -376,6 +397,8 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]]) {
       _ => ColumnLogic.editorFieldCG.getOption
 
     override protected def reusabilityRowEditor = implicitly
+
+    override protected def pubidClipboardData(row: RowData, vi: ViewInput) = None
 
     override protected def viewMaker(row: RowData, vi: ViewInput): Column => Reusable[TagMod] = {
       val pw = vi

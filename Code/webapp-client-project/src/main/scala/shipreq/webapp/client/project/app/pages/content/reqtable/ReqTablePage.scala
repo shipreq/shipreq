@@ -18,7 +18,7 @@ import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
-import shipreq.webapp.base.text.TextSearch
+import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.base.ui.{NoContentMessage, Toast}
 import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
@@ -37,6 +37,7 @@ object ReqTablePage {
 
   final case class StaticProps(stateAccess           : StateAccessPure[State],
                                savedViewStatic       : SavedViewFeature.Static,
+                               pxPlainText           : Px[PlainText.ForProject.NoCtx],
                                pxTextSearch          : Px[TextSearch],
                                pxProjectWidgets      : Reusable[Px[ProjectWidgets.NoCtx]],
                                pxFilterCompilerFromFD: Px[FilterDead => Filter.Valid.Compiler],
@@ -158,7 +159,7 @@ object ReqTablePage {
       } yield SelectionCtrls.Props(
         sel, rows, setModal.map(_.setState), project, projectWidgets, textSearch, updateIO, rowAsyncW)
 
-    val reqTable = new Table(pxProjectWidgets)
+    val reqTable = new Table(pxProjectWidgets, pxPlainText)
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

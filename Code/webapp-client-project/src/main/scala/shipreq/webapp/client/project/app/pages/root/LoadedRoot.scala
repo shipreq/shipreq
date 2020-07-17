@@ -262,6 +262,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       ReqTablePage.StaticProps(
         stateAccess            = $ zoomStateL State.reqTable,
         savedViewStatic        = savedViewFeatureStatic,
+        pxPlainText            = pxPlainText,
         pxTextSearch           = pxTextSearch,
         pxProjectWidgets       = pxProjectWidgets,
         pxFilterCompilerFromFD = pxFilterCompilerFromFilterDead,

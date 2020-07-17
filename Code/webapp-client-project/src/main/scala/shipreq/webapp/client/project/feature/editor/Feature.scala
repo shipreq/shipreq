@@ -4,6 +4,7 @@ import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
+import scala.annotation.nowarn
 import shipreq.base.util._
 import shipreq.base.util.univeq._
 import shipreq.webapp.base.data._
@@ -92,6 +93,7 @@ object Feature {
 
     // Note: editor is package-private here because it's actually read & write, where as this class is read-only
     final case class ForEditor[-A, +C](private[editor] val editor: Option[Editor[A, C]],
+                                       clipboardDataOverride     : Option[() => ClipboardData],
                                        renderText                : Reusable[() => Option[String]],
                                        editability               : Permission,
                                        async                     : AsyncState) {
@@ -100,10 +102,19 @@ object Feature {
         copy(editor.map(_.withArgs(args)))
 
       def clipboardData: Option[ClipboardData] =
-        editor match {
-          case None    => renderText.value().map(ClipboardData.apply)
-          case Some(e) => e.clipboardData
+        clipboardDataOverride match {
+          case Some(f) => Some(f())
+          case None => editor match {
+            case Some(e) => e.clipboardData
+            case None    => renderText.value().map(ClipboardData.apply)
+          }
         }
+
+      def withClipboardData(d: => ClipboardData): ForEditor[A, C] =
+        copy(clipboardDataOverride = Some(() => d))
+
+      def withClipboardDataOption(o: Option[() => ClipboardData]): ForEditor[A, C] =
+        o.fold(this)(f => withClipboardData(f()))
 
       def isOpen: Boolean =
         editor.isDefined
@@ -119,7 +130,7 @@ object Feature {
 
     object ForEditor {
       val doNothing: ForEditor[Any, Nothing] =
-        apply(None, Reusable.always(() => None), Deny, None)
+        apply(None, None, Reusable.always(() => None), Deny, None)
     }
 
     final case class ForFields[-FK <: FieldKey](_editor    : State.ForFields,
@@ -133,6 +144,7 @@ object Feature {
       def apply(f: FK): ForEditor[f.Args, f.Change] =
         ForEditor(
           editor.get(f),
+          None,
           Reusable.implicitly(renderText).withValue(() => renderText(f.forRender)),
           editability(f),
           async(f))
@@ -196,6 +208,10 @@ object Feature {
           renderText.forManualIssues.widen(None),
           Editability.forManualIssues)
     }
+
+    @nowarn("cat=unused")
+    private implicit val reusabilityForClipboardDataFn: Reusability[() => ClipboardData] =
+      Reusability.byRef
 
              val reusabilityForEditorAny   : Reusability[ForAnyEditor   ] = Reusability.derive
     implicit def reusabilityForEditor[A, C]: Reusability[ForEditor[A, C]] = reusabilityForEditorAny.narrow
@@ -393,10 +409,16 @@ object Feature {
             set(pv).getOrEmpty.asAsyncCallback
           ).toCallback
         )
+
+      def withClipboardData(d: => ClipboardData): ForEditor[A, C] =
+        copy(read = read.withClipboardData(d))
+
+      def withClipboardDataOption(o: Option[() => ClipboardData]): ForEditor[A, C] =
+        o.fold(this)(f => withClipboardData(f()))
     }
 
     object ForEditor {
-      def doNothing[A]: ForEditor[A, Nothing] =
+      val doNothing: ForEditor[Any, Nothing] =
         apply(
           Read.ForEditor.doNothing,
           Write.ForEditor.doNothing,
