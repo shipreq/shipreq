@@ -49,9 +49,9 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
     src: webpackOutput,
     outputPath: staticDir,
     outputName: name,
-   }, o);
+  }, o);
 
-   /**
+  /**
     * @param lib      npm package name as in ./node_modules/xxx
     * @param filename asset filename without any directory info.
     *                 Use opts.path if to specify the directory from the npm package root.
@@ -146,7 +146,7 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
         'jquery', // Lift needs this immediately
         'semanticCss',
         'loadjs',
-       ],
+      ],
 
       semanticCss: [
         { type: 'cdn', url: semanticUiImport, as: 'style' },
@@ -193,9 +193,11 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
       ],
 
       prismJs: [
-        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism-core.min.js', {manifest: 'prismJsCore', path: 'components'}),
-        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism-autoloader.min.js', {manifest: 'prismJsAutoloader', path: 'plugins/autoloader'}),
-        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism.css', {manifest: 'prismJsCss', path: 'themes'}),
+        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism-core.min.js',         {manifest: 'prismJsCore',           path: 'components'}),
+        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism-okaidia.css',         {manifest: 'prismJsCss',            path: 'themes'}),
+        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism-autoloader.min.js',   {manifest: 'prismJsAutoloader',     path: 'plugins/autoloader'}),
+        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism-match-braces.min.js', {manifest: 'prismJsMatchBraces',    path: 'plugins/match-braces'}),
+        fromCdnjs({npm:'prismjs', cdn:'prism'}, 'prism-match-braces.css',    {manifest: 'prismJsMatchBracesCss', path: 'plugins/match-braces'}),
       ],
 
       vizJs: { type: 'local', files: 'vendor/viz.js', manifest: true },

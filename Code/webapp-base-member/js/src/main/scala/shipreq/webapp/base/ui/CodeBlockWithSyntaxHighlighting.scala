@@ -38,7 +38,7 @@ object CodeBlockWithSyntaxHighlighting {
       <.div( // so that React has a stable root
         <.pre(
           <.code.withRef(ref)(
-            ^.cls := s"language-${p.language.getOrElse(txt)}",
+            ^.cls := s"language-${p.language.getOrElse(txt)} match-braces",
             p.code)))
 
     val highlight: Callback =

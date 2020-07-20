@@ -36,8 +36,16 @@ object AssetManifest {
     integrity = Some("sha256-9h14mWYYiQGkeAKg2JtijbqApb56kgw57WN6sI6dwH0="))
 
   def prismJsCss = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/themes/prism.css",
-    integrity = Some("sha256-LArq5Cddn4QETLgVbBZppSkBLJbL1dhacPVQF/EPH00="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/themes/prism-okaidia.css",
+    integrity = Some("sha256-PCIRBVLXb7L62+EomqoQYE4fCb7LpmGlAcPrbnbRAyw="))
+
+  def prismJsMatchBraces = CDN(
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/match-braces/prism-match-braces.min.js",
+    integrity = Some("sha256-ICsqq6gRT8YxNMWqiSlCk+Xxr8XpkSaSVW+apneJuYs="))
+
+  def prismJsMatchBracesCss = CDN(
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/match-braces/prism-match-braces.css",
+    integrity = Some("sha256-Qr3kZtoWj5+ax8ifwd0asqiDHBSyxWOKltSh2AH2XBA="))
 
   def reactDomJs = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.13.1/umd/react-dom.development.js",
