@@ -58,6 +58,7 @@ v2.2
 Backlog (maybe-probably soon)
 ========================================================================================================================
 
+* Make code block lineNumbers configurable via attribute
 * Use WebSockets on home SPA to see projects and project stats update
 * Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
 * Bulk tag add/remove

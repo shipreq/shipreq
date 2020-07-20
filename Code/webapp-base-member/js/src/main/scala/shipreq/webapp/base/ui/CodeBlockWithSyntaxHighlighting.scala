@@ -8,9 +8,6 @@ import shipreq.webapp.base.jsfacade.PrismJs
 
 object CodeBlockWithSyntaxHighlighting {
 
-  @inline def apply(language: Option[String], code: String): VdomElement =
-    Props(language, code).render
-
   private final val txt = "txt"
 
   private var initialisationPending = true
@@ -23,12 +20,17 @@ object CodeBlockWithSyntaxHighlighting {
       PrismJs.languages.add(txt, js.Dynamic.literal())
     }
 
-  final case class Props(language: Option[String], code: String) {
+  final case class Props(language   : Option[String],
+                         code       : String,
+                         lineNumbers: Boolean) {
     @inline def render: VdomElement = Component(this)
   }
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
+
+  private val lineNumbers =
+    ^.cls := "line-numbers"
 
   final class Backend($: BackendScope[Props, Unit]) {
 
@@ -37,7 +39,7 @@ object CodeBlockWithSyntaxHighlighting {
     def render(p: Props): VdomElement =
       <.div( // so that React has a stable root
         <.pre(
-          ^.cls := "line-numbers",
+          lineNumbers.when(p.lineNumbers),
           <.code.withRef(ref)(
             ^.cls := s"language-${p.language.getOrElse(txt)} match-braces",
             p.code)))

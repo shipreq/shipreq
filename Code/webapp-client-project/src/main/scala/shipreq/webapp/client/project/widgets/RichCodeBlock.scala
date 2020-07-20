@@ -29,7 +29,11 @@ object RichCodeBlock {
     }
 
   private def renderCodeBlock(code: String, language: Option[String]): VdomNode =
-    CodeBlockWithSyntaxHighlighting(code = code, language = language)
+    CodeBlockWithSyntaxHighlighting.Props(
+      code        = code,
+      language    = language,
+      lineNumbers = language.isDefined,
+    ).render
 
   private def renderUnrecognisedAttr(language: String, attributes: TreeSet[String]): VdomNode =
     <.div(
