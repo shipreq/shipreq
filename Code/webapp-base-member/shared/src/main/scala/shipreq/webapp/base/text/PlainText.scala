@@ -255,9 +255,9 @@ object PlainText {
 
             val firstLine: String =
               if (includeMarkup)
-                a.language match {
-                  case Some(lang) => "```" ~ lang ~ '\n'
-                  case None       => "```\n"
+                a.detail match {
+                  case Some(d) => "```" ~ d.toText ~ '\n'
+                  case None    => "```\n"
                 }
               else
                 ""

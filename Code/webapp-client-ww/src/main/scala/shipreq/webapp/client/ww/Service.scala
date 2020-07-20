@@ -1,6 +1,7 @@
 package shipreq.webapp.client.ww
 
 import japgolly.scalajs.react.AsyncCallback
+import shipreq.webapp.client.ww.GraphViz.DOT
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object Service extends Server.Service[WebWorkerCmd] {
@@ -38,6 +39,9 @@ object Service extends Server.Service[WebWorkerCmd] {
           pt <- state.acPlainText
           x  <- ReqGraph(p, pt, filterDead, scope, config).toSvg
         } yield x
+
+      case GraphInline(dot) =>
+        DOT(dot).toSvg
 
     }
 }

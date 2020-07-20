@@ -189,7 +189,7 @@ object PlainTextTest extends TestSuite {
             |
             |hello
             |
-            |```md
+            |```md:render:x,y=1
             |* here we go again!
             |```
             |

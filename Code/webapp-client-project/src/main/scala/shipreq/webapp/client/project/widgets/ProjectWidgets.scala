@@ -14,9 +14,9 @@ import shipreq.webapp.base.jsfacade.KaTeX
 import shipreq.webapp.base.lib.ClientUtil.{renderSeq, renderVector, sepComma, sepSpace}
 import shipreq.webapp.base.text.Text.AnyOptional
 import shipreq.webapp.base.text.{Grammar => G, _}
-import shipreq.webapp.base.ui.CodeBlockWithSyntaxHighlighting
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.project.app.Style.{widgets => *}
+import shipreq.webapp.client.project.app.WebWorkerClient
 
 object ProjectWidgets {
 
@@ -25,8 +25,9 @@ object ProjectWidgets {
 
   def apply[Ctx <: ProjectText.Context](project    : Project,
                                         plainText  : PlainText.ForProject[Ctx],
-                                        reqDetailRC: RouterCtl[ExternalPubid]): ProjectWidgets[Ctx] =
-    new ProjectWidgets(project, plainText, reqDetailRC)
+                                        reqDetailRC: RouterCtl[ExternalPubid],
+                                        webWorker  : WebWorkerClient.Instance): ProjectWidgets[Ctx] =
+    new ProjectWidgets(project, plainText, reqDetailRC, webWorker)
 
   implicit def subst1[F[_], C <: ProjectText.Context](pw: F[ProjectWidgets[C]]): F[ProjectWidgets.AnyCtx] =
     pw.asInstanceOf[F[AnyCtx]]
@@ -74,7 +75,8 @@ object ProjectWidgets {
 
 final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
                                                         val plainText: PlainText.ForProject[Ctx],
-                                                        reqDetailRC  : RouterCtl[ExternalPubid])
+                                                        reqDetailRC  : RouterCtl[ExternalPubid],
+                                                        webWorker    : WebWorkerClient.Instance)
     extends ProjectText[Ctx, VdomTag](project, plainText.ctx) {
 
   import ProjectWidgets.Internal._
@@ -295,7 +297,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
 
     lazy val atom: AnyAtom => TagMod = {
       case a: Literal         # Literal        => <.span(a.value)
-      case a: CodeBlock       # CodeBlock      => CodeBlockWithSyntaxHighlighting(a.language, a.code)
+      case a: CodeBlock       # CodeBlock      => RichCodeBlock.Props(a.detail, a.code, webWorker).render
       case a: ContentRef      # CodeRef        => codeRef(liveText)(a.value)
       case a: ContentRef      # ReqRef         => reqRef(liveText)(a.value)
       case a: ContentRef      # UseCaseStepRef => useCaseStepRefById(a.value)
@@ -428,7 +430,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     if (newCtx ==* ctx)
       this.asInstanceOf[ProjectWidgets[Ctx2]]
     else
-      ProjectWidgets(project, plainText withCtx newCtx, reqDetailRC)
+      ProjectWidgets(project, plainText withCtx newCtx, reqDetailRC, webWorker)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Public additions not part of ProjectText

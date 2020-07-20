@@ -74,11 +74,11 @@ object CreateContentCmd {
 
 
   // ===================================================================================================================
-  object CodecsV2 {
+  object CodecsV3 {
     import boopickle.DefaultBasic._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
-    import shipreq.webapp.base.protocol.binary.v1.Rev3.AtomPicklers.instances._
+    import shipreq.webapp.base.protocol.binary.v1.Rev5.AtomPicklers.instances._
     // REMEMBER: Don't forget to increment `CodecsVn` if you change these
 
     private implicit val picklerCreateGenericReq: Pickler[CreateGenericReq] =

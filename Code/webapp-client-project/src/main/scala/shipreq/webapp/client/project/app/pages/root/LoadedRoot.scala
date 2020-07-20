@@ -122,7 +122,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
 
     private val pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]] =
-      Reusable byRef Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC))
+      Reusable byRef Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC, webWorkerClient))
 
     private val pxViewReqDataCache: Px[ViewReqDataCache] =
       pxProject.map(ViewReqDataCache.apply)

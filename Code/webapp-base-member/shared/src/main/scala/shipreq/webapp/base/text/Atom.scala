@@ -2,6 +2,7 @@ package shipreq.webapp.base.text
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import monocle.Iso
+import scala.collection.immutable.TreeSet
 import scala.reflect.ClassTag
 import scalaz.Applicative
 import shipreq.base.util.NonEmptyArraySeq
@@ -398,8 +399,20 @@ object Atom {
     }
   }
 
+  final case class CodeBlockDetail(language: String, attributes: TreeSet[String]) {
+    lazy val toText: String =
+      if (attributes.isEmpty)
+        language
+      else
+        language + ":" + attributes.mkString(":")
+  }
+
+  object CodeBlockDetail {
+    implicit def univEq: UnivEq[CodeBlockDetail] = UnivEq.derive
+  }
+
   trait CodeBlock extends Base {
-    case class CodeBlock(language: Option[String], code: String) extends Atom {
+    case class CodeBlock(detail: Option[CodeBlockDetail], code: String) extends Atom {
       override final def isPlain = false
       override final def containsMultipleLines = true
       override final def allowBlankLineAfter = false

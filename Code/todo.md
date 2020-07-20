@@ -52,11 +52,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* Add `<dot></dot>` for inline graphs (!).
-  Alternatively, could just render inline code blocks of type dot/gv?
-  Maybe even add support for options eg. `html:render`, `dot:render`
-  Render by fit to width (or other option?)
-  Don't require digraph X{}
 
 
 

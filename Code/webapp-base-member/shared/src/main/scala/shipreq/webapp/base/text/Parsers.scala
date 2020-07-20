@@ -3,11 +3,13 @@ package shipreq.webapp.base.text
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.parboiled2.{CharPredicate => CP, _}
+import scala.collection.immutable.TreeSet
 import shapeless._
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
+import shipreq.webapp.base.text.Atom.CodeBlockDetail
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.util._
 
@@ -365,12 +367,27 @@ object Parsers {
       NL ~ OWS ~ "```" ~ &(OWS ~ (NL | EOI))
     )
 
+    private val languageCP  = CP.Visible -- ':'
+    private def attributeCP = languageCP
+    private def separatorCP = CP.from(c => c == ':' || c == ' ')
+
+    def codeBlockDetail: Rule1[CodeBlockDetail] =
+      rule(
+        separatorCP.*
+        ~ capture(languageCP.+)
+        ~ (separatorCP.+ ~ capture(attributeCP.+)).*
+        ~ separatorCP.*
+        ~> ((lang: String, attrs: Seq[String]) => {
+          CodeBlockDetail(lang, TreeSet.empty[String] ++ attrs)
+        })
+      )
+
     def codeBlock: Rule1[t.CodeBlock] =
       rule(
         "```"
           ~ indentationLevelSoFar(3)
           ~ OWS
-          ~ capture(CP.Visible.+).?
+          ~ codeBlockDetail.?
           ~ OWS
           ~ &(NL)
           ~ nonGreedyCapture0(codeBlockEnd)
@@ -379,11 +396,11 @@ object Parsers {
           ~> buildCodeBlock
       )
 
-    private val buildCodeBlock: (Int, Option[String], String, Int) => t.CodeBlock =
-      (startIndent, lang, codeTxt, endIndent) => {
+    private val buildCodeBlock: (Int, Option[CodeBlockDetail], String, Int) => t.CodeBlock =
+      (startIndent, detail, codeTxt, endIndent) => {
         val indent = startIndent min endIndent
         val code = processCodeBlockCode(codeTxt.unindent(indent))
-        t.CodeBlock(lang, code)
+        t.CodeBlock(detail, code)
       }
   }
 

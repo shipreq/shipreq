@@ -11,6 +11,10 @@ export { default as TextComplete   } from 'textcomplete/lib/textcomplete';
 export { default as TextCompleteTA } from 'textcomplete/lib/textarea';
 export { default as tinycolor      } from 'tinycolor2/tinycolor';
 
+// dompurify
+import DOMPurify from 'dompurify';
+export { DOMPurify as DP };
+
 // screenfull
 import * as screenfull from 'screenfull';
 export { screenfull };

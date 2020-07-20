@@ -37,6 +37,8 @@ object WebWorkerCmd {
                                         scope     : Option[Set[ReqId]],
                                         config    : ImpGraphConfig) extends WebWorkerCmd[ErrorMsg \/ Svg]
 
+  final case class GraphInline(dot: String) extends WebWorkerCmd[ErrorMsg \/ Svg]
+
   // ===================================================================================================================
 
   import shipreq.webapp.base.protocol.binary.v1.BaseData._
@@ -112,6 +114,9 @@ object WebWorkerCmd {
       }
     }
 
+  implicit val picklerGraphInline: Pickler[GraphInline] =
+    transformPickler(GraphInline.apply)(_.dot)
+
   implicit val picklerCmd: Pickler[WebWorkerCmd[_]] =
     new Pickler[WebWorkerCmd[_]] {
       private[this] final val KeySetProject           = 0
@@ -119,6 +124,7 @@ object WebWorkerCmd {
       private[this] final val KeyGraphAllImplications = 2
       private[this] final val KeyGraphReqImplications = 3
       private[this] final val KeyGraphUseCaseStepFlow = 4
+      private[this] final val KeyGraphInline          = 5
       override def pickle(a: WebWorkerCmd[_])(implicit state: PickleState): Unit =
         a match {
           case b: SetProject           => state.enc.writeByte(KeySetProject          ); state.pickle(b)
@@ -126,6 +132,7 @@ object WebWorkerCmd {
           case b: GraphAllImplications => state.enc.writeByte(KeyGraphAllImplications); state.pickle(b)
           case b: GraphReqImplications => state.enc.writeByte(KeyGraphReqImplications); state.pickle(b)
           case b: GraphUseCaseStepFlow => state.enc.writeByte(KeyGraphUseCaseStepFlow); state.pickle(b)
+          case b: GraphInline          => state.enc.writeByte(KeyGraphInline         ); state.pickle(b)
         }
       override def unpickle(implicit state: UnpickleState): WebWorkerCmd[_] =
         state.dec.readByte match {
@@ -134,6 +141,7 @@ object WebWorkerCmd {
           case KeyGraphAllImplications => state.unpickle[GraphAllImplications]
           case KeyGraphReqImplications => state.unpickle[GraphReqImplications]
           case KeyGraphUseCaseStepFlow => state.unpickle[GraphUseCaseStepFlow]
+          case KeyGraphInline          => state.unpickle[GraphInline]
         }
     }
 }

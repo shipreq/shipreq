@@ -315,4 +315,14 @@ object Util {
     }
   }
 
+  def countOccurrences(str: String, subString: String): Int = {
+    @tailrec def count(pos: Int, c: Int): Int = {
+      val idx = str.indexOf(subString, pos)
+      if (idx == -1)
+        c
+      else
+        count(idx + subString.length, c + 1)
+    }
+    count(0, 0)
+  }
 }

@@ -18,10 +18,13 @@ import shipreq.webapp.client.ww.api._
  * The reusable bits of a component the renders a graph through the WebWorker API.
  *
  * Usage:
- * 1. Make your `Props` extend `HasWebWorker`.
- * 2. Make your `Backend` extend `GraphBackend`.
- * 3. Call `.graphState` when creating the component.
- * 4. Call `.configure(graphConfig)` when creating the component.
+ * 1. `import shipreq.webapp.client.project.widgets.GraphComponent._`
+ * 2. Make your `Props` extend `HasWebWorker`.
+ * 3. Make your `Backend` extend `GraphBackend($)`.
+ * 4. Add `.initialState(State.init)` to your component builder.
+ * 5. Add `.configure(graphConfig)` to your component builder.
+ * 6. Remove the `render` method in your Backend.
+ * 7. Implement abstract methods in Backend.
  */
 object GraphComponent {
 

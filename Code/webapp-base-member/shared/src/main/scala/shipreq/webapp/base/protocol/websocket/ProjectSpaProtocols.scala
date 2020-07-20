@@ -34,11 +34,11 @@ object ProjectSpaProtocols {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   private final val wsrrVersion = 5 // Bump this when any of following imports change
-  import CreateContentCmd.CodecsV2._
-  import ManualIssueCmd  .CodecsV2._
+  import CreateContentCmd.CodecsV3._
+  import ManualIssueCmd  .CodecsV3._
   import SavedViewCmd    .CodecsV3._
   import UpdateConfigCmd .CodecsV1._
-  import UpdateContentCmd.CodecsV2._
+  import UpdateContentCmd.CodecsV3._
 
   private object Codecs {
     val safePicklerWsReqResAndReq: SafePickler[WsReqRes.AndReq] = {

@@ -1278,6 +1278,20 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
   object widgets {
 
+    val richCodeBlockError = style(
+      backgroundColor(c"#ddd"),
+      padding(1 ex, 2 ex),
+    )
+
+    val richCodeBlockErrorCode = style(
+      color(c"#c00"),
+    )
+
+    val richCodeBlockErrorUL = style(
+      marginTop(.5 em),
+      marginBottom(.2 em),
+    )
+
     private val noDropdownError = styleS(
       (color :=! "#0009").important,
       (background := "#e8e8e8").important,
@@ -1613,10 +1627,11 @@ object Style extends StyleSheet.Inline {
 
     val rowText = style(
       background := "#f0fbff",
+      verticalAlign.top,
     )
 
     val rowExamples = style(
-      background := "#f0fbff",
+      rowText,
       monospace,
       whiteSpace.nowrap,
       color(c"#f39"))

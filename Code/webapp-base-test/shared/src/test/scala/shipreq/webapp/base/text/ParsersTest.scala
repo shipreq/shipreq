@@ -8,16 +8,16 @@ import nyaya.prop.{Atom => _, _}
 import nyaya.test.PropTest._
 import nyaya.util._
 import org.parboiled2._
+import scala.collection.immutable.TreeSet
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 import scalaz.Equal
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{NonEmptyArraySeq, Valid}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ApplicableTagGD, Event}
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.{ProjectDsl, SampleProject6 => SP, TextShrink, UnsafeTypes}
-import shipreq.webapp.base.text.Atom.AnyAtom
+import shipreq.webapp.base.text.Atom.{AnyAtom, CodeBlockDetail}
 import shipreq.webapp.base.{RandomData => $}
 import sourcecode.Line
 import utest._
@@ -25,17 +25,17 @@ import utest._
 object ParsersTest extends TestSuite {
 //  shipreq.webapp.base.RandomDataSettings.disableUnicode = true
 
-  def preprocessStr(s: String, lc: LineCardinality): String =
+  private def preprocessStr(s: String, lc: LineCardinality): String =
     Parsers.preProcessor(lc)(s).asString
 
-  val counts = Atom.Type.values.iterator.map((_, new AtomicInteger)).toMap
-  def count(as: Iterable[AnyAtom]): Unit =
+  private val counts = Atom.Type.values.iterator.map((_, new AtomicInteger)).toMap
+  private def count(as: Iterable[AnyAtom]): Unit =
     as.foreach { a =>
       val t = Atom.Type of a
       counts(t).incrementAndGet()
     }
 
-  def assertSuccess[A](parser: Parser, t: Try[A]): A =
+  private def assertSuccess[A](parser: Parser, t: Try[A]): A =
     t match {
       case Success(a) => a
       case Failure(e: ParseError) =>
@@ -44,7 +44,7 @@ object ParsersTest extends TestSuite {
         fail(e.toString)
     }
 
-  class Tester(p: Project, inputsML: List[String]) {
+  protected class Tester(p: Project, inputsML: List[String]) {
     override def toString = p.toString
 
 //    println(p.countAtoms.showTree + "\n")
@@ -194,12 +194,12 @@ object ParsersTest extends TestSuite {
       )
   }
 
-  def tester: Gen[Tester] =
+  protected def tester: Gen[Tester] =
     Gen.lift2($.project, $.TextGen.genCharML.string1.list1)(new Tester(_, _))
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  def parserProp[A, P <: Parser](name: => String, txt: A => String, parser: ParserInput => P)(run: P => Try[A])(implicit eq: Equal[A]) =
+  private def parserProp[A, P <: Parser](name: => String, txt: A => String, parser: ParserInput => P)(run: P => Try[A])(implicit eq: Equal[A]) =
     Prop.atom[A](name,
       a => {
         val p = parser(txt(a))
@@ -216,7 +216,7 @@ object ParsersTest extends TestSuite {
     )
 
   import Text.{CustomTextField => T, InlineIssueDesc => I, StyledInnerFull => S}
-  val P = {
+  private val P = {
     import ProjectDsl._
     import UnsafeTypes._
     import SP.Values._
@@ -226,33 +226,30 @@ object ParsersTest extends TestSuite {
     GReq(reqType = co, title = "be good").code("co1").code("here.i.am_3") !
     SP.project
   }
-  @inline def NEA[A: ClassTag](h: A, t: A*) = NonEmptyArraySeq(h, t: _*)
-  @inline def LI[A <: AnyAtom: ClassTag](as: A*) = as.to(ArraySeq)
-  @inline def L(s: String) = T.Literal(s)
+  @inline private def NEA[A: ClassTag](h: A, t: A*) = NonEmptyArraySeq(h, t: _*)
+  @inline private def LI[A <: AnyAtom: ClassTag](as: A*) = as.to(ArraySeq)
+  @inline private def L(s: String) = T.Literal(s)
 
-  val reqCode_co2      = ApReqCodeId(9)
-  val reqCode_co1      = ApReqCodeId(10)
-  val reqCode_hereiam3 = ApReqCodeId(11)
+  private val reqCode_co2      = ApReqCodeId(9)
+  private val reqCode_co1      = ApReqCodeId(10)
+  private val reqCode_hereiam3 = ApReqCodeId(11)
 
-  def propEmailAddress = parserProp("EmailAddress",
+  private def propEmailAddress = parserProp("EmailAddress",
     (_: T.EmailAddress).value, T.parserI(P, None))(_.emailAddress.run())
 
-  def propWebAddress = parserProp("WebAddress",
+  private def propWebAddress = parserProp("WebAddress",
     (_: T.WebAddress).value, T.parserI(P, None))(_.webAddress.run())
 
-  def propMathTeX = parserProp("MathTeX",
-    (_: T.TeX).value |> Grammar.texSurround.display, T.parserI(P, None))(_.tex.run())
-
-  val whitespaceCombos: Set[String] = {
+  private val whitespaceCombos: Set[String] = {
     val chars = List(' ', '\n', '\r', '\t')
     val words = (1 to 3).iterator.flatMap(n => chars.combinations(n).flatMap(_.permutations)).map(_.mkString)
     words.toSet
   }
 
-  val optBool: List[Option[Boolean]] =
+  private val optBool: List[Option[Boolean]] =
     None :: Some(true) :: Some(false) :: Nil
 
-  val maybeSpace = List("", " ")
+  private val maybeSpace = List("", " ")
 
   private def applicableTagGD(key: String) =
     ApplicableTagGD(
@@ -263,6 +260,9 @@ object ParsersTest extends TestSuite {
       key                = HashRefKey(key),
       parents            = Map.empty,
     )
+
+  private implicit def autoCodeBlockDetail(s: String): CodeBlockDetail =
+    CodeBlockDetail(s, TreeSet.empty)
 
   override val tests = Tests {
     "preprocess" - {
@@ -927,6 +927,20 @@ object ParsersTest extends TestSuite {
           T.UnorderedList(NEA(
             LI(T.CodeBlock(Some("tla"), """x = /\ \/ /\ \/ /\ \/ """ + """\/ /\""" + "\n    ...")),
           )),
+        )
+
+        "withDetail" - test(
+          """
+            |``` : js : attr1 :: attr2 :
+            |ok1!
+            |```
+            |```omg:a=x,b=y
+            |ok2!
+            |```
+            |""".stripMargin
+        )(
+          T.CodeBlock(Some(CodeBlockDetail("js", TreeSet("attr1", "attr2"))), "ok1!"),
+          T.CodeBlock(Some(CodeBlockDetail("omg", TreeSet("a=x,b=y"))), "ok2!"),
         )
       }
 

@@ -17,10 +17,10 @@ object ManualIssueCmd {
   implicit def univEq: UnivEq[ManualIssueCmd] = UnivEq.derive
 
   // ===================================================================================================================
-  object CodecsV2 {
+  object CodecsV3 {
     import boopickle.DefaultBasic._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
-    import shipreq.webapp.base.protocol.binary.v1.Rev3.AtomPicklers.instances.manualIssueN
+    import shipreq.webapp.base.protocol.binary.v1.Rev5.AtomPicklers.instances.manualIssueN
     // REMEMBER: Don't forget to increment `CodecsVn` if you change these
 
     private implicit val picklerCreate: Pickler[Create] =

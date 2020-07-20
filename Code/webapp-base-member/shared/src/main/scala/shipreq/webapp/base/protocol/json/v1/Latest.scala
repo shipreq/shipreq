@@ -13,6 +13,6 @@ object Latest {
   @inline implicit def encoderVerifiedEvent = L.encoderVerifiedEvent
   @inline implicit def codecValidFilter     = L.codecValidFilter
 
-  val AtomCodecs      = Rev3.AtomCodecs
+  val AtomCodecs      = Rev5.AtomCodecs
   val SavedViewCodecs = L.SavedViewCodecs
 }

@@ -109,6 +109,36 @@ object RichTextEditorHelp {
             |""".stripMargin.trim
         )
       ),
+
+      Row(
+        "The following languages accept a ", code("render"), " option that will interpret and embed the content.",
+        <.ul(
+          <.li(<.code("html"), " - Embeds the given HTML"),
+          <.li(<.code("svg"), " - Draws a vector graphic"),
+          <.li(<.code("dot"), " - Draws a graph in the ", <.a.toNewWindow("https://graphviz.org")("GraphViz"), " ", <.a.toNewWindow("https://graphviz.org/doc/info/lang.html")("DOT format")),
+        )
+      )(
+        <.div(
+          ^.whiteSpace.pre,
+          """
+            |```html:render
+            |<table>
+            |  <tr><th>First Name:</th><td>Felisin</td></tr>
+            |  <tr><th>Last Name:</th><td>Paran</td></tr>
+            |</table>
+            |```
+            |""".stripMargin.trim
+        ),
+        <.div(
+          ^.whiteSpace.pre,
+          """
+            |```dot:render
+            |a,b -> c
+            |b -> d
+            |```
+            |""".stripMargin.trim
+        ),
+      )
     )
 
   private val useCaseFlow =

@@ -13,6 +13,7 @@ import shipreq.webapp.base.filter.{CompiledFilter, Filter}
 import shipreq.webapp.base.issue.{Issue, Issues}
 import shipreq.webapp.base.jsfacade.MomentJs
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd
+import shipreq.webapp.base.text.Atom.CodeBlockDetail
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
 import shipreq.webapp.base.text.{Atom, PlainText, ProjectText, TextSearch}
@@ -21,6 +22,9 @@ import shipreq.webapp.base.user._
 object DataReusability extends DataReusability
 
 abstract class DataReusability extends BaseReusability {
+
+  implicit def reusabilityCodeBlockDetail: Reusability[CodeBlockDetail] =
+    Reusability.byRefOrUnivEq
 
   final def reusabilityByRefOrEqual[A <: AnyRef](implicit e: Equal[A]): Reusability[A] =
     Reusability.byRef || Reusability(e.equal)

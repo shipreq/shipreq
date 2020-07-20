@@ -11,6 +11,7 @@ import monocle.{Optional => _, _}
 import nyaya.gen._
 import nyaya.util._
 import org.parboiled2.CharPredicate
+import scala.collection.immutable.TreeSet
 import scalaz.Need
 import scalaz.std.list._
 import scalaz.std.option.{none => _, _}
@@ -631,11 +632,14 @@ object RandomData {
         }
     }
 
-    private val codeBlockLang: Gen[String] =
-      charPred(CharPredicate.Visible).string(1 to 4)
+    private val codeBlockDetail: Gen[CodeBlockDetail] = {
+      val genLang = charPred(CharPredicate.Visible -- ':').string(1 to 4)
+      val genAttr = genLang.to(TreeSet)(0 to 4)
+      Gen.apply2(CodeBlockDetail.apply)(genLang, genAttr)
+    }
 
     def codeBlock(implicit t: CodeBlock): Gen[t.CodeBlock] =
-      Gen.lift2(codeBlockLang.option, codeBlockContent)(t.CodeBlock(_, _))
+      Gen.lift2(codeBlockDetail.option, codeBlockContent)(t.CodeBlock(_, _))
 
     def blankLine(implicit t: NewLine): Gen[t.BlankLine] =
       Gen.pure(t.blankLine)
