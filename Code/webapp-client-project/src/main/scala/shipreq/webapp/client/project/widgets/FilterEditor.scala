@@ -79,11 +79,14 @@ object FilterEditor {
       case -\/(_) => (Invalid, None)
     }
 
-  private def normaliseAutoCompleteText(s: String): String =
+  private def normaliseAutoCompleteField(s: String): String =
     s.filter(FilterAlgebra.isFieldNameUnquotedChar).toLowerCase
 
+  private def normaliseAutoCompleteFieldAttr(s: String): String =
+    s.toLowerCase
+
   private final class FieldSuggestion(val display: String, value: String) {
-    val displayNormalised = normaliseAutoCompleteText(display)
+    val displayNormalised = normaliseAutoCompleteField(display)
     def quotedValue = FilterAlgebra.quoteFieldName(value)
   }
 
@@ -93,6 +96,18 @@ object FilterEditor {
 
     def apply(display: String, value: String): FieldSuggestion =
       new FieldSuggestion(display, value)
+  }
+
+  private final class FieldAttrSuggestion(val attr: FilterAst.FieldAttr) {
+    def value = attr.name
+    val normalised = normaliseAutoCompleteFieldAttr(value)
+  }
+
+  private object FieldAttrSuggestion {
+    val all =
+      FilterAst.FieldAttr.values
+        .map(new FieldAttrSuggestion(_))
+        .sortBy(_.normalised)
   }
 
   private val specialFields: ArraySeq[FieldSuggestion] =
@@ -149,23 +164,38 @@ object FilterEditor {
         .arraySeq
     }
 
-    val query: String => IterableOnce[FieldSuggestion] =
-      input => {
-        val i = normaliseAutoCompleteText(input)
-        fieldNames.iterator
-          .filter(_.displayNormalised contains i)
-          .take(AutoCompleteFeature.MaxResults)
-      }
+    val fieldName = {
+      val query: String => IterableOnce[FieldSuggestion] =
+        input => {
+          val i = normaliseAutoCompleteField(input)
+          fieldNames.iterator
+            .filter(_.displayNormalised contains i)
+            .take(AutoCompleteFeature.MaxResults)
+        }
 
-    val autoCompleteFieldName =
       AutoComplete.Strategy.builder
         .regex("""\b(field:)([^ :=]*)$""", index = 2)
         .search(query)
         .replace(f => "$1" + f.quotedValue)
         .template((f, _) => f.display)
         .result()
+    }
 
-    hashtags :+ autoCompleteFieldName :+ autoCompletePresenceLackAttr :+ autoCompleteHasIssue :+ autoCompleteKeywords
+    val fieldAttr = {
+      val query: String => IterableOnce[String] =
+        input => {
+          val n = normaliseAutoCompleteFieldAttr(input)
+          FieldAttrSuggestion.all.iterator.filter(_.normalised.startsWith(n)).map(_.value)
+        }
+
+      AutoComplete.Strategy.builder
+        .regex("""\b(field:(?:"[^"]+"|[^ :=]+)=)([^ ]*)$""", index = 2)
+        .search(query)
+        .replace("$1" + _)
+        .result()
+    }
+
+    hashtags :+ fieldName :+ fieldAttr :+ autoCompletePresenceLackAttr :+ autoCompleteHasIssue :+ autoCompleteKeywords
   }
 
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.BackendI {

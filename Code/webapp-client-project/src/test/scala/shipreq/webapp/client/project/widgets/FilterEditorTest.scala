@@ -29,7 +29,12 @@ object FilterEditorTest extends TestSuite {
         "middle"   - assertSuggestionsAndSelectionFor("field:tes")("Notes")("field:Notes")
         "quotes"   - assertSuggestionsAndSelectionFor("field:OTH")("Other Tags")("field:\"Other Tags\"")
         "impField" - assertSuggestionsAndSelectionFor("field:maj")("Major Feature")("field:MF")
+      }
 
+      "fieldAttr" - {
+        "basic"   - assertSuggestionsAndSelectionFor("field:MF=")("blank", "default", "n/a", "notBlank")("field:MF=blank")
+        "quoted"  - assertSuggestionsAndSelectionFor("field:\"ALL TAGS\"=")("blank", "default", "n/a", "notBlank")("field:\"ALL TAGS\"=blank")
+        "partial" - assertSuggestionsAndSelectionFor("field:mf=DEF")("default")("field:mf=default")
       }
 
     }
