@@ -1,5 +1,5 @@
 const path = require("path")
-const postComponentPath = path.resolve(`./src/components/post.js`);
+const postComponentPath = path.resolve(`./src/components/post.tsx`);
 
 function postPath(node) {
   return `/post/${node.frontmatter.slug}`;

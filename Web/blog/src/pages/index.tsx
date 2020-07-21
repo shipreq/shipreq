@@ -3,7 +3,7 @@ import { Link, graphql } from "gatsby"
 import ShipreqBanner from "../components/shipreqBanner"
 import SEO from "../components/seo"
 
-export default function({ data }) {
+export default function({ data }: Query) {
   const { edges: posts } = data.allMdx
   const md = data.site.siteMetadata
 
@@ -11,9 +11,10 @@ export default function({ data }) {
     <div>
 
       <SEO
-        desc  = {md.description}
-        title = {md.title}
-        path  = ""
+        article = {false}
+        desc    = {md.description}
+        path    = ""
+        title   = {md.title}
       />
 
       <ShipreqBanner height={100} />
@@ -32,6 +33,31 @@ export default function({ data }) {
       </ul>
     </div>
   )
+}
+
+type Query = {
+  data: {
+    site: {
+      siteMetadata: {
+        description: string,
+        title: string,
+      }
+    },
+    allMdx: {
+      edges: [{
+        node: {
+          id: string,
+          excerpt: string,
+          frontmatter: {
+            title: string,
+          },
+          fields: {
+            path: string,
+          }
+        }
+      }]
+    }
+  }
 }
 
 export const pageQuery = graphql`

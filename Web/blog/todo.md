@@ -10,4 +10,3 @@
 * sitemap
 * statcounter
 * tests
-* typescript
