@@ -5,7 +5,7 @@ function singleLine(l) {
 module.exports = {
   title: "ShipReq Blog",
 
-  rootUrl: "https://blog.shipreq.com",
+  siteUrl: "https://blog.shipreq.com",
 
   cardImageUrl: "https://blog.shipreq.com/qwe.png",
 

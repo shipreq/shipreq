@@ -16,7 +16,7 @@ type Query = {
   site: {
     siteMetadata: {
       locale: string
-      rootUrl: string
+      siteUrl: string
       title: string
       twitterHandle: string
       author: {
@@ -37,7 +37,7 @@ export default function(p: Props) {
         site {
           siteMetadata {
             locale
-            rootUrl
+            siteUrl
             title
             twitterHandle
             author {
@@ -49,7 +49,7 @@ export default function(p: Props) {
     `
   )
 
-  const url = p.path && `${md.rootUrl}${p.path.replace(/^\/*/, "/")}`.replace(/\/+$/, "")
+  const url = p.path && `${md.siteUrl}${p.path.replace(/^\/*/, "/")}`.replace(/\/+$/, "")
 
   return (<>
     <Helmet title={p.title} defer={false} />
