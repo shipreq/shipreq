@@ -1,4 +1,3 @@
-* blog article tags
 * comments (?)
 * google analytics
 * mobile

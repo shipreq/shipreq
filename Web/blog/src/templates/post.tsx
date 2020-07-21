@@ -3,6 +3,7 @@ import { graphql } from "gatsby"
 import { MDXProvider } from "@mdx-js/react"
 import { MDXRenderer } from "gatsby-plugin-mdx"
 import { Link } from "gatsby"
+import kebabCase from "lodash/kebabCase"
 import SEO from "../components/seo"
 
 const componentsUsed = { Link }
@@ -10,6 +11,7 @@ const componentsUsed = { Link }
 export default function PageTemplate({ data: { mdx } }: Query) {
 
   const title = mdx.frontmatter.title
+  const tags = mdx.frontmatter.tags.sort()
 
   return (
     <div>
@@ -23,6 +25,15 @@ export default function PageTemplate({ data: { mdx } }: Query) {
       <MDXProvider components={componentsUsed}>
         <MDXRenderer>{mdx.body}</MDXRenderer>
       </MDXProvider>
+      <ul>
+        {tags.map(tag => (
+          <li key={tag}>
+            <Link to={`/tag/${kebabCase(tag)}`}>
+              {tag}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 };
@@ -36,6 +47,7 @@ type Query = {
         path: string,
       },
       frontmatter: {
+        tags: Array<string>,
         title: string,
         desc: string,
       }
@@ -52,6 +64,7 @@ export const pageQuery = graphql`
         path
       }
       frontmatter {
+        tags
         title
         desc
       }

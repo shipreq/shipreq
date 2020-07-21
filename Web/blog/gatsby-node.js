@@ -1,5 +1,5 @@
+const kebabCase = require("lodash/kebabCase")
 const path = require("path")
-const postTemplatePath = path.resolve(`./src/templates/post.tsx`);
 
 function postPath(node) {
   return `/post/${node.frontmatter.slug.replace(/^\/+/, '')}`;
@@ -20,14 +20,20 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
             }
           }
         }
+        tags: group(field: frontmatter___tags) {
+          name: fieldValue
+        }
       }
     }
   `)
 
   if (result.errors) {
     reporter.panicOnBuild('🚨  ERROR: Loading "createPages" query')
+    return
   }
 
+  // Create pages for posts
+  const postTemplatePath = path.resolve(`./src/templates/post.tsx`);
   result.data.allMdx.edges.forEach(({ node }, index) => {
     createPage({
       path: postPath(node),
@@ -35,6 +41,17 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
       context: { id: node.id },
     })
   })
+
+  // Create pages for tags
+  const tagsTemplatePath = path.resolve(`./src/templates/tags.tsx`);
+  result.data.allMdx.tags.forEach(tag => {
+    createPage({
+      path: `/tag/${kebabCase(tag.name)}`,
+      component: tagsTemplatePath,
+      context: { tag: tag.name },
+    })
+  })
+
 };
 
 // =================================================================================================

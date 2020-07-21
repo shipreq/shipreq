@@ -1,0 +1,77 @@
+import React from "react"
+import { Link, graphql } from "gatsby"
+
+export default function({ pageContext, data }: Props) {
+  const { tag } = pageContext
+  const { edges, totalCount } = data.allMdx
+  const tagHeader = `${totalCount} post${
+    totalCount === 1 ? "" : "s"
+  } tagged with "${tag}"`
+
+  return (
+    <div>
+      <h1>{tagHeader}</h1>
+      <ul>
+        {edges.map(({ node }) => {
+          const { path } = node.fields
+          const { title } = node.frontmatter
+          return (
+            <li key={path}>
+              <Link to={path}>{title}</Link>
+            </li>
+          )
+        })}
+      </ul>
+      {/*
+              This links to a page that does not yet exist.
+              You'll come back to it!
+            */}
+      <Link to="/tags">All tags</Link>
+    </div>
+  )
+}
+
+type Props = {
+  pageContext: {
+    tag: string,
+  },
+  data: {
+    allMdx: {
+      totalCount: number,
+      edges: [
+        {
+          node: {
+            fields: {
+              path: string,
+            },
+            frontmatter: {
+              title: string,
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+export const pageQuery = graphql`
+  query($tag: String) {
+    allMdx(
+      limit: 2000
+      sort: { fields: [frontmatter___date], order: DESC }
+      filter: { frontmatter: { tags: { in: [$tag] } } }
+    ) {
+      totalCount
+      edges {
+        node {
+          fields {
+            path
+          }
+          frontmatter {
+            title
+          }
+        }
+      }
+    }
+  }
+`
