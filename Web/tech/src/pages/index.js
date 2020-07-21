@@ -1,14 +1,14 @@
-import React from "react";
-import { Link, graphql } from "gatsby";
-import ShipreqBanner from "../images/shipreq-banner.inline.svg";
+import React from "react"
+import { Link, graphql } from "gatsby"
+import ShipreqBanner from "../components/shipreqBanner"
 
-const Index = ({ data }) => {
+export default function({ data }) {
   const { edges: posts } = data.allMdx
 
   return (
     <div>
 
-      <ShipreqBanner />
+      <ShipreqBanner height={100} />
 
       <h1>Awesome MDX Blog</h1>
 
@@ -44,5 +44,3 @@ export const pageQuery = graphql`
     }
   }
 `
-
-export default Index;
