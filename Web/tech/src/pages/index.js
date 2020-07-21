@@ -1,12 +1,20 @@
 import React from "react"
 import { Link, graphql } from "gatsby"
 import ShipreqBanner from "../components/shipreqBanner"
+import SEO from "../components/seo"
 
 export default function({ data }) {
   const { edges: posts } = data.allMdx
+  const md = data.site.siteMetadata
 
   return (
     <div>
+
+      <SEO
+        desc  = {md.description}
+        title = {md.title}
+        path  = ""
+      />
 
       <ShipreqBanner height={100} />
 
@@ -28,6 +36,12 @@ export default function({ data }) {
 
 export const pageQuery = graphql`
   query {
+    site {
+      siteMetadata {
+        description
+        title
+      }
+    }
     allMdx {
       edges {
         node {
