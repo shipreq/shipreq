@@ -6,7 +6,8 @@ module.exports = {
   plugins: [
 
     // =============================================================================================
-    `gatsby-plugin-mdx`,
+    "gatsby-plugin-mdx",
+    "gatsby-plugin-svgr-svgo",
 
     // =============================================================================================
     {
@@ -19,13 +20,13 @@ module.exports = {
 
     // =============================================================================================
     {
-      resolve: `gatsby-plugin-manifest`,
+      resolve: "gatsby-plugin-manifest",
       options: {
         name            : "ShipReq tech blog",
         start_url       : "/",
         display         : "browser",
         icon            : "src/images/shipreq-logo-only.svg",
-        crossOrigin     : `use-credentials`,
+        crossOrigin     : "use-credentials",
         background_color: "#ffffff",
         theme_color     : "#ffffff",
       },
@@ -33,9 +34,9 @@ module.exports = {
 
     // =============================================================================================
     {
-      resolve: `gatsby-plugin-typography`,
+      resolve: "gatsby-plugin-typography",
       options: {
-        pathToConfigModule: `src/utils/typography`,
+        pathToConfigModule: "src/utils/typography",
       },
     },
 

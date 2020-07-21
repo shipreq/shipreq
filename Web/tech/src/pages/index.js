@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, graphql } from "gatsby";
-import shipreqBanner from "../images/shipreq-banner.svg";
+import ShipreqBanner from "../images/shipreq-banner.inline.svg";
 
 const Index = ({ data }) => {
   const { edges: posts } = data.allMdx
@@ -8,7 +8,7 @@ const Index = ({ data }) => {
   return (
     <div>
 
-      <img src={shipreqBanner} alt="ShipReq" />
+      <ShipreqBanner />
 
       <h1>Awesome MDX Blog</h1>
 

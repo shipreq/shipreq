@@ -16,9 +16,11 @@
   "dependencies": {
     "@mdx-js/mdx": "^1.6.11",
     "@mdx-js/react": "^1.6.11",
+    "@svgr/webpack": "^5.4.0",
     "gatsby": "^2.23.12",
     "gatsby-plugin-manifest": "^2.4.18",
     "gatsby-plugin-mdx": "^1.2.27",
+    "gatsby-plugin-svgr-svgo": "^1.0.12",
     "gatsby-plugin-typography": "^2.5.10",
     "gatsby-source-filesystem": "^2.3.20",
     "react": "^16.12.0",
