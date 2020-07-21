@@ -10,9 +10,11 @@ type Props = {
 }
 
 type Query = {
+  card: {
+    publicURL: string
+  },
   site: {
     siteMetadata: {
-      cardImageUrl: string
       locale: string
       rootUrl: string
       title: string
@@ -26,12 +28,14 @@ type Query = {
 
 export default function(p: Props) {
 
-  const { site: {siteMetadata: md} } = useStaticQuery<Query>(
+  const { card, site: {siteMetadata: md} } = useStaticQuery<Query>(
     graphql`
       query {
+        card: file(relativePath: {eq: "logo-title-1024.png"}) {
+          publicURL
+        }
         site {
           siteMetadata {
-            cardImageUrl
             locale
             rootUrl
             title
@@ -55,13 +59,13 @@ export default function(p: Props) {
 
       <meta name="twitter:card"        content="summary_large_image" />
       <meta name="twitter:description" content={p.desc} />
-      <meta name="twitter:image"       content={md.cardImageUrl} />
+      <meta name="twitter:image"       content={card.publicURL} />
       <meta name="twitter:site"        content={md.twitterHandle} />
       <meta name="twitter:title"       content={p.title} />
       {p.article && <meta property="twitter:creator" content={md.author.twitterHandle} />}
 
       <meta property="og:description"      content={p.desc} />
-      <meta property="og:image"            content={md.cardImageUrl} />
+      <meta property="og:image"            content={card.publicURL} />
       <meta property="og:locale"           content={md.locale} />
       <meta property="og:site_name"        content={md.title} />
       <meta property="og:title"            content={p.title} />

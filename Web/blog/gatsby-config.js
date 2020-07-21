@@ -8,7 +8,16 @@ module.exports = {
     // =============================================================================================
     "gatsby-plugin-catch-links",
     "gatsby-plugin-react-helmet",
+    "gatsby-plugin-sharp",
     "gatsby-plugin-svgr-svgo",
+
+    // =============================================================================================
+    {
+      resolve: "gatsby-transformer-sharp",
+      options: {
+        checkSupportedExtensions: false, // Don't warn about svgs in src/images
+      },
+    },
 
     // =============================================================================================
     {
@@ -28,6 +37,13 @@ module.exports = {
     },
 
     // =============================================================================================
+    {
+      resolve: "gatsby-source-filesystem",
+      options: {
+        name: "images",
+        path: "src/images/",
+      },
+    },
     {
       resolve: "gatsby-source-filesystem",
       options: {
