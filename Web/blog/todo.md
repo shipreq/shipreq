@@ -1,3 +1,13 @@
+* 404
+* blog article tags
 * card image
-* typescript
+* comments (?)
+* google analytics
+* mobile
+* prism
+* RSS
+* search
+* sitemap
+* statcounter
 * tests
+* typescript
