@@ -1,12 +1,37 @@
-import React from "react"
-import { Helmet } from "react-helmet"
-import styled from "styled-components"
 import { graphql } from "gatsby"
+import { Helmet } from "react-helmet"
+import React from "react"
 import SEO from "../components/seo"
+import styled from "styled-components"
 import tileQuestionSvg from "../images/tile-question.svg"
 
+export const pageQuery = graphql`
+  query {
+    site {
+      siteMetadata {
+        description
+        title
+      }
+    }
+  }
+`
+
+type Query = {
+  data: {
+    site: {
+      siteMetadata: {
+        description: string
+        title: string
+      }
+    }
+  }
+}
+
 const Container = styled.div`
-  height:66.67vh; width:100vw; display:flex;`
+  height: 66.67vh;
+  width: 100vw;
+  display: flex;
+`
 
 export default function({ data }: Query) {
   const md = data.site.siteMetadata
@@ -51,25 +76,3 @@ export default function({ data }: Query) {
     </Container>
   )
 }
-
-type Query = {
-  data: {
-    site: {
-      siteMetadata: {
-        description: string,
-        title: string,
-      }
-    }
-  }
-}
-
-export const pageQuery = graphql`
-  query {
-    site {
-      siteMetadata {
-        description
-        title
-      }
-    }
-  }
-`

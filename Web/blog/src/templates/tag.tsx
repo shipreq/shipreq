@@ -1,6 +1,6 @@
-import React from "react"
 import { Link, graphql } from "gatsby"
 import { linkToTagIndex } from "../utils/routes"
+import React from "react"
 
 export const pageQuery = graphql`
   query($tag: String) {
@@ -26,23 +26,21 @@ export const pageQuery = graphql`
 
 type Props = {
   pageContext: {
-    tag: string,
-  },
+    tag: string
+  }
   data: {
     allMdx: {
-      totalCount: number,
-      edges: [
-        {
-          node: {
-            fields: {
-              path: string,
-            },
-            frontmatter: {
-              title: string,
-            }
+      totalCount: number
+      edges: [{
+        node: {
+          fields: {
+            path: string
+          }
+          frontmatter: {
+            title: string
           }
         }
-      ]
+      }]
     }
   }
 }
@@ -50,6 +48,7 @@ type Props = {
 export default function({ pageContext, data }: Props) {
   const { tag } = pageContext
   const { edges, totalCount } = data.allMdx
+
   const tagHeader = `${totalCount} post${
     totalCount === 1 ? "" : "s"
   } tagged with "${tag}"`

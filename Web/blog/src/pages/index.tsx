@@ -1,7 +1,57 @@
-import React from "react"
 import { Link, graphql } from "gatsby"
-import ShipreqBanner from "../components/shipreqBanner"
+import React from "react"
 import SEO from "../components/seo"
+import ShipreqBanner from "../components/shipreqBanner"
+
+export const pageQuery = graphql`
+  query {
+    site {
+      siteMetadata {
+        description
+        title
+      }
+    }
+    allMdx {
+      edges {
+        node {
+          id
+          excerpt
+          frontmatter {
+            title
+          }
+          fields {
+            path
+          }
+        }
+      }
+    }
+  }
+`
+
+type Query = {
+  data: {
+    site: {
+      siteMetadata: {
+        description: string
+        title: string
+      }
+    }
+    allMdx: {
+      edges: [{
+        node: {
+          id: string
+          excerpt: string
+          frontmatter: {
+            title: string
+          }
+          fields: {
+            path: string
+          }
+        }
+      }]
+    }
+  }
+}
 
 export default function({ data }: Query) {
   const { edges: posts } = data.allMdx
@@ -34,53 +84,3 @@ export default function({ data }: Query) {
     </div>
   )
 }
-
-type Query = {
-  data: {
-    site: {
-      siteMetadata: {
-        description: string,
-        title: string,
-      }
-    },
-    allMdx: {
-      edges: [{
-        node: {
-          id: string,
-          excerpt: string,
-          frontmatter: {
-            title: string,
-          },
-          fields: {
-            path: string,
-          }
-        }
-      }]
-    }
-  }
-}
-
-export const pageQuery = graphql`
-  query {
-    site {
-      siteMetadata {
-        description
-        title
-      }
-    }
-    allMdx {
-      edges {
-        node {
-          id
-          excerpt
-          frontmatter {
-            title
-          }
-          fields {
-            path
-          }
-        }
-      }
-    }
-  }
-`

@@ -1,32 +1,32 @@
-import React from "react"
 import { Helmet } from "react-helmet"
 import { useStaticQuery, graphql } from "gatsby"
+import React from "react"
 
 type Props = {
-  article: boolean,
-  title: string,
-  desc: string,
-  path: string | null,
-}
-
-type Query = {
-  card: {
-    publicURL: string
-  },
-  site: {
-    siteMetadata: {
-      locale: string
-      siteUrl: string
-      title: string
-      twitterHandle: string
-      author: {
-        twitterHandle: string
-      }
-    }
-  }
+  article: boolean
+  title: string
+  desc: string
+  path: string | null
 }
 
 export default function(p: Props) {
+
+  type Query = {
+    card: {
+      publicURL: string
+    }
+    site: {
+      siteMetadata: {
+        locale: string
+        siteUrl: string
+        title: string
+        twitterHandle: string
+        author: {
+          twitterHandle: string
+        }
+      }
+    }
+  }
 
   const { card, site: {siteMetadata: md} } = useStaticQuery<Query>(
     graphql`
