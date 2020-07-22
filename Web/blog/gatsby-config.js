@@ -1,4 +1,6 @@
-const siteMetadata = require('./src/siteMetadata');
+require("ts-node").register({ files: true })
+
+const siteMetadata = require('./site-metadata');
 
 module.exports = {
   siteMetadata,

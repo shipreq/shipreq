@@ -1,9 +1,5 @@
-const kebabCase = require("lodash/kebabCase")
 const path = require("path")
-
-function postPath(node) {
-  return `/post/${node.frontmatter.slug.replace(/^\/+/, '')}`;
-}
+const routes = require("./src/utils/routes")
 
 // =================================================================================================
 exports.createPages = async ({ graphql, actions, reporter }) => {
@@ -36,19 +32,19 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
   const postTemplatePath = path.resolve(`./src/templates/post.tsx`);
   result.data.allMdx.edges.forEach(({ node }, index) => {
     createPage({
-      path: postPath(node),
+      path     : routes.pathForPost({node}),
       component: postTemplatePath,
-      context: { id: node.id },
+      context  : { id: node.id },
     })
   })
 
   // Create pages for tags
-  const tagsTemplatePath = path.resolve(`./src/templates/tags.tsx`);
+  const tagsTemplatePath = path.resolve(`./src/templates/tag.tsx`);
   result.data.allMdx.tags.forEach(tag => {
     createPage({
-      path: `/tag/${kebabCase(tag.name)}`,
+      path     : routes.pathForTag(tag.name),
       component: tagsTemplatePath,
-      context: { tag: tag.name },
+      context  : { tag: tag.name },
     })
   })
 
@@ -62,7 +58,7 @@ exports.onCreateNode = ({ node, actions, getNode }) => {
     createNodeField({
       node,
       name: `path`,
-      value: postPath(node),
+      value: routes.pathForPost({node}),
     })
   }
 };

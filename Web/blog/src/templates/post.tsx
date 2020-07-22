@@ -3,7 +3,7 @@ import { graphql } from "gatsby"
 import { MDXProvider } from "@mdx-js/react"
 import { MDXRenderer } from "gatsby-plugin-mdx"
 import { Link } from "gatsby"
-import kebabCase from "lodash/kebabCase"
+import { pathForTag } from "../utils/routes"
 import SEO from "../components/seo"
 
 const componentsUsed = { Link }
@@ -28,7 +28,7 @@ export default function PageTemplate({ data: { mdx } }: Query) {
       <ul>
         {tags.map(tag => (
           <li key={tag}>
-            <Link to={`/tag/${kebabCase(tag)}`}>
+            <Link to={pathForTag(tag)}>
               {tag}
             </Link>
           </li>

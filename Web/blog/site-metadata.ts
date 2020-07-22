@@ -1,4 +1,4 @@
-function singleLine(l) {
+function singleLine(l: string) {
   return l.replace(/\s+/g, " ").trim()
 }
 

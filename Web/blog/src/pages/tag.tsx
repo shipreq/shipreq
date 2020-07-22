@@ -1,8 +1,8 @@
 import React from "react"
-import kebabCase from "lodash/kebabCase"
 import sortBy from "lodash/sortBy"
 import { Helmet } from "react-helmet"
 import { Link, graphql } from "gatsby"
+import { pathForTag } from "../utils/routes"
 
 export default function({ data }: Props) {
 
@@ -16,7 +16,7 @@ export default function({ data }: Props) {
         <ul>
           {tags.map(tag => (
             <li key={tag.name}>
-              <Link to={`/tag/${kebabCase(tag.name)}`}>
+              <Link to={pathForTag(tag.name)}>
                 {tag.name} ({tag.totalCount})
               </Link>
             </li>
