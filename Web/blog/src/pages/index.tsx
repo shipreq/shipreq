@@ -1,4 +1,5 @@
 import { Link, graphql } from "gatsby"
+import Analytics from "../components/analytics"
 import React from "react"
 import SEO from "../components/seo"
 import ShipreqBanner from "../components/shipreq-banner"
@@ -47,6 +48,7 @@ export default function({ data }: Query) {
   return (
     <div>
 
+      <Analytics />
       <SEO path = "" />
 
       <ShipreqBanner height={100} />

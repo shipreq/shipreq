@@ -3,9 +3,10 @@
 
 ### Commands
 
-* `gatsby develop` - Serve at http://localhost:8000/ and auto-reload on change
-* `gatsby build` - Builds the ste for production in `./public`
-* `gatsby serve` - Serves `./public` at http://localhost:9000/
+* `gatsby develop`        - Serve at http://localhost:8000/ and auto-reload on change
+* `gatsby build`          - Builds the site minified in `./public`
+* `ENV=prod gatsby build` - Builds the site for production in `./public`
+* `gatsby serve`          - Serves `./public` at http://localhost:9000/
 
 
 ### Blogging

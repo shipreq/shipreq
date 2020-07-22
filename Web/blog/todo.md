@@ -1,9 +1,9 @@
 * tasks
-  * add statcounter
   * add google analytics
   * add tests
 
 * content
+  * global layout with analytics
   * about
   * contact
   * social
