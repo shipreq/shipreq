@@ -41,6 +41,14 @@ git checkout -
 cd Docker/analytics_proxy
 ```
 
+# Masking URLs
+
+```sh
+npm install
+npm run mask 'www.googletagmanager.com/gtag/js?id=UA-173267009-2'
+make mask_sc # stat counter
+```
+
 # Testing
 
 1. Run `make test` or `make run`

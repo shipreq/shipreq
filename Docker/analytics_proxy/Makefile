@@ -27,3 +27,9 @@ down:
 
 test:
 	APP__ENV_NAME=test NODE_ENV=test PORT=3000 npm start
+
+node_modules:
+	npm install
+
+mask_sc: node_modules
+	npm run mask 'www.statcounter.com/counter/counter.js'

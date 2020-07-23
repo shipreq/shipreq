@@ -12,13 +12,20 @@ function singleLine(l: string) {
   return l.replace(/\s+/g, " ").trim()
 }
 
-const apProxy           = "https://ap.shipreq.com"
-const statCounterJsPath = "www.statcounter.com/counter/counter.js"
-
 const statCounter: StatCounter | null =
   isDev ?
-  {project: 12363376, security: "bec10e58", https: false, jsUrl: `https://${statCounterJsPath}`, disabled: true} :
-  {project: 12363377, security: "e1f055a7", https: true , jsUrl: `${apProxy}/${statCounterJsPath}`}
+  {
+    project : 12363376,
+    security: "bec10e58",
+    https   : false,
+    jsUrl   : "http://localhost:3000/*(d3d3LnN0YXRjb3VudGVyLmNvbQ)*/*(Y291bnRlcg)*/*(Y291bnRlci5qcw)*",
+    disabled: true,
+  } : {
+    project : 12363377,
+    security: "e1f055a7",
+    https   : true,
+    jsUrl   : "https://ap.shipreq.com/*(d3d3LnN0YXRjb3VudGVyLmNvbQ)*/*(Y291bnRlcg)*/*(Y291bnRlci5qcw)*",
+  }
 
 module.exports = {
 
