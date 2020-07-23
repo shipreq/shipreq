@@ -1,6 +1,3 @@
-* tasks
-  * add tests
-
 * content
   * global layout with analytics
   * about
