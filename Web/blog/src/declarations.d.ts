@@ -4,3 +4,4 @@
 // Exclude from type-checking
 declare module "*.css"
 declare module "*.svg"
+declare module '@mdx-js/react'

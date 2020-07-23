@@ -16,6 +16,8 @@ module.exports = {
     "gatsby-plugin-sitemap",
     "gatsby-plugin-styled-components",
     "gatsby-plugin-svgr-svgo",
+    "gatsby-plugin-typescript",
+    "gatsby-plugin-typescript-checker",
 
     // =============================================================================================
     {
