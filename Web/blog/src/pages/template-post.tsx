@@ -4,8 +4,9 @@ import { MDXProvider } from "@mdx-js/react"
 import { MDXRenderer } from "gatsby-plugin-mdx"
 import { Props as SeoProps } from "../components/seo"
 import Layout from "../layouts/focused"
-import A from "./a"
-import Date from "./date"
+import A from "../components/a"
+import Author from "../components/author"
+import Date from "../components/date"
 import React from "react"
 import styled from "styled-components"
 
@@ -108,8 +109,9 @@ export default function({ data: { mdx } }: Query) {
         </MDXProvider>
 
         <Footer>
-
         </Footer>
+
+        <Author />
 
         <ul>
           {tags.map(tag => (

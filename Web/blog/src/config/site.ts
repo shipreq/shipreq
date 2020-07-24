@@ -38,6 +38,8 @@ const statCounter: StatCounter | null =
     jsUrl   : "https://ap.shipreq.com/*(d3d3LnN0YXRjb3VudGVyLmNvbQ)*/*(Y291bnRlcg)*/*(Y291bnRlci5qcw)*",
   }
 
+const Year = new Date().getFullYear()
+
 export default {
 
   title: "ShipReq Blog",
@@ -46,7 +48,7 @@ export default {
 
   cardImageUrl: "https://blog.shipreq.com/static/ab7f7f3a4df0120151227c3bbb6eed6e/logo-title-1024.png",
 
-  copyright1: `© 2013-${new Date().getFullYear()} Bearded Logic.`,
+  copyright1: `© 2013-${Year} Bearded Logic.`,
   copyright2: "All rights reserved.",
 
   locale: "en_AU",
@@ -82,10 +84,18 @@ export default {
   },
 
   japgolly: {
+    name: "David Barri",
+    bio: singleLine(`
+      Hi! I'm the founder/creator of ShipReq.
+      I've been coding since I was a kid, and
+      have been euphorically doing functional programming in Scala for ${Year - 2012} years and counting.
+      I love to create that which sparks joy in others.
+    `),
+    link: "https://github.com/japgolly",
     twitter: {
       handle: "@japgolly",
       url: "https://twitter.com/japgolly",
     },
-    },
+  },
 
 };
