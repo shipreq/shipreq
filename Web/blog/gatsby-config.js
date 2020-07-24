@@ -9,6 +9,7 @@ module.exports = {
 
     // =============================================================================================
     "gatsby-plugin-catch-links",
+    "gatsby-plugin-lodash",
     "gatsby-plugin-postcss",
     "gatsby-plugin-react-helmet",
     "gatsby-plugin-sass",
@@ -16,6 +17,8 @@ module.exports = {
     "gatsby-plugin-sitemap",
     "gatsby-plugin-styled-components",
     "gatsby-plugin-svgr-svgo",
+
+    // =============================================================================================
     "gatsby-plugin-typescript",
     "gatsby-plugin-typescript-checker",
 
@@ -34,6 +37,7 @@ module.exports = {
         gatsbyRemarkPlugins: [
           "gatsby-remark-autolink-headers",
           "gatsby-remark-check-links",
+          "gatsby-remark-emoji",
           "gatsby-remark-smartypants",
           {
             resolve: "gatsby-remark-external-links",
