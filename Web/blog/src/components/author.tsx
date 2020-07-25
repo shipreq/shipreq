@@ -1,5 +1,5 @@
 import { useStaticQuery, graphql } from "gatsby"
-import {FixedObject} from "gatsby-image"
+import { FixedObject } from "gatsby-image"
 import A from "./a"
 import Img from "gatsby-image"
 import R from "../utils/responsive"
@@ -9,9 +9,6 @@ import styled from "styled-components"
 
 const Container = styled.section`
   display: flex;
-`
-
-const AvatarContainer = styled.div`
 `
 
 const Avatar = styled(Img)`
@@ -75,16 +72,19 @@ export default function() {
   return (
     <Container>
 
-      <AvatarContainer>
+      <div>
         <Avatar
           fixed={query.file.childImageSharp.fixed}
           loading="eager"
           alt={`Avatar of ${author.name}`}
         />
-      </AvatarContainer>
+      </div>
 
       <TextContainer>
-        <Title>{`Written by `}<A href={author.link}>{author.name}</A></Title>
+        <Title>
+          {`Written by `}
+          <A href={author.link}>{author.name}</A>
+        </Title>
         <Bio>{author.bio}</Bio>
       </TextContainer>
 

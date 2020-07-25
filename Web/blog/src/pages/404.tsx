@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet"
 import React from "react"
-import {SEO} from "../components/seo"
+import { SEO } from "../components/seo"
 import styled from "styled-components"
 import tileQuestionSvg from "../images/tile-question.svg"
 
@@ -38,7 +38,7 @@ export default function() {
         `}</style>
       </Helmet>
 
-      <SEO subtitle = "404" />
+      <SEO subtitle="404" />
 
       <main>
         <div id="a">404</div>

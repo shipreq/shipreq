@@ -22,7 +22,7 @@ export function SEO(p: Props) {
   const { card } = useStaticQuery<Query>(
     graphql`
       query {
-        card: file(relativePath: {eq: "logo-title-1024.png"}) {
+        card: file(relativePath: { eq: "logo-title-1024.png" }) {
           publicURL
         }
       }

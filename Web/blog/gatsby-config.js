@@ -1,12 +1,11 @@
 require("ts-node").register({ files: true })
 
-const siteMetadata = require('./src/config/site').default;
+const siteMetadata = require("./src/config/site").default
 
 module.exports = {
   siteMetadata,
 
   plugins: [
-
     // =============================================================================================
     "gatsby-plugin-catch-links",
     "gatsby-plugin-lodash",
@@ -42,8 +41,8 @@ module.exports = {
           {
             resolve: "gatsby-remark-external-links",
             options: {
-              rel: "noopener"
-            }
+              rel: "noopener",
+            },
           },
           {
             resolve: "gatsby-remark-prismjs",

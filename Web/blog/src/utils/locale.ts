@@ -140,7 +140,7 @@ function setLocale(): void {
   if (!localeIsSet) {
     localeIsSet = true
 
-    let lang = window.navigator.languages ? window.navigator.languages[0] : null;
+    let lang = window.navigator.languages ? window.navigator.languages[0] : null
     // @ts-ignore
     lang = lang || window.navigator.language || window.navigator.browserLanguage || window.navigator.userLanguage;
     // console.log(`Detected lang as ${lang}`)

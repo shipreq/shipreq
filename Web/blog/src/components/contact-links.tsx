@@ -39,7 +39,7 @@ const ContactLink = styled.a`
   }
 `
 
-type Contact = {icon: IconName, href: string}
+type Contact = { icon: IconName; href: string }
 
 const Contact = (c: Contact) => (
   <ContactItem>

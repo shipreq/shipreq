@@ -1,5 +1,5 @@
 import { Link } from "gatsby"
-import { Node as Node, PageContext } from "../config/post"
+import { Node, PageContext } from "../config/post"
 import { pathForPost } from "../utils/routes"
 import React from "react"
 import styled from "styled-components"

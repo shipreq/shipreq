@@ -63,7 +63,7 @@ export default function() {
     // 2. Don't make the script tags async, else you get the "Failed to write to document" error
     // 3. When testing locally, make sure uBlock is disabled
     const settings = minifyJs(`
-      var sc_https='${s.https?1:0}',
+      var sc_https='${s.https ? 1 : 0}',
       sc_invisible=1,
       sc_remove_link=1,
       sc_security='${s.security}',

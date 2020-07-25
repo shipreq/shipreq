@@ -11,7 +11,7 @@ export default function() {
   return (
     <Copyright>
       {site.copyright1}
-      <br/>
+      <br />
       {site.copyright2}
     </Copyright>
   )

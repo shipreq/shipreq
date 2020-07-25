@@ -56,13 +56,13 @@ const components = {
 }
 
 const Article = styled.article`
-  line-height:1.5em;
+  line-height: 1.5em;
   .huddle > li {
-    margin-bottom:0;
+    margin-bottom: 0;
   }
 `
 const Title = styled.h1`
-  display:block;
+  display: block;
   font-weight: bold;
   border-bottom: solid 1px #ccc;
   color: #933;
@@ -75,7 +75,7 @@ const Header = styled.header`
 `
 
 const DateContainer = styled.header`
-  color:#888;
+  color: #888;
   text-align: right;
   margin-top: 0.2em;
   font-size: 85%;
