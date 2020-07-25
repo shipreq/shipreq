@@ -8,6 +8,12 @@ type IconDef = {
   viewBox: string
 }
 
+const facebook: IconDef = {
+  name: 'Facebook',
+  path: 'M14.984 0.187v4.125h-2.453c-1.922 0-2.281 0.922-2.281 2.25v2.953h4.578l-0.609 4.625h-3.969v11.859h-4.781v-11.859h-3.984v-4.625h3.984v-3.406c0-3.953 2.422-6.109 5.953-6.109 1.687 0 3.141 0.125 3.563 0.187z',
+  viewBox: '0 0 16 28'
+}
+
 const twitter: IconDef = {
   name: 'Twitter',
   path: 'M25.312 6.375c-0.688 1-1.547 1.891-2.531 2.609 0.016 0.219 0.016 0.438 0.016 0.656 0 6.672-5.078 14.359-14.359 14.359-2.859 0-5.516-0.828-7.75-2.266 0.406 0.047 0.797 0.063 1.219 0.063 2.359 0 4.531-0.797 6.266-2.156-2.219-0.047-4.078-1.5-4.719-3.5 0.313 0.047 0.625 0.078 0.953 0.078 0.453 0 0.906-0.063 1.328-0.172-2.312-0.469-4.047-2.5-4.047-4.953v-0.063c0.672 0.375 1.453 0.609 2.281 0.641-1.359-0.906-2.25-2.453-2.25-4.203 0-0.938 0.25-1.797 0.688-2.547 2.484 3.062 6.219 5.063 10.406 5.281-0.078-0.375-0.125-0.766-0.125-1.156 0-2.781 2.25-5.047 5.047-5.047 1.453 0 2.766 0.609 3.687 1.594 1.141-0.219 2.234-0.641 3.203-1.219-0.375 1.172-1.172 2.156-2.219 2.781 1.016-0.109 2-0.391 2.906-0.781z',
@@ -50,10 +56,11 @@ const youtube: IconDef = {
   viewBox: '0 0 24 24'
 }
 
-export type IconName = "twitter" | "reddit" | "github" | "email" | "rss" | "linkedIn" | "youtube"
+export type IconName = "facebook" | "twitter" | "reddit" | "github" | "email" | "rss" | "linkedIn" | "youtube"
 
 function iconDef(icon: IconName): IconDef {
   switch(icon) {
+    case "facebook": return facebook
     case "twitter" : return twitter
     case "reddit"  : return reddit
     case "github"  : return github

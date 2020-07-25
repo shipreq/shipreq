@@ -10,3 +10,16 @@ export function minifyJs(js: string): string {
 
 // Shitty hack to ensure exhaustivity
 export function exhaustiveCheck(arg: never): void {}
+
+export function encodeQuery(q: {[k: string]: string}): string {
+  const comps: Array<string> = []
+  for (let k in q) {
+    const v = q[k]
+    comps.push(`${k}=${encodeURIComponent(v)}`)
+  }
+  return "?" + comps.join("&")
+}
+
+export function urlWithQuery(url: string, query: {[k: string]: string}): string {
+  return url + encodeQuery(query)
+}
