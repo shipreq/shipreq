@@ -88,7 +88,7 @@ export default {
     bio: singleLine(`
       Hi! I'm the founder/creator of ShipReq.
       I've been coding since I was a kid, and
-      have been euphorically doing functional programming in Scala for ${Year - 2012} years and counting.
+      have been euphorically doing full-stack functional programming in Scala for ${Year - 2012} years and counting.
       I love to create that which sparks joy in others.
     `),
     link: "https://github.com/japgolly",
