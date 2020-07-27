@@ -2,7 +2,7 @@
 
 BRANCH   := $(shell git rev-parse --abbrev-ref HEAD)
 CHANGES  := $(shell git status --porcelain)
-PROD_REV := $(shell fgrep shipreq ../Infrastructure/terraform/prod/versions.tf | perl -pe 's/.*git-(.+?)".*/$$1/')
+PROD_REV := $(shell fgrep shipreq ../Terraform/prod/versions.tf | perl -pe 's/.*git-(.+?)".*/$$1/')
 
 WATCH_CODEBUILD = watch -n 6 -c aws-codebuild-status -t 'Name:shipreq'
 
