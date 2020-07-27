@@ -1,12 +1,11 @@
 import { Link } from "gatsby"
-import { Node as PostNode } from "../config/post"
+import { Node as Post } from "../config/post"
 import { pathForPost } from "../utils/routes"
+import Date from "./date"
+import R from "../utils/responsive"
 import React from "react"
 import styled from "styled-components"
-import Date from "./date"
 import TagList from "./tag-list"
-
-type Post = PostNode & { excerpt: string }
 
 type Props = {
   posts: Array<Post>
@@ -14,6 +13,9 @@ type Props = {
 
 const Item = styled.div`
   margin-bottom: 2rem;
+  ${R.phoneWide`
+    margin-bottom: 1.2rem;
+  `}
 `
 
 const Attributes = styled.div`
@@ -30,7 +32,7 @@ const Header = styled.h2`
   margin-bottom: 0.2em;
 `
 
-const Excerpt = styled.p`
+const Desc = styled.p`
   line-height: 1.45em;
   color: #555;
   margin: 0;
@@ -48,9 +50,9 @@ function renderPost(post: Post) {
         <Link to={pathForPost(post)}>{post.frontmatter.title}</Link>
       </Header>
 
-      <Excerpt>
-        {post.excerpt}
-      </Excerpt>
+      <Desc>
+        {post.frontmatter.desc}
+      </Desc>
 
       <Attributes>
         <TagListWrapper><TagList tags={tags} /></TagListWrapper>

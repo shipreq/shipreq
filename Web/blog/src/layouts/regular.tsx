@@ -41,6 +41,7 @@ const Container = styled.div`
     ;
   `}
   ${R.notSmall`
+    grid-template-columns: auto 1fr;
     grid-template-rows: auto auto auto 1fr;
     grid-template-areas:
       "${GridArea.banner}    ${GridArea.main}"
@@ -54,7 +55,8 @@ const Container = styled.div`
     padding: 0.5rem;
   `}
   ${R.phoneWide`
-    gap: 1rem;
+    row-gap: 1rem;
+    column-gap: 2rem;
     padding: 1rem;
   `}
   ${R.tablet`
