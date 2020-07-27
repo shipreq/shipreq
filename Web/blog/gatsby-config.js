@@ -38,7 +38,7 @@ module.exports = {
       resolve: "gatsby-plugin-mdx",
       options: {
         gatsbyRemarkPlugins: [
-          "gatsby-remark-autolink-headers",
+          // "gatsby-remark-autolink-headers",
           "gatsby-remark-check-links",
           "gatsby-remark-emoji",
           "gatsby-remark-smartypants",

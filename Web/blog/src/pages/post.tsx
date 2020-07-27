@@ -1,4 +1,4 @@
-import { graphql } from "gatsby"
+import { graphql, Link } from "gatsby"
 import { MDXProvider } from "@mdx-js/react"
 import { MDXRenderer } from "gatsby-plugin-mdx"
 import { Node, PageContext } from "../config/post"
@@ -32,6 +32,7 @@ type Props = {
 
 const components = {
   A,
+  About: () => <Link to="/about">About</Link>,
   ScalaJS: () => <A href="https://www.scala-js.org">Scala.JS</A>,
   ShipReq: () => <A href="https://shipreq.com">ShipReq</A>,
 }
@@ -42,6 +43,10 @@ const Article = styled.article`
     margin-bottom: 0;
   }
 `
+const Header = styled.header`
+  margin-bottom: 1rem;
+`
+
 const Title = styled.h1`
   display: block;
   font-weight: bold;
@@ -51,15 +56,24 @@ const Title = styled.h1`
   font-size: 250%;
 `
 
-const Header = styled.header`
-  margin-bottom: 1rem;
-`
-
-const DateContainer = styled.header`
+const DateContainer = styled.div`
   color: #888;
   text-align: right;
   margin-top: 0.2em;
   font-size: 85%;
+`
+
+const Body = styled.section`
+  h1,h2,h3,h4,h5,h6 {
+    margin-top: 0;
+    &:not(:first-child) {
+      margin-top: 1.5em;
+    }
+    margin-bottom: 1em;
+  }
+  p {
+    margin-bottom: 1em;
+  }
 `
 
 const footerGap = "1.8rem"
@@ -93,17 +107,16 @@ export default function({ data, pageContext }: Props) {
           </DateContainer>
         </Header>
 
-        <MDXProvider components={components}>
-          <MDXRenderer>{post.body}</MDXRenderer>
-        </MDXProvider>
+        <Body>
+          <MDXProvider components={components}>
+            <MDXRenderer>{post.body}</MDXRenderer>
+          </MDXProvider>
+        </Body>
 
         <Footer>
-
           <Author />
-
           <PostShare post={post} />
           <PostSiblingNav pageContext={pageContext} />
-
         </Footer>
 
       </Article>
