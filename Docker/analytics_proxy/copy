@@ -3,6 +3,6 @@ set -euo pipefail
 cd "$(dirname "$0")"
 tmp=/tmp/analytics_proxy-$(date +%Y%m%d-%H%M%S)-$$
 
-zip -9r $tmp "$0" package* src test-static *.js
+zip -9r $tmp "$0" package* src static-test *.js readme.md
 
 echo $tmp

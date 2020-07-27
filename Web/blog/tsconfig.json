@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    // "allowJs": true,
+    // "checkJs": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "jsx": "react",
+    "lib": ["dom", "es2017"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "es5"
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}

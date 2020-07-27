@@ -52,6 +52,9 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
+* AP: customise index html
+* AP: Use `APP__HOSTS_WHITELIST_REGEX`
+* ShipReq: Mask stat counter
 
 
 
