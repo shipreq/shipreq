@@ -30,7 +30,34 @@ echo
 
 function runcmd {
   echo "> $@"
-  "$@"
+
+  # Attempt to run in full
+  fail=0
+  "$@" || fail=$?
+
+  # If we've failed, try again by removing the --cache-from args
+  if [ $fail -ne 0 ]; then
+    args=()
+    skip_next=0
+    changed=0
+    for arg in "$@"; do
+      if [ $skip_next -eq 1 ]; then
+        skip_next=0
+      elif [ "$arg" = --cache-from ]; then
+        skip_next=1
+        changed=1
+      else
+        args+=("$arg")
+      fi
+    done
+    if [ $changed -eq 0 ]; then
+      return $fail
+    else
+      echo "Trying again without --cache-from ..."
+      echo "> ${args[@]}"
+      "${args[@]}"
+    fi
+  fi
 }
 
 function build_and_deploy {
