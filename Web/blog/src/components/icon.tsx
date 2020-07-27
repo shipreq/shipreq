@@ -8,6 +8,12 @@ type IconDef = {
   viewBox: string
 }
 
+const hackerNews: IconDef = {
+  name: 'Hacker News',
+  path: 'M0 24V0h24v24H0zM6.951 5.896l4.112 7.708v5.064h1.583v-4.972l4.148-7.799h-1.749l-2.457 4.875c-.372.745-.688 1.434-.688 1.434s-.297-.708-.651-1.434L8.831 5.896h-1.88z',
+  viewBox: '0 0 24 24'
+}
+
 const facebook: IconDef = {
   name: 'Facebook',
   path: 'M14.984 0.187v4.125h-2.453c-1.922 0-2.281 0.922-2.281 2.25v2.953h4.578l-0.609 4.625h-3.969v11.859h-4.781v-11.859h-3.984v-4.625h3.984v-3.406c0-3.953 2.422-6.109 5.953-6.109 1.687 0 3.141 0.125 3.563 0.187z',
@@ -56,18 +62,19 @@ const youtube: IconDef = {
   viewBox: '0 0 24 24'
 }
 
-export type IconName = "facebook" | "twitter" | "reddit" | "github" | "email" | "rss" | "linkedIn" | "youtube"
+export type IconName = "hackerNews" | "facebook" | "twitter" | "reddit" | "github" | "email" | "rss" | "linkedIn" | "youtube"
 
 function iconDef(icon: IconName): IconDef {
   switch(icon) {
-    case "facebook": return facebook
-    case "twitter" : return twitter
-    case "reddit"  : return reddit
-    case "github"  : return github
-    case "email"   : return email
-    case "rss"     : return rss
-    case "linkedIn": return linkedIn
-    case "youtube" : return youtube
+    case "hackerNews": return hackerNews
+    case "facebook"  : return facebook
+    case "twitter"   : return twitter
+    case "reddit"    : return reddit
+    case "github"    : return github
+    case "email"     : return email
+    case "rss"       : return rss
+    case "linkedIn"  : return linkedIn
+    case "youtube"   : return youtube
   }
   exhaustiveCheck(icon)
 }

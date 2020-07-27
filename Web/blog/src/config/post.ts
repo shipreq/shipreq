@@ -11,6 +11,7 @@ export type Node = {
     desc    : string
     twitter?: string
     reddit? : string
+    hn?     : string
     tags    : Array<string>
   }
 }
@@ -47,6 +48,7 @@ export const createPages: GatsbyNode["createPages"] = async ({ graphql, actions,
               desc
               twitter
               reddit
+              hn
               tags
             }
           }

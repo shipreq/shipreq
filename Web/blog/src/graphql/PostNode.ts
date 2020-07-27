@@ -6,6 +6,7 @@ export const PostNode = graphql`
     frontmatter {
       date
       desc
+      hn
       reddit
       slug
       tags

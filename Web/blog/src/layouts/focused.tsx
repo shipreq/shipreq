@@ -55,7 +55,6 @@ const Container = styled.div`
   `}
   ${R.phoneWide`
     padding: 1rem;
-    gap: 1rem;
   `}
   ${R.tablet`
     padding: 1rem;
@@ -127,7 +126,6 @@ const MainCell = styled.main`
     margin-top: 2rem;
   `}
   ${R.phoneWide`
-    margin-top: 0.5rem;
   `}
   ${R.tablet`
   `}

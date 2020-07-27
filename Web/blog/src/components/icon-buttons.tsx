@@ -7,7 +7,7 @@ type Props = {
 }
 
 const Container = styled.div`
-  display: flex;
+  display: inline-flex;
   flex-flow: row wrap;
   flex-grow: 0;
   flex-shrink: 0;
