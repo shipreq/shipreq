@@ -1,8 +1,8 @@
-import { Link, graphql } from "gatsby"
-import Layout from "../layouts/regular"
-import React from "react"
-import { pathForPost } from "../utils/routes"
+import { graphql } from "gatsby"
 import { Node as Post } from "../config/post"
+import Layout from "../layouts/regular"
+import PostList from "../components/post-list"
+import React from "react"
 
 export const pageQuery = graphql`
   query {
@@ -35,16 +35,7 @@ export default function({ data }: Query) {
   return (
     <Layout seo={{}}>
 
-      <ul>
-        {posts.map(({ node: post }) => (
-          <li key={post.id}>
-            <Link to={pathForPost(post)}>
-              <h2>{post.frontmatter.title}</h2>
-            </Link>
-            <p>{post.excerpt}</p>
-          </li>
-        ))}
-      </ul>
+      <PostList posts={posts.map(n => n.node)} />
 
     </Layout>
   )

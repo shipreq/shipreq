@@ -19,7 +19,7 @@ const Container = styled.div`
 export default (p: Props) => (
   <Container>
     {
-      p.buttons.map(b => <IconButton {...b} />)
+      p.buttons.map(b => <IconButton key={b.icon} {...b} />)
     }
   </Container>
 )

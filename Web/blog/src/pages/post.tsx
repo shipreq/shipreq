@@ -1,8 +1,8 @@
 import { graphql } from "gatsby"
-import { linkToTag, pathForPost } from "../utils/routes"
 import { MDXProvider } from "@mdx-js/react"
 import { MDXRenderer } from "gatsby-plugin-mdx"
 import { Node, PageContext } from "../config/post"
+import { pathForPost } from "../utils/routes"
 import { Props as SeoProps } from "../components/seo"
 import A from "../components/a"
 import Author from "../components/author"
@@ -12,9 +12,10 @@ import PostShare from "../components/post-share"
 import PostSiblingNav from "../components/post-sibling-nav"
 import React from "react"
 import styled from "styled-components"
+import Tag from "../components/tag"
 
 export const pageQuery = graphql`
-  query BlogPostQuery($id: String) {
+  query PostPageQuery($id: String) {
     mdx(id: { eq: $id }) {
       ...PostNode
       body
@@ -99,7 +100,7 @@ export default function({ data, pageContext }: Props) {
 
           <ul>
             {tags.map(tag => (
-              <li key={tag}>{linkToTag(tag)}</li>
+              <li key={tag}><Tag name={tag} /></li>
             ))}
           </ul>
 
