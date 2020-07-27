@@ -2,7 +2,6 @@ package shipreq.webapp.server.snippet
 
 import net.liftweb.http.DispatchSnippet
 import scala.xml._
-import shipreq.base.util.Url
 import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.app.ServerConfig.Statcounter
@@ -49,7 +48,8 @@ object Analytics extends DispatchSnippet {
     )
 
   private def googleAnalytics(trackingId: String): Logic[Group] = {
-    val url = Global.analyticsProxy.reRoute(Url.Absolute("https://www.google-analytics.com/analytics.js"))
+    // www.google-analytics.com/analytics.js
+    val url = Global.analyticsProxy.masked("*(d3d3Lmdvb2dsZS1hbmFseXRpY3MuY29t)*/*(YW5hbHl0aWNzLmpz)*")
 
     // so that analytics from Scala.JS aren't lost
     val initGA = "window.ga=function(){ga.q.push(arguments)};ga.q=[]"
@@ -73,7 +73,8 @@ object Analytics extends DispatchSnippet {
   }
 
   private def statcounter(cfg: Statcounter): Logic[Group] = {
-    val url = Global.analyticsProxy.reRoute(Url.Absolute("https://www.statcounter.com/counter/counter.js"))
+    // www.statcounter.com/counter/counter.js
+    val url = Global.analyticsProxy.masked("*(d3d3LnN0YXRjb3VudGVyLmNvbQ)*/*(Y291bnRlcg)*/*(Y291bnRlci5qcw)*")
 
     val vars = Map[String, String](
       "sc_project"     -> cfg.project.toString,
