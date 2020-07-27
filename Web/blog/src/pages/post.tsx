@@ -16,17 +16,8 @@ import styled from "styled-components"
 export const pageQuery = graphql`
   query BlogPostQuery($id: String) {
     mdx(id: { eq: $id }) {
-      id
+      ...PostNode
       body
-      frontmatter {
-        title
-        slug
-        date
-        desc
-        twitter
-        reddit
-        tags
-      }
     }
   }
 `

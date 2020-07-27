@@ -121,12 +121,7 @@ module.exports = {
                 allMdx(sort: { order: DESC, fields: [frontmatter___date] }) {
                   edges {
                     node {
-                      frontmatter {
-                        title
-                        slug
-                        desc
-                        date
-                      }
+                      ...PostNode
                     }
                   }
                 }
