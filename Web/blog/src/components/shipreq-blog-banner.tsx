@@ -1,4 +1,5 @@
 import { Link as GatsbyLink } from "gatsby"
+import A from "./a"
 import R from "../utils/responsive"
 import React from "react"
 import ShipreqBanner from "./shipreq-banner"
@@ -30,9 +31,13 @@ const Title = styled.h1`
 
 export default function(): JSX.Element {
   return (
-    <Link to="/">
-      <ShipreqBanner width="100%" />
-      <Title>Blog</Title>
-    </Link>
+    <>
+      <A href="https://shipreq.com">
+        <ShipreqBanner width="100%" />
+      </A>
+      <Link to="/">
+        <Title>Blog</Title>
+      </Link>
+    </>
   )
 }

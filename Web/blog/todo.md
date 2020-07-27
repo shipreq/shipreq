@@ -1,5 +1,4 @@
 * hacker news link
-* link to app
 * about page
 
 * maybe...
