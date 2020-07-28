@@ -86,3 +86,19 @@ export const createPages: GatsbyNode["createPages"] = async ({ graphql, actions,
     })
   }
 }
+
+export const graphTypeDefs = `
+  type Mdx implements Node {
+    frontmatter: MdxFrontmatter
+  }
+  type MdxFrontmatter {
+    title  : String!
+    slug   : String!
+    date   : String!
+    desc   : String!
+    tags   : [String]!
+    twitter: String
+    reddit : String
+    hn     : String
+  }
+`
