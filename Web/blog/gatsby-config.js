@@ -120,7 +120,14 @@ module.exports = {
                 ) {
                   edges {
                     node {
-                      ...PostNode
+                      id
+                      frontmatter {
+                        date
+                        desc
+                        slug
+                        tags
+                        title
+                      }
                     }
                   }
                 }
