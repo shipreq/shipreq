@@ -1,19 +1,28 @@
-resource "aws_cloudfront_origin_access_identity" "web" {}
+data "aws_region" "s3" {}
 
 resource "aws_cloudfront_distribution" "web" {
   aliases             = [var.dns_domain]
   default_root_object = "index.html"
-  depends_on          = [aws_acm_certificate.web]
+  depends_on          = [aws_acm_certificate.web, aws_s3_bucket.web]
   enabled             = true
   is_ipv6_enabled     = true
   price_class         = var.cdn_price_class
   tags                = local.default_tags
 
   origin {
-    domain_name = aws_s3_bucket.web.bucket_regional_domain_name
-    origin_id   = local.cdn_origin_id
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.web.cloudfront_access_identity_path
+    origin_id = local.cdn_origin_id
+
+    # Temporary workaround for https://github.com/terraform-providers/terraform-provider-aws/issues/13393
+    # domain_name = aws_s3_bucket.web.website_endpoint
+    domain_name = "${var.s3_bucket_name}.s3-website-${data.aws_region.s3.name}.amazonaws.com"
+
+    # Custom origin with S3 website as source
+    # This ensures subdirectories redirect to their associated index.html
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 

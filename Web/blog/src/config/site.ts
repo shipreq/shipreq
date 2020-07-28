@@ -1,3 +1,4 @@
+import { hostname, s3_bucket, s3_region } from "./terraform"
 import { GoogleAnalytics, StatCounter } from "./types"
 
 const isProd: boolean = /prod/.test("" + process.env.ENV)
@@ -42,15 +43,20 @@ const statCounter: StatCounter | null =
 
 const Year = new Date().getFullYear()
 
+if (isProd)
+  console.log(`Terraform settings: [${hostname}] via S3 bucket [${s3_bucket}] @ [${s3_region}]`)
+
 export default {
   isProd,
   isDev,
 
   title: "ShipReq Blog",
 
-  siteUrl: "https://blog.shipreq.com",
+  hostname,
 
-  cardImageUrl: "https://blog.shipreq.com/static/ab7f7f3a4df0120151227c3bbb6eed6e/logo-title-1024.png",
+  siteUrl: `https://${hostname}`,
+
+  cardImageUrl: `https://${hostname}/static/ab7f7f3a4df0120151227c3bbb6eed6e/logo-title-1024.png`,
 
   copyright1: `© 2013-${Year} Bearded Logic.`,
   copyright2: "All rights reserved.",
@@ -102,4 +108,8 @@ export default {
     },
   },
 
+  s3: {
+    bucket: s3_bucket,
+    region: s3_region,
+  },
 };

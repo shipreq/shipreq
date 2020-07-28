@@ -151,5 +151,16 @@ module.exports = {
       },
     },
 
+    // =============================================================================================
+    {
+      resolve: "gatsby-plugin-s3",
+      options: {
+        bucketName: siteMetadata.s3.bucket,
+        region    : siteMetadata.s3.region,
+        protocol  : 'https',
+        hostname  : siteMetadata.hostname,
+      },
+    },
+
   ].filter(o => !!o),
 }

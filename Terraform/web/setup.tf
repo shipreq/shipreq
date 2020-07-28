@@ -1,5 +1,5 @@
 provider "aws" {
-  region  = "ap-southeast-2"
+  region  = "ap-southeast-2" // Comment for blog/gatsy-config.ts
   version = "~> 2.70"
 }
 
