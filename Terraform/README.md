@@ -24,6 +24,9 @@ Overview
 * `dev` - Terraform to setup a ShipReq dev environment.
           Depends on `init` and `global`.
 
+* `web` - Terraform to setup static websites like `blog.shipreq.com`
+          Depends on `init` and `global`.
+
 
 Initial Setup
 =============

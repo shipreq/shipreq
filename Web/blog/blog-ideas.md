@@ -4,3 +4,5 @@
 * scalajs-react SSR
 
 * Docker cache-from stupidity ( d595f2047a3491e6574bc696c12d6aa0ae19d9c2 )
+
+* terraform: my ec2-{sd,ebs} modules?
