@@ -4,8 +4,6 @@ const siteMetadata = require("./src/config/site").default
 const routes = require("./src/utils/routes")
 const { isProd } = siteMetadata
 
-const compressExts = ['css', 'html', 'js', 'svg', 'xml']
-
 module.exports = {
   siteMetadata,
 
@@ -108,7 +106,6 @@ module.exports = {
       },
     },
 
-
     // =============================================================================================
     {
       resolve: `gatsby-plugin-feed`,
@@ -144,23 +141,6 @@ module.exports = {
             title: siteMetadata.title,
           },
         ],
-      },
-    },
-
-    // =============================================================================================
-    isProd && {
-      resolve: 'gatsby-plugin-brotli',
-      options: {
-        extensions: compressExts,
-      },
-    },
-
-
-    // =============================================================================================
-    isProd && {
-      resolve: 'gatsby-plugin-zopfli',
-      options: {
-        extensions: compressExts,
       },
     },
 

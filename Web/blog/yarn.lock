@@ -955,13 +955,6 @@
   resolved "https://registry.yarnpkg.com/@emotion/unitless/-/unitless-0.7.5.tgz#77211291c1900a700b8a78cfafda3160d76949ed"
   integrity sha512-OWORNpfjMsSSUBVrRBVGECkhWcULOAJz9ZW8uK9qgxD+87M7jHRcvh/A96XXNhXTLmKcoYSQtBEX7lHMO7YRwg==
 
-"@gfx/zopfli@^1.0.14":
-  version "1.0.14"
-  resolved "https://registry.yarnpkg.com/@gfx/zopfli/-/zopfli-1.0.14.tgz#52319e9bce0482f03ff02845e13fd95bb0ec7152"
-  integrity sha512-3BuC4gWCvNz5fd2VdVSOQegtv1lTGT8DUTuqvE6M16uAjgBod+vhHCXTlKMtZA4s2+z3IDAgQm/k3RkhYNodiA==
-  dependencies:
-    base64-js "^1.3.0"
-
 "@graphql-tools/schema@^6.0.11":
   version "6.0.15"
   resolved "https://registry.yarnpkg.com/@graphql-tools/schema/-/schema-6.0.15.tgz#b016f9f36820342982887a291baa7e7d11b039ae"
@@ -2721,7 +2714,7 @@ base64-arraybuffer@0.1.5:
   resolved "https://registry.yarnpkg.com/base64-arraybuffer/-/base64-arraybuffer-0.1.5.tgz#73926771923b5a19747ad666aa5cd4bf9c6e9ce8"
   integrity sha1-c5JncZI7Whl0etZmqlzUv5xunOg=
 
-base64-js@^1.0.2, base64-js@^1.1.2, base64-js@^1.3.0:
+base64-js@^1.0.2:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.3.1.tgz#58ece8cb75dd07e71ed08c736abc5fac4dbf8df1"
   integrity sha512-mLQ4i2QO1ytvGWFWmcngKO//JXAQueZvwEKtjgQFM4jIK0kU+ytMfplL8j+n5mspOfjHwoAg+9yhb7BwAHm36g==
@@ -2999,13 +2992,6 @@ brorand@^1.0.1:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/brorand/-/brorand-1.1.0.tgz#12c25efe40a45e3c323eb8675a0a0ce57b22371f"
   integrity sha1-EsJe/kCkXjwyPrhnWgoM5XsiNx8=
-
-brotli@^1.3.2:
-  version "1.3.2"
-  resolved "https://registry.yarnpkg.com/brotli/-/brotli-1.3.2.tgz#525a9cad4fcba96475d7d388f6aecb13eed52f46"
-  integrity sha1-UlqcrU/LqWR119OI9q7LE+7VL0Y=
-  dependencies:
-    base64-js "^1.1.2"
 
 browserify-aes@^1.0.0, browserify-aes@^1.0.4:
   version "1.2.0"
@@ -6252,16 +6238,6 @@ gatsby-page-utils@^0.2.19:
     lodash "^4.17.15"
     micromatch "^3.1.10"
 
-gatsby-plugin-brotli@^1.3.1:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/gatsby-plugin-brotli/-/gatsby-plugin-brotli-1.3.1.tgz#419941de7925359f33321d5b10d179e906d8a753"
-  integrity sha512-0oxwJqO8sSfyWJEBaaiUvf/j3ASgbBrorod9vCIhycBRsaejdpfQz4YEHKgd/fBfHivtDIP7PKi6nTKvDUZ5/Q==
-  dependencies:
-    brotli "^1.3.2"
-    glob "^7.1.6"
-    mkdirp "^0.5.1"
-    worker-farm "^1.7.0"
-
 gatsby-plugin-catch-links@^2.3.11:
   version "2.3.11"
   resolved "https://registry.yarnpkg.com/gatsby-plugin-catch-links/-/gatsby-plugin-catch-links-2.3.11.tgz#6a61a126a2ffcc3b155a1647123eb069a0b9e5d6"
@@ -6466,16 +6442,6 @@ gatsby-plugin-typography@^2.5.10:
   integrity sha512-5ds0l4oOAZpe8XDxcfQOaR5LDIJ5VN/tIwr2KqD5NOukOFpQ0aayvH8tDp3M+gT63VibiW0f+eCxtvpjYIfpDg==
   dependencies:
     "@babel/runtime" "^7.10.3"
-
-gatsby-plugin-zopfli@^1.3.2:
-  version "1.3.2"
-  resolved "https://registry.yarnpkg.com/gatsby-plugin-zopfli/-/gatsby-plugin-zopfli-1.3.2.tgz#712e390c1e3200702e942664e17a4a20bd1b6208"
-  integrity sha512-sJX1UKWxDYxUzfMqPWok1+hlBnjUSConWhbBytR5Tie9v9xaYkjSY5nk8/alrlIgIVun/OEw+iMDpne9+Bu20w==
-  dependencies:
-    "@gfx/zopfli" "^1.0.14"
-    glob "^7.1.4"
-    mkdirp "^0.5.1"
-    worker-farm "^1.7.0"
 
 gatsby-react-router-scroll@^3.0.12:
   version "3.0.12"
