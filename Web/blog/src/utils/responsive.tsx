@@ -1,4 +1,11 @@
-import media from "styled-media-query"
+import { generateMedia } from "styled-media-query"
+
+const media = generateMedia({
+  small : '450px',
+  medium: '853px', // default was 768px
+  large : '1170px',
+  huge  : '1440px',
+})
 
 export default {
 

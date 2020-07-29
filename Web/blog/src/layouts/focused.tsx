@@ -56,10 +56,10 @@ const Container = styled.div`
   `}
 
   ${R.phone`
-    padding: 0.5rem;
+    padding: 0.8rem;
   `}
   ${R.phoneWide`
-    padding: 1rem;
+    padding: 0.8rem;
   `}
   ${R.tablet`
     padding: 1rem;

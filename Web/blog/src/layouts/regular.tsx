@@ -56,12 +56,12 @@ const Container = styled.div`
   `}
 
   ${R.phone`
-    padding: 0.5rem;
+    padding: 0.8rem;
   `}
   ${R.phoneWide`
-    row-gap: 1rem;
-    column-gap: 2rem;
-    padding: 1rem;
+    row-gap: 0.8rem;
+    column-gap: 1.6rem;
+    padding: 0.8rem;
   `}
   ${R.tablet`
     column-gap: 2.4rem;

@@ -34,7 +34,7 @@ clean:
 	@echo
 
 dev:
-	$(GATSBY) develop
+	$(GATSBY) develop --host 0.0.0.0
 
 build-dev:
 	$(GATSBY) build
@@ -45,7 +45,7 @@ build-prod:
 	@echo
 
 prod: build-prod
-	$(GATSBY) serve
+	$(GATSBY) serve --host 0.0.0.0
 
 watch-prod: clean
 	git ls-files | entr -cr make build-prod
