@@ -29,15 +29,15 @@ resource "aws_cloudfront_distribution" "web" {
   default_cache_behavior {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    default_ttl            = 3600
-    max_ttl                = 86400
-    min_ttl                = 0
+    compress               = false    # Doing it myself
+    default_ttl            = 31536000 # 1 yr cos we do an invalidation on publish
+    max_ttl                = 31536000 # 1 yr cos we do an invalidation on publish
+    min_ttl                = 31536000 # 1 yr cos we do an invalidation on publish
     target_origin_id       = local.cdn_origin_id
     viewer_protocol_policy = "redirect-to-https"
 
     forwarded_values {
-      query_string = false
+      query_string = true
       cookies {
         forward = "none"
       }
@@ -52,7 +52,7 @@ resource "aws_cloudfront_distribution" "web" {
 
   viewer_certificate {
     acm_certificate_arn      = aws_acm_certificate.web.arn
-    minimum_protocol_version = "TLSv1.2_2018"
+    minimum_protocol_version = "TLSv1.2_2019"
     ssl_support_method       = "sni-only"
   }
 
