@@ -116,7 +116,7 @@ familiar with <ScalaJS/> cross-projects in SBT. Thus I'll simply say,
 create a new cross-project in SBT that looks like this:
 
 ```scala
-val scalaGraalVer = "0.5.0"
+val scalaGraalVer = "1.0.0"
 
 lazy val webappSsr =
   crossProject("webapp-ssr")
@@ -125,7 +125,7 @@ lazy val webappSsrJs = webappSsr.js
   .dependsOn(myScalaJsWebapp) // change this to your real SJS module name(s)
   .settings(
     libraryDependencies ++= Seq(
-      "com.github.japgolly.scala-graal" %%% "core"          % scalaGraalVer,
+      "com.github.japgolly.scala-graal" %%% "core-js"       % scalaGraalVer,
       "com.github.japgolly.scala-graal" %%% "ext-boopickle" % scalaGraalVer
     ),
     scalaJSLinkerConfig ~= { _.withSourceMap(false) },
@@ -137,7 +137,7 @@ lazy val webappSsrJvm = webappSsr.jvm
   .settings(
     libraryDependencies ++= Seq(
       "com.github.japgolly.scala-graal" %% "core"          % scalaGraalVer,
-      "com.github.japgolly.scala-graal" %% "util"          % scalaGraalVer,
+      "com.github.japgolly.scala-graal" %% "core-js"       % scalaGraalVer,
       "com.github.japgolly.scala-graal" %% "ext-boopickle" % scalaGraalVer
     ),
     unmanagedResources in Compile += Def.taskDyn {
@@ -275,7 +275,7 @@ Let's start by creating a file in `webapp-ssr/jvm/src/main/scala`:
 
 ```scala
 import japgolly.scalagraal._
-import japgolly.scalagraal.util.ReactSsr
+import japgolly.scalagraal.js._
 
 object MySsr {
   import GraalBoopickle._
@@ -326,7 +326,7 @@ We'll start off with the easiest, but naive, method.
 
 ```scala
   def doIt(input: MySpaInputs): Expr.Result[String] = {
-    val ctx = ContextSync.newContextPerUse()
+    val ctx = GraalContext()
     ctx.eval(setup >> renderMySpa)
   }
 ```
@@ -341,12 +341,15 @@ Let's unpack this.
 
 * We're creating a "context". In order to execute your JS, you need a little stateful
   sandbox for it. When React loads, it modifies the global state to make globals like `React`
-  and `ReactDOMServer` available. Here we're using `ContextSync.newContextPerUse`
-  which will create a new context (stateful sandbox) on each call to `.eval`, and then
-  discard it.
+  and `ReactDOMServer` available. Here we're creating a `GraalContext`
+  which will give us our stateful sandbox.
 
-* The `Sync` in `ContextSync` means we interact with the context is a synchronous manner. <SG/>
-  provides asynchronous versions as well.
+* There are a number of different ways to create GraalContexts.
+  The default `GraalContext()` is the same as `GraalContext.fixedContext()` meaning that
+  a single (fixed) context will be created and reused for all `.eval` calls.
+  It also means that if evaluate an expression that modifies global state, future `.eval`
+  calls will be affected.
+  Check out the <SG/> doc if you want an asynchronous version or different semantics.
 
 > Note: if you're rendering an SPA, it needs to know which route to render based on the URL.
 > Use `ReactSsr.setUrl` before rendering to set the URL. <br/>
@@ -363,7 +366,7 @@ because the env/context/sandbox is new and cold (just like cold vs hot JVMs).
 That's terribly inefficient so let's fix that by replacing the last snippet with this:
 
 ```scala
-  private val ctx = ContextSync.fixedContext()
+  private val ctx = GraalContext()
 
   private lazy val init: Expr.Result[Unit] =
     ctx.eval(setup)
