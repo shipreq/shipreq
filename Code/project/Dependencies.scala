@@ -200,7 +200,7 @@ object Dependencies {
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.5")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
-  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.3.1")
+  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.3.2")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.14")
   val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.13.2")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "4.0.1")
