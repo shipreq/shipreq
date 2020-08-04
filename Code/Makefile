@@ -49,7 +49,14 @@ rm_targets:
 	find . -name target -type d | egrep -v './project|frontend' | xargs rm -rfv
 
 since_prod:
-	git l $(PROD_REV).. .
+	@git log \
+	--format='%C(yellow)%h%Creset %ai %C(cyan)<%an>%Creset %s' \
+	$(PROD_REV).. \
+	-- \
+	. \
+	':(exclude,glob)**/*.md' \
+	':(exclude,glob)**/Makefile' \
+	':(exclude,glob)**/frontend/dist'
 
 watch_codebuild:
 	$(WATCH_CODEBUILD)
