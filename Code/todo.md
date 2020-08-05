@@ -45,7 +45,6 @@ v2.2
 
 ### Implement
 * KB shortcuts for fullscreen & monospace
-* further lighten the preview stripes, maybe even remove
 * I want an option to see `[MF-35: xxxxxxxxx]` instead of just `[MF-35]` in rich text
 * New form: alt-enter loses focus
 * Derivative tags

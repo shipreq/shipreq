@@ -331,7 +331,7 @@ object BaseStyles extends StyleSheet.Inline {
       case (Position.Under, EditTheme.Mode.Inline)     => styleS()
       case (Position.Under, EditTheme.Mode.Fullscreen) => styleS(height :=! fullscreenEditorAndPreviewHeight)
     },
-    (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.05)5ex,rgba(137,214,229,.05)10ex)").important,
+    (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.02)5ex,rgba(137,214,229,.02)10ex)").important,
     addClassNames("ui", "segments", "raised"),
   )}
 
