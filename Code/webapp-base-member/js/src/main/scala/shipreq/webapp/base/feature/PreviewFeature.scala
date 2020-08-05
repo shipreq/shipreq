@@ -286,7 +286,7 @@ object PreviewFeature {
           $.modStateOption {
             case Some(_: Manual) => None
             case _               => Some(None)
-          }.delayMs(100).toCallback // This delay is so that when EditTheme.OpenPreview is MinimallyWithControls and a
+          }.delayMs(100).toCallback // This delay is so that when EditControlsFeature.OpenPreview is MinimallyWithControls and a
                                     // user clicks move-right, there is enough time for the move-right button to receive
                                     // the click before the preview animates into non-existence.
 

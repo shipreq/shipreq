@@ -14,10 +14,9 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature.AutoCompleteFeature._
-import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus, PreviewFeature}
+import shipreq.webapp.base.feature.{AsyncFeature, EditControlsFeature, EditorStatus, PreviewFeature}
 import shipreq.webapp.base.lib.{KeyHandler, KeyboardTheme}
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -207,12 +206,12 @@ object UseCaseStepEditor {
 
     def render(p: Props) = {
       @inline def editorStyle =
-        EditTheme.Style.default
+        EditControlsFeature.Style.default
 
       def editor(enabled: Enabled, validity: Validity): VdomElement = {
-        val autosizeProps = EditTheme.autosizeTextareaProps(
+        val autosizeProps = EditControlsFeature.autosizeTextareaProps(
           position = None,
-          mode     = EditTheme.Mode.Inline,
+          mode     = EditControlsFeature.Mode.Inline,
           enabled  = enabled,
           validity = validity,
           value    = p.edit.value,
@@ -224,7 +223,7 @@ object UseCaseStepEditor {
       def richText =
         p.projectWidgets.useCaseStepTextAndMaybeInvalidFlow(p.parsed, hardcodedLive)
 
-      EditTheme.renderEditor(
+      EditControlsFeature.renderEditor(
         status          = p.status,
         editor          = editor,
         readOnlyView    = richText,
@@ -237,7 +236,7 @@ object UseCaseStepEditor {
     }
 
     val onMount: Callback =
-      EditTheme.onTextareaEditorMount(editorRef).toCallback
+      EditControlsFeature.onTextareaEditorMount(editorRef).toCallback
   }
 
   val Component =

@@ -9,11 +9,10 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags
-import shipreq.webapp.base.feature.PreviewFeature
+import shipreq.webapp.base.feature.{EditControlsFeature, PreviewFeature}
 import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.TextSearch
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 import shipreq.webapp.client.project.app.Style.{deletionForm => *}
 import shipreq.webapp.client.project.app.TestMarker
@@ -57,7 +56,7 @@ object DeletionForm {
         autoFocus          = true,
         commitFn           = None,
         commitVerb         = "",
-        editorStyle        = EditTheme.Style.default,
+        editorStyle        = EditControlsFeature.Style.default,
         preview            = PreviewFeature.ReadWrite.Single.alwaysShow,
         preEditValue       = None,
         extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,

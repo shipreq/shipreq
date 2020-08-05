@@ -4,10 +4,11 @@ import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Invalid, Valid}
+import shipreq.webapp.base.feature.EditControlsFeature
 import shipreq.webapp.base.feature.PreviewFeature.Position
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.JQuery
-import shipreq.webapp.base.ui.{BaseStyles, EditTheme}
 
 object CommonObs {
 
@@ -15,7 +16,7 @@ object CommonObs {
     val previewButtons             = BaseStyles.previewToggleWrapper2.selector + " button"
     val fullscreen                 = BaseStyles.fullscreen.selector
     val editorInvalid              = ".pointing.red.label"
-    val textEditorLeftPreviewRight = EditTheme.Mode.values.map(BaseStyles.textEditorLeftPreviewRight(_).selector).mkString(",")
+    val textEditorLeftPreviewRight = EditControlsFeature.Mode.values.map(BaseStyles.textEditorLeftPreviewRight(_).selector).mkString(",")
   }
 
   // ===================================================================================================================

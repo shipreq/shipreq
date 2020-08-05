@@ -9,11 +9,10 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.feature.AutoCompleteFeature._
-import shipreq.webapp.base.feature.EditorStatus
+import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
 import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme}
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
 import shipreq.webapp.base.text.SingleLine
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -178,9 +177,9 @@ object TagEditor {
           textareaConst,
           keys,
           ^.autoFocus  := p.autoFocus)
-        val autosizeProps = EditTheme.autosizeTextareaProps(
-          position = Some(EditTheme.Style.default.position),
-          mode     = EditTheme.Mode.Inline,
+        val autosizeProps = EditControlsFeature.autosizeTextareaProps(
+          position = Some(EditControlsFeature.Style.default.position),
+          mode     = EditControlsFeature.Mode.Inline,
           enabled  = Enabled,
           validity = validity,
           value    = p.edit.value,
@@ -202,11 +201,11 @@ object TagEditor {
             monospace = None,
           ))
 
-      EditTheme.renderEditor(p.status, editor, p.edit.value, instructions)
+      EditControlsFeature.renderEditor(p.status, editor, p.edit.value, instructions)
     }
 
     val onMount: Callback =
-      EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback >>
+      EditControlsFeature.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback >>
         trigger(ta => Some(ta.value))
   }
 

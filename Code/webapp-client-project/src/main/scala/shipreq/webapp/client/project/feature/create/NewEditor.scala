@@ -10,7 +10,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.client.project.feature.create.Feature.{AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
@@ -64,10 +63,10 @@ object NewEditor {
 
     final val ShowInstructions = true
 
-    val editorStyle = EditTheme.Style(
+    val editorStyle = EditControlsFeature.Style(
       PreviewFeature.Position.Under,
-      EditTheme.OpenPreview.WhenWanted,
-      EditTheme.WhenInTransit.DisableEditor, // else buttons move up & down jarringly
+      EditControlsFeature.OpenPreview.WhenWanted,
+      EditControlsFeature.WhenInTransit.DisableEditor, // else buttons move up & down jarringly
     )
   }
 

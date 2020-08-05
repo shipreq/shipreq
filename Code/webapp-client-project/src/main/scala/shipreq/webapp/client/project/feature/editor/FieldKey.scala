@@ -6,10 +6,9 @@ import scalaz.~~>
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
-import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.feature.{AsyncFeature, EditControlsFeature}
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text.Text
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.lib.DataReusability._
 
@@ -99,7 +98,7 @@ object FieldKey {
   }
 
   final case class CustomTextField(field: CustomField.Text.Id) extends ForAllReqs {
-    override type Args = EditTheme.Style
+    override type Args = EditControlsFeature.Style
     override type Change = Text.CustomTextField.OptionalText
     override type RenderFieldKey = RenderFeature.FieldKey.CustomTextField
     override def forRender = RenderFeature.FieldKey.CustomTextField(field)

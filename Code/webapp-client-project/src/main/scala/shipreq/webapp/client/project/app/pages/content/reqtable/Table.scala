@@ -12,10 +12,10 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
-import shipreq.webapp.base.feature.{AsyncFeature, DragToReorderFeature, TableNavigationFeature}
+import shipreq.webapp.base.feature.{AsyncFeature, DragToReorderFeature, EditControlsFeature, TableNavigationFeature}
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.base.ui.{EditTheme, semantic}
+import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 import shipreq.webapp.client.project.feature.SavedViewFeature.{ColumnLogic, ColumnPlus}
@@ -294,7 +294,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
 
       def renderLocked = {
         val colCells = mkColumnCells(nopEditorFor)
-        rowBase(selBase(EditTheme.spinner), colCells)
+        rowBase(selBase(EditControlsFeature.spinner), colCells)
       }
 
       p.rowAsync match {
@@ -499,7 +499,7 @@ object Table {
 
   val editorArgs =
     FieldKey.allArgs(
-      customTextField = EditTheme.Style.default.copy(openPreview = EditTheme.OpenPreview.MinimallyWithControls),
+      customTextField = EditControlsFeature.Style.default.copy(openPreview = EditControlsFeature.OpenPreview.MinimallyWithControls),
       useCaseStep     = FieldKey.UseCaseStep.Args.empty,
     )
 }

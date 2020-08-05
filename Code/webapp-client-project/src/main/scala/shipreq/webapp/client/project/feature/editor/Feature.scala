@@ -9,7 +9,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
 import shipreq.webapp.base.text.ProjectText
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -368,7 +367,7 @@ object Feature {
         * impure
         */
       def themedRenderOr(args: A)(view: => TagMod): TagMod =
-        renderOr(args)(TagMod(EditTheme.editableInline(startEdit), view))
+        renderOr(args)(TagMod(EditControlsFeature.editableInline(startEdit), view))
 
       /** Enable an editor so that the user can edit a portion of data.
         *

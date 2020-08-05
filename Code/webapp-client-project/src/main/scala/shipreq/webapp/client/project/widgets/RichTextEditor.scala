@@ -11,12 +11,12 @@ import shipreq.webapp.base.data
 import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.data.{Optional => _, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
-import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
+import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus, PreviewFeature}
 import shipreq.webapp.base.jsfacade.ScrollIntoViewIfNeeded
 import shipreq.webapp.base.lib.{ConfirmJs, KeyHandlers, KeyboardTheme, TaskRepeater}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.{EditTheme, OptionalFullscreen}
+import shipreq.webapp.base.ui.OptionalFullscreen
 import shipreq.webapp.base.util.PreProcessor
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -42,7 +42,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val status            : EditorStatus
     val wantPreview       : Boolean
     val autoFocus         : Boolean
-    val editorStyle       : EditTheme.Style
+    val editorStyle       : EditControlsFeature.Style
     val optionalFullscreen: Option[OptionalFullscreen]
 
     def validated: PotentialChange[Any, Any]
@@ -75,7 +75,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                       autoFocus         : Boolean,
                       commitFn          : Option[Optional.CommitFn],
                       commitVerb        : String,
-                      editorStyle       : EditTheme.Style,
+                      editorStyle       : EditControlsFeature.Style,
                       preview           : PreviewFeature.ReadWrite.Single,
                       preEditValue      : Option[text.OptionalText],
                       extraKbShortcuts  : KeyboardTheme.Shortcuts,
@@ -111,7 +111,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                       autoFocus         : Boolean,
                       commitFn          : Option[NonEmpty.CommitFn],
                       commitVerb        : String,
-                      editorStyle       : EditTheme.Style,
+                      editorStyle       : EditControlsFeature.Style,
                       preview           : PreviewFeature.ReadWrite.Single,
                       preEditValue      : Option[text.NonEmptyText],
                       extraKbShortcuts  : KeyboardTheme.Shortcuts,
@@ -145,7 +145,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
   val potentialValueAcceptor: PotentialValueAcceptor[String] =
     PotentialValueAcceptor.correct(liveCorrect)
 
-  private val layoutPosition: EditTheme.Layout => Option[PreviewFeature.Position] =
+  private val layoutPosition: EditControlsFeature.Layout => Option[PreviewFeature.Position] =
     text.lineCardinality match {
       case SingleLine => _.position
       case MultiLine  => _.positionIfShown
@@ -205,7 +205,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
     private def _render(p: Props, s: State, optionalFullscreen: Option[OptionalFullscreen]): VdomNode = {
 
-      def editor(layout: EditTheme.Layout, enabled: Enabled, validity: Validity): VdomElement = {
+      def editor(layout: EditControlsFeature.Layout, enabled: Enabled, validity: Validity): VdomElement = {
         val keys = keyHandlerBase(p.extraKbShortcuts.keyHandlers)
 
         val base = TagMod(
@@ -213,7 +213,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
           keys,
           ^.autoFocus  := p.autoFocus)
 
-        val autosizeProps = EditTheme.autosizeTextareaProps(
+        val autosizeProps = EditControlsFeature.autosizeTextareaProps(
           mode     = layout.mode,
           position = layoutPosition(layout),
           enabled  = enabled,
@@ -253,7 +253,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
           case p2: NonEmpty => p.projectWidgets.text(text.toOptional(p2.richTextO), hardcodedLive, p.naTags, Mandatory)
         }
 
-      EditTheme.renderEditor(
+      EditControlsFeature.renderEditor(
         status             = p.status,
         optionalFullscreen = optionalFullscreen,
         editor             = editor,
@@ -269,7 +269,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
     val onMount: Callback =
       for {
-        _ <- EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
+        _ <- EditControlsFeature.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
         p <- $.props
         _ <- scrollIntoView.when_(p.autoFocus)
       } yield ()
@@ -297,8 +297,11 @@ object RichTextEditor {
 
   @Lenses
   final case class State(monospace: Boolean) {
-    val font: EditTheme.Font =
-      if (monospace) EditTheme.Font.Monospace else EditTheme.Font.Default
+    val font: EditControlsFeature.Font =
+      if (monospace)
+        EditControlsFeature.Font.Monospace
+      else
+        EditControlsFeature.Font.Default
   }
 
   private val preprocessor = {

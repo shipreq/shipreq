@@ -17,7 +17,7 @@ import shipreq.webapp.base.lib.{ConfirmJs, KeyboardTheme}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.{EditTheme, OptionalFullscreen}
+import shipreq.webapp.base.ui.OptionalFullscreen
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.feature.editor.Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -688,19 +688,19 @@ object NewEditor {
       import shipreq.webapp.base.text._
       import shipreq.webapp.client.project.widgets.RichTextEditor
 
-      case class AbstractArgs[A](style: A => EditTheme.Style, changeArg: A)
+      case class AbstractArgs[A](style: A => EditControlsFeature.Style, changeArg: A)
 
       object AbstractArgs {
-        def const(style: EditTheme.Style): AbstractArgs[Unit] =
+        def const(style: EditControlsFeature.Style): AbstractArgs[Unit] =
           apply(_ => style, ())
 
         val constDefault: AbstractArgs[Unit] =
-          const(EditTheme.Style.default)
+          const(EditControlsFeature.Style.default)
 
-        val dynamicStyle: AbstractArgs[EditTheme.Style] =
+        val dynamicStyle: AbstractArgs[EditControlsFeature.Style] =
           apply(
             identity,
-            EditTheme.Style.default) // <-- doesn't affect change calculation
+            EditControlsFeature.Style.default) // <-- doesn't affect change calculation
       }
 
       abstract class Base[T <: Text.Generic, A](val editor: RichTextEditor[T], aa: AbstractArgs[A]) extends ForChangeType {

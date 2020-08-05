@@ -4,11 +4,12 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import shipreq.webapp.base.feature.EditControlsFeature
 import shipreq.webapp.base.lib.KeyHandler._
 import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.ui.BaseStyles.{editorInstructions => *}
+import shipreq.webapp.base.ui.OptionalFullscreen
 import shipreq.webapp.base.ui.semantic.Icon
-import shipreq.webapp.base.ui.{EditTheme, OptionalFullscreen}
 
 /**
   * Keyboard functionality consistent throughout the entire app.
@@ -152,7 +153,7 @@ object KeyboardTheme {
           TagMod.Composite(rendered)
         }
 
-      val mode = EditTheme.Mode.derive(fullscreen)
+      val mode = EditControlsFeature.Mode.derive(fullscreen)
 
       <.div(*.container(mode), content)
     }
