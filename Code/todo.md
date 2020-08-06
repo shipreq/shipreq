@@ -45,7 +45,6 @@ v2.2
 
 ### Implement
 * Derivative tags
-* Dual clipboard formats: one for ShipReq, one for everywhere else. Exclude ref titles from ShipReq version.
 * RedisProtocolTest when done
 
 
@@ -89,6 +88,8 @@ Backlog (eventually)
 * Tag/Implication Browser (aka Distribution manager/console)
 
 ### Functional changes
+* Dual clipboard formats: one for ShipReq, one for everywhere else. Exclude ref titles from ShipReq version.
+  (waiting for Chrome/FF to implement https://www.w3.org/TR/clipboard-apis; Currently only text/plain & image/png supported.)
 * big long (SVG) code blocks take over the screen. Preview not visible anymore when editing.
 * support all kinds of URL schemes in WebAddress (maybe - what considerations are necessary? security?)
 * Bug: field editor doesn't fit (and no scroll) when window is left 50% of screen
