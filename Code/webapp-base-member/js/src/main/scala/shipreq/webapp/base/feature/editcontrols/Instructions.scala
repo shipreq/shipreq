@@ -60,8 +60,8 @@ object Instructions {
   private val comma         : TagMod  = ","
   private val fullStop      : TagMod  = "."
   private val helpIcon      : VdomTag = Icon.HelpCircle.tag(*.icon, ^.title := "help")
-  private val fullscreenIcon: VdomTag = Icon.Maximize.tag(*.icon, ^.title := "fullscreen")
-  private val monospaceIcon : VdomTag = Icon.TextWidth.tag(*.icon, ^.title := "use monospace font")
+  private val fullscreenIcon: VdomTag = Icon.Maximize.tag(*.icon, ^.title := s"zen-mode / fullscreen\n(${Keys.fullscreen.desc})")
+  private val monospaceIcon : VdomTag = Icon.TextWidth.tag(*.icon, ^.title := s"toggle monospace font\n(${Keys.monospace.desc})")
 
   private val renderAtom: Atom => TagMod = {
     case Vdom(v)    => v

@@ -22,4 +22,8 @@ object Keys {
    */
   @inline def commitAndProgress = AltEnter
 
+  @inline def fullscreen = AltZ
+
+  @inline def monospace = AltT
+
 }

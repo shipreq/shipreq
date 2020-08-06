@@ -44,7 +44,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* KB shortcuts for fullscreen & monospace
 * I want an option to see `[MF-35: xxxxxxxxx]` instead of just `[MF-35]` in rich text
 * New form: alt-enter loses focus
 * Derivative tags

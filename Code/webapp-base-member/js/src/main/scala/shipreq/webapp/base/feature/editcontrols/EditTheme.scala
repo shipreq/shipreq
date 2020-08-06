@@ -17,7 +17,7 @@ private[feature] object EditTheme {
 
   def renderEditor(status            : EditorStatus,
                    optionalFullscreen: Option[OptionalFullscreen],
-                   editor            : (Layout, Enabled, Validity) => VdomElement,
+                   editor            : (Layout, Enabled, Option[OptionalFullscreen.Ctx], Validity) => VdomElement,
                    readOnlyView      : => VdomNode,
                    instructions      : Option[OptionalFullscreen.Ctx] => TagMod,
                    style             : Style,
@@ -38,7 +38,7 @@ private[feature] object EditTheme {
           )
 
         this.renderActive(
-          editorFn        = editor(_, enabled, _),
+          editorFn        = editor(_, enabled, fullscreen, _),
           defaultPosition = style.position,
           instructions    = modInstructions(instructions(fullscreen)),
           previewRW       = previewRW,

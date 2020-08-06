@@ -107,6 +107,8 @@ object KeyHandler {
     val Escape    = Criterion("esc",        EventType.KeyDown, KeyCode.Escape)
     val Enter     = Criterion("enter",      EventType.KeyDown, KeyCode.Enter)
     val AltEnter  = Criterion("alt-enter",  EventType.KeyDown, KeyCode.Enter, ModKey.Alt)
+    val AltT      = Criterion("alt-t",      EventType.KeyDown, KeyCode.T,     ModKey.Alt)
+    val AltZ      = Criterion("alt-z",      EventType.KeyDown, KeyCode.Z,     ModKey.Alt)
     val CtrlEnter = Criterion("ctrl-enter", EventType.KeyDown, KeyCode.Enter, ModKey.Ctrl)
     val CtrlSpace = Criterion("ctrl-space", EventType.KeyDown, KeyCode.Space, ModKey.Ctrl)
   }

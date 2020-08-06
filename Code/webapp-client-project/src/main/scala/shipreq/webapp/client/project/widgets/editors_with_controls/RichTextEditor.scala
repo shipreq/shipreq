@@ -211,9 +211,16 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
       }
 
     private def _render(p: Props, s: State, optionalFullscreen: Option[OptionalFullscreen]): VdomNode = {
+      val editControls = {
+        val e = this.editControls.withMonospace(StateSnapshot.zoomL(State.monospace)(s).setStateVia($))
+        (f: Option[OptionalFullscreen.Ctx]) => e.withFullscreenCtx(f)
+      }
 
-      def editor(layout: EditControlsFeature.Layout, enabled: Enabled, validity: Validity): VdomElement = {
-        val keys = keyHandlerBase(editControls.keyHandlers(p))
+      def editor(layout       : EditControlsFeature.Layout,
+                 enabled      : Enabled,
+                 fullscreenCtx: Option[OptionalFullscreen.Ctx],
+                 validity     : Validity): VdomElement = {
+        val keys = keyHandlerBase(editControls(fullscreenCtx).keyHandlers(p))
 
         val base = TagMod(
           textareaConst,
@@ -235,8 +242,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
       def instructions(fullscreenCtx: Option[OptionalFullscreen.Ctx]): TagMod =
         TagMod.when(p.showInstructions) {
-          val monospace = StateSnapshot.zoomL(State.monospace)(s).setStateVia($)
-          editControls.instructions(p, fullscreenCtx, Some(monospace))
+          editControls(fullscreenCtx).instructions(p)
         }
 
       def richText: VdomTag =

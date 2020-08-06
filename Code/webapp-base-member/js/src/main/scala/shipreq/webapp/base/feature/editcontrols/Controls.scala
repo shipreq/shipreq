@@ -105,9 +105,9 @@ object Controls {
     }
 
     def addDynamicExtras(f: P => ExtraControls): ExtraDynamic[P] =
-      new ExtraDynamic(this, f)
+      new ExtraDynamic(this, f, None, None)
 
-    // ===================================================================================================================
+    // =================================================================================================================
 
     def keyHandlersPure(p: P): KeyHandlers =
       keyHandlers(CallbackTo.pure(p))
@@ -120,11 +120,8 @@ object Controls {
       k
     }
 
-    def instructions(p         : P,
-                     fullscreen: Option[OptionalFullscreen.Ctx] = None,
-                     monospace : Option[StateSnapshot[Boolean]] = None,
-                    ): VdomTag =
-      _instructions(p, fullscreen, monospace, ExtraControls.empty)
+    def instructions(p: P): VdomTag =
+      _instructions(p, None, None, ExtraControls.empty)
 
     private[Controls] def _instructions(p         : P,
                                         fullscreen: Option[OptionalFullscreen.Ctx],
@@ -147,21 +144,40 @@ object Controls {
     }
   }
 
-  // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  final class ExtraDynamic[P](standard: Standard[P],
-                              extras: P => ExtraControls) {
+  final class ExtraDynamic[P](standard  : Standard[P],
+                              extras    : P => ExtraControls,
+                              fullscreen: Option[OptionalFullscreen.Ctx],
+                              monospace : Option[StateSnapshot[Boolean]],
+                             ) { self =>
+
+    private def copy(standard  : Standard[P]                    = self.standard,
+                     extras    : P => ExtraControls             = self.extras,
+                     fullscreen: Option[OptionalFullscreen.Ctx] = self.fullscreen,
+                     monospace : Option[StateSnapshot[Boolean]] = self.monospace,
+                    ): ExtraDynamic[P] =
+      new ExtraDynamic(standard, extras, fullscreen, monospace)
 
     def addExtra(f: P => ExtraControls): ExtraDynamic[P] =
-      new ExtraDynamic[P](standard, p => extras(p) ++ f(p))
+      copy(extras = p => extras(p) ++ f(p))
 
-    def keyHandlers(p: P): KeyHandlers =
-      standard.keyHandlersPure(p) ++ extras(p).keys
+    def withFullscreenCtx(f: Option[OptionalFullscreen.Ctx]): ExtraDynamic[P] =
+      copy(fullscreen = f)
 
-    def instructions(p         : P,
-                     fullscreen: Option[OptionalFullscreen.Ctx] = None,
-                     monospace : Option[StateSnapshot[Boolean]] = None,
-                    ): VdomTag =
+    def withMonospace(ss: StateSnapshot[Boolean]): ExtraDynamic[P] =
+      copy(monospace = Some(ss))
+
+    def keyHandlers(p: P): KeyHandlers = {
+      var k = standard.keyHandlersPure(p) ++ extras(p).keys
+      for (f <- fullscreen)
+        k += Keys.fullscreen.handle(f.toggleFullscreen)
+      for (ss <- monospace)
+        k += Keys.monospace.handle(ss.modState(!_))
+      k
+    }
+
+    def instructions(p: P): VdomTag =
       standard._instructions(p, fullscreen, monospace, extras(p))
   }
 }

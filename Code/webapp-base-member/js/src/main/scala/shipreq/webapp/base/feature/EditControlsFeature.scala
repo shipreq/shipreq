@@ -120,7 +120,7 @@ object EditControlsFeature {
     renderEditor(
       status             = status,
       optionalFullscreen = None,
-      editor             = (_, e, v) => editor(e, v),
+      editor             = (_, e, _, v) => editor(e, v),
       readOnlyView       = readOnlyView,
       instructions       = _ => instructions,
       style              = style,
@@ -133,7 +133,7 @@ object EditControlsFeature {
   /** full */
   def renderEditor(status            : EditorStatus,
                    optionalFullscreen: Option[OptionalFullscreen],
-                   editor            : (Layout, Enabled, Validity) => VdomElement,
+                   editor            : (Layout, Enabled, Option[OptionalFullscreen.Ctx], Validity) => VdomElement,
                    readOnlyView      : => VdomNode,
                    instructions      : Option[OptionalFullscreen.Ctx] => TagMod,
                    style             : Style,

@@ -61,7 +61,7 @@ object EditThemeTest extends TestSuite {
     EditControlsFeature.renderEditor(
       status             = status,
       optionalFullscreen = fullscreen,
-      editor             = editor,
+      editor             = (l, e, _, v) => editor(l, e, v),
       readOnlyView       = "{readOnlyView}",
       instructions       = _ => "{instructions}",
       style              = style,
