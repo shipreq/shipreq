@@ -729,10 +729,13 @@ object RandomData {
         plus.foldLeft[List[Gen.Freq[t.Atom]]](Nil)((q, o) =>
           o.fold(q)(g => (9, g) :: q)): _*)
 
+    val displayReqRef: Gen[DisplayReqRef] =
+      Gen.chooseNE(adtValues[DisplayReqRef])
+
     def reqAndCodeRefs(r: Option[Gen[ReqId]], c: Option[Gen[ReqCodeId]])(implicit t: ContentRef): List[Gen[t.Atom]] = {
       var result = List.empty[Gen[t.Atom]]
-      r.foreach(result ::= _ map t.ReqRef)
-      c.foreach(result ::= _ map t.CodeRef)
+      r.foreach(result ::= Gen.lift2(_, displayReqRef)(t.ReqRef(_, _)))
+      c.foreach(result ::= Gen.lift2(_, displayReqRef)(t.CodeRef(_, _)))
       result
     }
 

@@ -139,8 +139,8 @@ object IssueDetectors {
 
     private def isRefLive(a: Atom.AnyContentRef, p: Project): Boolean =
       a match {
-        case r: Atom.ContentRef # ReqRef         => p.content.reqs.need(r.value).live(p.config.reqTypes).is(Live)
-        case r: Atom.ContentRef # CodeRef        => p.content.reqCodes.needById(r.value).isActive
+        case r: Atom.ContentRef # ReqRef         => p.content.reqs.need(r.id).live(p.config.reqTypes).is(Live)
+        case r: Atom.ContentRef # CodeRef        => p.content.reqCodes.needById(r.id).isActive
         case r: Atom.ContentRef # UseCaseStepRef => p.content.reqs.useCases.focusStep(r.value).live.is(Live)
       }
   }

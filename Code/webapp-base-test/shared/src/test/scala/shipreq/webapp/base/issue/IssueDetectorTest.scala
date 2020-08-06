@@ -11,6 +11,7 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._
+import shipreq.webapp.base.text.Atom.DisplayReqRef
 import shipreq.webapp.base.text.{Text => T}
 import sourcecode.Line
 import utest._
@@ -224,7 +225,7 @@ object IssueDetectorTest extends TestSuite {
     )()
 
     def inRcg() = test(p3)(
-      Event.CodeGroupUpdate(demoId, CodeGroupGD.ValueForTitle(ArraySeq(T.CodeGroupTitle.ReqRef(P3.frs(2))))),
+      Event.CodeGroupUpdate(demoId, CodeGroupGD.ValueForTitle(ArraySeq(T.CodeGroupTitle.ReqRef(P3.frs(2), DisplayReqRef.AsId)))),
       Event.ReqsDelete(NonEmptySet.one(P3.frs(2)), ∅, ∅),
     )(
       IssueLite.DeadRefInRcg(demoId, ContentRef.ReqRef(P3.frs(2)))
@@ -232,8 +233,8 @@ object IssueDetectorTest extends TestSuite {
 
     def toRcg() = test(p3)(
       ContentEventTestHelp.createRCG(987, "haha.boop"),
-      Event.GenericReqTitleSet(1001, ArraySeq(T.GenericReqTitle.CodeRef(987.RCG))),
-      Event.GenericReqTitleSet(1002, ArraySeq(T.GenericReqTitle.CodeRef(demoId))),
+      Event.GenericReqTitleSet(1001, ArraySeq(T.GenericReqTitle.CodeRef(987.RCG, DisplayReqRef.AsId))),
+      Event.GenericReqTitleSet(1002, ArraySeq(T.GenericReqTitle.CodeRef(demoId, DisplayReqRef.AsId))),
       Event.CodeGroupsDelete(NonEmptySet.one(demoId)),
     )(
       IssueLite.DeadRefInReq(1002, Location.Text.Title, ContentRef.CodeRef(demoId)),

@@ -455,19 +455,36 @@ object Atom {
     }
   }
 
+  sealed trait DisplayReqRef
+  object DisplayReqRef {
+    case object AsId         extends DisplayReqRef
+    case object AsIdAndTitle extends DisplayReqRef
+    implicit def univEq: UnivEq[DisplayReqRef] = UnivEq.derive
+
+    def memoLazy[A](f: DisplayReqRef => A): DisplayReqRef => A = {
+      lazy val a = f(AsId)
+      lazy val b = f(AsIdAndTitle)
+
+      {
+        case DisplayReqRef.AsId         => a
+        case DisplayReqRef.AsIdAndTitle => b
+      }
+    }
+  }
+
   trait ContentRef extends Base { self =>
     sealed trait ContentRef extends Atom {
       override final def exists(f: AnyAtom => Boolean) = f(this)
     }
 
     /** Reference to a requirement, like "UC-4". */
-    case class ReqRef(value: ReqId) extends self.ContentRef {
+    case class ReqRef(id: ReqId, display: DisplayReqRef) extends self.ContentRef {
       override final def isPlain = false
       override final def containsMultipleLines = false
     }
 
     /** Reference to a requirement via its [[ReqCode]]. */
-    case class CodeRef(value: ReqCodeId) extends self.ContentRef {
+    case class CodeRef(id: ReqCodeId, display: DisplayReqRef) extends self.ContentRef {
       override final def isPlain = false
       override final def containsMultipleLines = false
     }

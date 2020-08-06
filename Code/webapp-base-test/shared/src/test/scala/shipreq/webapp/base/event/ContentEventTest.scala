@@ -11,6 +11,7 @@ import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.test.UnsafeTypes.AutoNES._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.text.Atom.DisplayReqRef
 import shipreq.webapp.base.text.Text.{CodeGroupTitle, CustomTextField => CTF, GenericReqTitle => GRT, InlineIssueDesc => IID}
 import shipreq.webapp.base.text.{Grammar, Text}
 import utest._
@@ -92,15 +93,15 @@ object ContentEventTest extends TestSuite {
     }
 
   val createRefToCode3 = GenericReqCreate(500, mf, nev(
-    Title(GRT.nonEmpty(GRT.Literal("Ref to #3: "), GRT.CodeRef(3.ARC)))))
+    Title(GRT.nonEmpty(GRT.Literal("Ref to #3: "), GRT.CodeRef(3.ARC, DisplayReqRef.AsId)))))
 
   val createRefToCodeGroup3 = GenericReqCreate(500, mf, nev(
-    Title(GRT.nonEmpty(GRT.Literal("Ref to #3: "), GRT.CodeRef(3.RCG)))))
+    Title(GRT.nonEmpty(GRT.Literal("Ref to #3: "), GRT.CodeRef(3.RCG, DisplayReqRef.AsId)))))
 
   // As above but hides the ref in an IssueDesc
   val createRefToCodeGroup3I = GenericReqCreate(500, mf, nev(
     Title(GRT.nonEmpty(GRT.Issue(issueType1, IID(
-      IID.Literal("Ref to #3: "), IID.CodeRef(3.RCG)))))))
+      IID.Literal("Ref to #3: "), IID.CodeRef(3.RCG, DisplayReqRef.AsId)))))))
 
   val delA              = delGR(reqA)
   val delB              = delGR(reqB)
@@ -229,7 +230,7 @@ object ContentEventTest extends TestSuite {
 
         // 2.1: Create RCᵣ ref
         val createA = GenericReqCreate(reqA, mf, nev(
-          Title(GRT.nonEmpty(GRT.Literal("Ref to self: "), GRT.CodeRef(1.ARC))),
+          Title(GRT.nonEmpty(GRT.Literal("Ref to self: "), GRT.CodeRef(1.ARC, DisplayReqRef.AsId))),
           Codes(1 -> "a.b.c")))
         test(createA)("a.b.c: AD[#1Req(#a)]")
 
@@ -325,7 +326,7 @@ object ContentEventTest extends TestSuite {
 
         // 3a.2: Create refs to it
         val refs = GenericReqCreate(500, mf, nev(
-          Title(GRT.nonEmpty(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
+          Title(GRT.nonEmpty(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC, DisplayReqRef.AsId), GRT.CodeRef(1.ARC, DisplayReqRef.AsId)))))
         test(refs)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]")
 
         // 3a.3: Delete req a
@@ -366,7 +367,7 @@ object ContentEventTest extends TestSuite {
 
         // 3b.2: Create refs to it
         val refs = GenericReqCreate(500, mf, nev(
-          Title(GRT.nonEmpty(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
+          Title(GRT.nonEmpty(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC, DisplayReqRef.AsId), GRT.CodeRef(1.ARC, DisplayReqRef.AsId)))))
         test(refs)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]")
 
         // 3b.3: Merge refs
@@ -396,7 +397,7 @@ object ContentEventTest extends TestSuite {
 
         // 4.2: Create refs to some of it
         val refsA = GenericReqCreate(500, mf, nev(
-          Title(GRT.nonEmpty(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC), GRT.CodeRef(1.ARC)))))
+          Title(GRT.nonEmpty(GRT.Literal("Refs to #1 and #3: "), GRT.CodeRef(3.ARC, DisplayReqRef.AsId), GRT.CodeRef(1.ARC, DisplayReqRef.AsId)))))
         test(refsA)("one: AD[#1Req(#a)]", "three: AD[#3Req(#a)]", "other: AD[#2Req(#a)]")
 
         // 4.3: Merge refs
@@ -420,7 +421,7 @@ object ContentEventTest extends TestSuite {
 
         // 4.8: Create refs to some of B
         val refsB = GenericReqCreate(501, mf, nev(
-          Title(GRT.nonEmpty(GRT.Literal("Refs to #4 and #5: "), GRT.CodeRef(4.ARC), GRT.CodeRef(5.ARC)))))
+          Title(GRT.nonEmpty(GRT.Literal("Refs to #4 and #5: "), GRT.CodeRef(4.ARC, DisplayReqRef.AsId), GRT.CodeRef(5.ARC, DisplayReqRef.AsId)))))
         test(refsB)(
           "aaa: RR[#1Req(#a)]", "aaa: RR[#3Req(#a)]", "other: RR[#2Req(#a)]",
           "aaa: AD[#4Req(#b)]", "bbb: AD[#5Req(#b)]", "other: AD[#6Req(#b)]")

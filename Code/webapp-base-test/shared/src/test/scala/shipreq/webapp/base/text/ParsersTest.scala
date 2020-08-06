@@ -17,7 +17,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ApplicableTagGD, Event}
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.{ProjectDsl, SampleProject6 => SP, TextShrink, UnsafeTypes}
-import shipreq.webapp.base.text.Atom.{AnyAtom, CodeBlockDetail}
+import shipreq.webapp.base.text.Atom.{AnyAtom, CodeBlockDetail, DisplayReqRef}
 import shipreq.webapp.base.{RandomData => $}
 import sourcecode.Line
 import utest._
@@ -332,7 +332,7 @@ object ParsersTest extends TestSuite {
         "nl"      - test("here\nthere")(L("here"), T.blankLine, L("there"))
         "nls"     - test("here \n \n\n there")(L("here"), T.blankLine, L("there"))
         "listNL"  - test("ok\n\n\n*   hehe \n \n\n  \n *  yay \n\n\nbye")(L("ok"), T.UnorderedList(NEA(LI(L("hehe")), LI(L("yay")))), L("bye"))
-        "codeRef" - test("[ here . i . am_3 ]")(T.CodeRef(reqCode_hereiam3))
+        "codeRef" - test("[ here . i . am_3 ]")(T.CodeRef(reqCode_hereiam3, DisplayReqRef.AsId))
         "headNL"  - whitespaceCombos.foreach(w => test(w + "good")(T.Literal("good")))
         "tailNL"  - whitespaceCombos.foreach(w => test("good" + w)(T.Literal("good")))
         "ulStyle" - test("* //a //\n* //b //")(T.UnorderedList(NonEmptyArraySeq(
@@ -1023,7 +1023,7 @@ object ParsersTest extends TestSuite {
             H.Literal(" issue: "),
             H.Issue(1, I.empty),
             H.Literal(", ref: "),
-            H.ReqRef(frs(1)),
+            H.ReqRef(frs(1), DisplayReqRef.AsId),
           )),
           T.UnorderedList(NonEmptyArraySeq(ArraySeq.empty)),
           T.Heading1(NonEmptyArraySeq(H.Literal("h1"))),
@@ -1081,16 +1081,24 @@ object ParsersTest extends TestSuite {
         // should also test some invalid combinations
       }
 
+      "reqRefDisplay" - {
+        import DisplayReqRef._
+        "req" - test("[fr1:][fr 1 : ]")(T.ReqRef(frs(1), AsIdAndTitle), T.ReqRef(frs(1), AsIdAndTitle))
+        "code" - test("[here.i.am_3:][ here . i . am_3 : ]")(T.CodeRef(reqCode_hereiam3, AsIdAndTitle), T.CodeRef(reqCode_hereiam3, AsIdAndTitle))
+      }
+
       "altForms" - {
-        "req" - test("[fr1][fr 1][ fr - 2 ][Mf-1 ]")(T.ReqRef(frs(1)), T.ReqRef(frs(1)), T.ReqRef(frs(2)), T.ReqRef(mfs(1)))
+        import DisplayReqRef.AsId
+        "req" - test("[fr1][fr 1][ fr - 2 ][Mf-1 ]")(T.ReqRef(frs(1), AsId), T.ReqRef(frs(1), AsId), T.ReqRef(frs(2), AsId), T.ReqRef(mfs(1), AsId))
         "tag" - test("#wip#DEFER#V3.x")(T.TagRef(11), T.TagRef(12), T.TagRef(26))
         "issue" - test("#tbd{cool}#Todo#TBD { nice }")(
           T.Issue(2, I(I.Literal("cool"))), T.Issue(1, I.empty), T.Issue(2, I(I.Literal("nice"))))
       }
 
       "ambiguity" - {
-        "pubid" - test("[CO1][co-1]")(T.ReqRef(cos(1)), T.ReqRef(cos(1)))
-        "code"  - test("[co1][co2]")(T.CodeRef(reqCode_co1), T.CodeRef(reqCode_co2))
+        import DisplayReqRef.AsId
+        "pubid" - test("[CO1][co-1]")(T.ReqRef(cos(1), AsId), T.ReqRef(cos(1), AsId))
+        "code"  - test("[co1][co2]")(T.CodeRef(reqCode_co1, AsId), T.CodeRef(reqCode_co2, AsId))
       }
     }
 

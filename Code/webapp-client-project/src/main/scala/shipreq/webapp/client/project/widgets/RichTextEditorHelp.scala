@@ -13,16 +13,28 @@ object RichTextEditorHelp {
   private val references =
     Group("References")(
       Row(
-        "Requirements can be referenced by putting the ID inside square brackets.")(
-        "[FR-3]"),
+        "Requirements can be referenced by putting the ID inside square brackets.",
+        <.br, <.br,
+        "If you'd like the req title displayed outside of edit-mode, add a ", <.code(":"), " after the ID."
+      )(
+        "[FR-3]",
+        "[FR-3:]",
+      ),
 
       Row(
-        "Use case steps can be referenced by putting the use case ID and step number, inside square brackets.")(
+        "Use case steps can be referenced by putting the use case ID and step number, inside square brackets.",
+      )(
         "[UC-2.0.3.a]"),
 
       Row(
-        "Codes can be referenced by putting the code inside square brackets.")(
-        "[backend.backup.times]"))
+        "Codes can be referenced by putting the code inside square brackets.",
+        <.br, <.br,
+        "If you'd like the req title displayed outside of edit-mode, add a ", <.code(":"), " after the code."
+      )(
+        "[backend.backup.times]",
+        "[backend.backup.times:]",
+      ),
+    )
 
   private val issues =
     Group("Issues")(

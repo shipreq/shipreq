@@ -4,6 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import org.parboiled2._
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.text.Atom.DisplayReqRef
 import shipreq.webapp.base.text.Parsers.{StyleCtx, StyleType}
 import shipreq.webapp.base.text.{Atom => A, Parsers => P}
 
@@ -393,10 +394,10 @@ object Text {
              useCaseStepId: UseCaseStepId): NonEmptyArraySeq[NonEmptyText] =
       NonEmptyArraySeq(
         NonEmptyArraySeq(
-          Literal("Need to finish "), ReqRef(reqId),
+          Literal("Need to finish "), ReqRef(reqId, DisplayReqRef.AsId),
           Literal(", "), UseCaseStepRef(useCaseStepId),
-          Literal(", "), CodeRef(reqCodeIdA),
-          Literal(" and "), CodeRef(reqCodeIdG),
+          Literal(", "), CodeRef(reqCodeIdA, DisplayReqRef.AsIdAndTitle),
+          Literal(" and "), CodeRef(reqCodeIdG, DisplayReqRef.AsIdAndTitle),
         ),
         NonEmptyArraySeq(Literal("Ask "), EmailAddress("bob@gmail.com"), Literal(" about "), TeX("e=mc^2")))
   }
@@ -450,10 +451,10 @@ object Text {
              issue        : CustomIssueTypeId): NonEmptyText = {
 
       var uls = NonEmptyArraySeq[ListItem](
-        ArraySeq(Literal("Req: "), ReqRef(reqId)),
+        ArraySeq(Literal("Req: "), ReqRef(reqId, DisplayReqRef.AsIdAndTitle)),
         ArraySeq(Literal("UC Step Req: "), UseCaseStepRef(useCaseStepId)),
-        ArraySeq(Literal("Code: "), CodeRef(reqCodeIdA)),
-        ArraySeq(Literal("Code Group: "), CodeRef(reqCodeIdG)),
+        ArraySeq(Literal("Code: "), CodeRef(reqCodeIdA, DisplayReqRef.AsId)),
+        ArraySeq(Literal("Code Group: "), CodeRef(reqCodeIdG, DisplayReqRef.AsId)),
         ArraySeq(Literal("Tag: "), TagRef(tagId)),
         ArraySeq(Literal("Issue(∅): "), Issue(issue, ArraySeq.empty)))
       uls ++= InlineIssueDesc.demo(reqId, reqCodeIdA, reqCodeIdG, useCaseStepId).map(desc =>

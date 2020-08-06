@@ -12,6 +12,7 @@ import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil.verifiedEventsFromJson
+import shipreq.webapp.base.text.Atom.DisplayReqRef
 import shipreq.webapp.base.text.Text
 import sourcecode.Line
 import utest._
@@ -403,7 +404,7 @@ object ProjectSpaProtocolsTest extends TestSuite {
         "v1.0" - {
           "create" - {
             val bin    = BinaryData.fromHex("5945B41D01000B0863026C04617364207267000138295653")
-            val expect = (ReqId(11),UpdateManualIssues.AndReq(Create(nonEmpty(Literal("asd "), ReqRef(GenericReqId(1))))))
+            val expect = (ReqId(11),UpdateManualIssues.AndReq(Create(nonEmpty(Literal("asd "), ReqRef(GenericReqId(1), DisplayReqRef.AsId)))))
             assertRequest(bin, expect)
           }
           "delete" - {

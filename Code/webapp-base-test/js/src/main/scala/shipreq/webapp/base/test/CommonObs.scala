@@ -236,6 +236,9 @@ object CommonObs {
       final def abort: *.Actions =
         *.action(s"Abort $field editor")(KB.Escape simulateKeyDown _.obs.editor.get)
 
+      final def set(newValue: String): *.Actions =
+        (doubleClick >> setEditorValue(newValue) >> commit).group(s"Set $field field to '$newValue'")
+
       final def change(fromTo: (String, String)): *.Actions =
         (doubleClick
           +> editorValue.assert.contains(fromTo._1)

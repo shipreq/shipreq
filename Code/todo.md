@@ -44,8 +44,10 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* I want an option to see `[MF-35: xxxxxxxxx]` instead of just `[MF-35]` in rich text
 * Derivative tags
+* Use title when suggesting refs
+* Dual clipboard formats: one for ShipReq, one for everywhere else. Exclude ref titles from ShipReq version.
+* RedisProtocolTest when done
 
 
 

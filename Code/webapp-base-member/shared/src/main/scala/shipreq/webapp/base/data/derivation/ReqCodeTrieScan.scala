@@ -14,7 +14,7 @@ final class ReqCodeTrieScan(trie: ReqCode.Trie) {
   private val _idSeq                 = ArraySeq.newBuilder[ReqCodeId]
 
   private[this] val scan = AtomScan.scan {
-    case a: ContentRef # CodeRef        => _localReqCodeRefs += a.value
+    case a: ContentRef # CodeRef        => _localReqCodeRefs += a.id
     case a: ContentRef # UseCaseStepRef => _localUseCaseStepRefs += a.value
     case _                              => ()
   }

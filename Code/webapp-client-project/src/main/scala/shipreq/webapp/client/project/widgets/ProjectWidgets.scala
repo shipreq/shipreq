@@ -12,6 +12,7 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{Contextualise, Plain, _}
 import shipreq.webapp.base.jsfacade.KaTeX
 import shipreq.webapp.base.lib.ClientUtil.{renderSeq, renderVector, sepComma, sepSpace}
+import shipreq.webapp.base.text.Atom.DisplayReqRef
 import shipreq.webapp.base.text.Text.AnyOptional
 import shipreq.webapp.base.text.{Grammar => G, _}
 import shipreq.webapp.base.util.ReqCodeTreeItem
@@ -31,6 +32,7 @@ object ProjectWidgets {
 
   implicit def subst1[F[_], C <: ProjectText.Context](pw: F[ProjectWidgets[C]]): F[ProjectWidgets.AnyCtx] =
     pw.asInstanceOf[F[AnyCtx]]
+
   implicit def subst2[F[_], G[_], C <: ProjectText.Context](pw: F[G[ProjectWidgets[C]]]): F[G[ProjectWidgets.AnyCtx]] =
     pw.asInstanceOf[F[G[AnyCtx]]]
 
@@ -114,41 +116,6 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
   override protected def whenBlankButMandatory =
     ProjectWidgets.blankButMandatory
 
-  /** Contextualised */
-  private val codeRef: Live => ReqCodeId => VdomTag =
-    Live.memo { live =>
-      Memo { id =>
-        import ProjectText.ReqCodeResolution._
-
-        implicit def liveWithValidity(a: Live): (Live, Validity) =
-          invalidWhenDead(a)
-
-        def toRef(code: ReqCode.Value, r: ReqId): VdomTag = {
-          val req = project.content.reqs.need(r)
-          ref(
-            linkOrSpan(req)(*.reqRef(req live project.config.reqTypes)),
-            code,
-            plainText reqTitleWithoutMarkup req)
-        }
-
-        def toGroup(code: ReqCode.Value, g: CodeGroup): VdomTag =
-          ref(<.span(*.codeGroupRef(g.live)), code, plainText.codeGroupTitle(g))
-
-        def ref(base: VdomTag, code: ReqCode.Value, title: String): VdomTag =
-          base(
-            ^.title := UiText.hoverText(title),
-            G.reflinkSurround(PlainText reqCode code))
-
-        ProjectText.ReqCodeResolution(id, project.content.reqCodes) match {
-          case ActiveCodeToReq     (c, r) => toRef(c, r)
-          case ActiveCodeToGroup   (c, g) => toGroup(c, g)
-          case DeadGroup           (c, g) => toGroup(c, g)
-          case ReqWithAltCode      (c, r) => toRef(c, r)
-          case ReqWithoutActiveCode(_, r) => reqRef(live)(r)
-        }
-      }
-    }
-
   private def issue(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText, liveText: Live): VdomTag =
     NonEmptyArraySeq.option(desc) match {
       case None       => issueWithoutDesc(id)(liveText)
@@ -229,11 +196,95 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     r(base, ld, label)
   }
 
-  private def reqRef(liveText: Live): PubidFormat =
-    liveText match {
-      case Live => PubidFormat.invalidWhenDeadWithCtx
-      case Dead => PubidFormat.validWhenDead
+  /** Contextualised */
+  private val codeRef: Live => ReqCodeId => DisplayReqRef => VdomTag =
+    Live.memo { live =>
+      Memo { id =>
+        import ProjectText.ReqCodeResolution._
+
+        implicit def liveWithValidity(a: Live): (Live, Validity) =
+          invalidWhenDead(a)
+
+        DisplayReqRef.memoLazy {
+
+          // -----------------------------------------------------------------------------------------------------------
+          case d@ DisplayReqRef.AsId =>
+            def ref(base: VdomTag, code: ReqCode.Value, title: String): VdomTag =
+              base(
+                ^.title := UiText.hoverText(title),
+                G.reflinkSurround(PlainText.reqCode(code)))
+
+            def toReq(code: ReqCode.Value, r: ReqId): VdomTag = {
+              val req = project.content.reqs.need(r)
+              ref(
+                base  = linkOrSpan(req)(*.reqRef(req live project.config.reqTypes)),
+                code  = code,
+                title = plainText reqTitleWithoutMarkup req)
+            }
+
+            def toGroup(code: ReqCode.Value, g: CodeGroup): VdomTag =
+              ref(
+                base  = <.span(*.codeGroupRef(g.live)),
+                code  = code,
+                title = plainText.codeGroupTitle(g))
+
+            ProjectText.ReqCodeResolution(id, project.content.reqCodes) match {
+              case ActiveCodeToReq     (c, r) => toReq(c, r)
+              case ReqWithAltCode      (c, r) => toReq(c, r)
+              case ActiveCodeToGroup   (c, g) => toGroup(c, g)
+              case DeadGroup           (c, g) => toGroup(c, g)
+              case ReqWithoutActiveCode(_, r) => reqRef(live)(d)(r)
+            }
+
+          // -----------------------------------------------------------------------------------------------------------
+          case d@ DisplayReqRef.AsIdAndTitle =>
+            def ref(base: VdomTag, code: ReqCode.Value, title: TagMod): VdomTag =
+              base(
+                G.reflinkSurround.prefix,
+                PlainText.reqCode(code),
+                ": ",
+                title,
+                G.reflinkSurround.suffix)
+
+            def toReq(code: ReqCode.Value, r: ReqId): VdomTag = {
+              val req = project.content.reqs.need(r)
+              ref(
+                base  = linkOrSpan(req)(*.reqRef(req live project.config.reqTypes)),
+                code  = code,
+                title = reqTitle(req))
+            }
+
+            def toGroup(code: ReqCode.Value, g: CodeGroup): VdomTag =
+              ref(
+                base  = <.span(*.codeGroupRef(g.live)),
+                code  = code,
+                title = codeGroupTitle(g))
+
+            ProjectText.ReqCodeResolution(id, project.content.reqCodes) match {
+              case ActiveCodeToReq     (c, r) => toReq(c, r)
+              case ReqWithAltCode      (c, r) => toReq(c, r)
+              case ActiveCodeToGroup   (c, g) => toGroup(c, g)
+              case DeadGroup           (c, g) => toGroup(c, g)
+              case ReqWithoutActiveCode(_, r) => reqRef(live)(d)(r)
+            }
+        }
+      }
     }
+
+  private val reqRef: Live => DisplayReqRef => ReqId => VdomTag = {
+    Live.memo { liveText =>
+
+      val pubidFmt = liveText match {
+        case Live => PubidFormat.invalidWhenDeadWithCtx
+        case Dead => PubidFormat.validWhenDead
+      }
+
+      DisplayReqRef.memoLazy {
+        case DisplayReqRef.AsId         => pubidFmt(_)
+        case DisplayReqRef.AsIdAndTitle => id => pubidFmt.withSuffix(id, false)(": ", reqTitleById(id))
+      }
+    }
+  }
 
   private val tagWithoutStyleMemo: Boolean => Contextualise => ApplicableTag => VdomTag =
     Memo.bool { includeDesc =>
@@ -298,8 +349,8 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     lazy val atom: AnyAtom => TagMod = {
       case a: Literal         # Literal        => <.span(a.value)
       case a: CodeBlock       # CodeBlock      => RichCodeBlock.Props(a.detail, a.code, webWorker).render
-      case a: ContentRef      # CodeRef        => codeRef(liveText)(a.value)
-      case a: ContentRef      # ReqRef         => reqRef(liveText)(a.value)
+      case a: ContentRef      # CodeRef        => codeRef(liveText)(a.id)(a.display)
+      case a: ContentRef      # ReqRef         => reqRef(liveText)(a.display)(a.id)
       case a: ContentRef      # UseCaseStepRef => useCaseStepRefById(a.value)
       case a: Headings        # Heading1       => wrapped(h1, a.title)
       case a: Headings        # Heading2       => wrapped(h2, a.title)
@@ -502,6 +553,24 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
 
     def apply(pubid: Pubid): Out =
       apply(project.content.reqs.reqIdByPubid(pubid))
+
+    def withSuffix(id: ReqId, titleAttr: Boolean)(suffix: VdomNode*): Out = {
+      val req   = project.content.reqs.need(id)
+      val ep    = req.pubid.external(project)
+      val pubid = PlainText.pubid(ep)
+      val live  = liveFn(req)
+
+      var label = TagMod(pubid, TagMod(suffix: _*))
+      contextualise match {
+        case Contextualise => label = TagMod(G.reflinkSurround.prefix, label, G.reflinkSurround.suffix)
+        case Plain         => ()
+      }
+
+      linkOrSpan(req, ep)(
+        styleMemo(live),
+        TagMod.when(titleAttr)(^.title :=? titleFn(req)),
+        label)
+    }
 
     private val sep: TagMod =
       contextualise match {

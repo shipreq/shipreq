@@ -6,7 +6,7 @@ import scala.collection.immutable.SortedSet
 import shipreq.base.util.SafeStringOps._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Atom.AnyAtom
+import shipreq.webapp.base.text.Atom.{AnyAtom, DisplayReqRef}
 import shipreq.webapp.base.text.GrammarSpec.Surrounds
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.util.ReqCodeTreeItem
@@ -131,17 +131,6 @@ object PlainText {
 
     override protected def whenBlankButMandatory = ""
 
-    private def codeRef(id: ReqCodeId): String = {
-      import ProjectText.ReqCodeResolution, ReqCodeResolution._
-      ReqCodeResolution(id, p.content.reqCodes) match {
-        case ActiveCodeToReq     (c, _) => G reflinkSurround reqCode(c)
-        case ActiveCodeToGroup   (c, _) => G reflinkSurround reqCode(c)
-        case DeadGroup           (c, _) => G reflinkSurround reqCode(c)
-        case ReqWithAltCode      (c, _) => G reflinkSurround reqCode(c)
-        case ReqWithoutActiveCode(_, r) => reqRef(r)
-      }
-    }
-
     private def issue(id: CustomIssueTypeId, desc: Option[String]): String = {
       val it = p.config.customIssueTypes.need(id)
       desc.foldLeft(hashtag(it.key))(_ ~ G.issueDescSurround(_))
@@ -228,8 +217,8 @@ object PlainText {
         val cur = atoms(idx) match {
           case a: Literal         # Literal        => a.value
           case _: NewLine         # BlankLine      => "\n\n" ~ indent
-          case a: ContentRef      # ReqRef         => reqRef(a.value)
-          case a: ContentRef      # CodeRef        => codeRef(a.value)
+          case a: ContentRef      # ReqRef         => reqRef(a.id, a.display, includeMarkup = includeMarkup)
+          case a: ContentRef      # CodeRef        => codeRef(a.id, a.display, includeMarkup = includeMarkup)
           case a: ContentRef      # UseCaseStepRef => useCaseStepRef(a.value)
           case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live, Optional)))
           case a: PlainTextMarkup # EmailAddress   => a.value
@@ -313,10 +302,48 @@ object PlainText {
         go(acc, atoms, 0)
     }
 
-    private def reqRef(req: ReqId): String = {
-      val pid = p.content.reqs.need(req).pubid
-      val rt  = p.config.reqTypes.need(pid.reqTypeId)
-      G.reflinkSurround(pubid(rt, pid.pos))
+    private def _reqRef(display: DisplayReqRef, includeMarkup: Boolean)
+                       (id: String, title: => String): String = {
+      val label =
+        if (includeMarkup)
+          display match {
+            case DisplayReqRef.AsId         => id
+            case DisplayReqRef.AsIdAndTitle => id ~ ":"
+          }
+        else
+          display match {
+            case DisplayReqRef.AsId         => id
+            case DisplayReqRef.AsIdAndTitle => s"$id: $title"
+          }
+      G.reflinkSurround(label)
+    }
+
+    private def codeRef(id: ReqCodeId, display: DisplayReqRef, includeMarkup: Boolean): String = {
+      import ProjectText.ReqCodeResolution, ReqCodeResolution._
+
+      def withCode(c: ReqCode.Value, title: => String) =
+        _reqRef(display, includeMarkup)(
+          id    = reqCode(c),
+          title = title,
+        )
+
+      ReqCodeResolution(id, p.content.reqCodes) match {
+        case ActiveCodeToReq     (c, r) => withCode(c, reqTitleWithoutMarkupById(r))
+        case ActiveCodeToGroup   (c, g) => withCode(c, codeGroupTitle(g))
+        case DeadGroup           (c, g) => withCode(c, codeGroupTitle(g))
+        case ReqWithAltCode      (c, r) => withCode(c, reqTitleWithoutMarkupById(r))
+        case ReqWithoutActiveCode(_, r) => reqRef(r, display, includeMarkup)
+      }
+    }
+
+    private def reqRef(id: ReqId, display: DisplayReqRef, includeMarkup: Boolean): String = {
+      val req      = p.content.reqs.need(id)
+      val rt       = p.config.reqTypes.need(req.pubid.reqTypeId)
+      def live     = req.live(p.config.reqTypes)
+      _reqRef(display, includeMarkup)(
+        id    = pubid(rt, req.pubid.pos),
+        title = textWithoutMarkup(req.title, live),
+      )
     }
 
     private def tagRef(id: ApplicableTagId): String = {

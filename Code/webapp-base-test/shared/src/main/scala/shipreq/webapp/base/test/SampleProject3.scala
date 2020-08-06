@@ -4,6 +4,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.ProjectDsl._
 import shipreq.webapp.base.test.SampleProject.{project => project0}
 import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.text.Atom.DisplayReqRef
 import shipreq.webapp.base.text.{Text => T, _}
 
 /**
@@ -26,7 +27,7 @@ object SampleProject3 {
 
   val inlineIssueDesc = {
     import T.InlineIssueDesc._
-    apply(Literal("Pending "), ReqRef(mfs(26)))
+    apply(Literal("Pending "), ReqRef(mfs(26), DisplayReqRef.AsId))
   }
 
   lazy val project: Project = {
@@ -35,13 +36,13 @@ object SampleProject3 {
       import T.GenericReqTitle._
       apply(
         EmailAddress("japgolly@gmail.com"), Literal(" is on "), WebAddress("https://github.com"),
-        Literal(" cos of "), ReqRef(mfs(6)), Literal(" "), Issue(1, T.empty),
+        Literal(" cos of "), ReqRef(mfs(6), DisplayReqRef.AsId), Literal(" "), Issue(1, T.empty),
         TeX("c = \\pm\\sqrt{a^2 + b^2}")
       )
     }
     def fr2Title = {
       import T.GenericReqTitle._
-      apply(Issue(2, inlineIssueDesc), Literal(". "), ReqRef(mfs(28)), Literal(" is dead."))
+      apply(Issue(2, inlineIssueDesc), Literal(". "), ReqRef(mfs(28), DisplayReqRef.AsId), Literal(" is dead."))
     }
 
     val contentByDsl = (

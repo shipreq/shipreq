@@ -7,6 +7,7 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.json.v1.Events.EventData._
 import shipreq.webapp.base.protocol.json.v1.Rev1.EventData._
 import shipreq.webapp.base.protocol.json.v1.Rev5.EventData._
+import shipreq.webapp.base.protocol.json.v1.Rev6.EventData._
 import shipreq.webapp.server.logic.DB.ReadProjectEventError
 
 object EventSerialisation {

@@ -9,7 +9,7 @@ import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
-import shipreq.webapp.base.text.Atom.CodeBlockDetail
+import shipreq.webapp.base.text.Atom.{CodeBlockDetail, DisplayReqRef}
 import shipreq.webapp.base.text.{Grammar => G}
 import shipreq.webapp.base.util._
 
@@ -460,17 +460,32 @@ object Parsers {
     import G.reflinkSurround.parsing.{prefix, suffix}
     import ReqCode._
 
+    private def displayReqRef: Rule1[DisplayReqRef] =
+      rule(
+        (':' ~ OWS ~ push(DisplayReqRef.AsIdAndTitle))
+        | push(DisplayReqRef.AsId)
+      )
+
+    private def refResult[A, I](make: (I, DisplayReqRef) => A): Rule[I :: DisplayReqRef :: HNil, A :: HNil] =
+      rule(test(true) ~> make)
+
     def reqRef: Rule1[t.ReqRef] = rule(
-      prefix ~ OWS ~ reqTypeMnemonicCI ~ OWS ~ ('-' ~ OWS).? ~ reqTypePos ~ OWS ~ suffix
-        ~> lookupReq ~ popOptional[ReqId] ~> t.ReqRef)
+      prefix ~ OWS ~ reqTypeMnemonicCI ~ OWS ~ ('-' ~ OWS).? ~ reqTypePos ~ OWS
+        ~> lookupReq ~ popOptional[ReqId]
+        ~ displayReqRef ~ suffix
+        ~ refResult(t.ReqRef(_, _))
+    )
 
     def reqCodeNode: Rule1[Node] = rule(
       capture(grammarStr(G.reqCode)(_.firstChar, _.tailChars, None, _.nodeLength)) ~> Node.applyFn)
 
     // Could be optimised to lookup each node as parsed and fail early
     def codeRef: Rule1[t.CodeRef] = rule(
-      prefix ~ oneOrMore(OWS ~ reqCodeNode).separatedBy(OWS ~ G.reqCode.nodeSeparator) ~ OWS ~ suffix
-        ~> lookupCode ~ popOptional[ReqCodeId] ~> t.CodeRef)
+      prefix ~ oneOrMore(OWS ~ reqCodeNode).separatedBy(OWS ~ G.reqCode.nodeSeparator) ~ OWS
+        ~> lookupCode ~ popOptional[ReqCodeId]
+        ~ displayReqRef ~ suffix
+        ~ refResult(t.CodeRef(_, _))
+    )
 
     val lookupCode: Seq[Node] => Option[ReqCodeId] = ss =>
       NonEmptyVector.maybe(ss.toVector, None: Option[ReqCodeId])(code =>

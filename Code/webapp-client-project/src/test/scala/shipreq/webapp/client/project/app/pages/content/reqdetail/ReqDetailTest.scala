@@ -721,5 +721,12 @@ object ReqDetailTest extends TestSuite {
         >> press(KB.Down) +> assertTableCellFocused(-1)
         >> press(KB.Down) +> titleCellHasFocus
     ))
+
+    "refsWithTitle" - test("MF-1")(Plan.action(
+      title.set("[mf2] [mf2:]")
+      +> title.text.assert("[MF-2] [MF-2: Anonymous Share]")
+      >> title.doubleClick
+      +> title.editorValue.assert.contains("[MF-2] [MF-2:]")
+    ))
   }
 }

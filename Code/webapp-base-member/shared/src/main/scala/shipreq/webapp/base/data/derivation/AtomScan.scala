@@ -45,7 +45,7 @@ object AtomScan {
       scan {
         case a: ContentRef # ReqRef =>
           contentRefsInReqs(reqId).add(live, LocAndValue(loc, a))
-          reqRefs += a.value
+          reqRefs += a.id
 
         case a: ContentRef # CodeRef =>
           contentRefsInReqs(reqId).add(live, LocAndValue(loc, a))
@@ -72,7 +72,7 @@ object AtomScan {
       scan {
         case a: ContentRef # ReqRef =>
           contentRefsInRcgs(reqCodeId).add(live, LocAndValue(loc, a))
-          reqRefs += a.value
+          reqRefs += a.id
 
         case a: ContentRef # CodeRef =>
           contentRefsInRcgs(reqCodeId).add(live, LocAndValue(loc, a))
@@ -140,7 +140,7 @@ object AtomScan {
   def reqCodeRefs(f: (ArraySeq[AnyAtom] => Unit) => Unit): Set[ReqCodeId] = {
     val b = UnivEq.setBuilder[ReqCodeId]
     val scan = AtomScan.scan {
-      case a: ContentRef # CodeRef => b += a.value
+      case a: ContentRef # CodeRef => b += a.id
       case _                       => ()
     }
     f(scan)
