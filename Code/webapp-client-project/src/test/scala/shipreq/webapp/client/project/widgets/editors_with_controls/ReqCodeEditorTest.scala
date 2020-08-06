@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.widgets.editors_with_controls
 
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.client.project.test.PrepareEnv

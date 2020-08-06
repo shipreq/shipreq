@@ -295,7 +295,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditReqType extends ForChangeType {
-      import shipreq.webapp.client.project.widgets.ReqTypeSelector
+      import shipreq.webapp.client.project.widgets.editors_with_controls.ReqTypeSelector
       import ReqTypeSelector.RT
 
       override type Args   = Unit
@@ -367,7 +367,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditReqCodes {
-      import shipreq.webapp.client.project.widgets.ReqCodeEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.ReqCodeEditor
 
       val trieCB: CallbackTo[ReqCode.Trie] =
         pxProject.toCallback.map(_.content.reqCodes.trie)
@@ -488,7 +488,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditImplications extends ForChangeType {
-      import shipreq.webapp.client.project.widgets.ImplicationEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.ImplicationEditor
       import ImplicationEditor.{CommitFn, Lookup, ValidationFn}
 
       private val _pxLookupAll = Px.apply2(pxProject, pxPlainTextNoCtx)(ImplicationEditor.Lookup.all)
@@ -600,7 +600,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditTags extends ForChangeType {
-      import shipreq.webapp.client.project.widgets.TagEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.TagEditor
       import TagEditor.{CommitFn, Lookup, potentialValueAcceptor}
 
       override type Args   = Unit
@@ -686,7 +686,7 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichText {
       import shipreq.webapp.base.text._
-      import shipreq.webapp.client.project.widgets.RichTextEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       case class AbstractArgs[A](style: A => EditControlsFeature.Style, changeArg: A)
 
@@ -822,7 +822,7 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichTextNonEmpty {
       import shipreq.webapp.base.text._
-      import shipreq.webapp.client.project.widgets.RichTextEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
       import EditRichText.AbstractArgs
 
       abstract class Base[T <: Text.Generic, Cmd, A](val editor: RichTextEditor[T],
@@ -921,9 +921,9 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditUseCaseStep extends ForChangeType {
-      import shipreq.webapp.client.project.widgets.RichTextEditor.hardcodedLive
-      import shipreq.webapp.client.project.widgets.UseCaseStepEditor
-      import shipreq.webapp.client.project.widgets.UseCaseStepEditor.potentialValueAcceptor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor.hardcodedLive
+      import shipreq.webapp.client.project.widgets.editors_with_controls.UseCaseStepEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.UseCaseStepEditor.potentialValueAcceptor
       import UseCaseStepFlowText.TextAndFlow
 
       override type Args = FieldKey.UseCaseStep.Args

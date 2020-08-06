@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.widgets.editors_with_controls
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._

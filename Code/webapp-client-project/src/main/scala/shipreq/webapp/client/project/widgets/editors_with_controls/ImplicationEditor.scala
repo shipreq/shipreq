@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.widgets.editors_with_controls
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._

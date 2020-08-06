@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.widgets.editors_with_controls
 
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
@@ -20,7 +20,8 @@ import shipreq.webapp.base.ui.OptionalFullscreen
 import shipreq.webapp.base.util.PreProcessor
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.RichTextEditor.hardcodedLive
+import shipreq.webapp.client.project.widgets._
+import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor.hardcodedLive
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {
   import RichTextEditor.State

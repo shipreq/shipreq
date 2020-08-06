@@ -143,7 +143,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditReqCodes {
-      import shipreq.webapp.client.project.widgets.ReqCodeEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.ReqCodeEditor
 
       val trieCB: CallbackTo[ReqCode.Trie] =
         pxProject.toCallback.map(_.content.reqCodes.trie)
@@ -219,7 +219,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditImplications extends ForValueType {
-      import shipreq.webapp.client.project.widgets.ImplicationEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.ImplicationEditor
       import ImplicationEditor.{Lookup, ValidationFn}
 
       val pxLookupAll = for {
@@ -280,7 +280,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditTags extends ForValueType {
-      import shipreq.webapp.client.project.widgets.TagEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.TagEditor
       import TagEditor.Lookup
 
       override type Value = Set[ApplicableTagId]
@@ -335,7 +335,7 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichText {
       import shipreq.webapp.base.text._
-      import shipreq.webapp.client.project.widgets.RichTextEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForValueType {
         val T: editor.text.type = editor.text
@@ -395,7 +395,7 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichTextNonEmpty {
       import shipreq.webapp.base.text._
-      import shipreq.webapp.client.project.widgets.RichTextEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForValueType {
         val T: editor.text.type = editor.text

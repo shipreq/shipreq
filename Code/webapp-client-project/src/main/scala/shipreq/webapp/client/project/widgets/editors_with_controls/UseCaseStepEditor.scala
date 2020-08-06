@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.widgets.editors_with_controls
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -20,6 +20,7 @@ import shipreq.webapp.base.text._
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.lib.DataReusability._
+import shipreq.webapp.client.project.widgets._
 
 object UseCaseStepEditor {
   import RichTextEditor.hardcodedLive

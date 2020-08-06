@@ -16,7 +16,8 @@ import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 import shipreq.webapp.client.project.app.Style.{deletionForm => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.Selection
-import shipreq.webapp.client.project.widgets.{ProjectWidgets, RichTextEditor}
+import shipreq.webapp.client.project.widgets.ProjectWidgets
+import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
 object DeletionForm {
   import DeletionRestorationLogic.Data
