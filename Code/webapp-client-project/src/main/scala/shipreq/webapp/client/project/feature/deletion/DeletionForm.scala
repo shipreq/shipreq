@@ -10,7 +10,6 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.feature.{EditControlsFeature, PreviewFeature}
-import shipreq.webapp.base.lib.KeyboardTheme
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.TextSearch
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
@@ -59,7 +58,7 @@ object DeletionForm {
         editorStyle        = EditControlsFeature.Style.default,
         preview            = PreviewFeature.ReadWrite.Single.alwaysShow,
         preEditValue       = None,
-        extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
+        extraControls      = EditControlsFeature.ExtraControls.empty,
         showInstructions   = true,
         optionalFullscreen = None)
 

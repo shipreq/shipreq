@@ -172,7 +172,7 @@ object NewEditor {
               autoFocus        = args.autoFocus,
               commitFn         = args.commitFn,
               commitVerb       = args.commitVerb,
-              extraKbShortcuts = args.extraKbShortcuts,
+              extraControls    = args.extraControls,
               showInstructions = ShowInstructions)
 
           override type State              = String
@@ -206,7 +206,7 @@ object NewEditor {
               autoFocus        = args.autoFocus,
               commitFn         = args.commitFn,
               commitVerb       = args.commitVerb,
-              extraKbShortcuts = args.extraKbShortcuts,
+              extraControls    = args.extraControls,
               showInstructions = ShowInstructions)
 
           override type State              = String
@@ -268,7 +268,7 @@ object NewEditor {
             commitFn         = args.commitFn,
             commitVerb       = args.commitVerb,
             textSearch       = textSearch,
-            extraKbShortcuts = args.extraKbShortcuts,
+            extraControls    = args.extraControls,
             showInstructions = ShowInstructions)
 
         override type State              = String
@@ -322,7 +322,7 @@ object NewEditor {
             autoFocus        = args.autoFocus,
             commitFn         = args.commitFn,
             commitVerb       = args.commitVerb,
-            extraKbShortcuts = args.extraKbShortcuts,
+            extraControls    = args.extraControls,
             showInstructions = ShowInstructions)
 
         override type State              = String
@@ -375,7 +375,7 @@ object NewEditor {
               editorStyle        = editorStyle,
               preview            = previewRW(pid),
               preEditValue       = None,
-              extraKbShortcuts   = args.extraKbShortcuts,
+              extraControls      = args.extraControls,
               showInstructions   = ShowInstructions,
               optionalFullscreen = None)
 
@@ -435,7 +435,7 @@ object NewEditor {
               editorStyle        = editorStyle,
               preview            = previewRW(pid),
               preEditValue       = None,
-              extraKbShortcuts   = args.extraKbShortcuts,
+              extraControls      = args.extraControls,
               showInstructions   = ShowInstructions,
               optionalFullscreen = None)
 

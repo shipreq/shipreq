@@ -15,7 +15,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{AsyncFeature, EditControlsFeature, EditorStatus, PreviewFeature}
-import shipreq.webapp.base.lib.{KeyHandler, KeyboardTheme}
+import shipreq.webapp.base.lib.KeyHandler
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
@@ -116,8 +116,6 @@ object UseCaseStepEditor {
   val potentialValueAcceptor: PotentialValueAcceptor[String] =
     PotentialValueAcceptor.correct(liveCorrect)
 
-  def saveAndAddKeyCriterion = KeyHandler.Criterion.AltEnter
-
   private val shiftKeyCriterion: LeftRight.Values[KeyHandler.Criterion] =
     LeftRight.Values { d =>
       import KeyHandler._
@@ -128,8 +126,24 @@ object UseCaseStepEditor {
       Criterion(desc, EventType.KeyDown, keyCode, ModKey.Alt)
     }
 
-  private val rightLeft: List[LeftRight] =
-    LeftRight.Right :: LeftRight.Left :: Nil
+  private val editControls =
+    EditControlsFeature.Controls[Props](lineCardinality)
+      .abort(_.abort)
+      .commitWhenDefined(_.status.getCommit)
+      .commitAndProgressWhenDefined(_.saveAndAdd, "save and add next step")
+      .withHelp(RichTextEditorHelp.modalFor(Text.UseCaseStep).show)
+      .addDynamicExtras { p =>
+        import LeftRight._
+
+        def shiftStep(d: LeftRight) =
+          EditControlsFeature.ExtraControls.option(
+            criterion = shiftKeyCriterion(d),
+            verb      = UiText.useCaseStepShift(d).toLowerCase,
+            action    = p.shiftRunner.flatMap(_.runOption(d)),
+          )
+
+        shiftStep(Left) ++ shiftStep(Right)
+      }
 
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxProject    = Px.props($).map(_.project).withReuse.autoRefresh
@@ -147,19 +161,6 @@ object UseCaseStepEditor {
       }
 
     val textareaConst: TagMod = {
-
-      def shiftStepKeyHandler(d: LeftRight): KeyHandler =
-        shiftKeyCriterion(d).handle(
-          $.props.flatMap(_.shiftRunner.fold(Callback.empty)(_.runOrDoNothing(d))))
-
-      val keys = (
-        LeftRight.mapReduce(shiftStepKeyHandler)(_ + _)
-          + saveAndAddKeyCriterion.handle($.props.flatMap(_.saveAndAdd.getOrEmpty))
-          + KeyboardTheme.abortCriterion.handle($.props.flatMap(_.abort))
-          + KeyboardTheme.commitCO($.props.map(_.status.getCommit))
-          ++ autoCompleteKeyHandlers
-        )
-
       val updateState: ReactEventFromTextArea => Callback =
         e => $.props >>= (p =>
           p.status.wrapEdit(p.edit.setState(liveCorrect(e.target.value)) >>
@@ -171,42 +172,12 @@ object UseCaseStepEditor {
         ^.onClick  ==> autoCompleteOnClick,
         ^.onChange ==> updateState,
         ^.onFocus  --> $.props.flatMap(p => p.preview.onFocus(p.wantPreview)),
-        RichTextEditor.minRows(lineCardinality),
-        keys)
-    }
-
-    private def instructions(p: Props) = {
-      import KeyboardTheme.Instructions
-
-      // Usual clauses
-      var clauses = Instructions.Clauses.forTextEditor(
-        lineCardinality,
-        commit = p.status.getCommit,
-        commitVerb = Instructions.defaultCommitVerb,
-        abort = Some(p.abort))
-
-      // Save-and-add
-      p.saveAndAdd.foreach(cb =>
-        clauses ::= Instructions.Clause.keyToAction(saveAndAddKeyCriterion.desc)("save and add next step", cb))
-
-      // Shift left/right clauses
-      for {
-        d  <- rightLeft
-        cb <- p.shiftRunner.flatMap(_.runOption(d))
-      } clauses ::=
-        Instructions.Clause.keyToAction(shiftKeyCriterion(d).desc)(UiText.useCaseStepShift(d).toLowerCase, cb)
-
-      Instructions(
-        clauses,
-        help = Some(RichTextEditorHelp.modalFor(Text.UseCaseStep).show),
-        fullscreen = None,
-        monospace = None,
-      )
+        RichTextEditor.minRows(lineCardinality))
     }
 
     def render(p: Props) = {
-      @inline def editorStyle =
-        EditControlsFeature.Style.default
+      val keys     = autoCompleteKeyHandlers ++ editControls.keyHandlers(p)
+      val textarea = TagMod(textareaConst, keys)
 
       def editor(enabled: Enabled, validity: Validity): VdomElement = {
         val autosizeProps = EditControlsFeature.autosizeTextareaProps(
@@ -215,7 +186,7 @@ object UseCaseStepEditor {
           enabled  = enabled,
           validity = validity,
           value    = p.edit.value,
-          tagMod   = textareaConst,
+          tagMod   = textarea,
         )
         editorRef.component(autosizeProps)
       }
@@ -227,8 +198,8 @@ object UseCaseStepEditor {
         status          = p.status,
         editor          = editor,
         readOnlyView    = richText,
-        instructions    = instructions(p),
-        style           = editorStyle,
+        instructions    = editControls.instructions(p),
+        style           = EditControlsFeature.Style.default,
         previewRW       = p.preview,
         previewWantOpen = p.wantPreview,
         previewBody     = richText,

@@ -12,8 +12,8 @@ import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
+import shipreq.webapp.base.lib.ConfirmJs
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.lib.{ConfirmJs, KeyboardTheme}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
@@ -283,7 +283,7 @@ object NewEditor {
     def getCustomReqTypeCB(id: CustomReqTypeId): CallbackOption[CustomReqType] =
       pxProject.toCallback.map(_.config.reqTypes.custom.get(id)).asCBO
 
-    def commitVerb = KeyboardTheme.Instructions.defaultCommitVerb
+    final val commitVerb = EditControlsFeature.defaultCommitVerb
 
     trait ForChangeType {
       type Args
@@ -416,7 +416,7 @@ object NewEditor {
               autoFocus        = true,
               commitFn         = commitFn,
               commitVerb       = commitVerb,
-              extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
+              extraControls    = EditControlsFeature.ExtraControls.empty,
               showInstructions = true)
 
           override def clipboardData: Option[ClipboardData] =
@@ -474,7 +474,7 @@ object NewEditor {
               autoFocus        = true,
               commitFn         = commitFn,
               commitVerb       = commitVerb,
-              extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
+              extraControls    = EditControlsFeature.ExtraControls.empty,
               showInstructions = true)
 
           override def clipboardData: Option[ClipboardData] =
@@ -582,7 +582,7 @@ object NewEditor {
             commitFn         = commitFn,
             commitVerb       = commitVerb,
             textSearch       = textSearch,
-            extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
+            extraControls    = EditControlsFeature.ExtraControls.empty,
             showInstructions = true)
 
         override def clipboardData: Option[ClipboardData] =
@@ -672,7 +672,7 @@ object NewEditor {
             autoFocus        = true,
             commitFn         = commitFn,
             commitVerb       = commitVerb,
-            extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
+            extraControls    = EditControlsFeature.ExtraControls.empty,
             showInstructions = true)
 
         override def clipboardData: Option[ClipboardData] =
@@ -774,7 +774,7 @@ object NewEditor {
               editorStyle        = aa.style(args),
               preview            = previewRW(pid),
               preEditValue       = initial,
-              extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
+              extraControls      = EditControlsFeature.ExtraControls.empty,
               showInstructions   = true,
               optionalFullscreen = someOptionalFullscreen)
 
@@ -898,7 +898,7 @@ object NewEditor {
               editorStyle        = aa.style(args),
               preview            = previewRW(pid),
               preEditValue       = initial,
-              extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
+              extraControls      = EditControlsFeature.ExtraControls.empty,
               showInstructions   = true,
               optionalFullscreen = someOptionalFullscreen)
 

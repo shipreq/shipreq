@@ -8,7 +8,7 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.data.{CustomReqType, ExternalPubid, ReqType, StaticReqType}
-import shipreq.webapp.base.lib.KeyboardTheme
+import shipreq.webapp.base.feature.EditControlsFeature
 import shipreq.webapp.base.protocol.websocket.CreateContentCmd
 import shipreq.webapp.base.text.{PlainText, Text}
 import shipreq.webapp.base.ui.Toast
@@ -200,12 +200,12 @@ sealed trait NewForm {
 
       val renderArgsWithoutAutoFocus =
         CreateFeature.EditorArgs(
-          abort            = Some(p.close),
-          autoFocus        = false,
-          commit           = createAndCloseForm,
-          commitVerb       = "create and close",
-          extraKbShortcuts = KeyboardTheme.Shortcut.option(
-            KeyboardTheme.commitAndProgressCriterion, "create without closing", createAndKeepFormOpen))
+          abort         = Some(p.close),
+          autoFocus     = false,
+          commit        = createAndCloseForm,
+          commitVerb    = "create and close",
+          extraControls = EditControlsFeature.ExtraControls
+            .commitAndProgressWhenDefined(createAndKeepFormOpen, "create without closing"))
 
       val cols = p.editableCols.whole
 

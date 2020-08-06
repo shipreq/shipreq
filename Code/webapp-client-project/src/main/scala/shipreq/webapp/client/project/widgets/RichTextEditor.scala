@@ -13,7 +13,7 @@ import shipreq.webapp.base.data.{Optional => _, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus, PreviewFeature}
 import shipreq.webapp.base.jsfacade.ScrollIntoViewIfNeeded
-import shipreq.webapp.base.lib.{ConfirmJs, KeyHandlers, KeyboardTheme, TaskRepeater}
+import shipreq.webapp.base.lib.{ConfirmJs, KeyHandlers, TaskRepeater}
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.OptionalFullscreen
@@ -37,7 +37,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     val abortConfirmation : Option[ConfirmJs]
     val commitVerb        : String
     val preview           : PreviewFeature.ReadWrite.Single
-    val extraKbShortcuts  : KeyboardTheme.Shortcuts
+    val extraControls     : EditControlsFeature.ExtraControls
     val showInstructions  : Boolean
     val status            : EditorStatus
     val wantPreview       : Boolean
@@ -78,7 +78,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                       editorStyle       : EditControlsFeature.Style,
                       preview           : PreviewFeature.ReadWrite.Single,
                       preEditValue      : Option[text.OptionalText],
-                      extraKbShortcuts  : KeyboardTheme.Shortcuts,
+                      extraControls     : EditControlsFeature.ExtraControls,
                       showInstructions  : Boolean,
                       optionalFullscreen: Option[OptionalFullscreen]) extends Props {
 
@@ -114,7 +114,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
                       editorStyle       : EditControlsFeature.Style,
                       preview           : PreviewFeature.ReadWrite.Single,
                       preEditValue      : Option[text.NonEmptyText],
-                      extraKbShortcuts  : KeyboardTheme.Shortcuts,
+                      extraControls     : EditControlsFeature.ExtraControls,
                       showInstructions  : Boolean,
                       optionalFullscreen: Option[OptionalFullscreen]) extends Props {
 
@@ -167,12 +167,15 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
         window = 500,
       ).run
 
+    private val editControls =
+      EditControlsFeature.Controls[Props](text.lineCardinality)
+        .abortWhenDefined(_.abortWithConfirmation)
+        .commitWhenDefined(_.status.getCommit, _.commitVerb)
+        .withHelp(RichTextEditorHelp.modalFor(text).show)
+        .addDynamicExtras(_.extraControls)
+
     private val keyHandlerBase =
-      KeyHandlers.base(
-        autoCompleteKeyHandlers
-          + KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abortWithConfirmation))
-          + KeyboardTheme.commitCO($.props.map(_.status.getCommit))
-      )
+      KeyHandlers.base(autoCompleteKeyHandlers)
 
     val textareaConst: TagMod = {
       val onFocus: Callback =
@@ -206,7 +209,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     private def _render(p: Props, s: State, optionalFullscreen: Option[OptionalFullscreen]): VdomNode = {
 
       def editor(layout: EditControlsFeature.Layout, enabled: Enabled, validity: Validity): VdomElement = {
-        val keys = keyHandlerBase(p.extraKbShortcuts.keyHandlers)
+        val keys = keyHandlerBase(editControls.keyHandlers(p))
 
         val base = TagMod(
           textareaConst,
@@ -228,23 +231,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
       def instructions(fullscreenCtx: Option[OptionalFullscreen.Ctx]): TagMod =
         TagMod.when(p.showInstructions) {
-
-          val textEditorInstructions =
-            KeyboardTheme.Instructions.Clauses.forTextEditor(
-              text.lineCardinality,
-              commit     = p.status.getCommit,
-              commitVerb = p.commitVerb,
-              abort      = p.abortWithConfirmation)
-
-          val clauses =
-            p.extraKbShortcuts.instructions ::: textEditorInstructions
-
-          KeyboardTheme.Instructions(
-            clauses    = clauses,
-            help       = Some(RichTextEditorHelp.modalFor(text).show),
-            fullscreen = fullscreenCtx,
-            monospace  = Some(StateSnapshot.zoomL(State.monospace)(s).setStateVia($))
-          )
+          val monospace = StateSnapshot.zoomL(State.monospace)(s).setStateVia($)
+          editControls.instructions(p, fullscreenCtx, Some(monospace))
         }
 
       def richText: VdomTag =

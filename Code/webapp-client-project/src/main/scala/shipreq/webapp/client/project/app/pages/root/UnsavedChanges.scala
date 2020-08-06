@@ -6,7 +6,7 @@ import japgolly.scalajs.react.{CallbackTo, Reusability}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.lib.KeyboardTheme
+import shipreq.webapp.base.feature.EditControlsFeature
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.client.project.app.pages
 import shipreq.webapp.client.project.feature.EditorFeature
@@ -122,7 +122,7 @@ object UnsavedChanges {
       import shipreq.webapp.client.project.feature.CreateFeature
       import CreateFeature.{FieldKey, RowKey}
 
-      private val uselessArgs = NewEditorArgs(None, false, None, "", KeyboardTheme.Shortcuts.empty)
+      private val uselessArgs = NewEditorArgs(None, false, None, "", EditControlsFeature.ExtraControls.empty)
 
       override def determine(input: Input) =
         CallbackTo {

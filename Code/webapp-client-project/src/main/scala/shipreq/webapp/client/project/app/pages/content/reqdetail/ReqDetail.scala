@@ -449,7 +449,7 @@ object ReqDetail {
             } yield ()
 
           def onKeyDown(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] =
-            UseCaseStepEditor.saveAndAddKeyCriterion.toCallbackOption(e) >> addStepAfterSelf
+            EditControlsFeature.Keys.commitAndProgress.toCallbackOption(e) >> addStepAfterSelf
 
           val stepProps =
             EditorNavParent.Props(

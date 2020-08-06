@@ -11,8 +11,15 @@ import shipreq.webapp.base.ui.{BaseStyles => *, _}
 
 object EditControlsFeature {
 
+  type ExtraControls = shipreq.webapp.base.feature.editcontrols.ExtraControls
+  val  ExtraControls = shipreq.webapp.base.feature.editcontrols.ExtraControls
+
+  val  Controls      = shipreq.webapp.base.feature.editcontrols.Controls
+
   type Font          = shipreq.webapp.base.feature.editcontrols.Font
   val  Font          = shipreq.webapp.base.feature.editcontrols.Font
+
+  val  Keys          = shipreq.webapp.base.feature.editcontrols.Keys
 
   type Layout        = shipreq.webapp.base.feature.editcontrols.Layout
   val  Layout        = shipreq.webapp.base.feature.editcontrols.Layout
@@ -23,13 +30,15 @@ object EditControlsFeature {
   type OpenPreview   = shipreq.webapp.base.feature.editcontrols.OpenPreview
   val  OpenPreview   = shipreq.webapp.base.feature.editcontrols.OpenPreview
 
-  type WhenInTransit = shipreq.webapp.base.feature.editcontrols.WhenInTransit
-  val  WhenInTransit = shipreq.webapp.base.feature.editcontrols.WhenInTransit
-
   type Style         = shipreq.webapp.base.feature.editcontrols.Style
   val  Style         = shipreq.webapp.base.feature.editcontrols.Style
 
-  def  spinner       = shipreq.webapp.base.feature.editcontrols.EditTheme.spinner
+  type WhenInTransit = shipreq.webapp.base.feature.editcontrols.WhenInTransit
+  val  WhenInTransit = shipreq.webapp.base.feature.editcontrols.WhenInTransit
+
+  final val defaultCommitVerb = editcontrols.Instructions.defaultCommitVerb
+
+  def spinner = shipreq.webapp.base.feature.editcontrols.EditTheme.spinner
 
   // ===================================================================================================================
 

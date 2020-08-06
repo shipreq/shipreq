@@ -3,8 +3,7 @@ package shipreq.webapp.base.ui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.feature.EditorStatus
-import shipreq.webapp.base.lib.KeyboardTheme
+import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
 import shipreq.webapp.base.text.SingleLine
 import shipreq.webapp.base.ui.semantic._
 
@@ -35,19 +34,20 @@ object PlainTextEditor {
     //  implicit val reusabilityProps: Reusability[Props] =
     //    Reusability.derive
 
+    private val editControls =
+      EditControlsFeature.Controls[Props](SingleLine)
+        .abortWhenDefined(_.abort)
+        .commitWhenDefined(_.status.getCommit)
+
     final class Backend($: BackendScope[Props, Unit]) {
 
       val base = {
-        val keys =
-          KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort)) +
-          KeyboardTheme.commitCO($.props.map(_.status.getCommit))
-
         val onChange = (_: ReactEventFromInput).extract(_.target.value)(t =>
           $.props.flatMap(p =>
             p.status.wrapEdit(p.updateText(t))))
 
         <.input.text(
-          keys,
+          editControls.keyHandlers($.props),
           ^.autoFocus := true,
           ^.onChange ==> onChange)
       }
@@ -56,15 +56,7 @@ object PlainTextEditor {
 
         def input = base(p.inputMod, ^.value := p.text)
 
-        def instructions = KeyboardTheme.Instructions.forTextEditor(
-          SingleLine,
-          commit     = p.status.getCommit,
-          commitVerb = KeyboardTheme.Instructions.defaultCommitVerb,
-          abort      = p.abort,
-          help       = None,
-          fullscreen = None,
-          monospace  = None,
-        )
+        def instructions = editControls.instructions(p)
 
         def renderWithError(err: TagMod) =
           <.div(
@@ -120,6 +112,10 @@ object PlainTextEditor {
     //  implicit val reusabilityProps: Reusability[Props] =
     //    Reusability.derive
 
+    private val editControls =
+      EditControlsFeature.Controls[Props](SingleLine)
+        .commitWhenDefined(_.status.getCommit)
+
     private def render(p: Props): VdomElement = {
       val onChange = (_: ReactEventFromInput).extract(_.target.value)(t => p.status.wrapEdit(p updateText t))
 
@@ -144,7 +140,7 @@ object PlainTextEditor {
                 buttonDisabled.tag(p.buttonLabel))))
 
         case EditorStatus.Valid(Some(commit)) =>
-          val keys = KeyboardTheme.commitCriterion.handle(commit).toReact
+          val keys = editControls.keyHandlersPure(p)
           <.div(
             <.div(
               Input.Action(

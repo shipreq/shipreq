@@ -8,7 +8,7 @@ import shipreq.webapp.base.data.DataValidators.{reqCode => V}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
-import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme}
+import shipreq.webapp.base.lib.KeyHandlers
 import shipreq.webapp.base.text.GrammarSpec.SeqFormat
 import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.validation.Simple._
@@ -44,7 +44,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
                    autoFocus       : Boolean,
                    commitFn        : Option[CommitFn],
                    commitVerb      : String,
-                   extraKbShortcuts: KeyboardTheme.Shortcuts,
+                   extraControls   : EditControlsFeature.ExtraControls,
                    showInstructions: Boolean) {
 
     val parseResult = validator(V.State(trie, dataToSet(initialValue)))(edit.value)
@@ -64,12 +64,14 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
     override val pxAutoComplete = pxTrie.map(t =>
       AutoComplete.Project.reqCodePrefixes(t))
 
+    private val editControls =
+      EditControlsFeature.Controls[Props](lineCardinality)
+        .abortWhenDefined(_.abort)
+        .commitWhenDefined(_.status.getCommit, _.commitVerb)
+        .addDynamicExtras(_.extraControls)
+
     private val keyHandlerBase =
-      KeyHandlers.base(
-        autoCompleteKeyHandlers
-          + KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort))
-          + KeyboardTheme.commitCO($.props.map(_.status.getCommit))
-      )
+      KeyHandlers.base(autoCompleteKeyHandlers)
 
     val textareaConst: TagMod = {
       val updateState: ReactEventFromTextArea => Callback =
@@ -85,7 +87,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
 
     def render(p: Props) = {
       def editor(validity: Validity): VdomElement = {
-        val keys = keyHandlerBase(p.extraKbShortcuts.keyHandlers)
+        val keys = keyHandlerBase(editControls.keyHandlers(p))
         val base = TagMod(
           textareaConst,
           keys,
@@ -103,16 +105,7 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
 
       def instructions: TagMod =
         TagMod.when(p.showInstructions)(
-          KeyboardTheme.Instructions(
-            p.extraKbShortcuts.instructions ::: KeyboardTheme.Instructions.Clauses.forTextEditor(
-              lineCardinality,
-              commit = p.status.getCommit,
-              commitVerb = p.commitVerb,
-              abort = p.abort),
-            help = None,
-            fullscreen = None,
-            monospace = None,
-          ))
+          editControls.instructions(p))
 
       EditControlsFeature.renderEditor(p.status, editor, p.edit.value, instructions)
     }
