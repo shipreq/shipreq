@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.widgets.editors_with_controls
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
@@ -9,11 +9,10 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.feature.AutoCompleteFeature._
-import shipreq.webapp.base.feature.EditorStatus
-import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme}
+import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
+import shipreq.webapp.base.lib.KeyHandlers
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
 import shipreq.webapp.base.text.SingleLine
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -92,10 +91,11 @@ object TagEditor {
                    lookup          : Lookup,
                    asyncStatus     : Option[EditorStatus.Async],
                    abort           : Option[Callback],
+                   abortVerb       : String,
                    autoFocus       : Boolean,
                    commitFn        : Option[CommitFn],
                    commitVerb      : String,
-                   extraKbShortcuts: KeyboardTheme.Shortcuts,
+                   extraControls   : EditControlsFeature.ExtraControls,
                    showInstructions: Boolean) {
 
     private val auditor: Auditor[String, ApplicableTag] =
@@ -150,12 +150,14 @@ object TagEditor {
 
     @inline private def lineCardinality = SingleLine
 
+    private val editControls =
+      EditControlsFeature.Controls[Props](lineCardinality)
+        .abortWhenDefined(_.abort, _.abortVerb)
+        .commitWhenDefined(_.status.getCommit, _.commitVerb)
+        .addDynamicExtras(_.extraControls)
+
     private val keyHandlerBase =
-      KeyHandlers.base(
-        autoCompleteKeyHandlers
-          + KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort))
-          + KeyboardTheme.commitCO($.props.map(_.status.getCommit))
-      )
+      KeyHandlers.base(autoCompleteKeyHandlers)
 
     val textareaConst: TagMod = {
       val updateState: ReactEventFromTextArea => Callback =
@@ -173,14 +175,16 @@ object TagEditor {
     def render(p: Props) = {
 
       def editor(validity: Validity): VdomElement = {
-        val keys = keyHandlerBase(p.extraKbShortcuts.keyHandlers)
+        val keys = keyHandlerBase(editControls.keyHandlers(p))
+
         val base = TagMod(
           textareaConst,
           keys,
           ^.autoFocus  := p.autoFocus)
-        val autosizeProps = EditTheme.autosizeTextareaProps(
-          position = Some(EditTheme.Style.default.position),
-          mode     = EditTheme.Mode.Inline,
+
+        val autosizeProps = EditControlsFeature.autosizeTextareaProps(
+          position = Some(EditControlsFeature.Style.default.position),
+          mode     = EditControlsFeature.Mode.Inline,
           enabled  = Enabled,
           validity = validity,
           value    = p.edit.value,
@@ -191,22 +195,13 @@ object TagEditor {
 
       def instructions: TagMod =
         TagMod.when(p.showInstructions)(
-          KeyboardTheme.Instructions(
-            p.extraKbShortcuts.instructions ::: KeyboardTheme.Instructions.Clauses.forTextEditor(
-              lineCardinality,
-              commit = p.status.getCommit,
-              commitVerb = p.commitVerb,
-              abort = p.abort),
-            help = None,
-            fullscreen = None,
-            monospace = None,
-          ))
+          editControls.instructions(p))
 
-      EditTheme.renderEditor(p.status, editor, p.edit.value, instructions)
+      EditControlsFeature.renderEditor(p.status, editor, p.edit.value, instructions)
     }
 
     val onMount: Callback =
-      EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback >>
+      EditControlsFeature.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback >>
         trigger(ta => Some(ta.value))
   }
 

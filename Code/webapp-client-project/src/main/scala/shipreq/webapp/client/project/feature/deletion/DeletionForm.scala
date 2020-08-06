@@ -9,16 +9,15 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags
-import shipreq.webapp.base.feature.PreviewFeature
-import shipreq.webapp.base.lib.KeyboardTheme
+import shipreq.webapp.base.feature.{EditControlsFeature, PreviewFeature}
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.DeleteReqs
 import shipreq.webapp.base.text.TextSearch
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 import shipreq.webapp.client.project.app.Style.{deletionForm => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.feature.Selection
-import shipreq.webapp.client.project.widgets.{ProjectWidgets, RichTextEditor}
+import shipreq.webapp.client.project.widgets.ProjectWidgets
+import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
 object DeletionForm {
   import DeletionRestorationLogic.Data
@@ -53,14 +52,15 @@ object DeletionForm {
         edit               = StateSnapshot.withReuse(s.reason)(setReason),
         asyncStatus        = None,
         abort              = None,
+        abortVerb          = "",
         abortConfirmation  = None,
         autoFocus          = true,
         commitFn           = None,
         commitVerb         = "",
-        editorStyle        = EditTheme.Style.default,
+        editorStyle        = EditControlsFeature.Style.default,
         preview            = PreviewFeature.ReadWrite.Single.alwaysShow,
         preEditValue       = None,
-        extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
+        extraControls      = EditControlsFeature.ExtraControls.empty,
         showInstructions   = true,
         optionalFullscreen = None)
 

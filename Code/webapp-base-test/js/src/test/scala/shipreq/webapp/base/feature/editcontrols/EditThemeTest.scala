@@ -1,13 +1,13 @@
-package shipreq.webapp.base.ui
+package shipreq.webapp.base.feature.editcontrols
 
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util.Validity
 import shipreq.webapp.base.data.Enabled
 import shipreq.webapp.base.feature.PreviewFeature.{Position, Status}
-import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
+import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus, PreviewFeature}
 import shipreq.webapp.base.test.RenderTestUtil._
 import shipreq.webapp.base.test.TestOptionalFullscreen
-import shipreq.webapp.base.ui.EditTheme.{OpenPreview, Style, WhenInTransit}
+import shipreq.webapp.base.ui._
 import utest._
 
 object EditThemeTest extends TestSuite {
@@ -15,8 +15,8 @@ object EditThemeTest extends TestSuite {
   private def renderBasicEditor(status: EditorStatus): VdomNode = {
 
     def editor(validity: Validity): VdomElement = {
-      val autosizeProps = EditTheme.autosizeTextareaProps(
-        mode     = EditTheme.Mode.Inline,
+      val autosizeProps = EditControlsFeature.autosizeTextareaProps(
+        mode     = Mode.Inline,
         position = Some(Position.Under),
         enabled  = Enabled,
         validity = validity,
@@ -25,7 +25,7 @@ object EditThemeTest extends TestSuite {
       AutosizeTextarea.Component(autosizeProps)
     }
 
-    EditTheme.renderEditor(
+    EditControlsFeature.renderEditor(
       status       = status,
       editor       = editor,
       readOnlyView = "{readOnlyView}",
@@ -37,7 +37,7 @@ object EditThemeTest extends TestSuite {
                                style          : Style,
                                previewState   : PreviewFeature.State.Single,
                                previewWantOpen: => Boolean,
-                               position       : EditTheme.Layout => Option[Position],
+                               position       : Layout => Option[Position],
                                fullscreen     : Option[OptionalFullscreen] = None,
                               ): VdomNode = {
 
@@ -46,8 +46,8 @@ object EditThemeTest extends TestSuite {
         PreviewFeature.Read.Single(previewState),
         PreviewFeature.Write.Single.doNothing)
 
-    def editor(layout: EditTheme.Layout, enabled: Enabled, validity: Validity): VdomElement = {
-      val autosizeProps = EditTheme.autosizeTextareaProps(
+    def editor(layout: Layout, enabled: Enabled, validity: Validity): VdomElement = {
+      val autosizeProps = EditControlsFeature.autosizeTextareaProps(
         mode     = layout.mode,
         position = position(layout),
         enabled  = enabled,
@@ -58,14 +58,14 @@ object EditThemeTest extends TestSuite {
       AutosizeTextarea.Component(autosizeProps)
     }
 
-    EditTheme.renderEditor(
+    EditControlsFeature.renderEditor(
       status             = status,
       optionalFullscreen = fullscreen,
       editor             = editor,
       readOnlyView       = "{readOnlyView}",
       instructions       = _ => "{instructions}",
       style              = style,
-      font               = EditTheme.Font.Default,
+      font               = Font.Default,
       previewRW          = previewRW,
       previewWantOpen    = previewWantOpen,
       previewBody        = "{previewBody}",
@@ -128,12 +128,12 @@ object EditThemeTest extends TestSuite {
     // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████
     "reqTableNewForm" - {
 
-      val style = EditTheme.Style(
+      val style = Style(
         Position.Under,
         OpenPreview.WhenWanted,
         WhenInTransit.DisableEditor,
       )
-      val position = (_: EditTheme.Layout).position
+      val position = (_: Layout).position
 
       "previewNotWanted" - {
         val a = renderTextEditor(
@@ -307,7 +307,7 @@ object EditThemeTest extends TestSuite {
     "reqTableTitle" - {
 
       val style = Style.default
-      val position = (_: EditTheme.Layout).position
+      val position = (_: Layout).position
 
       "previewClosed" - {
         val a = renderTextEditor(
@@ -378,7 +378,7 @@ object EditThemeTest extends TestSuite {
     "reqTableCustomText" - {
 
       val style = Style(Position.Under, OpenPreview.MinimallyWithControls, WhenInTransit.ReadOnlyViewWithSpinner)
-      val position = (_: EditTheme.Layout).positionIfShown
+      val position = (_: Layout).positionIfShown
 
       "previewClosed" - {
         val a = renderTextEditor(

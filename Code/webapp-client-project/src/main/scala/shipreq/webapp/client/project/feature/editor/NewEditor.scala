@@ -12,12 +12,12 @@ import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
+import shipreq.webapp.base.lib.ConfirmJs
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.lib.{ConfirmJs, KeyboardTheme}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.{EditTheme, OptionalFullscreen}
+import shipreq.webapp.base.ui.OptionalFullscreen
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.feature.editor.Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -283,7 +283,8 @@ object NewEditor {
     def getCustomReqTypeCB(id: CustomReqTypeId): CallbackOption[CustomReqType] =
       pxProject.toCallback.map(_.config.reqTypes.custom.get(id)).asCBO
 
-    def commitVerb = KeyboardTheme.Instructions.defaultCommitVerb
+    final val abortVerb = EditControlsFeature.defaultAbortVerb
+    final val commitVerb = EditControlsFeature.defaultCommitVerb
 
     trait ForChangeType {
       type Args
@@ -295,7 +296,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditReqType extends ForChangeType {
-      import shipreq.webapp.client.project.widgets.ReqTypeSelector
+      import shipreq.webapp.client.project.widgets.editors_with_controls.ReqTypeSelector
       import ReqTypeSelector.RT
 
       override type Args   = Unit
@@ -367,7 +368,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditReqCodes {
-      import shipreq.webapp.client.project.widgets.ReqCodeEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.ReqCodeEditor
 
       val trieCB: CallbackTo[ReqCode.Trie] =
         pxProject.toCallback.map(_.content.reqCodes.trie)
@@ -413,10 +414,11 @@ object NewEditor {
               trie             = trie,
               asyncStatus      = EditorStatus.async(asyncState),
               abort            = abort,
+              abortVerb        = abortVerb,
               autoFocus        = true,
               commitFn         = commitFn,
               commitVerb       = commitVerb,
-              extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
+              extraControls    = EditControlsFeature.ExtraControls.empty,
               showInstructions = true)
 
           override def clipboardData: Option[ClipboardData] =
@@ -471,10 +473,11 @@ object NewEditor {
               trie             = trie,
               asyncStatus      = EditorStatus.async(asyncState),
               abort            = abort,
+              abortVerb        = abortVerb,
               autoFocus        = true,
               commitFn         = commitFn,
               commitVerb       = commitVerb,
-              extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
+              extraControls    = EditControlsFeature.ExtraControls.empty,
               showInstructions = true)
 
           override def clipboardData: Option[ClipboardData] =
@@ -488,7 +491,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditImplications extends ForChangeType {
-      import shipreq.webapp.client.project.widgets.ImplicationEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.ImplicationEditor
       import ImplicationEditor.{CommitFn, Lookup, ValidationFn}
 
       private val _pxLookupAll = Px.apply2(pxProject, pxPlainTextNoCtx)(ImplicationEditor.Lookup.all)
@@ -578,11 +581,12 @@ object NewEditor {
             validationFn     = valFn,
             asyncStatus      = EditorStatus.async(asyncState),
             abort            = abort,
+            abortVerb        = abortVerb,
             autoFocus        = true,
             commitFn         = commitFn,
             commitVerb       = commitVerb,
             textSearch       = textSearch,
-            extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
+            extraControls    = EditControlsFeature.ExtraControls.empty,
             showInstructions = true)
 
         override def clipboardData: Option[ClipboardData] =
@@ -600,7 +604,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditTags extends ForChangeType {
-      import shipreq.webapp.client.project.widgets.TagEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.TagEditor
       import TagEditor.{CommitFn, Lookup, potentialValueAcceptor}
 
       override type Args   = Unit
@@ -669,10 +673,11 @@ object NewEditor {
             lookup           = lookup,
             asyncStatus      = EditorStatus.async(asyncState),
             abort            = abort,
+            abortVerb        = abortVerb,
             autoFocus        = true,
             commitFn         = commitFn,
             commitVerb       = commitVerb,
-            extraKbShortcuts = KeyboardTheme.Shortcuts.empty,
+            extraControls    = EditControlsFeature.ExtraControls.empty,
             showInstructions = true)
 
         override def clipboardData: Option[ClipboardData] =
@@ -686,21 +691,21 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichText {
       import shipreq.webapp.base.text._
-      import shipreq.webapp.client.project.widgets.RichTextEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
-      case class AbstractArgs[A](style: A => EditTheme.Style, changeArg: A)
+      case class AbstractArgs[A](style: A => EditControlsFeature.Style, changeArg: A)
 
       object AbstractArgs {
-        def const(style: EditTheme.Style): AbstractArgs[Unit] =
+        def const(style: EditControlsFeature.Style): AbstractArgs[Unit] =
           apply(_ => style, ())
 
         val constDefault: AbstractArgs[Unit] =
-          const(EditTheme.Style.default)
+          const(EditControlsFeature.Style.default)
 
-        val dynamicStyle: AbstractArgs[EditTheme.Style] =
+        val dynamicStyle: AbstractArgs[EditControlsFeature.Style] =
           apply(
             identity,
-            EditTheme.Style.default) // <-- doesn't affect change calculation
+            EditControlsFeature.Style.default) // <-- doesn't affect change calculation
       }
 
       abstract class Base[T <: Text.Generic, A](val editor: RichTextEditor[T], aa: AbstractArgs[A]) extends ForChangeType {
@@ -767,6 +772,7 @@ object NewEditor {
               edit               = ss,
               asyncStatus        = EditorStatus.async(asyncState),
               abort              = abort,
+              abortVerb          = abortVerb,
               abortConfirmation  = someConfirmJs,
               autoFocus          = true,
               commitFn           = commitFn,
@@ -774,7 +780,7 @@ object NewEditor {
               editorStyle        = aa.style(args),
               preview            = previewRW(pid),
               preEditValue       = initial,
-              extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
+              extraControls      = EditControlsFeature.ExtraControls.empty,
               showInstructions   = true,
               optionalFullscreen = someOptionalFullscreen)
 
@@ -822,7 +828,7 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichTextNonEmpty {
       import shipreq.webapp.base.text._
-      import shipreq.webapp.client.project.widgets.RichTextEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
       import EditRichText.AbstractArgs
 
       abstract class Base[T <: Text.Generic, Cmd, A](val editor: RichTextEditor[T],
@@ -891,6 +897,7 @@ object NewEditor {
               edit               = ss,
               asyncStatus        = EditorStatus.async(asyncState),
               abort              = abort,
+              abortVerb          = abortVerb,
               abortConfirmation  = someConfirmJs,
               autoFocus          = true,
               commitFn           = commitFn,
@@ -898,7 +905,7 @@ object NewEditor {
               editorStyle        = aa.style(args),
               preview            = previewRW(pid),
               preEditValue       = initial,
-              extraKbShortcuts   = KeyboardTheme.Shortcuts.empty,
+              extraControls      = EditControlsFeature.ExtraControls.empty,
               showInstructions   = true,
               optionalFullscreen = someOptionalFullscreen)
 
@@ -921,9 +928,9 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditUseCaseStep extends ForChangeType {
-      import shipreq.webapp.client.project.widgets.RichTextEditor.hardcodedLive
-      import shipreq.webapp.client.project.widgets.UseCaseStepEditor
-      import shipreq.webapp.client.project.widgets.UseCaseStepEditor.potentialValueAcceptor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor.hardcodedLive
+      import shipreq.webapp.client.project.widgets.editors_with_controls.UseCaseStepEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.UseCaseStepEditor.potentialValueAcceptor
       import UseCaseStepFlowText.TextAndFlow
 
       override type Args = FieldKey.UseCaseStep.Args

@@ -10,7 +10,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.client.project.feature.create.Feature.{AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
@@ -64,10 +63,10 @@ object NewEditor {
 
     final val ShowInstructions = true
 
-    val editorStyle = EditTheme.Style(
+    val editorStyle = EditControlsFeature.Style(
       PreviewFeature.Position.Under,
-      EditTheme.OpenPreview.WhenWanted,
-      EditTheme.WhenInTransit.DisableEditor, // else buttons move up & down jarringly
+      EditControlsFeature.OpenPreview.WhenWanted,
+      EditControlsFeature.WhenInTransit.DisableEditor, // else buttons move up & down jarringly
     )
   }
 
@@ -144,7 +143,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditReqCodes {
-      import shipreq.webapp.client.project.widgets.ReqCodeEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.ReqCodeEditor
 
       val trieCB: CallbackTo[ReqCode.Trie] =
         pxProject.toCallback.map(_.content.reqCodes.trie)
@@ -170,10 +169,11 @@ object NewEditor {
               trie             = trie,
               asyncStatus      = EditorStatus.async(asyncState),
               abort            = args.abort,
+              abortVerb        = args.abortVerb,
               autoFocus        = args.autoFocus,
               commitFn         = args.commitFn,
               commitVerb       = args.commitVerb,
-              extraKbShortcuts = args.extraKbShortcuts,
+              extraControls    = args.extraControls,
               showInstructions = ShowInstructions)
 
           override type State              = String
@@ -204,10 +204,11 @@ object NewEditor {
               trie             = trie,
               asyncStatus      = EditorStatus.async(asyncState),
               abort            = args.abort,
+              abortVerb        = args.abortVerb,
               autoFocus        = args.autoFocus,
               commitFn         = args.commitFn,
               commitVerb       = args.commitVerb,
-              extraKbShortcuts = args.extraKbShortcuts,
+              extraControls    = args.extraControls,
               showInstructions = ShowInstructions)
 
           override type State              = String
@@ -220,7 +221,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditImplications extends ForValueType {
-      import shipreq.webapp.client.project.widgets.ImplicationEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.ImplicationEditor
       import ImplicationEditor.{Lookup, ValidationFn}
 
       val pxLookupAll = for {
@@ -265,11 +266,12 @@ object NewEditor {
             validationFn     = valFn,
             asyncStatus      = EditorStatus.async(asyncState),
             abort            = args.abort,
+            abortVerb        = args.abortVerb,
             autoFocus        = args.autoFocus,
             commitFn         = args.commitFn,
             commitVerb       = args.commitVerb,
             textSearch       = textSearch,
-            extraKbShortcuts = args.extraKbShortcuts,
+            extraControls    = args.extraControls,
             showInstructions = ShowInstructions)
 
         override type State              = String
@@ -281,7 +283,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditTags extends ForValueType {
-      import shipreq.webapp.client.project.widgets.TagEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.TagEditor
       import TagEditor.Lookup
 
       override type Value = Set[ApplicableTagId]
@@ -320,10 +322,11 @@ object NewEditor {
             lookup           = lookup,
             asyncStatus      = EditorStatus.async(asyncState),
             abort            = args.abort,
+            abortVerb        = args.abortVerb,
             autoFocus        = args.autoFocus,
             commitFn         = args.commitFn,
             commitVerb       = args.commitVerb,
-            extraKbShortcuts = args.extraKbShortcuts,
+            extraControls    = args.extraControls,
             showInstructions = ShowInstructions)
 
         override type State              = String
@@ -336,7 +339,7 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichText {
       import shipreq.webapp.base.text._
-      import shipreq.webapp.client.project.widgets.RichTextEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForValueType {
         val T: editor.text.type = editor.text
@@ -369,6 +372,7 @@ object NewEditor {
               edit               = ss,
               asyncStatus        = EditorStatus.async(asyncState),
               abort              = args.abort,
+              abortVerb          = args.abortVerb,
               abortConfirmation  = None,
               autoFocus          = args.autoFocus,
               commitFn           = args.commitFn,
@@ -376,7 +380,7 @@ object NewEditor {
               editorStyle        = editorStyle,
               preview            = previewRW(pid),
               preEditValue       = None,
-              extraKbShortcuts   = args.extraKbShortcuts,
+              extraControls      = args.extraControls,
               showInstructions   = ShowInstructions,
               optionalFullscreen = None)
 
@@ -396,7 +400,7 @@ object NewEditor {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichTextNonEmpty {
       import shipreq.webapp.base.text._
-      import shipreq.webapp.client.project.widgets.RichTextEditor
+      import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForValueType {
         val T: editor.text.type = editor.text
@@ -429,6 +433,7 @@ object NewEditor {
               edit               = ss,
               asyncStatus        = EditorStatus.async(asyncState),
               abort              = args.abort,
+              abortVerb          = args.abortVerb,
               abortConfirmation  = None,
               autoFocus          = args.autoFocus,
               commitFn           = args.commitFn,
@@ -436,7 +441,7 @@ object NewEditor {
               editorStyle        = editorStyle,
               preview            = previewRW(pid),
               preEditValue       = None,
-              extraKbShortcuts   = args.extraKbShortcuts,
+              extraControls      = args.extraControls,
               showInstructions   = ShowInstructions,
               optionalFullscreen = None)
 

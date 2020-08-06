@@ -10,7 +10,7 @@ import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.UiText.EnglishStringExt
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
-import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
+import shipreq.webapp.base.feature.{AsyncFeature, EditControlsFeature, EditorStatus}
 import shipreq.webapp.base.jsfacade.MomentJs
 import shipreq.webapp.base.ui.BaseStyles.{projectItems => *}
 import shipreq.webapp.base.ui.semantic.{Icon, Size, Statistic, StatisticGroup}
@@ -111,7 +111,7 @@ object ProjectItem {
       def renderView(p: Props): TagMod =
         TagMod(
           <.h1(*.itemHeaderRW,
-            EditTheme.editableInline(p.state setState Some(EditState(p.item.name, None))),
+            EditControlsFeature.editableInline(p.state setState Some(EditState(p.item.name, None))),
             p.item.name),
           ProjectItem.renderMeta(p.item))
 

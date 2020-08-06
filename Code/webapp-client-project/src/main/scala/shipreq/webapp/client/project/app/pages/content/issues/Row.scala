@@ -6,8 +6,8 @@ import shipreq.base.util.IfApplicable
 import shipreq.webapp.base.UiText.{Issues => UI}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
+import shipreq.webapp.base.feature.EditControlsFeature
 import shipreq.webapp.base.issue._
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
@@ -30,7 +30,7 @@ object Row {
 
   val editorArgs =
     FieldKey.allArgs(
-      customTextField = EditTheme.Style.default.copy(openPreview = EditTheme.OpenPreview.MinimallyWithControls),
+      customTextField = EditControlsFeature.Style.default.copy(openPreview = EditControlsFeature.OpenPreview.MinimallyWithControls),
       useCaseStep     = FieldKey.UseCaseStep.Args.empty,
     )
 

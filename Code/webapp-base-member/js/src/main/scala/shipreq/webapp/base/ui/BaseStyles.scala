@@ -5,6 +5,7 @@ import scala.concurrent.duration._
 import shipreq.base.util.Validity
 import shipreq.webapp.base.CssSettings._
 import shipreq.webapp.base.data.{Off, On}
+import shipreq.webapp.base.feature.EditControlsFeature
 import shipreq.webapp.base.feature.PreviewFeature.Position
 import shipreq.webapp.base.ui.semantic.{Colour, Label}
 
@@ -14,10 +15,10 @@ object BaseStyles extends StyleSheet.Inline {
   /** Domains */
   object D {
     val on              = Domain.ofValues[On](On, Off)
-    val editorMode      = Domain.ofValues(EditTheme.Mode.values.whole: _*)
+    val editorMode      = Domain.ofValues(EditControlsFeature.Mode.values.whole: _*)
     val previewPosition = Domain.ofValues(Position.values.whole: _*)
     val editorPosMode   = previewPosition *** editorMode
-    val font            = Domain.ofValues(EditTheme.Font.values.whole: _*)
+    val font            = Domain.ofValues(EditControlsFeature.Font.values.whole: _*)
     val textEditor      = (EditorState.domain *** previewPosition.option *** editorMode *** font).map { case (((a, b), c), d) => (a, b, c, d) }
   }
 
@@ -158,7 +159,7 @@ object BaseStyles extends StyleSheet.Inline {
     "calc(50vh - (" + editorInstructions.heightEm + "em / 2) - " + fullscreenPaddingEx + "ex)"
 
   val textEditor = styleF(D.textEditor) { case (state, pos, mode, font) =>
-    import EditTheme.{Font, Mode}
+    import EditControlsFeature.{Font, Mode}
     styleS(
       width(100 %%),
       margin(`0`),
@@ -217,7 +218,7 @@ object BaseStyles extends StyleSheet.Inline {
         case EditorState.Invalid   => c"#E0B4B4"
       }),
       mixinIf(state ==* EditorState.InTransit)(display.flex),
-      mixinIf(mode != EditTheme.Mode.Fullscreen)(
+      mixinIf(mode != Mode.Fullscreen)(
         &.focus(
           (state match {
             case EditorState.Valid     => focus.glowBorder
@@ -248,8 +249,8 @@ object BaseStyles extends StyleSheet.Inline {
     justifyContent.spaceBetween,
     width(100 %%),
     mode match {
-      case EditTheme.Mode.Inline     => styleS()
-      case EditTheme.Mode.Fullscreen => styleS(height(100 %%))
+      case EditControlsFeature.Mode.Inline     => styleS()
+      case EditControlsFeature.Mode.Fullscreen => styleS(height(100 %%))
     }
   ))
 
@@ -263,8 +264,8 @@ object BaseStyles extends StyleSheet.Inline {
       width :=! "calc(50% - 0.35rem)"
     ),
     mode match {
-      case EditTheme.Mode.Inline     => styleS()
-      case EditTheme.Mode.Fullscreen => styleS(height :=! s"calc(100vh - 2 * (" + fullscreenPaddingEx + "ex))")
+      case EditControlsFeature.Mode.Inline     => styleS()
+      case EditControlsFeature.Mode.Fullscreen => styleS(height :=! s"calc(100vh - 2 * (" + fullscreenPaddingEx + "ex))")
     }
   ))
 
@@ -327,9 +328,9 @@ object BaseStyles extends StyleSheet.Inline {
 
   val richTextPreview = styleF(D.editorPosMode) { case (pos, mode) => styleS(
     (pos, mode) match {
-      case (Position.Right, _)                         => styleS(height(100 %%))
-      case (Position.Under, EditTheme.Mode.Inline)     => styleS()
-      case (Position.Under, EditTheme.Mode.Fullscreen) => styleS(height :=! fullscreenEditorAndPreviewHeight)
+      case (Position.Right, _)                                   => styleS(height(100 %%))
+      case (Position.Under, EditControlsFeature.Mode.Inline)     => styleS()
+      case (Position.Under, EditControlsFeature.Mode.Fullscreen) => styleS(height :=! fullscreenEditorAndPreviewHeight)
     },
     (backgroundImage := "repeating-linear-gradient(-225deg,rgba(0,0,0,0),rgba(0,0,0,0)5ex,rgba(137,214,229,.02)5ex,rgba(137,214,229,.02)10ex)").important,
     addClassNames("ui", "segments", "raised"),
@@ -371,8 +372,8 @@ object BaseStyles extends StyleSheet.Inline {
       textColour,
       textAlign.right,
       mode match {
-        case EditTheme.Mode.Fullscreen => styleS()
-        case EditTheme.Mode.Inline     => styleS(marginBottom(marginEm.em))
+        case EditControlsFeature.Mode.Fullscreen => styleS()
+        case EditControlsFeature.Mode.Inline     => styleS(marginBottom(marginEm.em))
       },
     ))
 

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.widgets.editors_with_controls
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
@@ -7,9 +7,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.PotentialChange
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.feature.EditorStatus
+import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
 import shipreq.webapp.base.text.Grammar
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.ui.semantic.{Dropdown => _, _}
 import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}
@@ -45,7 +44,7 @@ object ReqTypeSelector {
     rt.id.value.toString
 
   private def render(p: Props): VdomNode =
-    EditTheme.renderEditor(
+    EditControlsFeature.renderEditor(
       status       = p.status,
       editor       = _ => editor(p),
       readOnlyView = p.edit.value.fullName,

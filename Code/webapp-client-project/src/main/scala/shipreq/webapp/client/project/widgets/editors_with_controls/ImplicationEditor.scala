@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.widgets.editors_with_controls
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
@@ -11,10 +11,9 @@ import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.{Plain, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature.AutoComplete.Project.{ReqItem, ReqItems}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
-import shipreq.webapp.base.feature.EditorStatus
-import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme}
+import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
+import shipreq.webapp.base.lib.KeyHandlers
 import shipreq.webapp.base.text.{Grammar, PlainText, SingleLine, TextSearch}
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.base.validation._
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -91,11 +90,12 @@ object ImplicationEditor {
                    validationFn    : ValidationFn,
                    asyncStatus     : Option[EditorStatus.Async],
                    abort           : Option[Callback],
+                   abortVerb       : String,
                    autoFocus       : Boolean,
                    commitFn        : Option[CommitFn],
                    commitVerb      : String,
                    textSearch      : TextSearch,
-                   extraKbShortcuts: KeyboardTheme.Shortcuts,
+                   extraControls   : EditControlsFeature.ExtraControls,
                    showInstructions: Boolean) {
 
     val parseResult = validationFn(lookup)(edit.value)
@@ -151,12 +151,14 @@ object ImplicationEditor {
 
     @inline private def lineCardinality = SingleLine
 
+    private val editControls =
+      EditControlsFeature.Controls[Props](lineCardinality)
+        .abortWhenDefined(_.abort, _.abortVerb)
+        .commitWhenDefined(_.status.getCommit, _.commitVerb)
+        .addDynamicExtras(_.extraControls)
+
     private val keyHandlerBase =
-      KeyHandlers.base(
-        autoCompleteKeyHandlers
-          + KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort))
-          + KeyboardTheme.commitCO($.props.map(_.status.getCommit))
-      )
+      KeyHandlers.base(autoCompleteKeyHandlers)
 
     val textareaConst: TagMod = {
       val updateState: ReactEventFromTextArea => Callback =
@@ -173,14 +175,14 @@ object ImplicationEditor {
 
     def render(p: Props) = {
       def editor(validity: Validity): VdomElement = {
-        val keys = keyHandlerBase(p.extraKbShortcuts.keyHandlers)
+        val keys = keyHandlerBase(editControls.keyHandlers(p))
         val base = TagMod(
           textareaConst,
           keys,
           ^.autoFocus  := p.autoFocus)
-        val autosizeProps = EditTheme.autosizeTextareaProps(
-          position = Some(EditTheme.Style.default.position),
-          mode     = EditTheme.Mode.Inline,
+        val autosizeProps = EditControlsFeature.autosizeTextareaProps(
+          position = Some(EditControlsFeature.Style.default.position),
+          mode     = EditControlsFeature.Mode.Inline,
           enabled  = Enabled,
           validity = validity,
           value    = p.edit.value,
@@ -191,22 +193,13 @@ object ImplicationEditor {
 
       def instructions: TagMod =
         TagMod.when(p.showInstructions)(
-          KeyboardTheme.Instructions(
-            p.extraKbShortcuts.instructions ::: KeyboardTheme.Instructions.Clauses.forTextEditor(
-              lineCardinality,
-              commit = p.status.getCommit,
-              commitVerb = p.commitVerb,
-              abort = p.abort),
-            help = None,
-            fullscreen = None,
-            monospace = None,
-          ))
+          editControls.instructions(p))
 
-      EditTheme.renderEditor(p.status, editor, p.edit.value, instructions)
+      EditControlsFeature.renderEditor(p.status, editor, p.edit.value, instructions)
     }
 
     val onMount: Callback =
-      EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
+      EditControlsFeature.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
   }
 
   implicit val reusabilityLookup: Reusability[Lookup] =

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.widgets
+package shipreq.webapp.client.project.widgets.editors_with_controls
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -7,11 +7,10 @@ import shipreq.base.util._
 import shipreq.webapp.base.data.DataValidators.{reqCode => V}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
-import shipreq.webapp.base.feature.EditorStatus
-import shipreq.webapp.base.lib.{KeyHandlers, KeyboardTheme}
+import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
+import shipreq.webapp.base.lib.KeyHandlers
 import shipreq.webapp.base.text.GrammarSpec.SeqFormat
 import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
-import shipreq.webapp.base.ui.EditTheme
 import shipreq.webapp.base.validation.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -42,10 +41,11 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
                    trie            : ReqCode.Trie,
                    asyncStatus     : Option[EditorStatus.Async],
                    abort           : Option[Callback],
+                   abortVerb       : String,
                    autoFocus       : Boolean,
                    commitFn        : Option[CommitFn],
                    commitVerb      : String,
-                   extraKbShortcuts: KeyboardTheme.Shortcuts,
+                   extraControls   : EditControlsFeature.ExtraControls,
                    showInstructions: Boolean) {
 
     val parseResult = validator(V.State(trie, dataToSet(initialValue)))(edit.value)
@@ -65,12 +65,14 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
     override val pxAutoComplete = pxTrie.map(t =>
       AutoComplete.Project.reqCodePrefixes(t))
 
+    private val editControls =
+      EditControlsFeature.Controls[Props](lineCardinality)
+        .abortWhenDefined(_.abort, _.abortVerb)
+        .commitWhenDefined(_.status.getCommit, _.commitVerb)
+        .addDynamicExtras(_.extraControls)
+
     private val keyHandlerBase =
-      KeyHandlers.base(
-        autoCompleteKeyHandlers
-          + KeyboardTheme.abortCriterion.handleWhenDefined($.props.map(_.abort))
-          + KeyboardTheme.commitCO($.props.map(_.status.getCommit))
-      )
+      KeyHandlers.base(autoCompleteKeyHandlers)
 
     val textareaConst: TagMod = {
       val updateState: ReactEventFromTextArea => Callback =
@@ -86,14 +88,14 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
 
     def render(p: Props) = {
       def editor(validity: Validity): VdomElement = {
-        val keys = keyHandlerBase(p.extraKbShortcuts.keyHandlers)
+        val keys = keyHandlerBase(editControls.keyHandlers(p))
         val base = TagMod(
           textareaConst,
           keys,
           ^.autoFocus  := p.autoFocus)
-        val autosizeProps = EditTheme.autosizeTextareaProps(
-          position = Some(EditTheme.Style.default.position),
-          mode     = EditTheme.Mode.Inline,
+        val autosizeProps = EditControlsFeature.autosizeTextareaProps(
+          position = Some(EditControlsFeature.Style.default.position),
+          mode     = EditControlsFeature.Mode.Inline,
           enabled  = Enabled,
           validity = validity,
           value    = p.edit.value,
@@ -104,22 +106,13 @@ sealed abstract class ReqCodeEditor[In: Reusability, Out] {
 
       def instructions: TagMod =
         TagMod.when(p.showInstructions)(
-          KeyboardTheme.Instructions(
-            p.extraKbShortcuts.instructions ::: KeyboardTheme.Instructions.Clauses.forTextEditor(
-              lineCardinality,
-              commit = p.status.getCommit,
-              commitVerb = p.commitVerb,
-              abort = p.abort),
-            help = None,
-            fullscreen = None,
-            monospace = None,
-          ))
+          editControls.instructions(p))
 
-      EditTheme.renderEditor(p.status, editor, p.edit.value, instructions)
+      EditControlsFeature.renderEditor(p.status, editor, p.edit.value, instructions)
     }
 
     val onMount: Callback =
-      EditTheme.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
+      EditControlsFeature.onTextareaEditorMount(editorRef, $.props.map(_.autoFocus)).toCallback
   }
 
   // lazy else there'll be a FieldNotInitialised error via .configure -> impTextEditor -> textEditor

@@ -12,11 +12,11 @@ import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.ExternalPubid.LookupFailure
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{Event, ProjectAndOrd, VerifiedEvent}
-import shipreq.webapp.base.feature.{AsyncFeature, PreviewFeature, TableNavigationFeature}
+import shipreq.webapp.base.feature.{AsyncFeature, EditControlsFeature, PreviewFeature, TableNavigationFeature}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{CreateContentCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.{EditTheme, NoContentMessage}
+import shipreq.webapp.base.ui.NoContentMessage
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
@@ -32,10 +32,10 @@ import shipreq.webapp.client.ww.api.WebWorkerCmd
 object ReqDetail {
   import Shared.tableNavigationFeature
 
-  private val bigTextEditorStyle = EditTheme.Style(
+  private val bigTextEditorStyle = EditControlsFeature.Style(
     PreviewFeature.Position.Right,
-    EditTheme.OpenPreview.ShowWithControls,
-    EditTheme.WhenInTransit.ReadOnlyViewWithSpinner,
+    EditControlsFeature.OpenPreview.ShowWithControls,
+    EditControlsFeature.WhenInTransit.ReadOnlyViewWithSpinner,
   )
 
   def apply(staticProps: StaticProps) =
@@ -449,7 +449,7 @@ object ReqDetail {
             } yield ()
 
           def onKeyDown(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] =
-            UseCaseStepEditor.saveAndAddKeyCriterion.toCallbackOption(e) >> addStepAfterSelf
+            EditControlsFeature.Keys.commitAndProgress.toCallbackOption(e) >> addStepAfterSelf
 
           val stepProps =
             EditorNavParent.Props(
