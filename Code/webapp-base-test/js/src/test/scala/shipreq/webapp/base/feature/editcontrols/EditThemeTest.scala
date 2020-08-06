@@ -249,7 +249,7 @@ object EditThemeTest extends TestSuite {
         val e =
           """<div class="BaseStyles-textEditorTopPreviewUnder-2">
             |  <div>
-            |    <textarea disabled="" class="BaseStyles-textEditor-18">
+            |    <textarea readonly="" class="BaseStyles-textEditor-54">
             |      {editor.value}
             |    </textarea>
             |    <span style="visibility:hidden">
@@ -288,7 +288,7 @@ object EditThemeTest extends TestSuite {
         val e =
           """<div class="BaseStyles-textEditorTopPreviewUnder-2">
             |  <div>
-            |    <textarea disabled="" class="BaseStyles-textEditor-18">
+            |    <textarea readonly="" class="BaseStyles-textEditor-54">
             |      {editor.value}
             |    </textarea>
             |    <span style="visibility:hidden">
