@@ -45,7 +45,6 @@ v2.2
 
 ### Implement
 * Derivative tags
-* Use title when suggesting refs
 * Dual clipboard formats: one for ShipReq, one for everywhere else. Exclude ref titles from ShipReq version.
 * RedisProtocolTest when done
 

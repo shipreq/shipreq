@@ -140,8 +140,9 @@ private[strategies] object ReqCodeStrategies {
 
       case (code, -\/(a)) =>
         Candidate.standard(
-          title = code,
-          desc = pt.codeGroupTitle(a.group),
+          title       = code,
+          desc        = pt.codeGroupTitle(a.group),
+          replacement = code,
         )
 
       case (code, \/-(a)) =>

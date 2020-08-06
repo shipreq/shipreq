@@ -18,7 +18,11 @@ final case class ReqItem(reqId  : ReqId,
   val sortKey      = (reqType.mnemonic.value, pubid.pos.value)
 
   private[strategies] def candidate =
-    RefStrategies.Candidate.standard(title = pubidStr, desc = title)
+    RefStrategies.Candidate.standard(
+      title       = pubidStr,
+      desc        = title,
+      replacement = pubidStr + ":",
+    )
 }
 
 object ReqItem {
@@ -38,13 +42,6 @@ private[strategies] object RefStrategies {
   }
 
   object Candidate {
-
-    def standard(title: String, desc: String): Candidate =
-      standard(
-        title       = title,
-        desc        = desc,
-        replacement = title,
-      )
 
     def standard(title: String, desc: String, replacement: String): Candidate =
       apply(
