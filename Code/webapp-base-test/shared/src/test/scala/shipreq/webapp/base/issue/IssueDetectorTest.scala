@@ -288,7 +288,8 @@ object IssueDetectorTest extends TestSuite {
     )
 
     def otherwise() = test(p7)(
-      Event.FieldCustomTagUpdate(statusField, CustomTagFieldGD(FieldReqTypeRules.defaultTo(uat3).notApplicable(mf))),
+      Event.FieldCustomTagUpdate(statusField, CustomTagFieldGD.ValueForFieldReqTypeRules(
+        FieldReqTypeRules.defaultTo(uat3).notApplicable(mf))),
     )(
       IssueLite.FieldDefaultTagDead(statusField, uat3, Set(brs(1), brs(2), frs(1), frs(2), uc2)),
     )
@@ -322,7 +323,7 @@ object IssueDetectorTest extends TestSuite {
     )
 
     def otherwise() = test(p7)(
-      Event.FieldCustomTagUpdate(priField, CustomTagFieldGD(
+      Event.FieldCustomTagUpdate(priField, CustomTagFieldGD.ValueForFieldReqTypeRules(
         FieldReqTypeRules.defaultTo(priMed).notApplicable(mf, dd).optional(fr).mandatory(uc, si))),
       Event.ApplicableTagUpdate(priMed, ApplicableTagGD.ValueForApplicableReqTypes(onlyReqTypes(co))),
     )(

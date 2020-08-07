@@ -708,20 +708,26 @@ trait ApplyConfigEvent {
     val ^ = CustomTagFieldGD
     val GD = GenericDataApp[CustomField.Tag](^)
 
+    val validateDerivativeTags: DerivativeTags => Eval[DerivativeTags] =
+      d => ensureTagsExist(d.tagIdIterator().toSet).andReturn(d)
+
     def applyCreate(e: FieldCustomTagCreate): Eval[Unit] = {
       implicit val vs = e.vs
       for {
-        r <- GD.need(^.FieldReqTypeRules)
         _ <- ensureTagIsLive(e.tagId)
-        _ <- create(CustomField.Tag(e.id, e.tagId, r, Live))
+        r <- GD.need(^.FieldReqTypeRules)
+        d <- validateDerivativeTags(GD.want(^.DerivativeTags)(DerivativeTags.emptyDisabled))
+        _ <- create(CustomField.Tag(e.id, e.tagId, r, d, Live))
       } yield ()
     }
 
     val updateTagId             = fieldUpdateFn(CustomField.Tag.tagId)
     val updateFieldReqTypeRules = fieldUpdateFn(CustomField.Tag.fieldReqTypeRules)
+    val updateDerivativeTags    = validateDerivativeTags >>=@ CustomField.Tag.derivativeTags
 
     val updateValues = GD.updateEachValue {
       case v: ^.ValueForFieldReqTypeRules => updateFieldReqTypeRules(v.value)
+      case v: ^.ValueForDerivativeTags    => updateDerivativeTags   (v.value)
     }
 
     def applyUpdate(e: FieldCustomTagUpdate): Eval[Unit] =

@@ -125,7 +125,7 @@ object TagFieldEditor {
           } yield (a, b)
 
         pass1.flatMap { case (tagId, rules) =>
-          val cmd = UpdateConfigCmd.CustomFieldCreateTag(tagId, rules)
+          val cmd = UpdateConfigCmd.CustomFieldCreateTag(tagId, rules, DerivativeTags.emptyDisabled)
           PotentialChange.Success(cmd)
         }
       }

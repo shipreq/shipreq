@@ -5,7 +5,7 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import java.time.Instant
 import scala.collection.immutable.TreeSet
 import scala.reflect.ClassTag
-import shipreq.base.util.{ErrorMsg, NonEmptyArraySeq}
+import shipreq.base.util.{Enabled, ErrorMsg, NonEmptyArraySeq}
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
@@ -21,7 +21,6 @@ object Rev6 {
   import Rev5._
   import Events._
   import PostEvents._
-
 
   object AtomPicklers extends AtomTC[Pickler] {
     import shipreq.webapp.base.text._
@@ -239,6 +238,187 @@ object Rev6 {
   }
 
   import AtomPicklers.instances._
+
+  // ===================================================================================================================
+
+  implicit lazy val picklerEnabled: Pickler[Enabled] =
+    pickleBool(Enabled)
+
+  implicit lazy val picklerDerivativeTagsTagPair: Pickler[DerivativeTags.TagPair] =
+    new Pickler[DerivativeTags.TagPair] {
+      override def pickle(a: DerivativeTags.TagPair)(implicit state: PickleState): Unit = {
+        state.pickle(a.lo)
+        state.pickle(a.hi)
+      }
+      override def unpickle(implicit state: UnpickleState): DerivativeTags.TagPair = {
+        val lo = state.unpickle[ApplicableTagId]
+        val hi = state.unpickle[ApplicableTagId]
+        new DerivativeTags.TagPair(lo, hi)
+      }
+    }
+
+  implicit lazy val picklerDerivativeTagsRules: Pickler[DerivativeTags.Rules] =
+    pickleMap
+
+  implicit lazy val picklerDerivativeTags: Pickler[DerivativeTags] =
+    new Pickler[DerivativeTags] {
+      override def pickle(a: DerivativeTags)(implicit state: PickleState): Unit = {
+        state.pickle(a.enabled)
+        state.pickle(a.rules)
+      }
+      override def unpickle(implicit state: UnpickleState): DerivativeTags = {
+        val enabled = state.unpickle[Enabled]
+        val rules   = state.unpickle[DerivativeTags.Rules]
+        DerivativeTags(enabled, rules)
+      }
+    }
+
+  implicit lazy val picklerCustomFieldTag: Pickler[CustomField.Tag] =
+    new Pickler[CustomField.Tag] {
+      override def pickle(a: CustomField.Tag)(implicit state: PickleState): Unit = {
+        writeVersion(2)
+        state.pickle(a.id)
+        state.pickle(a.tagId)
+        state.pickle(a.fieldReqTypeRules)
+        state.pickle(a.derivativeTags)
+        state.pickle(a.liveExplicitly)
+      }
+      override def unpickle(implicit state: UnpickleState): CustomField.Tag =
+        readByVersion(2) {
+
+          // v1.0
+          case 0 =>
+            val id             = state.unpickle[CustomField.Tag.Id]
+            val tagId          = state.unpickle[TagId]
+            val mandatory      = state.unpickle[Mandatory]
+            val reqTypes       = state.unpickle[ApplicableReqTypes]
+            val liveExplicitly = state.unpickle[Live]
+            CustomField.Tag.v1(id, tagId, mandatory, reqTypes, liveExplicitly)
+
+          // v1.1
+          case 1 =>
+            val id             = state.unpickle[CustomField.Tag.Id]
+            val tagId          = state.unpickle[TagGroupId]
+            val reqTypes       = state.unpickle[FieldReqTypeRules.ForTagField]
+            val liveExplicitly = state.unpickle[Live]
+            CustomField.Tag.v2(id, tagId, reqTypes, liveExplicitly)
+
+          // v1.2
+          case 2 =>
+            val id             = state.unpickle[CustomField.Tag.Id]
+            val tagId          = state.unpickle[TagGroupId]
+            val reqTypes       = state.unpickle[FieldReqTypeRules.ForTagField]
+            val derivativeTags = state.unpickle[DerivativeTags]
+            val liveExplicitly = state.unpickle[Live]
+            CustomField.Tag(id, tagId, reqTypes, derivativeTags, liveExplicitly)
+        }
+    }
+
+  implicit lazy val picklerCustomField: Pickler[CustomField] =
+    new Pickler[CustomField] {
+      private[this] final val KeyImplication = 'i'
+      private[this] final val KeyTag         = 't'
+      private[this] final val KeyText        = 'x'
+      override def pickle(a: CustomField)(implicit state: PickleState): Unit =
+        a match {
+          case b: CustomField.Implication => state.enc.writeByte(KeyImplication); state.pickle(b)
+          case b: CustomField.Tag         => state.enc.writeByte(KeyTag        ); state.pickle(b)
+          case b: CustomField.Text        => state.enc.writeByte(KeyText       ); state.pickle(b)
+        }
+      override def unpickle(implicit state: UnpickleState): CustomField =
+        state.dec.readByte match {
+          case KeyImplication => state.unpickle[CustomField.Implication]
+          case KeyTag         => state.unpickle[CustomField.Tag        ]
+          case KeyText        => state.unpickle[CustomField.Text       ]
+        }
+    }
+
+  implicit lazy val picklerFieldSetCustomFields: Pickler[FieldSet.CustomFields] =
+    pickleIMap(FieldSet.emptyCustomFields)
+
+  implicit lazy val picklerFieldSet: Pickler[FieldSet] =
+    new Pickler[FieldSet] {
+      override def pickle(a: FieldSet)(implicit state: PickleState): Unit = {
+        state.pickle(a.customFields)
+        state.pickle(a.order)
+      }
+      override def unpickle(implicit state: UnpickleState): FieldSet = {
+        val customFields = state.unpickle[FieldSet.CustomFields]
+        val order        = state.unpickle[FieldSet.Order]
+        FieldSet(customFields, order)
+      }
+    }
+
+  implicit lazy val picklerProjectConfig: Pickler[ProjectConfig] =
+    new Pickler[ProjectConfig] {
+      override def pickle(a: ProjectConfig)(implicit state: PickleState): Unit = {
+        state.pickle(a.customIssueTypes)
+        state.pickle(a.reqTypes)
+        state.pickle(a.fields)
+        state.pickle(a.tags)
+      }
+      override def unpickle(implicit state: UnpickleState): ProjectConfig = {
+        val customIssueTypes = state.unpickle[CustomIssueTypeIMap]
+        val reqTypes         = state.unpickle[ReqTypes]
+        val fields           = state.unpickle[FieldSet]
+        val tags             = state.unpickle[Tags]
+        ProjectConfig(customIssueTypes, reqTypes, fields, tags)
+      }
+    }
+
+  implicit lazy val pickleCustomTagFieldGD: Pickler[CustomTagFieldGD.NonEmptyValues] = {
+    import CustomTagFieldGD._
+
+    implicit val picklerValueForDerivativeTags    = transformPickler(ValueForDerivativeTags   .apply)(_.value)
+    implicit val picklerValueForFieldReqTypeRules = transformPickler(ValueForFieldReqTypeRules.apply)(_.value)
+
+    implicit val picklerValue: Pickler[Value] =
+      new Pickler[Value] {
+        private[this] final val KeyReqTypes       = 'R'
+        private[this] final val KeyDerivativeTags = 'T'
+        override def pickle(a: Value)(implicit state: PickleState): Unit =
+          a match {
+            case b: ValueForDerivativeTags    => state.enc.writeByte(KeyDerivativeTags); state.pickle(b)
+            case b: ValueForFieldReqTypeRules => state.enc.writeByte(KeyReqTypes      ); state.pickle(b)
+          }
+        override def unpickle(implicit state: UnpickleState): Value =
+          state.dec.readByte match {
+            case KeyDerivativeTags => state.unpickle[ValueForDerivativeTags]
+            case KeyReqTypes       => state.unpickle[ValueForFieldReqTypeRules]
+          }
+      }
+
+    val values: Pickler[Values] = pickleIMap(emptyValues)
+    pickleNonEmptyMono[Values](values, implicitly)
+  }
+
+  private[v1] implicit lazy val picklerEventFieldCustomTagCreate: Pickler[Event.FieldCustomTagCreate] =
+    new Pickler[Event.FieldCustomTagCreate] {
+      override def pickle(a: Event.FieldCustomTagCreate)(implicit state: PickleState): Unit = {
+        state.pickle(a.id)
+        state.pickle(a.tagId)
+        state.pickle(a.vs)
+      }
+      override def unpickle(implicit state: UnpickleState): Event.FieldCustomTagCreate = {
+        val id    = state.unpickle[CustomField.Tag.Id]
+        val tagId = state.unpickle[TagGroupId]
+        val vs    = state.unpickle[CustomTagFieldGD.NonEmptyValues]
+        Event.FieldCustomTagCreate(id, tagId, vs)
+      }
+    }
+
+  private[v1] implicit lazy val picklerEventFieldCustomTagUpdate: Pickler[Event.FieldCustomTagUpdate] =
+    new Pickler[Event.FieldCustomTagUpdate] {
+      override def pickle(a: Event.FieldCustomTagUpdate)(implicit state: PickleState): Unit = {
+        state.pickle(a.id)
+        state.pickle(a.vs)
+      }
+      override def unpickle(implicit state: UnpickleState): Event.FieldCustomTagUpdate = {
+        val id = state.unpickle[CustomField.Tag.Id]
+        val vs = state.unpickle[CustomTagFieldGD.NonEmptyValues]
+        Event.FieldCustomTagUpdate(id, vs)
+      }
+    }
 
   // ===================================================================================================================
 

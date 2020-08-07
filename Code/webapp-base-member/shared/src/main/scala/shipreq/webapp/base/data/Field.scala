@@ -389,6 +389,7 @@ object CustomField {
   final case class Tag(id               : Tag.Id,
                        tagId            : TagGroupId,
                        fieldReqTypeRules: FieldReqTypeRules.ForTagField,
+                       derivativeTags   : DerivativeTags,
                        liveExplicitly   : Live) extends CustomField(CustomFieldType.Tag) {
 
     override def toString = s"CustomField.Tag($id, $tagId, $fieldReqTypeRules, $liveExplicitly)"
@@ -423,15 +424,25 @@ object CustomField {
            tagId             : TagId,
            mandatory         : Mandatory,
            applicableReqTypes: ApplicableReqTypes,
-           liveExplicitly    : Live): Tag = {
-
-      apply(
+           liveExplicitly    : Live): Tag =
+      v2(
         id                = id,
         tagId             = castV1TagId(tagId),
         fieldReqTypeRules = FieldReqTypeRules.v1(mandatory, applicableReqTypes),
         liveExplicitly    = liveExplicitly,
       )
-    }
+
+    def v2(id               : Tag.Id,
+           tagId            : TagGroupId,
+           fieldReqTypeRules: FieldReqTypeRules.ForTagField,
+           liveExplicitly   : Live): Tag =
+      apply(
+        id                = id,
+        tagId             = tagId,
+        fieldReqTypeRules = fieldReqTypeRules,
+        derivativeTags    = DerivativeTags.emptyDisabled,
+        liveExplicitly    = liveExplicitly,
+      )
 
     final case class Id(value: Int) extends CustomFieldId  {
       override def toString = s"CustomField.Tag.Id($value)"

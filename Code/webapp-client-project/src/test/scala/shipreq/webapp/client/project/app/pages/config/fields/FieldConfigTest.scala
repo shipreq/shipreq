@@ -533,7 +533,7 @@ object FieldConfigTest extends TestSuite {
       applyEventsSuccessfully(
         SampleProject7.project,
         Event.TagGroupCreate(1000.TG, TagGroupGD("X", ∅, Exclusive, ∅, Vector(misc1, misc2))),
-        Event.FieldCustomTagCreate(1000.CFTag, 1000.TG, CustomTagFieldGD(FieldReqTypeRules.empty))
+        Event.FieldCustomTagCreate(1000.CFTag, 1000.TG, CustomTagFieldGD.ValueForFieldReqTypeRules(FieldReqTypeRules.empty))
       )
     )(
       *.emptyAction

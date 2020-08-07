@@ -45,6 +45,7 @@ v2.2
 
 ### Implement
 * Derivative tags
+  * invalid tag rules when tags out of scope. Hide or Issues page?
 * RedisProtocolTest when done
 
 

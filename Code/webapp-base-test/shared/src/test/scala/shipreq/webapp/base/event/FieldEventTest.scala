@@ -1,7 +1,8 @@
 package shipreq.webapp.base.event
 
 import japgolly.microlibs.nonempty.NonEmpty
-import shipreq.base.util.NonExclusive
+import shipreq.base.util.{Enabled, NonExclusive}
+import shipreq.webapp.base.data
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.{FieldReqTypeRules => FRTR}
 import shipreq.webapp.base.event.ApplyEventTestFns._
@@ -280,6 +281,10 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
     import ApplicableTagGD._
     ApplicableTagCreate(2, nev(Key("c2"), Desc(Some("r")), Colour(None), ApplicableReqTypes(allReqTypes)))
   }
+  val createAT3 = {
+    import ApplicableTagGD._
+    ApplicableTagCreate(3, nev(Key("c3"), Desc(Some("r")), Colour(None), ApplicableReqTypes(allReqTypes)))
+  }
   val softDelTG1 = TagGroupEventTest.sd1
   implicit val init = InitialEvents(TagGroupEventTest.c1, createAT2)
 
@@ -309,12 +314,32 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
           val c = FieldCustomTagCreate(1, priTG, nev(FieldReqTypeRules(FRTR.defaultTo(priHigh))))
           val p = applyEventSuccessfully(p0, c)
           val f = p.config.fields.customFields.need(c.id)
-          assertEq(f, CustomField.Tag(c.id, priTG, FRTR.defaultTo(priHigh), Live))
+          assertEq(f, CustomField.Tag.v2(c.id, priTG, FRTR.defaultTo(priHigh), Live))
         }
 
         "notFound"  - assertBad(priTG, 1234.AT)
 //        'dead      - assertBad(statusTG, uat2)
 //        'notAChild - assertBad(statusTG, priHigh)
+      }
+
+      "derivativeTags" - {
+        import data.DerivativeTags.TagPair
+        implicit val init = CustomTagFieldEventTest.init.add(createAT3)
+
+        "ok" - {
+          import SampleProject.Values._
+          val r  = FRTR.defaultTo(priHigh)
+          val d  = data.DerivativeTags(Enabled, Map(TagPair(v10, v11) -> v12))
+          val c  = FieldCustomTagCreate(1, priTG, nev(FieldReqTypeRules(r), DerivativeTags(d)))
+          val p0 = Project.fields.set(FieldSet.empty)(SampleProject.project)
+          val p  = applyEventSuccessfully(p0, c)
+          val f  = p.config.fields.customFields.need(c.id)
+          assertEq(f, CustomField.Tag(c.id, priTG, r, d, Live))
+        }
+
+        "badTagId1" - assertFail("not found")(c1.mod(_ + DerivativeTags(data.DerivativeTags(Enabled, Map(TagPair(9.AT, 2.AT) -> 2.AT)))))
+        "badTagId2" - assertFail("not found")(c1.mod(_ + DerivativeTags(data.DerivativeTags(Enabled, Map(TagPair(2.AT, 9.AT) -> 2.AT)))))
+        "badTagId3" - assertFail("not found")(c1.mod(_ + DerivativeTags(data.DerivativeTags(Enabled, Map(TagPair(2.AT, 3.AT) -> 9.AT)))))
       }
     }
 
@@ -322,14 +347,14 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
       "ok" - {
         var es = Vector[Event](c1, u1)
         def r = _assertPass(es: _*).config.fields.customFields.get(c1.id).get
-        assertEq(r, CustomField.Tag(1, 1.TG, FRTR.optional, Live))
+        assertEq(r, CustomField.Tag.v2(1, 1.TG, FRTR.optional, Live))
 
         es :+= FieldCustomTagUpdate(1, nev(FieldReqTypeRules(FRTR.mandatory)))
-        assertEq(r, CustomField.Tag(1, 1.TG, FRTR.mandatory, Live))
+        assertEq(r, CustomField.Tag.v2(1, 1.TG, FRTR.mandatory, Live))
 
         es :+= CustomReqTypeEventTest.c1
         es :+= FieldCustomTagUpdate(1, nev(FieldReqTypeRules(onlyRT1)))
-        assertEq(r, CustomField.Tag(1, 1.TG, onlyRT1, Live))
+        assertEq(r, CustomField.Tag.v2(1, 1.TG, onlyRT1, Live))
       }
       "badReqTypes" - assertFail("Types") (c1, FieldCustomTagUpdate(1, nev(FieldReqTypeRules(onlyRT1)))) // RT1 doesn't exist
 
@@ -349,12 +374,31 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
           val u = FieldCustomTagUpdate(id, nev(FieldReqTypeRules(FRTR.defaultTo(wip))))
           val p = applyEventSuccessfully(p0, u)
           val f = p.config.fields.customFields.need(u.id)
-          assertEq(f, CustomField.Tag(id, statusTG, FRTR.defaultTo(wip), Live))
+          assertEq(f, CustomField.Tag.v2(id, statusTG, FRTR.defaultTo(wip), Live))
         }
 
         "notFound"  - assertBad(1234.AT)
 //        'dead      - assertBad(uat2)
 //        'notAChild - assertBad(priHigh)
+      }
+
+      "derivativeTags" - {
+        import data.DerivativeTags.TagPair
+        implicit val init = CustomTagFieldEventTest.init.add(createAT3)
+
+        "ok" - {
+          import SampleProject.Values._
+          val d  = data.DerivativeTags(Enabled, Map(TagPair(v10, v11) -> v12))
+          val u  = FieldCustomTagUpdate(1, nev(DerivativeTags(d)))
+          val p0 = Project.fields.set(FieldSet.empty)(SampleProject.project)
+          val p  = applyEventsSuccessfully(p0, c1, u)
+          val f  = p.config.fields.customFields.need(u.id)
+          assertEq(f, CustomField.Tag(u.id, priTG, FRTR.mandatory, d, Live))
+        }
+
+        "badTagId1" - assertFail("not found")(c1, FieldCustomTagUpdate(1, nev(DerivativeTags(data.DerivativeTags(Enabled, Map(TagPair(9.AT, 2.AT) -> 2.AT))))))
+        "badTagId2" - assertFail("not found")(c1, FieldCustomTagUpdate(1, nev(DerivativeTags(data.DerivativeTags(Enabled, Map(TagPair(2.AT, 9.AT) -> 2.AT))))))
+        "badTagId3" - assertFail("not found")(c1, FieldCustomTagUpdate(1, nev(DerivativeTags(data.DerivativeTags(Enabled, Map(TagPair(2.AT, 3.AT) -> 9.AT))))))
       }
     }
   }

@@ -89,18 +89,19 @@ object SampleProject7 {
     FieldCustomTextCreate(componentField, CustomTextFieldGD("Component",
       FieldReqTypeRules.notApplicable.optional(co, fr, si))),
 
-    FieldCustomTagUpdate(priField, CustomTagFieldGD(
+    FieldCustomTagUpdate(priField, CustomTagFieldGD.ValueForFieldReqTypeRules(
       FieldReqTypeRules.optional.mandatory(mf, fr).notApplicable(co).defaultTo(priMed)(br))),
 
     FieldCustomRestore(relField),
 
-    FieldCustomTagUpdate(relField, CustomTagFieldGD(
+    FieldCustomTagUpdate(relField, CustomTagFieldGD.ValueForFieldReqTypeRules(
       FieldReqTypeRules.mandatory.defaultTo(priMed)(co))),
 
-    FieldCustomTagUpdate(statusField, CustomTagFieldGD(
+    FieldCustomTagUpdate(statusField, CustomTagFieldGD.ValueForFieldReqTypeRules(
       FieldReqTypeRules.optional.defaultTo(wip)(mf).defaultTo(uat)(br, co).defaultTo(uat2)(fr).defaultTo(uat3)(si))),
 
-    Event.FieldCustomTagCreate(verField, verTG, CustomTagFieldGD(FieldReqTypeRules.defaultTo(priLow).notApplicable(mf))),
+    Event.FieldCustomTagCreate(verField, verTG, CustomTagFieldGD.ValueForFieldReqTypeRules(
+      FieldReqTypeRules.defaultTo(priLow).notApplicable(mf))),
 
     GenericReqCreate(brs(1), br, GenericReqGD.ValueForTitle("Must make moneh")),
     GenericReqCreate(brs(2), br, GenericReqGD.ValueForTitle("Must make moar moneh")),

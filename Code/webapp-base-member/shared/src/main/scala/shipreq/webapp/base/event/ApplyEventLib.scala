@@ -109,6 +109,15 @@ private[event] object ApplyEventLib {
         _ <- ensureLive(t.tag.live)(show(id))
       } yield ())
 
+  def ensureTagsExist(tagsId: => Set[TagId])(implicit trust: Trust): Eval[Unit] =
+    whenUntrusted(
+      Eval.get.flatMap { p =>
+        val tt    = p.config.tags.tree
+        val error = tagsId.find(!tt.containsK(_)).map(id => ErrorMsg("Tag not found: " + id))
+        Eval.failOption(error)
+      }
+    )
+
   def ensureReqTypeIsLive(id: ReqTypeId)(implicit trust: Trust): Eval[Unit] =
     whenUntrusted(
       id.foldId(f => ensureLive(f.live)(show(id)), ensureCustomReqTypeIsLive))

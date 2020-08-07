@@ -49,7 +49,7 @@ object IssueConfigTest extends TestSuite {
   private def testView()(implicit tp: TestPath) = {
     val p = applyEventSuccessfully(
       SampleProject7.project,
-      Event.FieldCustomTagUpdate(relField, CustomTagFieldGD(FieldReqTypeRules.mandatory))
+      Event.FieldCustomTagUpdate(relField, CustomTagFieldGD.ValueForFieldReqTypeRules(FieldReqTypeRules.mandatory))
     )
 
     val assertOtherSources =

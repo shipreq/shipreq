@@ -17,6 +17,7 @@ object Rev6 {
   import JsonCodec.Implicits._
   import BaseData._
   import BaseMemberData1._
+  import Rev1._
   import Events._
   import PostEvents._
 
@@ -212,6 +213,59 @@ object Rev6 {
 
   // ===================================================================================================================
 
+  private[v1] implicit lazy val codecEnabled: JsonCodec[Enabled] =
+    codecBool(Enabled)
+
+  private[v1] implicit lazy val codecDerivativeTagsTagPair: JsonCodec[DerivativeTags.TagPair] =
+    JsonCodec.xemap((p: DerivativeTags.TagPair) => Array(p.lo, p.hi))(
+      ids => ids.length match {
+        case 2 => Right(DerivativeTags.TagPair(ids(0), ids(1)))
+        case _ => Left(DecodingFailure("Expected array of two tag ids", Nil))
+      }
+    )
+
+  private[v1] implicit lazy val codecDerivativeTagsRules: JsonCodec[DerivativeTags.Rules] = {
+    import DerivativeTags.TagPair
+
+    implicit val keyEnc: KeyEncoder[TagPair] =
+      KeyEncoder.instance(p => s"${p.lo.value}+${p.hi.value}")
+
+    val regex = """^(\d+?)\+(\d+)$""".r
+
+    implicit val keyDec: KeyDecoder[TagPair] =
+      KeyDecoder.instance {
+        case regex(lo, hi) => Some(TagPair(ApplicableTagId(lo.toInt), ApplicableTagId(hi.toInt)))
+        case _             => None
+      }
+
+    JsonCodec.map
+  }
+
+  private[v1] implicit lazy val codecDerivativeTags: JsonCodec[DerivativeTags] =
+    JsonCodec(
+      Encoder.forProduct2("enabled", "rules")(a => (a.enabled, a.rules)),
+      Decoder.forProduct2("enabled", "rules")(DerivativeTags.apply))
+
+  private[v1] implicit lazy val codecCustomTagFieldGD: JsonCodec[CustomTagFieldGD.NonEmptyValues] = {
+    import CustomTagFieldGD._
+
+    implicit val codecValueForFieldReqTypeRules = JsonCodec.xmap(ValueForFieldReqTypeRules.apply)(_.value)
+    implicit val codecValueForDerivativeTags    = JsonCodec.xmap(ValueForDerivativeTags   .apply)(_.value)
+
+    implicit val decoderValue: Decoder[Value] = decodeSumBySoleKey {
+      case ("reqTypes",   c) => c.as[ValueForFieldReqTypeRules]
+      case ("derivation", c) => c.as[ValueForDerivativeTags]
+    }
+
+    implicit val encoderValue: Encoder[Value] = Encoder.instance {
+      case a: ValueForFieldReqTypeRules => Json.obj("reqTypes"   -> a.asJson)
+      case a: ValueForDerivativeTags    => Json.obj("derivation" -> a.asJson)
+    }
+
+    implicit val values: JsonCodec[Values] = codecIMap(emptyValues)
+    codecNonEmptyMono[Values]
+  }
+
   private[v1] implicit val codecEventNonEmptyCustomTextMap: JsonCodec[Event.NonEmptyCustomTextMap] =
     codecNonEmptyMono
 
@@ -321,6 +375,18 @@ object Rev6 {
   }
 
   object EventData {
+
+    implicit val decoderEventFieldCustomTagCreate: Decoder[Event.FieldCustomTagCreate] =
+      Decoder.forProduct3("id", "tagId", "values")(Event.FieldCustomTagCreate.apply)
+
+    implicit val encoderEventFieldCustomTagCreate: Encoder[Event.FieldCustomTagCreate] =
+      Encoder.forProduct3("id", "tagId", "values")(a => (a.id, a.tagId, a.vs))
+
+    implicit val decoderEventFieldCustomTagUpdate: Decoder[Event.FieldCustomTagUpdate] =
+      Decoder.forProduct2("id", "values")(Event.FieldCustomTagUpdate.apply)
+
+    implicit val encoderEventFieldCustomTagUpdate: Encoder[Event.FieldCustomTagUpdate] =
+      Encoder.forProduct2("id", "values")(a => (a.id, a.vs))
 
     implicit val decoderEventGenericReqCreate: Decoder[Event.GenericReqCreate] =
       Decoder.forProduct3("reqId", "reqTypeId", "values")(Event.GenericReqCreate.apply)

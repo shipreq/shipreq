@@ -16,20 +16,28 @@ Adding a new event
    * DON'T CHANGE `ProjectTemplate` IN A BACKWARD-INCOMPATIBLE WAY
 
 
-Making a backward-compatible change to an event
-===============================================
-Just do it *but* make sure that you follow the [codec evolution guide](codec-evolution.md)
-such that protocol versions increase by `.1`.
+Changing an existing event
+==========================
+
+The process depends on whether you can do it in a backwards-compatible way,
+where backwards-compatible is in terms of the types/data, not the codecs.
+
+Examples:
+* adding a new event field           - backwards-compatible
+* adding a new GenericData attribute - backwards-compatible
+* removing a field                   - not backwards-compatible
+
+#### When backwards-compatible...
+* Modify the types/data directly
+* Evolve the codecs as described in the [codec evolution guide](codec-evolution.md)
+
+#### When not backwards-compatible...
+1. Soft-delete the event (see below)
+2. Add a new replacement event (see above)
 
 
-Making a backward-incompatible change to an event
-=================================================
-1. Delete existing event.
-2. Add new event.
-
-
-Deleting an new event
-=====================
+Deleting an event
+=================
 
 1. Use IDE to rename the event: append `V1` or similar
 

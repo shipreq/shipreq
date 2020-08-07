@@ -37,7 +37,7 @@ object ProjectSpaProtocols {
   import CreateContentCmd.CodecsV4._
   import ManualIssueCmd  .CodecsV4._
   import SavedViewCmd    .CodecsV3._
-  import UpdateConfigCmd .CodecsV1._
+  import UpdateConfigCmd .CodecsV2._
   import UpdateContentCmd.CodecsV4._
 
   private object Codecs {
