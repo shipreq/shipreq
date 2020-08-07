@@ -228,11 +228,13 @@ object TagInTree {
 object Tags {
   val empty = apply(TagTree.empty)
   implicit def univEq: UnivEq[Tags] = UnivEq.derive
+  type TagOrder = Map[ApplicableTagId, Int]
 }
 
 @Lenses
 final case class Tags(tree: TagTree) {
   import FlatTag.FilterPolicy
+  import Tags.TagOrder
 
   def validateApplicableTag(id: ApplicableTagId): Option[ErrorMsg] =
     applicableTag(id) match {
@@ -436,6 +438,31 @@ final case class Tags(tree: TagTree) {
 
   def sortTagIds(ids: IterableOnce[ApplicableTagId]): Iterator[ApplicableTagId] =
     MutableArray(ids).sortBySchwartzian(needApplicableTag(_).name).iterator()
+
+  lazy val orderByName: TagOrder =
+    tree
+      .valuesIterator
+      .map(_.tag)
+      .filterSubType[ApplicableTag]
+      .|>(MutableArray.apply)
+      .sortBySchwartzian(_.key.value.toLowerCase)
+      .map(_.id)
+      .iterator()
+      .mapToOrder
+
+  lazy val orderingByName: Ordering[ApplicableTagId] =
+    Ordering.by(orderByName)
+
+  lazy val orderByPos: TagOrder =
+    flatRowsUnfiltered
+      .iterator
+      .map(_.id)
+      .filterSubType[ApplicableTagId]
+      .mapToOrder
+
+  lazy val orderingByPos: Ordering[ApplicableTagId] =
+    Ordering.by(orderByPos)
+
 }
 
 final class RecursiveTagIterator(tags      : Tags,

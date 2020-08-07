@@ -1,7 +1,5 @@
 package shipreq.webapp.base.data.derivation
 
-import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import nyaya.util.Multimap
 import scala.collection.mutable
@@ -106,31 +104,6 @@ final class DataLogic(p: Project) {
   val tagFieldDist: FilterDead => TagFieldDistribution.TagIds =
     FilterDead.memoLazy(DataLogic.tagFieldDist(p.config, _, None))
 
-  lazy val tagOrderByName: TagOrder =
-    p.config.tags.tree
-      .valuesIterator
-      .map(_.tag)
-      .filterSubType[ApplicableTag]
-      .|>(MutableArray.apply)
-      .sortBySchwartzian(_.key.value |> normaliseStringForSorting)
-      .map(_.id)
-      .iterator()
-      .mapToOrder
-
-  lazy val tagOrderingByName: Ordering[ApplicableTagId] =
-    Ordering.by(tagOrderByName)
-
-  lazy val tagOrderByPos: TagOrder =
-    p.config.tags
-      .flatRowsUnfiltered
-      .iterator
-      .map(_.id)
-      .filterSubType[ApplicableTagId]
-      .mapToOrder
-
-  lazy val tagOrderingByPos: Ordering[ApplicableTagId] =
-    Ordering.by(tagOrderByPos)
-
   // See https://shipreq.com/project/d6My#reqs/IV-26 for an explanation of this logic.
   val customFieldImps: FilterDead => CustomField.Implication.Id => CustomImpFieldValues =
     FilterDead.memoLazy { fd =>
@@ -229,9 +202,6 @@ final class DataLogic(p: Project) {
     val reqTypeOrder = reqTypes.order
     i => (reqTypeOrder(i.reqTypeId), i.pos.value)
   }
-
-  lazy val pubidOrdering: Ordering[Pubid] =
-    Ordering.by(pubidSortKeyFn)
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -313,8 +283,6 @@ object DataLogic {
         ReqTags(_other, _deadTagsInLiveText, _naTagsInLiveText)
     }
   }
-
-  type TagOrder = Map[ApplicableTagId, Int]
 
   type TagLookup = ReqId => ReqTags
 

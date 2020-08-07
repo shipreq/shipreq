@@ -151,8 +151,8 @@ object ViewReq {
       val tagDist         = project.dataLogic.tagFieldDist(filterDead)
       val tagLookup       = project.dataLogic.tagLookup(filterDead)
       val reqTags         = tagLookup(id)
-      val tagOrderByName  = project.dataLogic.tagOrderByName
-      val tagOrderByPos   = project.dataLogic.tagOrderByPos
+      val tagOrderByName  = project.config.tags.orderByName
+      val tagOrderByPos   = project.config.tags.orderByPos
       val impFilter       = cfg.reqFilter(filterDead)
       val otherTagSet     = DataLogic.otherTags(tagDist, tagLookup)(id)
       val otherTags       = MutableArray(otherTagSet).sortBy(tagOrderByName.apply).iterator().to(Vector)

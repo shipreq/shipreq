@@ -132,50 +132,50 @@ private[reqtable] object Logic {
       view,
       ap,
       p.dataLogic.customFieldImps(fd)(_).getPubids,
-      Some(Sorter.orderingForImpField(p.dataLogic)))
+      Some(Sorter.orderingForImpField(p.config)))
 
-  private def impExpander(dir      : Direction,
-                          view     : View,
-                          dataLogic: DataLogic): Expander[Pubid] =
+  private def impExpander(dir : Direction,
+                          view: View,
+                          cfg : ProjectConfig): Expander[Pubid] =
     Expanded.forColumn[Pubid](
       view,
       Column.Implications(dir),
-      Some(Sorter.orderingForImpField(dataLogic)))
+      Some(Sorter.orderingForImpField(cfg)))
 
   private def tagFieldExpander(view        : View,
-                                    ap          : ProjectApplicability[Column, ReqTypeId],
-                                    dataLogic   : DataLogic,
-                                    tagFieldDist: TagFieldDistribution.TagIds,
-                                    tagLookup   : TagLookup): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] =
+                               ap          : ProjectApplicability[Column, ReqTypeId],
+                               cfg         : ProjectConfig,
+                               tagFieldDist: TagFieldDistribution.TagIds,
+                               tagLookup   : TagLookup): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] =
     customFieldExpander(
       view,
       ap,
       fid => DataLogic.customFieldTags(tagFieldDist, tagLookup, fid),
-      Some(Sorter.orderingForTagField(dataLogic)))
+      Some(Sorter.orderingForTagField(cfg)))
 
   private def otherTagsExpander(view        : View,
-                                     ap          : ProjectApplicability[Column, ReqTypeId],
-                                     dataLogic   : DataLogic,
-                                     tagFieldDist: TagFieldDistribution.TagIds,
-                                     tagLookup   : TagLookup): Req => Expanded[ApplicableTagId] = {
+                                ap          : ProjectApplicability[Column, ReqTypeId],
+                                cfg         : ProjectConfig,
+                                tagFieldDist: TagFieldDistribution.TagIds,
+                                tagLookup   : TagLookup): Req => Expanded[ApplicableTagId] = {
     fieldExpander(
       view,
       Column.OtherTags,
       ap,
       DataLogic.otherTags(tagFieldDist, tagLookup),
-      Some(Sorter.orderingForOtherTags(dataLogic)))
+      Some(Sorter.orderingForOtherTags(cfg)))
   }
 
   private def allTagsExpander(view     : View,
-                                   ap       : ProjectApplicability[Column, ReqTypeId],
-                                   dataLogic: DataLogic,
-                                   tagLookup: TagLookup): Req => Expanded[ApplicableTagId] = {
+                              ap       : ProjectApplicability[Column, ReqTypeId],
+                              cfg      : ProjectConfig,
+                              tagLookup: TagLookup): Req => Expanded[ApplicableTagId] = {
     fieldExpander(
       view,
       Column.AllTags,
       ap,
       tagLookup(_).all,
-      Some(Sorter.orderingForAllTags(dataLogic)))
+      Some(Sorter.orderingForAllTags(cfg)))
   }
 
   private def codeExpander(view: View): Expander[ReqCode.Value] =
@@ -265,12 +265,12 @@ private[reqtable] object Logic {
     val tagFieldDist    = DataLogic.tagFieldDist(p.config, fd, Some(f => view isVisible Column.CustomField(f)))
     val tagLookup       = dataLogic.tagLookup(fd)
     val applicability   = Column.applicabilityForReq(p.config.applicability)
-    val expandImps      = Direction.memo(impExpander(_, view, dataLogic))
+    val expandImps      = Direction.memo(impExpander(_, view, p.config))
     val expandCodes     = codeExpander(view)
     val expandImpCols   = impExpander(view, fd, p, applicability)
-    val expandTagCols   = tagFieldExpander(view, applicability, dataLogic, tagFieldDist, tagLookup)
-    val expandOtherTags = otherTagsExpander(view, applicability, dataLogic, tagFieldDist, tagLookup)
-    val expandAllTags   = allTagsExpander(view, applicability, dataLogic, tagLookup)
+    val expandTagCols   = tagFieldExpander(view, applicability, p.config, tagFieldDist, tagLookup)
+    val expandOtherTags = otherTagsExpander(view, applicability, p.config, tagFieldDist, tagLookup)
+    val expandAllTags   = allTagsExpander(view, applicability, p.config, tagLookup)
 
     // The segregation of live/dead is because live reqs can have inactive reqcodes (leftovers of CodeRefs).
     // It would be erroneous to display inactive reqs for a live req.
