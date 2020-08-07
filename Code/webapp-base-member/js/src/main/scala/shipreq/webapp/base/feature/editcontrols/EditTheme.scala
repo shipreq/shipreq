@@ -3,7 +3,6 @@ package shipreq.webapp.base.feature.editcontrols
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
-import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.feature.PreviewFeature.Position
 import shipreq.webapp.base.feature.{EditorStatus, PreviewFeature}
 import shipreq.webapp.base.jsfacade.ReactCollapse

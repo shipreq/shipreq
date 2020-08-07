@@ -5,8 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.data._
+import shipreq.base.util.{Disabled, Enabled, ErrorMsg}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.ServerSideProcInvoker

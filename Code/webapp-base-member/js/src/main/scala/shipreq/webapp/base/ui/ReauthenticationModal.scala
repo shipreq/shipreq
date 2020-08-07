@@ -3,8 +3,7 @@ package shipreq.webapp.base.ui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
-import shipreq.base.util.{Allow, Deny, ErrorMsg, Permission}
-import shipreq.webapp.base.data.{Disabled, Enabled}
+import shipreq.base.util.{Allow, Deny, Disabled, Enabled, ErrorMsg, Permission}
 import shipreq.webapp.base.lib.ModalForm
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
 import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocols}

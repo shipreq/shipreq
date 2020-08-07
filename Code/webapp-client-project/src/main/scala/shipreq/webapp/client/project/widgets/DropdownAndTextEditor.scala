@@ -5,7 +5,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scala.scalajs.js
-import shipreq.webapp.base.data._
+import shipreq.base.util.Enabled
 import shipreq.webapp.base.ui.semantic.{Dropdown, Icon, UsesSemanticUiManually}
 
 @UsesSemanticUiManually

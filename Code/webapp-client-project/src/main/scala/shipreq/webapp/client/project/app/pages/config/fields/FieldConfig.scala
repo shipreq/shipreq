@@ -9,7 +9,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import scala.reflect.ClassTag
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{ErrorMsg, Optics, PotentialChange}
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.DataReusability._

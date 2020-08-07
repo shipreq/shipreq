@@ -6,7 +6,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import shipreq.base.util.ScalaExt._
-import shipreq.base.util.{PotentialChange, Validity}
+import shipreq.base.util.{Enabled, PotentialChange, Validity}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.data.{Optional => _, _}

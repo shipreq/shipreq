@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import org.scalajs.dom.{html, window}
 import shipreq.base.util._
-import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
+import shipreq.webapp.base.data.TCB
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.{BrowserStorage, ValidationUX}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker

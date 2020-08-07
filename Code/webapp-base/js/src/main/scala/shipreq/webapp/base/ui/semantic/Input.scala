@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import org.scalajs.dom.html
 import shipreq.base.util._
-import shipreq.webapp.base.data.{Disabled, Enabled, On}
+import shipreq.webapp.base.data.On
 
 object Input {
   private[this] val disabled = ^.cls := "disabled"

@@ -4,9 +4,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import shipreq.base.util.{Deny, ErrorMsg, Permission}
+import shipreq.base.util.{Deny, Disabled, Enabled, ErrorMsg, Permission}
 import shipreq.webapp.base.CommmonUiText
-import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.ServerSideProcInvoker

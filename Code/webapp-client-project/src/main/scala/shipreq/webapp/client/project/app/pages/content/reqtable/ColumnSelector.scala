@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import shipreq.base.util.Disabled
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.lib.DataReusability._

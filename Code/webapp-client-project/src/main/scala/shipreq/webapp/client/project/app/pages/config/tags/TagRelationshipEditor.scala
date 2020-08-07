@@ -8,7 +8,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{LeftRight, MMTree}
+import shipreq.base.util.{Disabled, Enabled, LeftRight, MMTree}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.ui.semantic.{Button, ColourPlus, Header, Icon, Segment}

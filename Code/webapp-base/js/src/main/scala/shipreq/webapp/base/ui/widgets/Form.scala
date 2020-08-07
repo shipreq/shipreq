@@ -5,8 +5,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.{Iso, Lens}
-import shipreq.base.util.{Identity, IsoBool, Validity}
-import shipreq.webapp.base.data.{Disabled, Enabled, On}
+import shipreq.base.util._
+import shipreq.webapp.base.data.On
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Input, Segment, UsesSemanticUiManually}

@@ -3,8 +3,7 @@ package shipreq.webapp.base.ui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
-import shipreq.base.util.{ErrorMsg, OpResult}
-import shipreq.webapp.base.data.{Disabled, Enabled}
+import shipreq.base.util.{Disabled, Enabled, ErrorMsg, OpResult}
 import shipreq.webapp.base.lib.ModalForm
 import shipreq.webapp.base.protocol.ajax.AjaxClient
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.{Metadata, SubmitFeedback}

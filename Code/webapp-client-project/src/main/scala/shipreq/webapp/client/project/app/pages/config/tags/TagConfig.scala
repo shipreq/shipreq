@@ -7,7 +7,7 @@ import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{ErrorMsg, Optics, PotentialChange}
+import shipreq.base.util.{Disabled, Enabled, ErrorMsg, Optics, PotentialChange}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.DataReusability._

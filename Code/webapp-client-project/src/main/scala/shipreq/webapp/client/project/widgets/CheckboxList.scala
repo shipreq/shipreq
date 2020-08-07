@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalaz.Equal
+import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.CheckboxList._

@@ -5,8 +5,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, raw}
 import scala.scalajs.js
 import scala.util.Success
-import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.data.{Disabled, Enabled}
+import shipreq.base.util.{Disabled, Enabled, ErrorMsg}
 import shipreq.webapp.base.ui.semantic.{JQuery, Modal, UsesSemanticUiManually}
 
 object ModalForm {
