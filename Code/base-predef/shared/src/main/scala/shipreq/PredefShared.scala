@@ -4,6 +4,7 @@ import java.lang.CharSequence
 import nyaya.util.{MultiValues, Multimap}
 import scala.annotation.elidable.ASSERTION
 import scala.collection.{ArrayOps, StringOps, immutable}
+import scala.reflect.ClassTag
 
 abstract class PredefShared
   extends PredefScala
@@ -52,6 +53,13 @@ abstract class PredefShared
   @inline
   final implicit def predefExtAnyRef[A <: AnyRef](a: A) =
     new PredefShared.ExtAnyRef(a)
+
+  def ArraySeq1[@specialized A: ClassTag](a: A): ArraySeq[A] = {
+    val x = new Array[A](1)
+    x(0) = a
+    ArraySeq.unsafeWrapArray(x)
+  }
+
 }
 
 object PredefShared {
