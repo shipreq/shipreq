@@ -128,6 +128,22 @@ final class NonEmptyArraySeq[+A] private[NonEmptyArraySeq](val whole: ArraySeq[A
   def reduce[B >: A](f: (B, B) => B): B =
     reduceMapLeft1[B](a => a)(f)
 
+  def intercalate[B >: A: ClassTag](b: B): NonEmptyArraySeq[B] =
+    intercalateF(b)(a => a)
+
+  def intercalateF[B: ClassTag](b: B)(f: A => B): NonEmptyArraySeq[B] = {
+    val x = new Array[B](length << 1 - 1)
+    x(0) = f(head)
+    var i = 0
+    for (a <- tail) {
+      i += 1
+      x(i) = b
+      i += 1
+      x(i) = f(a)
+    }
+    NonEmptyArraySeq.force(ArraySeq.unsafeWrapArray(x))
+  }
+
   def filter(f: A => Boolean): Option[NonEmptyArraySeq[A]] =
     NonEmptyArraySeq.option(whole filter f)
 
