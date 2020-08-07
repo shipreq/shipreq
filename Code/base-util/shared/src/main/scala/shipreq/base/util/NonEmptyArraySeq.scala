@@ -257,11 +257,14 @@ object NonEmptyArraySeq extends NonEmptyArraySeqImplicits0 {
   def apply[A: ClassTag](h: A, t: A*): NonEmptyArraySeq[A] =
     if (t.isEmpty)
       one(h)
-    else {
-      val b = ArraySeq.newBuilder[A]
-      b += h
-      b ++= t
-      new NonEmptyArraySeq(b.result())
+    else t match {
+      case tail: ArraySeq[A] =>
+        new NonEmptyArraySeq(h +: tail)
+      case _ =>
+        val b = ArraySeq.newBuilder[A]
+        b += h
+        b ++= t
+        new NonEmptyArraySeq(b.result())
     }
 
   def one[A: ClassTag](h: A): NonEmptyArraySeq[A] = {
