@@ -49,10 +49,12 @@ object DerivativeTagRuleEditorTest extends TestSuite {
 
     val tags         = projectConfig.tags
     val groupTags    = tags.tagGroupTagsFDV(statusTG)
-  //val liveTags     = groupTags(HideDead)
+    val liveTags     = groupTags(HideDead)
   //val deadTags     = groupTags(ShowDead)
     val initialState = State.init(dt, statusTG, tags)
     val validated    = initialState.validate(groupTags)
+
+    implicit lazy val autoCompleteStrategies = DerivativeTagRuleEditor.autoComplete(liveTags)
   }
 
   override def tests = Tests {
@@ -145,6 +147,32 @@ object DerivativeTagRuleEditorTest extends TestSuite {
           TagPair(wip, v10) -> wip, // out-of-scope: key no longer part of Status
         )
       ))
+    }
+
+    "autoComplete" - {
+      import AutoCompleteTestUtil._
+      import Data1._
+
+      val all = Vector(
+        "defer",
+        "prod",
+        "wip",
+      )
+
+      def assertSuggestsAll(prefix: String, suffix: String)(implicit l: Line): Unit =
+        assertSuggestionsAndSelectionFor(prefix)(all: _*)(prefix + all.head + suffix)
+
+      "BOI"     - assertSuggestsAll("", " +")
+      "space"   - assertSuggestsAll(" ", " +")
+      "plus"    - assertSuggestsAll("qwe +", " =")
+      "plus_"   - assertSuggestsAll("qwe + ", " =")
+      "equals"  - assertSuggestsAll("qwe + zxc =", "\n")
+      "equals_" - assertSuggestsAll("qwe + zxc = ", "\n")
+      "newLine" - assertSuggestsAll("qwe + zxc = qwe\n", " +")
+      "nlSpace" - assertSuggestsAll("qwe + zxc = qwe\n ", " +")
+      "w"       - assertSuggestionsAndSelectionFor("w")("wip")("wip +")
+      "+d"      - assertSuggestionsAndSelectionFor("wip + d")("defer")("wip + defer =")
+      "=d"      - assertSuggestionsAndSelectionFor("wip + defer = d")("defer")("wip + defer = defer\n")
     }
 
   }

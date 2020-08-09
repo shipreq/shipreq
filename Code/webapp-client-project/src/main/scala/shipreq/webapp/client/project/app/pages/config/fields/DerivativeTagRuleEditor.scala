@@ -5,11 +5,13 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import nyaya.util.Multimap
+import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import shipreq.base.util.Util.ShipReqOpsForArraySeq
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.TagGroupTags
+import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.ui.AutosizeTextarea
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
@@ -308,8 +310,59 @@ private[fields] object DerivativeTagRuleEditor {
 
   // ===================================================================================================================
 
+  private[fields] def autoComplete(tags: TagGroupTags): AutoComplete.Strategies = {
+
+    val sorted = MutableArray(tags.tags).map(_.name.toLowerCase).sort.arraySeq
+
+    val searchFn: String => IterableOnce[String] =
+      ss => {
+        val s = ss.toLowerCase
+        sorted.iterator.filter(_.startsWith(s)).take(MaxResults)
+      }
+
+    def instance(before: String, suffix: String) =
+      AutoComplete.Strategy.builder
+        .regex(s"((?:$before) *)([^\\s=+]*)$$", index = 2)
+        .search(searchFn)
+        .replace("$1" + _ + suffix)
+        .result()
+
+    Vector(
+      instance("^|\\n", " +"),
+      instance("\\+", " ="),
+      instance("=", "\n"),
+    )
+  }
+
   @UsesSemanticUiManually
-  final class Backend($: BackendScope[Props, Unit]) {
+  final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.BackendTA {
+
+    private val pxGroup: Px[TagGroupId] =
+      Px.props($).map(_.group).withReuse.autoRefresh
+
+    private val pxTags: Px[Tags] =
+      Px.props($).map(_.tags).withReuse.autoRefresh
+
+    private val pxAutoComplete: Px[AutoComplete.Strategies] =
+      for {
+        group <- pxGroup
+        tags  <- pxTags
+      } yield {
+        val groupTags = tags.tagGroupTags(group)(HideDead)
+        autoComplete(groupTags)
+      }
+
+    private val editorRef =
+      Ref.toScalaComponent(AutosizeTextarea.Component)
+
+    override val autoCompleteCtx: CallbackOption[AutoCompleteCtx] =
+      for {
+        r <- editorRef.get
+        h <- CallbackOption.liftOption(r.getDOMNode.toHtml)
+      } yield AutoCompleteCtx(pxAutoComplete.value(), h.domCast[html.TextArea])
+
+    override protected def getTextFromHeadToCaret =
+      AutoComplete.getTextFromHeadToCaretTA
 
     private val onChange: ReactEventFromTextArea => Callback =
       e => {
@@ -378,12 +431,16 @@ private[fields] object DerivativeTagRuleEditor {
       val validity = Valid when vali.invalidity.isEmpty
 
       val editor =
-        AutosizeTextarea(
+        editorRef.component(TagMod(
           *.derivativeTagsEditor(validity),
           updateOnChange,
-          ^.spellCheck := false,
+          ^.onBlur     --> autoCompleteOnBlur,
+          ^.onClick    ==> autoCompleteOnClick,
+          ^.onKeyDown  ==> autoCompleteOnKeyDown,
+          ^.spellCheck  := false,
           ^.placeholder := "Define rules to combine tags by typing:\nrule1 + rule2 = newRule",
-          ^.value := txt)
+          ^.value       := txt,
+        ))
 
       val showTag: TagId => String =
         p.tags.needTag(_).name
@@ -439,5 +496,6 @@ private[fields] object DerivativeTagRuleEditor {
   val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
     .configure(Reusability.shouldComponentUpdate)
+    .configure(AutoComplete.install)
     .build
 }

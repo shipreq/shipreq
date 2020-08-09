@@ -46,7 +46,6 @@ v2.2
 ### Implement
 * style inline graphs by default
 * Derivative tags
-  * autocomplete
   * new issues:
     * result tag is dead
     * result tag is out-of-scope
