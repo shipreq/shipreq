@@ -1024,8 +1024,8 @@
     57 [remove] i.small.icon,i.small.icons
     29 [keep  ] i.icon,i.icons
     79 [keep  ] i.large.icon,i.large.icons
-    73 [remove] i.big.icon,i.big.icons
-    75 [remove] i.huge.icon,i.huge.icons
+    73 [keep  ] i.big.icon,i.big.icons
+    75 [keep  ] i.huge.icon,i.huge.icons
     81 [remove] i.massive.icon,i.massive.icons
     61 [keep  ] i.icons
    163 [keep  ] i.icons .icon
