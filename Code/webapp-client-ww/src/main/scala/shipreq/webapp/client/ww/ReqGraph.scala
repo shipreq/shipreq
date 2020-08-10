@@ -117,7 +117,7 @@ object ReqGraph {
 
             val coloursByReqId: Map[ReqId, ArraySeq[Colour]] = {
               val tags    = project.config.tags
-              val reqTags = project.reqTagsFn(tagGroupId, filterDead)
+              val reqTags = project.virtualTags.underTagGroup(tagGroupId, filterDead)
               val reqIds  = scope.fold(project.content.reqs.idIterator())(_.iterator)
               reqIds.map { reqId =>
                 val colours =

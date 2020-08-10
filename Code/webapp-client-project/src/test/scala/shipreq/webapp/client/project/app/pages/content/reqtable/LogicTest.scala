@@ -144,7 +144,8 @@ object LogicTest extends TestSuite {
     val pc = pcache(p)
     import pc.{pt, ts}
     val r = gatherSortConsolidate(p, v, pt, ts)
-    assertEq(extract(r), expect)
+    def filterText = f.map(", filter = \"" + Filter.Valid.toText(p.config, _) + "\"")
+    assertEq(s"testUnsorted2($fd${filterText.getOrElse("")})", extract(r), expect)
   }
 
   private def viewSortedByCB(c: C.SortInconclusiveHasBlanks, sm: ConsiderBlanks, fd: FilterDead, f: Filter): View =
@@ -1120,9 +1121,11 @@ object LogicTest extends TestSuite {
     testFilter(P7, F.fieldProp(\/-(verField), FieldAttr.DefaultInUse))("", "")
     testFilter(P7, F.fieldProp(\/-(priField), FieldAttr.DefaultInUse))("BR-1  BR-2  BR-3", "")
 
+    // Even with HideDead, when an empty tag field cell gets a dead default, it's still shown to users.
+    // Otherwise, they'd see a blank cell where they'd be expecting a default tag, or a <blank>.
     testFilter(P7, F.fieldProp(\/-(statusField), FieldAttr.DefaultInUse))(
-      "MF-1  MF-2  MF-4  MF-8  MF-9  MF-10  MF-11  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-23  MF-24  MF-25  MF-26  MF-27",
-      "BR-1  BR-2  CO-1  CO-2  FR-1  FR-2  MF-19  MF-28  SI-1  SI-2")
+      "BR-1  BR-2  FR-1  FR-2  MF-1  MF-2  MF-4  MF-8  MF-9  MF-10  MF-11  MF-14  MF-15  MF-16  MF-17  MF-18  MF-20  MF-21  MF-23  MF-24  MF-25  MF-26  MF-27",
+      "CO-1  CO-2  MF-19  MF-28  SI-1  SI-2")
   }
 
   def testFilterTextFieldNA(): Unit = {

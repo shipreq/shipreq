@@ -29,10 +29,10 @@ object TagEditor {
   object Lookup {
 
     private def make(config: ProjectConfig, legal: IterableOnce[ApplicableTag]): Lookup = {
-      val legalStream = legal.iterator.filter(_.live is Live).toList
-      val legalIds    = legalStream.iterator.map(_.id).toSet
-      val tagDist     = config.liveTagFieldDistribution
-      val tagTree     = config.tags.tree
+      val legalList = legal.iterator.filter(_.live is Live).toList
+      val legalIds  = legalList.iterator.map(_.id).toSet
+      val tagDist   = config.liveTagFieldDistribution
+      val tagTree   = config.tags.tree
 
       val map: Map[String, Invalidity \/ ApplicableTag] =
         config.tags.applicableTagIterator().map { tag =>
@@ -52,7 +52,7 @@ object TagEditor {
           tag.name.toLowerCase -> value
         }.toMap
 
-      Lookup(s => map.get(s.toLowerCase), legalStream)
+      Lookup(s => map.get(s.toLowerCase), legalList)
     }
 
     def all(p: Project): Lookup =

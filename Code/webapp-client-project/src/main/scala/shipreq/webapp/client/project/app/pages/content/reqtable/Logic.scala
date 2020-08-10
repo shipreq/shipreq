@@ -20,7 +20,6 @@ import shipreq.webapp.base.util.ReqCodeTreeItem
  * Deletion complicates everything. See `Requirements/analysis-deletion.ods` for details.
  */
 private[reqtable] object Logic {
-  import DataLogic.TagLookup
   import MTrie.Ops
 
   // ===================================================================================================================
@@ -142,39 +141,37 @@ private[reqtable] object Logic {
       Column.Implications(dir),
       Some(Sorter.orderingForImpField(cfg)))
 
-  private def tagFieldExpander(view        : View,
-                               ap          : ProjectApplicability[Column, ReqTypeId],
-                               cfg         : ProjectConfig,
-                               tagFieldDist: TagFieldDistribution.TagIds,
-                               tagLookup   : TagLookup): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] =
+  private def tagFieldExpander(view: View,
+                               ap  : ProjectApplicability[Column, ReqTypeId],
+                               cfg : ProjectConfig,
+                               tags: VirtualProjectTags): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] =
     customFieldExpander(
       view,
       ap,
-      fid => DataLogic.customFieldTags(tagFieldDist, tagLookup, fid),
+      fid => tags(_, view.filterDead).fieldSet(fid),
       Some(Sorter.orderingForTagField(cfg)))
 
-  private def otherTagsExpander(view        : View,
-                                ap          : ProjectApplicability[Column, ReqTypeId],
-                                cfg         : ProjectConfig,
-                                tagFieldDist: TagFieldDistribution.TagIds,
-                                tagLookup   : TagLookup): Req => Expanded[ApplicableTagId] = {
+  private def otherTagsExpander(view: View,
+                                ap  : ProjectApplicability[Column, ReqTypeId],
+                                cfg : ProjectConfig,
+                                tags: VirtualProjectTags): Req => Expanded[ApplicableTagId] = {
     fieldExpander(
       view,
       Column.OtherTags,
       ap,
-      DataLogic.otherTags(tagFieldDist, tagLookup),
+      tags(_, view.filterDead).otherSet,
       Some(Sorter.orderingForOtherTags(cfg)))
   }
 
-  private def allTagsExpander(view     : View,
-                              ap       : ProjectApplicability[Column, ReqTypeId],
-                              cfg      : ProjectConfig,
-                              tagLookup: TagLookup): Req => Expanded[ApplicableTagId] = {
+  private def allTagsExpander(view: View,
+                              ap  : ProjectApplicability[Column, ReqTypeId],
+                              cfg : ProjectConfig,
+                              tags: VirtualProjectTags): Req => Expanded[ApplicableTagId] = {
     fieldExpander(
       view,
       Column.AllTags,
       ap,
-      tagLookup(_).all,
+      tags(_, view.filterDead).allSet,
       Some(Sorter.orderingForAllTags(cfg)))
   }
 
@@ -257,20 +254,19 @@ private[reqtable] object Logic {
     // * Column.ImplicationSrc isn't transitive; custom implication columns are.
     //   There can potentially be overlap but culling this could be misleading.
 
-    val dataLogic       = p.dataLogic
     val fd              = view.filterDead
     val filterDeadReq   = fd.filterFn.contramap[Req](_ live p.config.reqTypes)
     val filterDeadRCG   = fd.filterFn.contramap[CodeGroup](_.live)
     val filterDead      = CompiledFilter(filterDeadReq, filterDeadRCG, OptionalBoolFn.empty)
-    val tagFieldDist    = DataLogic.tagFieldDist(p.config, fd, Some(f => view isVisible Column.CustomField(f)))
-    val tagLookup       = dataLogic.tagLookup(fd)
+    val tagFieldDist    = DataLogic.tagFieldDist(p.config, fd, f => view isVisible Column.CustomField(f))
+    val tags            = p.virtualTags.withTagFieldDist(tagFieldDist)
     val applicability   = Column.applicabilityForReq(p.config.applicability)
     val expandImps      = Direction.memo(impExpander(_, view, p.config))
     val expandCodes     = codeExpander(view)
     val expandImpCols   = impExpander(view, fd, p, applicability)
-    val expandTagCols   = tagFieldExpander(view, applicability, p.config, tagFieldDist, tagLookup)
-    val expandOtherTags = otherTagsExpander(view, applicability, p.config, tagFieldDist, tagLookup)
-    val expandAllTags   = allTagsExpander(view, applicability, p.config, tagLookup)
+    val expandTagCols   = tagFieldExpander(view, applicability, p.config, tags)
+    val expandOtherTags = otherTagsExpander(view, applicability, p.config, tags)
+    val expandAllTags   = allTagsExpander(view, applicability, p.config, tags)
 
     // The segregation of live/dead is because live reqs can have inactive reqcodes (leftovers of CodeRefs).
     // It would be erroneous to display inactive reqs for a live req.

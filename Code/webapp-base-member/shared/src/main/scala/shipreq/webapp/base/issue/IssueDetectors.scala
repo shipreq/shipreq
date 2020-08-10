@@ -30,12 +30,8 @@ object IssueDetectors {
 
       // Check tags
       run(ctx, fields.tags) {
-        val tagLookup = ctx.project.dataLogic.tagLookup(HideDead)
-        val dist = ctx.project.config.liveTagFieldDistribution
-        f => {
-          val tags = DataLogic.customFieldTags(dist, tagLookup, f.id)
-          tags(_).isEmpty
-        }
+        val tags = ctx.project.virtualTags
+        f => tags(_, HideDead).fieldSet(f.id).isEmpty
       }
 
       // Check text
@@ -95,10 +91,10 @@ object IssueDetectors {
 
     private def detectInReqs(ctx: Ctx): Req => Unit = {
       val exclusiveGroups = ctx.project.config.tags.exclusiveGroups
-      val tagLookup       = ctx.project.dataLogic.tagLookup(HideDead)
+      val tags            = ctx.project.virtualTags
       req => {
         val reqId     = req.id
-        val tagIds    = tagLookup(reqId).other
+        val tagIds    = tags(reqId).manualLiveValues
         val conflicts = Util.uniqueDupsNested(tagIds.keyIterator)(exclusiveGroups)
         for (g <- conflicts) {
           val locs: Set[LocationOf.Tag.InReq] =
@@ -218,13 +214,13 @@ object IssueDetectors {
 
           for ((tagId, reqTypeIds) <- found.m) {
             val tag = cfg.tags.needApplicableTag(tagId)
-            val fieldDefaultApplied = ctx.project.fieldDefaultApplied(f.id, ShowDead)
+            val tags = ctx.project.virtualTags
 
             val affectedReqs: List[Req] =
               reqTypeIds
                 .iterator
                 .flatMap(rt => ctx.project.content.reqs.reqsByType(rt).filter(_.live(cfg.reqTypes) is Live))
-                .filter(req => fieldDefaultApplied(req.id))
+                .filter(req => tags(req.id).defaults.contains(f.id))
                 .toList
 
             ctx.add(Issue.FieldDefaultTagDead(f, tag, affectedReqs))
@@ -340,10 +336,10 @@ object IssueDetectors {
       ctx.foreachLiveReq(() => detectInReqs(ctx))
 
     private def detectInReqs(ctx: Ctx): Req => Unit = {
-      val tagLookup = ctx.project.dataLogic.tagLookup(HideDead)
+      val tags = ctx.project.virtualTags
       req => {
         for {
-          (tagId, locs) <- tagLookup(req.id).naTagsInLiveText.m
+          (tagId, locs) <- tags(req.id).naTagsInLiveText.m
           tag            = ctx.project.config.tags.needApplicableTag(tagId)
           loc           <- locs
         }

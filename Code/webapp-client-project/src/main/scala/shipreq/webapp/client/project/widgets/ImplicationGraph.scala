@@ -154,7 +154,7 @@ object ImplicationGraph {
             none
 
           case Colours.ByTag(tagGroupId) =>
-            val reqTags = project.reqTagsFn(tagGroupId, filterDead)
+            val reqTags = project.virtualTags.underTagGroup(tagGroupId, filterDead)
             req => plainText.tagListWithHashtags(reqTags(req.id))
         }
 

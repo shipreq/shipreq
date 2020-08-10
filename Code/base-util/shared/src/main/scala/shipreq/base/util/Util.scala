@@ -200,6 +200,11 @@ object Util {
     dups
   }
 
+  def mergeMaps[K, V](x: Map[K, V], y: Map[K, V]): Map[K, V] =
+         if (x.isEmpty) y
+    else if (y.isEmpty) x
+    else x ++ y
+
   def mergeSets[A: UnivEq](x: Set[_ <: A], y: Set[_ <: A]): Set[A] =
          if (x.isEmpty) y.asInstanceOf[Set[A]]
     else if (y.isEmpty) x.asInstanceOf[Set[A]]

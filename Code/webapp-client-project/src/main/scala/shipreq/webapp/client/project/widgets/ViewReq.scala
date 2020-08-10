@@ -1,13 +1,11 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react.vdom.html_<^.VdomTag
 import scala.collection.immutable.SortedSet
 import shipreq.base.util._
 import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
 import shipreq.webapp.client.project.widgets.ViewReq._
@@ -148,33 +146,14 @@ object ViewReq {
       val cfg             = project.config
       val pubidSortKeyFn  = project.dataLogic.pubidSortKeyFn
       val customImpLookup = project.dataLogic.customFieldImps(filterDead)
-      val tagDist         = project.dataLogic.tagFieldDist(filterDead)
-      val tagLookup       = project.dataLogic.tagLookup(filterDead)
-      val reqTags         = tagLookup(id)
-      val tagOrderByName  = project.config.tags.orderByName
-      val tagOrderByPos   = project.config.tags.orderByPos
       val impFilter       = cfg.reqFilter(filterDead)
-      val otherTagSet     = DataLogic.otherTags(tagDist, tagLookup)(id)
-      val otherTags       = MutableArray(otherTagSet).sortBy(tagOrderByName.apply).iterator().to(Vector)
-      val allTags         = MutableArray(reqTags.all).sortBy(tagOrderByName.apply).iterator().to(Vector)
-
-      val customTags: CustomField.Tag.Id => Vector[ApplicableTagId] =
-        Memo { fid =>
-          def tagSet = DataLogic.customFieldTags(tagDist, tagLookup, fid)(id)
-          MutableArray(tagSet).sortBy(tagOrderByPos.apply).iterator().to(Vector)
-        }
+      val tags            = project.virtualTags(id, filterDead)
 
       def sortPubids(pubids: IterableOnce[Pubid]): Vector[Pubid] =
         MutableArray(pubids)
           .sortBySchwartzian(pubidSortKeyFn)
           .iterator()
           .to(Vector)
-
-      val codes: List[ReqCode.Value] =
-        MutableArray(project.content.reqCodes.activeReqCodesByReqId(id))
-          .sortBySchwartzian(PlainText.reqCode)
-          .iterator()
-          .to(List)
 
       val generalImps: Direction => Vector[Pubid] =
         Direction.memo(dir =>
@@ -184,6 +163,12 @@ object ViewReq {
               .map(project.content.reqs.need)
               .filter(impFilter)
               .map(_.pubid)))
+
+      val codes: List[ReqCode.Value] =
+        MutableArray(project.content.reqCodes.activeReqCodesByReqId(id))
+          .sortBySchwartzian(PlainText.reqCode)
+          .iterator()
+          .to(List)
 
       val pastPubids: SortedSet[ExternalPubid] = {
         val b = SortedSet.newBuilder[ExternalPubid]
@@ -199,9 +184,9 @@ object ViewReq {
         req              = req,
         live             = req.live(cfg.reqTypes),
         codes            = codes,
-        otherTags        = otherTags,
-        allTags          = allTags,
-        customTags       = customTags,
+        otherTags        = tags.otherOrdered,
+        allTags          = tags.allOrdered,
+        customTags       = tags.fieldOrdered,
         invalidTags      = project.invalidTagsPerReq(id),
         generalImps      = generalImps,
         customImps       = fid => sortPubids(customImpLookup(fid).getPubids(id)),

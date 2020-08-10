@@ -115,17 +115,7 @@ final case class Project(name        : Project.Name,
 
   lazy val issues = IssueTracker(this).issues
 
-  def reqTagsFn(tagGroupId: TagGroupId, filterDead: FilterDead): ReqId => Vector[ApplicableTagId] = {
-    val tagLookup = dataLogic.tagLookup(filterDead)
-    val tagScope  = config.tagFieldDistribution(filterDead).inTagGroup(tagGroupId)
-    val tagOrder  = config.tags.applicableTagOrdering(tagGroupId, filterDead)
-
-    reqId =>
-      MutableArray(tagLookup(reqId).all.iterator.filter(tagScope.contains))
-        .sort(tagOrder)
-        .iterator()
-        .toVector
-  }
+  lazy val virtualTags = VirtualProjectTags(this)
 
   def deletionMethodForUseCaseStep(id: UseCaseStepId): DeletionMethod =
     DeletionMethod.Hard.unless {
@@ -196,12 +186,6 @@ final case class Project(name        : Project.Name,
 
   def savedViewIterator: Iterator[savedview.SavedView] =
     savedViews.fold[Iterator[savedview.SavedView]](Iterator.empty)(_.iterator)
-
-  def fieldDefaultApplied(fieldId: CustomField.Tag.Id, filterDead: FilterDead): ReqId => Boolean = {
-    val scope = config.tagFieldDistribution(filterDead).inField(fieldId)
-    val tagLookup = dataLogic.tagLookup(filterDead)
-    reqId => tagLookup(reqId).fieldDefaultApplied(scope)
-  }
 
   def isReqTypeInUse(id: CustomReqTypeId): Boolean =
     content.reqs.pubids.value(id).nonEmpty

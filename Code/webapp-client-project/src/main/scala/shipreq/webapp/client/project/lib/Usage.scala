@@ -15,12 +15,12 @@ import shipreq.webapp.client.project.app.pages.root.SpecialRouterCtl
 final class Usage(p: Project, router: SpecialRouterCtl) {
 
   lazy val tags: LiveDeadStatMap[ApplicableTagId, Int] = {
-    val tagLookup = p.dataLogic.tagLookup(ShowDead)
+    val tags = p.virtualTags
     val b = LiveDeadStatMap.Builder.ofInts[ApplicableTagId]()
     for {
       req    <- p.content.reqs.reqIterator()
       reqLive = req.live(p.config.reqTypes)
-      tagId  <- tagLookup(req.id).all
+      tagId  <- tags(req.id, ShowDead).allSet
     } {
       val live = reqLive & p.config.tags.needApplicableTag(tagId).live
       b(tagId).add(live, 1)
