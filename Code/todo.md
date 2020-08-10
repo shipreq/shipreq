@@ -45,6 +45,7 @@ v2.2
 
 ### Implement
 * style inline graphs by default
+* req detail: add prev/next buttons
 * Derivative tags
   * new issues:
     * result tag is dead
