@@ -60,11 +60,11 @@ object Dependencies {
   }
 
   object ScalaGraal {
-    private val ver   = "1.0.0"
+    private val ver   = "1.0.1"
     private val jvm   = MultiModule.scala("com.github.japgolly.scala-graal", ver)
     private val both  = MultiModule.jvmAndJs("com.github.japgolly.scala-graal", ver)
     val core          = jvm("core") ++ graal
-    val coreJs        = jvm("corejs") ++ core
+    val coreJs        = jvm("core-js") ++ core
     val extBoopickle  = both("ext-boopickle")
     val extPrometheus = jvm("ext-prometheus") ++ coreJs
 
@@ -183,7 +183,7 @@ object Dependencies {
   }
 
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.8.0")
-  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "1.0.0")
+  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "1.1.0")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "1.0.0")
 
   val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.3.3")
