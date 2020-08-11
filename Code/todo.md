@@ -8,6 +8,9 @@ v2.2
 * New plan for the rest of v2.2
 
 ### Analyse
+* it would be a cool idea to have a button in req detail that would simplify the forward implication tree
+  (simplify = remove redundant edges)
+  Or maybe we can just apply this option to views without affecting data?
 * [FB-11] Add a field to show where a req is being referenced (i.e. FB-9 references FR-5 in its detail field, I should be able to see that from FB-5's page. "References"? "Citations"?)
 * Req Code config
   * completely disable (don't show in ReqDetail or ReqTable, even remove from auto-complete)
