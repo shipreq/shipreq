@@ -8,11 +8,39 @@ final case class DerivativeTags(enabled: Enabled, rules: DerivativeTags.Rules) {
   def tagIdIterator(): Iterator[ApplicableTagId] =
     rules.iterator.flatMap(x => x._1.lo :: x._1.hi :: x._2 :: Nil)
 
-  def combineOption(tag1: ApplicableTagId, tag2: ApplicableTagId): Option[ApplicableTagId] = {
-    val pair = TagPair(tag1, tag2)
-    rules.get(pair)
+  def combineOption(tag1: ApplicableTagId, tag2: ApplicableTagId): Option[ApplicableTagId] =
+    if (tag1 ==* tag2)
+      Some(tag1)
+    else {
+      val pair = TagPair(tag1, tag2)
+      rules.get(pair)
+    }
+
+  def combineOne(tags: Set[ApplicableTagId], newTag: ApplicableTagId): Set[ApplicableTagId] = {
+    for (t <- tags)
+      if (t != newTag) {
+        val p = TagPair(t, newTag)
+        rules.get(p) match {
+          case Some(r) => return combineAll(tags - t + r)
+          case None    =>
+        }
+      }
+    tags + newTag
   }
 
+  def combineAll(tags: Set[ApplicableTagId]): Set[ApplicableTagId] = {
+    for {
+      t1 <- tags
+      t2 <- tags
+    } if (t1 != t2) {
+      val p = TagPair(t1, t2)
+      rules.get(p) match {
+        case Some(r) => return combineAll(tags - t1 - t2 + r)
+        case None    =>
+      }
+    }
+    tags
+  }
 }
 
 object DerivativeTags {
