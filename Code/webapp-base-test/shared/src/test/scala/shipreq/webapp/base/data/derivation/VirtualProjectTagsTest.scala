@@ -21,6 +21,7 @@ object VirtualProjectTagsTest extends TestSuite {
         "step2" - derivativeTags_sc4_step2()
         "step3" - derivativeTags_sc4_step3()
         "step4" - derivativeTags_sc4_step4()
+        "step5" - derivativeTags_sc4_step5()
       }
     }
   }
@@ -340,25 +341,25 @@ object VirtualProjectTagsTest extends TestSuite {
 
   private def derivativeTags_sc4_step4(): Unit = {
     import SampleDerivativeTags2._, Values._
-    println(Console.YELLOW_B + ("=" * 80) + Console.RESET)
     assertDerivativeTags(step4, statusField, Vector(fr, iv, mf, fb))(
       """FR-1
-        |  + FR-3: implemented (derived)
+        |  + FR-3: readyForDev (default)
         |  + self: implemented (manual)
-        |  = {implemented}
+        |  = {implemented readyForDev}
         |FR-2
         |  + self: readyForDev (default)
         |  = {readyForDev}
         |FR-3
-        |  + FR-1: implemented (manual)
-        |  = {implemented}
+        |  + self: readyForDev (default)
+        |  = {readyForDev}
         |FR-4
         |  + self: implemented (manual)
         |  = {implemented}
         |IV-1
         |  + FR-1: implemented (manual)
+        |  + FR-1: readyForDev (derived)
         |  + FR-2: readyForDev (default)
-        |  + FR-3: implemented (derived)
+        |  + FR-3: readyForDev (default)
         |  + self: analysed (manual)
         |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
         |IV-2
@@ -370,8 +371,9 @@ object VirtualProjectTagsTest extends TestSuite {
         |  = {analysed implemented} // "analysed" is here because we never remove manual values
         |MF-1
         |  + FR-1: implemented (manual)
+        |  + FR-1: readyForDev (derived)
         |  + FR-2: readyForDev (default)
-        |  + FR-3: implemented (derived)
+        |  + FR-3: readyForDev (default)
         |  + FR-4: implemented (manual)
         |  + IV-1: analysed (manual)
         |  + IV-1: readyForDev (derived)
@@ -381,8 +383,9 @@ object VirtualProjectTagsTest extends TestSuite {
         |  = {readyForDev}
         |FB-1
         |  + FR-1: implemented (manual)
+        |  + FR-1: readyForDev (derived)
         |  + FR-2: readyForDev (default)
-        |  + FR-3: implemented (derived)
+        |  + FR-3: readyForDev (default)
         |  + FR-4: implemented (manual)
         |  + IV-1: analysed (manual)
         |  + IV-1: readyForDev (derived)
@@ -391,6 +394,62 @@ object VirtualProjectTagsTest extends TestSuite {
         |  + IV-3: implemented (derived)
         |  + MF-1: readyForDev (derived)
         |  = {readyForDev}
+        |""".stripMargin
+    )
+  }
+
+  private def derivativeTags_sc4_step5(): Unit = {
+    import SampleDerivativeTags2._, Values._
+    assertDerivativeTags(step5, statusField, Vector(fr, iv, mf, fb))(
+      """FR-1
+        |  + FR-3: implemented (manual)
+        |  + self: implemented (manual)
+        |  = {implemented}
+        |FR-2
+        |  + self: implemented (manual)
+        |  = {implemented}
+        |FR-3
+        |  + self: implemented (manual)
+        |  = {implemented}
+        |FR-4
+        |  + self: implemented (manual)
+        |  = {implemented}
+        |IV-1
+        |  + FR-1: implemented (manual)
+        |  + FR-2: implemented (manual)
+        |  + FR-3: implemented (manual)
+        |  + self: analysed (manual)
+        |  = {analysed implemented} // "analysed" is here because we never remove manual values
+        |IV-2
+        |  + self: rejected (manual)
+        |  = {rejected}
+        |IV-3
+        |  + FR-4: implemented (manual)
+        |  + self: analysed (manual)
+        |  = {analysed implemented} // "analysed" is here because we never remove manual values
+        |MF-1
+        |  + FR-1: implemented (manual)
+        |  + FR-2: implemented (manual)
+        |  + FR-3: implemented (manual)
+        |  + FR-4: implemented (manual)
+        |  + IV-1: analysed (manual)
+        |  + IV-1: implemented (derived)
+        |  + IV-2: rejected (manual)
+        |  + IV-3: analysed (manual)
+        |  + IV-3: implemented (derived)
+        |  = {implemented}
+        |FB-1
+        |  + FR-1: implemented (manual)
+        |  + FR-2: implemented (manual)
+        |  + FR-3: implemented (manual)
+        |  + FR-4: implemented (manual)
+        |  + IV-1: analysed (manual)
+        |  + IV-1: implemented (derived)
+        |  + IV-2: rejected (manual)
+        |  + IV-3: analysed (manual)
+        |  + IV-3: implemented (derived)
+        |  + MF-1: implemented (derived)
+        |  = {implemented}
         |""".stripMargin
     )
   }

@@ -86,5 +86,5 @@ object SampleDerivativeTags2 {
   val step2 = applyEventSuccessfully(step1, reqTagsPatch(iv2, rejected))
   val step3 = applyEventSuccessfully(step2, reqTagsPatch(fr4, implemented))
   val step4 = applyEventSuccessfully(step3, reqTagsPatch(fr1, implemented))
-  val step5 = applyEventSuccessfully(step4, reqTagsPatch(fr2, implemented))
+  val step5 = applyEventsSuccessfully(step4, reqTagsPatch(fr2, implemented), reqTagsPatch(fr3, implemented))
 }
