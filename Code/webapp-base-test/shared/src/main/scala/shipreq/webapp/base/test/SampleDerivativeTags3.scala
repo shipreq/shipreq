@@ -160,7 +160,6 @@ object SampleDerivativeTags3 {
         |  + MF-1: v2 (manual)
         |  + self: ∅
         |  = {v1 v2}
-        |
         |""".stripMargin
   }
 

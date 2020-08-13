@@ -75,7 +75,7 @@ object VirtualProjectTagsTest extends TestSuite {
 
   private def assertDerivativeTags(p: Project,
                                    f: CustomField.Tag.Id,
-                                   reqTypeOrder: Vector[ReqTypeId],
+                                   reqTypeOrder: Vector[ReqTypeId] = Vector.empty,
                                    alwaysSimplifyFirst: Boolean = false)(_expect: String)(implicit l: Line): Unit = {
     val actual = summariseDerivativeTags(p, f, reqTypeOrder)
     val expect = _expect.trim.replaceAll(" *//.+?(?=\n|$)", "")
@@ -167,6 +167,12 @@ object VirtualProjectTagsTest extends TestSuite {
           "step5" - assertDerivativeTags(step5.project, verField, verOrder)(step5.virtualVersions)
         }
       }
+
+      "edge" - {
+        import SampleDerivativeTags4._, Values._
+        assertDerivativeTags(project, zField)(virtualTagsZ)
+      }
+
     }
   }
 }
