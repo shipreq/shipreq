@@ -97,7 +97,7 @@ object VirtualProjectTags {
     implicit def univEq: UnivEq[DerivativeTagFactor] = UnivEq.derive
   }
 
-  // ===================================================================================================================
+  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   private object Mutable {
 
@@ -159,7 +159,7 @@ object VirtualProjectTags {
     val liveTagDist = p.config.liveTagFieldDistribution
     val imps        = p.content.implications
 
-    // -----------------------------------------------------------------------------------------------------------------
+    // =================================================================================================================
     def collectManualTags(req: Req, b: ForReq): Unit = {
 
       // Scan live text
@@ -188,7 +188,7 @@ object VirtualProjectTags {
         b.addManual(t, Location.Tags, ctx = Live)
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
+    // =================================================================================================================
     def addDefaults(req: Req, b: ForReq): Unit = {
       import FieldReqTypeRules.Resolution
 
@@ -210,7 +210,9 @@ object VirtualProjectTags {
       }
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
+    // =================================================================================================================
+    // Derivative tags
+
     type DerivativeTagFactors = Map[CustomField.Tag.Id, MutableRef[Multimap[ReqId, Set, DerivativeTagFactor]]]
 
     private final val debugDerivativeTags = false
@@ -218,186 +220,182 @@ object VirtualProjectTags {
     def applyDerivativeTags(data: Data): DerivativeTagFactors = {
       import DerivativeTagFactor.SourceType
 
-      var factors: DerivativeTagFactors = Map.empty
+      var factorsPerField: DerivativeTagFactors = Map.empty
 
       val fields =
         p.config.liveCustomTagFields
         .iterator
         .filter(_.derivativeTags.enabled is Enabled)
         .map(f => DerivativeTagField(f.id, f.derivativeTags, liveTagDist.inField(f.id)))
-        .tapEach(f => factors = factors.updated(f.fieldId, MutableRef(Mutable.emptyDTF)))
+        .tapEach(f => factorsPerField = factorsPerField.updated(f.fieldId, MutableRef(Mutable.emptyDTF)))
         .to(ArraySeq)
 
-        val graph = imps.forwards
-        @inline def relDir = Forwards
+      val graph = imps.forwards
 
-        for (f <- fields) {
-          val seen = mutable.Map.empty[ReqId, Set[DerivativeTagFactor]]
-          val fieldFactors = factors(f.fieldId)
-          val dt = f.derivativeTags
+      for (f <- fields) {
+        val seen    = mutable.Map.empty[ReqId, Set[DerivativeTagFactor]]
+        val factors = factorsPerField(f.fieldId)
+        val dt      = f.derivativeTags
 
-          def scan(nodeId: ReqId,
-                   parentsManual: Set[DerivativeTagFactor],
-//                   parentsDefaults: Set[DerivativeTagFactor.Relation], // TODO pass down parent defaults later
-                  ): Set[DerivativeTagFactor] =
+        def scan(nodeId: ReqId,
+                 parentsManuals: Set[DerivativeTagFactor],
+                 // parentsDefaults: Set[DerivativeTagFactor.Relation], // TODO pass down parent defaults later
+                ): Set[DerivativeTagFactor] =
+          seen.get(nodeId) match {
+            case None =>
 
-            seen.get(nodeId) match {
-              case None =>
+              seen.update(nodeId, null)
+              val node = data(nodeId)
 
-                seen.update(nodeId, null)
-                val node = data(nodeId)
+              val manuals    = node.manualLive.keyIterator.filter(f.liveTags.contains).toSet
+              val hasManual  = manuals.nonEmpty
+              val default    = node.liveDefaults.get(f.fieldId)
+              val hasDefault = default.isDefined
 
-                val theseManual = node.manualLive.keyIterator.filter(f.liveTags.contains).toSet
-                val hasManual = theseManual.nonEmpty
-                val hasDefault = node.liveDefaults.contains(f.fieldId)
+              val relevantManuals: Set[DerivativeTagFactor] =
+                if (hasManual) {
+                  // Discard parents' manuals and override with our own
+                  manuals.map(DerivativeTagFactor.Relation(nodeId, Backwards, _, SourceType.Manual))
+                } else if (parentsManuals.isEmpty)
+                  parentsManuals
+                else default match {
+                  case None =>
+                    parentsManuals
 
-                val newParentsManual: Set[DerivativeTagFactor] =
-                  if (hasManual)
-                    theseManual.map(DerivativeTagFactor.Relation(nodeId, Backwards, _, SourceType.Manual))
-                  else if (hasDefault) {
-                    val default = node.liveDefaults(f.fieldId)
-                    val ourDefaults: Set[ApplicableTagId] =
-                      Set1(default)
-                    var ourDefaultAndParentsManuals: Set[ApplicableTagId] =
-                      ourDefaults
+                  case Some(d) =>
 
-                    parentsManual.foreach {
-                      case DerivativeTagFactor.Relation(_, _, tag, _) if tag !=* default =>
-                        ourDefaultAndParentsManuals = dt.combineOne(ourDefaultAndParentsManuals, tag)
+                    // Combine parents' values with our default and see if parents' values are relevant
+                    val ourDefault = Set1(d)
+                    var results = ourDefault
+
+                    parentsManuals.foreach {
+                      case DerivativeTagFactor.Relation(_, _, tag, _) if tag !=* d =>
+                        results = dt.add(results, tag)
                       case _ =>
                     }
 
                     if (debugDerivativeTags) {
-                      println(s"(${nodeId.value})               parentsManual: $parentsManual")
-                      println(s"(${nodeId.value})                 ourDefaults: $ourDefaults")
-                      println(s"(${nodeId.value}) ourDefaultAndParentsManuals: $ourDefaultAndParentsManuals")
+                      println(s"(${nodeId.value})               parentsManual: $parentsManuals")
+                      println(s"(${nodeId.value})                 ourDefaults: $ourDefault")
+                      println(s"(${nodeId.value}) ourDefaultAndParentsManuals: $results")
                     }
-                    if (ourDefaultAndParentsManuals ==* ourDefaults)
-                      Set.empty // TODO LAter Set1(DerivativeTagFactor.Relation(nodeId, Backwards, default, SourceType.Default))
+
+                    // Parent's values changed nothing - ignore them
+                    if (results ==* ourDefault)
+                      Set.empty // TODO Later Set1(DerivativeTagFactor.Relation(nodeId, Backwards, default, SourceType.Default))
                     else
-                      parentsManual
-
-                  } else
-                    parentsManual
-
-                // Complete all children
-                val addedFromChildren = {
-                  var s = Set.empty[DerivativeTagFactor]
-                  for (child <- graph(nodeId)) {
-                    val results = scan(child, newParentsManual)
-                    s = Util.mergeSets(s, results)
-                  }
-                  s
+                      parentsManuals
                 }
 
-                if (debugDerivativeTags) {
-                  println("=================================================================")
-                  println(s"= ${p.config.tags.needTagGroup(p.config.fields.custom(f.fieldId).tagId).name} -> $nodeId")
+              // Complete all children
+              val addedFromChildren = {
+                var s = Set.empty[DerivativeTagFactor]
+                for (child <- graph(nodeId)) {
+                  val results = scan(child, relevantManuals)
+                  s = Util.mergeSets(s, results)
                 }
+                s
+              }
 
-                // TODO AFTER THIS IS WORKING, NEED TO FILTER manualLive BY TAG GROUP
-                var addToParents = addedFromChildren
-                var defaultAddable = false
+              if (debugDerivativeTags) {
+                println("=================================================================")
+                println(s"= ${p.config.tags.needTagGroup(p.config.fields.custom(f.fieldId).tagId).name} -> $nodeId")
+              }
 
-                if (newParentsManual eq parentsManual)
-                  fieldFactors.mod(_.addvs(nodeId, parentsManual))
+              var addToParents = addedFromChildren
+              var defaultAddable = false
 
-                if (addedFromChildren.nonEmpty) {
-                   fieldFactors.mod(_.addvs(nodeId, addedFromChildren))
+              // Add data from parents
+              if (relevantManuals eq parentsManuals)
+                factors.mod(_.addvs(nodeId, parentsManuals))
+
+              // Add data from children
+              if (addedFromChildren.nonEmpty) {
+                factors.mod(_.addvs(nodeId, addedFromChildren))
+              }
+
+              // Add data from ourself
+              if (hasManual) {
+                for (t <- manuals) {
+                  factors.mod(_.add(nodeId, DerivativeTagFactor.Self(t, SourceType.Manual)))
+                  addToParents += DerivativeTagFactor.Relation(nodeId, Forwards, t, SourceType.Manual)
                 }
+              } else if (hasDefault) {
+                defaultAddable = true
+              } else {
+                factors.mod(_.add(nodeId, DerivativeTagFactor.EmptySelf))
+              }
 
-                (hasManual, hasDefault) match {
-                  case (true, _) =>
-                    for (t <- theseManual) {
-                      fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(t, SourceType.Manual)))
-                      addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Manual)
-                    }
-
-                  case (false, true) =>
-                    for (default <- node.liveDefaults.get(f.fieldId)) {
-
-                      defaultAddable = true
-                    }
-
-                  case (false, false) =>
-                    fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.EmptySelf))
-//                    addToParents += DerivativeTagFactor.EmptyRelation(nodeId, relDir)
-                }
-
-                // Derive final results for this node
-                // TODO AFTER THIS IS WORKING, SCOPE DERIVED BY FIELD
-
-                var nonDefaultEncountered = false
-
+              // Derive tags from collected factors
+              var newlyDerived = {
                 def addDerive(tags: Set[ApplicableTagId], id: ApplicableTagId): Set[ApplicableTagId] = {
-                  for (default <- node.liveDefaults.get(f.fieldId)) {
-                    if (id != default)
-                      nonDefaultEncountered = true
-                  }
-                  dt.combineOne(tags, id)
+                  if (defaultAddable && !default.contains(id))
+                    defaultAddable = false
+                  dt.add(tags, id)
                 }
-
-                var newlyDerived =
-                  fieldFactors.value(nodeId).foldLeft(Set.empty[ApplicableTagId]) { (tags, fac) =>
-                    fac match {
-                      case DerivativeTagFactor.EmptySelf
-                         | _: DerivativeTagFactor.EmptyRelation => tags
-                      case f: DerivativeTagFactor.Self          => addDerive(tags, f.tag)
-                      case f: DerivativeTagFactor.Relation      => addDerive(tags, f.tag)
-                    }
+                factors.value(nodeId).foldLeft(Set.empty[ApplicableTagId]) { (tags, fac) =>
+                  fac match {
+                    case f: DerivativeTagFactor.Self          => addDerive(tags, f.tag)
+                    case f: DerivativeTagFactor.Relation      => addDerive(tags, f.tag)
+                    case DerivativeTagFactor.EmptySelf
+                       | _: DerivativeTagFactor.EmptyRelation => tags
                   }
-                val derived1 = newlyDerived
-                newlyDerived --= node.manualLive.keys
-                if (defaultAddable & nonDefaultEncountered)
-                  defaultAddable = false
+                }
+              }
 
+              // Don't say we've derived manual results
+              newlyDerived = newlyDerived &~ node.manualLive.keySet
+
+              // Don't say we've derived the default; just use the default
+              if (defaultAddable)
+                for (d <- default)
+                  newlyDerived -= d
+
+              // Clean up
+              if (newlyDerived.isEmpty) {
                 if (defaultAddable)
-                  newlyDerived --= node.liveDefaults.get(f.fieldId)
+                  for (d <- default) {
+                    factors.mod(_.add(nodeId, DerivativeTagFactor.Self(d, SourceType.Default)))
+                    addToParents += DerivativeTagFactor.Relation(nodeId, Forwards, d, SourceType.Default)
+                  }
+                if (!hasManual && !defaultAddable)
+                  addToParents += DerivativeTagFactor.EmptyRelation(nodeId, Forwards)
+              } else {
+                for (t <- newlyDerived)
+                  addToParents += DerivativeTagFactor.Relation(nodeId, Forwards, t, SourceType.Derived)
+                if (hasDefault && !defaultAddable)
+                  node.liveDefaults = node.liveDefaults.removed(f.fieldId)
+              }
 
-                if (newlyDerived.isEmpty) {
-                  if (defaultAddable)
-                    for (default <- node.liveDefaults.get(f.fieldId)) {
-                      fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(default, SourceType.Default)))
-                      addToParents += DerivativeTagFactor.Relation(nodeId, relDir, default, SourceType.Default)
-                    }
-                  if (!hasManual && !defaultAddable)
-                    addToParents += DerivativeTagFactor.EmptyRelation(nodeId, relDir)
-                } else {
-                  for (t <- newlyDerived)
-                    addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Derived)
-                  if (hasDefault && !defaultAddable)
-                    node.liveDefaults = node.liveDefaults.removed(f.fieldId)
-                }
+              // Add this field's derivation to this req's other derived tags
+              node.derived = Util.mergeSets(node.derived, newlyDerived)
 
-                node.derived =
-                  Util.mergeSets(node.derived, newlyDerived)
+              if (debugDerivativeTags) {
+                println(s"defaultAddable = $defaultAddable, hasManual = $hasManual, hasDefault = $hasDefault")
+                println(s"addedFromChildren: $addedFromChildren")
+                println(s"newlyDerived: ${newlyDerived.map(_.value)}")
+                println(s"node.derived: ${node.derived.map(_.value)}")
+                println(s"fieldFactors: ${factors.value(nodeId)}")
+                println(s"addToParents: ${addToParents}")
+                println(s"node.liveDefaults: ${node.liveDefaults}")
+                println(s"node.manualLive: ${node.manualLive.keys.map(_.value).toVector.sorted}")
+              }
 
-                if (debugDerivativeTags) {
-                  println(s"nonDefaultEncountered: $nonDefaultEncountered, defaultAddable = $defaultAddable, hasManual = $hasManual, hasDefault = $hasDefault")
-                  println(s"addedFromChildren: $addedFromChildren")
-                  println(s"derived1: ${derived1 .map(_.value)}")
-                  println(s"derivedN: ${newlyDerived.map(_.value)}")
-                  println(s"derived: ${node.derived.map(_.value)}")
-                  println(s"fieldFactors: ${fieldFactors.value(nodeId)}")
-                  println(s"addToParents: ${addToParents}")
-                  println(s"node.liveDefaults: ${node.liveDefaults}")
-                  println(s"node.manualLive: ${node.manualLive.keys.map(_.value).toVector.sorted}")
-                }
+              seen.update(nodeId, addToParents)
+              addToParents
 
-                seen.update(nodeId, addToParents)
-                addToParents
+            case Some(previousResults) =>
+              previousResults
+          }
 
-              case Some(results) => results
-            }
+        for (n <- imps.roots)
+          scan(n, Set.empty)
+      }
 
-          for (n <- imps.roots)
-            scan(n, Set.empty)
-        }
-
-      factors
+      factorsPerField
     }
 
-    // -----------------------------------------------------------------------------------------------------------------
+    // =================================================================================================================
 
     type Data = mutable.HashMap[ReqId, ForReq]
 
@@ -417,6 +415,9 @@ object VirtualProjectTags {
 
       // Step 2: Derivative tags
       val dtFactors = applyDerivativeTags(data)
+
+      // Done.
+      // Now we provide results...
 
       val monoResults: ReqId => ResultsMono =
         Memo { reqId =>

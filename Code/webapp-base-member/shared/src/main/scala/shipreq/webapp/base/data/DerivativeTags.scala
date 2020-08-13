@@ -16,29 +16,46 @@ final case class DerivativeTags(enabled: Enabled, rules: DerivativeTags.Rules) {
       rules.get(pair)
     }
 
-  def combineOne(tags: Set[ApplicableTagId], newTag: ApplicableTagId): Set[ApplicableTagId] = {
-    for (t <- tags)
-      if (t != newTag) {
+  def add(tags: Set[ApplicableTagId], newTag: ApplicableTagId): Set[ApplicableTagId] = {
+    var result: Set[ApplicableTagId] = null
+
+    val it = tags.iterator
+    while ((result eq null) && it.hasNext) {
+      val t = it.next()
+      if (t !=* newTag) {
         val p = TagPair(t, newTag)
         rules.get(p) match {
-          case Some(r) => return combineAll(tags - t + r)
+          case Some(r) => result = reduce(tags - t + r)
           case None    =>
         }
       }
-    tags + newTag
+    }
+
+    if (result ne null)
+      result
+    else
+      tags + newTag
   }
 
-  def combineAll(tags: Set[ApplicableTagId]): Set[ApplicableTagId] = {
-    for {
-      t1 <- tags
-      t2 <- tags
-    } if (t1 != t2) {
-      val p = TagPair(t1, t2)
-      rules.get(p) match {
-        case Some(r) => return combineAll(tags - t1 - t2 + r)
-        case None    =>
-      }
-    }
+  def reduce(tags: Set[ApplicableTagId]): Set[ApplicableTagId] = {
+    val it1 = tags.iterator
+    while (it1.hasNext) {
+      val t1 = it1.next()
+
+      val it2 = tags.iterator
+      while (it2.hasNext) {
+        val t2 = it2.next()
+
+        if (t1.value < t2.value) {
+          val p = TagPair(t1, t2)
+          rules.get(p) match {
+            case Some(r) => return reduce(tags - t1 - t2 + r)
+            case None    =>
+          }
+        }
+      } // it2
+    } // it1
+
     tags
   }
 }
