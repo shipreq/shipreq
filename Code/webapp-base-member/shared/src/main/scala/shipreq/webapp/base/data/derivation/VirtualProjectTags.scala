@@ -213,10 +213,10 @@ object VirtualProjectTags {
     // -----------------------------------------------------------------------------------------------------------------
     type DerivativeTagFactors = Map[CustomField.Tag.Id, MutableRef[Multimap[ReqId, Set, DerivativeTagFactor]]]
 
+    private final val debugDerivativeTags = false
+
     def applyDerivativeTags(data: Data): DerivativeTagFactors = {
       import DerivativeTagFactor.SourceType
-
-      val noInputs = UnivEq.emptySet[DerivativeTagFactor]
 
       var factors: DerivativeTagFactors = Map.empty
 
@@ -228,49 +228,6 @@ object VirtualProjectTags {
         .tapEach(f => factors = factors.updated(f.fieldId, MutableRef(Mutable.emptyDTF)))
         .to(ArraySeq)
 
-      // Scan forward
-//      {
-//        val graph = imps.forwards
-//        @inline def relDir = Backwards
-//
-//        for (f <- fields) {
-//          val fieldFactors = factors(f.fieldId)
-//
-//          def scan(nodeId: ReqId, addFromParents: Set[DerivativeTagFactor]): Unit = {
-//            val node = data(nodeId)
-//            val hasContent = node.manualLive.nonEmpty || node.liveDefaults.contains(f.fieldId)
-//
-//            val addToChildren: Set[DerivativeTagFactor] =
-//              if (hasContent) {
-//                var a = noInputs
-//                for (t <- node.manualLive.keyIterator) {
-//                  fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(t, SourceType.Manual)))
-//                  a += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Manual)
-//                }
-//                for (t <- node.liveDefaults.get(f.fieldId)) {
-////                  fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(t, SourceType.Default)))
-//                  a += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Default)
-//                }
-//                a
-//              } else {
-//                fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.EmptySelf))
-//                if (addFromParents.nonEmpty)
-//                  fieldFactors.mod(_.addvs(nodeId, addFromParents))
-//                addFromParents //+ DerivativeTagFactor.EmptyRelation(nodeId, relDir)
-//              }
-//
-//
-//            val children = graph(nodeId)
-//            if (children.nonEmpty)
-//              children.foreach(scan(_, addToChildren))
-//          }
-//
-//          for (n <- imps.roots)
-//            scan(n, noInputs)
-//        }
-//      }
-
-      {
         val graph = imps.forwards
         @inline def relDir = Forwards
 
@@ -310,9 +267,11 @@ object VirtualProjectTags {
                       case _ =>
                     }
 
-                    println(s"(${nodeId.value})               parentsManual: $parentsManual")
-                    println(s"(${nodeId.value})                 ourDefaults: $ourDefaults")
-                    println(s"(${nodeId.value}) ourDefaultAndParentsManuals: $ourDefaultAndParentsManuals")
+                    if (debugDerivativeTags) {
+                      println(s"(${nodeId.value})               parentsManual: $parentsManual")
+                      println(s"(${nodeId.value})                 ourDefaults: $ourDefaults")
+                      println(s"(${nodeId.value}) ourDefaultAndParentsManuals: $ourDefaultAndParentsManuals")
+                    }
                     if (ourDefaultAndParentsManuals ==* ourDefaults)
                       Set.empty // TODO LAter Set1(DerivativeTagFactor.Relation(nodeId, Backwards, default, SourceType.Default))
                     else
@@ -331,7 +290,10 @@ object VirtualProjectTags {
                   s
                 }
 
-                println("=================================================================\n" + nodeId)
+                if (debugDerivativeTags) {
+                  println("=================================================================")
+                  println(s"= ${p.config.tags.needTagGroup(p.config.fields.custom(f.fieldId).tagId).name} -> $nodeId")
+                }
 
                 // TODO AFTER THIS IS WORKING, NEED TO FILTER manualLive BY TAG GROUP
                 var addToParents = addedFromChildren
@@ -354,39 +316,6 @@ object VirtualProjectTags {
                   case (false, true) =>
                     for (default <- node.liveDefaults.get(f.fieldId)) {
 
-//                      val defaultIsDerivedFromChildren =
-//                        addFromChildren.exists {
-//                          case DerivativeTagFactor.EmptySelf
-//                               | _: DerivativeTagFactor.EmptyRelation => false
-//                          case f: DerivativeTagFactor.Self => f.tag ==* default
-//                          case f: DerivativeTagFactor.Relation => f.tag ==* default
-//                        }
-//
-//                      val willTakeNonDefaultFromChildren =
-//                        addFromChildren.exists {
-//                          case DerivativeTagFactor.EmptySelf
-//                               | _: DerivativeTagFactor.EmptyRelation => false
-//                          case f: DerivativeTagFactor.Self => dt.combineOption(f.tag, default).forall(_ !=* default)
-//                          case f: DerivativeTagFactor.Relation => dt.combineOption(f.tag, default).forall(_ !=* default)
-//                        }
-
-//                      //                  println(s"${nodeId}: willTakeNonDefaultFromChildren = $willTakeNonDefaultFromChildren | $addFromChildren\n")
-//                      if (willTakeNonDefaultFromChildren) {
-//                        //                    addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Derived)
-//                      } else {
-//                        fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(default, SourceType.Default)))
-//                        addToParents += DerivativeTagFactor.Relation(nodeId, relDir, default, SourceType.Default)
-//                      }
-
-                      //                  if (defaultIsDerivedFromChildren) {
-                      //                    addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Derived)
-                      //                  } else {
-                      //                    fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(t, SourceType.Default)))
-                      //                    addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Default)
-                      //                  }
-
-//                      fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(default, SourceType.Default)))
-//                      addToParents += DerivativeTagFactor.Relation(nodeId, relDir, default, SourceType.Default)
                       defaultAddable = true
                     }
 
@@ -408,7 +337,7 @@ object VirtualProjectTags {
                   dt.combineOne(tags, id)
                 }
 
-                node.derived =
+                var newlyDerived =
                   fieldFactors.value(nodeId).foldLeft(Set.empty[ApplicableTagId]) { (tags, fac) =>
                     fac match {
                       case DerivativeTagFactor.EmptySelf
@@ -417,15 +346,15 @@ object VirtualProjectTags {
                       case f: DerivativeTagFactor.Relation      => addDerive(tags, f.tag)
                     }
                   }
-                val derived1 = node.derived
-                node.derived --= node.manualLive.keys
+                val derived1 = newlyDerived
+                newlyDerived --= node.manualLive.keys
                 if (defaultAddable & nonDefaultEncountered)
                   defaultAddable = false
 
                 if (defaultAddable)
-                  node.derived --= node.liveDefaults.get(f.fieldId)
+                  newlyDerived --= node.liveDefaults.get(f.fieldId)
 
-                if (node.derived.isEmpty) {
+                if (newlyDerived.isEmpty) {
                   if (defaultAddable)
                     for (default <- node.liveDefaults.get(f.fieldId)) {
                       fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(default, SourceType.Default)))
@@ -434,19 +363,26 @@ object VirtualProjectTags {
                   if (!hasManual && !defaultAddable)
                     addToParents += DerivativeTagFactor.EmptyRelation(nodeId, relDir)
                 } else {
-                  for (t <- node.derived)
+                  for (t <- newlyDerived)
                     addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Derived)
                   if (hasDefault && !defaultAddable)
                     node.liveDefaults = node.liveDefaults.removed(f.fieldId)
                 }
 
-                println(s"nonDefaultEncountered: $nonDefaultEncountered, defaultAddable = $defaultAddable, hasManual = $hasManual, hasDefault = $hasDefault")
-                println(s"addedFromChildren: $addedFromChildren")
-                println(s"derived1: ${derived1 .map(_.value)}")
-                println(s"derived: ${node.derived.map(_.value)}")
-                println(s"fieldFactors: ${fieldFactors.value(nodeId)}")
-                println(s"addToParents: ${addToParents}")
-                println(s"node.liveDefaults: ${node.liveDefaults}")
+                node.derived =
+                  Util.mergeSets(node.derived, newlyDerived)
+
+                if (debugDerivativeTags) {
+                  println(s"nonDefaultEncountered: $nonDefaultEncountered, defaultAddable = $defaultAddable, hasManual = $hasManual, hasDefault = $hasDefault")
+                  println(s"addedFromChildren: $addedFromChildren")
+                  println(s"derived1: ${derived1 .map(_.value)}")
+                  println(s"derivedN: ${newlyDerived.map(_.value)}")
+                  println(s"derived: ${node.derived.map(_.value)}")
+                  println(s"fieldFactors: ${fieldFactors.value(nodeId)}")
+                  println(s"addToParents: ${addToParents}")
+                  println(s"node.liveDefaults: ${node.liveDefaults}")
+                  println(s"node.manualLive: ${node.manualLive.keys.map(_.value).toVector.sorted}")
+                }
 
                 seen.update(nodeId, addToParents)
                 addToParents
@@ -457,113 +393,6 @@ object VirtualProjectTags {
           for (n <- imps.roots)
             scan(n, Set.empty)
         }
-      }
-
-      /*
-      // Scan backward
-      {
-
-        for (f <- fields) {
-          val fieldFactors = factors(f.fieldId)
-          val dt = f.derivativeTags
-
-          def scan(nodeId: ReqId, addFromChildren: Set[DerivativeTagFactor]): Unit = {
-            val node = data(nodeId)
-            val hasManual = node.manualLive.nonEmpty
-            val hasDefault = node.liveDefaults.contains(f.fieldId)
-
-            var addToParents = addFromChildren
-
-            if (addFromChildren.nonEmpty)
-              fieldFactors.mod(_.addvs(nodeId, addFromChildren))
-
-            (hasManual, hasDefault) match {
-              case (true, _) =>
-                for (t <- node.manualLive.keyIterator) {
-                  fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(t, SourceType.Manual)))
-                  addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Manual)
-                }
-              case (false, true) =>
-                for (t <- node.liveDefaults.get(f.fieldId)) {
-
-                  val defaultIsDerivedFromChildren =
-                    addFromChildren.exists {
-                      case DerivativeTagFactor.EmptySelf
-                         | _: DerivativeTagFactor.EmptyRelation => false
-                      case f: DerivativeTagFactor.Self          => f.tag ==* t
-                      case f: DerivativeTagFactor.Relation      => f.tag ==* t
-                    }
-
-                  val willTakeNonDefaultFromChildren =
-                    addFromChildren.exists {
-                      case DerivativeTagFactor.EmptySelf
-                         | _: DerivativeTagFactor.EmptyRelation => false
-                      case f: DerivativeTagFactor.Self          => dt.combineOption(f.tag, t).forall(_ !=* t)
-                      case f: DerivativeTagFactor.Relation      => dt.combineOption(f.tag, t).forall(_ !=* t)
-                    }
-
-                  println(s"${nodeId}: willTakeNonDefaultFromChildren = $willTakeNonDefaultFromChildren | $addFromChildren\n")
-                  if (willTakeNonDefaultFromChildren) {
-//                    addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Derived)
-                  } else {
-                    fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(t, SourceType.Default)))
-                    addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Default)
-                  }
-
-//                  if (defaultIsDerivedFromChildren) {
-//                    addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Derived)
-//                  } else {
-//                    fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.Self(t, SourceType.Default)))
-//                    addToParents += DerivativeTagFactor.Relation(nodeId, relDir, t, SourceType.Default)
-//                  }
-                }
-
-              case (false, false) =>
-                fieldFactors.mod(_.add(nodeId, DerivativeTagFactor.EmptySelf))
-                addFromChildren + DerivativeTagFactor.EmptyRelation(nodeId, relDir)
-            }
-
-            val parents = graph(nodeId)
-            if (parents.nonEmpty)
-              parents.foreach(scan(_, addToParents))
-          }
-
-          for (n <- imps.terminals)
-            scan(n, noInputs)
-        }
-      }
-
-      // Derive
-      {
-        val graph = imps.forwards
-        for (f <- fields) {
-          val seen = mutable.Set.empty[ReqId]
-          val fieldFactors = factors(f.fieldId).value
-          val dt = f.derivativeTags
-
-          def scan(nodeId: ReqId): Unit =
-            if (!seen.contains(nodeId)) {
-              seen += nodeId
-              val node = data(nodeId)
-
-              node.derived =
-                fieldFactors(nodeId).foldLeft(Set.empty[ApplicableTagId]) { (tags, fac) =>
-                  fac match {
-                    case DerivativeTagFactor.EmptySelf
-                       | _: DerivativeTagFactor.EmptyRelation => tags
-                    case f: DerivativeTagFactor.Self          => dt.combineOne(tags, f.tag)
-                    case f: DerivativeTagFactor.Relation      => dt.combineOne(tags, f.tag)
-                  }
-                }
-
-              graph(nodeId).foreach(scan)
-            }
-
-          for (n <- imps.roots)
-            scan(n)
-        }
-      }
-       */
 
       factors
     }

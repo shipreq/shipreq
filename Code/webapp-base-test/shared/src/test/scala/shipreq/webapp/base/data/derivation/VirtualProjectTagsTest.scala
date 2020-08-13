@@ -2,29 +2,16 @@ package shipreq.webapp.base.data.derivation
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import sourcecode.Line
-import shipreq.webapp.base.data._
-import utest._
-import shipreq.webapp.base.text.PlainText
 import shipreq.base.test.BaseTestUtil._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
+import shipreq.webapp.base.text.PlainText
+import sourcecode.Line
+import utest._
 
 object VirtualProjectTagsTest extends TestSuite {
   import VirtualProjectTags.DerivativeTagFactor
   import VirtualProjectTags.DerivativeTagFactor.SourceType
-
-  override def tests = Tests {
-    "derivativeTags" - {
-      "sc2" - derivativeTags_sc2()
-      "sc4" - {
-        "step1" - derivativeTags_sc4_step1()
-        "step2" - derivativeTags_sc4_step2()
-        "step3" - derivativeTags_sc4_step3()
-        "step4" - derivativeTags_sc4_step4()
-        "step5" - derivativeTags_sc4_step5()
-      }
-    }
-  }
 
   private def summariseDerivativeTags(p: Project,
                                       fieldId: CustomField.Tag.Id,
@@ -108,349 +95,40 @@ object VirtualProjectTagsTest extends TestSuite {
     }
   }
 
-  private def derivativeTags_sc2(): Unit = {
-    import SampleDerivativeTags1._, Values._
-    assertDerivativeTags(project, verField, Vector(fr, iv, mf, fb))(
-      """FR-1
-        |  + self: v1 (manual)
-        |  = {v1}
-        |FR-2
-        |  + MF-1: v2 (manual)
-        |  + self: ∅
-        |  = {v2}
-        |FR-3
-        |  + MF-1: v2 (manual)
-        |  + self: ∅
-        |  = {v2}
-        |FR-4
-        |  + self: v1 (manual)
-        |  = {v1}
-        |IV-1
-        |  + FR-1: v1 (manual)
-        |  + FR-2: v2 (derived)
-        |  + MF-1: v2 (manual)
-        |  + self: ∅
-        |  = {v1 v2}
-        |IV-2
-        |  + FR-3: v2 (derived)
-        |  + MF-1: v2 (manual)
-        |  + self: ∅
-        |  = {v2}
-        |IV-3
-        |  + FR-4: v1 (manual)
-        |  + MF-1: v2 (manual)
-        |  + self: ∅
-        |  = {v1 v2}
-        |MF-1
-        |  + FR-1: v1 (manual)
-        |  + FR-2: v2 (derived)
-        |  + FR-3: v2 (derived)
-        |  + FR-4: v1 (manual)
-        |  + IV-1: v1 (derived)
-        |  + IV-1: v2 (derived)
-        |  + IV-2: v2 (derived)
-        |  + IV-3: v1 (derived)
-        |  + IV-3: v2 (derived)
-        |  + self: v2 (manual)
-        |  = {v1 v2}
-        |FB-1
-        |  + FR-1: v1 (manual)
-        |  + FR-2: v2 (derived)
-        |  + FR-3: v2 (derived)
-        |  + FR-4: v1 (manual)
-        |  + IV-1: v1 (derived)
-        |  + IV-1: v2 (derived)
-        |  + IV-2: v2 (derived)
-        |  + IV-3: v1 (derived)
-        |  + IV-3: v2 (derived)
-        |  + MF-1: v1 (derived)
-        |  + MF-1: v2 (manual)
-        |  + self: ∅
-        |  = {v1 v2}
-        |""".stripMargin
-    )
-  }
+  override def tests = Tests {
+    "derivativeTags" - {
 
-  private def derivativeTags_sc4_step1(): Unit = {
-    import SampleDerivativeTags2._, Values._
-    assertDerivativeTags(step1, statusField, Vector(fr, iv, mf, fb))(
-      """FR-1
-        |  + FR-3: readyForDev (default)
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-2
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-3
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-4
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |IV-1
-        |  + FR-1: readyForDev (default)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
-        |IV-2
-        |  + self: needsAnalysis (default)
-        |  = {needsAnalysis}
-        |IV-3
-        |  + FR-4: readyForDev (default)
-        |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
-        |MF-1
-        |  + FR-1: readyForDev (default)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + FR-4: readyForDev (default)
-        |  + IV-1: analysed (manual)
-        |  + IV-1: readyForDev (derived)
-        |  + IV-2: needsAnalysis (default)
-        |  + IV-3: analysed (manual)
-        |  + IV-3: readyForDev (derived)
-        |  = {needsAnalysis}
-        |FB-1
-        |  + FR-1: readyForDev (default)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + FR-4: readyForDev (default)
-        |  + IV-1: analysed (manual)
-        |  + IV-1: readyForDev (derived)
-        |  + IV-2: needsAnalysis (default)
-        |  + IV-3: analysed (manual)
-        |  + IV-3: readyForDev (derived)
-        |  + MF-1: needsAnalysis (derived)
-        |  = {needsAnalysis}
-        |""".stripMargin
-    )
-  }
+      "sc2" - {
+        import SampleDerivativeTags1._, Values._
+        assertDerivativeTags(project, verField, virtualTagOrder)(virtualTags)
+      }
 
-  private def derivativeTags_sc4_step2(): Unit = {
-    import SampleDerivativeTags2._, Values._
-    assertDerivativeTags(step2, statusField, Vector(fr, iv, mf, fb))(
-      """FR-1
-        |  + FR-3: readyForDev (default)
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-2
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-3
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-4
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |IV-1
-        |  + FR-1: readyForDev (default)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
-        |IV-2
-        |  + self: rejected (manual)
-        |  = {rejected}
-        |IV-3
-        |  + FR-4: readyForDev (default)
-        |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
-        |MF-1
-        |  + FR-1: readyForDev (default)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + FR-4: readyForDev (default)
-        |  + IV-1: analysed (manual)
-        |  + IV-1: readyForDev (derived)
-        |  + IV-2: rejected (manual)
-        |  + IV-3: analysed (manual)
-        |  + IV-3: readyForDev (derived)
-        |  = {readyForDev}
-        |FB-1
-        |  + FR-1: readyForDev (default)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + FR-4: readyForDev (default)
-        |  + IV-1: analysed (manual)
-        |  + IV-1: readyForDev (derived)
-        |  + IV-2: rejected (manual)
-        |  + IV-3: analysed (manual)
-        |  + IV-3: readyForDev (derived)
-        |  + MF-1: readyForDev (derived)
-        |  = {readyForDev}
-        |""".stripMargin
-    )
-  }
+      "sc4" - {
+        import SampleDerivativeTags2._, Values._
+        "step1" - assertDerivativeTags(step1.project, statusField, virtualTagOrder)(step1.virtualTags)
+        "step2" - assertDerivativeTags(step2.project, statusField, virtualTagOrder)(step2.virtualTags)
+        "step3" - assertDerivativeTags(step3.project, statusField, virtualTagOrder)(step3.virtualTags)
+        "step4" - assertDerivativeTags(step4.project, statusField, virtualTagOrder)(step4.virtualTags)
+        "step5" - assertDerivativeTags(step5.project, statusField, virtualTagOrder)(step5.virtualTags)
+      }
 
-  private def derivativeTags_sc4_step3(): Unit = {
-    import SampleDerivativeTags2._, Values._
-    assertDerivativeTags(step3, statusField, Vector(fr, iv, mf, fb))(
-      """FR-1
-        |  + FR-3: readyForDev (default)
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-2
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-3
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-4
-        |  + self: implemented (manual)
-        |  = {implemented}
-        |IV-1
-        |  + FR-1: readyForDev (default)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
-        |IV-2
-        |  + self: rejected (manual)
-        |  = {rejected}
-        |IV-3
-        |  + FR-4: implemented (manual)
-        |  + self: analysed (manual)
-        |  = {analysed implemented} // "analysed" is here because we never remove manual values
-        |MF-1
-        |  + FR-1: readyForDev (default)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + FR-4: implemented (manual)
-        |  + IV-1: analysed (manual)
-        |  + IV-1: readyForDev (derived)
-        |  + IV-2: rejected (manual)
-        |  + IV-3: analysed (manual)
-        |  + IV-3: implemented (derived)
-        |  = {readyForDev}
-        |FB-1
-        |  + FR-1: readyForDev (default)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + FR-4: implemented (manual)
-        |  + IV-1: analysed (manual)
-        |  + IV-1: readyForDev (derived)
-        |  + IV-2: rejected (manual)
-        |  + IV-3: analysed (manual)
-        |  + IV-3: implemented (derived)
-        |  + MF-1: readyForDev (derived)
-        |  = {readyForDev}
-        |""".stripMargin
-    )
-  }
-
-  private def derivativeTags_sc4_step4(): Unit = {
-    import SampleDerivativeTags2._, Values._
-    assertDerivativeTags(step4, statusField, Vector(fr, iv, mf, fb))(
-      """FR-1
-        |  + FR-3: readyForDev (default)
-        |  + self: implemented (manual)
-        |  = {implemented readyForDev}
-        |FR-2
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-3
-        |  + self: readyForDev (default)
-        |  = {readyForDev}
-        |FR-4
-        |  + self: implemented (manual)
-        |  = {implemented}
-        |IV-1
-        |  + FR-1: implemented (manual)
-        |  + FR-1: readyForDev (derived)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
-        |IV-2
-        |  + self: rejected (manual)
-        |  = {rejected}
-        |IV-3
-        |  + FR-4: implemented (manual)
-        |  + self: analysed (manual)
-        |  = {analysed implemented} // "analysed" is here because we never remove manual values
-        |MF-1
-        |  + FR-1: implemented (manual)
-        |  + FR-1: readyForDev (derived)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + FR-4: implemented (manual)
-        |  + IV-1: analysed (manual)
-        |  + IV-1: readyForDev (derived)
-        |  + IV-2: rejected (manual)
-        |  + IV-3: analysed (manual)
-        |  + IV-3: implemented (derived)
-        |  = {readyForDev}
-        |FB-1
-        |  + FR-1: implemented (manual)
-        |  + FR-1: readyForDev (derived)
-        |  + FR-2: readyForDev (default)
-        |  + FR-3: readyForDev (default)
-        |  + FR-4: implemented (manual)
-        |  + IV-1: analysed (manual)
-        |  + IV-1: readyForDev (derived)
-        |  + IV-2: rejected (manual)
-        |  + IV-3: analysed (manual)
-        |  + IV-3: implemented (derived)
-        |  + MF-1: readyForDev (derived)
-        |  = {readyForDev}
-        |""".stripMargin
-    )
-  }
-
-  private def derivativeTags_sc4_step5(): Unit = {
-    import SampleDerivativeTags2._, Values._
-    assertDerivativeTags(step5, statusField, Vector(fr, iv, mf, fb))(
-      """FR-1
-        |  + FR-3: implemented (manual)
-        |  + self: implemented (manual)
-        |  = {implemented}
-        |FR-2
-        |  + self: implemented (manual)
-        |  = {implemented}
-        |FR-3
-        |  + self: implemented (manual)
-        |  = {implemented}
-        |FR-4
-        |  + self: implemented (manual)
-        |  = {implemented}
-        |IV-1
-        |  + FR-1: implemented (manual)
-        |  + FR-2: implemented (manual)
-        |  + FR-3: implemented (manual)
-        |  + self: analysed (manual)
-        |  = {analysed implemented} // "analysed" is here because we never remove manual values
-        |IV-2
-        |  + self: rejected (manual)
-        |  = {rejected}
-        |IV-3
-        |  + FR-4: implemented (manual)
-        |  + self: analysed (manual)
-        |  = {analysed implemented} // "analysed" is here because we never remove manual values
-        |MF-1
-        |  + FR-1: implemented (manual)
-        |  + FR-2: implemented (manual)
-        |  + FR-3: implemented (manual)
-        |  + FR-4: implemented (manual)
-        |  + IV-1: analysed (manual)
-        |  + IV-1: implemented (derived)
-        |  + IV-2: rejected (manual)
-        |  + IV-3: analysed (manual)
-        |  + IV-3: implemented (derived)
-        |  = {implemented}
-        |FB-1
-        |  + FR-1: implemented (manual)
-        |  + FR-2: implemented (manual)
-        |  + FR-3: implemented (manual)
-        |  + FR-4: implemented (manual)
-        |  + IV-1: analysed (manual)
-        |  + IV-1: implemented (derived)
-        |  + IV-2: rejected (manual)
-        |  + IV-3: analysed (manual)
-        |  + IV-3: implemented (derived)
-        |  + MF-1: implemented (derived)
-        |  = {implemented}
-        |""".stripMargin
-    )
+      "sc6" - {
+        import SampleDerivativeTags3._, Values._
+        "status" - {
+          "step1" - assertDerivativeTags(step1.project, statusField, statusOrder)(step1.virtualStatuses)
+          "step2" - assertDerivativeTags(step2.project, statusField, statusOrder)(step2.virtualStatuses)
+          "step3" - assertDerivativeTags(step3.project, statusField, statusOrder)(step3.virtualStatuses)
+          "step4" - assertDerivativeTags(step4.project, statusField, statusOrder)(step4.virtualStatuses)
+          "step5" - assertDerivativeTags(step5.project, statusField, statusOrder)(step5.virtualStatuses)
+        }
+        "ver" - {
+          "step1" - assertDerivativeTags(step1.project, verField, verOrder)(step1.virtualVersions)
+          "step2" - assertDerivativeTags(step2.project, verField, verOrder)(step2.virtualVersions)
+          "step3" - assertDerivativeTags(step3.project, verField, verOrder)(step3.virtualVersions)
+          "step4" - assertDerivativeTags(step4.project, verField, verOrder)(step4.virtualVersions)
+          "step5" - assertDerivativeTags(step5.project, verField, verOrder)(step5.virtualVersions)
+        }
+      }
+    }
   }
 }

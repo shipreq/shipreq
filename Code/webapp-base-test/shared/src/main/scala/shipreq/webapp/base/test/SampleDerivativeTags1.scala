@@ -3,8 +3,8 @@ package shipreq.webapp.base.test
 import shipreq.base.util.Enabled
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.UnsafeTypes._
+import shipreq.webapp.base.test.WebappTestUtil._
 
 /** https://shipreq.com/project/d6My#/reqs/SC-2 */
 object SampleDerivativeTags1 {
@@ -58,4 +58,66 @@ object SampleDerivativeTags1 {
       genericReqCreate(fr3, fr, impSrcs = iv2),
       genericReqCreate(fr4, fr, impSrcs = iv3, tags = v1),
     )
+
+  val virtualTagOrder = Vector(fr, iv, mf, fb)
+
+  def virtualTags =
+    """FR-1
+      |  + self: v1 (manual)
+      |  = {v1}
+      |FR-2
+      |  + MF-1: v2 (manual)
+      |  + self: ∅
+      |  = {v2}
+      |FR-3
+      |  + MF-1: v2 (manual)
+      |  + self: ∅
+      |  = {v2}
+      |FR-4
+      |  + self: v1 (manual)
+      |  = {v1}
+      |IV-1
+      |  + FR-1: v1 (manual)
+      |  + FR-2: v2 (derived)
+      |  + MF-1: v2 (manual)
+      |  + self: ∅
+      |  = {v1 v2}
+      |IV-2
+      |  + FR-3: v2 (derived)
+      |  + MF-1: v2 (manual)
+      |  + self: ∅
+      |  = {v2}
+      |IV-3
+      |  + FR-4: v1 (manual)
+      |  + MF-1: v2 (manual)
+      |  + self: ∅
+      |  = {v1 v2}
+      |MF-1
+      |  + FR-1: v1 (manual)
+      |  + FR-2: v2 (derived)
+      |  + FR-3: v2 (derived)
+      |  + FR-4: v1 (manual)
+      |  + IV-1: v1 (derived)
+      |  + IV-1: v2 (derived)
+      |  + IV-2: v2 (derived)
+      |  + IV-3: v1 (derived)
+      |  + IV-3: v2 (derived)
+      |  + self: v2 (manual)
+      |  = {v1 v2}
+      |FB-1
+      |  + FR-1: v1 (manual)
+      |  + FR-2: v2 (derived)
+      |  + FR-3: v2 (derived)
+      |  + FR-4: v1 (manual)
+      |  + IV-1: v1 (derived)
+      |  + IV-1: v2 (derived)
+      |  + IV-2: v2 (derived)
+      |  + IV-3: v1 (derived)
+      |  + IV-3: v2 (derived)
+      |  + MF-1: v1 (derived)
+      |  + MF-1: v2 (manual)
+      |  + self: ∅
+      |  = {v1 v2}
+      |""".stripMargin
+
 }
