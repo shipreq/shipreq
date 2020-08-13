@@ -95,6 +95,44 @@ object VirtualProjectTagsTest extends TestSuite {
     }
   }
 
+  // TODO move into multilibs
+  private def assertMultiline(actual: String, expect: String)(implicit q: Line): Unit = {
+    import japgolly.microlibs.testutil.TestUtilInternals._
+    import scala.io.AnsiColor._
+
+    if (actual != expect) withAtomicOutput {
+      println()
+      val AE = List(actual, expect).map(_.split("\n"))
+      val List(as, es) = AE
+      val lim = as.length max es.length
+      val List(maxA,_) = AE.map(x => (0 :: x.iterator.map(_.length).toList).max)
+      val maxL = lim.toString.length
+      if (maxL == 0 || maxA == 0)
+        assertEq(actual, expect)
+      else {
+        if (as.length == es.length) {
+          println(s"${BRIGHT_YELLOW}assertMultiline:$RESET actual | expect")
+          val fmtOK = s"${BRIGHT_BLACK}%${maxL}d: %-${maxA}s | | %s${RESET}\n"
+          val fmtWS = s"${WHITE}%${maxL}d: ${RED_B}${BLACK}%-${maxA}s${RESET}${WHITE} |≈| ${GREEN_B}${BLACK}%s${RESET}\n"
+          val fmtKO = s"${WHITE}%${maxL}d: ${BOLD_BRIGHT_RED}%-${maxA}s${RESET}${WHITE} |≠| ${BOLD_BRIGHT_GREEN}%s${RESET}\n"
+          def removeWhitespace(s: String) = s.filterNot(_.isWhitespace)
+          for (i <- 0 until lim) {
+            val List(a, e) = AE.map(s => if (i >= s.length) "" else s(i))
+            val fmt =
+              if (a == e) fmtOK
+              else if (removeWhitespace(a) == removeWhitespace(e)) fmtWS
+              else fmtKO
+            printf(fmt, i + 1, a, e)
+          }
+        } else {
+          println(LineDiff(expect, actual).expectActualColoured)
+        }
+        println()
+        fail("assertMultiline failed.")
+      }
+    }
+  }
+
   override def tests = Tests {
     "derivativeTags" - {
 
