@@ -15,6 +15,7 @@ import shipreq.webapp.base.text.Atom.DisplayReqRef
 import shipreq.webapp.base.text.{Text => T}
 import sourcecode.Line
 import utest._
+import shipreq.webapp.base.test.SampleDerivativeTags4.yDerivativeTags
 
 object IssueDetectorTest extends TestSuite {
 
@@ -22,6 +23,7 @@ object IssueDetectorTest extends TestSuite {
   import SampleProject4.{Values => P4, project => p4}
   import SampleProject6.{Values => P6, project => p6}
   import SampleProject7.{Values => P7, project => p7}
+  import SampleDerivativeTags4.{Values => DT4, project => dt4}
 
   private lazy val demoId         = p3.content.reqCodes.need("demo").activeId.get.value.RCG
   private lazy val demoWhateverId = p3.content.reqCodes.need("demo.whatever").activeId.get.value.ARC
@@ -256,6 +258,44 @@ object IssueDetectorTest extends TestSuite {
       IssueLite.DeadTag(P3.frs(1), Location.Text.Title, P3.priHigh),
       IssueLite.DeadTag(P3.frs(1), Location.Text.Title, P3.priLow),
     )
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private object DerivativeTagResultDeadTests {
+    private implicit val filter = IssueFilter[Issue.DerivativeTagResultDead]
+    import DT4._
+
+    def ko() = test(dt4)()(
+      IssueLite.DerivativeTagResultDead(yField, y1, y2, y3),
+    )
+
+    def dead() = test(dt4)(
+      Event.FieldCustomDelete(yField),
+    )()
+
+    def disabled() = test(dt4)(
+      Event.FieldCustomTagUpdate(yField, CustomTagFieldGD.ValueForDerivativeTags(yDerivativeTags.copy(Disabled)))
+    )()
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private object DerivativeTagResultUnrelatedTests {
+    private implicit val filter = IssueFilter[Issue.DerivativeTagResultUnrelated]
+    import DT4._
+
+    def ko() = test(dt4)()(
+      IssueLite.DerivativeTagResultUnrelated(yField, y1, y4, z1),
+    )
+
+    def dead() = test(dt4)(
+      Event.FieldCustomDelete(yField),
+    )()
+
+    def disabled() = test(dt4)(
+      Event.FieldCustomTagUpdate(yField, CustomTagFieldGD.ValueForDerivativeTags(yDerivativeTags.copy(Disabled)))
+    )()
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -571,6 +611,20 @@ object IssueDetectorTest extends TestSuite {
     "DeadTag" - {
       import DeadTagTests._
       "ko" - ko()
+    }
+
+    "DerivativeTagResultDead" - {
+      import DerivativeTagResultDeadTests._
+      "ko"       - ko()
+      "dead"     - dead()
+      "disabled" - disabled()
+    }
+
+    "DerivativeTagResultUnrelated" - {
+      import DerivativeTagResultUnrelatedTests._
+      "ko"       - ko()
+      "dead"     - dead()
+      "disabled" - disabled()
     }
 
     "EmptyCodeGroup" - {

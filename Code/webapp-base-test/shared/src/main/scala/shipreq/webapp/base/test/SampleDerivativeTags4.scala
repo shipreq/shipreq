@@ -125,7 +125,7 @@ object SampleDerivativeTags4 {
     val y4     = ApplicableTagId(24)
     val y5     = ApplicableTagId(25) // (DEAD)
 
-    val xField = CustomField.Tag.Id(3)
+    val xField = CustomField.Tag.Id(3) // (DEAD)
     val x      = TagGroupId(30)
     val x1     = ApplicableTagId(31)
     val x2     = ApplicableTagId(32)
@@ -143,7 +143,7 @@ object SampleDerivativeTags4 {
       .defaultTo(z1)(a)
       .notApplicable(c)
 
-  val zDerivativeTags = DerivativeTags(Enabled, Map())
+  val zDerivativeTags = DerivativeTags(Enabled, Map.empty)
 
   val yRules =
     FieldReqTypeRules.empty

@@ -165,6 +165,32 @@ object IssueDetectors {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  case object DerivativeTagRules extends Instance {
+    // Note: This only check rule result tags.
+    // There's no need to check the keys as they are managed, in that they're automatically hidden from all views until
+    // the tags come back in scope.
+    override val detect = ctx => {
+      val cfg = ctx.project.config
+      for (f <- cfg.fields.customTagFields)
+        if (f.derivativeTags.enabled.is(Enabled) & f.live(cfg).is(Live)) {
+          val scope = cfg.liveTagFieldDistribution.inField(f.id)
+          for ((k, v) <- f.derivativeTags.rules) {
+            def k1  = cfg.tags.needApplicableTag(k.lo)
+            def k2  = cfg.tags.needApplicableTag(k.hi)
+            val tag = cfg.tags.needApplicableTag(v)
+
+            if (!scope.contains(v)) {
+              val tg = cfg.tags.needTagGroup(f.tagId)
+              ctx.add(Issue.DerivativeTagResultUnrelated(f, tg, k1, k2, tag))
+            } else if (tag.live is Dead)
+              ctx.add(Issue.DerivativeTagResultDead(f, k1, k2, tag))
+          }
+        }
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   case object EmptyCodeGroup extends Instance {
 
     override val detect = ctx =>
@@ -193,7 +219,7 @@ object IssueDetectors {
   case object FieldDefaultTagDead extends Instance {
     override val detect = ctx => {
       val cfg = ctx.project.config
-      for (f <- ctx.project.config.fields.customTagFields)
+      for (f <- cfg.fields.customTagFields)
         if (f.live(cfg) is Live) {
 
           var found = Multimap.empty[ApplicableTagId, List, ReqTypeId]
@@ -225,7 +251,7 @@ object IssueDetectors {
   case object FieldDefaultTagNotApplicable extends Instance {
     override val detect = ctx => {
       val cfg = ctx.project.config
-      for (f <- ctx.project.config.fields.customTagFields)
+      for (f <- cfg.fields.customTagFields)
         if (f.live(cfg) is Live) {
 
           val fixed = cfg.tagFieldRulesFixedHideDead(f.id)
@@ -246,7 +272,7 @@ object IssueDetectors {
     override val detect = ctx => {
 
       val cfg = ctx.project.config
-      for (f <- ctx.project.config.fields.customTagFields)
+      for (f <- cfg.fields.customTagFields)
         if (f.live(cfg) is Live) {
 
           val unrelatedTags: Set[ApplicableTagId] =
@@ -344,7 +370,7 @@ object IssueDetectors {
   case object NonApplicableField extends Instance {
     override val detect = ctx => {
       val cfg = ctx.project.config
-      for (f <- ctx.project.config.fields.customFields.values) {
+      for (f <- cfg.fields.customFields.values) {
         val isLive      = f.liveExplicitly is Live
         def allDeadOrNA = f.fieldReqTypeRules.liveResolutionIterator(cfg.reqTypes).forall(_.isNA)
         if (isLive && allDeadOrNA)
@@ -359,7 +385,7 @@ object IssueDetectors {
 
     override val detect = ctx => {
       val cfg = ctx.project.config
-      for (f <- ctx.project.config.fields.customTagFields) {
+      for (f <- cfg.fields.customTagFields) {
         val isLive        = f.liveExplicitly is Live
         def uninhabitable = !inhabitable(f.tagId, cfg)
         if (isLive && uninhabitable)

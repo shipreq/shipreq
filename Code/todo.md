@@ -52,11 +52,7 @@ v2.2
 * if I have a flat list of unconnected nodes in ReqGraph, they appear backwards (ie. IV1, FR3, FR2, FR1)
 * style inline graphs by default
 * req detail: add prev/next buttons
-* Derivative tags
-  * new issues:
-    * result tag is dead
-    * result tag is out-of-scope
-
+* rich text: wrap selection in / _ * like vscode
 
 
 Backlog (maybe-probably soon)

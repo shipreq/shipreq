@@ -8,6 +8,14 @@ final case class DerivativeTags(enabled: Enabled, rules: DerivativeTags.Rules) {
   def filterRulesByResult(f: ApplicableTagId => Boolean): DerivativeTags =
     copy(rules = rules.filter(x => f(x._2)))
 
+  def withoutRuleFor(x: ApplicableTagId, y: ApplicableTagId): DerivativeTags =
+    if (x ==* y)
+      this
+    else {
+      val k = TagPair(x, y)
+      copy(rules = rules - k)
+    }
+
   def tagIdIterator(): Iterator[ApplicableTagId] =
     rules.iterator.flatMap(x => x._1.lo :: x._1.hi :: x._2 :: Nil)
 

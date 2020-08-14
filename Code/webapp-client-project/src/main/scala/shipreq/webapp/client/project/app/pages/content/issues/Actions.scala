@@ -4,10 +4,11 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Allow, Deny, Enabled}
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.event.CustomTagFieldGD
 import shipreq.webapp.base.issue.{ContentRef, Issue}
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}
 import shipreq.webapp.base.text.PlainText
-import shipreq.webapp.base.ui.semantic.{Button => Btn, Icon}
+import shipreq.webapp.base.ui.semantic.{Icon, Button => Btn}
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.app.pages.root.Routes
 
@@ -136,6 +137,15 @@ object Actions {
       case ContentRef.UseCaseStepRef(id) => restoreUseCaseStep(id)
     }
 
+    private def deleteDerivativeTagRule(field: CustomField.Tag,
+                                        k1: ApplicableTagId,
+                                        k2: ApplicableTagId): Actions = {
+      val dt = field.derivativeTags.withoutRuleFor(k1, k2)
+      val newDT = CustomTagFieldGD.ValueForDerivativeTags(dt)
+      val cmd = UpdateConfigCmd.CustomFieldUpdateTag(field.id, newDT)
+      delete("the rule", cmd) :: Nil
+    }
+
     // -----------------------------------------------------------------------------------------------------------------
 
     def apply(i: Issue): List[Action] = i match {
@@ -155,15 +165,17 @@ object Actions {
          | _: Issue.NonApplicableField
             => linkTo(Routes.Page.CfgFields)
 
-      case i: Issue.DeadIssueTagInRcg     => restoreIssueTag(i.issue.typ)
-      case i: Issue.DeadIssueTagInReq     => restoreIssueTag(i.issue.typ)
-      case i: Issue.DeadRefInRcg          => restoreRefTarget(i.ref)
-      case i: Issue.DeadRefInReq          => restoreRefTarget(i.ref)
-      case i: Issue.DeadTag               => restoreTag(i.tag)
-      case i: Issue.EmptyCodeGroup        => deleteReqCodeGroup(i.rcg)
-      case i: Issue.ManualIssue           => delete("issue", ManualIssueCmd.Delete(i.issue.id))
-      case _: Issue.NonApplicableTag      => linkTo(Routes.Page.CfgTags)
-      case i: Issue.UninhabitableTagField => deleteField(i.field)
+      case i: Issue.DeadIssueTagInRcg            => restoreIssueTag(i.issue.typ)
+      case i: Issue.DeadIssueTagInReq            => restoreIssueTag(i.issue.typ)
+      case i: Issue.DeadRefInRcg                 => restoreRefTarget(i.ref)
+      case i: Issue.DeadRefInReq                 => restoreRefTarget(i.ref)
+      case i: Issue.DeadTag                      => restoreTag(i.tag)
+      case i: Issue.DerivativeTagResultDead      => deleteDerivativeTagRule(i.field, i.key1.id, i.key2.id)
+      case i: Issue.DerivativeTagResultUnrelated => deleteDerivativeTagRule(i.field, i.key1.id, i.key2.id)
+      case i: Issue.EmptyCodeGroup               => deleteReqCodeGroup(i.rcg)
+      case i: Issue.ManualIssue                  => delete("issue", ManualIssueCmd.Delete(i.issue.id))
+      case _: Issue.NonApplicableTag             => linkTo(Routes.Page.CfgTags)
+      case i: Issue.UninhabitableTagField        => deleteField(i.field)
     }
   }
 }
