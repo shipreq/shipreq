@@ -80,9 +80,8 @@ object Issue {
 
   final case class EmptyCodeGroup(rcg: LiveCodeGroup) extends Issue(C.EmptyCodeGroup)
 
-  final case class FieldDefaultTagDead(field       : CustomField.Tag,
-                                       tag         : ApplicableTag,
-                                       reqsAffected: List[Req]) extends Issue(C.FieldDefaultTagDead)
+  final case class FieldDefaultTagDead(field: CustomField.Tag,
+                                       tag  : ApplicableTag) extends Issue(C.FieldDefaultTagDead)
 
   final case class FieldDefaultTagNotApplicable(field  : CustomField.Tag,
                                                 tag    : ApplicableTag,

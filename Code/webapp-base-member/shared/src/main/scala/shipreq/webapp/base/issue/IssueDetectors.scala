@@ -212,18 +212,9 @@ object IssueDetectors {
             case _ =>
           }
 
-          for ((tagId, reqTypeIds) <- found.m) {
+          for (tagId <- found.keys) {
             val tag = cfg.tags.needApplicableTag(tagId)
-            val tags = ctx.project.virtualTags
-
-            val affectedReqs: List[Req] =
-              reqTypeIds
-                .iterator
-                .flatMap(rt => ctx.project.content.reqs.reqsByType(rt).filter(_.live(cfg.reqTypes) is Live))
-                .filter(req => tags(req.id, ShowDead).defaults.contains(f.id))
-                .toList
-
-            ctx.add(Issue.FieldDefaultTagDead(f, tag, affectedReqs))
+            ctx.add(Issue.FieldDefaultTagDead(f, tag))
           }
         }
     }

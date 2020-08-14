@@ -41,9 +41,8 @@ object IssueLite {
 
   final case class EmptyCodeGroup(rcgId: ReqCodeGroupId) extends IssueLite(C.EmptyCodeGroup)
 
-  final case class FieldDefaultTagDead(fieldId     : CustomField.Tag.Id,
-                                       tagId       : ApplicableTagId,
-                                       reqsAffected: Set[ReqId]) extends IssueLite(C.FieldDefaultTagDead)
+  final case class FieldDefaultTagDead(fieldId: CustomField.Tag.Id,
+                                       tagId  : ApplicableTagId) extends IssueLite(C.FieldDefaultTagDead)
 
   final case class FieldDefaultTagNotApplicable(fieldId  : CustomField.Tag.Id,
                                                 tagId    : ApplicableTagId,
@@ -84,7 +83,7 @@ object IssueLite {
     case Issue.DeadRefInReq                (req, loc, ref        ) => DeadRefInReq                (req.id, loc, ref)
     case Issue.DeadTag                     (req, loc, tag        ) => DeadTag                     (req.id, loc, tag.id)
     case Issue.EmptyCodeGroup              (rcg                  ) => EmptyCodeGroup              (rcg.id)
-    case Issue.FieldDefaultTagDead         (field, tag, reqs     ) => FieldDefaultTagDead         (field.id, tag.id, reqs.iterator.map(_.id).toSet)
+    case Issue.FieldDefaultTagDead         (field, tag           ) => FieldDefaultTagDead         (field.id, tag.id)
     case Issue.FieldDefaultTagNotApplicable(field, tag, reqType  ) => FieldDefaultTagNotApplicable(field.id, tag.id, reqType.reqTypeId)
     case Issue.FieldDefaultTagUnrelated    (field, tag           ) => FieldDefaultTagUnrelated    (field.id, tag.id)
     case Issue.ImplicationRequired         (req                  ) => ImplicationRequired         (req.id)
