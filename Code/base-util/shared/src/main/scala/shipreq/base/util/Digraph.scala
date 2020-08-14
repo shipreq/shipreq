@@ -126,6 +126,42 @@ object Digraph {
   }
 
   // ===================================================================================================================
+
+  final case class Roots[A](roots: Set[A], members: Set[A])
+
+  object Roots {
+    def derive[A](graph: BiDir[A]): Roots[A] = {
+      val f = graph.forwards.m
+      val b = graph.backwards.m
+
+      var members = Set.empty[A]
+      var roots   = Set.empty[A]
+
+      val processTgt: A => Unit = a =>
+        if (!members.contains(a)) {
+          members += a
+        }
+
+      for (x <- f) {
+        val src = x._1
+        val tgts = x._2
+
+        if (!members.contains(src)) {
+          members += src
+          if (!b.contains(src))
+            roots += src
+        }
+
+        tgts.foreach(processTgt)
+      }
+      apply(
+        members = members,
+        roots = roots,
+      )
+    }
+  }
+
+  // ===================================================================================================================
   // Acyclicicity
 
   type CycleDetector[A] = CycleDetectorN[Map[A, Set[A]], A]

@@ -53,7 +53,6 @@ v2.2
 * style inline graphs by default
 * req detail: add prev/next buttons
 * Derivative tags
-  * no need to collect terminals anymore
   * new issues:
     * result tag is dead
     * result tag is out-of-scope

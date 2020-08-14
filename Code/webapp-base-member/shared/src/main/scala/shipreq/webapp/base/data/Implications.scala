@@ -16,17 +16,14 @@ final case class Implications(graph: Implications.Graph) {
   @inline def backwards: Implications.Graph.UniDir =
     graph.backwards
 
-  private[this] lazy val rootsAndTerminals =
-    Digraph.RootsAndTerminals.derive(graph)
+  private[this] lazy val _roots =
+    Digraph.Roots.derive(graph)
 
   def members: Set[ReqId] =
-    rootsAndTerminals.members
+    _roots.members
 
   def roots: Set[ReqId] =
-    rootsAndTerminals.roots
-
-  def terminals: Set[ReqId] =
-    rootsAndTerminals.terminals
+    _roots.roots
 }
 
 object Implications {
