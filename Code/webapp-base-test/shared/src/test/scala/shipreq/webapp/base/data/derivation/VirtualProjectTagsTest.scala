@@ -82,7 +82,13 @@ object VirtualProjectTagsTest extends TestSuite {
                                    reqTypeOrder: Vector[ReqTypeId] = Vector.empty,
                                    alwaysSimplifyFirst: Boolean = false)(_expect: String)(implicit l: Line): Unit = {
     val actual = summariseDerivativeTags(p, f, reqTypeOrder)
-    val expect = _expect.trim.replaceAll(" *//.+?(?=\n|$)", "").replaceAll("(?<=^|\n) *\n", "")
+
+    val expect = _expect
+      .trim
+      .replaceAll(" *//.+?(?=\n|$)", "") // remove comments
+      .replaceAll("(?<=^|\n) *\n", "") // remove blank links
+      .replaceAll("(?<=\\d) * =", "\n  =") // expand concise no-factor lines
+
     if (actual != expect) {
 
       def simplify(s: String): String =
@@ -92,7 +98,10 @@ object VirtualProjectTagsTest extends TestSuite {
           .mkString("\n")
           .replace("\n  =", " =")
 
-//      println(actual)
+      if (expect.isEmpty)
+        println(simplify(actual))
+
+      //println(actual)
       if (alwaysSimplifyFirst || !expect.contains("  +"))
         assertMultiline(simplify(actual), simplify(expect))
       assertMultiline(actual, expect)
@@ -138,6 +147,8 @@ object VirtualProjectTagsTest extends TestSuite {
         import SampleDerivativeTags4._, Values._
         "z" - assertDerivativeTags(project, zField)(virtualTagsZ)
         "y" - assertDerivativeTags(project, yField)(virtualTagsY)
+        "x" - assertDerivativeTags(project, xField)(virtualTagsX)
+        "w" - assertDerivativeTags(project, wField)(virtualTagsW)
       }
 
     }

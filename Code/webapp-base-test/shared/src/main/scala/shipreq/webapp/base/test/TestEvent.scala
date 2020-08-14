@@ -10,6 +10,15 @@ import shipreq.webapp.base.text.Text
 object TestEvent {
   import Event._
 
+  private val optionalString: String => Option[Option[String]] = {
+    case null => None
+    case ""   => Some(None)
+    case s    => Some(Some(s))
+  }
+
+  private def mapOptionalString[A](s: String, f: String => A): Option[Option[A]] =
+    optionalString(s).map(_.map(f))
+
   def tagGroupCreate(id         : TagGroupId,
                      name       : String        = null,
                      desc       : String        = null,
@@ -46,6 +55,29 @@ object TestEvent {
       ValueForChildren(children),
       ValueForParents(parents.iterator.++(Option(parent)).map((_, Option.empty[TagId])).toMap),
     ))
+  }
+
+  def applicableTagUpdate(id                : ApplicableTagId,
+                          key               : String             = null,
+                          applicableReqTypes: ApplicableReqTypes = null,
+                          colour            : String             = null,
+                          desc              : String             = null,
+                          children          : Vector[TagId]      = null,
+                          parent            : TagId              = null,
+                          parents           : Vector[TagId]      = null,
+                    ): ApplicableTagUpdate = {
+    import ApplicableTagGD._
+    var vs = emptyValues
+    Option(key).map(HashRefKey).foreach(vs += ValueForKey(_))
+    Option(applicableReqTypes).map(vs += ValueForApplicableReqTypes(_))
+    mapOptionalString(colour, data.Colour.force).foreach(vs += ValueForColour(_))
+    optionalString(desc).foreach(vs += ValueForDesc(_))
+    Option(children).foreach(vs += ValueForChildren(_))
+    if ((parent ne null) || (parents ne null)) {
+      val p = Option(parents).iterator.flatten.++(Option(parent)).map((_, Option.empty[TagId])).toMap
+      vs += ValueForParents(p)
+    }
+    ApplicableTagUpdate(id, NonEmpty.force(vs))
   }
 
   def genericReqCreate(id     : GenericReqId,

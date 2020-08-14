@@ -1,12 +1,12 @@
 package shipreq.webapp.base.test
 
-import shipreq.base.util.Enabled
+import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
 
-/** This aims to catch a bunch of edge cases.
+/** This is a collection of edge cases.
   *
   * A1 (default) -> B1 (empty)
   *
@@ -39,16 +39,25 @@ import shipreq.webapp.base.test.WebappTestUtil._
   * Bad DT rules:
   * C3 (manual) -> C4 (manual) [DT -> dead]
   * C5 (manual) -> C6 (manual) [DT -> N/A]
+  *
+  * Bad RT rules:
+  * D1 (default:dead)
+  * E1 (default:external)
+  * D2 (default:dead) -> E2 (default:external)
+  * B12 (manual) -> D3 (default:dead) -> E3 (default:external) -> B13 (manual)
+  *
+  * Derivative tag field is dead (xField)
+  *
+  * Derivative tag field is disabled (wField)
   */
 object SampleDerivativeTags4 {
-
-  // field: dead | live
-  // RT default: dead | N/A
 
   object Values {
     val a = CustomReqTypeId(1)
     val b = CustomReqTypeId(2)
     val c = CustomReqTypeId(3)
+    val d = CustomReqTypeId(4)
+    val e = CustomReqTypeId(5)
 
     val a1 = GenericReqId(101)
     val a2 = GenericReqId(102)
@@ -81,6 +90,8 @@ object SampleDerivativeTags4 {
     val b9 = GenericReqId(209)
     val b10 = GenericReqId(210)
     val b11 = GenericReqId(211)
+    val b12 = GenericReqId(212)
+    val b13 = GenericReqId(213)
 
     val c1 = GenericReqId(301)
     val c2 = GenericReqId(302)
@@ -88,6 +99,14 @@ object SampleDerivativeTags4 {
     val c4 = GenericReqId(304)
     val c5 = GenericReqId(305)
     val c6 = GenericReqId(306)
+
+    val d1 = GenericReqId(401)
+    val d2 = GenericReqId(402)
+    val d3 = GenericReqId(403)
+
+    val e1 = GenericReqId(501)
+    val e2 = GenericReqId(502)
+    val e3 = GenericReqId(503)
 
     val zField = CustomField.Tag.Id(1)
     val z      = TagGroupId(10)
@@ -104,21 +123,48 @@ object SampleDerivativeTags4 {
     val y2     = ApplicableTagId(22)
     val y3     = ApplicableTagId(23) // (DEAD)
     val y4     = ApplicableTagId(24)
+    val y5     = ApplicableTagId(25) // (DEAD)
+
+    val xField = CustomField.Tag.Id(3)
+    val x      = TagGroupId(30)
+    val x1     = ApplicableTagId(31)
+    val x2     = ApplicableTagId(32)
+
+    val wField = CustomField.Tag.Id(4)
+    val w      = TagGroupId(40)
+    val w1     = ApplicableTagId(41)
+    val w2     = ApplicableTagId(42)
   }
 
   import TestEvent._
   import Values._
 
-  val zRules =
-    FieldReqTypeRules.empty
+  val zRules = FieldReqTypeRules.empty
       .defaultTo(z1)(a)
       .notApplicable(c)
 
   val zDerivativeTags = DerivativeTags(Enabled, Map())
 
+  val yRules =
+    FieldReqTypeRules.empty
+      .defaultTo(y5)(d)
+      .defaultTo(z1)(e)
+
   val yDerivativeTags = DerivativeTags(Enabled, Map(
     (y1, y2) -> y3,
     (y1, y4) -> z1,
+  ))
+
+  val xRules = FieldReqTypeRules.defaultTo(x1)
+
+  val xDerivativeTags = DerivativeTags(Enabled, Map(
+    (x1, x2) -> x1,
+  ))
+
+  val wRules = FieldReqTypeRules.defaultTo(w1)
+
+  val wDerivativeTags = DerivativeTags(Disabled, Map(
+    (w1, w2) -> w1,
   ))
 
   val project = applyEventsSuccessfully(Project.empty,
@@ -126,20 +172,36 @@ object SampleDerivativeTags4 {
     Event.CustomReqTypeCreate(a, CustomReqTypeGD("A", "A", Optional, ∅)),
     Event.CustomReqTypeCreate(b, CustomReqTypeGD("B", "B", Optional, ∅)),
     Event.CustomReqTypeCreate(c, CustomReqTypeGD("C", "C", Optional, ∅)),
+    Event.CustomReqTypeCreate(d, CustomReqTypeGD("D", "D", Optional, ∅)),
+    Event.CustomReqTypeCreate(e, CustomReqTypeGD("E", "E", Optional, ∅)),
 
     tagGroupCreate(z, "Z"),
+    tagGroupCreate(y, "Y"),
+    tagGroupCreate(x, "X"),
+    tagGroupCreate(w, "W"),
+
+    applicableTagCreate(y1, "y1", parent = y),
+    applicableTagCreate(y2, "y2", parent = y),
+    applicableTagCreate(y3, "y3", parent = y),
+    applicableTagCreate(y4, "y4", parent = y),
+    applicableTagCreate(y5, "y5", parent = y),
     applicableTagCreate(z1, "z1", parent = z),
+    fieldCustomTagCreate(yField, y, yRules, yDerivativeTags),
+
+    applicableTagUpdate(z1, parent = z),
     applicableTagCreate(z2, "z2", parent = z),
     applicableTagCreate(z3, "z3", parent = z),
     applicableTagCreate(z4, "z4", parent = z),
     fieldCustomTagCreate(zField, z, zRules, zDerivativeTags),
 
-    tagGroupCreate(y, "Y"),
-    applicableTagCreate(y1, "y1", parent = y),
-    applicableTagCreate(y2, "y2", parent = y),
-    applicableTagCreate(y3, "y3", parent = y),
-    applicableTagCreate(y4, "y4", parent = y),
-    fieldCustomTagCreate(yField, y, deriv = yDerivativeTags),
+    applicableTagCreate(x1, "x1", parent = x),
+    applicableTagCreate(x2, "x2", parent = x),
+    fieldCustomTagCreate(xField, x, xRules, xDerivativeTags),
+    Event.FieldCustomDelete(xField),
+
+    applicableTagCreate(w1, "w1", parent = w),
+    applicableTagCreate(w2, "w2", parent = w),
+    fieldCustomTagCreate(wField, w, wRules, wDerivativeTags),
 
     // a1 (default) -> b1 (empty)
     genericReqCreate(a1, a),
@@ -212,9 +274,23 @@ object SampleDerivativeTags4 {
     genericReqCreate(c5, c, tags = y1),
     genericReqCreate(c6, c, tags = y4, impSrcs = c5),
 
+    // D1 (default:dead)
+    // E1 (default:external)
+    // D2 (default:dead) -> E2 (default:external)
+    // B12 (manual) -> D3 (default:dead) -> E3 (default:external) -> B13 (manual)
+    genericReqCreate(b12, b, tags = y1),
+    genericReqCreate(b13, b, tags = y2),
+    genericReqCreate(d1, d),
+    genericReqCreate(d2, d),
+    genericReqCreate(d3, d, impSrcs = b12),
+    genericReqCreate(e1, e),
+    genericReqCreate(e2, e),
+    genericReqCreate(e3, e, impSrcs = d3, impTgts = b13),
+
     // Delete tags
     Event.TagDelete(z4),
     Event.TagDelete(y3),
+    Event.TagDelete(y5),
   )
 
   def virtualTagsZ =
@@ -339,17 +415,33 @@ object SampleDerivativeTags4 {
       |  + A-19: z1 (manual)
       |  + self: ∅
       |  = {z1 z3}
-      |C-1
+      |B-12
+      |  + B-13: ∅
+      |  + D-3: ∅
+      |  + E-3: ∅
+      |  + self: ∅
       |  = {}
-      |C-2
+      |B-13
+      |  + self: ∅
       |  = {}
-      |C-3
+      |C-1 = {}
+      |C-2 = {}
+      |C-3 = {}
+      |C-4 = {}
+      |C-5 = {}
+      |C-6 = {}
+      |D-1 = {}
+      |D-2 = {}
+      |D-3
+      |  + B-13: ∅
+      |  + E-3: ∅
+      |  + self: ∅
       |  = {}
-      |C-4
-      |  = {}
-      |C-5
-      |  = {}
-      |C-6
+      |E-1 = {}
+      |E-2 = {}
+      |E-3
+      |  + B-13: ∅
+      |  + self: ∅
       |  = {}
       |""".stripMargin
 
@@ -457,6 +549,18 @@ object SampleDerivativeTags4 {
       |B-11
       |  + self: ∅
       |  = {}
+      |B-12
+      |  + B-13: y2 (manual)
+      |  + D-3: y1 (derived)
+      |  + D-3: y2 (derived)
+      |  + E-3: y1 (derived)
+      |  + E-3: y2 (derived)
+      |  + self: y1 (manual)
+      |  = {y1 y2}
+      |    {y1 y2 y3} (ShowDead)
+      |B-13
+      |  + self: y2 (manual)
+      |  = {y2}
       |C-1
       |  + B-3: ∅
       |  + self: ∅
@@ -480,6 +584,78 @@ object SampleDerivativeTags4 {
       |C-6
       |  + self: y4 (manual)
       |  = {y4}
+      |D-1
+      |  = {}
+      |    {y5} (ShowDead)
+      |D-2
+      |  = {}
+      |    {y5} (ShowDead)
+      |D-3
+      |  + B-12: y1 (manual)
+      |  + B-13: y2 (manual)
+      |  + E-3: y1 (derived)
+      |  + E-3: y2 (derived)
+      |  + self: ∅
+      |  = {y1 y2}
+      |    {y1 y2 y3 y5} (ShowDead)
+      |E-1 = {}
+      |E-2 = {}
+      |E-3
+      |  + B-12: y1 (manual)
+      |  + B-13: y2 (manual)
+      |  + self: ∅
+      |  = {y1 y2}
+      |    {y1 y2 y3} (ShowDead)
       |""".stripMargin
+
+  def virtualTagsW =
+    """A-1 = {w1}
+      |A-2 = {w1}
+      |A-3 = {w1}
+      |A-4 = {w1}
+      |A-5 = {w1}
+      |A-6 = {}
+      |A-7 = {w1}
+      |A-8 = {w1}
+      |A-9 = {}
+      |A-10 = {w1}
+      |A-11 = {w1}
+      |A-12 = {w1}
+      |A-13 = {w1}
+      |A-14 = {w1}
+      |A-15 = {w1}
+      |A-16 = {w1}
+      |A-17 = {}
+      |A-18 = {w1}
+      |A-19 = {w1}
+      |B-1 = {w1}
+      |B-2 = {w1}
+      |B-3 = {w1}
+      |B-4 = {w1}
+      |B-5 = {w1}
+      |B-6 = {w1}
+      |B-7 = {w1}
+      |B-8 = {w1}
+      |B-9 = {w1}
+      |B-10 = {w1}
+      |B-11 = {w1}
+      |B-12 = {w1}
+      |B-13 = {w1}
+      |C-1 = {w1}
+      |C-2 = {w1}
+      |C-3 = {w1}
+      |C-4 = {w1}
+      |C-5 = {w1}
+      |C-6 = {w1}
+      |D-1 = {w1}
+      |D-2 = {w1}
+      |D-3 = {w1}
+      |E-1 = {w1}
+      |E-2 = {w1}
+      |E-3 = {w1}
+      |""".stripMargin
+
+  def virtualTagsX =
+    virtualTagsW.replace("w1", "")
 
 }
