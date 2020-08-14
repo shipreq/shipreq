@@ -5,6 +5,9 @@ import shipreq.base.util.{Disabled, Enabled}
 final case class DerivativeTags(enabled: Enabled, rules: DerivativeTags.Rules) {
   import DerivativeTags.TagPair
 
+  def filterRulesByResult(f: ApplicableTagId => Boolean): DerivativeTags =
+    copy(rules = rules.filter(x => f(x._2)))
+
   def tagIdIterator(): Iterator[ApplicableTagId] =
     rules.iterator.flatMap(x => x._1.lo :: x._1.hi :: x._2 :: Nil)
 
@@ -16,7 +19,10 @@ final case class DerivativeTags(enabled: Enabled, rules: DerivativeTags.Rules) {
       rules.get(pair)
     }
 
-  def add(tags: Set[ApplicableTagId], newTag: ApplicableTagId): Set[ApplicableTagId] = {
+  def add(tags  : Set[ApplicableTagId],
+          newTag: ApplicableTagId,
+          filter: ApplicableTagId => Boolean = _ => true): Set[ApplicableTagId] = {
+
     var result: Set[ApplicableTagId] = null
 
     val it = tags.iterator
@@ -25,8 +31,10 @@ final case class DerivativeTags(enabled: Enabled, rules: DerivativeTags.Rules) {
       if (t !=* newTag) {
         val p = TagPair(t, newTag)
         rules.get(p) match {
-          case Some(r) => result = reduce(tags - t + r)
-          case None    =>
+          case Some(r) =>
+            if (filter(r))
+              result = reduce(tags - t + r, filter)
+          case None =>
         }
       }
     }
@@ -37,7 +45,9 @@ final case class DerivativeTags(enabled: Enabled, rules: DerivativeTags.Rules) {
       tags + newTag
   }
 
-  def reduce(tags: Set[ApplicableTagId]): Set[ApplicableTagId] = {
+  def reduce(tags  : Set[ApplicableTagId],
+             filter: ApplicableTagId => Boolean = _ => true): Set[ApplicableTagId] = {
+
     val it1 = tags.iterator
     while (it1.hasNext) {
       val t1 = it1.next()
@@ -49,7 +59,7 @@ final case class DerivativeTags(enabled: Enabled, rules: DerivativeTags.Rules) {
         if (t1.value < t2.value) {
           val p = TagPair(t1, t2)
           rules.get(p) match {
-            case Some(r) => return reduce(tags - t1 - t2 + r)
+            case Some(r) => if (filter(r)) return reduce(tags - t1 - t2 + r)
             case None    =>
           }
         }

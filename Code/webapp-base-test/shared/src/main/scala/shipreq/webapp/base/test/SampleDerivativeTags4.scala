@@ -35,11 +35,15 @@ import shipreq.webapp.base.test.WebappTestUtil._
   * Different roots:
   * A16 (manual) -> A17 (dead) -> A18 (manual) -> B11 (empty)
   *                               A19 (manual) ->
+  *
+  * Bad DT rules:
+  * C3 (manual) -> C4 (manual) [DT -> dead]
+  * C5 (manual) -> C6 (manual) [DT -> N/A]
   */
 object SampleDerivativeTags4 {
 
   // field: dead | live
-  // rule tag: dead | live
+  // RT default: dead | N/A
 
   object Values {
     val a = CustomReqTypeId(1)
@@ -81,6 +85,9 @@ object SampleDerivativeTags4 {
     val c1 = GenericReqId(301)
     val c2 = GenericReqId(302)
     val c3 = GenericReqId(303)
+    val c4 = GenericReqId(304)
+    val c5 = GenericReqId(305)
+    val c6 = GenericReqId(306)
 
     val zField = CustomField.Tag.Id(1)
     val z      = TagGroupId(10)
@@ -88,6 +95,15 @@ object SampleDerivativeTags4 {
     val z2     = ApplicableTagId(12)
     val z3     = ApplicableTagId(13)
     val z4     = ApplicableTagId(14) // (DEAD)
+
+    // y1 + y2 = y3 (DEAD)
+    // y1 + y4 = z1 (out of scope)
+    val yField = CustomField.Tag.Id(2)
+    val y      = TagGroupId(20)
+    val y1     = ApplicableTagId(21)
+    val y2     = ApplicableTagId(22)
+    val y3     = ApplicableTagId(23) // (DEAD)
+    val y4     = ApplicableTagId(24)
   }
 
   import TestEvent._
@@ -98,7 +114,11 @@ object SampleDerivativeTags4 {
       .defaultTo(z1)(a)
       .notApplicable(c)
 
-  val zDerivativeTags = DerivativeTags(Enabled, Map(
+  val zDerivativeTags = DerivativeTags(Enabled, Map())
+
+  val yDerivativeTags = DerivativeTags(Enabled, Map(
+    (y1, y2) -> y3,
+    (y1, y4) -> z1,
   ))
 
   val project = applyEventsSuccessfully(Project.empty,
@@ -113,6 +133,13 @@ object SampleDerivativeTags4 {
     applicableTagCreate(z3, "z3", parent = z),
     applicableTagCreate(z4, "z4", parent = z),
     fieldCustomTagCreate(zField, z, zRules, zDerivativeTags),
+
+    tagGroupCreate(y, "Y"),
+    applicableTagCreate(y1, "y1", parent = y),
+    applicableTagCreate(y2, "y2", parent = y),
+    applicableTagCreate(y3, "y3", parent = y),
+    applicableTagCreate(y4, "y4", parent = y),
+    fieldCustomTagCreate(yField, y, deriv = yDerivativeTags),
 
     // a1 (default) -> b1 (empty)
     genericReqCreate(a1, a),
@@ -177,8 +204,17 @@ object SampleDerivativeTags4 {
     genericReqCreate(b11, b, impSrcs = Set(a18, a19)),
     reqsDelete(a17),
 
+    // Bad DT rules:
+    // C3 (manual) -> C4 (manual) [DT -> dead]
+    // C5 (manual) -> C6 (manual) [DT -> N/A]
+    genericReqCreate(c3, c, tags = y1),
+    genericReqCreate(c4, c, tags = y2, impSrcs = c3),
+    genericReqCreate(c5, c, tags = y1),
+    genericReqCreate(c6, c, tags = y4, impSrcs = c5),
+
     // Delete tags
     Event.TagDelete(z4),
+    Event.TagDelete(y3),
   )
 
   def virtualTagsZ =
@@ -307,6 +343,143 @@ object SampleDerivativeTags4 {
       |  = {}
       |C-2
       |  = {}
+      |C-3
+      |  = {}
+      |C-4
+      |  = {}
+      |C-5
+      |  = {}
+      |C-6
+      |  = {}
+      |""".stripMargin
+
+  def virtualTagsY =
+    """A-1
+      |  + B-1: ∅
+      |  + self: ∅
+      |  = {}
+      |A-2
+      |  + self: ∅
+      |  = {}
+      |A-3
+      |  + B-3: ∅
+      |  + C-1: ∅
+      |  + self: ∅
+      |  = {}
+      |A-4
+      |  + self: ∅
+      |  = {}
+      |A-5
+      |  + self: ∅
+      |  = {}
+      |A-6
+      |  = {}
+      |A-7
+      |  + self: ∅
+      |  = {}
+      |A-8
+      |  = {}
+      |A-9
+      |  = {}
+      |A-10
+      |  + A-11: ∅
+      |  + self: ∅
+      |  = {}
+      |A-11
+      |  + self: ∅
+      |  = {}
+      |A-12
+      |  + B-7: ∅
+      |  + self: ∅
+      |  = {}
+      |A-13
+      |  + self: ∅
+      |  = {}
+      |A-14
+      |  + B-10: ∅
+      |  + self: ∅
+      |  = {}
+      |A-15
+      |  + B-10: ∅
+      |  + self: ∅
+      |  = {}
+      |A-16
+      |  + self: ∅
+      |  = {}
+      |A-17
+      |  = {}
+      |A-18
+      |  + B-11: ∅
+      |  + self: ∅
+      |  = {}
+      |A-19
+      |  + B-11: ∅
+      |  + self: ∅
+      |  = {}
+      |B-1
+      |  + self: ∅
+      |  = {}
+      |B-2
+      |  + A-2: ∅
+      |  + self: ∅
+      |  = {}
+      |B-3
+      |  + self: ∅
+      |  = {}
+      |B-4
+      |  + A-4: ∅
+      |  + C-2: ∅
+      |  + self: ∅
+      |  = {}
+      |B-5
+      |  + B-6: ∅
+      |  + self: ∅
+      |  = {}
+      |B-6
+      |  + self: ∅
+      |  = {}
+      |B-7
+      |  + self: ∅
+      |  = {}
+      |B-8
+      |  + A-13: ∅
+      |  + self: ∅
+      |  = {}
+      |B-9
+      |  + A-14: ∅
+      |  + A-15: ∅
+      |  + B-10: ∅
+      |  + self: ∅
+      |  = {}
+      |B-10
+      |  + self: ∅
+      |  = {}
+      |B-11
+      |  + self: ∅
+      |  = {}
+      |C-1
+      |  + B-3: ∅
+      |  + self: ∅
+      |  = {}
+      |C-2
+      |  + A-4: ∅
+      |  + self: ∅
+      |  = {}
+      |C-3
+      |  + C-4: y2 (manual)
+      |  + self: y1 (manual)
+      |  = {y1 y2}
+      |    {y1 y2 y3} (ShowDead)
+      |C-4
+      |  + self: y2 (manual)
+      |  = {y2}
+      |C-5
+      |  + C-6: y4 (manual)
+      |  + self: y1 (manual)
+      |  = {y1 y4}
+      |C-6
+      |  + self: y4 (manual)
+      |  = {y4}
       |""".stripMargin
 
 }

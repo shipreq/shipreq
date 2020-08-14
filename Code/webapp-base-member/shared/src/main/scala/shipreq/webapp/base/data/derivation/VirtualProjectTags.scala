@@ -119,7 +119,8 @@ object VirtualProjectTags {
       var naTagsInLiveText    = ForReq.emptyInText
       var liveDefaults        = Map.empty[CustomField.Tag.Id, ApplicableTagId]
       var deadDefaults        = Map.empty[CustomField.Tag.Id, ApplicableTagId] // dead tags in live reqs, not defaults applied to dead reqs
-      var derived             = Set.empty[ApplicableTagId]
+      var liveDerived         = Set.empty[ApplicableTagId]
+      var deadDerived         = Set.empty[ApplicableTagId]
 
       def addManual(id     : ApplicableTagId,
                     loc    : LocationOf.Tag.InReq,
@@ -247,13 +248,15 @@ object VirtualProjectTags {
         .filter(_.derivativeTags.enabled is Enabled)
         .map { f =>
           factorsPerField = factorsPerField.updated(f.id, MutableRef(Mutable.emptyDTF))
+          val scope = liveTagDist.inField(f.id)
           val naReqTypes =
             p.config.reqTypes.all
               .iterator
               .filter(rt => rt.live.is(Dead) || f.fieldReqTypeRules(rt.reqTypeId).isNA)
               .map(_.reqTypeId)
               .toSet
-          DerivativeTagField(f.id, f.derivativeTags, naReqTypes, liveTagDist.inField(f.id))
+          val derivativeTags = f.derivativeTags.filterRulesByResult(scope.contains)
+          DerivativeTagField(f.id, derivativeTags, naReqTypes, scope)
         }
         .to(ArraySeq)
 
@@ -409,11 +412,17 @@ object VirtualProjectTags {
                   }
 
                   // Derive tags from collected factors
-                  var newlyDerived = {
+                  var deadDerived = Set.empty[ApplicableTagId]
+                  val derivationFilter: ApplicableTagId => Boolean =
+                    tagId => tagLive(tagId) match {
+                      case Live => true
+                      case Dead => deadDerived += tagId; false
+                    }
+                  var liveDerived = {
                     def addDerive(tags: Set[ApplicableTagId], id: ApplicableTagId): Set[ApplicableTagId] = {
                       if (defaultAddable && !default.contains(id))
                         defaultAddable = false
-                      dt.add(tags, id)
+                      dt.add(tags, id, derivationFilter)
                     }
                     factors.value(nodeId).foldLeft(Set.empty[ApplicableTagId]) { (tags, fac) =>
                       fac match {
@@ -426,15 +435,15 @@ object VirtualProjectTags {
                   }
 
                   // Don't say we've derived manual results
-                  newlyDerived = newlyDerived &~ node.manualLive.keySet
+                  liveDerived = liveDerived &~ node.manualLive.keySet
 
                   // Don't say we've derived the default; just use the default
                   if (defaultAddable)
                     for (d <- default)
-                      newlyDerived -= d
+                      liveDerived -= d
 
                   // Clean up
-                  if (newlyDerived.isEmpty) {
+                  if (liveDerived.isEmpty) {
                     if (defaultAddable)
                       for (d <- default) {
                         factors.mod(_.add(nodeId, DerivativeTagFactor.Self(d, SourceType.Default)))
@@ -443,23 +452,25 @@ object VirtualProjectTags {
                     else if (!hasManual)
                       addToParents += DerivativeTagFactor.EmptyRelation(nodeId, Forwards)
                   } else {
-                    for (t <- newlyDerived)
+                    for (t <- liveDerived)
                       addToParents += DerivativeTagFactor.Relation(nodeId, Forwards, t, SourceType.Derived)
                     if (hasDefault && !defaultAddable)
                       node.liveDefaults = node.liveDefaults.removed(f.fieldId)
                   }
 
                   // Add this field's derivation to this req's other derived tags
-                  node.derived = Util.mergeSets(node.derived, newlyDerived)
+                  node.liveDerived = Util.mergeSets(node.liveDerived, liveDerived)
+                  node.deadDerived = Util.mergeSets(node.deadDerived, deadDerived)
 
                   if (debugDerivativeTags) {
                     println(s"defaultAddable = $defaultAddable, hasManual = $hasManual, hasDefault = $hasDefault")
                     println(s"addedFromChildren: $addedFromChildren")
-                    println(s"newlyDerived: ${newlyDerived.map(_.value)}")
-                    println(s"node.derived: ${node.derived.map(_.value)}")
+                    println(s"newlyDerived: ${liveDerived.map(_.value)}")
+                    println(s"node.derived: ${node.liveDerived.map(_.value)}")
                     println(s"fieldFactors: ${factors.value(nodeId)}")
                     println(s"addToParents: ${addToParents}")
                     println(s"node.liveDefaults: ${node.liveDefaults}")
+                    println(s"node.deadDefaults: ${node.deadDefaults}")
                     println(s"node.manualLive: ${node.manualLive.keys.map(_.value).toVector.sorted}")
                   }
 
@@ -538,7 +549,7 @@ object VirtualProjectTags {
             case HideDead =>
               Memo { reqId =>
                 val b = data(reqId)
-                var results = b.derived
+                var results = b.liveDerived
                 results ++= b.manualLive.keys
                 results ++= b.deadTagsInLiveText.keys
                 results ++= b.naTagsInLiveText.keys
@@ -551,6 +562,7 @@ object VirtualProjectTags {
                 var results = live(reqId)
                 results ++= b.deadDefaults.values
                 results ++= b.manualDead.keys
+                results ++= b.deadDerived
                 results
               }
           }
@@ -682,7 +694,8 @@ object VirtualProjectTags {
               items ++= showM(b.naTagsInLiveText  ).map("naTagsInLiveText   : " + _)
               items ++= showD(b.liveDefaults      ).map("liveDefaults       : " + _)
               items ++= showD(b.deadDefaults      ).map("deadDefaults       : " + _)
-              items ++= showS(b.derived           ).map("derived            : " + _)
+              items ++= showS(b.liveDerived       ).map("liveDerived        : " + _)
+              items ++= showS(b.deadDerived       ).map("deadDerived        : " + _)
               val detail = items.sorted.map("  - " + _).mkString("\n")
               if (detail.isEmpty)
                 title
