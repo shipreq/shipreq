@@ -44,6 +44,12 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
+* when session expired, it should still always retry in case re-auth occurred in another tab
+* limit the initial size of nodes in ReqGraph
+* if I have a flat list of unconnected nodes in ReqGraph, they appear backwards (ie. IV1, FR3, FR2, FR1)
+* style inline graphs by default
+* req detail: add prev/next buttons
+* rich text: wrap selection in / _ * like vscode
 * Derivative tags
 * RedisProtocolTest when done
 
