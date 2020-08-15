@@ -1,5 +1,5 @@
   core-js            38.02 KB   88.4%
-<self>               698.95 KB  54.6%
+<self>               699.32 KB  54.6%
   <self>             5.01 KB    11.6%
 lodash               139.84 KB  10.9%
 moment               77.24 KB   6.04%
@@ -14,7 +14,7 @@ react-property       13.08 KB   1.02%
 html-dom-parser      10.5 KB    0.821%
 html-react-parser    9.6 KB     0.750%
 eventemitter3        8.44 KB    0.660%
-autosize             8.13 KB    0.636%
+autosize             8.13 KB    0.635%
 react-virtualized    7.73 KB    0.604%
 inline-style-parser  4.94 KB    0.386%
 textarea-caret       4.36 KB    0.341%

@@ -45,7 +45,6 @@ v2.2
 
 ### Implement
 * when session expired, it should still always retry in case re-auth occurred in another tab
-* limit the initial size of nodes in ReqGraph
 * if I have a flat list of unconnected nodes in ReqGraph, they appear backwards (ie. IV1, FR3, FR2, FR1)
 * req detail: add prev/next buttons
 * rich text: wrap selection in / _ * like vscode

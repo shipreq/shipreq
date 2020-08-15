@@ -25,7 +25,7 @@ object AssetManifest {
 
   def loadjs = "/s/9e706a6f7bc551ddf626c15cd76c1c25.js"
 
-  def memberLibBundleJs = "/s/8e7c5712b785315b1e4e8b9c09c8ee03.js"
+  def memberLibBundleJs = "/s/b353bdab4c0c44df2a33f785d4fd8386.js"
 
   def prismJsAutoloader = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js",
