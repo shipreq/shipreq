@@ -32,8 +32,8 @@ object ColourTest extends TestSuite {
 
       "orange" - {
         val c = Colour("#f80").get
-        assertEqWithTolerance(c.contrastRatio(Colour.black), 8.77)
-        assertEqWithTolerance(c.contrastRatio(Colour.white), 2.39)
+        assertEqWithTolerance(c.contrastRatio(Colour.black), 8.773)
+        assertEqWithTolerance(c.contrastRatio(Colour.white), 2.393)
         assertEq(c.foreground, Colour.white)
       }
 
@@ -44,8 +44,8 @@ object ColourTest extends TestSuite {
 
       "blue" - {
         val c = Colour("#283ba3").get
-        assertEqWithTolerance(c.contrastRatio(Colour.black), 2.24)
-        assertEqWithTolerance(c.contrastRatio(Colour.white), 9.36)
+        assertEqWithTolerance(c.contrastRatio(Colour.black), 2.244)
+        assertEqWithTolerance(c.contrastRatio(Colour.white), 9.355)
         assertEq(c.foreground, Colour.white)
       }
     }

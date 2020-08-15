@@ -121,24 +121,6 @@ object VirtualProjectTagsTest extends TestSuite {
     "Derivation took " + dur.conciseDesc
   }
 
-  // TODO Move into microlibs
-  private def assertEqWithTolerance(name: => String, actual: Double, expect: Double, tolerance: Double = 0.001)(implicit l: Line): Unit = {
-    import japgolly.microlibs.testutil.TestUtilInternals._
-    import Console._
-    val d = Math.abs(actual - expect)
-    if (d > tolerance) {
-      println(
-        s"""
-           |${YELLOW_B}${BLACK}assertEqWithTolerance failed:$RESET ${BOLD_BRIGHT_YELLOW}$name$RESET
-           |${BOLD_BRIGHT_GREEN}expect: $expect$RESET
-           |${BOLD_BRIGHT_RED}actual: $actual$RESET
-           |${BOLD_BRIGHT_RED} delta: $d$RESET
-           |$YELLOW   tol: $tolerance$RESET
-           |""".stripMargin)
-      fail(s"[$name] $actual ≠ $expect by $d which exceeds tolerance of $tolerance")
-    }
-  }
-
   private def assertProps(p: Project)(implicit l: Line): Unit = {
     val fields   = p.config.liveCustomTagFields.filter(_.derivativeTags.enabled is Enabled)
     val reqTypes = p.config.reqTypes
