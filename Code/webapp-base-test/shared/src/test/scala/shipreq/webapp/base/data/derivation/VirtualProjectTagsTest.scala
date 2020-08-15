@@ -218,7 +218,7 @@ object VirtualProjectTagsTest extends TestSuite {
         "sdt3-4" - assertProps(SampleDerivativeTags3.step4.project)
         "sdt3-5" - assertProps(SampleDerivativeTags3.step5.project)
         "sdt4"   - assertProps(SampleDerivativeTags4.project)
-        "random" - RandomData.project.values.take(4).foreach(assertProps)
+        "random" - RandomData.project.samples().take(3).foreach(assertProps)
       }
     }
   }

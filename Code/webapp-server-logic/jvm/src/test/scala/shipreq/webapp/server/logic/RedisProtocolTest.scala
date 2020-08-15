@@ -83,7 +83,7 @@ object RedisProtocolTest extends TestSuite {
       "roundTrip" - {
         val gen: Gen[ProjectSnapshot] =
           for {
-            p <- R.project.cachedGen()
+            p <- R.project
             o <- Gen.chooseInt(10000)
           } yield ProjectSnapshot(p, o)
         propTestRoundTrip(codec)(gen)

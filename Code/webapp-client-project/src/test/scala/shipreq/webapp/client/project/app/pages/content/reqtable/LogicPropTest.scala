@@ -272,7 +272,7 @@ object LogicPropTest extends TestSuite {
 
   def gen: Gen[LogicTests] =
     for {
-      p  <- RandomData.project.cachedGen()
+      p  <- RandomData.project
       fd <- RandomData.filterDead
       v  <- RandomSavedView.view(p, fd, allowFilter = false)
     } yield

@@ -18,7 +18,6 @@ import scalaz.std.option.{none => _, _}
 import scalaz.std.set._
 import scalaz.std.vector._
 import shipreq.base.test.BaseUtilGen._
-import shipreq.base.test.CachedGen
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
@@ -1738,17 +1737,15 @@ object RandomData {
       ts <- gText.list(len)
     } yield ts.foldLeft(ManualIssues.empty)(_ add _)
 
-  lazy val projectConfig: CachedGen[ProjectConfig] =
-    CachedGen(
-      for {
-        reqtypes       <- customReqTypes
-        reqTypeIds     = StaticReqType.values ++ reqtypes.keys
-        reqTypeIdSet   = reqTypeIds.whole.toSet
-        genReqTypeIds  = Gen.chooseNE(reqTypeIds).set(0 to 2)
-        (issues, tags) <- Gen.tuple2(customIssueTypes, tagTree(genReqTypeIds)) map distinctHashRefKeys.run
-        fields         <- fieldSet(reqTypeIdSet, tags.keySet)
-      } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
-    )
+  lazy val projectConfig: Gen[ProjectConfig] =
+    for {
+      reqtypes       <- customReqTypes
+      reqTypeIds     = StaticReqType.values ++ reqtypes.keys
+      reqTypeIdSet   = reqTypeIds.whole.toSet
+      genReqTypeIds  = Gen.chooseNE(reqTypeIds).set(0 to 2)
+      (issues, tags) <- Gen.tuple2(customIssueTypes, tagTree(genReqTypeIds)) map distinctHashRefKeys.run
+      fields         <- fieldSet(reqTypeIdSet, tags.keySet)
+    } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
 
   def genProject(cfg            : ProjectConfig,
                  reqsWithoutText: Requirements,
@@ -1793,33 +1790,29 @@ object RandomData {
     } yield IdCeilings.supply(ic => p1.copy(savedViews = savedViews, idCeilings = ic))
   }
 
-  lazy val project: CachedGen[Project] =
-    projectConfig.flatMapGen { genProjectConfig =>
-      for {
-        cfg             <- genProjectConfig
-        atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
-        reqCount        <- Gen.chooseSize
-        ucCount         <- Gen.chooseSize map (_ >> 1)
-        reqsWithoutText <- reqsWithoutText(cfg, reqCount, ucCount)
-        reqIdSet        = reqsWithoutText.idIterator().toSet
-        reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
-        liveReqIds      = reqsWithoutText.reqIterator().filter(_.live(cfg.reqTypes) is Live).map(_.id)
-        liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq
-        reqCodeDataG    = reqCode.data(liveReqIdG, reqIdG)(0 to (3 `JVM|JS` 2))
-        reqCodes        <- reqCodes(reqCode.trie(reqCodeDataG, 2 `JVM|JS` 2))
-        reqTags         <- reqFieldDataTags(reqIdSet, atagIds)
-        reqImps         <- reqFieldDataImplications(reqIdSet)
-        p               <- genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
-      } yield p
-    }
+  lazy val project: Gen[Project] =
+    for {
+      cfg             <- projectConfig
+      atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
+      reqCount        <- Gen.chooseSize
+      ucCount         <- Gen.chooseSize map (_ >> 1)
+      reqsWithoutText <- reqsWithoutText(cfg, reqCount, ucCount)
+      reqIdSet        = reqsWithoutText.idIterator().toSet
+      reqIdG          = Gen tryGenChoose reqIdSet.toIndexedSeq
+      liveReqIds      = reqsWithoutText.reqIterator().filter(_.live(cfg.reqTypes) is Live).map(_.id)
+      liveReqIdG      = Gen tryGenChoose liveReqIds.toIndexedSeq
+      reqCodeDataG    = reqCode.data(liveReqIdG, reqIdG)(0 to (3 `JVM|JS` 2))
+      reqCodes        <- reqCodes(reqCode.trie(reqCodeDataG, 2 `JVM|JS` 2))
+      reqTags         <- reqFieldDataTags(reqIdSet, atagIds)
+      reqImps         <- reqFieldDataImplications(reqIdSet)
+      p               <- genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
+    } yield p
 
-  lazy val projectAndOrd: CachedGen[ProjectAndOrd] =
-    project.flatMapGen { genProject =>
-      for {
-        o <- events.eventOrd.map(_.asLatest).option
-        p <- genProject
-      } yield ProjectAndOrd(p, o)
-    }
+  lazy val projectAndOrd: Gen[ProjectAndOrd] =
+    for {
+      o <- events.eventOrd.map(_.asLatest).option
+      p <- project
+    } yield ProjectAndOrd(p, o)
 
   def projectIdPublic: Gen[ProjectId.Public] =
     obfuscated
@@ -2079,7 +2072,7 @@ object RandomData {
 
     def projectSpaInitAppData: Gen[ProjectSpaProtocols.InitAppData] =
       for {
-        a <- projectAndOrd.cachedGen()
+        a <- projectAndOrd
         b <- projectMetaData
       } yield ProjectSpaProtocols.InitAppData(a, b)
 

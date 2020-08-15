@@ -20,9 +20,9 @@ object BinaryProtocolTest extends TestSuite {
 
   override def tests = Tests {
 
-    "filters" - propTestRoundTripP(R.projectConfig.cachedGen().flatMap(R.filter.valid.forProjectConfig))
+    "filters" - propTestRoundTripP(R.projectConfig.flatMap(R.filter.valid.forProjectConfig))
 
-    "savedViews" - propTestRoundTripP(R.project.cachedGen().flatMap(R.savedViews.nonEmptySavedViewsForProject))
+    "savedViews" - propTestRoundTripP(R.project.flatMap(R.savedViews.nonEmptySavedViewsForProject))
 
     "text" - {
       def gr = R.reqId

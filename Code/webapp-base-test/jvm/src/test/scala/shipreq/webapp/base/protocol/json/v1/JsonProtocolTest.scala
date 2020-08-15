@@ -21,9 +21,9 @@ object JsonProtocolTest extends TestSuite {
 
   override def tests = Tests {
 
-    "filters" - propTestRoundTrip(R.projectConfig.cachedGen().flatMap(R.filter.valid.forProjectConfig))
+    "filters" - propTestRoundTrip(R.projectConfig.flatMap(R.filter.valid.forProjectConfig))
 
-    "savedViews" - propTestRoundTrip(R.project.cachedGen().flatMap(R.savedViews.nonEmptySavedViewsForProject))
+    "savedViews" - propTestRoundTrip(R.project.flatMap(R.savedViews.nonEmptySavedViewsForProject))
 
     "text" - {
       def gr = R.reqId

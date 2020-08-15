@@ -102,7 +102,7 @@ object FilterParserTest extends TestSuite {
 //      $.filter.potential.gen.bugHunt(samplesPerSeed = 7)(propUnparseParse)
 
       "fromValid" - {
-        for (cfg <- $.projectConfig.values.take(2)) {
+        for (cfg <- $.projectConfig.samples().take(2)) {
           val gen  = $.filter.valid.forProjectConfig(cfg)
           val prop = propFromValid(cfg)
           prop.mustBeSatisfiedBy(gen)
