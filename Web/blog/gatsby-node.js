@@ -1,12 +1,12 @@
-const post = require("./src/config/post")
-const tag = require("./src/config/tag")
+const posts = require("./src/config/posts")
+const tags = require("./src/config/tags")
 
 exports.createPages = async args => {
-  await post.createPages(args)
-  await tag.createPages(args)
+  await posts.createPages(args)
+  await tags.createPages(args)
 }
 
 exports.createSchemaCustomization = async ({ actions }) => {
   const { createTypes } = actions
-  createTypes(post.graphTypeDefs)
+  createTypes(posts.graphTypeDefs)
 }

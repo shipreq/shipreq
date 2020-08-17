@@ -1,5 +1,5 @@
 import { IconName } from "./icon"
-import { Node } from "../config/post"
+import { Node } from "../config/posts"
 import { Props as IconButtonProps } from "./icon-button"
 import { urlForPost } from "../utils/routes"
 import { urlWithQuery } from "../utils/utils"

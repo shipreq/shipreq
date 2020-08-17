@@ -1,5 +1,5 @@
 import { Link } from "gatsby"
-import { Node as Post } from "../config/post"
+import { Node as Post } from "../config/posts"
 import { pathForPost } from "../utils/routes"
 import PostAttr from "./post-attributes"
 import R from "../utils/responsive"

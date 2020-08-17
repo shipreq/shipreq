@@ -1,5 +1,5 @@
 import { Link } from "gatsby"
-import { Node, PageContext } from "../config/post"
+import { Node, PageContext } from "../config/posts"
 import { pathForPost } from "../utils/routes"
 import Arrow from "./arrow"
 import R from "../utils/responsive"

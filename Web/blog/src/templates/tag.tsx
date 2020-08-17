@@ -1,5 +1,5 @@
 import { graphql } from "gatsby"
-import { Node as Post } from "../config/post"
+import { Node as Post } from "../config/posts"
 import { pathForTag } from "../utils/routes"
 import Layout from "../layouts/regular"
 import PostList from "../components/post-list"

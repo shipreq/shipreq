@@ -1,7 +1,7 @@
 import { graphql, Link } from "gatsby"
 import { MDXProvider } from "@mdx-js/react"
 import { MDXRenderer } from "gatsby-plugin-mdx"
-import { Node, PageContext } from "../config/post"
+import { Node, PageContext } from "../config/posts"
 import { pathForPost } from "../utils/routes"
 import { Props as SeoProps } from "../components/seo"
 import A from "../components/a"

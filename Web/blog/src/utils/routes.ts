@@ -1,4 +1,4 @@
-import { Node } from "../config/post"
+import { Node } from "../config/posts"
 import kebabCase from "lodash/kebabCase"
 import site from "../config/site"
 
