@@ -48,7 +48,7 @@ const components = {
 }
 
 const Header = styled.header`
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 `
 
 const Title = styled.h1`

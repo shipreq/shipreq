@@ -83,8 +83,12 @@ article.post {
       padding: 0.4em 1ex;
     }
 
+    li ~ li {
+      margin-top: .8em;
+    }
+
     .huddle > li {
-      margin-bottom: 0;
+      margin-top: 0 !important;
     }
   }
 

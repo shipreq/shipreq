@@ -119,7 +119,7 @@ const TagIndexCell = styled.section`
   text-align: right;
   letter-spacing: 1px;
   ${R.phone`
-    margin-top: 0.3rem;
+    margin-top: 0.5rem;
   `}
   ${R.phoneWide`
     margin-top: 0.6rem;
