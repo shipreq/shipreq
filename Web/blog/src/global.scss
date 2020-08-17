@@ -54,14 +54,25 @@ blockquote {
   margin-bottom: 0.5em;
 }
 
+@mixin yellowHeader() {
+  background-color: lighten($yellow, 15%);
+  padding: .18em 1ex 0.05em;
+  border-radius: 2ex;
+}
+
+.tagIndexHeader {
+  @include yellowHeader();
+  letter-spacing: 1.2px;
+  text-align: center;
+  margin: 0;
+}
+
 article.post {
 
   & > .body {
 
     h2 {
-      background-color: lighten($yellow, 15%);
-      padding: .18em 1ex 0.05em;
-      border-radius: 2ex;
+      @include yellowHeader();
     }
 
     code {

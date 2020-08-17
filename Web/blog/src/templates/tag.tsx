@@ -1,11 +1,12 @@
-import { pathForTag } from "../utils/routes"
 import { graphql } from "gatsby"
 import { Node as Post } from "../config/post"
+import { pathForTag } from "../utils/routes"
 import Layout from "../layouts/regular"
-import React from "react"
-import Tag from "../components/tag"
 import PostList from "../components/post-list"
+import R from "../utils/responsive"
+import React from "react"
 import styled from "styled-components"
+import Tag from "../components/tag"
 
 export const pageQuery = graphql`
   query TagPageQuery($tag: String) {
@@ -38,13 +39,11 @@ type Input = {
   }
 }
 
-const Header = styled.h1`
-  color: #011b31;
-  font-weight: bold;
-  letter-spacing: 0.1ex;
-  border-bottom: solid 1px #011b3133;
-  padding-bottom: 0.1em;
-  margin-bottom: 1em;
+const Header = styled.header`
+  margin-bottom: 2.8em;
+  ${R.phone`
+    margin-top: 1em;
+  `}
 `
 
 export default function(input: Input) {
@@ -59,7 +58,11 @@ export default function(input: Input) {
   return (
     <Layout seo={seo}>
 
-      <Header><Tag name={tag} notAsLink /></Header>
+      <Header>
+        <h1 className="tagIndexHeader">
+          <Tag name={tag} notAsLink />
+        </h1>
+      </Header>
 
       <PostList posts={posts.map(n => n.node)} />
 
