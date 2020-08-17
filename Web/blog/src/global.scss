@@ -65,6 +65,11 @@ blockquote {
   padding-top: 0.83333rem;
 }
 
+p {
+  margin-block-start: 1.3333em;
+  margin-block-end: 1.3333em;
+}
+
 @mixin yellowHeader() {
   background-color: lighten($yellow, 15%);
   padding: .18em 1ex 0.05em;
@@ -78,29 +83,35 @@ blockquote {
   margin: 0;
 }
 
-article.post {
+main.page,
+article.post > .body {
 
-  & > .body {
+  .katsokaa {
+    color: $pink;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.25px;
+    line-height: 1.3em;
+  }
 
-    h2 {
-      @include yellowHeader();
-    }
+  h2 {
+    @include yellowHeader();
+  }
 
-    code {
-      font-size:90%;
-    }
+  code {
+    font-size:90%;
+  }
 
-    pre[class*="language-"] {
-      padding: 0.4em 1ex;
-    }
+  pre[class*="language-"] {
+    padding: 0.4em 1ex;
+  }
 
-    li ~ li {
-      margin-top: .8em;
-    }
+  li ~ li {
+    margin-top: .8em;
+  }
 
-    .huddle > li {
-      margin-top: 0 !important;
-    }
+  .huddle > li {
+    margin-top: 0 !important;
   }
 
 }
