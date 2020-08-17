@@ -19,6 +19,8 @@ export default {
 
   phoneAny: media.lessThan("medium"),
   notPhone: media.greaterThan("medium"),
+
+  notDesktop: media.lessThan("large"),
 }
 
 /*

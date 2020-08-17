@@ -30,6 +30,8 @@ const Container = styled.div`
   justify-content: stretch;
   justify-items: stretch;
   margin: 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
 
   ${R.small`
     grid-template-rows: auto auto auto auto auto 1fr;

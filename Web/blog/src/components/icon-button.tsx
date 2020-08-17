@@ -12,7 +12,7 @@ const buttonHeight = "2.1875rem"
 
 const Container = styled.div`
   padding: 0;
-  margin: 4px;
+  margin: 0;
   display: flex;
   align-content: center;
   align-items: center;

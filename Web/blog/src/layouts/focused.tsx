@@ -33,7 +33,7 @@ const Container = styled.div`
   min-width: 0;
   box-sizing: border-box;
 
-  ${R.phoneAny`
+  ${R.notDesktop`
     grid-template-rows: auto auto auto auto auto 1fr;
     grid-template-areas:
       "${GridArea.banner}"
@@ -44,7 +44,7 @@ const Container = styled.div`
       "${GridArea.copyright}"
     ;
   `}
-  ${R.notPhone`
+  ${R.desktop`
     grid-template-rows: auto auto auto auto 1fr;
     grid-template-columns: auto 1fr;
     grid-template-areas:
@@ -70,7 +70,6 @@ const Container = styled.div`
   `}
   ${R.tablet`
     padding: 1rem;
-    column-gap: 2.4rem;
     min-height: calc(100vh - 2rem);
   `}
   ${R.desktop`
@@ -91,7 +90,8 @@ const BannerWrapper = styled.div`
     margin-left: auto;
   `}
   ${R.tablet`
-    width:230px;
+    width:440px;
+    margin-left: auto;
   `}
   ${R.desktop`
     width:300px;
@@ -119,11 +119,11 @@ const ContactCell = styled.section`
 const TagIndexCell = styled.section`
   grid-area: ${GridArea.tagIndex};
   text-align: right;
-  ${R.phone`
+  ${R.notDesktop`
     display:none;
   `}
-  ${R.phoneWide`
-    display:none;
+  ${R.desktop`
+    margin-top: 3rem;
   `}
 `
 
@@ -166,6 +166,7 @@ const MainCell = styled.main`
   ${R.tablet`
   `}
   ${R.desktop`
+    margin-top: 2.8rem;
   `}
 `
 

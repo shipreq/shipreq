@@ -1,4 +1,5 @@
 import { IconButton, Props as IconButtonProps } from "./icon-button"
+import R from "../utils/responsive"
 import React from "react"
 import styled from "styled-components"
 
@@ -13,7 +14,15 @@ const Container = styled.div`
   flex-shrink: 0;
   list-style: none;
   padding: 0;
-  margin: 0 -4px 0 0;
+
+  & > div:not(:first-child) {
+    ${R.notDesktop`
+      margin-left: 2ex;
+    `}
+    ${R.desktop`
+      margin-left: 1.2ex;
+    `}
+  }
 `
 
 export default (p: Props) => (
