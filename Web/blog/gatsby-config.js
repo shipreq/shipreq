@@ -63,6 +63,14 @@ module.exports = {
     {
       resolve: "gatsby-source-filesystem",
       options: {
+        name  : "pages",
+        path  : "content/pages/",
+        ignore: process.env.NODE_ENV === `production` && [`**/draft-*`]
+      },
+    },
+    {
+      resolve: "gatsby-source-filesystem",
+      options: {
         name  : "posts",
         path  : "content/posts/",
         ignore: process.env.NODE_ENV === `production` && [`**/draft-*`]
