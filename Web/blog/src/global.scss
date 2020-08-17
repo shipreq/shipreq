@@ -2,6 +2,12 @@ $blue: #00549c;
 $pink: #d90166;
 $yellow: #f9da29;
 
+html {
+  // Just force a scrollbar so that the viewport width doesn't change.
+  // Otherwise, the layout moves around when use change pages.
+  overflow-y: scroll;
+}
+
 body {
   font-family: 'Nunito Sans', sans-serif;
   font-size: 18px;

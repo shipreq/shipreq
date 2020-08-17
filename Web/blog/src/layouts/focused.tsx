@@ -32,6 +32,7 @@ const Container = styled.div`
   margin: 0 auto;
   min-width: 0;
   box-sizing: border-box;
+  min-height: 100vh;
 
   ${R.notDesktop`
     grid-template-rows: auto auto auto auto auto 1fr;
@@ -59,24 +60,20 @@ const Container = styled.div`
   ${R.phone`
     padding: 0.8rem;
     max-width: calc(100vw - 1.6rem);
-    min-height: calc(100vh - 1.6rem);
     width: 100%;
   `}
   ${R.phoneWide`
     padding: 0.8rem;
     max-width: calc(100vw - 1.6rem);
-    min-height: calc(100vh - 1.6rem);
     width: 100%;
   `}
   ${R.tablet`
     padding: 1rem;
-    min-height: calc(100vh - 2rem);
   `}
   ${R.desktop`
     column-gap: 4.8rem;
     max-width: 1200px;
     padding: 1rem;
-    min-height: calc(100vh - 2rem);
   `}
 `
 
@@ -119,6 +116,7 @@ const ContactCell = styled.section`
 const TagIndexCell = styled.section`
   grid-area: ${GridArea.tagIndex};
   text-align: right;
+  letter-spacing: 1px;
   ${R.notDesktop`
     display:none;
   `}
@@ -130,6 +128,7 @@ const TagIndexCell = styled.section`
 const PageIndexCell = styled.section`
   grid-area: ${GridArea.pageIndex};
   text-align: right;
+  letter-spacing: 1px;
   ${R.phone`
     display:none;
   `}

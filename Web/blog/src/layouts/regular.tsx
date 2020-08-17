@@ -32,6 +32,7 @@ const Container = styled.div`
   margin: 0 auto;
   min-width: 0;
   box-sizing: border-box;
+  min-height: 100vh;
 
   ${R.small`
     grid-template-rows: auto auto auto auto auto 1fr;
@@ -58,24 +59,24 @@ const Container = styled.div`
 
   ${R.phone`
     padding: 0.8rem;
-    min-height: calc(100vh - 1.6rem);
+    max-width: calc(100vw - 1.6rem);
+    width: 100%;
   `}
   ${R.phoneWide`
     row-gap: 0.8rem;
     column-gap: 1.8rem;
     padding: 0.8rem;
-    min-height: calc(100vh - 1.6rem);
+    max-width: calc(100vw - 1.6rem);
+    width: 100%;
   `}
   ${R.tablet`
     column-gap: 2.4rem;
     padding: 1rem;
-    min-height: calc(100vh - 2rem);
   `}
   ${R.desktop`
     column-gap: 4.8rem;
     max-width: 1200px;
     padding: 1rem;
-    min-height: calc(100vh - 2rem);
   `}
 `
 
