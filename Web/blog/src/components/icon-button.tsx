@@ -5,6 +5,7 @@ import styled from "styled-components"
 export type Props = {
   icon: IconName
   href: string
+  inverse?: boolean
 }
 
 const buttonHeight = "2.1875rem"
@@ -24,19 +25,35 @@ const Container = styled.div`
   border: 1px solid #ebebeb;
 `
 
-const Link = styled.a`
+const LinkBase = styled.a`
   border: 0;
   display: flex;
+`
+
+const backgroundNormal = "#fff"
+const LinkNormal = styled(LinkBase)`
   color: #222;
   &:hover, &:focus {
     color: #d90166;
   }
 `
 
-export const IconButton = (p: Props) => (
-  <Container>
-    <Link href={p.href} target="_blank" rel="noopener">
-      <Icon icon={p.icon} />
-    </Link>
-  </Container>
-)
+const backgroundInverse = "#222"
+const LinkInverse = styled(LinkBase)`
+  color: #fff;
+  &:hover, &:focus {
+    color: #d90166;
+  }
+`
+
+export const IconButton = (p: Props) => {
+  const Link = p.inverse ? LinkInverse : LinkNormal
+  const backgroundColor = p.inverse ? backgroundInverse : backgroundNormal
+  return (
+    <Container style={{backgroundColor}}>
+      <Link href={p.href} target="_blank" rel="noopener">
+        <Icon icon={p.icon} />
+      </Link>
+    </Container>
+  )
+}

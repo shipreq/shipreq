@@ -80,6 +80,7 @@ export default function({ data, pageContext }: Props) {
         <Header>
           <Title>{title}</Title>
           <PostAttr date={date} tags={tags} />
+          <PostShare post={post} pos="top" />
         </Header>
 
         <section className="body">
@@ -88,9 +89,10 @@ export default function({ data, pageContext }: Props) {
           </MDXProvider>
         </section>
 
+        <PostShare post={post} pos="bottom" />
+
         <Footer>
           <Author />
-          <PostShare post={post} />
           <PostSiblingNav pageContext={pageContext} />
         </Footer>
 
