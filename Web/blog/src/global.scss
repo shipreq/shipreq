@@ -8,7 +8,7 @@ html {
   overflow-y: scroll;
 }
 
-body {
+body, blockquote {
   font-family: 'Nunito Sans', sans-serif;
   font-size: 18px;
   letter-spacing: 0.25px;
@@ -50,8 +50,19 @@ a {
 }
 
 blockquote {
-  font-size: "95%";
+  background: #00000008;
+  border-left: 0.20833rem solid #0003;
+  color: #000000b0;
+  font-size: 1.1487rem;
+  line-height: 1.66667rem;
   margin-bottom: 0.5em;
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+  padding-bottom: 0.83333rem;
+  padding-left: 1.45833rem;
+  padding-right: 0.83333rem;
+  padding-top: 0.83333rem;
 }
 
 @mixin yellowHeader() {
