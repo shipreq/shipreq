@@ -14,7 +14,7 @@ terraform {
 
   backend "s3" {
     bucket = "shipreq-terraform-state"
-    key    = "web.tfstate"
+    key    = "blog.tfstate"
     region = "ap-southeast-2"
   }
 }
@@ -23,6 +23,6 @@ locals {
   default_tags = {
     createdBy = "terraform"
     env       = "n/a"
-    terraform = "web"
+    terraform = "blog"
   }
 }

@@ -2,7 +2,7 @@
 
 GATSBY        := ./node_modules/gatsby-cli/cli.js
 GATSBY_s3     := ./node_modules/gatsby-plugin-s3/bin.js
-TF_DIR        := ../../Terraform/web
+TF_DIR        := ../../Terraform/blog
 TF_OUT        := ./src/config/terraform.ts
 CLOUDFRONT_ID := E1G9VKU9QVZZKL
 
