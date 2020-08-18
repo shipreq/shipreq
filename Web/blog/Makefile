@@ -4,7 +4,7 @@ GATSBY        := ./node_modules/gatsby-cli/cli.js
 GATSBY_s3     := ./node_modules/gatsby-plugin-s3/bin.js
 TF_DIR        := ../../Terraform/blog
 TF_OUT        := ./src/config/terraform.ts
-CLOUDFRONT_ID := E1G9VKU9QVZZKL
+CLOUDFRONT_ID := E1VOYBWVFSWD3V
 
 info:
 	@echo "ShipReq Blog."
