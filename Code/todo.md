@@ -44,6 +44,9 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
+* Fix favicon
+* Add link to blog
+* Update LP copy
 * I want an option to see `[MF-35: xxxxxxxxx]` instead of just `[MF-35]` in rich text
 * Derivative tags
 
