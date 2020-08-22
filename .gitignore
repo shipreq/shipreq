@@ -8,3 +8,4 @@
 .*.swn
 
 .metals
+.vscode/settings.json
