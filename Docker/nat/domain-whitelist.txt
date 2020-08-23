@@ -1,6 +1,8 @@
 .amazon.com
 .amazonaws.com
 .freshdesk.com
+.google-analytics.com
+.googletagmanager.com
 .mailchimp.com
 .mailgun.net
 .security.ubuntu.com
@@ -8,4 +10,3 @@
 .statcounter.com
 smtp.gmail.com
 stats.grafana.org
-www.google-analytics.com

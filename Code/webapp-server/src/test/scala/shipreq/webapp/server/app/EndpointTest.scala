@@ -29,7 +29,7 @@ object EndpointTest extends TestSuite {
       "metrics" - test(Endpoint.Metrics, metricsPath)
     }
 
-    "webappClientHomeJs"    - test(Endpoint.AssetSpecific("ico", "favicon"),          AssetManifest.favicon)
+    "faviconIco"            - test(Endpoint.AssetSpecific("ico", "favicon"),          AssetManifest.faviconIco)
     "webappClientHomeJs"    - test(Endpoint.AssetSpecific("js", "shipreq-home"),      AssetManifest.webappClientHomeJs)
     "webappClientProjectJs" - test(Endpoint.AssetSpecific("js", "shipreq-project"),   AssetManifest.webappClientProjectJs)
     "webappClientPublicJs"  - test(Endpoint.AssetSpecific("js", "shipreq-public"),    AssetManifest.webappClientPublicJs)

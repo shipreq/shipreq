@@ -11,10 +11,6 @@ const Container = styled.section`
   display: flex;
 `
 
-const Avatar = styled(Img)`
-  border-radius: 50%;
-`
-
 const TextContainer = styled.div`
   flex-grow: 1;
   ${R.small`
@@ -27,20 +23,21 @@ const TextContainer = styled.div`
 
 const Title = styled.div`
   font-size: 90%;
-  color: #444;
+  color: #222;
   font-weight: bold;
 `
 
 const Bio = styled.div`
-  color: #777;
+  color: #707070;
   font-size: 85%;
   line-height: 1.3em;
   hyphens: auto;
   overflow-wrap: break-word;
   text-align: justify;
   word-break: break-word;
-  ${R.notPhone`
-    margin-top: 0.4em;
+  margin-top: 0.4em;
+  ${R.phone`
+    margin-top: 0.1em;
   `}
 `
 
@@ -73,10 +70,11 @@ export default function() {
     <Container>
 
       <div>
-        <Avatar
+        <Img
           fixed={query.file.childImageSharp.fixed}
           loading="eager"
           alt={`Avatar of ${author.name}`}
+          imgStyle={{borderRadius: "50%"}}
         />
       </div>
 

@@ -18,7 +18,7 @@ object ReactSvgPanZoom {
   @js.native sealed trait Tool     extends js.Any
 
   @js.native
-  sealed trait Value extends js.Object {
+  sealed trait Value extends TransformationMatrix {
     var viewerWidth : js.UndefOr[Double]
     var viewerHeight: js.UndefOr[Double]
     var SVGWidth    : js.UndefOr[Double]
@@ -34,7 +34,7 @@ object ReactSvgPanZoom {
   @js.native
   object Exports extends js.Object {
   //val ACTION_PAN                  : Action             = js.native
-  //val ACTION_ZOOM                 : Action             = js.native
+    val ACTION_ZOOM                 : Action             = js.native
   //val ALIGN_BOTTOM                : AlignY             = js.native
     val ALIGN_CENTER                : AlignX with AlignY = js.native
   //val ALIGN_COVER                 : Align?             = js.native
@@ -42,7 +42,7 @@ object ReactSvgPanZoom {
   //val ALIGN_RIGHT                 : AlignX             = js.native
   //val ALIGN_TOP                   : AlignY             = js.native
     val INITIAL_VALUE               : Value              = js.native
-  //val MODE_IDLE                   : Mode               = js.native
+    val MODE_IDLE                   : Mode               = js.native
   //val MODE_PANNING                : Mode               = js.native
   //val MODE_ZOOMING                : Mode               = js.native
   //val Miniature                   : js.Any             = js.native // f(props)
@@ -62,13 +62,17 @@ object ReactSvgPanZoom {
   //val Viewer                      : js.Any             = js.native // f()
   //val closeMiniature              : js.Any             = js.native // f(value)
   //val fitSelection                : js.Any             = js.native // f(value, selectionSVGPointX, selectionSVGPointY, selectionWidth, selectionHeight)
-    val fitToViewer                 : FitToViewer        = js.native // f(value)
+  //val fitToViewer                 : FitToViewer        = js.native // f(value)
   //val openMiniature               : js.Any             = js.native // f(value)
   //val pan                         : js.Any             = js.native // f(value, SVGDeltaX, SVGDeltaY)
   //val reset                       : js.Any             = js.native // f(value)
   //val setPointOnViewerCenter      : js.Any             = js.native // f(value, SVGPointX, SVGPointY, zoomLevel)
   //val zoom                        : js.Any             = js.native // f(value, SVGPointX, SVGPointY, scaleFactor)
   //val zoomOnViewerCenter          : js.Any             = js.native // f(value, scaleFactor)
+
+    def isZoomLevelGoingOutOfBounds(value: Value, scaleLevel: Double): Boolean = js.native
+    def limitZoomLevel(value: Value, matrix: TransformationMatrix): js.Object = js.native
+    def set(value: Value, patch: js.Object, action: Action = js.native): Value = js.native
   }
 
   type OnChangeTool  = js.Function1[Tool, Unit]
@@ -210,13 +214,21 @@ object ReactSvgPanZoom {
     /** Reset Viewer view to default */
     def reset(): Unit
 
-    // def pan(SVGDeltaX, SVGDeltaY)	Apply a pan
-    // def zoom(SVGPointX, SVGPointY, scaleFactor)	Zoom in or out the SVG
+    /** Get current viewer value */
+    def getValue(): Value
+
+    /** Through this method you can set a new value */
+    def setValue(v: Value): Unit
+
+    /** Apply a pan */
+    def pan(SVGDeltaX: Double, SVGDeltaY: Double): Unit
+
+    /** Zoom in or out the SVG */
+    def zoom(SVGPointX: Double, SVGPointY: Double, scaleFactor: Double): Unit
+
     // def fitSelection(selectionSVGPointX, selectionSVGPointY, selectionWidth, selectionHeight)	Fit an SVG area to viewer
     // def setPointOnViewerCenter(SVGPointX, SVGPointY, zoomLevel)	Set a point on Viewer center
     // def zoomOnViewerCenter(scaleFactor)	Zoom SVG on center
-    // def getValue()	Get current viewer value
-    // def setValue(value)	Through this method you can set a new value
     // def getTool()	Get current tool
     // def changeTool(tool)	Change the tool (one of none,pan,zoom-in,zoom-out,auto)
     // def openMiniature	Open the miniature
@@ -225,5 +237,4 @@ object ReactSvgPanZoom {
 
   val Component = JsComponent[Props, Children.Varargs, State](Exports.ReactSVGPanZoom)
     .addFacade[Backend]
-
 }

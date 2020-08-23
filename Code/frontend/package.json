@@ -24,6 +24,7 @@
     "screenfull": "^5.0.2",
     "scroll-into-view-if-needed": "2.2.25",
     "semantic-ui": "2.2.13",
+    "text-field-edit": "^3.1.0",
     "textcomplete": "0.18.2"
   },
   "devDependencies": {
@@ -52,6 +53,6 @@
     "webpack-bundle-size-analyzer": "3.1.0",
     "webpack-cli": "3.3.12",
     "webpack-merge": "4.2.2",
-    "webtamp": "0.4.9"
+    "webtamp": "0.5.1"
   }
 }

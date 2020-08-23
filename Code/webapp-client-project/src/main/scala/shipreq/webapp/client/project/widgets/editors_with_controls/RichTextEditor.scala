@@ -12,8 +12,9 @@ import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.data.{Optional => _, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus, PreviewFeature}
-import shipreq.webapp.base.jsfacade.ScrollIntoViewIfNeeded
-import shipreq.webapp.base.lib.{ConfirmJs, KeyHandlers, TaskRepeater}
+import shipreq.webapp.base.jsfacade.{ScrollIntoViewIfNeeded, TextFieldEdit}
+import shipreq.webapp.base.lib._
+import shipreq.webapp.base.text.Atom.TypeGroup
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.OptionalFullscreen
@@ -185,19 +186,52 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
       val onFocus: Callback =
         $.props.flatMap(p => p.preview.onFocus(p.wantPreview)) >> scrollIntoView
 
-      val onChange: ReactEventFromTextArea => Callback =
-        e => $.props.flatMap(p =>
-          p.status.wrapEdit(p.edit.setState(liveCorrect(e.target.value)) >>
+      def setValue(text: String): Callback =
+        $.props.flatMap(p =>
+          p.status.wrapEdit(p.edit.setState(liveCorrect(text)) >>
             p.preview.onEdit(p.wantPreview)))
+
+      val onChange: ReactEventFromTextArea => Callback =
+        e => setValue(e.target.value)
 
       val onBlur: Callback =
         autoCompleteOnBlur >> $.props.flatMap(_.preview.onBlur)
 
+      val wrapSelection: ReactKeyboardEventFromTextArea => Callback =
+        if (text.supports(TypeGroup.PlainTextMarkup))
+          e => {
+            val key          = e.key
+            val textarea     = e.target
+            val textSelected = textarea.selectionStart != textarea.selectionEnd
+            val modified     = e.altKey || e.ctrlKey || e.metaKey
+            Callback {
+              if (textSelected && !e.defaultPrevented && !modified) {
+                def wrap(prefix: String, _suffix: String = null): Unit = {
+                  e.preventDefault()
+                  val suffix = if (_suffix eq null) prefix else _suffix
+                  TextFieldEdit.wrapSelection(textarea, prefix, suffix)
+                }
+                key match {
+                  case "/" | "_" | "*" | "~" => wrap(key + key)
+                  case "`"                   => wrap(key)
+                  case "("                   => wrap("(", ")")
+                  case "{"                   => wrap("{", "}")
+                  case "<"                   => wrap("<", ">")
+                  case "["                   => wrap("[", "]")
+                  case _                     =>
+                }
+              }
+            }
+          }
+        else
+          _ => Callback.empty
+
       TagMod(
-        ^.onFocus  --> onFocus,
-        ^.onChange ==> onChange,
-        ^.onBlur   --> onBlur,
-        ^.onClick  ==> autoCompleteOnClick,
+        ^.onKeyDown ==> wrapSelection,
+        ^.onFocus   --> onFocus,
+        ^.onChange  ==> onChange,
+        ^.onBlur    --> onBlur,
+        ^.onClick   ==> autoCompleteOnClick,
         RichTextEditor.minRows(text.lineCardinality))
     }
 
@@ -225,7 +259,7 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
         val base = TagMod(
           textareaConst,
           keys,
-          ^.autoFocus  := p.autoFocus)
+          ^.autoFocus := p.autoFocus)
 
         val autosizeProps = EditControlsFeature.autosizeTextareaProps(
           mode     = layout.mode,

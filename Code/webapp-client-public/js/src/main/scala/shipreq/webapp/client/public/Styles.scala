@@ -155,15 +155,16 @@ object Styles {
       marginTop := "5em")
 
     val yap1 = TagMod(
-      color := "hsl(209,100%,15%)", // "Ship" in ShipReq with lower L%
-      fontSize := "1.6em",
+      color := "hsla(209,100%,15%,.86)", // "Ship" in ShipReq with lower L%
+      fontSize := "1.5em",
+      letterSpacing := "0.25px",
       lineHeight := "1.3em")
 
     val yap2 = TagMod(
-      color := "hsl(207,100%,5%)", // "Req" in ShipReq with lower L%
+      color := "hsla(207,100%,5%,.9)", // "Req" in ShipReq with lower L%
       fontSize := "1.15em",
       marginTop := "3em",
-      lineHeight := "1.5em")
+      lineHeight := "1.4em")
 
     val pointAtForm: TagMod =
       cssBuilder.addClass(2, c =>

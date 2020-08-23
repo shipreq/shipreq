@@ -12,9 +12,18 @@ const Item = styled.div`
     display: inline;
   `}
   & ~ & {
-    ${R.small`
-      margin-left: 1ex;
-  `}
+    ${R.phone`
+      margin-left: 1.7ex;
+    `}
+    ${R.phoneWide`
+      margin-top: 0.2em;
+    `}
+    ${R.tablet`
+      margin-top: 0.7em;
+    `}
+    ${R.desktop`
+      margin-top: 0.4em;
+    `}
   }
 `
 

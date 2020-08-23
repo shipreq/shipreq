@@ -1,2 +1,5 @@
-.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
-.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+a {color: #00549c}
+a:hover {color: #d90166}
+
+.ui.menu.inverted .ui.breadcrumb a {color: #66b8ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #ff5ca8}

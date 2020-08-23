@@ -4,6 +4,7 @@ import shipreq.base.test.BaseTestUtil._
 import utest._
 
 object UserDefinedGraphTest extends TestSuite {
+  import UserDefinedGraph.defaults
 
   override def tests = Tests {
     "correction" - {
@@ -18,7 +19,7 @@ object UserDefinedGraphTest extends TestSuite {
           postHeader <- List("{\n", " {")
         } {
           val input  = strict + graph + id + postHeader + body + "}"
-          val expect = (strict + graph + id).trim + "{bgcolor=transparent;rankdir=LR;" + body + "}"
+          val expect = (strict + graph + id).trim + s"{$defaults;$body}"
           val actual = UserDefinedGraph.correct(input)
           assertMultiline(actual, expect)
         }
@@ -31,11 +32,11 @@ object UserDefinedGraphTest extends TestSuite {
             |# wow
             |""".stripMargin.trim
         ),
-        """digraph{bgcolor=transparent;rankdir=LR;a [label=qwe]
-          |a -> b
-          |# wow
-          |}
-          |""".stripMargin.trim
+        s"""digraph{$defaults;a [label=qwe]
+           |a -> b
+           |# wow
+           |}
+           |""".stripMargin.trim
       )
 
       "anonDigraph" - assertMultiline(
@@ -44,10 +45,10 @@ object UserDefinedGraphTest extends TestSuite {
             |a -> b
             |""".stripMargin.trim
         ),
-        """digraph{bgcolor=transparent;rankdir=LR;a [label=qwe]
-          |a -> b
-          |}
-          |""".stripMargin.trim
+        s"""digraph{$defaults;a [label=qwe]
+           |a -> b
+           |}
+           |""".stripMargin.trim
       )
 
       "anonGraph" - assertMultiline(
@@ -57,11 +58,11 @@ object UserDefinedGraphTest extends TestSuite {
             |// ha
             |""".stripMargin.trim
         ),
-        """graph{bgcolor=transparent;rankdir=LR;a [label=qwe]
-          |a -- b
-          |// ha
-          |}
-          |""".stripMargin.trim
+        s"""graph{$defaults;a [label=qwe]
+           |a -- b
+           |// ha
+           |}
+           |""".stripMargin.trim
       )
 
     }

@@ -30,9 +30,11 @@ const Container = styled.div`
   justify-content: stretch;
   justify-items: stretch;
   margin: 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
   min-height: 100vh;
 
-  ${R.phoneAny`
+  ${R.notDesktop`
     grid-template-rows: auto auto auto auto auto 1fr;
     grid-template-areas:
       "${GridArea.banner}"
@@ -43,7 +45,7 @@ const Container = styled.div`
       "${GridArea.copyright}"
     ;
   `}
-  ${R.notPhone`
+  ${R.desktop`
     grid-template-rows: auto auto auto auto 1fr;
     grid-template-columns: auto 1fr;
     grid-template-areas:
@@ -57,18 +59,21 @@ const Container = styled.div`
 
   ${R.phone`
     padding: 0.8rem;
+    max-width: calc(100vw - 1.6rem);
+    width: 100%;
   `}
   ${R.phoneWide`
     padding: 0.8rem;
+    max-width: calc(100vw - 1.6rem);
+    width: 100%;
   `}
   ${R.tablet`
     padding: 1rem;
-    column-gap: 2.4rem;
   `}
   ${R.desktop`
-    padding: 1rem;
     column-gap: 4.8rem;
     max-width: 1200px;
+    padding: 1rem;
   `}
 `
 
@@ -78,11 +83,12 @@ const BannerCell = styled.header`
 
 const BannerWrapper = styled.div`
   ${R.phoneWide`
-    width:400px;
+    width:440px;
     margin-left: auto;
   `}
   ${R.tablet`
-    width:230px;
+    width:440px;
+    margin-left: auto;
   `}
   ${R.desktop`
     width:300px;
@@ -100,27 +106,29 @@ const ContactCell = styled.section`
     display:none;
   `}
   ${R.tablet`
-    margin: 1rem 0;
+    display:none;
   `}
   ${R.desktop`
-    margin: 2rem 0;
+    margin-top: 3rem;
   `}
 `
 
 const TagIndexCell = styled.section`
   grid-area: ${GridArea.tagIndex};
   text-align: right;
-  ${R.phone`
+  letter-spacing: 1px;
+  ${R.notDesktop`
     display:none;
   `}
-  ${R.phoneWide`
-    display:none;
+  ${R.desktop`
+    margin-top: 3rem;
   `}
 `
 
 const PageIndexCell = styled.section`
   grid-area: ${GridArea.pageIndex};
   text-align: right;
+  letter-spacing: 1px;
   ${R.phone`
     display:none;
   `}
@@ -128,10 +136,10 @@ const PageIndexCell = styled.section`
     display:none;
   `}
   ${R.tablet`
-    margin: 1rem 0;
+    display:none;
   `}
   ${R.desktop`
-    margin: 2rem 0;
+    margin-top: 3rem;
   `}
 `
 
@@ -139,19 +147,25 @@ const CopyrightCell = styled.footer`
   grid-area: ${GridArea.copyright};
   align-self: end;
   text-align: right;
-  margin-top: 1rem;
+  margin-top: 2rem;
 `
 
+// `min-width: 0;` below is very important!!
+// Without it, long code blocks will push out the width of the entire container!
 const MainCell = styled.main`
   grid-area: ${GridArea.main};
+  min-width: 0;
+  max-width: 100%;
   ${R.phone`
     margin-top: 2rem;
   `}
   ${R.phoneWide`
+    margin-top: 1rem;
   `}
   ${R.tablet`
   `}
   ${R.desktop`
+    margin-top: 2.8rem;
   `}
 `
 
@@ -179,7 +193,7 @@ export default function(p: Props) {
         </PageIndexCell>
 
         <CopyrightCell>
-          <Copyright />
+          <Copyright layout="focused" />
         </CopyrightCell>
 
         <MainCell>

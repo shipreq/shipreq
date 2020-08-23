@@ -51,13 +51,12 @@ object LandingPage {
   private val yap = ScalaComponent.static(
     <.div(*.yap,
       <.div(*.yap1,
-        "ShipReq is a modern, online tool", <.br,
-        "for requirements development and management,", <.br,
-        "currently in private beta phase."
+        "ShipReq is a next-generation service to record, maintain, automate, and socialise your project's requirements, issues, tasks, design documents, interviews, test cases, and more.",
       ),
       <.div(*.yap2,
+        "ShipReq is currently in a private beta phase.", <.br,
         "Would you like to know more, or participate in the beta?", <.br,
-        "Get in touch !",
+        "Get in touch! ",
         <.span(*.pointAtForm))))
 
   final class Backend {

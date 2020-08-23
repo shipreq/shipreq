@@ -1,4 +1,4 @@
-import React from "react"
+import React, { ReactNode } from "react"
 
 /** Only supports a tiny subset of minification.
  * Meant for when you've written JS in a multiline string literal.
@@ -26,15 +26,27 @@ export function urlWithQuery(url: string, query: {[k: string]: string}): string 
   return url + encodeQuery(query)
 }
 
-export function intersperse(elements: Array<React.ReactNode>, sep: React.ReactNode): React.ReactNode {
+export function renderArray(elements: Array<ReactNode>): JSX.Element {
+  const a = []
+  for (let i in elements) {
+    const e = elements[i]
+    a.push(<React.Fragment key={i}>{e}</React.Fragment>)
+  }
+  return (<React.Fragment children={a} />)
+}
+
+export function intersperse(elements: Array<ReactNode>, sep?: ReactNode): JSX.Element {
+  if (!sep)
+    return renderArray(elements)
   const a = []
   let first = true
-  for (let e in elements) {
+  for (let i in elements) {
+    const e = elements[i]
     if (first)
       first = false
     else
       a.push(sep)
-    a.push(e)
+    a.push(<React.Fragment key={i}>{e}</React.Fragment>)
   }
   return (<React.Fragment children={a} />)
 }

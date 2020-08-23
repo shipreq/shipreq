@@ -10,6 +10,7 @@ git checkout -b fork/analytics
 # Copying custom changes to fork source
 
 ```sh
+cd $sq/Docker/analytics_proxy
 ./copy
 cd $sq
 git checkout fork/analytics
@@ -17,7 +18,7 @@ unzip /tmp/analytics_proxy-Xxxxxxxxxx
 # Inspect changes
 git add -u
 git commit -m 'Integrate my custom changes'
-git push && github fork/analytics
+git push && git push github fork/analytics
 git checkout -
 cd Docker/analytics_proxy
 ```
@@ -36,7 +37,7 @@ rm -rf src && unzip -o /tmp/analytics_proxy-Xxxxxxxxxx
 # Inspect changes
 git add .
 git commit -m 'Integrate upstream changes'
-git push && github fork/analytics
+git push && git push github fork/analytics
 git checkout -
 cd Docker/analytics_proxy
 ```

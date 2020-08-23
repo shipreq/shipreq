@@ -7,7 +7,33 @@ object AssetManifest {
 
   def analyticsJs = "/s/11670b0e3e1d31a771f7cd5a49d22ab3.js"
 
-  def favicon = "/s/286b75985993da80759cbdc5142de4d3.ico"
+  def favicon16X16Png = "/s/fed79b5fe13954bcbb0ebbd3fe18be61.png"
+
+  def favicon32X32Png = "/s/968f9f592363a6aebfecfaa971c9691e.png"
+
+  def faviconAndroidChrome192X192Png = "/s/20ab17bc80d2928a62763dfe7f893ef5.png"
+
+  def faviconAndroidChrome512X512Png = "/s/9555829e0aaf22dbcd2b9533eaf06d7a.png"
+
+  def faviconAppleTouchIconPng = "/s/2b57a3c82fdf10e9b7f98ba195781d52.png"
+
+  def faviconBrowserconfigXml = "/s/a619848940c32bff1a6b35ef42233cfe.xml"
+
+  def faviconIco = "/s/6e7bc57637f95943a6e45bb50d658f00.ico"
+
+  def faviconMstile144X144Png = "/s/8e42faa27135493d07743aa67d581d86.png"
+
+  def faviconMstile150X150Png = "/s/70c2722a92d878811dee2af404c71944.png"
+
+  def faviconMstile310X150Png = "/s/0ae352160f52d1f1548091d566bfb2fa.png"
+
+  def faviconMstile310X310Png = "/s/aa114264eb997ef8628bfdd31ad1760c.png"
+
+  def faviconMstile70X70Png = "/s/d8c0dc6a2efcb5a942cb361a6527c150.png"
+
+  def faviconSafariPinnedTabSvg = "/s/434d8432f986eeb5f656a77a12ae3d0a.svg"
+
+  def faviconSiteWebmanifest = "/s/76cc82191b414b685f2716ed31829d4a.webmanifest"
 
   def jqueryJs = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js",
@@ -25,7 +51,7 @@ object AssetManifest {
 
   def loadjs = "/s/9e706a6f7bc551ddf626c15cd76c1c25.js"
 
-  def memberLibBundleJs = "/s/8e7c5712b785315b1e4e8b9c09c8ee03.js"
+  def memberLibBundleJs = "/s/dbee8e8ba9944907be031baaf3044d4e.js"
 
   def prismJsAutoloader = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js",
@@ -67,7 +93,7 @@ object AssetManifest {
     href = "https://cdnjs.cloudflare.com/ajax/libs/react/16.13.1/umd/react.production.min.js",
     integrity = Some("sha256-yUhvEmYVhZ/GGshIQKArLvySDSh6cdmdcIx0spR3UP4="))
 
-  def semanticCss = "/s/95c59c32142455bcd84e339b0a7a935f.css"
+  def semanticCss = "/s/7dd05c74235738208b14b3a463e7dda5.css"
 
   def semanticCssUrls: List[String] =
     "icons.eot" ::

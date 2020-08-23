@@ -7,6 +7,7 @@ args=(
   --rm
   --user $(id -u):$(id -g)
   -v "$(pwd)":/host:rw
+  -v /tmp:/tmp:rw
   -w /host
 )
 

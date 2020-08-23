@@ -63,6 +63,15 @@ object Urls {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  final case class External private[External](title: String, url: Url.Absolute)
+
+  object External {
+    def about = apply("About", Url.Absolute("https://blog.shipreq.com/about"))
+    def blog  = apply("Blog", Url.Absolute("https://blog.shipreq.com"))
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   val ajaxRoot = Url.Relative("/x")
 
   def publicHome          = PublicSpaRoute.Home.url

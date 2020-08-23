@@ -1,40 +1,34 @@
 import { Link } from "gatsby"
-import { Node as Post } from "../config/post"
+import { Node as Post } from "../config/posts"
 import { pathForPost } from "../utils/routes"
-import Date from "./date"
+import PostAttr from "./post-attributes"
 import R from "../utils/responsive"
 import React from "react"
 import styled from "styled-components"
-import TagList from "./tag-list"
 
 type Props = {
   posts: Array<Post>
 }
 
 const Item = styled.div`
-  margin-bottom: 2rem;
+  margin-bottom: 3.6rem;
   ${R.phoneWide`
-    margin-bottom: 1.2rem;
+    margin-bottom: 2.8rem;
   `}
 `
 
-const Attributes = styled.div`
-  opacity: 0.6;
-  font-size: 80%;
-  text-align: right;
+const Header = styled.h1`
+  margin-bottom: 0;
+  a:not(:hover) { color: #000; }
 `
 
-const TagListWrapper = styled.span`
-  margin: 0 1ex;
-`
-
-const Header = styled.h2`
-  margin-bottom: 0.2em;
+const AttributeSeparatorStyle = styled.span`
+  color: #ddd;
+  margin: 0 1.7ex;
 `
 
 const Desc = styled.p`
-  line-height: 1.45em;
-  color: #555;
+  color: #3a3a3a;
   margin: 0;
 `
 
@@ -50,14 +44,11 @@ function renderPost(post: Post) {
         <Link to={pathForPost(post)}>{post.frontmatter.title}</Link>
       </Header>
 
+      <PostAttr date={post.frontmatter.date} tags={tags}  />
+
       <Desc>
         {post.frontmatter.desc}
       </Desc>
-
-      <Attributes>
-        <TagListWrapper><TagList tags={tags} /></TagListWrapper>
-        <Date date={post.frontmatter.date} />
-      </Attributes>
 
     </Item>
   )

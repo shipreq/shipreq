@@ -1,0 +1,132 @@
+---
+title  : Welcome!
+slug   : welcome
+date   : 2020-08-18T11:28:00+1000
+desc   : An introduction, a tech overview of ShipReq, and a warm message to OSS contributors.
+tags   : ["service", "tech"]
+hn     : https://news.ycombinator.com/item?id=24195087
+reddit : https://old.reddit.com/r/scala/comments/ibtrco/a_message_to_the_scala_oss_community_new/
+twitter: https://twitter.com/japgolly/status/1295566888227856385
+---
+
+Hello and welcome to the ShipReq Blog.
+I'm David and I created ShipReq.
+
+## What is "ShipReq"? A techie's perspective
+If you're reading this you're likely a fellow techie, and probably expecting a technical article.
+I'll leave you to head over to the <About/> page if your want to know ShipReq's purpose.
+
+Otherwise, I'll introduce it from a technical perspective.
+It's a SAAS built from the ground-up with FP (functional programming); both in the backend, which is written in <Scala/>;
+and in the frontend, which is written in <Scala/> too using <ScalaJS/>. Scala.JS
+transpiles and optimises Scala into plain old JS. The generated JS is incomprehensible to humans but
+source maps can also be generated.
+Deciding to use Scala for both the frontend as well as the backend was a decision that felt a bit risky at first,
+but has ended up consistently paying huge dividends for years now, and I couldn't be happier.
+Being able to effortlessly share, and move strongly-verified code around between the frontend and backend is profoundly beneficial.
+
+There are a bunch of satellite components and services in the ShipReq ecosystem if you peek behind the covers,
+most of which are third-party OSS apps.
+I won't list them all but notably, <Prometheus/> and <Grafana/>
+deserve an applause, and I highly recommend you give them a look if you don't know what they are.
+
+All infrastructure is managed by <Terraform/>.
+Another fantastic tool I highly recommend using if you're not already.
+Finally with my own venture I'm in a position where if I decide I want to spin up a completely
+new environment, complete with metrics and security and scalability etc, I basically just
+hit a button and enjoy a 20 min coffee break. There've been so many times in my career
+that I and the entire team were frustrated and hindered by the fact that we needed to,
+we couldn't spin up a new UAT cluster,
+or do performance testing without locking everyone else out.
+If you write all of your infrastructure once without hardcoding settings,
+especially if you make your environment a <A href="https://learn.hashicorp.com/tutorials/terraform/module">Terraform module</A>,
+getting it working for a single environment effectively gains you the ability
+to spin up new, isolated environments for free.
+
+
+This site is written
+with <Gatsby/>, <Typescript/>, <A href="https://mdxjs.com">MDX</A> <span style="opacity:0.5">(= MD + JSX)</span>
+which, by the way, has been a surprisingly awesome experience.
+Typescript isn't the greatest type system in the world,
+but a blog is not a large-scale complex system and
+Typescript has shown to be a fantastic tool for this job.
+Gatsby's much slower than advertised and I really hope that the Gatsby team manages to improve this in the future
+because it's the only significant flaw that I experienced.
+ShipReq's documentation is ongoing (and has been stalled by the global pandemic),
+and I was planning to host it all with Gatsby.
+Given the discovery of Gatsby's performance issues (30 min builds anyone?), I think it's now important
+to evaluate <NextJS/> and it's ability to create static websites.
+If you're ever need to create a web "site" (not webapp), regardless of what your favourite language is,
+I think you'll like <Typescript/> with either <Gatsby/> or <NextJS/>.
+
+
+## What is this blog for?
+
+There are two types of content you can expect to see here.
+
+1. **Service related:** articles discussing <ShipReq/>, the service.
+
+  Anything from announcements of, or deep-dives into new features, to notifications of uptime disruption.
+
+2. **Technical posts:** educational material, mostly for programmers.
+
+  There's a reason I listed a bunch of technologies above.
+  When I come across something I think is an interesting discovery, invention, workaround, whatever, in those domains,
+  if I judge it to be the right combination of valuable and not-well-known then this is where you can find me posting about it.
+
+
+## OSS <Heart/>
+
+<p>
+<ShipReq/> is quite an advanced product that wouldn't have been possible
+without being able to stand on the shoulders of many giants in the open-source community.
+I have so much appreciation towards the many wonderful people
+in the open-source community, their efforts, and the amazing tools and technologies.
+As the founder, a very important part of my vision for <ShipReq/> has always been that it has
+to be of exceptionally high quality, both from the perspective of our staff as we maintain, nurture and
+grow the product; and even more importantly, of our users in every interaction both on-screen and off.
+I'm elated to say that I've achieved my goal, and
+I wouldn't have been able to achieve this level of quality alone, without access to all the wonderful,
+free tools and material out there.
+So it's become a very important value of ShipReq, now and forever,
+to give back to the community when I can, and hopefully enable a
+new generation of creators and visionaries, just as I had the privilege of being enabled.
+To be concrete, I plan to do this in the following ways:
+</p>
+
+1. <u>open-sourcing software created for ShipReq.</u>
+  &nbsp;I've been doing this for years now, and you can already have a look around if you like:
+  <br/><span style="opacity:0.5">(They're nearly all Scala libraries)</span>
+
+  <ul class="huddle">
+  <li><A href="https://github.com/japgolly/clear-config">Clear Config</A></li>
+  <li><A href="https://github.com/japgolly/microlibs-scala">Microlibs</A></li>
+  <li><A href="https://github.com/japgolly/mr.boilerplate">Mr. Boilerplate</A></li>
+  <li><A href="https://github.com/japgolly/nyaya">Nyaya</A></li>
+  <li><A href="https://github.com/japgolly/scala-graal">scala-graal</A></li>
+  <li><A href="https://github.com/japgolly/scalajs-benchmark">scalajs-benchmark</A></li>
+  <li><A href="https://github.com/japgolly/scalajs-react">scalajs-react</A></li>
+  <li><A href="https://github.com/japgolly/scalacss">ScalaCSS</A></li>
+  <li><A href="https://github.com/japgolly/test-state">Scala Test State</A></li>
+  <li><A href="https://github.com/japgolly/univeq">UnivEq</A></li>
+  <li><A href="https://github.com/japgolly/webtamp">Webtamp</A> (JS)</li>
+  </ul>
+
+1. <u>sharing learnings & teaching.</u>
+  &nbsp;Primarily by writing blog posts—that's part of what this blog is for!
+  Previously I'd post to <A href="https://japgolly.blogspot.com/">my personal account</A> but
+  going forward, all new technical articles will appear here instead. The majority of articles
+  will be about <A href="https://www.scala-lang.org">Scala</A>, <ScalaJS/>, and FP (functional programming).
+
+1. <u>financial support and sponsorship.</u> <ShipReq/> is still in the early stages of business and as I write
+  this, it's not even open to the general public yet. But mark my words, when <ShipReq/> blooms into a
+  successful business and is in a position that can afford to, we will financially contribute to both
+  OSS directly, and to amazing initiatives like <A href="https://scala.epfl.ch">Scala Center</A>.
+  This declaration has been written down and archived until (at least) the cold death of universe by Google
+  so feel free to hold me to it in future.
+
+That's all for now.
+Thanks for dropping by and stay tuned for more!
+
+And again: if you're a contributor to OSS or similar, <Heart/>thank you<Heart/>!
+You help people's dreams come true.

@@ -1,18 +1,17 @@
-import { graphql, Link } from "gatsby"
+import { graphql } from "gatsby"
 import { MDXProvider } from "@mdx-js/react"
 import { MDXRenderer } from "gatsby-plugin-mdx"
-import { Node, PageContext } from "../config/post"
+import { Node, PageContext } from "../config/posts"
 import { pathForPost } from "../utils/routes"
 import { Props as SeoProps } from "../components/seo"
-import A from "../components/a"
 import Author from "../components/author"
-import Date from "../components/date"
 import Layout from "../layouts/focused"
+import MdxComponents from "../components/mdx_components"
+import PostAttr from "../components/post-attributes"
 import PostShare from "../components/post-share"
 import PostSiblingNav from "../components/post-sibling-nav"
 import React from "react"
 import styled from "styled-components"
-import TagList from "../components/tag-list"
 
 export const pageQuery = graphql`
   query PostPageQuery($id: String) {
@@ -30,75 +29,24 @@ type Props = {
   pageContext: PageContext
 }
 
-const MrB = ({type}: {type: "app" | "github"}) => (
-  (type == "app")
-  ? <A href="https://japgolly.github.io/mr.boilerplate">Mr. Boilerplate</A>
-  : <A href="https://github.com/japgolly/mr.boilerplate">Mr. Boilerplate</A>
-)
-
-const components = {
-  A,
-  MrB,
-  About    : () => <Link to="/about">About</Link>,
-  BooPickle: () => <A href="https://github.com/suzaku-io/boopickle">BooPickle</A>,
-  Graal    : () => <A href="https://www.graalvm.org">GraalVM</A>,
-  ScalaJS  : () => <A href="https://www.scala-js.org">Scala.JS</A>,
-  SG       : () => <A href="https://github.com/japgolly/scala-graal">scala-graal</A>,
-  ShipReq  : () => <A href="https://shipreq.com">ShipReq</A>,
-  SJR      : () => <A href="https://github.com/japgolly/scalajs-react">scalajs-react</A>,
-}
-
-const Article = styled.article`
-  line-height: 1.5em;
-  .huddle > li {
-    margin-bottom: 0;
-  }
-`
 const Header = styled.header`
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 `
 
 const Title = styled.h1`
-  display: block;
-  font-weight: bold;
-  border-bottom: solid 1px #ccc;
-  color: #933;
+  font-size: 220%;
   margin-bottom: 0;
-  font-size: 250%;
 `
-
-const DateContainer = styled.div`
-  color: #888;
-  text-align: right;
-  margin-top: 0.2em;
-  font-size: 85%;
-`
-
-const Body = styled.section`
-  h1,h2,h3,h4,h5,h6 {
-    margin-top: 0;
-    &:not(:first-child) {
-      margin-top: 1.5em;
-    }
-    margin-bottom: 1em;
-  }
-  p {
-    margin-bottom: 1em;
-  }
-`
-
-const footerGap = "1.8rem"
 
 const Footer = styled.footer`
-  border-top: solid 1px #ccc;
-  margin-top: ${footerGap};
-  padding-top: ${footerGap};
+  border-top: solid 1px #888;
+  margin-top: 3rem;
+  padding-top: 1rem;
 `
 
 export default function({ data, pageContext }: Props) {
-  const post  = data.mdx
-  const title = post.frontmatter.title
-  const tags  = post.frontmatter.tags
+  const post = data.mdx
+  const { date, title, tags } = post.frontmatter
 
   const seo: SeoProps =  {
     article : true,
@@ -109,28 +57,28 @@ export default function({ data, pageContext }: Props) {
 
   return (
     <Layout seo={seo}>
-      <Article>
+      <article className="post">
 
         <Header>
           <Title>{title}</Title>
-          <DateContainer>
-            <Date date={post.frontmatter.date} />
-          </DateContainer>
+          <PostAttr date={date} tags={tags} />
+          <PostShare post={post} pos="top" />
         </Header>
 
-        <Body>
-          <MDXProvider components={components}>
+        <section className="body">
+          <MDXProvider components={MdxComponents}>
             <MDXRenderer>{post.body}</MDXRenderer>
           </MDXProvider>
-        </Body>
+        </section>
+
+        <PostShare post={post} pos="bottom" />
 
         <Footer>
           <Author />
-          <PostShare post={post} />
           <PostSiblingNav pageContext={pageContext} />
         </Footer>
 
-      </Article>
+      </article>
     </Layout>
   )
 };

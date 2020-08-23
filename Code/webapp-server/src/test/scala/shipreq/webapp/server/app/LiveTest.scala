@@ -66,8 +66,8 @@ object LiveTest extends TestSuite {
       ()
     }
 
-    "favicon" - {
-      get(AssetManifest.favicon)
+    "faviconIco" - {
+      get(AssetManifest.faviconIco)
         .assertOk
         .assertContentType("image/x-icon")
       ()
@@ -136,7 +136,7 @@ object LiveTest extends TestSuite {
 
       // GETs shouldn't increase session time
       assertEq(get(Urls.memberHome.relativeUrl, Some(s2)).newJwt(), None)
-      assertEq(get(AssetManifest.favicon, Some(s2)).newJwt(), None)
+      assertEq(get(AssetManifest.faviconIco, Some(s2)).newJwt(), None)
       assertEq(get(Urls.project(Obfuscators.projectId.obfuscate(pid.get)).relativeUrl, Some(s2)).newJwt(), None)
 
       // Non-login AJAX shouldn't increase session time

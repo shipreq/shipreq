@@ -16,7 +16,7 @@ args="$@"
 
 webpack="node_modules/.bin/webpack --color --display-reasons --display-modules --progress --config"
 webtamp="node_modules/.bin/webtamp"
-[ -n "$WEBTAMP" ] && webtamp="$WEBTAMP/src/cli.js"
+[ -n "$WEBTAMP" ] && webtamp="$WEBTAMP/dist/cli.js"
 webtamp="$webtamp --config"
 
 for mode in ${args[@]}; do

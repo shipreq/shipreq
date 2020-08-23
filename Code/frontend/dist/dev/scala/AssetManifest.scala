@@ -7,7 +7,33 @@ object AssetManifest {
 
   def analyticsJs = "/assets/analytics.js"
 
-  def favicon = "/assets/favicon.ico"
+  def favicon16X16Png = "/assets/favicon-16x16.png"
+
+  def favicon32X32Png = "/assets/favicon-32x32.png"
+
+  def faviconAndroidChrome192X192Png = "/assets/android-chrome-192x192.png"
+
+  def faviconAndroidChrome512X512Png = "/assets/android-chrome-512x512.png"
+
+  def faviconAppleTouchIconPng = "/assets/apple-touch-icon.png"
+
+  def faviconBrowserconfigXml = "/assets/browserconfig.xml"
+
+  def faviconIco = "/assets/favicon.ico"
+
+  def faviconMstile144X144Png = "/assets/mstile-144x144.png"
+
+  def faviconMstile150X150Png = "/assets/mstile-150x150.png"
+
+  def faviconMstile310X150Png = "/assets/mstile-310x150.png"
+
+  def faviconMstile310X310Png = "/assets/mstile-310x310.png"
+
+  def faviconMstile70X70Png = "/assets/mstile-70x70.png"
+
+  def faviconSafariPinnedTabSvg = "/assets/safari-pinned-tab.svg"
+
+  def faviconSiteWebmanifest = "/assets/site.webmanifest"
 
   def jqueryJs = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js",

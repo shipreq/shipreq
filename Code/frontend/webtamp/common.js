@@ -2,6 +2,7 @@ const
   CamelCase = require('camelcase'),
   Deasync = require('deasync'),
   EscapeRegexp = require('escape-string-regexp'),
+  FS = require('fs'),
   Path = require('path'),
   Svgo = require('svgo'),
   Webtamp = require(process.env.WEBTAMP ? `${process.env.WEBTAMP}/src/main` : 'webtamp');
@@ -25,6 +26,8 @@ const semanticUiImport = 'https://fonts.googleapis.com/css?family=Lato:400,700,4
 
 // SJS resources all go in /j/ as is configured in web.xml
 const sjsDir = 'j';
+
+const faviconHead = FS.readFileSync('src/favicon/head.html').toString().trim()
 
 const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
 
@@ -97,6 +100,11 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
       .replace(/'/g, '"')
       .replace(/, *$/mg, "");
 
+  function faviconManifest(i) {
+    const s = /favicon.*/.test(i) ? i : i = "favicon-" + i
+    return CamelCase(s)
+  }
+
   return {
 
     src: Path.resolve(__dirname, ".."),
@@ -111,7 +119,9 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
 
       html: { type: 'local', src: 'src/html', files: '**/*.html', outputName: '[path]/[basename]' },
 
-      favicon: { type: 'local', src: 'src/images', files: 'favicon.ico', manifest: true },
+      // These are included in the manifest so that they can be referenced from site.webmanifest, browserconfig.xml, and html files
+      faviconImages: { type: 'local', src: 'src/favicon', files: '*.{ico,png,svg}', manifest: faviconManifest },
+      faviconManifests: { type: 'local', src: 'src/favicon', files: '*.{webmanifest,xml}', manifest: faviconManifest },
 
       images: { type: 'local', src: 'src/images', files: '*.{svg,png}', manifest: CamelCase },
 
@@ -218,14 +228,31 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
         { failUnlessChange: true }
       ),
 
+      // Replace <webtamp.favicon/> in HTML
+      Webtamp.plugins.Modify.content(
+        /\.html$/,
+        c => c.replace(/< *webtamp *\. *favicon *\/? *>/ig, faviconHead),
+        { failUnlessChange: false }
+      ),
+
       // Minify SVGs
       Webtamp.plugins.Modify.content(/\.svg$/, c => svgoOptimizeSync(svgo, c)),
 
       // Inline small images
-      Webtamp.plugins.Inline.data(i => /\.(svg|png)$/.test(i.dest) && i.size() < 4096),
+      Webtamp.plugins.Inline.data(i =>
+        /\.(svg|png)$/.test(i.dest) &&
+        !/favicon/i.test(i.manifestName) && // don't inline favicons
+        i.size() < 4096
+      ),
 
-      // Replace <require> tags and webtamp:// URIs
+      // Replace <require> tags and webtamp:// URIs in HTML
       Webtamp.plugins.Html.replace({ modTag: fixLinksInLiftTemplates }),
+
+      // Replace webtamp:// URIs in non-HTML
+      Webtamp.plugins.Modify.replaceWebtampUrls({
+        testFilename: /(browserconfig.xml|site.webmanifest)$/,
+        urlQuotes: [`"`],
+      }),
 
       // Minify HTML
       htmlMinifyOptions && Webtamp.plugins.Html.minify({ options: htmlMinifyOptions }),

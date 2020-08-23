@@ -40,9 +40,22 @@ object Endpoint {
     exactMatches.put(AssetManifest.memberLibBundleJs                , AssetSpecific("js", "member_lib_bundle"))
     exactMatches.put(AssetManifest.vizJs                            , AssetSpecific("js", "viz"))
     exactMatches.put(AssetManifest.semanticJs                       , AssetSpecific("js", "semantic"))
-    exactMatches.put(AssetManifest.favicon                          , AssetSpecific("ico", "favicon"))
     exactMatches.put(AssetManifest.semanticCss                      , AssetSpecific("css", "semantic"))
     exactMatches.put(AssetManifest.shipreqBannerSvg                 , AssetGeneric("svg"))
+    exactMatches.put(AssetManifest.favicon16X16Png                  , AssetSpecific("png", "favicon"))
+    exactMatches.put(AssetManifest.favicon32X32Png                  , AssetSpecific("png", "favicon"))
+    exactMatches.put(AssetManifest.faviconAndroidChrome192X192Png   , AssetSpecific("png", "favicon"))
+    exactMatches.put(AssetManifest.faviconAndroidChrome512X512Png   , AssetSpecific("png", "favicon"))
+    exactMatches.put(AssetManifest.faviconAppleTouchIconPng         , AssetSpecific("png", "favicon"))
+    exactMatches.put(AssetManifest.faviconBrowserconfigXml          , AssetSpecific("xml", "favicon"))
+    exactMatches.put(AssetManifest.faviconIco                       , AssetSpecific("ico", "favicon"))
+    exactMatches.put(AssetManifest.faviconMstile144X144Png          , AssetSpecific("png", "favicon"))
+    exactMatches.put(AssetManifest.faviconMstile150X150Png          , AssetSpecific("png", "favicon"))
+    exactMatches.put(AssetManifest.faviconMstile310X150Png          , AssetSpecific("png", "favicon"))
+    exactMatches.put(AssetManifest.faviconMstile310X310Png          , AssetSpecific("png", "favicon"))
+    exactMatches.put(AssetManifest.faviconMstile70X70Png            , AssetSpecific("png", "favicon"))
+    exactMatches.put(AssetManifest.faviconSafariPinnedTabSvg        , AssetSpecific("svg", "favicon"))
+    exactMatches.put(AssetManifest.faviconSiteWebmanifest           , AssetSpecific("webmanifest", "favicon"))
 
     (path, provided) => {
       val result =

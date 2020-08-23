@@ -1,30 +1,27 @@
-import { Node } from "../config/post"
+import { IconName } from "./icon"
+import { Node } from "../config/posts"
 import { Props as IconButtonProps } from "./icon-button"
 import { urlForPost } from "../utils/routes"
 import { urlWithQuery } from "../utils/utils"
 import IconButtons from "./icon-buttons"
-import R from "../utils/responsive"
 import React from "react"
 import site from "../config/site"
 import styled from "styled-components"
 
 type Props = {
+  pos: "top" | "bottom"
   post: Node
 }
 
-const Container = styled.section`
-  margin-top: 1em;
-  ${R.phoneWide`
-    margin-top: 0.5em;
-  `}
+const TopContainer = styled.section`
 `
 
-const Header = styled.span`
-  color: #666;
-  margin-right: 1ex;
+const BottomContainer = styled.section`
+  margin-top: 2em;
+  text-align: center;
 `
 
-export default ({ post }: Props) => {
+export default ({ pos, post }: Props) => {
   const p   = post.frontmatter
   const url = urlForPost(post)
 
@@ -43,15 +40,21 @@ export default ({ post }: Props) => {
     })
 
   const buttons: Array<IconButtonProps> = []
-  if (p.twitter) buttons.push({ icon: "twitter", href: p.twitter })
-  if (p.reddit)  buttons.push({ icon: "reddit", href: p.reddit })
-  if (p.hn)      buttons.push({ icon: "hackerNews", href: p.hn })
-  buttons.push({ icon: "facebook", href: facebookUrl })
-  buttons.push({ icon: "linkedIn", href: linkedInUrl })
+
+  function addButton(icon: IconName, href: string): void {
+    buttons.push({ icon, href, inverse: true })
+  }
+
+  if (p.twitter) addButton("twitter", p.twitter)
+  if (p.reddit)  addButton("reddit", p.reddit)
+  if (p.hn)      addButton("hackerNews", p.hn)
+  addButton("facebook", facebookUrl)
+  addButton("linkedIn", linkedInUrl)
+
+  const Container = pos == "top" ? TopContainer : BottomContainer
 
   return (
     <Container>
-      <Header>Share / Discuss:</Header>
       <IconButtons buttons={buttons} />
     </Container>
   )

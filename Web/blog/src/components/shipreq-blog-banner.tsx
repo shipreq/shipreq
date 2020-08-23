@@ -1,6 +1,5 @@
 import { Link as GatsbyLink } from "gatsby"
 import A from "./a"
-import R from "../utils/responsive"
 import React from "react"
 import ShipreqBanner from "./shipreq-banner"
 import styled from "styled-components"
@@ -11,23 +10,48 @@ const Link = styled(GatsbyLink)`
 `
 
 const Title = styled.h1`
-  margin: 0;
+  width: 36%;
+  margin: .1rem 0 0 auto !important;
   text-align: right;
-  font-weight: bold;
-  color: #00488c;
-  ${R.phone`
-    font-size: 250%;
-  `}
-  ${R.phoneWide`
-    font-size: 160%;
-  `}
-  ${R.tablet`
-    font-size: 180%;
-  `}
-  ${R.desktop`
-    font-size: 230%;
-  `}
+  line-height: 0;
 `
+
+class Blog extends React.Component<{}, {hover: boolean}> {
+  constructor(props: {}) {
+    super(props)
+    this.state = {hover: false}
+    this.onHover = this.onHover.bind(this)
+    this.onExit = this.onExit.bind(this)
+
+  }
+
+  onHover() {
+    this.setState({hover: true})
+  }
+
+  onExit() {
+    this.setState({hover: false})
+  }
+
+  render() {
+    const colour = this.state.hover ? "#d90166" : "#00549c"
+    return (
+      <svg viewBox="0 0 85 33" onMouseEnter={this.onHover} onMouseLeave={this.onExit}>
+        <text
+          x="0"
+          y="26"
+          letterSpacing="3.6px"
+          style={{
+            fontFamily: "'Nunito Sans', sans-serif",
+            fill: colour,
+          }}
+        >Blog</text>
+      </svg>
+    )
+  }
+}
+
+
 
 export default function(): JSX.Element {
   return (
@@ -35,9 +59,11 @@ export default function(): JSX.Element {
       <A href="https://shipreq.com">
         <ShipreqBanner width="100%" />
       </A>
-      <Link to="/">
-        <Title>Blog</Title>
-      </Link>
+      <Title>
+        <Link to="/">
+          <Blog />
+        </Link>
+      </Title>
     </>
   )
 }

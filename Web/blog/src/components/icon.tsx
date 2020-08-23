@@ -17,7 +17,7 @@ const hackerNews: IconDef = {
 const facebook: IconDef = {
   name: 'Facebook',
   path: 'M14.984 0.187v4.125h-2.453c-1.922 0-2.281 0.922-2.281 2.25v2.953h4.578l-0.609 4.625h-3.969v11.859h-4.781v-11.859h-3.984v-4.625h3.984v-3.406c0-3.953 2.422-6.109 5.953-6.109 1.687 0 3.141 0.125 3.563 0.187z',
-  viewBox: '0 0 16 28'
+  viewBox: '0 0 19 28'
 }
 
 const twitter: IconDef = {
@@ -53,7 +53,7 @@ const rss: IconDef = {
 const linkedIn: IconDef = {
   name: 'LinkedIn',
   path: 'M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z',
-  viewBox: '0 0 24 24'
+  viewBox: '0 0 24 26'
 }
 
 const youtube: IconDef = {

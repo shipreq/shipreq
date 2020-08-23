@@ -30,6 +30,8 @@ const Container = styled.div`
   justify-content: stretch;
   justify-items: stretch;
   margin: 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
   min-height: 100vh;
 
   ${R.small`
@@ -57,11 +59,15 @@ const Container = styled.div`
 
   ${R.phone`
     padding: 0.8rem;
+    max-width: calc(100vw - 1.6rem);
+    width: 100%;
   `}
   ${R.phoneWide`
     row-gap: 0.8rem;
-    column-gap: 1.6rem;
+    column-gap: 1.8rem;
     padding: 0.8rem;
+    max-width: calc(100vw - 1.6rem);
+    width: 100%;
   `}
   ${R.tablet`
     column-gap: 2.4rem;
@@ -80,7 +86,7 @@ const BannerCell = styled.header`
 
 const BannerWrapper = styled.div`
   ${R.phoneWide`
-    width:200px;
+    width:190px;
   `}
   ${R.tablet`
     width:230px;
@@ -95,37 +101,52 @@ const ContactCell = styled.section`
   align-self: end;
   justify-self: end;
   ${R.phone`
-    margin: 1rem 0 0 0;
+    margin-top: 0.8rem;
   `}
   ${R.phoneWide`
+    margin-top: 0.6rem;
   `}
   ${R.tablet`
-    margin: 1rem 0;
+    margin-top: 3rem;
   `}
   ${R.desktop`
-    margin: 2rem 0;
+    margin-top: 3rem;
   `}
 `
 
 const TagIndexCell = styled.section`
   grid-area: ${GridArea.tagIndex};
   text-align: right;
+  letter-spacing: 1px;
   ${R.phone`
-    margin-top: 0.2rem;
+    margin-top: 0.5rem;
+  `}
+  ${R.phoneWide`
+    margin-top: 0.6rem;
+  `}
+  ${R.tablet`
+    margin-top: 3rem;
+  `}
+  ${R.desktop`
+    margin-top: 3rem;
   `}
 `
 
 const PageIndexCell = styled.section`
   grid-area: ${GridArea.pageIndex};
   text-align: right;
+  letter-spacing: 1px;
   ${R.phone`
-    margin-top: 0.2rem;
+    margin-top: 0.3rem;
+  `}
+  ${R.phoneWide`
+    margin-top: 0.6rem;
   `}
   ${R.tablet`
-    margin: 1rem 0;
+    margin-top: 3rem;
   `}
   ${R.desktop`
-    margin: 2rem 0;
+    margin-top: 3rem;
   `}
 `
 

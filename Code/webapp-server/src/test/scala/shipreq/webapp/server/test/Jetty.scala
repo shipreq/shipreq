@@ -64,7 +64,7 @@ class Jetty(val port: Int) extends Logger {
     def assetFile(s: String) = new File(s"$assetDir/$s")
     def warFile(s: String) = new File(s"${tmpWarDir.getAbsolutePath}/$s")
     def copyAsset(s: String) = FileUtils.copyFile(assetFile(s), new File(s"$tmpWarDir/$s"))
-    copyAsset(AssetManifest.favicon)
+    copyAsset(AssetManifest.faviconIco)
     FileUtils.write(warFile(AssetManifest.webappClientPublicJs), "function public(){}") // Fake content
     FileUtils.write(warFile(AssetManifest.webappClientHomeJs), "function home(){}") // Fake content
     FileUtils.write(warFile(AssetManifest.webappClientProjectJs), "function project(){}") // Fake content

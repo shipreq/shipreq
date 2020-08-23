@@ -1,0 +1,11 @@
+#!/bin/bash
+set -euo pipefail
+[ $# -ne 2 ] && echo "Usage: $0 <terraform_dir> <output>" && exit 1
+
+TF_DIR="$1"
+OUT="$2"
+
+echo '// Re-generate this by running "make sync"' > "$OUT"
+< "$TF_DIR"/blog.tf grep ' domain *=' | perl -pe 's/.*(".+").*/export const hostname = \1/' >> "$OUT"
+< "$TF_DIR"/blog.tf fgrep s3_bucket_name | perl -pe 's/.*(".+").*/export const s3_bucket = \1/' >> "$OUT"
+< "$TF_DIR"/setup.tf fgrep blog/gatsy | fgrep ' region ' | perl -pe 's/.*(".+").*/export const s3_region = \1/' >> "$OUT"

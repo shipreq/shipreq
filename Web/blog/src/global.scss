@@ -1,0 +1,123 @@
+$blue: #00549c;
+$pink: #d90166;
+$yellow: #f9da29;
+
+html {
+  // Just force a scrollbar so that the viewport width doesn't change.
+  // Otherwise, the layout moves around when use change pages.
+  overflow-y: scroll;
+}
+
+body, blockquote {
+  font-family: 'Nunito Sans', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.25px;
+  line-height: 1.333333em;
+}
+
+header {
+  overflow-wrap: break-word;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  // font-family: 'Nunito', sans-serif;
+  line-height: 1.2em;
+  overflow-wrap: break-word;
+  margin-top: 0;
+  &:not(:first-child) {
+    margin-top: 1.6em;
+  }
+}
+
+h1 {
+  margin-bottom: 0.4em;
+}
+
+h2 {
+  margin-bottom: 0.3em;
+}
+
+h3 {
+  margin-bottom: 0.2em;
+}
+
+a {
+  color: $blue;
+  text-decoration: none;
+  &:hover {
+    color: $pink;
+  }
+}
+
+blockquote {
+  background: #00000008;
+  border-left: 0.20833rem solid #0003;
+  color: #000000b0;
+  font-size: 1.1487rem;
+  line-height: 1.66667rem;
+  margin-bottom: 0.5em;
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+  padding-bottom: 0.83333rem;
+  padding-left: 1.45833rem;
+  padding-right: 0.83333rem;
+  padding-top: 0.83333rem;
+}
+
+p {
+  margin-block-start: 1.3333em;
+  margin-block-end: 1.3333em;
+}
+
+@mixin yellowHeader() {
+  background-color: lighten($yellow, 15%);
+  padding: .18em 1ex 0.05em;
+  border-radius: 2ex;
+}
+
+.tagIndexHeader {
+  @include yellowHeader();
+  letter-spacing: 1.2px;
+  text-align: center;
+  margin: 0;
+}
+
+main.page,
+article.post > .body {
+
+  .katsokaa {
+    color: $pink;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.25px;
+    line-height: 1.3em;
+  }
+
+  h2 {
+    @include yellowHeader();
+  }
+
+  code {
+    font-size:90%;
+  }
+
+  pre[class*="language-"] {
+    padding: 0.4em 1ex;
+  }
+
+  :not(pre) > code[class*="language-"] {
+    background: #272822aa;
+    padding-left: .6ex;
+    padding-right: .6ex;
+  }
+
+  li ~ li {
+    margin-top: .8em;
+  }
+
+  .huddle > li {
+    margin-top: 0 !important;
+  }
+
+}

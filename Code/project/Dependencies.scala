@@ -10,7 +10,7 @@ object Dependencies {
   }
 
   object Graal {
-    val ver = "20.1.0"
+    val ver = "20.2.0"
   }
 
   object Scala {
@@ -25,7 +25,7 @@ object Dependencies {
   }
 
   object React {
-    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.7.4")
+    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "1.7.5")
     val core    = mm("core")
     val test    = mm("test")
     val monocle = mm("ext-monocle-scalaz") ++ Monocle.core
@@ -196,12 +196,12 @@ object Dependencies {
   val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.4")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.9")
-  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.5.3")
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.5.5")
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.5")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.3.2")
-  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.14")
+  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.16")
   val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.13.3")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "4.0.1")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.3")

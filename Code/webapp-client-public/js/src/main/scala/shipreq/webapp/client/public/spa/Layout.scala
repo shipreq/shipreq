@@ -5,7 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.Urls.PublicSpaRoute.Login
 import shipreq.webapp.base.user.Username
-import shipreq.webapp.base.{AssetManifest, WebappConfig}
+import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
 import shipreq.webapp.client.public.Styles.{layout => *}
 
 object Layout {
@@ -30,11 +30,15 @@ object Layout {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Shared
 
+  private type Link = Urls.External \/ Page.Static
   private val linkSep = <.span(*.linkSep, "|")
   private val linkActive = <.span(*.linkActive)
 
-  private def makeNav(p: Props, links: List[Page.Static]): TagMod = {
-    def render(page: Page.Static): VdomTag = {
+  private def makeNav(p: Props, links: List[Link]): TagMod = {
+    def renderExternal(e: Urls.External): VdomTag =
+      <.a.toNewWindow(e.url.absoluteUrl)(e.title)
+
+    def renderPage(page: Page.Static): VdomTag = {
 
       val base: VdomTag =
         if (page ==* p.currentPage)
@@ -52,7 +56,7 @@ object Layout {
     }
 
     links.iterator
-      .map(render)
+      .map(_.fold(renderExternal, renderPage))
       .intersperse(linkSep)
       .toTagMod
   }
@@ -63,7 +67,11 @@ object Layout {
     private val mid     = <.div(*.headerMid)
     private def right   = left
     private val logoImg = <.img(*.headerLogo, ^.src := AssetManifest.shipreqLogoSvg, ^.alt := Page.Home.linkTitle)
-    private val links   = List[Page.Static](Page.Login, Page.Register1)
+    private val links   = List[Link](
+      -\/(Urls.External.about),
+      \/-(Page.Login),
+      \/-(Page.Register1),
+    )
 
     private def render(p: Props): VdomElement = {
       val logo =
@@ -85,7 +93,10 @@ object Layout {
   private object Footer {
     private def copyright = <.div(*.copyright, WebappConfig.copyrightNotice)
     private val footer    = <.footer(*.footer, copyright)
-    private val links     = List[Page.Static](Page.TermsOfService, Page.Privacy)
+    private val links     = List[Link](
+      \/-(Page.Privacy),
+      \/-(Page.TermsOfService),
+    )
 
     private def render(p: Props): VdomElement =
       footer(makeNav(p, links))

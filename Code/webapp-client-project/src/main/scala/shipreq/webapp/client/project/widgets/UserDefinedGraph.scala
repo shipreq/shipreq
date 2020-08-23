@@ -41,7 +41,7 @@ object UserDefinedGraph {
       )
   }
 
-  private val defaults = "bgcolor=transparent;rankdir=LR"
+  private[widgets] val defaults = """bgcolor=transparent;rankdir=LR;node[style=filled fillcolor="#e8e8e8"]"""
 
   private val comment = "(?:#|//).*$".r
 

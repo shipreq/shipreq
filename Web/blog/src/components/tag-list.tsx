@@ -1,10 +1,13 @@
-import React from "react"
+import React, { ReactNode } from "react"
 import styled from "styled-components"
 import Tag from "./tag"
+import { intersperse, renderArray } from "../utils/utils"
 
 type Props = {
   tags: Array<string>
   notAsLink?: boolean
+  separator?: ReactNode
+  style?: object
 }
 
 const Item = styled.span`
@@ -13,19 +16,24 @@ const Item = styled.span`
   }
 `
 
-export default (p: Props) => {
+function render(p: Props): JSX.Element {
 
-  const tags = p.tags.sort()
+  if (p.separator) {
+    const tags =
+      p.tags.sort().map(tag => (
+        <Tag name={tag} style={p.style} notAsLink={p.notAsLink} />
+      ))
+      return intersperse(tags, p.separator)
 
-  return (
-    <>
-      {tags.map(tag => (
-
+  } else {
+    const tags =
+      p.tags.sort().map(tag => (
         <Item key={tag}>
-          <Tag name={tag} notAsLink={p.notAsLink} />
+          <Tag name={tag} style={p.style} notAsLink={p.notAsLink} />
         </Item>
-
-      ))}
-    </>
-  )
+    ))
+    return renderArray(tags)
+  }
 }
+
+export default render
