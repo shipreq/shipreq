@@ -106,6 +106,12 @@ article.post > .body {
     padding: 0.4em 1ex;
   }
 
+  :not(pre) > code[class*="language-"] {
+    background: #272822aa;
+    padding-left: .6ex;
+    padding-right: .6ex;
+  }
+
   li ~ li {
     margin-top: .8em;
   }

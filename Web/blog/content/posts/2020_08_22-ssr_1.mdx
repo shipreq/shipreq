@@ -67,7 +67,7 @@ and now again with the Polyglot/Truffle API. Unlike previous attempts, this new 
 If "Oracle" makes you wary due to licencing, don't worry: there are two editions of Graal available.
 
 1. Community Edition (CE) which is completely free, and ~5% faster than the standard JVM
-2. Enterprise Edition (EE) which is not free, but has more JIT optimisations giving you 5-15% better runtime performance
+2. Enterprise Edition (EE) which is not free, and has more JIT optimisations giving you 5-15% better runtime performance
 
 We'll use Graal (not just locally but as the JVM you deploy to production with your app), so that it can execute JS.
 Specifically, it will execute the transpiled output of your <ScalaJS /> app.
@@ -119,7 +119,7 @@ familiar with <ScalaJS/> cross-projects in SBT. Thus I'll simply say,
 create a new cross-project in SBT that looks like this:
 
 ```scala
-val scalaGraalVer = "1.0.0"
+val scalaGraalVer = "1.0.1"
 
 lazy val webappSsr =
   crossProject("webapp-ssr")
@@ -157,7 +157,7 @@ This is going to give you a few things.
 * `webapp-ssr/js/src/main/scala` ← for exposing the React components that we'll equip with SSR
 * `webapp-ssr/jvm/src/main/scala` ← for performing the SSR from the JVM
 * `webapp-ssr/jvm/src/main/resources/webapp-ssr.js` ← SBT will automatically populate this with the output of the `webappSsrJs` module
-* Embedded JS is still JS; it doesn't speak Scala, even though you're on the JVM, so you need a communication protocol.
+* Embedded JS is still JS; it doesn't speak Scala, even though you're on the JVM. You need a communication protocol.
   We'll use <BooPickle/>, a very fast binary serialisation library, to marshall data back and forth between the JVM and JS-embedded-in-the-JVM.
 
 > Note: Whether you're enabling SSR on 1 page or 100 pages, you only need to create one SSR project.
@@ -189,11 +189,11 @@ object SsrSharedData {
 
 Here we're doing three things.
 
-1. We're declaring the name of the JS function that we'll soon export.
+1. With `SsrSharedData.Manifest.MySpa`, we're declaring the name of the JS function that we'll soon export.
     Its value can be anything so long as it's unique and doesn't conflict with anything
     available in the global JS environment.
-
-    It has to be a `final val` so that it can be used in annotations.
+    (It has to be a `final val` so that it can be used in annotations.
+    This is equivalent to the much-clearer `inline val` in Scala 3.)
 
 2. We declare a `MySpaInputs` class to contain all the inputs/args/props to our React component.
 
@@ -294,12 +294,15 @@ object MySsr {
 
 Let's break this down a bit.
 
-* We create a `val setup`, which is a mini-program/function/procedure that we can execute in JS.
-  We don't actually execute it here, just create it as an `Expr[Unit]`,
+* We create a `val setup`, which is a mini-program/function/procedure that we will later execute in JS.
+  We don't actually execute it here, we just prepare it in the form of an `Expr[Unit]`,
   meaning it will return `Unit` when you later choose to execute it.
+  This makes sense because it will statefully modify our sandbox JS environment, just like how if you
+  load a JS file in a browser using `<script>` tags you don't get a return value; the JS instead
+  creates global variables like `React` or `jQuery`.
 
 * The arguments we pass to `ReactSsr.Setup` need to load React itself, and optionally,
-  any other dependencies. You *must not* pass in your <ScalaJS/> output here.
+  any other dependencies. You <u>*must not*</u> pass in your <ScalaJS/> output here.
 
 * On the last line we have `>>` which means "and then".
   If you don't like `a >> b` you can also write it as `a.flatMap(_ => b)`.
@@ -318,8 +321,11 @@ Next we'll add a function (and pre-compile it) to call the endpoint we exported 
     Expr.fn1[MySpaInputs](Manifest.MySpa).compile(_.asString)
 ```
 
-The `1` in `.fn1` means our function has one argument.
-The `(_.asString)` function is where we process the JS function's output.
+* The `1` in `.fn1` means our function has one argument
+* `[MySpaInputs]` indicates the type of our function input
+* `Manifest.MySpa` is the name of the function we want invoked
+* `.compile` means we want to pre-compile this for future/repeated use
+* `_.asString` is how we process the JS function's output, and declare the return type
 
 Pretty easy. Now we've got a function that accepts `MySpaInputs`, automatically serialises
 them, calls the code that we exported above, and returns a String which is the rendered HTML.
@@ -342,16 +348,16 @@ Let's unpack this.
   or your component could throw a division-by-zero error --
   you'll have to handle these errors yourself.
 
-* We're creating a "context". In order to execute your JS, you need a little stateful
+* We're creating a Graal "context". In order to execute your JS, you need a little stateful
   sandbox for it. When React loads, it modifies the global state to make globals like `React`
-  and `ReactDOMServer` available. Here we're creating a `GraalContext`
-  which will give us our stateful sandbox.
+  and `ReactDOMServer` available. Calling `GraalContext()` here
+  will give us our stateful sandbox.
 
 * There are a number of different ways to create GraalContexts.
   The default `GraalContext()` is the same as `GraalContext.fixedContext()` meaning that
   a single (fixed) context will be created and reused for all `.eval` calls.
   It also means that if evaluate an expression that modifies global state, future `.eval`
-  calls will be affected.
+  calls will be see those global modifications.
   Check out the <SG/> doc if you want an asynchronous version or different semantics.
 
 > Note: if you're rendering an SPA, it needs to know which route to render based on the URL.
@@ -362,9 +368,9 @@ So, this works! We did it!
 
 But it does have a flaw as far as SSR is concerned.
 On each request, this approach would
-create a new context, spend time loading React, any deps, and all of your Scala.JS into it,
+create a new context, spend time loading React, any dependencies, and all of your Scala.JS into it,
 and then when it finally gets around to calling your component, it will do so slowly
-because the env/context/sandbox is new and cold (just like cold vs hot JVMs).
+because the Graal context / sandbox / environment is new and cold, just like cold vs hot JVMs.
 
 That's terribly inefficient so let's fix that by replacing the last snippet with this:
 
@@ -388,12 +394,15 @@ Now as to how fast that's going to be, it depends on how many times you call it 
 It's likely to be about ~100ms,
 can become ~10ms after around 1000 runs,
 and if you spend ~30 sec doing 10000 runs, it comes down to ~1ms (for the same inputs).
-Ideally you'd want to warmup it with different inputs.
+If you warm up a function by calling it repeatedly with the same inputs it becomes very fast
+but unfortunately, if you then call the function with different inputs it will be slow again.
+Hopefully this is something Graal will improve in future releases but if you're going to warmup
+a function these days, you'd want to at least warm it up with different inputs.
 
 The point is, the performance is volatile.
 There are approaches to speed this up; <SG/> provides functionality for creating pools of contexts,
 and warming up contexts which you can use on startup.
 
 But there's an even better way. We can make this constant time (no more JIT fluctuation),
-and we can make it consistently take ~0ms. It doesn't work for all types of components,
+and we can make it consistently take ≤1ms. It doesn't work for all types of components,
 but it does work for many. This article is long enough so stay tuned for part 2...
