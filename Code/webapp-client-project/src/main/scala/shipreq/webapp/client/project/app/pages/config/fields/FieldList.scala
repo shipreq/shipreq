@@ -9,6 +9,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd.FieldUpdateOrder
+import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.Usage
@@ -170,10 +171,19 @@ object FieldList {
       }
     }
 
-    private val detailAllVisible  = renderDetailRule("All", "Visible")
-    private val detailUcOptional  = renderDetailRule(StaticReqType.UseCase.mnemonic.value, "Optional")
-    private val detailUcVisible   = renderDetailRule(StaticReqType.UseCase.mnemonic.value, "Visible")
-    private val detailDerivTagsOn = renderDetailRule("Derivative Tags", "Enabled")
+    private val detailAllVisible =
+      renderDetailRule("All", "Visible")
+
+    private val detailUcOptional =
+      renderDetailRule(StaticReqType.UseCase.mnemonic.value, "Optional")
+
+    private val detailUcVisible =
+      renderDetailRule(StaticReqType.UseCase.mnemonic.value, "Visible")
+
+    private val detailDerivTagsOn = {
+      val icon = Icon.Sitemap.tag(*.fieldListDetailDerivativeTagsIcon)
+      renderDetailRule(TagMod(icon, "Derivative Tags"), "Enabled")
+    }
 
     def render(p: Props): VdomNode = {
 

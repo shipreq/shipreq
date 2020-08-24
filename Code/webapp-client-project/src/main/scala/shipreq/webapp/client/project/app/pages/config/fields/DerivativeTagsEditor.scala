@@ -9,7 +9,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.ui.semantic.{Icon, Input, Segment, Size, Table}
+import shipreq.webapp.base.ui.semantic.{Icon, Input, Message, Segment, Table}
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
@@ -64,19 +64,17 @@ private[fields] object DerivativeTagsEditor {
 
     private val container      = Segment.tag
     private val matrixCellSame = TagMod(*.derivativeTagMatrixSame)
-    private val matrixCellNone = TagMod(*.derivativeTagMatrixNone, "(both)", ^.title := "These two tags will not be merged.\nThey will both remain as is.")
+    private val matrixCellNone = TagMod(*.derivativeTagMatrixNone, "(both)", ^.title := "These two tags will not be combined.\nThey will both remain as is.")
 
-    private val featureDesc =
-      <.div(*.derivativeTagsEditorDesc,
-        <.div(*.derivativeTagsEditorDescLeft,
-          Icon.InfoCircle.withSize(Size.Big).tagNoMargin,
-        ),
-        <.div(*.derivativeTagsEditorDescRight,
-          "Keeping tags up-to-date is normally tedious and error prone as the volume of requirements increases.",
-          " By enabling derivative tags, ShipReq will automatically assign tags to requirements based on the tags of related requirements.",
-          " You specify how pairs of tags should be combined and ShipReq does the rest.",
-        )
+    private val featureDesc = {
+      val style = Message.Style(Message.Type.Info)
+      val desc = TagMod(
+        "Keeping tags up-to-date is normally tedious and error prone as the volume of requirements increases.",
+        " By enabling derivative tags, ShipReq will automatically assign tags to requirements based on the tags of related requirements.",
+        " You specify how pairs of tags should be combined and ShipReq does the rest.",
       )
+      Message(style, Icon.Sitemap, desc)
+    }
 
     private def renderToggle(p: Props, enabled: Enabled): VdomNode =
       Input.Checkbox.fromStateSnapshot(
@@ -148,11 +146,15 @@ private[fields] object DerivativeTagsEditor {
         renderToggle(p, Enabled),
         featureDesc)
 
-    private def renderWhenOn(p: Props, tagGroupId: TagGroupId): VdomNode =
+    private def renderWhenOn(p: Props, id: TagGroupId): VdomNode = {
+      val tag = p.cfg.tags.needTagGroup(id)
       container(
         renderToggle(p, Enabled),
-        renderMatrix(p, tagGroupId).whenDefined,
-        renderRuleEditor(p, tagGroupId))
+        featureDesc,
+        <.div(tag.name, " combination rules:"),
+        renderMatrix(p, id).whenDefined,
+        renderRuleEditor(p, id))
+    }
 
     def render(p: Props): VdomNode =
       p.tagGroupId match {

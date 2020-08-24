@@ -1,5 +1,5 @@
   core-js                   38.02 KB   88.4%
-<self>                      602.68 KB  41.1%
+<self>                      602.72 KB  41.1%
   <self>                    5.01 KB    11.6%
 lodash                      139.84 KB  9.53%
 react-svg-pan-zoom          102.51 KB  6.99%
@@ -23,7 +23,7 @@ clipboard-polyfill          8.57 KB    0.584%
 eventemitter3               8.44 KB    0.575%
 autosize                    8.13 KB    0.554%
 react-is                    7.59 KB    0.517%
-compute-scroll-into-view    7.49 KB    0.511%
+compute-scroll-into-view    7.49 KB    0.510%
 inline-style-parser         4.94 KB    0.337%
 textarea-caret              4.36 KB    0.297%
 screenfull                  3.95 KB    0.269%

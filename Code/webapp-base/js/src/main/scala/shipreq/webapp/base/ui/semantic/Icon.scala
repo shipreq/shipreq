@@ -723,7 +723,7 @@ object Icon {
   // case object SignOut                           extends Unmodified("sign out")
   // case object Signup                            extends Unmodified("signup")
   // case object Simplybuilt                       extends Unmodified("simplybuilt")
-  // case object Sitemap                           extends Unmodified("sitemap")
+  case object Sitemap                           extends Unmodified("sitemap")
   // case object Skyatlas                          extends Unmodified("skyatlas")
   // case object Skype                             extends Unmodified("skype")
   // case object Slack                             extends Unmodified("slack")

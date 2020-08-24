@@ -365,7 +365,6 @@ object FieldConfigTest extends TestSuite {
 
       clickNew("Tag field")
         +> filterDead.assert(HideDead)
-        +> messageHeader.assert.empty
         +> editorDropdown.assert.contains("")
         +> editorDropdownError.assert(true) // blank
         +> editorDropdownItems.assert("Nada", "Surprise")
@@ -374,7 +373,6 @@ object FieldConfigTest extends TestSuite {
 
         >> clickFilterDead
         +> filterDead.assert(ShowDead)
-        +> messageHeader.assert.empty
         +> editorDropdown.assert.contains("")
         +> editorDropdownError.assert(true) // blank
         +> editorDropdownItems.assert("Nada", "Surprise")
@@ -383,7 +381,6 @@ object FieldConfigTest extends TestSuite {
         +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Disabled))
 
         >> setEditorDropdown("Surprise")
-        +> messageHeader.assert.empty
         +> editorDropdown.assert.contains("Surprise")
         +> editorDropdownError.assert(false)
         +> editorDropdownItems.assert("Nada", "Surprise")

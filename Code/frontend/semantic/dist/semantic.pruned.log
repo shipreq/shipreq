@@ -1066,7 +1066,7 @@
     40 [remove] i.icon.dashboard:before
     46 [remove] i.icon.comment.outline:before
     47 [remove] i.icon.comments.outline:before
-    38 [remove] i.icon.sitemap:before
+    38 [keep  ] i.icon.sitemap:before
     35 [remove] i.icon.idea:before
     36 [remove] i.icon.alarm:before
     39 [remove] i.icon.terminal:before

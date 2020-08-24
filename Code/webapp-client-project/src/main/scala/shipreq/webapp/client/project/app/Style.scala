@@ -911,6 +911,10 @@ object Style extends StyleSheet.Inline {
       marginTop(0.2 em),
     )
 
+    val fieldListDetailDerivativeTagsIcon = style(
+      marginLeft(`0`),
+      marginRight(.7 ex))
+
     val rulesEditor = style(
       addClassNames("table", "ui", "single", "line", "table")
     )
@@ -980,19 +984,6 @@ object Style extends StyleSheet.Inline {
 
     val derivativeTagsEditorContainer = style(
       marginTop(1 em))
-
-    val derivativeTagsEditorDesc = style(
-      display.flex,
-      margin.vertical(1 em))
-
-    val derivativeTagsEditorDescLeft = style(
-      color(c"#777"),
-      paddingLeft(1 ex),
-      paddingRight(1 ex))
-
-    val derivativeTagsEditorDescRight = style(
-      color(c"#666"),
-      flexGrow(1))
 
     val derivativeTagsEditor = styleF(D.validity)(validity => styleS(
       monospace,
