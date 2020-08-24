@@ -14,6 +14,19 @@ import shipreq.base.util.ScalaExt.StringBuilderExt
 
 object Util {
 
+  // Immutable maps are optimised at low values to not even create a hash map
+  def memoWithMapVar[K: UnivEq, V](f: K => V): K => V = { // TODO Add to microlibs
+    var m = Map.empty[K, V]
+    k =>
+      if (m.contains(k))
+        m(k)
+      else {
+        val v = f(k)
+        m = m.updated(k, v)
+        v
+      }
+  }
+
   def quickJSB(f: java.lang.StringBuilder => Unit): String = {
     val sb = new java.lang.StringBuilder
     f(sb)

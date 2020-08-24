@@ -1459,12 +1459,12 @@ object Style extends StyleSheet.Inline {
       addClassName(s"ui label ${tagLabelColour(live)}"),
     )}
 
-    val tagInText = styleF(D.`live * validity`){ case (l, v) => styleS(
-      tagBase(l, helpIconOnHover = true),
-      (l, v) match {
+    val tagInText = styleF(D.`live * validity * bool`) { case ((live, validity), helpIconOnHover) => styleS(
+      tagBase(live, helpIconOnHover = helpIconOnHover),
+      (live, validity) match {
         case (Live, Valid)   => styleS(refColour)
         case (Live, Invalid) => styleS(hasError, textDecoration := ^.lineThrough)
-        case (Dead, _)       => deadMaybeValid(v)
+        case (Dead, _)       => deadMaybeValid(validity)
       },
     )}
 

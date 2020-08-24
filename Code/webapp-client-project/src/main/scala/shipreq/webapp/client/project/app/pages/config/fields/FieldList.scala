@@ -13,7 +13,7 @@ import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.Usage
-import shipreq.webapp.client.project.widgets.ProjectWidgets
+import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewTags}
 
 object FieldList {
 
@@ -39,6 +39,8 @@ object FieldList {
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
+
+  private implicit def tagDisplaySettings = ViewTags.DisplaySettings.plain
 
   private def fieldKey(f: FieldId): Key =
     f match {
@@ -219,7 +221,7 @@ object FieldList {
             case f: CustomField.Implication    => renderDetailRules(p, f.fieldReqTypeRulesByResolution)(impossible)
 
             case f: CustomField.Tag =>
-              val reqTypeRules   = renderDetailRules(p, f.fieldReqTypeRulesByResolution)(p.pw.tagSimple(_, includeDesc = true))
+              val reqTypeRules   = renderDetailRules(p, f.fieldReqTypeRulesByResolution)(p.pw.viewTags(_).render)
               val derivativeTags = TagMod.when(f.derivativeTags.enabled is Enabled)(detailDerivTagsOn)
               <.div(reqTypeRules, derivativeTags)
 

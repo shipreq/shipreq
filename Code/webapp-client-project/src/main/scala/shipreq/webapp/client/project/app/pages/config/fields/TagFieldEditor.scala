@@ -17,7 +17,7 @@ import shipreq.webapp.base.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.base.ui.widgets.{Dropdown, Form}
 import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.{ProjectWidgets, ReqTypeRulesEditor}
+import shipreq.webapp.client.project.widgets.{ProjectWidgets, ReqTypeRulesEditor, ViewTags}
 
 object TagFieldEditor {
   import DataImplicits._
@@ -187,11 +187,13 @@ object TagFieldEditor {
 
   // ===================================================================================================================
 
+  private implicit def tagDisplaySettings = ViewTags.DisplaySettings.plain
+
   private def render(p: Props): VdomNode =
     if (p.isPossible) {
 
       val renderDefault: ApplicableTagId ~=> VdomNode =
-        Reusable.implicitly(p.pw).map(pw => id => pw.tagSimple(id, includeDesc = true))
+        Reusable.implicitly(p.pw).map(pw => id => pw.viewTags(id).render)
 
       val reqTypeRules =
         ReqTypeRulesEditor.ApplicableTagDefault.Component(

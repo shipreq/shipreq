@@ -8,7 +8,8 @@ import japgolly.scalajs.react.vdom.VdomElement
 import monocle.Lens
 import org.scalajs.dom.window
 import shipreq.base.util.{Allow, ErrorMsg}
-import shipreq.webapp.base.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId}
+import shipreq.webapp.base.data.derivation.VirtualProjectTags
+import shipreq.webapp.base.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId, Tags}
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.feature.AsyncFeature.Implicits._
 import shipreq.webapp.base.feature._
@@ -30,7 +31,7 @@ import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.Usage
-import shipreq.webapp.client.project.widgets.{NewReqButton, ProjectWidgets, ViewReqCache, ViewReqDataCache}
+import shipreq.webapp.client.project.widgets.{NewReqButton, ProjectWidgets, ViewReqCache, ViewReqDataCache, ViewTags}
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object LoadedRoot {
@@ -91,8 +92,14 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     private val pxProjectName: Px[Project.Name] =
       pxProject.map(_.name).withReuse
 
+    private val pxVirtualTags: Px[VirtualProjectTags] =
+      pxProject.map(_.virtualTags) // TODO Can we have reusability?
+
     private val pxProjectConfig: Px[ProjectConfig] =
       pxProject.map(_.config).withReuse
+
+    private val pxTags: Px[Tags] =
+      pxProject.map(_.config.tags).withReuse
 
     private val pxEditEditability: Px[EditorFeature.Editability.ForProject] =
       pxProject.map(EditorFeature.Editability.apply)
@@ -121,8 +128,11 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     private val pxTextSearch: Px[TextSearch] =
       Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
 
+    private val pxViewTags: Px[ViewTags] =
+      Px.apply2(pxVirtualTags, pxTags)(ViewTags.apply)
+
     private val pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]] =
-      Reusable byRef Px.apply2(pxProject, pxPlainText)(ProjectWidgets(_, _, reqDetailRC, webWorkerClient))
+      Reusable byRef Px.apply3(pxProject, pxPlainText, pxViewTags)(ProjectWidgets(_, _, _, reqDetailRC, webWorkerClient))
 
     private val pxViewReqDataCache: Px[ViewReqDataCache] =
       pxProject.map(ViewReqDataCache.apply)

@@ -12,7 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.ui.semantic.{Icon, Input, Message, Segment, Table}
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.ProjectWidgets
+import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewTags}
 
 private[fields] object DerivativeTagsEditor {
 
@@ -57,6 +57,8 @@ private[fields] object DerivativeTagsEditor {
 
   // ===================================================================================================================
 
+  private implicit def tagDisplaySettings = ViewTags.DisplaySettings.plain
+
   final class Backend($: BackendScope[Props, Unit]) {
 
     private val ssRuleEditor =
@@ -99,11 +101,11 @@ private[fields] object DerivativeTagsEditor {
         for (rowTag <- tags.tags) {
           val rowAbb     = tags.abbreviations(rowTag)
           val rowKey     = ^.key := rowTag.id.value
-          val rowTagVdom = pw.tagWithCustomName(rowTag, rowAbb)
+          val rowTagVdom = pw.viewTags(rowTag).withCustomName(rowAbb).render
           head += <.th(rowKey, rowTagVdom)
 
           val row = VdomArray.empty()
-          row += <.td(^.key := "h", pw.tagSimple(rowTag, includeDesc = true))
+          row += <.td(^.key := "h", pw.viewTags(rowTag).render)
           for (colTag <- tags.tags) {
 
             val content: TagMod =
@@ -114,7 +116,7 @@ private[fields] object DerivativeTagsEditor {
                   case Some(tagId) =>
                     val tag = p.cfg.tags.needApplicableTag(tagId)
                     val abb = tags.abbreviations(tag)
-                    pw.tagWithCustomName(tag, abb)
+                    pw.viewTags(tag).withCustomName(abb).render
                   case None =>
                     matrixCellNone
                 }

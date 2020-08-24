@@ -26,9 +26,10 @@ object ProjectWidgets {
 
   def apply[Ctx <: ProjectText.Context](project    : Project,
                                         plainText  : PlainText.ForProject[Ctx],
+                                        viewTags   : ViewTags,
                                         reqDetailRC: RouterCtl[ExternalPubid],
                                         webWorker  : WebWorkerClient.Instance): ProjectWidgets[Ctx] =
-    new ProjectWidgets(project, plainText, reqDetailRC, webWorker)
+    new ProjectWidgets(project, plainText, viewTags, reqDetailRC, webWorker)
 
   implicit def subst1[F[_], C <: ProjectText.Context](pw: F[ProjectWidgets[C]]): F[ProjectWidgets.AnyCtx] =
     pw.asInstanceOf[F[AnyCtx]]
@@ -77,6 +78,7 @@ object ProjectWidgets {
 
 final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
                                                         val plainText: PlainText.ForProject[Ctx],
+                                                        val viewTags : ViewTags,
                                                         reqDetailRC  : RouterCtl[ExternalPubid],
                                                         webWorker    : WebWorkerClient.Instance)
     extends ProjectText[Ctx, VdomTag](project, plainText.ctx) {
@@ -87,7 +89,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     PubidFormat.validWhenDead.pubids(ids)
 
   override protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): VdomTag =
-    renderVector(ids, sepSpace)(id => tagPlain(validity(id))(id))
+    viewTags.vectorById(ids, sepSpace, validity)(ViewTags.DisplaySettings.plainWithHelpCursor)
 
   override protected def _text(text: AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity): VdomTag =
     <.span(text.map(textAtom(live, tagValidity)): _*)
@@ -286,47 +288,6 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     }
   }
 
-  private def _genericTag(c: Contextualise, t: ApplicableTag, name: String, includeDesc: Boolean): VdomTag = {
-    var desc = ""
-    if (includeDesc) {
-      desc =
-        if (name.compareToIgnoreCase(t.key.value) == 0)
-          ""
-        else
-          G.hashRefKey.prefix ~ t.key.value
-      for (d <- t.desc) {
-        if (desc.nonEmpty)
-          desc += "\n\n"
-        desc += d
-      }
-    }
-    val displayTxt = c match {
-      case Contextualise => G.hashRefKey.prefix ~ name
-      case Plain         => name
-    }
-    <.span(
-      TagMod.when(desc.nonEmpty)(^.title := desc),
-      displayTxt)
-  }
-
-  private val tagWithoutStyleMemo: Boolean => Contextualise => ApplicableTag => VdomTag =
-    Memo.bool { includeDesc =>
-      Contextualise.memo { c =>
-
-        def render(t: ApplicableTag): VdomTag =
-          _genericTag(c, t, t.name, includeDesc)
-
-        val memo = Memo.by((_: ApplicableTag).id)(render)
-
-        tag =>
-          // TagConfig create a fake ApplicableTag with id of -1 to render new tags live before they're saved
-          if (tag.id.value >= 0)
-            memo(tag)
-          else
-            render(tag)
-      }
-    }
-
   private val h1            = <.h1(*.h1)
   private val h2            = <.h2(*.h2)
   private val h3            = <.h3(*.h3)
@@ -337,9 +298,6 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
   private val italic        = <.em
   private val strikethrough = <.span(*.strikethrough)
   private val underline     = <.span(*.underline)
-
-  private def tagWithoutStyle(c: Contextualise, t: ApplicableTag, includeDesc: Boolean): VdomTag =
-    tagWithoutStyleMemo(includeDesc)(c)(t)
 
   private def textAtom(liveText: Live, tagValidity: ApplicableTagId => Validity): Atom.AnyAtom => TagMod = {
     import Atom._
@@ -379,8 +337,9 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
 
       case a: TagRef          # TagRef         =>
         val tag = project.config.tags.needApplicableTag(a.value)
-        val valid = tagValidity(tag.id) & Invalid.when(liveText.is(Live) && tag.live.is(Dead))
-        tagWithoutStyle(Contextualise, tag, includeDesc = true)(*.tagInText((tag.live, valid)))
+        viewTags(tag)
+          .withValidity(tagValidity(tag.id) & Invalid.when(liveText.is(Live) && tag.live.is(Dead)))
+          .render(ViewTags.DisplaySettings.inText)
     }
 
     atom
@@ -459,27 +418,6 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       case None     => <.span("?")
     }
 
-  private def tagColour(o: Option[Colour], live: Live): TagMod =
-    // Do nothing if Dead because of the *.tag style and tagLabelColour which results in .ui.label.grey for dead tags
-    TagMod.when(live is Live) {
-      val c = o.getOrElse(Colour.tagDefault)
-      TagMod(
-        ^.backgroundColor := c.value,
-        ^.borderColor     := c.value,
-        ^.color           := c.foreground.value,
-      )
-    }
-
-  private val tagPlain: Validity => ApplicableTagId => VdomTag =
-    Validity.memo { validity =>
-      Memo { id =>
-        val tag = project.config.tags.needApplicableTag(id)
-        tagWithoutStyle(Plain, tag, includeDesc = true)(
-          *.tag(((tag.live, validity), true)),
-          tagColour(tag.colour, tag.live))
-      }
-    }
-
   override def useCaseStepTextAndFlow(step: UseCaseStepFlowText.TextAndFlow[AnyOptional, Set[UseCaseStepId]], live: Live): VdomTag =
     makeUseCaseStepTextAndFlow(step, live)(useCaseFlowElementsById(_).iterator())
 
@@ -487,33 +425,10 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     if (newCtx ==* ctx)
       this.asInstanceOf[ProjectWidgets[Ctx2]]
     else
-      ProjectWidgets(project, plainText withCtx newCtx, reqDetailRC, webWorker)
+      ProjectWidgets(project, plainText withCtx newCtx, viewTags, reqDetailRC, webWorker)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Public additions not part of ProjectText
-
-  /** Simple here means:
-    *
-    * - title optional
-    * - no cursor:help style if title
-    * - no concept of Validity (Live vs Dead is still respected)
-    * - no contextualisation
-    */
-  def tagSimple(id: ApplicableTagId, includeDesc: Boolean): VdomTag = {
-    val tag = project.config.tags.needApplicableTag(id)
-    tagSimple(tag, includeDesc)
-  }
-
-  private def tagStyle(tag: ApplicableTag): TagMod =
-    TagMod(
-      *.tag(((tag.live, Valid), false)),
-      tagColour(tag.colour, tag.live))
-
-  def tagSimple(tag: ApplicableTag, includeDesc: Boolean): VdomTag =
-    tagWithoutStyle(Plain, tag, includeDesc = includeDesc)(tagStyle(tag))
-
-  def tagWithCustomName(tag: ApplicableTag, name: String): VdomTag =
-    _genericTag(Plain, tag, name, includeDesc = true)(tagStyle(tag))
 
   def useCaseStepTextAndMaybeInvalidFlow[C[x] <: Iterable[x]](s: UseCaseStepFlowText.TextAndFlow[AnyOptional, C[String \/ UseCaseStepId]],
                                                               l: Live): VdomTag = {

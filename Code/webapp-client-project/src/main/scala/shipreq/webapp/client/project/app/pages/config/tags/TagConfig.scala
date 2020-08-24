@@ -17,7 +17,7 @@ import shipreq.webapp.base.ui.{GeneralTheme, Toast}
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.lib.Usage
-import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, EditorButtons, ProjectWidgets, SplitScreenCrud}
+import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, EditorButtons, ProjectWidgets, SplitScreenCrud, ViewTags}
 
 object TagConfig {
 
@@ -82,6 +82,8 @@ object TagConfig {
     splitScreenCrud.initState(NewTagType.Tag)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private implicit def tagDisplaySettings = ViewTags.DisplaySettings.plainNoHover
 
   private val rightEmpty =
     SplitScreenCrud.emptyEditorMessage("tag")
@@ -207,14 +209,14 @@ object TagConfig {
           case \/-(id: ApplicableTagId) =>
             var tag = p.project.config.tags.needApplicableTag(id)
             colourOverride.foreach(c => tag = tag.copy(colour = c))
-            p.pw.tagSimple(tag, includeDesc = false)(*.editorApTagHeader)
+            p.pw.viewTags(tag).render.apply(*.editorApTagHeader)
 
           case -\/(NewTagType.Tag) =>
             ateState.flatMap(s => DataValidators.hashRefKey.hashRefKey.stateless.unnamed(s.key).toOption) match {
 
               case Some(k) =>
                 val tag = Shared.fakeApplicableTag.copy(key = k, colour = colourOverride.flatten)
-                <.span("New tag: ", p.pw.tagSimple(tag, includeDesc = false)(*.editorApTagHeader))
+                <.span("New tag: ", p.pw.viewTags(tag).render.apply(*.editorApTagHeader))
 
               case None =>
                 "New tag"
