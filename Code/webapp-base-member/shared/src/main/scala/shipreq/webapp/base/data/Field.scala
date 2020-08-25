@@ -446,7 +446,9 @@ object CustomField {
 
     final case class Id(value: Int) extends CustomFieldId  {
       override def toString = s"CustomField.Tag.Id($value)"
+      val some = Some(this)
     }
+
     object IdAccess extends ObjDataId[Tag.type, Tag, Id] {
       override def id(d: Tag) = d.id
       override val unapplyData: AnyRef => Option[Tag] = {case r: Tag => Some(r); case _ => None}
