@@ -328,34 +328,34 @@ object VirtualProjectTags {
                   if (hasManual) {
                     // Discard parents' manuals and override with our own
                     manuals.map(DerivativeTagFactor.Relation(nodeId, Backwards, _, TagProvenance.Manual))
-                  } else node.liveDefaults.get(f.fieldId) match {
-                    case None =>
+
+                  } else if (node.liveDefaults.contains(f.fieldId)) {
+
+                    // Combine parents' values with our default and see if parents' values are relevant
+                    val d = node.liveDefaults(f.fieldId)
+                    val ourDefault = Set1(d)
+                    var results = ourDefault
+
+                    parentsManuals.foreach {
+                      case DerivativeTagFactor.Relation(_, _, tag, _) if tag !=* d =>
+                        results = dt.add(results, tag)
+                      case _ =>
+                    }
+
+                    if (debugDerivativeTags) {
+                      println(s"(${nodeId.value})               parentsManual: $parentsManuals")
+                      println(s"(${nodeId.value})                 ourDefaults: $ourDefault")
+                      println(s"(${nodeId.value}) ourDefaultAndParentsManuals: $results")
+                    }
+
+                    // Parent's values changed nothing - ignore them
+                    if (results ==* ourDefault)
+                      Set1(DerivativeTagFactor.Relation(nodeId, Backwards, d, TagProvenance.Default))
+                    else
                       parentsManuals
 
-                    case Some(d) =>
-
-                      // Combine parents' values with our default and see if parents' values are relevant
-                      val ourDefault = Set1(d)
-                      var results = ourDefault
-
-                      parentsManuals.foreach {
-                        case DerivativeTagFactor.Relation(_, _, tag, _) if tag !=* d =>
-                          results = dt.add(results, tag)
-                        case _ =>
-                      }
-
-                      if (debugDerivativeTags) {
-                        println(s"(${nodeId.value})               parentsManual: $parentsManuals")
-                        println(s"(${nodeId.value})                 ourDefaults: $ourDefault")
-                        println(s"(${nodeId.value}) ourDefaultAndParentsManuals: $results")
-                      }
-
-                      // Parent's values changed nothing - ignore them
-                      if (results ==* ourDefault)
-                        Set1(DerivativeTagFactor.Relation(nodeId, Backwards, d, TagProvenance.Default))
-                      else
-                        parentsManuals
-                  }
+                  } else
+                      parentsManuals
 
                 // Add data from parents
                 if (relevantManuals eq parentsManuals)
@@ -700,10 +700,10 @@ object VirtualProjectTags {
       b.naTagsInLiveText
 
     override def derivativeTagFactors(f: CustomField.Tag.Id) =
-      dtFactors.get(f) match {
-        case Some(m) => m.value(reqId)
-        case None    => Set.empty
-      }
+      if (dtFactors.contains(f))
+        dtFactors(f).value(reqId)
+      else
+        Set.empty
 
     private val childrenSummaries: CustomField.Tag.Id => ChildrenSummary =
       Memo(new ChildrenSummaryImpl(reqId, _, mutableResults))
@@ -721,47 +721,46 @@ object VirtualProjectTags {
     import mutableResults._
 
     private lazy val _aggregated: (Map[Option[ApplicableTagId], Double], Int) =
-      dtFactors.get(fieldId) match {
-        case Some(allFactors) =>
+      if (dtFactors.contains(fieldId)) {
+        val allFactors = dtFactors(fieldId)
 
-          // Group by reqId
-          val byReq = mutable.HashMap.empty[ReqId, MutableRef[List[ApplicableTagId]]]
+        // Group by reqId
+        val byReq = mutable.HashMap.empty[ReqId, MutableRef[List[ApplicableTagId]]]
 
-          def add(reqId: ReqId, tag: ApplicableTagId): Unit =
-            byReq.getOrElseUpdate(reqId, MutableRef(Nil)).mod(tag :: _)
+        def add(reqId: ReqId, tag: ApplicableTagId): Unit =
+          byReq.getOrElseUpdate(reqId, MutableRef(Nil)).mod(tag :: _)
 
-          allFactors.value(reqId).foreach {
-            case DerivativeTagFactor.EmptyRelation(req, Forwards)    => add(req, null)
-            case DerivativeTagFactor.Relation(req, Forwards, tag, _) => add(req, tag)
-            case _                                                   => ()
+        allFactors.value(reqId).foreach {
+          case DerivativeTagFactor.EmptyRelation(req, Forwards) => add(req, null)
+          case DerivativeTagFactor.Relation(req, Forwards, tag, _) => add(req, tag)
+          case _ => ()
+        }
+
+        // Aggregate by tag
+        val agg = mutable.HashMap.empty[ApplicableTagId, MutableRef[Double]]
+        var noTag = 0d
+        var total = 0
+        for (ref <- byReq.valuesIterator) {
+          total += 1
+          val tags = ref.value
+          val length = tags.length
+          val weight = if (length > 1) 1d / length.toDouble else 1d
+          tags foreach {
+            case null => noTag += weight
+            case t => agg.getOrElseUpdate(t, MutableRef.double()).mod(_ + weight)
           }
+        }
 
-          // Aggregate by tag
-          val agg = mutable.HashMap.empty[ApplicableTagId, MutableRef[Double]]
-          var noTag = 0d
-          var total = 0
-          for (ref <- byReq.valuesIterator) {
-            total += 1
-            val tags = ref.value
-            val length = tags.length
-            val weight = if (length > 1) 1d / length.toDouble else 1d
-            tags foreach {
-              case null => noTag += weight
-              case t    => agg.getOrElseUpdate(t, MutableRef.double()).mod(_ + weight)
-            }
-          }
+        // Reorganise results
+        var results = Map.empty[Option[ApplicableTagId], Double]
+        results = agg.foldLeft(results) { case (q, (k, v)) => q.updated(Some(k), v.value) }
+        if (noTag > 0d)
+          results = results.updated(None, noTag)
 
-          // Reorganise results
-          var results = Map.empty[Option[ApplicableTagId], Double]
-          results = agg.foldLeft(results) { case (q, (k, v)) => q.updated(Some(k), v.value) }
-          if (noTag > 0d)
-            results = results.updated(None,noTag)
+        (results, total)
 
-          (results, total)
-
-        case None =>
-          (Map.empty, 0)
-      }
+      } else
+        (Map.empty, 0)
 
     override def aggregated = _aggregated._1
     override def total      = _aggregated._2
