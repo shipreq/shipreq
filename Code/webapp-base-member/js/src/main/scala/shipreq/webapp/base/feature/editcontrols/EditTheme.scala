@@ -115,7 +115,7 @@ private[feature] object EditTheme {
     layout match {
 
       // Preview under, no controls
-      case Layout(mode, Some(Preview(pos @ Under, previewShown, collapsible)), None) =>
+      case Layout(mode, Some(Preview(pos: Under.type, previewShown, collapsible)), None) =>
         val preview = renderPreview(pos, mode)
 
         val collapsiblePreview: VdomNode =
@@ -132,7 +132,7 @@ private[feature] object EditTheme {
             collapsiblePreview))
 
       // Preview under, with controls
-      case Layout(mode, Some(Preview(pos @ Under, previewShown, collapsible)), Some(Controls(around, showControlsInitially))) =>
+      case Layout(mode, Some(Preview(pos: Under.type, previewShown, collapsible)), Some(Controls(around, showControlsInitially))) =>
         val preview = renderPreview(pos, mode)
 
         val collapsiblePreview: VdomNode =
@@ -172,7 +172,7 @@ private[feature] object EditTheme {
         }
 
       // Preview right, with controls
-      case Layout(mode, Some(Preview(pos @ Right, previewShown, _)), Some(Controls(around, showControlsInitially))) =>
+      case Layout(mode, Some(Preview(pos: Right.type, previewShown, _)), Some(Controls(around, showControlsInitially))) =>
         val preview = renderPreview(pos, mode)
 
         val previewControls =
@@ -207,7 +207,7 @@ private[feature] object EditTheme {
         }
 
       // Preview right, without controls
-      case Layout(mode, Some(Preview(pos @ Right, true, _)), None) =>
+      case Layout(mode, Some(Preview(pos: Right.type, true, _)), None) =>
         val preview = renderPreview(pos, mode)
 
         <.div(*.textEditorLeftPreviewRight(mode),

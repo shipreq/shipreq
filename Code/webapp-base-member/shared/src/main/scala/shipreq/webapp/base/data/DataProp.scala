@@ -207,7 +207,7 @@ object DataProp {
       Prop.atom[PubidRegister]("Pubid reqtype-to-req associations",
         pr => pr.value.m.iterator.map {
           case (rt: CustomReqTypeId, reqIds) => test(rt, reqIds)
-          case (rt@ UseCase        , reqIds) => test(rt, reqIds)
+          case (rt: UseCase.type   , reqIds) => test(rt, reqIds)
         }.find(_.isDefined).flatten
       ).contramap[T](_.pubids)
     }
