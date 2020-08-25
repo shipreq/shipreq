@@ -45,6 +45,7 @@ object VirtualProjectTags {
     def manualLiveValues: Multimap[ApplicableTagId, List, LocationOf.Tag.InReq]
     def naTagsInLiveText: Multimap[ApplicableTagId, List, Location.Text]
     def derivativeTagFactors(field: CustomField.Tag.Id): Set[DerivativeTagFactor]
+    val provenance: CustomField.Tag.Id => ApplicableTagId => TagProvenance
     def childrenSummary(field: CustomField.Tag.Id): ChildrenSummary
   }
 
@@ -704,6 +705,62 @@ object VirtualProjectTags {
         dtFactors(f).value(reqId)
       else
         Set.empty
+
+    override val provenance = Util.memoWithMapVar { f =>
+      import TagProvenance._
+
+      if (!dtFactors.contains(f)) {
+
+        // No derivative tags
+        val allManualTags = p.content.reqTags(reqId)
+        t =>
+          if (allManualTags.contains(t))
+            Manual
+          else
+            Default
+
+      } else {
+        val factors = dtFactors(f).value(reqId)
+        if (factors.isEmpty) {
+          // No derivative tag factors
+          val allManualTags = p.content.reqTags(reqId)
+          t =>
+            if (allManualTags.contains(t))
+              Manual
+            else
+              Default
+
+        } else {
+          // Inspect derivative tag factors
+          Util.memoWithMapVar { t =>
+            val it = factors.iterator
+            var result: TagProvenance = null
+            while (it.hasNext && (result eq null)) {
+              val fac = it.next()
+              fac match {
+                case DerivativeTagFactor.EmptySelf =>
+                  result =
+                    if (b.deadDefaults.contains(f) && b.deadDefaults(f) ==* t)
+                      Default
+                    else
+                      Derived
+                case DerivativeTagFactor.Self(tag, provenance) =>
+                  if (tag ==* t)
+                    result = provenance
+                case _ =>
+              }
+            }
+
+            if (result ne null)
+              result
+            else if (b.manualDead.m.contains(t))
+              Manual
+            else
+              Derived
+          }
+        }
+      }
+    }
 
     private val childrenSummaries: CustomField.Tag.Id => ChildrenSummary =
       Memo(new ChildrenSummaryImpl(reqId, _, mutableResults))

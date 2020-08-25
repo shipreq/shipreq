@@ -21,12 +21,18 @@ object VirtualProjectTagsTest extends TestSuite {
     val tags = p.virtualTags
     def req(id: ReqId) = PlainText.pubid(p.content.reqs.need(id).pubid, p)
     def tag(id: ApplicableTagId) = p.config.tags.needApplicableTag(id).name
-    def tagVec(ids: Vector[ApplicableTagId]) = ids.iterator.map(tag).mkString("{", " ", "}")
+    def resultTags(results: IterableOnce[String]) = results.iterator.mkString("{", " ", "}")
 
-    val showType: TagProvenance => String = {
+    val showProvenance: TagProvenance => String = {
       case TagProvenance.Default => "default"
       case TagProvenance.Derived => "derived"
       case TagProvenance.Manual  => "manual"
+    }
+
+    val provenanceSuffix: TagProvenance => String = {
+      case TagProvenance.Default => "?"
+      case TagProvenance.Derived => "+"
+      case TagProvenance.Manual  => ""
     }
 
     val showFactor: DerivativeTagFactor => String = {
@@ -38,10 +44,10 @@ object VirtualProjectTagsTest extends TestSuite {
         req(src) + ": ∅"
 
       case DerivativeTagFactor.Self(t, srcType) =>
-        s"self: ${tag(t)} (${showType(srcType)})"
+        s"self: ${tag(t)} (${showProvenance(srcType)})"
 
       case DerivativeTagFactor.Relation(r, _, t, srcType) =>
-        s"${req(r)}: ${tag(t)} (${showType(srcType)})"
+        s"${req(r)}: ${tag(t)} (${showProvenance(srcType)})"
     }
 
     type Item = ((Int, Int), String)
@@ -54,13 +60,24 @@ object VirtualProjectTagsTest extends TestSuite {
 
     def perReq: Iterator[Item] = {
       p.content.reqs.reqIterator().map { r =>
-        val pubid       = req(r.id)
-        val deadResults = tags(r.id, ShowDead).fieldOrdered(fieldId) |> tagVec
+        val pubid = req(r.id)
+        val mono = tags(r.id)
+
+        def results(fd: FilterDead): String =
+          tags(r.id, fd)
+            .fieldOrdered(fieldId)
+            .iterator
+            .map(t => tag(t) + provenanceSuffix(mono.provenance(fieldId)(t)))
+            .|>(resultTags)
+
+        val deadResults =
+          results(ShowDead)
+
         val liveResults =
           if (r.live(p.config.reqTypes) is Dead)
-            tagVec(Vector.empty)
+            resultTags(Nil)
           else
-            tags(r.id, HideDead).fieldOrdered(fieldId) |> tagVec
+            results(HideDead)
 
         val factors =
           MutableArray(

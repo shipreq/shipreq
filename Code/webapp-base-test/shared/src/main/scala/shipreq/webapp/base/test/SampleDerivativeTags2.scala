@@ -91,29 +91,29 @@ object SampleDerivativeTags2 {
       """FR-1
         |  + FR-3: readyForDev (default)
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-2
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-3
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-4
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |IV-1
         |  + FR-1: readyForDev (default)
         |  + FR-2: readyForDev (default)
         |  + FR-3: readyForDev (default)
         |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
+        |  = {analysed readyForDev+} // "analysed" is here because we never remove manual values
         |IV-2
         |  + self: needsAnalysis (default)
-        |  = {needsAnalysis}
+        |  = {needsAnalysis?}
         |IV-3
         |  + FR-4: readyForDev (default)
         |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
+        |  = {analysed readyForDev+} // "analysed" is here because we never remove manual values
         |MF-1
         |  + FR-1: readyForDev (default)
         |  + FR-2: readyForDev (default)
@@ -124,7 +124,7 @@ object SampleDerivativeTags2 {
         |  + IV-2: needsAnalysis (default)
         |  + IV-3: analysed (manual)
         |  + IV-3: readyForDev (derived)
-        |  = {needsAnalysis}
+        |  = {needsAnalysis+}
         |FB-1
         |  + FR-1: readyForDev (default)
         |  + FR-2: readyForDev (default)
@@ -136,7 +136,7 @@ object SampleDerivativeTags2 {
         |  + IV-3: analysed (manual)
         |  + IV-3: readyForDev (derived)
         |  + MF-1: needsAnalysis (derived)
-        |  = {needsAnalysis}
+        |  = {needsAnalysis+}
         |""".stripMargin
   }
 
@@ -146,29 +146,29 @@ object SampleDerivativeTags2 {
       """FR-1
         |  + FR-3: readyForDev (default)
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-2
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-3
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-4
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |IV-1
         |  + FR-1: readyForDev (default)
         |  + FR-2: readyForDev (default)
         |  + FR-3: readyForDev (default)
         |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
+        |  = {analysed readyForDev+} // "analysed" is here because we never remove manual values
         |IV-2
         |  + self: rejected (manual)
         |  = {rejected}
         |IV-3
         |  + FR-4: readyForDev (default)
         |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
+        |  = {analysed readyForDev+} // "analysed" is here because we never remove manual values
         |MF-1
         |  + FR-1: readyForDev (default)
         |  + FR-2: readyForDev (default)
@@ -179,7 +179,7 @@ object SampleDerivativeTags2 {
         |  + IV-2: rejected (manual)
         |  + IV-3: analysed (manual)
         |  + IV-3: readyForDev (derived)
-        |  = {readyForDev}
+        |  = {readyForDev+}
         |FB-1
         |  + FR-1: readyForDev (default)
         |  + FR-2: readyForDev (default)
@@ -191,7 +191,7 @@ object SampleDerivativeTags2 {
         |  + IV-3: analysed (manual)
         |  + IV-3: readyForDev (derived)
         |  + MF-1: readyForDev (derived)
-        |  = {readyForDev}
+        |  = {readyForDev+}
         |""".stripMargin
   }
 
@@ -201,13 +201,13 @@ object SampleDerivativeTags2 {
       """FR-1
         |  + FR-3: readyForDev (default)
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-2
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-3
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-4
         |  + self: implemented (manual)
         |  = {implemented}
@@ -216,14 +216,14 @@ object SampleDerivativeTags2 {
         |  + FR-2: readyForDev (default)
         |  + FR-3: readyForDev (default)
         |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
+        |  = {analysed readyForDev+} // "analysed" is here because we never remove manual values
         |IV-2
         |  + self: rejected (manual)
         |  = {rejected}
         |IV-3
         |  + FR-4: implemented (manual)
         |  + self: analysed (manual)
-        |  = {analysed implemented} // "analysed" is here because we never remove manual values
+        |  = {analysed implemented+} // "analysed" is here because we never remove manual values
         |MF-1
         |  + FR-1: readyForDev (default)
         |  + FR-2: readyForDev (default)
@@ -234,7 +234,7 @@ object SampleDerivativeTags2 {
         |  + IV-2: rejected (manual)
         |  + IV-3: analysed (manual)
         |  + IV-3: implemented (derived)
-        |  = {readyForDev}
+        |  = {readyForDev+}
         |FB-1
         |  + FR-1: readyForDev (default)
         |  + FR-2: readyForDev (default)
@@ -246,7 +246,7 @@ object SampleDerivativeTags2 {
         |  + IV-3: analysed (manual)
         |  + IV-3: implemented (derived)
         |  + MF-1: readyForDev (derived)
-        |  = {readyForDev}
+        |  = {readyForDev+}
         |""".stripMargin
   }
 
@@ -256,13 +256,13 @@ object SampleDerivativeTags2 {
       """FR-1
         |  + FR-3: readyForDev (default)
         |  + self: implemented (manual)
-        |  = {implemented readyForDev}
+        |  = {implemented readyForDev+}
         |FR-2
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-3
         |  + self: readyForDev (default)
-        |  = {readyForDev}
+        |  = {readyForDev?}
         |FR-4
         |  + self: implemented (manual)
         |  = {implemented}
@@ -272,14 +272,14 @@ object SampleDerivativeTags2 {
         |  + FR-2: readyForDev (default)
         |  + FR-3: readyForDev (default)
         |  + self: analysed (manual)
-        |  = {analysed readyForDev} // "analysed" is here because we never remove manual values
+        |  = {analysed readyForDev+} // "analysed" is here because we never remove manual values
         |IV-2
         |  + self: rejected (manual)
         |  = {rejected}
         |IV-3
         |  + FR-4: implemented (manual)
         |  + self: analysed (manual)
-        |  = {analysed implemented} // "analysed" is here because we never remove manual values
+        |  = {analysed implemented+} // "analysed" is here because we never remove manual values
         |MF-1
         |  + FR-1: implemented (manual)
         |  + FR-1: readyForDev (derived)
@@ -291,7 +291,7 @@ object SampleDerivativeTags2 {
         |  + IV-2: rejected (manual)
         |  + IV-3: analysed (manual)
         |  + IV-3: implemented (derived)
-        |  = {readyForDev}
+        |  = {readyForDev+}
         |FB-1
         |  + FR-1: implemented (manual)
         |  + FR-1: readyForDev (derived)
@@ -304,7 +304,7 @@ object SampleDerivativeTags2 {
         |  + IV-3: analysed (manual)
         |  + IV-3: implemented (derived)
         |  + MF-1: readyForDev (derived)
-        |  = {readyForDev}
+        |  = {readyForDev+}
         |""".stripMargin
   }
 
@@ -329,14 +329,14 @@ object SampleDerivativeTags2 {
         |  + FR-2: implemented (manual)
         |  + FR-3: implemented (manual)
         |  + self: analysed (manual)
-        |  = {analysed implemented} // "analysed" is here because we never remove manual values
+        |  = {analysed implemented+} // "analysed" is here because we never remove manual values
         |IV-2
         |  + self: rejected (manual)
         |  = {rejected}
         |IV-3
         |  + FR-4: implemented (manual)
         |  + self: analysed (manual)
-        |  = {analysed implemented} // "analysed" is here because we never remove manual values
+        |  = {analysed implemented+} // "analysed" is here because we never remove manual values
         |MF-1
         |  + FR-1: implemented (manual)
         |  + FR-2: implemented (manual)
@@ -347,7 +347,7 @@ object SampleDerivativeTags2 {
         |  + IV-2: rejected (manual)
         |  + IV-3: analysed (manual)
         |  + IV-3: implemented (derived)
-        |  = {implemented}
+        |  = {implemented+}
         |FB-1
         |  + FR-1: implemented (manual)
         |  + FR-2: implemented (manual)
@@ -359,7 +359,7 @@ object SampleDerivativeTags2 {
         |  + IV-3: analysed (manual)
         |  + IV-3: implemented (derived)
         |  + MF-1: implemented (derived)
-        |  = {implemented}
+        |  = {implemented+}
         |""".stripMargin
   }
 

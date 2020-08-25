@@ -68,11 +68,11 @@ object SampleDerivativeTags1 {
       |FR-2
       |  + MF-1: v2 (manual)
       |  + self: ∅
-      |  = {v2}
+      |  = {v2+}
       |FR-3
       |  + MF-1: v2 (manual)
       |  + self: ∅
-      |  = {v2}
+      |  = {v2+}
       |FR-4
       |  + self: v1 (manual)
       |  = {v1}
@@ -81,17 +81,17 @@ object SampleDerivativeTags1 {
       |  + FR-2: v2 (derived)
       |  + MF-1: v2 (manual)
       |  + self: ∅
-      |  = {v1 v2}
+      |  = {v1+ v2+}
       |IV-2
       |  + FR-3: v2 (derived)
       |  + MF-1: v2 (manual)
       |  + self: ∅
-      |  = {v2}
+      |  = {v2+}
       |IV-3
       |  + FR-4: v1 (manual)
       |  + MF-1: v2 (manual)
       |  + self: ∅
-      |  = {v1 v2}
+      |  = {v1+ v2+}
       |MF-1
       |  + FR-1: v1 (manual)
       |  + FR-2: v2 (derived)
@@ -103,7 +103,7 @@ object SampleDerivativeTags1 {
       |  + IV-3: v1 (derived)
       |  + IV-3: v2 (derived)
       |  + self: v2 (manual)
-      |  = {v1 v2}
+      |  = {v1+ v2}
       |FB-1
       |  + FR-1: v1 (manual)
       |  + FR-2: v2 (derived)
@@ -117,7 +117,7 @@ object SampleDerivativeTags1 {
       |  + MF-1: v1 (derived)
       |  + MF-1: v2 (manual)
       |  + self: ∅
-      |  = {v1 v2}
+      |  = {v1+ v2+}
       |""".stripMargin
 
 }
