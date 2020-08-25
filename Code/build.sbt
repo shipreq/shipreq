@@ -55,4 +55,4 @@ val utils                 = ShipReqBuild.utils
 val `scalafix-input`      = ScalafixBuild.`scalafix-input`
 val `scalafix-output`     = ScalafixBuild.`scalafix-output`
 val `scalafix-rules`      = ScalafixBuild.`scalafix-rules`
-//val `scalafix-tests`      = ScalafixBuild.`scalafix-tests`
+val `scalafix-tests`      = ScalafixBuild.`scalafix-tests`

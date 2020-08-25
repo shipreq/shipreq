@@ -29,7 +29,7 @@ object ShipReqBuild {
         ScalafixBuild.`scalafix-input`,
         ScalafixBuild.`scalafix-output`,
         ScalafixBuild.`scalafix-rules`,
-//        ScalafixBuild.`scalafix-tests`,
+        ScalafixBuild.`scalafix-tests`,
         base, taskman, webapp, utils, benchmarkJvm, benchmarkJs)
 
   /** All JS modules */
