@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.scalajs.react.vdom.html_<^.VdomTag
+import japgolly.scalajs.react.vdom.PackageBase._
 import scala.collection.immutable.SortedSet
 import shipreq.base.util._
 import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
@@ -13,9 +13,13 @@ import shipreq.webapp.client.project.widgets.ViewReq._
 /**
   * Easy means to view/render a requirement.
   */
-final case class ViewReq[A](data           : Data,
-                            pt             : ProjectText[ProjectText.Context, A],
-                            fmtReqTypeShort: Boolean) {
+final class ViewReq[A](data           : Data,
+                       pt             : ProjectText[ProjectText.Context, A],
+                       viewTags       : ViewTags.ForReq[A],
+                       fmtReqTypeShort: Boolean) {
+
+  def withFullReqTypeFmt: ViewReq[A] =
+    new ViewReq(data, pt, viewTags, false)
 
   def reqType: A = {
     val id = data.req.reqTypeId
@@ -56,25 +60,20 @@ final case class ViewReq[A](data           : Data,
   def pastPubids: A =
     pt pastPubids data.pastPubids
 
-  private val tagValidity: ApplicableTagId => Validity =
-    Invalid when data.invalidTags.contains(_)
-
   def otherTags: A =
-    pt.tagList(data.otherTags, data.live, Optional, tagValidity)
+    viewTags.vector(data.otherTags, viewTags.other)
 
   def allTags: A =
-    pt.tagList(data.allTags, data.live, Optional, tagValidity)
+    viewTags.vector(data.allTags, viewTags.all)
 
-  def fieldTags(id: CustomField.Tag.Id): IfApplicable[A] = {
-    val tags = data.customTags(id)
-    data.fieldRules.tag(id) match {
-      case Resolution.Optional      => \/-(pt.tagList(tags, data.live, Optional, tagValidity))
-      case Resolution.Mandatory     => \/-(pt.tagList(tags, data.live, Mandatory, tagValidity))
-      case Resolution.NotApplicable => NotApplicable.left
-      case Resolution.DefaultTo(d)  =>
-        val t = if (tags.isEmpty) Vector1(d) else tags
-        \/-(pt.tagList(t, data.live, Optional, tagValidity))
-    }
+  def fieldTags(fid: CustomField.Tag.Id): IfApplicable[A] = {
+    val tags = data.customTags(fid)
+    if (data.fieldRules.tag(fid).isNA)
+      NotApplicable.left
+    else if (tags.isEmpty && data.live.is(Live) && data.fieldRules.tag(fid).isMandatory)
+      \/-(pt.whenBlankButMandatory)
+    else
+      \/-(viewTags.vector(tags, viewTags.inField(fid)))
   }
 
   def text(id: CustomField.Text.Id): IfApplicable[A] =
@@ -116,6 +115,7 @@ object ViewReq {
   type ToVdom = ViewReq[VdomTag]
 
   final case class Data(req             : Req,
+                        filterDead      : FilterDead,
                         live            : Live,
                         codes           : Iterable[ReqCode.Value],
                         otherTags       : Vector[ApplicableTagId],
@@ -129,8 +129,11 @@ object ViewReq {
                         fieldRules      : FieldSetRules,
                        ) {
 
-    def apply[A](pt: ProjectText[ProjectText.Context, A]): ViewReq[A] =
-      ViewReq(this, pt, true)
+    def apply(pw: ProjectWidgets.AnyCtx): ToVdom =
+      apply(pw, pw.viewTags.forReq(filterDead)(req.id))
+
+    def apply[A](pt: ProjectText[ProjectText.Context, A], viewTags: ViewTags.ForReq[A]): ViewReq[A] =
+      new ViewReq(this, pt, viewTags, true)
   }
 
   object Data {
@@ -182,6 +185,7 @@ object ViewReq {
 
       Data(
         req              = req,
+        filterDead       = filterDead,
         live             = req.live(cfg.reqTypes),
         codes            = codes,
         otherTags        = tags.otherOrdered,

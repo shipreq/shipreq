@@ -207,7 +207,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
 
     protected def reusabilityRowEditor: Reusability[RowEditor]
 
-    protected def viewMaker(row: RowData, vi: ViewInput): Column => Reusable[TagMod]
+    protected def viewMaker(row: RowData, fd: FilterDead, vi: ViewInput): Column => Reusable[TagMod]
 
     protected def pubidClipboardData(row: RowData, vi: ViewInput): Option[() => ClipboardData]
 
@@ -249,7 +249,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
       val selBase     = <.td(*.selectionDataCell(cellStateFn(row.live)))
 
       val mkViewWhenApplicable: Column => Reusable[TagMod] =
-        viewMaker(row, p.viewInput)
+        viewMaker(row, p.filterDead, p.viewInput)
 
       def mkProps(c: Column, ok: Reusable[TagMod] => Cell.Props): Cell.Props =
         p.applicability(row, c) match {
@@ -336,11 +336,12 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
 
     override protected def reusabilityRowEditor = implicitly
 
-    override protected def viewMaker(row: RowData, vi: ViewInput): Column => Reusable[TagMod] = {
+    override protected def viewMaker(row: RowData, fd: FilterDead, vi: ViewInput): Column => Reusable[TagMod] = {
       val (cfg, pw, pubidFmt) = vi
 
       val viewReq = ViewReq.Data(
         req              = row.req,
+        filterDead       = fd,
         live             = row.live,
         codes            = row.exp.reqCodes.result,
         allTags          = row.exp.allTags.result,
@@ -398,7 +399,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
 
     override protected def pubidClipboardData(row: RowData, vi: ViewInput) = None
 
-    override protected def viewMaker(row: RowData, vi: ViewInput): Column => Reusable[TagMod] = {
+    override protected def viewMaker(row: RowData, fd: FilterDead, vi: ViewInput): Column => Reusable[TagMod] = {
       val pw = vi
 
       def ret(c: Column, view: => TagMod): Reusable[TagMod] =

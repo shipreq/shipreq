@@ -88,9 +88,6 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
   override protected def _implicationList(ids: Vector[Pubid]): VdomTag =
     PubidFormat.validWhenDead.pubids(ids)
 
-  override protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): VdomTag =
-    viewTags.vectorById(ids, sepSpace, validity)(ViewTags.DisplaySettings.tag)
-
   override protected def _text(text: AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity): VdomTag =
     <.span(text.map(textAtom(live, tagValidity)): _*)
 
@@ -115,7 +112,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
           *.useCaseStepFlowElement(ld),
           label)))
 
-  override protected def whenBlankButMandatory =
+  override def whenBlankButMandatory =
     ProjectWidgets.blankButMandatory
 
   private def issue(id: CustomIssueTypeId, desc: Text.InlineIssueDesc.OptionalText, liveText: Live): VdomTag =

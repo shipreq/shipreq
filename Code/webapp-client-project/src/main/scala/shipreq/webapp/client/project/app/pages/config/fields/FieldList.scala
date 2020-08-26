@@ -234,7 +234,7 @@ object FieldList {
                   <.div(*.fieldListDetailNoOtherTags, "(Currently no tags fit this criteria.)"))
               else {
                 val sortedTagIds = p.config.tags.sortTagIds(tagIds).toVector
-                val tags = p.pw.tagList(sortedTagIds, Live, Optional, Valid.always)
+                val tags = p.pw.viewTags.basicVectorById(sortedTagIds)
                 <.div(
                   desc,
                   <.div(*.fieldListDetailOtherTags, tags))

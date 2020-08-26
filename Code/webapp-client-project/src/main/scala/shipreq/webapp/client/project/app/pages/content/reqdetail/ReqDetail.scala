@@ -116,7 +116,7 @@ object ReqDetail {
         Reusable.ap(
           Reusable.byRef(viewData),
           Reusable.byRef(pw),
-        )(_(_).copy(fmtReqTypeShort = false))
+        )(_(_).withFullReqTypeFmt)
       }
 
     val useCaseData: Option[UseCaseData] =

@@ -3,13 +3,11 @@ package shipreq.webapp.client.project.app.pages.root
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
-import japgolly.scalajs.react.vdom.Implicits._
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.PackageBase._
 import monocle.Lens
 import org.scalajs.dom.window
 import shipreq.base.util.{Allow, ErrorMsg}
-import shipreq.webapp.base.data.derivation.VirtualProjectTags
-import shipreq.webapp.base.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId, Tags}
+import shipreq.webapp.base.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId}
 import shipreq.webapp.base.event.VerifiedEvent
 import shipreq.webapp.base.feature.AsyncFeature.Implicits._
 import shipreq.webapp.base.feature._
@@ -92,14 +90,8 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     private val pxProjectName: Px[Project.Name] =
       pxProject.map(_.name).withReuse
 
-    private val pxVirtualTags: Px[VirtualProjectTags] =
-      pxProject.map(_.virtualTags) // TODO Can we have reusability?
-
     private val pxProjectConfig: Px[ProjectConfig] =
       pxProject.map(_.config).withReuse
-
-    private val pxTags: Px[Tags] =
-      pxProject.map(_.config.tags).withReuse
 
     private val pxEditEditability: Px[EditorFeature.Editability.ForProject] =
       pxProject.map(EditorFeature.Editability.apply)
@@ -129,7 +121,12 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       Px.apply2(pxProject, pxPlainText)(TextSearch.apply)
 
     private val pxViewTags: Px[ViewTags] =
-      Px.apply2(pxVirtualTags, pxTags)(ViewTags.apply)
+      pxProject.map(ViewTags.apply)
+
+    private val pxViewTagsForReq: Px[Reusable[FilterDead => ReqId => ViewTags.ForReq[VdomTag]]] =
+      pxViewTags.map { vt =>
+        Reusable.byRef(vt.forReq)
+      }
 
     private val pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]] =
       Reusable byRef Px.apply3(pxProject, pxPlainText, pxViewTags)(ProjectWidgets(_, _, _, reqDetailRC, webWorkerClient))
@@ -138,10 +135,15 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       pxProject.map(ViewReqDataCache.apply)
 
     private val pxViewReqCache: Px[ViewReqCache.ToVdom[ProjectText.Context.None]] =
-      Px.apply2(pxViewReqDataCache, pxProjectWidgets)(ViewReqCache.apply)
+      Px.apply3(pxViewReqDataCache, pxProjectWidgets, pxViewTagsForReq)(ViewReqCache.apply)
 
-    private val pxViewReqCacheText: Px[ViewReqCache[ProjectText.Context.None, String]] =
-      Px.apply2(pxViewReqDataCache, pxPlainText)(ViewReqCache.apply)
+    private val pxViewReqCacheText: Px[ViewReqCache[ProjectText.Context.None, String]] = {
+      for {
+        c  <- pxViewReqDataCache
+        pt <- pxPlainText
+        vt <- pxViewTags
+      } yield ViewReqCache(c, pt, vt.forPlainTextViewReqCache)
+    }
 
     private val pxRenderFeature: Px[FilterDead => RenderFeature.ToVdom.NoCtx.IfApplicable.ForProject] =
       Px.apply3(pxProject, pxViewReqCache, pxProjectWidgets)(RenderFeature.ToVdom.NoCtx.IfApplicable.prepare)
@@ -287,6 +289,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
         editability   <- pxEditEditability
         reqDetailId   <- pxReqDetailId
         project       <- pxProject
+        vt            <- pxViewTags
         vrdc          <- pxViewReqDataCache
       } yield reqDetailId.map { id =>
         val row = EditorFeature.RowKey.req(id)
@@ -294,7 +297,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
         val ew  = editW.forReq(id)
         val ctx = ProjectText.Context.Req(id)
         val pt  = PlainText.ForProject(project, ctx)
-        val vrc = ViewReqCache(vrdc, pt)
+        val vrc = ViewReqCache(vrdc, pt, vt.forPlainTextViewReqCache)
         val rff = RenderFeature.ToText.ReqCtx.ApplicableOption.prepare(project, vrc, pt)
 
         (s: State) => {

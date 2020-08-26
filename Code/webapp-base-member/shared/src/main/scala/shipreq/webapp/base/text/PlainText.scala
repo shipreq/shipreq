@@ -110,9 +110,6 @@ object PlainText {
     override protected def _implicationList(ids: Vector[Pubid]): String =
       ids.iterator.map(pubid(_, p)).mkString(", ")
 
-    override protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): String =
-      ids.iterator.map(p.config.tags.needApplicableTag(_).key.value).mkString(" ")
-
     override protected def _text(text: Text.AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity): String =
       nestedText("", "", live, text, true)
 
@@ -129,7 +126,7 @@ object PlainText {
     override protected val useCaseFlowElement: UseCaseStep.Focus => String =
       useCaseStepLabel
 
-    override protected def whenBlankButMandatory = ""
+    override def whenBlankButMandatory = ""
 
     private def issue(id: CustomIssueTypeId, desc: Option[String]): String = {
       val it = p.config.customIssueTypes.need(id)

@@ -51,6 +51,8 @@ object VirtualProjectTags {
 
   /** Results indexed by FilterDead. */
   sealed trait ResultsLiveDead {
+    def tagSources(id: ApplicableTagId): Set[Option[CustomField.Tag.Id]]
+
     val fieldSet: CustomField.Tag.Id => Set[ApplicableTagId]
     def allSet  : Set[ApplicableTagId]
     def otherSet: Set[ApplicableTagId]
@@ -861,6 +863,9 @@ object VirtualProjectTags {
 
     override def isEmpty =
       allTagsByField.value.isEmpty
+
+    def tagSources(id: ApplicableTagId) =
+      allTagsByField.value(id)
 
     override def allSet =
       allTagsByField.value.keySet

@@ -1,20 +1,24 @@
 package shipreq.webapp.client.project.widgets
 
+import japgolly.microlibs.utils.Memo
+import japgolly.scalajs.react.Reusable
 import japgolly.scalajs.react.vdom.html_<^._
 import scala.collection.mutable
 import scala.scalajs.js.|
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.derivation.VirtualProjectTags
+import shipreq.webapp.base.data.derivation.VirtualProjectTags.TagProvenance
 import shipreq.webapp.base.lib.ClientUtil
 import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 
-final class ViewTags(vtags: VirtualProjectTags, tagConfig: Tags) {
+final class ViewTags(project: Project) {
   import ViewTags._
 
-  locally(vtags) /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  private[this] val vtags     = project.virtualTags
+  private[this] val tagConfig = project.config.tags
 
   type Out = VdomTag
 
@@ -64,7 +68,7 @@ final class ViewTags(vtags: VirtualProjectTags, tagConfig: Tags) {
     }
   }
 
-  private val cache: DisplaySettings => Validity => TagOrId => Out =
+  private[this] val cache: DisplaySettings => Validity => TagOrId => Out =
     Util.memoWithMapVar { ds =>
       Validity.memo { validity =>
         val ts = TagSettings(None, validity)
@@ -142,22 +146,96 @@ final class ViewTags(vtags: VirtualProjectTags, tagConfig: Tags) {
     }
   }
 
-  def vectorById(ids: Vector[ApplicableTagId],
-                 separator: TagMod,
-                 validity: ApplicableTagId => Validity)
-                (implicit ds: DisplaySettings): VdomTag = {
+  /** Basic here means the tag has context-specific decorations. So...
+    * - no provenance icon
+    * - no derivation explanation
+    */
+  def basicVectorById(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity = Valid.always)
+                     (implicit ds: DisplaySettings): VdomTag = {
     val c = cache(ds)
-    ClientUtil.renderVector(ids, separator) { id =>
+    ClientUtil.renderVector(ids, ClientUtil.sepSpace) { id =>
       val v = validity(id)
       c(v)(id)
+    }
+  }
+
+  val forReq: FilterDead => ReqId => ForReq[Out] =
+    FilterDead.memo { fd =>
+      Memo { reqId =>
+        _forReq(reqId, fd)
+      }
+    }
+
+  private def _forReq(reqId: ReqId, fd: FilterDead): ForReq[Out] = {
+    type Fn         = ApplicableTagId => VdomTag
+    implicit def ds = DisplaySettings.tag
+    val invalidTags = project.invalidTagsPerReq(reqId)
+    val basicCache  = cache(ds)
+    val basicTag    = (id: ApplicableTagId) => basicCache(Invalid when invalidTags.contains(id))(id)
+    val provenance  = this.vtags(reqId).provenance
+    val vtags       = this.vtags(reqId, fd)
+
+    val renderInAll: Fn =
+      Util.memoWithMapVar { t =>
+
+        var default = false
+        var derivedIn = Set.empty[CustomField.Tag.Id]
+        for {
+          of <- vtags.tagSources(t)
+          f  <- of
+        } provenance(f)(t) match {
+          case TagProvenance.Derived => derivedIn += f
+          case TagProvenance.Default => default = true
+          case TagProvenance.Manual  =>
+        }
+
+        basicTag(t)(
+          TagMod.when(default)(provenanceIcon(TagProvenance.Default)),
+          TagMod.when(derivedIn.nonEmpty)(provenanceIcon(TagProvenance.Derived)),
+        )
+      }
+
+    val renderInField: CustomField.Tag.Id => Fn =
+      f => {
+        val fp = provenance(f)
+        t => {
+          val p = fp(t)
+          basicTag(t)(provenanceIcon(p))
+        }
+      }
+
+    new ForReq[Out] {
+      override val all     = renderInAll
+      override val other   = basicTag
+      override val inField = renderInField
+
+      override def vector(ids: Vector[ApplicableTagId], render: ApplicableTagId => Out): Out =
+        ClientUtil.renderVector(ids, ClientUtil.sepSpace)(render)
+    }
+  }
+
+  val forPlainTextViewReqCache: Reusable[FilterDead => ReqId => ViewTags.ForReq[String]] =
+    Reusable.byRef(this).withValue(_ => _ => plainTextForReq)
+
+  val plainTextForReq: ForReq[String] = {
+    val renderOne: ApplicableTagId => String =
+      project.config.tags.needApplicableTag(_).name
+
+    new ForReq[String] {
+      override def all     = renderOne
+      override def other   = renderOne
+      override val inField = _ => renderOne
+
+      override def vector(ids: Vector[ApplicableTagId], render: ApplicableTagId => String) =
+        ids.iterator.map(render).mkString(" ")
     }
   }
 }
 
 object ViewTags {
 
-  def apply(vtags: VirtualProjectTags, tagConfig: Tags): ViewTags =
-    new ViewTags(vtags, tagConfig)
+  def apply(project: Project): ViewTags =
+    new ViewTags(project)
 
   final case class DisplaySettings private[DisplaySettings](hoverText    : HoverText,
                                                             contextualise: Contextualise) {
@@ -197,4 +275,20 @@ object ViewTags {
 
   type TagOrId = ApplicableTag | ApplicableTagId
 
+  trait ForReq[A] {
+    def inField: CustomField.Tag.Id => ApplicableTagId => A
+    def other  : ApplicableTagId => A
+    def all    : ApplicableTagId => A
+
+    def vector(ids: Vector[ApplicableTagId], render: ApplicableTagId => A): A
+  }
+
+  private val tagIconDefault = Icon.Sliders.tag(*.tagIconDefault)
+  private val tagIconDerived = Icon.Sitemap.tag(*.tagIconDerived)
+
+  private[ViewTags] val provenanceIcon: TagProvenance => TagMod = {
+    case TagProvenance.Manual  => TagMod.empty
+    case TagProvenance.Default => tagIconDefault
+    case TagProvenance.Derived => tagIconDerived
+  }
 }

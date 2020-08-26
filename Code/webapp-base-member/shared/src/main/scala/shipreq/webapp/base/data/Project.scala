@@ -147,7 +147,7 @@ final case class Project(name        : Project.Name,
       val req           = content.reqs.need(reqId)
       val conflicting   = conflictingTagsPerReq(reqId)
       val nonApplicable = config.naTags(req.reqTypeId).set
-      conflicting ++ nonApplicable
+      Util.mergeSets(conflicting, nonApplicable)
     }
 
   /**

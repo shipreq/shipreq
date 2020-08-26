@@ -1313,6 +1313,21 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
   object widgets {
 
+    private val tagIconBase = styleS(
+      marginLeft(0.5 ex).important,
+      marginRight(`0`).important,
+    )
+
+    val tagIconDefault = style(
+      tagIconBase,
+      opacity(0.7).important,
+    )
+
+    val tagIconDerived = style(
+      tagIconBase,
+      opacity(0.6).important,
+    )
+
     val richCodeBlockError = style(
       backgroundColor(c"#ddd"),
       padding(1 ex, 2 ex),
