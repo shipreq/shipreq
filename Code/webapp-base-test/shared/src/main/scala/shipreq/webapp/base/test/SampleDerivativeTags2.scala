@@ -61,6 +61,7 @@ object SampleDerivativeTags2 {
 
     val project =
       applyEventsSuccessfully(Project.empty,
+        Event.FieldStaticAdd(StaticField.AllTags),
 
         Event.CustomReqTypeCreate(fb, CustomReqTypeGD("FB", "FB", Optional, ∅)),
         Event.CustomReqTypeCreate(mf, CustomReqTypeGD("MF", "MF", Optional, ∅)),

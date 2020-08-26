@@ -16,7 +16,7 @@ import shipreq.webapp.client.project.test.TestGlobal
 
 object ReqDetailObs {
 
-  case class NAE[A](normal: A, alt: A, exception: A) {
+  final case class NAE[A](normal: A, alt: A, exception: A) {
     def map[B](f: A => B): NAE[B] =
       NAE(f(normal), f(alt), f(exception))
 
@@ -25,6 +25,20 @@ object ReqDetailObs {
 
     def get[B](f: A => Option[B]): Option[B] =
       f(normal) orElse f(alt) orElse f(exception)
+  }
+
+  final class TagField($: DomZipperJs) {
+    val tags = $.collect0n("span.ui.label").map(new Tag(_))
+    val desc = tags.iterator.map(_.desc).mkString(" ")
+  }
+
+  final class Tag($: DomZipperJs) {
+    val text    = $.innerText.trim
+    val icon    = $.collect01(".icon").map(_.classes)
+    val derived = icon.exists(_ contains "sitemap")
+    val default = icon.exists(_ contains "sliders")
+    val suffix  = if (derived) "+" else if (default) "?" else ""
+    val desc    = text + suffix
   }
 
   import UiText.FieldNames._
@@ -71,6 +85,17 @@ final class ReqDetailObs($: DomZipperJs, val nav: NavObs, val global: TestGlobal
 
     def field(name: String): Field =
       fields.getOrElse(name, throw new RuntimeException("Field not found: " + name))
+
+    val tagFields: Map[String, ReqDetailObs.TagField] =
+      rows
+        .zippers
+        .iterator
+        .filter(z => z(">th").innerText.trim.endsWith(" Tags") || z(">td").exists("span.ui.label"))
+        .map(z => z(">th").innerText -> new ReqDetailObs.TagField(z(">td")))
+        .toMap
+
+    def tagField(name: String): ReqDetailObs.TagField =
+      tagFields.getOrElse(name, throw new RuntimeException("Tag field not found: " + name))
 
     val lifeRow = fields(UiText.Life.field)
 

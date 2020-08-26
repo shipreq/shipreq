@@ -728,5 +728,29 @@ object ReqDetailTest extends TestSuite {
       >> title.doubleClick
       +> title.editorValue.assert.contains("[MF-2] [MF-2:]")
     ))
+
+    "derivativeTags" - {
+      import SampleDerivativeTags3.step3.{project => DT3_3}
+
+      def testTags(project: Project, pubid: String, expectations: (String, String)*): Unit =
+        test(pubid, project = project)(Plan.action(
+          expectations.foldLeft(*.emptyAction)((p, e) => p +> tagFieldDesc(e._1).assert(e._2))
+        ))
+
+      "dt3-3" - {
+
+        "mf1" - testTags(DT3_3, "MF-1",
+          "Status"   -> "readyForDev+",
+          "Version"  -> "v1+ v2",
+          "All Tags" -> "readyForDev+ v1+ v2")
+
+        "fr1" - testTags(DT3_3, "FR-1",
+          "Status"   -> "readyForDev?",
+          "Version"  -> "v1",
+          "All Tags" -> "readyForDev? v1")
+
+      }
+    }
+
   }
 }

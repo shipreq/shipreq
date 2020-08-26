@@ -94,6 +94,9 @@ object ReqDetailTestDsl {
   val tailStepAC = *.focus("AC tail step").value(_.obs.uc.tailStepRowAC)
   val tailStepEC = *.focus("EC tail step").value(_.obs.uc.tailStepRowEC)
 
+  def tagFieldDesc(name: String) =
+    *.focus(name + " desc").value(_.obs.generic.tagField(name).desc)
+
   val invariantsWhenBad: *.Invariants =
     *.emptyInvariant
 
