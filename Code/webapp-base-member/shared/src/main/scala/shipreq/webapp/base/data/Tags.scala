@@ -69,36 +69,32 @@ object ApplicableTag {
     )
   }
 
-  sealed trait OrId extends AnyRef
+  implicit class OrId(private val x: AnyRef) extends AnyVal {
 
-  object OrId {
-    implicit def fromId(id: ApplicableTagId): OrId =
-      id.asInstanceOf[OrId]
+    @inline def isId: Boolean =
+      x.isInstanceOf[ApplicableTagId]
 
-    implicit def fromTag(tag: ApplicableTag): OrId =
-      tag.asInstanceOf[OrId]
+    @inline def isTag: Boolean =
+      !isId
 
-    final implicit class Ops(private val x: OrId) extends AnyVal {
+    @inline def unsafeAsId: ApplicableTagId =
+      x.asInstanceOf[ApplicableTagId]
 
-      @inline def isId: Boolean =
-        (x: AnyRef).isInstanceOf[ApplicableTagId]
+    @inline def unsafeAsTag: ApplicableTag =
+      x.asInstanceOf[ApplicableTag]
 
-      @inline def isTag: Boolean =
-        !isId
+    @inline def id: ApplicableTagId =
+      if (isId) unsafeAsId else unsafeAsTag.id
 
-      @inline def unsafeAsId: ApplicableTagId =
-        x.asInstanceOf[ApplicableTagId]
-
-      @inline def unsafeAsTag: ApplicableTag =
-        x.asInstanceOf[ApplicableTag]
-
-      @inline def id: ApplicableTagId =
-        if (isId) unsafeAsId else unsafeAsTag.id
-
-      @inline def tag(tags: Tags): ApplicableTag =
-        if (isId) tags.needApplicableTag(unsafeAsId) else unsafeAsTag
-    }
+    @inline def tag(tags: Tags): ApplicableTag =
+      if (isId) tags.needApplicableTag(unsafeAsId) else unsafeAsTag
   }
+
+  implicit def orIdFromId(id: ApplicableTagId): OrId =
+    new OrId(id)
+
+  implicit def orIdFromTag(tag: ApplicableTag): OrId =
+    new OrId(tag)
 }
 
 sealed abstract class TagType(val name: String) { type Data <: Tag }
