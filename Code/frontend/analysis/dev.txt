@@ -1,8 +1,8 @@
   core-js                   38.02 KB   88.4%
-<self>                      602.76 KB  41.1%
+<self>                      603.35 KB  41.1%
   <self>                    5.01 KB    11.6%
 lodash                      139.84 KB  9.53%
-react-svg-pan-zoom          102.51 KB  6.99%
+react-svg-pan-zoom          102.51 KB  6.98%
 moment                      77.24 KB   5.26%
 react-color                 75.34 KB   5.13%
 autotrack                   62.72 KB   4.27%
@@ -15,8 +15,8 @@ prop-types                  25.37 KB   1.73%
 react-collapse              17.17 KB   1.17%
 react-virtualized           14.56 KB   0.992%
 reactcss                    13.23 KB   0.901%
-react-property              13.08 KB   0.892%
-html-dom-parser             10.5 KB    0.716%
+react-property              13.08 KB   0.891%
+html-dom-parser             10.5 KB    0.715%
 html-react-parser           9.6 KB     0.654%
 dom-utils                   9.56 KB    0.651%
 clipboard-polyfill          8.57 KB    0.584%
@@ -33,4 +33,4 @@ object-assign               2.17 KB    0.148%
 undate                      1.48 KB    0.101%
 scroll-into-view-if-needed  1.36 KB    0.0927%
 webpack                     1021 B     0.0679%
-style-to-object             976 B      0.0650%
+style-to-object             976 B      0.0649%

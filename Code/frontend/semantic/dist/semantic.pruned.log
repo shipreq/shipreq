@@ -2147,12 +2147,12 @@
     54 [remove] .ui.brown.ribbon.label
    109 [remove] .ui.basic.brown.label
    153 [remove] .ui.basic.brown.labels a.label:hover,a.ui.basic.brown.label:hover
-   125 [remove] .ui.grey.label,.ui.grey.labels .label
-   138 [remove] .ui.grey.labels .label:hover,a.ui.grey.label:hover
-    89 [remove] .ui.grey.corner.label,.ui.grey.corner.label:hover
+   125 [keep  ] .ui.grey.label,.ui.grey.labels .label
+   138 [keep  ] .ui.grey.labels .label:hover,a.ui.grey.label:hover
+    89 [keep  ] .ui.grey.corner.label,.ui.grey.corner.label:hover
     53 [remove] .ui.grey.ribbon.label
-   108 [remove] .ui.basic.grey.label
-   151 [remove] .ui.basic.grey.labels a.label:hover,a.ui.basic.grey.label:hover
+   108 [keep  ] .ui.basic.grey.label
+   151 [keep  ] .ui.basic.grey.labels a.label:hover,a.ui.basic.grey.label:hover
    127 [remove] .ui.black.label,.ui.black.labels .label
    140 [remove] .ui.black.labels .label:hover,a.ui.black.label:hover
     91 [remove] .ui.black.corner.label,.ui.black.corner.label:hover
