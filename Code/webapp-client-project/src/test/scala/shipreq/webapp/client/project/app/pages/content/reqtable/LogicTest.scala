@@ -1146,8 +1146,9 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterIgnoreNATags(): Unit = {
-    // BR-2 should be missing; that's the point
-    testFilter(P7, F.tag(prod))("MF-3  UC-1", "")
+    testFilter(P7, F.tag(prod))(
+      "MF-3  UC-1", // BR-2 should be missing; that's the point
+      "BR-2")
   }
 
   def testFilterTitleBlank(): Unit = {
@@ -1382,6 +1383,7 @@ object LogicTest extends TestSuite {
     val fmtRows = prefixWithPubid(p, rowToTagTxt(p, allTags))
 
     // Order: pri=high pri=low pri=med v10 wip
+    //                                     ^^^ N/A to DDs but visible because ShowDead
     testCB(p, C.AllTags, None, ShowDead, fmtRows)(allSortsCB(1,
       asc  = "DD-3:pri=high  DD-5:pri=high,pri=low  DD-2:pri=low  DD-5:pri=low,pri=high  DD-8:pri=low,v1.0  DD-4:pri=med  DD-7:pri=med,v1.0  DD-8:v1.0,pri=low  DD-6:wip",
       desc = "DD-6:wip  DD-7:v1.0,pri=med  DD-8:v1.0,pri=low  DD-4:pri=med  DD-7:pri=med,v1.0  DD-2:pri=low  DD-5:pri=low,pri=high  DD-8:pri=low,v1.0  DD-3:pri=high  DD-5:pri=high,pri=low"))

@@ -162,6 +162,7 @@ object VirtualProjectTags {
                        tagLive: ApplicableTagId => Live) {
       var manualLive         = ForReq.emptyInReq
       var manualDead         = ForReq.emptyInReq
+      var manualHiddenNA     = ForReq.emptyInReq
       var deadTagsInLiveText = ForReq.emptyInText
       var naTagsInLiveText   = ForReq.emptyInText
       var liveDefaults       = Map.empty[CustomField.Tag.Id, ApplicableTagId]
@@ -169,11 +170,12 @@ object VirtualProjectTags {
       var liveDerived        = emptyDerivedTags
       var deadDerived        = emptyDerivedTags
 
-      def addManual(id     : ApplicableTagId,
-                    loc    : LocationOf.Tag.InReq,
-                    ctx    : Live,
-                    allowNA: Boolean = false): Unit =
-        if (allowNA || !nonApplicableTags.contains(id))
+      def addManual(id    : ApplicableTagId,
+                    loc   : LocationOf.Tag.InReq,
+                    ctx   : Live): Unit =
+        if (nonApplicableTags.contains(id))
+          manualHiddenNA = manualHiddenNA.add(id, loc)
+        else
           ctx & tagLive(id) match {
             case Live => manualLive = manualLive.add(id, loc)
             case Dead => manualDead = manualDead.add(id, loc)
@@ -260,7 +262,7 @@ object VirtualProjectTags {
 
       // Scan dead text
       for (t <- tagsInText(req.id).dead)
-        b.addManual(t.value, t.loc, ctx = Dead, allowNA = true)
+        b.addManual(t.value, t.loc, ctx = Dead)
 
       // Scan tag fields
       for (t <- reqTags(req.id))
@@ -563,6 +565,8 @@ object VirtualProjectTags {
                     println(s"node.liveDefaults: ${node.liveDefaults}")
                     println(s"node.deadDefaults: ${node.deadDefaults}")
                     println(s"node.manualLive: ${node.manualLive.keys.map(_.value).toVector.sorted}")
+                    println(s"node.manualDead: ${node.manualDead.keys.map(_.value).toVector.sorted}")
+                    println(s"node.manualHiddenNA: ${node.manualHiddenNA.keys.map(_.value).toVector.sorted}")
                     println(s"badManuals: $badManuals")
                   }
 
@@ -728,6 +732,8 @@ object VirtualProjectTags {
     import s._
 
     addManuals(data.manualDead.m, dist, p => _.markAsDead().markAsManual(p))
+
+    addManuals(data.manualHiddenNA.m, dist, p => _.markAsInvalid().markAsManual(p))
 
     for ((tag, fields) <- data.deadDerived.m)
       tagState(tag).modFields(fields, _.markAsDead().markAsDerived())

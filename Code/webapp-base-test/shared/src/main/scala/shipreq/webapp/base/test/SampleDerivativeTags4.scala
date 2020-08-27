@@ -491,6 +491,7 @@ object SampleDerivativeTags4 {
       |  + A-22: z1 (default)
       |  + self: ∅
       |  = {z1+}
+      |    {z1+ z5!} (ShowDead)
       |B-18
       |  + A-23: z1 (default)
       |  + self: z5 (text)
