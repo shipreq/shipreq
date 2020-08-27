@@ -507,7 +507,6 @@ object CustomField {
 
     final case class Id(value: Int) extends CustomFieldId  {
       override def toString = s"CustomField.Tag.Id($value)"
-      val some = Some(this) // TODO remove?
       val asTagFieldId = TagFieldId.Custom(this)
     }
 

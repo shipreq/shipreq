@@ -253,7 +253,7 @@ object FieldConfig {
               EditorType.Dead(fid)
             else fid match {
               case id: CustomField.Implication.Id => EditorType.LiveImp(Some(id))
-              case id: CustomField.Tag.Id         => EditorType.LiveTag(id.some)
+              case id: CustomField.Tag.Id         => EditorType.LiveTag(Some(id))
               case id: CustomField.Text.Id        => EditorType.LiveText(Some(id))
             }
           case -\/(NewFieldType.Imp)       => EditorType.LiveImp(None)
@@ -320,7 +320,7 @@ object FieldConfig {
         case EditorType.Dead(id) =>
           val editor =
             id match {
-              case i: CustomField.Tag        .Id => tagFieldEditor (i.some,  Disabled).render
+              case i: CustomField.Tag        .Id => tagFieldEditor (Some(i),  Disabled).render
               case i: CustomField.Text       .Id => textFieldEditor(Some(i), Disabled).render
               case i: CustomField.Implication.Id => impFieldEditor (Some(i), Disabled).render
             }

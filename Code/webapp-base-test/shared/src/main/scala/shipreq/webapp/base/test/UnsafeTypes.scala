@@ -96,7 +96,7 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 //  implicit def autoUseCaseIdO        (i: Int): Option[UseCaseId]                  = Some(i)
   implicit def autoUseCaseStepIdO    (i: Int): Option[UseCaseStepId]              = Some(i)
   implicit def autoCustomFieldImpIdO (i: Int): Option[CustomField.Implication.Id] = Some(i)
-  implicit def autoCustomFieldTagIdO (i: Int): Option[CustomField.Tag.Id]         = i.some
+  implicit def autoCustomFieldTagIdO (i: Int): Option[CustomField.Tag.Id]         = Some(i)
   implicit def autoCustomFieldTxtIdO (i: Int): Option[CustomField.Text.Id]        = Some(i)
   implicit def autoCustomIssueTypeIdO(i: Int): Option[CustomIssueTypeId]          = Some(i)
   implicit def autoCustomReqTypeIdO  (i: Int): Option[CustomReqTypeId]            = Some(i)
