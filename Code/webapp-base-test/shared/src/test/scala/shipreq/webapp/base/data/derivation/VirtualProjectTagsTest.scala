@@ -4,7 +4,7 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import shipreq.base.test.BaseTestUtil._
-import shipreq.base.util.Enabled
+import shipreq.base.util.{Enabled, Invalid}
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
@@ -36,6 +36,7 @@ object VirtualProjectTagsTest extends TestSuite {
       if (t.isDefault) desc += "?"
       if (t.isDerived) desc += "+"
       if (t.live is Dead) desc += "-"
+      if (t.validity is Invalid) desc += "!"
       desc
     }
 

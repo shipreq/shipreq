@@ -46,6 +46,10 @@ import shipreq.webapp.base.test.WebappTestUtil._
   * D2 (default:dead) -> E2 (default:external)
   * B12 (manual) -> D3 (default:dead) -> E3 (default:external) -> B13 (manual)
   *
+  * A20 (text) -> B14 (empty)
+  *
+  * C7 (text:N/A) -> B15 (empty)
+  *
   * Derivative tag field is dead (xField)
   *
   * Derivative tag field is disabled (wField)
@@ -78,6 +82,7 @@ object SampleDerivativeTags4 {
     val a17 = GenericReqId(117)
     val a18 = GenericReqId(118)
     val a19 = GenericReqId(119)
+    val a20 = GenericReqId(120)
 
     val b1 = GenericReqId(201)
     val b2 = GenericReqId(202)
@@ -92,6 +97,8 @@ object SampleDerivativeTags4 {
     val b11 = GenericReqId(211)
     val b12 = GenericReqId(212)
     val b13 = GenericReqId(213)
+    val b14 = GenericReqId(214)
+    val b15 = GenericReqId(215)
 
     val c1 = GenericReqId(301)
     val c2 = GenericReqId(302)
@@ -99,6 +106,7 @@ object SampleDerivativeTags4 {
     val c4 = GenericReqId(304)
     val c5 = GenericReqId(305)
     val c6 = GenericReqId(306)
+    val c7 = GenericReqId(307)
 
     val d1 = GenericReqId(401)
     val d2 = GenericReqId(402)
@@ -288,6 +296,14 @@ object SampleDerivativeTags4 {
     genericReqCreate(e2, e),
     genericReqCreate(e3, e, impSrcs = d3, impTgts = b13),
 
+    // A20 (text) -> B14 (empty)
+    genericReqCreate(a20, a, titleTagRef = z1),
+    genericReqCreate(b14, b, impSrcs = a20),
+
+    // C7 (text:N/A) -> B15 (empty)
+    genericReqCreate(c7, c, titleTagRef = z1),
+    genericReqCreate(b15, b, impSrcs = c7),
+
     // Delete tags
     Event.TagDelete(z4),
     Event.TagDelete(y3),
@@ -362,6 +378,10 @@ object SampleDerivativeTags4 {
       |  + B-11: z3 (derived)
       |  + self: z1 (manual)
       |  = {z1 z3+}
+      |A-20
+      |  + B-14: z1 (derived)
+      |  + self: z1 (text)
+      |  = {z1#}
       |B-1
       |  + A-1: z1 (default)
       |  + self: ∅
@@ -421,12 +441,21 @@ object SampleDerivativeTags4 {
       |B-13
       |  + self: ∅
       |  = {}
+      |B-14
+      |  + A-20: z1 (text)
+      |  + self: ∅
+      |  = {z1+}
+      |B-15
+      |  + self: ∅
+      |  = {}
       |C-1 = {}
       |C-2 = {}
       |C-3 = {}
       |C-4 = {}
       |C-5 = {}
       |C-6 = {}
+      |C-7
+      |  = {z1#!}
       |D-1 = {}
       |D-2 = {}
       |D-3
@@ -505,6 +534,10 @@ object SampleDerivativeTags4 {
       |  + B-11: ∅
       |  + self: ∅
       |  = {}
+      |A-20
+      |  + B-14: ∅
+      |  + self: ∅
+      |  = {}
       |B-1
       |  + self: ∅
       |  = {}
@@ -558,6 +591,12 @@ object SampleDerivativeTags4 {
       |B-13
       |  + self: y2 (manual)
       |  = {y2}
+      |B-14
+      |  + self: ∅
+      |  = {}
+      |B-15
+      |  + self: ∅
+      |  = {}
       |C-1
       |  + B-3: ∅
       |  + self: ∅
@@ -581,6 +620,10 @@ object SampleDerivativeTags4 {
       |C-6
       |  + self: y4 (manual)
       |  = {y4}
+      |C-7
+      |  + B-15: ∅
+      |  + self: ∅
+      |  = {}
       |D-1
       |  = {}
       |    {y5?-} (ShowDead)
@@ -625,6 +668,7 @@ object SampleDerivativeTags4 {
       |A-17 = {} / {x1?-}
       |A-18 = {} / {x1?-}
       |A-19 = {} / {x1?-}
+      |A-20 = {} / {x1?-}
       |B-1 = {} / {x1?-}
       |B-2 = {} / {x1?-}
       |B-3 = {} / {x1?-}
@@ -638,12 +682,15 @@ object SampleDerivativeTags4 {
       |B-11 = {} / {x1?-}
       |B-12 = {} / {x1?-}
       |B-13 = {} / {x1?-}
+      |B-14 = {} / {x1?-}
+      |B-15 = {} / {x1?-}
       |C-1 = {} / {x1?-}
       |C-2 = {} / {x1?-}
       |C-3 = {} / {x1?-}
       |C-4 = {} / {x1?-}
       |C-5 = {} / {x1?-}
       |C-6 = {} / {x1?-}
+      |C-7 = {} / {x1?-}
       |D-1 = {} / {x1?-}
       |D-2 = {} / {x1?-}
       |D-3 = {} / {x1?-}
@@ -672,6 +719,7 @@ object SampleDerivativeTags4 {
       |A-17 = {} / {w1?-}
       |A-18 = {w1?}
       |A-19 = {w1?}
+      |A-20 = {w1?}
       |B-1 = {w1?}
       |B-2 = {w1?}
       |B-3 = {w1?}
@@ -685,12 +733,15 @@ object SampleDerivativeTags4 {
       |B-11 = {w1?}
       |B-12 = {w1?}
       |B-13 = {w1?}
+      |B-14 = {w1?}
+      |B-15 = {w1?}
       |C-1 = {w1?}
       |C-2 = {w1?}
       |C-3 = {w1?}
       |C-4 = {w1?}
       |C-5 = {w1?}
       |C-6 = {w1?}
+      |C-7 = {w1?}
       |D-1 = {w1?}
       |D-2 = {w1?}
       |D-3 = {w1?}

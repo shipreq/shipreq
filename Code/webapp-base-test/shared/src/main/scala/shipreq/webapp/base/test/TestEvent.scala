@@ -80,16 +80,25 @@ object TestEvent {
     ApplicableTagUpdate(id, NonEmpty.force(vs))
   }
 
-  def genericReqCreate(id     : GenericReqId,
-                       rt     : CustomReqTypeId,
-                       title  : String                        = null,
-                       tags   : IterableOnce[ApplicableTagId] = Nil,
-                       impSrcs: IterableOnce[ReqId]           = Nil,
-                       impTgts: IterableOnce[ReqId]           = Nil,
+  def genericReqCreate(id         : GenericReqId,
+                       rt         : CustomReqTypeId,
+                       title      : String                        = null,
+                       titleTagRef: ApplicableTagId               = null,
+                       tags       : IterableOnce[ApplicableTagId] = Nil,
+                       impSrcs    : IterableOnce[ReqId]           = Nil,
+                       impTgts    : IterableOnce[ReqId]           = Nil,
                       ): GenericReqCreate = {
     import GenericReqGD._
     var vs = emptyValues
-    Option(title).foreach(t => vs += ValueForTitle(NonEmptyArraySeq(Text.GenericReqTitle.Literal(t))))
+
+    {
+      import Text.GenericReqTitle._
+      var t: OptionalText = ArraySeq.empty
+      Option(title).foreach(t :+= Literal(_))
+      Option(titleTagRef).foreach(t :+= TagRef(_))
+      NonEmptyArraySeq.option(t).foreach(vs += ValueForTitle(_))
+    }
+
     NonEmptySet.option(tags.iterator.toSet).foreach(vs += ValueForTags(_))
     NonEmptySet.option(impSrcs.iterator.toSet).foreach(vs += ValueForImpSrcs(_))
     NonEmptySet.option(impTgts.iterator.toSet).foreach(vs += ValueForImpTgts(_))
