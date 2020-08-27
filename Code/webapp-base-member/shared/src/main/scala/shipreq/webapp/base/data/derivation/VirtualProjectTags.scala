@@ -459,11 +459,11 @@ object VirtualProjectTags {
                   processChildren()
 
                 } else {
-                  val manuals     = getFieldManuals(node, f)
-                  val deadManuals = node.deadTagsInLiveText.keyIterator.filter(f.tags.contains).toSet
-                  val hasManual   = manuals.nonEmpty || deadManuals.nonEmpty
-                  val default     = node.liveDefaults.get(f.fieldId)
-                  val hasDefault  = default.isDefined
+                  val manuals    = getFieldManuals(node, f)
+                  val badManuals = (node.deadTagsInLiveText.keyIterator ++ node.naTagsInLiveText.keyIterator).filter(f.tags.contains).toSet
+                  val hasManual  = manuals.nonEmpty || badManuals.nonEmpty
+                  val default    = node.liveDefaults.get(f.fieldId)
+                  val hasDefault = default.isDefined
 
                   // Complete all children
                   val addedFromChildren = processChildren()
@@ -490,7 +490,7 @@ object VirtualProjectTags {
                       factors.mod(_.add(nodeId, DerivativeTagFactor.Self(t, p)))
                       addToParents += DerivativeTagFactor.Relation(nodeId, Forwards, t, p)
                     }
-                    for (tag <- deadManuals)
+                    for (tag <- badManuals)
                       factors.mod(_.add(nodeId, DerivativeTagFactor.Self(tag, TagProvenance.ManualInText)))
                   } else if (hasDefault) {
                     defaultAddable = true
@@ -523,7 +523,7 @@ object VirtualProjectTags {
 
                   // Don't say we've derived manual results
                   liveDerived = liveDerived &~ manuals.keySet
-                  liveDerived = liveDerived &~ deadManuals
+                  liveDerived = liveDerived &~ badManuals
 
                   // Don't say we've derived the default; just use the default
                   if (defaultAddable)

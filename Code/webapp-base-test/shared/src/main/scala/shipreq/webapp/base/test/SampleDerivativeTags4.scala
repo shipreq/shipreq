@@ -51,7 +51,11 @@ import shipreq.webapp.base.test.WebappTestUtil._
   * C7 (text:N/A) -> B15 (empty)
   *
   * A21 (text:dead) -> B16 (empty)
-
+  *
+  * B17 (N/A) -> A22 (default)
+  *
+  * B18 (text:N/A) -> A23 (default)
+  *
   * Derivative tag field is dead (xField)
   *
   * Derivative tag field is disabled (wField)
@@ -86,6 +90,8 @@ object SampleDerivativeTags4 {
     val a19 = GenericReqId(119)
     val a20 = GenericReqId(120)
     val a21 = GenericReqId(121)
+    val a22 = GenericReqId(122)
+    val a23 = GenericReqId(123)
 
     val b1 = GenericReqId(201)
     val b2 = GenericReqId(202)
@@ -103,6 +109,8 @@ object SampleDerivativeTags4 {
     val b14 = GenericReqId(214)
     val b15 = GenericReqId(215)
     val b16 = GenericReqId(216)
+    val b17 = GenericReqId(217)
+    val b18 = GenericReqId(218)
 
     val c1 = GenericReqId(301)
     val c2 = GenericReqId(302)
@@ -126,6 +134,7 @@ object SampleDerivativeTags4 {
     val z2     = ApplicableTagId(12)
     val z3     = ApplicableTagId(13)
     val z4     = ApplicableTagId(14) // (DEAD)
+    val z5     = ApplicableTagId(15) // (N/A to Bs)
 
     // y1 + y2 = y3 (DEAD)
     // y1 + y4 = z1 (out of scope)
@@ -205,6 +214,7 @@ object SampleDerivativeTags4 {
     applicableTagCreate(z2, "z2", parent = z),
     applicableTagCreate(z3, "z3", parent = z),
     applicableTagCreate(z4, "z4", parent = z),
+    applicableTagCreate(z5, "z5", parent = z, applicableReqTypes = ApplicableReqTypes.blacklist(b)),
     fieldCustomTagCreate(zField, z, zRules, zDerivativeTags),
 
     applicableTagCreate(x1, "x1", parent = x),
@@ -312,6 +322,14 @@ object SampleDerivativeTags4 {
     genericReqCreate(a21, a, titleTagRef = z4, tags = y1),
     genericReqCreate(b16, b, impSrcs = a21),
 
+    // B17 (N/A) -> A22 (default)
+    genericReqCreate(b17, b, tags = z5),
+    genericReqCreate(a22, a, impSrcs = b17),
+
+    // B18 (text:N/A) -> A23 (default)
+    genericReqCreate(b18, b, titleTagRef = z5),
+    genericReqCreate(a23, a, impSrcs = b18),
+
     // Delete tags
     Event.TagDelete(z4),
     Event.TagDelete(y3),
@@ -394,6 +412,12 @@ object SampleDerivativeTags4 {
       |  + B-16: ∅
       |  + self: z4 (text)
       |  = {z4#-}
+      |A-22
+      |  + self: z1 (default)
+      |  = {z1?}
+      |A-23
+      |  + self: z1 (default)
+      |  = {z1?}
       |B-1
       |  + A-1: z1 (default)
       |  + self: ∅
@@ -463,6 +487,14 @@ object SampleDerivativeTags4 {
       |B-16
       |  + self: ∅
       |  = {}
+      |B-17
+      |  + A-22: z1 (default)
+      |  + self: ∅
+      |  = {z1+}
+      |B-18
+      |  + A-23: z1 (default)
+      |  + self: z5 (text)
+      |  = {z1+ z5#!}
       |C-1 = {}
       |C-2 = {}
       |C-3 = {}
@@ -557,6 +589,12 @@ object SampleDerivativeTags4 {
       |  + B-16: y1 (derived)
       |  + self: y1 (manual)
       |  = {y1}
+      |A-22
+      |  + self: ∅
+      |  = {}
+      |A-23
+      |  + self: ∅
+      |  = {}
       |B-1
       |  + self: ∅
       |  = {}
@@ -622,6 +660,14 @@ object SampleDerivativeTags4 {
       |  + A-21: y1 (manual)
       |  + self: ∅
       |  = {y1+}
+      |B-17
+      |  + A-22: ∅
+      |  + self: ∅
+      |  = {}
+      |B-18
+      |  + A-23: ∅
+      |  + self: ∅
+      |  = {}
       |C-1
       |  + B-3: ∅
       |  + self: ∅
@@ -695,6 +741,8 @@ object SampleDerivativeTags4 {
       |A-19 = {} / {x1?-}
       |A-20 = {} / {x1?-}
       |A-21 = {} / {x1?-}
+      |A-22 = {} / {x1?-}
+      |A-23 = {} / {x1?-}
       |B-1 = {} / {x1?-}
       |B-2 = {} / {x1?-}
       |B-3 = {} / {x1?-}
@@ -711,6 +759,8 @@ object SampleDerivativeTags4 {
       |B-14 = {} / {x1?-}
       |B-15 = {} / {x1?-}
       |B-16 = {} / {x1?-}
+      |B-17 = {} / {x1?-}
+      |B-18 = {} / {x1?-}
       |C-1 = {} / {x1?-}
       |C-2 = {} / {x1?-}
       |C-3 = {} / {x1?-}
@@ -748,6 +798,8 @@ object SampleDerivativeTags4 {
       |A-19 = {w1?}
       |A-20 = {w1?}
       |A-21 = {w1?}
+      |A-22 = {w1?}
+      |A-23 = {w1?}
       |B-1 = {w1?}
       |B-2 = {w1?}
       |B-3 = {w1?}
@@ -764,6 +816,8 @@ object SampleDerivativeTags4 {
       |B-14 = {w1?}
       |B-15 = {w1?}
       |B-16 = {w1?}
+      |B-17 = {w1?}
+      |B-18 = {w1?}
       |C-1 = {w1?}
       |C-2 = {w1?}
       |C-3 = {w1?}
