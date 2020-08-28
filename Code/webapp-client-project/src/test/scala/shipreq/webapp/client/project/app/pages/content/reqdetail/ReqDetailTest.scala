@@ -614,9 +614,10 @@ object ReqDetailTest extends TestSuite {
           Event.FieldCustomDelete(statusField),
         )
 
-      // Note: BR-2 already has
-      //   - N/A tag (#prod)
-      //   - live & dead assigned to no field (#misc1 #misc2)
+      // Note 1: BR-2 already has
+      //           - N/A tag (#prod)
+      //           - live & dead assigned to no field (#misc1 #misc2)
+      // Note 2: N/A tags are shown when ShowDead
       test("BR-2", project)(Plan.action(
         *.emptyAction
           +> filterDead.assert(HideDead)
@@ -628,9 +629,9 @@ object ReqDetailTest extends TestSuite {
           >> filterDeadToggle
           +> filterDead.assert(ShowDead)
           +> field("Priority").text.assert("pri=high pri=low")
-          +> field("Status").text.assert("wip defer")
+          +> field("Status").text.assert("wip defer prod")
           +> field(OtherTags.name).text.assert("misc1 misc2")
-          +> field(AllTags.name).text.assert("defer misc1 misc2 pri=high pri=low wip")
+          +> field(AllTags.name).text.assert("defer misc1 misc2 pri=high pri=low prod wip")
       ))
     }
 
