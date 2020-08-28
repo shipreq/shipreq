@@ -117,6 +117,17 @@ object TestEvent {
     ))
   }
 
+  def fieldCustomTextCreate(id   : CustomField.Text.Id,
+                            name : String = null,
+                            rules: FieldReqTypeRules[Impossible] = FieldReqTypeRules.empty,
+                           ): FieldCustomTextCreate = {
+    import CustomTextFieldGD._
+    FieldCustomTextCreate(id, nev(
+      ValueForName(name),
+      ValueForFieldReqTypeRules(rules),
+    ))
+  }
+
   def reqTagsPatch(id    : ReqId,
                    add   : IterableOnce[ApplicableTagId] = Nil,
                    remove: IterableOnce[ApplicableTagId] = Nil,

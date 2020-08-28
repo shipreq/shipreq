@@ -96,10 +96,14 @@ object AtomScan {
           ()
       }
 
+    val reqTypesPerReqId = mutable.HashMap.empty[GenericReqId, ReqTypeId]
+
     // Parse generic reqs
     val rts = p.config.reqTypes
-    for (r <- p.content.reqs.genericReqs.imap.valuesIterator)
+    for (r <- p.content.reqs.genericReqs.imap.valuesIterator) {
+      reqTypesPerReqId.update(r.id, r.reqTypeId)
       scanReqText(r.live(rts), r.id, Location.Text.Title)(r.title)
+    }
 
     // Parse use cases
     for (uc <- p.content.reqs.useCases.imap.valuesIterator) {
@@ -111,13 +115,26 @@ object AtomScan {
     // Parse custom-text-field text
     val customTextFieldText = p.content.reqText
     val liveTextFields      = p.config.liveCustomTextFieldIdSet
+    val naReqTypesPerField  = p.config.naReqTypesPerField
 
     // Don't use a for-comprehension here
     // https://github.com/scala/bug/issues/11951
-    customTextFieldText.data.foreach { case (tf, textByReqId) =>
-      val live = Live when (liveTextFields contains tf)
+    customTextFieldText.data.foreach { case (fieldId, textByReqId) =>
+      val fieldLive = Live.when(liveTextFields contains fieldId)
+      val naReqTypes = naReqTypesPerField(fieldId)
       textByReqId.foreach { case (id, txt) =>
-        scanReqText(live, id, Location.Text.CustomTextField(tf))(txt.whole)
+
+        @inline def reqTypeId: ReqTypeId =
+          id match {
+            case r: GenericReqId => reqTypesPerReqId(r)
+            case _: UseCaseId    => StaticReqType.UseCase
+          }
+
+        @inline def fieldIsNA = naReqTypes.nonEmpty && naReqTypes.contains(reqTypeId)
+
+        val live = fieldLive & Dead.when(fieldIsNA)
+
+        scanReqText(live, id, Location.Text.CustomTextField(fieldId))(txt.whole)
       }
     }
 

@@ -837,8 +837,8 @@ object LogicTest extends TestSuite {
 
   def testOtherTags_inText(): Unit = {
     def t(direct: ApplicableTagId*)(inTitle: ApplicableTagId*)(inCustomText: ApplicableTagId*) =
-      GReq(title = reqTitleTagRefs.optional(inTitle))
-        .cftextO(descField, customTextTagRefs.optional(inCustomText))
+      GReq(title = reqTitleTagRefs.optional(inTitle), reqType = dd)
+        .cftextO(notesField, customTextTagRefs.optional(inCustomText))
         .cftext(reporterField, NonEmptyArraySeq.fromNEV(allLiveTags).map(Text.CustomTextField.TagRef)) // dead column has no effect
         .tag(direct: _*)
     val p       = t()()() + t(v10)(v12)(v1x, v1x) + t(v2x)(v2x, v11)(v11) ! PA
@@ -853,8 +853,8 @@ object LogicTest extends TestSuite {
   def testCustomTagField_inText(): Unit = {
     // TODO test tag transitivity: column tag ← mutual tag ← tag in text
     def t(direct: ApplicableTagId*)(inTitle: ApplicableTagId*)(inCustomText: ApplicableTagId*) =
-      GReq(title = reqTitleTagRefs.optional(inTitle))
-        .cftextO(descField, customTextTagRefs.optional(inCustomText))
+      GReq(title = reqTitleTagRefs.optional(inTitle), reqType = dd)
+        .cftextO(notesField, customTextTagRefs.optional(inCustomText))
         .cftext(reporterField, customTextTagRefs(allLiveTags)) // dead column has no effect
         .tag(direct: _*)
     val p       = t(wip)(wip, priHigh)(priLow, priLow) + t()()() + t(priMed)(priHigh, priMed)(priHigh, defer) ! PA
