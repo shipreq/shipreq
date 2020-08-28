@@ -175,6 +175,38 @@
       .ucSteps .ctrls button:nth-child(4):hover ,
       .ucSteps .tailStep.ctrls button:hover {color:#21BA45}
 
+      .derivedRow {
+        display: flex;
+        align-items: center;
+      }
+
+      .derivedRow > .tags {
+        flex-grow:1;
+      }
+
+      .github {
+        background:#fef;
+        box-sizing: border-box;
+        float:right;
+        width:20vw;
+        white-space: nowrap;
+        word-break: keep-all;
+      }
+      .github .progress {
+        display: flex;
+        height: 8px;
+        overflow: hidden;
+        background-color: #e1e4e8;
+        border-radius: 6px;
+        outline: 1px solid #0000;
+      }
+      .github .progress .progress_item {
+        outline: 2px solid #0000;
+      }
+      .progress_item + .progress_item {
+        margin-left: 2px;
+      }
+
   %body
 
     .ui.menu.borderless.fixed.inverted
@@ -301,6 +333,21 @@
               .ui.label.red.is-tag
                 must
                 %span(style="margin-left:.5ex;margin-right:0; opacity:.7; font-style:italic") (T)
+
+          %tr
+            %th Status
+            %td
+              .derivedRow
+                .tags
+                  .ui.label.is-tag(style="background:#f5f100; color:#000")
+                    analysed
+                  .ui.label.is-tag(style="background:#ccf000; color:#000")
+                    ready_for_dev
+                    %i.icon.sitemap(style="margin-left:.5ex;margin-right:.0ex; opacity:.6")
+                .github
+                  %span.progress
+                    %span.progress_item(style="background:#f5f100; width:40%" title="40% analysed")
+                    %span.progress_item(style="background:#ccf000; width:60%" title="60% ready_for_dev")
 
           %tr
             %th Implications

@@ -130,6 +130,34 @@
 
       .blueHover:hover {color:#2185D0!important}
 
+      .derivedRow {
+        flex-direction: column;
+        width:100%;
+        height: 100%;
+        display:inline-flex;
+        margin: 0;
+        padding:0;
+      }
+
+      .derivedRow > .tags {
+        flex-grow:1;
+        padding: 4px;
+      }
+
+      .github {
+        background:#fef;
+        box-sizing: border-box;
+        float:right;
+        width:100%;
+        white-space: nowrap;
+        word-break: keep-all;
+      }
+      .github .progress {
+        display: flex;
+        height: 4px;
+        overflow: hidden;
+      }
+
   %body
 
     .ui.menu.borderless.fixed.inverted
@@ -571,8 +599,14 @@
               = "Fix "
               %span.tagRef focus
               = " and keyboard nav."
-            %td.inline-edit
-              .ui.label.blue.is-tag should
+            %td.inline-edit(style="padding:0")
+              .derivedRow
+                .tags
+                  .ui.label.blue.is-tag should
+                .github
+                  %span.progress
+                    %span.progress_item(style="background:#f5f100; width:40%" title="40% analysed")
+                    %span.progress_item(style="background:#ccf000; width:60%" title="60% ready_for_dev")
             %td.inline-edit
               %a{href:"#"} MF-7
             %td.inline-edit
@@ -588,8 +622,15 @@
               = "Do more stuff! "
               %span.issueRef
                 \#TODO
-            %td.inline-edit
-              .ui.label.blue.is-tag must
+            %td.inline-edit(style="padding:0")
+              .derivedRow
+                .tags
+                  .ui.label.red.is-tag must
+                .github
+                  %span.progress
+                    %span.progress_item(style="background:#f5f100; width:13%" title="13% could")
+                    %span.progress_item(style="background:#2185d0; width:53%" title="53% should")
+                    %span.progress_item(style="background:#db2828; width:34%" title="34% must")
             %td.inline-edit
               %a{href:"#"} MF-7
               = ", "
