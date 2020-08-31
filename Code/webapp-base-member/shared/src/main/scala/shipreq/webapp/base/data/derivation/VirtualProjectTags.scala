@@ -149,6 +149,14 @@ object VirtualProjectTags {
 
   implicit def univEqProgressBarPortion: UnivEq[ProgressBarPortion] = UnivEq.derive
 
+  final case class DerivationDesc(factors: ArraySeq[DerivationDesc.Factor],
+                                  steps: ArraySeq[DerivationDesc.DerivStep])
+
+  object DerivationDesc {
+    final case class Factor(tag: Option[ApplicableTagId], reqs: String)
+    final case class DerivStep(tags: NonEmptyVector[ApplicableTagId])
+  }
+
   sealed trait ChildrenSummary {
     final type ByTag = Map[Option[ApplicableTagId], Double]
     def byTag: ByTag
@@ -156,7 +164,7 @@ object VirtualProjectTags {
     final type ProgressBar = ArraySeq[ProgressBarPortion]
     def progressBar: ProgressBar
 
-    def descDerivation: Option[String]
+    def derivationDesc: Option[DerivationDesc]
 
     /** The number of live, relevant, unique, transitive children.
       * Also the sum of all aggregated values.
@@ -1080,12 +1088,14 @@ object VirtualProjectTags {
     override def byTag       = results._2
     override def progressBar = results._3
 
-    override lazy val descDerivation: Option[String] =
+    override lazy val derivationDesc: Option[DerivationDesc] =
       Option.when(dtFactors.contains(fieldId)) {
+        import DerivationDesc._
+
         val allFactors    = dtFactors(fieldId)
         val tagCfg        = p.config.tags
         val orderingByPos = tagCfg.orderingByPos
-        val showNoTag     = "no tag"
+        val dt            = p.config.fields.custom(fieldId).derivativeTags
 
         // Group factors by tag
         var byTag = Multimap.empty[ApplicableTagId, Set, ReqId]
@@ -1098,64 +1108,29 @@ object VirtualProjectTags {
         }
         val allTags = MutableArray(byTag.keyIterator).sort(orderingByPos).arraySeq
 
-        // Work out tag alignment
-        val tagAlignment = Aligner.forStrings()
-        if (noTag.nonEmpty)
-          tagAlignment.consider(showNoTag)
-        for (tagId <- allTags) {
-          val tag = tagCfg.needApplicableTag(tagId)
-          tagAlignment.consider(tag.name, plus = 1)
-        }
-
-        val result = new StringBuilder
-
-        // Describe factors
-        result.append("Factors\n")
-
+        // Factors
+        val factors = ArraySeq.newBuilder[Factor]
         for (reqs <- NonEmptySet.option(noTag)) {
-          result.append("\n  ")
-          tagAlignment.padLeft(result, showNoTag)
-          result.append(" - ")
-          result.append(PlainText.concisePubidSet(reqs, p))
+          factors += Factor(None, PlainText.concisePubidSet(reqs, p))
         }
-
         for (tagId <- allTags.iterator) {
-          val tag  = tagCfg.needApplicableTag(tagId)
-          result.append("\n  ")
-          tagAlignment.padLeft(result, tag.key.with_#)
-          result.append(" - ")
-          result.append(PlainText.concisePubidSet(NonEmptySet.force(byTag(tagId)), p))
+          val reqs = NonEmptySet.force(byTag(tagId))
+          factors += Factor(tagId.some, PlainText.concisePubidSet(reqs, p))
         }
 
-        // Describe derivation
-        if (allTags.nonEmpty) {
-          val dt = p.config.fields.custom(fieldId).derivativeTags
-          result.append("\n\nDerivation\n")
-
-          @tailrec
-          def showDerivation(tags: Set[ApplicableTagId]): Unit = {
-            def render(sep: String): Unit = {
-              result.append("\n  = ")
-              MutableArray(tags)
-                .sort(orderingByPos)
-                .iterator()
-                .map(tagCfg.needApplicableTag(_).key.with_#)
-                .mkString(sep)
-                .|>(result.append)
-            }
+        // Derivation steps
+        val steps = ArraySeq.newBuilder[DerivStep]
+        @tailrec
+        def addDerivationStep(tags: Set[ApplicableTagId]): Unit =
+          if (tags.nonEmpty) {
+            steps += DerivStep(NonEmptyVector.force(MutableArray(tags).sort(orderingByPos).to(Vector)))
             val next = dt.reduce(tags, recursively = false)
-            if (next eq tags) {
-              render(" ")
-            } else {
-              render(" + ")
-              showDerivation(next)
-            }
+            if (next ne tags)
+              addDerivationStep(next)
           }
+        addDerivationStep(allTags.toSet)
 
-          showDerivation(allTags.toSet)
-        }
-
-        result.toString
+        DerivationDesc(factors.result(), steps.result())
       }
   }
 

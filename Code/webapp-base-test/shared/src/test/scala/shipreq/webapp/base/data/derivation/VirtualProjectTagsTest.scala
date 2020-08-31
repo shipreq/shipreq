@@ -13,7 +13,7 @@ import sourcecode.Line
 import utest._
 
 object VirtualProjectTagsTest extends TestSuite {
-  import VirtualProjectTags.{DerivativeTagFactor, Provenance, VirtualTag}
+  import VirtualProjectTags.{DerivationDesc, DerivativeTagFactor, Provenance, VirtualTag}
 
   private def summariseDerivativeTags(p: Project,
                                       fieldId: CustomField.Tag.Id,
@@ -202,12 +202,42 @@ object VirtualProjectTagsTest extends TestSuite {
                                    f     : CustomField.Tag.Id,
                                    reqId : ReqId)
                                   (expect: String)(implicit l: Line): Unit = {
+
+    def render(d: DerivationDesc): String = {
+      val result = new StringBuilder
+      result.append("Factors\n")
+      for (f <- d.factors) {
+        result.append("\n  ")
+        result.append(f.tag.fold("no tag")(p.config.tags.needApplicableTag(_).key.with_#))
+        result.append(" - ")
+        result.append(f.reqs)
+      }
+      if (d.steps.nonEmpty) {
+        result.append("\n\nDerivation\n")
+        for (i <- d.steps.indices) {
+          val s = d.steps(i)
+          val sep = if (i == d.steps.indices.last) " " else " + "
+          result.append("\n  = ")
+          result.append(s.tags.iterator.map(p.config.tags.needApplicableTag(_).key.with_#).mkString(sep))
+        }
+      }
+      result.toString
+    }
+
     val actual =
       p.virtualTags(reqId)
         .childrenSummary(f)
-        .descDerivation
+        .derivationDesc
+        .map(render)
         .orNull
-    assertMultiline(PlainText.pubidByReqId(reqId, p), actual = actual, expect = expect.trim)
+
+    val norm: String => String =
+      _.trim.replaceAll(" {2,}", " ")
+
+    assertMultiline(
+      PlainText.pubidByReqId(reqId, p),
+      actual = norm(actual),
+      expect = norm(expect))
   }
 
   override def tests = Tests {
