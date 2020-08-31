@@ -117,6 +117,7 @@ object VirtualProjectTags {
     def isManualInText: Boolean
     def isDefault     : Boolean
     def isDerived     : Boolean
+    def derivationDesc: Option[DerivationDesc]
 
     @inline final def isDead = live is Dead
   }
@@ -131,6 +132,7 @@ object VirtualProjectTags {
         override def isManualInText = false
         override def isDefault      = false
         override def isDerived      = false
+        override def derivationDesc = None
       }
   }
 
@@ -163,8 +165,6 @@ object VirtualProjectTags {
 
     final type ProgressBar = ArraySeq[ProgressBarPortion]
     def progressBar: ProgressBar
-
-    def derivationDesc: Option[DerivationDesc]
 
     /** The number of live, relevant, unique, transitive children.
       * Also the sum of all aggregated values.
@@ -274,8 +274,7 @@ object VirtualProjectTags {
     }
 
     // Step 2: Derivative tags
-    val dtFactors: DerivativeTagFactors =
-      applyDerivativeTags(data)
+    val (dtFields, dtFactors) = applyDerivativeTags(data)
 
     // =================================================================================================================
     private def collectManualTags(req: Req, b: ForReq): Unit = {
@@ -362,7 +361,7 @@ object VirtualProjectTags {
 
     private final val debugDerivativeTags = false
 
-    private def applyDerivativeTags(data: Data): DerivativeTagFactors = {
+    private def applyDerivativeTags(data: Data) = {
 
       var factorsPerField: DerivativeTagFactors = Map.empty
 
@@ -670,14 +669,15 @@ object VirtualProjectTags {
         pass2()
       }
 
-      factorsPerField
+      (fields, factorsPerField)
     }
   } // class Mutable
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
   // Finally, calculate results
 
-  private class MutableVirtualTag extends VirtualTag {
+  private class MutableVirtualTag(_derivationDesc: () => Option[DerivationDesc]) extends VirtualTag {
+    override def derivationDesc = _derivationDesc()
     override def provenances    = _provenances
     override def live           = _live
     override def validity       = _validity
@@ -732,13 +732,14 @@ object VirtualProjectTags {
 
   private type MutableVirtualTagsByField = TagFieldId.Mutable[MutableVirtualTag]
 
-  private class MutableVirtualTags {
+  private class MutableVirtualTags(derivationDesc: ApplicableTagId => TagFieldId => Option[DerivationDesc]) {
     type TagState = MutableVirtualTagsByField
     var state = Map.empty[ApplicableTagId, TagState]
 
     def tagState(id: ApplicableTagId): TagState =
       state.getOrElse(id, {
-        val s = new TagFieldId.Mutable(new MutableVirtualTag)
+        val d = derivationDesc(id)
+        val s = new TagFieldId.Mutable(f => new MutableVirtualTag(() => d(f)))
         state = state.updated(id, s)
         s
       })
@@ -765,8 +766,10 @@ object VirtualProjectTags {
       }
   }
 
-  private def calculateVirtualTagsShared(data: Mutable.ForReq, dist: TagFieldDistribution.TagIds): MutableVirtualTags = {
-    val s = new MutableVirtualTags
+  private def calculateVirtualTagsShared(data: Mutable.ForReq,
+                                         dist: TagFieldDistribution.TagIds,
+                                         init: () => MutableVirtualTags): MutableVirtualTags = {
+    val s = init()
     import s._
 
     for ((tag, fields) <- data.liveDerived.m)
@@ -786,15 +789,15 @@ object VirtualProjectTags {
     s
   }
 
-  private def calculateVirtualTagsLive(m: Mutable, data: Mutable.ForReq): MutableVirtualTags = {
+  private def calculateVirtualTagsLive(m: Mutable, data: Mutable.ForReq, init: () => MutableVirtualTags): MutableVirtualTags = {
     val dist = m.liveTagDist
-    val s = calculateVirtualTagsShared(data, dist)
+    val s = calculateVirtualTagsShared(data, dist, init)
     s
   }
 
-  private def calculateVirtualTagsDead(m: Mutable, data: Mutable.ForReq): MutableVirtualTags = {
+  private def calculateVirtualTagsDead(m: Mutable, data: Mutable.ForReq, init: () => MutableVirtualTags): MutableVirtualTags = {
     val dist = m.p.config.deadTagFieldDistribution
-    val s = calculateVirtualTagsShared(data, dist)
+    val s = calculateVirtualTagsShared(data, dist, init)
     import s._
 
     addManuals(data.manualDead.m, dist, p => _.markAsDead().markAsManual(p))
@@ -810,12 +813,104 @@ object VirtualProjectTags {
     s
   }
 
+  private def describeDerivation(allFactors: Set[DerivativeTagFactor],
+                                 selfId    : ReqId,
+                                 fieldIds  : List[CustomField.Tag.Id],
+                                 p         : Project): Option[DerivationDesc] = {
+    Option.when(allFactors.nonEmpty) {
+      import DerivationDesc._
+
+      val tagCfg        = p.config.tags
+      val orderingByPos = tagCfg.orderingByPos
+
+      // Group factors by tag
+      var byTag = Multimap.empty[ApplicableTagId, Set, ReqId]
+      var noTag = Set.empty[ReqId]
+      allFactors.foreach {
+        case DerivativeTagFactor.Relation(req, _, tag, _) => byTag = byTag.add(tag, req)
+        case DerivativeTagFactor.Self(tag, _)             => byTag = byTag.add(tag, selfId)
+        case DerivativeTagFactor.EmptyRelation(req, _)    => noTag += req
+        case DerivativeTagFactor.EmptySelf                => noTag += selfId
+      }
+      val allTags = MutableArray(byTag.keyIterator).sort(orderingByPos).arraySeq
+
+      // Factors
+      val factors = ArraySeq.newBuilder[Factor]
+      for (reqs <- NonEmptySet.option(noTag)) {
+        factors += Factor(None, PlainText.concisePubidSet(reqs, p))
+      }
+      for (tagId <- allTags.iterator) {
+        val reqs = NonEmptySet.force(byTag(tagId))
+        factors += Factor(tagId.some, PlainText.concisePubidSet(reqs, p))
+      }
+
+      // Derivation steps
+      val steps = ArraySeq.newBuilder[DerivStep]
+      for (fieldId <- fieldIds) {
+        val dt = p.config.fields.custom(fieldId).derivativeTags
+
+        @tailrec
+        def addDerivationStep(tags: Set[ApplicableTagId]): Unit =
+          if (tags.nonEmpty) {
+            steps += DerivStep(NonEmptyVector.force(MutableArray(tags).sort(orderingByPos).to(Vector)))
+            val next = dt.reduce(tags, recursively = false)
+            if (next ne tags)
+              addDerivationStep(next)
+          }
+
+        addDerivationStep(allTags.toSet)
+      }
+
+      DerivationDesc(factors.result(), steps.result())
+    }
+  }
+
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   def apply(p: Project): VirtualProjectTags = {
 
     val m = new Mutable(p)
-    import m.data
+    import m.{p => _, _}
+
+    val descDerivMemo: ReqId => ApplicableTagId => TagFieldId => Option[DerivationDesc] =
+      if (dtFields.isEmpty)
+        _ => _ => _ => None
+      else
+        Memo { reqId =>
+          Memo { tagId =>
+
+            val relevantFields = dtFields.iterator.filter(_.tags.contains(tagId)).map(_.fieldId).toList
+
+            var self: TagFieldId => Option[DerivationDesc] = null
+            self = Memo {
+
+              case TagFieldId.Custom(fieldId) =>
+                if (dtFactors.contains(fieldId)) {
+                  val factors = dtFactors(fieldId).value(reqId)
+                  describeDerivation(factors, reqId, fieldId :: Nil, p)
+                } else
+                  None
+
+              case TagFieldId.Other =>
+                None
+
+              case TagFieldId.All =>
+                relevantFields match {
+                  case Nil =>
+                    None
+
+                  case fieldId :: Nil =>
+                    self(TagFieldId.Custom(fieldId))
+
+                  case _ =>
+                    val factors = relevantFields.iterator.map(dtFactors(_).value(reqId)).reduce(Util.mergeSets(_, _))
+                    describeDerivation(factors, reqId, relevantFields, p)
+                }
+            }
+
+            self
+          }
+        }
 
     val virtualTagsMemo: FilterDead => ReqId => LazyVal[MutableVirtualTags] =
       FilterDead.memo {
@@ -823,14 +918,18 @@ object VirtualProjectTags {
           Memo { reqId =>
             LazyVal {
               val d = data(reqId)
-              calculateVirtualTagsLive(m, d)
+              val descDeriv = descDerivMemo(reqId)
+              val init = () => new MutableVirtualTags(descDeriv)
+              calculateVirtualTagsLive(m, d, init)
             }
           }
         case ShowDead =>
           Memo { reqId =>
             LazyVal {
               val d = data(reqId)
-              calculateVirtualTagsDead(m, d)
+              val descDeriv = descDerivMemo(reqId)
+              val init = () => new MutableVirtualTags(descDeriv)
+              calculateVirtualTagsDead(m, d, init)
             }
           }
       }
@@ -876,7 +975,10 @@ object VirtualProjectTags {
     private val fdResults = allLiveDeadResults(distFn)
 
     private val monoResults: ReqId => ResultsMono =
-      Memo(reqId => new MonoImpl(reqId, fdResults(HideDead)(reqId), mutableResults))
+      Memo(reqId => new MonoImpl(
+        reqId,
+        fdResults(HideDead)(reqId),
+        mutableResults))
 
     override def apply(reqId: ReqId): ResultsMono =
       monoResults(reqId)
@@ -1087,51 +1189,6 @@ object VirtualProjectTags {
     override def total       = results._1
     override def byTag       = results._2
     override def progressBar = results._3
-
-    override lazy val derivationDesc: Option[DerivationDesc] =
-      Option.when(dtFactors.contains(fieldId)) {
-        import DerivationDesc._
-
-        val allFactors    = dtFactors(fieldId)
-        val tagCfg        = p.config.tags
-        val orderingByPos = tagCfg.orderingByPos
-        val dt            = p.config.fields.custom(fieldId).derivativeTags
-
-        // Group factors by tag
-        var byTag = Multimap.empty[ApplicableTagId, Set, ReqId]
-        var noTag = Set.empty[ReqId]
-        allFactors.value(selfId).foreach {
-          case DerivativeTagFactor.Relation(req, _, tag, _) => byTag = byTag.add(tag, req)
-          case DerivativeTagFactor.Self(tag, _)             => byTag = byTag.add(tag, selfId)
-          case DerivativeTagFactor.EmptyRelation(req, _)    => noTag += req
-          case DerivativeTagFactor.EmptySelf                => noTag += selfId
-        }
-        val allTags = MutableArray(byTag.keyIterator).sort(orderingByPos).arraySeq
-
-        // Factors
-        val factors = ArraySeq.newBuilder[Factor]
-        for (reqs <- NonEmptySet.option(noTag)) {
-          factors += Factor(None, PlainText.concisePubidSet(reqs, p))
-        }
-        for (tagId <- allTags.iterator) {
-          val reqs = NonEmptySet.force(byTag(tagId))
-          factors += Factor(tagId.some, PlainText.concisePubidSet(reqs, p))
-        }
-
-        // Derivation steps
-        val steps = ArraySeq.newBuilder[DerivStep]
-        @tailrec
-        def addDerivationStep(tags: Set[ApplicableTagId]): Unit =
-          if (tags.nonEmpty) {
-            steps += DerivStep(NonEmptyVector.force(MutableArray(tags).sort(orderingByPos).to(Vector)))
-            val next = dt.reduce(tags, recursively = false)
-            if (next ne tags)
-              addDerivationStep(next)
-          }
-        addDerivationStep(allTags.toSet)
-
-        DerivationDesc(factors.result(), steps.result())
-      }
   }
 
   // ===================================================================================================================

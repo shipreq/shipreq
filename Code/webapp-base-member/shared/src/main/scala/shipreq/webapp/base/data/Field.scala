@@ -57,9 +57,9 @@ object TagFieldId {
 
   implicit def univEq: UnivEq[TagFieldId] = UnivEq.derive
 
-  final class Mutable[A](empty: => A) {
-    var all = empty
-    var other = empty
+  final class Mutable[A](empty: TagFieldId => A) {
+    var all = empty(All)
+    var other = empty(Other)
     var fields = Map.empty[CustomField.Tag.Id, A]
 
     def get(f: TagFieldId): A =
@@ -71,7 +71,7 @@ object TagFieldId {
 
     def field(f: CustomField.Tag.Id): A =
       fields.getOrElse(f, {
-        val a = empty
+        val a = empty(Custom(f))
         fields = fields.updated(f, a)
         a
       })

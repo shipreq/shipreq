@@ -199,8 +199,9 @@ object VirtualProjectTagsTest extends TestSuite {
   }
 
   private def assertDescDerivation(p     : Project,
-                                   f     : CustomField.Tag.Id,
-                                   reqId : ReqId)
+                                   f     : TagFieldId,
+                                   reqId : ReqId,
+                                   tagId : ApplicableTagId)
                                   (expect: String)(implicit l: Line): Unit = {
 
     def render(d: DerivationDesc): String = {
@@ -224,20 +225,22 @@ object VirtualProjectTagsTest extends TestSuite {
       result.toString
     }
 
-    val actual =
-      p.virtualTags(reqId)
-        .childrenSummary(f)
-        .derivationDesc
-        .map(render)
-        .orNull
-
     val norm: String => String =
       _.trim.replaceAll(" {2,}", " ")
 
-    assertMultiline(
-      PlainText.pubidByReqId(reqId, p),
-      actual = norm(actual),
-      expect = norm(expect))
+    for (fd <- FilterDead) {
+
+      val actual =
+        p.virtualTags(reqId, fd)(tagId, f)
+          .derivationDesc
+          .map(render)
+          .orNull
+
+      assertMultiline(
+        PlainText.pubidByReqId(reqId, p),
+        actual = norm(actual),
+        expect = norm(expect))
+    }
   }
 
   override def tests = Tests {
@@ -352,33 +355,69 @@ object VirtualProjectTagsTest extends TestSuite {
           }
         }
         "descDerivation" - {
-          def p = step5.project
           "fb1" - {
-            // + FR-1: implemented (manual)
-            // + FR-2: implemented (manual)
-            // + FR-3: implemented (manual)
-            // + FR-4: implemented (manual)
-            // + IV-1: analysed (manual)
-            // + IV-1: implemented (derived)
-            // + IV-2: rejected (manual)
-            // + IV-3: analysed (manual)
-            // + IV-3: implemented (derived)
-            // + MF-1: implemented (derived)
-            assertDescDerivation(p, statusField, fb1)(
-              """
-                |Factors
-                |
-                |  #analysed    - IV-{1,3}
-                |  #implemented - FR-{1-4},IV-{1,3},MF-1
-                |  #rejected    - IV-2
-                |
-                |Derivation
-                |
-                |  = #analysed + #implemented + #rejected
-                |  = #implemented + #rejected
-                |  = #implemented
-                |
-                |""".stripMargin)
+            def p = step5.project
+            "implemented" - {
+              // + FR-1: implemented (manual)
+              // + FR-2: implemented (manual)
+              // + FR-3: implemented (manual)
+              // + FR-4: implemented (manual)
+              // + IV-1: analysed (manual)
+              // + IV-1: implemented (derived)
+              // + IV-2: rejected (manual)
+              // + IV-3: analysed (manual)
+              // + IV-3: implemented (derived)
+              // + MF-1: implemented (derived)
+              def test(f: TagFieldId) =
+                assertDescDerivation(p, f, fb1, implemented)(
+                  """
+                    |Factors
+                    |
+                    |  #analysed    - IV-{1,3}
+                    |  #implemented - FR-{1-4},IV-{1,3},MF-1
+                    |  #rejected    - IV-2
+                    |
+                    |Derivation
+                    |
+                    |  = #analysed + #implemented + #rejected
+                    |  = #implemented + #rejected
+                    |  = #implemented
+                    |
+                    |""".stripMargin)
+              "status" - test(TagFieldId.Custom(statusField))
+              "all" - test(TagFieldId.All)
+            }
+            "v1" - {
+              // + FR-1: v1 (manual)
+              // + FR-2: v2 (derived)
+              // + FR-3: v1 (derived)
+              // + FR-4: v1 (manual)
+              // + IV-1: v1 (derived)
+              // + IV-1: v2 (derived)
+              // + IV-2: v2 (derived)
+              // + IV-3: v1 (derived)
+              // + IV-3: v2 (derived)
+              // + MF-1: v1 (derived)
+              // + MF-1: v2 (manual)
+              // + self: ∅
+              // = {v1+ v2+}
+              def test(f: TagFieldId) =
+                assertDescDerivation(p, f, fb1, v1)(
+                  """
+                    |Factors
+                    |
+                    |  no tag - FB-1
+                    |  #v1    - FR-{1,3,4},IV-{1,3},MF-1
+                    |  #v2    - FR-2,IV-{1-3},MF-1
+                    |
+                    |Derivation
+                    |
+                    |  = #v1 #v2
+                    |
+                    |""".stripMargin)
+              "ver" - test(TagFieldId.Custom(verField))
+              "all" - test(TagFieldId.All)
+            }
           }
         }
       }
