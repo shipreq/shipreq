@@ -500,6 +500,14 @@ final case class Tags(tree: TagTree) {
   lazy val orderingByPos: Ordering[ApplicableTagId] =
     Ordering.by(orderByPos)
 
+  lazy val orderingByPosEmptyFirst: Ordering[Option[ApplicableTagId]] = {
+    val o = orderByPos
+    Ordering.by {
+      case Some(t) => o(t)
+      case None    => -1
+    }
+  }
+
   val tagGroupTags: TagGroupId => FilterDead => TagGroupTags =
     Memo(id => FilterDead.memoLazy(TagGroupTags.derive(this, id, _)))
 

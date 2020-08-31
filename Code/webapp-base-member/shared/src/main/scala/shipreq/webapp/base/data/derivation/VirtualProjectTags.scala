@@ -134,8 +134,26 @@ object VirtualProjectTags {
       }
   }
 
+  final case class ProgressBarPortion(tagId  : Option[ApplicableTagId],
+                                      tag    : Option[ApplicableTag],
+                                      portion: Double,
+                                      total  : Int) {
+
+    def pct1    = portion / total.toDouble
+    def pct100d = pct1 * 100d
+    def pct100i = Math.round(pct100d).toInt
+    def name    = tag.fold("no tag")(_.name)
+    val desc    = s"${pct100i}% $name"
+  }
+
+  implicit def univEqProgressBarPortion: UnivEq[ProgressBarPortion] = UnivEq.derive
+
   sealed trait ChildrenSummary {
-    def aggregated: Map[Option[ApplicableTagId], Double]
+    final type ByTag = Map[Option[ApplicableTagId], Double]
+    def byTag: ByTag
+
+    final type ProgressBar = ArraySeq[ProgressBarPortion]
+    def progressBar: ProgressBar
 
     /** The number of live, relevant, unique, transitive children.
       * Also the sum of all aggregated values.
@@ -847,7 +865,7 @@ object VirtualProjectTags {
     private val fdResults = allLiveDeadResults(distFn)
 
     private val monoResults: ReqId => ResultsMono =
-      Memo(new MonoImpl(_, mutableResults))
+      Memo(reqId => new MonoImpl(reqId, fdResults(HideDead)(reqId), mutableResults))
 
     override def apply(reqId: ReqId): ResultsMono =
       monoResults(reqId)
@@ -930,7 +948,9 @@ object VirtualProjectTags {
 
   // ===================================================================================================================
 
-  private final class MonoImpl(reqId: ReqId, mutableResults: Mutable) extends ResultsMono {
+  private final class MonoImpl(reqId         : ReqId,
+                               liveResults   : ResultsLiveDead,
+                               mutableResults: Mutable) extends ResultsMono {
     import mutableResults._
 
     private val b = data(reqId)
@@ -951,7 +971,7 @@ object VirtualProjectTags {
         Set.empty
 
     private val childrenSummaries: CustomField.Tag.Id => ChildrenSummary =
-      Memo(new ChildrenSummaryImpl(reqId, _, mutableResults))
+      Memo(new ChildrenSummaryImpl(reqId, _, liveResults, mutableResults))
 
     override def childrenSummary(field: CustomField.Tag.Id) =
       childrenSummaries(field)
@@ -959,56 +979,103 @@ object VirtualProjectTags {
 
   // ===================================================================================================================
 
-  private final class ChildrenSummaryImpl(reqId: ReqId,
-                                          fieldId: CustomField.Tag.Id,
+  private final val debugProgressBar = false
+
+  private final class ChildrenSummaryImpl(selfId        : ReqId,
+                                          fieldId       : CustomField.Tag.Id,
+                                          liveResults   : ResultsLiveDead,
                                           mutableResults: Mutable) extends ChildrenSummary {
 
     import mutableResults._
 
-    private lazy val _aggregated: (Map[Option[ApplicableTagId], Double], Int) =
+    private lazy val results: (Int, ByTag, ProgressBar) =
       if (dtFactors.contains(fieldId)) {
         val allFactors = dtFactors(fieldId)
+        val tags = p.config.tags
 
         // Group by reqId
-        val byReq = mutable.HashMap.empty[ReqId, MutableRef[List[ApplicableTagId]]]
+        val _byReq = mutable.HashMap.empty[ReqId, MutableRef[List[ApplicableTagId]]]
 
-        def add(reqId: ReqId, tag: ApplicableTagId): Unit =
-          byReq.getOrElseUpdate(reqId, MutableRef(Nil)).mod(tag :: _)
+        {
+          def add(reqId: ReqId, tag: ApplicableTagId): Unit =
+            _byReq.getOrElseUpdate(reqId, MutableRef(Nil)).mod(tag :: _)
 
-        allFactors.value(reqId).foreach {
-          case DerivativeTagFactor.EmptyRelation(req, Forwards) => add(req, null)
-          case DerivativeTagFactor.Relation(req, Forwards, tag, _) => add(req, tag)
-          case _ => ()
+          // Scan DT factors
+          allFactors.value(selfId).foreach {
+            case DerivativeTagFactor.EmptyRelation(req, Forwards)    => add(req, null)
+            case DerivativeTagFactor.Relation(req, Forwards, tag, _) => add(req, tag)
+            case DerivativeTagFactor.Self(tag, _: Provenance.Manual) => add(selfId, tag)
+            case _                                                   =>
+          }
+
+          // If no manual tags added for self, add virtual results
+          if (!_byReq.contains(selfId)) {
+            val selfTags = liveResults.set(TagFieldId.Custom(fieldId))
+            if (selfTags.isEmpty)
+              add(selfId, null)
+            else
+              selfTags.foreach(add(selfId, _))
+          }
         }
 
-        // Aggregate by tag
-        val agg = mutable.HashMap.empty[ApplicableTagId, MutableRef[Double]]
+        // Debugging
+        if (debugProgressBar) {
+          val sep = "=" * 80
+          println(sep)
+          println(s"Progress bar components for ${PlainText.pubidByReqId(selfId, p)}")
+          def descTag(id: ApplicableTagId) = Option(id).fold("∅")(tags.needApplicableTag(_).name)
+          val rows = _byReq.keysIterator.toList.map { k =>
+            val v = _byReq(k)
+            val pubid = PlainText.pubidByReqId(k, p)
+            s"  - $pubid: ${v.value.map(descTag).sorted.mkString(",")}"
+          }
+          rows.sorted.foreach(println)
+          println(sep)
+        }
+
+        // Aggregate
+        val _byTag = mutable.HashMap.empty[ApplicableTagId, MutableRef[Double]]
         var noTag = 0d
         var total = 0
-        for (ref <- byReq.valuesIterator) {
+        for (ref <- _byReq.valuesIterator) {
           total += 1
           val tags = ref.value
           val length = tags.length
           val weight = if (length > 1) 1d / length.toDouble else 1d
           tags foreach {
             case null => noTag += weight
-            case t => agg.getOrElseUpdate(t, MutableRef.double()).mod(_ + weight)
+            case t => _byTag.getOrElseUpdate(t, MutableRef.double()).mod(_ + weight)
           }
         }
 
         // Reorganise results
-        var results = Map.empty[Option[ApplicableTagId], Double]
-        results = agg.foldLeft(results) { case (q, (k, v)) => q.updated(Some(k), v.value) }
-        if (noTag > 0d)
-          results = results.updated(None, noTag)
+        var byTag = Map.empty[Option[ApplicableTagId], Double] // TODO remove?
+        val _progressBar = Array.newBuilder[ProgressBarPortion]
+        for ((k, v) <- _byTag) {
+          val tagId = Some(k)
+          val tag = Some(tags.needApplicableTag(k))
+          byTag = byTag.updated(tagId, v.value)
+          _progressBar += ProgressBarPortion(tagId, tag, v.value, total)
+        }
+        if (noTag > 0d) {
+          byTag = byTag.updated(None, noTag)
+          _progressBar += ProgressBarPortion(None, None, noTag, total)
+        }
 
-        (results, total)
+        // Sort progress bar
+        val progressBarArray = _progressBar.result()
+        val progressBarOrder = Ordering.by((_: ProgressBarPortion).tagId)(tags.orderingByPosEmptyFirst)
+        scala.util.Sorting.quickSort(progressBarArray)(progressBarOrder)
+        val progressBar = ArraySeq.unsafeWrapArray(progressBarArray)
+
+        (total, byTag, progressBar)
 
       } else
-        (Map.empty, 0)
+        (0, Map.empty, ArraySeq.empty)
 
-    override def aggregated = _aggregated._1
-    override def total      = _aggregated._2
+    override def total       = results._1
+    override def byTag       = results._2
+    override def progressBar = results._3
   }
 
   // ===================================================================================================================

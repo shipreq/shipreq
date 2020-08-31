@@ -171,15 +171,31 @@ object VirtualProjectTagsTest extends TestSuite {
             reqLive match {
               case Live =>
                 val relevantChildren = reqChildren.filterNot(r => f.fieldReqTypeRules(r.reqTypeId).isNA)
-                assertEqWithTolerance(desc, c.aggregated.valuesIterator.sum, relevantChildren.length)
+                assertEqWithTolerance(desc, c.byTag.valuesIterator.sum, relevantChildren.length)
+                assertEqWithTolerance(desc, c.progressBar.iterator.map(_.portion).sum, relevantChildren.length)
                 assertEq(c.total, relevantChildren.length)
 
               case Dead =>
-                assertEq(c.aggregated, Map.empty[Option[ApplicableTagId], Double])
+                assertEq(c.byTag, Map.empty: c.ByTag)
+                assertEq(c.progressBar, ArraySeq.empty: c.ProgressBar)
                 assertEq(c.total, 0)
             }
           }
       }
+  }
+
+  private def assertProgressBar(p     : Project,
+                                f     : CustomField.Tag.Id,
+                                reqId : ReqId)
+                               (expect: String)(implicit l: Line): Unit = {
+    val actual =
+      p.virtualTags(reqId)
+        .childrenSummary(f)
+        .progressBar
+        .iterator
+        .map(p => s"(${p.portion}) ${p.desc}")
+        .mkString(", ")
+    assertEq(PlainText.pubidByReqId(reqId, p), actual = actual, expect = expect)
   }
 
   override def tests = Tests {
@@ -214,6 +230,84 @@ object VirtualProjectTagsTest extends TestSuite {
           "step3" - assertDerivativeTags(step3.project, verField, verOrder)(step3.virtualVersions)
           "step4" - assertDerivativeTags(step4.project, verField, verOrder)(step4.virtualVersions)
           "step5" - assertDerivativeTags(step5.project, verField, verOrder)(step5.virtualVersions)
+        }
+        "progressBar" - {
+          "ver" - {
+            def p = step5.project
+            def f = verField
+            "fr3" - assertProgressBar(p, f, fr3)("(1.0) 100% v1")
+            "fr1" - assertProgressBar(p, f, fr1)("(2.0) 100% v1")
+            "mf1" - {
+              // - FR-1: v1
+              // - FR-2: v2
+              // - FR-3: v1
+              // - FR-4: v1
+              // - IV-1: v1,v2
+              // - IV-2: v2
+              // - IV-3: v1,v2
+              // - MF-1: v2 <--- v1 omitted because v2 is manual and v1 is derived
+              // v1 = FR1  FR3 FR4 ½IV1 ½IV3 = 4.0
+              // v2 = FR2 ½IV1 IV2 ½IV3 self = 4.0
+              assertProgressBar(p, f, mf1)("(4.0) 50% v1, (4.0) 50% v2")
+            }
+            "fb1" - {
+              // - FB-1: v1,v2
+              // - FR-1: v1
+              // - FR-2: v2
+              // - FR-3: v1
+              // - FR-4: v1
+              // - IV-1: v1,v2
+              // - IV-2: v2
+              // - IV-3: v1,v2
+              // - MF-1: v1,v2
+              // v1 = FR1  FR3 FR4 ½IV1 ½IV3 ½MF-1 ½self = 5
+              // v2 = FR2 ½IV1 IV2 ½IV3      ½MF-1 ½self = 4
+              assertProgressBar(p, f, fb1)("(5.0) 56% v1, (4.0) 44% v2")
+            }
+          }
+          "status" - {
+            "step1" - {
+              def p = step1.project
+              def f = statusField
+              "iv2" - assertProgressBar(p, f, iv2)("(1.0) 100% needsAnalysis")
+            }
+            "step4" - {
+              def p = step4.project
+              def f = statusField
+              "fr3" - assertProgressBar(p, f, fr3)("(1.0) 100% readyForDev")
+              "fr1" - assertProgressBar(p, f, fr1)("(1.0) 50% readyForDev, (1.0) 50% implemented")
+            }
+            "step5" - {
+              def p = step5.project
+              def f = statusField
+              "fr3" - assertProgressBar(p, f, fr3)("(1.0) 100% implemented")
+              "fr1" - assertProgressBar(p, f, fr1)("(2.0) 100% implemented")
+              "iv1" - assertProgressBar(p, f, iv1)("(1.0) 25% analysed, (3.0) 75% implemented")
+              "mf1" - {
+                // - FR-1: implemented
+                // - FR-2: implemented
+                // - FR-3: implemented
+                // - FR-4: implemented
+                // - IV-1: analysed,implemented
+                // - IV-2: rejected
+                // - IV-3: analysed,implemented
+                // - MF-1: implemented
+                assertProgressBar(p, f, mf1)("(1.0) 13% analysed, (6.0) 75% implemented, (1.0) 13% rejected")
+              }
+              "fb1" - {
+                // - FB-1: implemented
+                // - FR-1: implemented
+                // - FR-2: implemented
+                // - FR-3: implemented
+                // - FR-4: implemented
+                // - IV-1: analysed,implemented
+                // - IV-2: rejected
+                // - IV-3: analysed,implemented
+                // - MF-1: implemented
+                assertProgressBar(p, f, fb1)("(1.0) 11% analysed, (7.0) 78% implemented, (1.0) 11% rejected")
+              }
+            }
+          }
         }
       }
 

@@ -71,8 +71,8 @@ object SampleDerivativeTags2 {
         tagGroupCreate(status),
         applicableTagCreate(needsAnalysis, "needsAnalysis", parent = status),
         applicableTagCreate(analysed,      "analysed",      parent = status),
-        applicableTagCreate(implemented,   "implemented",   parent = status),
         applicableTagCreate(readyForDev,   "readyForDev",   parent = status),
+        applicableTagCreate(implemented,   "implemented",   parent = status),
         applicableTagCreate(rejected,      "rejected",      parent = status),
 
         fieldCustomTagCreate(statusField, status, defaults, derivativeTags),
@@ -257,7 +257,7 @@ object SampleDerivativeTags2 {
       """FR-1
         |  + FR-3: readyForDev (default)
         |  + self: implemented (manual)
-        |  = {implemented readyForDev+}
+        |  = {readyForDev+ implemented}
         |FR-2
         |  + self: readyForDev (default)
         |  = {readyForDev?}

@@ -81,8 +81,8 @@ object SampleDerivativeTags3 {
         tagGroupCreate(status, "Status"),
         applicableTagCreate(needsAnalysis, "needsAnalysis", parent = status),
         applicableTagCreate(analysed, "analysed", parent = status),
-        applicableTagCreate(implemented, "implemented", parent = status),
         applicableTagCreate(readyForDev, "readyForDev", parent = status),
+        applicableTagCreate(implemented, "implemented", parent = status),
         applicableTagCreate(rejected, "rejected", parent = status),
         fieldCustomTagCreate(statusField, status, statusFieldDefaults, statusFieldDerivativeTags),
 
