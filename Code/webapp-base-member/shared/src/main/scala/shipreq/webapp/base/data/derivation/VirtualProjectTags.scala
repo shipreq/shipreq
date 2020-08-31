@@ -166,7 +166,7 @@ object VirtualProjectTags {
     final type ProgressBar = ArraySeq[ProgressBarPortion]
     def progressBar: ProgressBar
 
-    /** The number of live, relevant, unique, transitive children.
+    /** The number of live, relevant, unique, transitive children, and this req itself.
       * Also the sum of all aggregated values.
       */
     def total: Int
@@ -1104,7 +1104,8 @@ object VirtualProjectTags {
     private lazy val results: (Int, ByTag, ProgressBar) =
       if (dtFactors.contains(fieldId)) {
         val allFactors = dtFactors(fieldId)
-        val tags = p.config.tags
+        val tags       = p.config.tags
+        def selfLive   = p.content.reqs.need(selfId).live(p.config.reqTypes)
 
         // Group by reqId
         val _byReq = mutable.HashMap.empty[ReqId, MutableRef[List[ApplicableTagId]]]
@@ -1122,7 +1123,7 @@ object VirtualProjectTags {
           }
 
           // If no manual tags added for self, add virtual results
-          if (!_byReq.contains(selfId)) {
+          if (!_byReq.contains(selfId) && selfLive.is(Live)) {
             val selfTags = liveResults.set(TagFieldId.Custom(fieldId))
             if (selfTags.isEmpty)
               add(selfId, null)

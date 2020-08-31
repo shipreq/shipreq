@@ -28,7 +28,8 @@ object ReqDetailObs {
   }
 
   final class TagField($: DomZipperJs) {
-    val tags = $.collect0n("span.ui.label").map(new Tag(_))
+    val ignore = $.collect0n(".popup").zippers.iterator.flatMap(_.collect0n("span.ui.label").doms).toArray
+    val tags = $.collect0n("span.ui.label").zippers.iterator.filter(z => !ignore.contains(z.dom)).map(new Tag(_)).toArray
     val desc = tags.iterator.map(_.desc).mkString(" ")
   }
 

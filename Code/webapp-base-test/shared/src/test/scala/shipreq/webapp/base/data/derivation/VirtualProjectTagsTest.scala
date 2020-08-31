@@ -171,9 +171,10 @@ object VirtualProjectTagsTest extends TestSuite {
             reqLive match {
               case Live =>
                 val relevantChildren = reqChildren.filterNot(r => f.fieldReqTypeRules(r.reqTypeId).isNA)
-                assertEqWithTolerance(desc, c.byTag.valuesIterator.sum, relevantChildren.length)
-                assertEqWithTolerance(desc, c.progressBar.iterator.map(_.portion).sum, relevantChildren.length)
-                assertEq(c.total, relevantChildren.length)
+                val expectedTotal = relevantChildren.length + 1
+                assertEqWithTolerance(desc, c.byTag.valuesIterator.sum, expectedTotal)
+                assertEqWithTolerance(desc, c.progressBar.iterator.map(_.portion).sum, expectedTotal)
+                assertEq(c.total, expectedTotal)
 
               case Dead =>
                 assertEq(c.byTag, Map.empty: c.ByTag)
@@ -195,7 +196,15 @@ object VirtualProjectTagsTest extends TestSuite {
         .iterator
         .map(p => s"(${p.portion}) ${p.desc}")
         .mkString(", ")
-    assertEq(PlainText.pubidByReqId(reqId, p), actual = actual, expect = expect)
+
+    val norm: String => String =
+      _.trim.replace(".0)", ")")
+
+
+    assertEq(
+      PlainText.pubidByReqId(reqId, p),
+      actual = norm(actual),
+      expect = norm(expect))
   }
 
   private def assertDescDerivation(p     : Project,
