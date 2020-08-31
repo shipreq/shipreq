@@ -37,7 +37,7 @@ object ReqTableTest extends TestSuite {
       project = p.initialState)
   }
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   import ProjectDsl._
   import UnsafeTypes._
 
@@ -174,7 +174,7 @@ object ReqTableTest extends TestSuite {
     import ce._
 
     Plan.action(
-      showAllColumns +> text.assert("v1.3 v1.x v3.x v4.x") // wip & uat in Status col
+      showAllColumns +> text.assert("v1.3# v1.x v3.x v4.x#") // wip & uat in Status col
         >> startEdit +> editorValue.assert("v1.1 v1.x") // Should only show direct & live
         >> testInvalid("v0.9").suffix(" (Dead target)")
         >> testInvalid("v3.x").suffix(" (Dead target)")
@@ -195,7 +195,7 @@ object ReqTableTest extends TestSuite {
     import ce._
 
     Plan.action(
-      showAllColumns +> text.assert("wip uat uat3 prod")
+      showAllColumns +> text.assert("wip uat uat3# prod#")
         >> startEdit +> editorValue.assert("wip") // Should only show direct & live
         >> testInvalid("uat").suffix(" (Dead target)")
         >> testInvalid("uat2").suffix(" (Dead target)")
@@ -207,7 +207,7 @@ object ReqTableTest extends TestSuite {
         >> testValid("wip defer")
         >> testValid("defer")
         >> commit
-        +> text.assert("defer uat uat3 prod") // dead #uat preserved
+        +> text.assert("defer uat uat3# prod#") // dead #uat preserved
     ) withInitialState p
   }
 
@@ -524,20 +524,24 @@ object ReqTableTest extends TestSuite {
     val noProdInText   = text.test("doesn't contain prod")(!_.toLowerCase.contains("prod"))
     val noProdInEditor = editorValue.value.test("doesn't contain prod")(!_.get.toLowerCase.contains("prod"))
 
-    val test = (
-      *.emptyAction
+    val plan = Plan.action(
+      enterFilter("BR")
+        >> showAllColumns(HideDead)
         +> noProdInText
         >> startEdit
         +> noProdInEditor
         >> testInvalid("prod")
         >> abort
-      )
 
-    val plan = Plan.action(
-      enterFilter("BR")
-        >> showAllColumns(HideDead) >> test
-        >> setFilterDead(ShowDead) >> test
-        >> enterFilter("#prod") +> tablePubids.assert.not.contains(pubid)
+        >> setFilterDead(ShowDead)
+        >> startEdit
+        +> noProdInEditor
+        >> testInvalid("prod")
+        >> abort
+
+        >> setFilterDead(HideDead)
+        >> enterFilter("#prod")
+        +> tablePubids.assert.not.contains(pubid)
     )
 
     runTest(plan withInitialState SampleProject7.project)

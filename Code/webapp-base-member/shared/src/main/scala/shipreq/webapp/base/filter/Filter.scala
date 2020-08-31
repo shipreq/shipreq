@@ -131,7 +131,7 @@ object Filter {
         projectText,
         textSearch,
         p.dataLogic.issueLookup(filterDead),
-        p.dataLogic.tagLookup(filterDead))
+        p.virtualTags)
 
       val compiler: Compiler =
         v => Recursion.cata(compile)(Recursion.cata(extensional)(v))

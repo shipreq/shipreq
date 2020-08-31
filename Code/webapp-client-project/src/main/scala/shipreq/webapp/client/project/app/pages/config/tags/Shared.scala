@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.app.pages.config.tags
 
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.ui.semantic.Icon

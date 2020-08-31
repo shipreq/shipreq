@@ -5,13 +5,13 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
+import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.Usage
-import shipreq.webapp.client.project.widgets.ProjectWidgets
-
+import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewTags}
 
 private[tags] object TagTreeView {
 
@@ -33,6 +33,8 @@ private[tags] object TagTreeView {
     Reusability.derive
 
   val selected = VdomAttr.elidable[Boolean]("data-selected")
+
+  private implicit def tagDisplaySettings = ViewTags.DisplaySettings.tag
 
   final class Backend($: BackendScope[Props, Unit]) {
 
@@ -139,7 +141,7 @@ private[tags] object TagTreeView {
             ^.key := id.value,
             ^.onClick ==>? select,
             TagMod.when(canAnyDrag)(Shared.dragHandle(item, modificationEnabled, tag.live)),
-            pw.tagSimple(id, includeDesc = true),
+            pw.viewTags.render(id),
             <.div(*.usage, p.usage.tagLink(id, p.filterDead))
           )
 

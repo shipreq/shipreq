@@ -83,8 +83,11 @@ object BaseMemberData2 {
       }
     }
 
-  implicit lazy val picklerImplications: Pickler[Implications] =
+  implicit lazy val picklerImplicationGraph: Pickler[Implications.Graph] =
     pickleDigraphBiDir
+
+  implicit lazy val picklerImplications: Pickler[Implications] =
+    transformPickler(Implications.apply)(_.graph)
 
   implicit lazy val picklerMultimapReqIdSetApReqCodeId: Pickler[Multimap[ReqId, Set, ApReqCodeId]] =
     pickleMultimap[ReqId, Set, ApReqCodeId]

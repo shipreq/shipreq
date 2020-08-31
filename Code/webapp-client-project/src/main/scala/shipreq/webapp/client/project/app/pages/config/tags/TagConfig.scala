@@ -7,7 +7,7 @@ import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{ErrorMsg, Optics, PotentialChange}
+import shipreq.base.util.{Disabled, Enabled, ErrorMsg, Optics, PotentialChange}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.DataReusability._
@@ -17,7 +17,7 @@ import shipreq.webapp.base.ui.{GeneralTheme, Toast}
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.lib.Usage
-import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, EditorButtons, ProjectWidgets, SplitScreenCrud}
+import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, EditorButtons, ProjectWidgets, SplitScreenCrud, ViewTags}
 
 object TagConfig {
 
@@ -82,6 +82,8 @@ object TagConfig {
     splitScreenCrud.initState(NewTagType.Tag)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  private implicit def tagDisplaySettings = ViewTags.DisplaySettings.tagNoDesc
 
   private val rightEmpty =
     SplitScreenCrud.emptyEditorMessage("tag")
@@ -207,14 +209,14 @@ object TagConfig {
           case \/-(id: ApplicableTagId) =>
             var tag = p.project.config.tags.needApplicableTag(id)
             colourOverride.foreach(c => tag = tag.copy(colour = c))
-            p.pw.tagSimple(tag, includeDesc = false)(*.editorApTagHeader)
+            p.pw.viewTags.render(tag).apply(*.editorApTagHeader)
 
           case -\/(NewTagType.Tag) =>
             ateState.flatMap(s => DataValidators.hashRefKey.hashRefKey.stateless.unnamed(s.key).toOption) match {
 
               case Some(k) =>
                 val tag = Shared.fakeApplicableTag.copy(key = k, colour = colourOverride.flatten)
-                <.span("New tag: ", p.pw.tagSimple(tag, includeDesc = false)(*.editorApTagHeader))
+                <.span("New tag: ", p.pw.viewTags.render(tag).apply(*.editorApTagHeader))
 
               case None =>
                 "New tag"
@@ -231,7 +233,7 @@ object TagConfig {
         args.id match {
           case \/-(id) if p.project.config.tags.tree.need(id).tag.live.is(Dead) => EditorType.Dead(id)
           case \/-(id: TagGroupId)                                       => EditorType.TagGroup(Some(id))
-          case \/-(id: ApplicableTagId)                                  => EditorType.ApplicableTag(Some(id))
+          case \/-(id: ApplicableTagId)                                  => EditorType.ApplicableTag(id.some)
           case -\/(NewTagType.TagGroup)                                  => EditorType.TagGroup(None)
           case -\/(NewTagType.Tag)                                       => EditorType.ApplicableTag(None)
         }
@@ -277,7 +279,7 @@ object TagConfig {
         case EditorType.Dead(id) =>
           val editor =
             id match {
-              case i: ApplicableTagId => applicableTagEditor(Some(i), Disabled)
+              case i: ApplicableTagId => applicableTagEditor(i.some, Disabled)
               case i: TagGroupId      => tagGroupEditor(Some(i), Disabled)
             }
 

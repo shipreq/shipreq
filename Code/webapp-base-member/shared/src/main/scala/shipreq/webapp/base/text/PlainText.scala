@@ -1,7 +1,9 @@
 package shipreq.webapp.base.text
 
+import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.microlibs.utils.Memo
+import japgolly.microlibs.utils.{ConciseIntSetFormat, Memo}
+import nyaya.util.Multimap
 import scala.collection.immutable.SortedSet
 import shipreq.base.util.SafeStringOps._
 import shipreq.base.util._
@@ -85,6 +87,24 @@ object PlainText {
   def pubid(mnemonic: ReqType.Mnemonic, pos: ReqTypePos): String =
     mnemonic.value ~ "-" ~ pos.value
 
+  def concisePubidSet(reqIds: NonEmptySet[ReqId], p: Project, sep: String = ","): String = {
+    val reqs = p.content.reqs
+    var byType = Multimap.empty[ReqTypeId, Set, Int]
+    for (reqId <- reqIds) {
+      val pubid = reqs.need(reqId).pubid
+      byType = byType.add(pubid.reqTypeId, pubid.pos.value)
+    }
+    val reqTypes = MutableArray(byType.keyIterator).sort(p.config.reqTypes.reqTypeIdOrdering)
+    reqTypes.iterator().map { rt =>
+      val prefix = p.config.reqTypes.need(rt).mnemonic.value + "-"
+      val ps = byType(rt)
+      if (ps.sizeIs == 1)
+        prefix + ps.head.toString
+      else
+        s"$prefix{${ConciseIntSetFormat(ps)}}"
+    }.mkString(sep)
+  }
+
   def reqTypeShort(rt: ReqType): String =
     rt.mnemonic.value
 
@@ -110,9 +130,6 @@ object PlainText {
     override protected def _implicationList(ids: Vector[Pubid]): String =
       ids.iterator.map(pubid(_, p)).mkString(", ")
 
-    override protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): String =
-      ids.iterator.map(p.config.tags.needApplicableTag(_).key.value).mkString(" ")
-
     override protected def _text(text: Text.AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity): String =
       nestedText("", "", live, text, true)
 
@@ -129,7 +146,7 @@ object PlainText {
     override protected val useCaseFlowElement: UseCaseStep.Focus => String =
       useCaseStepLabel
 
-    override protected def whenBlankButMandatory = ""
+    override def whenBlankButMandatory = ""
 
     private def issue(id: CustomIssueTypeId, desc: Option[String]): String = {
       val it = p.config.customIssueTypes.need(id)

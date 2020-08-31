@@ -1,6 +1,6 @@
 package shipreq.webapp.base.event
 
-import japgolly.microlibs.nonempty.NonEmpty
+import japgolly.microlibs.nonempty._
 import scalaz.{Equal, Order}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -298,6 +298,19 @@ object CustomTagFieldGD extends GenericData {
   sealed abstract class Attr extends AttrBase
   sealed abstract class Value extends ValueBase
 
+  case object DerivativeTags extends Attr {
+    override type Data = DerivativeTags
+    override def apply(data: Data) = ValueForDerivativeTags(data)
+    override val dataEquality: Equal[Data] = implicitly[Equal[DerivativeTags]]
+  }
+  final case class ValueForDerivativeTags(value: DerivativeTags.Data) extends Value {
+    override val attr: DerivativeTags.type = DerivativeTags
+    override def equals(o: Any): Boolean = o match {
+      case v2: ValueForDerivativeTags => DerivativeTags.dataEquality.equal(value, v2.value)
+      case _ => false
+    }
+  }
+
   case object FieldReqTypeRules extends Attr {
     override type Data = FieldReqTypeRules[ApplicableTagId]
     override def apply(data: Data) = ValueForFieldReqTypeRules(data)
@@ -312,14 +325,14 @@ object CustomTagFieldGD extends GenericData {
   }
 
   override implicit val equalityAttr: Order[Attr] with UnivEq[Attr] =
-    Util.univEqAndArbitraryOrder(Vector(FieldReqTypeRules))
+    Util.univEqAndArbitraryOrder(Vector(DerivativeTags, FieldReqTypeRules))
 
   @inline override implicit def equalityValue: UnivEq[Value] = UnivEq.force
 
-  override val attrs = NonEmptySet[Attr](FieldReqTypeRules)
+  override val attrs = NonEmptySet[Attr](DerivativeTags, FieldReqTypeRules)
 
-  def apply(fieldReqTypeRules: FieldReqTypeRules[ApplicableTagId]): NonEmptyValues =
-    NonEmpty.force(emptyValues + ValueForFieldReqTypeRules(fieldReqTypeRules))
+  def apply(derivativeTags: DerivativeTags, fieldReqTypeRules: FieldReqTypeRules[ApplicableTagId]): NonEmptyValues =
+    NonEmpty.force(emptyValues + ValueForDerivativeTags(derivativeTags) + ValueForFieldReqTypeRules(fieldReqTypeRules))
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

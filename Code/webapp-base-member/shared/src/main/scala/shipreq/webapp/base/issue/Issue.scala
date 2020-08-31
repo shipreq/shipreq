@@ -27,6 +27,8 @@ object IssueClass {
   case object DeadIssueTag                 extends IssueClass(C.BadData)
   case object DeadReference                extends IssueClass(C.BadData)
   case object DeadTag                      extends IssueClass(C.BadData)
+  case object DerivativeTagDead            extends IssueClass(C.BadData)
+  case object DerivativeTagUnrelated       extends IssueClass(C.BadData)
   case object EmptyCodeGroup               extends IssueClass(C.Futility)
   case object FieldDefaultTagDead          extends IssueClass(C.BadData)
   case object FieldDefaultTagNotApplicable extends IssueClass(C.BadData)
@@ -78,11 +80,21 @@ object Issue {
                            loc: LocationOf.Text.InReq,
                            tag: ApplicableTag) extends Issue(C.DeadTag)
 
+  final case class DerivativeTagResultDead(field: CustomField.Tag,
+                                           key1 : ApplicableTag,
+                                           key2 : ApplicableTag,
+                                           tag  : ApplicableTag) extends Issue(C.DerivativeTagDead)
+
+  final case class DerivativeTagResultUnrelated(field        : CustomField.Tag,
+                                                fieldTagGroup: TagGroup,
+                                                key1         : ApplicableTag,
+                                                key2         : ApplicableTag,
+                                                tag          : ApplicableTag) extends Issue(C.DerivativeTagUnrelated)
+
   final case class EmptyCodeGroup(rcg: LiveCodeGroup) extends Issue(C.EmptyCodeGroup)
 
-  final case class FieldDefaultTagDead(field       : CustomField.Tag,
-                                       tag         : ApplicableTag,
-                                       reqsAffected: List[Req]) extends Issue(C.FieldDefaultTagDead)
+  final case class FieldDefaultTagDead(field: CustomField.Tag,
+                                       tag  : ApplicableTag) extends Issue(C.FieldDefaultTagDead)
 
   final case class FieldDefaultTagNotApplicable(field  : CustomField.Tag,
                                                 tag    : ApplicableTag,

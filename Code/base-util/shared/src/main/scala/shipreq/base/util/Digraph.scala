@@ -37,12 +37,6 @@ object Digraph {
                          (implicit ct: ClassTag[A]): TransitiveClosure[A] =
       TransitiveClosure.auto(keys)(apply(dir).apply, filter)
 
-    def memberIterator: Iterator[A] =
-      Digraph.memberIterator(forwards)
-
-    def members: Set[A] =
-      Digraph.members(forwards)
-
     def modify[B: UnivEq](f: UniDir[A] => UniDir[B]): BiDir[B] =
       BiDir(f(forwards))
   }
@@ -89,6 +83,82 @@ object Digraph {
 
     final val biToUni: Iso[BiDir, UniDir] =
       Digraph.biToUni
+  }
+
+  // ===================================================================================================================
+
+  final case class RootsAndTerminals[A](roots: Set[A], terminals: Set[A], members: Set[A])
+
+  object RootsAndTerminals {
+    def derive[A](graph: BiDir[A]): RootsAndTerminals[A] = {
+      val f = graph.forwards.m
+      val b = graph.backwards.m
+
+      var members   = Set.empty[A]
+      var roots     = Set.empty[A]
+      var terminals = Set.empty[A]
+
+      val processTgt: A => Unit = a =>
+        if (!members.contains(a)) {
+          members += a
+          if (!f.contains(a))
+            terminals += a
+        }
+
+      for (x <- f) {
+        val src = x._1
+        val tgts = x._2
+
+        if (!members.contains(src)) {
+          members += src
+          if (!b.contains(src))
+            roots += src
+        }
+
+        tgts.foreach(processTgt)
+      }
+      apply(
+        members = members,
+        roots = roots,
+        terminals = terminals,
+      )
+    }
+  }
+
+  // ===================================================================================================================
+
+  final case class Roots[A](roots: Set[A], members: Set[A])
+
+  object Roots {
+    def derive[A](graph: BiDir[A]): Roots[A] = {
+      val f = graph.forwards.m
+      val b = graph.backwards.m
+
+      var members = Set.empty[A]
+      var roots   = Set.empty[A]
+
+      val processTgt: A => Unit = a =>
+        if (!members.contains(a)) {
+          members += a
+        }
+
+      for (x <- f) {
+        val src = x._1
+        val tgts = x._2
+
+        if (!members.contains(src)) {
+          members += src
+          if (!b.contains(src))
+            roots += src
+        }
+
+        tgts.foreach(processTgt)
+      }
+      apply(
+        members = members,
+        roots = roots,
+      )
+    }
   }
 
   // ===================================================================================================================

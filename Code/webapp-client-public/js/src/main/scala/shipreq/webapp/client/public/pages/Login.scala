@@ -1,12 +1,13 @@
 package shipreq.webapp.client.public.pages
 
+import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import org.scalajs.dom.{html, window}
 import shipreq.base.util._
-import shipreq.webapp.base.data.{Disabled, Enabled, TCB}
+import shipreq.webapp.base.data.{On, TCB}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.{BrowserStorage, ValidationUX}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -90,6 +91,7 @@ object Login {
   object State {
     val usernameOrEmail = req ^|-> Request.Untyped.usernameOrEmail
     val password        = req ^|-> Request.Untyped.password
+    val rememberMeOn    = rememberMe ^<-> On.isoWhen(true).reverse
 
     def empty: State =
       State(Request.Untyped("", ""), true, None, None, None)
@@ -232,7 +234,7 @@ object Login {
 
       val bottomRow =
         <.div(*.bottomRow,
-          <.div(*.rememberMe, Input.Checkbox.fromStateSnapshot(State.rememberMe, p.state, "Remember me")),
+          <.div(*.rememberMe, Input.Checkbox.fromStateSnapshot(p.state.zoomStateL(State.rememberMeOn), "Remember me")),
           <.div(*.submitCont, submitButton))
 
       fields :+= Form.Field.replacement(bottomRow)

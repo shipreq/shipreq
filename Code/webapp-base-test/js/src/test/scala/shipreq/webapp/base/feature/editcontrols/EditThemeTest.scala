@@ -1,8 +1,7 @@
 package shipreq.webapp.base.feature.editcontrols
 
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.base.util.Validity
-import shipreq.webapp.base.data.Enabled
+import shipreq.base.util.{Enabled, Validity}
 import shipreq.webapp.base.feature.PreviewFeature.{Position, Status}
 import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus, PreviewFeature}
 import shipreq.webapp.base.test.RenderTestUtil._

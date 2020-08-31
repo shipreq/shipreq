@@ -24,15 +24,36 @@ object NaTags {
 
   private[data] def forReqType(reqTypeId: ReqTypeId, config: ProjectConfig): NaTags =
     config.reqTypes.get(reqTypeId) match {
-      case Some(rt) => forReqType(rt, config.tags)
+      case Some(rt) => forReqType(rt, config)
       case None     => none
     }
 
-  private[data] def forReqType(reqType: ReqType, tags: Tags): NaTags = {
+  private[data] def forReqType(reqType: ReqType, config: ProjectConfig): NaTags = {
+
+    val naFields =
+      config.fields.customTagFields
+        .iterator
+        .filter(_.fieldReqTypeRules(reqType.reqTypeId).isNA)
+        .map(_.id)
+        .toSet
+
+    val isNA: ApplicableTag => Boolean =
+      t => {
+        def individuallyNA =
+          t.applicableReqTypes(reqType.reqTypeId) is NotApplicable
+
+        def naByField = naFields.nonEmpty && {
+          val fields = config.liveTagFieldDistribution.fieldsFor(t.id)
+          fields.nonEmpty && fields.forall(naFields.contains)
+        }
+
+        individuallyNA || naByField
+      }
+
     val set: Set[ApplicableTagId] =
-      tags
+      config.tags
         .applicableTagIterator()
-        .filter(_.applicableReqTypes(reqType.reqTypeId) is NotApplicable)
+        .filter(isNA)
         .map(_.id)
         .toSet
 

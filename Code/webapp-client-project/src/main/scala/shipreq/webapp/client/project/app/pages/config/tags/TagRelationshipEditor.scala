@@ -8,14 +8,14 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{LeftRight, MMTree}
+import shipreq.base.util.{Disabled, Enabled, LeftRight, MMTree}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.ui.semantic.{Button, ColourPlus, Header, Icon, Segment}
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.{DropdownButton, ProjectWidgets}
+import shipreq.webapp.client.project.widgets.{DropdownButton, ProjectWidgets, ViewTags}
 
 object TagRelationshipEditor {
   import DataImplicits._
@@ -126,6 +126,8 @@ object TagRelationshipEditor {
 
   // ===================================================================================================================
 
+  private implicit def tagDisplaySettings = ViewTags.DisplaySettings.tag
+
   final class Backend($: BackendScope[Props, Unit]) {
 
     private def modState(f: State => State): Callback =
@@ -213,7 +215,7 @@ object TagRelationshipEditor {
           ^.key := id.value,
           dying.when(isDying),
           Shared.dragHandle(item, enabled, live & Dead.when(isDying)),
-          p.pw.tagSimple(id, includeDesc = true),
+          p.pw.viewTags.render(id),
           deleteButton(id, enabled)(hidden.when(live is Dead)),
         )
       }
@@ -259,7 +261,7 @@ object TagRelationshipEditor {
           val display: VdomNode =
             ft.tag match {
               case g: TagGroup      => Shared.group(g)
-              case t: ApplicableTag => p.pw.tagSimple(t.id, includeDesc = true)
+              case t: ApplicableTag => p.pw.viewTags.render(t)
             }
 
           DropdownButton.Item(

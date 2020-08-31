@@ -14,6 +14,19 @@ import shipreq.base.util.ScalaExt.StringBuilderExt
 
 object Util {
 
+  // Immutable maps are optimised at low values to not even create a hash map
+  def memoWithMapVar[K: UnivEq, V](f: K => V): K => V = { // TODO Add to microlibs
+    var m = Map.empty[K, V]
+    k =>
+      if (m.contains(k))
+        m(k)
+      else {
+        val v = f(k)
+        m = m.updated(k, v)
+        v
+      }
+  }
+
   def quickJSB(f: java.lang.StringBuilder => Unit): String = {
     val sb = new java.lang.StringBuilder
     f(sb)
@@ -200,6 +213,11 @@ object Util {
     dups
   }
 
+  def mergeMaps[K, V](x: Map[K, V], y: Map[K, V]): Map[K, V] =
+         if (x.isEmpty) y
+    else if (y.isEmpty) x
+    else x ++ y
+
   def mergeSets[A: UnivEq](x: Set[_ <: A], y: Set[_ <: A]): Set[A] =
          if (x.isEmpty) y.asInstanceOf[Set[A]]
     else if (y.isEmpty) x.asInstanceOf[Set[A]]
@@ -302,7 +320,35 @@ object Util {
       y.foldLeft(x)((q, a) =>
         if (x.exists(e.equal(_, a))) q else q :+ a)
 
+  def arraySeqConcatDistinct[A](x: ArraySeq[A], y: ArraySeq[A])(implicit e: Equal[A]): ArraySeq[A] =
+    if (x eq y)
+      x
+    else if (x.isEmpty)
+      y
+    else
+      y.foldLeft(x)((q, a) =>
+        if (x.exists(e.equal(_, a))) q else q :+ a)
+
   implicit class ShipReqOpsForArraySeq[A](private val self: ArraySeq[A]) extends AnyVal {
+
+    def splitOn(sep: A)(implicit e: Equal[A]): ArraySeq[ArraySeq[A]] = {
+      val b = ArraySeq.newBuilder[ArraySeq[A]]
+
+      @tailrec
+      def go(rem: ArraySeq[A]): Unit =
+        if (rem.nonEmpty)
+          rem.indexWhere(e.equal(sep, _)) match {
+            case -1 =>
+              b += rem
+            case n =>
+              b += rem.take(n)
+              go(rem.drop(n + 1))
+          }
+
+      go(self)
+      b.result()
+    }
+
     def traverse[G[_], B: ClassTag](f: A => G[B])(implicit G: Applicative[G]): G[ArraySeq[B]] = {
       if (self.isEmpty)
         G.pure(ArraySeq.empty[B])

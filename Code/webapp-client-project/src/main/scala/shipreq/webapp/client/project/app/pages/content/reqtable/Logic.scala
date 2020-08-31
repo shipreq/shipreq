@@ -20,7 +20,6 @@ import shipreq.webapp.base.util.ReqCodeTreeItem
  * Deletion complicates everything. See `Requirements/analysis-deletion.ods` for details.
  */
 private[reqtable] object Logic {
-  import DataLogic.TagLookup
   import MTrie.Ops
 
   // ===================================================================================================================
@@ -132,50 +131,48 @@ private[reqtable] object Logic {
       view,
       ap,
       p.dataLogic.customFieldImps(fd)(_).getPubids,
-      Some(Sorter.orderingForImpField(p.dataLogic)))
+      Some(Sorter.orderingForImpField(p.config)))
 
-  private def impExpander(dir      : Direction,
-                          view     : View,
-                          dataLogic: DataLogic): Expander[Pubid] =
+  private def impExpander(dir : Direction,
+                          view: View,
+                          cfg : ProjectConfig): Expander[Pubid] =
     Expanded.forColumn[Pubid](
       view,
       Column.Implications(dir),
-      Some(Sorter.orderingForImpField(dataLogic)))
+      Some(Sorter.orderingForImpField(cfg)))
 
-  private def tagFieldExpander(view        : View,
-                                    ap          : ProjectApplicability[Column, ReqTypeId],
-                                    dataLogic   : DataLogic,
-                                    tagFieldDist: TagFieldDistribution.TagIds,
-                                    tagLookup   : TagLookup): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] =
+  private def tagFieldExpander(view: View,
+                               ap  : ProjectApplicability[Column, ReqTypeId],
+                               cfg : ProjectConfig,
+                               tags: VirtualProjectTags): Req => Map[CustomField.Tag.Id, Expanded[ApplicableTagId]] =
     customFieldExpander(
       view,
       ap,
-      fid => DataLogic.customFieldTags(tagFieldDist, tagLookup, fid),
-      Some(Sorter.orderingForTagField(dataLogic)))
+      fid => tags(_, view.filterDead).set(fid.asTagFieldId),
+      Some(Sorter.orderingForTagField(cfg)))
 
-  private def otherTagsExpander(view        : View,
-                                     ap          : ProjectApplicability[Column, ReqTypeId],
-                                     dataLogic   : DataLogic,
-                                     tagFieldDist: TagFieldDistribution.TagIds,
-                                     tagLookup   : TagLookup): Req => Expanded[ApplicableTagId] = {
+  private def otherTagsExpander(view: View,
+                                ap  : ProjectApplicability[Column, ReqTypeId],
+                                cfg : ProjectConfig,
+                                tags: VirtualProjectTags): Req => Expanded[ApplicableTagId] = {
     fieldExpander(
       view,
       Column.OtherTags,
       ap,
-      DataLogic.otherTags(tagFieldDist, tagLookup),
-      Some(Sorter.orderingForOtherTags(dataLogic)))
+      tags(_, view.filterDead).set(TagFieldId.Other),
+      Some(Sorter.orderingForOtherTags(cfg)))
   }
 
-  private def allTagsExpander(view     : View,
-                                   ap       : ProjectApplicability[Column, ReqTypeId],
-                                   dataLogic: DataLogic,
-                                   tagLookup: TagLookup): Req => Expanded[ApplicableTagId] = {
+  private def allTagsExpander(view: View,
+                              ap  : ProjectApplicability[Column, ReqTypeId],
+                              cfg : ProjectConfig,
+                              tags: VirtualProjectTags): Req => Expanded[ApplicableTagId] = {
     fieldExpander(
       view,
       Column.AllTags,
       ap,
-      tagLookup(_).all,
-      Some(Sorter.orderingForAllTags(dataLogic)))
+      tags(_, view.filterDead).set(TagFieldId.All),
+      Some(Sorter.orderingForAllTags(cfg)))
   }
 
   private def codeExpander(view: View): Expander[ReqCode.Value] =
@@ -257,20 +254,19 @@ private[reqtable] object Logic {
     // * Column.ImplicationSrc isn't transitive; custom implication columns are.
     //   There can potentially be overlap but culling this could be misleading.
 
-    val dataLogic       = p.dataLogic
     val fd              = view.filterDead
     val filterDeadReq   = fd.filterFn.contramap[Req](_ live p.config.reqTypes)
     val filterDeadRCG   = fd.filterFn.contramap[CodeGroup](_.live)
     val filterDead      = CompiledFilter(filterDeadReq, filterDeadRCG, OptionalBoolFn.empty)
-    val tagFieldDist    = DataLogic.tagFieldDist(p.config, fd, Some(f => view isVisible Column.CustomField(f)))
-    val tagLookup       = dataLogic.tagLookup(fd)
+    val tagFieldDist    = DataLogic.tagFieldDist(p.config, fd, f => view isVisible Column.CustomField(f))
+    val tags            = p.virtualTags.withTagFieldDist(tagFieldDist)
     val applicability   = Column.applicabilityForReq(p.config.applicability)
-    val expandImps      = Direction.memo(impExpander(_, view, dataLogic))
+    val expandImps      = Direction.memo(impExpander(_, view, p.config))
     val expandCodes     = codeExpander(view)
     val expandImpCols   = impExpander(view, fd, p, applicability)
-    val expandTagCols   = tagFieldExpander(view, applicability, dataLogic, tagFieldDist, tagLookup)
-    val expandOtherTags = otherTagsExpander(view, applicability, dataLogic, tagFieldDist, tagLookup)
-    val expandAllTags   = allTagsExpander(view, applicability, dataLogic, tagLookup)
+    val expandTagCols   = tagFieldExpander(view, applicability, p.config, tags)
+    val expandOtherTags = otherTagsExpander(view, applicability, p.config, tags)
+    val expandAllTags   = allTagsExpander(view, applicability, p.config, tags)
 
     // The segregation of live/dead is because live reqs can have inactive reqcodes (leftovers of CodeRefs).
     // It would be erroneous to display inactive reqs for a live req.
@@ -335,7 +331,7 @@ private[reqtable] object Logic {
 
           // Build
           exps.foreachWithIndex((exp, i) =>
-            output += Row.ForReq(r, live, p.invalidTagsPerReq(id), exp, fieldRules, i))
+            output += Row.ForReq(r, live, exp, fieldRules, i))
 
           seeExpandedCodes(codes)
         }
@@ -409,7 +405,6 @@ private[reqtable] object Logic {
           Some(Row.ForReq(
             req         = a.req,
             live        = a.live,
-            invalidTags = a.invalidTags,
             exp         = a.exp |+| b.exp,
             fieldRules  = a.fieldRules,
             instanceId  = a.instanceId min b.instanceId))

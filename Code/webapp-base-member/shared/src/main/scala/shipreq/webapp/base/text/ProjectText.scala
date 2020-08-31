@@ -104,8 +104,6 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   protected def _implicationList(ids: Vector[Pubid]): Out
 
-  protected def _tagList(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity): Out
-
   protected def _text(text: Text.AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity): Out
 
   protected def deletionReasonWhenNoneGiven: Out
@@ -122,7 +120,7 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
    */
   protected val useCaseFlowElement: UseCaseStep.Focus => Out
 
-  protected def whenBlankButMandatory: Out
+  def whenBlankButMandatory: Out
 
   def pastPubids(ids: SortedSet[ExternalPubid]): Out
 
@@ -249,15 +247,6 @@ abstract class ProjectText[+Ctx <: Context, Out](project: Project, final val ctx
 
   final def reqTitleById(id: ReqId): Out =
     reqTitle(project.content.reqs.need(id))
-
-  final def tagList(ids      : Vector[ApplicableTagId],
-                    live     : Live,
-                    mandatory: Mandatory,
-                    validity : ApplicableTagId => Validity): Out =
-    if (ids.isEmpty && live.is(Live) && mandatory.is(Mandatory))
-      whenBlankButMandatory
-    else
-      _tagList(ids, validity)
 
   final def text(text: Text.AnyNonEmpty, live: Live, tagValidity: ApplicableTagId => Validity): Out =
     _text(text.whole, live, tagValidity)

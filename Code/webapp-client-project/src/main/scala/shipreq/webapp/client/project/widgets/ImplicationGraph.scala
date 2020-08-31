@@ -61,7 +61,7 @@ object ImplicationGraph {
 
 
   implicit val reusabilityProps: Reusability[Props] = {
-    @nowarn("cat=unused") implicit def a: Reusability[Implications.BiDir] = Reusability.byRef
+    @nowarn("cat=unused") implicit def a: Reusability[Implications] = Reusability.byRef
     Reusability.derive
   }
 
@@ -154,7 +154,7 @@ object ImplicationGraph {
             none
 
           case Colours.ByTag(tagGroupId) =>
-            val reqTags = project.reqTagsFn(tagGroupId, filterDead)
+            val reqTags = project.virtualTags.underTagGroup(tagGroupId, filterDead)
             req => plainText.tagListWithHashtags(reqTags(req.id))
         }
 

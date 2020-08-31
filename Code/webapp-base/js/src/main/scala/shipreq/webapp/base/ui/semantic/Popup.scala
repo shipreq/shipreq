@@ -9,7 +9,7 @@ import scala.scalajs.js
 /** http://semantic-ui.com/modules/popup.html */
 object Popup {
 
-  sealed abstract class Position(val value: String) {
+  sealed abstract class Position(final val value: String) {
     def toReact = Position.position := value
   }
   object Position {
@@ -51,6 +51,7 @@ object Popup {
       val duration      : js.UndefOr[Int    ] = js.undefined
       val distanceAway  : js.UndefOr[Int    ] = js.undefined
       val inline        : js.UndefOr[Boolean] = js.undefined
+      val prefer        : js.UndefOr[String ] = js.undefined
       val hoverable     : js.UndefOr[Boolean] = js.undefined
       val lastResort    : js.UndefOr[Boolean] = js.undefined
       val movePopup     : js.UndefOr[Boolean] = js.undefined
@@ -68,26 +69,27 @@ object Popup {
       }
     }
 
-    private val uiPopup = <.div(^.cls := "ui popup")
+    private val uiPopup = <.div(^.cls := "ui popup flowing", ^.display.none)
 
-    case class Props(options: Options,
-                     anchor: VdomTag,
-                     popup: TagMod) {
+    final case class Props(options: Options,
+                           base   : VdomTag,
+                           display: VdomTag,
+                           popup  : TagMod) {
       @inline def render = Component(this)
     }
 
     final class Backend($: BackendScope[Props, Unit]) {
 
-      val anchorDom = Ref[TopNode]
+      val displayRef = Ref[TopNode]
 
       def render(p: Props): VdomElement =
-        <.div(
-          p.anchor.withRef(anchorDom),
+        p.base(
+          p.display.withRef(displayRef),
           uiPopup(p.popup))
 
       val applyPopup: Callback =
         $.props.flatMap(p =>
-          anchorDom.foreach(JQuery(_).popup(p.options)))
+          displayRef.foreach(JQuery(_).popup(p.options)))
     }
 
     val Component = ScalaComponent.builder[Props]

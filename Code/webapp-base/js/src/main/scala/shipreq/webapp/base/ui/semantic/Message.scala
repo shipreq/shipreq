@@ -42,6 +42,12 @@ object Message {
     val tag = divCls("ui message" <+ tipe <+ attr <+ colour <+ size)
   }
 
+  def apply(style: Style, icon: Icon, content: TagMod): VdomTag =
+    style.tag(^.cls := "icon",
+      icon.tag,
+      <.div(^.cls := "content",
+        <.p(content)))
+
   def apply(style: Style, icon: Icon, header: TagMod, content: TagMod): VdomTag =
     withBody(style, icon, header, <.p(content))
 

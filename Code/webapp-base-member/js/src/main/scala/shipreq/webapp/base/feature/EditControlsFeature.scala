@@ -6,7 +6,6 @@ import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.data.{Disabled, Enabled}
 import shipreq.webapp.base.ui.{BaseStyles => *, _}
 
 object EditControlsFeature {

@@ -4,6 +4,7 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
+import nyaya.util.Multimap
 import scalaz.Equal
 import shipreq.base.util.{Applicable, NotApplicable}
 import shipreq.webapp.base.data.DataImplicits._
@@ -267,6 +268,19 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
     fields.fields.iterator.filter(f => liveFilter(f) && applicability(reqTypeId, f.fieldId).is(Applicable))
   }
 
+  lazy val naReqTypesPerField: Multimap[FieldId, Set, ReqTypeId] = {
+    // TODO Optimise naReqTypesPerFields
+    // We could be smarter and iterate over fields without iterating over reqtypes by inspecting the rules directly
+    var m = Multimap.empty[FieldId, Set, ReqTypeId]
+    for {
+      r <- reqTypes.all
+      f <- fields.fields
+    }
+      if (applicability(r.reqTypeId, f.fieldId) is NotApplicable)
+        m = m.add(f.fieldId, r.reqTypeId)
+    m
+  }
+
   val mostRelevantLiveFieldForTag: TagId => Option[CustomField.Tag] =
     Memo { tagId =>
       type R = Option[CustomField.Tag]
@@ -302,7 +316,9 @@ final case class ProjectConfig(customIssueTypes: CustomIssueTypeIMap,
       case ShowDead => deadTagFieldDistribution
     }
 
-  /** Only live fields considered. All tags, live & dead, included. */
+  /** "Live" refers to fields, not tags.
+    * In other words, only live fields considered and then all tags, live & dead, are included.
+    */
   lazy val liveTagFieldDistribution: TagFieldDistribution.TagIds =
     TagFieldDistribution(this, _.live(this) is Live)
 

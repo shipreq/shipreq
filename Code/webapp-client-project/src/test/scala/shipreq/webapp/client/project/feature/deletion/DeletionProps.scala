@@ -96,7 +96,7 @@ final class DeletionProps(mode: DeleteOrRestore,
         // a candidate for restoration too.
 
         val impSrcToTgtTC2 =
-          p2.content.implications.transitiveClosure(
+          p2.content.implications.graph.transitiveClosure(
             Forwards,
             p2.content.reqs.idIterator(),
             id => p2.content.reqs.need(id).allowLiveChange(p2.config.reqTypes) match {
@@ -208,7 +208,7 @@ object DeletionProps {
     }
 
   def changableImpTC(p: Project, dir: Direction) =
-    p.content.implications.transitiveClosure(
+    p.content.implications.graph.transitiveClosure(
       dir,
       p.content.reqs.idIterator(),
       p.content.reqs.need(_).allowLiveChange(p.config.reqTypes) match {
@@ -248,8 +248,8 @@ object DeletionProps {
         reqs2     = (TestOptics.grsLive.set(mode.fromState) compose TestOptics.ucsLive.set(mode.fromState))(reqs1)
         imps1     <- *.reqFieldDataImplications(reqs2.idIterator().toSet)
         imps2     = imps1.forwards.m.mapValuesNow(_.take(1))
-        imps3     = Implications.BiDir(Implications.UniDir(imps2).reverse) // reverse ensures take(1) is on parent side
-        content   = ProjectContent.empty.copy(reqs = reqs2, implications = imps3)
+        imps3     = Implications.Graph.BiDir(Implications.Graph.UniDir(imps2).reverse) // reverse ensures take(1) is on parent side
+        content   = ProjectContent.empty.copy(reqs = reqs2, implications = Implications(imps3))
         project   = Project.empty.copy(config = config, content = content)
       } yield IdCeilings.supply(ic => project.copy(idCeilings = ic))
 

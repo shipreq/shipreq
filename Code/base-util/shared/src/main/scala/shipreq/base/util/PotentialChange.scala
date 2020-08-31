@@ -31,6 +31,19 @@ sealed abstract class PotentialChange[+E, +A] {
       case Unchanged    => Unchanged
     }
 
+  final def ap[EE >: E, AA >: A, B, C](fb: PotentialChange[EE, B])
+                                      (f: (Option[AA], Option[B]) => Option[C]): PotentialChange[EE, C] =
+    (this, fb) match {
+      case (x: NonFailure[AA], y: NonFailure[B]) => PotentialChange.fromOption(f(x.getUpdate, y.getUpdate))
+      case (f: Failure[EE], _)                   => f
+      case (_, f: Failure[EE])                   => f
+    }
+
+  final def merge[EE >: E, AA >: A, B, C](fb: PotentialChange[EE, B])
+                                         (originalA: => AA, originalB: => B)
+                                         (f: (AA, B) => C): PotentialChange[EE, C] =
+    ap(fb)((oa, ob) => Some(f(oa getOrElse originalA, ob getOrElse originalB)))
+
   final def getUpdate: Option[A] =
     this match {
       case Success(a)             => Some(a)
@@ -123,6 +136,8 @@ object PotentialChange {
 
   implicit def univEq[E: UnivEq, A: UnivEq]: UnivEq[PotentialChange[E, A]] =
     UnivEq.derive
+
+  // no compare, compareOption etc because they're methods on instances instead
 
   def fromDisjunction[E, A](d: E \/ A): PotentialChange[E, A] =
     d match {

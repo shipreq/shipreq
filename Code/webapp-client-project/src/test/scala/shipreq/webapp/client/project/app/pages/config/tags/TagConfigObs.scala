@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.app.pages.config.tags
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.scalajs.dom.html
+import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.test.TestState._

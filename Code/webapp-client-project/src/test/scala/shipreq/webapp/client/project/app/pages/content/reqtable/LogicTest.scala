@@ -144,7 +144,8 @@ object LogicTest extends TestSuite {
     val pc = pcache(p)
     import pc.{pt, ts}
     val r = gatherSortConsolidate(p, v, pt, ts)
-    assertEq(extract(r), expect)
+    def filterText = f.map(", filter = \"" + Filter.Valid.toText(p.config, _) + "\"")
+    assertEq(s"testUnsorted2($fd${filterText.getOrElse("")})", extract(r), expect)
   }
 
   private def viewSortedByCB(c: C.SortInconclusiveHasBlanks, sm: ConsiderBlanks, fd: FilterDead, f: Filter): View =
@@ -836,8 +837,8 @@ object LogicTest extends TestSuite {
 
   def testOtherTags_inText(): Unit = {
     def t(direct: ApplicableTagId*)(inTitle: ApplicableTagId*)(inCustomText: ApplicableTagId*) =
-      GReq(title = reqTitleTagRefs.optional(inTitle))
-        .cftextO(descField, customTextTagRefs.optional(inCustomText))
+      GReq(title = reqTitleTagRefs.optional(inTitle), reqType = dd)
+        .cftextO(notesField, customTextTagRefs.optional(inCustomText))
         .cftext(reporterField, NonEmptyArraySeq.fromNEV(allLiveTags).map(Text.CustomTextField.TagRef)) // dead column has no effect
         .tag(direct: _*)
     val p       = t()()() + t(v10)(v12)(v1x, v1x) + t(v2x)(v2x, v11)(v11) ! PA
@@ -852,8 +853,8 @@ object LogicTest extends TestSuite {
   def testCustomTagField_inText(): Unit = {
     // TODO test tag transitivity: column tag ← mutual tag ← tag in text
     def t(direct: ApplicableTagId*)(inTitle: ApplicableTagId*)(inCustomText: ApplicableTagId*) =
-      GReq(title = reqTitleTagRefs.optional(inTitle))
-        .cftextO(descField, customTextTagRefs.optional(inCustomText))
+      GReq(title = reqTitleTagRefs.optional(inTitle), reqType = dd)
+        .cftextO(notesField, customTextTagRefs.optional(inCustomText))
         .cftext(reporterField, customTextTagRefs(allLiveTags)) // dead column has no effect
         .tag(direct: _*)
     val p       = t(wip)(wip, priHigh)(priLow, priLow) + t()()() + t(priMed)(priHigh, priMed)(priHigh, defer) ! PA
@@ -1145,8 +1146,9 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterIgnoreNATags(): Unit = {
-    // BR-2 should be missing; that's the point
-    testFilter(P7, F.tag(prod))("MF-3  UC-1", "")
+    testFilter(P7, F.tag(prod))(
+      "MF-3  UC-1", // BR-2 should be missing; that's the point
+      "BR-2")
   }
 
   def testFilterTitleBlank(): Unit = {
@@ -1381,6 +1383,7 @@ object LogicTest extends TestSuite {
     val fmtRows = prefixWithPubid(p, rowToTagTxt(p, allTags))
 
     // Order: pri=high pri=low pri=med v10 wip
+    //                                     ^^^ N/A to DDs but visible because ShowDead
     testCB(p, C.AllTags, None, ShowDead, fmtRows)(allSortsCB(1,
       asc  = "DD-3:pri=high  DD-5:pri=high,pri=low  DD-2:pri=low  DD-5:pri=low,pri=high  DD-8:pri=low,v1.0  DD-4:pri=med  DD-7:pri=med,v1.0  DD-8:v1.0,pri=low  DD-6:wip",
       desc = "DD-6:wip  DD-7:v1.0,pri=med  DD-8:v1.0,pri=low  DD-4:pri=med  DD-7:pri=med,v1.0  DD-2:pri=low  DD-5:pri=low,pri=high  DD-8:pri=low,v1.0  DD-3:pri=high  DD-5:pri=high,pri=low"))

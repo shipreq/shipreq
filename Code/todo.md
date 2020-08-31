@@ -8,6 +8,9 @@ v2.2
 * New plan for the rest of v2.2
 
 ### Analyse
+* it would be a cool idea to have a button in req detail that would simplify the forward implication tree
+  (simplify = remove redundant edges)
+  Or maybe we can just apply this option to views without affecting data?
 * [FB-11] Add a field to show where a req is being referenced (i.e. FB-9 references FR-5 in its detail field, I should be able to see that from FB-5's page. "References"? "Citations"?)
 * Req Code config
   * completely disable (don't show in ReqDetail or ReqTable, even remove from auto-complete)
@@ -44,11 +47,12 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
+* ability to embed tweets
+* enter on reqtable in pubid should navigate to req
 * when session expired, it should still always retry in case re-auth occurred in another tab
 * if I have a flat list of unconnected nodes in ReqGraph, they appear backwards (ie. IV1, FR3, FR2, FR1)
 * req detail: add prev/next buttons
-* Derivative tags
-* RedisProtocolTest when done
+* use CloudFront for static assets
 
 
 

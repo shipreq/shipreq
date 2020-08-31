@@ -23,7 +23,7 @@ object ReqGraph {
 
     GraphViz.digraph { implicit b =>
 
-      val imps           = project.content.implications
+      val imps           = project.content.implications.graph
       val reqs           = project.content.reqs
       val reqTypes       = project.config.reqTypes
       val impHelpers     = new ImpHelpers(reqs, reqTypes)
@@ -117,7 +117,7 @@ object ReqGraph {
 
             val coloursByReqId: Map[ReqId, ArraySeq[Colour]] = {
               val tags    = project.config.tags
-              val reqTags = project.reqTagsFn(tagGroupId, filterDead)
+              val reqTags = project.virtualTags.underTagGroup(tagGroupId, filterDead)
               val reqIds  = scope.fold(project.content.reqs.idIterator())(_.iterator)
               reqIds.map { reqId =>
                 val colours =
@@ -170,7 +170,7 @@ object ReqGraph {
         b.flowOneToMany(fromId, toIds)(node, atEnd())
       }
 
-      def allFlow(graph: Implications.UniDir): Unit =
+      def allFlow(graph: Implications.Graph.UniDir): Unit =
         for ((fromId, toIds) <- graph.iterator)
           if (reqIdFilter(fromId)) {
             val fromLive = live(fromId)

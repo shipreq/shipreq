@@ -2,6 +2,7 @@ package shipreq.webapp.base.data.derivation
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
+import nyaya.util.Multimap
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
 
@@ -47,16 +48,31 @@ object TagFieldDistribution {
         tagTree.need(tagGroupId).transitiveChildren.iterator.filterSubType[ApplicableTagId].toSet
       }
 
+    private lazy val _byField = {
+      val fields         = p.fields.customTagFields.filter(tagFieldFilter).map(_.id)
+      var _usedInFields  = Set.empty[ApplicableTagId]
+      var _reverseLookup = Multimap.empty[ApplicableTagId, Set, CustomField.Tag.Id]
+      for (f <- fields) {
+        val tags = inField(f)
+        for (t <- tags) {
+          _usedInFields += t
+          _reverseLookup = _reverseLookup.add(t, f)
+        }
+      }
+      (_usedInFields, _reverseLookup)
+    }
+
+    def fieldsFor(tag: ApplicableTagId): Set[CustomField.Tag.Id] =
+      _byField._2(tag)
+
     override val inField =
       Memo { (fid: CustomField.Tag.Id) =>
         val field = p.fields.custom(fid)
         inTagGroup(field.tagId)
       }
 
-    override lazy val usedInFields = {
-      val tagIds = p.fields.customTagFields filter tagFieldFilter map (_.id)
-      tagIds.foldLeft(Set.empty[ApplicableTagId])(_ | inField(_))
-    }
+    override lazy val usedInFields =
+      _byField._1
 
     override lazy val notUsedInFields =
       all -- usedInFields

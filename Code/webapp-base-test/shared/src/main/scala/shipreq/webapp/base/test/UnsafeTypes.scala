@@ -101,7 +101,7 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
   implicit def autoCustomIssueTypeIdO(i: Int): Option[CustomIssueTypeId]          = Some(i)
   implicit def autoCustomReqTypeIdO  (i: Int): Option[CustomReqTypeId]            = Some(i)
   implicit def autoTagGroupIdO       (i: Int): Option[TagGroupId]                 = Some(i)
-  implicit def autoApplicableTagIdO  (i: Int): Option[ApplicableTagId]            = Some(i)
+  implicit def autoApplicableTagIdO  (i: Int): Option[ApplicableTagId]            = i.some
   implicit def autoDeletionReasonIdO (i: Int): Option[DeletionReasonId]           = Some(i)
 
   implicit def autoObfuscated[A](s: String): Obfuscated[A] = Obfuscated(s)
@@ -198,6 +198,12 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
 
   implicit def autoVerifiedEventNonEmptySeqFromOne(v: VerifiedEvent): VerifiedEvent.NonEmptySeq =
     VerifiedEvent.NonEmptySeq.one(v)
+
+  implicit def derivativeTagsTagPair[A, B](p: (A, B))(implicit a: A => ApplicableTagId, b: B => ApplicableTagId): DerivativeTags.TagPair =
+    DerivativeTags.TagPair(p._1, p._2)
+
+  implicit def derivativeTagsRule[A, B](p: (A, B))(implicit a: A => DerivativeTags.TagPair, b: B => ApplicableTagId): (DerivativeTags.TagPair, ApplicableTagId) =
+    (p._1, p._2)
 }
 
 object UnsafeTypes extends UnsafeTypesMedPriority {

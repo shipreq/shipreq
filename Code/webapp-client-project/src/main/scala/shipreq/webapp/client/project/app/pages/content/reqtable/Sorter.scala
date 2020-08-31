@@ -14,7 +14,7 @@ object Sorter {
   val Types = new WithTypes[Setup, Row]
   import Types._
 
-  type TagOrder = DataLogic.TagOrder
+  type TagOrder = Tags.TagOrder
 
   /**
    * Project data prepared in a way that various sorts will use.
@@ -127,13 +127,13 @@ object Sorter {
     case c: C.CustomField =>
       c.id match {
         case id: CustomField.Text       .Id => customTextFieldSorter(id, c)
-        case id: CustomField.Tag        .Id => tagSorter(Row.cfTag(id), _.p.dataLogic.tagOrderByPos)
+        case id: CustomField.Tag        .Id => tagSorter(Row.cfTag(id), _.p.config.tags.orderByPos)
         case id: CustomField.Implication.Id => pubidVectorSorter(Row.cfImp(id))
       }
     case C.Title                            => titleSorter
     case C.Code                             => reqCodeSorter
-    case C.OtherTags                        => tagSorter(Row.otherTags, _.p.dataLogic.tagOrderByName)
-    case C.AllTags                          => tagSorter(Row.allTags, _.p.dataLogic.tagOrderByName)
+    case C.OtherTags                        => tagSorter(Row.otherTags, _.p.config.tags.orderByName)
+    case C.AllTags                          => tagSorter(Row.allTags, _.p.config.tags.orderByName)
     case C.Implications(dir)                => pubidVectorSorter(Row.implications(dir))
     case C.DeletionReason                   => deletionReasonSorter
   }
@@ -150,8 +150,8 @@ object Sorter {
     r(sc.method)
   }
 
-  def orderingForAllTags  (d: DataLogic): Ordering[ApplicableTagId] = d.tagOrderingByName
-  def orderingForOtherTags(d: DataLogic): Ordering[ApplicableTagId] = d.tagOrderingByName
-  def orderingForTagField (d: DataLogic): Ordering[ApplicableTagId] = d.tagOrderingByPos
-  def orderingForImpField (d: DataLogic): Ordering[Pubid          ] = d.pubidOrdering
+  def orderingForAllTags  (cfg: ProjectConfig): Ordering[ApplicableTagId] = cfg.tags.orderingByName
+  def orderingForOtherTags(cfg: ProjectConfig): Ordering[ApplicableTagId] = cfg.tags.orderingByName
+  def orderingForTagField (cfg: ProjectConfig): Ordering[ApplicableTagId] = cfg.tags.orderingByPos
+  def orderingForImpField (cfg: ProjectConfig): Ordering[Pubid          ] = cfg.reqTypes.pubidOrdering
 }

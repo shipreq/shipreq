@@ -279,6 +279,7 @@ object LogicPropTest extends TestSuite {
       LogicTests(v, p)
 
   override def tests = Tests {
+    // gen.bugHunt()(Prop.eval(_.all))
     gen.mustSatisfyE(_.all)//(implicitly[Settings].setSeed(0).setDebug.setSampleSize(20))
   }
 }

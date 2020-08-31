@@ -26,11 +26,10 @@ object Style extends StyleSheet.Inline {
     val dragStatus =
       Domain.ofValues[DragStatus](DragStatus.allValues.whole: _*)
 
-    val `enabled * live`         = enabled *** live
-    val `live * live`            = live *** live
-    val `live * on`              = live *** on
-    val `live * validity`        = live *** validity
-    val `live * validity * bool` = live *** validity *** Domain.boolean
+    val `enabled * live`  = enabled *** live
+    val `live * live`     = live *** live
+    val `live * on`       = live *** on
+    val `live * validity` = live *** validity
 
     val ucStepIndent = Domain.ofRange(0 until StaticField.useCaseStepTrees.iterator.map(_.maxDepth).max)
   }
@@ -41,11 +40,17 @@ object Style extends StyleSheet.Inline {
   private def monospace =
     BaseStyles.monospace
 
+  private val refColour =
+    color(c"#2363A1")
+
   private val hasErrorBackground =
     backgroundColor(c"#fee")
 
+  private val errorRed = c"#c00"
+  private val warningYellow = c"#948a00"
+
   private val hasErrorColor =
-    color(c"#c00")
+    color(errorRed)
 
   private val errorRedOnRed = mixin(
     hasErrorColor,
@@ -689,6 +694,39 @@ object Style extends StyleSheet.Inline {
     val reqTypeRowL = style(flexGrow(1))
     val reqTypeRowR = style(background := "#fff", marginLeft(0.6 rem))
 
+    val derivativeTagRow = style(
+      display.flex,
+      alignItems.center,
+    )
+
+    val derivativeTagRowTags = style(
+      flexGrow(1),
+    )
+
+    val derivativeTagRowBar = style(
+      background := "#fef",
+      boxSizing.borderBox,
+      width(20 vw),
+      whiteSpace.nowrap,
+      wordBreak.keepAll,
+    )
+
+    val progressBar = style(
+      display.flex,
+      height(8 px),
+      overflow.hidden,
+      background := "#e1e4e8",
+      borderRadius(6 px),
+      outline(1 px, solid, c"#0000"),
+    )
+
+    val progressBarItem = style(
+      outline(2 px, solid, c"#0000"),
+      &.not(_.firstChild)(
+        marginLeft(2 px),
+      )
+    )
+
     object useCaseStep {
 
       val container = style(
@@ -908,6 +946,10 @@ object Style extends StyleSheet.Inline {
       marginTop(0.2 em),
     )
 
+    val fieldListDetailDerivativeTagsIcon = style(
+      marginLeft(`0`),
+      marginRight(.7 ex))
+
     val rulesEditor = style(
       addClassNames("table", "ui", "single", "line", "table")
     )
@@ -967,6 +1009,35 @@ object Style extends StyleSheet.Inline {
     @inline def editorTitle = tagConfig.editorTitle
     @inline def fieldListDetailDead = rulesOtherDeadReqType
     @inline def rulesOtherDeadReqType = generic.deadTextStrikeThrough
+
+    val derivativeTagMatrixSame = style(
+      opacity(0.5),
+      backgroundColor(c"#eee"))
+
+    val derivativeTagMatrixNone = style(
+      color(c"#bbb"))
+
+    val derivativeTagsEditorContainer = style(
+      marginTop(1 em))
+
+    val derivativeTagsEditor = styleF(D.validity)(validity => styleS(
+      monospace,
+      mixinIf(validity is Invalid)(borderColor(errorRed)),
+    ))
+
+    val derivativeTagsEditorWarningBody = style(
+      color(warningYellow))
+
+    val derivativeTagsEditorErrorBody = style(
+      color(errorRed))
+
+    val derivativeTagsEditorWarningTitle = style(
+      derivativeTagsEditorWarningBody,
+      fontWeight.bold)
+
+    val derivativeTagsEditorErrorTitle = style(
+      derivativeTagsEditorErrorBody,
+      fontWeight.bold)
   }
 
   // ===================================================================================================================
@@ -1276,6 +1347,107 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
+  object tags {
+
+    private def tagBase(live: Live) = mixin(
+      whiteSpace.nowrap,
+      mixinIf(live is Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
+//      cursor.default,
+    )
+
+    private val tagLabelColour: Live => String = {
+      case Live => ""
+      case Dead => "grey"
+    }
+
+    @UsesSemanticUiManually
+    val tag = styleF(D.`live * validity`) { case (live, validity) => styleS(
+      tagBase(live),
+      padding(4 px, 6 px).important,
+      mixinIf(validity is Invalid)(hasErrorBackground.important, hasErrorColor.important, textDecoration := ^.lineThrough),
+      addClassName(s"ui label ${tagLabelColour(live)}"),
+    )}
+
+    val tagInText = styleF(D.`live * validity`) { case (live, validity) => styleS(
+      tagBase(live),
+      (live, validity) match {
+        case (Live, Valid)   => styleS(refColour)
+        case (Live, Invalid) => styleS(hasError, textDecoration := ^.lineThrough)
+        case (Dead, _)       => deadMaybeValid(validity)
+      },
+    )}
+
+    private val iconBase = styleS(
+      marginLeft(0.5 ex).important,
+      marginRight(`0`).important,
+    )
+
+    val iconDead = style(
+      iconBase,
+      opacity(0.7).important,
+    )
+
+    val iconDefault = styleF(Domain.boolean)(foregroundIsBlack => styleS(
+      iconBase,
+      opacity(if (foregroundIsBlack) 0.4 else 0.7).important,
+    ))
+
+    val iconDerived = styleF(Domain.boolean)(foregroundIsBlack => styleS(
+      iconBase,
+      opacity(if (foregroundIsBlack) 0.45 else 0.6).important,
+    ))
+
+    def iconText = iconDefault
+
+    val derivDescHeading = style(
+      marginBottom(0.6 em),
+      &.not(_.firstChild)(
+        marginTop(1 em),
+      )
+    )
+
+    private val derivDescDetails = mixin(
+      marginLeft(2 ex),
+      lineHeight(2 em),
+      whiteSpace.nowrap,
+      wordBreak.keepAll,
+    )
+
+    private val derivDescGap = 0.75 ex
+
+    val derivDescFactors = style(
+      derivDescDetails,
+    )
+
+    val derivDescFactorKey = style(
+      textAlign.right,
+      padding(`0`).important, // for when in ReqTable
+      border.none.important, // for when in ReqTable
+    )
+
+    val derivDescFactorDash = style(
+      margin.horizontal(derivDescGap),
+    )
+
+    val derivDescFactorValues = style(
+      padding(`0`).important, // for when in ReqTable
+      border.none.important, // for when in ReqTable
+    )
+
+    val derivDescDerivationSteps = style(
+      derivDescDetails,
+      listStyleType := "none",
+      paddingInlineStart(`0`),
+      marginRight(`0`),
+      marginBottom(`0`),
+      marginTop(`0`),
+    )
+
+    val derivDescDerivationStepEquals = style(marginRight(1 ex))
+    val derivDescDerivationStepPlus = style(margin.horizontal(derivDescGap))
+  }
+
+  // ===================================================================================================================
   object widgets {
 
     val richCodeBlockError = style(
@@ -1334,8 +1506,6 @@ object Style extends StyleSheet.Inline {
         padding(1 px, `0`).important,
       ),
     )
-
-    private val refColour = color(c"#2363A1")
 
     private def blankLineHeight = 0.8 em
 
@@ -1396,41 +1566,6 @@ object Style extends StyleSheet.Inline {
       height(100 %%),
       width(11 ex),
       borderRadius(0.3 ex))
-
-    private def tagBase(live: Live, helpIconOnHover: Boolean) = mixin(
-      mixinIf(live is Dead)(&.not(_.hover)(textDecoration := ^.lineThrough)),
-      if (helpIconOnHover)
-        styleS(
-          hoverShowsInfo,
-//          &.not(hasTitle)(cursor.default),
-        )
-      else
-        styleS(
-//          cursor.default,
-        ),
-    )
-
-    private val tagLabelColour: Live => String = {
-      case Live => ""
-      case Dead => "grey"
-    }
-
-    @UsesSemanticUiManually
-    val tag = styleF(D.`live * validity * bool`) { case ((live, validity), helpIconOnHover) => styleS(
-      tagBase(live, helpIconOnHover = helpIconOnHover),
-      padding(4 px, 6 px).important,
-      mixinIf(validity is Invalid)(hasErrorBackground.important, hasErrorColor.important, textDecoration := ^.lineThrough),
-      addClassName(s"ui label ${tagLabelColour(live)}"),
-    )}
-
-    val tagInText = styleF(D.`live * validity`){ case (l, v) => styleS(
-      tagBase(l, helpIconOnHover = true),
-      (l, v) match {
-        case (Live, Valid)   => styleS(refColour)
-        case (Live, Invalid) => styleS(hasError, textDecoration := ^.lineThrough)
-        case (Dead, _)       => deadMaybeValid(v)
-      },
-    )}
 
     val reqTypeShort = styleF(D.live)(a => styleS(
       hoverShowsInfo,
@@ -1668,6 +1803,7 @@ object Style extends StyleSheet.Inline {
     reqTypeConfig.implicationHelp,
     savedViews.activeItem,
     tagConfig.tagTree,
+    tags.iconDead,
     widgets.issueDesc,
     widgets.reqTypeSelector.dropdown,
     widgets.splitScreen.left,

@@ -205,6 +205,9 @@ object RandomData {
   val on =
     Gen.boolean.map(On.when)
 
+  val enabled =
+    Gen.boolean.map(Enabled.when)
+
   val applicability: Gen[Applicability] =
     Gen.boolean.map(Applicable.when)
 
@@ -509,13 +512,37 @@ object RandomData {
   def customFieldText(rules: Gen[FieldReqTypeRules.ForTextField]): Gen[CustomField.Text] =
     Gen.apply4(CustomField.Text.apply)(customFieldTextId, fieldName, rules, live)
 
-  def customFieldTag(tagId: Gen[TagGroupId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[CustomField.Tag] =
-    Gen.apply4(CustomField.Tag.apply)(customFieldTagId, tagId, rules, live)
+  def customFieldTag(tagId: Gen[TagGroupId], rules: Gen[FieldReqTypeRules.ForTagField], deriv: Gen[DerivativeTags]): Gen[CustomField.Tag] =
+    Gen.apply5(CustomField.Tag.apply)(customFieldTagId, tagId, rules, deriv, live)
 
-  def customFieldTagSome(tagIds: Set[TagGroupId], rules: Gen[FieldReqTypeRules.ForTagField]): Gen[Vector[CustomField.Tag]] =
-    Gen.subset(tagIds.toVector).flatMap(ids =>
+  def derivativeTags(appTagIds: Set[ApplicableTagId]): Gen[DerivativeTags] = {
+    val ids = appTagIds.toVector
+    derivativeTags(Option.when(ids.length >= 2)(Gen.choose_!(ids)))
+  }
+
+  def derivativeTags(genId: Option[Gen[ApplicableTagId]]): Gen[DerivativeTags] =
+    genId match {
+      case Some(id) => derivativeTags(id)
+      case None     => enabled.map(DerivativeTags(_, Map.empty))
+    }
+
+  def derivativeTags(id: Gen[ApplicableTagId]): Gen[DerivativeTags] = {
+    val pair = Gen.lift2(id, id)((a, b) => Option.unless(a == b)(DerivativeTags.TagPair(a, b)))
+
+    val rules =
+      Gen.lift2(pair, id)((p, a) => p.map((_, a)))
+        .list(0 to 6)
+        .map(es => DerivativeTags.emptyDisabled.rules ++ es.iterator.flatten)
+
+    Gen.apply2(DerivativeTags.apply)(enabled, rules)
+  }
+
+  def customFieldTagSome(tagGroupIds: Set[TagGroupId],
+                         rules: Gen[FieldReqTypeRules.ForTagField],
+                         deriv: Gen[DerivativeTags]): Gen[Vector[CustomField.Tag]] =
+    Gen.subset(tagGroupIds.toVector).flatMap(ids =>
       Gen sequence ids.map(id =>
-        customFieldTag(Gen pure id, rules)))
+        customFieldTag(Gen pure id, rules, deriv)))
 
   def customFieldImplication(reqTypeId: Gen[ReqTypeId], rules: Gen[FieldReqTypeRules.ForImpField]): Gen[CustomField.Implication] =
     Gen.apply4(CustomField.Implication.apply)(customFieldImplicationId, reqTypeId, rules, live)
@@ -527,23 +554,26 @@ object RandomData {
 
   def customField(rulesAny: Gen[FieldReqTypeRules[Impossible]],
                   rulesTag: Gen[FieldReqTypeRules.ForTagField],
+                  derivTags: Gen[DerivativeTags],
                   impFields: Boolean,
                   tagFields: Boolean): Gen[CustomField] = {
     lazy val txt: Gen[CustomField] = customFieldText(rulesAny)
     customFieldType.flatMap {
       case CustomFieldType.Text        => txt
-      case CustomFieldType.Tag         => if (tagFields) customFieldTag(tagGroupId, rulesTag) else txt
+      case CustomFieldType.Tag         => if (tagFields) customFieldTag(tagGroupId, rulesTag, derivTags) else txt
       case CustomFieldType.Implication => if (impFields) customFieldImplication(reqTypeId, rulesAny) else txt
     }
   }
 
   def customFields(reqTypeIds: Set[ReqTypeId],
                    tagIds    : Set[TagGroupId],
+                   appTagIds : Set[ApplicableTagId],
                    rulesAny  : Gen[FieldReqTypeRules[Impossible]],
                    rulesTag  : Gen[FieldReqTypeRules.ForTagField]): Gen[IMap[CustomFieldId, CustomField]] = {
+    val deriv = derivativeTags(appTagIds)
     val cf = for {
-      f1 <- customField(rulesAny, rulesTag, false, false).list
-      f2 <- customFieldTagSome(tagIds, rulesTag)
+      f1 <- customField(rulesAny, rulesTag, deriv, false, false).list
+      f2 <- customFieldTagSome(tagIds, rulesTag, deriv)
       f3 <- customFieldImplicationSome(reqTypeIds, rulesAny)
     } yield f3.toList ::: f2.toList ::: f1
     def id   = distinctId(CustomField.IdAccess, CustomFieldId_T)
@@ -553,13 +583,14 @@ object RandomData {
   }
 
   def fieldSet(reqTypeIds: Set[ReqTypeId], tagIds: Set[TagId]): Gen[FieldSet] = {
-    val tagGroupIds   = tagIds.iterator.filterSubType[TagGroupId].toSet
-    val genApTagId    = NonEmptySet.option(tagIds.iterator.filterSubType[ApplicableTagId].toSet).map(Gen.chooseNE(_))
-    val genReqTypeId  = NonEmptySet.option(reqTypeIds).map(Gen.chooseNE(_))
-    val rulesAny      = fieldReqTypeRules[Impossible](genReqTypeId, None)
-    val rulesTag      = fieldReqTypeRules(genReqTypeId, genApTagId)
+    val tagGroupIds  = tagIds.iterator.filterSubType[TagGroupId].toSet
+    val appTagIds    = tagIds.iterator.filterSubType[ApplicableTagId].toSet
+    val genApTagId   = NonEmptySet.option(appTagIds).map(Gen.chooseNE(_))
+    val genReqTypeId = NonEmptySet.option(reqTypeIds).map(Gen.chooseNE(_))
+    val rulesAny     = fieldReqTypeRules[Impossible](genReqTypeId, None)
+    val rulesTag     = fieldReqTypeRules(genReqTypeId, genApTagId)
     for {
-      cf           <- customFields(reqTypeIds, tagGroupIds, rulesAny, rulesTag)
+      cf           <- customFields(reqTypeIds, tagGroupIds, appTagIds, rulesAny, rulesTag)
       mandatoryIds = cf.keySet.map(f => f: FieldId) ++ StaticField.mandatory.iterator
       optionalIds  <- Gen.subset(StaticField.optional.whole)
       order        <- Gen.shuffle((mandatoryIds ++ optionalIds).toVector)
@@ -1480,7 +1511,7 @@ object RandomData {
 
   type ImplicationsUM = Map[ReqId, Set[ReqId]]
   @tailrec def preventImplicationCycles(m: ImplicationsUM): ImplicationsUM =
-    Implications.cycleDetector.findCycle(m) match {
+    Implications.Graph.cycleDetector.findCycle(m) match {
       case None         => m
       case Some((_, b)) => preventImplicationCycles(m - b)
     }
@@ -1494,7 +1525,7 @@ object RandomData {
   val implicationsMethodDefault: ImpMethod = (g, fix) =>
     g.pair
       .list(MaxImplicationPairs)
-      .map(kvs => Implications.emptyUniDir.addPairs(kvs: _*).m |> fix)
+      .map(kvs => Implications.Graph.emptyUniDir.addPairs(kvs: _*).m |> fix)
 
   def implicationsMethod2(maxImpsPerSrc: Int, maxImpKeys: Int): ImpMethod = (g, fix) =>
     Gen.tuple2(g, g.set1(1 to maxImpsPerSrc))
@@ -1505,12 +1536,12 @@ object RandomData {
     def fix(m: ImplicationsUM): Implications = {
       val m2 = preventImplicationCycles(m)
       // println(m2); println()
-      Implications.BiDir(Multimap(m2))
+      Implications(Implications.Graph.BiDir(Multimap(m2)))
     }
 
     Gen.tryGenChoose(reqIds.toSeq) match {
       case Some(g) => method(g, fix)
-      case None    => Gen pure Implications.emptyBiDir
+      case None    => Gen pure Implications.empty
     }
   }
 
@@ -2477,6 +2508,9 @@ object RandomData {
     private def fieldReqTypeRulesTag: Gen[FieldReqTypeRules[ApplicableTagId]] =
       fieldReqTypeRules(Some(reqTypeId), Some(applicableTagId))
 
+    private lazy val derivativeTags: Gen[DerivativeTags] =
+      RandomData.derivativeTags(applicableTagId)
+
     object customTextFieldGD extends GenericDataGen(CustomTextFieldGD) {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
@@ -2489,6 +2523,7 @@ object RandomData {
       import gd._
       override def valueFor(a: Attr): Gen[Value] = a match {
         case FieldReqTypeRules => fieldReqTypeRulesTag map FieldReqTypeRules.apply
+        case DerivativeTags    => derivativeTags       map DerivativeTags   .apply
       }
     }
 

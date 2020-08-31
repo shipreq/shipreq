@@ -107,7 +107,7 @@ object SampleProject {
   lazy val reqCodes = ReqCodes.empty
   lazy val reqText  = ReqData.Text.empty
   lazy val reqTags  = ReqData.emptyTags
-  lazy val reqImps  = Implications.emptyBiDir
+  lazy val reqImps  = Implications.empty
 
   lazy val projectConfig = ProjectConfig(customIssueTypes, ReqTypes(customReqTypes), fields, tags)
   lazy val projectContent = ProjectContent(reqs, reqCodes, reqText, reqTags, reqImps, DeletionReasons.empty)

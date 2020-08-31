@@ -44,8 +44,6 @@ object Location {
 
   sealed trait InReqCodeGroup
 
-  case object FieldDefault extends InReq with LocationOf.Tag.InReq
-
   case object Tags extends InReq with LocationOf.Tag.InReq
 
   sealed trait Text extends InReq with LocationOf.Tag.InReq with LocationOf.Text.InReq

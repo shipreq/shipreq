@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.utils.Memo
-import japgolly.scalajs.react.Reusability
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^.VdomTag
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.text.ProjectText
@@ -28,13 +28,15 @@ object ViewReqDataCache {
 // =====================================================================================================================
 
 final case class ViewReqCache[+Ctx <: ProjectText.Context, A](dataCache: ViewReqDataCache,
-                                                              private[ViewReqCache] val pt: ProjectText[Ctx, A]) {
+                                                              private[ViewReqCache] val pt: ProjectText[Ctx, A],
+                                                              private[ViewReqCache] val vt: Reusable[FilterDead => ReqId => ViewTags.ForReq[A]]) {
 
   private[this] val cache: FilterDead => ReqId => ViewReq[A] =
     FilterDead.memo { fd =>
       val f = dataCache(fd)
+      val v = vt(fd)
       Memo { reqId =>
-        f(reqId)(pt)
+        f(reqId)(pt, v(reqId))
       }
     }
 

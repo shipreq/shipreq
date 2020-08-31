@@ -14,6 +14,7 @@ import sbtcrossproject.CrossProject
 import scala.{Console => C}
 import scala.concurrent.duration._
 import scalafix.sbt.ScalafixPlugin
+import scalafix.sbt.ScalafixPlugin.autoImport.ScalafixConfig
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import LibDependency.{Dep, HasBoth, HasJs, HasJvm, JS, JVM, ModDepScope}
 
@@ -120,7 +121,7 @@ object Common {
 
   val scalafixSettings: Project => Project =
     if (scalafixEnabled)
-      _.enablePlugins(ScalafixPlugin)
+      _.enablePlugins(ScalafixPlugin).dependsOn(ScalafixBuild.`scalafix-rules` % ScalafixConfig)
     else
       _.disablePlugins(ScalafixPlugin)
 
@@ -160,8 +161,7 @@ object Common {
       // Remove versions from manifests
       packageOptions in (Compile, packageBin) := Nil)
 
-  /** Minimal settings used by benchmark modules too */
-  lazy val settingsMin = (p: Project) => p
+  lazy val settingsMinForScalafix = (p: Project) => p
     .settings(
       organization                := "com.beardedlogic.shipreq",
       organizationName            := "Bearded Logic",
@@ -173,17 +173,24 @@ object Common {
       aggregate in update         := true,
       scalaVersion                := Dependencies.Scala.version,
       scalacOptions              ++= scalacFlags,
-      testFrameworks              := List(new TestFramework("utest.runner.Framework")),
     //cancelable in Global        := true, // Allows ctrl-c to kill apps started with run without exiting SBT
       dependencyUpdatesFilter     -= Dependencies.updateExclusions,
       minForcegcInterval          := 3.minutes,
       target                      := redirectTargetDir(target.value))
     .configure(
-      scalafixSettings,
       packageBinaryOnly,
-      dockerLayerReuse,
       Dependencies.useKindProjector,
       Dependencies.useBetterMonadicFor)
+
+  /** Minimal settings used by benchmark modules too */
+  lazy val settingsMin =
+    settingsMinForScalafix.andThen(_
+      .configure(
+        scalafixSettings,
+        dockerLayerReuse)
+      .settings(
+        testFrameworks := List(new TestFramework("utest.runner.Framework"))
+      ))
 
   /** Common settings used by standard modules - not benchmarks, not test modules */
   private def settings: Project => Project =

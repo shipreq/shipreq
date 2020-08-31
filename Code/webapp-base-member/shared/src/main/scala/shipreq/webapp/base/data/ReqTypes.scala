@@ -180,6 +180,9 @@ final case class ReqTypes(custom: IMap[CustomReqTypeId, CustomReqType]) {
       .zipWithIndex
       .toMap
 
+  lazy val reqTypeIdOrdering: Ordering[ReqTypeId] =
+    Ordering.by(order.apply)
+
   lazy val pubidOrdering: Ordering[Pubid] =
     new Ordering[Pubid] {
       val rto = order

@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.base.data.{Disabled, Enabled}
+import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.ui.semantic.{Dropdown, Icon, UsesSemanticUiManually}
 
 /** A stateless button that shows a dropdown when clicked.

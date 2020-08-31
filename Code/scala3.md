@@ -4,3 +4,5 @@
 * Delete `TaggedTypes` and make all current subtypes (eg. all IDs) opaque types
 
 * Change FieldKeys to be intersection types and get rid of manual fold classes
+
+* `data/package.scala`

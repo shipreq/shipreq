@@ -127,7 +127,7 @@ object ImplicationEditor {
       for (i <- subject)
         is = is.mod(i, diff.apply)
 
-      if (Implications.cycleDetector.hasCycle(is.m))
+      if (Implications.Graph.cycleDetector.hasCycle(is.m))
         -\/(Invalidity("That would cause a cycle in your implication graph."))
       else
         \/-(diff)

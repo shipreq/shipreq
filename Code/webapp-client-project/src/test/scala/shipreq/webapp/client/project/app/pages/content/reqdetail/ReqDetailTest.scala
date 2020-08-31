@@ -15,6 +15,8 @@ import shipreq.webapp.client.project.test._
 import utest._
 
 object ReqDetailTest extends TestSuite {
+  import SampleDerivativeTags3.step3.{project => DT3_3}
+  import SampleDerivativeTags4.{project => DT4}
   import ReqDetailTestDsl._
   import WebappTestUtil._
   import global.press
@@ -565,8 +567,8 @@ object ReqDetailTest extends TestSuite {
           StaticField.AllTags.name)
           +> field("Component").text.assert("") // perReq > otherwise, opt - no content
           +> field("Released").text.assert("v1.0") // def:tag:bad - w/ content - ShowDead
-          +> field("Status").text.assert("uat") // def:tag:dead - no content - ShowDead
-          +> field("Version").text.assert("v1.0 v3.x") // def:tag:bad - w/ content - ShowDead
+          +> tagFieldDesc("Status").assert("uat?-") // def:tag:dead - no content - ShowDead
+          +> tagFieldDesc("Version").assert("v1.0 v3.x-") // def:tag:bad - w/ content - ShowDead
       ))
 
       "si1" - test("SI-1", SampleProject7.project)(Plan.action(
@@ -612,9 +614,10 @@ object ReqDetailTest extends TestSuite {
           Event.FieldCustomDelete(statusField),
         )
 
-      // Note: BR-2 already has
-      //   - N/A tag (#prod)
-      //   - live & dead assigned to no field (#misc1 #misc2)
+      // Note 1: BR-2 already has
+      //           - N/A tag (#prod)
+      //           - live & dead assigned to no field (#misc1 #misc2)
+      // Note 2: N/A tags are shown when ShowDead
       test("BR-2", project)(Plan.action(
         *.emptyAction
           +> filterDead.assert(HideDead)
@@ -626,9 +629,9 @@ object ReqDetailTest extends TestSuite {
           >> filterDeadToggle
           +> filterDead.assert(ShowDead)
           +> field("Priority").text.assert("pri=high pri=low")
-          +> field("Status").text.assert("wip defer")
+          +> field("Status").text.assert("wip defer prod")
           +> field(OtherTags.name).text.assert("misc1 misc2")
-          +> field(AllTags.name).text.assert("defer misc1 misc2 pri=high pri=low wip")
+          +> field(AllTags.name).text.assert("defer misc1 misc2 pri=high pri=low prod wip")
       ))
     }
 
@@ -728,5 +731,59 @@ object ReqDetailTest extends TestSuite {
       >> title.doubleClick
       +> title.editorValue.assert.contains("[MF-2] [MF-2:]")
     ))
+
+    "derivativeTags" - {
+
+      "dt3-3" - {
+        "mf1" - test("MF-1", project = DT3_3)(Plan.action(
+          *.emptyAction +> tagFieldDescs(
+            "Status"   -> "readyForDev+",
+            "Version"  -> "v1+ v2",
+            "All Tags" -> "readyForDev+ v1+ v2")
+        ))
+
+        "fr1" - test("FR-1", project = DT3_3)(Plan.action(
+          *.emptyAction +> tagFieldDescs(
+            "Status"   -> "readyForDev?",
+            "Version"  -> "v1",
+            "All Tags" -> "readyForDev? v1")
+        ))
+      }
+
+      "dt4" - {
+        "d3" - test("D-3", project = DT4)(Plan.action(
+          *.emptyAction +> tagFieldDescs(
+            "W"        -> "w1?",
+            "Y"        -> "y1+ y2+",
+            "All Tags" -> "w1? y1+ y2+")
+          >> filterDeadToggle +> tagFieldDescs(
+            "W"        -> "w1?",
+            "Y"        -> "y1+ y2+ y3+- y5?-",
+            "X"        -> "x1?-",
+            "All Tags" -> "w1? x1?- y1+ y2+ y3+- y5?-")
+        ))
+
+        "other" - {
+          import SampleDerivativeTags4.Values._
+          val p = applyEventsSuccessfully(DT4,
+            Event.TagRestore(z4),
+            TestEvent.applicableTagUpdate(z4, parents = Vector.empty),
+            Event.TagDelete(z4),
+          )
+          test("A-12", p)(Plan.action(
+            *.emptyAction +> tagFieldDescs(
+              "W"          -> "w1?",
+              "Other Tags" -> "",
+              "All Tags"   -> "w1? z1?")
+          >> filterDeadToggle +> tagFieldDescs(
+              "W"          -> "w1?",
+              "Other Tags" -> "z4-",
+              "All Tags"   -> "w1? x1?- z1? z4-")
+          ))
+        }
+      }
+
+    }
+
   }
 }

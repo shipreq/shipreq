@@ -7,7 +7,7 @@ import shipreq.webapp.base.UiText.EnglishIntExt
 import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.ProjectWidgets
+import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewTags}
 
 /** This isn't really an editor; it's read/only! But it's what appears in place of the editor. */
 object StaticFieldEditor {
@@ -21,6 +21,8 @@ object StaticFieldEditor {
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
+
+  private implicit def tagDisplaySettings = ViewTags.DisplaySettings.tag
 
   private val ul    = <.ul(*.staticFieldUL)
   private val li    = <.li(*.staticFieldLI)
@@ -36,7 +38,7 @@ object StaticFieldEditor {
       else
         <.ul(
           p.config.tags.sortTagIds(ids).toTagMod(id =>
-            liTag(p.pw.tagSimple(id, includeDesc = true))))
+            liTag(p.pw.viewTags.render(id))))
 
     val allTags = p.config.liveTagFieldDistribution.notUsedInFields
     val (live, dead) = allTags.partition(p.config.tags.needApplicableTag(_).live is Live)

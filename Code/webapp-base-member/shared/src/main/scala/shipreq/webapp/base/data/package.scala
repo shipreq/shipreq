@@ -56,9 +56,6 @@ package object data {
   // ----------------------------------------------------------------------------------------------
   // Data types and functions
 
-  val Implications = new Digraph.FixAcyclic[ReqId, Int]("implications", _.value)
-  type Implications = Implications.BiDir
-
   type ImplicationScope = CustomField.Implication.Id \/ Direction
   object ImplicationScope {
     def dir(s: ImplicationScope): Direction =

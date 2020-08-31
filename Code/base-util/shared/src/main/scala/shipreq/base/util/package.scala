@@ -6,9 +6,6 @@ package object util {
 
   type IfApplicable[+A] = NotApplicable.type \/ A
 
-  /** Faster than Vector(a) */
-  @inline def Vector1[A](a: A): Vector[A] = Vector.empty :+ a
-
   /**
     * Relative Position.
     *

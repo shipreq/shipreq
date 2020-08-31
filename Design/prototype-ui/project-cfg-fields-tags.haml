@@ -89,6 +89,12 @@
 
       .button-row button:not(:first-child) {margin-left:2em}
 
+      .deriv_table .na { background: #f6f6f6 }
+      .deriv_table .none { xbackground: #f6f6f6; color:#aaa }
+      .deriv_table .none::after { content: '(both)' }
+      /*.deriv_table th, .deriv_table td:not(:first-child) { text-align: center !important }*/
+      x.deriv_table td:first-child { text-align: right !important }
+
   -# ==================================================================================================================================================
   -# ==================================================================================================================================================
   %body
@@ -244,6 +250,11 @@
                 .rule
                   %span.types Other
                   %span.value Optional
+                .rule
+                  %span.types
+                    %i.icon.sitemap(style="margin-left:0;margin-right:.4ex")
+                    Derivative tags
+                  %span.value Enabled
               %td
                 <button class="ui button basic  negative " style="white-space: nowrap;"><i class="icon trash"></i>Delete</button>
             %tr
@@ -339,17 +350,190 @@
                 %td
                   <button class="ui button basic green" style="white-space: nowrap; border-color: #080 !important"><i class="icon plus" style="margin:0"></i></button>
 
-          -# %div.button-row(style="text-align:right; margin-top:2rem")
-            %button.ui.button.black.basic
-              %i.icon.remove
-              Cancel
-            %button.ui.button.negative.basic(style="white-space: nowrap;")
-              %i.icon.trash
-              Delete
-            -# %button.ui.button.basic.green(style="border-color: #080 !important; font-weight: bold !important;")
-            %button.ui.button.green
-              %i.icon.plus
-              Update
+          %section.ui.segment
+            %div(style="margin-bottom:1rem")
+              .ui.checkbox
+                %input(type="checkbox" checked=true)
+                %label
+                  -# %i.icon.sitemap(style="margin-left:0;margin-right:.4ex")
+                  Derivative tags
+                  -# %i.icon.sitemap(style="margin-left:.5ex;margin-right:0")
+
+            .ui.icon.message.info
+              %i.icon.sitemap
+              .content
+                %p Explanation of derivative tags. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Dui sapien eget mi proin sed libero enim. Eu facilisis sed odio morbi quis commodo odio aenean. Ut sem nulla pharetra diam. Ut venenatis tellus in metus vulputate eu scelerisque felis. Sed blandit libero volutpat sed.
+
+            %h4 Tag merging rules
+
+            -# %table.ui.definition.celled.compact.table.deriv_table
+              %thead
+                %tr
+                  %th
+                  %th .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %th .ui.label.is-tag.yellow(style="margin:0;color:#000!important") analysed
+                  %th .ui.label.is-tag.teal(style="margin:0") ready_for_dev
+                  %th .ui.label.is-tag.green(style="margin:0") implemented
+                  %th .ui.label.is-tag.grey(style="margin:0") rejected
+              %tbody
+                %tr
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %td.na ="-"
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                %tr
+                  %td .ui.label.is-tag.yellow(style="margin:0;color:#000!important") analysed
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %td.na ="-"
+                  %td .ui.label.is-tag.teal(style="margin:0") ready_for_dev
+                  %td .ui.label.is-tag.green(style="margin:0") implemented
+                  %td .ui.label.is-tag.yellow(style="margin:0;color:#000!important") analysed
+                %tr
+                  %td .ui.label.is-tag.teal(style="margin:0") ready_for_dev
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %td .ui.label.is-tag.teal(style="margin:0") ready_for_dev
+                  %td.na ="-"
+                  %td .ui.label.is-tag.teal(style="margin:0") ready_for_dev
+                  %td .ui.label.is-tag.teal(style="margin:0") ready_for_dev
+                %tr
+                  %td .ui.label.is-tag.green(style="margin:0") implemented
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %td .ui.label.is-tag.green(style="margin:0") implemented
+                  %td .ui.label.is-tag.teal(style="margin:0") ready_for_dev
+                  %td.na ="-"
+                  %td .ui.label.is-tag.green(style="margin:0") implemented
+                %tr
+                  %td .ui.label.is-tag.grey(style="margin:0") rejected
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %td .ui.label.is-tag.yellow(style="margin:0;color:#000!important") analysed
+                  %td .ui.label.is-tag.teal(style="margin:0") ready_for_dev
+                  %td .ui.label.is-tag.green(style="margin:0") implemented
+                  %td.na ="-"
+
+            -# %table.ui.definition.celled.compact.table.deriv_table
+              %thead
+                %tr
+                  %th
+                  %th .ui.label.is-tag.brown(style="margin:0") nee
+                  %th .ui.label.is-tag.yellow(style="margin:0;color:#000!important") ana
+                  %th .ui.label.is-tag.teal(style="margin:0") rea
+                  %th .ui.label.is-tag.green(style="margin:0") imp
+                  %th .ui.label.is-tag.grey(style="margin:0") rej
+              %tbody
+                %tr
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %td.na .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                %tr
+                  %td .ui.label.is-tag.yellow(style="margin:0;color:#000!important") analysed
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td.na .ui.label.is-tag.yellow(style="margin:0;color:#000!important") ana
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                  %td .ui.label.is-tag.green(style="margin:0") imp
+                  %td .ui.label.is-tag.yellow(style="margin:0;color:#000!important") ana
+                %tr
+                  %td .ui.label.is-tag.teal(style="margin:0") ready_for_dev
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                  %td.na .ui.label.is-tag.teal(style="margin:0") rea
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                %tr
+                  %td .ui.label.is-tag.green(style="margin:0") implemented
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.green(style="margin:0") imp
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                  %td.na .ui.label.is-tag.green(style="margin:0") imp
+                  %td .ui.label.is-tag.green(style="margin:0") imp
+                %tr
+                  %td .ui.label.is-tag.grey(style="margin:0") rejected
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.yellow(style="margin:0;color:#000!important") ana
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                  %td .ui.label.is-tag.green(style="margin:0") imp
+                  %td.na .ui.label.is-tag.grey(style="margin:0") rej
+
+            %table.ui.definition.celled.compact.table.deriv_table
+              %thead
+                %tr
+                  %th
+                  %th .ui.label.is-tag.brown(style="margin:0") nee
+                  %th .ui.label.is-tag.yellow(style="margin:0;color:#000!important") ana
+                  %th .ui.label.is-tag.teal(style="margin:0") rea
+                  %th .ui.label.is-tag.green(style="margin:0") imp
+                  %th .ui.label.is-tag.grey(style="margin:0") rej
+              %tbody
+                %tr
+                  %td .ui.label.is-tag.brown(style="margin:0") needs_analysis
+                  %td.na ="-"
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                %tr
+                  %td .ui.label.is-tag.yellow(style="margin:0;color:#000!important") analysed
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td.na ="-"
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                  %td.none
+                  %td .ui.label.is-tag.yellow(style="margin:0;color:#000!important") ana
+                %tr
+                  %td .ui.label.is-tag.teal(style="margin:0") ready_for_dev
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                  %td.na ="-"
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                %tr
+                  %td .ui.label.is-tag.green(style="margin:0") implemented
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td.none
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                  %td.na ="-"
+                  %td .ui.label.is-tag.green(style="margin:0") imp
+                %tr
+                  %td .ui.label.is-tag.grey(style="margin:0") rejected
+                  %td .ui.label.is-tag.brown(style="margin:0") nee
+                  %td .ui.label.is-tag.yellow(style="margin:0;color:#000!important") ana
+                  %td .ui.label.is-tag.teal(style="margin:0") rea
+                  %td .ui.label.is-tag.green(style="margin:0") imp
+                  %td.na ="-"
+
+            .ui.form.error
+              .field.errorx
+                %textarea(style="font-family:monospace,monospace; border-color:red" rows=13)
+                  ="analysed       + implemented    = implemented\n"
+                  ="analysed       + needs_analysis = needs_analysis\n"
+                  ="analysed       + ready_for_dev  = ready_for_dev\n"
+                  ="analysed       + rejected       = analysed\n"
+                  ="implemented    + needs_analysis = needs_analysis\n"
+                  ="implemented    + ready_for_dev  = ready_for_dev\n"
+                  ="implemented    + rejected       = implemented\n"
+                  ="needs_analysis + ready_for_dev  = needs_analysis\n"
+                  ="needs_analysis + rejected       = needs_analysis\n"
+                  ="ready_for_dev  + rejected       = ready_for_dev\n"
+                  ="implemented + analysed = ready_for_dev\n"
+                  ="imp + anna = red\n"
+                %div(style="color:#e00")
+                  %ul
+                    %li
+                      %span(style="font-weight:bold")
+                        Error: conflicting rules
+                      %ul
+                        %li analysed       + implemented    = implemented
+                        %li implemented + analysed = ready_for_dev
+                    %li
+                      %span(style="font-weight:bold")
+                        Error: invalid tags
+                      %ul
+                        %li anna
+                        %li red
+
 
           %div(style="margin-top:2rem; display:flex")
             %button.ui.button.negative.basic(style="white-space: nowrap;")
@@ -364,19 +548,6 @@
               %i.icon.plus
               Update
 
-          -# %div(style="margin-top:2rem; display:flex; justify-content: space-between")
-            %button.ui.button.black.basic
-              %i.icon.remove
-              Cancel
-            %button.ui.button.negative.basic(style="white-space: nowrap;")
-              %i.icon.trash
-              Delete
-            -# %button.ui.button.basic.green(style="border-color: #080 !important; font-weight: bold !important;")
-              %i.icon.plus
-              Update
-            %button.ui.button.green
-              %i.icon.plus
-              Update
 
   :javascript
     $('.ui.dropdown').dropdown();

@@ -1,6 +1,4 @@
-package shipreq.webapp.base.data
-
-import shipreq.base.util.IsoBool
+package shipreq.base.util
 
 sealed trait Enabled extends IsoBool.WithBoolOps[Enabled] {
   override final def companion = Enabled

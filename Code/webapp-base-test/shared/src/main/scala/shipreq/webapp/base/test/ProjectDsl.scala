@@ -28,7 +28,7 @@ object ProjectDslInternals {
                           maxReqCodeId  : Int,
                           text          : ReqData.Text,
                           tags          : ReqData.Tags,
-                          imps          : Implications.UniDir) {
+                          imps          : Implications.Graph.UniDir) {
 
     private var _newMaxReqCodeId = maxReqCodeId
 
@@ -65,7 +65,7 @@ object ProjectDslInternals {
         f = f compose Project.reqCodes    .modify(_ => ReqCodes(reqCodeTrie))
         f = f compose Project.reqText     .modify(_ => text)
         f = f compose Project.reqTags     .modify(_ => tags)
-        f = f compose Project.implications.modify(_ => Implications.BiDir(imps))
+        f = f compose Project.implications.modify(_ => Implications.Graph.BiDir(imps))
         f(p)
       }
   }

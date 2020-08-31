@@ -250,8 +250,11 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
   val applicableTagId: Live => Option[Gen[ApplicableTagId]] =
     tryGenChooseLiveDead(l => p.config.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].filter(_.live is l).map(_.id))
 
+  lazy val applicableTagIdSet =
+    p.config.tags.tree.keysIterator.filterSubType[ApplicableTagId].toSet
+
   lazy val existingApplicableTagId: Option[Gen[ApplicableTagId]] =
-    Gen.tryGenChoose(p.config.tags.tree.keysIterator.filterSubType[ApplicableTagId])
+    Gen.tryGenChoose(applicableTagIdSet)
 
   lazy val existingReqType: Gen[ReqType] =
     Gen.chooseNE(p.config.reqTypes.all)
@@ -282,6 +285,9 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
 
   lazy val fieldReqTypeRulesTag: Gen[FieldReqTypeRules[ApplicableTagId]] =
     RandomData.fieldReqTypeRules(existingReqTypeId, existingApplicableTagId)
+
+  lazy val derivativeTags: Gen[DerivativeTags] =
+    RandomData.derivativeTags(applicableTagIdSet)
 
   lazy val existingReqId: Option[Gen[ReqId]] =
     Gen.tryGenChoose(p.content.reqs.idIterator())
@@ -451,6 +457,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
     import gd._
     override def valueFor(a: Attr) = a match {
       case FieldReqTypeRules => fieldReqTypeRulesTag map FieldReqTypeRules.apply
+      case DerivativeTags    => derivativeTags       map DerivativeTags   .apply
     }
   }
 

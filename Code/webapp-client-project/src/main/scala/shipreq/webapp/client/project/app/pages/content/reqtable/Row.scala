@@ -25,7 +25,6 @@ object Row {
    */
   final case class ForReq(req        : Req,
                           live       : Live,
-                          invalidTags: Set[ApplicableTagId],
                           exp        : Expansions,
                           fieldRules : FieldSetRules,
                           instanceId : Int) extends Row {
@@ -126,15 +125,15 @@ object Row {
     case r: ForReq       => Some(r.exp)
     case _: ForCodeGroup => None
   }(nv => {
-    case ForReq(r, l, c, _, f, i) => ForReq(r, l, c, nv, f, i)
-    case r: ForCodeGroup          => r
+    case ForReq(r, l, _, f, i) => ForReq(r, l, nv, f, i)
+    case r: ForCodeGroup       => r
   })
 
   val reqCodes = Lens[Row, Vector[ReqCode.Value]] {
     case r: ForReq       => r.exp.reqCodes.values
     case r: ForCodeGroup => Vector1(r.reqCode)
   }(nv => {
-    case ForReq(r, l, c, e, f, i)          => ForReq(r, l, c, e.copyReqCodes(nv), f, i)
+    case ForReq(r, l, e, f, i)             => ForReq(r, l, e.copyReqCodes(nv), f, i)
     case r: ForCodeGroup if nv.length == 1 => r.copy(reqCode = nv.head)
     case r: ForCodeGroup if nv.length != 1 => assert(false, s"Can't apply $nv to $r") ;r
   })
@@ -144,7 +143,7 @@ object Row {
     case r: ForReq       => r.exp.reqCodeTree.values
     case r: ForCodeGroup => r.reqCodeTreeItem.toVector
   }(nv => {
-    case ForReq(r, l, c, e, f, i) => ForReq(r, l, c, e.copyReqCodeTree(nv), f, i)
+    case ForReq(r, l, e, f, i) => ForReq(r, l, e.copyReqCodeTree(nv), f, i)
     case r: ForCodeGroup => nv.length match {
       case 1 => r.copy(reqCodeTreeItem = Some(nv.head))
       case 0 => r.copy(reqCodeTreeItem = None)

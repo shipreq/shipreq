@@ -49,6 +49,67 @@ object FieldType {
   implicit def equality: UnivEq[FieldType] = UnivEq.derive
 }
 
+sealed trait TagFieldId
+object TagFieldId {
+  case object All extends TagFieldId
+  case object Other extends TagFieldId
+  final case class Custom(id: CustomField.Tag.Id) extends TagFieldId
+
+  implicit def univEq: UnivEq[TagFieldId] = UnivEq.derive
+
+  final class Mutable[A](empty: TagFieldId => A) {
+    var all = empty(All)
+    var other = empty(Other)
+    var fields = Map.empty[CustomField.Tag.Id, A]
+
+    def get(f: TagFieldId): A =
+      f match {
+        case Custom(id) => field(id)
+        case All        => all
+        case Other      => other
+      }
+
+    def field(f: CustomField.Tag.Id): A =
+      fields.getOrElse(f, {
+        val a = empty(Custom(f))
+        fields = fields.updated(f, a)
+        a
+      })
+
+    @inline def mod(field: TagFieldId, m: A => Unit): Unit =
+      field match {
+        case All       => m(all)
+        case Other     => modOther(m)
+        case Custom(f) => modField(f, m)
+      }
+
+    @inline def modOther(m: A => Unit): Unit = {
+      m(other)
+      m(all)
+    }
+
+    @inline def modField(f: CustomField.Tag.Id, m: A => Unit): Unit = {
+      m(field(f))
+      m(all)
+    }
+
+    @inline def modFields(fs: IterableOnce[CustomField.Tag.Id], m: A => Unit): Unit = {
+      val it = fs.iterator
+      if (it.nonEmpty) {
+        for (f <- it)
+          m(field(f))
+        m(all)
+      }
+    }
+
+    @inline def modFieldsOrOther(fields: Set[CustomField.Tag.Id], m: A => Unit): Unit =
+      if (fields.isEmpty)
+        modOther(m)
+      else
+        modFields(fields, m)
+  }
+}
+
 // =====================================================================================================================
 // Instances
 
@@ -389,6 +450,7 @@ object CustomField {
   final case class Tag(id               : Tag.Id,
                        tagId            : TagGroupId,
                        fieldReqTypeRules: FieldReqTypeRules.ForTagField,
+                       derivativeTags   : DerivativeTags,
                        liveExplicitly   : Live) extends CustomField(CustomFieldType.Tag) {
 
     override def toString = s"CustomField.Tag($id, $tagId, $fieldReqTypeRules, $liveExplicitly)"
@@ -423,19 +485,31 @@ object CustomField {
            tagId             : TagId,
            mandatory         : Mandatory,
            applicableReqTypes: ApplicableReqTypes,
-           liveExplicitly    : Live): Tag = {
-
-      apply(
+           liveExplicitly    : Live): Tag =
+      v2(
         id                = id,
         tagId             = castV1TagId(tagId),
         fieldReqTypeRules = FieldReqTypeRules.v1(mandatory, applicableReqTypes),
         liveExplicitly    = liveExplicitly,
       )
-    }
+
+    def v2(id               : Tag.Id,
+           tagId            : TagGroupId,
+           fieldReqTypeRules: FieldReqTypeRules.ForTagField,
+           liveExplicitly   : Live): Tag =
+      apply(
+        id                = id,
+        tagId             = tagId,
+        fieldReqTypeRules = fieldReqTypeRules,
+        derivativeTags    = DerivativeTags.emptyDisabled,
+        liveExplicitly    = liveExplicitly,
+      )
 
     final case class Id(value: Int) extends CustomFieldId  {
       override def toString = s"CustomField.Tag.Id($value)"
+      val asTagFieldId = TagFieldId.Custom(this)
     }
+
     object IdAccess extends ObjDataId[Tag.type, Tag, Id] {
       override def id(d: Tag) = d.id
       override val unapplyData: AnyRef => Option[Tag] = {case r: Tag => Some(r); case _ => None}

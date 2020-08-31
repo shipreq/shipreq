@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.pages.config.issues
 
+import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.TestState._
@@ -48,7 +49,7 @@ object IssueConfigTest extends TestSuite {
   private def testView()(implicit tp: TestPath) = {
     val p = applyEventSuccessfully(
       SampleProject7.project,
-      Event.FieldCustomTagUpdate(relField, CustomTagFieldGD(FieldReqTypeRules.mandatory))
+      Event.FieldCustomTagUpdate(relField, CustomTagFieldGD.ValueForFieldReqTypeRules(FieldReqTypeRules.mandatory))
     )
 
     val assertOtherSources =

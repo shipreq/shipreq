@@ -49,6 +49,8 @@ object IssueStats {
       case i: Issue.DeadRefInRcg                 => addInRcg(i.rcg)
       case i: Issue.DeadRefInReq                 => addInReq(i.req.id)
       case i: Issue.DeadTag                      => addInReq(i.req.id)
+      case _: Issue.DerivativeTagResultDead      => addInConfig()
+      case _: Issue.DerivativeTagResultUnrelated => addInConfig()
       case i: Issue.EmptyCodeGroup               => addInRcg(i.rcg)
       case _: Issue.FieldDefaultTagDead          => addInConfig()
       case _: Issue.FieldDefaultTagNotApplicable => addInConfig()

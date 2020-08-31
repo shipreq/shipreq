@@ -4,7 +4,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.data.{Disabled, Enabled}
+import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.ui.semantic.Modal
 import shipreq.webapp.client.project.app.Style.{help => *}
 

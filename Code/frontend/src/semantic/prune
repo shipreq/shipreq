@@ -24,8 +24,8 @@ const unusedClasses = [
   'small',
   'medium',
   // 'large',
-  'big',
-  'huge',
+  // 'big', // in manualRemovals
+  // 'huge', // in manualRemovals
   'massive',
 
   'radio',
@@ -92,10 +92,12 @@ const manualRemovals = [
   s => /\.black/   .test(s) && !/\.(?:button)/             .test(s),
   s => /\.blue/    .test(s) && !/\.(?:label|button|card)/  .test(s),
   s => /\.green/   .test(s) && !/\.(?:button|icon)/        .test(s),
-  s => /\.grey/    .test(s) && !/\.(?:icon)/               .test(s),
+  s => /\.grey/    .test(s) && !/\.(?:icon|label)/         .test(s),
   s => /\.orange/  .test(s) && !/\.(?:button)/             .test(s),
   s => /\.red/     .test(s) && !/\.(?:label|button|icon)/  .test(s),
   s => /\.yellow/  .test(s) && !/\.(?:card|icon)/          .test(s),
+  s => /\.big/     .test(s) && !/\.(?:icons?)/             .test(s),
+  s => /\.huge/    .test(s) && !/\.(?:icons?)/             .test(s),
 ];
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████

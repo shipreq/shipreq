@@ -5,9 +5,9 @@ cd "$(dirname "$(readlink -e "$0")")"/.. || exit 1
 
 files=
 case "$1" in
-  m|main) files=$(find */src/main */*/src/main -type f | fgrep -v base-test/ );;
-  t|test) files=$(find */src/test */*/src/test -type f);;
-  *)      files=$(find project */src */*/src -type f);;
+  m|main) files=$(find */src/main */*/src/main -type f | fgrep -v .json | fgrep -v base-test/ );;
+  t|test) files=$(find */src/test */*/src/test -type f | fgrep -v .json );;
+  *)      files=$(find project */src */*/src -type f | fgrep -v .json );;
 esac
 
 echo "$files" \

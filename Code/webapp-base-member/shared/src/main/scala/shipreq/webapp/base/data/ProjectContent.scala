@@ -9,13 +9,13 @@ import shipreq.webapp.base.text.{Atom, Text}
 import shipreq.webapp.base.util.ShowSize
 
 object ProjectContent {
-  val genericReqs         : Lens[ProjectContent, GenericReqIMap     ] = reqs ^|-> Requirements.genericReqs ^|-> GenericReqs.imap
-  val useCases            : Lens[ProjectContent, UseCases           ] = reqs ^|-> Requirements.useCases
-  val pubidRegister       : Lens[ProjectContent, PubidRegister      ] = reqs ^|-> Requirements.pubids
-  val reqCodeTrie         : Lens[ProjectContent, ReqCode.Trie       ] = reqCodes ^|-> ReqCodes.trie
-  val implicationsSrcToTgt: Lens[ProjectContent, Implications.UniDir] = implications ^<-> Implications.biToUni
-  val useCaseIMap         : Lens[ProjectContent, UseCaseIMap        ] = useCases ^|-> UseCases.imap
-  val useCaseStepIndex    : Lens[ProjectContent, UseCases.StepIndex ] = useCases ^|-> UseCases.stepIndex // for equality
+  val genericReqs         : Lens[ProjectContent, GenericReqIMap           ] = reqs ^|-> Requirements.genericReqs ^|-> GenericReqs.imap
+  val useCases            : Lens[ProjectContent, UseCases                 ] = reqs ^|-> Requirements.useCases
+  val pubidRegister       : Lens[ProjectContent, PubidRegister            ] = reqs ^|-> Requirements.pubids
+  val reqCodeTrie         : Lens[ProjectContent, ReqCode.Trie             ] = reqCodes ^|-> ReqCodes.trie
+  val implicationsSrcToTgt: Lens[ProjectContent, Implications.Graph.UniDir] = implications ^|-> Implications.srcToTgt
+  val useCaseIMap         : Lens[ProjectContent, UseCaseIMap              ] = useCases ^|-> UseCases.imap
+  val useCaseStepIndex    : Lens[ProjectContent, UseCases.StepIndex       ] = useCases ^|-> UseCases.stepIndex // for equality
 
   val empty: ProjectContent =
     ProjectContent(
@@ -23,7 +23,7 @@ object ProjectContent {
       ReqCodes.empty,
       ReqData.Text.empty,
       ReqData.emptyTags,
-      Implications.emptyBiDir,
+      Implications.empty,
       DeletionReasons.empty)
 
   import ReqData._ // for equality
@@ -38,7 +38,7 @@ final case class ProjectContent(reqs           : Requirements,
                                 reqCodes       : ReqCodes,
                                 reqText        : ReqData.Text,
                                 reqTags        : ReqData.Tags,
-                                implications   : Implications.BiDir,
+                                implications   : Implications,
                                 deletionReasons: DeletionReasons) {
 
   /** ReqCodes referenced in anything anywhere (including text in dead custom-text fields). */

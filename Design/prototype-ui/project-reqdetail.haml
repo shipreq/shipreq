@@ -175,6 +175,38 @@
       .ucSteps .ctrls button:nth-child(4):hover ,
       .ucSteps .tailStep.ctrls button:hover {color:#21BA45}
 
+      .derivedRow {
+        display: flex;
+        align-items: center;
+      }
+
+      .derivedRow > .tags {
+        flex-grow:1;
+      }
+
+      .github {
+        background:#fef;
+        box-sizing: border-box;
+        float:right;
+        width:20vw;
+        white-space: nowrap;
+        word-break: keep-all;
+      }
+      .github .progress {
+        display: flex;
+        height: 8px;
+        overflow: hidden;
+        background-color: #e1e4e8;
+        border-radius: 6px;
+        outline: 1px solid #0000;
+      }
+      .github .progress .progress_item {
+        outline: 2px solid #0000;
+      }
+      .progress_item + .progress_item {
+        margin-left: 2px;
+      }
+
   %body
 
     .ui.menu.borderless.fixed.inverted
@@ -263,10 +295,81 @@
           %tr
             %th Tags
             %td.inline-edit
-              .ui.label.grey.is-tag.dead backend
-              .ui.label.blue.is-tag bug
-              .ui.label.blue.is-tag focus
+              .ui.label.grey.is-tag.dead
+                backend
+                %i.icon.trash(style="margin-left:.5ex;margin-right:0; text-decoration:none; opacity:.7!important")
+              .ui.label.red.is-tag bug
+              -# .ui.label.blue.is-tag
+                ready
+                %i.icon.tags(style="margin-left:.4ex;margin-right:0")
+              -# .ui.label.blue.is-tag
+                %i.icon.sitemap(style="margin-left:.0ex;margin-right:.5ex; opacity:.6")
+                ready
+              .ui.label.blue.is-tag
+                ready
+                %i.icon.sitemap(style="margin-left:.5ex;margin-right:.0ex; opacity:.6")
+              .ui.label.blue.is-tag
+                focus
+                %i.icon.sliders(style="margin-left:.5ex;margin-right:0; opacity:.7")
+              -# .ui.label.blue.is-tag
+                focus
+                %i.icon.setting(style="margin-left:.5ex;margin-right:0; opacity:.6")
+              -# .ui.label.blue.is-tag
+                focus
+                %i.icon.dot.circle.outline(style="margin-left:.4ex;margin-right:0")
+              -# .ui.label.blue.is-tag
+                focus
+                %i.icon.dot.ban(style="margin-left:.4ex;margin-right:0; opacity:.6")
+              -# .ui.label.blue.is-tag.basic focus
+              .ui.label.red.is-tag
+                must
+                %i.icon.pencil(style="margin-left:.5ex;margin-right:0; opacity:.7")
+              .ui.label.red.is-tag
+                must
+                %span(style="margin-left:.5ex;margin-right:0; opacity:.7; xfont-style:italic") #
+              .ui.label.red.is-tag
+                must
+                %span(style="margin-left:.5ex;margin-right:0; opacity:.7; font-style:italic") T
+              .ui.label.red.is-tag
+                must
+                %span(style="margin-left:.5ex;margin-right:0; opacity:.7; font-style:italic") (T)
 
+          %tr
+            %th Status
+            %td
+              .derivedRow
+                .tags
+                  .ui.label.is-tag(style="background:#f5f100; color:#000")
+                    analysed
+                  %div(style="display:inline-block")
+                    .has-popup.ui.label.is-tag(style="background:#ccf000; color:#000")
+                      ready_for_dev
+                      %i.icon.sitemap(style="margin-left:.5ex;margin-right:.0ex; opacity:.6")
+                    .ui.popup(style="display:none")
+                      %h4 Factors
+                      %table(style="margin-left: 2ex")
+                        %tbody
+                          %tr
+                            %td no tag
+                            %td FR-1
+                          %tr
+                            %td
+                              .ui.label.is-tag(style="background:#f5f100; color:#000") analysed
+                            %td FR-1
+                      %h4 Derivation
+                      %ol(style="margin-left: 2ex; list-style-type: none; padding-inline-start: 0; line-height: 2em; margin-block-start: 0; margin-block-end: 0;")
+                        %li
+                          = "= "
+                          .ui.label.is-tag(style="background:#f5f100; color:#000") analysed
+                          = " + "
+                          .ui.label.is-tag(style="background:#ccf000; color:#000") ready_for_dev
+                        %li
+                          = "= "
+                          .ui.label.is-tag(style="background:#ccf000; color:#000") ready_for_dev
+                .github
+                  %span.progress
+                    %span.progress_item(style="background:#f5f100; width:40%" title="40% analysed")
+                    %span.progress_item(style="background:#ccf000; width:60%" title="60% ready_for_dev")
           %tr
             %th Implications
             %td
@@ -454,7 +557,7 @@
 
     $('.ui.dropdown:not(.onhover)').dropdown();
     $('.ui.dropdown.onhover').dropdown({on:"hover", delay: { show: 400 }});
-    $('.ui.has-popup').popup({delay: { show: 400, hide: 0 }});
+    $('.has-popup').popup({inline: true, delay: { show: 1, hide: 0 }});
     $('#cols-button')
       .popup({
         inline   : true,
@@ -469,13 +572,3 @@
 
     $('.ui.modal').modal();
     $('.ui.accordion').accordion('open');
-
-    // $('.ui.modal').modal('show');
-
-    /*
-    $('.inline-edit > a').on('mouseover', function(){
-      $(this).parent().removeClass('inline-edit');
-    }).on('mouseout', function(){
-      $(this).parent().addClass('inline-edit');
-    })
-    */

@@ -26,8 +26,10 @@ final case class Issues(vector: Vector[Issue]) {
       case i: Issue.DeadRefInRcg                 => f.codeGroup(i.rcg)
       case i: Issue.DeadRefInReq                 => f.req(i.req)
       case i: Issue.DeadTag                      => f.req(i.req)
+      case _: Issue.DerivativeTagResultDead      => false
+      case _: Issue.DerivativeTagResultUnrelated => false
       case i: Issue.EmptyCodeGroup               => f.codeGroup(i.rcg)
-      case i: Issue.FieldDefaultTagDead          => f.req.exists(i.reqsAffected)
+      case _: Issue.FieldDefaultTagDead          => false
       case _: Issue.FieldDefaultTagNotApplicable => false
       case _: Issue.FieldDefaultTagUnrelated     => false
       case i: Issue.ImplicationRequired          => f.req(i.req)
@@ -57,6 +59,8 @@ final case class Issues(vector: Vector[Issue]) {
       case i: Issue.DeadRefInRcg                 => addRcg(i, i.rcg.id)
       case i: Issue.DeadRefInReq                 => addReq(i, i.req.id)
       case i: Issue.DeadTag                      => addReq(i, i.req.id)
+      case i: Issue.DerivativeTagResultDead      => config = config.add(i)
+      case i: Issue.DerivativeTagResultUnrelated => config = config.add(i)
       case i: Issue.EmptyCodeGroup               => addRcg(i, i.rcg.id)
       case i: Issue.FieldDefaultTagNotApplicable => config = config.add(i)
       case i: Issue.FieldDefaultTagUnrelated     => config = config.add(i)

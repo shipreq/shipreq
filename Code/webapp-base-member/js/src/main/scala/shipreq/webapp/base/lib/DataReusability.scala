@@ -23,6 +23,12 @@ object DataReusability extends DataReusability
 
 abstract class DataReusability extends BaseReusability {
 
+  implicit def reusabilityDerivativeTagsRules: Reusability[DerivativeTags.Rules] =
+    Reusability.byRefOrUnivEq
+
+  implicit def reusabilityDerivativeTags: Reusability[DerivativeTags] =
+    Reusability.byRefOrUnivEq
+
   implicit def reusabilityCodeBlockDetail: Reusability[CodeBlockDetail] =
     Reusability.byRefOrUnivEq
 

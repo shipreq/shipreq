@@ -3,6 +3,7 @@ package shipreq.webapp.base.lib
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import shipreq.base.util.NonEmptyArraySeq
 
 object ClientUtil {
 
@@ -35,6 +36,12 @@ object ClientUtil {
   def renderVector[A, B](as: Vector[A], separator: TagMod)(renderEach: A => B)(implicit g: B => TagMod): VdomTag =
     <.span(
       NonEmptyVector.option(as).whenDefined(as =>
+        TagMod.fromTraversableOnce(
+          as.intercalateF(separator)(g compose renderEach).whole)))
+
+  def renderArraySeq[A, B](as: ArraySeq[A], separator: TagMod)(renderEach: A => B)(implicit g: B => TagMod): VdomTag =
+    <.span(
+      NonEmptyArraySeq.option(as).whenDefined(as =>
         TagMod.fromTraversableOnce(
           as.intercalateF(separator)(g compose renderEach).whole)))
 

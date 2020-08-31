@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
 import monocle.Optional
-import shipreq.base.util.{Util, Vector1}
+import shipreq.base.util.Util
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._

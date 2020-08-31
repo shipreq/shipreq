@@ -9,7 +9,8 @@ import scalaz.{Functor, Traverse}
 import shipreq.base.util.{Applicable, OptionalBoolFn, TransitiveClosure}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.DataImplicits._
-import shipreq.webapp.base.data.derivation.DataLogic.{IssueLookup, TagLookup}
+import shipreq.webapp.base.data.derivation.DataLogic.IssueLookup
+import shipreq.webapp.base.data.derivation.VirtualProjectTags
 import shipreq.webapp.base.data.{FilterDead, On}
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
@@ -360,7 +361,7 @@ object FilterAlgebra {
               projectText: PlainText.ForProject.NoCtx,
               textSearch : TextSearch,
               issueLookup: IssueLookup,
-              tagLookup  : TagLookup): FAlgebra[ExtensionalF, CompiledFilter] = {
+              tags       : VirtualProjectTags): FAlgebra[ExtensionalF, CompiledFilter] = {
     var cata: Extensional => CompiledFilter = null
 
     // Possible optimisations:
@@ -413,7 +414,7 @@ object FilterAlgebra {
 
     def byTag(f: Set[ApplicableTagId] => Boolean): CompiledFilter =
       make(
-        req         = r => tagLookup(r.id) exists f,
+        req         = r => f(tags(r.id, filterDead).set(TagFieldId.All)),
         codeGroup   = ignore,
         manualIssue = i => f(i.tags),
       )
@@ -502,7 +503,7 @@ object FilterAlgebra {
 
         case (FieldCriteria.Attr(Blank), \/-(f: CustomField.Tag.Id)) =>
           val scope = p.config.tagFieldDistribution(filterDead).inField(f)
-          fieldApplicableReqOnly(f)(req => tagLookup(req.id).all.intersect(scope).isEmpty)
+          fieldApplicableReqOnly(f)(req => tags(req.id, filterDead).set(TagFieldId.All).intersect(scope).isEmpty)
 
         case (FieldCriteria.Attr(Blank), -\/(SpecialBuiltInField.Title)) =>
           make(
@@ -513,7 +514,7 @@ object FilterAlgebra {
 
         case (FieldCriteria.Attr(Blank), \/-(StaticField.OtherTags)) =>
           val scope = p.config.tagFieldDistribution(filterDead).notUsedInFields
-          reqOnly(req => tagLookup(req.id).all.intersect(scope).isEmpty)
+          reqOnly(req => tags(req.id, filterDead).set(TagFieldId.All).intersect(scope).isEmpty)
 
         case (FieldCriteria.Attr(Blank), \/-(StaticField.AllTags)) =>
           byTag(_.isEmpty)
@@ -532,8 +533,7 @@ object FilterAlgebra {
           }
 
         case (FieldCriteria.Attr(DefaultInUse), \/-(f: CustomField.Tag.Id)) =>
-          val fieldDefaultApplied = p.fieldDefaultApplied(f, filterDead)
-          fieldApplicableReqOnly(f)(req => fieldDefaultApplied(req.id))
+          fieldApplicableReqOnly(f)(req => tags(req.id, filterDead).defaults.contains(f))
 
         case (FieldCriteria.Attr(NotApplicable), -\/(SpecialBuiltInField.Title)) =>
           reqOnly(fail)

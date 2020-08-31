@@ -116,7 +116,7 @@ object ReqDetail {
         Reusable.ap(
           Reusable.byRef(viewData),
           Reusable.byRef(pw),
-        )(_(_).copy(fmtReqTypeShort = false))
+        )(_(_).withFullReqTypeFmt)
       }
 
     val useCaseData: Option[UseCaseData] =
@@ -325,19 +325,37 @@ object ReqDetail {
         row match {
 
           case Row.CustomField(id) =>
-            val l = project.config.fields.customFields.need(id).live(project.config)
-            val field: FieldKey.ForSomeReq#AndArgs =
-              id match {
-                case id: CustomField.Text.Id        => FieldKey.CustomTextField(id).andArgs(bigTextEditorStyle)
-                case id: CustomField.Tag.Id         => FieldKey.CustomFieldTags(id).andArgs(())
-                case id: CustomField.Implication.Id => FieldKey.Implications(-\/(id)).andArgs(())
-              }
-            genericEditableRow(
-              name       = fieldName(id),
-              headerLive = l,
-              dataLive   = data.live & l,
-              field      = field,
-            )
+            val headerLive = project.config.fields.customFields.need(id).live(project.config)
+            val dataLive = headerLive & data.live
+            id match {
+              case id: CustomField.Text.Id =>
+                genericEditableRow(
+                  name       = fieldName(id),
+                  headerLive = headerLive,
+                  dataLive   = dataLive,
+                  field      = FieldKey.CustomTextField(id).andArgs(bigTextEditorStyle),
+                )
+
+              case id: CustomField.Tag.Id =>
+                CustomTagFieldRow.Props(
+                  reqId      = req.id,
+                  fieldId    = id,
+                  name       = fieldName(id),
+                  headerLive = headerLive,
+                  dataLive   = dataLive,
+                  editor     = reqEditor(FieldKey.CustomFieldTags(id)),
+                  view       = reusableView,
+                  project    = project,
+                ).render
+
+              case id: CustomField.Implication.Id =>
+                genericEditableRow(
+                  name       = fieldName(id),
+                  headerLive = headerLive,
+                  dataLive   = dataLive,
+                  field      = FieldKey.Implications(-\/(id)).andArgs(()),
+                )
+            }
 
           case Row.ReqType =>
             ReqTypeRow.Props(

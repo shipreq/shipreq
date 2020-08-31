@@ -3,6 +3,7 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
 import monocle.{Lens, Traversal}
 import nyaya.prop.CycleDetector
@@ -10,11 +11,14 @@ import nyaya.util.Multimap
 import scala.collection.mutable
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
+import shipreq.webapp.base.data.derivation.TagGroupTags
 import shipreq.webapp.base.util.Must._
 
 sealed trait TagId extends TaggedInt
-final case class TagGroupId     (value: Int) extends TagId with TaggedInt
-final case class ApplicableTagId(value: Int) extends TagId with TaggedInt
+final case class TagGroupId     (value: Int) extends TagId
+final case class ApplicableTagId(value: Int) extends TagId {
+  val some = Some(this)
+}
 
 sealed trait Tag {
   val id     : TagId
@@ -53,11 +57,10 @@ final case class ApplicableTag(id                : ApplicableTagId,
 
 object ApplicableTag {
   def v1(id  : ApplicableTagId,
-         name: String,
+         name: String, // unused
          desc: Option[String],
          key : HashRefKey,
          live: Live): ApplicableTag = {
-    locally(name) // removed
     apply(
       id                 = id,
       key                = key,
@@ -67,6 +70,33 @@ object ApplicableTag {
       live               = live,
     )
   }
+
+  implicit class OrId(private val x: AnyRef) extends AnyVal {
+
+    @inline def isId: Boolean =
+      x.isInstanceOf[ApplicableTagId]
+
+    @inline def isTag: Boolean =
+      !isId
+
+    @inline def unsafeAsId: ApplicableTagId =
+      x.asInstanceOf[ApplicableTagId]
+
+    @inline def unsafeAsTag: ApplicableTag =
+      x.asInstanceOf[ApplicableTag]
+
+    @inline def id: ApplicableTagId =
+      if (isId) unsafeAsId else unsafeAsTag.id
+
+    @inline def tag(tags: Tags): ApplicableTag =
+      if (isId) tags.needApplicableTag(unsafeAsId) else unsafeAsTag
+  }
+
+  implicit def orIdFromId(id: ApplicableTagId): OrId =
+    new OrId(id)
+
+  implicit def orIdFromTag(tag: ApplicableTag): OrId =
+    new OrId(tag)
 }
 
 sealed abstract class TagType(val name: String) { type Data <: Tag }
@@ -228,11 +258,19 @@ object TagInTree {
 object Tags {
   val empty = apply(TagTree.empty)
   implicit def univEq: UnivEq[Tags] = UnivEq.derive
+  type TagOrder = Map[ApplicableTagId, Int]
 }
 
 @Lenses
 final case class Tags(tree: TagTree) {
   import FlatTag.FilterPolicy
+  import Tags.TagOrder
+
+  private lazy val _applicableTagsByName: Map[String, ApplicableTag] =
+    applicableTagIterator().map(t => (t.key.value.toLowerCase, t)).toMap
+
+  def applicableTagLookup(key: String): Option[ApplicableTag] =
+    _applicableTagsByName.get(key.toLowerCase)
 
   def validateApplicableTag(id: ApplicableTagId): Option[ErrorMsg] =
     applicableTag(id) match {
@@ -275,6 +313,9 @@ final case class Tags(tree: TagTree) {
       case t: TagGroup      => t
       case a: ApplicableTag => mustNotHappen(ErrorMsg(s"$a is not a TagGroup."))
     }
+
+  def needTag(id: TagId): Tag =
+    tree.need(id).tag
 
   lazy val deadApplicableTagIds: Set[ApplicableTagId] =
     applicableTagIterator().filter(_.live is Dead).map(_.id).toSet
@@ -436,6 +477,50 @@ final case class Tags(tree: TagTree) {
 
   def sortTagIds(ids: IterableOnce[ApplicableTagId]): Iterator[ApplicableTagId] =
     MutableArray(ids).sortBySchwartzian(needApplicableTag(_).name).iterator()
+
+  lazy val orderByName: TagOrder =
+    tree
+      .valuesIterator
+      .map(_.tag)
+      .filterSubType[ApplicableTag]
+      .|>(MutableArray.apply)
+      .sortBySchwartzian(_.key.value.toLowerCase)
+      .map(_.id)
+      .iterator()
+      .mapToOrder
+
+  lazy val orderingByName: Ordering[ApplicableTagId] =
+    Ordering.by(orderByName)
+
+  lazy val orderByPos: TagOrder =
+    flatRowsUnfiltered
+      .iterator
+      .map(_.id)
+      .filterSubType[ApplicableTagId]
+      .mapToOrder
+
+  lazy val orderingByPos: Ordering[ApplicableTagId] =
+    Ordering.by(orderByPos)
+
+  lazy val orderingByPosEmptyFirst: Ordering[Option[ApplicableTagId]] = {
+    val o = orderByPos
+    Ordering.by {
+      case Some(t) => o(t)
+      case None    => -1
+    }
+  }
+
+  val tagGroupTags: TagGroupId => FilterDead => TagGroupTags =
+    Memo(id => FilterDead.memoLazy(TagGroupTags.derive(this, id, _)))
+
+  def tagGroupTagsFDV(id: TagGroupId): FilterDead.Values[TagGroupTags] =
+    FilterDead.Values(tagGroupTags(id))
+
+  def tagGroupTagsFDV(id: Option[TagGroupId]): FilterDead.Values[TagGroupTags] =
+    id match {
+      case Some(i) => tagGroupTagsFDV(i)
+      case None    => FilterDead.Values.both(TagGroupTags.empty)
+    }
 }
 
 final class RecursiveTagIterator(tags      : Tags,

@@ -207,7 +207,7 @@ object DataProp {
       Prop.atom[PubidRegister]("Pubid reqtype-to-req associations",
         pr => pr.value.m.iterator.map {
           case (rt: CustomReqTypeId, reqIds) => test(rt, reqIds)
-          case (rt@ UseCase        , reqIds) => test(rt, reqIds)
+          case (rt: UseCase.type   , reqIds) => test(rt, reqIds)
         }.find(_.isDefined).flatten
       ).contramap[T](_.pubids)
     }
@@ -309,7 +309,7 @@ object DataProp {
 
   // -------------------------------------------------------------------------------------------------------------------
   object implications {
-    @inline def all = Implications.acyclicPropBi
+    @inline def all = Implications.Graph.acyclicPropBi
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -651,7 +651,7 @@ object DataProp {
     def constituents = (
                    reqs.all.contramap[P](_.content.reqs)
       ∧        reqCodes.all.contramap[P](_.content.reqCodes)
-      ∧    implications.all.contramap[P](_.content.implications)
+      ∧    implications.all.contramap[P](_.content.implications.graph)
       ∧ deletionReasons.all.contramap[P](_.content.deletionReasons)
       ∧ savedViews.optional.contramap[P](_.savedViews)
     ) rename "constituents"
@@ -715,7 +715,7 @@ object DataProp {
       ∧ validIssueTypes("Atoms: Issues in reqs",            _.atomScan.issuesInReqs.all.all.map(_.value.typ))
       ∧ validIssueTypes("Atoms: Issues in RCGs",            _.atomScan.issuesInRcgs.all.all.map(_.typ))
       ∧ validReqIds    ("DeletionReason reqIds",            _.content.deletionReasons.reqApplication.keys)
-      ∧ validUCStepIds ("UseCase step flow",                _.content.reqs.useCases.stepFlow.memberIterator)
+      ∧ validUCStepIds ("UseCase step flow",                p => Digraph.memberIterator(p.content.reqs.useCases.stepFlow.forwards))
       ∧ fullRefCmp     ("SavedView filters",                p => Refs.savedViewFilters(p.savedViews))
       ∧ validFieldIds  ("SavedViews: Columns",              _.savedViewIterator.flatMap(_.view.columns.whole).flatMap(Refs.reqtableColumnField))
       ∧ validFieldIds  ("SavedViews: Sort Columns",         _.savedViewIterator.flatMap(_.view.order.all.whole).map(_.column).flatMap(Refs.reqtableColumnField))

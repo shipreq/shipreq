@@ -9,7 +9,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import scala.reflect.ClassTag
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{ErrorMsg, Optics, PotentialChange}
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.DataReusability._
@@ -320,9 +320,9 @@ object FieldConfig {
         case EditorType.Dead(id) =>
           val editor =
             id match {
-              case i: CustomField.Implication.Id => impFieldEditor (Some(i), Disabled).render
-              case i: CustomField.Tag        .Id => tagFieldEditor (Some(i), Disabled).render
+              case i: CustomField.Tag        .Id => tagFieldEditor (Some(i),  Disabled).render
               case i: CustomField.Text       .Id => textFieldEditor(Some(i), Disabled).render
+              case i: CustomField.Implication.Id => impFieldEditor (Some(i), Disabled).render
             }
           val buttons =
             EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.CustomFieldRestore(id), _, _)).render

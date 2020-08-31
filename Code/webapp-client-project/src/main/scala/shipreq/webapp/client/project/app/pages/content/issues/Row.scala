@@ -235,6 +235,27 @@ object Row {
         val desc = UI.descDeadTag(i.tag.key)
         forReqAndLoc(i, desc, i.req, i.loc)
 
+      case i: Issue.DerivativeTagResultDead =>
+        val fieldName = cfg.fieldName(i.field.id)
+        val desc = UI.descDerivativeTagResultDead(
+          field = fieldName,
+          key1  = i.key1.name,
+          key2  = i.key1.name,
+          tag   = i.tag.name,
+        )
+        forConfig(i, desc)
+
+      case i: Issue.DerivativeTagResultUnrelated =>
+        val fieldName = cfg.fieldName(i.field.id)
+        val desc = UI.descDerivativeTagResultUnrelated(
+          field    = fieldName,
+          key1     = i.key1.name,
+          key2     = i.key1.name,
+          tag      = i.tag.name,
+          tagGroup = i.fieldTagGroup.name,
+        )
+        forConfig(i, desc)
+
       case i: Issue.EmptyCodeGroup =>
         forRcg(i, UI.descEmptyCodeGroup, i.rcg, None)
 

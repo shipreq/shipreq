@@ -38,7 +38,7 @@ object Events {
   private[v1] implicit val keyDecoderTagId: KeyDecoder[TagId] =
     KeyDecoder.instance(k =>
       (k.headOption, k.drop(1)) match {
-        case (Some('a'), ParseInt(i)) => Some(ApplicableTagId(i))
+        case (Some('a'), ParseInt(i)) => ApplicableTagId(i).some
         case (Some('g'), ParseInt(i)) => Some(TagGroupId(i))
         case (_        , _          ) => None
       }

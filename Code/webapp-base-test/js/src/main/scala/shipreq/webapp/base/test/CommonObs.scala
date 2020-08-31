@@ -126,7 +126,7 @@ object CommonObs {
   // ===================================================================================================================
 
   final class Message($: DomZipperJs) {
-    val header = $(".header").innerText.trim
+    val header = $.collect01(".header").innerTexts.fold("")(_.trim)
 
     lazy val body = {
       var t = $(".content").innerText

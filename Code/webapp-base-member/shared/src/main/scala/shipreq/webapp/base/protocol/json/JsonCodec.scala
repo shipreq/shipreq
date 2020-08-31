@@ -24,8 +24,13 @@ object JsonCodec {
   def summon[A](implicit encoder: Encoder[A], decoder: Decoder[A]): JsonCodec[A] =
     apply(encoder, decoder)
 
-  def xmap[A, B](f: A => B)(g: B => A)(implicit encoder: Encoder[A], decoder: Decoder[A]): JsonCodec[B] =
-    summon[A].xmap(f)(g)
+  def xmap[A, B](r: A => B)(w: B => A)(implicit encoder: Encoder[A], decoder: Decoder[A]): JsonCodec[B] =
+    summon[A].xmap(r)(w)
+
+  def xemap[A, B](w: B => A)(r: A => Decoder.Result[B])(implicit encoder: Encoder[A], decoder: Decoder[A]): JsonCodec[B] =
+    apply(
+      encoder.contramap(w),
+      Decoder.instance(decoder(_).flatMap(r)))
 
   def lazily[A](j: => JsonCodec[A]): JsonCodec[A] = {
     lazy val l = j
@@ -44,6 +49,13 @@ object JsonCodec {
       Decoder.instance(c =>
         decoder(c).flatMap(b => mapBA.getOrElse(b, Left(DecodingFailure(s"Unrecognised value: $b", c.history))))))
   }
+
+  def map[K, V](implicit
+                encoderK: KeyEncoder[K],
+                encoderV: Encoder[V],
+                decoderK: KeyDecoder[K],
+                decoderV: Decoder[V]): JsonCodec[Map[K, V]] =
+    apply(Encoder.encodeMap, Decoder.decodeMap)
 
   def fix[F[_]: Traverse](enc: FAlgebra[F, Json],
                           dec: FCoalgebraM[Decoder.Result, F, ACursor]): JsonCodec[Fix[F]] =

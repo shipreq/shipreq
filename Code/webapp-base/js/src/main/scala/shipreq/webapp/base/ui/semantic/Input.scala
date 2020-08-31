@@ -3,10 +3,9 @@ package shipreq.webapp.base.ui.semantic
 import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
-import monocle.Lens
 import org.scalajs.dom.html
 import shipreq.base.util._
-import shipreq.webapp.base.data.{Disabled, Enabled, On}
+import shipreq.webapp.base.data.On
 
 object Input {
   private[this] val disabled = ^.cls := "disabled"
@@ -88,22 +87,39 @@ object Input {
 
     def apply(on    : On,
               change: On => Callback,
-              label : Option[TagMod]): VdomTag = {
-      val toggle = change(!on)
+              label : Option[TagMod]): VdomTag =
+      apply(on, change, label, Enabled)
+
+    def apply(on     : On,
+              change : On => Callback,
+              label  : Option[TagMod],
+              enabled: Enabled): VdomTag = {
+      val toggle = enabled match {
+        case Enabled  => change(!on)
+        case Disabled => Callback.empty
+      }
       <.div(^.cls := "ui checkbox",
-        <.input.checkbox(^.checked := on.is(On), ^.onChange --> toggle),
-        label.whenDefined(<.label(^.cursor.pointer, ^.onClick --> toggle, _)))
+        <.input.checkbox(
+          ^.checked := on.is(On),
+          ^.disabled := enabled.is(Disabled),
+          ^.onChange --> toggle,
+        ),
+        label.whenDefined(
+          <.label(
+            ^.cursor.pointer.when(enabled is Enabled),
+            ^.onClick --> toggle,
+            _)))
     }
 
-    /** Note: DO NOT use this with Reusability.
-      * StateSnapshot + Lens + Reusability = NO!
-      */
-    def fromStateSnapshot[S](lens: Lens[S, Boolean],
-                             ss: StateSnapshot[S],
-                             label: TagMod): VdomTag =
+    def fromStateSnapshot[S](ss     : StateSnapshot[On],
+                             label  : TagMod,
+                             enabled: Enabled = Enabled,
+                            ): VdomTag =
       apply(
-        On when lens.get(ss.value),
-        v => ss.modState(lens set v.is(On)),
-        label)
+        on      = ss.value,
+        change  = ss.setState,
+        label   = Some(label),
+        enabled = enabled
+      )
   }
 }

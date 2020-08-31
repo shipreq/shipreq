@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import shipreq.base.util.Disabled
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.lib.DataReusability._
@@ -48,12 +49,13 @@ object ColumnSelector {
   private val button = Button(
     tipe = Button.Type.IconOnly(Icon.Columns))
 
-  private val ColumnCheckboxes = CheckboxList[Column] (rs =>
+  private val ColumnCheckboxes = CheckboxList[Column](rs =>
     Popup.Js.Props(
-      popupOptions,
-      button.tag,
-      rs.toTagMod(r => Popup.renderCheckbox(r.checkbox, r.label)))
-      .render)
+      options = popupOptions,
+      base    = <.div,
+      display = button.tag,
+      popup   = rs.toTagMod(r => Popup.renderCheckbox(r.checkbox, r.label))
+    ).render)
 
   private def updateColumnList(active: NonEmptyVector[Column], clicked: Column, addClicked: Boolean): NonEmptyVector[Column] =
     NonEmptyVector force {

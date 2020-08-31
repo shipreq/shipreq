@@ -1,6 +1,7 @@
 import 'core-js/features/map';
 import 'core-js/features/object/assign';
 import 'core-js/features/set';
+import './node-test-polyfill';
 
 export { default as React          } from 'react';
 export { default as ReactDOM       } from 'react-dom';

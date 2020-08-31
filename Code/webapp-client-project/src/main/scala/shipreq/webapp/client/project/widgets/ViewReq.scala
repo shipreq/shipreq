@@ -1,13 +1,11 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.microlibs.utils.Memo
-import japgolly.scalajs.react.vdom.html_<^.VdomTag
+import japgolly.scalajs.react.vdom.PackageBase._
 import scala.collection.immutable.SortedSet
 import shipreq.base.util._
 import shipreq.webapp.base.data.FieldReqTypeRules.Resolution
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
 import shipreq.webapp.client.project.widgets.ViewReq._
@@ -15,9 +13,13 @@ import shipreq.webapp.client.project.widgets.ViewReq._
 /**
   * Easy means to view/render a requirement.
   */
-final case class ViewReq[A](data           : Data,
-                            pt             : ProjectText[ProjectText.Context, A],
-                            fmtReqTypeShort: Boolean) {
+final class ViewReq[A](data           : Data,
+                       pt             : ProjectText[ProjectText.Context, A],
+                       viewTags       : ViewTags.ForReq[A],
+                       fmtReqTypeShort: Boolean) {
+
+  def withFullReqTypeFmt: ViewReq[A] =
+    new ViewReq(data, pt, viewTags, false)
 
   def reqType: A = {
     val id = data.req.reqTypeId
@@ -58,25 +60,20 @@ final case class ViewReq[A](data           : Data,
   def pastPubids: A =
     pt pastPubids data.pastPubids
 
-  private val tagValidity: ApplicableTagId => Validity =
-    Invalid when data.invalidTags.contains(_)
-
   def otherTags: A =
-    pt.tagList(data.otherTags, data.live, Optional, tagValidity)
+    viewTags.vector(data.otherTags, viewTags(TagFieldId.Other))
 
   def allTags: A =
-    pt.tagList(data.allTags, data.live, Optional, tagValidity)
+    viewTags.vector(data.allTags, viewTags(TagFieldId.All))
 
-  def fieldTags(id: CustomField.Tag.Id): IfApplicable[A] = {
-    val tags = data.customTags(id)
-    data.fieldRules.tag(id) match {
-      case Resolution.Optional      => \/-(pt.tagList(tags, data.live, Optional, tagValidity))
-      case Resolution.Mandatory     => \/-(pt.tagList(tags, data.live, Mandatory, tagValidity))
-      case Resolution.NotApplicable => NotApplicable.left
-      case Resolution.DefaultTo(d)  =>
-        val t = if (tags.isEmpty) Vector1(d) else tags
-        \/-(pt.tagList(t, data.live, Optional, tagValidity))
-    }
+  def fieldTags(fid: CustomField.Tag.Id): IfApplicable[A] = {
+    val tags = data.customTags(fid)
+    if (data.fieldRules.tag(fid).isNA)
+      NotApplicable.left
+    else if (tags.isEmpty && data.live.is(Live) && data.fieldRules.tag(fid).isMandatory)
+      \/-(pt.whenBlankButMandatory)
+    else
+      \/-(viewTags.vector(tags, viewTags(fid.asTagFieldId)))
   }
 
   def text(id: CustomField.Text.Id): IfApplicable[A] =
@@ -118,12 +115,12 @@ object ViewReq {
   type ToVdom = ViewReq[VdomTag]
 
   final case class Data(req             : Req,
+                        filterDead      : FilterDead,
                         live            : Live,
                         codes           : Iterable[ReqCode.Value],
                         otherTags       : Vector[ApplicableTagId],
                         allTags         : Vector[ApplicableTagId],
                         customTags      : CustomField.Tag.Id => Vector[ApplicableTagId],
-                        invalidTags     : Set[ApplicableTagId],
                         generalImps     : Direction => Vector[Pubid],
                         customImps      : CustomField.Implication.Id => Vector[Pubid],
                         pastPubids      : SortedSet[ExternalPubid],
@@ -131,8 +128,11 @@ object ViewReq {
                         fieldRules      : FieldSetRules,
                        ) {
 
-    def apply[A](pt: ProjectText[ProjectText.Context, A]): ViewReq[A] =
-      ViewReq(this, pt, true)
+    def apply(pw: ProjectWidgets.AnyCtx): ToVdom =
+      apply(pw, pw.viewTags.forReq(filterDead)(req.id))
+
+    def apply[A](pt: ProjectText[ProjectText.Context, A], viewTags: ViewTags.ForReq[A]): ViewReq[A] =
+      new ViewReq(this, pt, viewTags, true)
   }
 
   object Data {
@@ -148,33 +148,14 @@ object ViewReq {
       val cfg             = project.config
       val pubidSortKeyFn  = project.dataLogic.pubidSortKeyFn
       val customImpLookup = project.dataLogic.customFieldImps(filterDead)
-      val tagDist         = project.dataLogic.tagFieldDist(filterDead)
-      val tagLookup       = project.dataLogic.tagLookup(filterDead)
-      val reqTags         = tagLookup(id)
-      val tagOrderByName  = project.dataLogic.tagOrderByName
-      val tagOrderByPos   = project.dataLogic.tagOrderByPos
       val impFilter       = cfg.reqFilter(filterDead)
-      val otherTagSet     = DataLogic.otherTags(tagDist, tagLookup)(id)
-      val otherTags       = MutableArray(otherTagSet).sortBy(tagOrderByName.apply).iterator().to(Vector)
-      val allTags         = MutableArray(reqTags.all).sortBy(tagOrderByName.apply).iterator().to(Vector)
-
-      val customTags: CustomField.Tag.Id => Vector[ApplicableTagId] =
-        Memo { fid =>
-          def tagSet = DataLogic.customFieldTags(tagDist, tagLookup, fid)(id)
-          MutableArray(tagSet).sortBy(tagOrderByPos.apply).iterator().to(Vector)
-        }
+      val tags            = project.virtualTags(id, filterDead)
 
       def sortPubids(pubids: IterableOnce[Pubid]): Vector[Pubid] =
         MutableArray(pubids)
           .sortBySchwartzian(pubidSortKeyFn)
           .iterator()
           .to(Vector)
-
-      val codes: List[ReqCode.Value] =
-        MutableArray(project.content.reqCodes.activeReqCodesByReqId(id))
-          .sortBySchwartzian(PlainText.reqCode)
-          .iterator()
-          .to(List)
 
       val generalImps: Direction => Vector[Pubid] =
         Direction.memo(dir =>
@@ -184,6 +165,12 @@ object ViewReq {
               .map(project.content.reqs.need)
               .filter(impFilter)
               .map(_.pubid)))
+
+      val codes: List[ReqCode.Value] =
+        MutableArray(project.content.reqCodes.activeReqCodesByReqId(id))
+          .sortBySchwartzian(PlainText.reqCode)
+          .iterator()
+          .to(List)
 
       val pastPubids: SortedSet[ExternalPubid] = {
         val b = SortedSet.newBuilder[ExternalPubid]
@@ -197,12 +184,12 @@ object ViewReq {
 
       Data(
         req              = req,
+        filterDead       = filterDead,
         live             = req.live(cfg.reqTypes),
         codes            = codes,
-        otherTags        = otherTags,
-        allTags          = allTags,
-        customTags       = customTags,
-        invalidTags      = project.invalidTagsPerReq(id),
+        otherTags        = tags.ordered(TagFieldId.Other),
+        allTags          = tags.ordered(TagFieldId.All),
+        customTags       = f => tags.ordered(f.asTagFieldId),
         generalImps      = generalImps,
         customImps       = fid => sortPubids(customImpLookup(fid).getPubids(id)),
         pastPubids       = pastPubids,

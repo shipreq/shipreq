@@ -68,11 +68,15 @@ object SelectionCtrls {
         if (remaining contains id) {
           remaining -= id
           row match {
-            case Row.ForReq(r, Live, _, _, _, _) =>
-              delRq :+= r
-            case Row.ForReq(r, Dead, _, _, _, _) =>
-              if (r.allowLiveChange(reqTypes) is Allow)
-                resRq :+= r
+            case forReq: Row.ForReq =>
+              val r = forReq.req
+              forReq.live match {
+                case Live =>
+                  delRq :+= r
+                case Dead =>
+                  if (r.allowLiveChange(reqTypes) is Allow)
+                    resRq :+= r
+              }
             case r: Row.ForCodeGroup =>
               r.live match {
                 case Live => delCG :+= r.group

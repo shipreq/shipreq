@@ -5,7 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import shipreq.base.util.PotentialChange
+import shipreq.base.util.{Enabled, PotentialChange}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.CustomTextFieldGD
 import shipreq.webapp.base.lib.ValidationUX

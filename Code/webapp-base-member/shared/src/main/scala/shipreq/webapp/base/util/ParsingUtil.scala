@@ -191,8 +191,10 @@ abstract class ParsingUtil extends Parser {
   }
 
   def hashRefStr[A](possibleStop: String => Boolean, parse: String => Option[A]): Rule1[A] =
+    rule(G.hashRefKey.prefix ~ hashRefStrWithoutPrefix(possibleStop, parse))
+
+  def hashRefStrWithoutPrefix[A](possibleStop: String => Boolean, parse: String => Option[A]): Rule1[A] =
     rule(
-      G.hashRefKey.prefix ~
       parseGrammarWithOptionalStop(G.hashRefKey, possibleStop)(_.firstChar, _.midChars, Some(_.lastChar), _.length)(parse)
     )
 

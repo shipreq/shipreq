@@ -25,8 +25,7 @@ object UpdateConfigCmd {
   final case class CustomReqTypeRestore   (id: CustomReqTypeId)                                            extends ToModifyReqTypes
 
   sealed trait ToModifyFields extends UpdateConfigCmd
-  final case class CustomFieldCreateImp (reqTypeId: ReqTypeId , fieldReqTypeRules: FieldReqTypeRules.ForImpField )    extends ToModifyFields
-  final case class CustomFieldCreateTag (tagId    : TagGroupId, fieldReqTypeRules: FieldReqTypeRules.ForTagField )    extends ToModifyFields
+  final case class CustomFieldCreateImp (reqTypeId: ReqTypeId , fieldReqTypeRules: FieldReqTypeRules.ForImpField)     extends ToModifyFields
   final case class CustomFieldCreateText(name     : String    , fieldReqTypeRules: FieldReqTypeRules.ForTextField)    extends ToModifyFields
   final case class CustomFieldUpdateImp (id: CustomField.Implication.Id, newValues: CustomImpFieldGD .NonEmptyValues) extends ToModifyFields
   final case class CustomFieldUpdateTag (id: CustomField.Tag        .Id, newValues: CustomTagFieldGD .NonEmptyValues) extends ToModifyFields
@@ -36,6 +35,11 @@ object UpdateConfigCmd {
   final case class StaticFieldAdd       (id: StaticField.Optional)                                                    extends ToModifyFields
   final case class StaticFieldRemove    (id: StaticField.Optional)                                                    extends ToModifyFields
   final case class FieldUpdateOrder     (id: FieldId, newPos: RelPos[FieldId])                                        extends ToModifyFields
+
+  final case class CustomFieldCreateTag(tagId            : TagGroupId,
+                                        fieldReqTypeRules: FieldReqTypeRules.ForTagField,
+                                        derivativeTags   : DerivativeTags) extends ToModifyFields
+
 
   /** Note: you're not allowed to specify any dead values in:
     *
@@ -59,12 +63,13 @@ object UpdateConfigCmd {
   implicit def univEq: UnivEq[UpdateConfigCmd] = UnivEq.derive
 
   // ===================================================================================================================
-  object CodecsV1 {
+  object CodecsV2 {
     import boopickle.DefaultBasic._
     import shipreq.webapp.base.protocol.binary.v1.BaseData._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
     import shipreq.webapp.base.protocol.binary.v1.Events._
     import shipreq.webapp.base.protocol.binary.v1.Rev1._
+    import shipreq.webapp.base.protocol.binary.v1.Rev6._
 
     private implicit val picklerCustomIssueTypeCreate: Pickler[CustomIssueTypeCreate] =
       new Pickler[CustomIssueTypeCreate] {
@@ -155,11 +160,13 @@ object UpdateConfigCmd {
         override def pickle(a: CustomFieldCreateTag)(implicit state: PickleState): Unit = {
           state.pickle(a.tagId)
           state.pickle(a.fieldReqTypeRules)
+          state.pickle(a.derivativeTags)
         }
         override def unpickle(implicit state: UnpickleState): CustomFieldCreateTag = {
           val tagId             = state.unpickle[TagGroupId]
           val fieldReqTypeRules = state.unpickle[FieldReqTypeRules.ForTagField]
-          CustomFieldCreateTag(tagId, fieldReqTypeRules)
+          val derivativeTags    = state.unpickle[DerivativeTags]
+          CustomFieldCreateTag(tagId, fieldReqTypeRules, derivativeTags)
         }
       }
 
