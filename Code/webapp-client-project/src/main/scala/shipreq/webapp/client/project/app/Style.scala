@@ -1355,6 +1355,13 @@ object Style extends StyleSheet.Inline {
 //      cursor.default,
     )
 
+    private def tagPillBase(live: Live, validity: Validity) = mixin(
+      tagBase(live),
+      padding(4 px, 6 px).important,
+      mixinIf(validity is Invalid)(hasErrorBackground.important, hasErrorColor.important, textDecoration := ^.lineThrough),
+      marginLeft(`0`).important,
+    )
+
     private val tagLabelColour: Live => String = {
       case Live => ""
       case Dead => "grey"
@@ -1362,11 +1369,16 @@ object Style extends StyleSheet.Inline {
 
     @UsesSemanticUiManually
     val tag = styleF(D.`live * validity`) { case (live, validity) => styleS(
-      tagBase(live),
-      padding(4 px, 6 px).important,
-      mixinIf(validity is Invalid)(hasErrorBackground.important, hasErrorColor.important, textDecoration := ^.lineThrough),
+      tagPillBase(live, validity),
       addClassName(s"ui label ${tagLabelColour(live)}"),
-      marginLeft(`0`).important,
+    )}
+
+    @UsesSemanticUiManually
+    val unfocusedTag = styleF(D.`live * validity`) { case (live, validity) => styleS(
+      tagPillBase(live, validity),
+      addClassName("ui label basic"),
+      opacity(0.75),
+      fontWeight.normal.important,
     )}
 
     val tagInText = styleF(D.`live * validity`) { case (live, validity) => styleS(

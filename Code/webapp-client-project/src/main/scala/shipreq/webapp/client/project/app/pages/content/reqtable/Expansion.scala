@@ -6,13 +6,21 @@ import scalaz.{Equal, Semigroup}
 import shipreq.base.util._
 
 final case class Expansion[+A](values: Vector[A], original: Vector[A]) {
-  lazy val result: Vector[A] =
+
+  /** Values that will be repeated on another row, and aren't the focus of this current row. */
+  lazy val nonPrimary: Vector[A] =
     if (values eq original)
-      values
+      Vector.empty
     else
       // Performance looks bad here but given overhead of a better CS-theoretic implementation this is actually likely
       // to be faster given the even the high watermark of quantities we can expect here.
-      values ++ original.filterNot(values.contains)
+      original.filterNot(values.contains)
+
+  lazy val all: Vector[A] =
+    if (values eq original)
+      values
+    else
+      values ++ nonPrimary
 }
 
 object Expansion {

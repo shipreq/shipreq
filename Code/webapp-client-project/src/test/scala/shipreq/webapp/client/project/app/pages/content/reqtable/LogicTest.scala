@@ -128,7 +128,7 @@ object LogicTest extends TestSuite {
   private def defaultOrder = View.default.order
 
   private def expansionResults[A]: Lens[Expansion[A], Vector[A]] =
-    Lens[Expansion[A], Vector[A]](_.result)(_ => identity)
+    Lens[Expansion[A], Vector[A]](_.all)(_ => identity)
 
   private val otherTags: Optional[Row, Vector[ApplicableTagId]] =
     Row.expansion ^|-> Expansions.otherTags ^|-> expansionResults

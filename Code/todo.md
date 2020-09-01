@@ -47,7 +47,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* reappearances should split tags, not duplicate and re-order
 * add control to req detail imp graph to change colours (eg. show Priority colours)
 * ability to embed tweets
 * pressing enter on reqtable in pubid should navigate to req

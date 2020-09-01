@@ -28,6 +28,18 @@ final case class Expansions(implications: Direction.Values[Expansion[Pubid]],
                             allTags     : Expansion[ApplicableTagId],
                           ) {
 
+  val focusedTags: TagFieldId => Vector[ApplicableTagId] = {
+    case f: CustomField.Tag.Id => cfTags.get(f).fold(Vector.empty[ApplicableTagId])(_.values)
+    case TagFieldId.All        => allTags.values
+    case TagFieldId.Other      => otherTags.values
+  }
+
+  val unfocusedTags: TagFieldId => Vector[ApplicableTagId] = {
+    case f: CustomField.Tag.Id => cfTags.get(f).fold(Vector.empty[ApplicableTagId])(_.nonPrimary)
+    case TagFieldId.All        => allTags.nonPrimary
+    case TagFieldId.Other      => otherTags.nonPrimary
+  }
+
   // Workaround for stupid https://issues.scala-lang.org/browse/SI-6391
   def copyReqCodes   (nv: Vector[ReqCode.Value]  ): Expansions = copy(reqCodes = reqCodes.copy(values = nv))
   def copyReqCodeTree(nv: Vector[ReqCodeTreeItem]): Expansions = copy(reqCodeTree = reqCodeTree.copy(values = nv))

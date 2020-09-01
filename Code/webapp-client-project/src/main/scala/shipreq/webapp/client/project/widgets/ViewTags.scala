@@ -7,7 +7,7 @@ import scala.collection.mutable
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.derivation.VirtualProjectTags.DerivationDesc
+import shipreq.webapp.base.data.derivation.VirtualProjectTags.{DerivationDesc, VirtualTag}
 import shipreq.webapp.base.lib.ClientUtil
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.ui.semantic.{Icon, Popup}
@@ -56,31 +56,8 @@ final class ViewTags(project: Project) {
       _render(t.tag(tagConfig), ds, ts)
   }
 
-  private[this] val cache: DisplaySettings => Validity => ApplicableTag.OrId => Out =
-    Util.memoWithMapVar { ds =>
-      Validity.memo { validity =>
-        val ts = TagSettings(None, validity)
-        val cache = new mutable.HashMap[ApplicableTagId, Out]()
-        t =>
-          if (t.isId) {
-            val id = t.id
-            cache.getOrElseUpdate(id, {
-              val tag = tagConfig.needApplicableTag(id)
-              _render(tag, ds, ts)
-            })
-          } else {
-            val tag = t.unsafeAsTag
-            cache.getOrElseUpdate(tag.id, _render(tag, ds, ts))
-          }
-      }
-    }
-
-  private def _render(tag: ApplicableTag, ds: DisplaySettings, ts: TagSettings): Out = {
-    val name      = ts.customName.getOrElse(tag.name)
-    val live      = tag.live
-    val tagInText = ds.contextualise ==* Contextualise
-    val styleArgs = (live, ts.validity)
-
+  private def hoverTextVdom(tag: ApplicableTag, ds: DisplaySettings, ts: TagSettings): TagMod = {
+    val name = ts.customName.getOrElse(tag.name)
 
     val hoverText: String =
       if (ds.hoverText == HoverText.Omit)
@@ -99,8 +76,15 @@ final class ViewTags(project: Project) {
         txt
       }
 
-    val hoverTextVdom =
-      ^.title := hoverText // yes, even when hoverText is empty so that it doesn't show "double-click to edit"
+    ^.title := hoverText // yes, even when hoverText is empty so that it doesn't show "double-click to edit"
+  }
+
+  private def _render(tag: ApplicableTag, ds: DisplaySettings, ts: TagSettings): Out = {
+    val name          = ts.customName.getOrElse(tag.name)
+    val live          = tag.live
+    val tagInText     = ds.contextualise ==* Contextualise
+    val styleArgs     = (live, ts.validity)
+    val hoverTextVdom = this.hoverTextVdom(tag, ds, ts)
 
     if (tagInText) {
       // ---------------------------------------------------------------------------------------------------------------
@@ -134,8 +118,76 @@ final class ViewTags(project: Project) {
     }
   }
 
+  private def _renderUnfocused(tag: ApplicableTag, ts: TagSettings): Out = {
+    implicit def ds   = DisplaySettings.tag
+    val name          = tag.name
+    val live          = tag.live
+    val styleArgs     = (live, ts.validity)
+    val hoverTextVdom = this.hoverTextVdom(tag, ds, ts)
+
+    <.span(
+      *.unfocusedTag(styleArgs),
+      hoverTextVdom,
+      name)
+  }
+
+  private def decorateTag(vtag: VirtualTag, base: Out, foregroundIsBlack: Boolean): Out = {
+    val decorated =
+      base(
+        TagMod.when(vtag.isManualInText)(tagIsFromText(foregroundIsBlack)),
+        TagMod.when(vtag.isDefault)(tagIconDefault(foregroundIsBlack)),
+        TagMod.when(vtag.isDerived)(tagIconDerived(foregroundIsBlack)),
+        tagIconDead.when(vtag.isDead),
+      )
+
+    if (vtag.isDerived) {
+      <.span(
+        Popup.Js.Props(
+          options = popupOptions,
+          base    = <.span,
+          display = decorated,
+          popup   = vtag.derivationDesc.whenDefined(renderDerivationDesc),
+        ).render)
+    } else if (vtag.isDefault)
+      decorated(tagTitleDefault)
+    else if (vtag.isManualInText)
+      decorated(tagTitleFromText)
+    else
+      decorated
+  }
+
+  private def memoApplicableTagOrId[A](f: ApplicableTag => A): ApplicableTag.OrId => A = {
+    val cache = new mutable.HashMap[ApplicableTagId, A]()
+    t =>
+      if (t.isId) {
+        val id = t.id
+        cache.getOrElseUpdate(id, {
+          val tag = tagConfig.needApplicableTag(id)
+          f(tag)
+        })
+      } else {
+        val tag = t.unsafeAsTag
+        cache.getOrElseUpdate(tag.id, f(tag))
+      }
+  }
+
+  private[this] val cache: DisplaySettings => Validity => ApplicableTag.OrId => Out =
+    Util.memoWithMapVar { ds =>
+      Validity.memo { validity =>
+        val ts = TagSettings(None, validity)
+        memoApplicableTagOrId(_render(_, ds, ts))
+      }
+    }
+
   private val basic: ApplicableTagId => VdomNode =
     cache(DisplaySettings.tag)(Valid)(_)
+
+  private val basicUnfocused: Validity => ApplicableTag.OrId => Out = {
+    Validity.memo { v =>
+      val ts = TagSettings.default.copy(validity = v)
+      memoApplicableTagOrId(_renderUnfocused(_, ts))
+    }
+  }
 
   /** Basic here means the tag has context-specific decorations. So...
     * - no provenance icon
@@ -162,7 +214,7 @@ final class ViewTags(project: Project) {
     val basicCache  = cache(ds)
     val vtags       = this.vtags(reqId, fd)
 
-    def render(t: ApplicableTagId, f: TagFieldId): Out = {
+    def renderFocused(t: ApplicableTagId, f: TagFieldId): Out = {
       val vtag = vtags(t, f)
 
       lazy val foregroundIsBlack: Boolean =
@@ -174,36 +226,33 @@ final class ViewTags(project: Project) {
           colour.foreground eq Colour.black
         }
 
-      val base =
-        basicCache(vtag.validity)(t)(
-          TagMod.when(vtag.isManualInText)(tagIsFromText(foregroundIsBlack)),
-          TagMod.when(vtag.isDefault)(tagIconDefault(foregroundIsBlack)),
-          TagMod.when(vtag.isDerived)(tagIconDerived(foregroundIsBlack)),
-          tagIconDead.when(vtag.isDead),
-        )
-
-      if (vtag.isDerived) {
-        <.span(
-          Popup.Js.Props(
-            options = popupOptions,
-            base    = <.span,
-            display = base,
-            popup   = vtag.derivationDesc.whenDefined(renderDerivationDesc),
-          ).render)
-      } else if (vtag.isDefault)
-        base(tagTitleDefault)
-      else if (vtag.isManualInText)
-        base(tagTitleFromText)
-      else
-        base
+      decorateTag(vtag, basicCache(vtag.validity)(t), foregroundIsBlack)
     }
+
+    def renderUnfocused(t: ApplicableTagId, f: TagFieldId): Out = {
+      val vtag = vtags(t, f)
+      decorateTag(vtag, basicUnfocused(vtag.validity)(t), foregroundIsBlack = true)
+    }
+
+    val focusedMemo: TagFieldId => ApplicableTagId => Out =
+      Memo(f => Memo(renderFocused(_, f)))
+
+    val unfocusedMemo: TagFieldId => ApplicableTagId => Out =
+      Memo(f => Memo(renderUnfocused(_, f)))
 
     new ForReq[Out] {
       override def apply(f: TagFieldId): ApplicableTagId => Out =
-        render(_, f)
+        focusedMemo(f)
 
-      override def vector(ids: Vector[ApplicableTagId], render: ApplicableTagId => Out): Out =
-        <.div(*.tagList, ids.toTagMod(render))
+      override def unfocused(f: TagFieldId): ApplicableTagId => Out =
+        unfocusedMemo(f)
+
+      override def vector(f        : TagFieldId,
+                          focused  : TagFieldId => Vector[ApplicableTagId],
+                          unfocused: TagFieldId => Vector[ApplicableTagId]) =
+        <.div(*.tagList,
+          focused(f).toTagMod(focusedMemo(f)),
+          unfocused(f).toTagMod(unfocusedMemo(f)))
     }
   }
 
@@ -237,13 +286,20 @@ final class ViewTags(project: Project) {
     Reusable.byRef(this).withValue(_ => _ => plainTextForReq)
 
   val plainTextForReq: ForReq[String] = {
-    val renderOne: ApplicableTagId => String =
+    val renderToString: ApplicableTagId => String =
       project.config.tags.needApplicableTag(_).name
 
     new ForReq[String] {
-      override def apply(f: TagFieldId) = renderOne
-      override def vector(ids: Vector[ApplicableTagId], render: ApplicableTagId => String) =
-        ids.iterator.map(render).mkString(" ")
+      override def apply(f: TagFieldId) =
+        renderToString
+
+      override def unfocused(f: TagFieldId) =
+        renderToString
+
+      override def vector(f        : TagFieldId,
+                          focused  : TagFieldId => Vector[ApplicableTagId],
+                          unfocused: TagFieldId => Vector[ApplicableTagId]) =
+      (focused(f).iterator ++ unfocused(f).iterator).map(renderToString).mkString(" ")
     }
   }
 }
@@ -291,7 +347,12 @@ object ViewTags {
 
   trait ForReq[A] {
     def apply(f: TagFieldId): ApplicableTagId => A
-    def vector(ids: Vector[ApplicableTagId], render: ApplicableTagId => A): A
+
+    def unfocused(f: TagFieldId): ApplicableTagId => A
+
+    def vector(f        : TagFieldId,
+               focused  : TagFieldId => Vector[ApplicableTagId],
+               unfocused: TagFieldId => Vector[ApplicableTagId]): A
   }
 
   private val tagIconDead      = Icon.Trash.tag(*.iconDead)

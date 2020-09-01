@@ -61,19 +61,19 @@ final class ViewReq[A](data           : Data,
     pt pastPubids data.pastPubids
 
   def otherTags: A =
-    viewTags.vector(data.otherTags, viewTags(TagFieldId.Other))
+    viewTags.vector(TagFieldId.Other, data.focusedTags, data.unfocusedTags)
 
   def allTags: A =
-    viewTags.vector(data.allTags, viewTags(TagFieldId.All))
+    viewTags.vector(TagFieldId.All, data.focusedTags, data.unfocusedTags)
 
   def fieldTags(fid: CustomField.Tag.Id): IfApplicable[A] = {
-    val tags = data.customTags(fid)
+    val tags = data.focusedTags(fid)
     if (data.fieldRules.tag(fid).isNA)
       NotApplicable.left
     else if (tags.isEmpty && data.live.is(Live) && data.fieldRules.tag(fid).isMandatory)
       \/-(pt.whenBlankButMandatory)
     else
-      \/-(viewTags.vector(tags, viewTags(fid)))
+      \/-(viewTags.vector(fid, data.focusedTags, data.unfocusedTags))
   }
 
   def text(id: CustomField.Text.Id): IfApplicable[A] =
@@ -118,9 +118,8 @@ object ViewReq {
                         filterDead      : FilterDead,
                         live            : Live,
                         codes           : Iterable[ReqCode.Value],
-                        otherTags       : Vector[ApplicableTagId],
-                        allTags         : Vector[ApplicableTagId],
-                        customTags      : CustomField.Tag.Id => Vector[ApplicableTagId],
+                        focusedTags     : TagFieldId => Vector[ApplicableTagId],
+                        unfocusedTags   : TagFieldId => Vector[ApplicableTagId],
                         generalImps     : Direction => Vector[Pubid],
                         customImps      : CustomField.Implication.Id => Vector[Pubid],
                         pastPubids      : SortedSet[ExternalPubid],
@@ -187,9 +186,8 @@ object ViewReq {
         filterDead       = filterDead,
         live             = req.live(cfg.reqTypes),
         codes            = codes,
-        otherTags        = tags.ordered(TagFieldId.Other),
-        allTags          = tags.ordered(TagFieldId.All),
-        customTags       = f => tags.ordered(f),
+        focusedTags      = tags.ordered,
+        unfocusedTags    = noUnfocusedTags,
         generalImps      = generalImps,
         customImps       = fid => sortPubids(customImpLookup(fid).getPubids(id)),
         pastPubids       = pastPubids,
@@ -197,5 +195,9 @@ object ViewReq {
         fieldRules       = cfg.fieldRules(filterDead)(req.reqTypeId),
       )
     }
+
+    private val noUnfocusedTags: TagFieldId => Vector[ApplicableTagId] =
+      _ => Vector.empty
   }
+
 }
