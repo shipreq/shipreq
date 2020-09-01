@@ -33,23 +33,20 @@ object ClientUtil {
   val sepComma: TagMod = ", "
   val sepSpace: TagMod = " "
 
-  def renderVector[A, B](as: Vector[A], separator: TagMod)(renderEach: A => B)(implicit g: B => TagMod): VdomTag =
-    <.span(
-      NonEmptyVector.option(as).whenDefined(as =>
-        TagMod.fromTraversableOnce(
-          as.intercalateF(separator)(g compose renderEach).whole)))
-
-  def renderArraySeq[A, B](as: ArraySeq[A], separator: TagMod)(renderEach: A => B)(implicit g: B => TagMod): VdomTag =
-    <.span(
-      NonEmptyArraySeq.option(as).whenDefined(as =>
-        TagMod.fromTraversableOnce(
-          as.intercalateF(separator)(g compose renderEach).whole)))
-
-  def renderSeq[A](as: IterableOnce[A], separator: TagMod)(implicit f: A => TagMod): VdomTag =
-    <.span(
+  def renderVector[A, B](as: Vector[A], separator: TagMod)(renderEach: A => B)(implicit g: B => TagMod): TagMod =
+    NonEmptyVector.option(as).whenDefined(as =>
       TagMod.fromTraversableOnce(
-        as.iterator
-          .map(f)
-          .intersperse(separator)))
+        as.intercalateF(separator)(g compose renderEach).whole))
+
+  def renderArraySeq[A, B](as: ArraySeq[A], separator: TagMod)(renderEach: A => B)(implicit g: B => TagMod): TagMod =
+    NonEmptyArraySeq.option(as).whenDefined(as =>
+      TagMod.fromTraversableOnce(
+        as.intercalateF(separator)(g compose renderEach).whole))
+
+  def renderSeq[A](as: IterableOnce[A], separator: TagMod)(implicit f: A => TagMod): TagMod =
+    TagMod.fromTraversableOnce(
+      as.iterator
+        .map(f)
+        .intersperse(separator))
 
 }

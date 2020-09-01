@@ -556,11 +556,11 @@ object FieldConfigTest extends TestSuite {
       )
     )(
       *.emptyAction
-        +> fieldDetail(StaticField.OtherTags.name).assert("Displays tags not assigned to a field.pri=high pri=med")
+        +> fieldDetail(StaticField.OtherTags.name).assert("Displays tags not assigned to a field.pri=highpri=med")
 
         >> clickFilterDead
         +> filterDead.assert(ShowDead)
-        +> fieldDetail(StaticField.OtherTags.name).assert("Displays tags not assigned to a field.misc1 misc2 pri=high pri=low pri=med")
+        +> fieldDetail(StaticField.OtherTags.name).assert("Displays tags not assigned to a field.misc1misc2pri=highpri=lowpri=med")
 
         >> selectField(StaticField.OtherTags.name)
         +> buttonsEnabled.assert(Buttons(remove = Enabled, close = Enabled))

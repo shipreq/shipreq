@@ -353,9 +353,10 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     useCaseStepRef(project.content.reqs.useCases.focusStep(id))
 
   override def pastPubids(ids: SortedSet[ExternalPubid]): VdomTag =
-    renderSeq(
-      ids.iterator.map(ep => <.span(*.pastPubid, PlainText.pubid(ep))),
-      sepComma)
+    <.span(
+      renderSeq(
+        ids.iterator.map(ep => <.span(*.pastPubid, PlainText.pubid(ep))),
+        sepComma))
 
   override def reqCode(c: ReqCode.Value): VdomTag =
     <.pre(*.reqCodeFlat, PlainText reqCode c)
@@ -503,10 +504,10 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
       }
 
     def pubids(v: Vector[Pubid]): VdomTag =
-      renderVector(v, sep)(apply)
+      <.span(renderVector(v, sep)(apply))
 
     def reqs(v: Vector[Req]): VdomTag =
-      renderVector(v, sep)(apply)
+      <.span(renderVector(v, sep)(apply))
   }
 
   object PubidFormat {

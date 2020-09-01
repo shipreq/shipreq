@@ -144,10 +144,10 @@ final class ViewTags(project: Project) {
   def basicVectorById(ids: Vector[ApplicableTagId], validity: ApplicableTagId => Validity = Valid.always)
                      (implicit ds: DisplaySettings): VdomTag = {
     val c = cache(ds)
-    ClientUtil.renderVector(ids, ClientUtil.sepSpace) { id =>
+    <.div(*.tagList, ClientUtil.renderVector(ids, EmptyVdom) { id =>
       val v = validity(id)
       c(v)(id)
-    }
+    })
   }
 
   val forReq: FilterDead => ReqId => ForReq[Out] =
@@ -207,7 +207,7 @@ final class ViewTags(project: Project) {
         }
 
       override def vector(ids: Vector[ApplicableTagId], render: ApplicableTagId => Out): Out =
-        ClientUtil.renderVector(ids, ClientUtil.sepSpace)(render)
+        <.div(*.tagList, ClientUtil.renderVector(ids, EmptyVdom)(render))
     }
   }
 

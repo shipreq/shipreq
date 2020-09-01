@@ -526,7 +526,7 @@ object ReqDetailTest extends TestSuite {
           +> field("Component").text.assert("") // perReq > otherwise, opt - no content
           +> field("Released").text.assert("v1.0") // def:tag:bad - w/ content - ShowDead
           +> field("Status").text.assert("uat") // def:tag:dead - no content - ShowDead
-          +> field("Version").text.assert("v1.0 v3.x") // def:tag:bad - w/ content - ShowDead
+          +> tagFieldDesc("Version").assert("v1.0 v3.x-") // def:tag:bad - w/ content - ShowDead
 
           >> restoreReq
           +> filterDead.assert(HideDead)
@@ -623,15 +623,15 @@ object ReqDetailTest extends TestSuite {
           +> filterDead.assert(HideDead)
           +> visibleFields.assert.not.contains("Status")
           +> field("Priority").text.assert("pri=low")
-          +> field(OtherTags.name).text.assert("misc1 wip")
-          +> field(AllTags.name).text.assert("misc1 pri=low wip")
+          +> tagFieldDesc(OtherTags.name).assert("misc1 wip")
+          +> tagFieldDesc(AllTags.name).assert("misc1 pri=low wip")
 
           >> filterDeadToggle
           +> filterDead.assert(ShowDead)
-          +> field("Priority").text.assert("pri=high pri=low")
-          +> field("Status").text.assert("wip defer prod")
-          +> field(OtherTags.name).text.assert("misc1 misc2")
-          +> field(AllTags.name).text.assert("defer misc1 misc2 pri=high pri=low prod wip")
+          +> tagFieldDesc("Priority").assert("pri=high- pri=low")
+          +> tagFieldDesc("Status").assert("wip defer- prod")
+          +> tagFieldDesc(OtherTags.name).assert("misc1 misc2-")
+          +> tagFieldDesc(AllTags.name).assert("defer- misc1 misc2- pri=high- pri=low prod wip")
       ))
     }
 

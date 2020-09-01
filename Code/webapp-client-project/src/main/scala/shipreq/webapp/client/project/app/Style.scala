@@ -1366,6 +1366,7 @@ object Style extends StyleSheet.Inline {
       padding(4 px, 6 px).important,
       mixinIf(validity is Invalid)(hasErrorBackground.important, hasErrorColor.important, textDecoration := ^.lineThrough),
       addClassName(s"ui label ${tagLabelColour(live)}"),
+      marginLeft(`0`).important,
     )}
 
     val tagInText = styleF(D.`live * validity`) { case (live, validity) => styleS(
@@ -1376,6 +1377,13 @@ object Style extends StyleSheet.Inline {
         case (Dead, _)       => deadMaybeValid(validity)
       },
     )}
+
+    val tagList = style(
+      display.flex,
+      flexWrap.wrap,
+      columnGap(1 ex),
+      rowGap(0.2 em),
+    )
 
     private val iconBase = styleS(
       marginLeft(0.5 ex).important,

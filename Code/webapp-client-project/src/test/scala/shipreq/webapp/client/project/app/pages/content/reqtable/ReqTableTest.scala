@@ -174,7 +174,7 @@ object ReqTableTest extends TestSuite {
     import ce._
 
     Plan.action(
-      showAllColumns +> text.assert("v1.3# v1.x v3.x v4.x#") // wip & uat in Status col
+      showAllColumns +> text.assert("v1.3#v1.xv3.xv4.x#") // wip & uat in Status col
         >> startEdit +> editorValue.assert("v1.1 v1.x") // Should only show direct & live
         >> testInvalid("v0.9").suffix(" (Dead target)")
         >> testInvalid("v3.x").suffix(" (Dead target)")
@@ -195,7 +195,7 @@ object ReqTableTest extends TestSuite {
     import ce._
 
     Plan.action(
-      showAllColumns +> text.assert("wip uat uat3# prod#")
+      showAllColumns +> text.assert("wipuatuat3#prod#")
         >> startEdit +> editorValue.assert("wip") // Should only show direct & live
         >> testInvalid("uat").suffix(" (Dead target)")
         >> testInvalid("uat2").suffix(" (Dead target)")
@@ -207,7 +207,7 @@ object ReqTableTest extends TestSuite {
         >> testValid("wip defer")
         >> testValid("defer")
         >> commit
-        +> text.assert("defer uat uat3# prod#") // dead #uat preserved
+        +> text.assert("deferuatuat3#prod#") // dead #uat preserved
     ) withInitialState p
   }
 
