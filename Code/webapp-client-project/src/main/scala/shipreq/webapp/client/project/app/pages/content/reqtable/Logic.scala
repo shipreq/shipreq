@@ -148,7 +148,7 @@ private[reqtable] object Logic {
     customFieldExpander(
       view,
       ap,
-      fid => tags(_, view.filterDead).set(fid.asTagFieldId),
+      fid => tags(_, view.filterDead).set(fid),
       Some(Sorter.orderingForTagField(cfg)))
 
   private def otherTagsExpander(view: View,

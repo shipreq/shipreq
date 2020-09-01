@@ -69,9 +69,9 @@ object VirtualProjectTagsTest extends TestSuite {
 
         def results(fd: FilterDead): String = {
           val v = tags(r.id, fd)
-          v.ordered(fieldId.asTagFieldId)
+          v.ordered(fieldId)
             .iterator
-            .map(t => tag(t) + describeTag(v(t, fieldId.asTagFieldId)))
+            .map(t => tag(t) + describeTag(v(t, fieldId)))
             .|>(resultTags)
         }
 
@@ -391,7 +391,7 @@ object VirtualProjectTagsTest extends TestSuite {
                     |  = #implemented
                     |
                     |""".stripMargin)
-              "status" - test(TagFieldId.Custom(statusField))
+              "status" - test(statusField)
               "all" - test(TagFieldId.All)
             }
             "v1" - {
@@ -422,7 +422,7 @@ object VirtualProjectTagsTest extends TestSuite {
                     |  = #v1 #v2
                     |
                     |""".stripMargin)
-              "ver" - test(TagFieldId.Custom(verField))
+              "ver" - test(verField)
               "all" - test(TagFieldId.All)
             }
           }

@@ -31,7 +31,7 @@ object IssueDetectors {
       // Check tags
       run(ctx, fields.tags) {
         val tags = ctx.project.virtualTags
-        f => tags(_, HideDead).set(f.id.asTagFieldId).isEmpty
+        f => tags(_, HideDead).set(f.id).isEmpty
       }
 
       // Check text

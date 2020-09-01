@@ -200,11 +200,7 @@ final class ViewTags(project: Project) {
 
     new ForReq[Out] {
       override def apply(f: TagFieldId): ApplicableTagId => Out =
-        f match {
-          case TagFieldId.Custom(f) => render(_, f.asTagFieldId)
-          case TagFieldId.All       => render(_, TagFieldId.All)
-          case TagFieldId.Other     => render(_, TagFieldId.Other)
-        }
+        render(_, f)
 
       override def vector(ids: Vector[ApplicableTagId], render: ApplicableTagId => Out): Out =
         <.div(*.tagList, ClientUtil.renderVector(ids, EmptyVdom)(render))

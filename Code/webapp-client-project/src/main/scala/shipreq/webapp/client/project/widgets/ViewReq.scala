@@ -73,7 +73,7 @@ final class ViewReq[A](data           : Data,
     else if (tags.isEmpty && data.live.is(Live) && data.fieldRules.tag(fid).isMandatory)
       \/-(pt.whenBlankButMandatory)
     else
-      \/-(viewTags.vector(tags, viewTags(fid.asTagFieldId)))
+      \/-(viewTags.vector(tags, viewTags(fid)))
   }
 
   def text(id: CustomField.Text.Id): IfApplicable[A] =
@@ -189,7 +189,7 @@ object ViewReq {
         codes            = codes,
         otherTags        = tags.ordered(TagFieldId.Other),
         allTags          = tags.ordered(TagFieldId.All),
-        customTags       = f => tags.ordered(f.asTagFieldId),
+        customTags       = f => tags.ordered(f),
         generalImps      = generalImps,
         customImps       = fid => sortPubids(customImpLookup(fid).getPubids(id)),
         pastPubids       = pastPubids,

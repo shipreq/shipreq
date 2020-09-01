@@ -881,7 +881,7 @@ object VirtualProjectTags {
             var self: TagFieldId => Option[DerivationDesc] = null
             self = Memo {
 
-              case TagFieldId.Custom(fieldId) =>
+              case fieldId: CustomField.Tag.Id =>
                 if (dtFactors.contains(fieldId)) {
                   val factors = dtFactors(fieldId).value(reqId)
                   describeDerivation(factors, reqId, fieldId :: Nil, p)
@@ -897,7 +897,7 @@ object VirtualProjectTags {
                     None
 
                   case fieldId :: Nil =>
-                    self(TagFieldId.Custom(fieldId))
+                    self(fieldId)
 
                   case _ =>
                     val factors = relevantFields.iterator.map(dtFactors(_).value(reqId)).reduce(Util.mergeSets(_, _))
@@ -1121,7 +1121,7 @@ object VirtualProjectTags {
 
           // If no manual tags added for self, add virtual results
           if (!_byReq.contains(selfId) && selfLive.is(Live)) {
-            val selfTags = liveResults.set(TagFieldId.Custom(fieldId))
+            val selfTags = liveResults.set(fieldId)
             if (selfTags.isEmpty)
               add(selfId, null)
             else
@@ -1219,9 +1219,9 @@ object VirtualProjectTags {
     }
 
     override val set = {
-      case TagFieldId.Custom(f) => fieldSet(f)
-      case TagFieldId.All       => allSet
-      case TagFieldId.Other     => otherSet
+      case f: CustomField.Tag.Id => fieldSet(f)
+      case TagFieldId.All        => allSet
+      case TagFieldId.Other      => otherSet
     }
 
     private lazy val allOrdered =
@@ -1235,9 +1235,9 @@ object VirtualProjectTags {
     }
 
     override val ordered = {
-      case TagFieldId.Custom(f) => fieldOrdered(f)
-      case TagFieldId.All       => allOrdered
-      case TagFieldId.Other     => otherOrdered
+      case f: CustomField.Tag.Id => fieldOrdered(f)
+      case TagFieldId.All        => allOrdered
+      case TagFieldId.Other      => otherOrdered
     }
 
     override def defaults =

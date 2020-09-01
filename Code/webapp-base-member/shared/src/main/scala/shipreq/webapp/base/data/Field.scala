@@ -53,7 +53,6 @@ sealed trait TagFieldId
 object TagFieldId {
   case object All extends TagFieldId
   case object Other extends TagFieldId
-  final case class Custom(id: CustomField.Tag.Id) extends TagFieldId
 
   implicit def univEq: UnivEq[TagFieldId] = UnivEq.derive
 
@@ -64,23 +63,23 @@ object TagFieldId {
 
     def get(f: TagFieldId): A =
       f match {
-        case Custom(id) => field(id)
-        case All        => all
-        case Other      => other
+        case id: CustomField.Tag.Id => field(id)
+        case All                    => all
+        case Other                  => other
       }
 
     def field(f: CustomField.Tag.Id): A =
       fields.getOrElse(f, {
-        val a = empty(Custom(f))
+        val a = empty(f)
         fields = fields.updated(f, a)
         a
       })
 
     @inline def mod(field: TagFieldId, m: A => Unit): Unit =
       field match {
-        case All       => m(all)
-        case Other     => modOther(m)
-        case Custom(f) => modField(f, m)
+        case f: CustomField.Tag.Id => modField(f, m)
+        case All                   => m(all)
+        case Other                 => modOther(m)
       }
 
     @inline def modOther(m: A => Unit): Unit = {
@@ -505,9 +504,8 @@ object CustomField {
         liveExplicitly    = liveExplicitly,
       )
 
-    final case class Id(value: Int) extends CustomFieldId  {
+    final case class Id(value: Int) extends CustomFieldId with TagFieldId {
       override def toString = s"CustomField.Tag.Id($value)"
-      val asTagFieldId = TagFieldId.Custom(this)
     }
 
     object IdAccess extends ObjDataId[Tag.type, Tag, Id] {
