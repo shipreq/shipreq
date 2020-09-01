@@ -47,8 +47,10 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
+* reappearances should split tags, not duplicate and re-order
+* add control to req detail imp graph to change colours (eg. show Priority colours)
 * ability to embed tweets
-* enter on reqtable in pubid should navigate to req
+* pressing enter on reqtable in pubid should navigate to req
 * when session expired, it should still always retry in case re-auth occurred in another tab
 * if I have a flat list of unconnected nodes in ReqGraph, they appear backwards (ie. IV1, FR3, FR2, FR1)
 * req detail: add prev/next buttons
