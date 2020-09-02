@@ -74,7 +74,7 @@ object Home {
     def render(p: Props, s: State): VdomElement = {
       State.recorder.record(s)
 
-      val navBar = MemberNavBar.Props(p.data.username, Some(p.feedbackModal), p.data.am, navBarLeft)
+      val navBar = MemberNavBar.Props(p.data.username, Some(p.feedbackModal), p.data.assetManifest, navBarLeft)
 
       def mainContent(m: TagMod): VdomElement =
         HomeContent.Props(

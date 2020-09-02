@@ -11,8 +11,8 @@ import shipreq.webapp.base.user.Username
 object ProjectSpaLoader {
 
   final case class Props(username   : Username,
-                         projectName: Project.Name) {
-    val am = new AssetManifest
+                         projectName: Project.Name,
+                         am         : AssetManifest) {
     @inline def render: VdomElement = Component(this)
   }
 

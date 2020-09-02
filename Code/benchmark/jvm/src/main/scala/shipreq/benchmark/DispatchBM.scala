@@ -143,6 +143,7 @@ object DispatchBM {
 
   implicit val config = ServerLogicConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
+    staticAssetCdn             = Some(Url.Absolute.Base("https://static.shipreq.com")),
     publicRegistration         = Allow,
     applyEventThresholdMs      = 1000,
     googleAnalyticsTrackingId  = None,

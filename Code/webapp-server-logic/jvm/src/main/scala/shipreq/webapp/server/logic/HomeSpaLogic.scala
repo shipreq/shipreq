@@ -2,6 +2,7 @@ package shipreq.webapp.server.logic
 
 import scalaz.syntax.monad._
 import scalaz.{Monad, ~>}
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.ajax.HomeSpaProtocols
@@ -38,6 +39,7 @@ object HomeSpaLogic {
   }
 
   def apply[D[_], F[_]](implicit db: DB.ForHomeSpa[D],
+                        am: AssetManifest,
                         runDB: D ~> F,
                         D: Monad[D],
                         F: Monad[F]): HomeSpaLogic[F] =
@@ -46,7 +48,7 @@ object HomeSpaLogic {
       override def initData(user: User): F[HomeSpaEntryPoint.InitData] =
         for {
           p <- runDB(db.getAllProjectMetaDataForUser(user.id))
-        } yield HomeSpaEntryPoint.InitData(user.username, p)
+        } yield HomeSpaEntryPoint.InitData(user.username, p, am)
 
       override val ajaxCreateProject =
         (user, name) => runDB(createProject(user.id, name))

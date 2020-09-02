@@ -2,16 +2,13 @@ package shipreq.webapp.server.snippet
 
 import net.liftweb.http.DispatchSnippet
 import scala.xml._
-import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.app.ServerConfig.Statcounter
 
 /**
   * Enables Google Analytics if the server was started with a tracking ID.
   */
-object Analytics extends DispatchSnippet {
-
-  private def am = new AssetManifest
+object Analytics extends DispatchSnippet with SnippetHelpers {
 
   override val dispatch: DispatchIt = {
 
@@ -65,8 +62,8 @@ object Analytics extends DispatchSnippet {
 
     val scriptInit = <script type="text/javascript" data-lift="head">{initErr};{initGA}</script>
     val scriptGA   = <script type="text/javascript" async="async" src={url.absoluteUrl}></script>
-    val scriptAs   = <script type="text/javascript" async="async" src={am.analyticsJs} onload={initAs}></script>
-    val scriptAm   = <script type="text/javascript" async="async" src={am.analyticsJs} onload={initAm}></script>
+    val scriptAs   = <script type="text/javascript" async="async" src={assetManifest.analyticsJs} onload={initAs}></script>
+    val scriptAm   = <script type="text/javascript" async="async" src={assetManifest.analyticsJs} onload={initAm}></script>
 
     Logic(
       singleRoute = Group(scriptInit :: scriptAs :: scriptGA :: Nil),

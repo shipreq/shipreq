@@ -4,16 +4,17 @@ import japgolly.scalajs.react.AsyncCallback
 import shipreq.webapp.client.ww.GraphViz.DOT
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 
-final class Service(implicit g: GraphViz) extends Server.Service[WebWorkerCmd] {
+object Service extends Server.Service[WebWorkerCmd] {
   import WebWorkerCmd._
 
   val state = new WebWorkerState
+  import state.Implicits._
 
   override def apply[A](cmd: WebWorkerCmd[A]): AsyncCallback[A] =
     cmd match {
 
-      case SetProject(p) =>
-        state.setProject(p).asAsyncCallback.ret(NoResult)
+      case Init(p, am) =>
+        (state.setProject(p) >> state.setAssetManifest(am)).asAsyncCallback.ret(NoResult)
 
       case UpdateProject(ves) =>
         state.updateProject(ves).asAsyncCallback.ret(NoResult)
@@ -41,6 +42,9 @@ final class Service(implicit g: GraphViz) extends Server.Service[WebWorkerCmd] {
         } yield x
 
       case GraphInline(dot) =>
-        g.render(DOT(dot))
+        for {
+          _ <- state.awaitGraphViz
+          x <- graphviz.render(DOT(dot))
+        } yield x
     }
 }

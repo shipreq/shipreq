@@ -3,6 +3,7 @@ package shipreq.webapp.client.ww.api
 import boopickle.ConstPickler
 import boopickle.DefaultBasic._
 import shipreq.base.util.ErrorMsg
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
@@ -18,7 +19,7 @@ object WebWorkerCmd {
   // Using instead of Unit so that we can define an implicit Pickler here and have it be universally in scope
   case object NoResult
 
-  final case class SetProject(projectAndOrd: ProjectAndOrd) extends WebWorkerCmd[NoResult.type]
+  final case class Init(projectAndOrd: ProjectAndOrd, am: AssetManifest) extends WebWorkerCmd[NoResult.type]
 
   final case class UpdateProject(events: VerifiedEvent.NonEmptySeq) extends WebWorkerCmd[NoResult.type]
 
@@ -59,14 +60,24 @@ object WebWorkerCmd {
       i => Option.when(i > 0)(EventOrd.Latest(i)))(
       _.fold(0)(_.value))
 
-  implicit val picklerSetProject: Pickler[SetProject] =
-    transformPickler(SetProject.apply)(_.projectAndOrd)
-
   implicit val picklerUpdateProject: Pickler[UpdateProject] =
     transformPickler(UpdateProject.apply)(_.events)
 
   implicit val picklerErrorMsgOrSvg: Pickler[ErrorMsg \/ Svg] =
     pickleDisj
+
+  private implicit val picklerInit: Pickler[Init] =
+    new Pickler[Init] {
+      override def pickle(a: Init)(implicit state: PickleState): Unit = {
+        state.pickle(a.projectAndOrd)
+        state.pickle(a.am)
+      }
+      override def unpickle(implicit state: UnpickleState): Init = {
+        val pao = state.unpickle[ProjectAndOrd]
+        val am  = state.unpickle[AssetManifest]
+        Init(pao, am)
+      }
+    }
 
   private implicit val picklerGraphUseCaseStepFlow: Pickler[GraphUseCaseFlow] =
     new Pickler[GraphUseCaseFlow] {
@@ -122,7 +133,7 @@ object WebWorkerCmd {
 
   implicit val picklerCmd: Pickler[WebWorkerCmd[_]] =
     new Pickler[WebWorkerCmd[_]] {
-      private[this] final val KeySetProject           = 0
+      private[this] final val KeyInit                 = 0
       private[this] final val KeyUpdateProject        = 1
       private[this] final val KeyGraphAllImplications = 2
       private[this] final val KeyGraphReqImplications = 3
@@ -130,7 +141,7 @@ object WebWorkerCmd {
       private[this] final val KeyGraphInline          = 5
       override def pickle(a: WebWorkerCmd[_])(implicit state: PickleState): Unit =
         a match {
-          case b: SetProject           => state.enc.writeByte(KeySetProject          ); state.pickle(b)
+          case b: Init                 => state.enc.writeByte(KeyInit                ); state.pickle(b)
           case b: UpdateProject        => state.enc.writeByte(KeyUpdateProject       ); state.pickle(b)
           case b: GraphAllImplications => state.enc.writeByte(KeyGraphAllImplications); state.pickle(b)
           case b: GraphReqImplications => state.enc.writeByte(KeyGraphReqImplications); state.pickle(b)
@@ -139,7 +150,7 @@ object WebWorkerCmd {
         }
       override def unpickle(implicit state: UnpickleState): WebWorkerCmd[_] =
         state.dec.readByte match {
-          case KeySetProject           => state.unpickle[SetProject]
+          case KeyInit                 => state.unpickle[Init]
           case KeyUpdateProject        => state.unpickle[UpdateProject]
           case KeyGraphAllImplications => state.unpickle[GraphAllImplications]
           case KeyGraphReqImplications => state.unpickle[GraphReqImplications]

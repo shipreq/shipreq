@@ -24,14 +24,16 @@ object SsrJs {
   }
 
   @JSExportTopLevel(SsrJsFunctionManifest.HomeSpaLoader)
-  def homeSpaLoader(i: Pickled[HomeSpaLoaderData]): String = {
-    val component = HomeSpaLoader.Props(i.value.username).render
+  def homeSpaLoader(pi: Pickled[HomeSpaLoaderData]): String = {
+    val i = pi.value
+    val component = HomeSpaLoader.Props(i.username, i.assetManifest).render
     ReactDOMServer.renderToStaticMarkup(component)
   }
 
   @JSExportTopLevel(SsrJsFunctionManifest.ProjectSpaLoader)
-  def projectSpaLoader(i: Pickled[ProjectSpaLoaderData]): String = {
-    val component = ProjectSpaLoader.Props(i.value.username, i.value.projectName).render
+  def projectSpaLoader(pi: Pickled[ProjectSpaLoaderData]): String = {
+    val i = pi.value
+    val component = ProjectSpaLoader.Props(i.username, i.projectName, i.assetManifest).render
     ReactDOMServer.renderToStaticMarkup(component)
   }
 }

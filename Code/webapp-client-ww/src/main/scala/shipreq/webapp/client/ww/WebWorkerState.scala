@@ -3,6 +3,7 @@ package shipreq.webapp.client.ww
 import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import monocle.macros.Lenses
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.EventOrd.Implicits._
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
@@ -10,6 +11,37 @@ import shipreq.webapp.base.text.PlainText
 
 final class WebWorkerState {
   import WebWorkerState._
+
+  private var _am: AssetManifest =
+    null
+
+  private var _graphviz: GraphViz =
+    null
+
+  def setAssetManifest(am: AssetManifest): Callback =
+    Callback {
+      this._am = am
+      this._graphviz = GraphViz.load(am)
+    } >> graphvizBarrier.complete
+
+  object Implicits {
+
+    implicit def assetManifest: AssetManifest = {
+      assert(_am ne null, "WebWorkerState AssetManifest not set.")
+      _am
+    }
+
+    implicit def graphviz: GraphViz = {
+      assert(_graphviz ne null, "WebWorkerState GraphViz not set.")
+      _graphviz
+    }
+  }
+
+  private val graphvizBarrier =
+    AsyncCallback.barrier.runNow()
+
+  val awaitGraphViz: AsyncCallback[Unit] =
+    graphvizBarrier.waitForCompletion
 
   private var state: Immutable =
     Immutable.init

@@ -1,6 +1,7 @@
 package shipreq.webapp.ssr
 
 import boopickle.DefaultBasic._
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.protocol.binary.v1.BaseData._
 import shipreq.webapp.base.user.Username
@@ -21,25 +22,40 @@ object SsrSharedData {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  final case class HomeSpaLoaderData(username: Username)
+  final case class HomeSpaLoaderData(username     : Username,
+                                     assetManifest: AssetManifest)
 
   implicit val picklerHomeSpaLoaderData: Pickler[HomeSpaLoaderData] =
-    transformPickler(HomeSpaLoaderData.apply)(_.username)
+    new Pickler[HomeSpaLoaderData] {
+      override def pickle(a: HomeSpaLoaderData)(implicit state: PickleState): Unit = {
+        state.pickle(a.username)
+        state.pickle(a.assetManifest)
+      }
+      override def unpickle(implicit state: UnpickleState): HomeSpaLoaderData = {
+        val username      = state.unpickle[Username]
+        val assetManifest = state.unpickle[AssetManifest]
+        HomeSpaLoaderData(username, assetManifest)
+      }
+    }
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  final case class ProjectSpaLoaderData(username: Username, projectName: Project.Name)
+  final case class ProjectSpaLoaderData(username     : Username,
+                                        projectName  : Project.Name,
+                                        assetManifest: AssetManifest)
 
   implicit val picklerProjectSpaLoaderData: Pickler[ProjectSpaLoaderData] =
     new Pickler[ProjectSpaLoaderData] {
       override def pickle(a: ProjectSpaLoaderData)(implicit state: PickleState): Unit = {
         state.pickle(a.username)
         state.pickle(a.projectName)
+        state.pickle(a.assetManifest)
       }
       override def unpickle(implicit state: UnpickleState): ProjectSpaLoaderData = {
-        val username    = state.unpickle[Username]
-        val projectName = state.unpickle[Project.Name]
-        ProjectSpaLoaderData(username, projectName)
+        val username      = state.unpickle[Username]
+        val projectName   = state.unpickle[Project.Name]
+        val assetManifest = state.unpickle[AssetManifest]
+        ProjectSpaLoaderData(username, projectName, assetManifest)
       }
     }
 

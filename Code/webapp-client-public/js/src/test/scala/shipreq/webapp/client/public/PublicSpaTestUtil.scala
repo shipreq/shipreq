@@ -3,6 +3,7 @@ package shipreq.webapp.client.public
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.base.util._
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.protocol.ajax.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.public.spa.{Page, PublicSpa}
@@ -10,7 +11,7 @@ import teststate.data.Id
 
 object PublicSpaTestUtil {
 
-  val initData = PublicSpaEntryPoint.InitData(Allow, None)
+  val initData = PublicSpaEntryPoint.InitData(Allow, None, AssetManifest(None))
 
   class ForTestState {
     val ajax     = new TestAjaxClient(false)

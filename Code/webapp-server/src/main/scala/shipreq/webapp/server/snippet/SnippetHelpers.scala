@@ -6,7 +6,7 @@ import scala.xml.NodeSeq
 import shipreq.base.util.Url
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.base.user._
-import shipreq.webapp.server.app.LiftDispatcher
+import shipreq.webapp.server.app.{Global, LiftDispatcher}
 import shipreq.webapp.server.util.HttpResponses.ShouldNeverHappenResponse
 
 private[snippet] object SnippetHelpers extends StaticSnippetHelpers {
@@ -56,6 +56,9 @@ private[snippet] trait StaticSnippetHelpers extends HasLogger {
  * @since 11/06/2013
  */
 private[snippet] trait SnippetHelpers extends StaticSnippetHelpers with HasLogger {
+
+  final protected def assetManifest =
+    Global.config.server.assetManifest
 
   @inline final def currentUserId_!() : UserId =
     currentUser_!().id

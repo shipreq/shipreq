@@ -5,6 +5,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit._
 import monocle.macros.Lenses
 import org.scalajs.dom.html
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data.ProjectMetaData
 import shipreq.webapp.base.protocol.ajax.{HomeSpaProtocols, TestAjaxClient}
 import shipreq.webapp.base.protocol.entrypoint.HomeSpaEntryPoint
@@ -103,7 +104,7 @@ object HomeTest extends TestSuite {
 
   def run(ps: List[ProjectMetaData])(plan: *.Plan): Report[String] = {
     val cp = new TestAjaxClient(false)
-    val init = HomeSpaEntryPoint.InitData(Username("thatguy"), ps)
+    val init = HomeSpaEntryPoint.InitData(Username("thatguy"), ps, AssetManifest(None))
     val props = Home.Props(init, cp)
     ReactTestUtils.withRenderedIntoDocument(props.render)(c =>
       plan

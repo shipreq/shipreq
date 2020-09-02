@@ -15,7 +15,7 @@ object HomeSpa extends SnippetHelpers {
   def render = {
     val user       = currentUser_!()
     val initData   = Global.logic.homeSpa.initData(user).unsafeRun()
-    val loaderData = HomeSpaLoaderData(user.username)
+    val loaderData = HomeSpaLoaderData(user.username, assetManifest)
     val loaderHtml = Global.ssr.homeSpaLoader(loaderData).unsafeRun().fold(NodeSeq.Empty)(_.xml)
 
     "*" #> (loaderHtml :+ EntryPoint.invokeOnLoadHtml(initData))

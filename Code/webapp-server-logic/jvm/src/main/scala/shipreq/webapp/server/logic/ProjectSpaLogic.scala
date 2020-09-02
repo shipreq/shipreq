@@ -8,6 +8,7 @@ import scalaz.{BindRec, Monad, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.taskman.api.{Task, TaskmanApi, UserId => TaskmanUserId}
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data.{Obfuscated, Project, ProjectId, ProjectMetaData}
 import shipreq.webapp.base.event.EventOrd.Implicits._
 import shipreq.webapp.base.event.{ApplyEvent, EventOrd, ProjectAndOrd, VerifiedEvent}
@@ -22,7 +23,7 @@ import shipreq.webapp.server.logic.dispatch.Cookie
 trait ProjectSpaLogic[F[_]] {
   import ProjectSpaLogic._
 
-  def initPage(projectId: ProjectId, username: Username): F[ProjectSpaEntryPoint.InitData]
+  def initPage(projectId: ProjectId, username: Username, am: AssetManifest): F[ProjectSpaEntryPoint.InitData]
 
   def onConnect(cookies  : Cookie.LookupFn,
                 projectId: ProjectId.Public): F[ConnectRejection \/ (WebSocketStatic, WebSocketState[F])]
@@ -146,12 +147,12 @@ object ProjectSpaLogic extends StrictLogging {
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      override def initPage(pid: ProjectId, username: Username): F[ProjectSpaEntryPoint.InitData] =
+      override def initPage(pid: ProjectId, username: Username, am: AssetManifest): F[ProjectSpaEntryPoint.InitData] =
         for {
           name <- runDB(db.projectSpaInitPage(pid))
         } yield {
           val pidPub = Obfuscators.projectId.obfuscate(pid)
-          ProjectSpaEntryPoint.InitData(username, pidPub, name, webWorkerJsUrl = sjsUrls.webWorker)
+          ProjectSpaEntryPoint.InitData(username, pidPub, name, am, webWorkerJsUrl = sjsUrls.webWorker)
         }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

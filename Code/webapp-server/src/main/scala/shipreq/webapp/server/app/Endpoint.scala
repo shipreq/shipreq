@@ -27,8 +27,7 @@ object Endpoint {
   // Note this is only meant to resolve generic requests.
   // Specific requests that DispatchLogic handles correctly set the Endpoint directly via MetricsLogic which results in
   // the FreeOption[Endpoint] param to Resolver being set.
-  def resolver(metricsPath: String, sjs: ScalaJsManifest[String]): Resolver = {
-    val am = new AssetManifest
+  def resolver(metricsPath: String, am: AssetManifest, sjs: ScalaJsManifest[String]): Resolver = {
 
     val exactMatches = new java.util.HashMap[String, Endpoint]
     exactMatches.put(metricsPath                                    , Metrics)

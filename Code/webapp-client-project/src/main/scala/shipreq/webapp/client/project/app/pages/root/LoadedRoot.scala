@@ -276,7 +276,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
         pxTextSearch           = pxTextSearch,
         pxProjectWidgets       = pxProjectWidgets,
         pxFilterCompilerFromFD = pxFilterCompilerFromFilterDead,
-        assetManifest          = initPageData.am,
+        assetManifest          = initPageData.assetManifest,
         reqDetailRC            = reqDetailRC,
         toast                  = toast,
         updateIO               = sspUpdateContent,
@@ -499,7 +499,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
         connectionStatus    = global.connectedStatusHub.unsafeGet(),
         setConnectionStatus = global.setConnectionStatus,
         reauthModal         = global.reauthModal,
-        assetManifest       = initPageData.am,
+        assetManifest       = initPageData.assetManifest,
         feedbackModal       = feedbackModal,
         toast               = StateSnapshot.zoomL(State.toast)(s).setStateVia($),
         rc                  = routerCtl,
@@ -510,9 +510,10 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
     def onMount: Callback = {
       val sendProjectToWebWorker: Callback =
-        pxProjectAndOrd.toCallback.asAsyncCallback
-          .flatMap(p => webWorkerClient.post(WebWorkerCmd.SetProject(p)))
-          .toCallback
+        for {
+          pao <- pxProjectAndOrd.toCallback
+          _   <- webWorkerClient.post(WebWorkerCmd.Init(pao, initPageData.assetManifest)).toCallback
+        } yield ()
 
       val installHooks: Callback =
         Callback {

@@ -5,6 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
 import scala.util.{Failure, Success, Try}
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.feature.clipboard.TestClipboard
@@ -283,7 +284,7 @@ object ProjectSpaTestDsl {
     val global       = TestGlobal(project)
     val confirmJs    = TestConfirmJs()
     val promptJs     = TestPromptJs()
-    val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name, "/ww.js")
+    val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name, AssetManifest(None), "/ww.js")
     val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs, global.optionalFullscreen)
     val rc           = MockRouterCtl[Page]()
     val init         = TestState(page, global.unsafeProject(), rd)

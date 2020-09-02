@@ -13,7 +13,11 @@ object PublicSpa extends SnippetHelpers {
 
   def render = {
     val user = currentUserOption()
-    val initData = PublicSpaEntryPoint.InitData(Global.config.server.publicRegistration, user.map(_.username))
+
+    val initData = PublicSpaEntryPoint.InitData(
+      Global.config.server.publicRegistration,
+      user.map(_.username),
+      assetManifest)
 
     val fx: Fx[NodeSeq => NodeSeq] =
       for {

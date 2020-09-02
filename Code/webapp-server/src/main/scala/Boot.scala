@@ -235,9 +235,10 @@ class Boot {
     if (cfg.ssr.enabled) {
       // Duplicating Global :S
       import TraceInterpreter.Implicits._
-      implicit val traceAlgebra = cfg.traceAlgebraFx
-      implicit val trace        = TraceLogic.on: TraceInterpreter.ForHttp[Fx]
-      implicit val server       = trace.injectServer(ServerInterpreter)
+      implicit val assetManifest = cfg.assetManifest
+      implicit val traceAlgebra  = cfg.traceAlgebraFx
+      implicit val trace         = TraceLogic.on: TraceInterpreter.ForHttp[Fx]
+      implicit val server        = trace.injectServer(ServerInterpreter)
       new MinimalSsr[Fx]
     } else
       new SsrOff[Fx]

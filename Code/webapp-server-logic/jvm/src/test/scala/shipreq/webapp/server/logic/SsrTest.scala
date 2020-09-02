@@ -4,8 +4,8 @@ import shipreq.base.ops.Trace
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{Allow, Url}
-import shipreq.webapp.base.Urls
 import shipreq.webapp.base.user.Username
+import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.ssr._
 import utest._
 
@@ -23,6 +23,8 @@ object SsrTest extends TestSuite {
     Option(u).map(Username(_))
 
   private def baseUrl = Url.Absolute.Base("https://shipreq.com")
+
+  private implicit val am = AssetManifest(Some(Url.Absolute.Base("https://static.shipreq.com")))
 
   private lazy val ssr = {
     implicit val trace = Trace.Algebra.off[Fx]
@@ -68,7 +70,7 @@ object SsrTest extends TestSuite {
 
     "home" - {
       "loader" - {
-        val html = getHtml(ssr.homeSpaLoader(HomeSpaLoaderData(Username("gori"))))
+        val html = getHtml(ssr.homeSpaLoader(HomeSpaLoaderData(Username("gori"), am)))
         assertNotContains(html, "Loading...")
         assertContains(html, "Projects")
         assertContains(html, "@gori")
@@ -78,7 +80,7 @@ object SsrTest extends TestSuite {
 
     "project" - {
       "loader" - {
-        val html = getHtml(ssr.projectSpaLoader(ProjectSpaLoaderData(Username("gori"), "Stuff")))
+        val html = getHtml(ssr.projectSpaLoader(ProjectSpaLoaderData(Username("gori"), "Stuff", am)))
         assertContains(html, "Loading...")
         assertContains(html, "Projects")
         assertContains(html, "Stuff")

@@ -9,6 +9,7 @@ import scalaz.Monad
 import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util.{Permission, Url}
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.user.Username
 import shipreq.webapp.ssr._
 
@@ -18,6 +19,7 @@ import shipreq.webapp.ssr._
   * - is minimal in that it only runs SSR on startup uses [[StrFnCache]] when serving
   */
 final class MinimalSsr[F[_]]()(implicit F: Monad[F],
+                               am: AssetManifest,
                                trace: Trace.Algebra[F],
                                svr: Server.Time[F]) extends SsrAlgebra[F] with StrictLogging {
   import GraalJs._
@@ -57,14 +59,17 @@ final class MinimalSsr[F[_]]()(implicit F: Monad[F],
     implicit val strFnCacheRouteUrlRelative: StrFnCacheRoute[Url.Relative] =
       StrFnCacheRoute.apply1(Url.Relative.apply)(_.relativeUrlNoHeadSlash)
 
+    implicit val strFnCacheParamAssetManifest: StrFnCacheParam[AssetManifest] =
+      StrFnCacheParam.const(am)
+
     implicit val strFnCacheParamUsername: StrFnCacheParam[Username] =
       StrFnCacheParam.apply1(Username.apply)(_.value)
 
     implicit val strFnCacheParamHomeSpaLoaderData: StrFnCacheParam[HomeSpaLoaderData] =
-      StrFnCacheParam.apply1(HomeSpaLoaderData.apply)(_.username)
+      StrFnCacheParam.apply2(HomeSpaLoaderData.apply)(d => (d.username, d.assetManifest))
 
     implicit val strFnCacheParamProjectSpaLoaderData: StrFnCacheParam[ProjectSpaLoaderData] =
-      StrFnCacheParam.apply2(ProjectSpaLoaderData.apply)(d => (d.username, d.projectName))
+      StrFnCacheParam.apply3(ProjectSpaLoaderData.apply)(d => (d.username, d.projectName, d.assetManifest))
 
     def wrap1[A](name: String, f: A => Expr.Result[String]): A => F[Output] =
       a => F.point {
@@ -96,7 +101,7 @@ final class MinimalSsr[F[_]]()(implicit F: Monad[F],
 
         def render(path: Url.Relative, u: Option[Username]): Expr.Result[String] =
           ctx.eval(ReactSsr.setUrl((baseUrl / path).absoluteUrl)) >>
-            ctx.eval(RealSsr.renderPublic(PublicInitData(publicRegistration, u)))
+            ctx.eval(RealSsr.renderPublic(PublicInitData(publicRegistration, u, am)))
 
         val cache = StrFnCache.withRouteWhitelist(render)(
           Url.Relative.root,

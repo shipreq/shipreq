@@ -9,8 +9,7 @@ import shipreq.webapp.base.{AssetManifest, ClientConfig}
 
 object HomeSpaLoader {
 
-  final case class Props(username: Username) {
-    val am = new AssetManifest
+  final case class Props(username: Username, am: AssetManifest) {
     @inline def render: VdomElement = Component(this)
   }
 

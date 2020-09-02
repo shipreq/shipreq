@@ -2064,6 +2064,12 @@ object RandomData {
 ////      })
 //  }
 
+  lazy val genAssetManifest: Gen[AssetManifest] = {
+    val am1 = AssetManifest(None)
+    val am2 = AssetManifest(Some(Url.Absolute.Base("https://static.shipreq.com")))
+    Gen.choose(am1, am2)
+  }
+
   // ===================================================================================================================
   object routines {
     import shipreq.webapp.base.protocol.entrypoint._
@@ -2081,7 +2087,8 @@ object RandomData {
         u <- username
         i <- projectIdPublic
         n <- projectName
-      } yield ProjectSpaEntryPoint.InitData(u, i, n, "/j/ww.js")
+        a <- genAssetManifest
+      } yield ProjectSpaEntryPoint.InitData(u, i, n, a, "/j/ww.js")
 
 //    class CrudActionGens[I, V](idG: Gen[I], vG: Gen[V]) {
 //      lazy val create  = vG.map(CrudAction.Create[I, V])

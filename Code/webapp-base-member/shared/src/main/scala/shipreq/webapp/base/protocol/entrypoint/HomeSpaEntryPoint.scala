@@ -7,10 +7,9 @@ import shipreq.webapp.base.user.Username
 
 object HomeSpaEntryPoint {
 
-  final case class InitData(username: Username,
-                            projects: List[ProjectMetaData]) {
-    val am = new AssetManifest
-  }
+  final case class InitData(username     : Username,
+                            projects     : List[ProjectMetaData],
+                            assetManifest: AssetManifest)
 
   implicit val picklerInitData: Pickler[InitData] =
     new Pickler[InitData] {
@@ -20,11 +19,13 @@ object HomeSpaEntryPoint {
       override def pickle(a: InitData)(implicit state: PickleState): Unit = {
         state.pickle(a.username)
         state.pickle(a.projects)
+        state.pickle(a.assetManifest)
       }
       override def unpickle(implicit state: UnpickleState): InitData = {
-        val username = state.unpickle[Username]
-        val projects = state.unpickle[List[ProjectMetaData]]
-        InitData(username, projects)
+        val username      = state.unpickle[Username]
+        val projects      = state.unpickle[List[ProjectMetaData]]
+        val assetManifest = state.unpickle[AssetManifest]
+        InitData(username, projects, assetManifest)
       }
     }
 

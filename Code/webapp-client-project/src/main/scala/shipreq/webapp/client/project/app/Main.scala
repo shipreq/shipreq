@@ -58,7 +58,7 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
 
   private def onFailure(i: InitData)(error: ErrorMsg): Callback =
     Callback {
-      val lp       = ProjectSpaLoader.Props(i.username, i.projectName)
+      val lp       = ProjectSpaLoader.Props(i.username, i.projectName, i.assetManifest)
       val lf       = LoadFailedPage.Props(lp, error)
       val view     = LoadFailedPage.Component(lf)
       val metadata = CommonProtocolsJs.Metadata.client(i.username, i.projectId)

@@ -13,6 +13,7 @@ import scala.reflect.ClassTag
 import scalaz.Isomorphism.<=>
 import scalaz.{Functor, \&/}
 import shipreq.base.util._
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.Version
 import shipreq.webapp.base.protocol.binary._
@@ -461,4 +462,10 @@ object BaseData {
           case KeyEmpty => VectorTree.ParentLocation.Empty
         }
     }
+
+  implicit lazy val pickleUrlAbsoluteBase =
+    transformPickler(Url.Absolute.Base.apply)(_.value)
+
+  implicit lazy val pickleAssetManifest =
+    transformPickler(AssetManifest.apply)(_.staticAssetCdn)
 }

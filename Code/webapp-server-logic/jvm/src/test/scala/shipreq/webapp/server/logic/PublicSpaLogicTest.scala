@@ -17,7 +17,7 @@ object PublicSpaLogicTest extends TestSuite {
     def withConfig(f: ServerLogicConfig => ServerLogicConfig): Tester =
       Tester(mockInterpreters.withConfig(f))
 
-    val initData = PublicSpaEntryPoint.InitData(Allow, None)
+    val initData = PublicSpaEntryPoint.InitData(Allow, None, assetManifest)
     val session = Security.SessionToken.anonymous()
 
     def runRegister1(i: PublicSpaProtocols.Register1.ajax.Req) = assertProtected(publicSpa.ajaxRegister1(i).value)

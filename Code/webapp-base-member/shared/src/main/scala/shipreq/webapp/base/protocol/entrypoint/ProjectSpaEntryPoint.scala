@@ -10,9 +10,8 @@ object ProjectSpaEntryPoint {
   final case class InitData(username      : Username,
                             projectId     : ProjectId.Public,
                             projectName   : Project.Name,
-                            webWorkerJsUrl: String) {
-    val am = new AssetManifest
-  }
+                            assetManifest : AssetManifest,
+                            webWorkerJsUrl: String)
 
   implicit val picklerInitData: Pickler[InitData] =
     new Pickler[InitData] {
@@ -22,6 +21,7 @@ object ProjectSpaEntryPoint {
         state.pickle(a.username)
         state.pickle(a.projectId)
         state.pickle(a.projectName)
+        state.pickle(a.assetManifest)
         state.pickle(a.webWorkerJsUrl)
       }
 
@@ -29,8 +29,9 @@ object ProjectSpaEntryPoint {
         val username       = state.unpickle[Username]
         val projectId      = state.unpickle[ProjectId.Public]
         val projectName    = state.unpickle[Project.Name]
+        val assetManifest  = state.unpickle[AssetManifest]
         val webWorkerJsUrl = state.unpickle[String]
-        InitData(username, projectId, projectName, webWorkerJsUrl)
+        InitData(username, projectId, projectName, assetManifest, webWorkerJsUrl)
       }
     }
 

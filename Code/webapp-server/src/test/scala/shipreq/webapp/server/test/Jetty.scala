@@ -7,7 +7,6 @@ import org.apache.commons.io.FileUtils
 import org.eclipse.jetty.server._
 import org.eclipse.jetty.webapp.WebAppContext
 import shipreq.base.util.ThreadUtils
-import shipreq.webapp.base.AssetManifest
 
 object TestJetty extends Jetty(8090)
 
@@ -45,7 +44,7 @@ class Jetty(val port: Int) extends Logger {
   }
 
   private def newServer: Server = {
-    val am = new AssetManifest
+    val am = PrepareEnv.global().config.server.assetManifest
     val sjsm = PrepareEnv.global().config.server.scalaJsManifest
     info("Starting Jetty")
 

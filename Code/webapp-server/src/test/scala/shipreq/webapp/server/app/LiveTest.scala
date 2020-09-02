@@ -5,7 +5,7 @@ import shipreq.webapp.base.data.{Project, ProjectId}
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
 import shipreq.webapp.base.protocol.entrypoint._
 import shipreq.webapp.base.user.{EmailAddr, PersonName}
-import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
+import shipreq.webapp.base.{Urls, WebappConfig}
 import shipreq.webapp.client.public.PublicSpaProtocols.LandingPage.Request
 import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.server.logic.{Obfuscators, Security}
@@ -19,7 +19,7 @@ object LiveTest extends TestSuite {
   import liveTestUtils._
   import userFixture.{TestUser, user1}
 
-  private lazy val am = new AssetManifest
+  private lazy val am = PrepareEnv.global().config.server.assetManifest
   private lazy val sjsm = PrepareEnv.global().config.server.scalaJsManifest
 
   private var pid = Option.empty[ProjectId]

@@ -9,10 +9,13 @@ import scalaz.syntax.applicative._
 import shipreq.base.ops._
 import shipreq.base.util.FxModule._
 import shipreq.base.util._
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic, ScalaJsManifest}
 
 @Lenses
 final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
+
+                                   staticAssetCdn: Option[Url.Absolute.Base],
 
                                    /** Whether or not public registrations are allowed.
                                      * (Registration tokens already issued will still be accepted.)
@@ -35,6 +38,9 @@ final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
                                    scalaJsManifest: ScalaJsManifest[String],
                                    ssr: ServerLogicConfig.SsrConfig,
                                    jaegerTracingConfig: Option[Configuration]) {
+
+  val assetManifest: AssetManifest =
+    AssetManifest(staticAssetCdn)
 
   lazy val traceAlgebraFx: Trace.Algebra[Fx] =
     Trace.Algebra(
@@ -152,6 +158,7 @@ object ServerLogicConfig {
 
     val part1 = (
       ConfigDef.need     [String  ]("url").map(Url.Absolute.Base.apply) |@|
+      ConfigDef.get      [String  ]("staticAssetCdn").map(_.map(Url.Absolute.Base.apply)) |@|
       ConfigDef.getOrUse [Boolean ]("feature.publicRegistration", true).map(Allow.when) |@|
       ConfigDef.getOrUse [Int     ]("applyEvent.thresholdMs", 200).ensure_>=(0).ensure_<(1000) |@|
       ConfigDef.get      [String  ]("googleAnalytics.trackingId") |@|
@@ -172,6 +179,7 @@ object ServerLogicConfig {
     val parts = (part1 |@| part2) {
       case ((
           baseUrl,
+          staticAssetCdn,
           publicRegistration,
           applyEventThresholdMs,
           googleAnalyticsTrackingId,
@@ -187,6 +195,7 @@ object ServerLogicConfig {
           jaegerTracingConfig,
         )) => apply(
                 baseUrl                   = baseUrl,
+                staticAssetCdn            = staticAssetCdn,
                 publicRegistration        = publicRegistration,
                 applyEventThresholdMs     = applyEventThresholdMs,
                 googleAnalyticsTrackingId = googleAnalyticsTrackingId,

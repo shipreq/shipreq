@@ -2,7 +2,6 @@ package shipreq.webapp.server.snippet
 
 import net.liftweb.util.Helpers._
 import shipreq.base.util.FxModule._
-import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.server.app.{Global, LiftDispatcher}
 import shipreq.webapp.server.protocol.entrypoint.{ClientSideProcInvoker, LoadJs}
@@ -12,24 +11,23 @@ import shipreq.webapp.ssr.SsrSharedData.ProjectSpaLoaderData
 object ProjectSpa extends SingleOpStatelessSnippet {
 
   private def ResourceBundle = {
-    val am = new AssetManifest
     val sjsm = Global.config.server.scalaJsManifest
     LoadJs.Bundle(
-      LoadJs.Resource(am.semanticJs),
-      LoadJs.Resource(am.reactJs),
-      LoadJs.Resource(am.reactDomJs),
-      LoadJs.Resource(am.reactDomServerJs),
-      LoadJs.Resource(am.memberLibBundleJs),
+      LoadJs.Resource(assetManifest.semanticJs),
+      LoadJs.Resource(assetManifest.reactJs),
+      LoadJs.Resource(assetManifest.reactDomJs),
+      LoadJs.Resource(assetManifest.reactDomServerJs),
+      LoadJs.Resource(assetManifest.memberLibBundleJs),
       LoadJs.Resource(sjsm.project),
-      LoadJs.Resource(am.katexCss),
-      LoadJs.Resource(am.katexJs),
-      LoadJs.Resource(am.prismJsCss),
-      LoadJs.Resource(am.prismJsCore),
-      LoadJs.Resource(am.prismJsAutoloader),
-      LoadJs.Resource(am.prismJsLineNumbers),
-      LoadJs.Resource(am.prismJsLineNumbersCss),
-      LoadJs.Resource(am.prismJsMatchBraces),
-      LoadJs.Resource(am.prismJsMatchBracesCss),
+      LoadJs.Resource(assetManifest.katexCss),
+      LoadJs.Resource(assetManifest.katexJs),
+      LoadJs.Resource(assetManifest.prismJsCss),
+      LoadJs.Resource(assetManifest.prismJsCore),
+      LoadJs.Resource(assetManifest.prismJsAutoloader),
+      LoadJs.Resource(assetManifest.prismJsLineNumbers),
+      LoadJs.Resource(assetManifest.prismJsLineNumbersCss),
+      LoadJs.Resource(assetManifest.prismJsMatchBraces),
+      LoadJs.Resource(assetManifest.prismJsMatchBracesCss),
     )
   }
 
@@ -47,10 +45,10 @@ object ProjectSpa extends SingleOpStatelessSnippet {
     val logic = Global.logic.projectSpa
 
     val init: ProjectSpaEntryPoint.InitData =
-      logic.initPage(projectId, user.username).unsafeRun()
+      logic.initPage(projectId, user.username, assetManifest).unsafeRun()
 
     val loaderData =
-      ProjectSpaLoaderData(user.username, init.projectName)
+      ProjectSpaLoaderData(user.username, init.projectName, assetManifest)
 
     val loaderHtml =
       Global.ssr.projectSpaLoader(loaderData).unsafeRun()

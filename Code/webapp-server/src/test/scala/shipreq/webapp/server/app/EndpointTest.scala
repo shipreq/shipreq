@@ -2,16 +2,15 @@ package shipreq.webapp.server.app
 
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.FreeOption
-import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.server.test.PrepareEnv
 import utest._
 
 object EndpointTest extends TestSuite {
 
   private val metricsPath = "/opsssss/metric"
-  private lazy val am = new AssetManifest
+  private lazy val am = PrepareEnv.global().config.server.assetManifest
   private lazy val sjsm = PrepareEnv.global().config.server.scalaJsManifest
-  private lazy val endpoint = Endpoint.resolver(metricsPath, sjsm)
+  private lazy val endpoint = Endpoint.resolver(metricsPath, am, sjsm)
 
   def test(expect: Endpoint, path: String, providedOrNull: Endpoint = null): Unit =
     assertEq(path, endpoint(path, FreeOption(providedOrNull)).toOption, Some(expect))
