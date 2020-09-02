@@ -129,7 +129,7 @@ object Common {
 
   val ciSettings: Project => Project =
     if (inCI)
-      _.settings(Global / concurrentRestrictions += Tags.limit(Tags.Test, 4))
+      _.settings(Global / concurrentRestrictions += Tags.limit(Tags.Test, 3))
     else
       identity
 
