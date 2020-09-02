@@ -16,7 +16,7 @@ object Prefetch {
       val res: List[ResourceHint] =
 //        ResourceHint.Prefetch.script(AssetManifest.reactDomServerJs) ::
         ResourceHint.Prefetch.script(AssetManifest.memberLibBundleJs) ::
-        ResourceHint.Prefetch.script(AssetManifest.webappClientHomeJs) ::
+//        ResourceHint.Prefetch.script(AssetManifest.webappClientHomeJs) :: // actually, better security to not even reveal the URL
 //        ResourceHint.Prefetch.script(AssetManifest.katexCss) ::
 //        ResourceHint.Prefetch.script(AssetManifest.katexJs) ::
         Nil

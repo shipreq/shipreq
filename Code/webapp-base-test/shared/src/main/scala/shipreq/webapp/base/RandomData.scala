@@ -2081,7 +2081,7 @@ object RandomData {
         u <- username
         i <- projectIdPublic
         n <- projectName
-      } yield ProjectSpaEntryPoint.InitData(u, i, n)
+      } yield ProjectSpaEntryPoint.InitData(u, i, n, "/j/ww.js")
 
 //    class CrudActionGens[I, V](idG: Gen[I], vG: Gen[V]) {
 //      lazy val create  = vG.map(CrudAction.Create[I, V])

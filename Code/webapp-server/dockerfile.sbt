@@ -1,6 +1,9 @@
 import Common._
 import WebappBuild.Frontend
 import WebappBuild.Server.DockerDeps
+import java.math.BigInteger
+import java.nio.file.Files
+import java.security.MessageDigest
 
 dockerfile in docker := {
   val jettyHome = "/jetty"
@@ -8,7 +11,6 @@ dockerfile in docker := {
   val srcDocker = sourceDirectory.value / "docker"
   val tmp       = target.value / "docker-prep" // must be distinct from (target in docker)
   val wsjar     = "webapp-server.jar"
-  val webXml    = "WEB-INF/web.xml"
 
   def prepareClean(f: String): Unit =
     execInBash(s"""rm -rf "$f" && mkdir -p "$f"""")
@@ -34,11 +36,11 @@ dockerfile in docker := {
 
   // Prepare exploded WAR
   val tmpWar = prepareTmpDir("war")
+  var scalaJsPathPublic  = null: String
+  var scalaJsPathHome    = null: String
+  var scalaJsPathProject = null: String
+  var scalaJsPathWw      = null: String
   val warTiers = {
-    val scalaJsPathPublic  = Frontend.scalaJsPathPublic      .value
-    val scalaJsPathHome    = Frontend.scalaJsPathHome        .value
-    val scalaJsPathProject = Frontend.scalaJsPathProject     .value
-    val scalaJsPathWw      = Frontend.scalaJsPathWw          .value
     val vizJs              = Frontend.manifestPath("vizJs")  .value
     val vizWasm            = Frontend.manifestPath("vizWasm").value
     val japgollyLib        = ".*(adt-macros|config_|macro-utils|nonempty|nyaya|scalaz-ext|stdlib-ext|univeq|scala.?graal).*"
@@ -49,8 +51,42 @@ dockerfile in docker := {
     }
     // for f in $(seq 19); do find /tmp/shipreq.sbt/webapp-server/target/docker/$f/bucket-* -type f |sort|xargs du -sch; echo; done
     // for f in $(seq 19); do find /tmp/shipreq-release.sbt/webapp-server/target/docker/$f/bucket-* -type f |sort|xargs du -sch; echo; done
-    webappPrepare.value
-      .filterNot(_._1.isDirectory)
+    var contents = webappPrepare.value.filterNot(_._1.isDirectory)
+
+    def md5Sum(f: File): String = {
+      val md5 = MessageDigest.getInstance("MD5")
+      md5.update(Files.readAllBytes(f.toPath))
+      String.format("%032x", new BigInteger(1, md5.digest()))
+    }
+
+    def renameScalaJs(_devUrl: String): String = {
+      val devUrl = _devUrl.stripPrefix("/")
+      val (found, other) = contents.partition(_._2 == devUrl)
+      require(found.size == 1, s"Invalid results for $devUrl: $found")
+      val file = found.head._1
+      val baseDir = file.getAbsolutePath.stripSuffix(devUrl)
+      val hash = md5Sum(file)
+      val newPath = s"s/$hash.js"
+      val newFile = new File(s"$baseDir/$newPath")
+      // println("=" * 80 )
+      // println(found)
+      // println(newUrl)
+      // println(file.getAbsolutePath)
+      // println(newFile.getAbsolutePath)
+      // println(hash)
+      // println("=" * 80)
+      println(s"Renaming $file => $newFile")
+      IO.move(file, newFile)
+      contents = other :+ ((newFile, newPath))
+      "/" + newPath
+    }
+
+    scalaJsPathPublic  = renameScalaJs(Frontend.scalaJsDevPathPublic)
+    scalaJsPathHome    = renameScalaJs(Frontend.scalaJsDevPathHome)
+    scalaJsPathProject = renameScalaJs(Frontend.scalaJsDevPathProject)
+    scalaJsPathWw      = renameScalaJs(Frontend.scalaJsDevPathWw)
+
+    contents
       .groupBy(x => withLibPart(x._2) match {
       //case (_, None)                                        => (97, false) // -
         case (p, None)    if p endsWith   ".html"             => (96, false) // -
@@ -130,9 +166,13 @@ dockerfile in docker := {
     from(Docker.baseImage)
 
     env(
-      "NAME"       -> "shipreq/webapp",
-      "JETTY_BASE" -> base,
-      "JETTY_HOME" -> jettyHome)
+      "NAME"                      -> "shipreq/webapp",
+      "JETTY_BASE"                -> base,
+      "JETTY_HOME"                -> jettyHome,
+      "SHIPREQ_SCALAJS_PUBLIC"    -> scalaJsPathPublic,
+      "SHIPREQ_SCALAJS_HOME"      -> scalaJsPathHome,
+      "SHIPREQ_SCALAJS_PROJECT"   -> scalaJsPathProject,
+      "SHIPREQ_SCALAJS_WEBWORKER" -> scalaJsPathWw)
 
     copy(tmpJetty, s"$jettyHome/")
 

@@ -37,7 +37,7 @@ final class AppServletFilter extends LiftFilter with HasLogger {
     // Initialise Prometheus
     val p = g.config.server.prometheus
     if (p.enabled) {
-      val endpointResolver = Endpoint.resolver(p.path)
+      val endpointResolver = Endpoint.resolver(p.path, g.config.server.scalaJsManifest)
       installPrometheus(new PrometheusMetrics.Unsafe(endpointResolver), p.path, p.bearerToken)
     }
 

@@ -24,18 +24,9 @@ function svgoOptimizeSync(svgo, content) {
 
 const semanticUiImport = 'https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin';
 
-// SJS resources all go in /j/ as is configured in web.xml
-const sjsDir = 'j';
-
 const faviconHead = FS.readFileSync('src/favicon/head.html').toString().trim()
 
-const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
-
-  const sjs = (name, manifest) => ({
-    type: 'external',
-    path: `${sjsDir}/${sjsName(name)}`,
-    manifest,
-  });
+const makeConfig = ({ mode, name, staticDir, htmlMinifyOptions }) => {
 
   const svgo = new Svgo({
     plugins: [{
@@ -124,25 +115,6 @@ const makeConfig = ({ mode, name, sjsName, staticDir, htmlMinifyOptions }) => {
       faviconManifests: { type: 'local', src: 'src/favicon', files: '*.{webmanifest,xml}', manifest: faviconManifest },
 
       images: { type: 'local', src: 'src/images', files: '*.{svg,png}', manifest: CamelCase },
-
-      webappClientPublic: [
-        sjs('public', 'webappClientPublicJs'),
-        'publicLibs',
-      ],
-
-      webappClientHome: [
-        sjs('home', 'webappClientHomeJs'),
-        'memberLibs',
-      ],
-
-      webappClientProject: [
-        sjs('project', 'webappClientProjectJs'),
-      ],
-
-      webappClientWw: [
-        sjs('ww', 'webappClientWwJs'),
-        'vizJs',
-      ],
 
       analytics: fromWebpack({ files: 'analytics.js', manifest: CamelCase }),
 

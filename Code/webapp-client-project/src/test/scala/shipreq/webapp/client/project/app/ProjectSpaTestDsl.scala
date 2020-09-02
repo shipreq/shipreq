@@ -283,7 +283,7 @@ object ProjectSpaTestDsl {
     val global       = TestGlobal(project)
     val confirmJs    = TestConfirmJs()
     val promptJs     = TestPromptJs()
-    val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name)
+    val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name, "/ww.js")
     val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs, global.optionalFullscreen)
     val rc           = MockRouterCtl[Page]()
     val init         = TestState(page, global.unsafeProject(), rd)

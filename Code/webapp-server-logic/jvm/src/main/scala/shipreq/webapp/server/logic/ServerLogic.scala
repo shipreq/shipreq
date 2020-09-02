@@ -30,6 +30,7 @@ object ServerLogic {
              config: ServerLogicConfig): ServerLogic[F] = {
 
     implicit val common = CommonProtocolLogic[F]
+    implicit val scalaJsManifest = config.scalaJsManifest
 
     ServerLogic(
       common,

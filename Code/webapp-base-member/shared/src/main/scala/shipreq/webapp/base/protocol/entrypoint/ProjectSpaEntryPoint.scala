@@ -6,9 +6,10 @@ import shipreq.webapp.base.user.Username
 
 object ProjectSpaEntryPoint {
 
-  final case class InitData(username: Username,
-                            projectId: ProjectId.Public,
-                            projectName: Project.Name)
+  final case class InitData(username      : Username,
+                            projectId     : ProjectId.Public,
+                            projectName   : Project.Name,
+                            webWorkerJsUrl: String)
 
   implicit val picklerInitData: Pickler[InitData] =
     new Pickler[InitData] {
@@ -18,12 +19,15 @@ object ProjectSpaEntryPoint {
         state.pickle(a.username)
         state.pickle(a.projectId)
         state.pickle(a.projectName)
+        state.pickle(a.webWorkerJsUrl)
       }
+
       override def unpickle(implicit state: UnpickleState): InitData = {
-        val username    = state.unpickle[Username]
-        val projectId   = state.unpickle[ProjectId.Public]
-        val projectName = state.unpickle[Project.Name]
-        InitData(username, projectId, projectName)
+        val username       = state.unpickle[Username]
+        val projectId      = state.unpickle[ProjectId.Public]
+        val projectName    = state.unpickle[Project.Name]
+        val webWorkerJsUrl = state.unpickle[String]
+        InitData(username, projectId, projectName, webWorkerJsUrl)
       }
     }
 

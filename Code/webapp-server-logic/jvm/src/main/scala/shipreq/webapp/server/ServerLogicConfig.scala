@@ -9,7 +9,7 @@ import scalaz.syntax.applicative._
 import shipreq.base.ops._
 import shipreq.base.util.FxModule._
 import shipreq.base.util._
-import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic}
+import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic, ScalaJsManifest}
 
 @Lenses
 final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
@@ -32,6 +32,7 @@ final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
                                    projectSpa: ProjectSpaLogic.Config,
                                    prometheus: ServerLogicConfig.Prometheus,
                                    security: ServerLogicConfig.Security,
+                                   scalaJsManifest: ScalaJsManifest[String],
                                    ssr: ServerLogicConfig.SsrConfig,
                                    jaegerTracingConfig: Option[Configuration]) {
 
@@ -147,21 +148,61 @@ object ServerLogicConfig {
       ConfigDef.getOrUse("enabled", true).map(apply)
   }
 
-  def config: ConfigDef[ServerLogicConfig] =
-    JaegerTracingConfig.external *>
-    ( ConfigDef.need       [String  ]       ("url").map(Url.Absolute.Base.apply) |@|
-      ConfigDef.getOrUse   [Boolean ]       ("feature.publicRegistration", true).map(Allow.when) |@|
-      ConfigDef.getOrUse   [Int     ]       ("applyEvent.thresholdMs", 200).ensure_>=(0).ensure_<(1000) |@|
-      ConfigDef.get        [String  ]       ("googleAnalytics.trackingId") |@|
-      ConfigDef.need       [String  ]       ("taskman.schema") |@|
-      ConfigDef.getOrUse   [Boolean ]       ("taskman.init", true) |@|
-      RetriesJvm.config.withPrefix          ("taskman.init.retry.") |@|
-      ProjectSpaLogic.Config.defn.withPrefix("projectSpa.") |@|
-      Prometheus.config.withPrefix          ("prometheus.") |@|
-      Security.config.withPrefix            ("security.") |@|
-      SsrConfig.config.withPrefix           ("ssr.") |@|
-      JaegerTracingConfig.main              ("webapp")
-  ) (apply)
-      .withPrefix("shipreq.")
+  def config: ConfigDef[ServerLogicConfig] = {
+
+    val part1 = (
+      ConfigDef.need     [String  ]("url").map(Url.Absolute.Base.apply) |@|
+      ConfigDef.getOrUse [Boolean ]("feature.publicRegistration", true).map(Allow.when) |@|
+      ConfigDef.getOrUse [Int     ]("applyEvent.thresholdMs", 200).ensure_>=(0).ensure_<(1000) |@|
+      ConfigDef.get      [String  ]("googleAnalytics.trackingId") |@|
+      ConfigDef.need     [String  ]("taskman.schema") |@|
+      ConfigDef.getOrUse [Boolean ]("taskman.init", true)
+    ).tupled
+
+    val part2 = (
+      RetriesJvm.config.withPrefix             ("taskman.init.retry.") |@|
+      ProjectSpaLogic.Config.defn.withPrefix   ("projectSpa.") |@|
+      Prometheus.config.withPrefix             ("prometheus.") |@|
+      Security.config.withPrefix               ("security.") |@|
+      ScalaJsManifest.config[String].withPrefix("scalajs.") |@|
+      SsrConfig.config.withPrefix              ("ssr.") |@|
+      JaegerTracingConfig.main                 ("webapp")
+    ).tupled
+
+    val parts = (part1 |@| part2) {
+      case ((
+          baseUrl,
+          publicRegistration,
+          applyEventThresholdMs,
+          googleAnalyticsTrackingId,
+          taskmanSchema,
+          initTaskmanOnBoot,
+        ), (
+          initTaskmanRetry,
+          projectSpa,
+          prometheus,
+          security,
+          scalaJsManifest,
+          ssr,
+          jaegerTracingConfig,
+        )) => apply(
+                baseUrl                   = baseUrl,
+                publicRegistration        = publicRegistration,
+                applyEventThresholdMs     = applyEventThresholdMs,
+                googleAnalyticsTrackingId = googleAnalyticsTrackingId,
+                taskmanSchema             = taskmanSchema,
+                initTaskmanOnBoot         = initTaskmanOnBoot,
+                initTaskmanRetry          = initTaskmanRetry,
+                projectSpa                = projectSpa,
+                prometheus                = prometheus,
+                security                  = security,
+                scalaJsManifest           = scalaJsManifest,
+                ssr                       = ssr,
+                jaegerTracingConfig       = jaegerTracingConfig,
+              )
+    }
+
+    JaegerTracingConfig.external *> parts.withPrefix("shipreq.")
+  }
 
 }

@@ -3,7 +3,7 @@ package shipreq.webapp.server.app
 import shipreq.base.util.FreeOption
 import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.WebappConfig.liftCtxPath
-import shipreq.webapp.server.logic.DispatchLogic
+import shipreq.webapp.server.logic.{DispatchLogic, ScalaJsManifest}
 
 sealed abstract class Endpoint(final val `type`: String, final val name: String)
 object Endpoint {
@@ -27,14 +27,15 @@ object Endpoint {
   // Note this is only meant to resolve generic requests.
   // Specific requests that DispatchLogic handles correctly set the Endpoint directly via MetricsLogic which results in
   // the FreeOption[Endpoint] param to Resolver being set.
-  def resolver(metricsPath: String): Resolver = {
+  def resolver(metricsPath: String, sjs: ScalaJsManifest[String]): Resolver = {
+
     val exactMatches = new java.util.HashMap[String, Endpoint]
     exactMatches.put(metricsPath                                    , Metrics)
     exactMatches.put(s"/$liftCtxPath/content-security-policy-report", AssetSecurityPolicy)
-    exactMatches.put(AssetManifest.webappClientHomeJs               , AssetSpecific("js", "shipreq-home"))
-    exactMatches.put(AssetManifest.webappClientProjectJs            , AssetSpecific("js", "shipreq-project"))
-    exactMatches.put(AssetManifest.webappClientPublicJs             , AssetSpecific("js", "shipreq-public"))
-    exactMatches.put(AssetManifest.webappClientWwJs                 , AssetSpecific("js", "shipreq-ww"))
+    exactMatches.put(sjs.home                                       , AssetSpecific("js", "shipreq-home"))
+    exactMatches.put(sjs.project                                    , AssetSpecific("js", "shipreq-project"))
+    exactMatches.put(sjs.public                                     , AssetSpecific("js", "shipreq-public"))
+    exactMatches.put(sjs.webWorker                                  , AssetSpecific("js", "shipreq-ww"))
     exactMatches.put(AssetManifest.analyticsJs                      , AssetSpecific("js", "analytics"))
     exactMatches.put(AssetManifest.loadjs                           , AssetSpecific("js", "load"))
     exactMatches.put(AssetManifest.memberLibBundleJs                , AssetSpecific("js", "member_lib_bundle"))

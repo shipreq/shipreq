@@ -19,6 +19,8 @@ object LiveTest extends TestSuite {
   import liveTestUtils._
   import userFixture.{TestUser, user1}
 
+  private lazy val sjsm = PrepareEnv.global().config.server.scalaJsManifest
+
   private var pid = Option.empty[ProjectId]
 
   private val prepare = onceUnit {
@@ -35,7 +37,7 @@ object LiveTest extends TestSuite {
 
     "root" - {
       get("/")
-        .assertSpa(AssetManifest.webappClientPublicJs, PublicSpaEntryPoint.proc)
+        .assertSpa(sjsm.public, PublicSpaEntryPoint.proc)
         .assertBodyTitle(WebappConfig.makePageTitle())
       ()
     }
@@ -58,7 +60,7 @@ object LiveTest extends TestSuite {
     }
 
     "webappClientPublicJs" - {
-      get(AssetManifest.webappClientPublicJs)
+      get(sjsm.public)
         .assertOk
         .assertContentTypeJs
         .assertBodyContains("function")
@@ -75,7 +77,7 @@ object LiveTest extends TestSuite {
 
     "membersHome" - {
       get(Urls.memberHome.relativeUrl, user1)
-        .assertSpa(AssetManifest.webappClientHomeJs, HomeSpaEntryPoint.proc)
+        .assertSpa(sjsm.home, HomeSpaEntryPoint.proc)
         .assertBodyTitle(WebappConfig.makePageTitle())
       ()
     }
@@ -83,7 +85,7 @@ object LiveTest extends TestSuite {
     "projectSpa" - {
       val p = Obfuscators.projectId.obfuscate(pid.get)
       get(Urls.project(p).relativeUrl, user1)
-        .assertSpa(AssetManifest.webappClientProjectJs, ProjectSpaEntryPoint.proc)
+        .assertSpa(sjsm.project, ProjectSpaEntryPoint.proc)
       ()
     }
 

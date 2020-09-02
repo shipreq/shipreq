@@ -123,12 +123,4 @@ object AssetManifest {
   def vizJs = "/s/9a73b4b3e629569bd6402c2bbbb4a178.js"
 
   def vizWasm = "/s/c77e522115f8de011debe84fc7946e52.wasm"
-
-  def webappClientHomeJs = "/j/h.js"
-
-  def webappClientProjectJs = "/j/p.js"
-
-  def webappClientPublicJs = "/j/a.js"
-
-  def webappClientWwJs = "/j/w.js"
 }

@@ -29,13 +29,11 @@ object WebappBuild {
       val List(line) = lines.filter(_.contains(s" $name ="))
       "(?<=\"/)(.+)(?=\")".r.findFirstIn(line).get
     }
-    def scalaJsPath(name: String) = Def.setting {
-      manifestPath(s"webappClient${name}Js").value
-    }
-    def scalaJsPathPublic  = scalaJsPath("Public")
-    def scalaJsPathHome    = scalaJsPath("Home")
-    def scalaJsPathProject = scalaJsPath("Project")
-    def scalaJsPathWw      = scalaJsPath("Ww")
+    def scalaJsDevPath(name: String) = s"/j/$name.js"
+    def scalaJsDevPathPublic  = scalaJsDevPath("public")
+    def scalaJsDevPathHome    = scalaJsDevPath("home")
+    def scalaJsDevPathProject = scalaJsDevPath("project")
+    def scalaJsDevPathWw      = scalaJsDevPath("ww")
   }
 
   lazy val webapp =
@@ -225,12 +223,16 @@ object WebappBuild {
     import JettyPlugin    .autoImport._
     import WebappPlugin   .autoImport._
 
-//    lazy val copyClientJs = taskKey[Unit]("Copies required webapp client resources.")
-
     lazy val DockerDeps = config("dockerdeps")
 
     def assetSettings: Project => Project =
       _.settings(
+        javaOptions in Jetty ++= Seq(
+          "-Dshipreq.scalajs.public="    + Frontend.scalaJsDevPathPublic,
+          "-Dshipreq.scalajs.home="      + Frontend.scalaJsDevPathHome,
+          "-Dshipreq.scalajs.project="   + Frontend.scalaJsDevPathProject,
+          "-Dshipreq.scalajs.webWorker=" + Frontend.scalaJsDevPathWw
+        ),
         webappPostProcess := {
           implicit val log = streams.value.log
 
@@ -239,10 +241,10 @@ object WebappBuild {
           val jsWebappClientHome     = (scalaJSLinkedFile in Compile in webappClientHome    ).value
           val jsWebappClientProject  = (scalaJSLinkedFile in Compile in webappClientProject ).value
           val jsWebappClientWw       = (scalaJSLinkedFile in Compile in webappClientWw      ).value
-          val pathScalaJsPathPublic  = Frontend.scalaJsPathPublic .value
-          val pathScalaJsPathHome    = Frontend.scalaJsPathHome   .value
-          val pathScalaJsPathProject = Frontend.scalaJsPathProject.value
-          val pathScalaJsPathWw      = Frontend.scalaJsPathWw     .value
+          val pathScalaJsPathPublic  = Frontend.scalaJsDevPathPublic
+          val pathScalaJsPathHome    = Frontend.scalaJsDevPathHome
+          val pathScalaJsPathProject = Frontend.scalaJsDevPathProject
+          val pathScalaJsPathWw      = Frontend.scalaJsDevPathWw
           (target: File) => {
 
             // Copy Scala.JS output

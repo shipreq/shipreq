@@ -126,6 +126,7 @@ object ProjectSpaLogic extends StrictLogging {
                         redis   : Redis.ProjectAlgebra[F],
                         runDB   : D ~> F,
                         security: Security.Algebra[F],
+                        sjsUrls : ScalaJsManifest[String],
                         svr     : Server.Time[F],
                         taskman : TaskmanApi[F],
                         trace   : Trace.Algebra[F]): ProjectSpaLogic[F] = {
@@ -150,7 +151,7 @@ object ProjectSpaLogic extends StrictLogging {
           name <- runDB(db.projectSpaInitPage(pid))
         } yield {
           val pidPub = Obfuscators.projectId.obfuscate(pid)
-          ProjectSpaEntryPoint.InitData(username, pidPub, name)
+          ProjectSpaEntryPoint.InitData(username, pidPub, name, webWorkerJsUrl = sjsUrls.webWorker)
         }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

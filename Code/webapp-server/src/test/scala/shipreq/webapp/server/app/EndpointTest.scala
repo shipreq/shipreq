@@ -3,12 +3,14 @@ package shipreq.webapp.server.app
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.FreeOption
 import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.server.test.PrepareEnv
 import utest._
 
 object EndpointTest extends TestSuite {
 
   private val metricsPath = "/opsssss/metric"
-  private val endpoint = Endpoint.resolver(metricsPath)
+  private lazy val sjsm = PrepareEnv.global().config.server.scalaJsManifest
+  private lazy val endpoint = Endpoint.resolver(metricsPath, sjsm)
 
   def test(expect: Endpoint, path: String, providedOrNull: Endpoint = null): Unit =
     assertEq(path, endpoint(path, FreeOption(providedOrNull)).toOption, Some(expect))
@@ -29,17 +31,22 @@ object EndpointTest extends TestSuite {
       "metrics" - test(Endpoint.Metrics, metricsPath)
     }
 
-    "faviconIco"            - test(Endpoint.AssetSpecific("ico", "favicon"),          AssetManifest.faviconIco)
-    "webappClientHomeJs"    - test(Endpoint.AssetSpecific("js", "shipreq-home"),      AssetManifest.webappClientHomeJs)
-    "webappClientProjectJs" - test(Endpoint.AssetSpecific("js", "shipreq-project"),   AssetManifest.webappClientProjectJs)
-    "webappClientPublicJs"  - test(Endpoint.AssetSpecific("js", "shipreq-public"),    AssetManifest.webappClientPublicJs)
-    "webappClientWwJs"      - test(Endpoint.AssetSpecific("js", "shipreq-ww"),        AssetManifest.webappClientWwJs)
-    "analyticsJs"           - test(Endpoint.AssetSpecific("js", "analytics"),         AssetManifest.analyticsJs)
-    "loadjs"                - test(Endpoint.AssetSpecific("js", "load"),              AssetManifest.loadjs)
-    "memberLibBundleJs"     - test(Endpoint.AssetSpecific("js", "member_lib_bundle"), AssetManifest.memberLibBundleJs)
-    "vizJs"                 - test(Endpoint.AssetSpecific("js", "viz"),               AssetManifest.vizJs)
-    "semanticJs"            - test(Endpoint.AssetSpecific("js", "semantic"),          AssetManifest.semanticJs)
-    "semanticCss"           - test(Endpoint.AssetSpecific("css", "semantic"),         AssetManifest.semanticCss)
+    "sjs" - {
+      "home"      - test(Endpoint.AssetSpecific("js", "shipreq-home"),    sjsm.home)
+      "project"   - test(Endpoint.AssetSpecific("js", "shipreq-project"), sjsm.project)
+      "public"    - test(Endpoint.AssetSpecific("js", "shipreq-public"),  sjsm.public)
+      "webWorker" - test(Endpoint.AssetSpecific("js", "shipreq-ww"),      sjsm.webWorker)
+    }
+
+    "specificAssets" - {
+      "faviconIco"        - test(Endpoint.AssetSpecific("ico", "favicon"),          AssetManifest.faviconIco)
+      "analyticsJs"       - test(Endpoint.AssetSpecific("js", "analytics"),         AssetManifest.analyticsJs)
+      "loadjs"            - test(Endpoint.AssetSpecific("js", "load"),              AssetManifest.loadjs)
+      "memberLibBundleJs" - test(Endpoint.AssetSpecific("js", "member_lib_bundle"), AssetManifest.memberLibBundleJs)
+      "vizJs"             - test(Endpoint.AssetSpecific("js", "viz"),               AssetManifest.vizJs)
+      "semanticJs"        - test(Endpoint.AssetSpecific("js", "semantic"),          AssetManifest.semanticJs)
+      "semanticCss"       - test(Endpoint.AssetSpecific("css", "semantic"),         AssetManifest.semanticCss)
+    }
 
     "genericAssets" - {
       "css"   - test(Endpoint.AssetGeneric("css"),    "/blah/x.css")

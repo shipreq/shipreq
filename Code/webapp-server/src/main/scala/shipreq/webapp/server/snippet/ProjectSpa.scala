@@ -18,7 +18,7 @@ object ProjectSpa extends SingleOpStatelessSnippet {
       LoadJs.Resource(AssetManifest.reactDomJs),
       LoadJs.Resource(AssetManifest.reactDomServerJs),
       LoadJs.Resource(AssetManifest.memberLibBundleJs),
-      LoadJs.Resource(AssetManifest.webappClientProjectJs),
+      LoadJs.Resource(Global.config.server.scalaJsManifest.project),
       LoadJs.Resource(AssetManifest.katexCss),
       LoadJs.Resource(AssetManifest.katexJs),
       LoadJs.Resource(AssetManifest.prismJsCss),

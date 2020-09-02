@@ -317,7 +317,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     }
 
     private val webWorkerClient: WebWorkerClient.Instance =
-      WebWorkerClient.Instance
+      WebWorkerClient(initPageData.webWorkerJsUrl)
 
     private val reqDetail = ReqDetail(ReqDetail.StaticProps(
       sspUpdateContent      = sspUpdateContent,
