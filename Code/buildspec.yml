@@ -19,9 +19,10 @@ phases:
           export CI=1;
           export MODE=release;
           SBT="sbt -Dsbt.server.autostart=false -no-colors -J-Xmx12g";
-          $SBT clean test:compile | strip-ansi && \
-          $SBT test | strip-ansi && \
-          $SBT taskman-server/docker webapp-server/docker | strip-ansi
+          $SBT clean test | strip-ansi && \
+          $SBT taskman-server/docker     webapp-server/docker \
+               taskman-server/dockerPush webapp-server/dockerPush \
+             | strip-ansi
         '
     finally:
       - find /root/.cache/coursier /root/.ivy2 /root/.sbt -name '*.lock' -type f -exec rm -fv {} +
