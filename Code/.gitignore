@@ -9,3 +9,4 @@ target
 *.out
 *.err
 project/metals.sbt
+.vscode
