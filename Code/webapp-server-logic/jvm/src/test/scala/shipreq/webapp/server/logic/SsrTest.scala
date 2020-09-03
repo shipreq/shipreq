@@ -24,7 +24,7 @@ object SsrTest extends TestSuite {
 
   private def baseUrl = Url.Absolute.Base("https://shipreq.com")
 
-  private implicit val am = AssetManifest(Some(Url.Absolute.Base("https://static.shipreq.com")))
+  private implicit val am = AssetManifest(Some(AssetManifest.StaticAssetCdn("https://static.shipreq.com")))
 
   private lazy val ssr = {
     implicit val trace = Trace.Algebra.off[Fx]

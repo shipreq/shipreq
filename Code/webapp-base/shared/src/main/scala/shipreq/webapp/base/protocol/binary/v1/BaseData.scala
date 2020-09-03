@@ -463,8 +463,8 @@ object BaseData {
         }
     }
 
-  implicit lazy val pickleUrlAbsoluteBase =
-    transformPickler(Url.Absolute.Base.apply)(_.value)
+  implicit lazy val pickleAssetManifestStaticAssetCdn =
+    transformPickler(AssetManifest.StaticAssetCdn.apply)(_.value)
 
   implicit lazy val pickleAssetManifest =
     transformPickler(AssetManifest.apply)(_.staticAssetCdn)

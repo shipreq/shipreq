@@ -13,9 +13,9 @@ import scalaz.syntax.monad._
 import scalaz.{Monad, Name, Need}
 import shipreq.base.util._
 import shipreq.taskman.api.TaskId
-import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.{ProjectId, VerificationToken}
 import shipreq.webapp.base.user._
+import shipreq.webapp.base.{AssetManifest, Urls}
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.logic.dispatch._
@@ -143,7 +143,7 @@ object DispatchBM {
 
   implicit val config = ServerLogicConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
-    staticAssetCdn             = Some(Url.Absolute.Base("https://static.shipreq.com")),
+    staticAssetCdn             = Some(AssetManifest.StaticAssetCdn("https://static.shipreq.com")),
     publicRegistration         = Allow,
     applyEventThresholdMs      = 1000,
     googleAnalyticsTrackingId  = None,

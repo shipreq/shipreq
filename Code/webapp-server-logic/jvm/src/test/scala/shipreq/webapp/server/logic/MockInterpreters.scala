@@ -11,6 +11,7 @@ import shipreq.base.test.JsonTestUtil._
 import shipreq.base.test.SyncEffect
 import shipreq.base.util._
 import shipreq.taskman.api.{Task, TaskId, TaskStatus, TaskmanApi}
+import shipreq.webapp.base.AssetManifest
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.WebappTestUtil._
@@ -510,7 +511,7 @@ object MockInterpreters {
 
   val config = ServerLogicConfig(
     baseUrl                    = Url.Absolute.Base("https://test.shipreq.com"),
-    staticAssetCdn             = Some(Url.Absolute.Base("https://static.shipreq.com")),
+    staticAssetCdn             = Some(AssetManifest.StaticAssetCdn("https://static.shipreq.com")),
     publicRegistration         = Allow,
     applyEventThresholdMs      = 1000,
     googleAnalyticsTrackingId  = None,

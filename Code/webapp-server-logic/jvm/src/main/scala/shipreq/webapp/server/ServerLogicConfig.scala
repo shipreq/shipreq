@@ -15,7 +15,7 @@ import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic, ScalaJsManif
 @Lenses
 final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
 
-                                   staticAssetCdn: Option[Url.Absolute.Base],
+                                   staticAssetCdn: Option[AssetManifest.StaticAssetCdn],
 
                                    /** Whether or not public registrations are allowed.
                                      * (Registration tokens already issued will still be accepted.)
@@ -158,7 +158,7 @@ object ServerLogicConfig {
 
     val part1 = (
       ConfigDef.need     [String  ]("url").map(Url.Absolute.Base.apply) |@|
-      ConfigDef.get      [String  ]("staticAssetCdn").map(_.map(Url.Absolute.Base.apply)) |@|
+      ConfigDef.get      [String  ]("staticAssetCdn").map(_.map(AssetManifest.StaticAssetCdn)) |@|
       ConfigDef.getOrUse [Boolean ]("feature.publicRegistration", true).map(Allow.when) |@|
       ConfigDef.getOrUse [Int     ]("applyEvent.thresholdMs", 200).ensure_>=(0).ensure_<(1000) |@|
       ConfigDef.get      [String  ]("googleAnalytics.trackingId") |@|
@@ -197,7 +197,7 @@ object ServerLogicConfig {
 
         val scalaJsManifest2 =
           staticAssetCdn match {
-            case Some(cdn) => scalaJsManifest.map(path => if (path.startsWith("/s/")) (cdn / Url.Relative(path)).absoluteUrl else path)
+            case Some(cdn) => scalaJsManifest.map(cdn.modPath)
             case None      => scalaJsManifest
           }
 

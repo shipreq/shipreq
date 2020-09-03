@@ -2066,7 +2066,7 @@ object RandomData {
 
   lazy val genAssetManifest: Gen[AssetManifest] = {
     val am1 = AssetManifest(None)
-    val am2 = AssetManifest(Some(Url.Absolute.Base("https://static.shipreq.com")))
+    val am2 = AssetManifest(Some(AssetManifest.StaticAssetCdn("https://static.shipreq.com")))
     Gen.choose(am1, am2)
   }
 
