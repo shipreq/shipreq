@@ -62,7 +62,7 @@ final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClie
 
       def loginPage(redirectOnLogin: Option[Url.Relative]): VdomElement = {
         val ss = StateSnapshot.zoomL(State.login)(s).setStateVia($)
-        Login.Props(ss, awLogin, p.am, sspLogin, sspResetPassword1, redirectOnLogin).render
+        Login.Props(ss, awLogin, sspLogin, sspResetPassword1, redirectOnLogin).render
       }
 
       val content: VdomElement =
@@ -86,7 +86,7 @@ final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClie
             Register1.Props(initData.publicRegistration, p.routerCtl, ss, awRegister1, sspRegister1).render
 
           case Page.Token(PublicSpaRoute.Register2, token) =>
-            Register2.Props(token, sspRegister2, p.am).render
+            Register2.Props(token, sspRegister2).render
 
           case Page.Static(PublicSpaRoute.Privacy) =>
             Legal.Privacy(p.routerCtl)

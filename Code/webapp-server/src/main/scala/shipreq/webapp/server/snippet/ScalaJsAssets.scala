@@ -10,15 +10,11 @@ object ScalaJsAssets extends DispatchSnippet {
   private val sjs = Global.config.server.scalaJsManifest
 
   override val dispatch: DispatchIt = {
-    case "prefetchProject" => prefetchProject
-    case "public"          => public
-    case "home"            => home
-    case "project"         => project
-    case "webWorker"       => webWorker
+    case "public"    => public
+    case "home"      => home
+    case "project"   => project
+    case "webWorker" => webWorker
   }
-
-  private val prefetchProject: NodeSeq => NodeSeq =
-    "*" #> <link data-lift="head" rel="prefetch" href={sjs.project} />
 
   private val public: NodeSeq => NodeSeq =
     "*" #> <script src={sjs.public} />

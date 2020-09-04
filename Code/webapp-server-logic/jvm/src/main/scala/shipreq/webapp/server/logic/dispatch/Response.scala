@@ -4,7 +4,6 @@ import shipreq.base.util.{BinaryData, Url}
 import shipreq.webapp.base.Urls
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.user.User
-import shipreq.webapp.base.util.ResourceHint
 
 final case class Response(cmd: ResponseCmd, cookies: Cookie.Update)
 
@@ -17,22 +16,6 @@ object ResponseCmd {
 
   type Header = (String, String)
   type Headers = List[Header]
-
-  implicit class ResourceHintExt(private val rh: ResourceHint) extends AnyVal {
-    def headerValue: String = {
-      val g = rh.generic
-      var h = s"<${g.href}>; rel=${g.rel}"
-      g.as.foreach(as => h = s"$h; as=$as")
-      g.`type`.foreach(t => h = h + "; type=\"" + t + "\"")
-      g.crossorigin match {
-        case Some("anonymous") => h = h + "; crossorigin"
-        case Some(v)           => h = h + "; crossorigin=\"" + v + "\""
-        case None              => ()
-      }
-      if (g.relativeHref) h = h + "; nopush"
-      h
-    }
-  }
 
   final case class ServePublicSpa(user: Option[User]) extends ResponseCmd
 

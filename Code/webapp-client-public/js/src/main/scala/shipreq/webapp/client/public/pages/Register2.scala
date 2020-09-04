@@ -17,16 +17,14 @@ import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.user._
 import shipreq.webapp.base.validation.Implicits._
 import shipreq.webapp.base.validation.{Composite, Simple}
-import shipreq.webapp.base.{AssetManifest, CommmonUiText, Urls, WebappConfig}
-import shipreq.webapp.client.public.Prefetch
+import shipreq.webapp.base.{CommmonUiText, Urls, WebappConfig}
 import shipreq.webapp.client.public.PublicSpaProtocols.Register2.{Request, Result}
 import shipreq.webapp.client.public.Styles.{register2 => *}
 
 object Register2 {
 
   final case class Props(token : VerificationToken,
-                         submit: ServerSideProcInvoker[Request, ErrorMsg, Result],
-                         am    : AssetManifest) {
+                         submit: ServerSideProcInvoker[Request, ErrorMsg, Result]) {
     @inline def render: VdomElement = Component(this)
   }
 
@@ -106,9 +104,6 @@ object Register2 {
         .withStateLens(State.password1)
 
     private def renderForm(p: Props, s: State): VdomElement = {
-
-      // User is very close to creating an account and logging in - prefetch new resources for next page
-      Prefetch.memberHome($.props.runNow().am)
 
       val usernameValidator = UserValidators.username(s.takenUsernames)
 

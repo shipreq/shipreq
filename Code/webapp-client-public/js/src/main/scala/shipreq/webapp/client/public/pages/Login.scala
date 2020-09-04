@@ -16,15 +16,13 @@ import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.user.{EmailAddr, UserValidators, Username}
-import shipreq.webapp.base.{AssetManifest, CommmonUiText, Urls}
-import shipreq.webapp.client.public.Prefetch
+import shipreq.webapp.base.{CommmonUiText, Urls}
 import shipreq.webapp.client.public.Styles.{login => *}
 
 object Login {
 
   final case class Props(state          : StateSnapshot[State],
                          asyncW         : AsyncFeature.Write.D0[ErrorMsg],
-                         am             : AssetManifest,
                          attemptLogin   : ServerSideProcInvoker[Request, ErrorMsg, Permission],
                          resetPassword  : ServerSideProcInvoker[Username \/ EmailAddr, ErrorMsg, Unit],
                          redirectOnLogin: Option[Url.Relative]) {
@@ -110,9 +108,6 @@ object Login {
   private implicit def validationUX = ValidationUX.Off
 
   final class Backend($: BackendScope[Props, Unit]) {
-
-    // User is likely to log in - prefetch new resources for next page
-    Prefetch.memberHome($.props.runNow().am)
 
     /** Stores the current state in client's local storage according to the remember-me setting */
     val writeCredentials: Callback =
