@@ -158,6 +158,7 @@ object Dependencies {
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
+    val http                     = mm("jetty-http")
     val servlet                  = mm("jetty-servlet")
     val servlets                 = mm("jetty-servlets")
     val webapp                   = mm("jetty-webapp")

@@ -41,7 +41,7 @@ object PrepareEnv {
 
   val lift: () => Unit = onceUnit {
     // if (!LiftRules.doneBoot) {
-    boot.configureLift()
+    boot.configureLift(Global.config)
   }
 
   val dbOnce = onceUnit {

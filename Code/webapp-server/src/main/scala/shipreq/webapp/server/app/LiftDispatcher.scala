@@ -3,9 +3,9 @@ package shipreq.webapp.server.app
 import com.typesafe.scalalogging.StrictLogging
 import java.nio.charset.Charset
 import net.liftweb.common.{Box, Empty, Failure => BoxFailure, Full}
-import net.liftweb.http.provider.HTTPCookie
-import net.liftweb.http.{Req => LiftReq, _}
+import net.liftweb.http.{RedirectResponse => _, Req => LiftReq, _}
 import net.liftweb.util.Props
+import org.eclipse.jetty.http.HttpCookie
 import scala.xml.NodeSeq
 import scalaz.Need
 import shipreq.base.util.FxModule._
@@ -24,11 +24,11 @@ object LiftDispatcher {
   val UTF8 = Charset.forName("UTF-8")
 
   final case class StatusOnlyResponse(status: Int) extends LiftResponse with HeaderDefaults {
-    def toResponse = InMemoryResponse(Array.empty, headers, cookies, status)
+    override def toResponse = InMemoryResponse(Array.empty, headers, cookies, status)
   }
 
   final case class GenericResponse(status: Int, body: String, mime: String) extends LiftResponse with HeaderDefaults {
-    def toResponse = {
+    override def toResponse = {
       val bytes = body.getBytes(UTF8)
       val headers2 = ("Content-Length", bytes.length.toString) :: ("Content-Type", mime + "; charset=utf-8") :: headers
       InMemoryResponse(bytes, headers2, cookies, status)
@@ -36,14 +36,21 @@ object LiftDispatcher {
   }
 
   final case class BinaryResponse(status: Int, body: BinaryData) extends LiftResponse with HeaderDefaults {
-    def toResponse = {
+    override def toResponse = {
       val headers2 = ("Content-Length" -> body.length.toString) :: ("Content-Type" -> "application/octet-stream") :: headers
       new OutputStreamResponse(body.writeTo, body.length, headers2, cookies, status)
     }
   }
 
-  def redirectWithCookies(uri: String): RedirectResponse =
-    RedirectResponse(uri, S.responseCookies: _*)
+  /** Not using Lift's version because it doesn't include headers or cookies. */
+  final case class RedirectResponse(uri: String) extends LiftResponse with HeaderDefaults {
+    override def toResponse =
+      InMemoryResponse(
+        Array.empty,
+        ("Location", uri) :: ("Content-Type", "text/plain") :: headers,
+        cookies,
+        302)
+  }
 
   final case class Template(name: String) {
     private val templateSrc = Templates(name :: Nil).openOrThrowException(s"Template not found: $name")
@@ -114,51 +121,47 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
     val deleteCookie: Cookie.Name => Unit =
       n => S.deleteCookie(n.value)
 
-    val addCookie: Cookie => Unit = {
-      val path = Full("/") // This is required for browsers to update the cookie on AJAX
+    val addCookie: Cookie => Unit =
       c => {
-        val httpCookie = new HTTPCookie(
-          name     = c.name.value,
-          value    = Full(c.value),
-          maxAge   = c.maxAgeInSec,
-          secure_? = c.secure,
-          httpOnly = c.httpOnly,
-          domain   = Empty,
-          path     = path,
-          version  = Empty)
-        S.addCookie(httpCookie)
+        val cookie =
+          new HttpCookie(
+            /*name     = */ c.name.value,
+            /*value    = */ c.value,
+            /*domain   = */ null: String,
+            /*path     = */ "/", // this is required for browsers to update the cookie on AJAX
+            /*maxAge   = */ c.maxAgeInSec.getOrElse(-1).toLong,
+            /*httpOnly = */ c.httpOnly.getOrElse(false),
+            /*secure   = */ c.secure.getOrElse(false),
+            /*comment  = */ null: String,
+            /*version  = */ 0,
+            /*sameSite = */ HttpCookie.SameSite.STRICT,
+          )
+        S.setHeader("Set-Cookie", cookie.getRFC6265SetCookie)
       }
-    }
 
-    (req, response) => {
-      import shipreq.webapp.server.logic.dispatch.ResponseCmd._
+    (req, response) =>
+      Fx {
+        S.statelessInit(req) {
+          import shipreq.webapp.server.logic.dispatch.ResponseCmd._
 
-      val setHeaders: Fx[Unit] =
-        Fx {
           response.cmd.headers.foreach(setHeader)
           response.cookies.remove.foreach(deleteCookie)
           response.cookies.add.foreach(addCookie)
-        }
 
-      val respond: Fx[Box[LiftResponse]] =
-        response.cmd match {
-          case ServePublicSpa(ou)     => Fx{ ou.foreach(UserVar.set); templatePublic.render(req) }
-          case ServeHomeSpa(u)        => Fx{ UserVar.set(u); templateHome.render(req) }
-          case ProjectSpa.Serve(u, p) => Fx{ UserVar.set(u); ProjectIdVar.set(p); templateProject.render(req) }
-          case ProjectSpa.NotOwner
-             | ProjectSpa.InvalidId   => Fx(Full(RedirectResponse(Urls.memberHome.relativeUrl)))
-          case Redirect(to)           => Fx(Full(redirectWithCookies(to.relativeUrl)))
-          case r: Binary              => Fx(Full(BinaryResponse(r.status, r.body)))
-          case r: Text                => Fx(Full(GenericResponse(r.status, r.body, "text/plain")))
-          case r: Json                => Fx(Full(GenericResponse(r.status, r.body, "application/json")))
-          case StatusOnly(status)     => Fx(Full(StatusOnlyResponse(status)))
-          // NOTE: Do NOT use Fx.pure here. These lift responses need to be created after headers/cookies are set
+          response.cmd match {
+            case ServePublicSpa(ou)     => ou.foreach(UserVar.set); templatePublic.render(req)
+            case ServeHomeSpa(u)        => UserVar.set(u); templateHome.render(req)
+            case ProjectSpa.Serve(u, p) => UserVar.set(u); ProjectIdVar.set(p); templateProject.render(req)
+            case ProjectSpa.NotOwner
+               | ProjectSpa.InvalidId   => Full(RedirectResponse(Urls.memberHome.relativeUrl))
+            case Redirect(to)           => Full(RedirectResponse(to.relativeUrl))
+            case r: Binary              => Full(BinaryResponse(r.status, r.body))
+            case r: Text                => Full(GenericResponse(r.status, r.body, "text/plain"))
+            case r: Json                => Full(GenericResponse(r.status, r.body, "application/json"))
+            case StatusOnly(status)     => Full(StatusOnlyResponse(status))
+          }
         }
-
-      S.statelessInit(req) {
-        setHeaders.flatMap(_ => respond)
       }
-    }
   }
 
   val logic: DispatchLogic[Fx, LiftReq] = {
