@@ -43,7 +43,7 @@ object Common {
   }
 
   def scalafixEnabled =
-    !releaseMode
+    !inCI
 
   lazy val emitSourceMapsValue: Boolean =
     System.getProperty("emitSourceMaps", "0").trim.toLowerCase match {
