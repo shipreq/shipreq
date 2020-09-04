@@ -78,7 +78,7 @@ module "shipreq" {
   shipreq_taskman_properties            = file("taskman.properties")
   shipreq_webapp_google_analytics_id    = "UA-105581783-1"
   shipreq_webapp_properties             = file("webapp.properties")
-  shipreq_webapp_use_cdn                = false
+  shipreq_webapp_use_cdn                = true
 
   # Versions
   app_analytics_proxy_image_tag   = local.versions.app.analytics_proxy
