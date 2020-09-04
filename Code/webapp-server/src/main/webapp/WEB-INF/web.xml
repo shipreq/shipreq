@@ -107,6 +107,14 @@
       <extension>eot</extension>
       <mime-type>application/vnd.ms-fontobject</mime-type>
     </mime-mapping>
+    <mime-mapping>
+      <extension>webmanifest</extension>
+      <mime-type>application/manifest+json</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+      <extension>xml</extension>
+      <mime-type>application/xml</mime-type>
+    </mime-mapping>
 
     <!-- =========================================================================================================== -->
 
