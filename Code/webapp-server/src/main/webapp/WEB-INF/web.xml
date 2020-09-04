@@ -127,6 +127,10 @@
             <param-name>allowedMethods</param-name>
             <param-value>GET,HEAD,OPTIONS</param-value>
         </init-param>
+        <init-param>
+            <param-name>allowCredentials</param-name>
+            <param-value>false</param-value>
+        </init-param>
     </filter>
 
     <filter-mapping>
