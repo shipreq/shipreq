@@ -130,6 +130,12 @@ class Boot {
     // Force requests to be UTF-8
     LiftRules.early.append(_ setCharacterEncoding "UTF-8")
 
+    // Prevent Lift from acting on static resources
+    // (Required because Lift otherwise prevents /s/*.xml from being served.)
+    LiftRules.liftRequest.prepend {
+      case req if req.uri.startsWith("/s/") => false
+    }
+
     // Security policies
     LiftRules.securityRules = () => {
       val nonProd = isLocalhost || Props.devMode || Props.testMode
