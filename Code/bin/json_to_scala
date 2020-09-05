@@ -1,0 +1,8 @@
+#!/bin/bash
+set -euo pipefail
+
+[ $# -ne 0 ] && echo "Usage: $0 <json >scala" && exit 1
+
+echo "  Seq[String]("
+jq -c '.[] | @json' | sed 's/^/    /; s/$/,/'
+echo "  )"

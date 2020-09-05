@@ -75,6 +75,9 @@ trait WebappTestUtil extends BaseTestUtil {
       case \/-(_) => fail(s"Failure expected but didn't occur applying $e")
     }
 
+  def restoreProject(es: VerifiedEvent.Seq): Project =
+    ApplyEvent.trusted.applyVerified(es)(Project.empty).getOrThrow()
+
   implicit final class WebappTestUtilExt_VerifiedEventSeq(private val self: VerifiedEvent.Seq) {
     def needNES: VerifiedEvent.NonEmptySeq =
       VerifiedEvent.NonEmptySeq(self.head, self.tail)

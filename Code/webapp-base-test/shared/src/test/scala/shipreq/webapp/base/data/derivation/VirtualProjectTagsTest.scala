@@ -4,7 +4,7 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import shipreq.base.test.BaseTestUtil._
-import shipreq.base.util.{Enabled, Invalid}
+import shipreq.base.util.{Enabled, Invalid, NaturalSort}
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
@@ -17,7 +17,8 @@ object VirtualProjectTagsTest extends TestSuite {
 
   private def summariseDerivativeTags(p: Project,
                                       fieldId: CustomField.Tag.Id,
-                                      reqTypeOrder: Vector[ReqTypeId]): String = {
+                                      reqTypeOrder: Vector[ReqTypeId],
+                                      reqFilter: Req => Boolean): String = {
     val tags = p.virtualTags
     def req(id: ReqId) = PlainText.pubid(p.content.reqs.need(id).pubid, p)
     def tag(id: ApplicableTagId) = p.config.tags.needApplicableTag(id).name
@@ -64,7 +65,7 @@ object VirtualProjectTagsTest extends TestSuite {
       (reqTypeOrder ++ unorderedReqTypes).mapToOrder
 
     def perReq: Iterator[Item] = {
-      p.content.reqs.reqIterator().map { r =>
+      p.content.reqs.reqIterator().filter(reqFilter).map { r =>
         val pubid = req(r.id)
 
         def results(fd: FilterDead): String = {
@@ -87,7 +88,7 @@ object VirtualProjectTagsTest extends TestSuite {
         val factors =
           MutableArray(
             tags(r.id).derivativeTagFactors(fieldId).iterator.map("\n  + " + showFactor(_))
-          ).sort.mkString
+          ).sort(NaturalSort).mkString
 
         var result = pubid + factors + "\n  = " + liveResults
 
@@ -101,10 +102,46 @@ object VirtualProjectTagsTest extends TestSuite {
     MutableArray(perReq).sortBy(_._1).iterator().map(_._2).mkString("\n")
   }
 
-  private def assertDerivativeTags(p0: Project,
-                                   f: CustomField.Tag.Id,
-                                   reqTypeOrder: Vector[ReqTypeId] = Vector.empty,
-                                   alwaysSimplifyFirst: Boolean = false)(_expect: String)(implicit l: Line): String = {
+  private def summariseDescDerivation(p     : Project,
+                                      f     : TagFieldId,
+                                      fd    : FilterDead,
+                                      reqId : ReqId,
+                                      tagId : ApplicableTagId): String = {
+
+    def render(d: DerivationDesc): String = {
+      val sb = new StringBuilder
+      sb.append("Factors\n")
+      for (f <- d.factors) {
+        sb.append("\n  ")
+        sb.append(f.tag.fold("no tag")(p.config.tags.needApplicableTag(_).key.with_#))
+        sb.append(" - ")
+        sb.append(f.reqs)
+      }
+      if (d.steps.nonEmpty) {
+        sb.append("\n\nDerivation\n")
+        for (i <- d.steps.indices) {
+          val s = d.steps(i)
+          val sep = if (i == d.steps.indices.last) " " else " + "
+          sb.append("\n  = ")
+          sb.append(s.tags.iterator.map(p.config.tags.needApplicableTag(_).key.with_#).mkString(sep))
+        }
+      }
+      sb.toString
+    }
+
+    p.virtualTags(reqId, fd)(tagId, f)
+      .derivationDesc
+      .map(render)
+      .orNull
+  }
+
+  private def assertDerivativeTags(p0                 : Project,
+                                   f                  : CustomField.Tag.Id,
+                                   reqTypeOrder       : Vector[ReqTypeId] = Vector.empty,
+                                   alwaysSimplifyFirst: Boolean           = false,
+                                   reqId              : ReqId             = null)
+                                  (_expect            : String)
+                                  (implicit l: Line): String = {
 
     val p = p0.copy() // avoid pre-computed virtualTags so that we can measure derivation time
     val startTime = System.nanoTime()
@@ -113,7 +150,13 @@ object VirtualProjectTagsTest extends TestSuite {
     val dur = Duration.ofNanos(endTime - startTime)
     if (x eq null) ???
 
-    val actual = summariseDerivativeTags(p, f, reqTypeOrder)
+    val reqFilter: Req => Boolean =
+      if (reqId ne null)
+        _.id ==* reqId
+      else
+        _ => true
+
+    val actual = summariseDerivativeTags(p, f, reqTypeOrder, reqFilter)
 
     val expect = _expect
       .trim
@@ -121,6 +164,7 @@ object VirtualProjectTagsTest extends TestSuite {
       .replaceAll("(^|\n) *\n", "$1") // remove blank links
       .replaceAll("(\\d) * =", "$1\n  =") // expand concise no-factor lines
       .replaceAll("(\\{.*?\\}) / (\\{.*?\\})", "$1\n    $2 (ShowDead)") // expand multi-result lines
+      .replaceAll("-[ 0](\\d):", "-$1:") // "MF- 1" => "MF-1"
 
     if (actual != expect) {
 
@@ -135,7 +179,8 @@ object VirtualProjectTagsTest extends TestSuite {
         println(simplify(actual))
 
       //println(actual)
-      if (alwaysSimplifyFirst || !(expect.contains("  +") || expect.contains("ShowDead")))
+//      if (alwaysSimplifyFirst || !(expect.contains("  +") || expect.contains("ShowDead")))
+      if (alwaysSimplifyFirst)
         assertMultiline(simplify(actual), simplify(expect))
       assertMultiline(actual, expect)
     }
@@ -174,6 +219,28 @@ object VirtualProjectTagsTest extends TestSuite {
                 val expectedTotal = relevantChildren.length + 1
                 assertEqWithTolerance(desc, c.progressBar.iterator.map(_.portion).sum, expectedTotal)
                 assertEq(c.total, expectedTotal)
+                for (fd <- FilterDead) {
+                  val vts = tags(req.id, fd)
+                  for (tagId <- vts.set(f.id)) {
+                    val vt = vts(tagId, f.id)
+                    if (vt.isDerived) {
+                      val d = vt.derivationDesc.get
+                      // Make sure derivation result in explanation matches the actual result
+                      // https://shipreq.com/project/d6My#/reqs/SC-7
+                      val all = d.steps.last.tags.whole
+                      def steps = summariseDescDerivation(p, f.id, fd, req.id, tagId)
+                      def tag = p.config.tags.needApplicableTag(tagId)
+                      vt.live match {
+                        case Live =>
+                          if (!all.contains(tagId))
+                            fail(s"\nIn $desc, resulting tag ${tag.key.with_#} not in explanation result.\n\n$steps\n")
+                        case Dead =>
+                          if (all.contains(tagId))
+                            fail(s"\nIn $desc, dead tag ${tag.key.with_#} is in explanation result.\n\n$steps\n")
+                      }
+                    }
+                  }
+                }
 
               case Dead =>
                 assertEq(c.progressBar, ArraySeq.empty: c.ProgressBar)
@@ -211,38 +278,11 @@ object VirtualProjectTagsTest extends TestSuite {
                                    tagId : ApplicableTagId)
                                   (expect: String)(implicit l: Line): Unit = {
 
-    def render(d: DerivationDesc): String = {
-      val result = new StringBuilder
-      result.append("Factors\n")
-      for (f <- d.factors) {
-        result.append("\n  ")
-        result.append(f.tag.fold("no tag")(p.config.tags.needApplicableTag(_).key.with_#))
-        result.append(" - ")
-        result.append(f.reqs)
-      }
-      if (d.steps.nonEmpty) {
-        result.append("\n\nDerivation\n")
-        for (i <- d.steps.indices) {
-          val s = d.steps(i)
-          val sep = if (i == d.steps.indices.last) " " else " + "
-          result.append("\n  = ")
-          result.append(s.tags.iterator.map(p.config.tags.needApplicableTag(_).key.with_#).mkString(sep))
-        }
-      }
-      result.toString
-    }
-
     val norm: String => String =
       _.trim.replaceAll(" {2,}", " ")
 
     for (fd <- FilterDead) {
-
-      val actual =
-        p.virtualTags(reqId, fd)(tagId, f)
-          .derivationDesc
-          .map(render)
-          .orNull
-
+      val actual = summariseDescDerivation(p, f, fd, reqId, tagId)
       assertMultiline(
         PlainText.pubidByReqId(reqId, p),
         actual = norm(actual),
@@ -442,24 +482,92 @@ object VirtualProjectTagsTest extends TestSuite {
         "z" - assertDerivativeTags(project, zField)(virtualTagsZ)
         "y" - assertDerivativeTags(project, yField)(virtualTagsY)
       }
+
+      "real1" - {
+        import RealProject1._, Values._
+
+        "mf32_status" - assertDerivativeTags(project, statusField, reqId = mf32)(
+          """
+            |MF-32
+            |  + BR-1: analysed (manual)
+            |  + BR-1: implemented (derived)
+            |  + BR-3: implemented (manual)
+            |  + FB-5: implemented (manual)
+            |  + FR-2: analysed (manual)
+            |  + FR-2: implemented (derived)
+            |  + FR-3: analysed (manual)
+            |  + FR-3: implemented (derived)
+            |  + FR-4: analysed (manual)
+            |  + FR-4: implemented (derived)
+            |  + FR-5: needs_analysis (manual)
+            |  + FR-6: implemented (manual)
+            |  + FR-7: analysed (manual)
+            |  + FR-7: implemented (derived)
+            |  + FR-8: implemented (manual)
+            |  + FR-9: implemented (manual)
+            |  + FR-12: implemented (manual)
+            |  + FR-13: needs_analysis (manual)
+            |  + FR-14: implemented (manual)
+            |  + FR-15: implemented (manual)
+            |  + FR-16: implemented (manual)
+            |  + IV-28: analysed (manual)
+            |  + IV-28: needs_analysis (derived)
+            |  + IV-31: needs_analysis (default)
+            |  + MF-35: needs_analysis (derived)
+            |  + SI-1: analysed (manual)
+            |  + SI-1: implemented (derived)
+            |  + SI-2: rejected (manual)
+            |  + SI-3: implemented (manual)
+            |  + SI-4: implemented (manual)
+            |  + SI-5: rejected (manual)
+            |  + UC-1: analysed (manual)
+            |  + UC-1: needs_analysis (derived)
+            |  + WF-1: needs_more_info (manual)
+            |  + WF-2: analysed (manual)
+            |  + WF-2: needs_analysis (derived)
+            |  + WF-3: needs_more_info (manual)
+            |  + WF-4: needs_more_info (manual)
+            |  + WF-5: needs_analysis (manual)
+            |  = {rejected+}
+            |""".stripMargin)
+
+        "mf32_steps" - assertDescDerivation(project, statusField, mf32, rejected)(
+          """
+            |Factors
+            |
+            | #needs_more_info - WF-{1,3,4}
+            | #needs_analysis  - FR-{5,13},IV-{28,31},MF-35,UC-1,WF-{2,5}
+            | #analysed        - BR-1,FR-{2-4,7},IV-28,SI-1,UC-1,WF-2
+            | #implemented     - BR-{1,3},FB-5,FR-{2-4,6-9,12,14-16},SI-{1,3,4}
+            | #rejected        - SI-{2,5}
+            |
+            |Derivation
+            |
+            | = #needs_more_info + #needs_analysis + #analysed + #implemented + #rejected
+            | = #needs_more_info + #analysed + #implemented + #rejected
+            | = #needs_more_info + #implemented + #rejected
+            | = #needs_more_info + #rejected
+            | = #rejected
+            |
+            |""".stripMargin)
+      }
     }
 
-    "childrenSummary" - {
-      "props" - {
-        "sdt1"   - assertProps(SampleDerivativeTags1.project)
-        "sdt2-1" - assertProps(SampleDerivativeTags2.step1.project)
-        "sdt2-2" - assertProps(SampleDerivativeTags2.step2.project)
-        "sdt2-3" - assertProps(SampleDerivativeTags2.step3.project)
-        "sdt2-4" - assertProps(SampleDerivativeTags2.step4.project)
-        "sdt2-5" - assertProps(SampleDerivativeTags2.step5.project)
-        "sdt3-1" - assertProps(SampleDerivativeTags3.step1.project)
-        "sdt3-2" - assertProps(SampleDerivativeTags3.step2.project)
-        "sdt3-3" - assertProps(SampleDerivativeTags3.step3.project)
-        "sdt3-4" - assertProps(SampleDerivativeTags3.step4.project)
-        "sdt3-5" - assertProps(SampleDerivativeTags3.step5.project)
-        "sdt4"   - assertProps(SampleDerivativeTags4.project)
-        "random" - RandomData.project.samples().take(3).foreach(assertProps)
-      }
+    "props" - {
+      "sdt1"   - assertProps(SampleDerivativeTags1.project)
+      "sdt2-1" - assertProps(SampleDerivativeTags2.step1.project)
+      "sdt2-2" - assertProps(SampleDerivativeTags2.step2.project)
+      "sdt2-3" - assertProps(SampleDerivativeTags2.step3.project)
+      "sdt2-4" - assertProps(SampleDerivativeTags2.step4.project)
+      "sdt2-5" - assertProps(SampleDerivativeTags2.step5.project)
+      "sdt3-1" - assertProps(SampleDerivativeTags3.step1.project)
+      "sdt3-2" - assertProps(SampleDerivativeTags3.step2.project)
+      "sdt3-3" - assertProps(SampleDerivativeTags3.step3.project)
+      "sdt3-4" - assertProps(SampleDerivativeTags3.step4.project)
+      "sdt3-5" - assertProps(SampleDerivativeTags3.step5.project)
+      "sdt4"   - assertProps(SampleDerivativeTags4.project)
+      "real1"  - assertProps(RealProject1.project)
+      "random" - RandomData.project.samples().take(3).foreach(assertProps)
     }
   }
 }

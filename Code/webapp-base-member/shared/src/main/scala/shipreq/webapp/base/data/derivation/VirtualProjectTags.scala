@@ -176,8 +176,8 @@ object VirtualProjectTags {
     type DerivedTags = Multimap[ApplicableTagId, Set, CustomField.Tag.Id]
     val emptyDerivedTags: DerivedTags = Multimap.empty
 
-    def addDerivedTags(prev: DerivedTags, field: CustomField.Tag.Id, tags: Set[ApplicableTagId]): DerivedTags =
-      tags.foldLeft(prev)(_.add(_, field))
+    @inline def addDerivedTags(prev: DerivedTags, field: CustomField.Tag.Id, tags: Set[ApplicableTagId]): DerivedTags =
+      prev.addks(tags, field)
 
     val emptyDTF = Multimap.empty[ReqId, Set, DerivativeTagFactor]
 
@@ -242,17 +242,18 @@ object VirtualProjectTags {
   private final class Mutable(val p: Project) {
     import Mutable._
 
-    val deadTags        = p.config.tags.deadApplicableTagIds
-    val tagsInText      = p.atomScan.tagRefs
-    val tagLive         = (id: ApplicableTagId) => Dead when deadTags.contains(id)
-    val reqTags         = p.content.reqTags
-    val reqTypes        = p.config.reqTypes
-    val fieldRules      = p.config.fieldRules(ShowDead) // ShowDead so that it doesn't replace dead defaults with Optional
-    val liveTagDist     = p.config.liveTagFieldDistribution
-    val imps            = p.content.implications
-    val tagOrderByName  = p.config.tags.orderByName
-    val tagOrderByPos   = p.config.tags.orderByPos
-    val exclusiveGroups = p.config.tags.exclusiveGroups
+    val deadTags         = p.config.tags.deadApplicableTagIds
+    val tagsInText       = p.atomScan.tagRefs
+    val tagLive          = (id: ApplicableTagId) => Dead when deadTags.contains(id)
+    val reqTags          = p.content.reqTags
+    val reqTypes         = p.config.reqTypes
+    val fieldRules       = p.config.fieldRules(ShowDead) // ShowDead so that it doesn't replace dead defaults with Optional
+    val liveTagDist      = p.config.liveTagFieldDistribution
+    val imps             = p.content.implications
+    val tagOrderByName   = p.config.tags.orderByName
+    val tagOrderByPos    = p.config.tags.orderByPos
+    val tagOrderingByPos = p.config.tags.orderingByPos
+    val exclusiveGroups  = p.config.tags.exclusiveGroups
 
     type Data = mutable.HashMap[ReqId, ForReq]
 
@@ -434,12 +435,11 @@ object VirtualProjectTags {
                     val d = node.liveDefaults(f.fieldId)
                     val ourDefault = Set1(d)
                     var results = ourDefault
-
                     parentsManuals.foreach {
-                      case DerivativeTagFactor.Relation(_, _, tag, _) if tag !=* d =>
-                        results = dt.add(results, tag)
-                      case _ =>
+                      case DerivativeTagFactor.Relation(_, _, tag, _) if tag !=* d => results += tag
+                      case _                                                       =>
                     }
+                    results = dt.derive(results, tagOrderingByPos)
 
                     if (debugDerivativeTags) {
                       println(s"(${nodeId.value})               parentsManual: $parentsManuals")
@@ -566,21 +566,20 @@ object VirtualProjectTags {
                       case Live => true
                       case Dead => deadDerived += tagId; false
                     }
-                  var liveDerived = {
-                    def addDerive(tags: Set[ApplicableTagId], id: ApplicableTagId): Set[ApplicableTagId] = {
-                      if (defaultAddable && !default.contains(id))
-                        defaultAddable = false
-                      dt.add(tags, id, derivationFilter)
-                    }
-                    factors.value(nodeId).foldLeft(Set.empty[ApplicableTagId]) { (tags, fac) =>
-                      fac match {
-                        case f: DerivativeTagFactor.Self          => addDerive(tags, f.tag)
-                        case f: DerivativeTagFactor.Relation      => addDerive(tags, f.tag)
-                        case DerivativeTagFactor.EmptySelf
-                           | _: DerivativeTagFactor.EmptyRelation => tags
-                      }
-                    }
+                  var liveDerived = Set.empty[ApplicableTagId]
+                  def addToLiveDerived(id: ApplicableTagId): Unit = {
+                    liveDerived += id
+                    if (defaultAddable && !default.contains(id))
+                      defaultAddable = false
                   }
+                  factors.value(nodeId).foreach {
+                    case f: DerivativeTagFactor.Self          => addToLiveDerived(f.tag)
+                    case f: DerivativeTagFactor.Relation      => addToLiveDerived(f.tag)
+                    case DerivativeTagFactor.EmptySelf
+                       | _: DerivativeTagFactor.EmptyRelation =>
+                  }
+
+                  liveDerived = dt.derive(liveDerived, tagOrderingByPos, derivationFilter)
 
                   // Don't say we've derived manual results
                   liveDerived = liveDerived &~ manuals.keySet
@@ -648,6 +647,7 @@ object VirtualProjectTags {
                     println(sep)
                     s"There need to be factors for $descReq"
                   })
+
                   seen.update(nodeId, addToParents)
                   addToParents
                 }
@@ -819,6 +819,8 @@ object VirtualProjectTags {
 
       val tagCfg        = p.config.tags
       val orderingByPos = tagCfg.orderingByPos
+      val liveAppTagIds = tagCfg.liveApplicableTagIds
+      val liveTagDist   = p.config.liveTagFieldDistribution
 
       // Group factors by tag
       var byTag = Multimap.empty[ApplicableTagId, Set, ReqId]
@@ -844,13 +846,16 @@ object VirtualProjectTags {
       // Derivation steps
       val steps = ArraySeq.newBuilder[DerivStep]
       for (fieldId <- fieldIds) {
-        val dt = p.config.fields.custom(fieldId).derivativeTags
+        val field     = p.config.fields.custom(fieldId)
+        val dt        = field.derivativeTags
+        val scope     = liveTagDist.inField(fieldId)
+        val tagFilter = (id: ApplicableTagId) => liveAppTagIds.contains(id) && scope.contains(id)
 
         @tailrec
         def addDerivationStep(tags: Set[ApplicableTagId]): Unit =
           if (tags.nonEmpty) {
             steps += DerivStep(NonEmptyVector.force(MutableArray(tags).sort(orderingByPos).to(Vector)))
-            val next = dt.reduce(tags, recursively = false)
+            val next = dt.derive(tags, orderingByPos, tagFilter, recursively = false)
             if (next ne tags)
               addDerivationStep(next)
           }

@@ -1,6 +1,7 @@
 package shipreq.base.test
 
 import io.circe.syntax._
+import java.time.{Duration, Instant}
 import scalaz.std.string.stringInstance
 import scalaz.{Equal, Order}
 import shipreq.base.util.Debug
@@ -41,6 +42,14 @@ trait BaseTestUtil
       override def order(a: A, b: A) = o.order(a, b)
       override def equal(a: A, b: A) = a == b
     }
+  }
+
+  def time[A](a: => A): (A, Duration) = {
+    val start = Instant.now()
+    val result = a
+    val end = Instant.now()
+    val dur = Duration.between(start, end)
+    (result, dur)
   }
 
   def once[A](a: => A): () => A = {

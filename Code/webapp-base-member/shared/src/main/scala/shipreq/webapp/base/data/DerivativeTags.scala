@@ -27,56 +27,39 @@ final case class DerivativeTags(enabled: Enabled, rules: DerivativeTags.Rules) {
       rules.get(pair)
     }
 
-  def add(tags  : Set[ApplicableTagId],
-          newTag: ApplicableTagId,
-          filter: ApplicableTagId => Boolean = _ => true): Set[ApplicableTagId] = {
-
-    var result: Set[ApplicableTagId] = null
-
-    val it = tags.iterator
-    while ((result eq null) && it.hasNext) {
-      val t = it.next()
-      if (t !=* newTag) {
-        val p = TagPair(t, newTag)
-        rules.get(p) match {
-          case Some(r) =>
-            if (filter(r))
-              result = reduce(tags - t + r, filter)
-          case None =>
-        }
-      }
-    }
-
-    if (result ne null)
-      result
-    else
-      tags + newTag
-  }
-
-  def reduce(tags       : Set[ApplicableTagId],
+  def derive(tags       : Set[ApplicableTagId],
+             tagOrder   : Ordering[ApplicableTagId],
              filter     : ApplicableTagId => Boolean = _ => true,
-             recursively: Boolean = true): Set[ApplicableTagId] = {
+             recursively: Boolean                    = true,
+            ): Set[ApplicableTagId] = {
 
-    val it1 = tags.iterator
-    while (it1.hasNext) {
-      val t1 = it1.next()
+    // Tags must be sorted
+    // https://shipreq.com/project/d6My#/reqs/SC-7
+    val orderedTags = tags.toArray
+    scala.util.Sorting.quickSort(orderedTags)(tagOrder)
 
-      val it2 = tags.iterator
-      while (it2.hasNext) {
-        val t2 = it2.next()
+    var i1, i2 = 0
+    while (i1 < orderedTags.length) {
+      val t1 = orderedTags(i1)
 
-        if (t1.value < t2.value) {
+      i2 = 0
+      while (i2 < orderedTags.length) {
+        if (i1 != i2) {
+          val t2 = orderedTags(i2)
+
           val p = TagPair(t1, t2)
           rules.get(p) match {
             case Some(r) =>
               if (filter(r)) {
                 val next = tags - t1 - t2 + r
-                return if (recursively) reduce(next) else next
+                return if (recursively) derive(next, tagOrder, filter) else next
               }
-            case None    =>
+            case None =>
           }
         }
+        i2 += 1
       } // it2
+      i1 += 1
     } // it1
 
     tags

@@ -317,6 +317,9 @@ final case class Tags(tree: TagTree) {
   def needTag(id: TagId): Tag =
     tree.need(id).tag
 
+  lazy val liveApplicableTagIds: Set[ApplicableTagId] =
+    applicableTagIterator().filter(_.live is Live).map(_.id).toSet
+
   lazy val deadApplicableTagIds: Set[ApplicableTagId] =
     applicableTagIterator().filter(_.live is Dead).map(_.id).toSet
 
