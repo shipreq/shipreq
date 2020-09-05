@@ -10,6 +10,7 @@ import scalaz.Equal
 import shipreq.base.util._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.issue.IssueTracker
+import shipreq.webapp.base.text.PlainText
 
 object Project {
   type Name = String
@@ -176,6 +177,7 @@ final case class Project(name        : Project.Name,
   @inline def naTagsForReq(req: Req): NaTags =
     config.naTags(req.reqTypeId)
 
+  @elidable(elidable.FINEST)
   def prettyPrintImplicationGraph: String =
     Util.quickJSB { sb =>
 
@@ -184,11 +186,11 @@ final case class Project(name        : Project.Name,
 
       val _fmt: ReqId => String =
         id => {
-          var a = id.value.toString
-          val r = content.reqs.need(id)
-          if (r.live(config.reqTypes) is Dead) {
-            a += (if (r.liveExplicitly is Dead) "!" else "-")
-            if (r.allowLiveChange(config.reqTypes) is Deny) a += "!"
+          val req = content.reqs.need(id)
+          var a = s"${PlainText.pubidByReqId(id, this)} (#${id.value})"
+          if (req.live(config.reqTypes) is Dead) {
+            a += (if (req.liveExplicitly is Dead) " [DEAD EXP]" else " [DEAD IMP]")
+            if (req.allowLiveChange(config.reqTypes) is Deny) a += " [!RESTORE]"
           }
           a
         }

@@ -18,12 +18,15 @@ import shipreq.webapp.base.text.Text
   * A7 (conflicting in dead custom text field & tags) -> A8 (empty)
   *
   * B1 (conflicting in N/A custom text field & tags) -> B2 (empty)
+  *
+  * {B3 (manual), B6 (empty)} -> C1 (N/A) -> C2 (N/A) -> {B4 (manual), B5 (empty)}
   */
 object SampleDerivativeTags5 {
 
   object Values {
     val a = CustomReqTypeId(1)
     val b = CustomReqTypeId(2)
+    val c = CustomReqTypeId(3)
 
     val a1 = GenericReqId(101)
     val a2 = GenericReqId(102)
@@ -36,6 +39,13 @@ object SampleDerivativeTags5 {
 
     val b1 = GenericReqId(201)
     val b2 = GenericReqId(202)
+    val b3 = GenericReqId(203)
+    val b4 = GenericReqId(204)
+    val b5 = GenericReqId(205)
+    val b6 = GenericReqId(206)
+
+    val c1 = GenericReqId(301)
+    val c2 = GenericReqId(302)
 
     val zField = CustomField.Tag.Id(1)
     val z      = TagGroupId(10)
@@ -55,7 +65,7 @@ object SampleDerivativeTags5 {
   import TestEvent._
   import Values._
 
-  val zRules = FieldReqTypeRules.empty
+  val zRules = FieldReqTypeRules.empty.notApplicable(c)
   val zDerivativeTags = DerivativeTags(Enabled, Map.empty)
 
   val yRules = FieldReqTypeRules.empty
@@ -66,6 +76,7 @@ object SampleDerivativeTags5 {
 
     Event.CustomReqTypeCreate(a, CustomReqTypeGD("A", "A", Optional, ∅)),
     Event.CustomReqTypeCreate(b, CustomReqTypeGD("B", "B", Optional, ∅)),
+    Event.CustomReqTypeCreate(c, CustomReqTypeGD("C", "C", Optional, ∅)),
 
     tagGroupCreate(z, "Z", exclusivity = Exclusive),
     applicableTagCreate(z1, "z1", parent = z),
@@ -101,6 +112,14 @@ object SampleDerivativeTags5 {
     genericReqCreate(b1, b, tags = Set(z1, y1)),
     genericReqCreate(b2, b, impSrcs = b1),
     Event.ReqFieldCustomTextSet(b1, tField, ArraySeq1(Text.CustomTextField.TagRef(z2))),
+
+    // {B3 (manual), B6 (empty)} -> C1 (N/A) -> C2 (N/A) -> {B4 (manual), B5 (empty)}
+    genericReqCreate(b3, b, tags = z1),
+    genericReqCreate(c1, c, impSrcs = b3),
+    genericReqCreate(c2, c, impSrcs = c1),
+    genericReqCreate(b4, b, impSrcs = c2, tags = z2),
+    genericReqCreate(b5, b, impSrcs = c2),
+    genericReqCreate(b6, b, impTgts = c1),
 
     // delete stuff
     Event.FieldCustomDelete(dField),
@@ -149,6 +168,25 @@ object SampleDerivativeTags5 {
       |  + B-1: z1 (manual)
       |  + self: ∅
       |  = {z1+}
+      |B-3
+      |  + B-4: z2 (manual)
+      |  + B-5: z1 (derived)
+      |  + self: z1 (manual)
+      |  = {z1 z2+}
+      |B-4
+      |  + self: z2 (manual)
+      |  = {z2}
+      |B-5
+      |  + B-3: z1 (manual)
+      |  + self: ∅
+      |  = {z1+}
+      |B-6
+      |  + B-4: z2 (manual)
+      |  + B-5: z1 (derived)
+      |  + self: ∅
+      |  = {z1+ z2+}
+      |C-1 = {}
+      |C-2 = {}
       |""".stripMargin
 
   def virtualTagsY =
@@ -192,5 +230,36 @@ object SampleDerivativeTags5 {
       |  + B-1: y1 (manual)
       |  + self: ∅
       |  = {y1+}
+      |B-3
+      |  + B-4: ∅
+      |  + B-5: ∅
+      |  + C-1: ∅
+      |  + C-2: ∅
+      |  + self: ∅
+      |  = {}
+      |B-4
+      |  + self: ∅
+      |  = {}
+      |B-5
+      |  + self: ∅
+      |  = {}
+      |B-6
+      |  + B-4: ∅
+      |  + B-5: ∅
+      |  + C-1: ∅
+      |  + C-2: ∅
+      |  + self: ∅
+      |  = {}
+      |C-1
+      |  + B-4: ∅
+      |  + B-5: ∅
+      |  + C-2: ∅
+      |  + self: ∅
+      |  = {}
+      |C-2
+      |  + B-4: ∅
+      |  + B-5: ∅
+      |  + self: ∅
+      |  = {}
       |""".stripMargin
 }

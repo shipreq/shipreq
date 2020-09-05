@@ -211,14 +211,23 @@ object VirtualProjectTagsTest extends TestSuite {
 
         for (f <- fields)
           if (!f.fieldReqTypeRules(req.reqTypeId).isNA) {
-            def desc = s"${PlainText.pubid(req.pubid, p)} ${p.config.tags.needTagGroup(f.tagId).name}"
+            def desc = s"${req.id} / ${PlainText.pubid(req.pubid, p)}, in the [${p.config.tags.needTagGroup(f.tagId).name}] field (${f.id})"
             val c = reqTags.childrenSummary(f.id)
             reqLive match {
               case Live =>
                 val relevantChildren = reqChildren.filterNot(r => f.fieldReqTypeRules(r.reqTypeId).isNA)
                 val expectedTotal = relevantChildren.length + 1
-                assertEqWithTolerance(desc, c.progressBar.iterator.map(_.portion).sum, expectedTotal)
-                assertEq(c.total, expectedTotal)
+                try {
+                  assertEqWithTolerance(desc, actual = c.progressBar.iterator.map(_.portion).sum, expect = expectedTotal)
+                  assertEq(actual = c.total, expect = expectedTotal)
+                } catch {
+                  case e: Throwable =>
+                    println(Console.CYAN_B + "relevantChildren: " + relevantChildren.map(_.id) + Console.RESET)
+                    c.progressBar.foreach(println)
+                    println()
+                    throw e
+                }
+
                 for (fd <- FilterDead) {
                   val vts = tags(req.id, fd)
                   for (tagId <- vts.set(f.id)) {
@@ -228,15 +237,26 @@ object VirtualProjectTagsTest extends TestSuite {
                       // Make sure derivation result in explanation matches the actual result
                       // https://shipreq.com/project/d6My#/reqs/SC-7
                       val all = d.steps.last.tags.whole
-                      def steps = summariseDescDerivation(p, f.id, fd, req.id, tagId)
-                      def tag = p.config.tags.needApplicableTag(tagId)
-                      vt.live match {
+                      val tag = p.config.tags.needApplicableTag(tagId)
+                      def failWithInfo(errMsg: String): Nothing = {
+                        val sep     = "=" * 180
+                        val deriv   = summariseDerivativeTags(p, f.id, Vector.empty, _.id == req.id)
+                        val steps   = summariseDescDerivation(p, f.id, fd, req.id, tagId)
+                        val tagTree = p.config.tags.prettyPrint
+                        val info    = s"$deriv\n\n$steps\n\n$tagTree"
+                        val block   = s"$sep\n$errMsg\n\n$info\n$sep"
+                        println()
+                        println(block)
+                        println()
+                        fail(errMsg)
+                      }
+                      tag.live match {
                         case Live =>
                           if (!all.contains(tagId))
-                            fail(s"\nIn $desc, resulting tag ${tag.key.with_#} not in explanation result.\n\n$steps\n")
+                            failWithInfo(s"In $desc, resulting tag ${tag.key.with_#} not in explanation result.")
                         case Dead =>
                           if (all.contains(tagId))
-                            fail(s"\nIn $desc, dead tag ${tag.key.with_#} is in explanation result.\n\n$steps\n")
+                            failWithInfo(s"In $desc, dead tag ${tag.key.with_#} is in explanation result.")
                       }
                     }
                   }
@@ -566,8 +586,63 @@ object VirtualProjectTagsTest extends TestSuite {
       "sdt3-4" - assertProps(SampleDerivativeTags3.step4.project)
       "sdt3-5" - assertProps(SampleDerivativeTags3.step5.project)
       "sdt4"   - assertProps(SampleDerivativeTags4.project)
+      "sdt5"   - assertProps(SampleDerivativeTags5.project)
       "real1"  - assertProps(RealProject1.project)
-      "random" - RandomData.project.samples().take(3).foreach(assertProps)
+
+      "rnd3" - {
+        val p = RandomData.project.withSeed(3).sample()
+        assertProps(p)
+      }
+
+      "rnd69" - {
+        val p = RandomData.project.withSeed(69).sample()
+//        val r = GenericReqId(11626)
+//        val f = CustomField.Tag.Id(57288)
+//        import DataImplicits._
+//        println()
+//        println(p.config.tags.prettyPrint)
+//        println()
+//        println(p.prettyPrintImplicationGraph.replace(r.value.toString, Console.RED_B + r.value + Console.RESET))
+//        // UC-10 (#54578)
+//        // . UC-7 (#63269)
+//        // . . UC-2 (#14458)
+//        // . . . MLBKM-1 (#11626) <-------------------------------------- subject
+//        // . . . . UC-6 (#31903)                                          (relevant child)
+//        // . . . . UC-3 (#37062)                                          (relevant child)
+//        // . . . . . UC-1 (#7200)                                         (relevant child)
+//        // . . . . . . IVDX-2 (#62984)                                    (N/A for this field)
+//        // . . . . . . . IVDX-1 (#36169)                                  (N/A for this field)
+//        // . . . . . . . . UC-13 (#30030)                                 (relevant child) <---- missing
+//        // . . . . . . . . UC-4 (#28035)                                  (relevant child) <---- missing
+//        // . . . . . . . . . YR-1 (#2113) [DEAD EXP]                      (dead)
+//        // . . . . . . . . . YWZ-1 (#15147) [DEAD IMP] [!RESTORE]         (dead)
+//        println()
+//        println("IVDX: " + p.config.fields.custom(f).fieldReqTypeRules(CustomReqTypeId(45761)))
+//        println()
+//        assertDerivativeTags(p, f, reqId = r)(
+//          """
+//            |MLBKM-1
+//            |  + UC-1: ∅
+//            |  + UC-3: ∅
+//            |  + UC-4: ∅
+//            |  + UC-6: ∅
+//            |  + UC-13: ∅
+//            |  + self: ∅
+//            |  = {}
+//            |""".stripMargin
+//        )
+        assertProps(p)
+      }
+
+      "random" - {
+//        import scala.util.Try
+//        import nyaya.prop._
+//        import nyaya.test.PropTestOps._
+//        import nyaya.test.DefaultSettings._
+//        RandomData.project.bugHunt(70, seeds = 100)(Prop.eval(p => Eval.atom("Props", (), Try(assertProps(p)).toEither.swap.toOption.map(_.toString))))
+
+        RandomData.project.samples().take(3).foreach(assertProps)
+      }
     }
   }
 }

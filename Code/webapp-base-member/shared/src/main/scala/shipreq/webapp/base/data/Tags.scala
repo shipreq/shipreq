@@ -156,6 +156,7 @@ object TagTree {
 
   def empty: TagTree = IMap.empty(_.id)
 
+  @elidable(elidable.FINEST)
   def prettyPrint(tt: TagTree): String = {
     def lookup(id: TagId) = tt.underlyingMap(id)
     val rootIds = tt.values.foldLeft(tt.keySet)(_ -- _.children)
@@ -418,6 +419,7 @@ final case class Tags(tree: TagTree) {
   def live(id: TagId): Live =
     tree.need(id).tag.live
 
+  @elidable(elidable.FINEST)
   def prettyPrint: String =
     TagTree.prettyPrint(tree)
 
