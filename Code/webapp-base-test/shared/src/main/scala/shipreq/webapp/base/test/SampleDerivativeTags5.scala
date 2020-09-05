@@ -23,6 +23,9 @@ import shipreq.webapp.base.text.Text
   *
   * B7 (tag:N/A + ok) mustn't derive
   * B8 (text:N/A + ok) mustn't derive
+  *
+  * B10 (empty) -> A9 (N/A for B)
+  * A10 (N/A for B) -> B11 (empty)
   */
 object SampleDerivativeTags5 {
 
@@ -39,6 +42,8 @@ object SampleDerivativeTags5 {
     val a6 = GenericReqId(106)
     val a7 = GenericReqId(107)
     val a8 = GenericReqId(108)
+    val a9 = GenericReqId(109)
+    val a10 = GenericReqId(110)
 
     val b1 = GenericReqId(201)
     val b2 = GenericReqId(202)
@@ -49,6 +54,8 @@ object SampleDerivativeTags5 {
     val b7 = GenericReqId(207)
     val b8 = GenericReqId(208)
     val b9 = GenericReqId(209)
+    val b10 = GenericReqId(210)
+    val b11 = GenericReqId(211)
 
     val c1 = GenericReqId(301)
     val c2 = GenericReqId(302)
@@ -139,6 +146,14 @@ object SampleDerivativeTags5 {
     genericReqCreate(b8, b, tags = z1, titleTagRef = z3),
     genericReqCreate(b9, b, impSrcs = Set(b7, b8)),
 
+    // B10 (empty) -> A9 (N/A for B)
+    genericReqCreate(b10, b),
+    genericReqCreate(a9, a, impSrcs = b10, tags = z3),
+
+    // A10 (N/A for B) -> B11 (empty)
+    genericReqCreate(a10, a, tags = z3),
+    genericReqCreate(b11, b, impSrcs = a10),
+
     // delete stuff
     Event.FieldCustomDelete(dField),
   )
@@ -177,6 +192,13 @@ object SampleDerivativeTags5 {
       |  + A-7: z1 (manual)
       |  + self: ∅
       |  = {z1+}
+      |A-9
+      |  + self: z3 (manual)
+      |  = {z3}
+      |A-10
+      |  + B-11: ∅
+      |  + self: z3 (manual)
+      |  = {z3}
       |B-1
       |  + B-2: z1 (derived)
       |  + self: z1 (manual)
@@ -217,6 +239,14 @@ object SampleDerivativeTags5 {
       |  + B-8: z1 (manual)
       |  + self: ∅
       |  = {z1+}
+      |B-10
+      |  + A-9: z3 (manual)
+      |  + self: ∅
+      |  = {}
+      |B-11
+      |  + A-10: z3 (manual)
+      |  + self: ∅
+      |  = {}
       |C-1 = {}
       |C-2 = {}
       |""".stripMargin
@@ -254,6 +284,13 @@ object SampleDerivativeTags5 {
       |  + A-7: y1 (manual)
       |  + self: ∅
       |  = {y1+}
+      |A-9
+      |  + self: ∅
+      |  = {}
+      |A-10
+      |  + B-11: ∅
+      |  + self: ∅
+      |  = {}
       |B-1
       |  + B-2: y1 (derived)
       |  + self: y1 (manual)
@@ -291,6 +328,13 @@ object SampleDerivativeTags5 {
       |  + self: ∅
       |  = {}
       |B-9
+      |  + self: ∅
+      |  = {}
+      |B-10
+      |  + A-9: ∅
+      |  + self: ∅
+      |  = {}
+      |B-11
       |  + self: ∅
       |  = {}
       |C-1

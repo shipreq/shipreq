@@ -520,12 +520,13 @@ object VirtualProjectTags {
                     x
 
                   } else {
-                    val manuals    = getFieldManuals(f, reqTypeId, node.manualLive.m)
-                    val badManuals = getFieldManuals(f, reqTypeId, node.deadTagsInLiveText.iterator ++ node.naTagsInLiveText.iterator)
-                    val conflicts  = getFieldManuals(f, reqTypeId, node.conflictingTags.m)
-                    val hasManual  = manuals.nonEmpty || badManuals.nonEmpty || conflicts.nonEmpty
-                    val default    = node.liveDefaults.get(f.fieldId)
-                    val hasDefault = default.isDefined
+                    val manuals       = getFieldManuals(f, reqTypeId, node.manualLive.m)
+                    val badManuals    = getFieldManuals(f, reqTypeId, node.deadTagsInLiveText.iterator ++ node.naTagsInLiveText.iterator)
+                    val conflicts     = getFieldManuals(f, reqTypeId, node.conflictingTags.m)
+                    val hasManual     = manuals.nonEmpty || badManuals.nonEmpty || conflicts.nonEmpty
+                    val default       = node.liveDefaults.get(f.fieldId)
+                    val hasDefault    = default.isDefined
+                    val liveValidTags = f.liveValidTags(reqTypeId)
 
                     // Complete all children
                     val addedFromChildren = processChildren()
@@ -571,7 +572,6 @@ object VirtualProjectTags {
 
                     // Derive tags from collected factors
                     var deadDerived = Set.empty[ApplicableTagId]
-                    val liveValidTags = f.liveValidTags(reqTypeId)
                     val derivationFilter: ApplicableTagId => Boolean =
                       tagId =>
                         liveValidTags.contains(tagId) || {
@@ -580,11 +580,12 @@ object VirtualProjectTags {
                           false
                         }
                     var liveDerived = Set.empty[ApplicableTagId]
-                    def addToLiveDerived(id: ApplicableTagId): Unit = {
-                      liveDerived += id
-                      if (defaultAddable && !default.contains(id))
-                        defaultAddable = false
-                    }
+                    def addToLiveDerived(id: ApplicableTagId): Unit =
+                      if (liveValidTags.contains(id)) {
+                        liveDerived += id
+                        if (defaultAddable && !default.contains(id))
+                          defaultAddable = false
+                      }
                     factors.value(nodeId).foreach {
                       case f: DerivativeTagFactor.Self          => addToLiveDerived(f.tag)
                       case f: DerivativeTagFactor.Relation      => addToLiveDerived(f.tag)

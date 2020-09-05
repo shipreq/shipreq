@@ -233,10 +233,6 @@ object VirtualProjectTagsTest extends TestSuite {
                   for (tagId <- vts.set(f.id)) {
                     val vt = vts(tagId, f.id)
                     if (vt.isDerived) {
-                      val d = vt.derivationDesc.get
-                      // Make sure derivation result in explanation matches the actual result
-                      // https://shipreq.com/project/d6My#/reqs/SC-7
-                      val all = d.steps.last.tags.whole
                       val tag = p.config.tags.needApplicableTag(tagId)
                       def failWithInfo(errMsg: String): Nothing = {
                         val sep     = "=" * 180
@@ -250,6 +246,15 @@ object VirtualProjectTagsTest extends TestSuite {
                         println()
                         fail(errMsg)
                       }
+
+                      val d = vt.derivationDesc.get
+                      if (d.steps.isEmpty) {
+                        failWithInfo(s"In $desc, the tag ${tag.key.with_#} is derived but there are no derivation steps.")
+                      }
+
+                      // Make sure derivation result in explanation matches the actual result
+                      // https://shipreq.com/project/d6My#/reqs/SC-7
+                      val all = d.steps.last.tags.whole
                       tag.live match {
                         case Live =>
                           if (!all.contains(tagId))
@@ -595,11 +600,10 @@ object VirtualProjectTagsTest extends TestSuite {
       }
 
       "random" - {
-//        import scala.util.Try
 //        import nyaya.prop._
 //        import nyaya.test.PropTestOps._
 //        import nyaya.test.DefaultSettings._
-//        RandomData.project.bugHunt(308, seeds = 100)(Prop.eval(p => Eval.atom("Props", (), Try(assertProps(p)).toEither.swap.toOption.map(_.toString))))
+//        RandomData.project.bugHunt(308, seeds = 1000)(Prop.eval(p => Eval.atom("Props", (), { assertProps(p); None })))
 
         RandomData.project.samples().take(3).foreach(assertProps)
       }
