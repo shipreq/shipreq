@@ -304,5 +304,11 @@ object TestGlobal {
 
     def press(k: SimEvent.Keyboard): *.Actions =
       *.action(s"Press ${k.desc}.")(k simulateKeyDownPressUp _.obs.activeElement)
+
+    def assertCellHasFocus(f: CommonObs.Editor.TestDsl[R, O, S]) =
+      activeElement.assert.equalBy(f.cellDom.run)
+
+    def assertEditorHasFocus(f: CommonObs.Editor.TestDsl[R, O, S]) =
+      activeElement.assert.equalBy(f.editorDom.run(_).orNull)
   }
 }

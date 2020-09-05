@@ -201,6 +201,7 @@ object CommonObs {
     class TestDsl[R, O, S](final val * : Dsl[Id, R, O, S, String], field: String)(getObs: O => Editor) {
       protected implicit def autoObs(o: O): Editor = getObs(o)
 
+      final val cellDom                    = *.focus(field + " cell dom"                            ).value(_.obs.dom)
       final val text                       = *.focus(field + " editor text"                         ).value(_.obs.text)
       final val editing                    = *.focus(field + " editing"                             ).value(_.obs.editing)
       final val editorDom                  = *.focus(field + " editor dom"                          ).option(_.obs.editor)

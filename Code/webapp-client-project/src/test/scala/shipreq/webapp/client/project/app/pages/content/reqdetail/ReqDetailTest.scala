@@ -727,7 +727,7 @@ object ReqDetailTest extends TestSuite {
 
     "keysInEditor" - {
       val f = field("Notes")
-      val editorHasFocus = global.activeElement.assert.equalBy(f.editorDom.run(_).orNull)
+      val editorHasFocus = global.assertEditorHasFocus(f)
       test("UC-1")(Plan.action(
         f.focusCell
           >> press(KB.d)        +> editorHasFocus +> f.editorValue.assert(Some("d"))
