@@ -47,7 +47,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* imp field auto complete adds ":" suffix
 * reorder tags when expansions recombined
 * Add percentages to deriv expl
 * tag in text should combine tag desc and whence-explanation

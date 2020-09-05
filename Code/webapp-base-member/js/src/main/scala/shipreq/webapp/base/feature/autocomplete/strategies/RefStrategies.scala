@@ -17,11 +17,11 @@ final case class ReqItem(reqId  : ReqId,
   val pubidStrNorm = ReqItem.normaliseReqPubid(pubidStr)
   val sortKey      = (reqType.mnemonic.value, pubid.pos.value)
 
-  private[strategies] def candidate =
+  private[strategies] def candidate(implicit s: ReqItem.Style) =
     RefStrategies.Candidate.standard(
       title       = pubidStr,
       desc        = title,
-      replacement = pubidStr + ":",
+      replacement = s.modReplacement(pubidStr),
     )
 }
 
@@ -31,6 +31,18 @@ object ReqItem {
 
   @inline private[strategies] def normaliseReqPubid(s: String): String =
     Grammar.pubid.seqFormat.normEach(s)
+
+  sealed trait Style {
+    def modReplacement(s: String): String
+  }
+  object Style {
+    case object Id extends Style {
+      override def modReplacement(s: String) = s
+    }
+    case object IdAndTitle extends Style {
+      override def modReplacement(s: String) = s + ":"
+    }
+  }
 }
 
 /** [REF] */
@@ -81,13 +93,13 @@ private[strategies] object RefStrategies {
       .sortBy(_.sortKey)
       .arraySeq
 
-  def candidatesByPubid(items: ArraySeq[ReqItem]): Candidates =
+  def candidatesByPubid(items: ArraySeq[ReqItem])(implicit s: ReqItem.Style): Candidates =
     term => {
       val np = ReqItem.normaliseReqPubid(term)
       items.iterator.filter(_.pubidStrNorm.contains(np)).map(_.candidate)
     }
 
-  def candidatesByTitle(items: ArraySeq[ReqItem], textSearch: TextSearch): Candidates = {
+  def candidatesByTitle(items: ArraySeq[ReqItem], textSearch: TextSearch)(implicit s: ReqItem.Style): Candidates = {
     val reqIdSet: Set[ReqId] =
       items.iterator.map(_.reqId).toSet
 

@@ -9,6 +9,8 @@ object ProjectStrategies {
   import Atom.TypeGroup
 
   type ReqItem = shipreq.webapp.base.feature.autocomplete.strategies.ReqItem
+  val  ReqItem = shipreq.webapp.base.feature.autocomplete.strategies.ReqItem
+
   type ReqItems = ArraySeq[ReqItem]
 
   def hashtag(project   : Project,
@@ -24,7 +26,7 @@ object ProjectStrategies {
       naTags     = naTags,
     )
 
-  def req(reqItems: ReqItems, textSearch: TextSearch): Contextualise => Strategies = {
+  def req(reqItems: ReqItems, textSearch: TextSearch)(implicit s: ReqItem.Style): Contextualise => Strategies = {
     val candidates = RefStrategies.combineCandidates(
       RefStrategies.candidatesByPubid(reqItems),
       RefStrategies.candidatesByTitle(reqItems, textSearch),
@@ -46,6 +48,7 @@ object ProjectStrategies {
                naTags    : NaTags,
                plainText : PlainText.ForProject.AnyCtx,
                textSearch: TextSearch): Strategies = {
+    implicit def style = ReqItem.Style.IdAndTitle
     val s = Vector.newBuilder[Strategy[_]]
 
     s ++= HashtagStrategies.forProject(

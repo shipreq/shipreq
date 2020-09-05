@@ -28,9 +28,10 @@ object TagP extends AutoCompleteTestModules.TagP {
 }
 
 object ReqC extends AutoCompleteTestModules.ReqC {
+  implicit def autoCompleteStyle = ReqItem.Style.IdAndTitle
   override implicit val strategies = {
     val reqItems = ProjectStrategies.reqItems(project, plainText)
-    ProjectStrategies.req(reqItems, textSearch)(Contextualise)
+    ProjectStrategies.req(reqItems, textSearch).apply(Contextualise)
   }
 }
 

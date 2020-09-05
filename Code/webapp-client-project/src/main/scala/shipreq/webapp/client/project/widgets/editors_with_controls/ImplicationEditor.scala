@@ -138,6 +138,8 @@ object ImplicationEditor {
       .mapValid(_.toSet)
       .andThenAuditor(validator2(p, subject, initialValues, dir))
 
+  private implicit def autoCompleteStyle = ReqItem.Style.Id
+
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.EditorBackend {
     private val pxLookup = Px.props($).map(_.lookup).withReuse.autoRefresh
     private val pxTextSearch = Px.props($).map(_.textSearch).withReuse.autoRefresh
@@ -147,7 +149,7 @@ object ImplicationEditor {
         l <- pxLookup
         s <- pxTextSearch
       } yield
-        AutoComplete.Project.req(l.suggestions, s)(Plain)
+        AutoComplete.Project.req(l.suggestions, s).apply(Plain)
 
     @inline private def lineCardinality = SingleLine
 
