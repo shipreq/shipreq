@@ -56,8 +56,8 @@
     "gatsby-plugin-s3": "^0.3.4",
     "gatsby-plugin-typescript": "^2.4.16",
     "gatsby-plugin-typescript-checker": "^1.1.1",
-    "prettier": "2.0.5",
-    "ts-node": "^8.10.2",
-    "typescript": "^3.9.7"
+    "prettier": "^2.1.1",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.2"
   }
 }
