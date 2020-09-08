@@ -117,7 +117,7 @@ object Dependencies {
   }
 
   object Doobie {
-    private val mm = MultiModule.scala("org.tpolecat", "0.9.0")
+    private val mm = MultiModule.scala("org.tpolecat", "0.9.2")
     val core          = mm("doobie-core")
     val postgres      = mm("doobie-postgres")
     val postgresCirce = mm("doobie-postgres-circe")
@@ -203,9 +203,9 @@ object Dependencies {
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.5")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
-  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.3.2")
+  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.4.0")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.16")
-  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.13.3")
+  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.13.4")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "4.0.1")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.3")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
