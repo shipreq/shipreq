@@ -1,7 +1,7 @@
 ---
 title  : Scala, React, and SSR (part 2)
 slug   : scala_react_and_ssr_part_2
-date   : 2020-09-09T13:00:00+1000
+date   : 2020-09-09T10:30:00+1000
 desc   : GraalVM lets us perform SSR but it's unfortunately still not fast enough yet. Luckily there's a way to have our cake and eat it too.
 tags   : ["tech"]
 ---
@@ -69,7 +69,8 @@ val quicklyPerformSSR: Props => Expr.Result[String] =
   StrFnCache(performSSR)
 ```
 
-That definition looks pretty simple.
+That's pretty concise but let's break it down.
+
 * We pass our real SSR function to `StrFnCache`
 * We save the result as a `val`, not a `def`, because we want a single cache.
   If this were a `def` it would create a new cache every time it's called, use it once
@@ -92,7 +93,7 @@ implicit def strFnCacheParamProps: StrFnCacheParam[Props] =
 In both cases, we're using `StrFnCacheParam.apply1` because we have case classes with 1 field.
 If our case class had 3 fields we would use `StrFnCacheParam.apply3`.
 
-That's it! Our example is now super fast, possibly even less than a microsecond.
+That's it! Our example is now super fast, possibly even less than a *micro*second.
 
 ## What's going on?
 
@@ -130,7 +131,7 @@ Firstly, it will call your real SSR function twice with the following inputs:
 
 `UNIQUE_TOKEN` is not literally the string `"UNIQUE_TOKEN"`, but it's a random UUID with the hex
 chars pushed into the unicode free-use region, then wrapped in `[scalagraal:` / `]`.
-Pretty safe to assume you'll never have a component return:
+Pretty safe to assume you'll never have a real component render this:
 
 ```
 [scalagraal:\UE697\UE6CC\UE69E\UE69A\UE69A\UE6CA\UE69D\UE69F\UE69D\UE6C7\UE6CA\UE69B\UE69A\UE6CA\UE698\UE69E\UE6C8\UE6C8\UE69E\UE69B\UE699\UE69A\UE69F\UE69C\UE69B\UE69A\UE6CA\UE69A\UE6C7\UE69E\UE69E\UE69C]
@@ -148,13 +149,49 @@ val simplifiedVersionOfTheCache: Props => Expr.Result[String] = {
   val UNIQUE_TOKEN = "..."
 
   p => p.username match {
-    case None    => anonymous
-    case Some(u) => withUsername.replace(UNIQUE_TOKEN, u.value)
+    case None    => Right(anonymous)
+    case Some(u) => Right(withUsername.replace(UNIQUE_TOKEN, u.value))
   }
 }
 ```
 
 As you can imagine, this is very, very fast.
+
+
+## Automatic branching
+
+What's really cool about this is that when you have multiple "logic paths", no matter how nested the
+conditions are, `StrFnCache` is smart enough to create separate caches (templates really) for each possible path.
+
+For example if we had,
+
+```scala
+sealed trait Status
+case object Ready
+case object Pending
+case object Complete
+
+final case class Item(id      : Long,
+                      status  : Status,
+                      readOnly: Boolean)
+
+final case class Props(username: Username,
+                       item    : Option[Item])
+```
+
+Due to the info provided by the implicit `StrFnCacheParam`s, `StrFnCache` will automatically
+create separate caches for the following patterns:
+
+```scala
+Props(_, None)
+Props(_, Some(Item(_, Complete, false)))
+Props(_, Some(Item(_, Complete, true)))
+Props(_, Some(Item(_, Pending, false)))
+Props(_, Some(Item(_, Pending, true)))
+Props(_, Some(Item(_, Ready, false)))
+Props(_, Some(Item(_, Ready, true)))
+```
+
 
 ## Caveats
 
@@ -177,8 +214,7 @@ enjoy lightning-fast SSR.
   <br/><u>Workaround:</u> Pass in the length using your props.
 
   <br/><br/><u>Example:</u> Some logic like <code class="language-scala">if (username == "admin")</code>
-  <br/><u>Workaround:</u> Either add an <code class="language-scala">admin: Boolean</code> flag to your props,
-  or write a custom <code class="language-scala">StrFnCacheParam</code> that duplicates the logic (not recommended).
+  <br/><u>Workaround:</u> Add an <code class="language-scala">admin: Boolean</code> flag to your props.
 
 1. **Numbers are trickier than Strings**
 
@@ -204,7 +240,7 @@ ADTs are comprised of three elements: values, products, and sums.
 
 ### 1. Values
 
-<SG/> provides a bunch of implicits out-of-the-box, and some configurable explicit instances
+Out-of-the-box, <SG/> provides a bunch of implicits and some configurable explicit instances
 for numeric types. Of course you can create your own, custom implicit `StrFnCacheParam` if you
 need, but realistically in 99.99999999% of cases your custom types are going to be
 products or sums.
@@ -270,7 +306,8 @@ def performSSR(path: String, p: Props): Expr.Result[String] =
 ```
 
 All we've done is add a `path` parameter and call `ReactSsr.setUrl` before rendering our
-component. There are two ways of adding route-aware caching.
+component. Now that we've adapted our render function to be route-aware, how do we
+adapt the caching to be route-aware too? Two ways:
 
 ### 1. Total
 
@@ -279,7 +316,7 @@ val quicklyPerformSSR: (String, Props) => Expr.Result[String] =
   StrFnCache.withRoutes(performSSR)
 ```
 
-We've changed `StrFnCache` to `StrFnCache.withRoutes`.
+We've changed `StrFnCache(` to `StrFnCache.withRoutes(`.
 That's it. Done.
 
 The only problem with this is that each route is cached on-demand.
@@ -297,12 +334,12 @@ val quicklyPerformSSR: (String, Props) => Expr.Result[Option[String]] =
   )
 ```
 
-* We've changed `StrFnCache` to `StrFnCache.withRouteWhitelist`.
+* We've changed `StrFnCache(` to `StrFnCache.withRouteWhitelist(`.
 * We're providing a finite set of paths - this allows <SG/> to pre-cache them all on startup.
 * The return type has changed to `Expr.Result[Option[String]]` and will return `None` when
   called with a path that's not in the whitelist.
 
-This also gives you the option of only adding SSR to a subset of your application.
+This also gives you the option of only adding SSR to a subset of your SPA.
 
 
 ## Success!
@@ -312,3 +349,5 @@ Now we've seen how to have our cake and eat it too!
 We're performing real SSR in our JVM server,
 and by populating our template-style caching on startup,
 we can guarantee that we respond to requests without any expensive overhead.
+
+I hope you've enjoyed this tutorial. Now go forth and create awesome apps!
