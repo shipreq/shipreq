@@ -170,9 +170,9 @@ For example if we had,
 
 ```scala
 sealed trait Status
-case object Ready
-case object Pending
-case object Complete
+case object Ready    extends Status
+case object Pending  extends Status
+case object Complete extends Status
 
 final case class Item(id      : Long,
                       status  : Status,
