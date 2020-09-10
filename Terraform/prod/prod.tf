@@ -46,7 +46,7 @@ module "shipreq" {
   app_public_key                        = file("key-app.rsa.pub")
   bastion_public_key                    = file("key-bastion.rsa.pub")
   elasticsearch_instance_type           = "t2.small.elasticsearch"
-  elasticsearch_retention_days          = 60
+  elasticsearch_retention_days          = 52
   elasticsearch_volume_size             = 10
   grafana_db_name                       = "grafana"
   grafana_db_password                   = local.passwords.db.grafana
