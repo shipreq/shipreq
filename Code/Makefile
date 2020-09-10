@@ -1,8 +1,9 @@
-.PHONY: info deploy diff_prod prod_ver publish push rm_targets since_prod watch_codebuild
+.PHONY: info deploy diff_prod prod_ver publish pull_images push rm_targets since_prod watch_codebuild
 
 BRANCH   := $(shell git rev-parse --abbrev-ref HEAD)
 CHANGES  := $(shell git status --porcelain)
 PROD_REV := $(shell fgrep shipreq ../Terraform/prod/versions.tf | perl -pe 's/.*git-(.+?)".*/$$1/')
+ECR      := 930801536115.dkr.ecr.ap-southeast-2.amazonaws.com
 
 WATCH_CODEBUILD = watch -n 6 -c aws-codebuild-status -t 'Name:shipreq'
 
@@ -15,6 +16,7 @@ info:
 	@echo "  * diff_prod       -- Show a diff between ShipReq that's currently in production, and local HEAD."
 	@echo "  * prod_ver        -- Show the Git SHA of ShipReq that's currently in production."
 	@echo "  * publish         -- Publish to AWS, start a build."
+	@echo "  * pull_images     -- Pull ShipReq images from ECR."
 	@echo "  * push            -- Git push to origin and Github"
 	@echo "  * rm_targets      -- Removes all local target directories."
 	@echo "  * since_prod      -- Show the commits that have occurred since the last production deployment."
@@ -40,6 +42,13 @@ else
 	git push aws master
 	aws codebuild start-build --project-name shipreq
 endif
+
+pull_images:
+	$(aws ecr get-login --no-include-email)
+	docker pull $(ECR)/shipreq/taskman
+	docker pull $(ECR)/shipreq/webapp
+	docker tag $(ECR)/shipreq/taskman shipreq/taskman
+	docker tag $(ECR)/shipreq/webapp shipreq/webapp
 
 push:
 	git push
