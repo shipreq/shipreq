@@ -65,6 +65,7 @@ v2.2
 * when session expired, it should still always retry in case re-auth occurred in another tab
 * if I have a flat list of unconnected nodes in ReqGraph, they appear backwards (ie. IV1, FR3, FR2, FR1)
 * req detail: add prev/next buttons
+* bug: pressing down from ReqDetail implications field loses focus
 
 
 
