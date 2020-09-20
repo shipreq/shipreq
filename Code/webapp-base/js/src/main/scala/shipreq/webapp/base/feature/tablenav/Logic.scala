@@ -7,25 +7,37 @@ import shipreq.base.util.{Deny, Permission}
 import shipreq.webapp.base.lib.DomUtil._
 
 object Attrs {
-  val NestedTable = "data-tnf-nt"
+  final val NestedTable = "data-tnf-nt"
 
-  val NewRow = "data-tnf-nr"
+  final val NewRow = "data-tnf-nr"
+
+  final val IgnoreFamily = "data-igfm"
 }
 
 private[tablenav] object Logic {
 
-  val allowMove: html.Element => Boolean = {
-    // Allow checkboxes
-    case i: html.Input => i.`type` ==* "checkbox"
+  val allowMove: html.Element => Boolean =
+    e => {
 
-    // These are not focusable by default, so if they are, I've specifically enabled them for this purpose
-    case _: html.Div
-       | _: html.Span
-       | _: html.TableCell => true
+      def allowed =
+        e match {
+          // Allow checkboxes
+          case i: html.Input => i.`type` ==* "checkbox"
 
-    // Ignore non-whitelisted
-    case _ => false
-  }
+          // These are not focusable by default, so if they are, I've specifically enabled them for this purpose
+          case _: html.Div
+             | _: html.Span
+             | _: html.TableCell => true
+
+          // Ignore non-whitelisted
+          case _ => false
+        }
+
+      def ignoreDueToParent =
+        parentsAndIndices(e).iterator.exists(x => Option(x._1.getAttribute(Attrs.IgnoreFamily)).exists(_.nonEmpty))
+
+      allowed && !ignoreDueToParent
+    }
 
   type ParentStream = LazyList[(html.Element, Int)]
 

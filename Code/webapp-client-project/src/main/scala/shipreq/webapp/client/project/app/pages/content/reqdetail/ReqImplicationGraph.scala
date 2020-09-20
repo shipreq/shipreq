@@ -7,6 +7,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.Colours
+import shipreq.webapp.base.feature.TableNavigationFeature
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.app.Style.reqdetail.{impGraph => *}
@@ -83,6 +84,7 @@ object ReqImplicationGraph {
           ).render
 
         <.div(*.controls,
+          TableNavigationFeature.ignoreFamily,
           <.div(*.controlHeader, "Colours"),
           dropdown)
       }

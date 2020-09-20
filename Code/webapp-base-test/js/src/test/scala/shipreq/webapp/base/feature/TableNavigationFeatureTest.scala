@@ -249,6 +249,14 @@ object TableNavigationFeatureTest extends TestSuite {
               <.td(VirtualLoc(1, 1, 4, None)),
               <.td(VirtualLoc(1, 1, 5, None), focusable, subRow, <.div(focusable), subRow, <.div(focusable)), // [01]x[01]
             ),
+            <.tr(TableNavigationFeature.ignoreFamily,
+              <.td(VirtualLoc(1, 2, 0, None), <.input.checkbox),
+              <.td(VirtualLoc(1, 2, 1, None), focusable),
+              <.td(VirtualLoc(1, 2, 2, None), focusable),
+              <.td(VirtualLoc(1, 2, 3, None), focusable),
+              <.td(VirtualLoc(1, 2, 4, None)),
+              <.td(VirtualLoc(1, 2, 5, None), focusable),
+            ),
           )
         )
     }

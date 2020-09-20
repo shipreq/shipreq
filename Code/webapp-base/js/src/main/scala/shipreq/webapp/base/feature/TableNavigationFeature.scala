@@ -73,6 +73,10 @@ object TableNavigationFeature {
   val ignore: TagMod =
     ^.tabIndex := DomUtil.tabIndexIgnoreInt
 
+  /** Mark an element so that itself and its children will be ignored by KB navigation. */
+  val ignoreFamily: TagMod =
+    VdomAttr(tablenav.Attrs.IgnoreFamily) := 1
+
   // -------------------------------------------------------------------------------------------------------------------
 
   final class Bundle private[TableNavigationFeature] (val tableStyle: TableStyle) {
