@@ -191,8 +191,8 @@ object TagConfig {
       val ateState: Option[ApplicableTagEditor.State] =
         p.state.value.right.editorOption.flatMap(_.swap.toOption)
 
-      val colourOverride: Option[Option[Colour]] =
-        ateState.map(_.colour.validated match {
+      val colourOverride: Option[Colour] =
+        ateState.flatMap(_.colour.validated match {
           case \/-(c) => c
           case -\/(_) => None
         })
@@ -207,15 +207,14 @@ object TagConfig {
             "New tag group"
 
           case \/-(id: ApplicableTagId) =>
-            var tag = p.project.config.tags.needApplicableTag(id)
-            colourOverride.foreach(c => tag = tag.copy(colour = c))
-            p.pw.viewTags.render(tag).apply(*.editorApTagHeader)
+            val ts = ViewTags.TagSettings.default.copy(customColour = colourOverride)
+            p.pw.viewTags.render(id, ts).apply(*.editorApTagHeader)
 
           case -\/(NewTagType.Tag) =>
             ateState.flatMap(s => DataValidators.hashRefKey.hashRefKey.stateless.unnamed(s.key).toOption) match {
 
               case Some(k) =>
-                val tag = Shared.fakeApplicableTag.copy(key = k, colour = colourOverride.flatten)
+                val tag = Shared.fakeApplicableTag.copy(key = k, colour = colourOverride)
                 <.span("New tag: ", p.pw.viewTags.render(tag).apply(*.editorApTagHeader))
 
               case None =>

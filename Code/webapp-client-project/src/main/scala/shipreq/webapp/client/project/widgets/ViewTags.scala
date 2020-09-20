@@ -48,6 +48,7 @@ final class ViewTags(project: Project) {
     val useCache = (
       id.value >= 0 // TagConfig creates a fake ApplicableTag with id of -1 to render new tags before they're saved
       && ts.customName.isEmpty // Custom names are not cached
+      && ts.customColour.isEmpty // Custom colours are not cached
     )
 
     if (useCache)
@@ -104,7 +105,7 @@ final class ViewTags(project: Project) {
       val colour: TagMod =
         // Do nothing if Dead because of the *.tag style and tagLabelColour which results in .ui.label.grey for dead tags
         TagMod.when(live is Live) {
-          val c = tag.colour.getOrElse(Colour.tagDefault)
+          val c = ts.customColour.orElse(tag.colour).getOrElse(Colour.tagDefault)
           TagMod(
             ^.backgroundColor := c.value,
             ^.borderColor     := c.value,
@@ -197,7 +198,7 @@ final class ViewTags(project: Project) {
   private[this] val cache: DisplaySettings => Validity => ApplicableTag.OrId => Out =
     Util.memoWithMapVar { ds =>
       Validity.memo { validity =>
-        val ts = TagSettings(None, validity)
+        val ts = TagSettings(None, None, validity)
         memoApplicableTagOrId(_render(_, ds, ts))
       }
     }
@@ -361,11 +362,12 @@ object ViewTags {
     implicit def univEq: UnivEq[HoverText] = UnivEq.derive
   }
 
-  final case class TagSettings(customName: Option[String],
-                               validity  : Validity)
+  final case class TagSettings(customName  : Option[String],
+                               customColour: Option[Colour],
+                               validity    : Validity)
 
   object TagSettings {
-    val default = apply(None, Valid)
+    val default = apply(None, None, Valid)
   }
 
   trait ForReq[A] {
