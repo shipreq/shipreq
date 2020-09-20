@@ -23,7 +23,7 @@ import shipreq.webapp.client.project.app.state.Global.State
 
 abstract class Global(onFirstLoad         : (Global, InitAppData) => Callback,
                       onInitFailure       : ErrorMsg => Callback,
-                      protected val logger: LoggerJs.Dsl) extends Broadcaster[ProjectState.Update] {
+                      protected val logger: LoggerJs) extends Broadcaster[ProjectState.Update] {
 
   val reauthModal: ReauthenticationModal
 
@@ -129,7 +129,7 @@ abstract class Global(onFirstLoad         : (Global, InitAppData) => Callback,
           }
       }
 
-    logger(_.info(s"WebSocket State: $s")) >> updateConnectionStatus >> action
+    logger.pure(_.info(s"WebSocket State: $s")) >> updateConnectionStatus >> action
   }
 
   final object connectedStatusHub extends Broadcaster[ConnectionStatus] {
@@ -149,7 +149,7 @@ abstract class Global(onFirstLoad         : (Global, InitAppData) => Callback,
 
   final private def load: Callback =
     for {
-      _  <- logger(l => l.info("WebSocket opened. Requesting InitApp...") >> l.time("initApp"))
+      _  <- logger.pure(l => l.info("WebSocket opened. Requesting InitApp...") >> l.time("initApp"))
       a1 <- wsClient.send(WsReqRes.InitApp)(())
       a2  = a1 <* logger.async(_.timeEnd("initApp"))
       _  <- a2.completeWith {
@@ -161,7 +161,7 @@ abstract class Global(onFirstLoad         : (Global, InitAppData) => Callback,
                     unsafeSetState(State.Active(s, None))
                     onFirstLoad(this, i).runNow()
                   case _: State.Active =>
-                    logger.runNow(_.warn("InitApp response received but already State.Active"))
+                    logger(_.warn("InitApp response received but already State.Active"))
                 }
               }
 
@@ -169,24 +169,24 @@ abstract class Global(onFirstLoad         : (Global, InitAppData) => Callback,
                 onInitFailure(errMsg) >> wsClient.close
 
               case Failure(err) =>
-                logger(_.warn(s"Connection failure: ${err.getMessage}"))
+                logger.pure(_.warn(s"Connection failure: ${err.getMessage}"))
             }
     } yield ()
 
   protected def reconnect(ps: ProjectState): Callback =
     for {
-      _  <- logger(l => l.info("WebSocket re-established. Requesting Reconnect...") >> l.time("reconnect"))
+      _  <- logger.pure(l => l.info("WebSocket re-established. Requesting Reconnect...") >> l.time("reconnect"))
       a1 <- wsClient.send(WsReqRes.Reconnect)(ps.ord)
       a2  = a1 <* logger.async(_.timeEnd("reconnect"))
       _  <- a2.completeWith {
               case Success(ves) => addEvents(ves).void
-              case Failure(err) => logger(_.warn(s"Connection failure: ${err.getMessage}"))
+              case Failure(err) => logger.pure(_.warn(s"Connection failure: ${err.getMessage}"))
             }
     } yield ()
 
   final def addEvents(recvEvents: VerifiedEvent.Seq): CallbackTo[NewEvents] =
     CallbackTo[NewEvents] {
-      logger.runNow(_.debug("Adding events: " + recvEvents))
+      logger(_.debug("Adding events: " + recvEvents))
       unsafeState match {
 
         case s1: State.Active =>
@@ -225,7 +225,7 @@ abstract class Global(onFirstLoad         : (Global, InitAppData) => Callback,
     }
 
   final protected def onPush(recvEvents: VerifiedEvent.NonEmptySeq): Callback = Callback {
-    logger.runNow(_.info("Server pushed: " + recvEvents))
+    logger(_.info("Server pushed: " + recvEvents))
     addEvents(recvEvents.values).runNow()
   }
 
@@ -249,7 +249,7 @@ abstract class Global(onFirstLoad         : (Global, InitAppData) => Callback,
             missing     = first.to(last).iterator.filterNot(got.contains).map(EventOrd(_)).toSet
             missingNE   <- NonEmptySet.option(missing)
           } yield {
-            logger.runNow(_.info {
+            logger(_.info {
               val dur = stalePeriod.conciseDesc
               val events = missingNE.iterator.map(_.value).toList.sorted.mkString(",")
               s"Client has been stale for $dur. Requesting sync for events: $events"
@@ -292,13 +292,13 @@ object Global {
             wscBuilder   : WebSocketClient.Builder[WsReqRes, Push],
             onFirstLoad  : (Global, InitAppData) => Callback,
             onInitFailure: ErrorMsg => Callback,
-            logger       : LoggerJs.Dsl): Global =
+            logger       : LoggerJs): Global =
     new Global(onFirstLoad, onInitFailure, logger) {
 
       override val reauthModal = reauth
 
       override val wsClient: WebSocketClient[WsReqRes] = {
-        logger.runNow(_.debug("Creating WebSocket..."))
+        logger(_.debug("Creating WebSocket..."))
         wscBuilder.build(
           reauthorise   = reauthModal.run,
           onServerPush  = onPush,

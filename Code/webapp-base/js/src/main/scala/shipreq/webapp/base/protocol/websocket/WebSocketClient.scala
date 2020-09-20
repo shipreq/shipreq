@@ -32,7 +32,7 @@ object WebSocketClient {
               onServerPush : Push => Callback,
               onStateChange: WebSocketClient[ReqRes] => State => Callback,
               timers       : JsTimers,
-              logger       : LoggerJs.Dsl): WebSocketClient[ReqRes]
+              logger       : LoggerJs): WebSocketClient[ReqRes]
   }
 
   object Builder {
@@ -53,7 +53,7 @@ object WebSocketClient {
                            onServerPush : p.Push => Callback,
                            onStateChange: WebSocketClient[p.ReqRes] => State => Callback,
                            timers       : JsTimers,
-                           logger       : LoggerJs.Dsl) =
+                           logger       : LoggerJs) =
           new Impl(
             w,
             r,
@@ -93,7 +93,7 @@ object WebSocketClient {
       mkProtocolSC      : (ReqId => Option[Protocol[SafePickler]]) => Protocol.Of[SafePickler, ServerToClient[Push]],
       recvPush          : Push => Callback,
       timers            : JsTimers,
-      logger            : LoggerJs.Dsl) extends WebSocketClient[ReqRes] { self =>
+      logger            : LoggerJs) extends WebSocketClient[ReqRes] { self =>
 
     private val requestManager: RequestManager[ReqId, Protocol.AndValue[SafePickler], Request[ReqRes]] =
       RequestManager.arrayStore
@@ -191,7 +191,8 @@ object WebSocketClient {
       createWS.map(new Instance(_)).attempt.runNow() match {
         case Right(i) => Some(i)
         case Left(e) =>
-          logger.runNow(_.warn(s"Failed to create WebSocket instance.") << Callback(e.printStackTrace()))
+          logger(_.warn(s"Failed to create WebSocket instance."))
+          LoggerJs.exception(e)
           None
       }
     }
@@ -199,7 +200,7 @@ object WebSocketClient {
     private def unsafeScheduleReconnect(): Unit =
       state.retries.pop match {
         case Some((retry, nextRetries)) =>
-          logger.runNow(_.info(s"WebSocketClient: retry connection in ${retry.toMillis} ms..."))
+          logger(_.info(s"WebSocketClient: retry connection in ${retry.toMillis} ms..."))
           val h = timers.setTimeout(retry.toMillis.toDouble) {
             // This bit here is Schedule in websocket_client.tla
             val i = unsafeNewInstance()
@@ -210,7 +211,7 @@ object WebSocketClient {
           state = state.copy(retries = nextRetries, scheduled = Some(h))
 
         case None =>
-          logger.runNow(_.info("WebSocketClient: out of retries. Leaving disconnected."))
+          logger(_.info("WebSocketClient: out of retries. Leaving disconnected."))
           state = state.copy(scheduled = None)
           unsafeFailQueued(errorClosed)
       }
@@ -273,7 +274,8 @@ object WebSocketClient {
               ws.send(payload.toArrayBuffer)
             catch {
               case t: Throwable =>
-                logger.runNow(l => l.exception(t) >> l.warn(s"WebSocket.send($payload) failed"))
+                LoggerJs.exception(t)
+                logger(_.warn(s"WebSocket.send($payload) failed"))
                 throw t
             }
 
@@ -290,30 +292,30 @@ object WebSocketClient {
         val handler: Callback =
           decode.attempt.flatMap {
             case Right(\/-(\/-((id, null)))) =>
-              logger(_.debug(s"Unable to decode response to req #${id.value}; request has been removed")) >>
+              logger.pure(_.debug(s"Unable to decode response to req #${id.value}; request has been removed")) >>
                 requestManager.remove(id)
 
             case Right(\/-(\/-((id, res)))) =>
-              logger(_.debug(s"WebSocketClient received response to req #${id.value}: ${res.value}")) >>
+              logger.pure(_.debug(s"WebSocketClient received response to req #${id.value}: ${res.value}")) >>
                 requestManager.complete(id, Success(res))
 
             case Right(\/-(-\/(push))) =>
-              logger(_.debug(s"WebSocketClient received push: $push")) >>
+              logger.pure(_.debug(s"WebSocketClient received push: $push")) >>
                 recvPush(push)
 
             case Right(-\/(err)) =>
-              logger(_.error(s"WebSocketClient failed to process msg: ${BinaryData.fromArrayBuffer(msg)}\n$err")) >>
+              logger.pure(_.error(s"WebSocketClient failed to process msg: ${BinaryData.fromArrayBuffer(msg)}\n$err")) >>
                 onDecodeFailure(err)
 
             case Left(err) =>
-              logger(_.error(s"WebSocketClient failed to process msg: ${BinaryData.fromArrayBuffer(msg)}\n$err")) >>
+              logger.pure(_.error(s"WebSocketClient failed to process msg: ${BinaryData.fromArrayBuffer(msg)}\n$err")) >>
                 onException(err)
           }
         handler.runNow()
       }
 
       private def onDecodeFailure(e: SafePickler.DecodingFailure): Callback = Callback {
-        logger(_.error(s"Failed to parse server response: $e")).runNow()
+        logger(_.error(s"Failed to parse server response: $e"))
         if (e.isLocalKnownToBeOutOfDate) {
           window.alert("Unable to understand the response from the server.\nWe've upgraded our servers since you opened this page.\nPlease reload this page to get the updates.")
           ws.close(CloseReason.clientOutOfDate)
@@ -324,7 +326,7 @@ object WebSocketClient {
 
       private def onException(err: Throwable): Callback =
         Callback {
-          logger(_.exception(err)).runNow()
+          LoggerJs.exception(err)
           val message = Option(err.getMessage)
           unsafeCloseDueToError(message)
         }

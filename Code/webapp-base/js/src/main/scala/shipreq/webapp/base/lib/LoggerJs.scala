@@ -2,90 +2,107 @@ package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react.{AsyncCallback, Callback}
 import scala.scalajs.js
-import scala.scalajs.js.{UndefOr, undefined}
+import scala.scalajs.LinkingInfo
 
-/**
- * Logger that only logs in dev-mode.
- * In prod-mode, the logging functionality is elided and replaced with `Callback.empty`.
- */
-sealed trait LoggerJs {
-  def debug     (msg: js.Any, extra: js.Any*)               : Callback
-  def info      (msg: js.Any, extra: js.Any*)               : Callback
-  def warn      (msg: js.Any, extra: js.Any*)               : Callback
-  def error     (msg: js.Any, extra: js.Any*)               : Callback
-  def exception (err: Throwable)                            : Callback
-  def log       (msg: js.Any, extra: js.Any*)               : Callback
-  def assert    (test: Boolean, msg: String, extra: js.Any*): Callback
-  def dir       (value: js.Any, extra: js.Any*)             : Callback
-  def time      (label: String)                             : Callback
-  def timeLog   (label: String)                             : Callback
-  def timeEnd   (label: String)                             : Callback
-  def profile   (reportName: UndefOr[String] = undefined)   : Callback
-  val profileEnd                                            : Callback
-  val clear                                                 : Callback
+trait LoggerJs {
+  import LoggerJs.Dsl
+
+  def apply(f: => (Dsl[Unit] => Unit)): Unit
+
+  def pure(f: => (Dsl[Callback] => Callback)): Callback
+
+  def async(f: => (Dsl[AsyncCallback[Unit]] => AsyncCallback[Unit])): AsyncCallback[Unit]
 }
 
 object LoggerJs {
 
-  private final val L = elidable.INFO
+  trait Dsl[Out] { self =>
+    def debug     (msg: js.Any, extra: js.Any*)               : Out
+    def info      (msg: js.Any, extra: js.Any*)               : Out
+    def warn      (msg: js.Any, extra: js.Any*)               : Out
+    def error     (msg: js.Any, extra: js.Any*)               : Out
+    def exception (err: Throwable)                            : Out
+    def log       (msg: js.Any, extra: js.Any*)               : Out
+    def assert    (test: Boolean, msg: String, extra: js.Any*): Out
+    def dir       (value: js.Any, extra: js.Any*)             : Out
+    def time      (label: String)                             : Out
+    def timeLog   (label: String)                             : Out
+    def timeEnd   (label: String)                             : Out
+    def profile   (reportName: String)                        : Out
+    def profileEnd                                            : Out
+    def clear                                                 : Out
 
-  @js.native
-  @nowarn("cat=unused")
-  private trait Console2 extends js.Object {
-    def debug(message: js.Any, optionalParams: js.Any*): Unit = js.native
-    def time(label: String): Unit = js.native
-    def timeLog(label: String): Unit = js.native
-    def timeEnd(label: String): Unit = js.native
+    def map[B](f: (() => Out) => B): Dsl[B] =
+      new Dsl[B] {
+        override def exception (err: Throwable)                             = f(() => self.exception (err))
+        override def debug     (msg: js.Any, extra: js.Any*)                = f(() => self.debug     (msg, extra: _*))
+        override def info      (msg: js.Any, extra: js.Any*)                = f(() => self.info      (msg, extra: _*))
+        override def warn      (msg: js.Any, extra: js.Any*)                = f(() => self.warn      (msg, extra: _*))
+        override def error     (msg: js.Any, extra: js.Any*)                = f(() => self.error     (msg, extra: _*))
+        override def log       (msg: js.Any, extra: js.Any*)                = f(() => self.log       (msg, extra: _*))
+        override def assert    (test: Boolean, msg: String, extra: js.Any*) = f(() => self.assert    (test, msg, extra: _*))
+        override def dir       (value: js.Any, extra: js.Any*)              = f(() => self.dir       (value, extra: _*))
+        override def time      (label: String)                              = f(() => self.time      (label))
+        override def timeLog   (label: String)                              = f(() => self.timeLog   (label))
+        override def timeEnd   (label: String)                              = f(() => self.timeEnd   (label))
+        override def profile   (reportName: String)                         = f(() => self.profile   (reportName))
+        override def profileEnd                                             = f(() => self.profileEnd)
+        override def clear                                                  = f(() => self.clear)
+      }
   }
 
-  @elidable(L) private def newInstance: LoggerJs = {
-    new LoggerJs {
-      val consol2 = console.asInstanceOf[Console2]
-      private def wrap(f: => Any): Callback = Callback(f).attempt.void
-      override def exception (err: Throwable)                             = wrap(err.printStackTrace(System.err))
-      override def debug     (msg: js.Any, extra: js.Any*)                = wrap(consol2.debug     (msg, extra: _*))
-      override def info      (msg: js.Any, extra: js.Any*)                = wrap(console.info      (msg, extra: _*))
-      override def warn      (msg: js.Any, extra: js.Any*)                = wrap(console.warn      (msg, extra: _*))
-      override def error     (msg: js.Any, extra: js.Any*)                = wrap(console.error     (msg, extra: _*))
-      override def log       (msg: js.Any, extra: js.Any*)                = wrap(console.log       (msg, extra: _*))
-      override def assert    (test: Boolean, msg: String, extra: js.Any*) = wrap(console.assert    (test, msg, extra: _*))
-      override def dir       (value: js.Any, extra: js.Any*)              = wrap(console.dir       (value, extra: _*))
-      override def time      (label: String)                              = wrap(consol2.time      (label))
-      override def timeLog   (label: String)                              = wrap(consol2.timeLog   (label))
-      override def timeEnd   (label: String)                              = wrap(consol2.timeEnd   (label))
-      override def profile   (reportName: UndefOr[String] = undefined)    = wrap(reportName.fold(console.profile())(console.profile))
-      override val profileEnd                                             = wrap(console.profileEnd())
-      override val clear                                                  = wrap(console.clear())
-    }
+  private object real extends Dsl[Unit] {
+    override def exception (err: Throwable)                             = LoggerJs.exception(err)
+    override def debug     (msg: js.Any, extra: js.Any*)                = console.debug     (msg, extra: _*)
+    override def info      (msg: js.Any, extra: js.Any*)                = console.info      (msg, extra: _*)
+    override def warn      (msg: js.Any, extra: js.Any*)                = console.warn      (msg, extra: _*)
+    override def error     (msg: js.Any, extra: js.Any*)                = console.error     (msg, extra: _*)
+    override def log       (msg: js.Any, extra: js.Any*)                = console.log       (msg, extra: _*)
+    override def assert    (test: Boolean, msg: String, extra: js.Any*) = console.assert    (test, msg, extra: _*)
+    override def dir       (value: js.Any, extra: js.Any*)              = console.dir       (value, extra: _*)
+    override def time      (label: String)                              = console.time      (label)
+    override def timeLog   (label: String)                              = console.asInstanceOf[js.Dynamic].timeLog(label)
+    override def timeEnd   (label: String)                              = console.timeEnd   (label)
+    override def profile   (reportName: String)                         = console.profile   (reportName)
+    override def profileEnd                                             = console.profileEnd()
+    override def clear                                                  = console.clear()
   }
 
-  private val instance = newInstance
+  object on extends LoggerJs {
+    override def apply(f: => (Dsl[Unit] => Unit)): Unit =
+      f(real)
 
-  @elidable(L) def runNow(f: => (LoggerJs => Callback)): Unit =
-    if (instance ne null) f(instance).runNow()
+    private val pureDsl =
+      real.map(f => Callback(f()))
 
-  @inline def apply(f: => (LoggerJs => Callback)): Callback =
-    Callback(runNow(f))
+    override def pure(f: => (Dsl[Callback] => Callback)): Callback =
+      f(pureDsl)
 
-  @inline def async(f: => (LoggerJs => Callback)): AsyncCallback[Unit] =
-    AsyncCallback.delay(runNow(f))
+    private val asyncDsl =
+      pureDsl.map(_().asAsyncCallback)
 
-  sealed class Dsl {
-    @elidable(L) def runNow(f: => (LoggerJs => Callback)): Unit =
-      if (instance ne null) f(instance).runNow()
-
-    @inline def apply(f: => (LoggerJs => Callback)): Callback =
-      Callback(runNow(f))
-
-    @inline def async(f: => (LoggerJs => Callback)): AsyncCallback[Unit] =
-      AsyncCallback.delay(runNow(f))
+    override def async(f: => (Dsl[AsyncCallback[Unit]] => AsyncCallback[Unit])): AsyncCallback[Unit] =
+      f(asyncDsl)
   }
 
-  val on: Dsl = new Dsl
+  object off extends LoggerJs {
+    @elidable(elidable.INFO)
+    override def apply(f: => (Dsl[Unit] => Unit)): Unit =
+      ()
 
-  val off: Dsl = new Dsl {
-    @elidable(L) override def runNow(f: => (LoggerJs => Callback)) = ()
-    @inline override def apply(f: => (LoggerJs => Callback)) = Callback.empty
-    @inline override def async(f: => (LoggerJs => Callback)) = AsyncCallback.pure(())
+    override def pure(f: => (Dsl[Callback] => Callback)): Callback =
+      Callback.empty
+
+    override def async(f: => (Dsl[AsyncCallback[Unit]] => AsyncCallback[Unit])): AsyncCallback[Unit] =
+      AsyncCallback.unit
   }
+
+  @inline def devOnly: LoggerJs =
+    if (LinkingInfo.developmentMode)
+      on
+    else
+      off
+
+  def exception(err: Throwable): Unit =
+    err.printStackTrace(System.err)
 }
