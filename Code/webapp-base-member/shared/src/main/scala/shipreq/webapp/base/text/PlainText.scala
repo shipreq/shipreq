@@ -87,7 +87,7 @@ object PlainText {
   def pubid(mnemonic: ReqType.Mnemonic, pos: ReqTypePos): String =
     mnemonic.value ~ "-" ~ pos.value
 
-  def concisePubidSet(reqIds: NonEmptySet[ReqId], p: Project, sep: String = ","): String = {
+  def concisePubidSet(reqIds: NonEmptySet[ReqId], p: Project, sep: String = ", "): String = {
     val reqs = p.content.reqs
     var byType = Multimap.empty[ReqTypeId, Set, Int]
     for (reqId <- reqIds) {

@@ -446,7 +446,7 @@ object VirtualProjectTagsTest extends TestSuite {
                     |Factors
                     |
                     |  #analysed    - IV-{1,3}
-                    |  #implemented - FR-{1-4},IV-{1,3},MF-1
+                    |  #implemented - FR-{1-4}, IV-{1,3}, MF-1
                     |  #rejected    - IV-2
                     |
                     |Derivation
@@ -479,8 +479,8 @@ object VirtualProjectTagsTest extends TestSuite {
                     |Factors
                     |
                     |  no tag - FB-1
-                    |  #v1    - FR-{1,3,4},IV-{1,3},MF-1
-                    |  #v2    - FR-2,IV-{1-3},MF-1
+                    |  #v1    - FR-{1,3,4}, IV-{1,3}, MF-1
+                    |  #v2    - FR-2, IV-{1-3}, MF-1
                     |
                     |Derivation
                     |
@@ -561,9 +561,9 @@ object VirtualProjectTagsTest extends TestSuite {
             |Factors
             |
             | #needs_more_info - WF-{1,3,4}
-            | #needs_analysis  - FR-{5,13},IV-{28,31},MF-35,UC-1,WF-{2,5}
-            | #analysed        - BR-1,FR-{2-4,7},IV-28,SI-1,UC-1,WF-2
-            | #implemented     - BR-{1,3},FB-5,FR-{2-4,6-9,12,14-16},SI-{1,3,4}
+            | #needs_analysis  - FR-{5,13}, IV-{28,31}, MF-35, UC-1, WF-{2,5}
+            | #analysed        - BR-1, FR-{2-4,7}, IV-28, SI-1, UC-1, WF-2
+            | #implemented     - BR-{1,3}, FB-5, FR-{2-4,6-9,12,14-16}, SI-{1,3,4}
             | #rejected        - SI-{2,5}
             |
             |Derivation

@@ -55,7 +55,6 @@ v2.2
 * Problem: I've set MF-33 to #should but it's still deriving #must as well
   SI: Might need to add a field to disable DT for a req for a specific field (granularity=req)
   SI: Or maybe a rule that for MFs, manual always wins / disables DT (granularity=req-type)
-* Put a space between DT factor values (eg. `FR-{5,13},IV-{28,31},MF-35` => `FR-{5,13}, IV-{28,31}, MF-35`)
 * when a derived tag has a desc (hover text), it doesn't show the deriv explanation
 * ReqDetail ImpGraph when coloured by tag, should display the tag in the hover text
   Actually, maybe just always include all tags in the hover text - that's probably better
