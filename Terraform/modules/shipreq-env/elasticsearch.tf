@@ -6,7 +6,7 @@ locals {
 resource "aws_elasticsearch_domain" "es" {
   count                 = local.es_count
   domain_name           = var.env
-  elasticsearch_version = "7.4"
+  elasticsearch_version = "7.7"
   tags                  = local.es_tags
 
   vpc_options {
