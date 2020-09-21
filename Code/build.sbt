@@ -5,7 +5,6 @@ startYear := Some(2013)
 cancelable in Global := true
 
 val root                  = ShipReqBuild.root
-val js                    = ShipReqBuild.js
 
 val base                  = ShipReqBuild.base
 val basePredefJvm         = ShipReqBuild.basePredefJvm

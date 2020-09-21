@@ -28,23 +28,6 @@ object ShipReqBuild {
       .aggregate(base, taskman, webapp, utils, benchmarkJvm, benchmarkJs)
       .aggregate(ScalafixBuild.projects: _*)
 
-  /** All JS modules */
-  lazy val js =
-    Project("js", file(".js"))
-      .configure(Common.jvmSettings)
-      .aggregate(
-        webappMacroJs,
-        webappBaseJs,
-        webappBaseMemberJs,
-        webappBaseTestJs,
-        webappClientPublicJs,
-        webappClientHome,
-        webappClientWwApi,
-        webappClientWw,
-        webappClientProject,
-        webappSsrJs,
-        webappServerLogicJs)
-
   // ===================================================================================================================
   // base-* : General utils for taskman, webapp, benchmarking, etc.
 
