@@ -49,11 +49,6 @@ v2.2
 ### Implement
 * search widget in nav bar (like how the gatsby doc works)
 * bug: freshdesk #86
-* Problem: I've set MF-33 to #should but it's still deriving #must as well
-  SI: Might need to add a field to disable DT for a req for a specific field (granularity=req)
-  SI: Or maybe a rule that for MFs, manual always wins / disables DT (granularity=req-type)
-* ReqDetail ImpGraph when coloured by tag, should display the tag in the hover text
-  Actually, maybe just always include all tags in the hover text - that's probably better
 * reorder tags when expansions recombined
 * Add percentages to deriv expl
 * tag in text should combine tag desc and whence-explanation
@@ -61,7 +56,13 @@ v2.2
 * when session expired, it should still always retry in case re-auth occurred in another tab
 * if I have a flat list of unconnected nodes in ReqGraph, they appear backwards (ie. IV1, FR3, FR2, FR1)
 * req detail: add prev/next buttons
-* advanced colour picker doesn't work
+
+* Problem: I've set MF-33 to #should but it's still deriving #must as well
+  SI: Might need to add a field to disable DT for a req for a specific field (granularity=req)
+  SI: Or maybe a rule that for MFs, manual always wins / disables DT (granularity=req-type)
+
+* ReqDetail ImpGraph when coloured by tag, should display the tag in the hover text
+  Actually, maybe just always include all tags in the hover text - that's probably better
 
 
 
@@ -72,6 +73,8 @@ Backlog (maybe-probably soon)
 * Use WebSockets on home SPA to see projects and project stats update
 * Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
 * Bulk tag add/remove
+* Advanced colour picker doesn't work
+* ReqTable doesn't respect `max-width` unless `table-layout:fixed`
 
 * Remove Scalaz
 
