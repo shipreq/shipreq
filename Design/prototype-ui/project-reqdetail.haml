@@ -207,6 +207,41 @@
         margin-left: 2px;
       }
 
+      #search_results {
+        display: flex;
+        flex-direction: column;
+      }
+      #search_results > * {
+        padding: 0.5em 1ex;
+        border-radius:4px;
+      }
+      #search_results .pubid {
+        font-weight: bold;
+        margin-right:1ex;
+      }
+      /*
+      #search_results > *:hover {
+        background: #d9016618;
+        background: #0088ff20;
+      }
+      #search_results a {
+        display: block;
+        color: #111;
+        padding-left: 2.5ex;
+        text-indent: -2.5ex;
+      }
+      */
+      #search_results a:hover {
+        color: #d90166;
+      }
+      #search_results a {
+        display: block;
+        color: #00549c;
+        color: #111;
+        padding-left: 2.5ex;
+        text-indent: -2.5ex;
+      }
+
   %body
 
     .ui.menu.borderless.fixed.inverted
@@ -242,12 +277,33 @@
           %i.divider.icon.right.angle
           .section.active FR-1
 
-      .item.ui.right.dropdown.simple
-        @japgolly
-        -# %i.dropdown.icon
-        .menu
-          %a.item{href: "member-account.html"} Account
-          .item Logout
+      .item(style="flex-grow:1;")
+        .ui.icon.input.small(style="max-width: 52ex; margin-left:auto; position:relative")
+          %input(type="text" placeholder="Search...")
+          %i.search.link.icon
+          .ui.popup.bottom.left.visible.fluid(style="top:100%; left:0;")
+            -# No results found.
+            #search_results
+              %div
+                %a(href="#")
+                  %span.pubid FR-1:
+                  Blah blah!
+              %div
+                %a(href="#")
+                  %span.pubid MF-16:
+                  Whatever man Whatever man Whatever man Whatever man Whatever man Whatever man Whatever man Whatever man
+              %div
+                %a(href="#")
+                  %span.pubid FR-2:
+                  Blah #must do stuff
+
+      .right.menu
+        .item.ui.dropdown.simple
+          @japgolly
+          -# %i.dropdown.icon
+          .menu
+            %a.item{href: "member-account.html"} Account
+            .item Logout
 
     -# =============================================================================================
     %main{style: "margin-top:4rem"}
