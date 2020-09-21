@@ -2,9 +2,8 @@
 
 ###########################################
 # Note: To test this locally...           #
-#   1. cd ../Docker/dev-build_env         #
-#   2. make exec                          #
-#   3. bin/ci                             #
+#   1. make build_env                     #
+#   2. bin/ci                             #
 ###########################################
 
 unset JAVA_OPTS

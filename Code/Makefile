@@ -1,4 +1,4 @@
-.PHONY: info deploy diff_prod prod_ver publish pull_images push rm_targets since_prod watch_codebuild
+.PHONY: build_env info deploy diff_prod prod_ver publish pull_images push rm_targets since_prod watch_codebuild
 
 BRANCH   := $(shell git rev-parse --abbrev-ref HEAD)
 CHANGES  := $(shell git status --porcelain)
@@ -12,6 +12,7 @@ info:
 	@echo
 	@echo "Commands:"
 	@echo
+	@echo "  * build_env       -- Create a new build-env instance and log in to it."
 	@echo "  * deploy          -- Publish to AWS, start a build, update prod Terraform."
 	@echo "  * diff_prod       -- Show a diff between ShipReq that's currently in production, and local HEAD."
 	@echo "  * prod_ver        -- Show the Git SHA of ShipReq that's currently in production."
@@ -22,6 +23,11 @@ info:
 	@echo "  * since_prod      -- Show the commits that have occurred since the last production deployment."
 	@echo "  * watch_codebuild -- Watches CodeBuild status."
 	@echo
+
+build_env:
+	$$(aws ecr get-login --no-include-email)
+	docker pull $(ECR)/shipreq/dev/build_env
+	make -f ../Docker/dev-build_env/Makefile exec2
 
 deploy: publish
 	../Terraform/prod/update_shipreq.sh
@@ -44,7 +50,7 @@ else
 endif
 
 pull_images:
-	$(aws ecr get-login --no-include-email)
+	$$(aws ecr get-login --no-include-email)
 	docker pull $(ECR)/shipreq/taskman
 	docker pull $(ECR)/shipreq/webapp
 	docker tag $(ECR)/shipreq/taskman shipreq/taskman
