@@ -190,7 +190,7 @@ object Layout {
         p.reauthModal.render,
         RichTextEditorHelp.allRendered,
         <.div(
-          ^.flexGrow := "1",
+          InlineBaseStyles.layout.mainInner,
           p.content
         )
       )

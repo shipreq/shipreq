@@ -6,6 +6,7 @@ object InlineBaseStyles {
 
   final val pageMarginRem = 1
   final val pageMarginStr = pageMarginRem.toString + "rem"
+  final val scrollBarSize = "1rem"
 
   val containerLarge = TagMod(
     ^.marginLeft.auto,
@@ -31,7 +32,15 @@ object InlineBaseStyles {
       ^.flex         := "1",
       ^.marginTop    := pageMarginStr,
       ^.marginBottom := pageMarginStr,
-      ^.padding      := s"0 $pageMarginStr",
-      ^.width        := "100%")
+      // ^.padding      := s"0 $pageMarginStr", // Flex parent padding doesn't work as expected - child margins required
+      ^.width        := "100%",
+    )
+
+    val mainInner = TagMod(
+      ^.flexGrow := "1",
+      ^.marginLeft := pageMarginStr,
+      ^.marginRight := pageMarginStr,
+      ^.width := s"calc(100vw - 2 * $pageMarginStr - $scrollBarSize)",
+    )
   }
 }
