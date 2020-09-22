@@ -1,8 +1,7 @@
 package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react.{AsyncCallback, Callback}
-import scala.scalajs.js
-import scala.scalajs.LinkingInfo
+import scala.scalajs.{LinkingInfo, js}
 
 trait LoggerJs {
   import LoggerJs.Dsl
