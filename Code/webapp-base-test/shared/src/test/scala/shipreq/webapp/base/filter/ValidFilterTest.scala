@@ -19,7 +19,7 @@ object ValidFilterTest extends TestSuite {
 
   private def assertTranslationFails(pf: Filter.Potential, p: Project = SampleProject6.project)(errFrag: String)(implicit l: Line): Unit =
     Filter.Potential.validate(pf, FilterAlgebra.validate(p.config)) match {
-      case -\/(e) => assertContainsCI(e, errFrag)
+      case -\/(e) => assertContainsCI(e.value, errFrag)
       case \/-(v) => fail(s"Expected an error containing '$errFrag'. Got: $v")
     }
 

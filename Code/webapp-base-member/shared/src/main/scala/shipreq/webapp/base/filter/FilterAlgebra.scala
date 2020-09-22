@@ -6,7 +6,7 @@ import japgolly.microlibs.utils.ConciseIntSetFormat
 import java.util.regex.Pattern
 import scalaz.syntax.traverse1._
 import scalaz.{Functor, Traverse}
-import shipreq.base.util.{Applicable, OptionalBoolFn, TransitiveClosure}
+import shipreq.base.util.{Applicable, ErrorMsg, OptionalBoolFn, TransitiveClosure}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.derivation.DataLogic.IssueLookup
@@ -101,37 +101,39 @@ object FilterAlgebra {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def validate(cfg: data.ProjectConfig): FAlgebraM[String \/ *, PotentialF, Valid] = {
-    type R = String \/ Valid
+  def validate(cfg: data.ProjectConfig): FAlgebraM[ErrorMsg \/ *, PotentialF, Valid] = {
+    type R = ErrorMsg \/ Valid
+
+    @inline def fail(err: String) = -\/(ErrorMsg(err))
 
     def byAttr(attrStr: String, f: Attr => ValidF[Nothing]): R =
       Attr(attrStr) match {
         case Some(a) => \/-(Valid(f(a)))
-        case None    => -\/(s"Unknown attribute: '$attrStr'. Known: ${Attr.availableText}.") // English
+        case None    => fail(s"Unknown attribute: '$attrStr'. Known: ${Attr.availableText}.") // English
       }
 
     def lookupFieldAttr(attrStr: String)(f: FieldAttr => R): R =
       FieldAttr(attrStr) match {
         case Some(a) => f(a)
-        case None    => -\/(s"Unknown attribute: '$attrStr'. Known: ${FieldAttr.availableText}.") // English
+        case None    => fail(s"Unknown attribute: '$attrStr'. Known: ${FieldAttr.availableText}.") // English
       }
 
     def byHashTag(k: data.HashRefKey): R =
       cfg.hashRefLookup(k.value) match {
         case Some(-\/(t)) => \/-(Valid(HashRef(\/-(t.id))))
         case Some(\/-(i)) => \/-(Valid(HashRef(-\/(i.id))))
-        case None         => -\/(s"Unknown tag or issue: '${k.value}'") // English
+        case None         => fail(s"Unknown tag or issue: '${k.value}'") // English
       }
 
     val reqTypesByMnemonic = cfg.reqTypes.allByMnemonic
 
-    def lookupReqType(mn: data.ReqType.Mnemonic): String \/ data.ReqType =
+    def lookupReqType(mn: data.ReqType.Mnemonic): ErrorMsg \/ data.ReqType =
       reqTypesByMnemonic.get(mn) match {
         case Some(rt) => \/-(rt)
-        case None     => -\/(s"Unknown type: '${mn.value}'") // English
+        case None     => fail(s"Unknown type: '${mn.value}'") // English
       }
 
-    val lookupReqSubset: Potential.ReqSubset => String \/ Valid.ReqSubset =
+    val lookupReqSubset: Potential.ReqSubset => ErrorMsg \/ Valid.ReqSubset =
       Traverse[IntensionalReqSet].traverse(_)(lookupReqType(_).map(_.reqTypeId))
 
     def byReqSet(reqs: Potential.ReqSet, f: Valid.ReqSet => ValidF[Valid]): R =
@@ -144,7 +146,7 @@ object FilterAlgebra {
       } catch {
         // PatternSyntaxException not available in Scala.JS
         // case e: PatternSyntaxException => error(e.getDescription)
-        case _: Throwable => -\/(s"Invalid regex: /$regex/")
+        case _: Throwable => fail(s"Invalid regex: /$regex/")
       }
 
     def byField(fieldName: String, criteria: FieldCriteria[String, Valid]): R = {
@@ -163,20 +165,20 @@ object FilterAlgebra {
         lookupFieldAttr(attrText) { attr =>
           import SpecialBuiltInField._
 
-          def blankOnly(f: Valid.Field, name: String): String \/ Valid =
+          def blankOnly(f: Valid.Field, name: String): ErrorMsg \/ Valid =
             attr match {
               case Blank
                  | NotBlank      => \/-(Valid.fieldProp(f, FieldCriteria.Attr(attr)))
-              case DefaultInUse  => -\/(s"$name doesn't have defaults")
-              case NotApplicable => -\/(s"$name is always applicable")
+              case DefaultInUse  => fail(s"$name doesn't have defaults")
+              case NotApplicable => fail(s"$name is always applicable")
             }
 
-          def noDefault(f: Valid.Field, name: String): String \/ Valid =
+          def noDefault(f: Valid.Field, name: String): ErrorMsg \/ Valid =
             attr match {
               case Blank
                  | NotBlank
                  | NotApplicable => \/-(Valid.fieldProp(f, FieldCriteria.Attr(attr)))
-              case DefaultInUse  => -\/(s"$name doesn't have defaults")
+              case DefaultInUse  => fail(s"$name doesn't have defaults")
             }
 
           // Keep FilterEditor pxAutoComplete in sync with below
@@ -185,20 +187,20 @@ object FilterAlgebra {
                                                             | NotBlank
                                                             | NotApplicable) => \/-(Valid.fieldProp(\/-(f.id), FieldCriteria.Attr(attr)))
             case (\/-(f: CustomField.Tag)                   , DefaultInUse ) => \/-(Valid.fieldProp(\/-(f.id), FieldCriteria.Attr(attr)))
-            case (\/-(_: CustomField.Text)                  , DefaultInUse ) => -\/("Text fields don't have defaults.")
-            case (\/-(_: CustomField.Implication)           , DefaultInUse ) => -\/("Implication fields don't have defaults.")
+            case (\/-(_: CustomField.Text)                  , DefaultInUse ) => fail("Text fields don't have defaults.")
+            case (\/-(_: CustomField.Implication)           , DefaultInUse ) => fail("Implication fields don't have defaults.")
             case (-\/(f: Title.type)                        , _            ) => blankOnly(-\/(f), f.name)
             case (\/-(f: StaticField.OtherTags.type)        , _            ) => blankOnly(\/-(f), f.name)
             case (\/-(f: StaticField.AllTags.type)          , _            ) => blankOnly(\/-(f), f.name)
             case (\/-(f: StaticField.NormalAltStepTree.type), _            ) => noDefault(\/-(f), f.name)
             case (\/-(f: StaticField.ExceptionStepTree.type), _            ) => noDefault(\/-(f), f.name)
             case (\/-(StaticField.ImplicationGraph)         , _)
-               | (\/-(StaticField.StepGraph)                , _            ) => -\/(s"$fieldName can't be used here.")
+               | (\/-(StaticField.StepGraph)                , _            ) => fail(s"$fieldName can't be used here.")
           }
         }
 
       def valuesNotAllowed: R =
-        -\/(s"You can't specify values for $fieldName.")
+        fail(s"You can't specify values for $fieldName.")
 
       def parseAsPoses(field: ParsedField, s: FieldCriteria.ReqTypePosSet): R =
         field match {
@@ -220,7 +222,7 @@ object FilterAlgebra {
             case s: FieldCriteria.ReqTypePosSet => parseAsPoses(field, s)
           }
         case None =>
-          -\/(s"Unknown field: '$fieldName'")
+          fail(s"Unknown field: '$fieldName'")
       }
     }
 
@@ -236,7 +238,7 @@ object FilterAlgebra {
       case ImpliedByAnyOf(criteria)        => impCriteria(criteria, ImpliedByAnyOf.apply)
       case Reqs          (reqs)            => byReqSet(reqs, Reqs.apply)
       case Presence      (attr)            => byAttr(attr, Presence.apply)
-      case HasIssue      (on, c)           => c.traverse1(FilterAst.issueCategoryFromStr).map(Valid.hasIssue(on, _))
+      case HasIssue      (on, c)           => c.traverse1(FilterAst.issueCategoryFromStr).bimap(ErrorMsg.apply, Valid.hasIssue(on, _))
       case Regex         (regex)           => byRegex(regex)
       case ReqType       (mn)              => lookupReqType(mn).map(rt => Valid(ReqType(rt.reqTypeId)))
       case FieldProp     (field, criteria) => byField(field, criteria)
@@ -347,7 +349,6 @@ object FilterAlgebra {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   /**
-   *
    * @param filterDead Not used to in consideration of reqs, but config.
    *                   i.e. dead reqs will still be returned (and expected to be further filtered out later),
    *                   where as it's needed in consideration of default tags in field rules.

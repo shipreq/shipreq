@@ -2,7 +2,7 @@ package shipreq.webapp.base.filter
 
 import japgolly.microlibs.recursion._
 import scalaz.Traverse
-import shipreq.base.util.Identity
+import shipreq.base.util.{ErrorMsg, Identity}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.{FilterDead, HideDead, Req}
 import shipreq.webapp.base.filter.FilterAst.ImpCriteria
@@ -12,7 +12,7 @@ import shipreq.webapp.base.text.{PlainText, TextSearch}
 object Filter {
   import Implicits._
 
-  type Validator = FAlgebraM[String \/ *, PotentialF, Valid]
+  type Validator = FAlgebraM[ErrorMsg \/ *, PotentialF, Valid]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -43,8 +43,8 @@ object Filter {
     def reqSet(i1: ReqSubset, in: ReqSubset*): ReqSet =
       NonEmptyVector(i1, in.toVector)
 
-    def validate(pf: Potential, validator: Validator): String \/ Filter.Valid =
-      Recursion.cataM[String \/ *, PotentialF, Valid](validator)(pf)
+    def validate(pf: Potential, validator: Validator): ErrorMsg \/ Filter.Valid =
+      Recursion.cataM[ErrorMsg \/ *, PotentialF, Valid](validator)(pf)
 
     def toText(f: Potential): String =
       AtomOrComposite.cata(FilterAlgebra.unparse)(f)
@@ -205,7 +205,7 @@ object Filter {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  def parseAndValidate(input: String, validator: Validator): (FilterParser.Failure \/ String) \/ Option[Filter.Valid] =
+  def parseAndValidate(input: String, validator: Validator): (FilterParser.Failure \/ ErrorMsg) \/ Option[Filter.Valid] =
     FilterParser.parse(input) match {
       case \/-(Some(f)) => Potential.validate(f, validator).bimap(\/-(_), Some(_))
       case \/-(None)    => \/-(None)
