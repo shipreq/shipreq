@@ -21,7 +21,7 @@ object ProjectSpaLoader {
       username      = p.username,
       am            = p.am,
       feedbackModal = None,
-      left          = Reusable.never(MemberNavBar.MemberHome :: Breadcrumb.Item.Div(p.projectName) :: Nil))
+      left          = Reusable.never(MemberNavBar.MemberHome :: Breadcrumb.Item.Section(p.projectName) :: Nil))
 
     Loader.render(navBar)(content)
   }

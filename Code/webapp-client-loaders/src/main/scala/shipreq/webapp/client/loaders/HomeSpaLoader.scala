@@ -14,7 +14,7 @@ object HomeSpaLoader {
   }
 
   private val navBarLeft: MemberNavBar.LeftProps =
-    Reusable.byRef(Breadcrumb.Item.Div(ClientConfig.BreadcrumbNameMemberHome) :: Nil)
+    Reusable.byRef(Breadcrumb.Item.Section(ClientConfig.BreadcrumbNameMemberHome) :: Nil)
 
   private def render(p: Props): VdomElement = {
     val navBar = MemberNavBar.Props(

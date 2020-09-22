@@ -46,14 +46,14 @@ object Layout {
 
       val tail = page match {
         case Page.Index =>
-          Breadcrumb.Item.Div(project.name) :: Nil
+          Breadcrumb.Item.Section(project.name) :: Nil
 
         case Page.ReqDetail(id) =>
           val menuItems  = ProjectIndex.dropdownItems(None, rc)
           val reqTable   = rc.link(Page.ReqTable)(ProjectIndex.Item.ReqTable.iconAndTitle)
           val menu       = Breadcrumb.Item.LinkAndDropdown(reqTable, menuItems)
           val reqLabel   = <.span(ProjectIndex.Item.ReqDetail.icon.tag, " " + PlainText.pubid(id))
-          val req        = Breadcrumb.Item.Div(reqLabel, Breadcrumb.ItemState.Active)
+          val req        = Breadcrumb.Item.Section(reqLabel, Breadcrumb.ItemState.Active)
           index :: menu :: req :: Nil
 
         case p =>

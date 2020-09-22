@@ -31,23 +31,23 @@ object Breadcrumb {
     private val dropdownMenu = divCls("menu")
     private val nbsp         = <.span(^.width := "1ex", ^.display := "inline-block")
 
-    case class Div(content: TagMod, state: ItemState = ItemState.Default) extends Item {
+    final case class Section(content: TagMod, state: ItemState = ItemState.Default) extends Item {
       override val tag = divSection(content) <+ state
     }
 
-    case class Link(a: VdomTagOf[html.Anchor], state: ItemState = ItemState.Default) extends Item {
+    final case class Link(a: VdomTagOf[html.Anchor], state: ItemState = ItemState.Default) extends Item {
       override val tag = a.addClass(section) <+ state
     }
 
-    case class Divider(content: TagMod) extends Item {
+    final case class Divider(content: TagMod) extends Item {
       override val tag = divider(content)
     }
 
-    case class DividerIcon(i: Icon, mod: TagMod = EmptyVdom) extends Item {
+    final case class DividerIcon(i: Icon, mod: TagMod = EmptyVdom) extends Item {
       override val tag = i.tag(^.cls := "divider", mod)
     }
 
-    case class DropDown(title: TagMod, items: Dropdown.Items) extends Item {
+    final case class DropDown(title: TagMod, items: Dropdown.Items) extends Item {
       override val tag =
         divSection(
           dropdown(
@@ -56,7 +56,7 @@ object Breadcrumb {
               items.toTagMod(_.tag))))
     }
 
-    case class LinkAndDropdown(a: VdomTagOf[html.Anchor], items: Dropdown.Items) extends Item {
+    final case class LinkAndDropdown(a: VdomTagOf[html.Anchor], items: Dropdown.Items) extends Item {
       override val tag =
         divSection(
           a,

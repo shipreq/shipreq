@@ -69,7 +69,7 @@ object Home {
         )
 
     val navBarLeft: MemberNavBar.LeftProps =
-      Reusable.byRef(Breadcrumb.Item.Div(ClientConfig.BreadcrumbNameMemberHome) :: Nil)
+      Reusable.byRef(Breadcrumb.Item.Section(ClientConfig.BreadcrumbNameMemberHome) :: Nil)
 
     def render(p: Props, s: State): VdomElement = {
       State.recorder.record(s)
