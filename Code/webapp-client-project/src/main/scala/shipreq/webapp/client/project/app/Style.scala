@@ -56,6 +56,10 @@ object Style extends StyleSheet.Inline {
     hasErrorColor,
     hasErrorBackground)
 
+  private val errorRedOnRedImportant = mixin(
+    hasErrorColor.important,
+    hasErrorBackground.important)
+
   private def deadColumnLabel(live: Live) =
     mixinIf(live is Dead)(textDecoration := ^.lineThrough)
 
@@ -1771,6 +1775,56 @@ object Style extends StyleSheet.Inline {
         flexGrow(1),
       )
     }
+
+    object reqSearch {
+
+      val menuItem = style(
+        flexGrow(1).important,
+      )
+
+      val container = style(
+        width(100 %%).important,
+        maxWidth(48 ex),
+        marginLeft.auto.important,
+      )
+
+      val input = style(
+        width(100 %%),
+      )
+
+      val resultPopup = style(
+        top(100 %%).important,
+        left(`0`),
+      )
+
+      val invalid = style(
+        errorRedOnRedImportant,
+      )
+
+      val results = style(
+        display.flex,
+        flexDirection.column,
+      )
+
+      val result = style(
+        padding(0.5 em, 1 ex),
+      )
+
+      val resultLink = style(
+        display.block,
+        color(c"#111").important,
+        paddingLeft(2.5 ex),
+        textIndent(-2.5 ex),
+        &.hover(
+          color(c"#d90166").important,
+        )
+      )
+
+      val resultPubid = style(
+        fontWeight.bold,
+        marginRight(1 ex),
+      )
+    }
   }
 
   // ===================================================================================================================
@@ -1854,6 +1908,7 @@ object Style extends StyleSheet.Inline {
     widgets.reqTypeSelector.dropdown,
     widgets.splitScreen.left,
     widgets.splitScreenCrud.emptyRight,
+    widgets.reqSearch.container,
   )
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

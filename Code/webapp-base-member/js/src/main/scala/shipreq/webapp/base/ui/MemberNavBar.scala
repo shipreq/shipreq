@@ -17,16 +17,18 @@ import shipreq.webapp.base.{AssetManifest, ClientConfig, Urls, WebappConfig}
   */
 object MemberNavBar {
 
-  type LeftProps = Reusable[Breadcrumb.Items]
-  type RightProps = Reusable[Menu.Items]
+  type LeftProps   = Reusable[Breadcrumb.Items]
+  type MiddleProps = Reusable[Menu.Items]
+  type RightProps  = Reusable[Menu.Items]
 
-  val noRightProps: RightProps = Reusable.byRef(Nil)
+  val emptyMenu: RightProps = Reusable.byRef(Nil)
 
   final case class Props(username     : Username,
                          feedbackModal: Option[FeedbackModal],
                          am           : AssetManifest,
                          left         : LeftProps,
-                         right        : RightProps = noRightProps) {
+                         middle       : MiddleProps = emptyMenu,
+                         right        : RightProps = emptyMenu) {
     lazy val leftWithDividers = left.iterator.intersperse(Divider).toList
     @inline def render: VdomElement = Component(this)
   }
@@ -90,7 +92,7 @@ object MemberNavBar {
       ).toItem
 
     val leftMenuItems =
-      itemLogo(p.am) :: leftBreadcrumb :: Nil
+      itemLogo(p.am) +: leftBreadcrumb +: p.middle.value
 
     val rightMenuItems =
       p.right :+ rightDropdown

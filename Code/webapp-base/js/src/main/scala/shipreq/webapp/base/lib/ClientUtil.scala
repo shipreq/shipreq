@@ -3,19 +3,20 @@ package shipreq.webapp.base.lib
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import java.time.Instant
 import shipreq.base.util.NonEmptyArraySeq
 
 object ClientUtil {
 
   private[this] var GLOBAL_VAR = 0
 
-  val uniqueInt = CallbackTo[Int] {
+  lazy val uniqueInt = CallbackTo[Int] {
     // JS is single-threaded
     GLOBAL_VAR += 1
     GLOBAL_VAR
   }
 
-  val uniqueStr: CallbackTo[String] =
+  lazy val uniqueStr: CallbackTo[String] =
     uniqueInt.map(i => s"___uqs$i")
 
   def textChangeRecv[R](f: String => R): ReactEventFromInput => R =
@@ -49,4 +50,5 @@ object ClientUtil {
         .map(f)
         .intersperse(separator))
 
+  lazy val now = CallbackTo(Instant.now())
 }

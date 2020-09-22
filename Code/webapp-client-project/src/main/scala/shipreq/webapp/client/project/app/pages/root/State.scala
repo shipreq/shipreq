@@ -16,7 +16,7 @@ import shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetail
 import shipreq.webapp.client.project.app.pages.content.{reqdetail, reqtable}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
-import shipreq.webapp.client.project.widgets.NewReqButton
+import shipreq.webapp.client.project.widgets.{NewReqButton, ReqSearch}
 
 sealed trait PreviewId
 object PreviewId {
@@ -92,6 +92,7 @@ object AsyncKey {
 
 @Lenses
 final case class State(projectName               : ProjectItem.WithEditableName.State,
+                       reqSearch                 : ReqSearch.State,
                        reqLookup                 : String,
                        create                    : CreateFeature.State.ForProject,
                        newReqAsync               : AsyncFeature.State.D0[ErrorMsg],
@@ -137,6 +138,7 @@ object State {
   def init(p: Project): State =
     State(
       projectName                = ProjectItem.WithEditableName.State.init,
+      reqSearch                  = ReqSearch.State.init,
       reqLookup                  = "",
       create                     = CreateFeature.State.ForProject.init,
       newReqAsync                = AsyncFeature.State.initD0,

@@ -17,6 +17,7 @@ import shipreq.webapp.base.protocol.ajax.CommonProtocolsJs
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
+import shipreq.webapp.base.ui.semantic.Menu
 import shipreq.webapp.base.ui.{FeedbackModal, OptionalFullscreen, ProjectItem, Toast}
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.app._
@@ -29,11 +30,11 @@ import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.Usage
-import shipreq.webapp.client.project.widgets.{NewReqButton, ProjectWidgets, ViewReqCache, ViewReqDataCache, ViewTags}
+import shipreq.webapp.client.project.widgets.{NewReqButton, ProjectWidgets, ReqSearch, ViewReqCache, ViewReqDataCache, ViewTags}
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object LoadedRoot {
-  case class Props(page: Page, routerCtl: RouterCtl)
+  final case class Props(page: Page, routerCtl: RouterCtl)
 }
 
 final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
@@ -75,7 +76,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
     // This never changes
     private val routerCtl = $.props.runNow().routerCtl
-    private val reqDetailRC = routerCtl.contramap(Page.ReqDetail.apply)
+    private val routerCtlEP = routerCtl.contramap(Page.ReqDetail.apply)
 
     private val toast = Toast($.zoomStateL(State.toast))
 
@@ -130,7 +131,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       }
 
     private val pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]] =
-      Reusable byRef Px.apply3(pxProject, pxPlainText, pxViewTags)(ProjectWidgets(_, _, _, reqDetailRC, webWorkerClient))
+      Reusable byRef Px.apply3(pxProject, pxPlainText, pxViewTags)(ProjectWidgets(_, _, _, routerCtlEP, webWorkerClient))
 
     private val pxViewReqDataCache: Px[ViewReqDataCache] =
       pxProject.map(ViewReqDataCache.apply)
@@ -257,6 +258,39 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
         savedViewIO                    = sspUpdateSavedViews,
       )
 
+    private val reqSearch =
+      new ReqSearch(
+        ReqSearch.StaticProps(
+          pxProject,
+          pxProjectConfig,
+          pxFilterCompilerFromFilterDead,
+          routerCtlEP,
+        )
+      )
+
+    private val reqSearchSS: Reusable[StateSnapshot.SetFn[ReqSearch.State]] =
+      Reusable.byRef((os, cb) => $.modStateOption(s => os.map(r => s.copy(reqSearch = r)), cb))
+
+    private val pxReqSearchState: Px[ReqSearch.State] =
+      Px.state($).map(_.reqSearch).withReuse.autoRefresh
+
+    private val pxReqSearchProps: Px[ReqSearch.Props] =
+      for {
+        s  <- pxReqSearchState
+        fd <- pxFilterDead
+        pw <- pxProjectWidgets.value
+      } yield ReqSearch.Props(
+        state      = StateSnapshot.withReuse(s)(reqSearchSS),
+        filterDead = fd,
+        pw         = pw,
+      )
+
+    private val pxLayoutMenuMiddle: Px[Reusable[List[Menu.Item]]] =
+      pxReqSearchProps.map { p =>
+        val items = reqSearch.menuItem(p) :: Nil
+        Reusable.byRef(items)
+      }
+
     private val issuesPage = content.issues.IssuesPage.StaticProps(
       pxProject,
       pxRenderFeature,
@@ -278,7 +312,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
         pxProjectWidgets       = pxProjectWidgets,
         pxFilterCompilerFromFD = pxFilterCompilerFromFilterDead,
         assetManifest          = initPageData.assetManifest,
-        reqDetailRC            = reqDetailRC,
+        reqDetailRC            = routerCtlEP,
         toast                  = toast,
         updateIO               = sspUpdateContent,
         rowAsyncW              = rowAsyncW.mapKey(content.reqtable.Row.SourceId.ToEditorRow.reverse),
@@ -324,7 +358,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     private val reqDetail = ReqDetail(ReqDetail.StaticProps(
       sspUpdateContent      = sspUpdateContent,
       sspCreateContent      = sspCreateContent,
-      reqDetailRC           = reqDetailRC,
+      reqDetailRC           = routerCtlEP,
       webWorker             = webWorkerClient,
       pxProjectAndOrd       = pxProjectAndOrd,
       pxViewReqDataCache    = pxViewReqDataCache,
@@ -485,7 +519,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
           content.reqgraph.ReqGraphPage.Props(
             projectAndOrd    = projectAndOrd,
             plainText        = pxPlainText.value(),
-            reqDetailRC      = reqDetailRC,
+            reqDetailRC      = routerCtlEP,
             webWorker        = webWorkerClient,
             savedViewFeature = savedViewFeature,
           ).render
@@ -504,6 +538,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
         feedbackModal       = feedbackModal,
         toast               = StateSnapshot.zoomL(State.toast)(s).setStateVia($),
         rc                  = routerCtl,
+        menuMiddle          = pxLayoutMenuMiddle.value(),
         page                = p.page,
         content             = body,
       ).render

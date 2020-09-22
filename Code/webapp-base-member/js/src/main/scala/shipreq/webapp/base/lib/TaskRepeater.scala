@@ -60,10 +60,9 @@ final class TaskRepeater(task: Callback, gap: Duration, window: Duration, now: C
 }
 
 object TaskRepeater {
-  private val now = CallbackTo(Instant.now())
 
   def apply(task: Callback, gap: Duration, window: Duration): TaskRepeater =
-    new TaskRepeater(task, gap, window, now)
+    new TaskRepeater(task, gap, window, ClientUtil.now)
 
   def millis(task: Callback, gap: Int, window: Int): TaskRepeater =
     apply(task, Duration.ofMillis(gap), Duration.ofMillis(window))

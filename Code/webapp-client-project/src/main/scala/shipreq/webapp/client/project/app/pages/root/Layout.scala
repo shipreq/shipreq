@@ -29,6 +29,7 @@ object Layout {
                          assetManifest      : AssetManifest,
                          toast              : Toast.Props,
                          rc                 : RouterCtl,
+                         menuMiddle         : MemberNavBar.MiddleProps,
                          page               : Page,
                          content            : VdomElement) {
     @inline def render = Component(this)
@@ -172,11 +173,12 @@ object Layout {
       p.setConnectionStatus(!p.connectionStatus)))
 
     val navBar = MemberNavBar.Props(
-      p.username,
-      Some(p.feedbackModal),
-      p.assetManifest,
-      menuLeft,
-      menuRight)
+      username      = p.username,
+      feedbackModal = Some(p.feedbackModal),
+      am            = p.assetManifest,
+      left          = menuLeft,
+      middle        = p.menuMiddle,
+      right         = menuRight)
 
     MemberLayout.Props(
       navBar,

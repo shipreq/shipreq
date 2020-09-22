@@ -278,24 +278,25 @@
           .section.active FR-1
 
       .item(style="flex-grow:1;")
-        .ui.icon.input.small(style="max-width: 52ex; margin-left:auto; position:relative")
-          %input(type="text" placeholder="Search...")
-          %i.search.link.icon
-          .ui.popup.bottom.left.visible.fluid(style="top:100%; left:0;")
-            -# No results found.
-            #search_results
-              %div
-                %a(href="#")
-                  %span.pubid FR-1:
-                  Blah blah!
-              %div
-                %a(href="#")
-                  %span.pubid MF-16:
-                  Whatever man Whatever man Whatever man Whatever man Whatever man Whatever man Whatever man Whatever man
-              %div
-                %a(href="#")
-                  %span.pubid FR-2:
-                  Blah #must do stuff
+        %div(style="width:100%; max-width: 48ex; margin-left:auto")
+          .ui.icon.input.small(style="position:relative; width:100%")
+            %input(type="text" placeholder="Search..." style="color:#c00;background-color:#fee" value="omg!")
+            %i.search.link.icon
+            .ui.popup.bottom.left.visible.fluid(style="top:100%; left:0;")
+              -# No results found.
+              #search_results
+                %div
+                  %a(href="#")
+                    %span.pubid FR-1:
+                    Blah blah!
+                %div
+                  %a(href="#")
+                    %span.pubid MF-16:
+                    Whatever man Whatever man Whatever man Whatever man Whatever man Whatever man Whatever man Whatever man
+                %div
+                  %a(href="#")
+                    %span.pubid FR-2:
+                    Blah #must do stuff
 
       .right.menu
         .item.ui.dropdown.simple
