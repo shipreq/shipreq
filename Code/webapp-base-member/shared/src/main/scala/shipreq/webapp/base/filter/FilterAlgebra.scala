@@ -454,6 +454,20 @@ object FilterAlgebra {
       )
     }
 
+    def byPubidOrText(str: String): CompiledFilter =
+      Grammar.pubid.stringPrism.getOption(str).flatMap(_.lookup(p).toOption) match {
+        case Some(matchingReq) =>
+          val posPrefix = matchingReq.pubid.pos.value.toString
+          reqOnly { r =>
+            @inline def reqTypeMatch = r.reqTypeId ==* matchingReq.reqTypeId
+            @inline def idMatch      = r.id ==* matchingReq.id
+            @inline def posMatch     = r.pubid.pos.value.toString.startsWith(posPrefix)
+            reqTypeMatch && (idMatch || posMatch)
+          }
+        case None =>
+          byText(str)
+      }
+
     def byRegex(regex: String): CompiledFilter = {
       val pat = Pattern.compile(regex)
       val m: String => Boolean = pat.matcher(_).matches
@@ -583,7 +597,8 @@ object FilterAlgebra {
     }
 
     val self: FAlgebra[ExtensionalF, CompiledFilter] = {
-      case Text          (substr, _)     => byText(substr)
+      case Text          (t, None)       => byPubidOrText(t)
+      case Text          (t, Some(_))    => byText(t)
       case Reqs          (reqs)          => reqOnly(r => reqs.contains(r.id))
       case ImpliesAnyOf  (criteria)      => byImplication(criteria, p.implicationTgtToSrcTC)
       case ImpliedByAnyOf(criteria)      => byImplication(criteria, p.implicationSrcToTgtTC)

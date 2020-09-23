@@ -1,8 +1,7 @@
 package shipreq.webapp.base.data
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import monocle.macros.GenIso
-import monocle.{Iso, Prism}
+import monocle.Prism
 import nyaya.util.Multimap
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.base.text.Grammar
@@ -69,11 +68,8 @@ final case class ExternalPubid(mnemonic: ReqType.Mnemonic, pos: ReqTypePos) {
 object ExternalPubid {
   implicit def equality: UnivEq[ExternalPubid] = UnivEq.derive
 
-  val TupleIso: Iso[(ReqType.Mnemonic, ReqTypePos), ExternalPubid] =
-    GenIso.fields[ExternalPubid].reverse
-
   val StringPrism: Prism[String, ExternalPubid] =
-    Grammar.pubid.stringPrism ^<-> TupleIso
+    Grammar.pubid.stringPrism
 
   def parse(s: String): Option[ExternalPubid] =
     StringPrism.getOption(s)

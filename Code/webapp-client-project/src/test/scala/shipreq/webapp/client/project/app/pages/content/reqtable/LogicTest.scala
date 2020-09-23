@@ -984,6 +984,10 @@ object LogicTest extends TestSuite {
     testFilter(P3, F.text("github.com"))("FR-1", "")
   }
 
+  def testFilterPubidPrefix(): Unit = {
+    testFilter(P3, F.text("mf2"))("MF-2  MF-20  MF-21  MF-22  MF-23  MF-24  MF-25  MF-26  MF-27", dead = "MF-28")
+  }
+
   def testFilterTextPattern(): Unit = {
     val r = """.*\W[A-Z]{3}\W.*"""
     testFilter(P3, F.regex(r))("FR-2  MF-3  MF-21", "") // FR-2 because of …#TBD …
@@ -1443,6 +1447,7 @@ object LogicTest extends TestSuite {
       }
     }
     "filter" - {
+      "pubidPrefix"          - testFilterPubidPrefix()
       "text"                 - testFilterText()
       "textPattern"          - testFilterTextPattern()
       "anyIssue"             - testFilterAnyIssue()

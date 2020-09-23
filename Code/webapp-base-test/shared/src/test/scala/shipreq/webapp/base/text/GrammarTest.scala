@@ -13,9 +13,9 @@ object GrammarTest extends TestSuite {
         import Grammar.pubid.stringPrism
 
         def test(m: ReqType.Mnemonic, p: ReqTypePos)(exact: String)(ok: String*): Unit = {
-          assertEq("pubid → string", stringPrism.reverseGet((m, p)), exact)
+          assertEq("pubid → string", stringPrism.reverseGet(ExternalPubid(m, p)), exact)
           for (s <- ok :+ exact)
-            assertEq("string → pubid", stringPrism.getOption(s), Some((m, p)))
+            assertEq("string → pubid", stringPrism.getOption(s), Some(ExternalPubid(m, p)))
         }
 
         "*" - test("A", 4)("A-4")("a4", "a-4", "a-04", "A04")

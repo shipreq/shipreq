@@ -48,7 +48,6 @@ v2.2
 
 ### Implement
 * single-req card in project index is now redundant
-* allow lowercase pubids in filter
 * bug: freshdesk #86
 * reorder tags when expansions recombined
 * Add percentages to deriv expl

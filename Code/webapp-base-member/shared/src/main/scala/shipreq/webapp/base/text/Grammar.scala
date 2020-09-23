@@ -3,7 +3,7 @@ package shipreq.webapp.base.text
 import monocle._
 import org.parboiled2.CharPredicate
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.data.{ReqType, ReqTypePos}
+import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.text.GrammarSpec._
 import shipreq.webapp.base.util.TextMod
 
@@ -32,21 +32,21 @@ object Grammar {
   }
 
   object pubid {
-    val caseInsensitiveRegexStr = "(" + reqTypeMnemonic.caseInsensitiveRegexStr + """)\s*(?:-\s*)?(\d+)"""
-    val caseInsensitiveRegex    = caseInsensitiveRegexStr.r
+    private val caseInsensitiveRegexStr = "(" + reqTypeMnemonic.caseInsensitiveRegexStr + """)\s*(?:-\s*)?(\d+)"""
+    private val caseInsensitiveRegex    = caseInsensitiveRegexStr.r
 
     /**
      * This doesn't guarantee validity.
      * Both reqtype and pos still need to be checked against a Project in order to create a valid Pubid, thus,
      * ReqTypePos can be 0 here. This allows something like UC-0 to be recognised as a typo and presented as not-found.
      */
-    val stringPrism = Prism[String, (ReqType.Mnemonic, ReqTypePos)]({
+    val stringPrism = Prism[String, ExternalPubid]({
       case caseInsensitiveRegex(a, b) =>
         val rtm = ReqType.Mnemonic(reqTypeMnemonic caseInsensitiveParsePost a)
         val pos = ReqTypePos(b.toInt)
-        Some((rtm, pos))
+        Some(ExternalPubid(rtm, pos))
       case _ => None
-    })(t => t._1.value + "-" + t._2.value)
+    })(e => e.mnemonic.value + "-" + e.pos.value)
 
     val seqFormat = SeqFormat(
       _.trim, "[ ,]+".r.pattern, _.replace("-", "") |> reqTypeMnemonic.caseInsensitiveParsePost, _.isEmpty,
