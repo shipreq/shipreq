@@ -1788,9 +1788,17 @@ object Style extends StyleSheet.Inline {
         marginLeft.auto.important,
       )
 
-      val input = style(
+      val input = styleF(Domain.boolean)(showingResult => styleS(
         width(100 %%),
-      )
+        &.not(_.focus)(
+          mixinIf(!showingResult)(
+            color(c"#bbb").important,
+          ),
+        ),
+        &.selection(
+          background := "#0088ff20",
+        ),
+      ))
 
       val resultPopup = style(
         top(100 %%).important,
@@ -1808,11 +1816,16 @@ object Style extends StyleSheet.Inline {
 
       val result = style(
         padding(0.5 em, 1 ex),
+        outline.none.important,
+        &.focus(
+          backgroundColor(c"#0088ff20"),
+        )
       )
 
       val resultLink = style(
         display.block,
         color(c"#111").important,
+        outline.none.important,
         paddingLeft(2.5 ex),
         textIndent(-2.5 ex),
         &.hover(

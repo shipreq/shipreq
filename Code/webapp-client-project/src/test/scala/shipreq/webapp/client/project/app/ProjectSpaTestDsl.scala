@@ -26,6 +26,7 @@ import shipreq.webapp.client.project.app.pages.root.LoadedRoot.Props
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH, _}
 import shipreq.webapp.client.project.test._
+import shipreq.webapp.client.project.widgets.ReqSearch
 
 object ProjectSpaTestDsl {
 
@@ -78,7 +79,7 @@ object ProjectSpaTestDsl {
     }
   }
 
-  class NavObs(nav: DomZipperJs, inner: DomZipperJs) {
+  final class NavObs(val nav: DomZipperJs, inner: DomZipperJs) {
     val breadcrumbs = nav(".ui.breadcrumb").collect0n(".section")
     // println(nav.innerHTML)
 
@@ -125,16 +126,22 @@ object ProjectSpaTestDsl {
                        issues     : Maybe[IssuesPageObs],
                        reqGraph   : Maybe[ReqGraphObs],
                        reqTable   : Maybe[ReqTableObs],
-                       reqDetail  : Maybe[ReqDetailObs])
+                       reqDetail  : Maybe[ReqDetailObs]) {
+
+    lazy val reqSearch: ReqSearchObs =
+      new ReqSearchObs(nav.nav(Style.widgets.reqSearch.container.selector))
+  }
 
   @Lenses
-  case class TestState(page: Page, project: Project, detailState: RD.State)
+  final case class TestState(page: Page, project: Project, detailState: RD.State)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   val * = Dsl[Ref, Obs, TestState]
 
   val global = new TestGlobal.TestDslWithObs(*)(_.global, _.global)
+
+  val reqSearch = new ReqSearchObs.TestDsl(*)(_.reqSearch)
 
   val reauth = new TestReauthenticationModal.TestDsl(*)(_.global.reauthModal)
 
@@ -223,6 +230,8 @@ object ProjectSpaTestDsl {
 
   val unsavedChanges = *.focus("unsaved changes").value(_.obs.nav.unsavedChanges)
 
+  val currentPage = *.focus("Current page").value(_.obs.nav.page)
+
   def setPage(p: Page): *.Actions = p match {
     case Page.ReqDetail(_) => sys error "Use setPageToReqDetail instead."
     case _                 => _setPage(p)
@@ -279,6 +288,7 @@ object ProjectSpaTestDsl {
                           rd        : RD.State = RD.unspecifiedState,
                           assertPass: Boolean = true): Report[String] = {
 
+    ReqSearch.typingDelayMs = 0
     OnlyVisibleOnMouseMove.allowHide = false
 
     val global       = TestGlobal(project)

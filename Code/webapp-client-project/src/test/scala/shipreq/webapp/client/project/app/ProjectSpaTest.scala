@@ -176,8 +176,36 @@ object ProjectSpaTest extends TestSuite {
     runReqDetailTest(test, pubid)
   }
 
+  private def testReqSearch(): Unit = {
+
+    val test: *.Actions = (
+      reqSearch.setQuery("collab")
+      +> reqSearch.resultPubids.assert("MF-9", "MF-10", "MF-11")
+      +> reqSearch.focusedResult.assert(None)
+
+      >> global.press(KB.Down) +> reqSearch.focusedResult.assert(0)
+      >> global.press(KB.Down) +> reqSearch.focusedResult.assert(1)
+      >> global.press(KB.Down) +> reqSearch.focusedResult.assert(2)
+      >> global.press(KB.Down) +> reqSearch.focusedResult.assert(None)
+      >> global.press(KB.Up)   +> reqSearch.focusedResult.assert(2)
+      >> global.press(KB.Up)   +> reqSearch.focusedResult.assert(1)
+      >> global.press(KB.Up)   +> reqSearch.focusedResult.assert(0)
+      >> global.press(KB.Up)   +> reqSearch.focusedResult.assert(None)
+
+      // Like above, routerCtl doesn't seem to work in these tests
+//      >> global.press(KB.Enter)
+//      >> reqSearch.clickResult(1)
+//      +> currentPage.assert.beforeAndAfter(Page.Index, Page.ReqDetail("MF-10"))
+//      +> reqSearch.query.assert("collab")
+//      +> reqSearch.resultsAreVisible.assert(false)
+    )
+
+    runTest(test, Page.Index)
+  }
+
   override def tests = Tests {
     "editorStyle"            - testEditorStyle()
+    "reqSearch"              - testReqSearch()
     "reqTableColumnsSync"    - runTest(reqTableColumnsSync     , Page.ReqTable)
     "reqTableFilterDeadSync" - runTest(reqTableFilterDeadSync  , Page.ReqTable)
     "cfgUsageLinkToReqTable" - runTest(cfgUsageLinkToReqTable  , Page.ReqTable)

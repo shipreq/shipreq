@@ -6,11 +6,14 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import java.time.Instant
+import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
+import shipreq.base.util.NonEmptyArraySeq
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.lib.ClientUtil
+import shipreq.webapp.base.lib.DomUtil.{PatchHtmlElement, unfocus}
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.ui.semantic.{Icon, Menu, UsesSemanticUiManually}
 import shipreq.webapp.client.project.app.Style.widgets.{reqSearch => *}
@@ -66,9 +69,11 @@ object ReqSearch {
 
   private final val MaxResults = 10
 
-  private final val TypingDelayMs = 200
+  // Var for testing
+  var typingDelayMs = 200
 
-  private final val BlurDelayMs = 300
+  private final val BlurDelayMs = 100
+  private final val BlurToleranceMs = 0
 
   private val container =
     <.div(
@@ -84,7 +89,7 @@ object ReqSearch {
     <.div(*.results)
 
   private val resultContainer =
-    <.div(*.result)
+    <.div(*.result, ^.tabIndex := -1)
 
   private val resultPubid =
     <.span(*.resultPubid)
@@ -103,6 +108,7 @@ object ReqSearch {
     import SP._
 
     private val inputRef = Ref[html.Input]
+    private val resultsRef = Ref[html.Div]
 
     private val pxFilterDead =
       Px.props($).map(_.filterDead).withReuse.autoRefresh
@@ -149,7 +155,7 @@ object ReqSearch {
             case Some(FocusState.Focused)       => true
             case Some(FocusState.LostFocus(at)) =>
               val sinceMs = now.toEpochMilli - at.toEpochMilli
-              sinceMs < BlurDelayMs
+              sinceMs < BlurToleranceMs
           })
         Option.when(showResults != s.showResults)(s.copy(showResults = showResults))
       }
@@ -173,48 +179,149 @@ object ReqSearch {
     }
 
     private val updateShowResultsOnTextChange: Callback =
-      updateShowResultsNow.debounceMs(TypingDelayMs)
+      updateShowResultsNow.debounceMs(typingDelayMs)
 
-    private val onFocus: Callback =
+    val onFocus: Callback =
       for {
         p <- $.props
         _ <- p.state.modState(s => s.copy(focus = Some(FocusState.Focused), showResults = s.hasQuery))
         _ <- inputRef.get.map(_.select()).toCallback
       } yield ()
 
-    private val onBlur: Callback =
-      for {
-        now <- ClientUtil.now
-        p   <- $.props
-        _   <- p.state.modState(_.copy(focus = Some(FocusState.LostFocus(now))))
-        _   <- updateShowResultsNow.delayMs(BlurDelayMs).toCallback
-      } yield ()
+    val onBlur: Callback = {
+      val onLostFocus: Callback =
+        for {
+          now <- ClientUtil.now
+          p   <- $.props
+          _   <- p.state.modState(_.copy(focus = Some(FocusState.LostFocus(now))))
+          _   <- updateShowResultsNow.delayMs(BlurToleranceMs).toCallback
+        } yield ()
 
-    private def onTextChange(e: ReactEventFromInput): Callback = {
-      val newText = e.target.value
-      $.props.flatMap(_.state.modState(_.copy(text = newText), updateShowResultsOnTextChange))
+      inputRef.get.asCallback.flatMap {
+        case Some(inputDom) =>
+          CallbackOption.activeHtmlElement.asCallback.flatMap { focus =>
+            val rootRom      = inputDom.parentElement
+            val stillFocused = focus.exists(_.findParent(_ == rootRom).isDefined)
+            Callback.unless(stillFocused)(onLostFocus)
+          }
+        case None =>
+          onLostFocus
+      }.delayMs(BlurDelayMs).toCallback
     }
 
-    private val inputBase =
+    private val inputBase = {
+
+      def onTextChange(e: ReactEventFromInput): Callback = {
+        val newText = e.target.value
+        $.props.flatMap(_.state.modState(_.copy(text = newText), updateShowResultsOnTextChange))
+      }
+
+      val nonEmptyResults: CallbackOption[NonEmptyArraySeq[Req]] =
+        pxQueryResult.toCallback.map {
+          case QueryResult.Results(reqs) => NonEmptyArraySeq.option(reqs)
+          case _                         => None
+        }.asCBO
+
+      val selectFirstResult: Callback =
+        nonEmptyResults.flatMap { results =>
+          val p         = pxProject.value()
+          val routerCtl = SP.routerCtl.onSetRun(onNav)
+          val req       = results.head
+          val epubid    = req.pubid.external(p)
+          routerCtl.set(epubid).toCBO
+        }
+
+      def focusResult(first: Boolean): Callback =
+        for {
+          reqs   <- nonEmptyResults
+          parent <- resultsRef.get
+        } yield {
+          val idx = if (first) 0 else reqs.length - 1
+          val tgt = parent.children(idx).domAsHtml
+          tgt.focus()
+        }
+
+      def onKey(e: ReactKeyboardEvent): Callback =
+        CallbackOption.keyCodeSwitch(e) {
+          case KeyCode.Up    => focusResult(first = false)
+          case KeyCode.Down  => focusResult(first = true)
+          case KeyCode.Enter => selectFirstResult
+        }.asEventDefault(e)
+
       <.input.text(
-        *.input,
         ^.placeholder := "Search...",
-        ^.onFocus --> onFocus,
-        ^.onBlur --> onBlur,
-        ^.onChange ==> onTextChange,
+        ^.onFocus    --> onFocus,
+        ^.onBlur     --> onBlur,
+        ^.onChange   ==> onTextChange,
+        ^.onKeyDown  ==> onKey,
       ).withRef(inputRef)
+    }
 
     private val onNav: Callback =
-      $.props.flatMap(_.state.modState(_.copy(showResults = false, focus = None)))
+      $.props.flatMap(_.state.modState(_.copy(showResults = false, focus = None), unfocus))
+
+    private val focusInput: Callback =
+      inputRef.get.map(_.focus())
+
+    private def focusResult(idx: Int): Callback =
+      resultsRef.get.map(_.children(idx).domAsHtml.focus()).attempt.void
+
+    private def renderValidResults(pw: ProjectWidgets.NoCtx, reqs: ArraySeq[Req]): VdomTag = {
+      val p         = pxProject.value()
+      val routerCtl = SP.routerCtl.onSetRun(onNav)
+
+      def renderItem(idx: Int): VdomTag = {
+        val req    = reqs(idx)
+        val pubid  = PlainText.pubidByReqId(req.id, p)
+        val epubid = req.pubid.external(p)
+
+        val link =
+          routerCtl.link(epubid)(
+            *.resultLink,
+            ^.tabIndex := -1,
+            resultPubid(pubid + ":"),
+            pw.reqTitle(req),
+          )
+
+        def move(delta: Int): Callback = {
+          val newIdx = idx + delta
+          if (reqs.indices.contains(newIdx))
+            focusResult(newIdx)
+          else
+            focusInput
+        }
+
+        def onKey(e: ReactKeyboardEvent): Callback =
+          CallbackOption.keyCodeSwitch(e) {
+            case KeyCode.Up    => move(-1)
+            case KeyCode.Down  => move(1)
+            case KeyCode.Enter => routerCtl.set(epubid)
+          }.asEventDefault(e)
+
+        resultContainer(
+          ^.onBlur --> onBlur,
+          ^.onKeyDown ==> onKey,
+          link,
+        )
+      }
+
+      resultsContainer(
+        reqs.indices.toTagMod(renderItem)
+      ).withRef(resultsRef)
+    }
 
     def render(p: Props): VdomNode = {
       val s = p.state.value
       val queryResult = pxQueryResult.value()
 
-      var input = inputBase(^.value := s.text)
+      var input = inputBase(
+        *.input(s.showResults),
+        ^.value := s.text,
+      )
 
       queryResult match {
-        case QueryResult.NoFilter | _: QueryResult.Results =>
+        case QueryResult.NoFilter
+           | _: QueryResult.Results =>
         case QueryResult.InvalidFilter =>
           input = input(*.invalid)
       }
@@ -230,19 +337,7 @@ object ReqSearch {
               if (reqs.isEmpty)
                 "No results found."
               else
-                resultsContainer {
-                  val project = pxProject.value()
-                  val routerCtl = SP.routerCtl.onSetRun(onNav)
-                  reqs.toTagMod { req =>
-                    resultContainer(
-                      routerCtl.link(req.pubid.external(project))(
-                        *.resultLink,
-                        resultPubid(PlainText.pubidByReqId(req.id, project) + ":"),
-                        p.pw.reqTitle(req),
-                      )
-                    )
-                  }
-                }
+                renderValidResults(p.pw, reqs)
             }
         }
       }

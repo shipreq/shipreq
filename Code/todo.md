@@ -47,7 +47,7 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* KB nav in req search
+* single-req card in project index is now redundant
 * allow lowercase pubids in filter
 * bug: freshdesk #86
 * reorder tags when expansions recombined

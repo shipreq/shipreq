@@ -248,11 +248,14 @@ object TestGlobal {
   import shipreq.webapp.base.test.TestState._
 
   final class Obs($: DomZipperJs, g: TestGlobal) {
-    val activeElement       = document.activeElement
+    val activeElement       = Option(document.activeElement).filter(_ ne document.body)
     val reqs                = g.reqs()
     val reauthModal         = TestReauthenticationModal.Obs(g.reauthModal.id)($.parent.parent, g.reauth)
     val fullscreenCount     = $.collect0n(BaseStyles.fullscreen.selector).size
     val isBrowserFullscreen = g.optionalFullscreen.currentlyFullscreen
+
+    def needFocus() =
+      activeElement.getOrElse(throw new RuntimeException("Nothing is focused."))
   }
 
   class TestDsl[R, O, S](final val * : Dsl[Id, R, O, S, String])(getRef: R => TestGlobal) {
@@ -290,7 +293,7 @@ object TestGlobal {
     protected final implicit def autoObs(o: O): Obs =
       getObs(o)
 
-    val activeElement = *.focus("activeElement").value(_.obs.activeElement)
+    val activeElement = *.focus("activeElement").value(_.obs.activeElement.orNull)
 
     val fullscreenCount = *.focus("Fullscreen elements").value(_.obs.fullscreenCount)
 
@@ -303,11 +306,11 @@ object TestGlobal {
     val assertLastTwoRequestsAreEqual = lastTwoRequests.map(_.req).assert.equal(Equal.by_==, implicitly)
 
     def press(k: SimEvent.Keyboard): *.Actions =
-      *.action(s"Press ${k.desc}.")(k simulateKeyDownPressUp _.obs.activeElement)
+      *.action(s"Press ${k.desc}.")(k simulateKeyDownPressUp _.obs.needFocus())
 
     def assertFocusBy(desc: String, f: *.OS => html.Element) =
       *.point(s"$desc must have focus") { os =>
-        val actual = activeElement.run(os)
+        val actual = os.obs.needFocus()
         val expect = f(os)
         Option.unless(actual == expect) {
           val h = Option(actual).fold("∅")(_.outerHTML.replace('\n', ' ').take(600))

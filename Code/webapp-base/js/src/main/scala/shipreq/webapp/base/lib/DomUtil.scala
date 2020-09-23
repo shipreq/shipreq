@@ -194,4 +194,6 @@ object DomUtil {
    */
   def siblingAtOffset(e: html.Element, offset: Int) =
     siblingAt(e, _ + offset)
+
+  val unfocus = CallbackOption.activeHtmlElement.map(_.blur()).toCallback
 }
