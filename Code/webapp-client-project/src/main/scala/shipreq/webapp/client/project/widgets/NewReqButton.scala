@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.data.ReqTypes
+import shipreq.webapp.base.data._
 import shipreq.webapp.client.project.feature.CreateFeature
 
 /** A button to create a new req.
@@ -45,10 +45,11 @@ object NewReqButton extends ButtonAndDropdown.Types[CreateFeature.RowKey] {
     }
 
     val dropdownProps: DBProps =
-      ButtonAndDropdown.Props.forNew(
+      ButtonAndDropdown.Props.newReq(
        items      = items,
+       selectItem = callbacks.map(_.map(_.select)),
        selected   = state,
-       callbacks  = callbacks,
+       create     = callbacks.map(_.map(_.click)),
        inProgress = inProgress,
        basic      = basic,
       )

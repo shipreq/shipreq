@@ -147,22 +147,26 @@ object TagConfig {
       args match {
 
         case NewArgs.Disabled(sel) =>
-          ButtonAndDropdown.Props.forNew[NewTagType](
+          ButtonAndDropdown.Props.newReq[NewTagType](
             items      = NewTagType.items,
             selected   = Some(sel),
-            callbacks  = None,
+            selectItem = None,
+            create     = None,
             inProgress = p.asyncInProgress,
           )
 
         case a: NewArgs.Enabled[NewState] =>
-          ButtonAndDropdown.Props.forNew[NewTagType](
+
+          def callback(f: NewState => Callback) =
+            Option.unless(p.asyncInProgress)(Reusable.byRef(a).withValue(f))
+
+          ButtonAndDropdown.Props.newReq[NewTagType](
             items      = NewTagType.items,
             selected   = Some(a.state.value),
+            selectItem = callback(a.state.setState),
+            create     = callback(_ => a.openEditor),
             inProgress = p.asyncInProgress,
-            callbacks  = Option.unless(p.asyncInProgress)(Reusable.byRef(a).withValue(dropdownButton.Callbacks(
-              click  = _ => a.openEditor,
-              select = a.state.setState,
-            ))))
+          )
       }
 
     private def renderLeft(p: Props, args: splitScreenCrud.ListArgs): VdomNode =

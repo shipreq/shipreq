@@ -282,7 +282,7 @@
           .ui.icon.input.small(style="position:relative; width:100%")
             %input(type="text" placeholder="Search..." style="color:#c00;background-color:#fee" value="omg!")
             %i.search.link.icon
-            .ui.popup.bottom.left.visible.fluid(style="top:100%; left:0;")
+            -# .ui.popup.bottom.left.visible.fluid(style="top:100%; left:0;")
               -# No results found.
               #search_results
                 %div
@@ -328,7 +328,18 @@
 
           %tr
             %th Type
-            %td.inline-edit FR: Functional Requirement
+            %td.inline-edit
+              %div(style="display:flex")
+                %div(style="flex-grow:1") FR: Functional Requirement
+                %div
+                  .ui.labeled.button
+                    .ui.button.green.basic
+                      New
+                    .ui.button.green.basic(style="border-radius: 0!important; box-shadow: none!important; border-top: #21ba45 1px solid!important; border-bottom: #21ba45 1px solid!important;")
+                      New
+                    .ui.dropdown.label.basic.green
+                      Blah
+                      %i.icon.dropdown
 
           %tr
             %th Past IDs
