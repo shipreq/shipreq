@@ -157,14 +157,14 @@ object TagConfig {
 
         case a: NewArgs.Enabled[NewState] =>
 
-          def callback(f: NewState => Callback) =
+          def callback[A](f: A => Callback) =
             Option.unless(p.asyncInProgress)(Reusable.byRef(a).withValue(f))
 
           ButtonAndDropdown.Props.newReq[NewTagType](
             items      = NewTagType.items,
             selected   = Some(a.state.value),
-            selectItem = callback(a.state.setState),
-            create     = callback(_ => a.openEditor),
+            selectItem = callback[NewState](a.state.setState),
+            create     = callback[ButtonAndDropdown.Click[NewState]](c => a.openEditor.unless_(c.targetsNewTab_?)),
             inProgress = p.asyncInProgress,
           )
       }

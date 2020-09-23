@@ -42,9 +42,9 @@ private[reqdetail] object ReqTypeRow {
   final class Backend($: BackendScope[Props, Unit]) {
 
     private val onCreate = {
-      val click: ImplyNewReqButton.Method => ImplyNewReqButton.DropdownValue => Callback =
-        method => rowKey =>
-          CallbackOption.traverseOption(rowKey.reqTypeIdOption) { reqTypeId =>
+      val click: ImplyNewReqButton.Method => ImplyNewReqButton.Click => Callback =
+        method => click =>
+          CallbackOption.traverseOption(click.value.reqTypeIdOption) { reqTypeId =>
             $.props.flatMap { p =>
 
               val cmd: CreateContentCmd =
@@ -53,13 +53,19 @@ private[reqdetail] object ReqTypeRow {
                   case ImplyNewReqButton.Method.Imply => CreateContentCmd.imply(reqTypeId, Set1(p.subject))
                 }
 
+              def onSuccess(newEvents: NewEvents, reqId: ReqId): Callback = {
+                import newEvents.project
+                val pubid = project.content.reqs.need(reqId).pubid.external(project)
+                if (click.targetsNewTab_?) {
+                  val url = p.reqDetailRC.urlFor(pubid).value
+                  CallbackTo.windowOpen(url, focus = false).void
+                } else
+                  p.reqDetailRC.set(pubid)
+              }
+
               p.newReqAsync.write.onFailureShowAndForget(
                 p.sspCreateContent(cmd).rightFlatTapSync(newEvents =>
-                  Callback.traverseOption(newEvents.summary.newReqIds.headOption) { reqId =>
-                    import newEvents.project
-                    val pubid = project.content.reqs.need(reqId).pubid.external(project)
-                    p.reqDetailRC.set(pubid)
-                  }
+                  Callback.traverseOption(newEvents.summary.newReqIds.headOption)(onSuccess(newEvents, _))
                 )
               )
             }

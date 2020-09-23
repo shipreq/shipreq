@@ -77,7 +77,7 @@ final class NewStuff(state        : State,
 
       NewReqButton.Callbacks(
         select = selectRow,
-        click = s => f.modState(_.toggle(s)))
+        click = c => f.modState(_.toggle(c.value)).unless_(c.targetsNewTab_?))
     }
 
   val buttonProps: NewReqButton.Props =

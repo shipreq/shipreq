@@ -18,19 +18,22 @@ object ButtonAndDropdown {
     final type Item          = ButtonAndDropdown.Item[A]
     final type Callbacks     = ButtonAndDropdown.Callbacks[A]
     final type DBProps       = ButtonAndDropdown.Props.Of[A]
+    final type Click         = ButtonsAndDropdown.Click[A]
 
     @inline final def Item = ButtonAndDropdown.Item
 
-    @inline final def Callbacks(click: A => Callback, select: A => Callback): Callbacks =
+    @inline final def Callbacks(click: Click => Callback, select: A => Callback): Callbacks =
       ButtonAndDropdown.Callbacks(click = click, select = select)
   }
 
   type Props     = ButtonsAndDropdown.Props
+  type Click[+A] = ButtonsAndDropdown.Click[A]
+  val  Click     = ButtonsAndDropdown.Click
   type Item[+A]  = ButtonsAndDropdown.Item[A]
   val  Item      = ButtonsAndDropdown.Item
   val  Component = ButtonsAndDropdown.Component
 
-  final case class Callbacks[-A](click: A => Callback, select: A => Callback)
+  final case class Callbacks[-A](click: Click[A] => Callback, select: A => Callback)
 
   object Props {
     import ButtonsAndDropdown.ButtonProps
@@ -40,7 +43,7 @@ object ButtonAndDropdown {
     def newReq[A](items       : NonEmptyVector[Item[A]],
                   selectItem  : Option[Reusable[A => Callback]],
                   selected    : Option[A],
-                  create      : Option[Reusable[A => Callback]],
+                  create      : Option[Reusable[Click[A] => Callback]],
                   inProgress  : Boolean,
                   outerTagMod : TagMod = TagMod.empty,
                   basic       : Boolean = false

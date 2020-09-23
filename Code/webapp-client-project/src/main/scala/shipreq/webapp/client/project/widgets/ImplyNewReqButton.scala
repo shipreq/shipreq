@@ -30,13 +30,15 @@ object ImplyNewReqButton {
     case object Imply extends Method
   }
 
+  type Click = ButtonsAndDropdown.Click[DropdownValue]
+
   private val middleButtonTagMod = TagMod(
     ^.borderColor := "#21ba45",
   )
 
   final case class Props(state      : State,
                          selectItem : Option[Reusable[DropdownValue => Callback]],
-                         create     : Option[Reusable[Method => DropdownValue => Callback]],
+                         create     : Option[Reusable[Method => Click => Callback]],
                          reqTypes   : ReqTypes,
                          allowRCG   : Permission,
                          pw         : ProjectWidgets.AnyCtx,

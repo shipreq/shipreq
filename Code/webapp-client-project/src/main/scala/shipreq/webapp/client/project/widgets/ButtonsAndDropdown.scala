@@ -31,12 +31,12 @@ object ButtonsAndDropdown {
   final case class ButtonProps[-A](colour    : ColourPlus,
                                    label     : String,
                                    icon      : Icon,
-                                   callback  : Option[Reusable[A => Callback]],
+                                   callback  : Option[Reusable[Click[A] => Callback]],
                                    inProgress: Boolean)
 
   object ButtonProps {
 
-    def newReq[A](create    : Option[Reusable[A => Callback]],
+    def newReq[A](create    : Option[Reusable[Click[A] => Callback]],
                   inProgress: Boolean): ButtonProps[A] =
       ButtonProps(
         colour     = Colour.Green,
@@ -111,6 +111,11 @@ object ButtonsAndDropdown {
       Reusability.byRef
   }
 
+  final case class Click[+A](event: ReactMouseEvent, item: Item[A]) {
+    def value           = item.value
+    def targetsNewTab_? = ReactMouseEvent.targetsNewTab_?(event)
+  }
+
   // ===================================================================================================================
 
   private final val middleClass = "_m__m_"
@@ -130,7 +135,17 @@ object ButtonsAndDropdown {
 
       val basic = (^.cls := "basic").when(p.basic)
 
-      def renderButton(b: ButtonProps[A], first: Boolean): VdomTag =
+      def renderButton(b: ButtonProps[A], first: Boolean): VdomTag = {
+
+        val onClick: ReactMouseEvent => Option[Callback] =
+          e =>
+            b.callback
+              .filter(_ => !p.inProgress)
+              .map { f =>
+                e.persist()
+                e.preventDefaultCB >> f(Click(e, p.selectedItem))
+              }
+
         <.a(
           middleButtonTagMod.unless(first),
           p.middleButtonTagMod.unless(first),
@@ -139,8 +154,10 @@ object ButtonsAndDropdown {
           basic,
           b.icon.tag,
           b.label,
-          ^.onClick -->? b.callback.flatMap(c => Option.unless(p.inProgress)(c.value(p.selectedItem.value))),
+          ^.onClick ==>? onClick,
+          ^.onAuxClick ==>? onClick,
         )
+      }
 
       def renderButtons = {
         val buttons = p.buttons.whole
