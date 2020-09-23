@@ -1611,6 +1611,8 @@ object Style extends StyleSheet.Inline {
 
     val blankButMandatory = style(
       errorRedOnRed,
+      display.inlineBlock,
+      textIndent(`0`), // for display in ReqSearch
       textAlign.center,
       height(100 %%),
       width(11 ex),
