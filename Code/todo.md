@@ -47,7 +47,6 @@ v2.2
 * Project deletion (hard & soft - maybe even call soft "archive")
 
 ### Implement
-* single-req card in project index is now redundant
 * bug: freshdesk #86
 * reorder tags when expansions recombined
 * Add percentages to deriv expl
@@ -75,6 +74,9 @@ Backlog (maybe-probably soon)
 * Bulk tag add/remove
 * Advanced colour picker doesn't work
 * ReqTable doesn't respect `max-width` unless `table-layout:fixed`
+
+* single-req card in project index is now redundant
+  Removing it now looks shit. Replace it later when a new content screen is added.
 
 * Remove Scalaz
 
