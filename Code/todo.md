@@ -1,74 +1,28 @@
-v2.2
-========================================================================================================================
-
-### Plan
-* Analyse [Collapsible Trees] and [Github integration]
-* Analyse, dev, deploy
-* Use new features to cut out all the noise in my ShipReq (so I can really see what's left)
-* New plan for the rest of v2.2
-
 ### Analyse
-* it would be a cool idea to have a button in req detail that would simplify the forward implication tree
-  (simplify = remove redundant edges)
-  Or maybe we can just apply this option to views without affecting data?
+* Problem: I've set MF-33 to #should but it's still deriving #must as well
+  SI: Might need to add a field to disable DT for a req for a specific field (granularity=req)
+  SI: Or maybe a rule that for MFs, manual always wins / disables DT (granularity=req-type)
 * [FB-11] Add a field to show where a req is being referenced (i.e. FB-9 references FR-5 in its detail field, I should be able to see that from FB-5's page. "References"? "Citations"?)
 * Req Code config
   * completely disable (don't show in ReqDetail or ReqTable, even remove from auto-complete)
   * disable for some req types (and don't show in ReqDetail)
   * mandatory for some req types
-* Common workflows pt2: SDLC to deployment
-* Tag aliases - a map of ReqType -> ApTagId. eg #done = FR:#analysed, CO:#implemented -- probably a bad idea because
-  if derivative tags are powerful enough you cover the underlying motivation with it appearing explicit instead of implicit
-  (by that I mean you can see the real value in the column, not see one value and get another.
-  everything in ShipReq should be transparent.)
-  Need analysis: what am I trying to solve? Honestly even if I built this immediately I have a feeling I wouldn't use it (lol)
-* Github integration
-* ImpGraph column in ReqTable
-* Multi user
-  * notification / change tracking
-  * personal vs global saved views? impact on audit trail.
-    maybe store views as Map[Option[UserId], List[SavedView]], just show "X created a personal saved view" in public audit trail
-  * new filters: {createdBy,updatedBy,containsRefTo} {me,@blah}
-  * refs to users in rich text
-  * Audit trail
-    * global/per req
-    * open project at revision x in R/O mode
-    * diff between revisions
-    * tag/baseline
-    * Add LastUpdated field to ReqTable/Detail
-* Project templates (and copies/user-defined)
-
-### Prototype
-* User profile: name
-* User profile: username
-* User profile: password
-* User profile: email
-* User profile: newsletter
-* Project deletion (hard & soft - maybe even call soft "archive")
+* Common workflows:
+  * SDLC to deployment
+  * bug tracking
+  * agile shit
 
 ### Implement
 * Add percentages to deriv expl
-* tag in text should combine tag desc and whence-explanation
-* pressing enter on reqtable in pubid should navigate to req
 * when session expired, it should still always retry in case re-auth occurred in another tab
 * if I have a flat list of unconnected nodes in ReqGraph, they appear backwards (ie. IV1, FR3, FR2, FR1)
-* req detail: add prev/next buttons
-
-* Problem: I've set MF-33 to #should but it's still deriving #must as well
-  SI: Might need to add a field to disable DT for a req for a specific field (granularity=req)
-  SI: Or maybe a rule that for MFs, manual always wins / disables DT (granularity=req-type)
-
-* ReqDetail ImpGraph when coloured by tag, should display the tag in the hover text
-  Actually, maybe just always include all tags in the hover text - that's probably better
+* ReqDetail ImpGraph: include all tags in the hover text
 
 
 
 Backlog (maybe-probably soon)
 ========================================================================================================================
 
-* reorder tags when expansions recombined -- hard to find a test case, wait until it appears again
-* Make code block lineNumbers configurable via attribute
-* Use WebSockets on home SPA to see projects and project stats update
 * Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
 * Bulk tag add/remove
 * Advanced colour picker doesn't work
@@ -79,7 +33,7 @@ Backlog (maybe-probably soon)
 
 * Remove Scalaz
 
-* Investigate changes required to support phone / tablet
+### Analyse
 
 * Metrics
   * Reduce biz metrics to 5m
@@ -102,6 +56,15 @@ Backlog (maybe-probably soon)
 
 Backlog (eventually)
 ========================================================================================================================
+
+* pressing enter on reqtable in pubid should navigate to req
+* tag in text should combine tag desc and whence-explanation
+* reorder tags when expansions recombined -- hard to find a test case, wait until it appears again
+* Use WebSockets on home SPA to see projects and project stats update
+* Investigate changes required to support phone / tablet
+* it would be a cool idea to have a button in req detail that would simplify the forward implication tree
+  (simplify = remove redundant edges)
+  Or maybe we can just apply this option to views without affecting data?
 
 ### New major features
 * Anonymous shares and read-only/presentation mode
