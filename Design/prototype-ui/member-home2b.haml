@@ -1,0 +1,222 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title Projects | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.min.js"}
+    :css
+      body {padding:1rem}
+      a {color:#00549c}
+      a:hover {color:#d90166}
+      #page-body {
+        margin-top:6rem;
+        display:flex;
+      }
+      #page-body > nav {
+        margin-right: 4rem;
+        width:18ex;
+      }
+      #page-body > main {
+        flex-grow: 1;
+      }
+
+      .ui.header > .content {
+        width:100%;
+      }
+      #header-row {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+      }
+      .header-right {
+        float: right;
+        padding-left: 4ex;
+      }
+
+      #new-row {
+        margin-top: 4rem;
+      }
+
+      .tree-container {
+        xborder: solid 1px red;
+        margin-top: 3rem;
+        margin-left: auto;
+        margin-right: auto;
+        _padding:0 2rem;
+        _max-width: 100ex;
+      }
+      .tree {
+        xborder: solid 1px red;
+        color: #333;
+        border-collapse: collapse;
+        width: calc(100% + 2ex);
+        margin-left:-1ex;
+        margin-right:-1ex;
+      }
+      .tree td:not(:first-child) {
+        padding-left:3rem;
+        text-align: right;
+      }
+      .tree tr:not(:first-child) td {
+        xborder-top:solid 1px #22242626;
+      }
+      .tree tr:hover td {
+        background: #0088ff11;
+        cursor:pointer;
+      }
+      .tree tr td:last-child {
+        padding-right: 1ex;
+      }
+      .tree td {
+        white-space: nowrap;
+        padding-top: 0.6em;
+        padding-bottom: 0.6em;
+        vertical-align: middle;
+      }
+      .tree .name {
+        xbackground: #ff000020;
+        width: 100%;
+        font-size: 1.5rem;
+      }
+      .tree .name i {
+        margin-right: 0.4ex!important;
+      }
+      .tree .updated, .tree .members {
+        color: #aaa;
+        text-transform: lowercase;
+      }
+      .tree .lvl1 {
+        padding-left: 1ex;
+      }
+      .tree .lvl2 {
+        padding-left: 3.5ex;
+      }
+      .tree .rel {
+        font-size: 1.1rem;
+      }
+      span.admin {
+        color: green;
+      }
+      span.collab, span.member {
+        color: #33b;
+      }
+      span.read-only {
+        color: #963;
+      }
+      #dead-projects {
+        margin-left: 2rem;
+      }
+      .dead td,
+      .dead td a:not(:hover),
+      .dead .updated,
+      .dead .rel span {
+        color:#bbb;
+        text-decoration:line-through;
+      }
+
+
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+      .item
+        .ui.breadcrumb
+          .section Projects
+      .right.menu
+        .item.ui.dropdown.simple
+          @japgolly
+          .menu
+            %a.item{href: "member-member-account.html"} Account
+            .item Logout
+
+    .ui.container#page-body
+      %nav.ui.secondary.pointing.menu.vertical
+        .item.active.orange Projects
+        .item Teams
+        .item Invitations
+      %main
+
+        #header-row
+          .header-left
+            .ui.labeled.button
+              %a.ui.button.green
+                %i.icon.plus
+                New
+              .ui.dropdown.label{style: "background-color: #00a632; color: #EEE;"}
+                Project
+                %i.icon.dropdown
+                .menu
+                  .item Project
+                  .item Group
+          .header-right
+            %span // this is important to prevent [.ui.header icon:only-child] affecting below
+            %button.ui.button.icon.has-popup#dead-projects{data-content: "Click to show deleted content."}
+              %i.icon.trash.outline.large.grey
+
+
+        -# %h2.ui.header
+          %i.icon.archive
+          -# %i.icon.book
+          .content
+          .ui.labeled.button
+            %a.ui.button.green
+              %i.icon.plus
+              New
+            .ui.dropdown.label{style: "background-color: #00a632; color: #EEE;"}
+              Project
+              %i.icon.dropdown
+              .menu
+                .item Project
+                .item Group
+            Your Projects
+            .header-right
+              %span // this is important to prevent [.ui.header icon:only-child] affecting below
+              %button.ui.button.icon.has-popup#dead-projects{data-content: "Click to show deleted content."}
+                %i.icon.trash.outline.large.grey
+
+        .tree-container
+          %table.tree
+            %tbody
+              %tr
+                %td.name.lvl1
+                  %i.icon.folder.open.outline
+                  OSS
+                %td.updated
+                %td.rel %span.admin admin
+              %tr
+                %td.name.lvl2
+                  %i.icon.book
+                  %a(href="#") Monocle
+                %td.updated Updated 2 weeks ago
+                %td.rel %span.collab collaborator
+              %tr.dead
+                %td.name.lvl2
+                  %i.icon.book
+                  %a(href="#") ScalaCSS
+                %td.updated Deleted 1 month ago
+                %td.rel %span.admin admin
+              %tr
+                %td.name.lvl1
+                  %i.icon.book
+                  %a(href="#") ShipReq
+                %td.updated Updated 3 days ago
+                %td.rel %span.admin admin
+
+        -# #new-row
+          .ui.labeled.button
+            %a.ui.button.green
+              %i.icon.plus
+              New
+            .ui.dropdown.label{style: "background-color: #00a632; color: #EEE;"}
+              Project
+              %i.icon.dropdown
+              .menu
+                .item Project
+                .item Group
+
+
+  :javascript
+    $('.ui.dropdown').dropdown();
