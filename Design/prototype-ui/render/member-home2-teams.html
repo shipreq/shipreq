@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html><head><title>Projects | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.min.js"></script><style type="text/css">
+body {padding:1rem}
+a {color:#00549c}
+a:hover {color:#d90166}
+#page-body {
+  margin-top:6rem;
+  display:flex;
+}
+#page-body > nav {
+  display:table; /* so that the content on the right doesn't squash this */
+  margin-right: 4rem;
+  width:23ex;
+}
+#page-body > nav .ui.label.plain {
+  opacity:.6;
+  display:none;
+  /* Rather than show counts for everything, only show pending invs.
+      That provides some consistency seeing as you can always see old invs that aren't pending.
+      If you had 8 old and 1 new, you wouldn't want to see 9 in red.
+  */
+}
+#page-body > main {
+  flex-grow: 1;
+}
+
+.ui.header > .content {
+  width:100%;
+}
+#header-row {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+.header-right {
+  float: right;
+  padding-left: 4ex;
+}
+
+#new-row {
+  margin-top: 4rem;
+}
+
+.tree-container {
+  xborder: solid 1px red;
+  margin-top: 3rem;
+  margin-left: auto;
+  margin-right: auto;
+  _padding:0 2rem;
+  _max-width: 100ex;
+}
+.tree {
+  xborder: solid 1px red;
+  color: #333;
+  border-collapse: collapse;
+  width: calc(100% + 2ex);
+  margin-left:-1ex;
+  margin-right:-1ex;
+}
+.tree td:not(:first-child) {
+  padding-left:3rem;
+  text-align: right;
+}
+.tree tr:not(:first-child) td {
+  xborder-top:solid 1px #22242626;
+}
+.tree tr:hover td {
+  background: #0088ff11;
+  cursor:pointer;
+}
+.tree tr td:last-child {
+  padding-right: 1ex;
+}
+.tree td {
+  white-space: nowrap;
+  padding-top: 0.6em;
+  padding-bottom: 0.6em;
+  vertical-align: middle;
+}
+.tree .name {
+  xbackground: #ff000020;
+  width: 100%;
+  font-size: 1.5rem;
+}
+.tree .name i {
+  margin-right: 0.4ex!important;
+}
+.tree .updated, .tree .members {
+  color: #aaa;
+  text-transform: lowercase;
+}
+.tree .lvl1 {
+  padding-left: 1ex;
+}
+.tree .lvl2 {
+  padding-left: 3.5ex;
+}
+.tree .rel {
+  font-size: 1.1rem;
+}
+span.admin {
+  color: green;
+}
+span.collab, span.member {
+  color: #33b;
+}
+span.read-only {
+  color: #963;
+}
+#dead-projects {
+  margin-left: 2rem;
+}
+.dead td,
+.dead td a:not(:hover),
+.dead .updated,
+.dead .rel span {
+  color:#bbb;
+  text-decoration:line-through;
+}
+
+.hide {display:none}
+.invis {visibility:hidden}
+_i.icon.users {display:none}
+
+.family {
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+.family > .h {
+  margin-bottom:1em;
+}
+.family > .b {
+  flex-grow:1;
+  min-height: 2em;
+}
+.family .tagtree {
+  margin-left:2ex;
+  margin-top:0.25em;
+  margin-bottom:2em;
+  padding-left:0;
+}
+.family .tagtree li.tag {
+  xmargin-left:2ex;
+  xmargin-bottom:1em;
+}
+.family .tagtree .button {
+  margin:-0.5em 0 .5em 0!important;
+}
+.family .lvl1 {padding-left:3ex}
+.family .lvl2 {padding-left:6ex}
+.family .ui.dropdown .menu>.item {
+  padding-top   :0.4em!important;
+  padding-bottom:0.4em!important;
+}
+.tagtree ol {
+  padding-left:6.5ex;
+}
+.tagtree li {
+  list-style-type: none;
+}
+
+.family > .b > table {
+  margin-left:4ex;
+  width:calc(100% - 4ex);
+  border-collapse:collapse;
+  margin-bottom:1.25rem;
+}
+.family > .b > table tr:hover td {
+  background: #0088ff11;
+}
+.family > .b > table td:last-child {
+  padding:.25em 0;
+}
+.family > .b > table td:not(:nth-child(2)) {
+  white-space: nowrap;
+}
+.family > .b > table td.inv {
+  color:#c9621d;
+  font-style:italic;
+}
+
+</style></head><body><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><div class="section">Projects</div></div></div><div class="right menu"><div class="item ui dropdown simple">@japgolly<div class="menu"><a href="member-member-account.html" class="item">Account</a><div class="item">Logout</div></div></div></div></div><div class="ui container" id="page-body"><nav class="ui secondary pointing menu vertical"><a href="member-home2.html" class="item">Projects<div class="ui label plain">2</div></a><a href="member-home2-teams.html" class="item active orange">Teams<div class="ui label plain">0</div></a><a href="member-home2-invitations.html" class="item">Invitations<div class="ui left pointing label red">19</div></a><a href="member-home2-contacts.html" class="item">Contacts<div class="ui label plain">0</div></a></nav><main><div id="header-row"><div class="header-left"><a class="ui button green disabled"><i class="icon plus"></i>New</a></div><div class="header-right"><span><!--/ this is important to prevent [.ui.header icon:only-child] affecting below--></span><button data-content="Click to show deleted content." class="ui button icon has-popup" id="dead-projects"><i class="icon trash outline large grey"></i></button></div></div><section style="margin-top:3rem" class="ui raised segment" id="new-project"><h2 style="margin-bottom:2rem; color:#3659e2" class="ui header"><i class="icon users"></i>New Team</h2><div class="ui form"><div class="field"><label>Name</label><input type="text" /></div><div class="field"><div class="ui segment"><div class="family"><div class="h"><h4 class="ui header">Members</h4></div><div class="b"><table><tbody><tr><td><i class="icon user"></i>You</td><td><span class="admin">admin</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative invis"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon user"></i>@matt</td><td class="inv"><i class="icon envelope"></i>member invitation will be sent</td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon users"></i>Dev Team</td><td><span class="member">member</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr></tbody></table></div><div class="f"><div class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add member...</span></div><div style="margin-left:2ex" class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add admin...</span></div></div></div></div></div><div class="field"><div class="ui segment"><div class="family"><div class="h"><h4 class="ui header">Parent teams</h4></div><div class="b"><table><tbody><tr><td><i class="icon folder open outline"></i>ShipReq / Dev Team</td><td><span class="admin">admin</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr></tbody></table></div><div class="f"><div class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add as member...</span></div><div style="margin-left:2ex" class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add as admin...</span></div></div></div></div></div><div class="field"><div class="ui segment"><div class="family"><div class="h"><h4 class="ui header">Projects</h4></div><div class="b"><table><tbody><tr><td><i class="icon archive"></i>ShipReq</td><td><span class="admin">admin</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative invis"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon folder open"></i>OSS projects</td><td class="inv"><i class="icon envelope"></i>collaborator access requested</td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon archive"></i>Whatever</td><td><span class="collab">collaborator</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr></tbody></table></div><div class="f"><div class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add as collaborator...</span></div><div style="margin-left:2ex" class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add as admin...</span></div></div></div></div></div><div style="text-align:right; margin-top:2rem"><button style="margin-right:2em" class="ui button black basic"><i class="icon remove"></i>Close</button><button style="margin-right:0!important" class="ui button green"><i class="icon plus"></i>Create</button></div></div></section><div class="tree-container"><table class="tree"><tbody><tr><td class="name lvl1"><i class="icon users"></i>Monocle dev</td><td class="members">8 users</td><td class="rel"><span class="member">member</span></td></tr><tr><td class="name lvl1"><i class="icon users"></i>OSS dev</td><td class="members">16 users</td><td class="rel"><span class="member">member</span></td></tr><tr><td class="name lvl1"><i class="icon folder open outline"></i>ShipReq</td><td class="members">3 users</td><td class="rel"><span class="admin">admin</span></td></tr><tr><td class="name lvl2"><i class="icon users"></i>Business Team</td><td class="members">1 user</td><td class="rel"><span class="admin">admin</span></td></tr><tr><td class="name lvl2"><i class="icon users"></i>Dev Team</td><td class="members">3 users</td><td class="rel"><span class="admin">admin</span></td></tr></tbody></table></div></main></div></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.dropdown').dropdown();
+//]]>
+</script>
+</html>

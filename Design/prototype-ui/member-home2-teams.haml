@@ -1,0 +1,419 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title Projects | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.min.js"}
+    :css
+      body {padding:1rem}
+      a {color:#00549c}
+      a:hover {color:#d90166}
+      #page-body {
+        margin-top:6rem;
+        display:flex;
+      }
+      #page-body > nav {
+        display:table; /* so that the content on the right doesn't squash this */
+        margin-right: 4rem;
+        width:23ex;
+      }
+      #page-body > nav .ui.label.plain {
+        opacity:.6;
+        display:none;
+        /* Rather than show counts for everything, only show pending invs.
+            That provides some consistency seeing as you can always see old invs that aren't pending.
+            If you had 8 old and 1 new, you wouldn't want to see 9 in red.
+        */
+      }
+      #page-body > main {
+        flex-grow: 1;
+      }
+
+      .ui.header > .content {
+        width:100%;
+      }
+      #header-row {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+      }
+      .header-right {
+        float: right;
+        padding-left: 4ex;
+      }
+
+      #new-row {
+        margin-top: 4rem;
+      }
+
+      .tree-container {
+        xborder: solid 1px red;
+        margin-top: 3rem;
+        margin-left: auto;
+        margin-right: auto;
+        _padding:0 2rem;
+        _max-width: 100ex;
+      }
+      .tree {
+        xborder: solid 1px red;
+        color: #333;
+        border-collapse: collapse;
+        width: calc(100% + 2ex);
+        margin-left:-1ex;
+        margin-right:-1ex;
+      }
+      .tree td:not(:first-child) {
+        padding-left:3rem;
+        text-align: right;
+      }
+      .tree tr:not(:first-child) td {
+        xborder-top:solid 1px #22242626;
+      }
+      .tree tr:hover td {
+        background: #0088ff11;
+        cursor:pointer;
+      }
+      .tree tr td:last-child {
+        padding-right: 1ex;
+      }
+      .tree td {
+        white-space: nowrap;
+        padding-top: 0.6em;
+        padding-bottom: 0.6em;
+        vertical-align: middle;
+      }
+      .tree .name {
+        xbackground: #ff000020;
+        width: 100%;
+        font-size: 1.5rem;
+      }
+      .tree .name i {
+        margin-right: 0.4ex!important;
+      }
+      .tree .updated, .tree .members {
+        color: #aaa;
+        text-transform: lowercase;
+      }
+      .tree .lvl1 {
+        padding-left: 1ex;
+      }
+      .tree .lvl2 {
+        padding-left: 3.5ex;
+      }
+      .tree .rel {
+        font-size: 1.1rem;
+      }
+      span.admin {
+        color: green;
+      }
+      span.collab, span.member {
+        color: #33b;
+      }
+      span.read-only {
+        color: #963;
+      }
+      #dead-projects {
+        margin-left: 2rem;
+      }
+      .dead td,
+      .dead td a:not(:hover),
+      .dead .updated,
+      .dead .rel span {
+        color:#bbb;
+        text-decoration:line-through;
+      }
+
+      .hide {display:none}
+      .invis {visibility:hidden}
+      _i.icon.users {display:none}
+
+      .family {
+        display:flex;
+        flex-direction:column;
+        height:100%;
+      }
+      .family > .h {
+        margin-bottom:1em;
+      }
+      .family > .b {
+        flex-grow:1;
+        min-height: 2em;
+      }
+      .family .tagtree {
+        margin-left:2ex;
+        margin-top:0.25em;
+        margin-bottom:2em;
+        padding-left:0;
+      }
+      .family .tagtree li.tag {
+        xmargin-left:2ex;
+        xmargin-bottom:1em;
+      }
+      .family .tagtree .button {
+        margin:-0.5em 0 .5em 0!important;
+      }
+      .family .lvl1 {padding-left:3ex}
+      .family .lvl2 {padding-left:6ex}
+      .family .ui.dropdown .menu>.item {
+        padding-top   :0.4em!important;
+        padding-bottom:0.4em!important;
+      }
+      .tagtree ol {
+        padding-left:6.5ex;
+      }
+      .tagtree li {
+        list-style-type: none;
+      }
+
+      .family > .b > table {
+        margin-left:4ex;
+        width:calc(100% - 4ex);
+        border-collapse:collapse;
+        margin-bottom:1.25rem;
+      }
+      .family > .b > table tr:hover td {
+        background: #0088ff11;
+      }
+      .family > .b > table td:last-child {
+        padding:.25em 0;
+      }
+      .family > .b > table td:not(:nth-child(2)) {
+        white-space: nowrap;
+      }
+      .family > .b > table td.inv {
+        color:#c9621d;
+        font-style:italic;
+      }
+
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+      .item
+        .ui.breadcrumb
+          .section Projects
+      .right.menu
+        .item.ui.dropdown.simple
+          @japgolly
+          .menu
+            %a.item{href: "member-member-account.html"} Account
+            .item Logout
+
+    .ui.container#page-body
+      %nav.ui.secondary.pointing.menu.vertical
+        %a.item(href="member-home2.html")
+          Projects
+          .ui.label.plain 2
+        %a.item.active.orange(href="member-home2-teams.html")
+          Teams
+          .ui.label.plain 0
+        %a.item(href="member-home2-invitations.html")
+          Invitations
+          .ui.left.pointing.label.red 19
+        %a.item(href="member-home2-contacts.html")
+          Contacts
+          .ui.label.plain 0
+      %main
+
+        #header-row
+          .header-left
+            %a.ui.button.green.disabled
+              %i.icon.plus
+              New
+          .header-right
+            %span // this is important to prevent [.ui.header icon:only-child] affecting below
+            %button.ui.button.icon.has-popup#dead-projects{data-content: "Click to show deleted content."}
+              %i.icon.trash.outline.large.grey
+
+        %section.ui.raised.segment#new-project(style="margin-top:3rem")
+          %h2.ui.header(style="margin-bottom:2rem; color:#3659e2")
+            %i.icon.users
+            New Team
+          .ui.form
+
+            .field
+              %label Name
+              %input(type="text")
+
+            .field
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header Members
+                  %div.b
+                    %table
+                      %tbody
+                        %tr
+                          %td
+                            %i.icon.user
+                            You
+                          %td %span.admin admin
+                          %td
+                            .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.user
+                            @matt
+                          %td.inv
+                            %i.icon.envelope
+                            member invitation will be sent
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.users
+                            Dev Team
+                          %td %span.member member
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add member...
+                    .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
+                      %i.icon.plus
+                      %span.text Add admin...
+
+            .field
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header Parent teams
+                  %div.b
+                    %table
+                      %tbody
+                        %tr
+                          %td
+                            %i.icon.folder.open.outline
+                            ShipReq / Dev Team
+                          %td %span.admin admin
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add as member...
+                    .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
+                      %i.icon.plus
+                      %span.text Add as admin...
+
+            .field
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header Projects
+                  %div.b
+                    %table
+                      %tbody
+                        %tr
+                          %td
+                            %i.icon.archive
+                            ShipReq
+                          %td %span.admin admin
+                          %td
+                            .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.folder.open
+                            OSS projects
+                          %td.inv
+                            %i.icon.envelope
+                            collaborator access requested
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.archive
+                            Whatever
+                          %td %span.collab collaborator
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add as collaborator...
+                    .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
+                      %i.icon.plus
+                      %span.text Add as admin...
+
+            -# .field
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header
+                      Invitation pages
+                      %span(style="opacity:.3; margin-left")
+                  %div.b
+                    %table
+                      %tbody
+                        %tr
+                          %td
+                            %i.icon.archive
+                            ShipReq
+                          %td %span.admin admin
+                          %td
+                            .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.folder.open
+                            OSS projects
+                          %td.inv
+                            %i.icon.envelope
+                            collaborator access requested
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.archive
+                            Whatever
+                          %td %span.collab collaborator
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Create for collaborators...
+                    .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
+                      %i.icon.plus
+                      %span.text Create for admin...
+
+            %div(style="text-align:right; margin-top:2rem")
+              %button.ui.button.black.basic(style="margin-right:2em")
+                %i.icon.remove
+                Close
+              %button.ui.button.green(style="margin-right:0!important")
+                %i.icon.plus
+                Create
+
+        .tree-container
+          %table.tree
+            %tbody
+              %tr
+                %td.name.lvl1
+                  %i.icon.users
+                  Monocle dev
+                %td.members 8 users
+                %td.rel %span.member member
+              %tr
+                %td.name.lvl1
+                  %i.icon.users
+                  OSS dev
+                %td.members 16 users
+                %td.rel %span.member member
+              %tr
+                %td.name.lvl1
+                  %i.icon.folder.open.outline
+                  ShipReq
+                %td.members 3 users
+                %td.rel %span.admin admin
+              %tr
+                %td.name.lvl2
+                  %i.icon.users
+                  Business Team
+                %td.members 1 user
+                %td.rel %span.admin admin
+              %tr
+                %td.name.lvl2
+                  %i.icon.users
+                  Dev Team
+                %td.members 3 users
+                %td.rel %span.admin admin
+
+  :javascript
+    $('.ui.dropdown').dropdown();

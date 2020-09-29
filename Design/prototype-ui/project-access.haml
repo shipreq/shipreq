@@ -1,0 +1,317 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.min.js"}
+    -# %link{href:  "../../Code/webapp-server/src/main/webapp/a/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    -# %script{src: "../../Code/webapp-server/src/main/webapp/a/semantic.min.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      #info {
+        margin: 4rem 0;
+      }
+      #info td:nth-child(1) {
+        white-space:nowrap;
+      }
+      #info td:nth-child(2) {
+        width: 100%;
+      }
+
+      #menu .segment {
+        display: flex;
+        align-items:flex-end;
+      }
+      #menu .left {
+        flex-grow:1;
+        margin-right: 8ex;
+      }
+      #menu .right .button {
+        margin-right:0!important;
+      }
+
+      .tree-container {
+        xborder: solid 1px red;
+        margin-top: 3rem;
+        margin-left: auto;
+        margin-right: auto;
+        _padding:0 2rem;
+        _max-width: 100ex;
+      }
+      .tree {
+        xborder: solid 1px red;
+        color: #333;
+        border-collapse: collapse;
+        width: calc(100% + 2ex);
+        margin-left:-1ex;
+        margin-right:-1ex;
+      }
+      .tree td:not(:first-child) {
+        padding-left:3rem;
+        text-align: right;
+      }
+      .tree tr:not(:first-child) td {
+        xborder-top:solid 1px #22242626;
+      }
+      .tree tr:hover td {
+        background: #0088ff11;
+        cursor:pointer;
+      }
+      .tree tr td:last-child {
+        padding-right: 1ex;
+      }
+      .tree td {
+        white-space: nowrap;
+        padding-top: 0.6em;
+        padding-bottom: 0.6em;
+        vertical-align: middle;
+      }
+      .tree .name {
+        xbackground: #ff000020;
+        width: 100%;
+        font-size: 1.5rem;
+      }
+      .tree .name i {
+        margin-right: 0.4ex!important;
+      }
+      .tree .updated, .tree .members {
+        color: #aaa;
+        text-transform: lowercase;
+      }
+      .tree .lvl1 {
+        padding-left: 1ex;
+      }
+      .tree .lvl2 {
+        padding-left: 3.5ex;
+      }
+      .tree .rel {
+        font-size: 1.1rem;
+      }
+      span.admin {
+        color: green;
+      }
+      span.collab, span.member {
+        color: #33b;
+      }
+      span.read-only {
+        color: #963;
+      }
+      #dead-projects {
+        margin-left: 2rem;
+      }
+      .dead td,
+      .dead td a:not(:hover),
+      .dead .updated,
+      .dead .rel span {
+        color:#bbb;
+        text-decoration:line-through;
+      }
+
+      .hide {display:none}
+      .invis {visibility:hidden}
+      _i.icon.users {display:none}
+
+      .family {
+        display:flex;
+        flex-direction:column;
+        height:100%;
+      }
+      .family > .h {
+        margin-bottom:1em;
+      }
+      .family > .b {
+        flex-grow:1;
+        min-height: 2em;
+      }
+      .family .tagtree {
+        margin-left:2ex;
+        margin-top:0.25em;
+        margin-bottom:2em;
+        padding-left:0;
+      }
+      .family .tagtree li.tag {
+        xmargin-left:2ex;
+        xmargin-bottom:1em;
+      }
+      .family .tagtree .button {
+        margin:-0.5em 0 .5em 0!important;
+      }
+      .family .lvl1 {padding-left:3ex}
+      .family .lvl2 {padding-left:6ex}
+      .family .ui.dropdown .menu>.item {
+        padding-top   :0.4em!important;
+        padding-bottom:0.4em!important;
+      }
+      .tagtree ol {
+        padding-left:6.5ex;
+      }
+      .tagtree li {
+        list-style-type: none;
+      }
+
+      .family > .b > table {
+        margin-left:4ex;
+        width:calc(100% - 4ex);
+        border-collapse:collapse;
+        margin-bottom:1.25rem;
+      }
+      .family > .b > table tr:hover td {
+        background: #0088ff11;
+      }
+      .family > .b > table td:last-child {
+        padding:.25em 0;
+      }
+      .family > .b > table td:not(:nth-child(2)) {
+        white-space: nowrap;
+      }
+      .family > .b > table td.inv {
+        color:#c9621d;
+        font-style:italic;
+      }
+
+  %body
+
+    %nav(style="margin-bottom:5rem")
+      .ui.menu.borderless.fixed.inverted
+        .item
+          %img{src: "logo-only-dark2.svg"}
+
+        .item
+          .ui.breadcrumb
+            %a.section{href: "member-home.html"} Projects
+            %i.divider.icon.right.angle
+            %a.section{href: "project-index.html"} CardBoard
+            .ui.dropdown.inline
+              &nbsp;
+              %i.icon.dropdown
+              .menu
+                .item.active CardBoard
+                .item ShipReq
+            %i.divider.icon.right.angle
+            .section // .active
+              .ui.dropdown.inline
+                Status
+                &nbsp;
+                %i.icon.dropdown
+                .menu
+
+        .right.menu
+
+          .item#connected4(onclick="$('#connected4 > *').toggle()")
+            %i.icon.large.plug.green(style="opacity:.7" title="connected")
+            %i.icon.large.plug.red(style="opacity:1;display:none" title="disconnected")
+
+          .item.ui.dropdown.simple
+            @japgolly
+            .menu
+              %a.item{href: "member-account.html"} Account
+              .item Send feedback
+              .item Logout
+
+    -# =============================================================================================
+    .ui.container{style: "max-width: 723px! important"}
+
+      %div(style="margin-top:6rem")
+
+        .ui.segment
+          .family
+            %div.h
+              %h2.ui.header Access
+            %div.b
+              %table
+                %tbody
+                  %tr
+                    %td
+                      %i.icon.user
+                      You
+                    %td %span.admin admin
+                    %td
+                      .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %tr
+                    %td
+                      %i.icon.user
+                      @zatt
+                    %td.inv
+                      %i.icon.envelope
+                      collaborator invitation will be sent
+                    %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %tr
+                    %td
+                      %i.icon.folder.open.outline
+                      ShipReq
+                    %td %span.member member
+                    %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %tr
+                    %td.lvl1
+                      %i.icon.users
+                      Dev Team
+                    %td %span.collab collaborator
+                    %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %tr
+                    %td.lvl2
+                      %i.icon.user
+                      @poop
+                    %td %span.collab collaborator
+                    %td
+                      .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+            %div.f
+              .ui.floating.labeled.icon.dropdown.button
+                %i.icon.plus
+                %span.text Add collaborator...
+              .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
+                %i.icon.plus
+                %span.text Add admin...
+
+        -# .ui.segment
+          .family
+            %div.h
+              %h2.ui.header Users
+            %div.b
+              %table
+                %tbody
+                  %tr
+                    %td
+                      %i.icon.user
+                      You
+                    %td %span.admin admin
+                    %td
+                      .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %tr
+                    %td
+                      %i.icon.user
+                      @poop
+                    %td %span.collab collaborator
+                    %td
+                      .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %tr
+                    %td
+                      %i.icon.user
+                      @zatt
+                    %td.inv
+                      %i.icon.envelope
+                      member invitation will be sent
+                    %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+            -# %div.f
+              .ui.floating.labeled.icon.dropdown.button
+                %i.icon.plus
+                %span.text Add collaborator...
+              .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
+                %i.icon.plus
+                %span.text Add admin...
+
+        .ui.segment
+          .family
+            %div.h
+              %h2.ui.header Invitation pages
+            %div.b
+              TODO
+
+  :javascript
+    $('.ui.dropdown').dropdown();
+    $('.omg-dimmable').dimmer({on: 'hover'});

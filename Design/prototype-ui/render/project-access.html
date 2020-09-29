@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html><head><title>CardBoard | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.min.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+.ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+#info {
+  margin: 4rem 0;
+}
+#info td:nth-child(1) {
+  white-space:nowrap;
+}
+#info td:nth-child(2) {
+  width: 100%;
+}
+
+#menu .segment {
+  display: flex;
+  align-items:flex-end;
+}
+#menu .left {
+  flex-grow:1;
+  margin-right: 8ex;
+}
+#menu .right .button {
+  margin-right:0!important;
+}
+
+.tree-container {
+  xborder: solid 1px red;
+  margin-top: 3rem;
+  margin-left: auto;
+  margin-right: auto;
+  _padding:0 2rem;
+  _max-width: 100ex;
+}
+.tree {
+  xborder: solid 1px red;
+  color: #333;
+  border-collapse: collapse;
+  width: calc(100% + 2ex);
+  margin-left:-1ex;
+  margin-right:-1ex;
+}
+.tree td:not(:first-child) {
+  padding-left:3rem;
+  text-align: right;
+}
+.tree tr:not(:first-child) td {
+  xborder-top:solid 1px #22242626;
+}
+.tree tr:hover td {
+  background: #0088ff11;
+  cursor:pointer;
+}
+.tree tr td:last-child {
+  padding-right: 1ex;
+}
+.tree td {
+  white-space: nowrap;
+  padding-top: 0.6em;
+  padding-bottom: 0.6em;
+  vertical-align: middle;
+}
+.tree .name {
+  xbackground: #ff000020;
+  width: 100%;
+  font-size: 1.5rem;
+}
+.tree .name i {
+  margin-right: 0.4ex!important;
+}
+.tree .updated, .tree .members {
+  color: #aaa;
+  text-transform: lowercase;
+}
+.tree .lvl1 {
+  padding-left: 1ex;
+}
+.tree .lvl2 {
+  padding-left: 3.5ex;
+}
+.tree .rel {
+  font-size: 1.1rem;
+}
+span.admin {
+  color: green;
+}
+span.collab, span.member {
+  color: #33b;
+}
+span.read-only {
+  color: #963;
+}
+#dead-projects {
+  margin-left: 2rem;
+}
+.dead td,
+.dead td a:not(:hover),
+.dead .updated,
+.dead .rel span {
+  color:#bbb;
+  text-decoration:line-through;
+}
+
+.hide {display:none}
+.invis {visibility:hidden}
+_i.icon.users {display:none}
+
+.family {
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+.family > .h {
+  margin-bottom:1em;
+}
+.family > .b {
+  flex-grow:1;
+  min-height: 2em;
+}
+.family .tagtree {
+  margin-left:2ex;
+  margin-top:0.25em;
+  margin-bottom:2em;
+  padding-left:0;
+}
+.family .tagtree li.tag {
+  xmargin-left:2ex;
+  xmargin-bottom:1em;
+}
+.family .tagtree .button {
+  margin:-0.5em 0 .5em 0!important;
+}
+.family .lvl1 {padding-left:3ex}
+.family .lvl2 {padding-left:6ex}
+.family .ui.dropdown .menu>.item {
+  padding-top   :0.4em!important;
+  padding-bottom:0.4em!important;
+}
+.tagtree ol {
+  padding-left:6.5ex;
+}
+.tagtree li {
+  list-style-type: none;
+}
+
+.family > .b > table {
+  margin-left:4ex;
+  width:calc(100% - 4ex);
+  border-collapse:collapse;
+  margin-bottom:1.25rem;
+}
+.family > .b > table tr:hover td {
+  background: #0088ff11;
+}
+.family > .b > table td:last-child {
+  padding:.25em 0;
+}
+.family > .b > table td:not(:nth-child(2)) {
+  white-space: nowrap;
+}
+.family > .b > table td.inv {
+  color:#c9621d;
+  font-style:italic;
+}
+
+</style></head><body><nav style="margin-bottom:5rem"><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Status&nbsp;<i class="icon dropdown"></i><div class="menu"></div></div></div></div></div><div class="right menu"><div onclick="$('#connected4 &gt; *').toggle()" class="item" id="connected4"><i style="opacity:.7" title="connected" class="icon large plug green"></i><i style="opacity:1;display:none" title="disconnected" class="icon large plug red"></i></div><div class="item ui dropdown simple">@japgolly<div class="menu"><a href="member-account.html" class="item">Account</a><div class="item">Send feedback</div><div class="item">Logout</div></div></div></div></div></nav><div style="max-width: 723px! important" class="ui container"><div style="margin-top:6rem"><div class="ui segment"><div class="family"><div class="h"><h2 class="ui header">Access</h2></div><div class="b"><table><tbody><tr><td><i class="icon user"></i>You</td><td><span class="admin">admin</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative invis"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon user"></i>@zatt</td><td class="inv"><i class="icon envelope"></i>collaborator invitation will be sent</td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon folder open outline"></i>ShipReq</td><td><span class="member">member</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td class="lvl1"><i class="icon users"></i>Dev Team</td><td><span class="collab">collaborator</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td class="lvl2"><i class="icon user"></i>@poop</td><td><span class="collab">collaborator</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative invis"><i style="margin:0!important" class="icon trash"></i></div></td></tr></tbody></table></div><div class="f"><div class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add collaborator...</span></div><div style="margin-left:2ex" class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add admin...</span></div></div></div></div><div class="ui segment"><div class="family"><div class="h"><h2 class="ui header">Invitation pages</h2></div><div class="b">TODO</div></div></div></div></div></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.dropdown').dropdown();
+$('.omg-dimmable').dimmer({on: 'hover'});
+//]]>
+</script>
+</html>

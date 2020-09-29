@@ -15,8 +15,17 @@
         display:flex;
       }
       #page-body > nav {
+        display:table; /* so that the content on the right doesn't squash this */
         margin-right: 4rem;
-        width:18ex;
+        width:23ex;
+      }
+      #page-body > nav .ui.label.plain {
+        opacity:.6;
+        display:none;
+        /* Rather than show counts for everything, only show pending invs.
+            That provides some consistency seeing as you can always see old invs that aren't pending.
+            If you had 8 old and 1 new, you wouldn't want to see 9 in red.
+        */
       }
       #page-body > main {
         flex-grow: 1;
@@ -116,6 +125,11 @@
         text-decoration:line-through;
       }
 
+      i.icon.book {display:none}
+
+      .qa {color:#444; padding-left:1ex}
+      .qa + .qa {margin-top:1em}
+      .qa .q {font-weight:bold}
 
   %body
 
@@ -134,14 +148,23 @@
 
     .ui.container#page-body
       %nav.ui.secondary.pointing.menu.vertical
-        .item.active.orange Projects
-        .item Teams
-        .item Invitations
+        %a.item.active.orange(href="member-home2.html")
+          Projects
+          .ui.label.plain 2
+        %a.item(href="member-home2-teams.html")
+          Teams
+          .ui.label.plain 0
+        %a.item(href="member-home2-invitations.html")
+          Invitations
+          .ui.left.pointing.label.red 19
+        %a.item(href="member-home2-contacts.html")
+          Contacts
+          .ui.label.plain 0
       %main
 
         #header-row
           .header-left
-            .ui.labeled.button
+            .ui.labeled.button.disabled
               %a.ui.button.green
                 %i.icon.plus
                 New
@@ -156,26 +179,47 @@
             %button.ui.button.icon.has-popup#dead-projects{data-content: "Click to show deleted content."}
               %i.icon.trash.outline.large.grey
 
-
-        -# %h2.ui.header
-          %i.icon.archive
-          -# %i.icon.book
-          .content
-          .ui.labeled.button
-            %a.ui.button.green
-              %i.icon.plus
-              New
-            .ui.dropdown.label{style: "background-color: #00a632; color: #EEE;"}
-              Project
-              %i.icon.dropdown
-              .menu
-                .item Project
-                .item Group
-            Your Projects
-            .header-right
-              %span // this is important to prevent [.ui.header icon:only-child] affecting below
-              %button.ui.button.icon.has-popup#dead-projects{data-content: "Click to show deleted content."}
-                %i.icon.trash.outline.large.grey
+        %section.ui.raised.segment#new-project(style="margin-top:3rem")
+          %h2.ui.header(style="margin-bottom:2rem; color:#3659e2")
+            -# %i.icon.book
+            %i.icon.archive
+            New Project
+          .ui.form
+            .field
+              %label Name
+              %input(type="text")
+            .two.fields
+              .field
+                %label Template
+                .ui.selection.dropdown
+                  %input(type="hidden")
+                  %i.icon.dropdown
+                  .item Default
+                  .menu
+                    .item Default
+                    .item Empty
+              .field
+                %label(style="visibility:hidden") Template
+                .qa
+                  .q What's a project template?
+                  .a
+                    = "ShipReq is very flexible."
+                    = " You can configure it to behave in a way that best suits your processes and needs."
+                    = " Rather than having to manually specify all of that configuration by yourself,"
+                    = " you can start a project off of a pre-configured template."
+                    = " Templates are just starting points."
+                    = " After creating a project you're free to completely change the configuration as you see fit."
+                .qa
+                  .q What does "Default" provide?
+                  .a
+                    The default template blah blah blah.
+            %div(style="text-align:right; margin-top:2rem")
+              %button.ui.button.black.basic(style="margin-right:2em")
+                %i.icon.remove
+                Close
+              %button.ui.button.green(style="margin-right:0!important")
+                %i.icon.plus
+                Create
 
         .tree-container
           %table.tree
@@ -189,34 +233,24 @@
               %tr
                 %td.name.lvl2
                   %i.icon.book
+                  %i.icon.archive
                   %a(href="#") Monocle
                 %td.updated Updated 2 weeks ago
                 %td.rel %span.collab collaborator
               %tr.dead
                 %td.name.lvl2
                   %i.icon.book
+                  %i.icon.archive
                   %a(href="#") ScalaCSS
                 %td.updated Deleted 1 month ago
                 %td.rel %span.admin admin
               %tr
                 %td.name.lvl1
                   %i.icon.book
+                  %i.icon.archive
                   %a(href="#") ShipReq
                 %td.updated Updated 3 days ago
                 %td.rel %span.admin admin
-
-        -# #new-row
-          .ui.labeled.button
-            %a.ui.button.green
-              %i.icon.plus
-              New
-            .ui.dropdown.label{style: "background-color: #00a632; color: #EEE;"}
-              Project
-              %i.icon.dropdown
-              .menu
-                .item Project
-                .item Group
-
 
   :javascript
     $('.ui.dropdown').dropdown();
