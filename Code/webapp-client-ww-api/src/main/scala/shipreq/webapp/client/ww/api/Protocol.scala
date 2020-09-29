@@ -34,8 +34,11 @@ object Protocol {
       override type Writer[A] = Pickler[A]
 
       override def encode[A: Pickler](input: A): ArrayBuffer = {
-        val bb = PickleImpl.intoBytes(input)
-        bb.typedArray().subarray(0, bb.limit).buffer
+        val bb  = PickleImpl.intoBytes(input)
+        val len = bb.limit()
+        val ia  = bb.typedArray().subarray(0, len)
+        val ab  = ia.buffer.slice(0, len)
+        ab
       }
 
       override def decode[A: Pickler](encoded: ArrayBuffer): A = {

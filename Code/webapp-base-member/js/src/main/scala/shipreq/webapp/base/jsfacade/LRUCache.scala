@@ -24,9 +24,9 @@ final class LRUCache(options: LRUCache.Options | Double) extends js.Any {
 
   def values(): js.Array[Value] = js.native
 
-  def length(): Double = js.native
+  def length: Double = js.native
 
-  def itemCount(): Int = js.native
+  def itemCount: Int = js.native
 
   def has(key: Key): Boolean = js.native
 

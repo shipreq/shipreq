@@ -59,6 +59,18 @@ final class BinaryData(private[BinaryData] val bytes: Array[Byte], val length: I
     else
       bytes.take(length)
 
+  def binaryLikeString: String = {
+    val chars = new Array[Char](length)
+    var j = length
+    while (j > 0) {
+      j -= 1
+      val b = bytes(j)
+      val i = b.toInt & 0xff
+      chars.update(j, i.toChar)
+    }
+    String.valueOf(chars)
+  }
+
   /** unsafe in that the result is mutable */
   def unsafeByteBuffer: ByteBuffer =
     ByteBuffer.wrap(bytes, 0, length)

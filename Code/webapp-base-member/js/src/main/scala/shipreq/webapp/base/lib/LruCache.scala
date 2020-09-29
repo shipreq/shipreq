@@ -1,41 +1,77 @@
 package shipreq.webapp.base.lib
 
 import japgolly.scalajs.react._
+import java.time.Duration
 import scala.scalajs.js
 import shipreq.webapp.base.jsfacade.LRUCache
 
-final class LruCache[K, V](raw: LRUCache) {
+final class LruCache[K, V](raw: LRUCache, loggerJs: LoggerJs) {
+  import LruCache.Debug
+
+  if (Debug) {
+    console.log("Raw cache: ", raw)
+  }
 
   def get(k: K): CallbackTo[js.UndefOr[V]] =
     CallbackTo(raw.get(k.asInstanceOf[LRUCache.Key]).asInstanceOf[js.UndefOr[V]])
 
   def set(k: K, v: V): Callback =
-    CallbackTo(raw.set(k, v))
+    CallbackTo {
+      if (Debug) loggerJs(_.info(s"Adding to cache: ${k.##}"))
+      raw.set(k, v)
+    }
 
   val reset: Callback =
     Callback(raw.reset())
 
+  def getOrSet(key: K, real: => AsyncCallback[V]): AsyncCallback[V] =
+    get(key).asAsyncCallback.attempt.flatMap { result =>
+      if (Debug) loggerJs(_.debug(s"Cache keys: ${raw.keys().toList.map(_.##).sorted.mkString("{", ", ", "}")}. Current key: ${key.##}"))
+      result match {
+        case Right(cached) if cached.isDefined =>
+          if (Debug) loggerJs(_.info(s"Cache hit for ${key.##}"))
+          AsyncCallback.pure(cached.get)
+        case _ =>
+          if (Debug) loggerJs(_.info(s"Cache miss for ${key.##}"))
+          real.flatTapSync(set(key, _))
+      }
+    }
+
+  def getOrSetX[A](key: K, real: => AsyncCallback[A])(f: A => V, g: V => A): AsyncCallback[A] =
+    getOrSet(key, real.map(f)).map(g)
+
+  def getOrSetR[A](key: K, real: => AsyncCallback[A])(implicit ev: V <:< LruCache.Result[Any]): AsyncCallback[A] = {
+    val self = this.asInstanceOf[LruCache[K, LruCache.Result[Any]]]
+    self.getOrSetX(key, real)(LruCache.Result(_), _.value.asInstanceOf[A])
+  }
+
   def memoAsync[I](key: I => K, f: (I, K) => AsyncCallback[V]): I => AsyncCallback[V] =
     i => {
       val k = key(i)
-      get(k).asAsyncCallback.flatMap { cached =>
-        if (cached.isDefined)
-          AsyncCallback.pure(cached.get)
-        else
-          f(i, k).flatTapSync(set(k, _))
-      }
+      getOrSet(k, f(i, k))
     }
 }
 
 object LruCache {
-  def apply[K, V] =
-    new Builder[K, V](Nil)
 
-  final class Builder[K, V](mods: List[LRUCache.Options => Unit]) {
+  final val Debug = false
+
+  def apply[K, V] =
+    new Builder[K, V](Nil, LoggerJs.off)
+
+  def toAny[K] =
+    apply[K, Result[Any]]
+
+  type ToAny[K] = LruCache[K, Result[Any]]
+
+  final class Builder[K, V](mods: List[LRUCache.Options => Unit], loggerJs: LoggerJs) {
     type This = Builder[K, V]
 
     private def add(f: LRUCache.Options => Unit): This =
-      new Builder(f :: mods)
+      new Builder(f :: mods, loggerJs)
+
+    def maxAge(dur: Duration): This =
+      maxAgeMs(dur.toMillis.toDouble)
 
     def maxAgeMs(ms: Double): This =
       add(_.maxAge = ms)
@@ -54,11 +90,14 @@ object LruCache {
     def updateAgeOnGet(b: Boolean): This =
       add(_.updateAgeOnGet = b)
 
+    def withLogger(l: LoggerJs): This =
+      new Builder(mods, l)
+
     def build(): LruCache[K, V] = {
       val o = js.Object().asInstanceOf[LRUCache.Options]
       mods.foreach(_(o))
       val c = new LRUCache(o)
-      new LruCache(c)
+      new LruCache(c, loggerJs)
     }
   }
 
