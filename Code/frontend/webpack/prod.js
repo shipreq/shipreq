@@ -1,6 +1,6 @@
 const
   Webpack = require('webpack'),
-  WebpackMerge = require('webpack-merge'),
+  WebpackMerge = require('webpack-merge').merge,
   TerserPlugin = require('terser-webpack-plugin'),
   common = require('./runtime');
 

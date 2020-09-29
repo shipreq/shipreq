@@ -1,7 +1,7 @@
   core-js            38.02 KB   88.4%
 <self>               703.25 KB  54.8%
   <self>             5.01 KB    11.6%
-lodash               139.84 KB  10.9%
+lodash               140.01 KB  10.9%
 moment               77.24 KB   6.02%
 react-color          75.34 KB   5.87%
 textcomplete         51.8 KB    4.04%
@@ -14,7 +14,7 @@ react-property       13.08 KB   1.02%
 html-dom-parser      10.5 KB    0.818%
 html-react-parser    9.6 KB     0.748%
 eventemitter3        8.44 KB    0.658%
-autosize             8.13 KB    0.634%
+autosize             8.13 KB    0.633%
 react-virtualized    7.73 KB    0.602%
 inline-style-parser  4.94 KB    0.385%
 textarea-caret       4.36 KB    0.340%
@@ -23,4 +23,4 @@ prop-types           2.56 KB    0.199%
 @icons/material      1.69 KB    0.132%
 undate               1.48 KB    0.115%
 webpack              1021 B     0.0777%
-style-to-object      976 B      0.0743%
+style-to-object      976 B      0.0742%
