@@ -53,5 +53,8 @@
     "webpack-cli": "3.3.12",
     "webpack-merge": "5.1.4",
     "webtamp": "0.5.4"
+  },
+  "resolutions": {
+    "graceful-fs": "^4.2.4"
   }
 }
