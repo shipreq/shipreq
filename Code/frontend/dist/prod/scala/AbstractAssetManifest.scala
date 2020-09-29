@@ -10,7 +10,7 @@ abstract class AbstractAssetManifest[+A] {
 
   protected def modify(f: String): A
 
-  final val analyticsJs = modify("/s/11670b0e3e1d31a771f7cd5a49d22ab3.js")
+  final val analyticsJs = modify("/s/160e616806adf95cb3d223d7151f4940.js")
 
   final val favicon16X16Png = modify("/s/fed79b5fe13954bcbb0ebbd3fe18be61.png")
 
@@ -45,45 +45,45 @@ abstract class AbstractAssetManifest[+A] {
     integrity = Some("sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="))
 
   final val katexCss = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css",
-    integrity = Some("sha256-V8SV2MO1FUb63Bwht5Wx9x6PVHNa02gv8BgH/uH3ung="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css",
+    integrity = Some("sha256-tn6hZ2YGDv0w1/DaFL4MiUoXuAVclrtFZs13ch3TB9M="))
 
   final val katexJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js",
-    integrity = Some("sha256-F/Xda58SPdcUCr+xhSGz9MA2zQBPb0ASEYKohl8UCHc="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js",
+    integrity = Some("sha256-1qhJwAgsSPVSSjlQVTewHS49eaoAbOz651dveUANVBI="))
 
   final val loadingSpinSvg = modify("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjMjJjIj48cGF0aCBvcGFjaXR5PSIuMjUiIGQ9Ik0xNiAwYTE2IDE2IDAgMDAwIDMyIDE2IDE2IDAgMDAwLTMybTAgNGExMiAxMiAwIDAxMCAyNCAxMiAxMiAwIDAxMC0yNCIvPjxwYXRoIGQ9Ik0xNiAwYTE2IDE2IDAgMDExNiAxNmgtNEExMiAxMiAwIDAwMTYgNHoiPjxhbmltYXRlVHJhbnNmb3JtIGF0dHJpYnV0ZU5hbWU9InRyYW5zZm9ybSIgdHlwZT0icm90YXRlIiBmcm9tPSIwIDE2IDE2IiB0bz0iMzYwIDE2IDE2IiBkdXI9IjAuNXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9wYXRoPjwvc3ZnPg==")
 
   final val loadjs = modify("/s/9e706a6f7bc551ddf626c15cd76c1c25.js")
 
-  final val memberLibBundleJs = modify("/s/4072801a3d4dd79ac120124811891d97.js")
+  final val memberLibBundleJs = modify("/s/cf0cc1c28183a5763ea1ec853e12ed24.js")
 
   final val prismJsAutoloader = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/autoloader/prism-autoloader.min.js",
-    integrity = Some("sha256-3S2PESHNt0YNL65z57WuHPHIv12fibpBDXepyCGHftw="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/autoloader/prism-autoloader.min.js",
+    integrity = Some("sha256-0ii9Dvp4IY/YYf10IqlNk43Yxaa0H1eYiThZcVIYI0Q="))
 
   final val prismJsCore = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/components/prism-core.min.js",
-    integrity = Some("sha256-9h14mWYYiQGkeAKg2JtijbqApb56kgw57WN6sI6dwH0="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/components/prism-core.min.js",
+    integrity = Some("sha256-BP8GoJLyZ0s3giW+h7G60XqiH7rZYtLFgGb3MFypAVQ="))
 
   final val prismJsCss = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/themes/prism-okaidia.css",
-    integrity = Some("sha256-PCIRBVLXb7L62+EomqoQYE4fCb7LpmGlAcPrbnbRAyw="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/themes/prism-okaidia.css",
+    integrity = Some("sha256-nwDipdLn93O1CZGoRDor0i4CLmDQb+mdg/yaYMUCuLM="))
 
   final val prismJsLineNumbers = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/line-numbers/prism-line-numbers.min.js",
-    integrity = Some("sha256-hep5s8952MqR7Y79JYfCXZD6vQjVHs7sOu/ZGrs1OEQ="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/line-numbers/prism-line-numbers.min.js",
+    integrity = Some("sha256-6BSzQi32/3BIedxgjt0WiqnJC61M+vnpvdqaioc9/68="))
 
   final val prismJsLineNumbersCss = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/line-numbers/prism-line-numbers.css",
-    integrity = Some("sha256-udLi8HM3vM4cuDDMGyRFzG8ek0UN0+uytPLWkbTpagg="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/line-numbers/prism-line-numbers.css",
+    integrity = Some("sha256-ye8BkHf2lHXUtqZ18U0KI3xjJ1Yv7P8lvdKBt9xmVJM="))
 
   final val prismJsMatchBraces = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/match-braces/prism-match-braces.min.js",
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/match-braces/prism-match-braces.min.js",
     integrity = Some("sha256-ICsqq6gRT8YxNMWqiSlCk+Xxr8XpkSaSVW+apneJuYs="))
 
   final val prismJsMatchBracesCss = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.20.0/plugins/match-braces/prism-match-braces.css",
+    href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/match-braces/prism-match-braces.css",
     integrity = Some("sha256-Qr3kZtoWj5+ax8ifwd0asqiDHBSyxWOKltSh2AH2XBA="))
 
   final val reactDomJs = CDN(
@@ -109,7 +109,7 @@ abstract class AbstractAssetManifest[+A] {
     modify("icons.svg#icons") ::
     Nil
 
-  final val semanticJs = modify("/s/ef085477e7327cc3191ec97fda7e72f6.js")
+  final val semanticJs = modify("/s/feb255b394c85459e34484e5b2c41e84.js")
 
   final val shipreqBannerSvg = modify("/s/878536f0a4ad0029794669f88dbf5f35.svg")
 

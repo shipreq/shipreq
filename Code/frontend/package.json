@@ -11,6 +11,7 @@
     "jquery": "2.2.4",
     "katex": "0.12.0",
     "loadjs": "4.2.0",
+    "lru-cache": "^6.0.0",
     "moment": "2.29.0",
     "prismjs": "1.21.0",
     "react": "16.13.1",

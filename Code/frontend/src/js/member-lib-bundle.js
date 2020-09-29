@@ -15,6 +15,10 @@ export { default as tinycolor      } from 'tinycolor2/tinycolor'
 import DOMPurify from 'dompurify'
 export { DOMPurify as DP }
 
+// lru-cache
+import LRUCache from 'lru-cache'
+export { LRUCache as LRUC }
+
 // screenfull
 import * as screenfull from 'screenfull'
 export { screenfull }
@@ -54,4 +58,4 @@ const TM = { scale, transform, translate }
 export { TM }
 
 // Paste the following into web console for quick testing.
-// console.log("G: ", {autosize, ChromePicker, clipboard, GithubPicker, HRP, moment, ReactCollapse, RSPZ, RVAS, scrollIntoView, screenfull, TextComplete, TextCompleteTA, TM, TFE, tinycolor})
+// console.log("G: ", {autosize, ChromePicker, clipboard, GithubPicker, HRP, LRUC, moment, ReactCollapse, RSPZ, RVAS, scrollIntoView, screenfull, TextComplete, TextCompleteTA, TM, TFE, tinycolor})
