@@ -14,7 +14,7 @@ object ModalForm {
 
 @UsesSemanticUiManually
 abstract class ModalForm[A](name             : String,
-                            initalResult     : A,
+                            initialResult    : A,
                             submitLabel      : String,
                             rootDom          : Element,
                             clear            : A => Boolean = (_: A) => true,
@@ -25,7 +25,7 @@ abstract class ModalForm[A](name             : String,
   val id = Modal.nextId()
 
   private var onCompletion = Callback.empty
-  private var lastResult = initalResult
+  private var lastResult = initialResult
 
   protected final def getDom[N <: raw.Node](sel: String): CallbackTo[N] =
     CallbackTo(rootDom.querySelector(s"#$id $sel").domCast[N])
@@ -36,12 +36,23 @@ abstract class ModalForm[A](name             : String,
   val content: TagMod
   val justSubmit: AsyncCallback[SetState \/ A]
 
-  private lazy val resetForm            = clearFormData.when(clear(lastResult)) >> setState(SetState(Enabled, None, inFlight = false))
-  private lazy val onHide               = resetForm >> Callback.byName(onCompletion)
-  private lazy val modalInitProps       = js.Dynamic.literal(onHidden = onHide.toJsFn)
-  private lazy val modalInit            = Callback(JQuery.byId(id).modal(modalInitProps))
-  private      val modalShow            = Callback(JQuery.byId(id).modal("show"))
-  private      val modalHide            = Callback(JQuery(rootDom.querySelector("#" + id)).modal("hide"))
+  protected final lazy val resetForm =
+    clearFormData.when(clear(lastResult)) >> setState(SetState(Enabled, None, inFlight = false))
+
+  protected lazy val onHide =
+    resetForm >> Callback.byName(onCompletion)
+
+  private lazy val modalInitProps =
+    js.Dynamic.literal(onHidden = onHide.toJsFn)
+
+  private lazy val modalInit =
+    Callback(JQuery.byId(id).modal(modalInitProps))
+
+  private val modalShow =
+    Callback(JQuery.byId(id).modal("show"))
+
+  protected val modalHide =
+    Callback(JQuery(rootDom.querySelector("#" + id)).modal("hide"))
 
   private val submitAsync: Option[ReactEvent] => AsyncCallback[Unit] = {
     val doIt = AsyncCallback.lazily(justSubmit).flatMap {
@@ -91,7 +102,7 @@ abstract class ModalForm[A](name             : String,
       for {
         (p, complete) <- AsyncCallback.promise[A]
         _             <- Callback {
-                           lastResult = initalResult
+                           lastResult = initialResult
                            onCompletion = CallbackTo(lastResult).flatMap(p => complete(Success(p)))
                          }
         _             <- resetForm
