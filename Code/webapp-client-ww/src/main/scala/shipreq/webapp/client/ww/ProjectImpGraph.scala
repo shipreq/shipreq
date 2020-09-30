@@ -47,10 +47,11 @@ final class ProjectImpGraph(project   : Project,
     colourProvider.declareAllReqsInScope()
 
     // Implication required
-    if (impReqResult.badIds.nonEmpty)
+    val relevantReqsWithoutImp = reqIdFilter.setFilter(impReqResult.badIds)
+    if (relevantReqsWithoutImp.nonEmpty)
       b.attrGroup("edge[color=\"#dd0000\"]") {
         b append "R[shape=octagon fillcolor=red fontcolor=white margin=0 fontsize=18 label=\"?\"]"
-        b.flowOneToMany("R", impReqResult.badIds.iterator.map(nodeId))(b.append, ())
+        b.flowOneToMany("R", relevantReqsWithoutImp.iterator.map(nodeId))(b.append, ())
         allFlow(impReqResult.badImpGraph.forwards)
       }
 

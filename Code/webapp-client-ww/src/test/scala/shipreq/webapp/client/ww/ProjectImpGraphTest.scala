@@ -1,5 +1,6 @@
 package shipreq.webapp.client.ww
 
+import shipreq.base.util.OptionalBoolFn
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.event.Event._
@@ -13,7 +14,7 @@ import utest._
 
 object ProjectImpGraphTest extends TestSuite {
   import GraphTestUtil._
-  import SampleImplicationGraph._
+  import SampleImplicationGraph._, Values._
 
   private def render(fd: FilterDead,
                      p: Project,
@@ -68,6 +69,134 @@ object ProjectImpGraphTest extends TestSuite {
            |$mf1->$fr1;
            |$fr2->$fr3;
            |$fr4->$fr5;
+           |}
+          """.stripMargin)
+      assertDOT(actual, expect)
+    }
+
+    "impRequired" - {
+      val p = applyEventSuccessfully(SIG_dead_FR7, TestEvent.genericReqCreate(GenericReqId(999), fr))
+      val actual = render(HideDead, p)
+      val expect = DOT(
+        s"""
+           |digraph G{bgcolor=transparent;rankdir=TB;
+           |node[style=filled shape=ellipse color="#222222"]
+           |edge[color="#222222"]
+           |
+           |node[fillcolor="#B7D058"]
+           |$br2[id="BR-2" label="BR-2"]
+           |$br1[id="BR-1" label="BR-1"]
+           |
+           |node[fillcolor="#D5A8C9"]
+           |$fr5[id="FR-5" label="FR-5"]
+           |$fr1[id="FR-1" label="FR-1"]
+           |$fr3[id="FR-3" label="FR-3"]
+           |$fr2[id="FR-2" label="FR-2"]
+           |$fr4[id="FR-4" label="FR-4"]
+           |999[id="FR-8" label="FR-8"]
+           |$fr6[id="FR-6" label="FR-6"]
+           |
+           |node[fillcolor="#93D5BA"]
+           |$mf4[id="MF-4" label="MF-4"]
+           |$mf3[id="MF-3" label="MF-3"]
+           |$mf2[id="MF-2" label="MF-2"]
+           |$mf1[id="MF-1" label="MF-1"]
+           |$mf5[id="MF-5" label="MF-5"]
+           |
+           |{
+           |edge[color="#dd0000"]
+           |R[shape=octagon fillcolor=red fontcolor=white margin=0 fontsize=18 label="?"]
+           |R->999;
+           |}
+           |
+           |$mf4->$fr6;
+           |$br1->$br2;
+           |$br1->$mf2;
+           |$mf3->$mf4;
+           |$mf3->$fr4;
+           |$br2->$mf3;
+           |$mf2->$fr2;
+           |$fr5->$mf5;
+           |$fr1->$fr2;
+           |$mf1->$fr1;
+           |$fr2->$fr3;
+           |$fr4->$fr5;
+           |}
+          """.stripMargin)
+      assertDOT(actual, expect)
+    }
+
+    "impRequiredFilteredOut" - {
+      val id = GenericReqId(999)
+      val p = applyEventSuccessfully(SIG_dead_FR7, TestEvent.genericReqCreate(id, fr))
+      val f = CompiledFilter.empty.copy(req = OptionalBoolFn(_.id != id))
+      val actual = render(HideDead, p, f)
+      val expect = DOT(
+        s"""
+           |digraph G{bgcolor=transparent;rankdir=TB;
+           |node[style=filled shape=ellipse color="#222222"]
+           |edge[color="#222222"]
+           |
+           |node[fillcolor="#B7D058"]
+           |$br2[id="BR-2" label="BR-2"]
+           |$br1[id="BR-1" label="BR-1"]
+           |
+           |node[fillcolor="#D5A8C9"]
+           |$fr5[id="FR-5" label="FR-5"]
+           |$fr1[id="FR-1" label="FR-1"]
+           |$fr3[id="FR-3" label="FR-3"]
+           |$fr2[id="FR-2" label="FR-2"]
+           |$fr4[id="FR-4" label="FR-4"]
+           |$fr6[id="FR-6" label="FR-6"]
+           |
+           |node[fillcolor="#93D5BA"]
+           |$mf4[id="MF-4" label="MF-4"]
+           |$mf3[id="MF-3" label="MF-3"]
+           |$mf2[id="MF-2" label="MF-2"]
+           |$mf1[id="MF-1" label="MF-1"]
+           |$mf5[id="MF-5" label="MF-5"]
+           |
+           |$mf4->$fr6;
+           |$br1->$br2;
+           |$br1->$mf2;
+           |$mf3->$mf4;
+           |$mf3->$fr4;
+           |$br2->$mf3;
+           |$mf2->$fr2;
+           |$fr5->$mf5;
+           |$fr1->$fr2;
+           |$mf1->$fr1;
+           |$fr2->$fr3;
+           |$fr4->$fr5;
+           |}
+          """.stripMargin)
+      assertDOT(actual, expect)
+    }
+
+    "impRequiredFiltered2" - {
+      val x1 = GenericReqId(666)
+      val x2 = GenericReqId(777)
+      val scope = Set[ReqId](x1, x2)
+      val p = applyEventsSuccessfully(SIG_dead_FR7,
+        TestEvent.genericReqCreate(x1, fr, impTgts = Set1(br1)),
+        TestEvent.genericReqCreate(x2, fr, impSrcs = Set1(br1)),
+      )
+      val f = CompiledFilter.empty.copy(req = OptionalBoolFn(r => scope.contains(r.id)))
+      val actual = render(HideDead, p, f)
+      val expect = DOT(
+        s"""
+           |digraph G{bgcolor=transparent;rankdir=TB;
+           |node[style=filled shape=ellipse color="#222222"]
+           |edge[color="#222222"]
+           |node[fillcolor="#D5A8C9"]
+           |777[id="FR-9" label="FR-9"]
+           |666[id="FR-8" label="FR-8"]
+           |
+           |{
+           |edge[color="#dd0000"]
+           |R[shape=octagon fillcolor=red fontcolor=white margin=0 fontsize=18 label="?"]
+           |R->666;
+           |}
            |}
           """.stripMargin)
       assertDOT(actual, expect)
