@@ -26,6 +26,9 @@ abstract class ModalForm[A](name             : String,
 
   private var onCompletion = Callback.empty
   private var lastResult = initialResult
+  private var open = false
+
+  protected def isModalOpen() = open
 
   protected final def getDom[N <: raw.Node](sel: String): CallbackTo[N] =
     CallbackTo(rootDom.querySelector(s"#$id $sel").domCast[N])
@@ -40,7 +43,7 @@ abstract class ModalForm[A](name             : String,
     clearFormData.when(clear(lastResult)) >> setState(SetState(Enabled, None, inFlight = false))
 
   protected lazy val onHide =
-    resetForm >> Callback.byName(onCompletion)
+    Callback {open = false} >> resetForm >> Callback.byName(onCompletion)
 
   private lazy val modalInitProps =
     js.Dynamic.literal(onHidden = onHide.toJsFn)
@@ -49,14 +52,20 @@ abstract class ModalForm[A](name             : String,
     Callback(JQuery.byId(id).modal(modalInitProps))
 
   private val modalShow =
-    Callback(JQuery.byId(id).modal("show"))
+    Callback {
+      JQuery.byId(id).modal("show")
+      open = true
+    }
 
   protected val modalHide =
     Callback(JQuery(rootDom.querySelector("#" + id)).modal("hide"))
 
+  protected def complete(a: A): Callback =
+    Callback {lastResult = a} >> modalHide
+
   private val submitAsync: Option[ReactEvent] => AsyncCallback[Unit] = {
     val doIt = AsyncCallback.lazily(justSubmit).flatMap {
-      case \/-(r) => (Callback {lastResult = r} >> modalHide).asAsyncCallback
+      case \/-(r) => complete(r).asAsyncCallback
       case -\/(s) => setState(s).asAsyncCallback
     }
 
@@ -92,7 +101,7 @@ abstract class ModalForm[A](name             : String,
       <.div(^.cls := "actions", cancelButton, loginButton),
     )
 
-  def component =
+  lazy val component =
     ScalaComponent.builder.static(name)(render)
       .componentDidMountConst(modalInit)
       .build

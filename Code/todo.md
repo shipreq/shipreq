@@ -19,7 +19,6 @@
 * hard delete
 
 * Add percentages to deriv expl
-* when session expired, it should still always retry in case re-auth occurred in another tab
 * if I have a flat list of unconnected nodes in ReqGraph, they appear backwards (ie. IV1, FR3, FR2, FR1)
 * ReqDetail ImpGraph: include all tags in the hover text
 

@@ -5,8 +5,8 @@ import japgolly.scalajs.react.AsyncCallback
 import java.time.Duration
 import org.scalajs.dom.webworkers.Worker
 import scala.scalajs.js.typedarray.ArrayBuffer
-import shipreq.base.util._
 import shipreq.base.util.JsExt._
+import shipreq.base.util._
 import shipreq.webapp.base.lib.{LoggerJs, LruCache}
 import shipreq.webapp.client.ww.api.Protocol.Codec.{default => codec}
 import shipreq.webapp.client.ww.api._

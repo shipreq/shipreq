@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
 import shipreq.base.util.{Allow, Deny, Disabled, Enabled, ErrorMsg, Permission}
+import shipreq.webapp.base.GlobalSettings
 import shipreq.webapp.base.lib.ModalForm
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
 import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocols}
@@ -98,21 +99,39 @@ object ReauthenticationModal {
             ^.onChange --> setState(SetState(Enabled, None, inFlight = false)),
             GeneralTheme.submitOnEnter(submit(None))
           ),
-          Icon.Lock.tag),
+          Icon.Lock.tag
+        ),
         errorLabel
       )
 
       override val justSubmit: AsyncCallback[SetState \/ Permission] =
         passwordGet.map(Login.Request.validate(-\/(username), _)).asAsyncCallback.flatMap {
           case \/-(req) =>
-            attemptLogin(req).map {
-              case ok@ \/-(Allow) => ok
-              case \/-(Deny)      => -\/(SetState(Enabled, Some(errorInvalidPassword), inFlight = false))
-              case -\/(err)       => -\/(SetState(Enabled, Some(err), inFlight = false))
+            attemptLogin(req).flatMap {
+              case ok@ \/-(Allow) => GlobalSettings.SessionExpired.remove.asAsyncCallback.ret(ok)
+              case \/-(Deny)      => AsyncCallback pure -\/(SetState(Enabled, Some(errorInvalidPassword), inFlight = false))
+              case -\/(err)       => AsyncCallback pure -\/(SetState(Enabled, Some(err), inFlight = false))
             }
           case -\/(_) =>
             AsyncCallback.pure(-\/(SetState(Enabled, Some(errorInvalidPassword), inFlight = false))).delayMs(delayMs)
         }
+
+      /** Check if re-authorisation has occurred in a different tab */
+      lazy val checkBackgroundReauthorisation: Callback = {
+        Callback.byName {
+          if (isModalOpen()) {
+            val sessionExpired = GlobalSettings.SessionExpired.get.runNow().contains(true)
+            if (sessionExpired)
+              checkBackgroundReauthorisation
+            else
+              complete(Allow)
+          } else
+            Callback.empty
+        }.delayMs(1000).toCallback
+      }
+
+      override def run: AsyncCallback[Permission] =
+        checkBackgroundReauthorisation.asAsyncCallback >> super.run
     }
 
     ReauthenticationModal(modalForm.id, modalForm.component(), modalForm.run)

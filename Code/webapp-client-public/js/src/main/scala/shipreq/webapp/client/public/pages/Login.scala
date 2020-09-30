@@ -16,7 +16,7 @@ import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.user.{EmailAddr, UserValidators, Username}
-import shipreq.webapp.base.{CommmonUiText, Urls}
+import shipreq.webapp.base.{CommmonUiText, GlobalSettings, Urls}
 import shipreq.webapp.client.public.Styles.{login => *}
 
 object Login {
@@ -161,8 +161,10 @@ object Login {
       )
 
     private def onLoginSuccess: TCB.Success =
-      TCB.Success($.props.map(p =>
-        window.location.href = p.redirectOnLogin.getOrElse(Urls.memberHome).relativeUrl))
+      TCB.Success(
+        GlobalSettings.SessionExpired.remove >>
+        $.props.map(p => window.location.href = p.redirectOnLogin.getOrElse(Urls.memberHome).relativeUrl)
+      )
 
     private def onLoginFailure(user: Username \/ EmailAddr): Callback =
       setError("Login failed", s"Invalid ${CommmonUiText.usernameOrEmail(user.isLeft).toLowerCase} or password.")

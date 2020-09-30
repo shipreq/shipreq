@@ -8,6 +8,7 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success, Try}
 import shipreq.base.util.JsExt._
 import shipreq.base.util._
+import shipreq.webapp.base.GlobalSettings
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
@@ -177,6 +178,14 @@ object WebSocketClient {
 
       readyStateCB.flatMap {
         case None | Some(ReadyState.Closed) =>
+
+          // Check if re-authorisation has occurred in a different tab
+          if (!state.authorised) {
+            val sessionExpired = GlobalSettings.SessionExpired.get.runNow().contains(true)
+            if (!sessionExpired)
+              state = state.copy(authorised = true)
+          }
+
           if (state.authorised)
             attemptConnect
           else
@@ -350,6 +359,7 @@ object WebSocketClient {
       private def onClosed(code: Option[CloseCode]): Unit =
         code match {
           case Some(CloseCode.`unauthorised`) =>
+            GlobalSettings.SessionExpired.set(true).runNow()
             state = state.copy(authorised = false)
             setPublicState(State.Unauthorised).runNow()
             connect.runNow()
