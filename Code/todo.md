@@ -18,6 +18,10 @@
 * delete & restore projects
 * hard delete
 * Add percentages to deriv expl (?)
+* have the text surrounding logic undo as well.
+  eg select [//asd//] and press / should equal [asd]
+  eg select //[asd]// and press / should equal [asd]
+* Markdown: Support nested lists
 
 
 
@@ -78,7 +82,6 @@ Backlog (eventually)
 * big long (SVG) code blocks take over the screen. Preview not visible anymore when editing.
 * support all kinds of URL schemes in WebAddress (maybe - what considerations are necessary? security?)
 * Bug: field editor doesn't fit (and no scroll) when window is left 50% of screen
-* Markdown: Support nested lists
 * Keyboard nav for ReqTablePage (not just the table) (?)
 * Show past IDs in ReqTable
 * Group req types in filter from ALL to ANY.
