@@ -206,11 +206,38 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
             val modified     = e.altKey || e.ctrlKey || e.metaKey
             Callback {
               if (textSelected && !e.defaultPrevented && !modified) {
+                val text = textarea.value
+
                 def wrap(prefix: String, _suffix: String = null): Unit = {
                   e.preventDefault()
                   val suffix = if (_suffix eq null) prefix else _suffix
-                  TextFieldEdit.wrapSelection(textarea, prefix, suffix)
+
+                  def unwrap(da: Int, db: Int): Option[(String, String, String)] = {
+                    val a = textarea.selectionStart - da
+                    val b = textarea.selectionEnd + db
+                    Option.when(a >= 0 && b <= text.length) {
+                      val s = text.substring(a, b)
+                      Option.when(s.startsWith(prefix) && s.endsWith(suffix)) {
+                        val pre = text.take(a)
+                        val mid = s.drop(prefix.length).dropRight(suffix.length)
+                        val pst = text.drop(b)
+                        (pre, mid, pst)
+                      }
+                    }.flatten
+                  }
+
+                  val unwrapped =
+                    unwrap(0, 0) orElse unwrap(prefix.length, suffix.length)
+
+                  unwrapped match {
+                    case Some((a, b, c)) =>
+                      TextFieldEdit.set(textarea, a + b + c)
+                      textarea.setSelectionRange(a.length, a.length + b.length)
+                    case None =>
+                      TextFieldEdit.wrapSelection(textarea, prefix, suffix)
+                  }
                 }
+
                 key match {
                   case "/" | "_" | "*" | "~" => wrap(key + key)
                   case "`"                   => wrap(key)

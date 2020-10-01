@@ -18,9 +18,6 @@
 * delete & restore projects
 * hard delete
 * Add percentages to deriv expl (?)
-* have the text surrounding logic undo as well.
-  eg select [//asd//] and press / should equal [asd]
-  eg select //[asd]// and press / should equal [asd]
 * Markdown: Support nested lists
 
 

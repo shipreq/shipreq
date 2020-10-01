@@ -23,12 +23,12 @@ object TestState
 
   type DomZipperTo[A] = DomZipperJsF[Id, A]
 
-  implicit class TestStateStyleAExt(private val self: StyleA) extends AnyVal {
+  implicit final class TestStateStyleAExt(private val self: StyleA) extends AnyVal {
     def selector: String =
       "." + self.className.value
   }
 
-  implicit class TestStateElementExt(private val self: html.Element) extends AnyVal {
+  implicit final class TestStateElementExt(private val self: html.Element) extends AnyVal {
     def get(v: VdomAttr[_])(implicit srcFile: sourcecode.File, srcLine: sourcecode.Line): String =
       Option(v.attrName.trim).filter(_.nonEmpty) match {
         case Some(n) =>
@@ -39,6 +39,11 @@ object TestState
         case None =>
           ErrorMsg(s"html.Element.get(∅) called from ${srcFile.value}:${srcLine.value}").throwException()
       }
+  }
+
+  implicit final class TestStateTextAreaExt(private val self: html.TextArea) extends AnyVal {
+    def selectionRange: (Int, Int) =
+      (self.selectionStart, self.selectionEnd)
   }
 
 //  implicit val displayTestReq: Display[TestClientProtocol.Req] =

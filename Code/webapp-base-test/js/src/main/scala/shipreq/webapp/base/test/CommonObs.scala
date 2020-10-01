@@ -1,5 +1,6 @@
 package shipreq.webapp.base.test
 
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.base.test.BaseTestUtil._
@@ -215,9 +216,17 @@ object CommonObs {
       final val previewPosition            = *.focus(field + " editor preview position"             ).option(_.obs.previewPosition)
       final val previewButtons             = *.focus(field + " editor preview buttons"              ).value(_.obs.previewButtonExistence)
       final val previewButtonsStr          = *.focus(field + " editor preview buttons"              ).value(_.obs.previewButtonExistence.asStr)
+    //final val editorSelectionRange       = *.focus(field + " editor selection range"              ).option(_.obs.editor.map(_.domCast[html.TextArea].selectionRange))
+    // ^^ doesn't work with PhantomJS
 
       final def focusCell =
         *.action("Focus cell")(_.obs.dom.focus())
+
+      final def focusEditor =
+        *.action("Focus editor")(_.obs.editor.get.focus())
+
+      final def setEditorSelectionRange(start: Int, end: Int) =
+        *.action(s"setEditorSelectionRange($start, $end)")(_.obs.editor.get.domCast[html.TextArea].setSelectionRange(start, end))
 
       final def doubleClick: *.Actions =
         *.action("Double-click " + field)(Simulate doubleClick _.obs.dom)

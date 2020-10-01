@@ -816,5 +816,50 @@ object ReqDetailTest extends TestSuite {
 
     }
 
+    "textSurrounds" - {
+      val f = field("Notes")
+      // TODO https://github.com/japgolly/scalajs-react/issues/783
+      import japgolly.scalajs.react.test.SimEvent._
+      val ForwardSlash = Keyboard(key = "/", keyCode = 191)
+      // val Underscore = Keyboard(key = "_", keyCode = 189, shiftKey = true)
+      val OpenBracket = Keyboard(key = "[", keyCode = 219)
+
+      def subtest(prefix: String, mid: String, suffix: String) = {
+        val a = prefix.length
+        val b = a + mid.length
+
+        (
+          f.setEditorValue(s"$prefix$mid$suffix")
+            >> f.focusEditor
+
+            // new wrap
+            >> f.setEditorSelectionRange(a, b)
+            >> press(OpenBracket)
+            +> f.editorValue.assert(Some(s"$prefix[$mid]$suffix"))
+
+            // unwrap cos of inside
+            >> f.setEditorSelectionRange(a + 1, b + 1)
+            >> press(OpenBracket)
+            +> f.editorValue.assert(Some(s"$prefix$mid$suffix"))
+
+            // new wrap
+            >> f.setEditorSelectionRange(a, b)
+            >> press(ForwardSlash)
+            +> f.editorValue.assert(Some(s"$prefix//$mid//$suffix"))
+
+            // unwrap cos of outside
+            >> f.setEditorSelectionRange(a + 2, b +2)
+            >> press(ForwardSlash)
+            +> f.editorValue.assert(Some(s"$prefix$mid$suffix"))
+        ).group(s"Test with '$prefix|$mid|$suffix'")
+      }
+
+      test("UC-1")(Plan.action(
+        f.doubleClick +> f.editing.assert(true)
+          >> subtest("abc", "wow", "omg")
+          >> subtest("", "x", "")
+      ))
+    }
+
   }
 }
