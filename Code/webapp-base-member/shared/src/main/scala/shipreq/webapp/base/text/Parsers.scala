@@ -5,8 +5,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.parboiled2.{CharPredicate => CP, _}
 import scala.collection.immutable.TreeSet
 import shapeless._
-import shipreq.base.util.NonEmptyArraySeq
-import shipreq.base.util.ScalaExt._
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.UseCaseStepLabelLookup
 import shipreq.webapp.base.text.Atom.{CodeBlockDetail, DisplayReqRef}
@@ -220,15 +219,16 @@ object Parsers {
     override val t: Atom.Literal
 
     final type TokenRule = () => Rule1[t.Atom]
+    final type AtomSeqRule = () => Rule1[ArraySeq[t.Atom]]
 
-    protected val atomsToArraySeq: Seq[t.Atom] => ArraySeq[t.Atom] = input => {
+    protected final val atomsToArraySeq: IterableOnce[t.Atom] => ArraySeq[t.Atom] = input => {
       var v = ArraySeq.empty[t.Atom]
       var lastIsBlank = false
 
       // Here we ensure that we don't end up with blank lines next to things that don't allow them around themselves.
       // A lot of this is done by the parsing rules but in the case of blank lines around top-level code blocks,
       // it was too hard and would require too much fundamental change to all the parsers. It's done here instead now.
-      for (a <- input) {
+      for (a <- input.iterator) {
         if (a.isBlankLine) {
           if (v.isEmpty || v.last.allowBlankLineAfter) {
             v :+= a
@@ -245,16 +245,30 @@ object Parsers {
       v
     }
 
+    protected final val singleAtomSeq: t.Atom => ArraySeq[t.Atom] =
+      ArraySeq1(_)
+
+    protected final val atomSeqsToArraySeq: Seq[ArraySeq[t.Atom]] => ArraySeq[t.Atom] =
+      i => atomsToArraySeq(i.iterator.flatten)
+
     def literalUntil[O <: HList](stop: () => Rule[HNil, O]): Rule1[t.Literal] =
       rule(capture(oneOrMore( !stop() ~ ANY )) ~> ((l: String) => t.Literal(fixLiteralWhiteSpace(l))))
 
-    def textUntil(token: TokenRule, end: () => Rule0): Rule1[t.OptionalText] = {
+    def tokensAndTextUntil(token: TokenRule, end: () => Rule0): Rule1[t.OptionalText] = {
       val endOrToken = () => rule(end() | token())
       rule(zeroOrMore(token() | literalUntil(endOrToken)) ~ end() ~> atomsToArraySeq)
     }
 
-    def textUntilEOL(token: TokenRule): Rule1[t.OptionalText] =
-      textUntil(token, untilEOL)
+    def tokensAndTextUntilEOL(token: TokenRule): Rule1[t.OptionalText] =
+      tokensAndTextUntil(token, untilEOL)
+
+    def atomSeqsAndTextUntil(atomSeqs: AtomSeqRule, end: () => Rule0): Rule1[t.OptionalText] = {
+      val endOrAtomSeq = () => rule(end() | atomSeqs())
+      rule(zeroOrMore(atomSeqs() | (literalUntil(endOrAtomSeq) ~> singleAtomSeq)) ~ end() ~> atomSeqsToArraySeq)
+    }
+
+    def atomSeqsAndTextUntilEOL(atomSeqs: AtomSeqRule): Rule1[t.OptionalText] =
+      atomSeqsAndTextUntil(atomSeqs, untilEOL)
   }
 
   trait PlainTextMarkup extends Base {
@@ -414,7 +428,7 @@ object Parsers {
       rule(
         OWSNL
           ~ lead() ~ OWS
-          ~ (firstLineCodeBlock | textUntil(listToken, untilEOL))
+          ~ (firstLineCodeBlock | tokensAndTextUntil(listToken, untilEOL))
           ~ extraLine(lead, tailLines).*
           ~> combineListItemLines
       )
@@ -432,7 +446,7 @@ object Parsers {
     private def extraLine(lead: () => Rule0, listToken: TokenRule): Rule1[ArraySeq[t.Atom]] =
       rule(
         (NL ~ extraLine(lead, listToken)) |
-        (' ' ~ OWS ~ !lead() ~ textUntil(listToken, untilEOL))
+        (' ' ~ OWS ~ !lead() ~ tokensAndTextUntil(listToken, untilEOL))
       )
 
     private def genericList(lead: () => Rule0, listToken: TokenRule): Rule1[NonEmptyArraySeq[t.ListItem]] =
@@ -561,7 +575,7 @@ object Parsers {
 
   trait HeadingTitle extends Literal {
     val token: TokenRule
-    final def inline: Rule1[t.NonEmptyText] = rule(textUntilEOL(token) ~ popNEA)
+    final def inline: Rule1[t.NonEmptyText] = rule(tokensAndTextUntilEOL(token) ~ popNEA)
   }
 
   trait Headings extends Base { self: Literal with Headings =>
@@ -600,7 +614,13 @@ object Parsers {
 
   trait SingleLine extends PlainTextMarkup with Literal {
     override val t: Atom.SingleLine
+
     def singleLine = plainTextMarkup
+
+    protected val token: TokenRule
+
+    def optionalText: Rule1[t.OptionalText] =
+      rule(OWS ~ tokensAndTextUntilEOL(token) ~ EOI)
   }
 
   trait MultiLine extends SingleLine with NewLine with ListMarkup with CodeBlock with Headings {
@@ -612,13 +632,22 @@ object Parsers {
 
     final val token: TokenRule =
       () => rule(listMarkup(listToken) | heading() | codeBlock | additionalTokens() | blankLine | singleLine)
+
+    val atomSeq: AtomSeqRule =
+      () => rule(token() ~> singleAtomSeq)
+
+    final override def optionalText: Rule1[t.OptionalText] =
+      rule(OWS ~ atomSeqsAndTextUntilEOL(atomSeq) ~ EOI)
   }
 
   // ===================================================================================================================
 
   trait TopBase extends Literal {
     protected val token: TokenRule
-    final def optionalText: Rule1[t.OptionalText] = rule(OWS ~ textUntilEOL(token) ~ EOI)
-    final def nonEmptyText: Rule1[t.NonEmptyText] = rule(optionalText ~ popNEA)
+
+    def optionalText: Rule1[t.OptionalText]
+
+    final def nonEmptyText: Rule1[t.NonEmptyText] =
+      rule(optionalText ~ popNEA)
   }
 }

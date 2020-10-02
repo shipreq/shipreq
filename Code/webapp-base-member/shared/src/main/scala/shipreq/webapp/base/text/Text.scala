@@ -381,7 +381,7 @@ object Text {
         rule(OWS ~ G.suffix)
 
       def inline: Rule1[NonEmptyText] =
-        rule(G.prefix ~ OWS ~ textUntil(token, inlineEnd) ~ popNEA)
+        rule(G.prefix ~ OWS ~ tokensAndTextUntil(token, inlineEnd) ~ popNEA)
 
       override protected def styledInner(s: StyleType) =
         rule(runSubParser(styled.parserI2(project, currentUseCase, StyleCtx.begin(s))(_).inline))
