@@ -371,4 +371,39 @@ object Util {
     }
     count(0, 0)
   }
+
+  def flattenArraySeqs[A: ClassTag](input: Seq[ArraySeq[A]]): ArraySeq[A] = {
+    val as: IndexedSeq[ArraySeq[A]] =
+      input match {
+        case i: IndexedSeq[ArraySeq[A]] => i
+        case _                          => input.to(ArraySeq)
+      }
+    as.length match {
+      case 0 => ArraySeq.empty
+      case 1 => as(0)
+      case n =>
+
+        val totalLen = {
+          var len = 0
+          var i = 0
+          while (i < n) {
+            val a = as(i)
+            len += a.length
+            i += 1
+          }
+          len
+        }
+
+        val result = new Array[A](totalLen)
+        var offset = 0
+        var i = 0
+        while (i < n) {
+          val a = as(i).unsafeArray.asInstanceOf[Array[A]]
+          System.arraycopy(a, 0, result, offset, a.length)
+          offset += a.length
+          i += 1
+        }
+        ArraySeq.unsafeWrapArray(result)
+    }
+  }
 }

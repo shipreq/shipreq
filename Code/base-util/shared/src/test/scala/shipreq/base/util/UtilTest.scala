@@ -36,5 +36,17 @@ object UtilTest extends TestSuite {
         }
       }
     }
+
+    "flattenArraySeqs" - {
+      val gen = Gen.ascii.arraySeq(0 to 4)
+      for {
+        n <- 0 to 4
+        s <- gen.arraySeq(n).samples().take(Math.pow(n, 2).toInt + 1)
+      } {
+        val actual = s.flatten
+        val expect = Util.flattenArraySeqs(s)
+        assertEq(actual, expect)
+      }
+    }
   }
 }
