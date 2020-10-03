@@ -3,22 +3,23 @@ package shipreq.webapp.base.text
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.SampleProject6._
-import shipreq.webapp.base.test.UnsafeTypes._
 import sourcecode.Line
 import utest._
 
 object PlainTextTest extends TestSuite {
   import Values._
 
-  def ctxUc1 = ProjectText.Context.Req(uc1 )
-  def ctxUc0 = ProjectText.Context.Req(0.UC)
+  def ctxUc1 = ProjectText.Context.Req(uc1)
+  def ctxUc0 = ProjectText.Context.Req(UseCaseId(0))
 
   private def assertRoundTrip(input: String)(implicit l: Line) =
     assertCorrection(input, input)
 
-  private def assertCorrection(input: String, expect: String)(implicit l: Line) = {
+  private def assertCorrection(input: String, expect: String, ignoreBlankLines: Boolean = false)(implicit l: Line) = {
     val rich = Text.CustomTextField.parse(project, None)(input)
-    val actual = plainText.text(rich, Live, Optional)
+    var actual = plainText.text(rich, Live, Optional)
+    if (ignoreBlankLines)
+      actual = actual.linesIterator.filter(_.trim.nonEmpty).mkString("\n")
     assertMultiline(actual.trim, expect.trim)
   }
 
@@ -275,6 +276,66 @@ object PlainTextTest extends TestSuite {
             |###### h6c
             |""".stripMargin
         assertCorrection(input, expect)
+      }
+
+      "nestedLists" - {
+        val input =
+          """1. nice
+            |* a
+            |   * x
+            |    * a
+            |  * y
+            |       * b
+            |       * c
+            |         * c1
+            |        * c2
+            |       * d
+            |        * d1
+            |  *   !
+            |   * x
+            |* b
+            | 1. voi
+            | *  oho
+            | 1. ja
+            | 1. ei
+            | *  miksi
+            |* c
+            | 1. z
+            |  nice
+            | 1. w
+            |  * xx
+            |* d
+            |1. cool
+            |""".stripMargin.replace("!", "")
+        val expect =
+          """1. nice
+            |* a
+            |  * x
+            |    * a
+            |  * y
+            |    * b
+            |    * c
+            |      * c1
+            |      * c2
+            |    * d
+            |      * d1
+            |  * !
+            |    * x
+            |* b
+            |  1. voi
+            |  * oho
+            |  1. ja
+            |  2. ei
+            |  * miksi
+            |* c
+            |  1. z
+            |     nice
+            |  2. w
+            |     * xx
+            |* d
+            |1. cool
+            |""".stripMargin.replace("!", "")
+        assertCorrection(input, expect, true) // TODO blank lines
       }
     }
   }
