@@ -283,8 +283,7 @@ object ParsersTest extends TestSuite {
         val e = as.to(ArraySeq)
 
         def assertParsed(name: => String, a: ArraySeq[A]): Unit = {
-          //  def fmt[B](as: ArraySeq[B]) = as.mkString("\n")
-          def fmt[B](as: ArraySeq[B]) = as.toString().replaceAll("(?<=[,\\(]) *(?!\\))", "\n")
+          def fmt[B](as: ArraySeq[B]) = pp(as).plainText
           assertMultiline(name, fmt(a), fmt(e))
           // assertEq(name, a, e)
         }

@@ -87,7 +87,7 @@ object ShipReqBuild {
       .dependsOn(baseUtil)
       .configureJvm(_.dependsOn(baseDb % Provided))
       .depsForBoth(
-        Microlibs.testUtil ++
+        Microlibs.testUtil ++ pprint ++
         providedScope(μTest ++ Nyaya.gen ++ Circe.main) ++
         testScope(μTest ++ Nyaya.test ++ Circe.main))
       .depsForJvm(providedScope(scalaCheck))

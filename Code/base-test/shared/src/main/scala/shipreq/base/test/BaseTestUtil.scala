@@ -2,9 +2,11 @@ package shipreq.base.test
 
 import io.circe.syntax._
 import java.time.{Duration, Instant}
+import pprint.PPrinter
 import scalaz.std.string.stringInstance
 import scalaz.{Equal, Order}
-import shipreq.base.util.Debug
+import shipreq.base.util.{Debug, NonEmptyArraySeq}
+
 object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
 
   final class BaseTestUtilOpsAny[A](private val a: A) extends AnyVal {
@@ -24,8 +26,15 @@ object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
       BaseTestUtil.assertEq(name, f(actual), f(expect))
       this
     }
-
   }
+
+  private val PrettyPrinter: PPrinter =
+    pprint.copy(
+      defaultWidth = 1,
+      additionalHandlers = {
+        case x: NonEmptyArraySeq[Any] => pprint.treeify(x.whole)
+      }
+    )
 }
 
 trait BaseTestUtil
@@ -35,6 +44,9 @@ trait BaseTestUtil
 
   implicit def BaseTestUtilOpsAny[A](a: A) =
     new BaseTestUtil.BaseTestUtilOpsAny(a)
+
+  def pp: PPrinter =
+    BaseTestUtil.PrettyPrinter
 
   def forceUnivEqOrderByToString[A]: Order[A] with UnivEq[A] = {
     val o = Order.orderBy((_: A).toString)
