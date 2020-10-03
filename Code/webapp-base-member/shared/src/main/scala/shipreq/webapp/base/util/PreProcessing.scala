@@ -47,17 +47,18 @@ object PreProcessor {
 
   }
 
-  type CanTrim = (Array[Char], Int) => Boolean
+  // boolean arg = left-trimming or not
+  type CanTrim = (Array[Char], Int, Boolean) => Boolean
 
   object CanTrim {
     @inline def whitespaceFn(c: Char): Boolean =
       java.lang.Character.isWhitespace(c)
 
     val whitespace: CanTrim =
-      (a, i) => whitespaceFn(a(i))
+      (a, i, _) => whitespaceFn(a(i))
 
     val no: CanTrim =
-      (_, _) => false
+      (_, _, _) => false
   }
 
   val singleLine = apply(FixChar.singleLine, CanTrim.whitespace)
@@ -85,8 +86,8 @@ object PreProcessor {
         var x = 0
         var y = last
 
-        while (y >= 0 && canTrim(inputArray, y)) y -= 1
-        while (x < y && canTrim(inputArray, x)) x += 1
+        while (y >= 0 && canTrim(inputArray, y, false)) y -= 1
+        while (x < y && canTrim(inputArray, x, true)) x += 1
 
         if (y < 0)
           Array.empty

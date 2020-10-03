@@ -31,6 +31,7 @@ object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
   private val PrettyPrinter: PPrinter =
     pprint.copy(
       defaultWidth = 1,
+      defaultHeight = 2000,
       additionalHandlers = {
         case x: NonEmptyArraySeq[Any] => pprint.treeify(x.whole)
       }

@@ -360,6 +360,25 @@ object PlainTextTest extends TestSuite {
             |""".stripMargin.replace("!", "")
         assertCorrection(input, expect)
       }
+
+      "listBug1" - {
+        val input =
+          """  1. a1
+            |  a2
+            | a3
+            |  1. b
+            |""".stripMargin
+        val expect =
+          """1. a1
+            |
+            |   a2
+            |
+            |   a3
+            |
+            |2. b
+            |""".stripMargin
+        assertCorrection(input, expect)
+      }
     }
   }
 }

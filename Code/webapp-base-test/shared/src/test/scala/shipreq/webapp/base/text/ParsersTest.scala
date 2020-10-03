@@ -1,7 +1,6 @@
 package shipreq.webapp.base.text
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.microlibs.testutil.TestUtilInternals.quoteStringForDisplay
 import java.util.concurrent.atomic.AtomicInteger
 import nyaya.gen._
 import nyaya.prop.{Atom => _, _}
@@ -282,7 +281,7 @@ object ParsersTest extends TestSuite {
           // assertEq(name, a, e)
         }
 
-        assertParsed("Parsing: " + quoteStringForDisplay(preprocessStr(text, MultiLine)), parse(p)(text))
+        assertParsed("Parsing:\n" + preprocessStr(text, MultiLine), parse(p)(text))
 
         val text2 = PlainText.ForProject.noCtx(p).text(e, Live, Optional)
         assertParsed(s"txt -> parsed -> txt:\n$text2", parse(p)(text2))
@@ -328,7 +327,7 @@ object ParsersTest extends TestSuite {
         "li"      - test("*     hehe    \n*     yay    ")(T.UnorderedList(NEA(LI(L("hehe")), LI(L("yay")))))
         "nl"      - test("here\nthere")(L("here"), T.blankLine, L("there"))
         "nls"     - test("here \n \n\n there")(L("here"), T.blankLine, L("there"))
-        "listNL"  - test("ok\n\n\n*   hehe \n \n\n  \n *  yay \n\n\nbye")(L("ok"), T.UnorderedList(NEA(LI(L("hehe")), LI(L("yay")))), L("bye"))
+        "listNL"  - test("ok\n\n\n*   hehe \n \n\n  \n*  yay \n\n\nbye")(L("ok"), T.UnorderedList(NEA(LI(L("hehe")), LI(L("yay")))), L("bye"))
         "codeRef" - test("[ here . i . am_3 ]")(T.CodeRef(reqCode_hereiam3, DisplayReqRef.AsId))
         "headNL"  - whitespaceCombos.foreach(w => test(w + "good")(T.Literal("good")))
         "tailNL"  - whitespaceCombos.foreach(w => test("good" + w)(T.Literal("good")))
@@ -1355,7 +1354,7 @@ object ParsersTest extends TestSuite {
     // Parsing text only happens to live text, and it only looks at active codes.
     "big" - {
       // tester.bugHunt(0, 10000)(Prop.eval(_.all))(nyaya.test.DefaultSettings.propSettings.setSeed(0).setDebug.setSingleThreaded)
-      // tester.mustSatisfyE(_.all)(nyaya.test.DefaultSettings.propSettings.setSampleSize(20000))
+      tester.mustSatisfyE(_.all)(nyaya.test.DefaultSettings.propSettings.setSampleSize(30 `JVM|JS` 3))
       println()
       val graphUnit = 1000 `JVM|JS` 10
       val graphChar = "#" `JVM|JS` "."

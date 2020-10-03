@@ -26,6 +26,9 @@ final class NonEmptyArraySeq[+A] private[NonEmptyArraySeq](val whole: ArraySeq[A
       case _: IndexOutOfBoundsException => None
     }
 
+  def unsafeWholeArray[AA >: A]: Array[AA] =
+    whole.unsafeArray.asInstanceOf[Array[AA]]
+
   @inline def head     = whole.head
   @inline def tail     = whole.tail
   @inline def init     = whole.init

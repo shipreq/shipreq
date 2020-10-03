@@ -62,16 +62,51 @@ object Parsers {
   // Special cases:
   // 1) "* " is a valid multiline bullet with no content. "*" is not.
   // 2) "1. " is a valid multiline leader with no content. "1." is not.
+  // 3) Whitespace before list item leads is important because it's additional context that affects how indentation of
+  //    subsequent list items are interpreted
   private val multiLineCanTrim: PreProcessor.CanTrim =
-    (a, i) => a(i) match {
+    (a, i, leftTrimming) => a(i) match {
       case ' ' =>
-        (i == 0) || {
-          a(i - 1) match {
+        if (leftTrimming) {
+
+          // Left trim
+          val last = a.length - 1
+
+          @tailrec
+          def go(i: Int): Boolean =
+            if (i == last)
+              true // end of string
+            else
+              a(i) match {
+                case ' '            => go(i + 1)
+                case '*'            => false
+                case c if c.isDigit =>
+                  @tailrec
+                  def canTrimPotentialOrderedListItem(i: Int): Boolean =
+                    if (i == last)
+                      true // end of string
+                    else {
+                      val c = a(i)
+                      if (c.isDigit)
+                        canTrimPotentialOrderedListItem(i + 1)
+                      else
+                        c != '.'
+                    }
+                  canTrimPotentialOrderedListItem(i + 1)
+                case _ => true
+              }
+
+          go(i + 1)
+
+        } else
+
+          // Right trim
+          (i > 0) && (a(i - 1) match {
             case '*' => false
             case '.' => !(i >= 2 && a(i - 2).isDigit)
             case _   => true
-          }
-        }
+          })
+
       case c =>
         PreProcessor.CanTrim.whitespaceFn(c)
     }
@@ -144,16 +179,29 @@ object Parsers {
     val project: Project
 
     /** Optional whitespace */
-    def OWS: Rule0 =
+    protected final def OWS: Rule0 =
       rule(zeroOrMore(' '))
 
     /** Optional whitespace and/or newlines */
-    def OWSNL: Rule0 =
+    protected final def OWSNL: Rule0 =
       rule(anyOf(" \r\n").*)
 
     /** Wwhitespace and/or newlines */
-    def WSNL: Rule0 =
+    protected final def WSNL: Rule0 =
       rule(anyOf(" \r\n").+)
+
+    protected final def indentationLevel: Rule1[Int] =
+      rule(
+        push {
+          @tailrec
+          def go(offset: Int): Int =
+            charAtRC(offset) match {
+              case ' ' => go(offset - 1)
+              case _   => -offset - 1
+            }
+          go(-1)
+        }
+      )
 
     private val isWS: Char => Boolean =
       _ == ' '
@@ -163,7 +211,8 @@ object Parsers {
       case _           => false
     }
 
-    @tailrec private def isStartOfLineAfterOWS(i: Int): Boolean =
+    @tailrec
+    private def isStartOfLineAfterOWS(i: Int): Boolean =
       if (i < 0)
         true
       else {
@@ -176,21 +225,21 @@ object Parsers {
           false
       }
 
-    def startOfLine: Rule0 =
+    protected final def startOfLine: Rule0 =
       rule(BOI | test(isNL(lastChar)))
 
-    def startOfLineAfterOWS: Rule0 =
+    protected final def startOfLineAfterOWS: Rule0 =
       rule(BOI | test(isStartOfLineAfterOWS(cursor - 1)))
 
-    val untilEOL = () => rule(OWS ~ EOL)
+    protected final val untilEOL = () => rule(OWS ~ EOL)
 
-    val lookupReq: (ReqType.Mnemonic, ReqTypePos) => Option[ReqId] =
+    protected final val lookupReq: (ReqType.Mnemonic, ReqTypePos) => Option[ReqId] =
       (m, n) =>
         project.config.reqTypes.allByMnemonic.get(m)
           .map(t => PubidT(t.reqTypeId, n))
           .flatMap(project.content.reqs.pubids.apply)
 
-    def hashRef: Rule1[HashRefTarget] =
+    protected final def hashRef: Rule1[HashRefTarget] =
       rule(hashRefStr(
         possibleStop = StyleType.isPossibleStart,
         parse        = project.config.hashRefLookup))
@@ -439,6 +488,8 @@ object Parsers {
     }
 
     final case class ListItem[+A](indent: Int, itemType: Option[ListItemType], body: ArraySeq[A])
+
+    private final val Debug = false
   }
 
   trait ListMarkup extends Literal with CodeBlock {
@@ -447,7 +498,7 @@ object Parsers {
     override val t: Atom.ListMarkup with Atom.Literal with Atom.NewLine with Atom.CodeBlock
 
     def listMarkup(listToken: TokenRule): Rule1[ArraySeq[t.ListBase]] =
-      rule(OWSNL ~ listItems(listToken) ~> mkLists)
+      rule(OWSNL ~ indentationLevel ~ listItems(listToken) ~> mkLists)
 
     private def listItems(listToken: TokenRule): Rule1[NonEmptyArraySeq[ListItem[t.Atom]]] =
       rule(startOfLineAfterOWS ~ listItem(listToken).+ ~ OWSNL ~ popSeqSeqToNEA[ListItem[t.Atom]])
@@ -536,9 +587,20 @@ object Parsers {
       }
     }
 
-    private val mkLists: NonEmptyArraySeq[ListItem[t.Atom]] => ArraySeq[t.ListBase] =
-      lisNonEmpty => {
-        val lis = lisNonEmpty.whole
+    private val mkLists: (Int, NonEmptyArraySeq[ListItem[t.Atom]]) => ArraySeq[t.ListBase] =
+      (initialIndentation, lisNonEmpty) => {
+        val lis = lisNonEmpty.unsafeWholeArray
+
+        if (initialIndentation > 0) {
+          val li = lis(0)
+          lis(0) = li.copy(indent = li.indent + initialIndentation)
+        }
+
+        if (Debug)
+          println(
+            s"""===============================================================================
+               |inputs:${lisNonEmpty.iterator.map(l => "\n  - " + io.circe.Encoder.encodeString(l.toString).noSpaces.drop(1).dropRight(1)).mkString}
+               |""".stripMargin)
 
         @tailrec
         def unfoldParents(parents: List[BuildState],
@@ -582,6 +644,16 @@ object Parsers {
                 } else {
                   val s       = state.getOrNull
                   val indDiff = li.indent.compareTo(s.indent())
+
+                  if (Debug)
+                    println(
+                      s"""Appending new list item.
+                         |  li         = $li
+                         |  parents    = $parents
+                         |  state      = $state
+                         |  indDiff    = ${indDiff}
+                         |""".stripMargin
+                    )
 
                   if (indDiff > 0) {
                     // Greater indentation
@@ -631,6 +703,17 @@ object Parsers {
                      |newState   = ${_newState}
                      |""".stripMargin)
 
+                if (Debug)
+                  println(
+                    s"""Appending indented content.
+                       |  li         = $li
+                       |  parents    = $parents
+                       |  state      = $state
+                       |  newParents = ${_newParents}
+                       |  newState   = ${_newState}
+                       |""".stripMargin
+                  )
+
                 var newParents = _newParents
                 var newState   = _newState.getOrNull
 
@@ -658,7 +741,17 @@ object Parsers {
             unfoldParents(parents, state, 0)._2.fold(completed, completed :+ _.result())
           }
 
-        go(0, FreeOption.empty, Nil, ArraySeq.empty)
+        val result = go(0, FreeOption.empty, Nil, ArraySeq.empty)
+
+        if (Debug)
+          println(
+            s"""
+               |result:${result.iterator.map(l => "\n  - " + io.circe.Encoder.encodeString(l.toString).noSpaces.drop(1).dropRight(1)).mkString}
+               |
+               |===============================================================================
+               |""".stripMargin)
+
+        result
       }
   }
 
@@ -723,7 +816,7 @@ object Parsers {
   trait UseCaseStepLabel extends ParsingUtil {
 
     /** Optional whitespace */
-    def OWS: Rule0
+    protected def OWS: Rule0
 
     def useCaseStepLabelLookup: UseCaseStepLabelLookup
 
@@ -844,7 +937,7 @@ object Parsers {
       () => rule(listMarkup(listToken) | (token() ~> singleAtomSeq))
 
     final override def optionalText: Rule1[t.OptionalText] =
-      rule(OWS ~ atomSeqsAndTextUntilEOL(atomSeq) ~ EOI)
+      rule(atomSeqsAndTextUntilEOL(atomSeq) ~ EOI)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
