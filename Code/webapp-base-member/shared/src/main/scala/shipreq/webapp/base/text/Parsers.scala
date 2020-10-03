@@ -619,17 +619,25 @@ object Parsers {
                 // have parents, but this is trivially provable by looking at the parser. List items ALWAYS come before
                 // indented bodies.
                 val (_newParents, _newState) = unfoldParents(parents, state, li.indent)
-                assert(_newParents.nonEmpty, "Indented bodies ALWAYS have parents.")
-                assert(_newState.nonEmpty, "Indented bodies ALWAYS have parents.")
+                assert(_newState.nonEmpty,
+                  s"""Indented bodies ALWAYS have parents.
+                     |
+                     |inputs:${lisNonEmpty.iterator.map(l => "\n  - " + io.circe.Encoder.encodeString(l.toString).noSpaces.drop(1).dropRight(1)).mkString}
+                     |
+                     |li         = $li
+                     |parents    = $parents
+                     |state      = $state
+                     |newParents = ${_newParents}
+                     |newState   = ${_newState}
+                     |""".stripMargin)
 
                 var newParents = _newParents
                 var newState   = _newState.getOrNull
 
-                if (newState.indent() >= li.indent) {
-                  assert(state.nonEmpty, "Indented body when no state.")
+                if (newParents.nonEmpty && newState.indent() >= li.indent) {
                   val p = newParents.head
                   newParents = newParents.tail
-                  p.appendNested(state.getOrNull.result())
+                  p.appendNested(newState.result())
                   newState = p
                 }
 

@@ -68,44 +68,38 @@ object ParsersTest extends TestSuite {
 
     def cmp[A <: AnyAtom](t: => String, expect: ArraySeq[A])(f: ArraySeq[A] => ArraySeq[A]): EvalL = {
 
-      val actual = f(expect)
-      var a = actual
-      var e = expect
+      val actual = Try(f(expect))
 
-      // These cause issues cos it can break the composition rules avoided in RandomData.TextGen.postProcessAtoms
-//      while (a.nonEmpty && e.nonEmpty && a.head == e.head) {
-//        a = a.tail
-//        e = e.tail
-//      }
-//      while (a.nonEmpty && e.nonEmpty && a.last == e.last) {
-//        a = a.init
-//        e = e.init
-//      }
-
-      if (a == e)
+      if (actual.toOption.exists(_ ==* expect))
         E.pass
       else {
         println("Parser error found - shrinking...")
 
+        var a = actual
+        var e = expect
+
         def size(): Double = e.toString.length + a.toString.length
         val sizeBefore = size()
-        e = TextShrink(e)(ee => Valid.when(f(ee) == ee))
-        a = f(e)
+        e = TextShrink(e)(ee => Valid.when(Try(f(ee)).toOption.exists(_ ==* ee)))
+        a = Try(f(e))
         val sizeAfter = size()
 
-        def pairOfOutput(name: String, f: ArraySeq[A] => String): String = {
-          val es = f(e)
-          val as = f(a)
+        def pairOfOutput(name: String, show: ArraySeq[A] => String): String = {
+          val es = quoteString(show(e))
+          val as = a match {
+            case Success(s) => quoteString(show(s))
+            case Failure(e) => e.toString
+          }
           if (es == as)
             s"""Expect & actual $name:
-               |${quoteString(es)}
+               |$es
                |""".stripMargin.trim
           else
             s"""Expect $name:
-               |${quoteString(es)}
+               |$es
                |
                |Actual $name:
-               |${quoteString(as)}
+               |$as
                |""".stripMargin.trim
         }
 
@@ -907,6 +901,65 @@ object ParsersTest extends TestSuite {
                 ))),
             )),
             L("x"),
+          )
+
+        "bug1e" -
+          test(
+            """* !
+              |
+              |  1. !
+              |
+              |  x
+              |""".stripMargin.replace("!", "")
+          )(
+            T.UnorderedList(NonEmptyArraySeq(
+              ArraySeq( // root item 1
+                T.OrderedList(NonEmptyArraySeq(
+                  ∅, // sub item 1
+                )),
+                L("x"),
+              ),
+            )),
+          )
+
+        "bug2" -
+          test(
+            """1. x
+              |
+              |   y
+              |""".stripMargin
+          )(
+            T.OrderedList(NonEmptyArraySeq(
+              ArraySeq( // root item 1
+                L("x"), T.blankLine, L("y")
+              ),
+            )),
+          )
+
+        "bug3" -
+          test(
+            """1. !
+              |
+              |   * !
+              |
+              |     1. !
+              |
+              |   `x`
+              |""".stripMargin.replace("!", "")
+          )(
+            T.OrderedList(NonEmptyArraySeq(
+              ArraySeq( // root item 1
+                T.UnorderedList(NonEmptyArraySeq(
+                  ArraySeq( // sub item 1
+                    T.OrderedList(NonEmptyArraySeq(
+                      ArraySeq( // sub sub item 1
+                      ),
+                    )),
+                  ),
+                )),
+                T.Monospace("x"),
+              ),
+            )),
           )
       }
 
