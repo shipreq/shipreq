@@ -858,7 +858,7 @@ object RandomData {
       (s"<${Grammar.texTag}>|(?:$olPrefix)|$styles" + """|[#@]+|[a-z]://|\*( )|\[\s*(?:""" + s"$insideRef)\\s*\\]").r
     }
 
-    val fixLiteral: String => String =
+    val fixLiteralCtxFree: String => String =
       s0 => {
         val startWithWS = s0.startsWith(" ")
         val endWithWS = s0.endsWith(" ")
@@ -901,8 +901,45 @@ object RandomData {
         case urlRegex(a, b) => s"$a://${removeStyleTokens(b)}"
       }
 
+      def fixLiteral(s: String, ctx: AtomCtx): String = {
+        val inIssueDesc = ctx == InIssueDesc
+
+        var fixed: Array[Char] = null
+
+        def setChar(i: Int, c: Char): Unit = {
+          if (fixed eq null)
+            fixed = s.toCharArray
+          fixed(i) = c
+        }
+
+        // Check all chars
+        var i = 0
+        var refOpened = false
+        while (i < s.length) {
+          val c = s(i)
+
+          if (c == '[')
+            refOpened = true
+
+          else if (c == ']') {
+            if (refOpened)
+              setChar(i, 'x')
+
+          } else if (inIssueDesc && c == '}')
+            setChar(i, 'x')
+
+          i += 1
+        }
+
+        // Done
+        if (fixed eq null)
+          s
+        else
+          String.valueOf(fixed)
+      }
+
       def fixEvery: T#Atom => T#Atom = {
-        case l: Lit if ctx == InIssueDesc          => l.modText(_.replace('}', 'x'))
+        case l: Lit                                => l.modText(fixLiteral(_, ctx))
         case i: Issue#Issue                        => i.copy(desc = postProcessAtoms(InIssueDesc)(i.desc))
         case ol: OL                                => ol.filterAtoms(legalListItemAtom).map(postProcessAtoms(InListItem))
         case ul: UL                                => ul.filterAtoms(legalListItemAtom).map(postProcessAtoms(InListItem))
@@ -958,7 +995,7 @@ object RandomData {
       }
 
       def fixAgain: T#Atom => T#Atom = {
-        case l: Lit => l.modText(fixLiteral)
+        case l: Lit => l.modText(fixLiteralCtxFree)
         case o      => o
       }
 
@@ -1016,8 +1053,9 @@ object RandomData {
           val a: T#Atom =
             fixEvery(a0)
 
-          def i = q.init
-          def drop = q
+          @inline def i = q.init
+          @inline def drop = q
+
           if (q.isEmpty)
             q :+ fixHead(a)
           else
