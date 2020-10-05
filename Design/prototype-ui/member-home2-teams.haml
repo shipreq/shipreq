@@ -182,7 +182,7 @@
       .family > .b > table td:not(:nth-child(2)) {
         white-space: nowrap;
       }
-      .family > .b > table td.inv {
+      .family > .b > table .inv {
         color:#c9621d;
         font-style:italic;
       }
@@ -250,30 +250,46 @@
                           %td
                             %i.icon.user
                             You
-                          %td %span.admin admin
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.admin admin
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
                           %td
                             .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
                         %tr
                           %td
                             %i.icon.user
                             @matt
-                          %td.inv
-                            %i.icon.envelope
-                            member invitation will be sent
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.member member
+                              .menu
+                                .item %span.admin admin
+                                .item %span.member member
+                            %span.inv(style="margin-left:2ex")
+                              %i.icon.envelope
+                              invitation will be sent
                           %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
                         %tr
                           %td
                             %i.icon.users
                             Dev Team
-                          %td %span.member member
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.member member
+                              .menu
+                                .item %span.admin admin
+                                .item %span.member member
                           %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
                   %div.f
                     .ui.floating.labeled.icon.dropdown.button
                       %i.icon.plus
-                      %span.text Add member...
-                    .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
-                      %i.icon.plus
-                      %span.text Add admin...
+                      %span.text Add...
 
             .field
               .ui.segment
@@ -287,15 +303,18 @@
                           %td
                             %i.icon.folder.open.outline
                             ShipReq / Dev Team
-                          %td %span.admin admin
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.admin admin
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
                           %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
                   %div.f
                     .ui.floating.labeled.icon.dropdown.button
                       %i.icon.plus
-                      %span.text Add as member...
-                    .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
-                      %i.icon.plus
-                      %span.text Add as admin...
+                      %span.text Add...
 
             .field
               .ui.segment
@@ -309,30 +328,46 @@
                           %td
                             %i.icon.archive
                             ShipReq
-                          %td %span.admin admin
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.admin admin
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
                           %td
                             .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
                         %tr
                           %td
                             %i.icon.folder.open
                             OSS projects
-                          %td.inv
-                            %i.icon.envelope
-                            collaborator access requested
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.collab collaborator
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
+                            %span.inv(style="margin-left:2ex")
+                              %i.icon.envelope
+                              invitation will be sent
                           %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
                         %tr
                           %td
                             %i.icon.archive
                             Whatever
-                          %td %span.collab collaborator
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.collab collaborator
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
                           %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
                   %div.f
                     .ui.floating.labeled.icon.dropdown.button
                       %i.icon.plus
-                      %span.text Add as collaborator...
-                    .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
-                      %i.icon.plus
-                      %span.text Add as admin...
+                      %span.text Add...
 
             -# .field
               .ui.segment
