@@ -1,0 +1,446 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.min.js"}
+    -# %link{href:  "../../Code/webapp-server/src/main/webapp/a/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    -# %script{src: "../../Code/webapp-server/src/main/webapp/a/semantic.min.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      span.admin {
+        color: green;
+      }
+      span.collab, span.member {
+        color: #33b;
+      }
+
+      .ui.message > .content > .header {
+        margin-bottom:1em;
+      }
+      .body-i {
+        display:flex;
+        align-items: center;
+      }
+      .body-i > div:nth-child(1) {
+        font-size:3rem;
+        opacity: 0.8;
+      }
+      .body-i > div:nth-child(1) i {
+        width:auto;
+      }
+      .body-i > div:nth-child(2) {
+        flex-grow:1;
+      }
+      .ui.message.done {
+        opacity:0.7;
+      }
+
+      .msg-controls {
+        text-align:right;
+      }
+      .msg-controls > * {
+        margin:0 0 0 1.5rem !important;
+      }
+
+      .ip .comments {
+        font-style:italic;
+        margin-bottom: 1em;
+      }
+
+      .two-stats {
+        display:flex;
+        margin:0 4ex;
+      }
+      .two-stats > * {
+        width:50%;
+      }
+      .ip .stats {
+        border-collapse: collapse;
+      }
+      .ip .stats td:first-child {
+        _padding-left:4ex;
+        padding-right:1.6ex;
+        _text-align:right;
+      }
+
+      .events {
+        margin-top: 1em;
+      }
+      .events > ul {
+        margin:0;
+      }
+      .events .when::after {
+        content: ' — ';
+      }
+
+  %body
+
+    %nav(style="margin-bottom:5rem")
+      .ui.menu.borderless.fixed.inverted
+        .item
+          %img{src: "logo-only-dark2.svg"}
+
+        .item
+          .ui.breadcrumb
+            %a.section{href: "member-home2.html"} Home
+            -# %i.divider.icon.right.angle
+
+        .right.menu
+
+          .item#connected4(onclick="$('#connected4 > *').toggle()")
+            %i.icon.large.plug.green(style="opacity:.7" title="connected")
+            %i.icon.large.plug.red(style="opacity:1;display:none" title="disconnected")
+
+          .item.ui.dropdown.simple
+            @japgolly
+            .menu
+              %a.item{href: "member-account.html"} Account
+              .item Send feedback
+              .item Logout
+
+    -# =============================================================================================
+    .ui.container{style: "max-width: 723px! important"}
+
+      %div(style="margin-top:6rem")
+
+          %section.ui.raised.segment#new-project(style="margin-top:2rem")
+            %h2.ui.header(style="margin-bottom:2rem; color:#3659e2")
+              %i.icon.bullhorn
+              -# %i.icon.sign.in
+              New Invitation Page
+            .ui.form
+
+              -# .field.ip-name
+                %label Name
+                %input(type="text")
+
+              .field
+                %label Permisson
+                .ui.selection.dropdown
+                  %input(type="hidden" name="perm")
+                  %i.icon.dropdown
+                  .item Collaborator
+                  .menu
+                    .item
+                      %span(style="color:red") Admin
+                    .item Collaborator
+
+              .field
+                %label Password
+                %input(type="password" placeholder="When specified, invitees will need to type this in to gain access")
+
+              .field
+                %label Expiration Date
+                %input(type="text" placeholder="Enter a duration like \"2 weeks\" or a time like \"8pm 15 May 2030\"")
+
+              .field
+                %label Admin Comments
+                %textarea(rows=3 placeholder="Comments for yourself and other admin.")
+
+              %div(style="text-align:right; margin-top:2rem")
+                %button.ui.button.black.basic(style="margin-right:2em")
+                  %i.icon.remove
+                  Close
+                %button.ui.button.green(style="margin-right:0!important")
+                  %i.icon.plus
+                  Create
+
+          -# =============================================================================================================================
+          Colour of the view below depends:
+          %table.ui.table.celled.definition
+            %thead
+              %tr
+                %th
+                %th Show inv history
+                %th Only show live invs
+            %tbody
+              %tr
+                %td Enabled
+                %td yellow
+                %td positive
+              %tr
+                %td Disabled
+                %td grey
+                %td grey
+          .ui.icon.message.ip.positive
+            %i.icon.bullhorn(style="margin:0!important; font-size:2.5rem")
+            %i.icon.angle.right(style="margin:0 1.4rem!important; font-size:2.5rem")
+            %i.icon.users(style="margin:0 2rem 0 0!important; font-size:2.5rem")
+            .content
+              .header
+                = "Invitation to team "
+                %a(href="#")ShipReq / Dev Team
+                = " as "
+                %span(style="color:red") admin
+              %div.sub(style="margin-top:.5em")
+                .comments
+                  Hey there. These are some comments I left earlier.
+                .two-stats
+                  %div
+                    %table.stats
+                      %tbody
+                        %tr
+                          %td Acceptences:
+                          %td 1
+                        %tr
+                          %td Rejections:
+                          %td 0
+                        %tr
+                          %td Password:
+                          %td yes
+                        %tr
+                          %td Password failures:
+                          %td 0
+                  %div
+                    %table.stats
+                      %tbody
+                        %tr
+                          %td Created by:
+                          %td @voi
+                        %tr
+                          %td Created at:
+                          %td 2 weeks ago
+                        %tr
+                          %td Expiration date:
+                          %td 3 days from now
+                        %tr
+                          %td Status:
+                          %td enabled
+                .events
+                  .h Latest activity
+                  %ul
+                    %li
+                      %span.when 34 minutes ago
+                      %span.what Accepted by @bob
+                    %li
+                      %span.when 34 minutes ago
+                      %span.what Viewed by @bob
+                    %li
+                      %span.when 36 minutes ago
+                      %span.what Attempted view from anonymous user
+                    %li
+                      %span.when 50 minutes ago
+                      %span.what Password change by @matt
+                    %li
+                      More…
+              .msg-controls
+                .ui.button.primary
+                  %i.icon.edit
+                  Edit
+                %i.icon.toggle.on.big(style="cursor:pointer")
+
+          -# =============================================================================================================================
+
+          %section.ui.raised.segment#new-project(style="margin-top:2rem")
+            %h2.ui.header(style="margin-bottom:2rem; color:#3659e2")
+              %i.icon.envelope
+              New Invitation
+            .ui.form
+
+              .field
+                %label Invitee
+                .ui.selection.dropdown
+                  %input(type="hidden" name="invitee")
+                  %i.icon.dropdown
+                  .item
+                    %i.icon.user
+                    @matt
+                  .menu
+                    .item
+                      %i.icon.user
+                      @matt
+                    .item
+                      %i.icon.users
+                      Dev Team
+
+              .field
+                %label Permisson
+                .ui.selection.dropdown
+                  %input(type="hidden" name="perm")
+                  %i.icon.dropdown
+                  .item Collaborator
+                  .menu
+                    .item
+                      %span(style="color:red") Admin
+                    .item Collaborator
+
+              -# .field
+                %label Invitees
+                %div(style="padding-left: 4ex")
+                  %table(style="width:100%; margin-bottom:0.4em;")
+                    %tbody
+                      %tr
+                        %td
+                          %i.icon.user
+                          @matt
+                        %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                      %tr
+                        %td
+                          %i.icon.users
+                          Dev Team
+                        %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  .ui.floating.labeled.icon.dropdown.button
+                    %i.icon.plus
+                    %span.text Add invitee...
+
+              .field
+                %label Expiration Date
+                %input(type="text" placeholder="Enter a duration like \"2 weeks\" or a time like \"8pm 15 May 2030\"")
+
+              %div(style="text-align:right; margin-top:2rem")
+                %button.ui.button.black.basic(style="margin-right:2em")
+                  %i.icon.remove
+                  Close
+                %button.ui.button.green(style="margin-right:0!important")
+                  %i.icon.plus
+                  Create
+
+          -# =============================================================================================================================
+
+          From invitees PoV:
+          .ui.icon.message.yellow
+            %i.icon.users
+            .content
+              .header
+                = "You are invited to team "
+                %a(href="#")Yeah bro
+                = " as admin"
+              .body
+                %table.stats
+                  %tbody
+                    %tr
+                      %td Created by:
+                      %td @voi
+                    %tr
+                      %td Created at:
+                      %td 2 weeks ago
+                    %tr
+                      %td Expiration date:
+                      %td 3 days from now
+                .msg-controls
+                  .ui.button.negative
+                    %i.icon.thumbs.down
+                    Reject
+                  .ui.button.positive
+                    %i.icon.thumbs.up
+                    Accept
+
+          And completed invitations could look like this.
+          Although it would be much less work to only show live invitations.
+
+          .ui.icon.message.done.positive
+            %i.icon.users
+            .content
+              .header
+                = "You accepted an invitation to team "
+                %a(href="#")Yeah bro
+                = " as admin"
+              .body
+                %table.stats
+                  %tbody
+                    %tr
+                      %td Created by:
+                      %td @voi
+                    %tr
+                      %td Created at:
+                      %td 2 weeks ago
+                    %tr
+                      %td Expiration date:
+                      %td 3 days from now
+                    %tr
+                      %td Accepted at:
+                      %td 10 minutes ago
+
+          .ui.icon.message.done.negative
+            %i.icon.users
+            .content
+              .header
+                = "You rejected an invitation to team "
+                %a(href="#")Yeah bro
+                = " as admin"
+              .body
+                %table.stats
+                  %tbody
+                    %tr
+                      %td Created by:
+                      %td @voi
+                    %tr
+                      %td Created at:
+                      %td 2 weeks ago
+                    %tr
+                      %td Expiration date:
+                      %td 3 days from now
+                    %tr
+                      %td Rejected at:
+                      %td 10 minutes ago
+
+          From inviters PoV:
+          .ui.icon.message.yellow
+            %i.icon.user(style="margin:0!important; font-size:2.5rem")
+            %i.icon.angle.right(style="margin:0 1.4rem!important; font-size:2.5rem")
+            %i.icon.users(style="margin:0 2rem 0 0!important; font-size:2.5rem")
+            .content
+              .header
+                = "@bob is invited to team "
+                %a(href="#")Yeah bro
+                = " as "
+                %span(style="color:red") admin
+              .body
+                %table.stats
+                  %tbody
+                    %tr
+                      %td Created by:
+                      %td @voi
+                    %tr
+                      %td Created at:
+                      %td 2 weeks ago
+                    %tr
+                      %td Expiration date:
+                      %td 3 days from now
+                .msg-controls
+                  .ui.button.negative
+                    %i.icon.close
+                    Revoke
+
+          -# .ui.icon.message.yellow
+            .content
+              .header
+                = "@bob is invited to team "
+                %a(href="#")Yeah bro
+                = " as "
+                %span(style="color:red") admin
+              .body-i
+                %div
+                  %i.icon.user(style="margin:0!important")
+                  %i.icon.angle.right(style="margin:0 1.5rem!important")
+                  %i.icon.users(style="margin:0 2rem 0 0!important")
+                %div
+                  %table.stats
+                    %tbody
+                      %tr
+                        %td Created by:
+                        %td @voi
+                      %tr
+                        %td Created at:
+                        %td 2 weeks ago
+                      %tr
+                        %td Expiration date:
+                        %td 3 days from now
+                  .msg-controls
+                    .ui.button.negative
+                      %i.icon.close
+                      Revoke
+
+
+
+
+  :javascript
+    $('.ui.dropdown').dropdown();
+    $('.omg-dimmable').dimmer({on: 'hover'});
