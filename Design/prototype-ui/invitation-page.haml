@@ -1,0 +1,135 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title CardBoard | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.min.js"}
+    -# %link{href:  "../../Code/webapp-server/src/main/webapp/a/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    -# %script{src: "../../Code/webapp-server/src/main/webapp/a/semantic.min.js"}
+    :css
+      body {padding:1rem}
+      .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+      .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+      .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+      span.admin {
+        color: green;
+      }
+      span.collab, span.member {
+        color: #33b;
+      }
+
+      .ui.message > .content > .header {
+        margin-bottom:1em;
+      }
+      .body-i {
+        display:flex;
+        align-items: center;
+      }
+      .body-i > div:nth-child(1) {
+        font-size:3rem;
+        opacity: 0.8;
+      }
+      .body-i > div:nth-child(1) i {
+        width:auto;
+      }
+      .body-i > div:nth-child(2) {
+        flex-grow:1;
+      }
+      .ui.message.done {
+        opacity:0.7;
+      }
+
+      .msg-controls {
+        text-align:right;
+        margin-top:1rem
+      }
+      .msg-controls > * {
+        margin:0 0 0 1.5rem !important;
+      }
+
+      .ip .comments {
+        font-style:italic;
+        margin-bottom: 1em;
+      }
+
+      .two-stats {
+        display:flex;
+        margin:0 4ex;
+      }
+      .two-stats > * {
+        width:50%;
+      }
+      .ip .stats {
+        border-collapse: collapse;
+      }
+      .ip .stats td:first-child {
+        _padding-left:4ex;
+        padding-right:1.6ex;
+        _text-align:right;
+      }
+
+      .events {
+        margin-top: 1em;
+      }
+      .events > ul {
+        margin:0;
+      }
+      .events .when::after {
+        content: ' — ';
+      }
+
+  %body
+
+    %nav(style="margin-bottom:5rem")
+      .ui.menu.borderless.fixed.inverted
+        .item
+          %img{src: "logo-only-dark2.svg"}
+
+        .item
+          .ui.breadcrumb
+            %a.section{href: "member-home2.html"} Home
+            -# %i.divider.icon.right.angle
+
+        .right.menu
+
+          .item#connected4(onclick="$('#connected4 > *').toggle()")
+            %i.icon.large.plug.green(style="opacity:.7" title="connected")
+            %i.icon.large.plug.red(style="opacity:1;display:none" title="disconnected")
+
+          .item.ui.dropdown.simple
+            @japgolly
+            .menu
+              %a.item{href: "member-account.html"} Account
+              .item Send feedback
+              .item Logout
+
+    -# =============================================================================================
+    .ui.container{style: "max-width: 723px! important"}
+
+      %div(style="margin-top:6rem")
+
+        %main(style="text-align:center; padding-top:6rem")
+
+          %h1
+            = "You are invited to team:"
+            %div(style="margin-top:.4em; _text-decoration:underline") Dev Team
+
+          %div(style="margin-top:4em")
+            .ui.button.negative(style="margin-right:4ex")
+              %i.icon.thumbs.down
+              Reject
+            .ui.button.positive
+              %i.icon.thumbs.up
+              Accept
+
+          %div(style="margin-top:4em; text-align:left;")
+            .ui.message.error
+              .header You already have access
+              %p blah blah blah
+
+  :javascript
+    $('.ui.dropdown').dropdown();
+    $('.omg-dimmable').dimmer({on: 'hover'});

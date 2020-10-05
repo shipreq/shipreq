@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html><head><title>CardBoard | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.min.js"></script><style type="text/css">
+body {padding:1rem}
+.ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
+.ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
+.ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
+
+span.admin {
+  color: green;
+}
+span.collab, span.member {
+  color: #33b;
+}
+
+.ui.message > .content > .header {
+  margin-bottom:1em;
+}
+.body-i {
+  display:flex;
+  align-items: center;
+}
+.body-i > div:nth-child(1) {
+  font-size:3rem;
+  opacity: 0.8;
+}
+.body-i > div:nth-child(1) i {
+  width:auto;
+}
+.body-i > div:nth-child(2) {
+  flex-grow:1;
+}
+.ui.message.done {
+  opacity:0.7;
+}
+
+.msg-controls {
+  text-align:right;
+  margin-top:1rem
+}
+.msg-controls > * {
+  margin:0 0 0 1.5rem !important;
+}
+
+.ip .comments {
+  font-style:italic;
+  margin-bottom: 1em;
+}
+
+.two-stats {
+  display:flex;
+  margin:0 4ex;
+}
+.two-stats > * {
+  width:50%;
+}
+.ip .stats {
+  border-collapse: collapse;
+}
+.ip .stats td:first-child {
+  _padding-left:4ex;
+  padding-right:1.6ex;
+  _text-align:right;
+}
+
+.events {
+  margin-top: 1em;
+}
+.events > ul {
+  margin:0;
+}
+.events .when::after {
+  content: ' — ';
+}
+
+</style></head><body><nav style="margin-bottom:5rem"><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home2.html" class="section">Home</a></div></div><div class="right menu"><div onclick="$('#connected4 &gt; *').toggle()" class="item" id="connected4"><i style="opacity:.7" title="connected" class="icon large plug green"></i><i style="opacity:1;display:none" title="disconnected" class="icon large plug red"></i></div><div class="item ui dropdown simple">@japgolly<div class="menu"><a href="member-account.html" class="item">Account</a><div class="item">Send feedback</div><div class="item">Logout</div></div></div></div></div></nav><div style="max-width: 723px! important" class="ui container"><div style="margin-top:6rem"><main style="text-align:center; padding-top:6rem"><h1>You are invited to team:<div style="margin-top:.4em; _text-decoration:underline">Dev Team</div></h1><div style="margin-top:4em"><div style="margin-right:4ex" class="ui button negative"><i class="icon thumbs down"></i>Reject</div><div class="ui button positive"><i class="icon thumbs up"></i>Accept</div></div><div style="margin-top:4em; text-align:left;"><div class="ui message error"><div class="header">You already have access</div><p>blah blah blah</p></div></div></main></div></div></body>
+<script type="text/javascript">
+//<![CDATA[
+$('.ui.dropdown').dropdown();
+$('.omg-dimmable').dimmer({on: 'hover'});
+//]]>
+</script>
+</html>
