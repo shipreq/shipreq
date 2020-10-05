@@ -166,7 +166,48 @@ _i.icon.users {display:none}
   font-style:italic;
 }
 
-</style></head><body><nav style="margin-bottom:5rem"><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Status&nbsp;<i class="icon dropdown"></i><div class="menu"></div></div></div></div></div><div class="right menu"><div onclick="$('#connected4 &gt; *').toggle()" class="item" id="connected4"><i style="opacity:.7" title="connected" class="icon large plug green"></i><i style="opacity:1;display:none" title="disconnected" class="icon large plug red"></i></div><div class="item ui dropdown simple">@japgolly<div class="menu"><a href="member-account.html" class="item">Account</a><div class="item">Send feedback</div><div class="item">Logout</div></div></div></div></div></nav><div style="max-width: 723px! important" class="ui container"><div style="margin-top:6rem"><div class="ui segment"><div class="family"><div class="h"><h2 class="ui header">Access</h2></div><div class="b"><table><tbody><tr><td><i class="icon user"></i>You</td><td><span class="admin">admin</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative invis"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon user"></i>@zatt</td><td class="inv"><i class="icon envelope"></i>collaborator invitation will be sent</td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon folder open outline"></i>ShipReq</td><td><span class="member">member</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td class="lvl1"><i class="icon users"></i>Dev Team</td><td><span class="collab">collaborator</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td class="lvl2"><i class="icon user"></i>@poop</td><td><span class="collab">collaborator</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative invis"><i style="margin:0!important" class="icon trash"></i></div></td></tr></tbody></table></div><div class="f"><div class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add collaborator...</span></div><div style="margin-left:2ex" class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add admin...</span></div></div></div></div><div class="ui segment"><div class="family"><div class="h"><h2 class="ui header">Invitation pages</h2></div><div class="b">TODO</div></div></div></div></div></body>
+.ui.message > .content > .header {
+  margin-bottom:1em;
+}
+.msg-controls {
+  text-align:right;
+  margin-top:1rem;
+}
+.msg-controls > * {
+  margin:0 0 0 1.5rem !important;
+}
+
+.ip .comments {
+  font-style:italic;
+  margin-bottom: 1em;
+}
+.two-stats {
+  display:flex;
+  margin:0 4ex;
+}
+.two-stats > * {
+  width:50%;
+}
+.ip .stats {
+  border-collapse: collapse;
+}
+.ip .stats td:first-child {
+  _padding-left:4ex;
+  padding-right:1.6ex;
+  _text-align:right;
+}
+
+.events {
+  margin-top: 1em;
+}
+.events > ul {
+  margin:0;
+}
+.events .when::after {
+  content: ' — ';
+}
+
+</style></head><body><nav style="margin-bottom:5rem"><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Status&nbsp;<i class="icon dropdown"></i><div class="menu"></div></div></div></div></div><div class="right menu"><div onclick="$('#connected4 &gt; *').toggle()" class="item" id="connected4"><i style="opacity:.7" title="connected" class="icon large plug green"></i><i style="opacity:1;display:none" title="disconnected" class="icon large plug red"></i></div><div class="item ui dropdown simple">@japgolly<div class="menu"><a href="member-account.html" class="item">Account</a><div class="item">Send feedback</div><div class="item">Logout</div></div></div></div></div></nav><div style="max-width: 723px! important" class="ui container"><div style="margin-top:6rem"><section><div class="family"><div class="h"><div class="ui horizontal divider header"><h2>Access</h2></div></div><div class="b"><table><tbody><tr><td><i class="icon user"></i>You</td><td><span class="admin">admin</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative invis"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon user"></i>@zatt</td><td class="inv"><i class="icon envelope"></i>collaborator invitation will be sent</td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon folder open outline"></i>ShipReq</td><td><span class="member">member</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td class="lvl1"><i class="icon users"></i>Dev Team</td><td><span class="collab">collaborator</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td class="lvl2"><i class="icon user"></i>@poop</td><td><span class="collab">collaborator</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative invis"><i style="margin:0!important" class="icon trash"></i></div></td></tr></tbody></table></div><div class="f"><div class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add collaborator...</span></div><div style="margin-left:2ex" class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add admin...</span></div></div></div></section><section style="margin-top:5rem"><div class="family"><div class="h"><div class="ui horizontal divider header"><h2>Invitations</h2></div></div></div><div class="ui icon message ip positive"><i style="margin:0 2rem 0 0!important; font-size:2.5rem" class="icon bullhorn"></i><div class="content"><div class="header">Invitation to team <a href="#">ShipReq / Dev Team</a> as <span style="color:red">admin</span></div><div style="margin-top:.5em" class="sub"><div class="comments">Hey there. These are some comments I left earlier.</div><div class="two-stats"><div><table class="stats"><tbody><tr><td>Acceptences:</td><td>1</td></tr><tr><td>Rejections:</td><td>0</td></tr><tr><td>Password:</td><td>yes</td></tr><tr><td>Password failures:</td><td>0</td></tr></tbody></table></div><div><table class="stats"><tbody><tr><td>Created by:</td><td>@voi</td></tr><tr><td>Created at:</td><td>2 weeks ago</td></tr><tr><td>Expiration date:</td><td>3 days from now</td></tr><tr><td>Status:</td><td>enabled</td></tr></tbody></table></div></div><div class="events"><div class="h">Latest activity</div><ul><li><span class="when">34 minutes ago</span><span class="what">Accepted by @bob</span></li><li><span class="when">34 minutes ago</span><span class="what">Viewed by @bob</span></li><li><span class="when">36 minutes ago</span><span class="what">Attempted view from anonymous user</span></li><li><span class="when">50 minutes ago</span><span class="what">Password change by @matt</span></li><li>More…</li></ul></div></div><div class="msg-controls"><div class="ui button negative"><i class="icon trash"></i>Delete</div><div class="ui button primary"><i class="icon edit"></i>Edit</div><i style="cursor:pointer" class="icon toggle on big"></i></div></div></div><div class="ui icon message yellow"><i style="margin:0 2rem 0 0!important; font-size:2.5rem" class="icon user"></i><div class="content"><div class="header">@bob is invited to team <a href="#">Yeah bro</a> as <span style="color:red">admin</span></div><div class="body"><table class="stats"><tbody><tr><td>Created by:</td><td>@voi</td></tr><tr><td>Created at:</td><td>2 weeks ago</td></tr><tr><td>Expiration date:</td><td>3 days from now</td></tr></tbody></table><div class="msg-controls"><div class="ui button negative"><i class="icon close"></i>Revoke</div></div></div></div></div><div style="margin-top:1.5rem" class="b"><div class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Invite...</span></div><div style="margin-left:2ex" class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">New invitation page...</span></div></div></section></div></div></body>
 <script type="text/javascript">
 //<![CDATA[
 $('.ui.dropdown').dropdown();

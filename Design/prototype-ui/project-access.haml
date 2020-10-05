@@ -175,6 +175,47 @@
         font-style:italic;
       }
 
+      .ui.message > .content > .header {
+        margin-bottom:1em;
+      }
+      .msg-controls {
+        text-align:right;
+        margin-top:1rem;
+      }
+      .msg-controls > * {
+        margin:0 0 0 1.5rem !important;
+      }
+
+      .ip .comments {
+        font-style:italic;
+        margin-bottom: 1em;
+      }
+      .two-stats {
+        display:flex;
+        margin:0 4ex;
+      }
+      .two-stats > * {
+        width:50%;
+      }
+      .ip .stats {
+        border-collapse: collapse;
+      }
+      .ip .stats td:first-child {
+        _padding-left:4ex;
+        padding-right:1.6ex;
+        _text-align:right;
+      }
+
+      .events {
+        margin-top: 1em;
+      }
+      .events > ul {
+        margin:0;
+      }
+      .events .when::after {
+        content: ' — ';
+      }
+
   %body
 
     %nav(style="margin-bottom:5rem")
@@ -219,10 +260,11 @@
 
       %div(style="margin-top:6rem")
 
-        .ui.segment
+        %section
           .family
             %div.h
-              %h2.ui.header Access
+              .ui.horizontal.divider.header
+                %h2 Access
             %div.b
               %table
                 %tbody
@@ -268,49 +310,111 @@
                 %i.icon.plus
                 %span.text Add admin...
 
-        -# .ui.segment
+        %section(style="margin-top:5rem")
           .family
             %div.h
-              %h2.ui.header Users
-            %div.b
-              %table
-                %tbody
-                  %tr
-                    %td
-                      %i.icon.user
-                      You
-                    %td %span.admin admin
-                    %td
-                      .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
-                  %tr
-                    %td
-                      %i.icon.user
-                      @poop
-                    %td %span.collab collaborator
-                    %td
-                      .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
-                  %tr
-                    %td
-                      %i.icon.user
-                      @zatt
-                    %td.inv
-                      %i.icon.envelope
-                      member invitation will be sent
-                    %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
-            -# %div.f
-              .ui.floating.labeled.icon.dropdown.button
-                %i.icon.plus
-                %span.text Add collaborator...
-              .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
-                %i.icon.plus
-                %span.text Add admin...
+              .ui.horizontal.divider.header
+                %h2 Invitations
+          .ui.icon.message.ip.positive
+            %i.icon.bullhorn(style="margin:0 2rem 0 0!important; font-size:2.5rem")
+            .content
+              .header
+                = "Invitation to team "
+                %a(href="#")ShipReq / Dev Team
+                = " as "
+                %span(style="color:red") admin
+              %div.sub(style="margin-top:.5em")
+                .comments
+                  Hey there. These are some comments I left earlier.
+                .two-stats
+                  %div
+                    %table.stats
+                      %tbody
+                        %tr
+                          %td Acceptences:
+                          %td 1
+                        %tr
+                          %td Rejections:
+                          %td 0
+                        %tr
+                          %td Password:
+                          %td yes
+                        %tr
+                          %td Password failures:
+                          %td 0
+                  %div
+                    %table.stats
+                      %tbody
+                        %tr
+                          %td Created by:
+                          %td @voi
+                        %tr
+                          %td Created at:
+                          %td 2 weeks ago
+                        %tr
+                          %td Expiration date:
+                          %td 3 days from now
+                        %tr
+                          %td Status:
+                          %td enabled
+                .events
+                  .h Latest activity
+                  %ul
+                    %li
+                      %span.when 34 minutes ago
+                      %span.what Accepted by @bob
+                    %li
+                      %span.when 34 minutes ago
+                      %span.what Viewed by @bob
+                    %li
+                      %span.when 36 minutes ago
+                      %span.what Attempted view from anonymous user
+                    %li
+                      %span.when 50 minutes ago
+                      %span.what Password change by @matt
+                    %li
+                      More…
+              .msg-controls
+                .ui.button.negative
+                  %i.icon.trash
+                  Delete
+                .ui.button.primary
+                  %i.icon.edit
+                  Edit
+                %i.icon.toggle.on.big(style="cursor:pointer")
 
-        .ui.segment
-          .family
-            %div.h
-              %h2.ui.header Invitation pages
-            %div.b
-              TODO
+          .ui.icon.message.yellow
+            %i.icon.user(style="margin:0 2rem 0 0!important; font-size:2.5rem")
+            .content
+              .header
+                = "@bob is invited to team "
+                %a(href="#")Yeah bro
+                = " as "
+                %span(style="color:red") admin
+              .body
+                %table.stats
+                  %tbody
+                    %tr
+                      %td Created by:
+                      %td @voi
+                    %tr
+                      %td Created at:
+                      %td 2 weeks ago
+                    %tr
+                      %td Expiration date:
+                      %td 3 days from now
+                .msg-controls
+                  .ui.button.negative
+                    %i.icon.close
+                    Revoke
+          %div.b(style="margin-top:1.5rem")
+            .ui.floating.labeled.icon.dropdown.button
+              %i.icon.plus
+              %span.text Invite...
+            .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
+              %i.icon.plus
+              %span.text New invitation page...
+
 
   :javascript
     $('.ui.dropdown').dropdown();
