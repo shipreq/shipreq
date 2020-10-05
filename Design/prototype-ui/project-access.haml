@@ -315,6 +315,9 @@
             %div.h
               .ui.horizontal.divider.header
                 %h2 Invitations
+          %div(style="text-align:right; margin-bottom:1.25rem")
+            %button.ui.button.icon.has-popup#dead-projects{data-content: "Click to show deleted content."}
+              %i.icon.trash.outline.large.grey
           .ui.icon.message.ip.positive
             %i.icon.bullhorn(style="margin:0 2rem 0 0!important; font-size:2.5rem")
             .content
@@ -375,7 +378,8 @@
                     %li
                       More…
               .msg-controls
-                .ui.button.negative
+                -# Delete should be in the edit form for UX consistency
+                -# .ui.button.negative
                   %i.icon.trash
                   Delete
                 .ui.button.primary

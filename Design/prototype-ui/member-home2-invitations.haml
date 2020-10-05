@@ -1,0 +1,338 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title Projects | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.min.js"}
+    :css
+      body {padding:1rem}
+      a {color:#00549c}
+      a:hover {color:#d90166}
+      #page-body {
+        margin-top:6rem;
+        display:flex;
+      }
+      #page-body > nav {
+        display:table; /* so that the content on the right doesn't squash this */
+        margin-right: 4rem;
+        width:23ex;
+      }
+      #page-body > nav .ui.label.plain {
+        opacity:.6;
+        display:none;
+        /* Rather than show counts for everything, only show pending invs.
+            That provides some consistency seeing as you can always see old invs that aren't pending.
+            If you had 8 old and 1 new, you wouldn't want to see 9 in red.
+        */
+      }
+      #page-body > main {
+        flex-grow: 1;
+      }
+
+      #header-row {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        margin-bottom: 0.6rem;
+      }
+      .header-right {
+        float: right;
+        padding-left: 4ex;
+      }
+
+      main > section:not(.first) {
+        margin-top: 4.2rem;
+      }
+
+      main > section > .ui.header {
+        margin-bottom: 1.6rem;
+      }
+
+      .ui.message > .content > .header {
+        margin-bottom:1em;
+      }
+
+      .ui.message.done {
+        opacity:0.7;
+      }
+      .msg-controls {
+        text-align:right;
+        margin-top:1rem
+      }
+      .msg-controls > * {
+        margin:0 0 0 1.5rem !important;
+      }
+
+      .ip .comments {
+        font-style:italic;
+        margin-bottom: 1em;
+      }
+
+      .two-stats {
+        display:flex;
+        margin:0 4ex;
+      }
+      .two-stats > * {
+        width:50%;
+      }
+      .ip .stats {
+        border-collapse: collapse;
+      }
+      .ip .stats td:first-child {
+        _padding-left:4ex;
+        padding-right:1.6ex;
+        _text-align:right;
+      }
+
+      .events {
+        margin-top: 1em;
+      }
+      .events > ul {
+        margin:0;
+      }
+      .events .when::after {
+        content: ' — ';
+      }
+
+  %body
+
+    .ui.menu.borderless.fixed.inverted
+      .item
+        %img{src: "logo-only-dark2.svg"}
+      .item
+        .ui.breadcrumb
+          .section Projects
+      .right.menu
+        .item.ui.dropdown.simple
+          @japgolly
+          .menu
+            %a.item{href: "member-member-account.html"} Account
+            .item Logout
+
+    .ui.container#page-body
+      %nav.ui.secondary.pointing.menu.vertical
+        %a.item(href="member-home2.html")
+          Projects
+          .ui.label.plain 2
+        %a.item(href="member-home2-teams.html")
+          Teams
+          .ui.label.plain 0
+        %a.item.active.orange(href="member-home2-invitations.html")
+          Invitations
+          .ui.left.pointing.label.red 19
+        %a.item(href="member-home2-contacts.html")
+          Contacts
+          .ui.label.plain 0
+      %main
+
+        #header-row
+          .header-left
+          .header-right
+            %span // this is important to prevent [.ui.header icon:only-child] affecting below
+            %button.ui.button.icon.has-popup#dead-projects{data-content: "Click to show deleted content."}
+              %i.icon.trash.outline.large.grey
+
+        %section.first
+          .ui.horizontal.divider.header
+            %h2
+              -# %i.icon.envelope
+              %i.icon.envelope.open
+              -# %i.icon.sign.in
+              Received
+
+          .ui.icon.message.yellow
+            %i.icon.users
+            .content
+              .header
+                = "You are invited to team "
+                %a(href="#")Yeah bro
+                = " as admin"
+              .body
+                %table.stats
+                  %tbody
+                    %tr
+                      %td Created by:
+                      %td @voi
+                    %tr
+                      %td Created at:
+                      %td 2 weeks ago
+                    %tr
+                      %td Expiration date:
+                      %td 3 days from now
+                .msg-controls
+                  .ui.button.negative
+                    %i.icon.thumbs.down
+                    Reject
+                  .ui.button.positive
+                    %i.icon.thumbs.up
+                    Accept
+
+          .ui.icon.message.done
+            %i.icon.users
+            -# %i.icons(style="margin:0 2rem 0 0!important; font-size:3rem")
+              %i.icon.users
+              %i.icon.corner.thumbs.up.black
+            .content
+              .header
+                = "You accepted an invitation to team "
+                %a(href="#")Yeah bro
+                = " as admin"
+              .body
+                %table.stats
+                  %tbody
+                    %tr
+                      %td Created by:
+                      %td @voi
+                    %tr
+                      %td Created at:
+                      %td 2 weeks ago
+                    %tr
+                      %td Expiration date:
+                      %td 3 days from now
+                    %tr
+                      %td Accepted at:
+                      %td 10 minutes ago
+
+        %section
+          .ui.horizontal.divider.header
+            %h2
+              %i.icon.envelope
+              -# %i.icon.sign.out
+              Sent
+
+          .ui.icon.message.yellow
+            %i.icon.user(style="margin:0!important; font-size:2.5rem")
+            %i.icon.angle.right(style="margin:0 1.4rem!important; font-size:2.5rem")
+            %i.icon.users(style="margin:0 2rem 0 0!important; font-size:2.5rem")
+            .content
+              .header
+                = "@bob is invited to team "
+                %a(href="#")Yeah bro
+                = " as "
+                %span(style="color:red") admin
+              .body
+                %table.stats
+                  %tbody
+                    %tr
+                      %td Created by:
+                      %td @voi
+                    %tr
+                      %td Created at:
+                      %td 2 weeks ago
+                    %tr
+                      %td Expiration date:
+                      %td 3 days from now
+                .msg-controls
+                  .ui.button.negative
+                    %i.icon.close
+                    Revoke
+
+          .ui.icon.message.done
+            %i.icon.users
+            -# %i.icons(style="margin:0 2rem 0 0!important; font-size:3rem")
+              %i.icon.users
+              %i.icon.corner.thumbs.up.black
+            .content
+              .header
+                = "@mike accepted your invitation to team "
+                %a(href="#")Yeah bro
+                = " as admin"
+              .body
+                %table.stats
+                  %tbody
+                    %tr
+                      %td Created by:
+                      %td @voi
+                    %tr
+                      %td Created at:
+                      %td 2 weeks ago
+                    %tr
+                      %td Expiration date:
+                      %td 3 days from now
+                    %tr
+                      %td Accepted at:
+                      %td 10 minutes ago
+
+
+        %section
+          .ui.horizontal.divider.header
+            %h2
+              %i.icon.bullhorn
+              Pages
+
+          .ui.icon.message.ip.positive
+            %i.icon.bullhorn(style="margin:0!important; font-size:2.5rem")
+            %i.icon.angle.right(style="margin:0 1.4rem!important; font-size:2.5rem")
+            %i.icon.users(style="margin:0 2rem 0 0!important; font-size:2.5rem")
+            .content
+              .header
+                = "Invitation to team "
+                %a(href="#")ShipReq / Dev Team
+                = " as "
+                %span(style="color:red") admin
+              %div.sub(style="margin-top:.5em")
+                .comments
+                  Hey there. These are some comments I left earlier.
+                .two-stats
+                  %div
+                    %table.stats
+                      %tbody
+                        %tr
+                          %td Acceptences:
+                          %td 1
+                        %tr
+                          %td Rejections:
+                          %td 0
+                        %tr
+                          %td Password:
+                          %td yes
+                        %tr
+                          %td Password failures:
+                          %td 0
+                  %div
+                    %table.stats
+                      %tbody
+                        %tr
+                          %td Created by:
+                          %td @voi
+                        %tr
+                          %td Created at:
+                          %td 2 weeks ago
+                        %tr
+                          %td Expiration date:
+                          %td 3 days from now
+                        %tr
+                          %td Status:
+                          %td enabled
+                .events
+                  .h Latest activity
+                  %ul
+                    %li
+                      %span.when 34 minutes ago
+                      %span.what Accepted by @bob
+                    %li
+                      %span.when 34 minutes ago
+                      %span.what Viewed by @bob
+                    %li
+                      %span.when 36 minutes ago
+                      %span.what Attempted view from anonymous user
+                    %li
+                      %span.when 50 minutes ago
+                      %span.what Password change by @matt
+                    %li
+                      More…
+              .msg-controls
+                -# Delete should be in the edit form for UX consistency
+                -# .ui.button.negative
+                  %i.icon.trash
+                  Delete
+                .ui.button.primary
+                  %i.icon.edit
+                  Edit
+                %i.icon.toggle.on.big(style="cursor:pointer")
+
+
+  :javascript
+    $('.ui.dropdown').dropdown();

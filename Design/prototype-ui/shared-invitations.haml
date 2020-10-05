@@ -154,8 +154,8 @@
                   Create
 
           -# =============================================================================================================================
-          Colour of the view below depends:
-          %table.ui.table.celled.definition
+          -# Colour of the view below depends:
+          -# %table.ui.table.celled.definition
             %thead
               %tr
                 %th
@@ -232,7 +232,8 @@
                     %li
                       More…
               .msg-controls
-                .ui.button.negative
+                -# Delete should be in the edit form for UX consistency
+                -# .ui.button.negative
                   %i.icon.trash
                   Delete
                 .ui.button.primary
@@ -336,10 +337,10 @@
                     %i.icon.thumbs.up
                     Accept
 
-          And completed invitations could look like this.
-          Although it would be much less work to only show live invitations.
+          Completed invitations (normally hidden by default, can viewable via FilterDead)
+          look like this:
 
-          .ui.icon.message.done.positive
+          .ui.icon.message.done
             %i.icon.users
             .content
               .header
