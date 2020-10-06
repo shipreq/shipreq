@@ -19,10 +19,19 @@
 * hard delete
 * Add percentages to deriv expl (?)
 
+* add a KB shortcut to show/hide preview
+* lighten editor yellow
+* surround with text with `"` and `'`
+* add blockquotes
+* too many newlines in nested lists (PlainText & ProjectWidgets)
 * sync up scroll between editor & preview
-* Allow edit of a subset of a rich text field
-  (eg. hover button appears on headers, click and edit just the header and it's contents)
 
+* This causes a parser bug:
+  ```
+  **Note: ** this is now #deferred because we have a little search box in the menu bar now.
+
+  Similar to Google, there should be a single, simple box where I can type in something I have in mind, and then it shows everywhere relevant in the project: LL reqs, UC steps, etc.
+  ```
 
 
 Backlog (maybe-probably soon)
