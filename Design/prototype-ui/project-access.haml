@@ -262,6 +262,18 @@
         content: ' — ';
       }
 
+      .segment.action {
+        display: flex;
+        align-items:flex-end;
+      }
+      .segment.action .left {
+        flex-grow:1;
+        margin-right: 8ex;
+      }
+      .segment.action .right .button {
+        margin-right:0!important;
+      }
+
   %body
 
     %nav(style="margin-bottom:5rem")
@@ -421,6 +433,18 @@
                   %button.ui.button.green(style="margin-right:0!important" onClick='toggle_access()')
                     %i.icon.edit
                     Save
+
+        .ui.segment.action(style="margin-top:3rem")
+          .left
+            %h4.ui.header Leave This Project
+            %p
+              Revoke your own access to this project.
+              = " "
+              If you do this and change your mind, you'll need an admin to invite you back.
+          .right
+            %button.ui.button.negative(style="white-space: nowrap; margin-right:2em")
+              -# %i.icon.sign.out
+              Leave This Project
 
         -# ==========================================================================================================================================
 

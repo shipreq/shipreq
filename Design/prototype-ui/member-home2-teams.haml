@@ -187,6 +187,18 @@
         font-style:italic;
       }
 
+      .segment.action {
+        display: flex;
+        align-items:flex-end;
+      }
+      .segment.action .left {
+        flex-grow:1;
+        margin-right: 8ex;
+      }
+      .segment.action .right .button {
+        margin-right:0!important;
+      }
+
   %body
 
     .ui.menu.borderless.fixed.inverted
@@ -301,7 +313,7 @@
                       %tbody
                         %tr
                           %td
-                            %i.icon.folder.open.outline
+                            %i.icon.users
                             ShipReq / Dev Team
                           %td
                             .ui.selection.dropdown
@@ -339,7 +351,7 @@
                             .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
                         %tr
                           %td
-                            %i.icon.folder.open
+                            %i.icon.folder.open.outline
                             OSS projects
                           %td
                             .ui.selection.dropdown
@@ -416,6 +428,8 @@
                 %i.icon.plus
                 Create
 
+        -# ========================================================================================================================================================================
+
         .tree-container
           %table.tree
             %tbody
@@ -433,7 +447,7 @@
                 %td.rel %span.member member
               %tr
                 %td.name.lvl1
-                  %i.icon.folder.open.outline
+                  %i.icon.users
                   ShipReq
                 %td.members 3 users
                 %td.rel %span.admin admin
@@ -449,6 +463,210 @@
                   Dev Team
                 %td.members 3 users
                 %td.rel %span.admin admin
+
+        -# ========================================================================================================================================================================
+
+        %section.ui.raised.segment#new-project(style="margin-top:3rem")
+          %h2.ui.header(style="margin-bottom:2rem; color:#3659e2")
+            %i.icon.users
+            Monocle dev
+
+          .ui.form
+            .field
+              %label Name
+              %input(type="text" value="Monocle dev")
+
+            .field
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header Members
+                  %div.b
+                    %table
+                      %tbody
+                        %tr
+                          %td
+                            %i.icon.user
+                            You
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.admin admin
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
+                          %td
+                            .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.user
+                            @matt
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.member member
+                              .menu
+                                .item %span.admin admin
+                                .item %span.member member
+                            %span.inv(style="margin-left:2ex")
+                              %i.icon.envelope
+                              invitation will be sent
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.users
+                            Dev Team
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.member member
+                              .menu
+                                .item %span.admin admin
+                                .item %span.member member
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add...
+
+            .field
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header Parent teams
+                  %div.b
+                    %table
+                      %tbody
+                        %tr
+                          %td
+                            %i.icon.users
+                            ShipReq / Dev Team
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.admin admin
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add...
+
+            .field
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header Projects
+                  %div.b
+                    %table
+                      %tbody
+                        %tr
+                          %td
+                            %i.icon.archive
+                            ShipReq
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.admin admin
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
+                          %td
+                            .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.folder.open.outline
+                            OSS projects
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.collab collaborator
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
+                            %span.inv(style="margin-left:2ex")
+                              %i.icon.envelope
+                              invitation will be sent
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.archive
+                            Whatever
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.collab collaborator
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add...
+
+            -# .field
+              .ui.segment
+                .family
+                  %div.h
+                    %h4.ui.header
+                      Invitation pages
+                      %span(style="opacity:.3; margin-left")
+                  %div.b
+                    %table
+                      %tbody
+                        %tr
+                          %td
+                            %i.icon.archive
+                            ShipReq
+                          %td %span.admin admin
+                          %td
+                            .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.folder.open
+                            OSS projects
+                          %td.inv
+                            %i.icon.envelope
+                            collaborator access requested
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.archive
+                            Whatever
+                          %td %span.collab collaborator
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Create for collaborators...
+                    .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
+                      %i.icon.plus
+                      %span.text Create for admin...
+
+            %div(style="text-align:right; margin-top:2rem")
+              %button.ui.button.black.basic(style="margin-right:2em")
+                %i.icon.remove
+                Close
+              %button.ui.button.green(style="margin-right:0!important")
+                %i.icon.edit
+                Update
+
+          .ui.segment.action(style="margin-top:3rem")
+            .left
+              %h4.ui.header Leave This Project
+              %p
+                Revoke your own access to this project.
+                = " "
+                If you do this and change your mind, you'll need an admin to invite you back.
+            .right
+              %button.ui.button.negative(style="white-space: nowrap; margin-right:2em")
+                -# %i.icon.sign.out
+                Leave This Project
+
+        %section.ui.raised.segment#new-project(style="margin-top:13rem; visibility:hidden")
 
   :javascript
     $('.ui.dropdown').dropdown();
