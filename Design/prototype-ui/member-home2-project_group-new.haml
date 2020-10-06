@@ -144,14 +144,14 @@
         text-decoration:line-through;
       }
 
-      .ro td {
+      #access-ro td {
         padding-top:0.5em;
         padding-bottom:0.5em;
       }
-      .ro .lvl1 {
+      #access-ro .lvl1 {
         padding-left: 3ex;
       }
-      .ro .lvl2 {
+      #access-ro .lvl2 {
         padding-left: 5.5ex;
       }
 
@@ -287,7 +287,7 @@
             %i.divider.icon.right.angle
             %span
               %i.icon.folder.open.outline
-              OSS
+              New Project Group
 
         .right.menu
 
@@ -306,27 +306,20 @@
 
       %div(style="margin-top:6rem")
 
-        %h2.ui.header(style="margin-bottom:2rem; color:#3659e2")
+        %h2.ui.header(style="margin-bottom:3rem; color:#3659e2")
           %i.icon.folder.open.outline
-          OSS
-
-        -# %h2(style="margin-bottom:2rem; color:#3659e2; font-size:2rem")
-          %a(href="member-home2.html" style="color:#333; margin-right: 1ex")
-            %i.icon.arrow.left
-          %i.icon.folder.open.outline
-          OSS
+          New Project Group
 
         -# ==================================================================================================================================
 
-        -# Make OSS inline-editable just like project names are now
-        -# .ui.form
+        .ui.form
           .field
             %label Name
             %input(type="text")
 
         -# ==================================================================================================================================
 
-        %section(style="margin-top:2rem")
+        %section(style="margin-top:4rem")
           .family
             %div.h
               .ui.horizontal.divider.header
@@ -335,43 +328,85 @@
                   Projects
             %div.b
 
-              .ui.segment.raised.ro
+              .ui.segment
                 .family
                   %div.h
                     %h4.ui.header Parent groups
                   %div.b
-                    %table(style="margin-left:2ex")
+                    %table
                       %tbody
                         %tr
                           %td
                             %i.icon.folder.open.outline
-                            ShipReq
-                            %span.inline-perm %span.member member
-                    %div(style="text-align:right; margin-top:2rem")
-                      %button.ui.button.blue(style="margin-right:0!important")
-                        %i.icon.edit
-                        Edit
+                            ShipReq / Dev Team
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.admin admin
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add...
 
-              .ui.segment.raised.ro
+              .ui.segment
                 .family
                   %div.h
                     %h4.ui.header Members
                   %div.b
-                    %table(style="margin-left:2ex")
+                    %table
                       %tbody
                         %tr
                           %td
-                            %i.icon.user
-                            You
-                            %span.inline-perm %span.admin admin
-                    %div(style="text-align:right; margin-top:2rem")
-                      %button.ui.button.blue(style="margin-right:0!important" onClick='toggle_access()')
-                        %i.icon.edit
-                        Edit
+                            %i.icon.archive
+                            ShipReq
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.admin admin
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
+                          %td
+                            .ui.button.basic.negative.invis(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.folder.open.outline
+                            OSS projects
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.collab collaborator
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
+                            -# %span.inv(style="margin-left:2ex")
+                              %i.icon.envelope
+                              invitation will be sent
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                        %tr
+                          %td
+                            %i.icon.archive
+                            Whatever
+                          %td
+                            .ui.selection.dropdown
+                              %i.icon.dropdown
+                              .item %span.collab collaborator
+                              .menu
+                                .item %span.admin admin
+                                .item %span.collab collaborator
+                          %td .ui.button.basic.negative(style="white-space: nowrap; float:right; background:#fff!important;") %i.icon.trash(style="margin:0!important")
+                  %div.f
+                    .ui.floating.labeled.icon.dropdown.button
+                      %i.icon.plus
+                      %span.text Add...
 
         -# ==================================================================================================================================
 
-        %section(style="margin-top:5rem")
+        %section(style="margin-top:4rem")
           .family
             %div.h
               .ui.horizontal.divider.header
@@ -380,41 +415,7 @@
                   Access
             %div.b
 
-              .ui.segment.raised.ro#access-ro
-                %table(style="margin-left:2ex")
-                  %tbody
-                    %tr
-                      %td
-                        %i.icon.user
-                        You
-                        %span.inline-perm %span.admin admin
-                    %tr.pending-inv
-                      %td
-                        %i.icon.user
-                        @zatt
-                        %span.inline-perm
-                          collaborator invitation sent
-                    %tr
-                      %td
-                        %i.icon.folder.open.outline
-                        ShipReq
-                        %span.inline-perm %span.member member
-                    %tr
-                      %td.lvl1
-                        %i.icon.users
-                        Dev Team
-                        %span.inline-perm %span.collab collaborator
-                    %tr
-                      %td.lvl2
-                        %i.icon.user
-                        @poop
-                        %span.inline-perm %span.collab collaborator
-                %div(style="text-align:right; margin-top:2rem")
-                  %button.ui.button.blue(style="margin-right:0!important" onClick='toggle_access()')
-                    %i.icon.edit
-                    Edit
-
-              .ui.segment.raised#access-rw(style="display:none")
+              .ui.segment.raised
                 %table(style="width:100%; margin-bottom:1em")
                   %tbody
                     %tr
@@ -481,162 +482,18 @@
                   .ui.floating.labeled.icon.dropdown.button
                     %i.icon.plus
                     %span.text Add...
-                %div(style="text-align:right; margin-top:2rem")
-                  %button.ui.button.black.basic(style="margin-right:2em" onClick='toggle_access()')
-                    %i.icon.remove
-                    Close
-                  %button.ui.button.green(style="margin-right:0!important" onClick='toggle_access()')
-                    %i.icon.edit
-                    Save
 
-        .ui.segment.action(style="margin-top:1rem")
-          .left
-            %h4.ui.header Leave This Project
-            %p
-              Revoke your own access to this project.
-              = " "
-              If you do this and change your mind, you'll need an admin to invite you back.
-          .right
-            %button.ui.button.negative(style="white-space: nowrap; margin-right:2em")
-              -# %i.icon.sign.out
-              Leave This Project
+      -# ==================================================================================================================================
 
-        -# ==========================================================================================================================================
-
-        %section(style="margin-top:5rem")
-          .family
-            %div.h
-              .ui.horizontal.divider.header
-                %h2
-                  %i.icon.envelope
-                  Invitations
-
-          #header-row
-            .header-left
-              %a.ui.button.green
-                %i.icon.plus
-                New invitation page
-              -# .ui.labeled.button
-                %a.ui.button.green
-                  %i.icon.plus
-                  New
-                .ui.dropdown.label{style: "background-color: #00a632; color: #EEE;"}
-                  Invitation
-                  %i.icon.dropdown
-                  .menu
-                    .item Invitation
-                    .item Invitation page
-            .header-right
-              %span // this is important to prevent [.ui.header icon:only-child] affecting below
-              %button.ui.button.icon.has-popup#dead-projects{data-content: "Click to show deleted content."}
-                %i.icon.trash.outline.large.grey
-
-          .ui.icon.message.ip.positive
-            %i.icon.bullhorn(style="margin:0 2rem 0 0!important; font-size:2.5rem")
-            .content
-              .header
-                = "Invitation to team "
-                %a(href="#")ShipReq / Dev Team
-                = " as "
-                %span(style="color:red") admin
-              %div.sub(style="margin-top:.5em")
-                .comments
-                  Hey there. These are some comments I left earlier.
-                .two-stats
-                  %div
-                    %table.stats
-                      %tbody
-                        %tr
-                          %td Acceptences:
-                          %td 1
-                        %tr
-                          %td Rejections:
-                          %td 0
-                        %tr
-                          %td Password:
-                          %td yes
-                        %tr
-                          %td Password failures:
-                          %td 0
-                  %div
-                    %table.stats
-                      %tbody
-                        %tr
-                          %td Created by:
-                          %td @voi
-                        %tr
-                          %td Created at:
-                          %td 2 weeks ago
-                        %tr
-                          %td Expiration date:
-                          %td 3 days from now
-                        %tr
-                          %td Status:
-                          %td enabled
-                .events
-                  .h Latest activity
-                  %ul
-                    %li
-                      %span.when 34 minutes ago
-                      %span.what Accepted by @bob
-                    %li
-                      %span.when 34 minutes ago
-                      %span.what Viewed by @bob
-                    %li
-                      %span.when 36 minutes ago
-                      %span.what Attempted view from anonymous user
-                    %li
-                      %span.when 50 minutes ago
-                      %span.what Password change by @matt
-                    %li
-                      More…
-              .msg-controls
-                -# Delete should be in the edit form for UX consistency
-                -# .ui.button.negative
-                  %i.icon.trash
-                  Delete
-                .ui.button.primary
-                  %i.icon.edit
-                  Edit
-                %i.icon.toggle.on.big(style="cursor:pointer")
-
-          .ui.icon.message.yellow
-            %i.icon.user(style="margin:0 2rem 0 0!important; font-size:2.5rem")
-            .content
-              .header
-                = "@bob is invited to team "
-                %a(href="#")Yeah bro
-                = " as "
-                %span(style="color:red") admin
-              .body
-                %table.stats
-                  %tbody
-                    %tr
-                      %td Created by:
-                      %td @voi
-                    %tr
-                      %td Created at:
-                      %td 2 weeks ago
-                    %tr
-                      %td Expiration date:
-                      %td 3 days from now
-                .msg-controls
-                  .ui.button.negative
-                    %i.icon.close
-                    Revoke
-          -# %div.b(style="margin-top:1.5rem")
-            .ui.floating.labeled.icon.dropdown.button
-              %i.icon.plus
-              %span.text Invite...
-            .ui.floating.labeled.icon.dropdown.button(style="margin-left:2ex")
-              %i.icon.plus
-              %span.text New invitation page...
+      %div(style="text-align:right; margin-top:5rem")
+        %button.ui.button.black.basic(style="margin-right:2em" onClick='toggle_access()')
+          %i.icon.remove
+          Cancel
+        %button.ui.button.green(style="margin-right:0!important" onClick='toggle_access()')
+          %i.icon.plus
+          Create
 
 
   :javascript
     $('.ui.dropdown').dropdown();
-    $('.omg-dimmable').dimmer({on: 'hover'});
-
-    function toggle_access() {
-      $('#access-ro,#access-rw').toggle();
-    }
+    function toggle_access() {}
