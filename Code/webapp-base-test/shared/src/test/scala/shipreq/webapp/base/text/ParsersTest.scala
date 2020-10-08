@@ -114,7 +114,7 @@ object ParsersTest extends TestSuite {
 
         E.fail(t, errMsg)
       }
-    }
+    } & DataProp.text.anyText(expect).liftL.rename("DataProp.anyText")
 
 //    var first = true
 //    def debug(t: String) = {
@@ -176,8 +176,7 @@ object ParsersTest extends TestSuite {
         }.rename("parse |> toStr |> parse = parse")
 
       parseToStringAndBack ∧
-      Eval.equal("txt2str |> preprocess = txt2str", in0, in2, in3) ∧
-      DataProp.text.anyText(par1).liftL.rename("DataProp.anyText")
+      Eval.equal("txt2str |> preprocess = txt2str", in0, in2, in3)
     }
 
     def all = (
@@ -345,6 +344,17 @@ object ParsersTest extends TestSuite {
           ArraySeq(T.Italic(NonEmptyArraySeq(S.Literal("a")))),
           ArraySeq(T.Italic(NonEmptyArraySeq(S.Literal("b")))),
         )))
+        "styling" - {
+          "1" - test(" ** A ** B "  )(L("** A ** B"))
+          "2" - test(" Z ** A ** B ")(L("Z ** A ** B"))
+          "3" - test(" Z ** A ** "  )(L("Z ** A **"))
+          "4" - test(" Z** A ** B " )(L("Z** A ** B"))
+          "5" - test(" Z **A ** B " )(L("Z "), T.Bold(NEA(S.Literal("A"))), L(" B"))
+          "5" - test(" Z **A** B " )(L("Z "), T.Bold(NEA(S.Literal("A"))), L(" B"))
+          "5" - test(" Z **A **B " )(L("Z "), T.Bold(NEA(S.Literal("A "))), L("B"))
+          "6" - test(" Z ** A** B " )(L("Z ** A** B"))
+          "7" - test(" Z ** A **B " )(L("Z ** A **B"))
+        }
       }
 
       "monospace" - {
@@ -433,7 +443,7 @@ object ParsersTest extends TestSuite {
           "seq" - test("__a__**b**~~c ~~ //d//")(
             T.Underline(NonEmptyArraySeq(S.Literal("a"))),
             T.Bold(NonEmptyArraySeq(S.Literal("b"))),
-            T.Strikethrough(NonEmptyArraySeq(S.Literal("c "))),
+            T.Strikethrough(NonEmptyArraySeq(S.Literal("c"))),
             T.Literal(" "),
             T.Italic(NonEmptyArraySeq(S.Literal("d"))),
           )

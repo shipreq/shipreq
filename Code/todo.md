@@ -21,13 +21,6 @@
 * In ReqDtail screen, render req sets as ULs and display the req titles
 * FR-46: Users #should be able to merge duplicated reqs
 
-* This causes a parser bug:
-  ```
-  **Note: ** this is now #deferred because we have a little search box in the menu bar now.
-
-  Similar to Google, there should be a single, simple box where I can type in something I have in mind, and then it shows everywhere relevant in the project: LL reqs, UC steps, etc.
-  ```
-
 * FR-35: Allow a user to view a project in read-only mode
 * delete & restore projects
 * hard delete

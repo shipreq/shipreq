@@ -16,43 +16,152 @@ import shipreq.webapp.base.util._
 
 object Parsers {
 
-  def fixOptionalText[T <: Atom.Base](text: T#OptionalText): T#OptionalText =
-    if (text.isEmpty)
-      text
-    else
-      fixNonEmptyText(NonEmptyArraySeq.force(text)).whole
-
   def fixNonEmptyText[T <: Atom.Base](text: T#NonEmptyText): T#NonEmptyText = {
-    val last: Atom.AnyAtom = text.last
-    val newLast: Atom.AnyAtom =
-      last match {
-        case a: Atom.Literal         # Literal               =>
-          val a2 = a.modText(TextMod.noWhitespaceRight.run)
-          if (a2.value.isEmpty)
-            null
-          else
-            a2
-        case a: Atom.Headings        # Heading               => a.modTitle(fixNonEmptyText(_))
-        case a: Atom.PlainTextMarkup # PlainTextMarkupStyled => a.unsafeWithInner(fixNonEmptyText(a.inner))
-        case a: Atom.ListMarkup      # ListBase              => a.map(fixOptionalText(_))
-        case _: Atom.CodeBlock       # CodeBlock
-           | _: Atom.ContentRef      # CodeRef
-           | _: Atom.ContentRef      # ReqRef
-           | _: Atom.ContentRef      # UseCaseStepRef
-           | _: Atom.Issue           # Issue
-           | _: Atom.NewLine         # BlankLine
-           | _: Atom.PlainTextMarkup # EmailAddress
-           | _: Atom.PlainTextMarkup # Monospace
-           | _: Atom.PlainTextMarkup # TeX
-           | _: Atom.PlainTextMarkup # WebAddress
-           | _: Atom.TagRef          # TagRef                => last
-      }
-    if (newLast eq null)
-      NonEmptyArraySeq.maybe(text.whole.dropRight(1), text)(identity)
-    else if (newLast eq last)
-      text
+    val t1 = text.whole
+    val t2 = fixOptionalText(t1)
+    if ((t1 ne t2) && t2.nonEmpty)
+      NonEmptyArraySeq.force(t2)
     else
-      text.updated(text.length - 1, newLast.asInstanceOf[T#Atom])
+      text
+  }
+
+  def fixOptionalText[T <: Atom.Base](rootText: T#OptionalText): T#OptionalText = {
+
+    var prevIsSpace = false
+
+    var _fixNonEmpty: (Atom.Base#NonEmptyText, Boolean) => Atom.Base#NonEmptyText = null
+
+    def fixNonEmpty[T2 <: Atom.Base](text: T2#NonEmptyText, allowTrailingWS: Boolean): T2#NonEmptyText =
+      _fixNonEmpty(text, allowTrailingWS).asInstanceOf[T2#NonEmptyText]
+
+    def fixOptional[T2 <: Atom.Base](text: T2#OptionalText, allowTrailingWS: Boolean): T2#OptionalText = {
+      var result: Array[T2#Atom] = null
+      var dropLast = false
+      var i = 0
+      val last = text.length - 1
+      while (i <= last) {
+        val atom = text(i): Atom.Base#Atom
+        var atom2 = atom
+
+        def allowWsBeforeNext =
+          if (i == last)
+            allowTrailingWS
+          else
+            (text(i + 1): Atom.Base#Atom) match {
+
+              case a: Atom.Literal         # Literal =>
+                !a.value.startsWith(" ")
+
+              // " " next
+              case _: Atom.ContentRef      # CodeRef
+                 | _: Atom.ContentRef      # ReqRef
+                 | _: Atom.ContentRef      # UseCaseStepRef
+                 | _: Atom.Issue           # Issue
+                 | _: Atom.PlainTextMarkup # Bold
+                 | _: Atom.PlainTextMarkup # EmailAddress
+                 | _: Atom.PlainTextMarkup # Italic
+                 | _: Atom.PlainTextMarkup # Monospace
+                 | _: Atom.PlainTextMarkup # Strikethrough
+                 | _: Atom.PlainTextMarkup # TeX
+                 | _: Atom.PlainTextMarkup # Underline
+                 | _: Atom.PlainTextMarkup # WebAddress
+                 | _: Atom.TagRef          # TagRef =>
+                true
+
+              // next
+              case _: Atom.CodeBlock       # CodeBlock
+                 | _: Atom.Headings        # Heading1
+                 | _: Atom.Headings        # Heading2
+                 | _: Atom.Headings        # Heading3
+                 | _: Atom.Headings        # Heading4
+                 | _: Atom.Headings        # Heading5
+                 | _: Atom.Headings        # Heading6
+                 | _: Atom.ListMarkup      # OrderedList
+                 | _: Atom.ListMarkup      # UnorderedList
+                 | _: Atom.NewLine         # BlankLine =>
+                false
+            }
+
+        atom match {
+
+          case a: Atom.Literal # Literal =>
+            val a2 =
+              if (prevIsSpace && a.value.startsWith(" "))
+                a.modText(_.drop(1))
+              else
+                a
+
+            val a3 =
+              if (i == last && !allowTrailingWS) {
+                val x = a2.modText(TextMod.noWhitespaceRight.run)
+                if (x.value.isEmpty)
+                  dropLast = true
+                x
+              } else
+                a2
+
+            atom2 = a3
+            prevIsSpace = a3.value.endsWith(" ")
+
+          case a: Atom.Headings # Heading =>
+            prevIsSpace = true
+            atom2 = a.modTitle(fixNonEmpty(_, allowWsBeforeNext))
+
+          case a: Atom.PlainTextMarkup # PlainTextMarkupStyled =>
+            val a2 = a.unsafeWithInner(fixNonEmpty(a.inner, allowWsBeforeNext))
+            atom2 = a2
+            // No need to update prevIsSpace here.
+            // It's a shared var so the last result of fixNonEmpty is exactly what's needed.
+
+          case a: Atom.ListMarkup # ListBase =>
+            atom2 = a.map { li =>
+              prevIsSpace = true
+              fixOptional(li, allowTrailingWS = false)
+            }
+
+          case _: Atom.CodeBlock       # CodeBlock
+             | _: Atom.ContentRef      # CodeRef
+             | _: Atom.ContentRef      # ReqRef
+             | _: Atom.ContentRef      # UseCaseStepRef
+             | _: Atom.Issue           # Issue
+             | _: Atom.NewLine         # BlankLine
+             | _: Atom.PlainTextMarkup # EmailAddress
+             | _: Atom.PlainTextMarkup # Monospace
+             | _: Atom.PlainTextMarkup # TeX
+             | _: Atom.PlainTextMarkup # WebAddress
+             | _: Atom.TagRef          # TagRef =>
+            prevIsSpace = false
+        }
+
+        if (!dropLast && (atom2 ne atom)) {
+          if (result eq null) result = text.toArray
+          result(i) = atom2.asInstanceOf[T2#Atom]
+        }
+
+        i += 1
+      }
+
+      if (dropLast) {
+        if (result eq null) result = text.toArray
+        result = result.dropRight(1)
+      }
+
+      if (result ne null)
+        ArraySeq.unsafeWrapArray(result)
+      else
+        text
+    }
+
+    _fixNonEmpty = (text, allowTrailingWS) => {
+      val t1 = text.whole
+      val t2 = fixOptional(t1, allowTrailingWS)
+      if ((t1 ne t2) && t2.nonEmpty)
+        NonEmptyArraySeq.force(t2)
+      else
+        text
+    }
+
+    fixOptional(rootText, allowTrailingWS = false)
   }
 
   // Because there are special cases, not all whitespace is trimmed.

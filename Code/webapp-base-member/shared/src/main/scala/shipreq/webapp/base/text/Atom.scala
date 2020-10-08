@@ -209,10 +209,10 @@ object Atom {
       override final def exists(f: AnyAtom => Boolean) =
         f(this) || title.exists(_.exists(f))
 
-      // For tests
-
-      final def modTitle(f: HeadingTitle => HeadingTitle) =
-        copy(f(title))
+      final def modTitle(f: HeadingTitle => HeadingTitle) = {
+        val t2 = f(title)
+        if (t2 eq title) this else copy(t2)
+      }
 
       final override def modText(f: String => String): this.type =
         copy(title.map(_.modText(f))).asInstanceOf[this.type]
@@ -299,12 +299,18 @@ object Atom {
 
     case class OrderedList(items: NonEmptyArraySeq[ListItem]) extends ListBase(items) {
       override def unsafeWithItems(items: NonEmptyArraySeq[ArraySeq[Base#Atom]]): this.type =
-        OrderedList(items.asInstanceOf[NonEmptyArraySeq[ListItem]]).asInstanceOf[this.type]
+        if (items eq this.items)
+          this
+        else
+          OrderedList(items.asInstanceOf[NonEmptyArraySeq[ListItem]]).asInstanceOf[this.type]
     }
 
     case class UnorderedList(items: NonEmptyArraySeq[ListItem]) extends ListBase(items) {
       override def unsafeWithItems(items: NonEmptyArraySeq[ArraySeq[Base#Atom]]): this.type =
-        UnorderedList(items.asInstanceOf[NonEmptyArraySeq[ListItem]]).asInstanceOf[this.type]
+        if (items eq this.items)
+          this
+        else
+          UnorderedList(items.asInstanceOf[NonEmptyArraySeq[ListItem]]).asInstanceOf[this.type]
     }
   }
 
@@ -352,7 +358,10 @@ object Atom {
         F.map(inner.traverse(_.modTextF(f).asInstanceOf[F[styled.Atom]]))(copy(_).asInstanceOf[this.type])
 
       final def unsafeWithInner(inner: NonEmptyArraySeq[Base#Atom]): Self =
-        copy(inner.asInstanceOf[Styled])
+        if (inner eq this.inner)
+          this.asInstanceOf[Self]
+        else
+          copy(inner.asInstanceOf[Styled])
     }
 
     /** Web address, like "https://www.google.com" */
