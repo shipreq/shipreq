@@ -15,7 +15,7 @@ import shipreq.base.util.{NonEmptyArraySeq, Valid}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ApplicableTagGD, Event}
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.test.{ProjectDsl, TextShrink, UnsafeTypes, SampleProject6 => SP}
+import shipreq.webapp.base.test.{ProjectDsl, SampleProject6 => SP, TextShrink, UnsafeTypes}
 import shipreq.webapp.base.text.Atom.{AnyAtom, CodeBlockDetail, DisplayReqRef}
 import shipreq.webapp.base.{RandomData => $}
 import sourcecode.Line
