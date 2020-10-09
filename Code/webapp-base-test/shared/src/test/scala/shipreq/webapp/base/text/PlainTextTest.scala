@@ -279,86 +279,233 @@ object PlainTextTest extends TestSuite {
       }
 
       "nestedLists" - {
-        val input =
-          """1. nice
-            |* a
-            |   * x
-            |    * a
-            |  * y
-            |       * b
-            |       * c
-            |         * c1
-            |        * c2
-            |       * d
-            |        * d1
-            |  *   !
-            |   * x
-            |* b
-            | 1. voi
-            | *  oho
-            | 1. ja
-            | 1. ei
-            | *  miksi
-            |* c
-            | 1. z
-            |  nice
-            | 1. w
-            |  * xx
-            |* d
-            |1. cool
-            |""".stripMargin.replace("!", "")
-        val expect =
-          """1. nice
-            |
-            |* a
-            |
-            |  * x
-            |
-            |    * a
-            |
-            |  * y
-            |
-            |    * b
-            |
-            |    * c
-            |
-            |      * c1
-            |      * c2
-            |
-            |    * d
-            |
-            |      * d1
-            |
-            |  * !
-            |
-            |    * x
-            |
-            |* b
-            |
-            |  1. voi
-            |
-            |  * oho
-            |
-            |  1. ja
-            |  2. ei
-            |
-            |  * miksi
-            |
-            |* c
-            |
-            |  1. z
-            |
-            |     nice
-            |
-            |  2. w
-            |
-            |     * xx
-            |
-            |* d
-            |
-            |1. cool
-            |""".stripMargin.replace("!", "")
-        assertCorrection(input, expect)
+
+        "allShort" - {
+          val expect =
+            """* a
+              |  * b
+              |  * c
+              |* d
+              |  * e
+              |    * f
+              |    * g
+              |  * h
+              |  * i
+              |    * j
+              |* k
+              |""".stripMargin
+          assertRoundTrip(expect)
+        }
+
+        "allShortEmpty" - {
+          val expect =
+            """* !
+              |  * !
+              |  * !
+              |* !
+              |  * !
+              |    * !
+              |    * !
+              |  * !
+              |  * !
+              |    * !
+              |* !
+              |""".stripMargin.replace("!", "")
+          assertRoundTrip(expect)
+        }
+
+        "nlInLI" - {
+          val expect =
+            """* a
+              |
+              |  Here we are
+              |
+              |  * b
+              |  * c
+              |
+              |  Ok
+              |
+              |  * d
+              |  * e
+              |
+              |  good
+              |
+              |* hello
+              |  * nice
+              |
+              |* bye
+              |""".stripMargin
+          assertRoundTrip(expect)
+        }
+
+        "textBetweenULs" - {
+          val expect =
+            """* a
+              |
+              |  * b
+              |  * c
+              |
+              |  Ok
+              |
+              |  * d
+              |  * e
+              |
+              |* hello
+              |  * nice
+              |
+              |* bye
+              |""".stripMargin
+          assertRoundTrip(expect)
+        }
+
+        "shortMixed" - {
+          val expect =
+            """* a
+              |
+              |  * b
+              |  * c
+              |
+              |  1. x
+              |  2. y
+              |
+              |  * d
+              |  * e
+              |
+              |* b
+              |  * b2
+              |""".stripMargin
+          assertRoundTrip(expect)
+        }
+
+        "nestedNLs1" - {
+          val expect =
+            """* a
+              |  * b
+              |  * c
+              |
+              |* d
+              |  * e
+              |    * f
+              |
+              |      nice
+              |
+              |    * g
+              |
+              |    * g2
+              |      * g3
+              |
+              |  * h
+              |
+              |  * i
+              |    * j
+              |
+              |* k
+              |  * l
+              |""".stripMargin
+          assertRoundTrip(expect)
+        }
+
+        "nestedNLs2" - {
+          val expect =
+            """* a
+              |  * b
+              |  * c
+              |
+              |* d
+              |  * e
+              |
+              |    here we go...
+              |
+              |    * f
+              |
+              |      nice
+              |
+              |    * g
+              |
+              |    * g2
+              |      * g3
+              |
+              |  * h
+              |
+              |  * i
+              |    * j
+              |
+              |* k
+              |  * l
+              |""".stripMargin
+          assertRoundTrip(expect)
+        }
+
+        "big" - {
+          val input =
+            """1. nice
+              |* a
+              |   * x
+              |    * a
+              |  * y
+              |       * b
+              |       * c
+              |         * c1
+              |        * c2
+              |       * d
+              |        * d1
+              |  *   !
+              |   * x
+              |* b
+              | 1. voi
+              | *  oho
+              | 1. ja
+              | 1. ei
+              | *  miksi
+              |* c
+              | 1. z
+              |  nice
+              | 1. w
+              |  * xx
+              |* d
+              |1. cool
+              |""".stripMargin.replace("!", "")
+          val expect =
+            """1. nice
+              |
+              |* a
+              |  * x
+              |    * a
+              |  * y
+              |    * b
+              |    * c
+              |      * c1
+              |      * c2
+              |    * d
+              |      * d1
+              |  * !
+              |    * x
+              |
+              |* b
+              |
+              |  1. voi
+              |
+              |  * oho
+              |
+              |  1. ja
+              |  2. ei
+              |
+              |  * miksi
+              |
+              |* c
+              |  1. z
+              |
+              |     nice
+              |
+              |  2. w
+              |     * xx
+              |
+              |* d
+              |
+              |1. cool
+              |""".stripMargin.replace("!", "")
+          assertCorrection(input, expect)
+        }
       }
 
       "listBug1" - {
