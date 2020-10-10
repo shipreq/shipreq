@@ -142,7 +142,7 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.9")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.10")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
@@ -154,7 +154,7 @@ object Dependencies {
   }
 
   object LibJetty {
-    private def ver = "9.4.31.v20200723"
+    private def ver = "9.4.32.v20200930"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
@@ -205,7 +205,7 @@ object Dependencies {
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.4.0")
-  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.16")
+  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.17")
   val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.13.5")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "4.0.1")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.3")
