@@ -1560,26 +1560,14 @@ object Style extends StyleSheet.Inline {
 
     val blankLine = style(display.block, height(blankLineHeight))
 
-    private def ul = styleS(
-      paddingLeft(3.2 ex),
-      &.firstChild(marginTop(`0`)),
-      &.lastChild(marginBottom(`0`)),
+    val richTextUL = style(
+      margin(`0`),
+      paddingLeft(3.4 ex),
     )
 
-    val ulCompact = style(
-      ul,
-      margin(blankLineHeight, `0`),
-    )
-
-    val ulSpacious = style(
-      ul,
-      margin(blankLineHeight, `0`, `0`, `0`),
-      unsafeChild(">li")(marginBottom(blankLineHeight)),
-      &.lastChild(
-        unsafeChild(">li")(
-          &.lastChild(marginBottom(`0`))
-        ),
-      ),
+    val richTextOL = style(
+      margin(`0`),
+      paddingLeft(3 ex),
     )
 
     private def heading = style(

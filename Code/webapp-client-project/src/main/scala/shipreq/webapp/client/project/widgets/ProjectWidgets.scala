@@ -108,7 +108,7 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
     }
 
   override protected def _text(text: AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity): VdomTag =
-    <.span(text.map(textAtom(live, tagValidity)): _*)
+    <.span(richText(text, live, tagValidity))
 
   // Keep in sync with PlainText because it's used together for sorting/rendering in ReqTable
   override protected def deletionReasonWhenNoneGiven: VdomTag =
@@ -314,51 +314,152 @@ final class ProjectWidgets[+Ctx <: ProjectText.Context](project      : Project,
   private val italic        = <.em
   private val strikethrough = <.span(*.strikethrough)
   private val underline     = <.span(*.underline)
+  private val liTopSpace    = ^.marginTop := "1em"
+  private val ulBottomSpace = ^.marginBottom := "1em"
+  private val ul            = <.ul(*.richTextUL)
+  private val ol            = <.ol(*.richTextOL)
 
-  private def textAtom(liveText: Live, tagValidity: ApplicableTagId => Validity): Atom.AnyAtom => TagMod = {
+  // There are some non-trivial rules in place here:
+  //
+  // 1. if an LI contains blanklines, or contains a list followed by anything else
+  //  * use spaces between immediate child lists
+  //  * all sibling LIs must be separated by spaces
+  //  * parent LIs should also be separated by spaces
+  //
+  private def richText(atoms      : ArraySeq[Atom.AnyAtom],
+                       liveText   : Live,
+                       tagValidity: ApplicableTagId => Validity): TagMod = {
     import Atom._
 
-    def wrapped(tag: VdomTag, inner: NonEmptyArraySeq[Atom.AnyAtom]) =
-      tag(inner.whole.toTagMod(atom))
+    def nextLevel(level            : Int,
+                  atoms            : ArraySeq[AnyAtom],
+                  parentIsSpacyList: Boolean = false
+                 ): TagMod = {
 
-    def list(tag: VdomTag, a: Atom.ListMarkup # ListBase) = {
-      val style = if (a.itemsContainMultipleLines) *.ulSpacious else *.ulCompact
-      tag(style, a.items.whole.toTagMod(row => <.li(row toTagMod atom)))
-    }
+      lazy val listsAtThisLevel: Int =
+        atoms.count {
+          case _: ListMarkup # ListBase => true
+          case _                        => false
+        }
 
-    lazy val atom: AnyAtom => TagMod = {
-      case a: Literal         # Literal        => <.span(a.value)
-      case a: CodeBlock       # CodeBlock      => RichCodeBlock.Props(a.detail, a.code, webWorker).render
-      case a: ContentRef      # CodeRef        => codeRef(liveText)(a.id)(a.display)
-      case a: ContentRef      # ReqRef         => reqRef(liveText)(a.display)(a.id)
-      case a: ContentRef      # UseCaseStepRef => useCaseStepRefById(a.value)
-      case a: Headings        # Heading1       => wrapped(h1, a.title)
-      case a: Headings        # Heading2       => wrapped(h2, a.title)
-      case a: Headings        # Heading3       => wrapped(h3, a.title)
-      case a: Headings        # Heading4       => wrapped(h4, a.title)
-      case a: Headings        # Heading5       => wrapped(h5, a.title)
-      case a: Headings        # Heading6       => wrapped(h6, a.title)
-      case a: Issue           # Issue          => issue(a.typ, a.desc, liveText)
-      case a: ListMarkup      # OrderedList    => list(<.ol, a)
-      case a: ListMarkup      # UnorderedList  => list(<.ul, a)
-      case _: NewLine         # BlankLine      => <.div(*.blankLine)
-      case a: PlainTextMarkup # Bold           => wrapped(bold, a.inner)
-      case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)
-      case a: PlainTextMarkup # Italic         => wrapped(italic, a.inner)
-      case a: PlainTextMarkup # Monospace      => <.pre(*.monospace, a.value)
-      case a: PlainTextMarkup # Strikethrough  => wrapped(strikethrough, a.inner)
-      case a: PlainTextMarkup # TeX            => katex(a)
-      case a: PlainTextMarkup # Underline      => wrapped(underline, a.inner)
-      case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
+      val lastIdx = atoms.length - 1
 
-      case a: TagRef          # TagRef         =>
+      def wrapped(tag: VdomTag, inner: NonEmptyArraySeq[Atom.AnyAtom]): VdomTag =
+        tag(nextLevel(level + 1, inner.whole))
+
+      def tagRef(a: TagRef # TagRef): VdomTag = {
         val tag = project.config.tags.needApplicableTag(a.value)
         viewTags(tag)
           .withValidity(tagValidity(tag.id) & Invalid.when(liveText.is(Live) && tag.live.is(Dead)))
           .render(ViewTags.DisplaySettings.inText)
+      }
+
+      @tailrec
+      def go(vdomArray                  : VdomArray,
+             idx                        : Int,
+             seenMultilineAtThisLevelYet: Boolean,
+            ): Unit = {
+
+        def list(tag: VdomTag, l: Atom.ListMarkup # ListBase): VdomTag = {
+          val lis                   = l.items.whole
+          val liSpace               = l.itemNeedsSpace.whole
+          val spaceForSubsequentLIs = l.needsSpace
+
+          val results = VdomArray.empty()
+          var i = 0
+          while (i < lis.length) {
+            val li = lis(i)
+
+            var needTopSpace = false
+
+            if (i == 0) {
+              // First LI
+
+              @inline def alreadyInPlace =
+                idx == 0
+
+              @inline def atRoot =
+                level == 0
+
+              @inline def separateFromParentListItem =
+                parentIsSpacyList && (seenMultilineAtThisLevelYet || listsAtThisLevel != 1)
+
+              if (!alreadyInPlace) {
+                if (atRoot || separateFromParentListItem) {
+                  needTopSpace = true
+                }
+              }
+
+            } else {
+              // Subsequent LIs
+              if (spaceForSubsequentLIs)
+                needTopSpace = true
+            }
+
+            val result: VdomTag =
+              <.li(
+                ^.key := i,
+                liTopSpace.when(needTopSpace),
+                TagMod.when(li.nonEmpty)(
+                  nextLevel(level + 1, li, liSpace(i))))
+
+            results += result
+            i += 1
+          }
+
+          val needBottomSpace =
+            idx != lastIdx
+
+          tag(
+            ulBottomSpace.when(needBottomSpace),
+            results)
+        }
+
+        val atom = atoms(idx)
+
+        val cur: VdomTag = atom match {
+          case a: Literal         # Literal        => <.span(a.value)
+          case a: CodeBlock       # CodeBlock      => <.div(RichCodeBlock.Props(a.detail, a.code, webWorker).render)
+          case a: ContentRef      # CodeRef        => codeRef(liveText)(a.id)(a.display)
+          case a: ContentRef      # ReqRef         => reqRef(liveText)(a.display)(a.id)
+          case a: ContentRef      # UseCaseStepRef => useCaseStepRefById(a.value)
+          case a: Headings        # Heading1       => wrapped(h1, a.title)
+          case a: Headings        # Heading2       => wrapped(h2, a.title)
+          case a: Headings        # Heading3       => wrapped(h3, a.title)
+          case a: Headings        # Heading4       => wrapped(h4, a.title)
+          case a: Headings        # Heading5       => wrapped(h5, a.title)
+          case a: Headings        # Heading6       => wrapped(h6, a.title)
+          case a: Issue           # Issue          => issue(a.typ, a.desc, liveText)
+          case a: ListMarkup      # OrderedList    => list(ol, a)
+          case a: ListMarkup      # UnorderedList  => list(ul, a)
+          case _: NewLine         # BlankLine      => <.div(*.blankLine)
+          case a: PlainTextMarkup # Bold           => wrapped(bold, a.inner)
+          case a: PlainTextMarkup # EmailAddress   => <.a(^.href := "mailto:" ~ a.value, a.value)
+          case a: PlainTextMarkup # Italic         => wrapped(italic, a.inner)
+          case a: PlainTextMarkup # Monospace      => <.pre(*.monospace, a.value)
+          case a: PlainTextMarkup # Strikethrough  => wrapped(strikethrough, a.inner)
+          case a: PlainTextMarkup # TeX            => katex(a)
+          case a: PlainTextMarkup # Underline      => wrapped(underline, a.inner)
+          case a: PlainTextMarkup # WebAddress     => <.a(^.href := a.value, a.value)
+          case a: TagRef          # TagRef         => tagRef(a)
+        }
+
+        vdomArray += cur(^.key := idx)
+
+        if (idx != lastIdx)
+          go(vdomArray, idx + 1, seenMultilineAtThisLevelYet || atom.containsMultipleLines)
+      }
+
+      if (atoms.isEmpty)
+        EmptyVdom
+      else {
+        val va = VdomArray.empty()
+        go(va, 0, seenMultilineAtThisLevelYet = false)
+        va
+      }
     }
 
-    atom
+    nextLevel(0, atoms)
   }
 
   private val useCaseStepRef: UseCaseStep.Focus => VdomTag =

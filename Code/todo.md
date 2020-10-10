@@ -17,7 +17,6 @@
 * Add percentages to deriv expl (?)
 * add a KB shortcut to show/hide preview
 * add blockquotes
-* too many newlines in nested lists (PlainText & ProjectWidgets)
 * FR-46: Users #should be able to merge duplicated reqs
 
 * FR-35: Allow a user to view a project in read-only mode

@@ -142,7 +142,7 @@ object PlainText {
       }
 
     override protected def _text(text: Text.AnyOptional, live: Live, tagValidity: ApplicableTagId => Validity): String =
-      nestedText("", "", live, text, true)
+      nestedText(live, text, includeMarkup = true)
 
     // Keep in sync with ProjectWidgets because it's used together for sorting/rendering in ReqTable
     override protected def deletionReasonWhenNoneGiven: String =
@@ -185,154 +185,210 @@ object PlainText {
         case n => " " * n
       }
 
-//    private def quote(s: String): String =
-//      io.circe.Encoder.encodeString(s).noSpaces
+    // There are some non-trivial rules in place here:
+    //
+    // 1. if an LI contains blanklines, or contains a list followed by anything else
+    //  * use spaces between immediate child lists
+    //  * all sibling LIs must be separated by spaces
+    //  * parent LIs should also be separated by spaces
+    //
+    private def nestedText(live         : Live,
+                           atoms        : ArraySeq[AnyAtom],
+                           includeMarkup: Boolean,
+                          ): String = {
 
-    private def nestedText(acc: String, indent: String, live: Live, atoms: ArraySeq[AnyAtom], includeMarkup: Boolean): String = {
-      @tailrec def go(acc: String, atoms: ArraySeq[AnyAtom], idx: Int): String = {
-        val nextIdx = idx + 1
-        val nextIsEmpty = nextIdx == atoms.length
-        import Atom._
+      def nextLevel(acc              : String,
+                    indent           : String,
+                    atoms            : ArraySeq[AnyAtom],
+                    parentIsSpacyList: Boolean = false
+                   ): String = {
 
-        def heading(markup: String, title: Headings#HeadingTitle) = {
-          val line = {
-            val t = nestedText("", "", live, title.whole, includeMarkup)
-            if (!includeMarkup)
-              t
-            else if (t.isEmpty)
-              markup
+        lazy val listsAtThisLevel: Int =
+          atoms.count {
+            case _: Atom.ListMarkup # ListBase => true
+            case _                             => false
+          }
+
+        @tailrec def go(acc                        : String,
+                        idx                        : Int,
+                        seenMultilineAtThisLevelYet: Boolean,
+                       ): String = {
+          import Atom._
+
+          val nextIdx = idx + 1
+          val nextIsEmpty = nextIdx == atoms.length
+
+          def heading(markup: String, title: Headings#HeadingTitle) = {
+            val line = {
+              val t = nextLevel("", "", title.whole)
+              if (!includeMarkup)
+                t
+              else if (t.isEmpty)
+                markup
+              else
+                markup ~ ' ' ~ t
+            }
+            val prefix = if (acc.isEmpty || acc.endsWith("\n\n")) "" else "\n\n"
+            val suffix = if (nextIsEmpty) "" else "\n\n"
+            prefix ~ line ~ suffix
+          }
+
+          def style(markup: String, innerText: NonEmptyArraySeq[AnyAtom]) = {
+            val inner = nextLevel("", "", innerText.whole)
+            if (includeMarkup)
+              markup ~ inner ~ markup
             else
-              markup ~ ' ' ~ t
-          }
-          val prefix = if (acc.isEmpty || acc.endsWith("\n\n")) "" else "\n\n"
-          val suffix = if (nextIsEmpty) "" else "\n\n"
-          prefix ~ line ~ suffix
-        }
-
-        def style(markup: String, innerText: NonEmptyArraySeq[AnyAtom]) = {
-          val inner = nestedText("", "", live, innerText.whole, includeMarkup)
-          if (includeMarkup)
-            markup ~ inner ~ markup
-          else
-            inner
-        }
-
-        def list(a: ListMarkup # ListBase, lead: () => String) = {
-          var bullet = ""
-
-          val prefix: String => String = {
-            val gapBetweenBullets =
-              if (a.itemsContainMultipleLines)
-                "\n\n"
-              else
-                "\n"
-            q => {
-              bullet = lead()
-              if (q.isEmpty) {
-                if (acc.isEmpty || acc.endsWith("\n\n" ~ indent))
-                  bullet
-                else
-                  "\n\n" ~ indent ~ bullet
-              } else
-                q ~ gapBetweenBullets ~ indent ~ bullet
-            }
+              inner
           }
 
-          val r = a.items.foldLeft("") { (q, li) =>
-            val p = prefix(q) // side-effects to re-populate bullet
-            val nextIndent = indent + spaces(bullet.length)
-            nestedText(p, nextIndent, live, li, includeMarkup)
-          }
+          def list(l: ListMarkup # ListBase, nextBullet: () => String) = {
+            val lis                   = l.items.whole
+            val liSpace               = l.itemNeedsSpace.whole
+            val spaceForSubsequentLIs = if (l.needsSpace) "\n\n" else "\n"
 
-          if (nextIsEmpty) r else r ~ "\n\n" ~ indent
-        }
+            var result = ""
+            var i = 0
+            while (i < lis.length) {
+              val li = lis(i)
 
-        val cur = atoms(idx) match {
-          case a: Literal         # Literal        => a.value
-          case _: NewLine         # BlankLine      => "\n\n" ~ indent
-          case a: ContentRef      # ReqRef         => reqRef(a.id, a.display, includeMarkup = includeMarkup)
-          case a: ContentRef      # CodeRef        => codeRef(a.id, a.display, includeMarkup = includeMarkup)
-          case a: ContentRef      # UseCaseStepRef => useCaseStepRef(a.value)
-          case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live, Optional)))
-          case a: PlainTextMarkup # EmailAddress   => a.value
-          case a: PlainTextMarkup # Monospace      => if (includeMarkup) '`' ~ a.value ~ '`' else a.value
-          case a: PlainTextMarkup # TeX            => G.texSurround(a.value)
-          case a: PlainTextMarkup # WebAddress     => a.value
-          case a: TagRef          # TagRef         => tagRef(a.value)
-          case a: Headings        # Heading1       => heading("#", a.title)
-          case a: Headings        # Heading2       => heading("##", a.title)
-          case a: Headings        # Heading3       => heading("###", a.title)
-          case a: Headings        # Heading4       => heading("####", a.title)
-          case a: Headings        # Heading5       => heading("#####", a.title)
-          case a: Headings        # Heading6       => heading("######", a.title)
-          case a: PlainTextMarkup # Bold           => style("**", a.inner)
-          case a: PlainTextMarkup # Italic         => style("//", a.inner)
-          case a: PlainTextMarkup # Strikethrough  => style("~~", a.inner)
-          case a: PlainTextMarkup # Underline      => style("__", a.inner)
-          case a: ListMarkup      # OrderedList    => list(a, olLead())
-          case a: ListMarkup      # UnorderedList  => list(a, ulLead)
+              // Add the new line
+              if (i == 0) {
 
-          // ---------------------------------------------------------------------------------------------------------
-          case a: CodeBlock # CodeBlock =>
+                // First LI
 
-            val firstLine: String =
-              if (includeMarkup)
-                a.detail match {
-                  case Some(d) => "```" ~ d.toText ~ '\n'
-                  case None    => "```\n"
+                @inline def alreadyInPlace =
+                  acc.isEmpty || acc.endsWith("\n\n" ~ indent)
+
+                @inline def atRoot =
+                  indent.isEmpty
+
+                @inline def separateFromParentListItem =
+                  parentIsSpacyList && (seenMultilineAtThisLevelYet || listsAtThisLevel != 1)
+
+                if (!alreadyInPlace) {
+                  if (atRoot || separateFromParentListItem) {
+                    result += "\n"
+                  }
+                  result += "\n"
+                  result += indent
                 }
-              else
-                ""
 
-            if (indent.isEmpty) {
-              // top-level
+              } else {
+                // Subsequent LIs
+                result += spaceForSubsequentLIs
+                result += indent
+              }
 
-              val head =
-                if (acc.isEmpty || acc.endsWith("\n\n"))
-                  "" // no top-margin required
-                else if (acc.endsWith("\n"))
-                  "\n" // shouldn't happen but just in case - ensure our top-margin is only one line
-                else
-                  "\n\n" // add top-margin of one line
+              // Add the bullet
+              val bullet = nextBullet()
+              result += bullet
 
-              val tail = if (nextIsEmpty) "" else "\n\n"
+              // Add the LI content
+              val nextIndent = indent + spaces(bullet.length)
+              if (li.nonEmpty) {
+                result = nextLevel(result, nextIndent, li, liSpace(i))
+              }
 
-              val lastLine = if (includeMarkup) "\n```" else ""
-
-              head ~ firstLine ~ a.code ~ lastLine ~ tail
-
-            } else {
-              // we're in a list
-
-              val head =
-                if (acc == "* " || acc.endsWith("\n* ") || acc.endsWith("\n" ~ indent))
-                  "" // no top-margin or indentation required
-                else if (acc.endsWith("\n"))
-                  "\n" ~ indent // shouldn't happen but just in case - ensure our top-margin is only one line
-                else
-                  "\n\n" ~ indent // add top-margin of one line, and indentation
-
-              val tail = if (nextIsEmpty) "" else "\n\n" ~ indent
-
-              val lastLine = if (includeMarkup) "\n" ~ indent ~ "```" else ""
-
-              head ~ firstLine ~ a.code.indent(indent) ~ lastLine ~ tail
+              i += 1
             }
 
-        }
-        // -----------------------------------------------------------------------------------------------------------
+            if (nextIsEmpty)
+              result
+            else
+              result ~ "\n\n" ~ indent
+          }
 
-        val nextAcc = acc ~ cur
-        if (nextIsEmpty)
-          nextAcc
+          val atom = atoms(idx)
+
+          val cur = atom match {
+            case a: Literal         # Literal        => a.value
+            case _: NewLine         # BlankLine      => "\n\n" ~ indent
+            case a: ContentRef      # ReqRef         => reqRef(a.id, a.display, includeMarkup = includeMarkup)
+            case a: ContentRef      # CodeRef        => codeRef(a.id, a.display, includeMarkup = includeMarkup)
+            case a: ContentRef      # UseCaseStepRef => useCaseStepRef(a.value)
+            case a: Issue           # Issue          => issue(a.typ, a.desc.asOption.map(text(_, live, Optional)))
+            case a: PlainTextMarkup # EmailAddress   => a.value
+            case a: PlainTextMarkup # Monospace      => if (includeMarkup) '`' ~ a.value ~ '`' else a.value
+            case a: PlainTextMarkup # TeX            => G.texSurround(a.value)
+            case a: PlainTextMarkup # WebAddress     => a.value
+            case a: TagRef          # TagRef         => tagRef(a.value)
+            case a: Headings        # Heading1       => heading("#", a.title)
+            case a: Headings        # Heading2       => heading("##", a.title)
+            case a: Headings        # Heading3       => heading("###", a.title)
+            case a: Headings        # Heading4       => heading("####", a.title)
+            case a: Headings        # Heading5       => heading("#####", a.title)
+            case a: Headings        # Heading6       => heading("######", a.title)
+            case a: PlainTextMarkup # Bold           => style("**", a.inner)
+            case a: PlainTextMarkup # Italic         => style("//", a.inner)
+            case a: PlainTextMarkup # Strikethrough  => style("~~", a.inner)
+            case a: PlainTextMarkup # Underline      => style("__", a.inner)
+            case a: ListMarkup      # OrderedList    => list(a, olLead())
+            case a: ListMarkup      # UnorderedList  => list(a, ulLead)
+
+            // ---------------------------------------------------------------------------------------------------------
+            case a: CodeBlock # CodeBlock =>
+
+              val firstLine: String =
+                if (includeMarkup)
+                  a.detail match {
+                    case Some(d) => "```" ~ d.toText ~ '\n'
+                    case None    => "```\n"
+                  }
+                else
+                  ""
+
+              if (indent.isEmpty) {
+                // top-level
+
+                val head =
+                  if (acc.isEmpty || acc.endsWith("\n\n"))
+                    "" // no top-margin required
+                  else if (acc.endsWith("\n"))
+                    "\n" // shouldn't happen but just in case - ensure our top-margin is only one line
+                  else
+                    "\n\n" // add top-margin of one line
+
+                val tail = if (nextIsEmpty) "" else "\n\n"
+
+                val lastLine = if (includeMarkup) "\n```" else ""
+
+                head ~ firstLine ~ a.code ~ lastLine ~ tail
+
+              } else {
+                // we're in a list
+
+                val head =
+                  if (acc == "* " || acc.endsWith("\n* ") || acc.endsWith("\n" ~ indent))
+                    "" // no top-margin or indentation required
+                  else if (acc.endsWith("\n"))
+                    "\n" ~ indent // shouldn't happen but just in case - ensure our top-margin is only one line
+                  else
+                    "\n\n" ~ indent // add top-margin of one line, and indentation
+
+                val tail = if (nextIsEmpty) "" else "\n\n" ~ indent
+
+                val lastLine = if (includeMarkup) "\n" ~ indent ~ "```" else ""
+
+                head ~ firstLine ~ a.code.indent(indent) ~ lastLine ~ tail
+              }
+
+          }
+          // -----------------------------------------------------------------------------------------------------------
+
+          val nextAcc = acc ~ cur
+          if (nextIsEmpty)
+            nextAcc
+          else
+            go(nextAcc, nextIdx, seenMultilineAtThisLevelYet || atom.containsMultipleLines)
+        }
+
+        if (atoms.isEmpty)
+          acc
         else
-          go(nextAcc, atoms, nextIdx)
+          go(acc, 0, seenMultilineAtThisLevelYet = false)
       }
 
-      if (atoms.isEmpty)
-        acc
-      else
-        go(acc, atoms, 0)
+      nextLevel("", "", atoms)
     }
 
     private def _reqRef(display: DisplayReqRef, includeMarkup: Boolean)
@@ -462,6 +518,6 @@ object PlainText {
       reqTitleWithoutMarkup(p.content.reqs.need(id))
 
     def textWithoutMarkup(text: Text.AnyOptional, live: Live): String =
-      nestedText("", "", live, text, false)
+      nestedText(live, text, includeMarkup = false)
   }
 }

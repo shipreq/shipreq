@@ -120,7 +120,6 @@ object Atom {
       final def containsType[T <: AnyAtom](implicit ct: ClassTag[T]): Boolean =
         exists(ct.runtimeClass.isInstance)
 
-      // For tests
       @nowarn("cat=unused") def modText(f: String => String): this.type = this
       @nowarn("cat=unused") def modTextF[F[_]](f: String => F[String])(implicit F: Applicative[F]): F[this.type] = F.pure(this)
     }
@@ -272,10 +271,51 @@ object Atom {
       final override def isPlain = false
       final override def allowBlankLineAfter = false
       final override def containsMultipleLines = (_items.length > 1) || _items.head.exists(_.containsMultipleLines)
-      final val itemsContainMultipleLines = _items.exists(_.exists {
-        case _: ListBase => true
-        case a           => a.containsMultipleLines
-      })
+
+      // Used for determining when space should surround list items during rendering.
+      //
+      // Rules:
+      //
+      // 1. if an LI contains blanklines, or contains a list followed by anything else
+      //  * use spaces between immediate child lists
+      //  * all sibling LIs must be separated by spaces
+      //  * parent LIs should also be separated by spaces
+      //
+      final lazy val (itemNeedsSpace: NonEmptyArraySeq[Boolean], needsSpace: Boolean) = {
+        val lis      = items.whole
+        val results  = new Array[Boolean](lis.length)
+        var ulResult = false
+        var i        = 0
+
+        while (i < lis.length) {
+          val li = lis(i)
+
+          val result: Boolean = {
+            val last = li.length - 1
+            (last >= 0) && li.indices.exists { j =>
+
+              li(j) match {
+                case a: ListBase =>
+                  if (j != last)
+                    true // a list followed by anything else
+                  else
+                    a.needsSpace
+                case a =>
+                  a.containsMultipleLines
+              }
+            }
+          }
+
+          if (result)
+            ulResult = true
+
+          results(i) = result
+
+          i += 1
+        }
+
+        (NonEmptyArraySeq.force(ArraySeq.unsafeWrapArray(results)), ulResult)
+      }
 
       override final def exists(f: AnyAtom => Boolean) =
         f(this) || _items.exists(_.exists(_.exists(f)))
