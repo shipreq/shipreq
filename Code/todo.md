@@ -1,24 +1,10 @@
-### Analyse
-* Problem: I've set MF-33 to #should but it's still deriving #must as well
-  SI: Might need to add a field to disable DT for a req for a specific field (granularity=req)
-  SI: Or maybe a rule that for MFs, manual always wins / disables DT (granularity=req-type)
-* [FB-11] Add a field to show where a req is being referenced (i.e. FB-9 references FR-5 in its detail field, I should be able to see that from FB-5's page. "References"? "Citations"?)
-* Req Code config
-  * completely disable (don't show in ReqDetail or ReqTable, even remove from auto-complete)
-  * disable for some req types (and don't show in ReqDetail)
-  * mandatory for some req types
-* Common workflows:
-  * SDLC to deployment
-  * bug tracking
-  * agile shit
-
 ### Implement
+* FR-47: Filter derivative tag sources in ReqTable
+* no success reaction when non-implied req created from ReqDetail
 * add option to show simplified UC graphs (using the `merged-a` style)
-* Add percentages to deriv expl (?)
 * add a KB shortcut to show/hide preview
-* add blockquotes
-* FR-46: Users #should be able to merge duplicated reqs
 
+* FR-46: Users #should be able to merge duplicated reqs
 * FR-35: Allow a user to view a project in read-only mode
 * delete & restore projects
 * hard delete
@@ -31,6 +17,8 @@ Backlog (maybe-probably soon)
 * Bulk tag add/remove
 * Advanced colour picker doesn't work
 * ReqTable doesn't respect `max-width` unless `table-layout:fixed`
+* Add percentages to deriv expl (?)
+* add blockquotes
 
 * single-req card in project index is now redundant
   Removing it now looks shit. Replace it later when a new content screen is added.
@@ -38,6 +26,18 @@ Backlog (maybe-probably soon)
 * Remove Scalaz
 
 ### Analyse
+
+* [FB-11] Add a field to show where a req is being referenced (i.e. FB-9 references FR-5 in its detail field, I should be able to see that from FB-5's page. "References"? "Citations"?)
+
+* Req Code config
+  * completely disable (don't show in ReqDetail or ReqTable, even remove from auto-complete)
+  * disable for some req types (and don't show in ReqDetail)
+  * mandatory for some req types
+
+* Common workflows:
+  * SDLC to deployment
+  * bug tracking
+  * agile shit
 
 * Metrics
   * Reduce biz metrics to 5m
