@@ -27,6 +27,7 @@ object Filter {
     Potential.HashTag,
     Potential.ReqSet,
     Potential.ReqType,
+    Potential.Scope,
     F]
 
   object Potential extends FilterAst.Dsl {
@@ -39,6 +40,7 @@ object Filter {
     type ReqSubset          = IntensionalReqSet[data.ReqType.Mnemonic]
     type ReqSet             = NonEmptyVector[ReqSubset]
     type ReqType            = data.ReqType.Mnemonic
+    type Scope              = NonEmptyVector[FilterAst.Scope[String]]
 
     def reqSet(i1: ReqSubset, in: ReqSubset*): ReqSet =
       NonEmptyVector(i1, in.toVector)
@@ -63,6 +65,7 @@ object Filter {
     Valid.HashTag,
     Valid.ReqSet,
     Valid.ReqType,
+    Valid.Scope,
     F]
 
   object Valid extends FilterAst.Dsl {
@@ -75,6 +78,7 @@ object Filter {
     type ReqSubset          = IntensionalReqSet[data.ReqTypeId]
     type ReqSet             = NonEmptyVector[ReqSubset]
     type ReqType            = data.ReqTypeId
+    type Scope              = NonEmptySet[FilterAst.Scope[data.CustomField.Tag.Id]]
 
     def reqSet(i1: ReqSubset, in: ReqSubset*): ReqSet =
       NonEmptyVector(i1, in.toVector)
@@ -107,6 +111,7 @@ object Filter {
         case c: FilterAst.ImpliesAnyOf  [ImpCriteriaF, Boolean]          => impCriteria(c.criteria)
         case c: FilterAst.ImpliedByAnyOf[ImpCriteriaF, Boolean]          => impCriteria(c.criteria)
         case c: FilterAst.Reqs          [ReqSet]                         => reqSet(c.reqs)
+        case c: FilterAst.Scoped        [Scope, Boolean]                 => c.clause
         case c: FilterAst.Not           [Boolean]                        => c.clause
         case c: FilterAst.AllOf         [Boolean]                        => c.clauses.exists(Identity.apply)
         case c: FilterAst.AnyOf         [Boolean]                        => c.head || c.tail.exists(Identity.apply)
@@ -166,6 +171,7 @@ object Filter {
     Extensional.HashTag,
     Extensional.ReqSet,
     Extensional.ReqType,
+    Extensional.Scope,
     F]
 
   object Extensional extends FilterAst.Dsl {
@@ -177,6 +183,7 @@ object Filter {
     type HashTag            = Valid.HashTag
     type ReqSet             = Set[data.ReqId]
     type ReqType            = Valid.ReqType
+    type Scope              = Valid.Scope
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -194,12 +201,12 @@ object Filter {
 
     implicit val univEqFilterPotential: UnivEq[Potential] = {
       import Potential._
-      FilterAst.univEqFix[FieldCriteriaF, ImpCriteriaF, Attr, Field, IssueCat, HashTag, ReqSet, ReqType]
+      FilterAst.univEqFix[FieldCriteriaF, ImpCriteriaF, Attr, Field, IssueCat, HashTag, ReqSet, ReqType, Scope]
     }
 
     implicit val univEqFilterValid: UnivEq[Valid] = {
       import Valid._
-      FilterAst.univEqFix[FieldCriteriaF, ImpCriteriaF, Attr, Field, IssueCat, HashTag, ReqSet, ReqType]
+      FilterAst.univEqFix[FieldCriteriaF, ImpCriteriaF, Attr, Field, IssueCat, HashTag, ReqSet, ReqType, Scope]
     }
   }
 

@@ -33,10 +33,10 @@ object ProjectSpaProtocols {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private final val wsrrVersion = 6 // Bump this when any of following imports change
+  private final val wsrrVersion = 7 // Bump this when any of following imports change
   import CreateContentCmd.CodecsV4._
   import ManualIssueCmd  .CodecsV4._
-  import SavedViewCmd    .CodecsV3._
+  import SavedViewCmd    .CodecsV4._
   import UpdateConfigCmd .CodecsV2._
   import UpdateContentCmd.CodecsV4._
 
@@ -70,13 +70,13 @@ object ProjectSpaProtocols {
         .withMagicNumbers(0x1DB44559, 0x53562938)
     }
 
-    protected final val responseVersion = 6  // Bump this when any of following imports change
+    protected final val responseVersion = 7  // Bump this when any of following imports change
     import boopickle.DefaultBasic.unitPickler
     import shipreq.webapp.base.protocol.binary.v1.BaseData._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData1._
     import shipreq.webapp.base.protocol.binary.v1.BaseMemberData2._
     import shipreq.webapp.base.protocol.binary.v1.PostEvents._
-    import shipreq.webapp.base.protocol.binary.v1.Rev6._
+    import shipreq.webapp.base.protocol.binary.v1.Rev7._
 
     implicit val picklerInitAppData: Pickler[InitAppData] =
       new Pickler[InitAppData] {
