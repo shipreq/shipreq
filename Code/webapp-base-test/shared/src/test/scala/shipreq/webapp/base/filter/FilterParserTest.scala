@@ -218,6 +218,19 @@ object FilterParserTest extends TestSuite {
       "offC" - testFail("has:issue:-x,")
     }
 
+    "scoped" - {
+      import FilterAst.Scope._
+      "basic"    - test("derivation:(x)",                  scoped(false, NonEmptyVector(Derivation(None)), text("x")))
+      "main"     - test("+derivation:(x)",                 scoped(true,  NonEmptyVector(Derivation(None)), text("x")))
+      "field1"   - test("derivation(a):(x)",               scoped(false, NonEmptyVector(Derivation(Some("a"))), text("x")))
+      "field1WS" - test("derivation( a b ):(x)",           scoped(false, NonEmptyVector(Derivation(Some("a b"))), text("x")))
+      "field2"   - test("derivation(\"a()\"):(x)",         scoped(false, NonEmptyVector(Derivation(Some("a()"))), text("x")))
+      "field2WS" - test("derivation( \"a()\" ):(x)",       scoped(false, NonEmptyVector(Derivation(Some("a()"))), text("x")))
+      "fields"   - test("derivation(a),derivation(b):(x)", scoped(false, NonEmptyVector(Derivation(Some("a")), Derivation(Some("b"))), text("x")))
+      "main2"    - testFail("++derivation:(x)")
+      "nested"   - testFail("derivation:(derivation:(x))")
+    }
+
     "unknownKeys" - {
       "empty"        - testFail(":")
       "typoLack"     - testFail("noo:stuff")

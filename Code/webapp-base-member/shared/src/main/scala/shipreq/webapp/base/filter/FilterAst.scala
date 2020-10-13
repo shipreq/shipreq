@@ -142,12 +142,16 @@ object FilterAst {                                                              
   sealed trait Scope[+DerivativeTagField]
 
   object Scope {
+    final val main      = "+"
+    final val separator = ","
+    final val suffix    = ":"
+
     final case class Derivation[+A](field: Option[A]) extends Scope[A]
 
     object Derivation {
-      val main = "+"
-
-      val keyword = "derivation"
+      final val keyword     = "derivation"
+      final val fieldPrefix = "("
+      final val fieldSuffix = ")"
 
       def quoteIfNecessary(s: String): String =
         if (s.contains(')'))

@@ -6,7 +6,7 @@ import scala.util.{Failure, Success, Try}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.data.{Off, On, ReqTypePos}
-import shipreq.webapp.base.filter.Filter.Potential
+import shipreq.webapp.base.filter.Filter.{Potential, PotentialF}
 import shipreq.webapp.base.filter.FilterAst._
 import shipreq.webapp.base.util.ParsingUtil._
 import shipreq.webapp.base.util.{ParsingUtil, PreProcessed, PreProcessor}
@@ -125,16 +125,24 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
     rule((reqsSpec + ',') ~ popSeqToNEV[Potential.ReqSubset])
 
   private case class QuoteRule(char: Char) {
-    val charRule: () => Rule0       = () => rule(char)
-    def toRule  : Rule1[Potential] =
-      rule(charRule() ~!~ nonGreedyCapture(charRule) ~> ((s: String) => Potential.text(s: String, char)))
+    val charRule: () => Rule0 =
+      () => rule(char)
+
+    def stringRule: Rule1[String] =
+      rule(charRule() ~!~ nonGreedyCapture(charRule))
+
+    def astRule: Rule1[Potential] =
+      rule(stringRule ~> ((s: String) => Potential.text(s, char)))
   }
   private val quote1 = QuoteRule('"')
   private val quote2 = QuoteRule('\'')
   private val quote3 = QuoteRule('`')
 
+  private def quotedString: Rule1[String] =
+    rule(quote1.stringRule | quote2.stringRule | quote3.stringRule)
+
   private def quotedText: Rule1[Potential] =
-    rule((quote1.toRule | quote2.toRule | quote3.toRule) ~ end)
+    rule((quote1.astRule | quote2.astRule | quote3.astRule) ~ end)
 
   private def simpleText: Rule1[Potential] =
     rule(capture(simpleTextChar.+) ~ end ~> ((s: String) => Potential.text(s: String)))
@@ -178,7 +186,7 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
   }
 
   private def subQuery: Rule1[Potential] =
-    rule("(" ~ mainNonEmpty ~ OWS ~ ")")
+    rule("(" ~ subQueries.mainNonEmpty ~ OWS ~ ")")
 
   private def presence: Rule1[Potential] =
     rule("has:" ~!~ attr ~> ((i: String) => Potential.presence(i)))
@@ -203,38 +211,94 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
         ~> mkImplication)
   }
 
-  private def positive: Rule1[Potential] =
-    rule(anyOf | allOf | quotedText | regex | hashRef | hasIssue | presence | field | implication | reqs | reqType | simpleText)
+  private def scoped: Rule1[Potential] = {
+    type S = Scope[String]
 
-  private def negative: Rule1[Potential] =
-    rule('-' ~!~ (('-' ~!~ expr) | (expr ~> ((f: Potential) => Potential.not(f)))))
+    val fieldSuffix: () => Rule0 =
+      () => rule(OWS ~ Scope.Derivation.fieldSuffix)
 
-  private def expr: Rule1[Potential] =
-    rule(negative | positive)
+    def fieldName: Rule1[String] =
+      rule(
+        Scope.Derivation.fieldPrefix ~
+        OWS ~
+        (
+          (quotedString ~ fieldSuffix())
+          | nonGreedyCapture(fieldSuffix)
+        )
+      )
 
-  private def clause: Rule1[NonEmptyVector[Potential]] =
-    rule(OWS ~ expr ~ zeroOrMore(OWS ~ expr) ~ OWS ~> mkClause)
+    val mkScope: Option[String] => S =
+      Scope.Derivation(_)
 
-  /** `( a b c )` */
-  private def allOf: Rule1[Potential] =
-    rule('(' ~!~ clause ~ ')' ~> ((f: NonEmptyVector[Potential]) => Potential(AllOf(f))))
+    def scope: Rule1[S] =
+      rule(Scope.Derivation.keyword ~ fieldName.? ~> mkScope)
 
-  /** `a b c` - no parens */
-  private def allOfImplicit: Rule1[Potential] =
-    rule(clause ~> mkImplicitAllOf)
+    val mkResult: (Option[String], Seq[S], Potential) => Potential =
+      (main, scopes, sub) =>
+        Potential.scoped(main.isDefined, NonEmptyVector.force(scopes.toVector), sub)
 
-  /** `( a | b | c )` */
-  private def anyOf: Rule1[Potential] =
-    rule('(' ~ anyOfImplicit ~ ')')
+    rule(
+      capture(Scope.main).? ~
+        oneOrMore(scope).separatedBy(Scope.separator) ~
+        Scope.suffix ~!~
+        subQuery
+        ~> mkResult
+    )
+  }
 
-  /** `a | b | c` - no parens */
-  private def anyOfImplicit: Rule1[Potential] =
-    rule(allOfImplicit ~ oneOrMore('|' ~!~ allOfImplicit)
-      ~ popSeqToNEV[Potential] ~> ((a: Potential, b: NonEmptyVector[Potential]) => Potential(AnyOf(a, b))))
+  // ===================================================================================================================
 
-  private def mainNonEmpty: Rule1[Potential] =
-    rule(anyOfImplicit | (clause ~> mkImplicitAllOf))
+  private final class Universe(val legal: () => Rule1[Potential]) {
+
+    def positive: Rule1[Potential] =
+      rule(anyOf | allOf | legal())
+
+    def negative: Rule1[Potential] =
+      rule('-' ~!~ (('-' ~!~ expr) | (expr ~> ((f: Potential) => Potential.not(f)))))
+
+    def expr: Rule1[Potential] =
+      rule(negative | positive)
+
+    def clause: Rule1[NonEmptyVector[Potential]] =
+      rule(OWS ~ expr ~ zeroOrMore(OWS ~ expr) ~ OWS ~> mkClause)
+
+    /** `( a b c )` */
+    def allOf: Rule1[Potential] =
+      rule('(' ~!~ clause ~ ')' ~> ((f: NonEmptyVector[Potential]) => Potential(AllOf(f))))
+
+    /** `a b c` - no parens */
+    def allOfImplicit: Rule1[Potential] =
+      rule(clause ~> mkImplicitAllOf)
+
+    /** `( a | b | c )` */
+    def anyOf: Rule1[Potential] =
+      rule('(' ~ anyOfImplicit ~ ')')
+
+    /** `a | b | c` - no parens */
+    def anyOfImplicit: Rule1[Potential] =
+      rule(allOfImplicit ~ oneOrMore('|' ~!~ allOfImplicit)
+        ~ popSeqToNEV[Potential] ~> ((a: Potential, b: NonEmptyVector[Potential]) => Potential(AnyOf(a, b))))
+
+    def mainNonEmpty: Rule1[Potential] =
+      rule(anyOfImplicit | (clause ~> mkImplicitAllOf))
+  }
+
+  private val topLevel = new Universe(() => rule(
+    quotedText | regex | hashRef | hasIssue | presence | scoped | field | implication | reqs | reqType | simpleText
+  ))
+
+  private val subQueries = {
+    val isValid: PotentialF[Potential] => Boolean = {
+      case Scoped(_, _, _) => false
+      case _               => true
+    }
+
+    def rejectInvalid: RuleAB[Potential, Potential] =
+      rule(run((p: Potential) => test(isValid(p.unfix)) ~ push(p)))
+
+    new Universe(() => rule(topLevel.legal() ~ rejectInvalid))
+  }
 
   def main: Rule1[Option[Potential]] =
-    rule(mainNonEmpty.? ~ EOI)
+    rule(topLevel.mainNonEmpty.? ~ EOI)
 }

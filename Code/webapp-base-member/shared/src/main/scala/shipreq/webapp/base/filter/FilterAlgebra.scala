@@ -83,7 +83,7 @@ object FilterAlgebra {
 
     @inline def fmtScoped(main: Boolean, scope: Potential.Scope, clause: AtomOrComposite[String]): AtomOrComposite[String] = {
       val prefix =
-        if(main) Scope.Derivation.main else ""
+        if(main) Scope.main else ""
 
       val scopeText =
         scope.iterator.map {
@@ -91,8 +91,12 @@ object FilterAlgebra {
             Scope.Derivation.keyword
 
           case Scope.Derivation(Some(f)) =>
-            Scope.Derivation.keyword + ":(" + Scope.Derivation.quoteIfNecessary(f) + ")"
-        }.mkString(",")
+            Scope.Derivation.keyword +
+              Scope.Derivation.fieldPrefix +
+              Scope.Derivation.quoteIfNecessary(f) +
+              Scope.Derivation.fieldSuffix
+
+        }.mkString(prefix, Scope.separator, Scope.suffix)
 
       val clauseText =
         clause match {
@@ -100,7 +104,7 @@ object FilterAlgebra {
           case AtomOrComposite.Composite(t, _) => t
         }
 
-      s"$prefix$scopeText:($clauseText)"
+      s"$scopeText($clauseText)"
     }
 
     {
