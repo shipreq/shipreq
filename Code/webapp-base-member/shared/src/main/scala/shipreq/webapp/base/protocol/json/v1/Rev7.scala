@@ -40,6 +40,7 @@ object Rev7 {
     final val KeyAstText           = "text"
     final val KeyAstScoped1        = "scoped1"
     final val KeyAstScoped2        = "scoped2"
+    final val KeyAstRelativeTags   = "relTags"
   }
 
   implicit lazy val codecValidFilter: JsonCodec[Filter.Valid] = {
@@ -273,12 +274,27 @@ object Rev7 {
     implicit val encoderFilterAstScoped2: Encoder[FilterAst.Scoped2[Valid.Scope, Json]] =
       Encoder.forProduct3("scope", "clause", "main")(a => (a.scope, a.clause, a.mainClause))
 
+    implicit val codecFilterAstOrderOp: JsonCodec[FilterAst.OrderOp] =
+      JsonCodec.enumAdt(AdtMacros.adtIsoSet[FilterAst.OrderOp, String] {
+        case FilterAst.OrderOp.<  => "<"
+        case FilterAst.OrderOp.>  => ">"
+        case FilterAst.OrderOp.<= => "<="
+        case FilterAst.OrderOp.>= => ">="
+      })
+
+    implicit val decoderFilterAstRelativeTags: Decoder[FilterAst.RelativeTags[Valid.ApTag]] =
+      Decoder.forProduct2("op", "subject")(FilterAst.RelativeTags.apply[Valid.ApTag])
+
+    implicit val encoderFilterAstRelativeTags: Encoder[FilterAst.RelativeTags[Valid.ApTag]] =
+      Encoder.forProduct2("op", "subject")(a => (a.op, a.subject))
+
     JsonCodec.fix[ValidF]({
       case a: FilterAst.Text                           => Json.obj(KeyAstText           -> a.asJson)
       case a: FilterAst.Regex                          => Json.obj(KeyAstRegex          -> a.asJson)
       case a: FilterAst.Presence      [Valid.Attr]     => Json.obj(KeyAstPresence       -> a.asJson)
       case a: FilterAst.HasIssue      [Valid.IssueCat] => Json.obj(KeyAstHasIssue       -> a.asJson)
       case a: FilterAst.HashRef       [Valid.HashTag]  => Json.obj(KeyAstHashRef        -> a.asJson)
+      case a: FilterAst.RelativeTags  [Valid.ApTag]    => Json.obj(KeyAstRelativeTags   -> a.asJson)
       case a@ FilterAst.ImpliesAnyOf  (_)              => Json.obj(KeyAstImpliesAnyOf   -> a.asJson)
       case a@ FilterAst.ImpliedByAnyOf(_)              => Json.obj(KeyAstImpliedByAnyOf -> a.asJson)
       case a: FilterAst.Reqs          [Valid.ReqSet]   => Json.obj(KeyAstReqs           -> a.asJson)
@@ -295,6 +311,7 @@ object Rev7 {
       case (KeyAstPresence      , c) => c.as[FilterAst.Presence      [Valid.Attr]]
       case (KeyAstHasIssue      , c) => c.as[FilterAst.HasIssue      [Valid.IssueCat]]
       case (KeyAstHashRef       , c) => c.as[FilterAst.HashRef       [Valid.HashTag]]
+      case (KeyAstRelativeTags  , c) => c.as[FilterAst.RelativeTags  [Valid.ApTag]]
       case (KeyAstImpliesAnyOf  , c) => c.as[FilterAst.ImpliesAnyOf  [Valid.ImpCriteriaF, ACursor]]
       case (KeyAstImpliedByAnyOf, c) => c.as[FilterAst.ImpliedByAnyOf[Valid.ImpCriteriaF, ACursor]]
       case (KeyAstReqs          , c) => c.as[FilterAst.Reqs          [Valid.ReqSet]]

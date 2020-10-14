@@ -50,8 +50,10 @@ object MMTree {
     def empty[I]: Relations[I] =
       Relations(Map.empty, Vector.empty)
 
+    // non-transitive
     def deriveParents[I: UnivEq](id: I, tree: Map[I, Vector[I]]): Parents[I] =
       tree
+        .iterator
         .filter(_._2 contains id)
         .foldLeft(UnivEq.emptyMap: Parents[I]) {
           case (m, (parent, sibs)) => m.updated(parent, RelPos.get(sibs, id))

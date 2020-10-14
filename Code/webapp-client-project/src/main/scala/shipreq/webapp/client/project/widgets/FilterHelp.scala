@@ -94,6 +94,16 @@ object FilterHelp {
       )("#draft"),
 
       Row(
+        "Because tags have order, you can prefix a tag with one of these ordering operations:",
+        <.ul(
+          <.li(code("<"), " - less than"),
+          <.li(code("<="), " - less than or equal to"),
+          <.li(code(">"), " - greater than"),
+          <.li(code(">="), " - greater than or equal to"),
+        ),
+      )(">= #v2.0"),
+
+      Row(
         "To find requirements that simply have any tag, or have any kind of issue, enter ", code("has:"),
         " followed by either:",
         <.ul(

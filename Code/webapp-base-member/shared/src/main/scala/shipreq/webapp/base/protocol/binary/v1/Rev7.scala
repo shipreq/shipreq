@@ -336,6 +336,41 @@ object Rev7 {
         }
       }
 
+    implicit val picklerFilterAstOrderOp: Pickler[FilterAst.OrderOp] =
+      new Pickler[FilterAst.OrderOp] {
+        private[this] final val Key_<  = 0
+        private[this] final val Key_>  = 1
+        private[this] final val Key_<= = 2
+        private[this] final val Key_>= = 3
+        override def pickle(a: FilterAst.OrderOp)(implicit state: PickleState): Unit =
+          a match {
+            case FilterAst.OrderOp.<  => state.enc.writeByte(Key_< )
+            case FilterAst.OrderOp.>  => state.enc.writeByte(Key_> )
+            case FilterAst.OrderOp.<= => state.enc.writeByte(Key_<=)
+            case FilterAst.OrderOp.>= => state.enc.writeByte(Key_>=)
+          }
+        override def unpickle(implicit state: UnpickleState): FilterAst.OrderOp =
+          state.dec.readByte match {
+            case Key_<  => FilterAst.OrderOp.<
+            case Key_>  => FilterAst.OrderOp.>
+            case Key_<= => FilterAst.OrderOp.<=
+            case Key_>= => FilterAst.OrderOp.>=
+          }
+      }
+
+    implicit val picklerFilterAstRelativeTags: Pickler[FilterAst.RelativeTags[Valid.ApTag]] =
+      new Pickler[FilterAst.RelativeTags[Valid.ApTag]] {
+        override def pickle(a: FilterAst.RelativeTags[Valid.ApTag])(implicit state: PickleState): Unit = {
+          state.pickle(a.op)
+          state.pickle(a.subject)
+        }
+        override def unpickle(implicit state: UnpickleState): FilterAst.RelativeTags[Valid.ApTag] = {
+          val op      = state.unpickle[FilterAst.OrderOp]
+          val subject = state.unpickle[Valid.ApTag]
+          FilterAst.RelativeTags(op, subject)
+        }
+      }
+
     implicit val picklerValidF: Pickler[ValidF[Unit]] =
       new Pickler[ValidF[Unit]] {
         private[this] final val KeyAllOf          = 0
@@ -353,6 +388,7 @@ object Rev7 {
         private[this] final val KeyFieldProp      = 12
         private[this] final val KeyScoped1        = 13
         private[this] final val KeyScoped2        = 14
+        private[this] final val KeyRelativeTags   = 15
         override def pickle(a: ValidF[Unit])(implicit state: PickleState): Unit =
           a match {
             case b: FilterAst.AllOf         [Unit]                     => state.enc.writeByte(KeyAllOf         ); state.pickle(b)
@@ -370,6 +406,7 @@ object Rev7 {
             case b: Valid.FieldPropF        [Unit]                     => state.enc.writeByte(KeyFieldProp     ); state.pickle(b)
             case b: FilterAst.Scoped1       [Valid.Scope, Unit       ] => state.enc.writeByte(KeyScoped1       ); state.pickle(b)
             case b: FilterAst.Scoped2       [Valid.Scope, Unit       ] => state.enc.writeByte(KeyScoped2       ); state.pickle(b)
+            case b: FilterAst.RelativeTags  [Valid.ApTag             ] => state.enc.writeByte(KeyRelativeTags  ); state.pickle(b)
           }
         override def unpickle(implicit state: UnpickleState): ValidF[Unit] =
           state.dec.readByte match {
@@ -388,6 +425,7 @@ object Rev7 {
             case KeyFieldProp      => state.unpickle[Valid.FieldPropF        [Unit                    ]]
             case KeyScoped1        => state.unpickle[FilterAst.Scoped1       [Valid.Scope, Unit       ]]
             case KeyScoped2        => state.unpickle[FilterAst.Scoped2       [Valid.Scope, Unit       ]]
+            case KeyRelativeTags   => state.unpickle[FilterAst.RelativeTags  [Valid.ApTag             ]]
           }
       }
 

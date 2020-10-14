@@ -234,14 +234,38 @@ object FilterParserTest extends TestSuite {
 
     "scoped2" - {
       import FilterAst.Scope._
-      "basic"    - test("derivation:(x)+(y)",              scoped2(NonEmptyVector(Derivation(None)), text("x"), text("y")))
-      "field1"   - test("derivation(a):(x)+(y)",           scoped2(NonEmptyVector(Derivation(Some("a"))), text("x"), text("y")))
-      "main0"    - testFail("derivation:(x)(y)")
-      "main2"    - testFail("derivation:(x)++(y)")
+      "basic"     - test("derivation:(x)+(y)",    scoped2(NonEmptyVector(Derivation(None)), text("x"), text("y")))
+      "field1"    - test("derivation(a):(x)+(y)", scoped2(NonEmptyVector(Derivation(Some("a"))), text("x"), text("y")))
+      "main0"     - testFail("derivation:(x)(y)")
+      "main2"     - testFail("derivation:(x)++(y)")
       "nested11"  - testFail("derivation:(derivation:(x))+(y)")
       "nested12"  - testFail("derivation:(derivation:(x)+(y))+(y)")
       "nested21"  - testFail("derivation:(x)+(derivation:(x))")
       "nested22"  - testFail("derivation:(x)+(derivation:(x)+(y))")
+    }
+
+    "relTags" - {
+      import FilterAst.OrderOp._
+      "withSpace" - {
+        "<=" - test("<= #x", relativeTags(<=, "x"))
+        ">=" - test(">= #x", relativeTags(>=, "x"))
+        "≤"  - test("≤ #x", relativeTags(<=, "x"))
+        "≥"  - test("≥ #x", relativeTags(>=, "x"))
+        "<"  - test("< #x", relativeTags(<, "x"))
+        ">"  - test("> #x", relativeTags(>, "x"))
+      }
+      "withoutSpace" - {
+        "<=" - test("<=#x", relativeTags(<=, "x"))
+        ">=" - test(">=#x", relativeTags(>=, "x"))
+        "≤"  - test("≤#x", relativeTags(<=, "x"))
+        "≥"  - test("≥#x", relativeTags(>=, "x"))
+        "<"  - test("<#x", relativeTags(<, "x"))
+        ">"  - test(">#x", relativeTags(>, "x"))
+      }
+      "hashRefConsistency" - {
+        "withSpace"    - test("=#x", hashRef("x"))
+        "withoutSpace" - test("= #x", hashRef("x"))
+      }
     }
 
     "unknownKeys" - {

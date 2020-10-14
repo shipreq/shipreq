@@ -10,6 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.event.{CustomImpFieldGD, Event => E, GenericReqGD, UseCaseGD, UseCaseStepGD}
+import shipreq.webapp.base.filter.FilterAst.OrderOp
 import shipreq.webapp.base.filter.{Filter, FilterAst, IntensionalReqSet}
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod._
@@ -1598,6 +1599,44 @@ object LogicTest extends TestSuite {
     ))
   }
 
+  def testFilterWithRelativeTags(op: OrderOp): Unit = {
+    import SampleProject.Values._
+
+    val mf1 = GenericReqId(101)
+    val mf2 = GenericReqId(102)
+    val mf3 = GenericReqId(103)
+    val mf4 = GenericReqId(104)
+    val mf5 = GenericReqId(105)
+
+    val p = applyEventsSuccessfully(SampleProject.project,
+      TestEvent.fieldCustomTagCreate(verField, verTG, deriv = DerivativeTags(Enabled, Map.empty)),
+      TestEvent.genericReqCreate(mf1, mf, tags = v11),
+      TestEvent.genericReqCreate(mf2, mf, tags = v12),
+      TestEvent.genericReqCreate(mf3, mf, tags = v13),
+      TestEvent.genericReqCreate(mf4, mf, tags = v12),
+      TestEvent.genericReqCreate(mf5, mf, tags = priMed),
+      E.ReqsDelete.one(mf4),
+    )
+
+    val filter = F.relativeTags(op, v12)
+
+    val expectLive = op match {
+      case OrderOp.<  => "MF-1"
+      case OrderOp.<= => "MF-1  MF-2"
+      case OrderOp.>= => "MF-2  MF-3"
+      case OrderOp.>  => "MF-3"
+    }
+
+    val expectDead = op match {
+      case OrderOp.<  => ""
+      case OrderOp.<= => "MF-4"
+      case OrderOp.>= => "MF-4"
+      case OrderOp.>  => ""
+    }
+
+    testFilter(p, filter)(expectLive, expectDead)
+  }
+
   // ===================================================================================================================
 
   override def tests = Tests {
@@ -1696,6 +1735,13 @@ object LogicTest extends TestSuite {
       "derivTags1b"          - testFilterWithDerivativeTags1b()
       "derivTags2a"          - testFilterWithDerivativeTags2a()
       "derivTags2b"          - testFilterWithDerivativeTags2b()
+
+      "relTags" - {
+        "<"  - testFilterWithRelativeTags(OrderOp.<)
+        ">"  - testFilterWithRelativeTags(OrderOp.>)
+        "<=" - testFilterWithRelativeTags(OrderOp.<=)
+        ">=" - testFilterWithRelativeTags(OrderOp.>=)
+      }
     }
     "codeGroupsWithFilter" - {
       "hideDead" - testCodeGroupWhenFilteredAndHideDead()

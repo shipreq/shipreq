@@ -153,8 +153,22 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
   private def regex: Rule1[Potential] =
     rule('/' ~!~ capture(regexChar.+) ~!~ '/' ~!~ end ~> ((s: String) => Potential.regex(s.replace("\\/", "/"))))
 
+  private def orderOp: Rule1[OrderOp] =
+    rule(
+        ((">=" | '≥') ~ push(OrderOp.>=))
+      | (("<=" | '≤') ~ push(OrderOp.<=))
+      // keep the above, above; and the below, below; else below will prevent the above.
+      | (">" ~ push(OrderOp.>))
+      | ("<" ~ push(OrderOp.<))
+    )
+
+  private def relTags: Rule1[Potential] =
+    rule(orderOp ~ OWS ~ hashRefStr_! ~ end ~> ((op: OrderOp, s: String) => Potential.relativeTags(op, data.HashRefKey(s))))
+
   private def hashRef: Rule1[Potential] =
-    rule(hashRefStr_! ~ end ~> ((s: String) => Potential.hashRef(data.HashRefKey(s))))
+    rule(
+      ('=' ~ OWS).? ~ // allow this just for consistency with relTags
+      hashRefStr_! ~ end ~> ((s: String) => Potential.hashRef(data.HashRefKey(s))))
 
   private def reqs: Rule1[Potential] =
     rule(reqTypeMnemonicCS ~ '-'.? ~ numberOrRange ~ end ~> mkReqs)
@@ -292,7 +306,7 @@ private[filter] class FilterParser(val input: ParserInput) extends ParsingUtil {
   }
 
   private val topLevel = new Universe(() => rule(
-    quotedText | regex | hashRef | hasIssue | presence | scoped | field | implication | reqs | reqType | simpleText
+    quotedText | regex | hashRef | relTags | hasIssue | presence | scoped | field | implication | reqs | reqType | simpleText
   ))
 
   private val subQueries = {

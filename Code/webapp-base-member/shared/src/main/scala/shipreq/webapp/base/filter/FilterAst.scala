@@ -18,24 +18,26 @@ sealed trait FilterAst[
   +ReqSet,           // 8
   +ReqType,          // 9
   +Scope,            // 10
+  +ApplicableTag,    // 11
 ]
 
-object FilterAst {                                                                               // 1        2        3        4        5        6        7        8        9        10
-  final case class Text                   (text: String, quoteChar: Option[Char]) extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class Regex                  (text: String)                          extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class Presence            [A](attr: A)                               extends FilterAst[Nothing, Nothing, Nothing, A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class FieldProp  [A, F[_], B](field: A, criteria: F[B])              extends FilterAst[B      , F      , Nothing, Nothing, A      , Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class HasIssue            [A](on: On, criteria: NonEmptyVector[A])   extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, A      , Nothing, Nothing, Nothing, Nothing]
-  final case class HashRef             [A](value: A)                              extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, A      , Nothing, Nothing, Nothing]
-  final case class ImpliesAnyOf  [F[_], B](criteria: F[B])                        extends FilterAst[B      , Nothing, F      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class ImpliedByAnyOf[F[_], B](criteria: F[B])                        extends FilterAst[B      , Nothing, F      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class Reqs                [A](reqs: A)                               extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, A      , Nothing, Nothing]
-  final case class ReqType             [A](reqType: A)                            extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, A      , Nothing]
-  final case class Scoped1          [S, A](main: Boolean, scope: S, clause: A)    extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, S      ]
-  final case class Scoped2          [S, A](scope: S, clause: A, mainClause: A)    extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, S      ]
-  final case class Not                 [A](clause: A)                             extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class AllOf               [A](clauses: NonEmptyVector[A])            extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
-  final case class AnyOf               [A](head: A, tail: NonEmptyVector[A])      extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+object FilterAst {                                                                               // 1        2        3        4        5        6        7        8        9        10       11
+  final case class Text                   (text: String, quoteChar: Option[Char]) extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class Regex                  (text: String)                          extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class Presence            [A](attr: A)                               extends FilterAst[Nothing, Nothing, Nothing, A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class FieldProp  [A, F[_], B](field: A, criteria: F[B])              extends FilterAst[B      , F      , Nothing, Nothing, A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class HasIssue            [A](on: On, criteria: NonEmptyVector[A])   extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, A      , Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class HashRef             [A](value: A)                              extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, A      , Nothing, Nothing, Nothing, Nothing]
+  final case class RelativeTags        [A](op: OrderOp, subject: A)               extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, A      ]
+  final case class ImpliesAnyOf  [F[_], B](criteria: F[B])                        extends FilterAst[B      , Nothing, F      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class ImpliedByAnyOf[F[_], B](criteria: F[B])                        extends FilterAst[B      , Nothing, F      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class Reqs                [A](reqs: A)                               extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, A      , Nothing, Nothing, Nothing]
+  final case class ReqType             [A](reqType: A)                            extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, A      , Nothing, Nothing]
+  final case class Scoped1          [S, A](main: Boolean, scope: S, clause: A)    extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, S      , Nothing]
+  final case class Scoped2          [S, A](scope: S, clause: A, mainClause: A)    extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, S      , Nothing]
+  final case class Not                 [A](clause: A)                             extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class AllOf               [A](clauses: NonEmptyVector[A])            extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class AnyOf               [A](head: A, tail: NonEmptyVector[A])      extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -53,6 +55,21 @@ object FilterAst {                                                              
 
     final def apply(n: String): Option[A] =
       names.get(n.toLowerCase)
+  }
+
+  sealed abstract class OrderOp(final val symbol : String,
+                                final val cmpInts: (Int, Int) => Boolean)
+
+  object OrderOp {
+    case object >  extends OrderOp(">" , _ >  _)
+    case object <  extends OrderOp("<" , _ <  _)
+    case object >= extends OrderOp(">=", _ >= _)
+    case object <= extends OrderOp("<=", _ <= _)
+
+    implicit def univEq: UnivEq[OrderOp] = UnivEq.derive
+
+    lazy val values: NonEmptyVector[OrderOp] =
+      AdtMacros.adtValues[OrderOp]
   }
 
   sealed abstract class Attr(final val name: String, final val additionalNames: String*)
@@ -180,15 +197,15 @@ object FilterAst {                                                              
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  type Fixed[A[_], B[_], C, D, E, F, G, H, I] = Fix[λ[X => FilterAst[X, A, B, C, D, E, F, G, H, I]]]
+  type Fixed[A[_], B[_], C, D, E, F, G, H, I, J] = Fix[λ[X => FilterAst[X, A, B, C, D, E, F, G, H, I, J]]]
 
   @nowarn("cat=unused")
-  def univEqFix[A[_], B[_], C: UnivEq, D: UnivEq, E: UnivEq, F: UnivEq, G: UnivEq, H: UnivEq, I: UnivEq](implicit A: UnivEq[A[Unit]], B: UnivEq[B[Unit]]): UnivEq[Fixed[A, B, C, D, E, F, G, H, I]] =
-    UnivEq.deriveFix[Fix, λ[X => FilterAst[X, A, B, C, D, E, F, G, H, I]]]
+  def univEqFix[A[_], B[_], C: UnivEq, D: UnivEq, E: UnivEq, F: UnivEq, G: UnivEq, H: UnivEq, I: UnivEq, J: UnivEq](implicit A: UnivEq[A[Unit]], B: UnivEq[B[Unit]]): UnivEq[Fixed[A, B, C, D, E, F, G, H, I, J]] =
+    UnivEq.deriveFix[Fix, λ[X => FilterAst[X, A, B, C, D, E, F, G, H, I, J]]]
 
-  def traverse[FieldCriteria[_], ImpCriteria[_], Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope](traverseFC: Traverse[FieldCriteria], traverseIC: Traverse[ImpCriteria]): Traverse[FilterAst[*, FieldCriteria, ImpCriteria, Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope]] =
-    new Traverse[FilterAst[*, FieldCriteria, ImpCriteria, Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope]] {
-      type F[A] = FilterAst[A, FieldCriteria, ImpCriteria, Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope]
+  def traverse[FieldCriteria[_], ImpCriteria[_], Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope, ApTag](traverseFC: Traverse[FieldCriteria], traverseIC: Traverse[ImpCriteria]): Traverse[FilterAst[*, FieldCriteria, ImpCriteria, Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope, ApTag]] =
+    new Traverse[FilterAst[*, FieldCriteria, ImpCriteria, Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope, ApTag]] {
+      type F[A] = FilterAst[A, FieldCriteria, ImpCriteria, Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope, ApTag]
 
       override def map[A, B](fa: F[A])(f: A => B): F[B] = fa match {
         case c: Text                                    => c
@@ -196,6 +213,7 @@ object FilterAst {                                                              
         case c: Presence      [Attr]                    => c
         case c: HasIssue      [IssueCat]                => c
         case c: HashRef       [HashTag]                 => c
+        case c: RelativeTags  [ApTag]                   => c
         case c: ImpliesAnyOf  [ImpCriteria, A]          => c.copy(traverseIC.map(c.criteria)(f))
         case c: ImpliedByAnyOf[ImpCriteria, A]          => c.copy(traverseIC.map(c.criteria)(f))
         case c: Reqs          [ReqSet]                  => c
@@ -214,6 +232,7 @@ object FilterAst {                                                              
         case c: Presence      [Attr]                    => G pure c
         case c: HasIssue      [IssueCat]                => G pure c
         case c: HashRef       [HashTag]                 => G pure c
+        case c: RelativeTags  [ApTag]                   => G pure c
         case c: ImpliesAnyOf  [ImpCriteria, A]          => G.map(traverseIC.traverse(c.criteria)(f))(c.copy)
         case c: ImpliedByAnyOf[ImpCriteria, A]          => G.map(traverseIC.traverse(c.criteria)(f))(c.copy)
         case c: Reqs          [ReqSet]                  => G pure c
@@ -239,8 +258,9 @@ object FilterAst {                                                              
     type ReqSet
     type ReqType
     type Scope
+    type ApTag
 
-    final type F[A] = FilterAst[A, FieldCriteriaF, ImpCriteriaF, Attr, Field, IssueCat, HashTag, ReqSet, ReqType, Scope]
+    final type F[A] = FilterAst[A, FieldCriteriaF, ImpCriteriaF, Attr, Field, IssueCat, HashTag, ReqSet, ReqType, Scope, ApTag]
 
     final type FieldCriteria      = FieldCriteriaF[Fix[F]]
     final type ImpCriteria        = ImpCriteriaF[Fix[F]]
@@ -300,6 +320,9 @@ object FilterAst {                                                              
 
     def scoped2(scope: Scope, clause: Fix[F], mainClause: Fix[F]): Fix[F] =
       Fix[F](Scoped2(scope, clause, mainClause))
+
+    def relativeTags(op: OrderOp, subject: ApTag): Fix[F] =
+      Fix[F](RelativeTags(op, subject))
 
     def not(clause: Fix[F]): Fix[F] =
       Fix[F](Not(clause))

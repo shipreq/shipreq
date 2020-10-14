@@ -2200,13 +2200,13 @@ object RandomData {
     val regex =
       unicodeString1.map(s => FilterAst.Regex(fixRegex(s)))
 
-    def fixRoot[A[_], B[_], C, D, E, F, G, H, I](f: FilterAst.Fixed[A, B, C, D, E, F, G, H, I]): FilterAst.Fixed[A, B, C, D, E, F, G, H, I] =
+    def fixRoot[A[_], B[_], C, D, E, F, G, H, I, J](f: FilterAst.Fixed[A, B, C, D, E, F, G, H, I, J]): FilterAst.Fixed[A, B, C, D, E, F, G, H, I, J] =
       f.unfix match {
         case FilterAst.AllOf(a) if a.tail.isEmpty => a.head
         case _                                    => f
       }
 
-    def scoped[S, SS, A](gs: Option[Gen[S]], ga: Gen[A])(f: (Scope[S], Vector[Scope[S]]) => SS): Gen[FilterAst[A, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, SS]] = {
+    def scoped[S, SS, A](gs: Option[Gen[S]], ga: Gen[A])(f: (Scope[S], Vector[Scope[S]]) => SS): Gen[FilterAst[A, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, SS, Nothing]] = {
 
       val genScope: Gen[Scope[S]] =
         gs match {
@@ -2224,6 +2224,9 @@ object RandomData {
       val scoped2 = Gen.apply3(FilterAst.Scoped2.apply[SS, A])(genScopes, ga, ga)
       Gen.chooseGen(scoped1, scoped2)
     }
+
+    val orderOp: Gen[FilterAst.OrderOp] =
+      Gen.chooseNE(FilterAst.OrderOp.values)
 
     // -----------------------------------------------------------------------------------------------------------------
     object potential {
@@ -2286,9 +2289,10 @@ object RandomData {
       val hashRef  = hashRefKey     .map(FilterAst.HashRef(_))
       val reqs     = someOfType     .map(s => FilterAst.Reqs(NonEmptyVector.one(s)))
       val presence = attr           .map(FilterAst.Presence(_))
+      val relTags  = Gen.lift2(orderOp, hashRefKey)(FilterAst.RelativeTags(_, _))
 
       private val flatGens: NonEmptyVector[Gen[PotentialF[Nothing]]] =
-        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, presence, hasIssue)
+        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, presence, hasIssue, relTags)
 
       private val flatGen: Gen[PotentialF[Nothing]] =
         Gen.chooseGenNE(flatGens :+ fieldProp(None))
@@ -2366,6 +2370,7 @@ object RandomData {
       def reqType    (g: Gen[Valid.ReqType])    : Gen[ValidF[Nothing]] = g.map(FilterAst.ReqType(_))
       def tag        (g: Gen[ApplicableTagId])  : Gen[ValidF[Nothing]] = g.map(i => FilterAst.HashRef(\/-(i)))
       def customIssue(g: Gen[CustomIssueTypeId]): Gen[ValidF[Nothing]] = g.map(i => FilterAst.HashRef(-\/(i)))
+      def relTags    (g: Gen[ApplicableTagId])  : Gen[ValidF[Nothing]] = Gen.lift2(orderOp, g)(FilterAst.RelativeTags(_, _))
 
       val specialBuiltInFieldFilterOk: Gen[SpecialBuiltInField.FilterOk] =
         Gen.chooseNE(SpecialBuiltInField.filterOk)
@@ -2407,6 +2412,7 @@ object RandomData {
         NonEmptyVector[Gen[ValidF[Nothing]]](quotedText, simpleText, regex, presence, hasIssue) ++
           gy.map(reqType) ++
           gt.map(tag) ++
+          gt.map(relTags) ++
           gi.map(customIssue) ++
           gy.map(reqs)
       }

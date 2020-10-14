@@ -11,7 +11,7 @@ import shipreq.webapp.base.data
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.derivation.DataLogic.IssueLookup
 import shipreq.webapp.base.data.derivation.VirtualProjectTags
-import shipreq.webapp.base.data.{FilterDead, On}
+import shipreq.webapp.base.data.{FilterDead, HideDead, On, ShowDead}
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
 
@@ -123,6 +123,7 @@ object FilterAlgebra {
       case Regex         (text)              => '/' ~ text.replace("/", "\\/") ~ '/'
       case ReqType       (value)             => value.value
       case HashRef       (text)              => Grammar.hashRefKey.prefix ~ text.value
+      case RelativeTags  (op, tag)           => op.symbol ~ Grammar.hashRefKey.prefix ~ tag.value
       case FieldProp     (field, attr)       => "field:" ~ quoteFieldName(field) ~ "=" ~ fieldCriteria(attr)
       case HasIssue      (on, criteria)      => "has:issue:" ~ (if (on is On) "" else "-") ~ criteria.mkString(",")
       case ImpliesAnyOf  (criteria)          => "implies:" ~ impCriteria(criteria)
@@ -237,7 +238,7 @@ object FilterAlgebra {
             case (\/-(f: StaticField.AllTags.type)          , _            ) => blankOnly(\/-(f), f.name)
             case (\/-(f: StaticField.NormalAltStepTree.type), _            ) => noDefault(\/-(f), f.name)
             case (\/-(f: StaticField.ExceptionStepTree.type), _            ) => noDefault(\/-(f), f.name)
-            case (\/-(StaticField.ImplicationGraph)         , _)
+            case (\/-(StaticField.ImplicationGraph)         , _            )
                | (\/-(StaticField.StepGraph)                , _            ) => fail(s"$fieldName can't be used here.")
           }
         }
@@ -302,8 +303,15 @@ object FilterAlgebra {
       }
     }
 
+    def relativeTag(op: OrderOp, key: data.HashRefKey): R =
+      cfg.hashRefLookup(key.value) match {
+        case Some(-\/(t)) => \/-(Valid(RelativeTags(op, t.id)))
+        case _            => fail(s"Unknown tag: '${key.value}'") // English
+      }
+
     {
       case HashRef       (key)             => byHashTag(key)
+      case RelativeTags  (op, key)         => relativeTag(op, key)
       case ImpliesAnyOf  (criteria)        => impCriteria(criteria, ImpliesAnyOf.apply)
       case ImpliedByAnyOf(criteria)        => impCriteria(criteria, ImpliedByAnyOf.apply)
       case Reqs          (reqs)            => byReqSet(reqs, Reqs.apply)
@@ -367,6 +375,7 @@ object FilterAlgebra {
     {
       case HashRef       (\/-(id))  => Potential(HashRef       (cfg.tags.needApplicableTag(id).key))
       case HashRef       (-\/(id))  => Potential(HashRef       (cfg.customIssueTypes.need(id).key))
+      case RelativeTags  (op, id)   => Potential(RelativeTags  (op, cfg.tags.needApplicableTag(id).key))
       case Presence      (attr)     => Potential(Presence      (attr.name))
       case ImpliesAnyOf  (criteria) => Potential(ImpliesAnyOf  (impCriteria(criteria)))
       case ImpliedByAnyOf(criteria) => Potential(ImpliedByAnyOf(impCriteria(criteria)))
@@ -409,21 +418,22 @@ object FilterAlgebra {
       }
 
     {
-      case ImpliesAnyOf  (criteria)               => Extensional(ImpliesAnyOf  (impCriteria(criteria)))
-      case ImpliedByAnyOf(criteria)               => Extensional(ImpliedByAnyOf(impCriteria(criteria)))
-      case Reqs          (reqs)                   => Extensional(Reqs          (lookupReqSet(reqs)))
-      case c: Regex                               => Extensional(c)
-      case c: Text                                => Extensional(c)
-      case c@ FieldProp(_, _)                     => Extensional(c)
-      case c: HashRef  [Valid.HashTag]            => Extensional(c)
-      case c: Presence [Valid.Attr]               => Extensional(c)
-      case c: HasIssue [Valid.IssueCat]           => Extensional(c)
-      case c: ReqType  [Valid.ReqType]            => Extensional(c)
-      case c: Not      [Extensional]              => Extensional(c)
-      case c: AllOf    [Extensional]              => Extensional(c)
-      case c: AnyOf    [Extensional]              => Extensional(c)
-      case c: Scoped1  [Valid.Scope, Extensional] => Extensional(c)
-      case c: Scoped2  [Valid.Scope, Extensional] => Extensional(c)
+      case ImpliesAnyOf  (criteria)                  => Extensional(ImpliesAnyOf  (impCriteria(criteria)))
+      case ImpliedByAnyOf(criteria)                  => Extensional(ImpliedByAnyOf(impCriteria(criteria)))
+      case Reqs          (reqs)                      => Extensional(Reqs          (lookupReqSet(reqs)))
+      case c: Regex                                  => Extensional(c)
+      case c: Text                                   => Extensional(c)
+      case c@ FieldProp(_, _)                        => Extensional(c)
+      case c: HashRef     [Valid.HashTag]            => Extensional(c)
+      case c: RelativeTags[Valid.ApTag]              => Extensional(c)
+      case c: Presence    [Valid.Attr]               => Extensional(c)
+      case c: HasIssue    [Valid.IssueCat]           => Extensional(c)
+      case c: ReqType     [Valid.ReqType]            => Extensional(c)
+      case c: Not         [Extensional]              => Extensional(c)
+      case c: AllOf       [Extensional]              => Extensional(c)
+      case c: AnyOf       [Extensional]              => Extensional(c)
+      case c: Scoped1     [Valid.Scope, Extensional] => Extensional(c)
+      case c: Scoped2     [Valid.Scope, Extensional] => Extensional(c)
     }
   }
 
@@ -693,6 +703,14 @@ object FilterAlgebra {
       root.copy(derivation = derivation)
     }
 
+    def relativeTags(op: OrderOp, subject: data.ApplicableTagId): CompiledFilter = {
+      val validTags = this.relativeTags(p.config.tags, filterDead, op, subject)
+      if (validTags.isEmpty)
+        byTag(_ => false)
+      else
+        byTag(_.exists(validTags.contains))
+    }
+
     val self: FAlgebra[ExtensionalF, CompiledFilter] = {
       case Text          (t, None)       => byPubidOrText(t)
       case Text          (t, Some(_))    => byText(t)
@@ -704,6 +722,7 @@ object FilterAlgebra {
       case Presence      (Attr.AnyTag)   => byTag(_.nonEmpty)
       case HashRef       (-\/(issue))    => byCustomIssueType(_.exists(_.typ ==* issue))
       case HashRef       (\/-(tag))      => byTag(_ contains tag)
+      case RelativeTags  (op, subject)   => relativeTags(op, subject)
       case Regex         (regex)         => byRegex(regex)
       case FieldProp     (f, a)          => byFieldProp(f, a)
       case AllOf         (fs)            => fs.reduce(_ && _)
@@ -722,6 +741,39 @@ object FilterAlgebra {
     cata = RecursionFn.cata(self)
 
     self
+  }
+
+  def relativeTags(tags   : data.Tags,
+                   fd     : FilterDead,
+                   op     : OrderOp,
+                   subject: data.ApplicableTagId): Set[data.ApplicableTagId] = {
+
+    def allInScope: Iterator[data.ApplicableTagId] =
+      if (tags.topLevelIds.contains(subject)) {
+
+        val base =
+          tags
+            .topLevelIds
+            .iterator
+            .filterSubType[data.ApplicableTagId]
+
+        fd match {
+          case HideDead => base.filter(tags.liveApplicableTagIds.contains)
+          case ShowDead => base
+        }
+
+      } else
+        tags.tagGroupParentsFor(fd)(subject)
+          .iterator
+          .flatMap(tags.transitiveChildren(fd))
+          .filterSubType[data.ApplicableTagId]
+
+    val lookupPos  = tags.orderByPos
+    val subjectPos = lookupPos(subject)
+
+    allInScope
+      .filter(t => op.cmpInts(lookupPos(t), subjectPos))
+      .toSet
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -788,6 +840,7 @@ object FilterAlgebra {
       case a: Presence      [Valid.Attr]                 => \/-(Valid(a))
       case a: HasIssue      [Valid.IssueCat]             => \/-(Valid(a))
       case a: HashRef       [Valid.HashTag]              => \/-(Valid(a))
+      case a: RelativeTags  [Valid.ApTag]                => \/-(Valid(a))
       case a: Reqs          [Valid.ReqSet]               => \/-(Valid(a))
       case a: ReqType       [Valid.ReqType]              => check1(reqTypes.contains(a.reqType), Valid(a))
       case a: Not           [Result]                     => a.clause.fold(b => -\/(!b), c => \/-(Valid(Not(c))))
