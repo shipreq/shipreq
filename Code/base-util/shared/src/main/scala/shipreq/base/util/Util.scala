@@ -213,10 +213,25 @@ object Util {
     dups
   }
 
-  def mergeMaps[K, V](x: Map[K, V], y: Map[K, V]): Map[K, V] =
+  def mergeDisjointMaps[K, V](x: Map[K, V], y: Map[K, V]): Map[K, V] =
          if (x.isEmpty) y
     else if (y.isEmpty) x
     else x ++ y
+
+  def mergeMaps[K, V](x: Map[K, V], y: Map[K, V])(combine: (V, V) => V): Map[K, V] =
+    if (x.isEmpty)
+      y
+    else if (y.isEmpty)
+      x
+    else
+      x.foldLeft(y) { case (m, (k, v1)) =>
+        val v =
+          m.get(k) match {
+            case None     => v1
+            case Some(v2) => combine(v1, v2)
+          }
+        m.updated(k, v)
+      }
 
   def mergeSets[A: UnivEq](x: Set[_ <: A], y: Set[_ <: A]): Set[A] =
          if (x.isEmpty) y.asInstanceOf[Set[A]]

@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
@@ -43,14 +42,16 @@ object HelpModal {
   final class Row(val row: TR)
 
   object Row {
-    private val rowText = <.td(*.rowText)
+    private val rowText     = <.td(*.rowText)
     private val rowExamples = <.td(*.rowExamples)
+    private val example     = <.div(*.example)
+    val header              = <.div(*.rowHeader)
 
     def apply(text: TagMod*)(sample1: VdomNode, sampleN: VdomNode*): Row =
       new Row(
         <.tr(
           rowText(text: _*),
-          rowExamples((sample1 +: sampleN).iterator.map(s => s: TagMod).intersperse(<.br).toTagMod)
+          rowExamples((sample1 +: sampleN).iterator.toTagMod(example(_)))
         )
       )
   }

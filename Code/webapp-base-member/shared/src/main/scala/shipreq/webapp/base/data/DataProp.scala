@@ -563,6 +563,7 @@ object DataProp {
                           useCaseStepIds: Set[UseCaseStepId],
                           reqTypeIds    : Set[ReqTypeId],
                           tagIds        : Set[TagId]) {
+      def addCustomFieldIds   (ids: CustomFieldId*   ): Refs = copy(fieldIds       = fieldIds       ++ ids)
       def addCustomFieldId    (id : CustomFieldId    ): Refs = copy(fieldIds       = fieldIds       + id)
       def addCustomIssueTypeId(id : CustomIssueTypeId): Refs = copy(issueIds       = issueIds       + id)
       def addReqId            (id : ReqId            ): Refs = copy(reqIds         = reqIds         + id)
@@ -614,9 +615,21 @@ object DataProp {
         case FilterAst.ReqType       (rt)                       => Refs.empty addReqTypeId rt
         case FilterAst.HashRef       (-\/(issue))               => Refs.empty addCustomIssueTypeId issue
         case FilterAst.HashRef       (\/-(tag))                 => Refs.empty addTagId tag
+        case FilterAst.RelativeTags  (_, t)                     => Refs.empty addTagId t
         case FilterAst.AllOf         (fs)                       => fs.reduce(_ ++ _)
         case FilterAst.AnyOf         (f, fs)                    => f ++ fs.reduce(_ ++ _)
         case FilterAst.Not           (f)                        => f
+
+        case FilterAst.Scoped1       (_, ss, f)                 =>
+          f.addCustomFieldIds(ss.iterator.map {
+            case FilterAst.Scope.Derivation(o) => o
+          }.filterDefined.toSeq: _*)
+
+        case FilterAst.Scoped2       (ss, f1, f2)               =>
+          (f1 ++ f2).addCustomFieldIds(ss.iterator.map {
+            case FilterAst.Scope.Derivation(o) => o
+          }.filterDefined.toSeq: _*)
+
         case _: FilterAst.Text
            | _: FilterAst.Regex
            | _: FilterAst.HasIssue[Filter.Valid.IssueCat]

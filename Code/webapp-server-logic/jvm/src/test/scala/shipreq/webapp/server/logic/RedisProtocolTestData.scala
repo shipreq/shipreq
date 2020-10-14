@@ -142,7 +142,7 @@ object RedisProtocolTestData {
       def parallelAttempt() = {
         print('.')
         val fs = List.fill(threads)(submit())
-        val rs = Await.result(Future.sequence(fs), 30.seconds.asFiniteDuration)
+        val rs = Await.result(Future.sequence(fs), 60.seconds.asFiniteDuration)
         rs.find(_.isSuccess).getOrElse(rs.head)
       }
 

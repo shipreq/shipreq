@@ -1880,8 +1880,21 @@ object Style extends StyleSheet.Inline {
     val rowExamples = style(
       rowText,
       monospace,
-      whiteSpace.nowrap,
+      hyphens.none,
+      width(32 ex),
       color(c"#f39"))
+
+    val rowHeader = style(
+      textDecoration := "underline",
+      fontWeight.bold,
+      marginBottom(1 em),
+    )
+
+    val example = style(
+      &.not(_.firstChild)(
+        marginTop(1 em),
+      )
+    )
 
     val code = style(
       padding(0.1 em, 0.5 ex),

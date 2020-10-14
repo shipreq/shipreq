@@ -164,22 +164,29 @@ object FilterEditor {
         .arraySeq
     }
 
-    val fieldName = {
-      val query: String => IterableOnce[FieldSuggestion] =
-        input => {
-          val i = normaliseAutoCompleteField(input)
-          fieldNames.iterator
-            .filter(_.displayNormalised contains i)
-            .take(AutoCompleteFeature.MaxResults)
-        }
+    val fieldNameLookup: String => IterableOnce[FieldSuggestion] =
+      input => {
+        val i = normaliseAutoCompleteField(input)
+        fieldNames.iterator
+          .filter(_.displayNormalised contains i)
+          .take(AutoCompleteFeature.MaxResults)
+      }
 
+    val derivationField =
+      AutoComplete.Strategy.builder
+        .regex("""\b\+?(derivation\() *([^ )]*)$""", index = 2)
+        .search(fieldNameLookup)
+        .replace(f => "$1" + f.quotedValue + "):(")
+        .template((f, _) => f.display)
+        .result()
+
+    val fieldName =
       AutoComplete.Strategy.builder
         .regex("""\b(field:)([^ :=]*)$""", index = 2)
-        .search(query)
+        .search(fieldNameLookup)
         .replace(f => "$1" + f.quotedValue)
         .template((f, _) => f.display)
         .result()
-    }
 
     val fieldAttr = {
       val query: String => IterableOnce[String] =
@@ -195,7 +202,7 @@ object FilterEditor {
         .result()
     }
 
-    hashtags :+ fieldName :+ fieldAttr :+ autoCompletePresenceLackAttr :+ autoCompleteHasIssue :+ autoCompleteKeywords
+    hashtags :+ derivationField :+ fieldName :+ fieldAttr :+ autoCompletePresenceLackAttr :+ autoCompleteHasIssue :+ autoCompleteKeywords
   }
 
   final class Backend($: BackendScope[Props, Unit]) extends AutoComplete.BackendI {

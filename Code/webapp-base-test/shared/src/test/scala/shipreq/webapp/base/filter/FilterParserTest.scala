@@ -218,6 +218,56 @@ object FilterParserTest extends TestSuite {
       "offC" - testFail("has:issue:-x,")
     }
 
+    "scoped1" - {
+      import FilterAst.Scope._
+      "basic"    - test("derivation:(x)",                  scoped1(false, NonEmptyVector(Derivation(None)), text("x")))
+      "main"     - test("+derivation:(x)",                 scoped1(true,  NonEmptyVector(Derivation(None)), text("x")))
+      "field1"   - test("derivation(a):(x)",               scoped1(false, NonEmptyVector(Derivation(Some("a"))), text("x")))
+      "field1WS" - test("derivation( a b ):(x)",           scoped1(false, NonEmptyVector(Derivation(Some("a b"))), text("x")))
+      "field2"   - test("derivation(\"a()\"):(x)",         scoped1(false, NonEmptyVector(Derivation(Some("a()"))), text("x")))
+      "field2WS" - test("derivation( \"a()\" ):(x)",       scoped1(false, NonEmptyVector(Derivation(Some("a()"))), text("x")))
+      "fields"   - test("derivation(a),derivation(b):(x)", scoped1(false, NonEmptyVector(Derivation(Some("a")), Derivation(Some("b"))), text("x")))
+      "main2"    - testFail("++derivation:(x)")
+      "nested1"  - testFail("derivation:(derivation:(x))")
+      "nested2"  - testFail("derivation:(derivation:(x)+(y))")
+    }
+
+    "scoped2" - {
+      import FilterAst.Scope._
+      "basic"     - test("derivation:(x)+(y)",    scoped2(NonEmptyVector(Derivation(None)), text("x"), text("y")))
+      "field1"    - test("derivation(a):(x)+(y)", scoped2(NonEmptyVector(Derivation(Some("a"))), text("x"), text("y")))
+      "main0"     - testFail("derivation:(x)(y)")
+      "main2"     - testFail("derivation:(x)++(y)")
+      "nested11"  - testFail("derivation:(derivation:(x))+(y)")
+      "nested12"  - testFail("derivation:(derivation:(x)+(y))+(y)")
+      "nested21"  - testFail("derivation:(x)+(derivation:(x))")
+      "nested22"  - testFail("derivation:(x)+(derivation:(x)+(y))")
+    }
+
+    "relTags" - {
+      import FilterAst.OrderOp._
+      "withSpace" - {
+        "<=" - test("<= #x", relativeTags(<=, "x"))
+        ">=" - test(">= #x", relativeTags(>=, "x"))
+        "≤"  - test("≤ #x", relativeTags(<=, "x"))
+        "≥"  - test("≥ #x", relativeTags(>=, "x"))
+        "<"  - test("< #x", relativeTags(<, "x"))
+        ">"  - test("> #x", relativeTags(>, "x"))
+      }
+      "withoutSpace" - {
+        "<=" - test("<=#x", relativeTags(<=, "x"))
+        ">=" - test(">=#x", relativeTags(>=, "x"))
+        "≤"  - test("≤#x", relativeTags(<=, "x"))
+        "≥"  - test("≥#x", relativeTags(>=, "x"))
+        "<"  - test("<#x", relativeTags(<, "x"))
+        ">"  - test(">#x", relativeTags(>, "x"))
+      }
+      "hashRefConsistency" - {
+        "withSpace"    - test("=#x", hashRef("x"))
+        "withoutSpace" - test("= #x", hashRef("x"))
+      }
+    }
+
     "unknownKeys" - {
       "empty"        - testFail(":")
       "typoLack"     - testFail("noo:stuff")

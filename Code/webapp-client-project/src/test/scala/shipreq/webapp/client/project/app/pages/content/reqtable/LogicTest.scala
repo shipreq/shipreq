@@ -10,7 +10,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.event.{CustomImpFieldGD, Event => E, GenericReqGD, UseCaseGD, UseCaseStepGD}
-import shipreq.webapp.base.filter.{Filter, IntensionalReqSet}
+import shipreq.webapp.base.filter.FilterAst.OrderOp
+import shipreq.webapp.base.filter.{Filter, FilterAst, IntensionalReqSet}
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.test.WebappTestUtil._
@@ -170,14 +171,19 @@ object LogicTest extends TestSuite {
     }
   }
 
-  private def allSortsCBA[A](z: A, zcount: Int)(f: (A, A) => A, asc: A, desc: A): Seq[(ConsiderBlanks, A)] = {
-    if (zcount < 1) fail("zcount must be ≥ 1")
-    val zz: A = if (zcount > 1) Iterator.fill(zcount)(z).reduce(f) else z
-    (BlanksThenAsc  -> f(zz, asc))  ::
-    (AscThenBlanks  -> f(asc, zz))  ::
-    (BlanksThenDesc -> f(zz, desc)) ::
-    (DescThenBlanks -> f(desc, zz)) :: Nil
-  }
+  private def allSortsCBA[A](z: A, zcount: Int)(f: (A, A) => A, asc: A, desc: A): Seq[(ConsiderBlanks, A)] =
+    if (zcount == 0) {
+      (BlanksThenAsc  -> asc)  ::
+      (AscThenBlanks  -> asc)  ::
+      (BlanksThenDesc -> desc) ::
+      (DescThenBlanks -> desc) :: Nil
+    } else {
+      val zz: A = if (zcount > 1) Iterator.fill(zcount)(z).reduce(f) else z
+      (BlanksThenAsc  -> f(zz, asc))  ::
+      (AscThenBlanks  -> f(asc, zz))  ::
+      (BlanksThenDesc -> f(zz, desc)) ::
+      (DescThenBlanks -> f(desc, zz)) :: Nil
+    }
 
   /** @param zcount Number of rows that are empty at the target column */
   private def allSortsCB(zcount: Int, asc: String, desc: String): Seq[(ConsiderBlanks, String)] =
@@ -1412,6 +1418,225 @@ object LogicTest extends TestSuite {
       desc = "DD-1:v1.3,v1.1,v1.0  DD-2:v1.2  DD-1:v1.1,v1.0,v1.3"))
   }
 
+  // https://shipreq.com/project/d6My#/reqs/FR-47
+  def testFilterWithDerivativeTags1a(): Unit = {
+    import SampleProject.Values._
+
+    val mf1 = GenericReqId(101) // Derives: v1.0 v1.1
+    val mf2 = GenericReqId(102) // Same as MF-1 but declares v1.0 manually
+    val mf3 = GenericReqId(103) // ∅
+    val mf4 = GenericReqId(104) // Derives: v1.0
+    val mf5 = GenericReqId(105) // v1.0
+
+    val fr1 = GenericReqId(201) // v1.0 defer
+    val fr2 = GenericReqId(202) // v1.1 wip
+
+    val p = applyEventsSuccessfully(SampleProject.project,
+      TestEvent.fieldCustomTagCreate(verField, verTG, deriv = DerivativeTags(Enabled, Map.empty)),
+      TestEvent.genericReqCreate(fr1, fr, tags = Set(v10, defer)),
+      TestEvent.genericReqCreate(fr2, fr, tags = Set(v11, wip)),
+      TestEvent.genericReqCreate(mf1, mf, impTgts = Set(fr1, fr2)),
+      TestEvent.genericReqCreate(mf2, mf, impTgts = Set(fr1, fr2), tags = v10),
+      TestEvent.genericReqCreate(mf3, mf),
+      TestEvent.genericReqCreate(mf4, mf, impTgts = Set(fr1)),
+      TestEvent.genericReqCreate(mf5, mf, tags = v10),
+    )
+
+    // After filtering:
+    // MF-1: v1.1 (v1.0)
+    // MF-2: v1.0 v1.1
+    // MF-3: ∅
+    // MF-4: ∅    (v1.0)
+    // MF-5: v1.0
+
+    val verScope   = FilterAst.Scope.Derivation(Some(verField))
+    val sort       = C.CustomField(verField)
+    val fmtRows    = prefixWithPubid(p, rowToTagTxt(p, cfTags(verField)))
+    val mainFilter = F.reqType(mf)
+    val filter     = F.allOf(mainFilter, F.scoped1(false, NonEmptySet(verScope), F.not(F.tag(defer))))
+
+    // Without derivation filter to confirm the data, and highlight the change
+    testCB(p, sort, mainFilter, HideDead, fmtRows)(Seq(
+      AscThenBlanks  -> "MF-1:v1.0,v1.1  MF-2:v1.0,v1.1  MF-4:v1.0  MF-5:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  ∅",
+      BlanksThenAsc  -> "∅  MF-1:v1.0,v1.1  MF-2:v1.0,v1.1  MF-4:v1.0  MF-5:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0",
+      BlanksThenDesc -> "∅  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  MF-1:v1.0,v1.1  MF-2:v1.0,v1.1  MF-4:v1.0  MF-5:v1.0",
+      DescThenBlanks -> "MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  MF-1:v1.0,v1.1  MF-2:v1.0,v1.1  MF-4:v1.0  MF-5:v1.0  ∅",
+    ))
+
+    // With derivation filter
+    testCB(p, sort, filter, HideDead, fmtRows)(Seq(
+      AscThenBlanks  -> "MF-2:v1.0,v1.1  MF-5:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  ∅  MF-4:v1.0",
+      BlanksThenAsc  -> "∅  MF-4:v1.0  MF-2:v1.0,v1.1  MF-5:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0",
+      BlanksThenDesc -> "∅  MF-4:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  MF-5:v1.0",
+      DescThenBlanks -> "MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  MF-5:v1.0  ∅  MF-4:v1.0",
+    ))
+  }
+
+  // https://shipreq.com/project/d6My#/reqs/FR-47
+  def testFilterWithDerivativeTags1b(): Unit = {
+    import SampleProject.Values._
+
+    val mf1 = GenericReqId(101)
+    val mf2 = GenericReqId(102)
+    val mf3 = GenericReqId(103)
+
+    val p = applyEventsSuccessfully(SampleProject.project,
+      TestEvent.fieldCustomTagCreate(verField, verTG, deriv = DerivativeTags(Enabled, Map.empty)),
+      TestEvent.genericReqCreate(mf1, mf),
+      TestEvent.genericReqCreate(mf2, mf, tags = v10),
+      TestEvent.genericReqCreate(mf3, mf, tags = v11),
+    )
+
+    val verScope    = FilterAst.Scope.Derivation(Some(verField))
+    val sort        = C.CustomField(verField)
+    val fmtRows     = prefixWithPubid(p, rowToTagTxt(p, cfTags(verField)))
+    val filterDeriv = F.scoped1(false, NonEmptySet(verScope), F.not(F.tag(v10)))
+    val filterMain  = F.scoped1(true, NonEmptySet(verScope), F.not(F.tag(v10)))
+
+    // Test that scoped filter is not added to main
+    testCB(p, sort, filterDeriv, HideDead, fmtRows)(allSortsCB(1, "MF-2:v1.0  MF-3:v1.1", "MF-3:v1.1  MF-2:v1.0"))
+
+    // Test that scoped filter is added to main
+    testCB(p, sort, filterMain, HideDead, fmtRows)(allSortsCB(1, "MF-3:v1.1", "MF-3:v1.1"))
+  }
+
+  /** Test that sub-filter only applies to derivation */
+  def testFilterWithDerivativeTags2a(): Unit = {
+    import SampleProject.Values._
+
+    val mf1 = GenericReqId(101) // Derives: v1.0 v1.1
+    val mf2 = GenericReqId(102) // Same as MF-1 but declares v1.0 manually
+    val mf3 = GenericReqId(103) // ∅
+    val mf4 = GenericReqId(104) // Derives: v1.0
+    val mf5 = GenericReqId(105) // v1.0
+
+    val fr1 = GenericReqId(201) // v1.0 defer
+    val fr2 = GenericReqId(202) // v1.1 wip
+
+    val p = applyEventsSuccessfully(SampleProject.project,
+      TestEvent.fieldCustomTagCreate(verField, verTG, deriv = DerivativeTags(Enabled, Map.empty)),
+      TestEvent.genericReqCreate(fr1, fr, tags = Set(v10, defer)),
+      TestEvent.genericReqCreate(fr2, fr, tags = Set(v11, wip)),
+      TestEvent.genericReqCreate(mf1, mf, impTgts = Set(fr1, fr2)),
+      TestEvent.genericReqCreate(mf2, mf, impTgts = Set(fr1, fr2), tags = v10),
+      TestEvent.genericReqCreate(mf3, mf, tags = defer),
+      TestEvent.genericReqCreate(mf4, mf, impTgts = Set(fr1)),
+      TestEvent.genericReqCreate(mf5, mf, tags = v10),
+    )
+
+    // After filtering:
+    // MF-1: v1.1 (v1.0)
+    // MF-2: v1.0 v1.1
+    // MF-3: ∅ [#defer]
+    // MF-4: ∅    (v1.0)
+    // MF-5: v1.0
+
+    val verScope   = FilterAst.Scope.Derivation(Some(verField))
+    val sort       = C.CustomField(verField)
+    val fmtRows    = prefixWithPubid(p, rowToTagTxt(p, cfTags(verField)))
+    val mainFilter = F.reqType(mf)
+    val notDefer   = F.not(F.tag(defer))
+    val alwaysTrue = F.not(F.text("no_match"))
+    val filter     = F.allOf(mainFilter, F.scoped2(NonEmptySet(verScope), notDefer, alwaysTrue))
+
+    // With derivation filter
+    testCB(p, sort, filter, HideDead, fmtRows)(Seq(
+      AscThenBlanks  -> "MF-2:v1.0,v1.1  MF-5:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  ∅  MF-4:v1.0",
+      BlanksThenAsc  -> "∅  MF-4:v1.0  MF-2:v1.0,v1.1  MF-5:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0",
+      BlanksThenDesc -> "∅  MF-4:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  MF-5:v1.0",
+      DescThenBlanks -> "MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  MF-5:v1.0  ∅  MF-4:v1.0",
+    ))
+  }
+
+  /** Test that main-filter only applies to both derivation and main results */
+  def testFilterWithDerivativeTags2b(): Unit = {
+    import SampleProject.Values._
+
+    val mf1 = GenericReqId(101) // Derives: v1.0 v1.1
+    val mf2 = GenericReqId(102) // Same as MF-1 but declares v1.0 manually
+    val mf3 = GenericReqId(103) // ∅
+    val mf4 = GenericReqId(104) // Derives: v1.0
+    val mf5 = GenericReqId(105) // v1.0
+    val mf6 = GenericReqId(106) // defer
+
+    val fr1 = GenericReqId(201) // v1.0 defer
+    val fr2 = GenericReqId(202) // v1.1 wip
+
+    val p = applyEventsSuccessfully(SampleProject.project,
+      TestEvent.fieldCustomTagCreate(verField, verTG, deriv = DerivativeTags(Enabled, Map.empty)),
+      TestEvent.genericReqCreate(fr1, fr, tags = Set(v10, defer)),
+      TestEvent.genericReqCreate(fr2, fr, tags = Set(v11, wip)),
+      TestEvent.genericReqCreate(mf1, mf, impTgts = Set(fr1, fr2)),
+      TestEvent.genericReqCreate(mf2, mf, impTgts = Set(fr1, fr2), tags = v10),
+      TestEvent.genericReqCreate(mf3, mf),
+      TestEvent.genericReqCreate(mf4, mf, impTgts = Set(fr1)),
+      TestEvent.genericReqCreate(mf5, mf, tags = v10),
+      TestEvent.genericReqCreate(mf6, mf, tags = defer),
+    )
+
+    // After filtering:
+    // MF-1: v1.1 (v1.0)
+    // MF-2: v1.0 v1.1
+    // MF-3: ∅
+    // MF-4: ∅    (v1.0)
+    // MF-5: v1.0
+    // MF-6: ∅ [#defer]
+
+    val verScope   = FilterAst.Scope.Derivation(Some(verField))
+    val sort       = C.CustomField(verField)
+    val fmtRows    = prefixWithPubid(p, rowToTagTxt(p, cfTags(verField)))
+    val mainFilter = F.reqType(mf)
+    val notDefer   = F.not(F.tag(defer))
+    val alwaysTrue = F.not(F.text("no_match"))
+    val filter     = F.allOf(mainFilter, F.scoped2(NonEmptySet(verScope), alwaysTrue, notDefer))
+
+    // With derivation filter
+    testCB(p, sort, filter, HideDead, fmtRows)(Seq(
+      AscThenBlanks  -> "MF-2:v1.0,v1.1  MF-5:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  ∅  MF-4:v1.0",
+      BlanksThenAsc  -> "∅  MF-4:v1.0  MF-2:v1.0,v1.1  MF-5:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0",
+      BlanksThenDesc -> "∅  MF-4:v1.0  MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  MF-5:v1.0",
+      DescThenBlanks -> "MF-1:v1.1,v1.0  MF-2:v1.1,v1.0  MF-5:v1.0  ∅  MF-4:v1.0",
+    ))
+  }
+
+  def testFilterWithRelativeTags(op: OrderOp): Unit = {
+    import SampleProject.Values._
+
+    val mf1 = GenericReqId(101)
+    val mf2 = GenericReqId(102)
+    val mf3 = GenericReqId(103)
+    val mf4 = GenericReqId(104)
+    val mf5 = GenericReqId(105)
+
+    val p = applyEventsSuccessfully(SampleProject.project,
+      TestEvent.fieldCustomTagCreate(verField, verTG, deriv = DerivativeTags(Enabled, Map.empty)),
+      TestEvent.genericReqCreate(mf1, mf, tags = v11),
+      TestEvent.genericReqCreate(mf2, mf, tags = v12),
+      TestEvent.genericReqCreate(mf3, mf, tags = v13),
+      TestEvent.genericReqCreate(mf4, mf, tags = v12),
+      TestEvent.genericReqCreate(mf5, mf, tags = priMed),
+      E.ReqsDelete.one(mf4),
+    )
+
+    val filter = F.relativeTags(op, v12)
+
+    val expectLive = op match {
+      case OrderOp.<  => "MF-1"
+      case OrderOp.<= => "MF-1  MF-2"
+      case OrderOp.>= => "MF-2  MF-3"
+      case OrderOp.>  => "MF-3"
+    }
+
+    val expectDead = op match {
+      case OrderOp.<  => ""
+      case OrderOp.<= => "MF-4"
+      case OrderOp.>= => "MF-4"
+      case OrderOp.>  => ""
+    }
+
+    testFilter(p, filter)(expectLive, expectDead)
+  }
+
   // ===================================================================================================================
 
   override def tests = Tests {
@@ -1506,6 +1731,17 @@ object LogicTest extends TestSuite {
       "allOf"                - testFilterAll()
       "anyOf"                - testFilterAny()
       "not"                  - testFilterNot()
+      "derivTags1a"          - testFilterWithDerivativeTags1a()
+      "derivTags1b"          - testFilterWithDerivativeTags1b()
+      "derivTags2a"          - testFilterWithDerivativeTags2a()
+      "derivTags2b"          - testFilterWithDerivativeTags2b()
+
+      "relTags" - {
+        "<"  - testFilterWithRelativeTags(OrderOp.<)
+        ">"  - testFilterWithRelativeTags(OrderOp.>)
+        "<=" - testFilterWithRelativeTags(OrderOp.<=)
+        ">=" - testFilterWithRelativeTags(OrderOp.>=)
+      }
     }
     "codeGroupsWithFilter" - {
       "hideDead" - testCodeGroupWhenFilteredAndHideDead()

@@ -2151,7 +2151,7 @@ object RandomData {
   // ===================================================================================================================
   object filter {
     import shipreq.webapp.base.filter._
-    import shipreq.webapp.base.filter.FilterAst.FieldCriteria
+    import shipreq.webapp.base.filter.FilterAst.{FieldCriteria, Scope}
     import shipreq.webapp.base.filter.Filter._
     import shipreq.webapp.base.filter.Filter.Implicits._
     import shipreq.webapp.base.filter.IntensionalReqSet._
@@ -2200,11 +2200,33 @@ object RandomData {
     val regex =
       unicodeString1.map(s => FilterAst.Regex(fixRegex(s)))
 
-    def fixRoot[A[_], B[_], C, D, E, F, G, H](f: FilterAst.Fixed[A, B, C, D, E, F, G, H]): FilterAst.Fixed[A, B, C, D, E, F, G, H] =
+    def fixRoot[A[_], B[_], C, D, E, F, G, H, I, J](f: FilterAst.Fixed[A, B, C, D, E, F, G, H, I, J]): FilterAst.Fixed[A, B, C, D, E, F, G, H, I, J] =
       f.unfix match {
         case FilterAst.AllOf(a) if a.tail.isEmpty => a.head
         case _                                    => f
       }
+
+    def scoped[S, SS, A](gs: Option[Gen[S]], ga: Gen[A])(f: (Scope[S], Vector[Scope[S]]) => SS): Gen[FilterAst[A, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, SS, Nothing]] = {
+
+      val genScope: Gen[Scope[S]] =
+        gs match {
+          case Some(g) => g.option.map(Scope.Derivation(_))
+          case None    => Gen.pure(Scope.Derivation(None))
+        }
+
+      val genScopes: Gen[SS] =
+        for {
+          s1 <- genScope
+          sn <- genScope.vector(0 to 2)
+        } yield f(s1, sn)
+
+      val scoped1 = Gen.apply3(FilterAst.Scoped1.apply[SS, A])(Gen.boolean, genScopes, ga)
+      val scoped2 = Gen.apply3(FilterAst.Scoped2.apply[SS, A])(genScopes, ga, ga)
+      Gen.chooseGen(scoped1, scoped2)
+    }
+
+    val orderOp: Gen[FilterAst.OrderOp] =
+      Gen.chooseNE(FilterAst.OrderOp.values)
 
     // -----------------------------------------------------------------------------------------------------------------
     object potential {
@@ -2267,9 +2289,10 @@ object RandomData {
       val hashRef  = hashRefKey     .map(FilterAst.HashRef(_))
       val reqs     = someOfType     .map(s => FilterAst.Reqs(NonEmptyVector.one(s)))
       val presence = attr           .map(FilterAst.Presence(_))
+      val relTags  = Gen.lift2(orderOp, hashRefKey)(FilterAst.RelativeTags(_, _))
 
       private val flatGens: NonEmptyVector[Gen[PotentialF[Nothing]]] =
-        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, presence, hasIssue)
+        NonEmptyVector(quotedText, simpleText, regex, reqs, reqType, hashRef, presence, hasIssue, relTags)
 
       private val flatGen: Gen[PotentialF[Nothing]] =
         Gen.chooseGenNE(flatGens :+ fieldProp(None))
@@ -2290,6 +2313,7 @@ object RandomData {
             gens :+= impliedByAnyOf(sgNext)
             gens :+= genNEV.map(FilterAst.AllOf(_))
             gens :+= genNEV.map(FilterAst.AnyOf(next, _))
+            gens :+= scoped(Some(fieldName), gNext)((h, t) => NonEmptyVector(h, t))
             Gen.chooseGenNE(flatGens)
           }
         }
@@ -2346,6 +2370,7 @@ object RandomData {
       def reqType    (g: Gen[Valid.ReqType])    : Gen[ValidF[Nothing]] = g.map(FilterAst.ReqType(_))
       def tag        (g: Gen[ApplicableTagId])  : Gen[ValidF[Nothing]] = g.map(i => FilterAst.HashRef(\/-(i)))
       def customIssue(g: Gen[CustomIssueTypeId]): Gen[ValidF[Nothing]] = g.map(i => FilterAst.HashRef(-\/(i)))
+      def relTags    (g: Gen[ApplicableTagId])  : Gen[ValidF[Nothing]] = Gen.lift2(orderOp, g)(FilterAst.RelativeTags(_, _))
 
       val specialBuiltInFieldFilterOk: Gen[SpecialBuiltInField.FilterOk] =
         Gen.chooseNE(SpecialBuiltInField.filterOk)
@@ -2387,11 +2412,15 @@ object RandomData {
         NonEmptyVector[Gen[ValidF[Nothing]]](quotedText, simpleText, regex, presence, hasIssue) ++
           gy.map(reqType) ++
           gt.map(tag) ++
+          gt.map(relTags) ++
           gi.map(customIssue) ++
           gy.map(reqs)
       }
 
-      private def coalgebra(gf: Option[Gen[CustomFieldId]], gy: Option[Gen[ReqTypeId]], flatGens: FlatGens): FCoalgebraM[Gen, ValidF, Int] = {
+      private def coalgebra(gf: Option[Gen[CustomFieldId]],
+                            gt: Option[Gen[CustomField.Tag.Id]],
+                            gy: Option[Gen[ReqTypeId]],
+                            flatGens: FlatGens): FCoalgebraM[Gen, ValidF, Int] = {
         val gr = gy.map(reqSpecs)
         val flatGen = Gen.chooseGenNE(flatGens ++ gf.map(fieldProp(_, None)))
         remainingDepth =>
@@ -2406,6 +2435,7 @@ object RandomData {
             gens :+= Gen.pure(FilterAst.Not(next))
             gens :+= genNEV.map(FilterAst.AllOf(_))
             gens :+= genNEV.map(FilterAst.AnyOf(next, _))
+            gens :+= scoped(gt, gNext)((h, t) => NonEmptySet(h, t.toSet))
             for (g <- gf) gens :+= fieldProp(g, sgNext)
             implies(gr, sgNext).foreach(gens :+= _)
             impliedBy(gr, sgNext).foreach(gens :+= _)
@@ -2413,26 +2443,31 @@ object RandomData {
           }
       }
 
-      private def deepGen(gf: Option[Gen[CustomFieldId]], gy: Option[Gen[ReqTypeId]], f: FlatGens): Gen[Valid] =
-        Recursion.anaM(coalgebra(gf, gy, f))(4 `JVM|JS` 3).map(fixRoot)
+      private def deepGen(gf: Option[Gen[CustomFieldId]],
+                          gt: Option[Gen[CustomField.Tag.Id]],
+                          gy: Option[Gen[ReqTypeId]],
+                          f: FlatGens): Gen[Valid] =
+        Recursion.anaM(coalgebra(gf, gt, gy, f))(4 `JVM|JS` 3).map(fixRoot)
 
       @inline def forProject(p: Project): Gen[Valid] =
         forProjectConfig(p.config)
 
       def forProjectConfig(p: ProjectConfig): Gen[Valid] = {
-        val gf: Option[Gen[CustomFieldId]]     = Gen tryGenChoose p.fields.customFields.keySet
-        val gy: Option[Gen[ReqTypeId]]         = Gen tryGenChoose p.reqTypes.all.whole.map(_.reqTypeId)
-        val gt: Option[Gen[ApplicableTagId]]   = Gen tryGenChoose p.tags.applicableTagIterator().map(_.id)
-        val gi: Option[Gen[CustomIssueTypeId]] = Gen tryGenChoose p.customIssueTypes.keys.toVector
-        deepGen(gf, gy, flatGens(gy, gt, gi))
+        val gf: Option[Gen[CustomFieldId]]      = Gen tryGenChoose p.fields.customFields.keySet
+        val gy: Option[Gen[ReqTypeId]]          = Gen tryGenChoose p.reqTypes.all.whole.map(_.reqTypeId)
+        val ga: Option[Gen[ApplicableTagId]]    = Gen tryGenChoose p.tags.applicableTagIterator().map(_.id)
+        val gi: Option[Gen[CustomIssueTypeId]]  = Gen tryGenChoose p.customIssueTypes.keys.toVector
+        val gt: Option[Gen[CustomField.Tag.Id]] = Gen tryGenChoose(p.fields.customTagFields).map(_.id)
+        deepGen(gf, gt, gy, flatGens(gy, ga, gi))
       }
 
       lazy val arbitrary: Gen[Valid] = {
-        val gf: Option[Gen[CustomFieldId]]     = Some(customFieldId)
-        val gy: Option[Gen[ReqTypeId]]         = Some(reqTypeId)
-        val gt: Option[Gen[ApplicableTagId]]   = Some(applicableTagId)
-        val gi: Option[Gen[CustomIssueTypeId]] = Some(customIssueTypeId)
-        deepGen(gf, gy, flatGens(gy, gt, gi))
+        val gf: Option[Gen[CustomFieldId]]      = Some(customFieldId)
+        val gy: Option[Gen[ReqTypeId]]          = Some(reqTypeId)
+        val ga: Option[Gen[ApplicableTagId]]    = Some(applicableTagId)
+        val gi: Option[Gen[CustomIssueTypeId]]  = Some(customIssueTypeId)
+        val gt: Option[Gen[CustomField.Tag.Id]] = Some(customFieldTagId)
+        deepGen(gf, gt, gy, flatGens(gy, ga, gi))
       }
     }
   }

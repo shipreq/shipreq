@@ -94,6 +94,16 @@ object FilterHelp {
       )("#draft"),
 
       Row(
+        "Because tags have order, you can prefix a tag with one of these ordering operations:",
+        <.ul(
+          <.li(code("<"), " - less than"),
+          <.li(code("<="), " - less than or equal to"),
+          <.li(code(">"), " - greater than"),
+          <.li(code(">="), " - greater than or equal to"),
+        ),
+      )(">= #v2.0"),
+
+      Row(
         "To find requirements that simply have any tag, or have any kind of issue, enter ", code("has:"),
         " followed by either:",
         <.ul(
@@ -210,6 +220,34 @@ object FilterHelp {
           "Like above, you can also wrap them in parenthesis ", code("(…)"),
           " and treat it as a single filter (which allows you to do things like negate the whole thing).",
       )("MF | FR | UC", "has:issue | #bug", "(#v1.0 | #v1.1)"),
+
+    ),
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    Group("Advanced Features")(
+
+      Row(
+        Row.header("Tag derivation filter"),
+        "You can specify a filter that only applies to sources of derivative tags. If all sources of a derived tag",
+        " are excluded by a filter, then it is displayed without any colour or highlighting, and is excluded from",
+        " sorting.", <.br, <.br,
+        "The most basic syntax is ", code("derivation:(sub-filter)"), " which applies the filter to all derived tags.",
+        " To only target only tag derived for a specific field, use the syntax ", code("derivation(field-name):(sub-filter)"), ".",
+        <.br, <.br,
+        " You can also specify that the sub-filter should be part of the main filter as well as just for derivation,",
+        " by adding a ", code("+"), " to the beginning of the clause. In other words, ",
+        code("#a #b #c derivation:(#a #b)"), " is identical to ", code("#c +derivation:(#a #b)"), ".",
+        <.br, <.br,
+        " Finally, there's an additional syntax of ",
+        code("derivation:(x)+(y)"),
+        " which is a shortcut for ",
+        code("derivation:(x) +derivation:(y)"),
+        ".",
+      )(
+        "+derivation:(-#implemented -#deferred -#analysed)",
+        "derivation:(-#analysed)+(-#implemented -#deferred)",
+        "MF -#implemented -#deferred derivation(Version):(-#implemented -#deferred -#analysed)",
+      ),
 
     ),
 

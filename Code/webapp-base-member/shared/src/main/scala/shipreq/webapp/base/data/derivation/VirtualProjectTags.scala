@@ -961,7 +961,7 @@ object VirtualProjectTags {
           val defaultsFn: Mutable.ForReq => Map[CustomField.Tag.Id, ApplicableTagId] =
             fd match {
               case HideDead => _.liveDefaults
-              case ShowDead => b => Util.mergeMaps(b.liveDefaults, b.deadDefaults)
+              case ShowDead => b => Util.mergeDisjointMaps(b.liveDefaults, b.deadDefaults)
             }
 
           Memo { reqId =>

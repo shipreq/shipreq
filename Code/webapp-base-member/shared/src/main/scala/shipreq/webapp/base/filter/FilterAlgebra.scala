@@ -11,7 +11,7 @@ import shipreq.webapp.base.data
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.derivation.DataLogic.IssueLookup
 import shipreq.webapp.base.data.derivation.VirtualProjectTags
-import shipreq.webapp.base.data.{FilterDead, On}
+import shipreq.webapp.base.data.{FilterDead, HideDead, On, ShowDead}
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
 
@@ -32,8 +32,8 @@ object FilterAlgebra {
   import FilterAst.FieldCriteria
 
   val isFieldNameUnquotedChar: Char => Boolean = {
-    case ':' | '=' | '"' => false
-    case c               => !c.isWhitespace
+    case ':' | '=' | '"' | ')' => false
+    case c                     => !c.isWhitespace
   }
 
   def quoteFieldName(name: String): String =
@@ -81,18 +81,57 @@ object FilterAlgebra {
       case ImpCriteria.Query(q) => subquery(q)
     }
 
+    @inline def fmtScoped(main      : Boolean,
+                          scope     : Potential.Scope,
+                          clause    : AtomOrComposite[String],
+                          mainClause: Option[AtomOrComposite[String]]): AtomOrComposite[String] = {
+
+      def clauseToText(c: AtomOrComposite[String]): String =
+        c match {
+          case AtomOrComposite.Atom(t)         => t
+          case AtomOrComposite.Composite(t, _) => t
+        }
+
+      val prefix =
+        if(main) Scope.mainPrefix else ""
+
+      val scopeText =
+        scope.iterator.map {
+          case Scope.Derivation(None) =>
+            Scope.Derivation.keyword
+
+          case Scope.Derivation(Some(f)) =>
+            Scope.Derivation.keyword +
+              Scope.Derivation.fieldPrefix +
+              Scope.Derivation.quoteIfNecessary(f) +
+              Scope.Derivation.fieldSuffix
+
+        }.mkString(prefix, Scope.separator, Scope.suffix)
+
+      val clauseText =
+        clauseToText(clause)
+
+      val secondClause =
+        mainClause.fold("")(c => s"${Scope.mainSuffix}(${clauseToText(c)})")
+
+      s"$scopeText($clauseText)$secondClause"
+    }
+
     {
       case Text          (text, None)        => text
       case Text          (text, Some(qChar)) => qChar ~ text ~ qChar
       case Regex         (text)              => '/' ~ text.replace("/", "\\/") ~ '/'
       case ReqType       (value)             => value.value
       case HashRef       (text)              => Grammar.hashRefKey.prefix ~ text.value
+      case RelativeTags  (op, tag)           => op.symbol ~ Grammar.hashRefKey.prefix ~ tag.value
       case FieldProp     (field, attr)       => "field:" ~ quoteFieldName(field) ~ "=" ~ fieldCriteria(attr)
       case HasIssue      (on, criteria)      => "has:issue:" ~ (if (on is On) "" else "-") ~ criteria.mkString(",")
       case ImpliesAnyOf  (criteria)          => "implies:" ~ impCriteria(criteria)
       case ImpliedByAnyOf(criteria)          => "impliedBy:" ~ impCriteria(criteria)
       case Reqs          (reqs)              => fmtReqs(reqs, ' ')
       case Presence      (attr)              => "has:" ~ attr
+      case Scoped1       (main, s, c)        => fmtScoped(main, s, c, None)
+      case Scoped2       (s, c, m)           => fmtScoped(false, s, c, Some(m))
       case Not           (clause)            => '-' ~ clause.atom
       case AllOf         (clauses)           => composite("(", clauses.iterator.map(_.atom).mkString(" "),  ")")
       case AnyOf         (c, cs)             => composite("(", (c +: cs).iterator.map(_.atom).mkString(" | "),  ")")
@@ -149,17 +188,22 @@ object FilterAlgebra {
         case _: Throwable => fail(s"Invalid regex: /$regex/")
       }
 
+    type ParsedField = data.SpecialBuiltInField.FilterOk \/ data.Field
+
+    def parseFieldName(name: String): ErrorMsg \/ ParsedField = {
+      val nameLower = name.toLowerCase
+      def tryL      = data.SpecialBuiltInField.filterOkByNameLowercase.get(nameLower).map(-\/(_))
+      def tryR      = cfg.fieldsByNameLowercaseWithFilterAliases.get(nameLower).map(\/-(_))
+
+      (tryL orElse tryR) match {
+        case Some(f) => \/-(f)
+        case None    => fail(s"Unknown field: '$name'")
+      }
+    }
+
     def byField(fieldName: String, criteria: FieldCriteria[String, Valid]): R = {
       import FieldAttr._
       import data._
-
-      type ParsedField = SpecialBuiltInField.FilterOk \/ Field
-      val parsedField: Option[ParsedField] = {
-        val nameLower = fieldName.toLowerCase
-        def tryL      = SpecialBuiltInField.filterOkByNameLowercase.get(nameLower).map(-\/(_))
-        def tryR      = cfg.fieldsByNameLowercaseWithFilterAliases.get(nameLower).map(\/-(_))
-        tryL orElse tryR
-      }
 
       def parseAsAttr(field: ParsedField, attrText: String): R =
         lookupFieldAttr(attrText) { attr =>
@@ -194,7 +238,7 @@ object FilterAlgebra {
             case (\/-(f: StaticField.AllTags.type)          , _            ) => blankOnly(\/-(f), f.name)
             case (\/-(f: StaticField.NormalAltStepTree.type), _            ) => noDefault(\/-(f), f.name)
             case (\/-(f: StaticField.ExceptionStepTree.type), _            ) => noDefault(\/-(f), f.name)
-            case (\/-(StaticField.ImplicationGraph)         , _)
+            case (\/-(StaticField.ImplicationGraph)         , _            )
                | (\/-(StaticField.StepGraph)                , _            ) => fail(s"$fieldName can't be used here.")
           }
         }
@@ -214,15 +258,12 @@ object FilterAlgebra {
           case _                               => valuesNotAllowed
         }
 
-      parsedField match {
-        case Some(field) =>
-          criteria match {
-            case FieldCriteria.Attr(a)          => parseAsAttr(field, a)
-            case q@ FieldCriteria.Query(_)      => parseAsQuery(field, q)
-            case s: FieldCriteria.ReqTypePosSet => parseAsPoses(field, s)
-          }
-        case None =>
-          fail(s"Unknown field: '$fieldName'")
+      parseFieldName(fieldName).flatMap { field =>
+        criteria match {
+          case FieldCriteria.Attr(a)          => parseAsAttr(field, a)
+          case q@ FieldCriteria.Query(_)      => parseAsQuery(field, q)
+          case s: FieldCriteria.ReqTypePosSet => parseAsPoses(field, s)
+        }
       }
     }
 
@@ -232,8 +273,45 @@ object FilterAlgebra {
         case q@ ImpCriteria.Query(_) => \/-(Valid(f(q)))
       }
 
+    def scoped(main: Boolean, scope: Potential.Scope, clause: Valid, mainClause: Option[Valid]): R = {
+      val scopeResult: ErrorMsg \/ NonEmptyVector[Scope[data.CustomField.Tag.Id]] =
+        scope.traverse1 {
+          case Scope.Derivation(None) =>
+            \/-(Scope.Derivation(None))
+
+          case Scope.Derivation(Some(fieldName)) =>
+            parseFieldName(fieldName).flatMap {
+              case \/-(f: data.CustomField.Tag) =>
+                // Not you'd be tempted to add a check here to confirm that the tag field actually uses derivative tags
+                // but if we did that, it would allow valid saved filters to later become invalid and not work.
+                \/-(Scope.Derivation(Some(f.id)))
+
+              case _ =>
+                fail(s"$fieldName is not a tag field.")
+            }
+        }
+
+      for {
+        s <- scopeResult
+      } yield {
+        val ss = s.toNES
+        val f = mainClause match {
+          case None    => Scoped1(main, ss, clause)
+          case Some(c) => Scoped2(ss, clause, c)
+        }
+        Valid(f)
+      }
+    }
+
+    def relativeTag(op: OrderOp, key: data.HashRefKey): R =
+      cfg.hashRefLookup(key.value) match {
+        case Some(-\/(t)) => \/-(Valid(RelativeTags(op, t.id)))
+        case _            => fail(s"Unknown tag: '${key.value}'") // English
+      }
+
     {
       case HashRef       (key)             => byHashTag(key)
+      case RelativeTags  (op, key)         => relativeTag(op, key)
       case ImpliesAnyOf  (criteria)        => impCriteria(criteria, ImpliesAnyOf.apply)
       case ImpliedByAnyOf(criteria)        => impCriteria(criteria, ImpliedByAnyOf.apply)
       case Reqs          (reqs)            => byReqSet(reqs, Reqs.apply)
@@ -242,6 +320,8 @@ object FilterAlgebra {
       case Regex         (regex)           => byRegex(regex)
       case ReqType       (mn)              => lookupReqType(mn).map(rt => Valid(ReqType(rt.reqTypeId)))
       case FieldProp     (field, criteria) => byField(field, criteria)
+      case Scoped1       (m, s, c)         => scoped(m, s, c, None)
+      case Scoped2       (s, c, m)         => scoped(false, s, c, Some(m))
       case c: Text                         => \/-(Valid(c))
       case c: Not  [Valid]                 => \/-(Valid(c))
       case c: AllOf[Valid]                 => \/-(Valid(c))
@@ -287,9 +367,15 @@ object FilterAlgebra {
         case x@ImpCriteria.Query(_) => x
       }
 
+    val convertScope: Scope[data.CustomField.Tag.Id] => Scope[String] = {
+      case Scope.Derivation(None)    => Scope.Derivation(None)
+      case Scope.Derivation(Some(f)) => Scope.Derivation(Some(cfg.fieldName(f)))
+    }
+
     {
       case HashRef       (\/-(id))  => Potential(HashRef       (cfg.tags.needApplicableTag(id).key))
       case HashRef       (-\/(id))  => Potential(HashRef       (cfg.customIssueTypes.need(id).key))
+      case RelativeTags  (op, id)   => Potential(RelativeTags  (op, cfg.tags.needApplicableTag(id).key))
       case Presence      (attr)     => Potential(Presence      (attr.name))
       case ImpliesAnyOf  (criteria) => Potential(ImpliesAnyOf  (impCriteria(criteria)))
       case ImpliedByAnyOf(criteria) => Potential(ImpliedByAnyOf(impCriteria(criteria)))
@@ -297,6 +383,8 @@ object FilterAlgebra {
       case ReqType       (id)       => Potential(ReqType       (convReqType(id)))
       case HasIssue      (on, c)    => Potential(HasIssue      (on, c.map(FilterAst.issueCategoryToStr)))
       case FieldProp     (f, c)     => Potential(FieldProp     (f.fold(_.name, fieldName), fieldCriteria(c)))
+      case Scoped1       (m, ss, c) => Potential(Scoped1       (m, ss.toNEV.map(convertScope), c))
+      case Scoped2       (ss, c, m) => Potential(Scoped2       (ss.toNEV.map(convertScope), c, m))
       case c: Regex                 => Potential(c)
       case c: Text                  => Potential(c)
       case c: Not  [Potential]      => Potential(c)
@@ -330,19 +418,22 @@ object FilterAlgebra {
       }
 
     {
-      case ImpliesAnyOf  (criteria)     => Extensional(ImpliesAnyOf  (impCriteria(criteria)))
-      case ImpliedByAnyOf(criteria)     => Extensional(ImpliedByAnyOf(impCriteria(criteria)))
-      case Reqs          (reqs)         => Extensional(Reqs          (lookupReqSet(reqs)))
-      case c: Regex                     => Extensional(c)
-      case c: Text                      => Extensional(c)
-      case c@ FieldProp(_, _)           => Extensional(c)
-      case c: HashRef  [Valid.HashTag]  => Extensional(c)
-      case c: Presence [Valid.Attr]     => Extensional(c)
-      case c: HasIssue [Valid.IssueCat] => Extensional(c)
-      case c: ReqType  [Valid.ReqType]  => Extensional(c)
-      case c: Not      [Extensional]    => Extensional(c)
-      case c: AllOf    [Extensional]    => Extensional(c)
-      case c: AnyOf    [Extensional]    => Extensional(c)
+      case ImpliesAnyOf  (criteria)                  => Extensional(ImpliesAnyOf  (impCriteria(criteria)))
+      case ImpliedByAnyOf(criteria)                  => Extensional(ImpliedByAnyOf(impCriteria(criteria)))
+      case Reqs          (reqs)                      => Extensional(Reqs          (lookupReqSet(reqs)))
+      case c: Regex                                  => Extensional(c)
+      case c: Text                                   => Extensional(c)
+      case c@ FieldProp(_, _)                        => Extensional(c)
+      case c: HashRef     [Valid.HashTag]            => Extensional(c)
+      case c: RelativeTags[Valid.ApTag]              => Extensional(c)
+      case c: Presence    [Valid.Attr]               => Extensional(c)
+      case c: HasIssue    [Valid.IssueCat]           => Extensional(c)
+      case c: ReqType     [Valid.ReqType]            => Extensional(c)
+      case c: Not         [Extensional]              => Extensional(c)
+      case c: AllOf       [Extensional]              => Extensional(c)
+      case c: AnyOf       [Extensional]              => Extensional(c)
+      case c: Scoped1     [Valid.Scope, Extensional] => Extensional(c)
+      case c: Scoped2     [Valid.Scope, Extensional] => Extensional(c)
     }
   }
 
@@ -390,6 +481,7 @@ object FilterAlgebra {
         req         = OptionalBoolFn(Option(req)),
         codeGroup   = OptionalBoolFn(Option(codeGroup)),
         manualIssue = OptionalBoolFn(Option(manualIssue)),
+        derivation  = CompiledFilter.Derivation.emptyReq,
       )
 
     def reqOnly(f: Req => Boolean): CompiledFilter =
@@ -451,6 +543,7 @@ object FilterAlgebra {
         req         = searchFilter.req        .contramap(_.id),
         codeGroup   = searchFilter.codeGroup  .contramap(_.id),
         manualIssue = searchFilter.manualIssue.contramap(_.id),
+        derivation  = CompiledFilter.Derivation.emptyReq,
       )
     }
 
@@ -596,6 +689,28 @@ object FilterAlgebra {
       }
     }
 
+    def scoped(main: Boolean, scopes: Extensional.Scope, filter: CompiledFilter): CompiledFilter = {
+      val derivation = {
+        var all      = OptionalBoolFn.empty[Req]
+        var perField = Map.empty[CustomField.Tag.Id, Req => Boolean]
+        scopes.foreach {
+          case Scope.Derivation(None)    => all = filter.req
+          case Scope.Derivation(Some(f)) => filter.req.value.foreach(g => perField = perField.updated(f, g))
+        }
+        new CompiledFilter.Derivation(all, perField) && filter.derivation
+      }
+      val root = if (main) filter else CompiledFilter.empty
+      root.copy(derivation = derivation)
+    }
+
+    def relativeTags(op: OrderOp, subject: data.ApplicableTagId): CompiledFilter = {
+      val validTags = this.relativeTags(p.config.tags, filterDead, op, subject)
+      if (validTags.isEmpty)
+        byTag(_ => false)
+      else
+        byTag(_.exists(validTags.contains))
+    }
+
     val self: FAlgebra[ExtensionalF, CompiledFilter] = {
       case Text          (t, None)       => byPubidOrText(t)
       case Text          (t, Some(_))    => byText(t)
@@ -607,13 +722,17 @@ object FilterAlgebra {
       case Presence      (Attr.AnyTag)   => byTag(_.nonEmpty)
       case HashRef       (-\/(issue))    => byCustomIssueType(_.exists(_.typ ==* issue))
       case HashRef       (\/-(tag))      => byTag(_ contains tag)
+      case RelativeTags  (op, subject)   => relativeTags(op, subject)
       case Regex         (regex)         => byRegex(regex)
       case FieldProp     (f, a)          => byFieldProp(f, a)
       case AllOf         (fs)            => fs.reduce(_ && _)
       case AnyOf         (f, fs)         => f || fs.reduce(_ || _)
       case Not           (f)             => !f
+      case Scoped1       (m, s, c)       => scoped(m, s, c)
+      case Scoped2       (s, c, m)       => scoped(false, s, c && m) && m
       case HasIssue      (On, cs)        => byIssue(i => i.issues.nonEmpty && cs.forall(i.categories.contains))
-      case HasIssue      (Off, cs)       =>
+
+      case HasIssue      (Off, cs) =>
         val categories = cs.whole.toSet
         byIssue(i => i.issues.nonEmpty && i.categories.exists(!categories.contains(_)))
     }
@@ -622,6 +741,39 @@ object FilterAlgebra {
     cata = RecursionFn.cata(self)
 
     self
+  }
+
+  def relativeTags(tags   : data.Tags,
+                   fd     : FilterDead,
+                   op     : OrderOp,
+                   subject: data.ApplicableTagId): Set[data.ApplicableTagId] = {
+
+    def allInScope: Iterator[data.ApplicableTagId] =
+      if (tags.topLevelIds.contains(subject)) {
+
+        val base =
+          tags
+            .topLevelIds
+            .iterator
+            .filterSubType[data.ApplicableTagId]
+
+        fd match {
+          case HideDead => base.filter(tags.liveApplicableTagIds.contains)
+          case ShowDead => base
+        }
+
+      } else
+        tags.tagGroupParentsFor(fd)(subject)
+          .iterator
+          .flatMap(tags.transitiveChildren(fd))
+          .filterSubType[data.ApplicableTagId]
+
+    val lookupPos  = tags.orderByPos
+    val subjectPos = lookupPos(subject)
+
+    allInScope
+      .filter(t => op.cmpInts(lookupPos(t), subjectPos))
+      .toSet
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -639,6 +791,11 @@ object FilterAlgebra {
 
     type Result = Boolean \/ Valid
 
+    def constFalse: Valid = {
+      val nope = Valid.text("x")
+      Valid.allOf(nope, Valid.not(nope))
+    }
+
     def check1(isBad: Boolean, ok: Valid): Result =
       if (isBad) -\/(false) else \/-(ok)
 
@@ -655,17 +812,41 @@ object FilterAlgebra {
         case ImpCriteria.Query(d)   => d.map(ImpCriteria.Query(_))
       }
 
+    def filterScope(scope: Valid.Scope)(f: Valid.Scope => ValidF[Valid]): Result = {
+      val newScopes =
+        if (fields.isEmpty)
+          scope.whole
+        else
+          scope.whole.filterNot {
+            case Scope.Derivation(f) => f.exists(fields.contains)
+          }
+
+      NonEmptySet.option(newScopes) match {
+        case Some(ss) => \/-(Fix(f(ss)))
+        case None     => -\/(true)
+      }
+    }
+
+    def scoped1(a: Scoped1[Valid.Scope, Result]): Result =
+      a.clause match {
+        case -\/(true)  => -\/(true)
+        case -\/(false) => filterScope(a.scope)(Scoped1(a.main, _, constFalse))
+        case \/-(sub)   => filterScope(a.scope)(Scoped1(a.main, _, sub))
+      }
+
     {
       case a: Text                                       => \/-(Valid(a))
       case a: Regex                                      => \/-(Valid(a))
       case a: Presence      [Valid.Attr]                 => \/-(Valid(a))
       case a: HasIssue      [Valid.IssueCat]             => \/-(Valid(a))
       case a: HashRef       [Valid.HashTag]              => \/-(Valid(a))
+      case a: RelativeTags  [Valid.ApTag]                => \/-(Valid(a))
       case a: Reqs          [Valid.ReqSet]               => \/-(Valid(a))
       case a: ReqType       [Valid.ReqType]              => check1(reqTypes.contains(a.reqType), Valid(a))
       case a: Not           [Result]                     => a.clause.fold(b => -\/(!b), c => \/-(Valid(Not(c))))
       case a: ImpliesAnyOf  [Valid.ImpCriteriaF, Result] => impCriteria(a.criteria).map(Valid.impliesAnyOf)
       case a: ImpliedByAnyOf[Valid.ImpCriteriaF, Result] => impCriteria(a.criteria).map(Valid.impliedByAnyOf)
+      case a: Scoped1       [Valid.Scope, Result]        => scoped1(a)
 
       case p @ FieldProp(_, _) =>
         fieldCriteria(p.criteria).flatMap { criteria =>
@@ -698,6 +879,18 @@ object FilterAlgebra {
               }
           }
         go(a.clauses.whole, Vector.empty)
+
+      case a: Scoped2[Valid.Scope, Result] =>
+        a.mainClause match {
+          case -\/(true)  => scoped1(Scoped1(false, a.scope, a.clause))
+          case -\/(false) => -\/(false)
+          case \/-(mc)    =>
+            a.clause match {
+              case -\/(true)  => \/-(mc)
+              case -\/(false) => filterScope(a.scope)(Scoped2(_, constFalse, mc))
+              case \/-(sub)   => filterScope(a.scope)(Scoped2(_, sub, mc))
+            }
+        }
     }
   }
 }

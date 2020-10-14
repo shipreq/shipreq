@@ -294,6 +294,9 @@ final case class Tags(tree: TagTree) {
       case t: TagGroup      => mustNotHappen(ErrorMsg(s"$t is not an ApplicableTag."))
     }
 
+  def applicableTagIdIterator(): Iterator[ApplicableTagId] =
+    tree.keysIterator.filterSubType[ApplicableTagId]
+
   def applicableTagIterator(): Iterator[ApplicableTag] =
     tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag]
 
@@ -525,6 +528,31 @@ final case class Tags(tree: TagTree) {
     id match {
       case Some(i) => tagGroupTagsFDV(i)
       case None    => FilterDead.Values.both(TagGroupTags.empty)
+    }
+
+  val transitiveChildren: FilterDead => TagId => Set[TagId] = {
+    val showDead: TagId => Set[TagId] =
+      Memo(tree.need(_).transitiveChildren(tree))
+
+    FilterDead.memo {
+      case ShowDead => showDead
+      case HideDead => Memo(showDead(_).filter(needTag(_).live is Live))
+    }
+  }
+
+  val tagGroupParentsFor: FilterDead => ApplicableTagId => Set[TagGroupId] =
+    FilterDead.memo { fd =>
+      val tc = transitiveChildren(fd)
+      Memo { subject =>
+        var results = Set.empty[TagGroupId]
+        val parents = fd.filterFn.iteratorBy(tagGroupIterator())(_.live).map(_.id)
+        for (parent <- parents) {
+          val subjectFoundInChildren = tc(parent).contains(subject)
+          if (subjectFoundInChildren)
+            results += parent
+        }
+        results
+      }
     }
 }
 
