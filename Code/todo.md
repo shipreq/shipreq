@@ -1,12 +1,15 @@
-### Implement
+### Problems
+* why do I need to override #needs_analysis in new FRs with #ready_for_dev. It's already the default
+* pressing tab in UCSE loses focus
+* text surrounds don't work in the UCSE
+* stop adding a space after auto-completing refs
 * no success reaction when non-implied req created from ReqDetail
+
+### Improvements
+* have an option in ReqGraph to show simplified graphs (i.e. remove redundant edges)
 * add option to show simplified UC graphs (using the `merged-a` style)
 * add a KB shortcut to show/hide preview
 
-* FR-46: Users #should be able to merge duplicated reqs
-* FR-35: Allow a user to view a project in read-only mode
-* delete & restore projects
-* hard delete
 
 
 Backlog (maybe-probably soon)
