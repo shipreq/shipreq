@@ -1,6 +1,5 @@
 ### Problems
 * why do I need to override #needs_analysis in new FRs with #ready_for_dev. It's already the default
-* text surrounds don't work in the UCSE
 * stop adding a space after auto-completing refs
 * no success reaction when non-implied req created from ReqDetail
 

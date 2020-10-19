@@ -201,64 +201,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
       val onBlur: Callback =
         autoCompleteOnBlur >> $.props.flatMap(_.preview.onBlur)
 
-      val wrapSelection: ReactKeyboardEventFromTextArea => Callback =
-        if (text.supports(TypeGroup.PlainTextMarkup))
-          e => {
-            val key          = e.key
-            val textarea     = e.target
-            val textSelected = textarea.selectionStart != textarea.selectionEnd
-            val modified     = e.altKey || e.ctrlKey || e.metaKey
-            Callback {
-              if (textSelected && !e.defaultPrevented && !modified) {
-                val text = textarea.value
-
-                def wrap(prefix: String, _suffix: String = null): Unit = {
-                  e.preventDefault()
-                  val suffix = if (_suffix eq null) prefix else _suffix
-
-                  def unwrap(da: Int, db: Int): Option[(String, String, String)] = {
-                    val a = textarea.selectionStart - da
-                    val b = textarea.selectionEnd + db
-                    Option.when(a >= 0 && b <= text.length) {
-                      val s = text.substring(a, b)
-                      Option.when(s.startsWith(prefix) && s.endsWith(suffix)) {
-                        val pre = text.take(a)
-                        val mid = s.drop(prefix.length).dropRight(suffix.length)
-                        val pst = text.drop(b)
-                        (pre, mid, pst)
-                      }
-                    }.flatten
-                  }
-
-                  val unwrapped =
-                    unwrap(0, 0) orElse unwrap(prefix.length, suffix.length)
-
-                  unwrapped match {
-                    case Some((a, b, c)) =>
-                      TextFieldEdit.set(textarea, a + b + c)
-                      textarea.setSelectionRange(a.length, a.length + b.length)
-                    case None =>
-                      TextFieldEdit.wrapSelection(textarea, prefix, suffix)
-                  }
-                }
-
-                key match {
-                  case "/" | "_" | "*" | "~" => wrap(key + key)
-                  case "`" | "'" | "\""      => wrap(key)
-                  case "("                   => wrap("(", ")")
-                  case "{"                   => wrap("{", "}")
-                  case "<"                   => wrap("<", ">")
-                  case "["                   => wrap("[", "]")
-                  case _                     =>
-                }
-              }
-            }
-          }
-        else
-          _ => Callback.empty
-
       TagMod(
-        ^.onKeyDown ==> wrapSelection,
+        ^.onKeyDown ==> RichTextEditor.wrapSelectionOnKeyDown(text),
         ^.onFocus   --> onFocus,
         ^.onChange  ==> onChange,
         ^.onBlur    --> onBlur,
@@ -387,6 +331,69 @@ object RichTextEditor {
 
   // This is an editor - you can't edit Dead stuff. Assume all content is Live.
   @inline def hardcodedLive = Live
+
+  def wrapSelectionOnKeyDown(text: Text.Generic): ReactKeyboardEventFromTextArea => Callback = {
+    val supportsPlainTextMarkup = text.supports(TypeGroup.PlainTextMarkup)
+    e => {
+      val key          = e.key
+      val textarea     = e.target
+      val textSelected = textarea.selectionStart != textarea.selectionEnd
+      val modified     = e.altKey || e.ctrlKey || e.metaKey
+      Callback {
+        if (textSelected && !e.defaultPrevented && !modified) {
+          val text = textarea.value
+
+          def wrap(prefix: String, _suffix: String = null): Unit = {
+            e.preventDefault()
+            val suffix = if (_suffix eq null) prefix else _suffix
+
+            def unwrap(da: Int, db: Int): Option[(String, String, String)] = {
+              val a = textarea.selectionStart - da
+              val b = textarea.selectionEnd + db
+              Option.when(a >= 0 && b <= text.length) {
+                val s = text.substring(a, b)
+                Option.when(s.startsWith(prefix) && s.endsWith(suffix)) {
+                  val pre = text.take(a)
+                  val mid = s.drop(prefix.length).dropRight(suffix.length)
+                  val pst = text.drop(b)
+                  (pre, mid, pst)
+                }
+              }.flatten
+            }
+
+            val unwrapped =
+              unwrap(0, 0) orElse unwrap(prefix.length, suffix.length)
+
+            unwrapped match {
+              case Some((a, b, c)) =>
+                TextFieldEdit.set(textarea, a + b + c)
+                textarea.setSelectionRange(a.length, a.length + b.length)
+              case None =>
+                TextFieldEdit.wrapSelection(textarea, prefix, suffix)
+            }
+          }
+
+          if (!e.isDefaultPrevented() && supportsPlainTextMarkup)
+            key match {
+              case "/" | "_" | "*" | "~" => wrap(key + key)
+              case "`"                   => wrap(key)
+              case _                     =>
+            }
+
+          if (!e.isDefaultPrevented())
+            key match {
+              case "'" | "\""            => wrap(key)
+              case "("                   => wrap("(", ")")
+              case "{"                   => wrap("{", "}")
+              case "<"                   => wrap("<", ">")
+              case "["                   => wrap("[", "]")
+              case _                     =>
+            }
+        }
+      }
+    }
+  }
+
 
   object GenericReqTitle extends RichTextEditor("GRT", Text.GenericReqTitle)
 

@@ -168,11 +168,12 @@ object UseCaseStepEditor {
             p.preview.onEdit(p.wantPreview)))
 
       TagMod(
-        ^.autoFocus := true,
-        ^.onBlur   --> (autoCompleteOnBlur >> $.props.flatMap(_.preview.onBlur)),
-        ^.onClick  ==> autoCompleteOnClick,
-        ^.onChange ==> updateState,
-        ^.onFocus  --> $.props.flatMap(p => p.preview.onFocus(p.wantPreview)),
+        ^.autoFocus  := true,
+        ^.onBlur    --> (autoCompleteOnBlur >> $.props.flatMap(_.preview.onBlur)),
+        ^.onClick   ==> autoCompleteOnClick,
+        ^.onChange  ==> updateState,
+        ^.onKeyDown ==> RichTextEditor.wrapSelectionOnKeyDown(Text.UseCaseStep),
+        ^.onFocus   --> $.props.flatMap(p => p.preview.onFocus(p.wantPreview)),
         RichTextEditor.minRows(lineCardinality))
     }
 
