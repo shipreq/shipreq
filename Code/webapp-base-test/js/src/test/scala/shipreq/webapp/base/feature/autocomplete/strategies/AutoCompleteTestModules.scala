@@ -57,12 +57,12 @@ object AutoCompleteTestModules {
         assertSuggestsMFs("[mf-8")(8)
         assertSuggests("[FR")("FR-1", "FR-2")
         assertSuggestsMFs("[14")(14)
-        assertSelect("[MF-14:] ")
+        assertSelect("[MF-14:]")
       }
       "title" - withAutoComplete(strategies) { implicit ctx =>
         assertSuggestsMFs("[save")(17)
         assertSuggestsMFs("[Collab")(9, 10, 11)
-        assertSelect("[MF-9:] ")
+        assertSelect("[MF-9:]")
       }
       "ignoreCase" - withAutoComplete(strategies) { implicit ctx =>
         assertSuggestsMFs("[require")(12, 13, 22, 23, 24)
@@ -73,7 +73,7 @@ object AutoCompleteTestModules {
       "complete" - assertSuggestionsFor("[MF-9]")()
       "afterText" - withAutoComplete(strategies) { implicit ctx =>
         assertSuggestsMFs("om\nfg [save")(17)
-        assertSelect("om\nfg [MF-17:] ")
+        assertSelect("om\nfg [MF-17:]")
       }
     }
   }
@@ -139,13 +139,13 @@ object AutoCompleteTestModules {
 
       "root" - withAutoComplete(strategies) { implicit ctx =>
         assertSuggests("[app")(app: _*)
-        assertSelect("[apple] ")
+        assertSelect("[apple]")
         assertSuggests("[goa")("goat.damn.egg.crap", "goat.damn.egg.stuff", "goat.damn.egglike")
       }
       "path" - withAutoComplete(strategies) { implicit ctx =>
         val arounds = List("abc.around.1", "abc.around.2", "abc.around.now", "abc.around.tbc", "abc.around.torn")
         assertSuggests("[abc.arou")(arounds: _*)
-        assertSelect("[abc.around.1] ")
+        assertSelect("[abc.around.1]")
         assertSuggests("[abc.round")(arounds: _*)
         assertSuggests("[a.round")(arounds: _*)
         assertSuggests("[c.round")(arounds: _*)

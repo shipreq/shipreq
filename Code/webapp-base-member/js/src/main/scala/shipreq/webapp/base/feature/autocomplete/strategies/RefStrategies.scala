@@ -73,7 +73,7 @@ private[strategies] object RefStrategies {
     Context.reflink[Candidate](
       mainRegex      = """([^\s\]]+?)""",
       replacementA   = _.replacement,
-      replacementEnd = " ",
+      replacementEnd = "",
       rest           = _.search(candidates(_).take(MaxResults)).template((c, _) => c.renderToStr),
     )
 
