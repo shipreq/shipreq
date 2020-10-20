@@ -60,6 +60,8 @@ object GraphViz {
   final class Builder {
     private val sb = new StringBuilder
 
+    var drawBackwards = false
+
     def result(): DOT =
       DOT(sb.result())
 
@@ -68,9 +70,10 @@ object GraphViz {
     def append(s: String): Unit = sb append s
 
     def rankdir(graphDir: GraphDir): Unit = {
+      val newGraphDir = if (drawBackwards) graphDir.reverse else graphDir
       sb append "rankdir="
       val dir: String =
-        graphDir match {
+        newGraphDir match {
           case GraphDir.BottomToTop => "BT"
           case GraphDir.LeftToRight => "LR"
           case GraphDir.RightToLeft => "RL"
@@ -147,21 +150,26 @@ object GraphViz {
 
     def flowOneToMany[A](fromId: A, toIds: IterableOnce[A])(id: A => Unit, atEnd: => Unit): Unit =
       for (toId <- toIds.iterator) {
-        id(fromId)
+        id(if (drawBackwards) toId else fromId)
         arrow()
-        id(toId)
+        id(if (drawBackwards) fromId else toId)
         atEnd
         eol()
       }
 
+    def flowOneToOne(from: String, to: String): Unit =
+      flowSB(sb append from, Forwards, sb append to)
+
     def flowS(from: String, dir: Direction, to: String): Unit =
       flowSB(sb append from, dir, sb append to)
 
-    def flowSB(from: => Unit, dir: Direction, to: => Unit): Unit =
-      dir match {
+    def flowSB(from: => Unit, dir: Direction, to: => Unit): Unit = {
+      val newDir = if (drawBackwards) !dir else dir
+      newDir match {
         case Forwards  => from; arrow(); to
         case Backwards => to  ; arrow(); from
       }
+    }
 
     def arrow(): Unit =
       sb append "->"

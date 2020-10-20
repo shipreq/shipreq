@@ -3,6 +3,7 @@ package shipreq.webapp.client.ww
 import shipreq.base.util.OptionalBoolFn
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
+import shipreq.webapp.base.data.savedview.ImpGraphConfig.GraphDir
 import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.filter.CompiledFilter
@@ -69,6 +70,52 @@ object ProjectImpGraphTest extends TestSuite {
            |$mf1->$fr1;
            |$fr2->$fr3;
            |$fr4->$fr5;
+           |}
+          """.stripMargin)
+      assertDOT(actual, expect)
+    }
+
+    "backwards" - {
+      val actual = render(HideDead, SIG_dead_FR7, config = ImpGraphConfig.default.copy(GraphDir.RightToLeft))
+      // rankdir=LR below is deliberate and correct because all the links have been run backwards
+      // See https://shipreq.com/project/d6My#/reqs/FR-131
+      val expect = DOT(
+        s"""
+           |digraph G{bgcolor=transparent;rankdir=LR;
+           |node[style=filled shape=ellipse color="#222222"]
+           |edge[color="#222222"][dir=back]
+           |
+           |node[fillcolor="#B7D058"]
+           |$br2[id="BR-2" label="BR-2"]
+           |$br1[id="BR-1" label="BR-1"]
+           |
+           |node[fillcolor="#D5A8C9"]
+           |$fr5[id="FR-5" label="FR-5"]
+           |$fr1[id="FR-1" label="FR-1"]
+           |$fr6[id="FR-6" label="FR-6"]
+           |$fr3[id="FR-3" label="FR-3"]
+           |$fr2[id="FR-2" label="FR-2"]
+           |$fr4[id="FR-4" label="FR-4"]
+           |
+           |node[fillcolor="#93D5BA"]
+           |$mf4[id="MF-4" label="MF-4"]
+           |$mf3[id="MF-3" label="MF-3"]
+           |$mf2[id="MF-2" label="MF-2"]
+           |$mf1[id="MF-1" label="MF-1"]
+           |$mf5[id="MF-5" label="MF-5"]
+           |
+           |$fr6->$mf4;
+           |$mf2->$br1;
+           |$br2->$br1;
+           |$mf4->$mf3;
+           |$fr4->$mf3;
+           |$mf3->$br2;
+           |$fr2->$mf2;
+           |$mf5->$fr5;
+           |$fr2->$fr1;
+           |$fr1->$mf1;
+           |$fr3->$fr2;
+           |$fr5->$fr4;
            |}
           """.stripMargin)
       assertDOT(actual, expect)

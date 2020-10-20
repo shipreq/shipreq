@@ -30,13 +30,26 @@ object ImpGraphConfig {
 
   // ===================================================================================================================
 
-  sealed trait GraphDir
+  sealed trait GraphDir {
+    def reverse: GraphDir
+  }
 
   object GraphDir {
-    case object BottomToTop extends GraphDir
-    case object LeftToRight extends GraphDir
-    case object RightToLeft extends GraphDir
-    case object TopToBottom extends GraphDir
+    case object LeftToRight extends GraphDir {
+      override def reverse = RightToLeft
+    }
+
+    case object RightToLeft extends GraphDir {
+      override def reverse = LeftToRight
+    }
+
+    case object BottomToTop extends GraphDir {
+      override def reverse = TopToBottom
+    }
+
+    case object TopToBottom extends GraphDir {
+      override def reverse = BottomToTop
+    }
 
     lazy val values = AdtMacros.adtValuesManually[GraphDir](
       BottomToTop,

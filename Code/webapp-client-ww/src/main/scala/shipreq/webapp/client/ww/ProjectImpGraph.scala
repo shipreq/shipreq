@@ -3,6 +3,7 @@ package shipreq.webapp.client.ww
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
+import shipreq.webapp.base.data.savedview.ImpGraphConfig.GraphDir
 import shipreq.webapp.base.text.PlainText
 
 final class ProjectImpGraph(project   : Project,
@@ -19,6 +20,13 @@ final class ProjectImpGraph(project   : Project,
     implicit val shape  = Shape(config.labelFormat)
     val colourProvider  = ColourProvider(config.colours)
     val impReqResult    = DataLogic.requiringImplication(reqTypes, imps.graph, reqs)
+
+    b.drawBackwards = config.graphDir match {
+      case GraphDir.LeftToRight
+         | GraphDir.TopToBottom => false
+      case GraphDir.RightToLeft
+         | GraphDir.BottomToTop => true
+    }
 
     def flow(fromId: ReqId, fromLive: Live, toIds: IterableOnce[ReqId], toLive: Live): Unit = {
       val atEnd: () => Unit =
@@ -43,6 +51,8 @@ final class ProjectImpGraph(project   : Project,
     b.rankdir(config.graphDir)
     subsequentNodesStyleAsImplications(shape)
     b.append(s"""edge[color="$blackish"]""")
+    if (b.drawBackwards)
+      b.append("[dir=back]")
 
     colourProvider.declareAllReqsInScope()
 
