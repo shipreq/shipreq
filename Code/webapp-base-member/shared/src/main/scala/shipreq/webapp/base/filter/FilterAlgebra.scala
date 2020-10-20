@@ -547,9 +547,22 @@ object FilterAlgebra {
       )
     }
 
-    def byPubidOrText(str: String): CompiledFilter =
-      Grammar.pubid.stringPrism.getOption(str).flatMap(_.lookup(p).toOption) match {
-        case Some(matchingReq) =>
+    def byPubidOrText(str: String, number: Option[Int]): CompiledFilter = {
+
+//      val byUniquePosition =
+//        for {
+//          n     <- number
+//          ups   <- p.content.reqs.pubids.uniquePositions
+//          pubid <- ups.lookup(n)
+//        } yield reqOnly(_.pubid ==* pubid)
+
+      val byPubidPos =
+        for {
+          n <- number.filter(n => n >= 1 && n <= p.content.reqs.pubids.highestPosition)
+        } yield reqOnly(_.pubid.pos.value ==* n)
+
+      @inline def byPubid =
+        Grammar.pubid.stringPrism.getOption(str).flatMap(_.lookup(p).toOption).map { matchingReq =>
           val posPrefix = matchingReq.pubid.pos.value.toString
           reqOnly { r =>
             @inline def reqTypeMatch = r.reqTypeId ==* matchingReq.reqTypeId
@@ -557,9 +570,10 @@ object FilterAlgebra {
             @inline def posMatch     = r.pubid.pos.value.toString.startsWith(posPrefix)
             reqTypeMatch && (idMatch || posMatch)
           }
-        case None =>
-          byText(str)
-      }
+        }
+
+      byPubidPos orElse byPubid getOrElse byText(str)
+    }
 
     def byRegex(regex: String): CompiledFilter = {
       val pat = Pattern.compile(regex)
@@ -712,7 +726,7 @@ object FilterAlgebra {
     }
 
     val self: FAlgebra[ExtensionalF, CompiledFilter] = {
-      case Text          (t, None)       => byPubidOrText(t)
+      case t@ Text       (_, None)       => byPubidOrText(t.text, t.unquotedNumber)
       case Text          (t, Some(_))    => byText(t)
       case Reqs          (reqs)          => reqOnly(r => reqs.contains(r.id))
       case ImpliesAnyOf  (criteria)      => byImplication(criteria, p.implicationTgtToSrcTC)

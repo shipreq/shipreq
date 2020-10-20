@@ -180,6 +180,11 @@ final case class PubidRegister(value: Multimap[ReqTypeId, Vector, ReqId]) {
     }
   }
 
+  lazy val highestPosition: Int =
+    if (value.isEmpty)
+      0
+    else
+      value.iterator.map(_._2.length).max
 }
 
 object PubidRegister {

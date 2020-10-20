@@ -2,6 +2,7 @@ package shipreq.webapp.base.filter
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.recursion.Fix
+import japgolly.microlibs.stdlib_ext.ParseInt
 import japgolly.microlibs.utils.StaticLookupFn
 import scalaz.{Applicative, Traverse, Traverse1}
 import shipreq.webapp.base.data.{On, ReqTypePos}
@@ -22,7 +23,6 @@ sealed trait FilterAst[
 ]
 
 object FilterAst {                                                                               // 1        2        3        4        5        6        7        8        9        10       11
-  final case class Text                   (text: String, quoteChar: Option[Char]) extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
   final case class Regex                  (text: String)                          extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
   final case class Presence            [A](attr: A)                               extends FilterAst[Nothing, Nothing, Nothing, A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
   final case class FieldProp  [A, F[_], B](field: A, criteria: F[B])              extends FilterAst[B      , F      , Nothing, Nothing, A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
@@ -38,6 +38,13 @@ object FilterAst {                                                              
   final case class Not                 [A](clause: A)                             extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
   final case class AllOf               [A](clauses: NonEmptyVector[A])            extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
   final case class AnyOf               [A](head: A, tail: NonEmptyVector[A])      extends FilterAst[A      , Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing]
+  final case class Text                   (text: String, quoteChar: Option[Char]) extends FilterAst[Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing] {
+    lazy val unquotedNumber: Option[Int] =
+      if (quoteChar.isDefined)
+        None
+      else
+        ParseInt.unapply(text)
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

@@ -1,5 +1,4 @@
 ### Problems
-* req search: accept numbers (eg. 103 instead of fr103)
 
 
 ### Improvements
