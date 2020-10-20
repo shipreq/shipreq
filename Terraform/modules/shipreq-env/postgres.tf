@@ -5,7 +5,7 @@ locals {
 resource "aws_db_instance" "postgres" {
   identifier                  = "${var.env}-postgres"
   engine                      = "postgres"
-  engine_version              = "11.5"
+  engine_version              = "11.8"
   instance_class              = var.postgres_instance_type
   storage_type                = "gp2"
   storage_encrypted           = true
