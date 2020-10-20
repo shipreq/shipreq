@@ -5,6 +5,7 @@
 * have an option in ReqGraph to show simplified graphs (i.e. remove redundant edges)
 * add option to show simplified UC graphs (using the `merged-a` style)
 * add a KB shortcut to show/hide preview
+* add a req type filter to field config
 
 
 
