@@ -85,7 +85,7 @@ resource "aws_cloudwatch_metric_alarm" "bastion-recovery" {
   statistic           = "Minimum"
   threshold           = 0
   alarm_actions       = ["arn:aws:automate:${local.region}:ec2:recover"]
-  dimensions          = { InstanceId = "${aws_instance.bastion.id}" }
+  dimensions          = { InstanceId = aws_instance.bastion.id }
   tags                = local.bastion_tags
 }
 

@@ -49,7 +49,7 @@ resource "aws_cloudwatch_metric_alarm" "nat-recovery" {
   statistic           = "Minimum"
   threshold           = 0
   alarm_actions       = ["arn:aws:automate:${local.region}:ec2:recover"]
-  dimensions          = { InstanceId = "${aws_instance.nat.id}" }
+  dimensions          = { InstanceId = aws_instance.nat.id }
   tags                = local.nat_tags
 }
 
