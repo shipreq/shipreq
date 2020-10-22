@@ -30,7 +30,7 @@ import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.lib.Usage
-import shipreq.webapp.client.project.widgets.{NewReqButton, ProjectWidgets, ReqSearch, ViewReqCache, ViewReqDataCache, ViewTags}
+import shipreq.webapp.client.project.widgets._
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 
 object LoadedRoot {
@@ -402,6 +402,9 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       }
     }
 
+    private val someEdgeEditorArgs: Some[ImplicationGraph.EdgeEditor.Args] =
+      Some(ImplicationGraph.EdgeEditor.Args())
+
     def render(p: Props, s: State): VdomElement = {
       lazy val editAsyncState = s.editAsync.toRead
       def createR          = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.newReqAsync)
@@ -522,6 +525,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
             reqDetailRC      = routerCtlEP,
             webWorker        = webWorkerClient,
             savedViewFeature = savedViewFeature,
+            edgeEditorArgs   = someEdgeEditorArgs,
           ).render
       }
 

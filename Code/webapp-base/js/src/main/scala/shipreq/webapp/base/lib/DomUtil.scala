@@ -42,6 +42,15 @@ object DomUtil {
   @inline implicit class NodeListExt(private val n: NodeList) extends AnyVal {
     def iterator: Iterator[Node] =
       (0 until n.length).iterator.map(n.apply)
+
+    def foreach(f: Node => Unit): Unit = {
+      var i = 0
+      while (i < n.length) {
+        f(n(i))
+        i += 1
+      }
+
+    }
   }
 
   @inline implicit class DOMStringListExt(private val d: DOMStringList) extends AnyVal {

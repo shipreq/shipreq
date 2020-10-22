@@ -56,6 +56,7 @@ let dragTgt = null
 const dragArrow1 = document.getElementById("dragArrow1")
 const point = svg.createSVGPoint()
 
+// https://stackoverflow.com/a/50396546/1846272
 function getCTM() {
   var owner = svg,
       height = owner.height.baseVal.value,

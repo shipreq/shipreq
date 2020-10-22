@@ -24,7 +24,9 @@ object ReqGraphPage {
                          plainText       : PlainText.ForProject.AnyCtx,
                          reqDetailRC     : RouterCtl[ExternalPubid],
                          webWorker       : WebWorkerClient.Instance,
-                         savedViewFeature: SavedViewFeature) {
+                         savedViewFeature: SavedViewFeature,
+                         edgeEditorArgs  : Option[ImplicationGraph.EdgeEditor.Args],
+                        ) {
     @inline def project = projectAndOrd.project
     @inline def render: VdomElement = Component(this)
   }
@@ -44,14 +46,15 @@ object ReqGraphPage {
         p.savedViewFeature.activeView.impGraphConfig.getOrElse(ImpGraphConfig.default)
 
       val impGraph = ImplicationGraph.Props.All(
-        ord          = p.projectAndOrd.ord,
-        reqWhitelist = p.savedViewFeature.reqWhitelist,
-        filterDead   = filterDead,
-        config       = impGraphConfig,
-        project      = p.project,
-        plainText    = p.plainText,
-        reqDetailRC  = p.reqDetailRC,
-        webWorker    = p.webWorker,
+        ord            = p.projectAndOrd.ord,
+        reqWhitelist   = p.savedViewFeature.reqWhitelist,
+        filterDead     = filterDead,
+        config         = impGraphConfig,
+        project        = p.project,
+        plainText      = p.plainText,
+        reqDetailRC    = p.reqDetailRC,
+        webWorker      = p.webWorker,
+        edgeEditorArgs = p.edgeEditorArgs,
       )
 
       def noContentMessage =

@@ -7,6 +7,8 @@ object Predef extends PredefShared {
 
   @inline def JSON = scala.scalajs.js.JSON
 
+  @inline def BREAKPOINT() = scala.scalajs.js.special.debugger()
+
   override implicit def predefExtString(s: String): AnyVal with PredefShared.ExtString =
     new PredefJs.ExtString(s)
 }

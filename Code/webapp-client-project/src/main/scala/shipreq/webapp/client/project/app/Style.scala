@@ -1838,6 +1838,67 @@ object Style extends StyleSheet.Inline {
         marginRight(1 ex),
       )
     }
+
+    object impGraphEdgeEditor {
+      final val clsDragging     = "ee_d"
+      final val clsDragArrow    = "ee_da"
+      final val clsDragSrc      = "ee_ds"
+      final val clsDragTgt      = "ee_dt"
+      final val clsSelectedEdge = "ee_s"
+      final val clsEdge2        = "ee_2"
+
+      private def arrowColour(colour: String) =
+        styleS(
+          unsafeExt(_ + ">path")(
+            svgStroke :=! colour,
+          ),
+          unsafeExt(_ + ">polygon")(
+            svgStroke :=! colour,
+            svgFill := colour,
+          ),
+        )
+
+      val root = style(
+
+        &.not("." + clsDragging)(
+          unsafeChild("." + clsDragArrow)(
+            display.none,
+          ),
+        ),
+
+        unsafeExt(_ + "." + clsDragging)(
+          unsafeChild("*")(
+            cursor.alias.important,
+          ),
+          unsafeChild(s"g.node:not(.$clsDragSrc):not(.$clsDragTgt):not(.$clsDragArrow)")(
+            opacity(.35),
+          ),
+        ),
+
+        unsafeChild(s".$clsDragArrow > path")(
+          svgFill := "none",
+          svgStroke :=! "red",
+          svgStrokeWidth := "2",
+        ),
+
+        unsafeChild(s"g.$clsEdge2:not(.$clsSelectedEdge)")(
+          arrowColour("#0000"),
+        ),
+
+        unsafeChild(s"g.$clsEdge2:not(.$clsSelectedEdge):hover")(
+          arrowColour("#ffff0018"),
+        ),
+
+//        unsafeChild(s"g.edge:not(.$clsSelectedEdge):hover")(
+//          arrowColour("#f0f"),
+//        ),
+
+        unsafeChild(s".$clsSelectedEdge")(
+          arrowColour("#f00"),
+        ),
+      )
+
+    }
   }
 
   // ===================================================================================================================
@@ -1935,6 +1996,7 @@ object Style extends StyleSheet.Inline {
     widgets.splitScreen.left,
     widgets.splitScreenCrud.emptyRight,
     widgets.reqSearch.container,
+    widgets.impGraphEdgeEditor.root,
   )
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

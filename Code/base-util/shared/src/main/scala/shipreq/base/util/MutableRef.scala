@@ -19,6 +19,9 @@ object MutableRef {
   def apply[A <: AnyRef](initialValue: A): MutableRef[A] =
     new MutableRef(initialValue)
 
+  def option[A]: MutableRef[Option[A]] =
+    apply(None)
+
   def double(initialValue: Double = 0): MutableRef[Double] =
     new MutableRef(initialValue)
 }
