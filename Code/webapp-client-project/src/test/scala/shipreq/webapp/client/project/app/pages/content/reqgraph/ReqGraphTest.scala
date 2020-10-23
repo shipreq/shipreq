@@ -128,14 +128,15 @@ object ReqGraphTest extends TestSuite {
     )
   }
 
-  private def testEdgeEditorNewEdgeNoOp(from: String,
-                                        to: String,
-                                        mod: *.Actions => *.Actions = identity)(implicit tp: TestPath): Unit = {
+  private def testEdgeEditorNewEdgeRejection(from     : String,
+                                             to       : String,
+                                             dragState: DragState,
+                                             mod      : *.Actions => *.Actions = identity)(implicit tp: TestPath): Unit = {
     import SampleProject3._
 
     val test = mod(
       graph.dragNewEdge(from -> to)
-        +> graph.dragState.assert(DragState.Invalid)
+        +> graph.dragState.assert(dragState)
 
         >> graph.dragEnd(to)
         +> global.requestCount.assert(0)
@@ -230,7 +231,7 @@ object ReqGraphTest extends TestSuite {
         "deadSrc" - testEdgeEditorNewEdgeInvalid("MF-19", "MF-18")
         "deadTgt" - testEdgeEditorNewEdgeInvalid("MF-17", "MF-19")
         "cycle"   - testEdgeEditorNewEdgeInvalid("FR-2", "MF-1")
-        "noop"    - testEdgeEditorNewEdgeNoOp("MF-1", "FR-2")
+        "noop"    - testEdgeEditorNewEdgeRejection("MF-1", "FR-2", DragState.NoOp)
         "refl"    - testEdgeEditorNewEdgeRefl()
       }
       "delEdge" - {
@@ -242,9 +243,9 @@ object ReqGraphTest extends TestSuite {
       "replaceEdge" - {
         "sameSrc"     - testEdgeEditorReplaceEdgeSameSrc()
         "sameTgt"     - testEdgeEditorReplaceEdgeSameTgt()
-        "sameDeadSrc" - testEdgeEditorNewEdgeNoOp("MF-19", "FR-2", graph.clickEdge("MF-19" -> "FR-1") >> _)
-        "sameDeadTgt" - testEdgeEditorNewEdgeNoOp("FR-1", "MF-27", graph.clickEdge("FR-1" -> "CO-2") >> _)
-        "sameEdge"    - testEdgeEditorNewEdgeNoOp("MF-1", "FR-2", graph.clickEdge("MF-1" -> "FR-2") >> _)
+        "sameDeadSrc" - testEdgeEditorNewEdgeRejection("MF-19", "FR-2", DragState.Invalid, graph.clickEdge("MF-19" -> "FR-1") >> _)
+        "sameDeadTgt" - testEdgeEditorNewEdgeRejection("FR-1", "MF-27", DragState.Invalid, graph.clickEdge("FR-1" -> "CO-2") >> _)
+        "sameEdge"    - testEdgeEditorNewEdgeRejection("MF-1", "FR-2", DragState.NoOp, graph.clickEdge("MF-1" -> "FR-2") >> _)
         "unrelated"   - testEdgeEditorNewEdgeOk(graph.clickEdge("MF-1" -> "FR-2") >> _)
       }
     }

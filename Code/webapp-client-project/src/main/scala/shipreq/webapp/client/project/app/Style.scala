@@ -1843,6 +1843,7 @@ object Style extends StyleSheet.Inline {
       final val clsDragging     = "ee_d"
       final val clsDragArrow    = "ee_da"
       final val clsDragInvalid  = "ee_i"
+      final val clsDragNoOp     = "ee_n"
       final val clsDragSrc      = "ee_ds"
       final val clsDragTgt      = "ee_dt"
       final val clsSelectedEdge = "ee_s"
@@ -1877,10 +1878,10 @@ object Style extends StyleSheet.Inline {
           ),
 
           // Valid link
-          unsafeExt(_ + ":not(." + clsDragInvalid + ")")(
+          unsafeExt(_ + ":not(." + clsDragInvalid + "):not(." + clsDragNoOp + ")")(
             unsafeChild("*")(cursor.alias.important),
             unsafeChild(s".$clsDragArrow > path")(
-              svgStroke :=! "#00f",
+              svgStroke :=! "#00c",
             ),
           ),
 
@@ -1891,6 +1892,15 @@ object Style extends StyleSheet.Inline {
               svgStroke :=! "#c00",
             ),
           ),
+
+          // NoOp link
+          unsafeExt(_ + "." + clsDragNoOp)(
+            unsafeChild("*")(cursor.alias.important),
+            unsafeChild(s".$clsDragArrow > path")(
+              svgStroke :=! "#4449",
+            ),
+          ),
+
         ),
 
         // Edge selection

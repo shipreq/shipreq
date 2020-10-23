@@ -560,9 +560,15 @@ object ImplicationGraph {
               result match {
                 case _: NewEdgeResult.Change =>
                   root.classList.remove(*.clsDragInvalid)
+                  root.classList.remove(*.clsDragNoOp)
 
-                case NewEdgeResult.NoOp | NewEdgeResult.Invalid =>
+                case NewEdgeResult.Invalid =>
                   root.classList.add(*.clsDragInvalid)
+                  root.classList.remove(*.clsDragNoOp)
+
+                case NewEdgeResult.NoOp =>
+                  root.classList.remove(*.clsDragInvalid)
+                  root.classList.add(*.clsDragNoOp)
               }
 
               // Draw an arrow from source to target
@@ -725,6 +731,7 @@ object ImplicationGraph {
     private def reset(): Unit = {
       root.classList.remove(*.clsDragging)
       root.classList.remove(*.clsDragInvalid)
+      root.classList.remove(*.clsDragNoOp)
       setDragDelay(None)
       setDragSrc(None)
       setDragTgt(None)

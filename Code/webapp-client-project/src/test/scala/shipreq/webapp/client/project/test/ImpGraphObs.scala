@@ -29,6 +29,8 @@ final class ImpGraphObs($: DomZipperJs) {
         DragState.Invisible
       else if (rootDom.classList.contains(*.clsDragInvalid))
         DragState.Invalid
+      else if (rootDom.classList.contains(*.clsDragNoOp))
+        DragState.NoOp
       else
         DragState.Valid
     }
@@ -77,6 +79,7 @@ object ImpGraphObs {
     case object Invisible extends DragState
     case object Valid     extends DragState
     case object Invalid   extends DragState
+    case object NoOp      extends DragState
 
     implicit def univEq: UnivEq[DragState] = UnivEq.derive
   }
