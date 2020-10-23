@@ -1,10 +1,10 @@
 package shipreq.webapp.client.project.app.pages.content.reqgraph
 
 import japgolly.scalajs.react.test.SimEvent.{Keyboard => KB}
-import shipreq.base.util.Forwards
+import shipreq.base.util.{Backwards, Forwards}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.Event
-import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
+import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.PatchImplications
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test.UnsafeTypes.nesd
 import shipreq.webapp.base.test._
@@ -97,12 +97,12 @@ object ReqGraphTest extends TestSuite {
   }
 
   private def newEdgeCmd(from: ReqId, to: ReqId) =
-    UpdateContentCmd.PatchImplications(from, Forwards, nesd()(to))
+    PatchImplications(from, Forwards, nesd()(to))
 
-  private def testEdgeEditorNewEdgeOk()(implicit tp: TestPath): Unit = {
+  private def testEdgeEditorNewEdgeOk(mod: *.Actions => *.Actions = identity)(implicit tp: TestPath): Unit = {
     import SampleProject3._, Values._
-    runActions(project, wwPrep.forSP3)(
 
+    val test = mod(
       graph.dragNewEdge("MF-17" -> "MF-18")
         +> graph.dragState.assert(DragState.Valid)
 
@@ -111,6 +111,8 @@ object ReqGraphTest extends TestSuite {
         +> global.assertLastRequestMsg(newEdgeCmd(mfs(17), mfs(18)))
         +> graph.dragState.assert(DragState.None)
     )
+
+    runActions(project, wwPrep.forSP3)(test)
   }
 
   private def testEdgeEditorNewEdgeInvalid(from: String, to: String)(implicit tp: TestPath): Unit = {
@@ -126,10 +128,10 @@ object ReqGraphTest extends TestSuite {
     )
   }
 
-  private def testEdgeEditorNewEdgeNoOp(from: String, to: String)(implicit tp: TestPath): Unit = {
+  private def testEdgeEditorNewEdgeNoOp(from: String, to: String, mod: *.Actions => *.Actions = identity)(implicit tp: TestPath): Unit = {
     import SampleProject3._
-    runActions(project, wwPrep.forSP3)(
 
+    val test = mod(
       graph.dragNewEdge(from -> to)
         +> graph.dragState.assert(DragState.Valid)
 
@@ -137,9 +139,11 @@ object ReqGraphTest extends TestSuite {
         +> global.requestCount.assert(0)
         +> graph.dragState.assert(DragState.None)
     )
+
+    runActions(project, wwPrep.forSP3)(test)
   }
 
-  private def testEdgeEditorNewEdgeSelf()(implicit tp: TestPath): Unit = {
+  private def testEdgeEditorNewEdgeRefl()(implicit tp: TestPath): Unit = {
     import SampleProject3._
     val id = "MF-1"
     runActions(project, wwPrep.forSP3)(
@@ -149,7 +153,7 @@ object ReqGraphTest extends TestSuite {
   }
 
   private def delEdgeCmd(from: ReqId, to: ReqId) =
-    UpdateContentCmd.PatchImplications(from, Forwards, nesd(to)())
+    PatchImplications(from, Forwards, nesd(to)())
 
   private def testEdgeEditorDelEdgeOk()(implicit tp: TestPath): Unit = {
     import SampleProject3._, Values._
@@ -180,6 +184,42 @@ object ReqGraphTest extends TestSuite {
     )
   }
 
+  private def testEdgeEditorReplaceEdgeSameSrc()(implicit tp: TestPath): Unit = {
+    import SampleProject3._, Values._
+    runActions(project, wwPrep.forSP3)(
+
+      graph.clickEdge("MF-22" -> "FR-2")
+
+        >> graph.dragNewEdge("MF-22" -> "MF-27")
+        +> graph.dragState.assert(DragState.Valid)
+        +> graph.assertSelectedEdge("MF-22" -> "FR-2")
+
+        >> graph.dragEnd("MF-27")
+        +> global.requestCount.assert(1)
+        +> global.assertLastRequestMsg(PatchImplications(mfs(22), Forwards, nesd[ReqId](frs(2))(add = mfs(27))))
+        +> graph.dragState.assert(DragState.None)
+        +> graph.selectedEdgeId.assert(None)
+    )
+  }
+
+  private def testEdgeEditorReplaceEdgeSameTgt()(implicit tp: TestPath): Unit = {
+    import SampleProject3._, Values._
+    runActions(project, wwPrep.forSP3)(
+
+      graph.clickEdge("MF-22" -> "FR-2")
+
+        >> graph.dragNewEdge("MF-15" -> "FR-2")
+        +> graph.dragState.assert(DragState.Valid)
+        +> graph.assertSelectedEdge("MF-22" -> "FR-2")
+
+        >> graph.dragEnd("FR-2")
+        +> global.requestCount.assert(1)
+        +> global.assertLastRequestMsg(PatchImplications(frs(2), Backwards, nesd[ReqId](mfs(22))(add = mfs(15))))
+        +> graph.dragState.assert(DragState.None)
+        +> graph.selectedEdgeId.assert(None)
+    )
+  }
+
   override def tests = Tests {
     "coloursWithDeadTag" - testColoursWithDeadTag()
     "edgeEditor" - {
@@ -189,13 +229,19 @@ object ReqGraphTest extends TestSuite {
         "deadTgt" - testEdgeEditorNewEdgeInvalid("MF-17", "MF-19")
         "cycle"   - testEdgeEditorNewEdgeInvalid("FR-2", "MF-1")
         "noop"    - testEdgeEditorNewEdgeNoOp("MF-1", "FR-2")
-        "self"    - testEdgeEditorNewEdgeSelf()
+        "refl"    - testEdgeEditorNewEdgeRefl()
       }
       "delEdge" - {
         "ok"      - testEdgeEditorDelEdgeOk()
         "empty"   - testEdgeEditorDelEdgeNoOp()
         "deadSrc" - testEdgeEditorDelEdgeNoOp("MF-19" -> "FR-1")
         "deadTgt" - testEdgeEditorDelEdgeNoOp("FR-1" -> "CO-2")
+      }
+      "replaceEdge" - {
+        "sameSrc"   - testEdgeEditorReplaceEdgeSameSrc()
+        "sameTgt"   - testEdgeEditorReplaceEdgeSameTgt()
+        "sameEdge"  - testEdgeEditorNewEdgeNoOp("MF-1", "FR-2", graph.clickEdge("MF-1" -> "FR-2") >> _)
+        "unrelated" - testEdgeEditorNewEdgeOk(graph.clickEdge("MF-1" -> "FR-2") >> _)
       }
     }
   }

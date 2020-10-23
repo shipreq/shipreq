@@ -9,7 +9,7 @@ import org.scalajs.dom.raw.SVGSVGElement
 import scala.scalajs.js
 import scala.util.Try
 import shipreq.base.util.JsExt._
-import shipreq.base.util.{ErrorMsg, Forwards, MutableRef, SetDiff}
+import shipreq.base.util.{Backwards, ErrorMsg, Forwards, MutableRef, SetDiff}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.LabelFormat
@@ -471,7 +471,7 @@ object ImplicationGraph {
 
           case "DELETE" =>
             for {
-              edge <- Option(root.querySelector("." + *.clsSelectedEdge).asSvgEl)
+              edge <- getSelectedEdge()
               args <- this.args
             } yield {
               ev.stopPropagation()
@@ -615,12 +615,44 @@ object ImplicationGraph {
       result.map(NonEmpty(_)) match {
 
         case \/-(Some(patch)) =>
-          // Change the graph
-          val cmd    = UpdateContentCmd.PatchImplications(reqSrc.id, Forwards, patch)
-          val commit = args.ssp(cmd)
-          val reset  = AsyncCallback.delay(this.reset())
-          val proc   = args.asyncW(cmd).onFailureShowAndForget(commit <* reset)
-          proc.runNow()
+
+          val cmdOption: Option[UpdateContentCmd.PatchImplications] =
+            getSelectedEdge().map(edgeIds) match {
+
+              case Some((idStrSelFrom, idStrSelTo)) if idStrSelFrom == idStrFrom =>
+                // Replace selected edge tgt
+                val reqSelTo = needReq(p, idStrSelTo)
+                Option.when(reqSelTo.live(p.config.reqTypes) is Live) {
+                  val patch2 = NonEmpty.force(SetDiff(removed = Set1(reqSelTo.id), added = patch.added))
+                  UpdateContentCmd.PatchImplications(reqSrc.id, Forwards, patch2)
+                }
+
+              case Some((idStrSelFrom, idStrSelTo)) if idStrSelTo == idStrTo =>
+                // Replace selected edge src
+                val reqSelFrom = needReq(p, idStrSelFrom)
+                Option.when(reqSelFrom.live(p.config.reqTypes) is Live) {
+                  val reqTgtId = patch.added.head
+                  val patch2 = NonEmpty.force(SetDiff(removed = Set1(reqSelFrom.id), added = Set1(reqSrc.id)))
+                  UpdateContentCmd.PatchImplications(reqTgtId, Backwards, patch2)
+                }
+
+              case _ =>
+                // Add new edge
+                Some(UpdateContentCmd.PatchImplications(reqSrc.id, Forwards, patch))
+            }
+
+          cmdOption match {
+
+            case Some(cmd) =>
+              // Change the graph
+              val commit = args.ssp(cmd)
+              val reset  = AsyncCallback.delay(this.reset())
+              val proc   = args.asyncW(cmd).onFailureShowAndForget(commit <* reset)
+              proc.runNow()
+
+            case None =>
+              reset()
+          }
 
         case _ =>
           // \/-(None) = No change to make
@@ -651,6 +683,8 @@ object ImplicationGraph {
       setDragSrc(None)
       setDragTgt(None)
       dragArrow.setAttribute("d", "")
+      for (e <- getSelectedEdge())
+        e.classList.remove(*.clsSelectedEdge)
     }
   }
 }
