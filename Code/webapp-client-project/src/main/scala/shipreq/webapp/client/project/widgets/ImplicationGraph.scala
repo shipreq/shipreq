@@ -18,6 +18,7 @@ import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
+import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.PatchImplications
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.Must._
 import shipreq.webapp.client.project.app.WebWorkerClient
@@ -256,6 +257,13 @@ object ImplicationGraph {
         edge.id match {
           case edgeIdRegex(from, to) => (from, to)
         }
+      }
+
+      sealed trait NewEdgeResult
+      object NewEdgeResult {
+        case object Invalid                             extends NewEdgeResult
+        case object NoOp                                extends NewEdgeResult
+        final case class Change(cmd: PatchImplications) extends NewEdgeResult
       }
 
       val logger      = LoggerJs.off // LoggerJs.devOnly.prefixedWith("[EE] ")
@@ -525,13 +533,15 @@ object ImplicationGraph {
             val changed = setDragTgt(Some(dt))
             if (changed) {
               val p      = projectCB.runNow()
-              val reqSrc = needReq(p, ds.id)
-              val legal  = newEdgeValue(p, reqSrc, dt.id).isRight
+              val result = newEdgeResult(p, ds.id, dt.id)
 
-              if (legal)
-                root.classList.remove(*.clsDragInvalid)
-              else
-                root.classList.add(*.clsDragInvalid)
+              result match {
+                case _: NewEdgeResult.Change =>
+                  root.classList.remove(*.clsDragInvalid)
+
+                case NewEdgeResult.NoOp | NewEdgeResult.Invalid =>
+                  root.classList.add(*.clsDragInvalid)
+              }
 
               // Draw an arrow from source to target
               val src = getNodeMidpoint(ds)
@@ -605,58 +615,71 @@ object ImplicationGraph {
       }
     }
 
-    private def createEdge(args: Args, idStrFrom: String, idStrTo: String): Unit = {
-      val p      = projectCB.runNow()
+    private def newEdgeResult(p: Project, idStrFrom: String, idStrTo: String): NewEdgeResult = {
       val reqSrc = needReq(p, idStrFrom)
       val result = newEdgeValue(p, reqSrc, idStrTo)
 
-      logger(_.info(s"New edge: $idStrFrom -> $idStrTo = $result"))
+      result match {
+        case \/-(maybePatch) =>
+          NonEmpty(maybePatch) match {
 
-      result.map(NonEmpty(_)) match {
+            case Some(patch) =>
+              getSelectedEdge().map(edgeIds) match {
 
-        case \/-(Some(patch)) =>
+                case Some((idStrSelFrom, idStrSelTo)) if idStrSelFrom == idStrFrom =>
+                  // Replace selected edge tgt
+                  val reqSelTo = needReq(p, idStrSelTo)
+                  if (reqSelTo.live(p.config.reqTypes) is Dead)
+                    NewEdgeResult.Invalid
+                  else {
+                    val patch2 = NonEmpty.force(SetDiff(removed = Set1(reqSelTo.id), added = patch.added))
+                    val cmd    = PatchImplications(reqSrc.id, Forwards, patch2)
+                    NewEdgeResult.Change(cmd)
+                  }
 
-          val cmdOption: Option[UpdateContentCmd.PatchImplications] =
-            getSelectedEdge().map(edgeIds) match {
+                case Some((idStrSelFrom, idStrSelTo)) if idStrSelTo == idStrTo =>
+                  // Replace selected edge src
+                  val reqSelFrom = needReq(p, idStrSelFrom)
+                  if (reqSelFrom.live(p.config.reqTypes) is Dead)
+                    NewEdgeResult.Invalid
+                  else {
+                    val reqTgtId = patch.added.head
+                    val patch2   = NonEmpty.force(SetDiff(removed = Set1(reqSelFrom.id), added = Set1(reqSrc.id)))
+                    val cmd      = PatchImplications(reqTgtId, Backwards, patch2)
+                    NewEdgeResult.Change(cmd)
+                  }
 
-              case Some((idStrSelFrom, idStrSelTo)) if idStrSelFrom == idStrFrom =>
-                // Replace selected edge tgt
-                val reqSelTo = needReq(p, idStrSelTo)
-                Option.when(reqSelTo.live(p.config.reqTypes) is Live) {
-                  val patch2 = NonEmpty.force(SetDiff(removed = Set1(reqSelTo.id), added = patch.added))
-                  UpdateContentCmd.PatchImplications(reqSrc.id, Forwards, patch2)
-                }
-
-              case Some((idStrSelFrom, idStrSelTo)) if idStrSelTo == idStrTo =>
-                // Replace selected edge src
-                val reqSelFrom = needReq(p, idStrSelFrom)
-                Option.when(reqSelFrom.live(p.config.reqTypes) is Live) {
-                  val reqTgtId = patch.added.head
-                  val patch2 = NonEmpty.force(SetDiff(removed = Set1(reqSelFrom.id), added = Set1(reqSrc.id)))
-                  UpdateContentCmd.PatchImplications(reqTgtId, Backwards, patch2)
-                }
-
-              case _ =>
-                // Add new edge
-                Some(UpdateContentCmd.PatchImplications(reqSrc.id, Forwards, patch))
-            }
-
-          cmdOption match {
-
-            case Some(cmd) =>
-              // Change the graph
-              val commit = args.ssp(cmd)
-              val reset  = AsyncCallback.delay(this.reset())
-              val proc   = args.asyncW(cmd).onFailureShowAndForget(commit <* reset)
-              proc.runNow()
+                case _ =>
+                  // Add new edge
+                  val cmd = PatchImplications(reqSrc.id, Forwards, patch)
+                  NewEdgeResult.Change(cmd)
+              }
 
             case None =>
-              reset()
+              NewEdgeResult.NoOp
           }
 
-        case _ =>
-          // \/-(None) = No change to make
-          // -\/(_)    = Invalid change
+        case -\/(_) =>
+          NewEdgeResult.Invalid
+      }
+    }
+
+    private def createEdge(args: Args, idStrFrom: String, idStrTo: String): Unit = {
+      val p      = projectCB.runNow()
+      val result = newEdgeResult(p, idStrFrom, idStrTo)
+
+      logger(_.info(s"New edge: $idStrFrom -> $idStrTo = $result"))
+
+      result match {
+
+        case NewEdgeResult.Change(cmd) =>
+          // Change the graph
+          val commit = args.ssp(cmd)
+          val reset  = AsyncCallback.delay(this.reset())
+          val proc   = args.asyncW(cmd).onFailureShowAndForget(commit <* reset)
+          proc.runNow()
+
+        case NewEdgeResult.NoOp | NewEdgeResult.Invalid =>
           reset()
       }
     }
@@ -670,7 +693,7 @@ object ImplicationGraph {
 
       if (!isEitherDead(p, reqSrc, reqTgt)) {
         val patch  = NonEmpty.force(SetDiff(removed = Set1(reqTgt.id), added = Set.empty))
-        val cmd    = UpdateContentCmd.PatchImplications(reqSrc.id, Forwards, patch)
+        val cmd    = PatchImplications(reqSrc.id, Forwards, patch)
         val commit = args.ssp(cmd)
         val proc   = args.asyncW(cmd).onFailureShowAndForget(commit)
         proc.runNow()
