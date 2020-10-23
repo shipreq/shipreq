@@ -26,7 +26,7 @@ import shipreq.webapp.client.project.app.pages.root.LoadedRoot.Props
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH, _}
 import shipreq.webapp.client.project.test._
-import shipreq.webapp.client.project.widgets.ReqSearch
+import shipreq.webapp.client.project.widgets.{ImplicationGraph, ReqSearch}
 
 object ProjectSpaTestDsl {
 
@@ -47,7 +47,9 @@ object ProjectSpaTestDsl {
   final case class Ref(global   : TestGlobal,
                        tester   : ComponentTester[Props, State, _],
                        confirmJs: TestConfirmJs,
-                       promptJs : TestPromptJs) {
+                       promptJs : TestPromptJs,
+                       ww       : TestWebWorkerClient,
+                      ) {
 
     def observe(): Obs = {
       val $ = tester.component.domZipper
@@ -74,7 +76,7 @@ object ProjectSpaTestDsl {
         case Page.ReqTable     => base.copy(reqTable    = Try(new ReqTableObs(inner, base.global, base.confirmJs)))
         case Page.ReqDetail(_) => base.copy(reqDetail   = Try(new ReqDetailObs(inner, nav, base.global)))
         case Page.Issues       => base.copy(issues      = Try(new IssuesPageObs(inner)))
-        case Page.ReqGraph     => base.copy(reqGraph    = Try(new ReqGraphObs(inner)))
+        case Page.ReqGraph     => base.copy(reqGraph    = Try(new ReqGraphObs(inner, base.global)))
       }
     }
   }
@@ -195,7 +197,7 @@ object ProjectSpaTestDsl {
 
   implicit lazy val transformReqGraph =
     ReqGraphTestDsl.*.transformer
-      .mapR[Ref](r => ReqGraphTestDsl.Ref(r.global, r.promptJs))
+      .mapR[Ref](r => ReqGraphTestDsl.Ref(r.global, r.promptJs, r.ww))
       .pmapO[Obs](_.reqGraph)
       .mapS[TestState](_ => ())((s, _) => s)
 
@@ -269,14 +271,17 @@ object ProjectSpaTestDsl {
 
   def runTest(action    : *.Actions,
               page      : Page,
-              project   : Project  = SampleProject5.project,
-              rd        : RD.State = RD.unspecifiedState,
-              assertPass: Boolean = true): Unit = {
+              project   : Project                  = SampleProject5.project,
+              rd        : RD.State                 = RD.unspecifiedState,
+              wwPrep    : TestWebWorkerClient.Prep = TestWebWorkerClient.noInitialPrep,
+              assertPass: Boolean                  = true,
+             ): Unit = {
     runTestReturnReport(
       action     = action,
       page       = page,
       project    = project,
       rd         = rd,
+      wwPrep     = wwPrep,
       assertPass = assertPass,
     )
     ()
@@ -284,18 +289,22 @@ object ProjectSpaTestDsl {
 
   def runTestReturnReport(action    : *.Actions,
                           page      : Page,
-                          project   : Project  = SampleProject5.project,
-                          rd        : RD.State = RD.unspecifiedState,
-                          assertPass: Boolean = true): Report[String] = {
+                          project   : Project                  = SampleProject5.project,
+                          rd        : RD.State                 = RD.unspecifiedState,
+                          wwPrep    : TestWebWorkerClient.Prep = TestWebWorkerClient.noInitialPrep,
+                          assertPass: Boolean                  = true,
+                         ): Report[String] = {
 
     ReqSearch.typingDelayMs = 0
     OnlyVisibleOnMouseMove.allowHide = false
+    ImplicationGraph.runningInUnitTest = true
 
     val global       = TestGlobal(project)
     val confirmJs    = TestConfirmJs()
     val promptJs     = TestPromptJs()
     val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name, AssetManifest(None), "/ww.js")
-    val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs, global.optionalFullscreen)
+    val ww           = TestWebWorkerClient(wwPrep)
+    val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs, global.optionalFullscreen, ww)
     val rc           = MockRouterCtl[Page]()
     val init         = TestState(page, global.unsafeProject(), rd)
 
@@ -305,7 +314,7 @@ object ProjectSpaTestDsl {
       val report = Plan(action, invariants)
                      .test(Observer(_.observe()))
                      .withInitialState(init)
-                     .withRefByName(Ref(global, tester, confirmJs, promptJs))
+                     .withRefByName(Ref(global, tester, confirmJs, promptJs, ww))
                      .run()
       if (assertPass)
         assertTestState(report)

@@ -1,9 +1,9 @@
 package shipreq.webapp.base.data
 
+import shipreq.webapp.base.test.WebappTestUtil._
+import shipreq.webapp.base.test._
 import sourcecode.Line
 import utest._
-import shipreq.webapp.base.test._
-import shipreq.webapp.base.test.WebappTestUtil._
 
 object PubidRegisterTest extends TestSuite {
 

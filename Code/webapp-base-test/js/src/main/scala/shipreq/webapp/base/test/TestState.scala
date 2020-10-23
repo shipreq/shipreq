@@ -5,6 +5,7 @@ import japgolly.scalajs.react.test._
 import japgolly.scalajs.react.vdom.html_<^.VdomAttr
 import org.scalajs.dom.html
 import scalacss.internal.StyleA
+import shipreq.base.test.BaseTestUtil
 import shipreq.base.util.{Debug, Disabled, Enabled, ErrorMsg}
 import shipreq.webapp.base.lib.DomUtil._
 import teststate.domzipper.DomZipperJsF.Dom
@@ -21,6 +22,9 @@ object TestState
   type Id[A] = A
 
   type DomZipperTo[A] = DomZipperJsF[Id, A]
+
+  implicit def BaseTestUtilOpsOption[A](a: Option[A]) =
+    new BaseTestUtil.BaseTestUtilOpsOption(a)
 
   implicit final class TestStateStyleAExt(private val self: StyleA) extends AnyVal {
     def selector: String =

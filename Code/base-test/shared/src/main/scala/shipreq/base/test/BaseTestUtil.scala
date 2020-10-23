@@ -27,6 +27,11 @@ object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
     }
   }
 
+  final class BaseTestUtilOpsOption[A](private val self: Option[A]) extends AnyVal {
+    def getOrThrow(moreInfo: => String): A =
+      self.getOrElse(fail(s"Option is empty: ${moreInfo.replaceFirst("\\.?$", ".")}"))
+  }
+
   private val PrettyPrinter: PPrinter =
     pprint.copy(
       defaultWidth = 1,
@@ -44,6 +49,9 @@ trait BaseTestUtil
 
   implicit def BaseTestUtilOpsAny[A](a: A) =
     new BaseTestUtil.BaseTestUtilOpsAny(a)
+
+  implicit def BaseTestUtilOpsOption[A](a: Option[A]) =
+    new BaseTestUtil.BaseTestUtilOpsOption(a)
 
   def pp: PPrinter =
     BaseTestUtil.PrettyPrinter

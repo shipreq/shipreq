@@ -301,6 +301,8 @@ object TestGlobal {
 
     val requestCount = *.focus("Server requests").value(_.obs.reqs.length)
 
+    val lastRequest = *.focus("Last request").option(_.obs.reqs.lastOption)
+
     val lastTwoRequests = *.focus("Last two requests").compare(_.obs.reqs.last, _.obs.reqs.init.last)
 
     val assertLastTwoRequestsAreEqual = lastTwoRequests.map(_.req).assert.equal(Equal.by_==, implicitly)

@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react.ScalazReact.reusabilityDisjunction
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.raw.{SVGGElement, SVGSVGElement}
+import org.scalajs.dom.raw.{Element, SVGGElement, SVGSVGElement}
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.data.Svg
@@ -74,15 +74,12 @@ object GraphComponent {
 
     private def enrichAttempt(p: Props, delayMs: Double, remainingDelayMs: Double): Callback =
       $.getDOMNode.map(_.toElement).asCBO.flatMap { dom =>
+        getGraphSvg(dom) match {
 
-        // The first svg is the result we care about.
-        // The others are ReactSvgPanZoom drawing tools and the minimap.
-        dom.querySelector("svg") match {
-
-          case svg: SVGSVGElement =>
+          case Some(svg) =>
             enrich(p, svg).toCBO
 
-          case _ =>
+          case None =>
             enrichAttempt(p, delayMs, remainingDelayMs - delayMs)
               .delayMs(delayMs)
               .toCallback
@@ -112,6 +109,15 @@ object GraphComponent {
     protected def graphNodeIterator(root: SVGSVGElement): Iterator[SVGGElement] =
       root.querySelectorAll("g.node").iterator.map(_.domCast[SVGGElement])
   }
+
+  // Exposed for tests
+  def getGraphSvg(parentDom: Element): Option[SVGSVGElement] =
+    // The first svg is the result we care about.
+    // The others are ReactSvgPanZoom drawing tools and the minimap.
+    parentDom.querySelector("svg") match {
+      case svg: SVGSVGElement => Some(svg)
+      case _                  => None
+    }
 
   def graphConfig[P <: HasWebWorker : Reusability, C <: Children, B <: GraphBackend[P]]: ScalaComponent.Config[P, C, State, B, UpdateSnapshot.None, UpdateSnapshot.Some[Unit]] =
     _.configure(Reusability.shouldComponentUpdate)

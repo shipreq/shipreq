@@ -6,7 +6,7 @@ import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
-import shipreq.webapp.client.project.test.PrepareEnv
+import shipreq.webapp.client.project.test.{PrepareEnv, TestWebWorkerClient}
 import utest._
 import utest.framework.TestPath
 
@@ -16,22 +16,39 @@ object ReqGraphTest extends TestSuite {
 
   PrepareEnv()
 
-  private def runActions(project: Project)(a: *.Actions)(implicit tp: TestPath): Unit =
-    runPlan(project)(Plan.action(a))
+  private def runActions(project: Project,
+                         wwPrep : TestWebWorkerClient.Prep = TestWebWorkerClient.noInitialPrep)
+                        (a      : *.Actions)(implicit tp: TestPath): Unit =
+    runPlan(project, wwPrep)(Plan.action(a))
 
-  private def runPlan(project: Project)(p: *.Plan)(implicit tp: TestPath): Unit = {
+  private def runPlan(project: Project,
+                      wwPrep : TestWebWorkerClient.Prep)
+                     (p      : *.Plan)(implicit tp: TestPath): Unit = {
     import ProjectSpaTestDsl._
 
     val name = p.name.fold(tp.value.mkString("Test: ", ".", ""))(_.value)
 
     ProjectSpaTestDsl.runTest(
       liftReqGraphTests(p).asAction(name),
-      page = Page.ReqGraph,
-      project = project)
+      page    = Page.ReqGraph,
+      project = project,
+      wwPrep  = wwPrep,
+    )
+  }
+
+  private object wwPrep {
+    import TestWebWorkerClient.Prep
+
+    def forSP3: Prep = _.respondToAllGraphsWith(Svg(SampleProject3.reqGraph.showDead))
   }
 
   override def tests = Tests {
     "coloursWithDeadTag" - testColoursWithDeadTag()
+    "edgeEditor" - {
+      "newEdge" - {
+        "ok" - testEdgeEditorNewEdgeOk()
+      }
+    }
   }
 
   private def testColoursWithDeadTag()(implicit tp: TestPath): Unit = {
@@ -50,7 +67,7 @@ object ReqGraphTest extends TestSuite {
       & colourOptions.assert("Tag: Priority", "Tag: Released", "Tag: Status", "Tag: Version", "Type"))
 
     runActions(SampleProject8.project)(
-      receiveExternalEvent(Event.TagDelete(relTG))
+      global.receiveExternalEvent(Event.TagDelete(relTG))
 
         >> selectColours("Tag: Status")
         +> savedViews.assert("> Unsaved view")
@@ -61,7 +78,7 @@ object ReqGraphTest extends TestSuite {
         >> saveCurrentView("yo")
         +> allGood
 
-        >> receiveExternalEvent(Event.TagDelete(statusTG))
+        >> global.receiveExternalEvent(Event.TagDelete(statusTG))
         +> tagIsDead
 
         >> filterDeadToggleNoOp
@@ -77,9 +94,19 @@ object ReqGraphTest extends TestSuite {
         >> selectColours("Tag: Status")
         +> tagIsDead
 
-        >> receiveExternalEvent(Event.TagRestore(statusTG))
+        >> global.receiveExternalEvent(Event.TagRestore(statusTG))
         >> filterDeadToggle
         +> allGood
+    )
+  }
+
+  private def testEdgeEditorNewEdgeOk()(implicit tp: TestPath): Unit = {
+    import SampleProject3._
+
+    runActions(project, wwPrep.forSP3)(
+      global.disableAutoResponse
+        >> graph.dragNewEdge("MF-17" -> "MF-18")
+        +> global.requestCount.assert(1)
     )
   }
 }

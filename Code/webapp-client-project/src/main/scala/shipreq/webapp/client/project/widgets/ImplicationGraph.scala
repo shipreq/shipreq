@@ -82,15 +82,20 @@ object ImplicationGraph {
       Reusability.derive
   }
 
+  var runningInUnitTest = false
+
   final class Backend($: BackendScope[Props, State]) extends GraphBackend($) {
 
     private var edgeEditor = Option.empty[EdgeEditor]
 
     override protected def displayMode(p: Props): DisplayMode =
-      p match {
-        case _: Props.FocusReq => DisplayMode.FitToWidth
-        case _: Props.All      => DisplayMode.PanZoom
-      }
+      if (runningInUnitTest)
+        DisplayMode.FitToWidth
+      else
+        p match {
+          case _: Props.FocusReq => DisplayMode.FitToWidth
+          case _: Props.All      => DisplayMode.PanZoom
+        }
 
     override def cmd(props: Props) =
       props match {

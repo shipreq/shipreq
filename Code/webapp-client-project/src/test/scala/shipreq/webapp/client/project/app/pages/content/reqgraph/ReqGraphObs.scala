@@ -4,19 +4,22 @@ import shipreq.webapp.base.test.CommonObs.Dropdown
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}
 import shipreq.webapp.client.project.feature.savedview._
+import shipreq.webapp.client.project.test.{ImpGraphObs, TestGlobal}
 
-final class ReqGraphObs($: DomZipperJs) {
+final class ReqGraphObs($: DomZipperJs, val global: TestGlobal.Obs) {
 
 //  println()
 //  println($.outerHTML)
 //  println()
 
-  private val controlsRow2 = $(">div", 2 of 3)
+  private lazy val controlsRow2 = $(">div", 2 of 3)
 
-  val savedViews = SavedViewManagerObs.needIn($)
-  val filterDead = FilterDeadButtonObs.needIn($)
-  val filter     = FilterEditorObs.needIn($)
+  lazy val savedViews = SavedViewManagerObs.needIn($)
+  lazy val filterDead = FilterDeadButtonObs.needIn($)
+  lazy val filter     = FilterEditorObs.needIn($)
 
-  val colours = new Dropdown(controlsRow2(*.configColoursEditor.selector).child(".ui.dropdown"))
+  lazy val colours = new Dropdown(controlsRow2(*.configColoursEditor.selector).child(".ui.dropdown"))
 
+  // not lazy because invariants exist
+  val graph = ImpGraphObs.find($)
 }
