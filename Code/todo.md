@@ -1,4 +1,7 @@
 ### Problems
+* Manually calculate first rank nodes and explicitly group
+* When clicking an edge (or starting a drag) clear the focus
+* Consider edge replacement in validation (eg. turning A->B into B->A)
 
 
 ### Improvements
@@ -18,6 +21,7 @@ Backlog (maybe-probably soon)
 * ReqTable doesn't respect `max-width` unless `table-layout:fixed`
 * Add percentages to deriv expl (?)
 * add blockquotes
+* New Graph label type: "Title" (only)
 
 * single-req card in project index is now redundant
   Removing it now looks shit. Replace it later when a new content screen is added.
