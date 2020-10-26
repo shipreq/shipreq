@@ -25,7 +25,14 @@ final case class SavedViewTestDsl[R, O, S](* : Dsl[Id, R, O, S, String])
 
   val filterText = *.focus("Filter text").value(_.obs.filter.value)
 
-  def enterFilter(f: String) = {
+  def focusFilter: *.Actions =
+    *.action("Focus filter") { x =>
+      val dom = x.obs.filter.input
+      dom.focus()
+      Simulate focus dom
+    }
+
+  def enterFilter(f: String): *.Actions = {
     val e = SimEvent.Change(f)
     *.action(s"enterFilter('$f')")(e simulate _.obs.filter.input)
       .addCheck(filterText.assert(f).after)

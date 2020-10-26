@@ -16,7 +16,7 @@ import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.LabelFormat
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.DomUtil._
-import shipreq.webapp.base.lib.LoggerJs
+import shipreq.webapp.base.lib.{DomUtil, LoggerJs}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.PatchImplications
@@ -464,6 +464,8 @@ object ImplicationGraph {
 
       setDragDelay(None)
 
+      DomUtil.unfocus.runNow()
+
       val edge = ev.currentTarget.asSvgEl.parentElement
       if (edge.classList.contains(*.clsSelectedEdge)) {
         // De-select
@@ -523,6 +525,9 @@ object ImplicationGraph {
 
     private val onNodeMouseDown: js.Function1[MouseEvent, Unit] = ev => {
       eventLogger(_.debug("onNodeMouseDown: ", ev))
+
+      DomUtil.unfocus.runNow()
+
       if (root ne null) {
 
         // DragSrc might still be specified because an async commit is in progress

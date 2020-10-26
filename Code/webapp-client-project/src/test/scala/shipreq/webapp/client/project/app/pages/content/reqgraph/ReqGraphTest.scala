@@ -158,27 +158,36 @@ object ReqGraphTest extends TestSuite {
   private def delEdgeCmd(from: ReqId, to: ReqId) =
     PatchImplications(from, Forwards, nesd(to)())
 
-  private def testEdgeEditorDelEdgeOk()(implicit tp: TestPath): Unit = {
+  private def edgeEditorDelEdgeOkTest = {
     import SampleProject3._, Values._
-    runActions(project, wwPrep.forSP3)(
 
-      graph.clickEdge("MF-1" -> "FR-2") +> graph.assertSelectedEdge("MF-1" -> "FR-2")
-        >> graph.clickEdge("MF-1" -> "FR-2") +> graph.selectedEdgeId.assert(None)
-        >> graph.clickEdge("MF-1" -> "FR-2") +> graph.assertSelectedEdge("MF-1" -> "FR-2")
+    (graph.clickEdge("MF-1" -> "FR-2") +> graph.assertSelectedEdge("MF-1" -> "FR-2")
+      >> graph.clickEdge("MF-1" -> "FR-2") +> graph.selectedEdgeId.assert(None)
+      >> graph.clickEdge("MF-1" -> "FR-2") +> graph.assertSelectedEdge("MF-1" -> "FR-2")
 
-        >> graph.clickEdge("MF-12" -> "FR-1")
-        +> graph.assertSelectedEdge("MF-12" -> "FR-1")
-        +> graph.dragState.assert(DragState.None)
+      >> graph.clickEdge("MF-12" -> "FR-1")
+      +> graph.assertSelectedEdge("MF-12" -> "FR-1")
+      +> graph.dragState.assert(DragState.None)
 
-        >> global.documentPress(KB.Delete)
-        +> global.requestCount.assert(1)
-        +> global.assertLastRequestMsg(delEdgeCmd(mfs(12), frs(1)))
-    )
+      >> global.press(KB.Delete)
+      +> global.requestCount.assert(1)
+      +> global.assertLastRequestMsg(delEdgeCmd(mfs(12), frs(1)))
+      )
+  }
+
+  private def testEdgeEditorDelEdgeOk()(implicit tp: TestPath): Unit = {
+    import SampleProject3._
+    runActions(project, wwPrep.forSP3)(edgeEditorDelEdgeOkTest)
+  }
+
+  private def testEdgeEditorDelEdgeFocus()(implicit tp: TestPath): Unit = {
+    import SampleProject3._
+    runActions(project, wwPrep.forSP3)(focusFilter >> edgeEditorDelEdgeOkTest)
   }
 
   private def testEdgeEditorDelEdgeNoOp(fromTo: (String, String) = null)(implicit tp: TestPath): Unit = {
     import SampleProject3._
-    val test = global.documentPress(KB.Delete) +> global.requestCount.assert(0)
+    val test = global.press(KB.Delete) +> global.requestCount.assert(0)
     runActions(project, wwPrep.forSP3)(
       Option(fromTo) match {
         case Some(e) => graph.clickEdge(e) >> test
@@ -236,6 +245,7 @@ object ReqGraphTest extends TestSuite {
       }
       "delEdge" - {
         "ok"      - testEdgeEditorDelEdgeOk()
+        "focus"   - testEdgeEditorDelEdgeFocus()
         "empty"   - testEdgeEditorDelEdgeNoOp()
         "deadSrc" - testEdgeEditorDelEdgeNoOp("MF-19" -> "FR-1")
         "deadTgt" - testEdgeEditorDelEdgeNoOp("FR-1" -> "CO-2")

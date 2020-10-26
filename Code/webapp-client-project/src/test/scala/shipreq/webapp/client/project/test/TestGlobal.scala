@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.test
 import japgolly.scalajs.react.test.SimEvent
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import java.time.{Duration, Instant}
-import org.scalajs.dom.{document, html}
+import org.scalajs.dom.{EventTarget, document, html}
 import scala.scalajs.js
 import shipreq.base.util.JsExt._
 import shipreq.base.util.{Allow, ErrorMsg, JsTimers, PotentialChange, Retries}
@@ -311,26 +311,30 @@ object TestGlobal {
     val assertLastTwoRequestsAreEqual = lastTwoRequests.map(_.req).assert.equal(Equal.by_==, implicitly)
 
     def press(k: SimEvent.Keyboard): *.Actions =
-      *.action(s"Press ${k.desc}.")(k simulateKeyDownPressUp _.obs.needFocus())
-
-    def documentPress(k: SimEvent.Keyboard): *.Actions =
-      *.action(s"Press ${k.desc}.") { _ =>
-        dispatchEvent(document, "keypress", e => {
-          val o = e.asInstanceOf[js.Dynamic]
-          o.key      = k.key
-          o.location = k.location
-          o.altKey   = k.altKey
-          o.ctrlKey  = k.ctrlKey
-          o.metaKey  = k.metaKey
-          o.shiftKey = k.shiftKey
-          o.repeat   = k.repeat
-          o.code     = k.code
-          o.locale   = k.locale
-          o.keyCode  = k.keyCode
-          o.charCode = k.charCode
-          o.which    = k.which
-        })
+      *.action(s"Press ${k.desc}.") { x =>
+        x.obs.activeElement match {
+          case Some(f) => k.simulateKeyDownPressUp(f)
+          case None    => manualKeyPress(document, k)
+        }
       }
+
+    private def manualKeyPress(target: EventTarget, k: SimEvent.Keyboard): Unit = {
+      dispatchEvent(target, "keypress", e => {
+        val o = e.asInstanceOf[js.Dynamic]
+        o.key      = k.key
+        o.location = k.location
+        o.altKey   = k.altKey
+        o.ctrlKey  = k.ctrlKey
+        o.metaKey  = k.metaKey
+        o.shiftKey = k.shiftKey
+        o.repeat   = k.repeat
+        o.code     = k.code
+        o.locale   = k.locale
+        o.keyCode  = k.keyCode
+        o.charCode = k.charCode
+        o.which    = k.which
+      })
+    }
 
     def assertFocusBy(desc: String, f: *.OS => html.Element) =
       *.point(s"$desc must have focus") { os =>

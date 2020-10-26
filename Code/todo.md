@@ -1,6 +1,5 @@
 ### Problems
 * Manually calculate first rank nodes and explicitly group
-* When clicking an edge (or starting a drag) clear the focus
 * Consider edge replacement in validation (eg. turning A->B into B->A)
 
 

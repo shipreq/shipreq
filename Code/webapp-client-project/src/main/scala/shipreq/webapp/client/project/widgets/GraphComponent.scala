@@ -52,7 +52,10 @@ object GraphComponent {
   }
 
   private[this] val container =
-    <.div(^.display.inline)
+    <.div(
+      ^.display.inline,
+      ^.onMouseDown --> unfocus,
+    )
 
   abstract class GraphBackend[Props <: HasWebWorker]($: BackendScope[Props, State]) {
 

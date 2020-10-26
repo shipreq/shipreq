@@ -6,7 +6,6 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import org.scalajs.dom.document
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Allow, ErrorMsg}
 import shipreq.webapp.base.AssetManifest
@@ -15,6 +14,7 @@ import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.lib.DataReusability._
+import shipreq.webapp.base.lib.DomUtil
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
@@ -31,7 +31,7 @@ object ReqTablePage {
     ScalaComponent.builder[Props]
       .backend(new Backend(staticProps, _))
       .renderBackend
-      .componentDidMount(_.backend.unfocus)
+      .componentDidMountConst(DomUtil.unfocus) // Prevent browser auto-focusing the first <input> it sees on page load
       .build
 
   final case class StaticProps(stateAccess           : StateAccessPure[State],
@@ -265,11 +265,6 @@ object ReqTablePage {
           pxColumnSelector.value()
         ).unless(mode ==* Mode.EmptyProject || mode ==* Mode.NoContentCosHideDead),
         body)
-    }
-
-    // Prevent browser auto-focusing the first <input> it sees on page load
-    def unfocus = Callback {
-      document.activeElement.domToHtml.foreach(_.blur())
     }
   }
 
