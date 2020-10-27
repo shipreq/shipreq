@@ -147,4 +147,19 @@ object TestEvent {
       codeGroups = codeGroups.iterator.toSet,
       reason     = Option(reason).map(Text.DeletionReason.Literal(_)).to(ArraySeq),
     )
+
+  def customReqTypeUpdate(id         : CustomReqTypeId,
+                          desc       : String    = null,
+                          implication: Mandatory = null,
+                          mnemonic   : String    = null,
+                          name       : String    = null,
+                         ): CustomReqTypeUpdate = {
+    import CustomReqTypeGD._
+    val b = valueBuilder()
+    Option(desc).foreach(v => b.addValue(ValueForDescription(Option.when(v.nonEmpty)(v))))
+    Option(mnemonic).foreach(v => b.addValue(ValueForMnemonic(ReqType.Mnemonic(v))))
+    Option(implication).foreach(v => b.addValue(ValueForImplication(v)))
+    Option(name).foreach(v => b.addValue(ValueForName(v)))
+    CustomReqTypeUpdate(id, b.nev().get)
+  }
 }

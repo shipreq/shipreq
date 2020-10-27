@@ -152,9 +152,6 @@ object AbstractGraph {
 
       import graph.{filterDead, live, project, reqIdsSortedByPubId, reqs, reqTypes}
 
-//      val reqIdFilter = OptionalBoolFn[ReqId](scope.map(s => s.contains _))
-//      val reqFilter = reqIdFilter.contramap[Req](_.id)
-
       configColours match {
 
         // =============================================================================================================
@@ -234,7 +231,7 @@ object AbstractGraph {
               val coloursByReqId: Map[ReqId, ArraySeq[Colour]] = {
                 val tags    = project.config.tags
                 val reqTags = project.virtualTags.underTagGroup(tagGroupId, filterDead)
-                val reqIds  = scope.fold(project.content.reqs.idIterator())(_.iterator)
+                val reqIds  = scope.fold(reqs.idIterator())(_.iterator)
                 reqIds.map { reqId =>
                   val colours =
                     reqTags(reqId)

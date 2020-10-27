@@ -38,16 +38,28 @@ object ProjectImpGraphTest extends TestSuite {
 //    }
 
     "basic" - {
-      val actual = render(HideDead, SIG_dead_FR7)
+      val actual = render(HideDead, SIG_FRs_optional)
       val expect = DOT(
         s"""
            |digraph G{bgcolor=transparent;rankdir=TB;
            |node[style=filled shape=ellipse color="#222222"]
            |edge[color="#222222"]
            |
+           |{
+           |  rank=same;
+           |
+           |  node[fillcolor="#B7D058"]
+           |  $br1[id="BR-1" label="BR-1"]
+           |
+           |  node[fillcolor="#D5A8C9"]
+           |  $fr7[id="FR-7" label="FR-7"]
+           |
+           |  node[fillcolor="#93D5BA"]
+           |  $mf1[id="MF-1" label="MF-1"]
+           |}
+           |
            |node[fillcolor="#B7D058"]
            |$br2[id="BR-2" label="BR-2"]
-           |$br1[id="BR-1" label="BR-1"]
            |
            |node[fillcolor="#D5A8C9"]
            |$fr5[id="FR-5" label="FR-5"]
@@ -61,7 +73,6 @@ object ProjectImpGraphTest extends TestSuite {
            |$mf4[id="MF-4" label="MF-4"]
            |$mf3[id="MF-3" label="MF-3"]
            |$mf2[id="MF-2" label="MF-2"]
-           |$mf1[id="MF-1" label="MF-1"]
            |$mf5[id="MF-5" label="MF-5"]
            |
            |$mf4->$fr6[id="MF-4--FR-6"];
@@ -82,7 +93,7 @@ object ProjectImpGraphTest extends TestSuite {
     }
 
     "backwards" - {
-      val actual = render(HideDead, SIG_dead_FR7, config = ImpGraphConfig.default.copy(GraphDir.RightToLeft))
+      val actual = render(HideDead, SIG_FRs_optional, config = ImpGraphConfig.default.copy(GraphDir.RightToLeft))
       // rankdir=LR below is deliberate and correct because all the links have been run backwards
       // See https://shipreq.com/project/d6My#/reqs/FR-131
       val expect = DOT(
@@ -91,6 +102,18 @@ object ProjectImpGraphTest extends TestSuite {
            |node[style=filled shape=ellipse color="#222222"]
            |edge[color="#222222"][dir=back]
            |
+           |{
+           |  rank=same;
+           |
+           |  node[fillcolor="#D5A8C9"]
+           |  $fr7[id="FR-7" label="FR-7"]
+           |  $fr6[id="FR-6" label="FR-6"]
+           |  $fr3[id="FR-3" label="FR-3"]
+           |
+           |  node[fillcolor="#93D5BA"]
+           |  $mf5[id="MF-5" label="MF-5"]
+           |}
+           |
            |node[fillcolor="#B7D058"]
            |$br2[id="BR-2" label="BR-2"]
            |$br1[id="BR-1" label="BR-1"]
@@ -98,8 +121,6 @@ object ProjectImpGraphTest extends TestSuite {
            |node[fillcolor="#D5A8C9"]
            |$fr5[id="FR-5" label="FR-5"]
            |$fr1[id="FR-1" label="FR-1"]
-           |$fr6[id="FR-6" label="FR-6"]
-           |$fr3[id="FR-3" label="FR-3"]
            |$fr2[id="FR-2" label="FR-2"]
            |$fr4[id="FR-4" label="FR-4"]
            |
@@ -108,7 +129,6 @@ object ProjectImpGraphTest extends TestSuite {
            |$mf3[id="MF-3" label="MF-3"]
            |$mf2[id="MF-2" label="MF-2"]
            |$mf1[id="MF-1" label="MF-1"]
-           |$mf5[id="MF-5" label="MF-5"]
            |
            |$fr6->$mf4[id="MF-4--FR-6"];
            |$mf2->$br1[id="BR-1--MF-2"];
@@ -136,9 +156,21 @@ object ProjectImpGraphTest extends TestSuite {
            |node[style=filled shape=ellipse color="#222222"]
            |edge[color="#222222"]
            |
+           |{
+           |  rank=same;
+           |
+           |  node[fillcolor="#B7D058"]
+           |  $br1[id="BR-1" label="BR-1"]
+           |
+           |  node[fillcolor="#D5A8C9"]
+           |  999[id="FR-8" label="FR-8"]
+           |
+           |  node[fillcolor="#93D5BA"]
+           |  $mf1[id="MF-1" label="MF-1"]
+           |}
+           |
            |node[fillcolor="#B7D058"]
            |$br2[id="BR-2" label="BR-2"]
-           |$br1[id="BR-1" label="BR-1"]
            |
            |node[fillcolor="#D5A8C9"]
            |$fr5[id="FR-5" label="FR-5"]
@@ -146,14 +178,12 @@ object ProjectImpGraphTest extends TestSuite {
            |$fr3[id="FR-3" label="FR-3"]
            |$fr2[id="FR-2" label="FR-2"]
            |$fr4[id="FR-4" label="FR-4"]
-           |999[id="FR-8" label="FR-8"]
            |$fr6[id="FR-6" label="FR-6"]
            |
            |node[fillcolor="#93D5BA"]
            |$mf4[id="MF-4" label="MF-4"]
            |$mf3[id="MF-3" label="MF-3"]
            |$mf2[id="MF-2" label="MF-2"]
-           |$mf1[id="MF-1" label="MF-1"]
            |$mf5[id="MF-5" label="MF-5"]
            |
            |{
@@ -190,9 +220,18 @@ object ProjectImpGraphTest extends TestSuite {
            |node[style=filled shape=ellipse color="#222222"]
            |edge[color="#222222"]
            |
+           |{
+           |  rank=same;
+           |
+           |  node[fillcolor="#B7D058"]
+           |  $br1[id="BR-1" label="BR-1"]
+           |
+           |  node[fillcolor="#93D5BA"]
+           |  $mf1[id="MF-1" label="MF-1"]
+           |}
+           |
            |node[fillcolor="#B7D058"]
            |$br2[id="BR-2" label="BR-2"]
-           |$br1[id="BR-1" label="BR-1"]
            |
            |node[fillcolor="#D5A8C9"]
            |$fr5[id="FR-5" label="FR-5"]
@@ -206,7 +245,6 @@ object ProjectImpGraphTest extends TestSuite {
            |$mf4[id="MF-4" label="MF-4"]
            |$mf3[id="MF-3" label="MF-3"]
            |$mf2[id="MF-2" label="MF-2"]
-           |$mf1[id="MF-1" label="MF-1"]
            |$mf5[id="MF-5" label="MF-5"]
            |
            |$mf4->$fr6[id="MF-4--FR-6"];
@@ -241,9 +279,13 @@ object ProjectImpGraphTest extends TestSuite {
            |digraph G{bgcolor=transparent;rankdir=TB;
            |node[style=filled shape=ellipse color="#222222"]
            |edge[color="#222222"]
-           |node[fillcolor="#D5A8C9"]
-           |777[id="FR-9" label="FR-9"]
-           |666[id="FR-8" label="FR-8"]
+           |
+           |{
+           |  rank=same;
+           |  node[fillcolor="#D5A8C9"]
+           |  777[id="FR-9" label="FR-9"]
+           |  666[id="FR-8" label="FR-8"]
+           |}
            |
            |{
            |edge[color="#dd0000"]
@@ -263,12 +305,23 @@ object ProjectImpGraphTest extends TestSuite {
            |node[style=filled shape=ellipse color="#222222"]
            |edge[color="#222222"]
            |
+           |{
+           |  rank=same;
+           |
+           |  node[fillcolor="#B7D058"]
+           |  $br1[id="BR-1" label="BR-1"]
+           |
+           |  node[fillcolor="#D5A8C9"]
+           |  $fr7[id="FR-7" label="FR-7" fillcolor="#dddddd" color="#777777" fontcolor="#666666"]
+           |
+           |  node[fillcolor="#93D5BA"]
+           |  $mf1[id="MF-1" label="MF-1"]
+           |}
+           |
            |node[fillcolor="#B7D058"]
            |$br2[id="BR-2" label="BR-2"]
-           |$br1[id="BR-1" label="BR-1"]
            |
            |node[fillcolor="#D5A8C9"]
-           |$fr7[id="FR-7" label="FR-7" fillcolor="#dddddd" color="#777777" fontcolor="#666666"]
            |$fr5[id="FR-5" label="FR-5"]
            |$fr1[id="FR-1" label="FR-1"]
            |$fr6[id="FR-6" label="FR-6"]
@@ -280,7 +333,6 @@ object ProjectImpGraphTest extends TestSuite {
            |$mf4[id="MF-4" label="MF-4" fillcolor="#dddddd" color="#777777" fontcolor="#666666"]
            |$mf3[id="MF-3" label="MF-3"]
            |$mf2[id="MF-2" label="MF-2"]
-           |$mf1[id="MF-1" label="MF-1"]
            |$mf5[id="MF-5" label="MF-5"]
            |
            |$mf4->$fr6[id="MF-4--FR-6"][color="#bbbbbb" style=dashed];
@@ -308,14 +360,25 @@ object ProjectImpGraphTest extends TestSuite {
            |node[style=filled shape=ellipse color="#222222"]
            |edge[color="#222222"]
            |
+           |{
+           |  rank=same;
+           |
+           |  node[fillcolor="#B7D058"]
+           |  $br1[id="BR-1" label="BR-1"]
+           |
+           |  node[fillcolor="#D5A8C9"]
+           |  $fr6[id="FR-6" label="FR-6"]
+           |
+           |  node[fillcolor="#93D5BA"]
+           |  $mf1[id="MF-1" label="MF-1"]
+           |}
+           |
            |node[fillcolor="#B7D058"]
            |$br2[id="BR-2" label="BR-2"]
-           |$br1[id="BR-1" label="BR-1"]
            |
            |node[fillcolor="#D5A8C9"]
            |$fr5[id="FR-5" label="FR-5"]
            |$fr1[id="FR-1" label="FR-1"]
-           |$fr6[id="FR-6" label="FR-6"]
            |$fr3[id="FR-3" label="FR-3"]
            |$fr2[id="FR-2" label="FR-2"]
            |$fr4[id="FR-4" label="FR-4"]
@@ -323,7 +386,6 @@ object ProjectImpGraphTest extends TestSuite {
            |node[fillcolor="#93D5BA"]
            |$mf3[id="MF-3" label="MF-3"]
            |$mf2[id="MF-2" label="MF-2"]
-           |$mf1[id="MF-1" label="MF-1"]
            |$mf5[id="MF-5" label="MF-5"]
            |
            |$br1->$mf2[id="BR-1--MF-2"];
@@ -364,11 +426,12 @@ object ProjectImpGraphTest extends TestSuite {
                |rankdir=LR;
                |node[style=filled shape=ellipse color="#222222"]edge[color="#222222"]
                |
+               |{
+               |rank=same;
                |1401[id="BR-1" label="BR-1" style=filled fillcolor="#123456" fontcolor="#ffffff"]
                |1402[id="BR-2" label="BR-2" style=wedged fillcolor="#ff0000:#123456" fontcolor="#ffffff"]
                |1403[id="BR-3" label="BR-3" style=filled fillcolor="#123456" fontcolor="#ffffff"]
                |1001[id="FR-1" label="FR-1" style=filled fillcolor="#0076f5" fontcolor="#ffffff"]
-               |1002[id="FR-2" label="FR-2" style=filled fillcolor="#0076f5" fontcolor="#ffffff"]
                |1101[id="MF-1" label="MF-1" style=filled fillcolor="#ff0000" fontcolor="#ffffff"]
                |1102[id="MF-2" label="MF-2" style=filled fillcolor="#123456" fontcolor="#ffffff"]
                |1103[id="MF-3" label="MF-3" style=filled fillcolor="#ff0000" fontcolor="#ffffff"]
@@ -380,6 +443,9 @@ object ProjectImpGraphTest extends TestSuite {
                |1109[id="MF-9" label="MF-9" style=filled fillcolor="#ff0000" fontcolor="#ffffff"]
                |1203[id="UC-1" label="UC-1" style=filled fillcolor="#0076f5" fontcolor="#ffffff"]
                |1204[id="UC-2" label="UC-2" style=filled fillcolor="#0076f5" fontcolor="#ffffff"]
+               |}
+               |
+               |1002[id="FR-2" label="FR-2" style=filled fillcolor="#0076f5" fontcolor="#ffffff"]
                |
                |1001->1002[id="FR-1--FR-2"];
                |1101->1002[id="MF-1--FR-2"];
@@ -408,12 +474,12 @@ object ProjectImpGraphTest extends TestSuite {
                |bgcolor=transparent;
                |rankdir=LR;
                |node[style="rounded,filled" shape=box color="#222222"]edge[color="#222222"]
-               |
+               |{
+               |rank=same;
                |1401[id="BR-1" label="BR-1\nMust make moneh" style="rounded,filled" fillcolor="#123456" fontcolor="#ffffff"]
                |1402[id="BR-2" label="BR-2\nMust make moar moneh" style="rounded,striped" fillcolor="#ff0000:#123456" fontcolor="#ffffff"]
                |1403[id="BR-3" label="BR-3\nCEO owns islands!" style="rounded,filled" fillcolor="#123456" fontcolor="#ffffff"]
                |1001[id="FR-1" label="FR-1\njapgolly@gmail.com is on https://github.com cos of\n[MF-6]\n#TODO<tex>c = \\pm\\sqrt{a^2 + b^2}</tex>"][style="rounded,filled" fillcolor="#0076f5" fontcolor="#ffffff"]
-               |1002[id="FR-2" label="FR-2\n#TBD{ Pending\n[MF-26]\n}.\n[MF-28]\nis dead."][style="rounded,filled" fillcolor="#0076f5" fontcolor="#ffffff"]
                |1101[id="MF-1" label="MF-1\nUse Case Editor"][style="rounded,filled" fillcolor="#ff0000" fontcolor="#ffffff"]
                |1102[id="MF-2" label="MF-2\nAnonymous Share"][style="rounded,filled" fillcolor="#123456" fontcolor="#ffffff"]
                |1103[id="MF-3" label="MF-3\nExport (PDF, XLS)"][style="rounded,filled" fillcolor="#ff0000" fontcolor="#ffffff"]
@@ -425,6 +491,9 @@ object ProjectImpGraphTest extends TestSuite {
                |1109[id="MF-9" label="MF-9\nCollaboration: authoring"][style="rounded,filled" fillcolor="#ff0000" fontcolor="#ffffff"]
                |1203[id="UC-1" label="UC-1\n\n[UC-1.0.X.1]\nand\n[UC-1.E.X.1]\nare dead.\n[UC-1.0.2.a]\nand\n[UC-1.E.1]\nare not."][style="rounded,filled" fillcolor="#0076f5" fontcolor="#ffffff"]
                |1204[id="UC-2" label="UC-2\nEmpty for now"][style="rounded,filled" fillcolor="#0076f5" fontcolor="#ffffff"]
+               |}
+               |
+               |1002[id="FR-2" label="FR-2\n#TBD{ Pending\n[MF-26]\n}.\n[MF-28]\nis dead."][style="rounded,filled" fillcolor="#0076f5" fontcolor="#ffffff"]
                |
                |1001->1002[id="FR-1--FR-2"];
                |1101->1002[id="MF-1--FR-2"];
@@ -465,13 +534,25 @@ object ProjectImpGraphTest extends TestSuite {
            |node[style=filled shape=ellipse color="#222222"]
            |edge[color="#222222"]
            |
+           |{
+           |  rank=same;
+           |
+           |  node[fillcolor="#B7D058"]
+           |  $br1[id="BR-1" label="BR-1"]
+           |  $br3[id="BR-3" label="BR-3"]
+           |
+           |  node[fillcolor="#D5A8C9"]
+           |  $fr7[id="FR-7" label="FR-7"]
+           |  $fr10[id="FR-10" label="FR-10"][fillcolor="#dddddd" color="#777777" fontcolor="#666666"]
+           |
+           |  node[fillcolor="#93D5BA"]
+           |  $mf1[id="MF-1" label="MF-1"]
+           |}
+           |
            |node[fillcolor="#B7D058"]
            |$br2[id="BR-2" label="BR-2"]
-           |$br1[id="BR-1" label="BR-1"]
-           |$br3[id="BR-3" label="BR-3"]
            |
            |node[fillcolor="#D5A8C9"]
-           |$fr7[id="FR-7" label="FR-7"]
            |$fr9[id="FR-9" label="FR-9"]
            |$fr5[id="FR-5" label="FR-5"]
            |$fr1[id="FR-1" label="FR-1"]
@@ -480,13 +561,11 @@ object ProjectImpGraphTest extends TestSuite {
            |$fr3[id="FR-3" label="FR-3"]
            |$fr2[id="FR-2" label="FR-2"]
            |$fr4[id="FR-4" label="FR-4"]
-           |$fr10[id="FR-10" label="FR-10"][fillcolor="#dddddd" color="#777777" fontcolor="#666666"]
            |
            |node[fillcolor="#93D5BA"]
            |$mf4[id="MF-4" label="MF-4"]
            |$mf3[id="MF-3" label="MF-3"]
            |$mf2[id="MF-2" label="MF-2"]
-           |$mf1[id="MF-1" label="MF-1"]
            |$mf5[id="MF-5" label="MF-5"]
            |
            |{edge[color="#dd0000"]

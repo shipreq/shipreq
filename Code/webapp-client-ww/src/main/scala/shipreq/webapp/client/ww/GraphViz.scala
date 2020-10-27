@@ -83,6 +83,12 @@ object GraphViz {
       sb append ';'
     }
 
+    def withSameRank(inner: => Unit): Unit = {
+      sb append "{rank=same;"
+      inner
+      sb append '}'
+    }
+
     def group(group: String)(inner: => Unit): Unit = {
       sb append group
       sb append '{'

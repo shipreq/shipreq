@@ -1,5 +1,6 @@
 package shipreq.webapp.client.ww
 
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
@@ -18,7 +19,7 @@ final class ProjectImpGraph(project   : Project,
   override protected def create()(implicit b: GraphViz.Builder): Unit = {
     implicit val lblFmt = LabelFormatter(config.labelFormat, plainText)
     implicit val shape  = Shape(config.labelFormat)
-    val colourProvider  = ColourProvider(config.colours, this).apply(scope)
+    val colourProvider  = ColourProvider(config.colours, this)
     val impReqResult    = DataLogic.requiringImplication(reqTypes, imps.graph, reqs)
 
     b.drawBackwards = config.graphDir match {
@@ -46,6 +47,18 @@ final class ProjectImpGraph(project   : Project,
           flow(fromId, fromLive, d, Dead)
         }
 
+    var rankMin        = Set.empty[ReqId]
+    var rankOther      = Set.empty[ReqId]
+    def reqIds         = scope.fold(reqs.idIterator())(_.iterator)
+    val preceedingDir  = if (b.drawBackwards) Forwards else Backwards
+    val preceedingImps = imps(preceedingDir)
+    for (reqId <- reqIds) {
+      if (reqIdSetFilter(preceedingImps(reqId)).isEmpty)
+        rankMin += reqId
+      else
+        rankOther += reqId
+    }
+
     // -----------------------------------------------------------------------------------------------------------------
 
     b.rankdir(config.graphDir)
@@ -54,7 +67,10 @@ final class ProjectImpGraph(project   : Project,
     if (b.drawBackwards)
       b.append("[dir=back]")
 
-    colourProvider.declareAllReqsInScope()
+    b.withSameRank {
+      colourProvider(Some(rankMin)).declareAllReqsInScope()
+    }
+    colourProvider(Some(rankOther)).declareAllReqsInScope()
 
     // Implication required
     val relevantReqsWithoutImp = reqIdFilter.setFilter(impReqResult.badIds)

@@ -1,11 +1,11 @@
 ### Problems
-* Manually calculate first rank nodes and explicitly group
-* Consider edge replacement in validation (eg. turning A->B into B->A)
 
 
 ### Improvements
 * have an option in ReqGraph to show simplified graphs (i.e. remove redundant edges)
+* add a new ReqGraph config option: Align = {none | beginning | end | justify} to control `rank=same` blocks
 * add option to show simplified UC graphs (using the `merged-a` style)
+* Consider edge replacement in validation (eg. turning A->B into B->A) -- requires new event
 * add a KB shortcut to show/hide preview
 * add a req type filter to field config
 
