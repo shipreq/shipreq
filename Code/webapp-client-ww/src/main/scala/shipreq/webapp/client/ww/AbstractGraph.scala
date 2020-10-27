@@ -83,118 +83,6 @@ abstract class AbstractGraph(protected val project   : Project,
     b.setLabel(f(id))
     b.append(']')
   }
-
-  protected final def ColourProvider(configColours: Colours)
-                                    (implicit b: Builder,
-                                     shape: Shape,
-                                     lf: LabelFormatter): ColourProvider =
-    configColours match {
-
-      case Colours.ByReqType =>
-
-        // Add to reqTypesWithReqs regardless of live status so that colours don't change when user toggles the
-        // FilterDead setting. Colours jumping around it's a needless cognitive burden when you're trying to analyse
-        // the graph.
-        val reqTypesWithReqs: Map[ReqTypeId, Int] =
-          MutableArray(reqs.reqsByType.keys)
-            .sortBy(reqTypes.order) // Deterministic (and stable until config changes) order of colours
-            .iterator()
-            .zipWithIndex
-            .toMap
-
-        lazy val reqsByReqType: Multimap[ReqTypeId, Vector, Req] =
-          reqFilter.value match {
-            case Some(f) =>
-              var m = reqs.reqsByType
-              for (rt <- m.keys)
-                m = m.mod(rt, _.filter(f))
-              m
-            case None =>
-              reqs.reqsByType
-          }
-
-        val colourFn =
-          DistinctColours("ffffff", reqTypesWithReqs.size, "ffffff")
-
-        def nodeData =
-          MutableArray(reqsByReqType.iterator)
-            .sortBy(x => reqTypes.order(x._1))
-            .iterator()
-
-        new ColourProvider {
-          private def declareNodeWithoutColour(id: ReqId): Unit = {
-            nodeDeclare(id)
-            nodeAddIdAndLabel(id)
-            nodeStyleLiveOrDead(live(id))
-          }
-
-          private def nodeStyle(reqType: ReqTypeId): Unit = {
-              val color = colourFn(reqTypesWithReqs(reqType))
-              b append """[fillcolor="#"""
-              b append color
-              b append """"]"""
-          }
-
-          override def declareAllReqsInScope(): Unit =
-            for ((reqType, reqs) <- nodeData) {
-              b append "node"
-              nodeStyle(reqType)
-              for (req <- reqs)
-                declareNodeWithoutColour(req.id)
-            }
-
-          override def declareNode(id: ReqId): Unit = {
-            declareNodeWithoutColour(id)
-            val reqType = reqs.need(id).reqTypeId
-            nodeStyle(reqType)
-          }
-        }
-
-      case Colours.ByTag(tagGroupId) =>
-
-        val coloursByReqId: Map[ReqId, ArraySeq[Colour]] = {
-          val tags    = project.config.tags
-          val reqTags = project.virtualTags.underTagGroup(tagGroupId, filterDead)
-          val reqIds  = scope.fold(project.content.reqs.idIterator())(_.iterator)
-          reqIds.map { reqId =>
-            val colours =
-              reqTags(reqId)
-                .iterator
-                .map(tags.needApplicableTag)
-                .map(t => t.colour.getOrElse(Colour.tagDefault).live(t.live))
-                .to(ArraySeq)
-            reqId -> colours
-          }.toMap
-        }
-
-        new ColourProvider {
-          override def declareNode(id: ReqId): Unit = {
-            nodeDeclare(id)
-            nodeAddIdAndLabel(id)
-            live(id) match {
-              case Live =>
-                val colours = coloursByReqId.get(id).filter(_.nonEmpty).getOrElse(ArraySeq(Colour.tagDefault))
-                val style =
-                  if (colours.length == 1) {
-                    // style=wedged requires at least 2 colours
-                    val c = colours(0)
-                    s"""[${shape.styleFilled} fillcolor="${c.`#rrggbb`}" fontcolor="${c.foreground.`#rrggbb`}"]"""
-                  } else {
-                    val fill = colours.iterator.map(_.`#rrggbb`).mkString(":")
-                    val font = Colour.chooseForegroundOverMultipleBackgroundColours(colours)
-                    s"""[${shape.styleMultiColour} fillcolor="$fill" fontcolor="${font.`#rrggbb`}"]"""
-                  }
-                b.append(style)
-              case Dead =>
-                nodeStyleDead()
-            }
-          }
-
-          override def declareAllReqsInScope(): Unit =
-            for (reqId <- reqIdFilter.iterator(reqIdsSortedByPubId.iterator))
-              declareNode(reqId)
-        }
-    }
 }
 
 // =====================================================================================================================
@@ -248,6 +136,149 @@ object AbstractGraph {
   trait ColourProvider {
     def declareNode(id: ReqId): Unit
     def declareAllReqsInScope(): Unit
+  }
+
+  object ColourProvider {
+
+    trait WithoutScope {
+      def apply(scope: Option[Set[ReqId]]): ColourProvider
+    }
+
+    def apply(configColours: Colours,
+              graph        : AbstractGraph)
+             (implicit b   : GraphViz.Builder,
+              shape        : Shape,
+              lf           : LabelFormatter): WithoutScope = {
+
+      import graph.{filterDead, live, project, reqIdsSortedByPubId, reqs, reqTypes}
+
+//      val reqIdFilter = OptionalBoolFn[ReqId](scope.map(s => s.contains _))
+//      val reqFilter = reqIdFilter.contramap[Req](_.id)
+
+      configColours match {
+
+        // =============================================================================================================
+        case Colours.ByReqType =>
+
+          // Add to reqTypesWithReqs regardless of live status so that colours don't change when user toggles the
+          // FilterDead setting. Colours jumping around it's a needless cognitive burden when you're trying to analyse
+          // the graph.
+          val reqTypesWithReqs: Map[ReqTypeId, Int] =
+            MutableArray(reqs.reqsByType.keys)
+              .sortBy(reqTypes.order) // Deterministic (and stable until config changes) order of colours
+              .iterator()
+              .zipWithIndex
+              .toMap
+
+          val colourFn =
+            DistinctColours("ffffff", reqTypesWithReqs.size, "ffffff")
+
+          new WithoutScope {
+            override def apply(scope: Option[Set[ReqId]]): ColourProvider = {
+              val reqIdFilter = OptionalBoolFn[ReqId](scope.map(s => s.contains _))
+              val reqFilter = reqIdFilter.contramap[Req](_.id)
+
+              lazy val reqsByReqType: Multimap[ReqTypeId, Vector, Req] =
+                reqFilter.value match {
+                  case Some(f) =>
+                    var m = reqs.reqsByType
+                    for (rt <- m.keys)
+                      m = m.mod(rt, _.filter(f))
+                    m
+                  case None =>
+                    reqs.reqsByType
+                }
+
+              @inline def nodeData =
+                MutableArray(reqsByReqType.iterator)
+                  .sortBy(x => reqTypes.order(x._1))
+                  .iterator()
+
+              new ColourProvider {
+                private def declareNodeWithoutColour(id: ReqId): Unit = {
+                  graph.nodeDeclare(id)
+                  graph.nodeAddIdAndLabel(id)
+                  graph.nodeStyleLiveOrDead(live(id))
+                }
+
+                private def nodeStyle(reqType: ReqTypeId): Unit = {
+                  val color = colourFn(reqTypesWithReqs(reqType))
+                  b append """[fillcolor="#"""
+                  b append color
+                  b append """"]"""
+                }
+
+                override def declareAllReqsInScope(): Unit =
+                  for ((reqType, reqs) <- nodeData) {
+                    b append "node"
+                    nodeStyle(reqType)
+                    for (req <- reqs)
+                      declareNodeWithoutColour(req.id)
+                  }
+
+                override def declareNode(id: ReqId): Unit = {
+                  declareNodeWithoutColour(id)
+                  val reqType = reqs.need(id).reqTypeId
+                  nodeStyle(reqType)
+                }
+              }
+            }
+          }
+
+        // =============================================================================================================
+        case Colours.ByTag(tagGroupId) =>
+          new WithoutScope {
+            override def apply(scope: Option[Set[ReqId]]): ColourProvider = {
+              val reqIdFilter = OptionalBoolFn[ReqId](scope.map(s => s.contains _))
+
+              val coloursByReqId: Map[ReqId, ArraySeq[Colour]] = {
+                val tags    = project.config.tags
+                val reqTags = project.virtualTags.underTagGroup(tagGroupId, filterDead)
+                val reqIds  = scope.fold(project.content.reqs.idIterator())(_.iterator)
+                reqIds.map { reqId =>
+                  val colours =
+                    reqTags(reqId)
+                      .iterator
+                      .map(tags.needApplicableTag)
+                      .map(t => t.colour.getOrElse(Colour.tagDefault).live(t.live))
+                      .to(ArraySeq)
+                  reqId -> colours
+                }.toMap
+              }
+
+              new ColourProvider {
+                override def declareNode(id: ReqId): Unit = {
+                  graph.nodeDeclare(id)
+                  graph.nodeAddIdAndLabel(id)
+                  live(id) match {
+                    case Live =>
+                      val colours = coloursByReqId.get(id).filter(_.nonEmpty).getOrElse(ArraySeq(Colour.tagDefault))
+                      val style =
+                        if (colours.length == 1) {
+                          // style=wedged requires at least 2 colours
+                          val c = colours(0)
+                          s"""[${shape.styleFilled} fillcolor="${c.`#rrggbb`}" fontcolor="${c.foreground.`#rrggbb`}"]"""
+                        } else {
+                          val fill = colours.iterator.map(_.`#rrggbb`).mkString(":")
+                          val font = Colour.chooseForegroundOverMultipleBackgroundColours(colours)
+                          s"""[${shape.styleMultiColour} fillcolor="$fill" fontcolor="${font.`#rrggbb`}"]"""
+                        }
+                      b.append(style)
+                    case Dead =>
+                      graph.nodeStyleDead()
+                  }
+                }
+
+                override def declareAllReqsInScope(): Unit =
+                  for (reqId <- reqIdFilter.iterator(reqIdsSortedByPubId.iterator))
+                    declareNode(reqId)
+              }
+            }
+          }
+
+        // =============================================================================================================
+      }
+    }
   }
 
   /** Declaration of node(s), and flow(s). */

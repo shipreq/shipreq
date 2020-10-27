@@ -18,7 +18,7 @@ final class ProjectImpGraph(project   : Project,
   override protected def create()(implicit b: GraphViz.Builder): Unit = {
     implicit val lblFmt = LabelFormatter(config.labelFormat, plainText)
     implicit val shape  = Shape(config.labelFormat)
-    val colourProvider  = ColourProvider(config.colours)
+    val colourProvider  = ColourProvider(config.colours, this).apply(scope)
     val impReqResult    = DataLogic.requiringImplication(reqTypes, imps.graph, reqs)
 
     b.drawBackwards = config.graphDir match {

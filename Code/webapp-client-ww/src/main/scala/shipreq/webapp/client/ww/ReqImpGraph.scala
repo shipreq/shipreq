@@ -17,7 +17,7 @@ final class ReqImpGraph(focus     : ReqId,
     implicit val lblFmt = LabelFormatter.pubid
     implicit val shape  = Shape.Ellipse
     val focusedReq      = reqs.need(focus)
-    val colourProvider  = colours.map(ColourProvider(_))
+    val colourProvider  = colours.map(ColourProvider(_, this).apply(scope))
 
     val declared = mutable.Set.empty[ReqId]
 
