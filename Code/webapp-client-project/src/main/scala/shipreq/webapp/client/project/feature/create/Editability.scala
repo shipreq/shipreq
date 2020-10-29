@@ -1,7 +1,10 @@
 package shipreq.webapp.client.project.feature.create
 
+import japgolly.scalajs.react.{Reusability, Reusable}
+import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.client.project.feature.editor
 import shipreq.webapp.client.project.feature.editor.{Editability => EE}
 
@@ -44,9 +47,8 @@ object Editability {
       FieldKey.editorFieldCG.reverseGet)
 
   val ForManualIssue: ForFields[FieldKey.ForManualIssue] =
-    _ => Allow
+    ForFields(Reusable.byRef(_ => Allow))
 
-  /*
   final case class ForFields[-FK <: FieldKey](fn: Reusable[FK => Permission]) {
     def apply(field: FK): Permission =
       fn(field)
@@ -61,15 +63,7 @@ object Editability {
       ForFields[FK](Reusable.implicitly(ee).map(e => f => e(map(f))))
   }
 
-  implicit val reusabilityForProject               : Reusability[ForProject        ] = Reusability.derive
-           val reusabilityForFieldsAny             : Reusability[ForFields[Nothing]] = Reusability.derive
-  implicit def reusabilityForFields[FK <: FieldKey]: Reusability[ForFields[FK]     ] = reusabilityForFields.narrow
-  */
-
-  type ForFields[-FK <: FieldKey] = FK => Permission
-
-  object ForFields {
-    def via[FK <: FieldKey, EFK <: editor.FieldKey, E <: EE.ForFields[EFK]](e: E, map: FK => EFK): ForFields[FK] =
-      f => e(map(f))
-  }
+  implicit val reusabilityForProject               : Reusability[ForProject        ] = Reusability.byRef || Reusability.derive
+  private  val reusabilityForFieldsAny             : Reusability[ForFields[Nothing]] = Reusability.byRef || Reusability.derive
+  implicit def reusabilityForFields[FK <: FieldKey]: Reusability[ForFields[FK]     ] = reusabilityForFieldsAny.narrow
 }

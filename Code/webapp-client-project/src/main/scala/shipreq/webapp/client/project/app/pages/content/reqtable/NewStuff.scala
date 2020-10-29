@@ -113,8 +113,8 @@ final class NewStuff(previewRW     : PreviewFeature.ReadWrite.Composite[CreateFe
         )
     }
 
-  private val cancel: Callback =
-    modState.modState(_.close)
+  private val cancel: Reusable[Callback] =
+    modState.map(_.modState(_.close))
 
   val form: Option[VdomElement] =
     state match {

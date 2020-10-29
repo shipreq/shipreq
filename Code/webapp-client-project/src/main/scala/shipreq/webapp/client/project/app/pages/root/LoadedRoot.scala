@@ -60,13 +60,13 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
   final class Backend($: BackendScope[Props, State]) extends OnUnmount {
     import global.cbProjectMetaData
 
-    private val sspCreateContent       = global.sspCreateContent
+    private val sspCreateContent       = Reusable.byRef(global.sspCreateContent)
     private val sspUpdateConfig        = global.sspUpdateConfig
     private val sspUpdateConfigE       = global.sspUpdateConfig.map(_.events)
     private val sspUpdateContent       = global.sspUpdateContent.map(_.events)
     private val sspProjectNameSet      = global.sspProjectNameSet.map(_.events)
     private val sspUpdateSavedViews    = global.sspUpdateSavedViews.map(_.events)
-    private val sspUpdateManualIssues  = global.sspUpdateManualIssues
+    private val sspUpdateManualIssues  = Reusable.byRef(global.sspUpdateManualIssues)
     private val sspUpdateManualIssuesE = global.sspUpdateManualIssues.map(_.events)
 
     private val feedbackModal: FeedbackModal = {
@@ -182,7 +182,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
     private val createW: CreateFeature.Write.ForProject =
       CreateFeature.Write.ForProject(
-        $ zoomStateL State.create,
+        Reusable.byRef($ zoomStateL State.create),
         newReqAsyncW,
         sspCreateContent,
         sspUpdateManualIssues)

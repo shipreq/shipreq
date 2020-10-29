@@ -27,10 +27,12 @@ object NewForm {
   private type ValueConsumer[A, V] = V => Unit
 
   object ForCodeGroup extends NewForm {
-    override type Input            = Unit
-    override type FK               = FieldKey.ForCodeGroup
-    override val columnToField     = ColumnLogic.creationFieldCG.getOption
-    override val createButtonLabel = Function const NewForm.createButtonLabel(UiText.codeGroup)
+    override type Input                     = Unit
+    override type FK                        = FieldKey.ForCodeGroup
+    override val columnToField              = ColumnLogic.creationFieldCG.getOption
+    override val createButtonLabel          = Function const NewForm.createButtonLabel(UiText.codeGroup)
+    override protected def reusabilityInput = implicitly[Reusability[Input]]
+
     override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
       var _code: Option[FieldKey.Code.Value] = None
       var title: FieldKey.CodeGroupTitle.Value = Text.empty
@@ -43,10 +45,12 @@ object NewForm {
   }
 
   object ForGenericReq extends NewForm {
-    override type Input            = CustomReqType
-    override type FK               = FieldKey.ForGenericReq
-    override val columnToField     = ColumnLogic.creationFieldGR.getOption
-    override val createButtonLabel = NewForm.createButtonLabel(_)
+    override type Input                     = CustomReqType
+    override type FK                        = FieldKey.ForGenericReq
+    override val columnToField              = ColumnLogic.creationFieldGR.getOption
+    override val createButtonLabel          = NewForm.createButtonLabel(_)
+    override protected def reusabilityInput = implicitly[Reusability[Input]]
+
     override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
       var c = CreateContentCmd.CreateGenericReq.empty(i.id)
       val fold = FieldKey.FoldForGenericReq[ValueConsumer](
@@ -63,10 +67,12 @@ object NewForm {
   }
 
   object ForUseCase extends NewForm {
-    override type Input            = Unit
-    override type FK               = FieldKey.ForUseCase
-    override val columnToField     = ColumnLogic.creationFieldUC.getOption
-    override val createButtonLabel = Function const NewForm.createButtonLabel(StaticReqType.UseCase)
+    override type Input                     = Unit
+    override type FK                        = FieldKey.ForUseCase
+    override val columnToField              = ColumnLogic.creationFieldUC.getOption
+    override val createButtonLabel          = Function const NewForm.createButtonLabel(StaticReqType.UseCase)
+    override protected def reusabilityInput = implicitly[Reusability[Input]]
+
     override protected def createCmd(i: Input, o: Output): Option[CreateContentCmd] = {
       var c = CreateContentCmd.CreateUseCase.empty
       val fold = FieldKey.FoldForUseCase[ValueConsumer](
@@ -102,6 +108,8 @@ sealed trait NewForm {
 
   protected def createCmd(i: Input, o: Output): Option[CreateContentCmd]
 
+  protected def reusabilityInput: Reusability[Input]
+
   // ↑ abstract
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // ↓ concrete
@@ -128,7 +136,7 @@ sealed trait NewForm {
                           createFeature : CreateFeature.ReadWrite.ForRow[FK, CreateContentCmd],
                           routerCtl     : RouterCtl[ExternalPubid],
                           toast         : Toast,
-                          close         : Callback) {
+                          close         : Reusable[Callback]) {
 
     lazy val editableCols: NonEmptyVector[(ColumnPlus, Editor)] =
       NonEmptyVector.force( // TODO test with mandatory columns only
@@ -279,8 +287,15 @@ sealed trait NewForm {
     }
   }
 
+  implicit val reusability: Reusability[Props] = {
+    @nowarn("cat=unused")
+    implicit def x = reusabilityInput
+    Reusability.derive
+  }
+
   val Component = ScalaComponent.builder[Props]
     .renderBackend[Backend]
+    .configure(shouldComponentUpdate)
     .build
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

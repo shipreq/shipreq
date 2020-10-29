@@ -14,15 +14,6 @@ import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.lib.DataReusability._
 
-/** Nothing here has `Reusability` because:
-  *
-  * 1. `Editor` doesn't have `Reusability`
-  * 2. `Read.ForEditor` has a `Editor` field which will always fail `Reusability` checks.
-  * 3. Once State is created, it is never cleared or removed. This prevents reuse-on-empty being helpful.
-  * 4. As a consequence, none of the `Read` classes can have `Reusability`
-  * 5. As a consequence, none of the `ReadWrite` classes can have `Reusability`
-  * 6. The `Write` classes are never passed around outside of `ReadWrite`, so `Reusability` is meaningless.
-  */
 object Feature {
 
   type AsyncError = ErrorMsg
@@ -43,6 +34,9 @@ object Feature {
   object Editor {
     type Invalidity = shipreq.webapp.base.validation.Simple.Invalidity
     type Value[+A] = Invalidity \/ A
+
+    implicit val reusability: Reusability[Editor[Nothing, Any]] =
+      Reusability.byRef
   }
 
   /** Id used for [[shipreq.webapp.base.feature.PreviewFeature]] */
@@ -98,6 +92,19 @@ object Feature {
       val init: ForProject =
         ForProject(UnivEq.emptyMap, Vector.empty)
     }
+
+    @nowarn("cat=unused")
+    private implicit def reusabilityMap[K, V]: Reusability[Map[K, V]] =
+      Reusability.byRef
+
+    private val _reusabilityF: Reusability[ForFields[Nothing]] =
+      Reusability.byRef || Reusability.derive
+
+    implicit def reusabilityF[FK <: FieldKey]: Reusability[ForFields[FK]] =
+      _reusabilityF.asInstanceOf[Reusability[ForFields[FK]]]
+
+    implicit val reusabilityP: Reusability[ForProject] =
+      Reusability.byRef || Reusability.derive
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -130,19 +137,28 @@ object Feature {
       def apply(r: RowKey): ForFields[r.FieldKey] =
         ForFields(state(r), editability(r), async)
     }
+
+    private val _reusabilityF: Reusability[ForFields[Nothing]] =
+      Reusability.byRef || Reusability.derive
+
+    implicit def reusabilityF[FK <: FieldKey]: Reusability[ForFields[FK]] =
+      _reusabilityF.asInstanceOf[Reusability[ForFields[FK]]]
+
+    implicit val reusabilityP: Reusability[ForProject] =
+      Reusability.byRef || Reusability.derive
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object Write {
 
-    final case class ForRow[-FK <: FieldKey, -Cmd](rowAccess : StateAccessPure[State.ForFields[FieldKey]],
-                                                   rowEditors: NewEditor.ForFields[FK],
+    final case class ForRow[-FK <: FieldKey, -Cmd](rowAccess : Reusable[StateAccessPure[State.ForFields[FieldKey]]],
+                                                   rowEditors: Reusable[NewEditor.ForFields[FK]],
                                                    async     : AsyncFeature.Write.D0[AsyncError],
-                                                   ssp       : ServerSideProcInvoker[Cmd, ErrorMsg, NewEvents]) {
+                                                   ssp       : Reusable[ServerSideProcInvoker[Cmd, ErrorMsg, NewEvents]]) {
 
       def startEditor(field: FK): Editor[field.Args, field.Value] = {
         val stateAccess: StateAccessPure[State.ForEditor[Nothing, Any]] =
-          rowAccess.zoomStateL(State.ForFields.untyped ^|-> Optics.mapValue(field))
+          rowAccess.value.zoomStateL(State.ForFields.untyped ^|-> Optics.mapValue(field))
 
         val ctx = NewEditor.Ctx[field.Args, field.Value](field.cast2(stateAccess))
         rowEditors(field)(ctx)
@@ -157,13 +173,13 @@ object Feature {
         rowAccess.modState(_ - field)
     }
 
-    final case class ForProject(stateAccess         : StateAccessPure[State.ForProject],
+    final case class ForProject(stateAccess         : Reusable[StateAccessPure[State.ForProject]],
                                 async               : AsyncFeature.Write.D0[AsyncError],
-                                sspCreateContent    : ServerSideProcInvoker[CreateContentCmd, ErrorMsg, NewEvents],
-                                sspCreateManualIssue: ServerSideProcInvoker[ManualIssueCmd, ErrorMsg, NewEvents],
+                                sspCreateContent    : Reusable[ServerSideProcInvoker[CreateContentCmd, ErrorMsg, NewEvents]],
+                                sspCreateManualIssue: Reusable[ServerSideProcInvoker[ManualIssueCmd, ErrorMsg, NewEvents]],
                                ) {
 
-      private type SSP[-A] = ServerSideProcInvoker[A, ErrorMsg, NewEvents]
+      private type SSP[-A] = Reusable[ServerSideProcInvoker[A, ErrorMsg, NewEvents]]
 
       private val foldCmd = RowKey.FoldCmd[SSP](
         codeGroup   = _ => sspCreateContent,
@@ -172,16 +188,32 @@ object Feature {
         manualIssue = _ => sspCreateManualIssue,
       )
 
-      def apply(row: RowKey): ForRow[row.FieldKey, row.Cmd] =
+      def apply(row: RowKey): ForRow[row.FieldKey, row.Cmd] = {
+        val rrow = Reusable.implicitly(row)
+
+        val stateAccess2 =
+          Reusable.ap(stateAccess, rrow)((stateAccess, row) =>
+            stateAccess.zoomStateL(State.ForProject.untyped ^|-> Optics.mapValueEmpty(row, State.ForFields.empty)(_.isEmpty)))
+
         ForRow[row.FieldKey, row.Cmd](
-          stateAccess.zoomStateL(State.ForProject.untyped ^|-> Optics.mapValueEmpty(row, State.ForFields.empty)(_.isEmpty)),
-          NewEditor.forRow(row),
+          stateAccess2,
+          rrow.withValue(NewEditor.forRow(row)),
           async,
           foldCmd(row))
+      }
 
       @inline def toReadWrite(r: Read.ForProject): ReadWrite.ForProject =
         ReadWrite.ForProject(r, this)
     }
+
+    private val _reusabilityR: Reusability[ForRow[Nothing, Nothing]] =
+      Reusability.byRef || Reusability.derive
+
+    implicit def reusabilityR[FK <: FieldKey, Cmd]: Reusability[ForRow[FK, Cmd]] =
+      _reusabilityR.narrow
+
+    implicit val reusabilityP: Reusability[ForProject] =
+      Reusability.byRef || Reusability.derive
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -248,5 +280,14 @@ object Feature {
         }
       }
     }
+
+    private val _reusabilityR: Reusability[ForRow[Nothing, Nothing]] =
+      Reusability.byRef || Reusability.derive
+
+    implicit def reusabilityR[FK <: FieldKey, Cmd]: Reusability[ForRow[FK, Cmd]] =
+      _reusabilityR.narrow
+
+    implicit val reusabilityP: Reusability[ForProject] =
+      Reusability.byRef || Reusability.derive
   }
 }
