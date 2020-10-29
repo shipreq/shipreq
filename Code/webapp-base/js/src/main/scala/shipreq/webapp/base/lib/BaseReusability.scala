@@ -3,6 +3,7 @@ package shipreq.webapp.base.lib
 import japgolly.scalajs.react._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
+
 object BaseReusability extends BaseReusability {
 
   final class ReusabilityObjExt(private val r: Reusability.type) extends AnyVal {

@@ -53,8 +53,10 @@ object Feature {
 
   /** Id used for [[shipreq.webapp.base.feature.PreviewFeature]] */
   final case class PreviewId(row: RowKey, cell: FieldKey)
+
   object PreviewId {
-    implicit def equality: UnivEq[PreviewId] = UnivEq.derive
+    implicit def univEq: UnivEq[PreviewId] = UnivEq.derive
+    implicit val reusability: Reusability[PreviewId] = Reusability.byRefOrUnivEq
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████

@@ -168,7 +168,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       pxFilterCompilerFromFilterDead.map(_(HideDead))
 
     private val previewW: PreviewFeature.Write.Composite[PreviewId] =
-      PreviewFeature.Write.Composite($ zoomStateL State.preview)
+      PreviewFeature.Write.Composite(Reusable.byRef($ zoomStateL State.preview))
 
     private val newReqAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.newReqAsync)

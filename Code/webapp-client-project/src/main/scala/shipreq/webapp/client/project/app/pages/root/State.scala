@@ -21,21 +21,21 @@ import shipreq.webapp.client.project.widgets.{NewReqButton, ReqSearch}
 sealed trait PreviewId
 object PreviewId {
 
-  case class CF(id: CreateFeature.PreviewId) extends PreviewId
-  case class EF(id: EditorFeature.PreviewId) extends PreviewId
+  final case class CF(id: CreateFeature.PreviewId) extends PreviewId
+  final case class EF(id: EditorFeature.PreviewId) extends PreviewId
 
   implicit def equality: UnivEq[PreviewId] = UnivEq.derive
   implicit val reusability: Reusability[PreviewId] = Reusability.byUnivEq
 
-  val ToCreate = Intersection[PreviewId, CreateFeature.PreviewId] {
+  val ToCreate = Reusable.byRef(Intersection[PreviewId, CreateFeature.PreviewId] {
     case CF(e) => Some(e)
     case _: EF => None
-  }(e => Some(CF(e)))
+  }(e => Some(CF(e))))
 
-  val ToEditor = Intersection[PreviewId, EditorFeature.PreviewId] {
+  val ToEditor = Reusable.byRef(Intersection[PreviewId, EditorFeature.PreviewId] {
     case EF(e) => Some(e)
     case _: CF => None
-  }(e => Some(EF(e)))
+  }(e => Some(EF(e))))
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
