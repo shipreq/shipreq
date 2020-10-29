@@ -37,15 +37,15 @@ object NewEditor {
 
     trait EditorImpl[Args, Value] extends Editor[Args, Value] {
       protected type Props
-      protected val props: (Args, AsyncState) => CallbackTo[Props]
+      protected val props: (Args, AsyncState) => Props
       protected def renderImpl: Props => VdomElement
       protected def valueImpl: Props => Editor.Value[Value]
 
-      final override def render(as: AsyncState, args: Args)(): VdomElement =
-        renderImpl(props(args, as).runNow())
+      final override def render(as: AsyncState, args: Args): VdomElement =
+        renderImpl(props(args, as))
 
       final override def value(args: Args) =
-        valueImpl(props(args, None).runNow())
+        valueImpl(props(args, None))
     }
 
     final val ShowInstructions = true
@@ -139,7 +139,6 @@ object NewEditor {
           override def renderImpl = _.render
           override def valueImpl = _.parseResult
           override val props = (args, asyncState) =>
-            CallbackTo {
             RCE.Props(
               edit             = ss,
               initialValue     = None,
@@ -152,7 +151,6 @@ object NewEditor {
               commitVerb       = args.commitVerb,
               extraControls    = args.extraControls,
               showInstructions = ShowInstructions)
-            }
 
           override type State              = String
           override val stateType           = implicitly[ClassTag[String]]
@@ -175,7 +173,6 @@ object NewEditor {
           override def renderImpl = _.render
           override def valueImpl = _.parseResult
           override val props = (args, asyncState) =>
-            CallbackTo {
             RCE.Props(
               edit             = ss,
               initialValue     = None,
@@ -188,7 +185,6 @@ object NewEditor {
               commitVerb       = args.commitVerb,
               extraControls    = args.extraControls,
               showInstructions = ShowInstructions)
-        }
 
           override type State              = String
           override val stateType           = implicitly[ClassTag[String]]
@@ -243,7 +239,6 @@ object NewEditor {
         override def renderImpl = _.render
         override def valueImpl = _.parseResult.map(_.added)
         override val props = (args, asyncState) =>
-          CallbackTo {
           ImplicationEditor.Props(
             edit             = ss,
             lookup           = lookupFn(args.project, args.plainText),
@@ -257,7 +252,6 @@ object NewEditor {
             textSearch       = args.textSearch,
             extraControls    = args.extraControls,
             showInstructions = ShowInstructions)
-          }
 
         override type State              = String
         override val stateType           = implicitly[ClassTag[String]]
@@ -300,7 +294,6 @@ object NewEditor {
         override def renderImpl = _.render
         override def valueImpl = _.parseResultSet
         override val props = (args, asyncState) =>
-          CallbackTo {
           TagEditor.Props(
             preEditValue     = None,
             naTags           = args.project.config.naTags(reqTypeId),
@@ -314,7 +307,6 @@ object NewEditor {
             commitVerb       = args.commitVerb,
             extraControls    = args.extraControls,
             showInstructions = ShowInstructions)
-          }
 
         override type State              = String
         override val stateType           = implicitly[ClassTag[String]]
@@ -345,7 +337,6 @@ object NewEditor {
           override def renderImpl = _.render
           override def valueImpl = _.parseResult
           override val props = (args, asyncState) =>
-            CallbackTo {
             editor.Optional(
               project            = args.project,
               naTags             = args.project.config.naTags(reqTypeId),
@@ -366,7 +357,6 @@ object NewEditor {
               extraControls      = args.extraControls,
               showInstructions   = ShowInstructions,
               optionalFullscreen = None)
-            }
 
           override type State              = String
           override val stateType           = implicitly[ClassTag[String]]
@@ -403,7 +393,6 @@ object NewEditor {
           override def renderImpl = _.render
           override def valueImpl = _.parseResult
           override val props = (args, asyncState) =>
-            CallbackTo {
             editor.NonEmpty(
               project            = args.project,
               naTags             = args.project.config.naTags(reqTypeId),
@@ -424,7 +413,6 @@ object NewEditor {
               extraControls      = args.extraControls,
               showInstructions   = ShowInstructions,
               optionalFullscreen = None)
-            }
 
           override type State              = String
           override val stateType           = implicitly[ClassTag[String]]

@@ -28,12 +28,10 @@ object Feature {
   type AsyncError = ErrorMsg
   type AsyncState = AsyncFeature.Read.D0[AsyncError]
 
-  /** This is not safe for Reusability because implementations call `CallbackTo#runNow()`.
-    *
-    * Editability is not checked here, it's the responsibility of the `Feature` API.
+  /** Editability is not checked here, it's the responsibility of the `Feature` API.
     */
   trait Editor[-Args, +Value] {
-    def render(as: AsyncState, args: Args)(): VdomElement
+    def render(as: AsyncState, args: Args): VdomElement
     def value(args: Args): Editor.Value[Value]
 
     type State
@@ -110,11 +108,9 @@ object Feature {
       */
     final class ForEditor[-A, +V](val editor: Editor[A, V], val async: AsyncState) {
 
-      /** impure */
       def render(args: A): VdomElement =
-        editor.render(async, args)()
+        editor.render(async, args)
 
-      /** impure */
       def value(args: A): Editor.Value[V] =
         editor.value(args)
     }
