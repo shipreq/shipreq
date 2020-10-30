@@ -24,7 +24,7 @@ final class LruCache[K, V](raw: LRUCache, loggerJs: LoggerJs) {
   val reset: Callback =
     Callback(raw.reset())
 
-  def getOrSet(key: K, real: => AsyncCallback[V]): AsyncCallback[V] =
+  def asyncGetOrSet(key: K, real: => AsyncCallback[V]): AsyncCallback[V] =
     get(key).asAsyncCallback.attempt.flatMap { result =>
       if (Debug) loggerJs(_.debug(s"Cache keys: ${raw.keys().toList.map(_.##).sorted.mkString("{", ", ", "}")}. Current key: ${key.##}"))
       result match {
@@ -37,18 +37,18 @@ final class LruCache[K, V](raw: LRUCache, loggerJs: LoggerJs) {
       }
     }
 
-  def getOrSetX[A](key: K, real: => AsyncCallback[A])(f: A => V, g: V => A): AsyncCallback[A] =
-    getOrSet(key, real.map(f)).map(g)
+  def asyncGetOrSetX[A](key: K, real: => AsyncCallback[A])(f: A => V, g: V => A): AsyncCallback[A] =
+    asyncGetOrSet(key, real.map(f)).map(g)
 
-  def getOrSetR[A](key: K, real: => AsyncCallback[A])(implicit ev: V <:< LruCache.Result[Any]): AsyncCallback[A] = {
+  def asyncGetOrSetR[A](key: K, real: => AsyncCallback[A])(implicit ev: V <:< LruCache.Result[Any]): AsyncCallback[A] = {
     val self = this.asInstanceOf[LruCache[K, LruCache.Result[Any]]]
-    self.getOrSetX(key, real)(LruCache.Result(_), _.value.asInstanceOf[A])
+    self.asyncGetOrSetX(key, real)(LruCache.Result(_), _.value.asInstanceOf[A])
   }
 
-  def memoAsync[I](key: I => K, f: (I, K) => AsyncCallback[V]): I => AsyncCallback[V] =
+  def asyncMemo[I](key: I => K, f: (I, K) => AsyncCallback[V]): I => AsyncCallback[V] =
     i => {
       val k = key(i)
-      getOrSet(k, f(i, k))
+      asyncGetOrSet(k, f(i, k))
     }
 }
 

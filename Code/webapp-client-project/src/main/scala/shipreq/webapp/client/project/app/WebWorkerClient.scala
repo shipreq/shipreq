@@ -57,7 +57,7 @@ object WebWorkerClient {
         @inline def useCache(c: Cache) = {
           val bin = BinaryData.unsafeFromArrayBuffer(enc)
           val key = bin.binaryLikeString
-          c.getOrSetR(key, real)
+          c.asyncGetOrSetR(key, real)
         }
 
         cmd match {
