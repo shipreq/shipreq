@@ -6,8 +6,6 @@ import scalaz.~~>
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.UseCaseStepGD
-import shipreq.webapp.base.feature.{AsyncFeature, EditControlsFeature}
-import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text.Text
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.lib.DataReusability._
@@ -19,7 +17,9 @@ import shipreq.webapp.client.project.lib.DataReusability._
 sealed trait FieldKey { self =>
 
   /** Arguments required for every .render call */
-  type Args
+  type Args <: AnyRef
+
+  final type CommitValue = Change
 
   /** Description of changes the user has made in the editor */
   type Change
@@ -69,7 +69,7 @@ object FieldKey {
   }
 
   case object Code extends ForCodeGroup {
-    override type Args = Unit
+    override type Args = EditorArgs.ForReqCodeEditor
     override type Change = ReqCode.Value
     override type RenderFieldKey = RenderFeature.FieldKey.Code.type
     override def forRender = RenderFeature.FieldKey.Code
@@ -78,7 +78,7 @@ object FieldKey {
   }
 
   case object CodeGroupTitle extends ForCodeGroup {
-    override type Args = Unit
+    override type Args = EditorArgs.ForTextEditor
     override type Change = Text.CodeGroupTitle.OptionalText
     override type RenderFieldKey = RenderFeature.FieldKey.CodeGroupTitle.type
     override def forRender = RenderFeature.FieldKey.CodeGroupTitle
@@ -87,18 +87,17 @@ object FieldKey {
   }
 
   case object Codes extends ForAllReqs {
-    override type Args = Unit
+    override type Args = EditorArgs.ForReqCodeEditor
     override type Change = SetDiff.NE[ReqCode.Value]
     override type RenderFieldKey = RenderFeature.FieldKey.Codes.type
     override def forRender = RenderFeature.FieldKey.Codes
     override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.codes(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.codes(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.codes(this)
-    val noArgs = andArgs(())
   }
 
   final case class CustomTextField(field: CustomField.Text.Id) extends ForAllReqs {
-    override type Args = EditControlsFeature.Style
+    override type Args = EditorArgs.ForTextEditor
     override type Change = Text.CustomTextField.OptionalText
     override type RenderFieldKey = RenderFeature.FieldKey.CustomTextField
     override def forRender = RenderFeature.FieldKey.CustomTextField(field)
@@ -108,7 +107,7 @@ object FieldKey {
   }
 
   case object GenericReqTitle extends ForGenericReq {
-    override type Args = Unit
+    override type Args = EditorArgs.ForTextEditor
     override type Change = Text.GenericReqTitle.OptionalText
     override type RenderFieldKey = RenderFeature.FieldKey.Title.type
     override def forRender = RenderFeature.FieldKey.Title
@@ -117,7 +116,7 @@ object FieldKey {
   }
 
   final case class Implications(scope: ImplicationScope) extends ForAllReqs {
-    override type Args = Unit
+    override type Args = EditorArgs.ForImplicationEditor
     override type Change = SetDiff.NE[ReqId]
     override type RenderFieldKey = RenderFeature.FieldKey.Implications
     override def forRender = RenderFeature.FieldKey.Implications(scope)
@@ -132,7 +131,7 @@ object FieldKey {
   }
 
   case object ReqType extends ForGenericReq {
-    override type Args = Unit
+    override type Args = EditorArgs.ForReqTypeEditor
     override type Change = CustomReqType
     override type RenderFieldKey = RenderFeature.FieldKey.ReqType.type
     override def forRender = RenderFeature.FieldKey.ReqType
@@ -141,29 +140,27 @@ object FieldKey {
   }
 
   case object AllTags extends ForAllReqs {
-    override type Args = Unit
+    override type Args = EditorArgs.ForTagEditor
     override type Change = SetDiff.NE[ApplicableTagId]
     override type RenderFieldKey = RenderFeature.FieldKey.AllTags.type
     override def forRender = RenderFeature.FieldKey.AllTags
     override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.allTags(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.allTags(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.allTags(this)
-    val noArgs = andArgs(())
   }
 
   case object OtherTags extends ForAllReqs {
-    override type Args = Unit
+    override type Args = EditorArgs.ForTagEditor
     override type Change = SetDiff.NE[ApplicableTagId]
     override type RenderFieldKey = RenderFeature.FieldKey.OtherTags.type
     override def forRender = RenderFeature.FieldKey.OtherTags
     override def fold[F[_, _]](f: FoldAll[F]): F[Args, Change] = f.otherTags(this)
     override def foldGR[F[_, _]](f: FoldForGenericReq[F]): F[Args, Change] = f.otherTags(this)
     override def foldUC[F[_, _]](f: FoldForUseCase[F]): F[Args, Change] = f.otherTags(this)
-    val noArgs = andArgs(())
   }
 
   final case class CustomFieldTags(field: CustomField.Tag.Id) extends ForAllReqs {
-    override type Args = Unit
+    override type Args = EditorArgs.ForTagEditor
     override type Change = SetDiff.NE[ApplicableTagId]
     override type RenderFieldKey = RenderFeature.FieldKey.CustomFieldTags
     override def forRender = RenderFeature.FieldKey.CustomFieldTags(field)
@@ -173,7 +170,7 @@ object FieldKey {
   }
 
   final case class UseCaseStep(id: UseCaseStepId) extends FieldKey {
-    override type Args = UseCaseStep.Args
+    override type Args = EditorArgs.ForUseCaseStepEditor
     override type Change = UseCaseStepGD.NonEmptyValues
     override type RenderFieldKey = RenderFeature.FieldKey.UseCaseStep
     override def forRender = RenderFeature.FieldKey.UseCaseStep(id)
@@ -181,20 +178,8 @@ object FieldKey {
     def foldUCS[F[_, _]](f: FoldForUseCaseSteps[F]): F[Args, Change] = f.step(this)
   }
 
-  object UseCaseStep {
-    /**
-      * @param shiftRunner   so users can shift the step left/right via keyboard shortcuts.
-      * @param addStepRunner so users can add a new step via keyboard shortcuts.
-      */
-    final case class Args(shiftRunner  : Option[AsyncFeature.Runner.D0[UpdateContentCmd.ForUseCaseStep, Any]],
-                          addStepRunner: Option[AsyncFeature.Runner.D0[UpdateContentCmd.AddUseCaseStep, Any]])
-    object Args {
-      val empty = Args(None, None)
-    }
-  }
-
   case object UseCaseTitle extends ForUseCase {
-    override type Args = Unit
+    override type Args = EditorArgs.ForTextEditor
     override type Change = Text.UseCaseTitle.OptionalText
     override type RenderFieldKey = RenderFeature.FieldKey.Title.type
     override def forRender = RenderFeature.FieldKey.Title
@@ -203,7 +188,7 @@ object FieldKey {
   }
 
   final case class ManualIssue(id: ManualIssueId) extends FieldKey {
-    override type Args = Unit
+    override type Args = EditorArgs.ForTextEditor
     override type Change = Text.ManualIssue.NonEmptyText
     override type RenderFieldKey = RenderFeature.FieldKey.ManualIssue
     override def forRender = RenderFeature.FieldKey.ManualIssue(id)
@@ -236,7 +221,7 @@ object FieldKey {
 //      case Location.Text.UseCaseStep(stepId)      => UseCaseStep(stepId)
 //    }
 
-  def reqTitle(id: ReqId): ForSomeReq { type Args = Unit } =
+  def reqTitle(id: ReqId): ForSomeReq { type Args = EditorArgs.ForTextEditor } =
     id match {
       case _: GenericReqId => GenericReqTitle
       case _: UseCaseId    => UseCaseTitle
@@ -365,54 +350,38 @@ object FieldKey {
   implicit val typeMI : Type[ManualIssue]   = new Type
   implicit val typeUCS: Type[UseCaseStep]   = new Type
 
-  // ===================================================================================================================
-
-  type AllArgsF[A, C] = A
-
-  type AllArgs = FoldAll[AllArgsF]
-
-  private val noArgs = (_: Any) => ()
-
-  def allArgs(customTextField: CustomTextField#Args,
-              useCaseStep    : UseCaseStep.Args): AllArgs =
-    FoldAll[AllArgsF](
-      code            = noArgs,
-      allTags         = noArgs,
-      codes           = noArgs,
-      customFieldTags = noArgs,
-      customTextField = _ => customTextField,
-      implications    = noArgs,
-      manualIssue     = noArgs,
-      otherTags       = noArgs,
-      reqType         = noArgs,
-      titleCG         = noArgs,
-      titleGR         = noArgs,
-      titleUC         = noArgs,
-      useCaseStep     = _ => useCaseStep,
-    )
 
   // ===================================================================================================================
 
   sealed trait AndArgs {
     val key: FieldKey
     val args: key.Args
-
-//    final override def hashCode: Int =
-//      fieldKey.hashCode * 31 + args.hashCode
-//
-//    final override def equals(obj: Any): Boolean =
-//      obj match {
-//        case x: AndArgs => fieldKey == x.fieldKey && args == x.args
-//        case _          => false
-//      }
   }
 
   object AndArgs {
-//    implicit def univEq: UnivEq[AndArgs] = UnivEq.force
-
     implicit val reusability: Reusability[AndArgs] = {
-      val args: Reusability[FieldKey#Args] = Reusability.by_==
-      Reusability.byRef || Reusability((x, y) => (x.key == y.key) && args.test(x.args, y.args))
+      type F[A, V] = Reusability[A]
+      val fold = FoldAll[F](
+        allTags         = f => implicitly[Reusability[f.Args]],
+        code            = f => implicitly[Reusability[f.Args]],
+        codes           = f => implicitly[Reusability[f.Args]],
+        customFieldTags = f => implicitly[Reusability[f.Args]],
+        customTextField = f => implicitly[Reusability[f.Args]],
+        implications    = f => implicitly[Reusability[f.Args]],
+        manualIssue     = f => implicitly[Reusability[f.Args]],
+        otherTags       = f => implicitly[Reusability[f.Args]],
+        reqType         = f => implicitly[Reusability[f.Args]],
+        titleCG         = f => implicitly[Reusability[f.Args]],
+        titleGR         = f => implicitly[Reusability[f.Args]],
+        titleUC         = f => implicitly[Reusability[f.Args]],
+        useCaseStep     = f => implicitly[Reusability[f.Args]],
+      )
+      Reusability { (x, y) =>
+        @inline def sameRef = x eq y
+        @inline def sameKey = x.key == y.key
+        @inline def sameArgs = x.key.fold(fold).test(x.args, y.args.asInstanceOf[x.key.Args])
+        sameRef || (sameKey && sameArgs)
+      }
     }
   }
 }

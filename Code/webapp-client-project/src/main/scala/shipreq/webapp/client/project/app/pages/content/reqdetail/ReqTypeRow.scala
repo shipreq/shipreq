@@ -80,7 +80,8 @@ private[reqdetail] object ReqTypeRow {
     }
 
     private def renderRowData(cell: Shared.DataCell, p: Props): VdomNode = {
-      val editor = p.editor.themedRenderOr(())(p.view.editable(field).getOrElse(EmptyVdom))
+      val args = EditorFeature.EditorArgs.ForReqTypeEditor(p.reqTypes)
+      val editor = p.editor.themedRenderOr(args)(p.view.editable(field).getOrElse(EmptyVdom))
 
       def defaultSelected =
         Some(CreateFeature.RowKey.req(p.reqType.reqTypeId))

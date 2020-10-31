@@ -93,11 +93,8 @@ object ReqTypeSelector {
     choices.find(_.mnemonic.value ==* input)
   }
 
-  def pxCustomReqTypes(p: Px[Project]): Px[Set[RT]] =
-    p.map(_.config.reqTypes.custom.values.toSet)
-
-  def pxChoices(initial: RT, pxCustomReqTypes: Px[Set[RT]]): Px[NonEmptySet[RT]] =
-    pxCustomReqTypes
-      .map(_.filter(_.live is Live))
-      .map(NonEmptySet(initial, _))
+  def choices(initial: RT, reqTypes: ReqTypes): NonEmptySet[RT] = {
+    val rts = reqTypes.custom.valuesIterator.filter(_.live is Live).toSet
+    NonEmptySet(initial, rts)
+  }
 }

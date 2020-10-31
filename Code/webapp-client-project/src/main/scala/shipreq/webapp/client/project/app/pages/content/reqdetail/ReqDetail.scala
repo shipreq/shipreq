@@ -21,6 +21,7 @@ import shipreq.webapp.base.text.ProjectText.SetRenderStyle
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.NoContentMessage
 import shipreq.webapp.base.util.CallbackHelpers._
+import shipreq.webapp.base.util.LastValueMemo
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.app.state.NewEvents
@@ -64,6 +65,7 @@ object ReqDetail {
                                 filterDead : StateSnapshot[FilterDead],
                                 reqProps   : ReqId => ReqProps,
                                 editorUCS  : EditorFeature.ReadWrite.ForUseCaseSteps,
+                                editorArgs : EditorFeature.EditorArgs.ForAny,
                                 state      : StateSnapshot[State],
                                 newReqState: StateSnapshot[NewReqButton.State],
                                 newReqAsync: AsyncFeature.ReadWrite.D0[ErrorMsg])
@@ -274,6 +276,9 @@ object ReqDetail {
         }
       }
 
+    private val customiseEditorArgs: ((EditorFeature.EditorArgs.ForAny, ProjectWidgets.AnyCtx)) => EditorFeature.EditorArgs.ForAny =
+      LastValueMemo(x => x._1.copy(projectWidgets = x._2))
+
     private def renderDetail(props: DynamicProps, data: Data): VdomElement = {
       import data.{project, req, pubidText}
 
@@ -283,20 +288,23 @@ object ReqDetail {
       val reqProps     = props.reqProps(req.id)
       val fieldName    = pxProjectConfig.value().fieldName
       val state        = props.state.value
+      val editorArgs   = customiseEditorArgs((props.editorArgs, pw))
 
       def reqEditor(fk: FieldKey.ForSomeReq): EditorFeature.ReadWrite.For[fk.type] =
         reqProps.editor(fk, data.pxProjectWidgets, data.filterDead)
 
-      def renderPageHeader: VdomElement =
+      def renderPageHeader: VdomElement = {
+        val f = FieldKey.reqTitle(req.id)
         HeaderRow.Props(
           pubidText    = pubidText,
           live         = data.live,
-          titleEditor  = reqEditor(FieldKey.reqTitle(req.id)),
+          titleEditor  = reqEditor(f).withArgs(editorArgs(f)),
           titleView    = Reusable.byRef(view.title),
           filterDead   = StateSnapshot.withReuse(props.filterDead.value)(setFilterDead),
           tableRef     = tableRef,
           titleCellRef = titleCellRef,
         ).render
+      }
 
       def renderRows =
         tableBase(
@@ -346,17 +354,19 @@ object ReqDetail {
                   name       = fieldName(id),
                   headerLive = headerLive,
                   dataLive   = dataLive,
-                  field      = FieldKey.CustomTextField(id).andArgs(bigTextEditorStyle),
+                  field      = editorArgs.withField(FieldKey.CustomTextField(id), style = bigTextEditorStyle),
                 )
 
               case id: CustomField.Tag.Id =>
+                val f = FieldKey.CustomFieldTags(id)
                 CustomTagFieldRow.Props(
                   reqId      = req.id,
                   fieldId    = id,
                   name       = fieldName(id),
                   headerLive = headerLive,
                   dataLive   = dataLive,
-                  editor     = reqEditor(FieldKey.CustomFieldTags(id)),
+                  editor     = reqEditor(f),
+                  editorArgs = editorArgs(f),
                   view       = reusableView,
                   project    = project,
                 ).render
@@ -366,7 +376,7 @@ object ReqDetail {
                   name       = fieldName(id),
                   headerLive = headerLive,
                   dataLive   = dataLive,
-                  field      = FieldKey.Implications(-\/(id)).andArgs(()),
+                  field      = editorArgs.withField(FieldKey.Implications(-\/(id))),
                 )
             }
 
@@ -397,23 +407,24 @@ object ReqDetail {
 
           case Row.Implications =>
             ImplicationsRow.Props(
-              pubidText = pubidText,
-              live      = data.live,
-              editorF   = reqEditor(FieldKey.Implications.byDir(Forwards)),
-              editorB   = reqEditor(FieldKey.Implications.byDir(Backwards)),
-              view      = reusableView,
+              pubidText  = pubidText,
+              live       = data.live,
+              editorF    = reqEditor(FieldKey.Implications.byDir(Forwards)),
+              editorB    = reqEditor(FieldKey.Implications.byDir(Backwards)),
+              editorArgs = editorArgs,
+              view       = reusableView,
             ).render
 
           case Row.OtherTags =>
             genericEditableRow(
               name  = StaticField.OtherTags.name,
-              field = FieldKey.OtherTags.noArgs,
+              field = editorArgs.withField(FieldKey.OtherTags),
             )
 
           case Row.AllTags =>
             genericEditableRow(
               name  = StaticField.AllTags.name,
-              field = FieldKey.AllTags.noArgs,
+              field = editorArgs.withField(FieldKey.AllTags),
             )
 
           case Row.ImplicationGraph =>
@@ -448,7 +459,7 @@ object ReqDetail {
           case Row.Codes =>
             genericEditableRow(
               name  = SpecialBuiltInField.Codes.name,
-              field = FieldKey.Codes.noArgs,
+              field = editorArgs.withField(FieldKey.Codes),
             )
 
           case Row.DeletionReason =>
@@ -468,14 +479,16 @@ object ReqDetail {
         val addCmdRunner = AsyncFeature.Runner.D1(reqProps.async.read, runAddAndEditNewUseCaseStep(req.id))
 
         val renderBody: UseCaseStepTree.RenderBodyFn = args => {
-          import FieldKey.UseCaseStep
           import args.id
 
-          val editor = props.editorUCS(UseCaseStep(id), data.pxProjectWidgets, data.filterDead)
+          val f = FieldKey.UseCaseStep(id)
 
-          def editorArgs = UseCaseStep.Args(
-            Some(cmdRunner(Cell.UseCaseStepCtrls(id))),
-            Some(addCmdRunner(Cell.AddUseCaseStep(id))))
+          val editor = props.editorUCS(f, data.pxProjectWidgets, data.filterDead)
+
+          val editorArgsUCS = editorArgs(f).copy(
+            shiftRunner    = Some(cmdRunner(Cell.UseCaseStepCtrls(id))),
+            addStepRunner  = Some(addCmdRunner(Cell.AddUseCaseStep(id))),
+          )
 
           def addStepAfterSelf: CallbackOption[Unit] =
             for {
@@ -490,11 +503,11 @@ object ReqDetail {
 
           val stepProps =
             EditorNavParent.Props(
-              args.base,
-              editor,
-              editorArgs,
-              pw.useCaseStepTextAndFlow(args.textAndFlow(), args.live),
-              onKeyDown,
+              parent     = args.base,
+              editor     = editor,
+              editorArgs = editorArgsUCS,
+              view       = pw.useCaseStepTextAndFlow(args.textAndFlow(), args.live),
+              onKeyDown  = onKeyDown,
             )
 
           val ref = useCaseStepRef(id)

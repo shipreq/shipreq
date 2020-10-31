@@ -60,7 +60,6 @@ object NewIssue {
     private def editorValue(p: Props): Option[Text.ManualIssue.NonEmptyText] = {
       val emptyArgs =
         CreateFeature.EditorArgs.ForTextEditor.empty(
-          previewRW      = p.previewRW,
           project        = p.project,
           textSearch     = p.textSearch,
           projectWidgets = p.projectWidgets)

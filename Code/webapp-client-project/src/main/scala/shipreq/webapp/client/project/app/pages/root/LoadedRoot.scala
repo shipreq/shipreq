@@ -177,6 +177,9 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     private val previewCreateW =
       previewW.mapId(PreviewId.ToCreate)
 
+    private val previewEditorW =
+      previewW.mapId(PreviewId.ToEditor)
+
     private val newReqAsyncW: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.newReqAsync)
 
@@ -389,6 +392,35 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     private val pxUsage: Px[Usage] =
       pxProject.map(new Usage(_, specialRouterCtl))
 
+    private val pxPreviewState =
+      pxState.map(_.preview).withReuse
+
+    private val pxCreatePreviewRW =
+      pxPreviewState.map { s =>
+        val read = PreviewFeature.Read.Composite(s).mapId(PreviewId.ToCreate)
+        previewCreateW.toReadWrite(read)
+      }.withReuse
+
+    private val pxEditorPreviewRW =
+      pxPreviewState.map { s =>
+        val read = PreviewFeature.Read.Composite(s).mapId(PreviewId.ToEditor)
+        previewEditorW.toReadWrite(read)
+      }.withReuse
+
+    private val pxEditorArgs: Px[EditorFeature.EditorArgs.ForAny] =
+      for {
+        previewRW      <- pxEditorPreviewRW
+        project        <- pxProject
+        projectWidgets <- pxProjectWidgets
+        textSearch     <- pxTextSearch
+      } yield EditorFeature.EditorArgs.ForAny(
+        previewRW      = previewRW,
+        project        = project,
+        plainTextNoCtx = projectWidgets.plainText,
+        projectWidgets = projectWidgets,
+        textSearch     = textSearch,
+    )
+
     lazy val projectNameAF =
       AsyncFeature.Write.D0[ErrorMsg](
         Reusable.fn((s: AsyncFeature.State.D0[ErrorMsg]) =>
@@ -422,8 +454,8 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       def renderFeature    = pxRenderFeatureText.value()(s.filterDead)
       def savedViewFeature = SavedViewFeature(savedViewFeatureStatic, s.savedViews, project, s.filterDead)
       def usage            = pxUsage.value()
-      def createPreviewR   = PreviewFeature.Read.Composite(s.preview).mapId(PreviewId.ToCreate)
-      def createPreviewRW  = previewCreateW.toReadWrite(createPreviewR)
+      def createPreviewRW  = pxCreatePreviewRW.value()
+      def editorArgs       = pxEditorArgs.value()
 
       val body: VdomElement = p.page match {
 
@@ -448,7 +480,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
           val cmdAsync = s.manualIssueCmdAsync.toRead
                            .either(s.updateConfigCmdAsync.toRead)
                            .either(s.updateContentCmdAsync.toRead)
-          val p = content.issues.IssuesPage.Props(state, creator, editRW, createPreviewRW, cmdAsync)
+          val p = content.issues.IssuesPage.Props(state, creator, editRW, editorArgs, createPreviewRW, cmdAsync)
           issuesPage.component(p)
 
         case Page.CfgFields =>
@@ -507,6 +539,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
               create          = createRW,
               createPreviewRW = createPreviewRW,
               editor          = editRW,
+              editorArgs      = editorArgs,
               savedViews      = savedViewFeature,
               rowAsync        = rowAsync,
               filterDead      = s.filterDead,
@@ -518,6 +551,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
             filterDead  = filterDeadSS,
             reqProps    = reqDetailReqPropsFn(s),
             editorUCS   = editRW.forUseCaseSteps,
+            editorArgs  = editorArgs,
             state       = StateSnapshot.withReuse(s.reqDetail)(reqDetailSetState),
             newReqState = StateSnapshot.withReuse(s.newReqButton)(setNewReqButton),
             newReqAsync = AsyncFeature.ReadWrite.D0(newReqAsyncW, s.newReqAsync),

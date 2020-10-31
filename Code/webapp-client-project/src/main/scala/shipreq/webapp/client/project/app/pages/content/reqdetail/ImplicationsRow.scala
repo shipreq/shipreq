@@ -19,11 +19,12 @@ private[reqdetail] object ImplicationsRow {
   import EditorFeature.FieldKey.{Implications => Field}
   import Shared.tableNavigationFeature
 
-  final case class Props(pubidText: String,
-                         live     : Live,
-                         editorF  : EditorFeature.ReadWrite.For[Field],
-                         editorB  : EditorFeature.ReadWrite.For[Field],
-                         view     : Reusable[ViewReq[VdomTag]],
+  final case class Props(pubidText : String,
+                         live      : Live,
+                         editorF   : EditorFeature.ReadWrite.For[Field],
+                         editorB   : EditorFeature.ReadWrite.For[Field],
+                         editorArgs: EditorFeature.EditorArgs.ForAny,
+                         view      : Reusable[ViewReq[VdomTag]],
                         ) {
     @inline def render: VdomElement = Component.withKey(row.key)(this)
   }
@@ -50,7 +51,8 @@ private[reqdetail] object ImplicationsRow {
       }
       def key    = FieldKey.Implications.byDir(dir)
       def view   = p.view.editable(key).getOrElse(EmptyVdom)
-      EditorNavParent.Props(impRowSubBase, editor, view).render
+      val f      = Field.byDir(dir)
+      EditorNavParent.Props(impRowSubBase, editor, p.editorArgs(f), view).render
     }
 
     cell.nonDirectlyEditableNavParent(

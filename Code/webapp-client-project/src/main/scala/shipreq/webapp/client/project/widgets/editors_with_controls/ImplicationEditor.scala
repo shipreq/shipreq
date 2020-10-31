@@ -55,6 +55,9 @@ object ImplicationEditor {
         UnivEq.emptySet,
         p.content.reqs.pubids.uniquePositions)
 
+    def allExcept(except: ReqId)(p: Project, pt: PlainText.ForProject.AnyCtx): Lookup =
+      all(p, pt).dontSuggest(except)
+
     def forCustomColumn(p: Project, l: Lookup, fid: CustomField.Implication.Id): Lookup = {
       val f = p.config.fields.custom(fid)
       l.outlaw(_.reqType.reqTypeId !=* f.reqTypeId, i => Invalidity(i.pubidStr + " is not applicable in this column"))

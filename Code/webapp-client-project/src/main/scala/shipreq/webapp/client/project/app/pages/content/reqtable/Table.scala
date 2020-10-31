@@ -14,7 +14,7 @@ import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
 import shipreq.webapp.base.feature.{AsyncFeature, DragToReorderFeature, EditControlsFeature, TableNavigationFeature}
 import shipreq.webapp.base.lib.DomUtil._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
@@ -35,11 +35,15 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
                      cols      : NonEmptyVector[ColumnPlus],
                      selection : RowSelectionVisible,
                      editor    : EditorFeature.ReadWrite.ForProject,
+                     editorArgs: EditorFeature.EditorArgs.ForAny,
                      rowAsync  : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
-                     config    : ProjectConfig,
-                     pw        : ProjectWidgets.NoCtx,
                      filterDead: FilterDead,
                      modifyView: ModFn[View]) {
+
+      // This is a no-op because it's what's already provided by LoadedRoot
+      val pw = editorArgs.projectWidgets.withCtx(ProjectText.Context.None)
+
+      @inline def config = editorArgs.project.config
       @inline def render = Component(this)
     }
 
@@ -86,6 +90,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
                   p.filterDead,
                   reqViewInputs,
                   p.editor.forReq(row.req.id),
+                  p.editorArgs,
                   p.cols,
                   applicability,
                   rowAsync,
@@ -98,6 +103,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
                   p.filterDead,
                   p.pw,
                   p.editor.forCodeGroup(row.reqCodeId),
+                  p.editorArgs,
                   p.cols,
                   applicability,
                   rowAsync,
@@ -223,6 +229,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
                      filterDead      : FilterDead,
                      viewInput       : ViewInput,
                      editor          : RowEditor,
+                     editorArgs      : EditorFeature.EditorArgs.ForAny,
                      cols            : NonEmptyVector[ColumnPlus],
                      applicability   : ProjectApplicability[Column, Row],
                      rowAsync        : AsyncFeature.Read.D0[ErrorMsg],
@@ -285,7 +292,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
 
         val colCells = mkColumnCells(col =>
           columnToEditorField(col) match {
-            case Some(f) => p.editor(f, rootPxProjectWidgets, p.filterDead).withArgs(editorArgs(f))
+            case Some(f) => p.editor(f, rootPxProjectWidgets, p.filterDead).withArgs(p.editorArgs(f: f.type, style = editorStyle))
             case None    => nopEditorFor(col)
           })
 
@@ -496,10 +503,7 @@ object Table {
   val reusableNA: Reusable[TagMod] =
     Reusable.byRef(`n/a`)
 
-  val editorArgs =
-    FieldKey.allArgs(
-      customTextField = EditControlsFeature.Style.default.copy(openPreview = EditControlsFeature.OpenPreview.MinimallyWithControls),
-      useCaseStep     = FieldKey.UseCaseStep.Args.empty,
-    )
+  val editorStyle =
+    EditControlsFeature.Style.default.copy(openPreview = EditControlsFeature.OpenPreview.MinimallyWithControls)
 }
 

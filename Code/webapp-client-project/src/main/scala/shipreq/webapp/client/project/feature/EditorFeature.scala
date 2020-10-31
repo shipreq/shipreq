@@ -60,6 +60,8 @@ object EditorFeature {
   type Static = editor.NewEditor.Static
   val  Static = editor.NewEditor.Static
 
+  val EditorArgs = editor.EditorArgs
+
   type EditorHooks = editor.NewEditor.Hooks
   val  EditorHooks = editor.NewEditor.Hooks
 

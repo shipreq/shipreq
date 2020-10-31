@@ -19,6 +19,7 @@ private[reqdetail] object CustomTagFieldRow {
                          headerLive: Live,
                          dataLive  : Live,
                          editor    : EditorFeature.ReadWrite.For[Field],
+                         editorArgs: Field#Args,
                          view      : Reusable[ViewReq[VdomTag]],
                          project   : Project,
                         ) {
@@ -64,7 +65,7 @@ private[reqdetail] object CustomTagFieldRow {
           <.div(*.derivativeTagRowBar, bar))
       }
 
-    cell.editorNavParent(p.editor, (), view)
+    cell.editorNavParent(p.editor, p.editorArgs, view)
   }
 
   val Component = ScalaComponent.builder[Props]

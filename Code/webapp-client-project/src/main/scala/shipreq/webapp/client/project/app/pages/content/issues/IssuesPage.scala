@@ -48,11 +48,12 @@ object IssuesPage {
       cmdInvoker)
   }
 
-  final case class Props(state    : StateSnapshot[State],
-                         creator  : CreateFeature.ReadWrite.ForManualIssueR,
-                         editor   : EditorFeature.ReadWrite.ForProject,
-                         previewRW: PreviewFeature.ReadWrite.Composite[PreviewId],
-                         cmdAsync : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
+  final case class Props(state     : StateSnapshot[State],
+                         creator   : CreateFeature.ReadWrite.ForManualIssueR,
+                         editor    : EditorFeature.ReadWrite.ForProject,
+                         editorArgs: EditorFeature.EditorArgs.ForAny,
+                         previewRW : PreviewFeature.ReadWrite.Composite[PreviewId],
+                         cmdAsync  : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
 
   @Lenses
   final case class State(newIssue    : NewIssue.State,
@@ -128,7 +129,7 @@ object IssuesPage {
           <.div(*.pageRow2,
             <.div(*.pageSort),
             <.div(FilterEditor.Props(p.state.value.filterEditor, project, filterUpdateFn).render)),
-          table.component(Table.Props(issues, p.editor, p.cmdAsync)))
+          table.component(Table.Props(issues, p.editor, p.editorArgs, p.cmdAsync)))
       }
 
       val issues = project.issues

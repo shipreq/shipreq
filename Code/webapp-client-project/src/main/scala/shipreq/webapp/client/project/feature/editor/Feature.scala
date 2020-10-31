@@ -18,25 +18,23 @@ object Feature {
   type AsyncError = ErrorMsg
   type AsyncState = AsyncFeature.Read.D0[AsyncError]
 
-  /** This is not safe for reusability because implementation calls `CallbackTo#runNow()`. */
   trait Editor[-Args, +Change] { self =>
 
-    /** impure */
     def render(p: Permission, as: AsyncState, args: Args): Option[VdomNode]
 
-    def change[C >: Change]: CallbackTo[Editor.Change[C]]
+    def change[C >: Change](args: Args): Editor.Change[C]
 
     def clipboardData: Option[ClipboardData]
 
-    def setPotentialValue(p: PotentialValue): Option[Callback]
+    def setPotentialValue(p: PotentialValue): CallbackOption[Unit]
 
     final def withArgs(args: Args): Editor[Unit, Change] =
       new Editor[Unit, Change] {
         override def render(p: Permission, as: AsyncState, u: Unit) =
           self.render(p, as, args)
 
-        override def change[C >: Change] =
-          self.change
+        override def change[C >: Change](u: Unit) =
+          self.change(args)
 
         override def clipboardData =
           self.clipboardData
@@ -118,11 +116,9 @@ object Feature {
       def isOpen: Boolean =
         editor.isDefined
 
-      /** impure */
       def render(args: A): Option[VdomNode] =
         editor.flatMap(_.render(editability, async, args))
 
-      /** impure */
       def renderOr[B](args: A)(b: => B)(implicit ev: VdomNode => B): B =
         render(args).fold(b)(ev)
     }
@@ -352,11 +348,9 @@ object Feature {
       def asyncState    = read.async
       def clipboardData = read.clipboardData
 
-      /** impure */
       @inline def render(args: A): Option[VdomNode] =
         read.render(args)
 
-      /** impure */
       @inline def renderOr[B](args: A)(b: => B)(implicit ev: VdomNode => B): B =
         read.renderOr(args)(b)(ev)
 
@@ -365,8 +359,6 @@ object Feature {
         *    - double-clicking starts the editor
         *    - there is hover text with user instructions
         *    - colour changes on hover
-        *
-        * impure
         */
       def themedRenderOr(args: A)(view: => TagMod): TagMod =
         renderOr(args)(TagMod(EditControlsFeature.editableInline(startEdit), view))
@@ -392,22 +384,36 @@ object Feature {
       def withArgs(args: A): ForEditor[Unit, C] =
         copy(read.withArgs(args))
 
-      val setPotentialValueFnIfAllowed: Option[PotentialValue => Option[Callback]] =
+      val setPotentialValueFnIfAllowed: Option[PotentialValue => CallbackOption[Unit]] =
         SetValueDecision(read) match {
-          case SetValueDecision.OpenAndReplace => Some(withPotentialValue(_).startEdit)
-          case SetValueDecision.Replace        => Some(p => read.editor.flatMap(_.setPotentialValue(p)))
-          case SetValueDecision.Ignore         => None
+
+          case SetValueDecision.OpenAndReplace =>
+            Some(p =>
+              CallbackOption.liftOptionCallback(withPotentialValue(p).startEdit))
+
+          case SetValueDecision.Replace =>
+            Some(p =>
+              for {
+                e <- CallbackOption.liftOption(read.editor)
+                _ <- e.setPotentialValue(p)
+              } yield ()
+            )
+
+          case SetValueDecision.Ignore =>
+            None
         }
 
-      def setPotentialValue(p: PotentialValue): Option[Callback] =
-        setPotentialValueFnIfAllowed.flatMap(_(p))
+      def setPotentialValue(p: PotentialValue): CallbackOption[Unit] =
+        setPotentialValueFnIfAllowed match {
+          case Some(set) => set(p)
+          case None      => CallbackOption.fail
+        }
 
-      def setPotentialValueAsync(getPV: AsyncCallback[PotentialValue]): Option[Callback] =
-        setPotentialValueFnIfAllowed.map(set =>
-          getPV.flatMap(pv =>
-            set(pv).getOrEmpty.asAsyncCallback
-          ).toCallback
-        )
+      def setPotentialValueAsync(getPV: AsyncCallback[PotentialValue]): CallbackOption[Unit] =
+        setPotentialValueFnIfAllowed match {
+          case Some(set) => getPV.flatMap(set(_).asAsyncCallback).toCallback
+          case None      => CallbackOption.fail
+        }
 
       def withClipboardData(d: => ClipboardData): ForEditor[A, C] =
         copy(read = read.withClipboardData(d))

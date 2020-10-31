@@ -2,11 +2,11 @@ package shipreq.webapp.client.project.app.pages.root
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
+import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react.{CallbackTo, Reusability}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.feature.PreviewFeature
 import shipreq.webapp.base.text.{PlainText, TextSearch}
 import shipreq.webapp.client.project.app.pages
 import shipreq.webapp.client.project.feature.EditorFeature
@@ -121,7 +121,7 @@ object UnsavedChanges {
 
     case object CreationFields extends Type {
       import shipreq.webapp.client.project.feature.CreateFeature
-      import CreateFeature.{FieldKey, RowKey}
+      import CreateFeature.{EditorArgs, FieldKey, RowKey}
 
       override def determine(input: Input) =
         CallbackTo {
@@ -132,8 +132,7 @@ object UnsavedChanges {
             for (e <- input.state.create(RowKey.ManualIssue)(FieldKey.ManualIssue)) {
 
               val uselessArgs =
-                CreateFeature.EditorArgs.ForTextEditor.empty(
-                  previewRW      = PreviewFeature.ReadWrite.Composite.empty,
+                EditorArgs.ForTextEditor.empty(
                   project        = input.project,
                   textSearch     = input.textSearch,
                   projectWidgets = input.projectWidgets)
@@ -150,20 +149,36 @@ object UnsavedChanges {
 
     case object Editors extends Type {
       import shipreq.webapp.client.project.feature.EditorFeature
-      import EditorFeature.{Editability, Editor, FieldKey, RowKey}
+      import EditorFeature.{Editability, EditorArgs, Editor, FieldKey, RowKey}
 
       override def determine(input: Input) =
         CallbackTo {
 
-          def eligible(editor: Editor[Nothing, Any], editability: => Permission): Boolean = {
+          // TODO Fix in Scala 3
+          def _uselessArgs(f: FieldKey): f.Args =
+            EditorArgs.empty(f: f.type)(
+              project        = input.project,
+              textSearch     = input.textSearch,
+              projectWidgets = input.projectWidgets)
+
+          val uselessArgsMemo: FieldKey => Any =
+            Memo[FieldKey, Any](_uselessArgs(_))
+
+          def uselessArgs(f: FieldKey): f.Args =
+            uselessArgsMemo(f).asInstanceOf[f.Args]
+
+          def eligible(f: FieldKey)
+                      (editor: Editor[f.Args, Any],
+                       editability: => Permission): Boolean = {
             // Rarely, but sometimes, ids and their data are hard-deleted.
             // When that happens, the editor state isn't deleted (probably it should be) but the point is, calling
             // .change here can result in stuff like:
             //     java.util.NoSuchElementException: key not found: UseCaseStepId(201)
             @inline def changed =
-              editor.change.attempt.runNow() match {
-                case Right(pv) => pv.isChanged
-                case Left(_)   => false
+              try
+                editor.change(uselessArgs(f)).isChanged
+              catch {
+                case _: Throwable => false
               }
 
             // This is wrapped in try for the same reasons as above
@@ -183,9 +198,11 @@ object UnsavedChanges {
 
             var locs = List.empty[Location]
 
-            for ((field, editor) <- state)
-              if (eligible(editor, editability(field)))
+            for ((f, editor) <- state) {
+              val e = editor.asInstanceOf[Editor[f.Args, f.Change]]
+              if (eligible(f)(e, editability(f)))
                 locs ::= loc
+            }
 
             locs
           }
@@ -203,9 +220,10 @@ object UnsavedChanges {
 
                 case RowKey.UseCaseSteps =>
                   fields.iterator.flatMap {
-                    case (field, editor) =>
-                      field match {
-                        case FieldKey.UseCaseStep(stepId) if eligible(editor, editability(field)) =>
+                    case (f, editor) =>
+                      @inline def e = editor.asInstanceOf[Editor[f.Args, f.Change]]
+                      f match {
+                        case FieldKey.UseCaseStep(stepId) if eligible(f)(e, editability(f)) =>
                           input.useCases.stepIndex
                             .get(stepId)
                             .map(k => Location.Req(k.useCaseId))

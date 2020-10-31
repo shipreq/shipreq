@@ -17,7 +17,7 @@ object EditorKeys {
       ClipboardKeys.copy.withFallback(e, editor.clipboardData)
 
     def paste: CallbackOption[Unit] =
-      ClipboardKeys.paste(e)(cd => editor.setPotentialValue(PotentialValue.Clipboard(cd)).getOrEmpty)
+      ClipboardKeys.paste(e)(cd => editor.setPotentialValue(PotentialValue.Clipboard(cd)))
 
     def noModKeys: CallbackOption[Unit] =
       CallbackOption.keyCodeSwitch(e) {
@@ -26,14 +26,14 @@ object EditorKeys {
           focusOrStartEditor(editor, e)
 
         case KeyCode.Backspace | KeyCode.Delete =>
-          editor.setPotentialValue(PotentialValue.Emptiness).getOrEmpty.when_(applicableToOpenAndReplace)
+          editor.setPotentialValue(PotentialValue.Emptiness).when_(applicableToOpenAndReplace)
       }
 
     def openEditorAndReplaceContentWithKey: CallbackOption[Unit] =
       for {
         _ <- CallbackOption.require(applicableToOpenAndReplace)
         _ <- CallbackOption.unless(e.key.matches("^(?:|[a-zA-Z0-9]{2,})$"))
-        _ <- CallbackOption.liftOptionCallback(editor.setPotentialValue(PotentialValue.Text(e.key)))
+        _ <- editor.setPotentialValue(PotentialValue.Text(e.key))
       } yield ()
 
     def handlers: CallbackOption[Unit] =

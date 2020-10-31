@@ -130,7 +130,7 @@ object NewEditor {
     def newPropsMemo[I, P](f: I => P)(implicit r: Reusability[I]): I => P =
       LruMemo.byReusability(f, 4)
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████
     object EditReqCodes {
       import shipreq.webapp.client.project.widgets.editors_with_controls.ReqCodeEditor
 
@@ -240,12 +240,12 @@ object NewEditor {
 
       def customField(fid: CustomField.Implication.Id): InitFn = {
         val dir = CustomField.Implication.dir
-        val lookup: LookupFn =
+        val lookupFn: LookupFn =
           (p, pt) => {
             val all = ImplicationEditor.Lookup.all(p, pt)
             ImplicationEditor.Lookup.forCustomColumn(p, all, fid)
           }
-        start(dir, lookup)
+        start(dir, lookupFn)
       }
 
       private def start(dir: Direction, lookupFn: LookupFn): InitFn = {

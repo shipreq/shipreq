@@ -24,7 +24,6 @@ private[reqdetail] object GenericEditableRow {
   implicit val reusabilityProps: Reusability[Props] = {
     @nowarn("cat=unused")
     implicit def x: Reusability[FieldKey.ForSomeReq#AndArgs] = FieldKey.AndArgs.reusability.narrow
-
     Reusability.derive
   }
 

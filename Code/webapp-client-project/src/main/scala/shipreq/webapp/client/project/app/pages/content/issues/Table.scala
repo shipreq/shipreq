@@ -38,9 +38,10 @@ object Table {
       .build
   }
 
-  final case class Props(issues  : Issues,
-                         editor  : EditorFeature.ReadWrite.ForProject,
-                         cmdAsync: AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
+  final case class Props(issues    : Issues,
+                         editRW    : EditorFeature.ReadWrite.ForProject,
+                         editorArgs: EditorFeature.EditorArgs.ForAny,
+                         cmdAsync  : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
@@ -133,16 +134,18 @@ object Table {
       val body =
         if (rows.isEmpty)
           NoFilterResults.asTableRow(columns.length)
-        else
+        else {
+          val rowEditorInput = Row.EditorInput(p.editRW, p.editorArgs, reusablePxPW)
           rows.indices.toVdomArray { rowIdx =>
 
             val row = rows(rowIdx)
 
-            val editor: Option[Reusable[IfApplicable[EditorNavParent.Props]]] =
-              row.editor(p.editor, reusablePxPW).map(
+            val editor: Option[Reusable[IfApplicable[EditorNavParent.Props]]] = {
+              row.editor(rowEditorInput).map(
                 _.tuple(Reusable.implicitly(rowIdx))
                   .map(_._1.map(p =>
                     p.modEditor(_.onClose(focusAlternateRow(rowIdx))))))
+            }
 
             val rowProps = TableRow.Props(
               row,
@@ -159,6 +162,7 @@ object Table {
 
             TableRow.Component.withKey(row.key)(rowProps)
           }
+        }
 
       semantic.Table.celledCompactUnstackable(
         *.table,

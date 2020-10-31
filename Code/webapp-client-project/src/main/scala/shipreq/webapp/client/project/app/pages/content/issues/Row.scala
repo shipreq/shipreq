@@ -10,7 +10,6 @@ import shipreq.webapp.base.feature.EditControlsFeature
 import shipreq.webapp.base.issue._
 import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.feature.EditorFeature
-import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 import shipreq.webapp.client.project.lib.EditorNavParent
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
@@ -20,7 +19,7 @@ sealed trait Row {
   def fieldOption: Option[IssueField[EditorFeature.FieldKey]]
   val actions: List[Action]
 
-  val editor: (EditorFeature.ReadWrite.ForProject, Reusable[Px[ProjectWidgets.NoCtx]]) => Option[Reusable[IfApplicable[EditorNavParent.Props]]]
+  val editor: Row.EditorInput => Option[Reusable[IfApplicable[EditorNavParent.Props]]]
 
   final def issueCategoryDesc = UI.category(issue.category)
   final val key: Key = issue.hashCode
@@ -28,11 +27,12 @@ sealed trait Row {
 
 object Row {
 
-  val editorArgs =
-    FieldKey.allArgs(
-      customTextField = EditControlsFeature.Style.default.copy(openPreview = EditControlsFeature.OpenPreview.MinimallyWithControls),
-      useCaseStep     = FieldKey.UseCaseStep.Args.empty,
-    )
+  private val customTextFieldStyle =
+    EditControlsFeature.Style.default.copy(openPreview = EditControlsFeature.OpenPreview.MinimallyWithControls)
+
+  final case class EditorInput(editRW: EditorFeature.ReadWrite.ForProject,
+                               args  : EditorFeature.EditorArgs.ForAny,
+                               pw    : Reusable[Px[ProjectWidgets.NoCtx]])
 
   sealed trait ForReq extends Row {
     val req: Req
@@ -45,7 +45,12 @@ object Row {
                                  renderer      : RenderFeature.ForGenericReq,
                                  actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
-    override val editor = (e, pw) => Some(renderEditable(field.key)(renderer, e.forGenericReq(req.id), editorArgs(field.key), pw))
+    override val editor = input => Some {
+      val f      = field.key
+      val editor = input.editRW.forGenericReq(req.id)
+      val args   = input.args(f: f.type, style = customTextFieldStyle)
+      renderEditable(f)(renderer, editor, args, input.pw)
+    }
   }
 
   final case class ForUseCase(issue         : Issue,
@@ -55,7 +60,12 @@ object Row {
                               renderer      : RenderFeature.ForUseCase,
                               actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
-    override val editor = (e, pw) => Some(renderEditable(field.key)(renderer, e.forUseCase(req.id), editorArgs(field.key), pw))
+    override val editor = input => Some {
+      val f      = field.key
+      val editor = input.editRW.forUseCase(req.id)
+      val args   = input.args(f: f.type, style = customTextFieldStyle)
+      renderEditable(f)(renderer, editor, args, input.pw)
+    }
   }
 
   final case class ForUseCaseStep(issue         : Issue,
@@ -66,8 +76,12 @@ object Row {
                                   renderer      : RenderFeature.ForUseCaseSteps,
                                   actions       : List[Action]) extends ForReq {
     override val fieldOption = Some(field)
-    override val editor = (e, pw) => Some(
-      renderEditable(field.key)(renderer, e.forUseCaseSteps, EditorFeature.FieldKey.UseCaseStep.Args.empty, pw))
+    override val editor = input => Some {
+      val f      = field.key
+      val editor = input.editRW.forUseCaseSteps
+      val args   = input.args(f: f.type, style = customTextFieldStyle)
+      renderEditable(f)(renderer, editor, args, input.pw)
+    }
   }
 
   final case class ForRcg(issue         : Issue,
@@ -78,17 +92,13 @@ object Row {
                           renderer      : RenderFeature.ForCodeGroup,
                           actions       : List[Action]) extends Row {
 
-    override val editor = (e, pw) =>
-      fieldOption.map { f =>
-        renderEditable(f.key)(renderer, e.forCodeGroup(rcg.id), editorArgs(f.key), pw)
+    override val editor = input =>
+      fieldOption.map { field =>
+        val f      = field.key
+        val editor = input.editRW.forCodeGroup(rcg.id)
+        val args   = input.args(f: f.type, style = customTextFieldStyle)
+        renderEditable(f)(renderer, editor, args, input.pw)
       }
-  }
-
-  final case class ForConfig(issue         : Issue,
-                             issueClassDesc: String,
-                             actions       : List[Action]) extends Row {
-    override def fieldOption = None
-    override val editor = (_, _) => None
   }
 
   final case class ForManualIssue(issue   : Issue.ManualIssue,
@@ -97,7 +107,19 @@ object Row {
     val field = IssueField.manual(issue.issue)
     override val issueClassDesc = UI.descManualIssue
     override def fieldOption = Some(field)
-    override val editor = (e, pw) => Some(renderEditable(field.key)(renderer, e.forManualIssues, (), pw))
+    override val editor = input => Some {
+      val f      = field.key
+      val editor = input.editRW.forManualIssues
+      val args   = input.args(f: f.type, style = customTextFieldStyle)
+      renderEditable(f)(renderer, editor, args, input.pw)
+    }
+  }
+
+  final case class ForConfig(issue         : Issue,
+                             issueClassDesc: String,
+                             actions       : List[Action]) extends Row {
+    override def fieldOption = None
+    override val editor = _ => None
   }
 
   // ===================================================================================================================

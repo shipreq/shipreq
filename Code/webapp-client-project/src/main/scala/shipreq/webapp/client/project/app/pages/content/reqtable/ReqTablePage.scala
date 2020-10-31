@@ -49,6 +49,7 @@ object ReqTablePage {
   final case class Props(create         : CreateFeature.ReadWrite.ForProject,
                          createPreviewRW: PreviewFeature.ReadWrite.Composite[CreateFeature.PreviewId],
                          editor         : EditorFeature.ReadWrite.ForProject,
+                         editorArgs     : EditorFeature.EditorArgs.ForAny,
                          savedViews     : SavedViewFeature,
                          rowAsync       : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
                          filterDead     : FilterDead,
@@ -241,9 +242,8 @@ object ReqTablePage {
         activeColumnsPlus,
         pxRowSelectionVisible.value(),
         p.editor,
+        p.editorArgs,
         p.rowAsync,
-        project.config,
-        pxProjectWidgets.value(),
         filterDead,
         modifyViewFn,
       ).render

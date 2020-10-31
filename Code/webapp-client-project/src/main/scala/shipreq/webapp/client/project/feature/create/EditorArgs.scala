@@ -197,12 +197,11 @@ object EditorArgs {
         commitVerb     = EditControlsFeature.defaultCommitVerb,
         extraControls  = EditControlsFeature.ExtraControls.empty)
 
-    def empty(previewRW     : PreviewFeature.ReadWrite.Composite[PreviewId],
-              project       : Project,
+    def empty(project       : Project,
               textSearch    : TextSearch,
               projectWidgets: ProjectWidgets.NoCtx): ForTextEditor[Any] =
       basic(
-        previewRW      = previewRW,
+        previewRW      = PreviewFeature.ReadWrite.Composite.empty,
         project        = project,
         textSearch     = textSearch,
         projectWidgets = projectWidgets,

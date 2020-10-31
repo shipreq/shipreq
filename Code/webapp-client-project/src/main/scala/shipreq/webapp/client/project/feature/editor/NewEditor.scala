@@ -8,7 +8,6 @@ import scalaz.~~>
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.event.UseCaseStepGD
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
@@ -19,6 +18,7 @@ import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
 import shipreq.webapp.base.text._
 import shipreq.webapp.base.ui.OptionalFullscreen
 import shipreq.webapp.base.util.CallbackHelpers._
+import shipreq.webapp.base.util.{LastValueMemo, LruMemo}
 import shipreq.webapp.client.project.feature.editor.Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
@@ -113,35 +113,23 @@ object NewEditor {
 
     trait EditorImpl[Args, Change] extends Editor[Args, Change] {
       protected type Props
-      protected val props: (Args, AsyncState) => CallbackTo[Props]
+      protected val props: (Args, AsyncState) => Props
       protected def renderImpl: Props => VdomNode
       protected def changeImpl: Props => Editor.Change[Change]
-
-      /** Currently all the editor types calculate their changes in the props. Some props need additional args for their
-        * creation. Combine the two and we're now in a state where we need an Args to generate a Props to get a Change.
-        *
-        * At the moment, we're able to provide instances of Args for all types such that they don't affect the Changes.
-        *
-        * In future this might not be possible in which case, we'll need to split Props into two so that Changes can be
-        * generated without Args, and this cheaty method should be removed.
-        */
-      protected def changeArgs: Args
 
       final override def render(p: Permission, as: AsyncState, args: Args): Option[VdomNode] =
         // Looks like this could block async but not so. Can't go from edit -> async -> notAllowed.
         // Unsafety is allowed here because EditorInstance is never Reusable
         p match {
-          case Allow => Some(renderImpl(props(args, as).runNow()))
+          case Allow => Some(renderImpl(props(args, as)))
           case Deny  => None
         }
 
-      private[this] lazy val _change = props(changeArgs, None).map(changeImpl)
-
-      final override def change[C >: Change]: CallbackTo[Editor.Change[C]] =
-        _change.widen
+      final override def change[C >: Change](args: Args): Editor.Change[C] =
+        changeImpl(props(args, None))
     }
 
-    def init[FieldArgs, Change, A](pva: PotentialValueAcceptor[A])
+    def init[FieldArgs, Change, A](pvaCB: CallbackTo[PotentialValueAcceptor[A]])
                                   (userInit: Option[A] => Init[FieldArgs, Change]): Init[FieldArgs, Change] = args => {
 
       args.potentialValue match {
@@ -151,8 +139,9 @@ object NewEditor {
 
         case Some(pv) =>
           for {
-            a <- CallbackOption.liftOption(pva.accept(pv)) // halt here if PotentialValueAcceptor rejects value
-            e <- userInit(Some(a))(args)
+            pva <- pvaCB.toCBO
+            a   <- CallbackOption.liftOption(pva.accept(pv)) // halt here if PotentialValueAcceptor rejects value
+            e   <- userInit(Some(a))(args)
           } yield e
       }
     }
@@ -292,77 +281,106 @@ object NewEditor {
       final type EditorImpl = Internal.EditorImpl[Args, Change]
       final type Init       = Internal.Init[Args, Change]
       final type InitFn     = InternalCtx[Args, Change] => Init
+      final type SetStateFn = japgolly.scalajs.react.SetStateFn[CallbackTo, State.ForEditor[Args, Change]]
     }
 
-    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    object EditReqType extends ForChangeType {
+    def newPropsMemo[I, P](f: I => P)(implicit r: Reusability[I]): I => P =
+      LruMemo.byReusability(f, 4)
+
+    def setPotentialValueStd[A](pvaCBO: CallbackOption[PotentialValueAcceptor[A]])
+                               (p: PotentialValue,
+                                ss: StateSnapshot[A]): CallbackOption[Unit] =
+      for {
+        pva <- pvaCBO
+        v   <- CallbackOption.liftOption(pva.accept(p))
+        _   <- ss.setState(v).toCBO
+      } yield ()
+
+    // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+    object EditReqType extends ForChangeType { base =>
       import shipreq.webapp.client.project.widgets.editors_with_controls.ReqTypeSelector
       import ReqTypeSelector.RT
 
-      override type Args   = Unit
+      override type Args   = EditorArgs.ForReqTypeEditor
       override type Change = CustomReqType
-
-      val pxCustomReqTypes = ReqTypeSelector.pxCustomReqTypes(pxProject)
+      type Props           = ReqTypeSelector.Props
+      type PropsInputs     = (StateSnapshot[RT], Args, AsyncState)
+      type InitialValue    = RT
 
       def apply(id: GenericReqId): InitFn = ictx => args => {
         import ictx._, ctx._
 
-        case class State(initialValue: Some[RT],
-                         editValue   : RT,
-                         pxChoices   : Px[NonEmptySet[RT]],
-                         abort       : Some[Callback],
-                         commitFn    : Some[RT => Callback]) extends EditorImpl {
-
-          @elidable(elidable.FINER)
-          override def toString = s"EditReqType(${ss.value})"
-
-          def ss = StateSnapshot(editValue)(stateAccess.toSetStateFn.contramap(e => copy(editValue = e).some))
-
-          override type Props = ReqTypeSelector.Props
-          override def renderImpl = _.render
-          override def changeArgs = ()
-          override def changeImpl = _.change
-          override val props = (_, asyncState) =>
-            for {
-              choices <- pxChoices.toCallback
-            } yield ReqTypeSelector.Props(
-              initialValue = initialValue,
-              edit         = ss,
-              choices      = choices,
-              asyncStatus  = EditorStatus.async(asyncState),
-              abort        = abort,
-              commitFn     = commitFn)
-
-          override def clipboardData: Option[ClipboardData] =
-            Some(ClipboardData(PlainText.reqTypeFull(ss.value)))
-
-          override def setPotentialValue(p: PotentialValue): Option[Callback] =
-            Some {
-              for {
-                choices <- pxChoices.toCallback
-                pva      = ReqTypeSelector.potentialValueAcceptor(choices.whole)
-                _       <- pva.accept(p).map(ss.setState).getOrEmpty
-              } yield ()
-            }
-        }
-
         val (abort, commitFn) =
           makeAbortCommitFn(sspUpdateContent)((t: RT) => UpdateContentCmd.SetGenericReqType(id, t.id), args.hooks, None)
 
+        def getInitialValue(current: RT): CallbackOption[InitialValue] =
+          args.potentialValue match {
+            case None =>
+              CallbackOption.pure(current)
+
+            case Some(pv) =>
+              for {
+                p      <- pxProject.toCallback.toCBO
+                choices = ReqTypeSelector.choices(current, p.config.reqTypes)
+                pva     = ReqTypeSelector.potentialValueAcceptor(choices.whole)
+                i      <- CallbackOption.liftOption(pva.accept(pv))
+              } yield i
+          }
+
+        val initialValueCBO: CallbackOption[RT] =
+          for {
+            req     <- getGenericReq(id)
+            current <- getCustomReqTypeCB(req.reqTypeId)
+            initial <- getInitialValue(current)
+          } yield initial
+
         for {
-          req      <- getGenericReq(id)
-          current  <- getCustomReqTypeCB(req.reqTypeId)
-          pxChoices = ReqTypeSelector.pxChoices(current, pxCustomReqTypes)
-          initial  <- args.potentialValue match {
-                        case None     => CallbackOption.pure(current)
-                        case Some(pv) =>
-                          for {
-                            choices <- pxChoices.toCallback.toCBO
-                            pva      = ReqTypeSelector.potentialValueAcceptor(choices.whole)
-                            i       <- CallbackOption.liftOption(pva.accept(pv))
-                          } yield i
-                      }
-        } yield State(Some(current), initial, pxChoices, abort, commitFn)
+          initialValue <- initialValueCBO
+        } yield {
+
+          val someInitialValue = Some(initialValue)
+
+          val propsMemo =
+            newPropsMemo[PropsInputs, Props] { in =>
+              val (ss, args, asyncState) = in
+              ReqTypeSelector.Props(
+                initialValue = someInitialValue,
+                edit         = ss,
+                choices      = ReqTypeSelector.choices(initialValue, args.reqTypes),
+                asyncStatus  = EditorStatus.async(asyncState),
+                abort        = abort,
+                commitFn     = commitFn)
+            }
+
+          val pxChoices: Px[NonEmptySet[RT]] =
+            pxProject.map(p => ReqTypeSelector.choices(initialValue, p.config.reqTypes))
+
+          State(initialValue, stateAccess.toSetStateFn, propsMemo, pxChoices)
+        }
+      }
+
+      private case class State(editValue : RT,
+                               setStateFn: SetStateFn,
+                               propsMemo : PropsInputs => Props,
+                               pxChoices : Px[NonEmptySet[RT]]) extends EditorImpl {
+
+        @elidable(elidable.FINER)
+        override def toString = s"EditReqType(${ss.value})"
+
+        val ss = StateSnapshot(editValue)(setStateFn.contramap(e => copy(editValue = e).some))
+
+        override type Props     = base.Props
+        override def renderImpl = _.render
+        override def changeImpl = _.change
+        override val props      = (args, asyncState) => propsMemo((ss, args, asyncState))
+
+        override def clipboardData: Option[ClipboardData] =
+          Some(ClipboardData(PlainText.reqTypeFull(ss.value)))
+
+        override def setPotentialValue(p: PotentialValue): CallbackOption[Unit] = {
+          val pvaCBO = pxChoices.toCallback.toCBO.map(choices => ReqTypeSelector.potentialValueAcceptor(choices.whole))
+          setPotentialValueStd(pvaCBO)(p, ss)
+        }
       }
     }
 
@@ -370,245 +388,284 @@ object NewEditor {
     object EditReqCodes {
       import shipreq.webapp.client.project.widgets.editors_with_controls.ReqCodeEditor
 
-      val trieCB: CallbackTo[ReqCode.Trie] =
-        pxProject.toCallback.map(_.content.reqCodes.trie)
-
-      object Multiple extends ForChangeType {
+      object Multiple extends ForChangeType { base =>
         import ReqCodeEditor.{Multiple => RCE}
-        import RCE.potentialValueAcceptor
 
-        override type Args   = Unit
+        private val potentialValueAcceptor = CallbackTo(RCE.potentialValueAcceptor)
+
+        override type Args   = EditorArgs.ForReqCodeEditor
         override type Change = RCE.Output
+        type Props           = RCE.Props
+        type PropsInputs     = (StateSnapshot[String], Args, AsyncState)
+        type InitialValues   = Set[ReqCode.Value]
 
         def apply(id: ReqId): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
           import ictx._
 
-          val initialValuesCB: CallbackTo[Set[ReqCode.Value]] =
+          val initialValuesCB: CallbackTo[InitialValues] =
             pxProject.toCallback.map(_.content.reqCodes.activeReqCodesByReqId(id))
 
           val (abort, commitFn) =
             makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqCodes(id, _), args.hooks, None)
 
-        startWithStateSnapshot(
-          initialData       = initialValuesCB.toCBO,
-          initalValueOption = ivo)(
-          initialValueFn    = ReqCodeEditor.Multiple.seqFmt merge _.toVector.map(PlainText.reqCode).sorted)(
-          editor            = initialValues => new State(_, Some(initialValues), abort, commitFn))
+          val initEditor: InitialValues => StateSnapshot[String] => EditorImpl =
+            initialValue => {
+
+              val someInitialValue = Some(initialValue)
+
+              val propsMemo =
+                newPropsMemo[PropsInputs, Props] { in =>
+                  val (ss, args, asyncState) = in
+                  RCE.Props(
+                    edit             = ss,
+                    initialValue     = someInitialValue,
+                    trie             = args.trie,
+                    asyncStatus      = EditorStatus.async(asyncState),
+                    abort            = abort,
+                    abortVerb        = abortVerb,
+                    autoFocus        = args.autoFocus,
+                    commitFn         = commitFn,
+                    commitVerb       = commitVerb,
+                    extraControls    = EditControlsFeature.ExtraControls.empty,
+                    showInstructions = true)
+                }
+
+              new State(_, propsMemo)
+            }
+
+          startWithStateSnapshot(
+            initialData       = initialValuesCB.toCBO,
+            initalValueOption = ivo)(
+            initialValueFn    = ReqCodeEditor.Multiple.seqFmt merge _.toVector.map(PlainText.reqCode).sorted)(
+            editor            = initEditor)
         }
 
-        private class State(ss      : StateSnapshot[String],
-                            initial : Some[Set[ReqCode.Value]],
-                            abort   : Some[Callback],
-                            commitFn: Some[RCE.CommitFn]) extends EditorImpl {
+        private final class State(ss       : StateSnapshot[String],
+                                  propsMemo: PropsInputs => Props) extends EditorImpl {
 
-          override type Props = RCE.Props
+          override type Props     = base.Props
           override def renderImpl = _.render
-          override def changeArgs = ()
           override def changeImpl = _.validated
-          override val props = (_, asyncState) =>
-            for {
-              trie <- trieCB
-            } yield RCE.Props(
-              edit             = ss,
-              initialValue     = initial,
-              trie             = trie,
-              asyncStatus      = EditorStatus.async(asyncState),
-              abort            = abort,
-              abortVerb        = abortVerb,
-              autoFocus        = true,
-              commitFn         = commitFn,
-              commitVerb       = commitVerb,
-              extraControls    = EditControlsFeature.ExtraControls.empty,
-              showInstructions = true)
+          override val props      = (args, asyncState) => propsMemo((ss, args, asyncState))
 
           override def clipboardData: Option[ClipboardData] =
             Some(ClipboardData(ss.value))
 
-          override def setPotentialValue(p: PotentialValue): Option[Callback] =
-            potentialValueAcceptor.accept(p).map(ss.setState)
+          override def setPotentialValue(p: PotentialValue): CallbackOption[Unit] =
+            setPotentialValueStd(potentialValueAcceptor.toCBO)(p, ss)
         }
       }
 
-      object Single extends ForChangeType {
+      object Single extends ForChangeType { base =>
         import ReqCodeEditor.{Single => RCE}
-        import RCE.potentialValueAcceptor
 
-        override type Args   = Unit
+        private val potentialValueAcceptor = CallbackTo(RCE.potentialValueAcceptor)
+
+        override type Args   = EditorArgs.ForReqCodeEditor
         override type Change = RCE.Output
+        type Props           = RCE.Props
+        type PropsInputs     = (StateSnapshot[String], Args, AsyncState)
+        type InitialValues   = ReqCode.Value
 
         def apply(id: ReqCodeGroupId): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
           import ictx._
 
-          val initialValueCB: CallbackOption[ReqCode.Value] =
+          val initialValueCB: CallbackOption[InitialValues] =
             pxProject.toCallback.map(_.content.reqCodes.reqCode(id)).toCBO
 
           val (abort, commitFn) =
             makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.SetCodeGroupCode(id, _), args.hooks, None)
 
-        startWithStateSnapshot(
-          initialData       = initialValueCB,
-          initalValueOption = ivo)(
-          initialValueFn    = PlainText.reqCode)(
-          editor            = i => new State(_, Some(i), abort, commitFn))
+          val initEditor: InitialValues => StateSnapshot[String] => EditorImpl =
+            initialValue => {
+
+              val someInitialValue = Some(initialValue)
+
+              val propsMemo =
+                newPropsMemo[PropsInputs, Props] { in =>
+                  val (ss, args, asyncState) = in
+                  RCE.Props(
+                    edit             = ss,
+                    initialValue     = someInitialValue,
+                    trie             = args.trie,
+                    asyncStatus      = EditorStatus.async(asyncState),
+                    abort            = abort,
+                    abortVerb        = abortVerb,
+                    autoFocus        = args.autoFocus,
+                    commitFn         = commitFn,
+                    commitVerb       = commitVerb,
+                    extraControls    = EditControlsFeature.ExtraControls.empty,
+                    showInstructions = true)
+                }
+
+              new State(_, propsMemo)
+            }
+
+          startWithStateSnapshot(
+            initialData       = initialValueCB,
+            initalValueOption = ivo)(
+            initialValueFn    = PlainText.reqCode)(
+            editor            = initEditor)
         }
 
-        private class State(ss      : StateSnapshot[String],
-                            initial : Some[ReqCode.Value],
-                            abort   : Some[Callback],
-                            commitFn: Some[RCE.CommitFn]) extends EditorImpl {
+        private final class State(ss      : StateSnapshot[String],
+                                  propsMemo: PropsInputs => Props) extends EditorImpl {
 
           @elidable(elidable.FINER)
           override def toString = s"EditReqCodes(${ss.value})"
 
-          override type Props = RCE.Props
+          override type Props     = base.Props
           override def renderImpl = _.render
-          override def changeArgs = ()
           override def changeImpl = _.validated
-          override val props = (_, asyncState) =>
-            for {
-              trie <- trieCB
-            } yield RCE.Props(
-              edit             = ss,
-              initialValue     = initial,
-              trie             = trie,
-              asyncStatus      = EditorStatus.async(asyncState),
-              abort            = abort,
-              abortVerb        = abortVerb,
-              autoFocus        = true,
-              commitFn         = commitFn,
-              commitVerb       = commitVerb,
-              extraControls    = EditControlsFeature.ExtraControls.empty,
-              showInstructions = true)
+          override val props      = (args, asyncState) => propsMemo((ss, args, asyncState))
 
           override def clipboardData: Option[ClipboardData] =
             Some(ClipboardData(ss.value))
 
-          override def setPotentialValue(p: PotentialValue): Option[Callback] =
-            potentialValueAcceptor.accept(p).map(ss.setState)
+          override def setPotentialValue(p: PotentialValue): CallbackOption[Unit] =
+            setPotentialValueStd(potentialValueAcceptor.toCBO)(p, ss)
         }
       }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    object EditImplications extends ForChangeType {
+    object EditImplications extends ForChangeType { base =>
       import shipreq.webapp.client.project.widgets.editors_with_controls.ImplicationEditor
-      import ImplicationEditor.{CommitFn, Lookup, ValidationFn}
+      import ImplicationEditor.{Lookup, ValidationFn}
 
-      private val _pxLookupAll = Px.apply2(pxProject, pxPlainTextNoCtx)(ImplicationEditor.Lookup.all)
-
-      private def pxLookupAllExceptSelf(reqId: ReqId) =
-        _pxLookupAll.map(_.dontSuggest(reqId))
-
-      override type Args   = Unit
+      override type Args   = EditorArgs.ForImplicationEditor
       override type Change = ImplicationEditor.Output
+      type Props           = ImplicationEditor.Props
+      type PropsInputs     = (StateSnapshot[String], Args, AsyncState)
+      type LookupFn        = (Project, PlainText.ForProject.AnyCtx) => Lookup
+      type InitialValues   = (Set[ReqId], String)
 
       def apply(id: ReqId, scope: ImplicationScope): InitFn =
         scope.fold(customField(id, _), all(id, _))
 
       def all(id: ReqId, dir: Direction): InitFn =
-        start(id, dir, pxLookupAllExceptSelf(id))
+        start(id, dir, ImplicationEditor.Lookup.allExcept(id))
 
       def customField(id: ReqId, fid: CustomField.Implication.Id): InitFn = {
         val dir = CustomField.Implication.dir
-        val lookup = Px.apply2(pxProject, pxLookupAllExceptSelf(id))(ImplicationEditor.Lookup.forCustomColumn(_, _, fid))
-        start(id, dir, lookup)
+        val lookupFn: LookupFn =
+          (p, pt) => {
+            val all = ImplicationEditor.Lookup.allExcept(id)(p, pt)
+            ImplicationEditor.Lookup.forCustomColumn(p, all, fid)
+          }
+        start(id, dir, lookupFn)
       }
 
-      private def start(id: ReqId, dir: Direction, pxLookup: Px[Lookup]): InitFn = ictx => {
+      private def start(id: ReqId, dir: Direction, lookupFn: LookupFn): InitFn = ictx => {
         import ictx._
 
-        val pxPubids = pxProject.map(p => ImplicationEditor.initialValue(p, dir, id))
+        val lookupFnMemo: LookupFn =
+          LastValueMemo(lookupFn.tupled).toFn2
 
-        val pxInit: Px[(Set[ReqId], String)] =
+        val valFnMemo: ((Project, InitialValues)) => ValidationFn =
+          LastValueMemo(x => ValidationFn(x._1, Some(id), x._2._1, dir))
+
+        val pxInitialValues =
+          pxProject.map(p => ImplicationEditor.initialValue(p, dir, id))
+
+        val pxLookup: Px[Lookup] =
           for {
-            project <- pxProject
-            lookup  <- pxLookup
-            pubids  <- pxPubids
-          } yield ImplicationEditor.initialValueAndText((id, pubids).some, project, lookup)
+            project       <- pxProject
+            plainText     <- pxPlainTextNoCtx
+          } yield lookupFnMemo(project, plainText)
+
+        val pxInit: Px[InitialValues] =
+          for {
+            project       <- pxProject
+            lookup        <- pxLookup
+            initialValues <- pxInitialValues
+          } yield ImplicationEditor.initialValueAndText((id, initialValues).some, project, lookup)
 
         val pxValFn: Px[ValidationFn] =
           for {
             project <- pxProject
             init    <- pxInit
-          } yield ImplicationEditor.ValidationFn(project, id.some, init._1, dir)
+          } yield valFnMemo((project, init))
 
         val pxCorrector: Px[String => String] =
           for {
-            lookup <- pxLookup
             valFn  <- pxValFn
+            lookup <- pxLookup
           } yield valFn(lookup).corrector.live
 
-        val potentialValueAcceptor = PotentialValueAcceptor.correct(pxCorrector.value())
+        val pvaCB: CallbackTo[PotentialValueAcceptor[String]] =
+          pxCorrector.toCallback.map(PotentialValueAcceptor.correct)
 
-        Internal.init(potentialValueAcceptor) { ivo => args =>
+        Internal.init(pvaCB) { ivo => args =>
 
           val (abort, commitFn) =
             makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchImplications(id, dir, _), args.hooks, None)
 
-        startWithStateSnapshot(
-          initialData       = pxInit.toCallback.toCBO,
-          initalValueOption = ivo)(
-          initialValueFn    = _._2)(
-          editor            = _ => new State(_, pxLookup, pxValFn, pxCorrector, abort, commitFn))
+          val initEditor: InitialValues => StateSnapshot[String] => EditorImpl =
+            initialValues => {
+
+              val propsMemo =
+                newPropsMemo[PropsInputs, Props] { in =>
+                  val (ss, args, asyncState) = in
+                  ImplicationEditor.Props(
+                    edit             = ss,
+                    lookup           = lookupFnMemo(args.project, args.plainText),
+                    validationFn     = valFnMemo((args.project, initialValues)),
+                    asyncStatus      = EditorStatus.async(asyncState),
+                    abort            = abort,
+                    abortVerb        = abortVerb,
+                    autoFocus        = args.autoFocus,
+                    commitFn         = commitFn,
+                    commitVerb       = commitVerb,
+                    textSearch       = args.textSearch,
+                    extraControls    = EditControlsFeature.ExtraControls.empty,
+                    showInstructions = true)
+                }
+
+              new State(_, propsMemo, pvaCB.toCBO)
+            }
+
+          startWithStateSnapshot(
+            initialData       = pxInit.toCallback.toCBO,
+            initalValueOption = ivo)(
+            initialValueFn    = _._2)(
+            editor            = initEditor)
         }
       }
 
       private class State(ss         : StateSnapshot[String],
-                          pxLookup   : Px[Lookup],
-                          pxValFn    : Px[ValidationFn],
-                          pxCorrector: Px[String => String],
-                          abort      : Some[Callback],
-                          commitFn   : Some[CommitFn]) extends EditorImpl {
+                          propsMemo  : PropsInputs => Props,
+                          pvaCBO     : CallbackOption[PotentialValueAcceptor[String]]) extends EditorImpl {
 
         @elidable(elidable.FINER)
         override def toString = s"EditImplications(${ss.value})"
 
-        private val pxPotentialValueAcceptor =
-          pxCorrector.map(PotentialValueAcceptor.correct)
-
-        override type Props = ImplicationEditor.Props
+        override type Props     = base.Props
         override def renderImpl = _.render
-        override def changeArgs = ()
         override def changeImpl = _.validated
-        override val props = (_, asyncState) =>
-          for {
-            lookup     <- pxLookup.toCallback
-            valFn      <- pxValFn.toCallback
-            textSearch <- pxTextSearch.toCallback
-          } yield ImplicationEditor.Props(
-            edit             = ss,
-            lookup           = lookup,
-            validationFn     = valFn,
-            asyncStatus      = EditorStatus.async(asyncState),
-            abort            = abort,
-            abortVerb        = abortVerb,
-            autoFocus        = true,
-            commitFn         = commitFn,
-            commitVerb       = commitVerb,
-            textSearch       = textSearch,
-            extraControls    = EditControlsFeature.ExtraControls.empty,
-            showInstructions = true)
+        override val props      = (args, asyncState) => propsMemo((ss, args, asyncState))
 
         override def clipboardData: Option[ClipboardData] =
           Some(ClipboardData(ss.value))
 
-        override def setPotentialValue(p: PotentialValue): Option[Callback] =
-          Some {
-            for {
-              pva <- pxPotentialValueAcceptor.toCallback
-              _   <- pva.accept(p).fold(Callback.empty)(ss.setState)
-            } yield ()
-          }
+        override def setPotentialValue(p: PotentialValue): CallbackOption[Unit] =
+          setPotentialValueStd(pvaCBO)(p, ss)
       }
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    object EditTags extends ForChangeType {
+    object EditTags extends ForChangeType { base =>
       import shipreq.webapp.client.project.widgets.editors_with_controls.TagEditor
-      import TagEditor.{CommitFn, Lookup, potentialValueAcceptor}
+      import TagEditor.Lookup
 
-      override type Args   = Unit
+      override type Args   = EditorArgs.ForTagEditor
       override type Change = TagEditor.Output
+      type Props           = TagEditor.Props
+      type PropsInputs     = (StateSnapshot[String], Args, AsyncState)
+      type LookupFn        = Project => Lookup
+      type InitialValues   = (Set[ApplicableTagId], String)
+
+      private val potentialValueAcceptor = CallbackTo.pure(TagEditor.potentialValueAcceptor)
 
       def allTags(id: ReqId): InitFn =
         apply(id, Lookup.all)
@@ -619,72 +676,76 @@ object NewEditor {
       def customField(id: ReqId, fid: CustomField.Tag.Id): InitFn =
         apply(id, Lookup.forTagField(fid))
 
-      def apply(id: ReqId, lookupFn: Project => Lookup): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
+      def apply(id: ReqId, lookupFn: LookupFn): InitFn = ictx => {
         import ictx._
 
-        val pxLookup = pxProject map lookupFn
-        val pxNaTags = pxProject.map(_.naTagsForReq(id))
+        val lookupFnMemo: Project => Lookup =
+          LastValueMemo(lookupFn)
 
-        val pxInit: Px[(Set[ApplicableTagId], String)] =
+        val initialValueCB: CallbackTo[InitialValues] =
           for {
-            project <- pxProject
-            lookup <- pxLookup
-            naTags <- pxNaTags
-          } yield TagEditor.initialValues(project.content.reqTags(id), project.config, lookup, naTags)
+            p <- pxProject.toCallback
+          } yield {
+            val lookup = lookupFnMemo(p)
+            val naTags = p.naTagsForReq(id)
+            TagEditor.initialValues(p.content.reqTags(id), p.config, lookup, naTags)
+          }
 
-        val (abort, commitFn) =
-          makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqTags(id, _), args.hooks, None)
+        Internal.init(potentialValueAcceptor) { ivo =>args =>
 
-        startWithStateSnapshot(
-          initialData       = pxInit.toCallback.toCBO,
-          initalValueOption = ivo)(
-          initialValueFn    = _._2)(
-          editor            = i => ss => new State(
-            ss            = ss,
-            initialValues = Some(i._1),
-            pxLookup      = pxLookup,
-            pxNaTags      = pxNaTags,
-            abort         = abort,
-            commitFn      = commitFn))
+          val (abort, commitFn) =
+            makeAbortCommitFn(sspUpdateContent)(UpdateContentCmd.PatchReqTags(id, _), args.hooks, None)
+
+          val initEditor: InitialValues => StateSnapshot[String] => EditorImpl =
+            initialValues => {
+
+              val initialValue = Some(initialValues._1)
+
+              val propsMemo =
+                newPropsMemo[PropsInputs, Props] { in =>
+                  val (ss, args, asyncState) = in
+                  TagEditor.Props(
+                    preEditValue     = initialValue,
+                    naTags           = args.project.naTagsForReq(id),
+                    edit             = ss,
+                    lookup           = lookupFnMemo(args.project),
+                    asyncStatus      = EditorStatus.async(asyncState),
+                    abort            = abort,
+                    abortVerb        = abortVerb,
+                    autoFocus        = args.autoFocus,
+                    commitFn         = commitFn,
+                    commitVerb       = commitVerb,
+                    extraControls    = EditControlsFeature.ExtraControls.empty,
+                    showInstructions = true)
+                }
+
+              new State(_, propsMemo)
+            }
+
+          startWithStateSnapshot(
+            initialData       = initialValueCB.toCBO,
+            initalValueOption = ivo)(
+            initialValueFn    = _._2)(
+            editor            = initEditor)
+        }
       }
 
-      private class State(ss           : StateSnapshot[String],
-                          initialValues: Some[Set[ApplicableTagId]],
-                          pxLookup     : Px[Lookup],
-                          pxNaTags     : Px[NaTags],
-                          abort        : Some[Callback],
-                          commitFn     : Some[CommitFn]) extends EditorImpl {
+      private class State(ss       : StateSnapshot[String],
+                          propsMemo: PropsInputs => Props) extends EditorImpl {
 
         @elidable(elidable.FINER)
         override def toString = s"EditTags(${ss.value})"
 
-        override type Props = TagEditor.Props
+        override type Props     = base.Props
         override def renderImpl = _.render
-        override def changeArgs = ()
         override def changeImpl = _.validated
-        override val props = (_, asyncState) =>
-          for {
-            lookup <- pxLookup.toCallback
-            naTags <- pxNaTags.toCallback
-          } yield TagEditor.Props(
-            preEditValue     = initialValues,
-            naTags           = naTags,
-            edit             = ss,
-            lookup           = lookup,
-            asyncStatus      = EditorStatus.async(asyncState),
-            abort            = abort,
-            abortVerb        = abortVerb,
-            autoFocus        = true,
-            commitFn         = commitFn,
-            commitVerb       = commitVerb,
-            extraControls    = EditControlsFeature.ExtraControls.empty,
-            showInstructions = true)
+        override val props      = (args, asyncState) => propsMemo((ss, args, asyncState))
 
         override def clipboardData: Option[ClipboardData] =
           Some(ClipboardData(ss.value))
 
-        override def setPotentialValue(p: PotentialValue): Option[Callback] =
-          potentialValueAcceptor.accept(p).map(ss.setState)
+        override def setPotentialValue(p: PotentialValue): CallbackOption[Unit] =
+          setPotentialValueStd(potentialValueAcceptor.toCBO)(p, ss)
       }
     }
 
@@ -693,106 +754,100 @@ object NewEditor {
       import shipreq.webapp.base.text._
       import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
-      case class AbstractArgs[A](style: A => EditControlsFeature.Style, changeArg: A)
+      @inline def defaultStyle = EditControlsFeature.Style.default
 
-      object AbstractArgs {
-        def const(style: EditControlsFeature.Style): AbstractArgs[Unit] =
-          apply(_ => style, ())
-
-        val constDefault: AbstractArgs[Unit] =
-          const(EditControlsFeature.Style.default)
-
-        val dynamicStyle: AbstractArgs[EditControlsFeature.Style] =
-          apply(
-            identity,
-            EditControlsFeature.Style.default) // <-- doesn't affect change calculation
-      }
-
-      abstract class Base[T <: Text.Generic, A](val editor: RichTextEditor[T], aa: AbstractArgs[A]) extends ForChangeType {
+      abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T], allowCustomStyle: Boolean = false) extends ForChangeType { base =>
         val T: editor.text.type = editor.text
 
-        import editor.potentialValueAcceptor
+        val potentialValueAcceptor = CallbackTo.pure(editor.potentialValueAcceptor)
 
-        override type Args   = A
+        override type Args   = EditorArgs.ForTextEditor
         override type Change = T.OptionalText
+        type Props           = editor.Optional
+        type PropsInputs     = (StateSnapshot[String], Args, AsyncState)
+        type InitialValues   = (T.OptionalText, String)
 
         protected def start(cmd           : T.OptionalText => UpdateContentCmd,
                             initialValueCB: CallbackOption[T.OptionalText],
                             pid           : PreviewId,
-                            reqId         : Option[ReqId]): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
+                            reqId         : Option[ReqId]): InitFn = ictx => {
           import ictx._
 
-          val (abort, commitFn) =
-            makeAbortCommitFn(sspUpdateContent)(cmd, args.hooks, Some(pid))
+          Internal.init(potentialValueAcceptor) { ivo => args =>
 
-          val initCB =
-            for {
-              initialValue   <- initialValueCB
-              projectWidgets <- args.cbProjectWidgets.toCBO
-            } yield {
-              val initialText = projectWidgets.plainText.text(initialValue, RichTextEditor.hardcodedLive, Optional)
-              (initialValue, initialText)
-            }
+            val (abort, commitFn) =
+              makeAbortCommitFn(sspUpdateContent)(cmd, args.hooks, Some(pid))
 
-        startWithStateSnapshot(
-          initialData       = initCB,
-          initalValueOption = ivo)(
-          initialValueFn    = _._2)(
-          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
+            val initCBO: CallbackOption[InitialValues] =
+              for {
+                initialValue   <- initialValueCB
+                projectWidgets <- args.cbProjectWidgets.toCBO
+              } yield {
+                val initialText = projectWidgets.plainText.text(initialValue, RichTextEditor.hardcodedLive, Optional)
+                (initialValue, initialText)
+              }
+
+            val initEditor: InitialValues => StateSnapshot[String] => EditorImpl =
+              initialValues => {
+
+                val initialValue = Some(initialValues._1)
+
+                val propsMemo =
+                  newPropsMemo[PropsInputs, Props] { in =>
+                    val (ss, args, asyncState) = in
+                    editor.Optional(
+                      project            = args.project,
+                      naTags             = args.project.naTagsForReq(reqId),
+                      plainTextNoCtx     = args.plainTextNoCtx,
+                      textSearch         = args.textSearch,
+                      projectWidgets     = args.projectWidgets,
+                      edit               = ss,
+                      asyncStatus        = EditorStatus.async(asyncState),
+                      abort              = abort,
+                      abortVerb          = abortVerb,
+                      abortConfirmation  = someConfirmJs,
+                      autoFocus          = args.autoFocus,
+                      commitFn           = commitFn,
+                      commitVerb         = commitVerb,
+                      editorStyle        = if (allowCustomStyle) args.style else defaultStyle,
+                      preview            = args.previewRW(pid),
+                      preEditValue       = initialValue,
+                      extraControls      = EditControlsFeature.ExtraControls.empty,
+                      showInstructions   = true,
+                      optionalFullscreen = someOptionalFullscreen)
+                  }
+
+                new State(_, propsMemo)
+              }
+
+            startWithStateSnapshot(
+              initialData       = initCBO,
+              initalValueOption = ivo)(
+              initialValueFn    = _._2)(
+              editor            = initEditor)
+          }
         }
 
-        private class State(ss              : StateSnapshot[String],
-                            initial         : Some[T.OptionalText],
-                            projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
-                            pid             : PreviewId,
-                            reqId           : Option[ReqId],
-                            abort           : Some[Callback],
-                            commitFn        : Some[editor.Optional.CommitFn]) extends EditorImpl {
+        private class State(ss       : StateSnapshot[String],
+                            propsMemo: PropsInputs => Props) extends EditorImpl {
 
           @elidable(elidable.FINER)
           override def toString = s"EditRichText(${ss.value})"
 
-          override type Props = editor.Optional
+          override type Props     = base.Props
           override def renderImpl = _.render
-          override def changeArgs = aa.changeArg
           override def changeImpl = _.validated
-          override val props = (args, asyncState) =>
-            for {
-              previewRW      <- previewW.toReadWriteCB
-              project        <- pxProject.toCallback
-              plainTextNoCtx <- pxPlainTextNoCtx.toCallback
-              textSearch     <- pxTextSearch.toCallback
-              projectWidgets <- projectWidgetsCB
-            } yield editor.Optional(
-              project            = project,
-              naTags             = project.naTagsForReq(reqId),
-              plainTextNoCtx     = plainTextNoCtx,
-              textSearch         = textSearch,
-              projectWidgets     = projectWidgets,
-              edit               = ss,
-              asyncStatus        = EditorStatus.async(asyncState),
-              abort              = abort,
-              abortVerb          = abortVerb,
-              abortConfirmation  = someConfirmJs,
-              autoFocus          = true,
-              commitFn           = commitFn,
-              commitVerb         = commitVerb,
-              editorStyle        = aa.style(args),
-              preview            = previewRW(pid),
-              preEditValue       = initial,
-              extraControls      = EditControlsFeature.ExtraControls.empty,
-              showInstructions   = true,
-              optionalFullscreen = someOptionalFullscreen)
+          override val props      = (args, asyncState) => propsMemo((ss, args, asyncState))
 
           override def clipboardData: Option[ClipboardData] =
             Some(ClipboardData(ss.value))
 
-          override def setPotentialValue(p: PotentialValue): Option[Callback] =
-            potentialValueAcceptor.accept(p).map(ss.setState)
+          override def setPotentialValue(p: PotentialValue): CallbackOption[Unit] =
+            setPotentialValueStd(potentialValueAcceptor.toCBO)(p, ss)
         }
       }
 
-      object CodeGroupTitle extends Base(RichTextEditor.CodeGroupTitle, AbstractArgs.constDefault) {
+      object CodeGroupTitle extends Base(RichTextEditor.CodeGroupTitle) {
         def apply(id: ReqCodeGroupId, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetCodeGroupTitle(id, _),
           initialValueCB = getCodeGroup(id).map(_.title).widen,
@@ -800,7 +855,7 @@ object NewEditor {
           reqId          = None)
       }
 
-      object CustomTextField extends Base(RichTextEditor.CustomTextField, AbstractArgs.dynamicStyle) {
+      object CustomTextField extends Base(RichTextEditor.CustomTextField, allowCustomStyle = true) {
         def apply(id: ReqId, fid: CustomField.Text.Id, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetCustomTextField(id, fid, _),
           initialValueCB = pxProject.toCallback.map(p => ReqData.Text.at(fid, id).get(p.content.reqText)).toCBO,
@@ -808,7 +863,7 @@ object NewEditor {
           reqId          = Some(id))
       }
 
-      object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle, AbstractArgs.constDefault) {
+      object GenericReqTitle extends Base(RichTextEditor.GenericReqTitle) {
         def apply(id: GenericReqId, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetGenericReqTitle(id, _),
           initialValueCB = getGenericReq(id).map(_.title),
@@ -816,7 +871,7 @@ object NewEditor {
           reqId          = Some(id))
       }
 
-      object UseCaseTitle extends Base(RichTextEditor.UseCaseTitle, AbstractArgs.constDefault) {
+      object UseCaseTitle extends Base(RichTextEditor.UseCaseTitle) {
         def apply(id: UseCaseId, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetUseCaseTitle(id, _),
           initialValueCB = getUseCase(id).map(_.title),
@@ -829,95 +884,104 @@ object NewEditor {
     object EditRichTextNonEmpty {
       import shipreq.webapp.base.text._
       import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
-      import EditRichText.AbstractArgs
 
-      abstract class Base[T <: Text.Generic, Cmd, A](val editor: RichTextEditor[T],
-                                                     aa: AbstractArgs[A],
-                                                     ssp: ServerSideProcInvoker[Cmd, ErrorMsg, Any]) extends ForChangeType {
+      @inline def defaultStyle = EditControlsFeature.Style.default
+
+      abstract class Base[T <: Text.Generic, Cmd](val editor: RichTextEditor[T],
+                                                  ssp: ServerSideProcInvoker[Cmd, ErrorMsg, Any],
+                                                  allowCustomStyle: Boolean = false) extends ForChangeType { base =>
+
         val T: editor.text.type = editor.text
 
-        import editor.potentialValueAcceptor
+        val potentialValueAcceptor = CallbackTo.pure(editor.potentialValueAcceptor)
 
-        override type Args   = A
+        override type Args   = EditorArgs.ForTextEditor
         override type Change = T.NonEmptyText
+        type Props           = editor.NonEmpty
+        type PropsInputs     = (StateSnapshot[String], Args, AsyncState)
+        type InitialValues   = (T.NonEmptyText, String)
 
         protected def start(cmd           : T.NonEmptyText => Cmd,
                             initialValueCB: CallbackOption[T.NonEmptyText],
                             pid           : PreviewId,
-                            reqId         : Option[ReqId]): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
+                            reqId         : Option[ReqId]): InitFn = ictx => {
           import ictx._
 
-          val (abort, commitFn) =
-            makeAbortCommitFn(ssp)(cmd, args.hooks, Some(pid))
+          Internal.init(potentialValueAcceptor) { ivo => args =>
 
-          val initCB =
-            for {
-              initialValue   <- initialValueCB
-              projectWidgets <- args.cbProjectWidgets.toCBO
-            } yield {
-              val initialText = projectWidgets.plainText.text(initialValue.whole, RichTextEditor.hardcodedLive, Mandatory)
-              (initialValue, initialText)
-            }
+            val (abort, commitFn) =
+              makeAbortCommitFn(ssp)(cmd, args.hooks, Some(pid))
 
-          startWithStateSnapshot(
-            initialData       = initCB,
-            initalValueOption = ivo)(
-            initialValueFn    = _._2)(
-            editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pid, reqId, abort, commitFn))
+            val initCBO: CallbackOption[InitialValues] =
+              for {
+                initialValue   <- initialValueCB
+                projectWidgets <- args.cbProjectWidgets.toCBO
+              } yield {
+                val initialText = projectWidgets.plainText.text(initialValue.whole, RichTextEditor.hardcodedLive, Mandatory)
+                (initialValue, initialText)
+              }
+
+            val initEditor: InitialValues => StateSnapshot[String] => EditorImpl =
+              initialValues => {
+
+                val initialValue = Some(initialValues._1)
+
+                val propsMemo =
+                  newPropsMemo[PropsInputs, Props] { in =>
+                    val (ss, args, asyncState) = in
+                    editor.NonEmpty(
+                      project            = args.project,
+                      naTags             = args.project.naTagsForReq(reqId),
+                      plainTextNoCtx     = args.plainTextNoCtx,
+                      textSearch         = args.textSearch,
+                      projectWidgets     = args.projectWidgets,
+                      edit               = ss,
+                      asyncStatus        = EditorStatus.async(asyncState),
+                      abort              = abort,
+                      abortVerb          = abortVerb,
+                      abortConfirmation  = someConfirmJs,
+                      autoFocus          = args.autoFocus,
+                      commitFn           = commitFn,
+                      commitVerb         = commitVerb,
+                      editorStyle        = if (allowCustomStyle) args.style else defaultStyle,
+                      preview            = args.previewRW(pid),
+                      preEditValue       = initialValue,
+                      extraControls      = EditControlsFeature.ExtraControls.empty,
+                      showInstructions   = true,
+                      optionalFullscreen = someOptionalFullscreen)
+                  }
+
+                new State(_, propsMemo)
+              }
+
+            startWithStateSnapshot(
+              initialData       = initCBO,
+              initalValueOption = ivo)(
+              initialValueFn    = _._2)(
+              editor            = initEditor)
+          }
         }
 
-        private class State(ss              : StateSnapshot[String],
-                            initial         : Some[T.NonEmptyText],
-                            projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
-                            pid             : PreviewId,
-                            reqId           : Option[ReqId],
-                            abort           : Some[Callback],
-                            commitFn        : Some[editor.NonEmpty.CommitFn]) extends EditorImpl {
+        private class State(ss       : StateSnapshot[String],
+                            propsMemo: PropsInputs => Props) extends EditorImpl {
 
           @elidable(elidable.FINER)
           override def toString = s"EditRichTextNonEmpty(${ss.value})"
 
-          override type Props = editor.NonEmpty
+          override type Props     = base.Props
           override def renderImpl = _.render
-          override def changeArgs = aa.changeArg
           override def changeImpl = _.validated
-          override val props = (args, asyncState) =>
-            for {
-              previewRW      <- previewW.toReadWriteCB
-              project        <- pxProject.toCallback
-              plainTextNoCtx <- pxPlainTextNoCtx.toCallback
-              textSearch     <- pxTextSearch.toCallback
-              projectWidgets <- projectWidgetsCB
-            } yield editor.NonEmpty(
-              project            = project,
-              naTags             = project.naTagsForReq(reqId),
-              plainTextNoCtx     = plainTextNoCtx,
-              textSearch         = textSearch,
-              projectWidgets     = projectWidgets,
-              edit               = ss,
-              asyncStatus        = EditorStatus.async(asyncState),
-              abort              = abort,
-              abortVerb          = abortVerb,
-              abortConfirmation  = someConfirmJs,
-              autoFocus          = true,
-              commitFn           = commitFn,
-              commitVerb         = commitVerb,
-              editorStyle        = aa.style(args),
-              preview            = previewRW(pid),
-              preEditValue       = initial,
-              extraControls      = EditControlsFeature.ExtraControls.empty,
-              showInstructions   = true,
-              optionalFullscreen = someOptionalFullscreen)
+          override val props      = (args, asyncState) => propsMemo((ss, args, asyncState))
 
           override def clipboardData: Option[ClipboardData] =
             Some(ClipboardData(ss.value))
 
-          override def setPotentialValue(p: PotentialValue): Option[Callback] =
-            potentialValueAcceptor.accept(p).map(ss.setState)
+          override def setPotentialValue(p: PotentialValue): CallbackOption[Unit] =
+            setPotentialValueStd(potentialValueAcceptor.toCBO)(p, ss)
         }
       }
 
-       object ManualIssue extends Base(RichTextEditor.ManualIssue, AbstractArgs.constDefault, sspManualIssue) {
+       object ManualIssue extends Base(RichTextEditor.ManualIssue, sspManualIssue) {
          def apply(id: ManualIssueId, pid: PreviewId): InitFn = start(
            cmd            = ManualIssueCmd.Update(id, _),
            initialValueCB = pxProject.toCallback.map(_.manualIssues.imap.need(id).text).toCBO,
@@ -927,106 +991,116 @@ object NewEditor {
     }
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    object EditUseCaseStep extends ForChangeType {
+    object EditUseCaseStep extends ForChangeType { base =>
       import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor.hardcodedLive
       import shipreq.webapp.client.project.widgets.editors_with_controls.UseCaseStepEditor
-      import shipreq.webapp.client.project.widgets.editors_with_controls.UseCaseStepEditor.potentialValueAcceptor
       import UseCaseStepFlowText.TextAndFlow
 
-      override type Args = FieldKey.UseCaseStep.Args
-      override type Change = UseCaseStepGD.NonEmptyValues
+      val potentialValueAcceptor = CallbackTo.pure(UseCaseStepEditor.potentialValueAcceptor)
 
-      def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => Internal.init(potentialValueAcceptor) { ivo => args =>
+      override type Args   = EditorArgs.ForUseCaseStepEditor
+      override type Change = UseCaseStepGD.NonEmptyValues
+      type Props           = UseCaseStepEditor.Props
+      type PropsInputs     = (StateSnapshot[String], Args, AsyncState)
+      type InitialValues   = (UseCaseStepEditor.InitialValue, String)
+
+      def apply(id: UseCaseStepId, pid: PreviewId): InitFn = ictx => {
         import ictx._
 
-        val commitFn: UseCaseStepEditor.CommitFn =
-          // Below you'll see that we're filtering flow to create visibleFlow
-          // There's no need to re-insert invisibleFlow here because flow is passed as a SetDiff
-          // meaning that regardless of what the actual flow is, we only send what the user changes.
-          Reusable.fn(v => commit(sspUpdateContent)(UpdateContentCmd.UpdateUseCaseStep(id, v), args.hooks, Some(pid)))
+        Internal.init(potentialValueAcceptor) { ivo => args =>
 
-        val pxStepFocus: Px[UseCaseStep.Focus] =
-          pxProject.map(_.content.reqs.useCases.focusStep(id))
+          val abortCB = abort(args.hooks, Some(pid))
 
-        val pxInit: Px[(UseCaseStepEditor.InitialValue, String)] =
-          for {
-            stepFocus      <- pxStepFocus
-            projectWidgets <- args.pxProjectWidgets.value
-          } yield {
-            val visibleFlow = args.filterDead match {
-              case HideDead => Direction.Values(stepFocus.flow(_, Live))
-              case ShowDead => Direction.Values(stepFocus.flow)
+          val commitFn: UseCaseStepEditor.CommitFn =
+            // Below you'll see that we're filtering flow to create visibleFlow
+            // There's no need to re-insert invisibleFlow here because flow is passed as a SetDiff
+            // meaning that regardless of what the actual flow is, we only send what the user changes.
+            Reusable.fn(v => commit(sspUpdateContent)(UpdateContentCmd.UpdateUseCaseStep(id, v), args.hooks, Some(pid)))
+
+          def getStepFocus(p: Project) =
+            p.content.reqs.useCases.focusStep(id)
+
+          val initCB: CallbackTo[InitialValues] =
+            for {
+              projectWidgets <- args.pxProjectWidgets.value.toCallback
+              project        <- pxProject.toCallback
+            } yield {
+              val stepFocus = getStepFocus(project)
+              val visibleFlow = args.filterDead match {
+                case HideDead => Direction.Values(stepFocus.flow(_, Live))
+                case ShowDead => Direction.Values(stepFocus.flow)
+              }
+              val initialValue = TextAndFlow(stepFocus.step.titleExplicitly, visibleFlow)
+              val initialText = projectWidgets.plainText.useCaseStepTextAndFlow(initialValue, hardcodedLive)
+              (initialValue, initialText)
             }
-            val initialValue = TextAndFlow(stepFocus.step.titleExplicitly, visibleFlow)
-            val initialText = projectWidgets.plainText.useCaseStepTextAndFlow(initialValue, hardcodedLive)
-            (initialValue, initialText)
-          }
 
-        startWithStateSnapshot(
-          initialData       = pxInit.toCallback.toCBO,
-          initalValueOption = ivo)(
-          initialValueFn    = _._2)(
-          editor            = i => new State(_, Some(i._1), args.cbProjectWidgets, pxStepFocus.toCallback, pid, abort(args.hooks, Some(pid)), commitFn))
+          val initEditor: InitialValues => StateSnapshot[String] => EditorImpl =
+            initialValues => {
+
+              val initialValue = Some(initialValues._1)
+
+              val propsMemo =
+                newPropsMemo[PropsInputs, Props] { in =>
+                  val (ss, args, asyncState) = in
+
+                  val step = getStepFocus(args.project)
+
+                  val shiftRunner: Option[AsyncFeature.Runner.D0O[LeftRight, Any]] =
+                    args.shiftRunner.map(
+                      _.mapRunOption(run =>
+                        Reusable.never(d =>
+                          step.canShift(d).option(
+                            run(UpdateContentCmd.ShiftUseCaseStep(step.id, d))))))
+
+                  val addStepRunner: Option[AsyncFeature.Runner.D0O[Unit, Any]] =
+                    args.addStepRunner.map(
+                      _.mapRunOption(run =>
+                        Reusable.never(_ =>
+                          UpdateContentCmd.addUseCaseStepAfter(step).map(run))))
+
+                  UseCaseStepEditor.Props(
+                    project        = args.project,
+                    plainTextNoCtx = args.plainTextNoCtx,
+                    textSearch     = args.textSearch,
+                    projectWidgets = args.projectWidgets,
+                    edit           = ss,
+                    asyncStatus    = EditorStatus.async(asyncState),
+                    abort          = abortCB,
+                    commit         = commitFn,
+                    shiftRunner    = shiftRunner,
+                    addStepRunner  = addStepRunner,
+                    preview        = args.previewRW(pid),
+                    preEditValue   = initialValue)
+                }
+
+              new State(_, propsMemo)
+            }
+
+          startWithStateSnapshot(
+            initialData       = initCB.toCBO,
+            initalValueOption = ivo)(
+            initialValueFn    = _._2)(
+            editor            = initEditor)
+        }
       }
 
-      private class State(ss              : StateSnapshot[String],
-                          initial         : Some[UseCaseStepEditor.InitialValue],
-                          projectWidgetsCB: CallbackTo[ProjectWidgets.AnyCtx],
-                          stepFocusCB     : CallbackTo[UseCaseStep.Focus],
-                          pid             : PreviewId,
-                          abort           : Callback,
-                          commitFn        : UseCaseStepEditor.CommitFn) extends EditorImpl {
+      private class State(ss       : StateSnapshot[String],
+                          propsMemo: PropsInputs => Props) extends EditorImpl {
 
         @elidable(elidable.FINER)
         override def toString = s"EditUseCaseStep(${ss.value})"
 
-        override type Props = UseCaseStepEditor.Props
+        override type Props     = base.Props
         override def renderImpl = _.render
-        override def changeArgs = FieldKey.UseCaseStep.Args.empty
         override def changeImpl = _.validatedChanges
-        override val props = (args: Args, asyncState) =>
-          for {
-            previewRW      <- previewW.toReadWriteCB
-            project        <- pxProject.toCallback
-            plainTextNoCtx <- pxPlainTextNoCtx.toCallback
-            textSearch     <- pxTextSearch.toCallback
-            projectWidgets <- projectWidgetsCB
-            step           <- stepFocusCB
-          } yield {
-
-            val shiftRunner: Option[AsyncFeature.Runner.D0O[LeftRight, Any]] =
-              args.shiftRunner.map(
-                _.mapRunOption(run =>
-                  Reusable.never(d =>
-                    step.canShift(d).option(
-                      run(UpdateContentCmd.ShiftUseCaseStep(step.id, d))))))
-
-            val addStepRunner: Option[AsyncFeature.Runner.D0O[Unit, Any]] =
-              args.addStepRunner.map(
-                _.mapRunOption(run =>
-                  Reusable.never(_ =>
-                    UpdateContentCmd.addUseCaseStepAfter(step).map(run))))
-
-            UseCaseStepEditor.Props(
-              project        = project,
-              plainTextNoCtx = plainTextNoCtx,
-              textSearch     = textSearch,
-              projectWidgets = projectWidgets,
-              edit           = ss,
-              asyncStatus    = EditorStatus.async(asyncState),
-              abort          = abort,
-              commit         = commitFn,
-              shiftRunner    = shiftRunner,
-              addStepRunner  = addStepRunner,
-              preview        = previewRW(pid),
-              preEditValue   = initial)
-          }
+        override val props      = (args, asyncState) => propsMemo((ss, args, asyncState))
 
         override def clipboardData: Option[ClipboardData] =
           Some(ClipboardData(ss.value))
 
-        override def setPotentialValue(p: PotentialValue): Option[Callback] =
-          potentialValueAcceptor.accept(p).map(ss.setState)
+        override def setPotentialValue(p: PotentialValue): CallbackOption[Unit] =
+          setPotentialValueStd(potentialValueAcceptor.toCBO)(p, ss)
       }
     }
 
