@@ -15,6 +15,12 @@ import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 object Feature {
 
+  private object ImplicitMaps { // TODO https://github.com/japgolly/scalajs-react/issues/795
+    @inline implicit def reusabilityMap[K, V](implicit rv: Reusability[V]): Reusability[Map[K, V]] =
+      Reusability.map
+  }
+  import ImplicitMaps._
+
   type AsyncError = ErrorMsg
   type AsyncState = AsyncFeature.Read.D0[AsyncError]
 
@@ -47,6 +53,12 @@ object Feature {
   object Editor {
     type Invalidity = shipreq.webapp.base.validation.Simple.Invalidity
     type Change[+A] = PotentialChange[Invalidity, A]
+
+    private val reusabilityAny: Reusability[Editor[Nothing, Any]] =
+      Reusability.byRef
+
+    implicit def reusability[A, C]: Reusability[Editor[A, C]] =
+      reusabilityAny.narrow
   }
 
   /** Id used for [[shipreq.webapp.base.feature.PreviewFeature]] */
@@ -74,13 +86,10 @@ object Feature {
     }
   }
 
-  val reusabilityStateForEditorAny: Reusability[State.ForAnyEditor] = {
-    implicit def e = Reusability.never[Editor[Nothing, Any]] // ∵ Editor is not safe for reusability
-    Reusability.option
-  }
+  private  val reusabilityStateForEditorAny   : Reusability[State.ForAnyEditor   ] = Reusability.option
   implicit def reusabilityStateForEditor[A, C]: Reusability[State.ForEditor[A, C]] = reusabilityStateForEditorAny.narrow
-  implicit val reusabilityStateForFields      : Reusability[State.ForFields      ] = Reusability.when(_.isEmpty)
-  implicit val reusabilityStateForProject     : Reusability[State.ForProject     ] = Reusability.when(_.isEmpty)
+  implicit val reusabilityStateForFields      : Reusability[State.ForFields      ] = Reusability.byRef || reusabilityMap
+  implicit val reusabilityStateForProject     : Reusability[State.ForProject     ] = Reusability.byRef || reusabilityMap
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 

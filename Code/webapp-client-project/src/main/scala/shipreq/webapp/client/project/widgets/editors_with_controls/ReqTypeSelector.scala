@@ -37,8 +37,8 @@ object ReqTypeSelector {
     @inline def render: VdomNode = Component(this)
   }
 
-  // implicit val reusabilityProps: Reusability[Props] =
-  //   Reusability.derive
+  implicit val reusabilityProps: Reusability[Props] =
+    Reusability.byRef // because Props are memo'ised in NewEditor
 
   private def key(rt: RT): Dropdown.ItemKey =
     rt.id.value.toString
@@ -76,7 +76,7 @@ object ReqTypeSelector {
 
   val Component = ScalaComponent.builder[Props]
     .render_P(render)
-    // .configure(Reusability.shouldComponentUpdate)
+    .configure(Reusability.shouldComponentUpdate)
     .build
 
   // ===================================================================================================================

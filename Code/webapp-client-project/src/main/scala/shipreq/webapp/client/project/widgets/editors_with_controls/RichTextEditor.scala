@@ -141,8 +141,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
 
   // ===================================================================================================================
 
-//  implicit val reusabilityProps: Reusability[Props] =
-//    Reusability.never // TODO Reusability.derive
+  implicit val reusabilityProps: Reusability[Props] =
+    Reusability.byRef // because Props are memo'ised in NewEditor
 
   val liveCorrect: EndoFn[String] =
     RichTextEditor.liveCorrect(text)
@@ -289,9 +289,8 @@ sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, fin
     ScalaComponent.builder[Props]("RichTextEditor:" + name)
       .initialStateFromProps(initialState)
       .renderBackend[Backend]
-      .configure(
-        //Reusability.shouldComponentUpdate,
-        AutoComplete.install)
+      .configure(Reusability.shouldComponentUpdate)
+      .configure(AutoComplete.install)
       .componentDidMount($ => $.backend.onMount($.props))
       .build
 }
@@ -308,6 +307,9 @@ object RichTextEditor {
       else
         EditControlsFeature.Font.Default
   }
+
+  implicit val reusabilityState: Reusability[State] =
+    Reusability.derive
 
   private val preprocessor = {
     val preprocessSL = PreProcessor(PreProcessor.FixChar.singleLine, PreProcessor.CanTrim.no)

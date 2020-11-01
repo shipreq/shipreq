@@ -221,15 +221,14 @@ object ImplicationEditor {
   implicit val reusabilityLookup: Reusability[Lookup] =
     Reusability.byRef[Lookup] || Reusability.byUnivEq
 
-//  implicit val reusabilityProps: Reusability[Props] =
-//    Reusability.never // TODO Reusability.derive
+  implicit val reusabilityProps: Reusability[Props] =
+    Reusability.byRef // because Props are memo'ised in NewEditor
 
   val Component =
     ScalaComponent.builder[Props]
       .renderBackend[Backend]
-      .configure(
-        //Reusability.shouldComponentUpdate,
-        AutoComplete.install)
+      .configure(Reusability.shouldComponentUpdate)
+      .configure(AutoComplete.install)
       .componentDidMount($ => $.backend.onMount($.props))
       .build
 }
