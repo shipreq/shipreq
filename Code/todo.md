@@ -1,5 +1,4 @@
 ### Problems
-* blacklist @admin, @owner
 * new issue: duplicate titles (per req type?)
 
 

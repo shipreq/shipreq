@@ -67,6 +67,32 @@ object UserValidators {
   def passwordChange(matchesCurrent: CurrentPasswordTest): Composite.Validator[PasswordChange, PasswordChange, PlainTextPassword] =
     (currentPassword(matchesCurrent) tuple passwordTwice).mapValid(_._2)
 
+  val usernameBlacklist: Set[String] = {
+    val b = Set.newBuilder[String]
+    def addWithPlural(s: String) = {
+      b += s
+      b += s + "s"
+    }
+    addWithPlural("admin")
+    addWithPlural("author")
+    addWithPlural("collaborator")
+    addWithPlural("contributor")
+    addWithPlural("creator")
+    addWithPlural("group")
+    addWithPlural("owner")
+    addWithPlural("project")
+    addWithPlural("subscriber")
+    addWithPlural("team")
+    addWithPlural("watcher")
+    b += "davidbarri"
+    b += "help"
+    b += "helpstaff"
+    b += "staff"
+    b += "support"
+    b += "supportstaff"
+    b.result()
+  }
+
   val username: Composite.Stateful[Set[Username], String, String, Username] =
     CV.endoValidator.lengthInRange(WebappConfig.usernameLength)
       .prependCorrector(TextMod.noWhitespace.andThen(TextMod.lowerCase).correctLive)
@@ -74,6 +100,8 @@ object UserValidators {
       .addInvalidator(CV.invalidator.whitelistCharRangeRegex("a-z0-9_")(Invalidity("Can only contain letters, numbers and underscores.")))
       .addInvalidator(CV.invalidator.startsWithRegex("[a-z]")(Invalidity("Must start with a letter.")))
       .addInvalidator(CV.invalidator.endsWithRegex("[a-z0-9]")(Invalidity("Must end with a letter or a number.")))
+      .addInvalidator(CV.invalidator.blacklistValuesP(usernameBlacklist)(_.replace("_", ""))(Uniqueness.notUnique))
+      .addInvalidator(Invalidator.logic[String](s => !s.replace("_", "").contains("shipreq"))(Uniqueness.notUnique))
       .toValidator
       .mapValid(Username.apply)
       .named(CommmonUiText.username)

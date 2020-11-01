@@ -24,10 +24,10 @@ object Implicits {
 
     implicit class SimpleExt_InvalidatorObj(private val ε: Generic.Invalidator.type) extends AnyVal {
 
-      def logic[A](f: A => Boolean): Simple.InvalidatorLogic[A] =
+      def logic[A](isValid: A => Boolean): Simple.InvalidatorLogic[A] =
         err => {
           val someInvalidity = Some(err)
-          Simple.Invalidator(a => if (f(a)) None else someInvalidity)
+          Simple.Invalidator(a => if (isValid(a)) None else someInvalidity)
         }
 
       def test[A](t: A => Boolean, i: Simple.Invalidity): Simple.Invalidator[A] =

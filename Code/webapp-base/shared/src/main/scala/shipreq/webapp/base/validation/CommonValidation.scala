@@ -61,6 +61,12 @@ object CommonValidation {
     def blacklistChars(isBlacklisted: Char => Boolean): InvalidatorLogic[String] =
       Invalidator.logic(_.forall(!isBlacklisted(_)))
 
+    def blacklistValues[A](blacklist: Set[A]): InvalidatorLogic[A] =
+      Invalidator.logic(!blacklist.contains(_))
+
+    def blacklistValuesP[A](blacklist: Set[A])(preprocess: A => A): InvalidatorLogic[A] =
+      Invalidator.logic(a => !blacklist.contains(preprocess(a)))
+
     def containsRegex(regex: String): InvalidatorLogic[String] =
       matchesRegex(s".*(?:$regex).*".r)
 

@@ -114,6 +114,14 @@ object UserValidatorTest extends TestSuite {
       "*" - test("")(fail(" long."))
       "*" - test("ab")(fail(" long.")) // too short
       "*" - assertEq(test.v.auditor.validity("a" * 33), Invalid) // too long
+      "blacklist" - {
+        "admin" - assertEq(test.v.auditor.validity("admin"), Invalid)
+        "admins" - assertEq(test.v.auditor.validity("admins"), Invalid)
+        "ad_min" - assertEq(test.v.auditor.validity("ad_min"), Invalid)
+        "shipreq" - assertEq(test.v.auditor.validity("shipreq"), Invalid)
+        "ship_req" - assertEq(test.v.auditor.validity("ship_req"), Invalid)
+        "shipreq_staff" - assertEq(test.v.auditor.validity("shipreq_staff"), Invalid)
+      }
     }
 
   }
