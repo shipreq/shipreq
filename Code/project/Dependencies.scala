@@ -154,7 +154,7 @@ object Dependencies {
   }
 
   object LibJetty {
-    private def ver = "9.4.32.v20200930"
+    private def ver = "9.4.33.v20201020"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
@@ -197,7 +197,7 @@ object Dependencies {
   val μTest       = jvmAndJs("com.github.japgolly.fork",         "utest",       "1.0.3")
   val pprint      = jvmAndJs("com.lihaoyi",                      "pprint",      "0.6.0")
 
-  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.1.4")
+  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.2.0")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.9")
   val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "6.5.7")
