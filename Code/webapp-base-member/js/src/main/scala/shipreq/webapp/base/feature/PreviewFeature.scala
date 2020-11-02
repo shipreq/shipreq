@@ -3,7 +3,6 @@ package shipreq.webapp.base.feature
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.internal.Effect
 import japgolly.scalajs.react.vdom.html_<^._
 import java.time.Duration
 import monocle.Lens
@@ -181,7 +180,7 @@ object PreviewFeature {
         _reusability[Any]
 
       implicit def reusability[Id]: Reusability[Composite[Id]] =
-        _reusabilityInstance.asInstanceOf[Reusability[Composite[Id]]]
+        _reusabilityInstance.unsafeSubst
     }
   }
 
@@ -282,40 +281,12 @@ object PreviewFeature {
         )
       }
 
-      private val __reusability = _reusability[Any]
-      implicit def reusability[Id] = __reusability.asInstanceOf[Reusability[Composite[Id]]]
+      private val reusabilityAny: Reusability[Composite[Any]] = _reusability
+      implicit def reusability[Id]: Reusability[Composite[Id]] = reusabilityAny.unsafeSubst
     }
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-
-  // TODO delete after https://github.com/japgolly/scalajs-react/issues/793
-  private def stateAccessConst[S](constState: CallbackTo[S]): StateAccessPure[S] =
-    new StateAccessPure[S] {
-      override def state =
-        constState
-
-      override type WithMappedState[S2] = StateAccessPure[S2]
-      override type WithEffect[F2[_]] = StateAccess[F2, S]
-
-      override def xmapState[S2](f: S => S2)(g: S2 => S) =
-        stateAccessConst(constState.map(f))
-
-      override def zoomState[S2](get: S => S2)(set: S2 => S => S) =
-        stateAccessConst(constState.map(get))
-
-      override def withEffect[F2[_]](implicit t: Effect.Trans[CallbackTo, F2]) =
-        null
-
-      override def modStateOption(mod: S => Option[S], callback: Callback) =
-        Callback.empty
-
-      override def setStateOption(newState: Option[S], callback: Callback) =
-        Callback.empty
-
-      override protected implicit def F: Effect[CallbackTo] =
-        Effect.callbackInstance
-    }
 
   object Write {
     sealed trait Single {
@@ -413,17 +384,19 @@ object PreviewFeature {
     }
 
     object Composite {
-      private val _empty: Composite[Any] =
-        apply(Reusable.byRef(stateAccessConst(CallbackTo.pure(State.Composite.init(UnivEq.force)))))
+      private val _empty: Composite[Any] = {
+        val getState = CallbackTo.pure(State.Composite.init[Any](UnivEq.force))
+        apply(Reusable.byRef(StateAccess.const(getState)))
+      }
 
       def empty[Id]: Composite[Id] =
         _empty.asInstanceOf[Composite[Id]]
 
-      private val _reusability: Reusability[Composite[Any]] =
+      private val reusabilityAny: Reusability[Composite[Any]] =
         Reusability.derive
 
       implicit def reusability[Id]: Reusability[Composite[Id]] =
-        _reusability.asInstanceOf[Reusability[Composite[Id]]]
+        reusabilityAny.unsafeSubst
     }
   }
 
@@ -535,11 +508,11 @@ object PreviewFeature {
       def empty[Id]: Composite[Id] =
         _empty.asInstanceOf[Composite[Id]]
 
-      private val _reusability: Reusability[Composite[Any]] =
+      private val reusabilityAny: Reusability[Composite[Any]] =
         Reusability.derive
 
       implicit def reusability[Id]: Reusability[Composite[Id]] =
-        _reusability.asInstanceOf[Reusability[Composite[Id]]]
+        reusabilityAny.unsafeSubst
     }
   }
 }

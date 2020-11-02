@@ -4,7 +4,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scala.scalajs.js.timers._
-import scala.scalajs.js.|
 import shipreq.base.util.FreeOption
 
 /** This feature allows you to keep the vertical scroll bars of multiple DOMs in sync.
@@ -87,17 +86,8 @@ final class ScrollSyncFeature {
   // -------------------------------------------------------------------------------------------------------------------
 
   def newPane(): PaneWithManualDom[html.Element] = {
-    // TODO https://github.com/japgolly/scalajs-react/issues/786
-    import vdom.TopNode
-    var dom: TopNode | Null = null
-    val setDom: raw.React.RefFn[TopNode] = d => dom = d
-    val get = CallbackTo {
-      dom match {
-        case e: html.Element => Some(e)
-        case _               => None
-      }
-    }
-    newPane(get, ^.untypedRef.:=(setDom)(VdomAttr.ValueType.direct))
+    val ref = Ref.toVdom[html.Element]
+    newPane(ref.get.asCallback, ^.untypedRef := ref)
   }
 
   // -------------------------------------------------------------------------------------------------------------------

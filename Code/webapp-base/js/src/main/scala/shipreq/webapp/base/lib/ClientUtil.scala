@@ -3,7 +3,6 @@ package shipreq.webapp.base.lib
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import java.time.Instant
 import shipreq.base.util.NonEmptyArraySeq
 
 object ClientUtil {
@@ -49,6 +48,4 @@ object ClientUtil {
       as.iterator
         .map(f)
         .intersperse(separator))
-
-  lazy val now = CallbackTo(Instant.now())
 }

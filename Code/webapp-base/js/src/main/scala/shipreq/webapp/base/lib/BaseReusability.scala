@@ -49,7 +49,4 @@ abstract class BaseReusability {
 
   //implicit def reusabilityValidation[S, I, C, V]: Reusability[Validator[S, I, C, V]] =
   //  Reusability.byRef
-
-  implicit def reusabilityRange: Reusability[Range] = // TODO https://github.com/japgolly/scalajs-react/issues/799
-    Reusability.byRefOr_==
 }

@@ -591,7 +591,7 @@ object AsyncFeature {
     implicit def reusabilityD0[I, F]: Reusability[D0[I, F]] = reusabilityAny0.narrow
 
     private val reusabilityAny1 = Reusability.derive[D1[Any, Nothing, Any]]
-    implicit def reusabilityD1[K, I, F]: Reusability[D1[K, I, F]] = reusabilityAny1.asInstanceOf[Reusability[D1[K, I, F]]]
+    implicit def reusabilityD1[K, I, F]: Reusability[D1[K, I, F]] = reusabilityAny1.unsafeSubst
   }
 
 }

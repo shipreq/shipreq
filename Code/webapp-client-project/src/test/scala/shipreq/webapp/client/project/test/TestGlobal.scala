@@ -319,21 +319,7 @@ object TestGlobal {
       }
 
     private def manualKeyPress(target: EventTarget, k: SimEvent.Keyboard): Unit = {
-      dispatchEvent(target, "keypress", e => {
-        val o = e.asInstanceOf[js.Dynamic]
-        o.key      = k.key
-        o.location = k.location
-        o.altKey   = k.altKey
-        o.ctrlKey  = k.ctrlKey
-        o.metaKey  = k.metaKey
-        o.shiftKey = k.shiftKey
-        o.repeat   = k.repeat
-        o.code     = k.code
-        o.locale   = k.locale
-        o.keyCode  = k.keyCode
-        o.charCode = k.charCode
-        o.which    = k.which
-      })
+      dispatchEvent(target, "keypress", e => k.assign(e.asInstanceOf[js.Dynamic]))
     }
 
     def assertFocusBy(desc: String, f: *.OS => html.Element) =

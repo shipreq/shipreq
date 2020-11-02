@@ -343,7 +343,7 @@ object ReqTableTest extends TestSuite {
     Plan.action(
       showAllColumns
         >> cellEditor(pubid = pubid, col = col).focus
-        >> press(cmdOrCtrl(KB.C))
+        >> press(cmdOrCtrl(KB.c))
         +> clipboardText.assert(expect)
     )
 
@@ -356,7 +356,7 @@ object ReqTableTest extends TestSuite {
         >> cell.focus
         +> cell.assertNotEditing
         +> cell.text.assert("")
-        >> press(cmdOrCtrl(KB.V))
+        >> press(cmdOrCtrl(KB.v))
         +> cell.assertState(Editing)
         +> cell.editorValue.assert(text)
         >> cell.commit
@@ -374,7 +374,7 @@ object ReqTableTest extends TestSuite {
         >> cell.focus
         +> cell.assertNotEditing
         +> cell.text.assert("Use Case Editor")
-        >> press(cmdOrCtrl(KB.V))
+        >> press(cmdOrCtrl(KB.v))
         +> cell.assertState(Editing)
         +> cell.editorValue.assert(text2)
         >> cell.commit
@@ -394,7 +394,7 @@ object ReqTableTest extends TestSuite {
         >> cell.setEditorValue("yo")
         +> cell.editorValue.assert("yo")
         >> cell.focus
-        >> press(cmdOrCtrl(KB.V))
+        >> press(cmdOrCtrl(KB.v))
         +> cell.assertState(Editing)
         +> cell.editorValue.assert(text)
         >> cell.commit

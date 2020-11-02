@@ -12,7 +12,6 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter._
-import shipreq.webapp.base.lib.ClientUtil
 import shipreq.webapp.base.lib.DomUtil.PatchHtmlElement
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.ui.semantic.{Icon, Menu, UsesSemanticUiManually}
@@ -172,7 +171,7 @@ object ReqSearch {
         }
 
       for {
-        now <- ClientUtil.now
+        now <- CallbackTo.now
         p   <- $.props
         _   <- p.state.modStateOption(update(_, now), repeatIfNecessary)
       } yield ()
@@ -191,7 +190,7 @@ object ReqSearch {
     val onBlur: Callback = {
       val onLostFocus: Callback =
         for {
-          now <- ClientUtil.now
+          now <- CallbackTo.now
           p   <- $.props
           _   <- p.state.modState(_.copy(focus = Some(FocusState.LostFocus(now))))
           _   <- updateShowResultsNow.delayMs(BlurToleranceMs).toCallback
@@ -351,7 +350,7 @@ object ReqSearch {
 
   // ===================================================================================================================
 
-  import Reusability.TemporalImplicitsWithoutTolerance.instant
+  import Reusability.TemporalImplicitsWithoutTolerance.reusabilityInstant
 
   implicit val reusabilityF: Reusability[FocusState] = Reusability.derive
   implicit val reusabilityS: Reusability[State]      = Reusability.derive

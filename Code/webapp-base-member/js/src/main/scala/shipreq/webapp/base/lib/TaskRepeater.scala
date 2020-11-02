@@ -62,7 +62,7 @@ final class TaskRepeater(task: Callback, gap: Duration, window: Duration, now: C
 object TaskRepeater {
 
   def apply(task: Callback, gap: Duration, window: Duration): TaskRepeater =
-    new TaskRepeater(task, gap, window, ClientUtil.now)
+    new TaskRepeater(task, gap, window, CallbackTo.now)
 
   def millis(task: Callback, gap: Int, window: Int): TaskRepeater =
     apply(task, Duration.ofMillis(gap), Duration.ofMillis(window))

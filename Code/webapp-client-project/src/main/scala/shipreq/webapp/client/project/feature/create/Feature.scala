@@ -114,7 +114,7 @@ object Feature {
       Reusability.byRef || Reusability.derive
 
     implicit def reusabilityF[FK <: FieldKey]: Reusability[ForFields[FK]] =
-      _reusabilityF.asInstanceOf[Reusability[ForFields[FK]]]
+      _reusabilityF.narrow
 
     implicit val reusabilityP: Reusability[ForProject] =
       Reusability.byRef || Reusability.derive
@@ -158,7 +158,7 @@ object Feature {
       Reusability.byRef || Reusability.derive
 
     implicit def reusabilityF[FK <: FieldKey]: Reusability[ForFields[FK]] =
-      _reusabilityF.asInstanceOf[Reusability[ForFields[FK]]]
+      _reusabilityF.narrow
 
     implicit val reusabilityP: Reusability[ForProject] =
       Reusability.byRef || Reusability.derive

@@ -45,11 +45,7 @@ final class WebWorkerState(logger: LoggerJs) {
     graphvizBarrier.waitForCompletion
 
   def withGraphViz[A](f: => AsyncCallback[A], retries: Int = 3): AsyncCallback[A] = {
-    // TODO https://github.com/japgolly/scalajs-react/issues/782
-    def timeout[B](f: AsyncCallback[B]): AsyncCallback[Option[B]] =
-      AsyncCallback.unit.delayMs(2000).race(f).map(_.toOption)
-
-    val main = timeout(AsyncCallback.byName(f).attempt)
+    val main = AsyncCallback.byName(f).attempt.timeoutMs(2000)
 
     def go(retries: Int): AsyncCallback[A] =
       main.flatMap {

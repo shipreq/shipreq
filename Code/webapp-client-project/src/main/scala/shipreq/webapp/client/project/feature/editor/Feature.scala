@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.feature.editor
 
 import japgolly.scalajs.react.MonocleReact._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.Reusability.MapImplicits._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util._
@@ -14,12 +15,6 @@ import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 
 object Feature {
-
-  private object ImplicitMaps { // TODO https://github.com/japgolly/scalajs-react/issues/795
-    @inline implicit def reusabilityMap[K, V](implicit rv: Reusability[V]): Reusability[Map[K, V]] =
-      Reusability.map
-  }
-  import ImplicitMaps._
 
   type AsyncError = ErrorMsg
   type AsyncState = AsyncFeature.Read.D0[AsyncError]

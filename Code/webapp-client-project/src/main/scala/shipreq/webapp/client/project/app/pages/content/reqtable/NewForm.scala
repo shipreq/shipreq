@@ -93,8 +93,6 @@ object NewForm {
   private def createButtonLabel(name: String): String = "Create " + name
   private def createButtonLabel(rt: ReqType) : String = createButtonLabel(rt.mnemonic.value)
 
-  private val doNothing = Reusable.callbackByRef(Callback.empty) // TODO https://github.com/japgolly/scalajs-react/issues/796
-
   private trait FieldArgsMemo {
     protected def get(f: FieldKey, autoFocus: Boolean): f.Args
 
@@ -198,7 +196,7 @@ sealed trait NewForm {
       }
 
     private val createAndKeepFormOpen: Reusable[Callback] =
-      createAnd(NewForm.doNothing)
+      createAnd(Reusable.emptyCallback)
 
     private val createAndCloseForm: Reusable[Callback] =
       createAnd(close)
