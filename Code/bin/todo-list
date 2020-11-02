@@ -17,5 +17,6 @@ echo "$files" \
   | fgrep -v 'RealProject1.scala' \
   | sort \
   | xargs grep -P --color=$colour -n '(?<!["#])TODO(?!").*' \
-  | awk '{match($1,/([a-z_-]+)\/src/,a); if (NR > 1 && a[1] != p[1]) print ""; print} {match($1,/([a-z_-]+)\/src/,p)}'
+  | awk '{match($1,/([a-z_-]+)\/src/,a); if (NR > 1 && a[1] != p[1]) print ""; print} {match($1,/([a-z_-]+)\/src/,p)}' \
+  | fgrep -v 'Fix in Scala 3'
 
