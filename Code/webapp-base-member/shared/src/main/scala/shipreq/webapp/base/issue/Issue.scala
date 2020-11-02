@@ -29,6 +29,7 @@ object IssueClass {
   case object DeadTag                      extends IssueClass(C.BadData)
   case object DerivativeTagDead            extends IssueClass(C.BadData)
   case object DerivativeTagUnrelated       extends IssueClass(C.BadData)
+  case object DuplicateTitle               extends IssueClass(C.BadData)
   case object EmptyCodeGroup               extends IssueClass(C.Futility)
   case object FieldDefaultTagDead          extends IssueClass(C.BadData)
   case object FieldDefaultTagNotApplicable extends IssueClass(C.BadData)
@@ -90,6 +91,8 @@ object Issue {
                                                 key1         : ApplicableTag,
                                                 key2         : ApplicableTag,
                                                 tag          : ApplicableTag) extends Issue(C.DerivativeTagUnrelated)
+
+  final case class DuplicateTitle(req: Req) extends Issue(C.DuplicateTitle)
 
   final case class EmptyCodeGroup(rcg: LiveCodeGroup) extends Issue(C.EmptyCodeGroup)
 

@@ -49,6 +49,8 @@ object IssueLite {
                                                 key2   : ApplicableTagId,
                                                 tagId  : ApplicableTagId) extends IssueLite(C.DerivativeTagUnrelated)
 
+  final case class DuplicateTitle(reqId: ReqId) extends IssueLite(C.DuplicateTitle)
+
   final case class EmptyCodeGroup(rcgId: ReqCodeGroupId) extends IssueLite(C.EmptyCodeGroup)
 
   final case class FieldDefaultTagDead(fieldId: CustomField.Tag.Id,
@@ -94,6 +96,7 @@ object IssueLite {
     case Issue.DeadTag                     (req, loc, tag        ) => DeadTag                     (req.id, loc, tag.id)
     case Issue.DerivativeTagResultDead     (field, k1, k2, tag   ) => DerivativeTagResultDead     (field.id, k1.id, k2.id, tag.id)
     case Issue.DerivativeTagResultUnrelated(field, _, k1, k2, tag) => DerivativeTagResultUnrelated(field.id, k1.id, k2.id, tag.id)
+    case Issue.DuplicateTitle              (req                  ) => DuplicateTitle              (req.id)
     case Issue.EmptyCodeGroup              (rcg                  ) => EmptyCodeGroup              (rcg.id)
     case Issue.FieldDefaultTagDead         (field, tag           ) => FieldDefaultTagDead         (field.id, tag.id)
     case Issue.FieldDefaultTagNotApplicable(field, tag, reqType  ) => FieldDefaultTagNotApplicable(field.id, tag.id, reqType.reqTypeId)

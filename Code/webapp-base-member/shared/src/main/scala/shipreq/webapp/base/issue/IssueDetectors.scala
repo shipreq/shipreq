@@ -2,10 +2,11 @@ package shipreq.webapp.base.issue
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import nyaya.util.Multimap
+import scala.collection.mutable
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
-import shipreq.webapp.base.text.Atom
+import shipreq.webapp.base.text.{Atom, Text}
 
 object IssueDetectors {
   import IssueDetector.Ctx
@@ -186,6 +187,33 @@ object IssueDetectors {
               ctx.add(Issue.DerivativeTagResultDead(f, k1, k2, tag))
           }
         }
+    }
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  case object DuplicateTitle extends Instance {
+    override val detect = ctx =>
+      ctx.foreachLiveReq(() => detectInReqs(ctx))
+
+    private def detectInReqs(ctx: Ctx): Req => Unit = {
+      val seenPerReqType = mutable.Map.empty[ReqTypeId, mutable.Map[Text.AnyOptional, Req]]
+
+      req => {
+        val title = req.title
+        if (title.nonEmpty) {
+          val seen = seenPerReqType.getOrElseUpdate(req.reqTypeId, mutable.Map.empty)
+          val reqSeen = seen.getOrElseUpdate(title, req)
+          if (reqSeen ne req) {
+            // Found a duplicate
+            if (reqSeen ne null) {
+              ctx.add(Issue.DuplicateTitle(reqSeen))
+              seen.put(title, null)
+            }
+            ctx.add(Issue.DuplicateTitle(req))
+          }
+        }
+      }
     }
   }
 

@@ -1,5 +1,4 @@
 ### Problems
-* new issue: duplicate titles (per req type?)
 
 
 

@@ -300,6 +300,39 @@ object IssueDetectorTest extends TestSuite {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+  private object DuplicateTitleTests {
+    private implicit val filter = IssueFilter[Issue.DuplicateTitle]
+    import SampleProject3.Values._
+
+    def blanks() = test(p3)(
+      Event.GenericReqTitleSet(mfs(27), ArraySeq.empty)
+    )()
+
+    def ko() = test(p3)(
+      Event.GenericReqTitleSet(mfs(27), "Search"),
+      Event.GenericReqTitleSet(frs(1), "X"),
+      Event.GenericReqTitleSet(frs(2), "X"),
+    )(
+      IssueLite.DuplicateTitle(mfs(25)),
+      IssueLite.DuplicateTitle(mfs(27)),
+      IssueLite.DuplicateTitle(frs(1)),
+      IssueLite.DuplicateTitle(frs(2)),
+    )
+
+    def dead() = test(p3)(
+      Event.GenericReqTitleSet(mfs(1), "X"),
+      Event.GenericReqTitleSet(mfs(2), "X"),
+      TestEvent.reqsDelete(ids = List(mfs(1), mfs(2))),
+      Event.GenericReqTitleSet(mfs(27), "Entities") // same as dead MF-28
+    )()
+
+    def perReqType() = test(p3)(
+      Event.GenericReqTitleSet(frs(1), "Search"), // Conflicts with MF-25 but different req types
+    )()
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   private object EmptyCodeGroupTests {
     private implicit val filter = IssueFilter[Issue.EmptyCodeGroup]
 
@@ -625,6 +658,14 @@ object IssueDetectorTest extends TestSuite {
       "ko"       - ko()
       "dead"     - dead()
       "disabled" - disabled()
+    }
+
+    "DuplicateTitle" - {
+      import DuplicateTitleTests._
+      "blanks"     - blanks()
+      "ko"         - ko()
+      "dead"       - dead()
+      "perReqType" - perReqType()
     }
 
     "EmptyCodeGroup" - {

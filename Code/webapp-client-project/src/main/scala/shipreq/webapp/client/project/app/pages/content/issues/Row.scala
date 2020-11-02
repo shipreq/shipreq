@@ -278,6 +278,9 @@ object Row {
         )
         forConfig(i, desc)
 
+      case i: Issue.DuplicateTitle =>
+        forReqTitle(i, UI.descDuplicateTitle, i.req)
+
       case i: Issue.EmptyCodeGroup =>
         forRcg(i, UI.descEmptyCodeGroup, i.rcg, None)
 

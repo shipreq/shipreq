@@ -154,6 +154,7 @@ object Actions {
          | _: Issue.BlankCustomField
          | _: Issue.BlankUseCaseStep
          | _: Issue.ConflictingTags
+         | _: Issue.DuplicateTitle
          | _: Issue.ImplicationRequired
          | _: Issue.IssueTagInRcg
          | _: Issue.IssueTagInReq

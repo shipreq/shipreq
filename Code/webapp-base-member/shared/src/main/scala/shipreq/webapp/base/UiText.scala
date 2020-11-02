@@ -190,6 +190,9 @@ object UiText {
     def descDerivativeTagResultUnrelated(field: String, key1: String, key2: String, tag: String, tagGroup: String): String =
       s"$field field derivative tag rule for [$key1 + $key2] results in $tag which isn't a $tagGroup anymore"
 
+    def descDuplicateTitle: String =
+      "Duplicate title"
+
     def descFieldDefaultTagDead(field: String, tag: String): String =
       s"$field field using deleted tag $tag as a default"
 
