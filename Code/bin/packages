@@ -1,0 +1,14 @@
+#!/bin/bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+find -name '*.scala' \
+  | fgrep /src/ \
+  | perl -pe '
+      s!/[^/\n]+$!!; s!^\./!!;
+      s!(.+?)/(?:(shared|jvm|js)/)?src/(.+?)/scala(?:/(.+))?!$1,$4!;
+      s!/!.!g;
+    ' \
+  | sort -u \
+  | egrep -v ',$'
