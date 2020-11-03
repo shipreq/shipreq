@@ -42,8 +42,8 @@ object WebappBuild {
     project("webapp")
       .configure(Common.jvmSettings)
       .aggregate(
-        webappMacroJvm, webappBaseJvm, webappBaseMemberJvm, webappServerLogicJvm, webappSampleDataJvm, webappBaseTestJvm,
-        webappMacroJs , webappBaseJs , webappBaseMemberJs , webappServerLogicJs , webappSampleDataJs , webappBaseTestJs ,
+        webappMacroJvm, webappBaseJvm, webappMemberJvm, webappServerLogicJvm, webappSampleDataJvm, webappBaseTestJvm,
+        webappMacroJs , webappBaseJs , webappMemberJs , webappServerLogicJs , webappSampleDataJs , webappBaseTestJs ,
         webappClientPublicJvm, webappClientPublicJs,
         webappClientLoaders,
         webappClientHome,
@@ -84,10 +84,27 @@ object WebappBuild {
       .jsSettings(
         genLastValueMemoBoilerplate := GenLastValueMemoBoilerplate(sourceDirectory.value / "main" / "scala"))
 
-  lazy val webappBaseMemberJvm = webappBaseMember.jvm
-  lazy val webappBaseMemberJs  = webappBaseMember.js
-  lazy val webappBaseMember =
-    crossProject("webapp-base-member")
+  lazy val webappBaseTestJvm = webappBaseTest.jvm
+  lazy val webappBaseTestJs  = webappBaseTest.js
+  lazy val webappBaseTest =
+    crossProject("webapp-base-test")
+      .configureBoth(Common.testModuleSettings)
+      .configureJvm(Common.jvmSettings)
+      .configureJvm(_.dependsOn(webappSampleDataJvm))
+      .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UsePhantomJs))
+      .dependsOn(baseTest, webappMember)
+      .depsForBoth(μTest ++ Nyaya.test ++ Circe.main)
+      .depsForJs(
+        React.test ++ ScalaCSS.react ++
+        TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact)
+      .jsSettings(
+        parallelExecution := false, // I don't know why this is needed
+        jsDependencies in Test += ProvidedJS / "webapp-base-test.js")
+
+  lazy val webappMemberJvm = webappMember.jvm
+  lazy val webappMemberJs  = webappMember.js
+  lazy val webappMember =
+    crossProject("webapp-member")
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
       .dependsOn(webappBase)
@@ -101,25 +118,8 @@ object WebappBuild {
     crossProject("webapp-sampledata")
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
-      .dependsOn(webappBaseMember)
+      .dependsOn(webappMember)
       .depsForBoth(Circe.main ++ Microlibs.testUtil)
-
-  lazy val webappBaseTestJvm = webappBaseTest.jvm
-  lazy val webappBaseTestJs  = webappBaseTest.js
-  lazy val webappBaseTest =
-    crossProject("webapp-base-test")
-      .configureBoth(Common.testModuleSettings)
-      .configureJvm(Common.jvmSettings)
-      .configureJvm(_.dependsOn(webappSampleDataJvm))
-      .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UsePhantomJs))
-      .dependsOn(baseTest, webappBaseMember)
-      .depsForBoth(μTest ++ Nyaya.test ++ Circe.main)
-      .depsForJs(
-        React.test ++ ScalaCSS.react ++
-        TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact)
-      .jsSettings(
-        parallelExecution := false, // I don't know why this is needed
-        jsDependencies in Test += ProvidedJS / "webapp-base-test.js")
 
   /** Settings for client SPA projects.
     *
@@ -144,7 +144,7 @@ object WebappBuild {
     project("webapp-client-loaders")
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(NoTests))
-      .dependsOn(webappBaseMemberJs)
+      .dependsOn(webappMemberJs)
 
   lazy val webappClientHome =
     project("webapp-client-home")
@@ -157,7 +157,7 @@ object WebappBuild {
     project("webapp-client-ww-api")
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(UsePhantomJs))
-      .dependsOn(webappBaseMemberJs)
+      .dependsOn(webappMemberJs)
       .depsForJs(
         boopickle ++ scalajsDom ++
         testScope(μTest))
@@ -185,7 +185,7 @@ object WebappBuild {
     crossProject("webapp-ssr")
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
-      .dependsOn(webappBaseMember, webappClientPublic, baseTest % Test)
+      .dependsOn(webappMember, webappClientPublic, baseTest % Test)
       .depsForBoth(ScalaGraal.extBoopickle ++ testScope(μTest))
 
   lazy val webappSsrJvm = webappSsr.jvm
@@ -211,7 +211,7 @@ object WebappBuild {
         Common.jvmSettings,
         _.dependsOn(taskmanApiLogic, webappClientPublicJvm, webappSsrJvm))
       .configureJs(Common.jsSettings(UsePhantomJs))
-      .dependsOn(webappBaseMember)
+      .dependsOn(webappMember)
       .dependsOn(baseTest % Test, webappBaseTest % Test)
       .depsForJvm(scaffeine ++ commonsText)
       .depsForBoth(testScope(μTest ++ Nyaya.test))
