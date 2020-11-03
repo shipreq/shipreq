@@ -1,4 +1,4 @@
-import sbt.{project => _, _}
+import sbt._
 import sbt.Keys._
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import com.typesafe.sbt.packager.universal.UniversalPlugin.autoImport.Universal
@@ -10,20 +10,22 @@ import ShipReqBuild._
 object TaskmanBuild {
 
   lazy val taskman =
-    project("taskman")
+    project
       .configure(Common.jvmSettings)
       .aggregate(taskmanApiLogic, taskmanApi, taskmanServerLogic, taskmanServer, taskmanServerSchema)
       .dependsOn(taskmanApiLogic, taskmanApi, taskmanServerLogic, taskmanServer, taskmanServerSchema)
 
   lazy val taskmanApiLogic =
-    project("taskman-api-logic")
+    project
+      .in(file("taskman-api-logic"))
       .configure(Common.jvmSettings)
       .deps(Circe.main ++ testScope(μTest ++ scalaCheck ++ Scala.reflect ++ Microlibs.testUtil))
       .dependsOn(baseUtilJvm)
       .dependsOn(baseTestJvm % Test)
 
   lazy val taskmanApi =
-    project("taskman-api")
+    project
+      .in(file("taskman-api"))
       .configure(Common.jvmSettings, DockerEnv.test.required)
       .deps(testScope(μTest ++ scalaCheck ++ Scala.reflect))
       .dependsOn(taskmanApiLogic, baseDb)
@@ -32,14 +34,16 @@ object TaskmanBuild {
       .settings(parallelExecution in Test := false)
 
   lazy val taskmanServerLogic =
-    project("taskman-server-logic")
+    project
+      .in(file("taskman-server-logic"))
       .configure(Common.jvmSettings)
       .deps(Logback.withPlugins ++ testScope(μTest ++ scalaCheck))
       .dependsOn(taskmanApiLogic)
       .dependsOn(baseTestJvm % Test)
 
   lazy val taskmanServerSchema =
-    project("taskman-server-schema")
+    project
+      .in(file("taskman-server-schema"))
       .configure(Common.jvmSettings)
       .dependsOn(baseDb)
 
@@ -64,7 +68,7 @@ object TaskmanBuild {
         javaOptions         in (Compile, run) ++= DockerEnv.dev.javaOptions("taskman", baseDirectory.value),
         runner              in (Compile, run)  := (runner in (Compile, run)).dependsOn(DockerEnv.dev.devEnvStart).value)
 
-    project("taskman-server")
+    Project("taskmanServer", file("taskman-server"))
       .enablePlugins(JavaAppPackaging, DockerPlugin)
       .configure(Common.jvmSettings, DockerEnv.test.required)
       .deps(

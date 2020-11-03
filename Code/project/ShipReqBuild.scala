@@ -4,7 +4,6 @@ import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin
 import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import sbtcrossproject.CrossPlugin.autoImport._
-import sbtcrossproject.CrossProject
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import Common._
 import Dependencies._
@@ -12,15 +11,6 @@ import TaskmanBuild._
 import WebappBuild._
 
 object ShipReqBuild {
-
-  def project(dir: String): Project =
-    Project(dir, file(dir))
-
-  def crossProject(dir: String): CrossProject =
-    CrossProject(dir, file(dir))(JVMPlatform, JSPlatform)
-      .jvmConfigure(_.withId(dir + "-jvm"))
-      .jsConfigure(_.withId(dir + "-js"))
-      .settings(name := dir)
 
   lazy val root =
     Project("root", file("."))
@@ -32,14 +22,15 @@ object ShipReqBuild {
   // base-* : General utils for taskman, webapp, benchmarking, etc.
 
   lazy val base =
-    project("base")
+    project
       .configure(Common.jvmSettings)
       .aggregate(basePredefJvm, basePredefJs, baseUtilJvm, baseUtilJs, baseOps, baseDb, baseTestJvm, baseTestJs)
 
   lazy val basePredefJvm = basePredef.jvm
   lazy val basePredefJs  = basePredef.js
   lazy val basePredef =
-    crossProject("base-predef")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("base-predef"))
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
       .depsForBoth(UnivEq.scalaz ++ scalaz ++ Nyaya.prop ++ Microlibs.nonempty)
@@ -51,7 +42,8 @@ object ShipReqBuild {
   lazy val baseUtilJvm = baseUtil.jvm
   lazy val baseUtilJs  = baseUtil.js
   lazy val baseUtil =
-    crossProject("base-util")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("base-util"))
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(UseNode))
       .dependsOn(basePredef)
@@ -65,7 +57,8 @@ object ShipReqBuild {
         SLF4J.api ++ Logback.withPlugins ++ scalaLogging ++ clearConfig ++ catsEffect)
 
   lazy val baseOps =
-    project("base-ops")
+    project
+      .in(file("base-ops"))
       .configure(
         Common.jvmSettings,
         Common.macroModuleSettings)
@@ -73,7 +66,8 @@ object ShipReqBuild {
       .deps(jaegerClient ++ Prometheus.client)
 
   lazy val baseDb =
-    project("base-db")
+    project
+      .in(file("base-db"))
       .configure(Common.jvmSettings)
       .dependsOn(baseOps)
       .deps(postgresql ++ Doobie.main ++ hikariCP ++ flyway ++ Circe.main)
@@ -81,7 +75,8 @@ object ShipReqBuild {
   lazy val baseTestJvm = baseTest.jvm
   lazy val baseTestJs  = baseTest.js
   lazy val baseTest =
-    crossProject("base-test")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("base-test"))
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(UseNode))
@@ -97,7 +92,7 @@ object ShipReqBuild {
   // utils & benchmark-*
 
   lazy val utils =
-    project("utils")
+    project
       .configure(Common.jvmSettings)
       .deps(commonsText ++ Nyaya.test)
       .dependsOn(webappBaseTestJvm)
@@ -138,8 +133,8 @@ object ShipReqBuild {
   lazy val benchmarkJvm = benchmark.jvm
   lazy val benchmarkJs  = benchmark.js
   lazy val benchmark =
-    crossProject("benchmark")
-      .configureBoth(Benchmark.commonSettings)
+    crossProject(JSPlatform, JVMPlatform)
+      .configure(Benchmark.commonSettings)
       .dependsOn(webappBaseTest, webappSampleData)
       .configureJvm(Benchmark.jvmSettings)
       .configureJs(Benchmark.jsSettings)

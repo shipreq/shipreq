@@ -1,10 +1,10 @@
-import sbt.{project => _, _}
+import sbt._
 import sbt.Keys._
 import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin
 import org.scalajs.jsdependencies.sbtplugin.JSDependenciesPlugin.autoImport._
 import org.scalajs.sbtplugin.{ScalaJSPlugin, Stage}
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import sbtcrossproject.CrossPlugin.autoImport.{crossProject => _, _}
+import sbtcrossproject.CrossPlugin.autoImport._
 import sbtdocker.DockerPlugin
 import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import Common._
@@ -39,7 +39,7 @@ object WebappBuild {
   }
 
   lazy val webapp =
-    project("webapp")
+    project
       .configure(Common.jvmSettings)
       .aggregate(
         webappMacroJvm, webappBaseJvm, webappMemberJvm, webappServerLogicJvm, webappSampleDataJvm, webappBaseTestJvm,
@@ -57,7 +57,8 @@ object WebappBuild {
   lazy val webappMacroJvm = webappMacro.jvm
   lazy val webappMacroJs  = webappMacro.js
   lazy val webappMacro =
-    crossProject("webapp-macro")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("webapp-macro"))
       .configureBoth(
         Common.macroModuleSettings)
       .configureJvm(Common.jvmSettings)
@@ -73,7 +74,8 @@ object WebappBuild {
   lazy val webappBaseJvm = webappBase.jvm
   lazy val webappBaseJs  = webappBase.js
   lazy val webappBase =
-    crossProject("webapp-base")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("webapp-base"))
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
       .dependsOn(baseUtil, webappMacro)
@@ -87,7 +89,8 @@ object WebappBuild {
   lazy val webappBaseTestJvm = webappBaseTest.jvm
   lazy val webappBaseTestJs  = webappBaseTest.js
   lazy val webappBaseTest =
-    crossProject("webapp-base-test")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("webapp-base-test"))
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
       .configureJvm(_.dependsOn(webappSampleDataJvm))
@@ -104,7 +107,8 @@ object WebappBuild {
   lazy val webappMemberJvm = webappMember.jvm
   lazy val webappMemberJs  = webappMember.js
   lazy val webappMember =
-    crossProject("webapp-member")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("webapp-member"))
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
       .dependsOn(webappBase)
@@ -115,7 +119,8 @@ object WebappBuild {
   lazy val webappSampleDataJvm = webappSampleData.jvm
   lazy val webappSampleDataJs  = webappSampleData.js
   lazy val webappSampleData =
-    crossProject("webapp-sampledata")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("webapp-sampledata"))
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
       .dependsOn(webappMember)
@@ -134,27 +139,31 @@ object WebappBuild {
   lazy val webappClientPublicJvm = webappClientPublic.jvm
   lazy val webappClientPublicJs  = webappClientPublic.js
   lazy val webappClientPublic =
-    crossProject("webapp-client-public")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("webapp-client-public"))
       .configureJvm(Common.jvmSettings)
       .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UsePhantomJs))
       .dependsOn(webappBase, webappBaseTest % Test)
       .jsSettings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
   lazy val webappClientLoaders =
-    project("webapp-client-loaders")
+    project
+      .in(file("webapp-client-loaders"))
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(NoTests))
       .dependsOn(webappMemberJs)
 
   lazy val webappClientHome =
-    project("webapp-client-home")
+    project
+      .in(file("webapp-client-home"))
       .configure(clientSpa)
       .configure(Common.jsSettings(UseNode)) // PhantomJS crashes
       .dependsOn(webappClientLoaders)
       .depsForJs(ScalaCSS.react)
 
   lazy val webappClientWwApi =
-    project("webapp-client-ww-api")
+    project
+      .in(file("webapp-client-ww-api"))
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappMemberJs)
@@ -163,7 +172,8 @@ object WebappBuild {
         testScope(μTest))
 
   lazy val webappClientWw =
-    project("webapp-client-ww")
+    project
+      .in(file("webapp-client-ww"))
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(UseNode))
       .dependsOn(webappClientWwApi, webappBaseTestJs % Test)
@@ -176,13 +186,15 @@ object WebappBuild {
         mainClass in Compile := Some("shipreq.webapp.client.ww.Main"))
 
   lazy val webappClientProject =
-    project("webapp-client-project")
+    project
+      .in(file("webapp-client-project"))
       .configure(clientSpa)
       .dependsOn(webappClientWwApi, webappClientLoaders)
       .depsForJs(ScalaCSS.react ++ scalajsDom ++ shapeless ++ Nyaya.prop ++ parboiled)
 
   lazy val webappSsr =
-    crossProject("webapp-ssr")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("webapp-ssr"))
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
       .dependsOn(webappMember, webappClientPublic, baseTest % Test)
@@ -206,7 +218,8 @@ object WebappBuild {
   lazy val webappServerLogicJvm = webappServerLogic.jvm
   lazy val webappServerLogicJs  = webappServerLogic.js
   lazy val webappServerLogic =
-    crossProject("webapp-server-logic")
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("webapp-server-logic"))
       .configureJvm(
         Common.jvmSettings,
         _.dependsOn(taskmanApiLogic, webappClientPublicJvm, webappSsrJvm))
@@ -219,7 +232,9 @@ object WebappBuild {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   lazy val webappServer =
-    project("webapp-server").configure(Server.definition)
+    project
+      .in(file("webapp-server"))
+      .configure(Server.definition)
 
   object Server {
     import com.earldouglas.xwp._
