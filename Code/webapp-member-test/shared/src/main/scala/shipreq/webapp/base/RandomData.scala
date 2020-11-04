@@ -27,71 +27,17 @@ import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
-import shipreq.webapp.base.user._
-import shipreq.webapp.base.util.PreProcessor
 
 // TODO RandomData is inaccurate in that CorrectionParts aren't applied.
 
-object RandomDataSettings {
-  var disableUnicode = false
-}
-
 object RandomData {
   import RandomDataSettings._
+  import RandomBaseData._
   import DataImplicits._
   import MTrie.Ops
   import Optics.Implicits._
   import TestOptics.{customReqTypesLive => _, _}
   import WebappBaseGen._
-
-  /*
-  def genmodL[A, B](l: Lens[A, B])(g: B => Gen[B])(a: A): Gen[A] =
-    g(l get a) map (l.set(_)(a))
-  */
-
-//    val trimLeftR = "^\\s+".r
-//    def trimLeft(s: String) = trimLeftR.replaceAllIn(s, "")
-//    val trimRightR = "\\s+$".r
-//    def trimRight(s: String) = trimRightR.replaceAllIn(s, "")
-
-  @tailrec def dropHead[A](v: ArraySeq[A])(f: A => Boolean): ArraySeq[A] =
-    if (v.nonEmpty && f(v.head))
-      dropHead(v.tail)(f)
-    else
-      v
-
-  @tailrec def dropLast[A](v: ArraySeq[A])(f: A => Boolean): ArraySeq[A] =
-    if (v.nonEmpty && f(v.last))
-      dropLast(v.init)(f)
-    else
-      v
-
-  private[this] val charsUpper      = ('A' to 'Z').toArray
-  private[this] val charsLower      = ('a' to 'z').toArray
-  private[this] val charsAlpha      = charsUpper ++ charsLower
-  private[this] val charsAlphaSlash = charsAlpha :+ '/'
-
-  val genAlphaSlash = Gen.chooseArray_!(charsAlphaSlash)
-
-  val unicodeChar: Gen[Char] =
-    if (disableUnicode)
-      Gen.ascii
-    else {
-      val a = new Array[Char](1)
-      val chars = (0 to 65535)
-        .iterator
-        .map(_.toChar)
-        .filter { c =>
-          a(0) = c
-          PreProcessor.FixChar.multiLine(a, 0)
-          a(0) ==* c
-        }
-        .toVector
-      Gen.choose_!(chars)
-    }
-
-  val unicodeString : Gen[String] = unicodeChar.string
-  val unicodeString1: Gen[String] = unicodeChar.string1
 
 //  private val _charPredAllChars = ('\u0001' to '\ud7ff')
   private val _charPredAllChars = ('\u0001' to '\u0100')
@@ -128,16 +74,6 @@ object RandomData {
     Gen.lift2(grammarChars(firstChar(g)), tail)(_.toString + _)
   }
 
-  class CaseInsensitive(val norm: String, val str: String) {
-    override def hashCode = norm.##
-    override def equals(o: Any) = o match {
-      case x: CaseInsensitive => norm == x.norm
-      case _ => false
-    }
-  }
-  def CaseInsensitive(s: String): CaseInsensitive =
-    new CaseInsensitive(s.toLowerCase, s)
-
   def legalGrammar[G](g: G)(first: G => GrammarSpec.Chars, rest: G => GrammarSpec.Chars, last: Option[G => GrammarSpec.Chars]): LazyList[String] = {
     val gf = first(g).iterator().map(_.toString).to(LazyList)
     val gn = rest(g).iterator().map(_.toString).to(LazyList)
@@ -173,16 +109,8 @@ object RandomData {
     Distinct.Fixer.lift(fix).xmap(_.str)(CaseInsensitive)
   }
 
-  def someOfWithDups[A, B](as: Seq[A])(f: A => Gen[B]): Gen[Vector[B]] =
-    Gen.tryGenChoose(as).fold[Gen[Vector[B]]](Gen pure Vector.empty)(
-      _.vector.flatMap(Gen.traverse(_)(f)))
-
   val id =
     Gen.chooseInt(1, 1024 * 64)
-
-  val shortText1        = unicodeChar.string(1 to WebappConfig.shortTextMaxLength)
-  val shortText         = unicodeChar.string(0 to WebappConfig.shortTextMaxLength)
-  val optionalLargeText = unicodeChar.string(1 to WebappConfig.largeTextMaxLength).option
 
   def revAndIMap[D, I <: TaggedInt](r: Gen[List[D]])
                                     (implicit i: DataIdAux[D, I], j: TestDataIdAux[D, I]): Gen[IMap[I, D]] = {
@@ -194,8 +122,6 @@ object RandomData {
   def distinctId[D, I <: TaggedInt](implicit i: DataIdAux[D, I], j: TestDataIdAux[D, I]) =
     Distinct.fint.xmap(j.mkId)(_.value).distinct.contramap[D](i.id, j.setId)
 
-  def imapToMapLens[K, V] = Lens((_: IMap[K, V]).underlyingMap)(v => _ replaceUnderlying v)
-
   val desc =
     unicodeString1.option
 
@@ -204,12 +130,6 @@ object RandomData {
 
   val on =
     Gen.boolean.map(On.when)
-
-  val enabled =
-    Gen.boolean.map(Enabled.when)
-
-  val applicability: Gen[Applicability] =
-    Gen.boolean.map(Applicable.when)
 
 //  val liveUsually =
 //    Gen.int.map(i => if ((i & 7) == 0) Dead else Live)
@@ -223,45 +143,8 @@ object RandomData {
   val hashRefKey: Gen[HashRefKey] =
     grammarStr1(Grammar.hashRefKey)(_.firstChar, _.midChars, Some(_.lastChar), _.length) map HashRefKey
 
-  val dir =
-    Gen.choose[Direction](Forwards, Backwards)
-
   val filterDead =
     Gen.choose[FilterDead](ShowDead, HideDead)
-
-  val alphaOne =
-    Gen.alpha.map(_.toString)
-
-  def obfuscated[A]: Gen[Obfuscated[A]] =
-    Gen.alphaNumeric.string(4 to 12).map(Obfuscated.apply[A])
-
-  lazy val username: Gen[Username] = {
-    val x = WebappConfig.usernameLength.min - 2
-    val y = WebappConfig.usernameLength.max - 2
-    for {
-      a <- Gen.lower
-      b <- Gen.chooseChar('_', 'a' to 'z', '0' to '9').string(x to y)
-      c <- Gen.chooseChar('a', 'b' to 'z', '0' to '9')
-    } yield Username("" + a + b + c)
-  }
-
-  lazy val errorMsg: Gen[ErrorMsg] =
-    Gen.ascii.string(1 to 6).map(ErrorMsg.apply)
-
-  lazy val emailAddr: Gen[EmailAddr] =
-    Gen.ascii.string(0 to 6).map(EmailAddr.apply)
-
-  lazy val plainTextPassword: Gen[PlainTextPassword] =
-    unicodeString.map(PlainTextPassword.apply)
-
-  lazy val personName: Gen[PersonName] =
-    unicodeString1.map(PersonName.apply)
-
-  lazy val verificationToken: Gen[VerificationToken] =
-    Gen.ascii.string(1 to 6).map(VerificationToken.apply)
-
-  lazy val genHexCharLower: Gen[Char] =
-    Gen.chooseChar('a', "bcdef0123456789")
 
   lazy val genColour: Gen[Colour] =
     for {

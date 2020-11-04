@@ -6,7 +6,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data.Obfuscated
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.user.{PlainTextPassword, Username}
-import shipreq.webapp.base.{RandomData => R}
+import shipreq.webapp.base.{RandomBaseData => R, RandomData => RR}
 import utest._
 
 object CommonProtocolsTest extends TestSuite {
@@ -14,7 +14,7 @@ object CommonProtocolsTest extends TestSuite {
 
   private val str                = Gen.string(0 to 4)
   private val genOrd             = Gen.chooseInt(100000)
-  private val genMetadataProject = Gen.apply3(Metadata.Project)(R.projectIdPublic, genOrd.option, genOrd.set(0 to 3))
+  private val genMetadataProject = Gen.apply3(Metadata.Project)(RR.projectIdPublic, genOrd.option, genOrd.set(0 to 3))
   private val genMetadataClient  = Gen.apply4(Metadata.Client)(genMetadataProject.option, str, str, R.username.option)
   private val metadataProjectMax = Metadata.Project(Obfuscated("cUZ0"), Some(9), Set(11, 12, 14))
   private val metadataClientMax  = Metadata.Client(Some(metadataProjectMax), "https://shipreq.com/project/cUZ0", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36", Some(Username("omg123")))

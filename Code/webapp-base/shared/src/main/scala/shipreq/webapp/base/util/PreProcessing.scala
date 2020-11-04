@@ -1,13 +1,11 @@
 package shipreq.webapp.base.util
 
-import org.parboiled2.ParserInput
 import scala.annotation.switch
 
-final class PreProcessed private[util] (private val chars: Array[Char]) extends AnyVal {
-  def value: ParserInput = chars
+final class PreProcessed private[util] (val charArray: Array[Char]) extends AnyVal {
 
   def asString: String =
-    String valueOf chars
+    String.valueOf(charArray)
 }
 
 object PreProcessor {

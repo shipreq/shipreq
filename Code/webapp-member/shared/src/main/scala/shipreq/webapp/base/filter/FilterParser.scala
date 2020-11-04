@@ -19,7 +19,7 @@ object FilterParser {
     parsePreProcessed(preProcessor(input))
 
   def parsePreProcessed(input: PreProcessed): Result = {
-    val parser = new FilterParser(input.value)
+    val parser = new FilterParser(input.charArray)
     parseResult(parser.main.run(), parser)
   }
 

@@ -52,7 +52,7 @@ object Text {
     protected[text] def parserI(p: Project, currentUseCase: Option[ReqTypePos])(i: ParserInput): Parser
 
     final def parser(p: Project, currentUseCase: Option[ReqTypePos])(text: String): Parser =
-      parserI(p, currentUseCase)(P.preProcessor(lineCardinality)(text).value)
+      parserI(p, currentUseCase)(P.preProcessor(lineCardinality)(text).charArray)
 
     final def parse(p: Project, currentUseCase: Option[ReqTypePos])(text: String): OptionalText = {
       val pp = parser(p, currentUseCase)(text)

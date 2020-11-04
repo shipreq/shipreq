@@ -95,7 +95,7 @@ object ShipReqBuild {
     project
       .configure(Common.jvmSettings)
       .deps(commonsText ++ Nyaya.test)
-      .dependsOn(webappBaseTestJvm)
+      .dependsOn(webappMemberTestJvm)
       .settings(
         connectInput in run  := true,
         fork         in run  := true,
@@ -135,7 +135,7 @@ object ShipReqBuild {
   lazy val benchmark =
     crossProject(JSPlatform, JVMPlatform)
       .configure(Benchmark.commonSettings)
-      .dependsOn(webappBaseTest, webappSampleData)
+      .dependsOn(webappMemberTest, webappSampleData)
       .configureJvm(Benchmark.jvmSettings)
       .configureJs(Benchmark.jsSettings)
 }

@@ -42,12 +42,18 @@ object WebappBuild {
     project
       .configure(Common.jvmSettings)
       .aggregate(
-        webappMacroJvm, webappBaseJvm, webappMemberJvm, webappServerLogicJvm, webappSampleDataJvm, webappBaseTestJvm,
-        webappMacroJs , webappBaseJs , webappMemberJs , webappServerLogicJs , webappSampleDataJs , webappBaseTestJs ,
+        webappMacroJvm, webappMacroJs,
+        webappBaseJvm, webappBaseJs,
+        webappBaseTestJvm, webappBaseTestJs,
+        webappMemberJvm, webappMemberJs,
+        webappMemberTestJvm, webappMemberTestJs,
+        webappServerLogicJvm, webappServerLogicJs,
+        webappSampleDataJvm, webappSampleDataJs,
         webappClientPublicJvm, webappClientPublicJs,
         webappClientLoaders,
         webappClientHome,
-        webappClientWwApi, webappClientWw, webappClientProject,
+        webappClientWwApi, webappClientWw,
+        webappClientProject,
         webappSsrJvm, webappSsrJs,
         webappServer)
       .settings(
@@ -93,10 +99,9 @@ object WebappBuild {
       .in(file("webapp-base-test"))
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
-      .configureJvm(_.dependsOn(webappSampleDataJvm))
       .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UsePhantomJs))
-      .dependsOn(baseTest, webappMember)
-      .depsForBoth(μTest ++ Nyaya.test ++ Circe.main)
+      .dependsOn(baseTest, webappBase)
+      .depsForBoth(μTest ++ Nyaya.test)
       .depsForJs(
         React.test ++ ScalaCSS.react ++
         TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact)
@@ -116,6 +121,21 @@ object WebappBuild {
       .depsForBoth(Circe.main % Provided) // Provided because for now, want to ensure JSON stuff isn't part of frontend
       .depsForJs(ScalaCSS.react)
 
+  lazy val webappMemberTestJvm = webappMemberTest.jvm
+  lazy val webappMemberTestJs  = webappMemberTest.js
+  lazy val webappMemberTest =
+    crossProject(JSPlatform, JVMPlatform)
+      .in(file("webapp-member-test"))
+      .configureBoth(Common.testModuleSettings)
+      .configureJvm(Common.jvmSettings)
+      .configureJvm(_.dependsOn(webappSampleDataJvm))
+      .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UsePhantomJs))
+      .dependsOn(webappBaseTest, webappMember)
+      .depsForBoth(Circe.main)
+      .jsSettings(
+        parallelExecution := false, // I don't know why this is needed
+        jsDependencies in Test += ProvidedJS / "webapp-member-test.js")
+
   lazy val webappSampleDataJvm = webappSampleData.jvm
   lazy val webappSampleDataJs  = webappSampleData.js
   lazy val webappSampleData =
@@ -130,10 +150,10 @@ object WebappBuild {
     *
     * ScalaCss is deliberately missing because it's too heavy for the public SPA.
     */
-  private lazy val clientSpa: Project => Project =
+  private lazy val memberSpa: Project => Project =
     _.enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
       .configure(Common.jsSettings(UsePhantomJs))
-      .dependsOn(webappBaseJs, webappBaseTestJs % Test, webappServerLogicJs % Test)
+      .dependsOn(webappMemberJs, webappMemberTestJs % Test, webappServerLogicJs % Test)
       .settings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
   lazy val webappClientPublicJvm = webappClientPublic.jvm
@@ -156,7 +176,7 @@ object WebappBuild {
   lazy val webappClientHome =
     project
       .in(file("webapp-client-home"))
-      .configure(clientSpa)
+      .configure(memberSpa)
       .configure(Common.jsSettings(UseNode)) // PhantomJS crashes
       .dependsOn(webappClientLoaders)
       .depsForJs(ScalaCSS.react)
@@ -176,7 +196,7 @@ object WebappBuild {
       .in(file("webapp-client-ww"))
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(UseNode))
-      .dependsOn(webappClientWwApi, webappBaseTestJs % Test)
+      .dependsOn(webappClientWwApi, webappMemberTestJs % Test)
       .depsForJs(
         boopickle ++ scalajsDom ++
         testScope(μTest))
@@ -188,7 +208,7 @@ object WebappBuild {
   lazy val webappClientProject =
     project
       .in(file("webapp-client-project"))
-      .configure(clientSpa)
+      .configure(memberSpa)
       .dependsOn(webappClientWwApi, webappClientLoaders)
       .depsForJs(ScalaCSS.react ++ scalajsDom ++ shapeless ++ Nyaya.prop ++ parboiled)
 
@@ -225,7 +245,7 @@ object WebappBuild {
         _.dependsOn(taskmanApiLogic, webappClientPublicJvm, webappSsrJvm))
       .configureJs(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappMember)
-      .dependsOn(baseTest % Test, webappBaseTest % Test)
+      .dependsOn(baseTest % Test, webappMemberTest % Test)
       .depsForJvm(scaffeine ++ commonsText)
       .depsForBoth(testScope(μTest ++ Nyaya.test))
 
@@ -331,6 +351,7 @@ object WebappBuild {
     def definition: Project => Project = _
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
       .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm)
+      .dependsOn(webappMemberTestJvm % Test)
       .deps(
         scalaz ++ Lift.webkit ++  scalaXml ++ SLF4J.jcl ++ commonsText ++ Nyaya.gen ++ Logback.withPlugins ++ JJWT.all ++
         Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ Prometheus.logback ++ redisson ++

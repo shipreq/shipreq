@@ -15,8 +15,8 @@ import shipreq.base.test.BaseUtilGen._
 import shipreq.base.test.IncCounter
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
-import shipreq.webapp.base.RandomData
-import shipreq.webapp.base.RandomData.{TextGen, TextGenExt, customReqTypeName, desc, exclusivity, fieldName, fieldRefKey, filter, filterDead, genColour, hashRefKey, implicationRequired, mandatory, reqCode, reqTypeMnemonic, tagGroupName, unicodeString1}
+import shipreq.webapp.base.RandomBaseData.unicodeString1
+import shipreq.webapp.base.RandomData.{TextGen, TextGenExt, customReqTypeName, desc, exclusivity, fieldName, fieldRefKey, filter, filterDead, genColour, hashRefKey, implicationRequired, mandatory, reqCode, reqTypeMnemonic, tagGroupName}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.SavedView
 import shipreq.webapp.base.event.ApplicableEventGen.ObserveFn
@@ -26,6 +26,7 @@ import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.test.DataTestExt._
 import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
+import shipreq.webapp.base.{RandomBaseData, RandomData}
 
 final case class RandomEventStreamConfig(retiredEvents: Boolean,
                                          reqCodeEvents: Boolean,
@@ -770,7 +771,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
       None
     else
       liveReqId.map { gReqId =>
-        RandomData.dir.flatMap { dir =>
+        RandomBaseData.dir.flatMap { dir =>
           gReqId.flatMap { id =>
             Gen.choose_!(liveReqIds.filter(_ !=* id)).set1.map { ids =>
               val sd = SetDiff.xor(p.content.implications(dir)(id), ids)
