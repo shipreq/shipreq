@@ -1,10 +1,11 @@
-package shipreq.webapp.base.protocol.ajax
+package shipreq.webapp.base.test
 
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import scala.util.{Failure, Success, Try}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.protocol._
+import shipreq.webapp.base.protocol.ajax.AjaxClient
 import shipreq.webapp.base.protocol.binary.SafePickler
 
 object TestAjaxClient {

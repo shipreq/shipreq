@@ -10,9 +10,10 @@ import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
-import shipreq.webapp.base.protocol.websocket.FakeWebSocket.Message
 import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.ReqId
+import shipreq.webapp.base.test.FakeWebSocket
+import shipreq.webapp.base.test.FakeWebSocket.Message
 import shipreq.webapp.base.test.WebappTestUtil._
 import sourcecode.Line
 import utest._

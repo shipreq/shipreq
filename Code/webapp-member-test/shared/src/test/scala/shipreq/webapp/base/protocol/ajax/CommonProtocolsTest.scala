@@ -5,8 +5,9 @@ import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{PlainTextPassword, Username}
 import shipreq.webapp.base.test.BinaryTestUtil._
+import shipreq.webapp.base.test.{RandomBaseData => R}
 import shipreq.webapp.base.util.Obfuscated
-import shipreq.webapp.base.{RandomBaseData => R, RandomData => RR}
+import shipreq.webapp.base.{RandomData => RR}
 import utest._
 
 object CommonProtocolsTest extends TestSuite {

@@ -10,8 +10,9 @@ import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.binary.v1.Latest.picklerProject
+import shipreq.webapp.base.test.RandomDataSettings
 import shipreq.webapp.base.util.ShowSize
-import shipreq.webapp.base.{RandomData => $, RandomDataSettings}
+import shipreq.webapp.base.{RandomData => $}
 
 object GenerateProject {
 

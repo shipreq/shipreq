@@ -15,7 +15,7 @@ import shipreq.base.test.BaseUtilGen._
 import shipreq.base.test.IncCounter
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
-import shipreq.webapp.base.RandomBaseData.unicodeString1
+import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.RandomData.{TextGen, TextGenExt, customReqTypeName, desc, exclusivity, fieldName, fieldRefKey, filter, filterDead, genColour, hashRefKey, implicationRequired, mandatory, reqCode, reqTypeMnemonic, tagGroupName}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.SavedView
@@ -24,9 +24,10 @@ import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.event.RandomEventStream.{ProjectDepGen, State}
 import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.test.DataTestExt._
+import shipreq.webapp.base.test.RandomBaseData
+import shipreq.webapp.base.test.RandomBaseData.unicodeString1
 import shipreq.webapp.base.test.WebappBaseGen._
 import shipreq.webapp.base.text.Text
-import shipreq.webapp.base.{RandomBaseData, RandomData}
 
 final case class RandomEventStreamConfig(retiredEvents: Boolean,
                                          reqCodeEvents: Boolean,

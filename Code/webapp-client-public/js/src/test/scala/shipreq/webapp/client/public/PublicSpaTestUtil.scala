@@ -4,7 +4,7 @@ import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.base.util._
 import shipreq.webapp.base.config.AssetManifest
-import shipreq.webapp.base.protocol.ajax.TestAjaxClient
+import shipreq.webapp.base.test.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.public.spa.{Page, PublicSpa}
 import teststate.data.Id

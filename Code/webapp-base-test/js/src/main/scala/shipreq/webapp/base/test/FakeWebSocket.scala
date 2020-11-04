@@ -1,11 +1,12 @@
-package shipreq.webapp.base.protocol.websocket
+package shipreq.webapp.base.test
 
 import org.scalajs.dom.raw
-import org.scalajs.dom.raw.{Blob, CloseEvent, Event, MessageEvent, MessageEventInit}
+import org.scalajs.dom.raw._
 import scala.scalajs.js
 import scala.scalajs.js.typedarray
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import shipreq.base.util.{BinaryData, BinaryJs, VarJs}
+import shipreq.webapp.base.protocol.websocket.WebSocket
 import shipreq.webapp.base.protocol.websocket.WebSocket._
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.{CloseCode, CloseReason, CloseReasonPhrase}
 

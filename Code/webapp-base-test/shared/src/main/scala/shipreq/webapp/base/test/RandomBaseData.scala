@@ -1,15 +1,11 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.test
 
-import monocle.{Optional => _, _}
-import nyaya.gen._
+import monocle.Lens
+import nyaya.gen.Gen
 import shipreq.base.util._
-import shipreq.webapp.base.config._
+import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.util._
-
-object RandomDataSettings {
-  var disableUnicode = false
-}
+import shipreq.webapp.base.util.{Obfuscated, PreProcessor}
 
 object RandomBaseData {
   import RandomDataSettings._
@@ -31,14 +27,14 @@ object RandomBaseData {
     g(l get a) map (l.set(_)(a))
   */
 
-//    val trimLeftR = "^\\s+".r
-//    def trimLeft(s: String) = trimLeftR.replaceAllIn(s, "")
-//    val trimRightR = "\\s+$".r
-//    def trimRight(s: String) = trimRightR.replaceAllIn(s, "")
+  //    val trimLeftR = "^\\s+".r
+  //    def trimLeft(s: String) = trimLeftR.replaceAllIn(s, "")
+  //    val trimRightR = "\\s+$".r
+  //    def trimRight(s: String) = trimRightR.replaceAllIn(s, "")
 
-  private[this] val charsUpper      = ('A' to 'Z').toArray
-  private[this] val charsLower      = ('a' to 'z').toArray
-  private[this] val charsAlpha      = charsUpper ++ charsLower
+  private[this] val charsUpper = ('A' to 'Z').toArray
+  private[this] val charsLower = ('a' to 'z').toArray
+  private[this] val charsAlpha = charsUpper ++ charsLower
   private[this] val charsAlphaSlash = charsAlpha :+ '/'
 
   val genAlphaSlash = Gen.chooseArray_!(charsAlphaSlash)
@@ -60,11 +56,12 @@ object RandomBaseData {
       Gen.choose_!(chars)
     }
 
-  val unicodeString : Gen[String] = unicodeChar.string
+  val unicodeString: Gen[String] = unicodeChar.string
   val unicodeString1: Gen[String] = unicodeChar.string1
 
   class CaseInsensitive(val norm: String, val str: String) {
     override def hashCode = norm.##
+
     override def equals(o: Any) = o match {
       case x: CaseInsensitive => norm == x.norm
       case _ => false
@@ -78,8 +75,8 @@ object RandomBaseData {
     Gen.tryGenChoose(as).fold[Gen[Vector[B]]](Gen pure Vector.empty)(
       _.vector.flatMap(Gen.traverse(_)(f)))
 
-  val shortText1        = unicodeChar.string(1 to WebappConfig.shortTextMaxLength)
-  val shortText         = unicodeChar.string(0 to WebappConfig.shortTextMaxLength)
+  val shortText1 = unicodeChar.string(1 to WebappConfig.shortTextMaxLength)
+  val shortText = unicodeChar.string(0 to WebappConfig.shortTextMaxLength)
   val optionalLargeText = unicodeChar.string(1 to WebappConfig.largeTextMaxLength).option
 
   def imapToMapLens[K, V] = Lens((_: IMap[K, V]).underlyingMap)(v => _ replaceUnderlying v)

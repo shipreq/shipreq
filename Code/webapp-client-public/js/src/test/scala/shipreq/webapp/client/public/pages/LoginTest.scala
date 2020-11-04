@@ -5,6 +5,7 @@ import org.scalajs.dom.{html, window}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax._
+import shipreq.webapp.base.test.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.public._
