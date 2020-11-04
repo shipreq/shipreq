@@ -1,8 +1,9 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.config
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import shipreq.base.util.Url
 import shipreq.webapp.base.data._
+import shipreq.webapp.base.util.Obfuscated
 
 object Urls {
 

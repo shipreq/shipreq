@@ -5,15 +5,15 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
 import scala.util.{Failure, Success, Try}
-import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.base.data.{ExternalPubid, Obfuscated, Project}
+import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data.{ExternalPubid, Project, Username}
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.feature.clipboard.TestClipboard
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.test.{SampleProject5, _}
 import shipreq.webapp.base.ui.OnlyVisibleOnMouseMove
-import shipreq.webapp.base.user.Username
+import shipreq.webapp.base.util.Obfuscated
 import shipreq.webapp.client.project.app.pages.config.fields.{FieldConfigObs, FieldConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.issues.{IssueConfigObs, IssueConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigObs, ReqTypeConfigTestDsl}

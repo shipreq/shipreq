@@ -1,9 +1,8 @@
 package shipreq.webapp.base.protocol.entrypoint
 
 import boopickle.DefaultBasic._
-import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.base.data.ProjectMetaData
-import shipreq.webapp.base.user.Username
+import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data.{ProjectMetaData, Username}
 
 object HomeSpaEntryPoint {
 

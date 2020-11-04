@@ -1,4 +1,4 @@
-package shipreq.webapp.base.data
+package shipreq.webapp.base.util
 
 // The means to obfuscate rest of this is in webapp-server.
 // Its exposure to JS is a security risk.

@@ -3,7 +3,7 @@ package shipreq.webapp.client.ww
 import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import monocle.macros.Lenses
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.EventOrd.Implicits._
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}

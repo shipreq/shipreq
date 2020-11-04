@@ -1,9 +1,8 @@
 package shipreq.webapp.server.logic.dispatch
 
 import shipreq.base.util.{BinaryData, Url}
-import shipreq.webapp.base.Urls
-import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.base.user.User
+import shipreq.webapp.base.config.Urls
+import shipreq.webapp.base.data.{ProjectId, User}
 
 final case class Response(cmd: ResponseCmd, cookies: Cookie.Update)
 

@@ -46,7 +46,7 @@ object Feature {
   }
 
   object Editor {
-    type Invalidity = shipreq.webapp.base.validation.Simple.Invalidity
+    type Invalidity = shipreq.webapp.base.validation.lib.Simple.Invalidity
     type Change[+A] = PotentialChange[Invalidity, A]
 
     private val reusabilityAny: Reusability[Editor[Nothing, Any]] =

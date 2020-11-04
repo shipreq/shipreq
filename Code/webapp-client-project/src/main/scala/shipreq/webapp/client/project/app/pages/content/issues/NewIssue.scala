@@ -4,12 +4,13 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.data.{Closed, Open, Project}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.PreviewFeature
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.websocket.ManualIssueCmd
 import shipreq.webapp.base.text.{Text, TextSearch}
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
+import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.create.Feature.PreviewId

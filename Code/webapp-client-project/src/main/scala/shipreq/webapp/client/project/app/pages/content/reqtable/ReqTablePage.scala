@@ -8,7 +8,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Allow, ErrorMsg}
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.feature.{AsyncFeature, PreviewFeature}
@@ -18,8 +18,9 @@ import shipreq.webapp.base.lib.DomUtil
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.base.ui.Toast
 import shipreq.webapp.base.ui.semantic.Icon
-import shipreq.webapp.base.ui.{NoContentMessage, Toast}
+import shipreq.webapp.base.ui.widgets.NoContentMessage
 import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.feature._

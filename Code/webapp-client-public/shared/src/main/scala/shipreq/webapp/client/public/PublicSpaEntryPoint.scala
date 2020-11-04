@@ -2,9 +2,9 @@ package shipreq.webapp.client.public
 
 import boopickle.DefaultBasic._
 import shipreq.base.util.Permission
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.protocol.entrypoint.ClientSideProc
-import shipreq.webapp.base.user.Username
 
 object PublicSpaEntryPoint {
 

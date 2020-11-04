@@ -3,13 +3,13 @@ package shipreq.webapp.base.protocol.ajax
 import boopickle.DefaultBasic._
 import monocle.macros.{GenIso, Lenses}
 import shipreq.base.util._
-import shipreq.webapp.base.Urls
-import shipreq.webapp.base.data.ProjectId
+import shipreq.webapp.base.config.Urls
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.base.protocol.binary._
-import shipreq.webapp.base.user._
-import shipreq.webapp.base.validation._
+import shipreq.webapp.base.validation.UserValidators
+import shipreq.webapp.base.validation.lib._
 
 object CommonProtocols {
 

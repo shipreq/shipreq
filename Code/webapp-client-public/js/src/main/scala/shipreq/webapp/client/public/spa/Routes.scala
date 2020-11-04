@@ -3,11 +3,11 @@ package shipreq.webapp.client.public.spa
 import japgolly.scalajs.react.extra.router.{RouterCtl => _, _}
 import japgolly.scalajs.react.{Callback, Reusability}
 import shipreq.base.util.Url
-import shipreq.webapp.base.Urls.PublicSpaRoute
+import shipreq.webapp.base.config.Urls.PublicSpaRoute
+import shipreq.webapp.base.config.{AssetManifest, Urls, WebappConfig}
 import shipreq.webapp.base.data.VerificationToken
 import shipreq.webapp.base.lib.BaseReusability._
 import shipreq.webapp.base.util.GoogleAnalytics
-import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
 
 sealed trait Page {
   val pageTitle: List[String]

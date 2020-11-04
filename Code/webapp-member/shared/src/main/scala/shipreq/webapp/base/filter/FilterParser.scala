@@ -5,11 +5,11 @@ import org.parboiled2.{Parser => _, _}
 import scala.util.{Failure, Success, Try}
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data.ReqType.Mnemonic
-import shipreq.webapp.base.data.{Off, On, ReqTypePos}
+import shipreq.webapp.base.data.ReqTypePos
 import shipreq.webapp.base.filter.Filter.{Potential, PotentialF}
 import shipreq.webapp.base.filter.FilterAst._
 import shipreq.webapp.base.util.ParsingUtil._
-import shipreq.webapp.base.util.{ParsingUtil, PreProcessed, PreProcessor}
+import shipreq.webapp.base.util._
 
 object FilterParser {
 

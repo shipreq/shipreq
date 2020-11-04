@@ -1,13 +1,13 @@
-package shipreq.webapp.base.ui
+package shipreq.webapp.base.ui.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
 import shipreq.base.util._
+import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.test.TestFeedbackModal
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.base.user.Username
 import utest._
 
 object FeedbackModalTest extends TestSuite {

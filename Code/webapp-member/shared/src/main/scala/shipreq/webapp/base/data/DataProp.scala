@@ -8,7 +8,7 @@ import scala.reflect.ClassTag
 import scalaz.std.list.listInstance
 import scalaz.std.option.optionInstance
 import shipreq.base.util._
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.filter.Filter.Implicits._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.text.{Atom, Text}

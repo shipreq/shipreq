@@ -5,8 +5,9 @@ import japgolly.microlibs.recursion.Fix
 import japgolly.microlibs.stdlib_ext.ParseInt
 import japgolly.microlibs.utils.StaticLookupFn
 import scalaz.{Applicative, Traverse, Traverse1}
-import shipreq.webapp.base.data.{On, ReqTypePos}
+import shipreq.webapp.base.data.ReqTypePos
 import shipreq.webapp.base.issue.IssueCategory
+import shipreq.webapp.base.util.On
 
 sealed trait FilterAst[
   +Self,             // 1

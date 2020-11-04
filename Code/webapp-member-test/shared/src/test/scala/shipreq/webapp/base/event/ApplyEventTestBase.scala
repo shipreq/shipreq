@@ -1,6 +1,6 @@
 package shipreq.webapp.base.event
 
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.ApplyEventTestFns._
 import shipreq.webapp.base.event.Event._

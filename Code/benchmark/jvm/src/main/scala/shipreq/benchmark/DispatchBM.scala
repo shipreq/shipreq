@@ -13,9 +13,8 @@ import scalaz.syntax.monad._
 import scalaz.{Monad, Name, Need}
 import shipreq.base.util._
 import shipreq.taskman.api.TaskId
-import shipreq.webapp.base.data.{ProjectId, VerificationToken}
-import shipreq.webapp.base.user._
-import shipreq.webapp.base.{AssetManifest, Urls}
+import shipreq.webapp.base.config.{AssetManifest, Urls}
+import shipreq.webapp.base.data._
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.logic.dispatch._

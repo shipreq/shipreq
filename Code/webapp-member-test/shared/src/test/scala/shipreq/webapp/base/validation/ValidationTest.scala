@@ -3,8 +3,9 @@ package shipreq.webapp.base.validation
 import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.base.validation.Simple._
+import shipreq.webapp.base.config.WebappConfig
+import shipreq.webapp.base.validation.lib.CommonValidation
+import shipreq.webapp.base.validation.lib.Simple._
 import utest._
 
 object ValidationTest extends TestSuite {

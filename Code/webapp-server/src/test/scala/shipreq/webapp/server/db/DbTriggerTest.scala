@@ -3,8 +3,7 @@ package shipreq.webapp.server.db
 import doobie._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db._
-import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.base.user._
+import shipreq.webapp.base.data._
 import shipreq.webapp.server.logic.IP
 import shipreq.webapp.server.test._
 import sourcecode.Line

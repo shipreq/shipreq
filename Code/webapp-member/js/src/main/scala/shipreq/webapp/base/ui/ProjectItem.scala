@@ -8,7 +8,7 @@ import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.UiText.EnglishStringExt
-import shipreq.webapp.base.Urls
+import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.base.feature.{AsyncFeature, EditControlsFeature, EditorStatus}
 import shipreq.webapp.base.jsfacade.MomentJs

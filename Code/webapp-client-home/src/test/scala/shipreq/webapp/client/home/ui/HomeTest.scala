@@ -5,13 +5,12 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit._
 import monocle.macros.Lenses
 import org.scalajs.dom.html
-import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.base.data.ProjectMetaData
+import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax.{HomeSpaProtocols, TestAjaxClient}
 import shipreq.webapp.base.protocol.entrypoint.HomeSpaEntryPoint
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.BaseStyles
-import shipreq.webapp.base.user._
 import shipreq.webapp.client.home.test.PrepareEnv
 import utest._
 

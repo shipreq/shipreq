@@ -3,7 +3,7 @@ package shipreq.webapp.base.util
 import japgolly.scalajs.react.{Callback, CallbackOption, CallbackTo}
 import scala.scalajs.js
 import shipreq.base.util.Url
-import shipreq.webapp.base.AnalyticsConfig._
+import shipreq.webapp.base.config.AnalyticsConfig._
 
 object GoogleAnalytics {
 

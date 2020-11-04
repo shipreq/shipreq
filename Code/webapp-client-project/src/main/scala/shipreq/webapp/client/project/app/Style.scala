@@ -9,6 +9,7 @@ import shipreq.webapp.base.feature.DragToReorderFeature.{Status => DragStatus}
 import shipreq.webapp.base.text.Grammar
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
+import shipreq.webapp.base.util._
 
 object Style extends StyleSheet.Inline {
   import dsl._

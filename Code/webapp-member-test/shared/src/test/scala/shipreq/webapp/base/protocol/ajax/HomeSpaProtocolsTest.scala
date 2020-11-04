@@ -5,8 +5,9 @@ import nyaya.gen.Gen
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.RandomData
-import shipreq.webapp.base.data.{Obfuscated, ProjectMetaData}
+import shipreq.webapp.base.data.ProjectMetaData
 import shipreq.webapp.base.test.BinaryTestUtil._
+import shipreq.webapp.base.util.Obfuscated
 import utest._
 
 object HomeSpaProtocolsTest extends TestSuite {

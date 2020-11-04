@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
 import shipreq.base.util.ErrorMsg
+import shipreq.webapp.base.config.{ClientConfig, WebappConfig}
 import shipreq.webapp.base.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus, ErrorHandlingFeature}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -14,8 +15,8 @@ import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocolsJs, HomeSpa
 import shipreq.webapp.base.protocol.entrypoint.HomeSpaEntryPoint
 import shipreq.webapp.base.ui._
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour}
+import shipreq.webapp.base.ui.widgets._
 import shipreq.webapp.base.util.CallbackHelpers._
-import shipreq.webapp.base.{ClientConfig, WebappConfig}
 
 object Home {
   final case class Props(data: HomeSpaEntryPoint.InitData,

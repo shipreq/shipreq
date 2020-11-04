@@ -3,11 +3,12 @@ package shipreq.webapp.base.ui
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import shipreq.webapp.base.config._
+import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.ui.BaseStyles.{layout => *}
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Dropdown, Icon, Menu, SemExtAny}
-import shipreq.webapp.base.user.Username
-import shipreq.webapp.base.{AssetManifest, ClientConfig, Urls, WebappConfig}
+import shipreq.webapp.base.ui.widgets.FeedbackModal
 
 /** At top of member (logged-in) screens:
   *

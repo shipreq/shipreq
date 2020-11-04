@@ -1,4 +1,4 @@
-package shipreq.webapp.base.ui
+package shipreq.webapp.base.ui.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -7,6 +7,7 @@ import shipreq.base.util.{Disabled, Enabled, ErrorMsg, OpResult}
 import shipreq.webapp.base.lib.ModalForm
 import shipreq.webapp.base.protocol.ajax.AjaxClient
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.{Metadata, SubmitFeedback}
+import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
 import shipreq.webapp.base.util.TextMod
 

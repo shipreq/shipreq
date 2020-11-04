@@ -5,9 +5,9 @@ import japgolly.scalajs.react.test._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
 import shipreq.base.util._
+import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.test.TestReauthenticationModal
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.base.user.Username
 import utest._
 
 object ReauthenticationModalTest extends TestSuite {

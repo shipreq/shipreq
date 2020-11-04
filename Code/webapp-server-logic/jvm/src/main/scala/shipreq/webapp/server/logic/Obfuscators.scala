@@ -1,7 +1,6 @@
 package shipreq.webapp.server.logic
 
-import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.base.user.UserId
+import shipreq.webapp.base.data.{ProjectId, UserId}
 
 object Obfuscators {
 

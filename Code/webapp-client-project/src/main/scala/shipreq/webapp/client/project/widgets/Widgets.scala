@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
-import shipreq.webapp.base.data.On
+import shipreq.webapp.base.util.On
 
 object Widgets {
 

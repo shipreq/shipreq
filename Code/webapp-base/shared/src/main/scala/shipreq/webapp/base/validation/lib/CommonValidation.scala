@@ -1,10 +1,10 @@
-package shipreq.webapp.base.validation
+package shipreq.webapp.base.validation.lib
 
 import java.util.regex.Pattern
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.util.TextMod
-import shipreq.webapp.base.validation.Implicits._
-import shipreq.webapp.base.validation.Simple._
+import shipreq.webapp.base.validation.lib.Implicits._
+import shipreq.webapp.base.validation.lib.Simple._
 
 object CommonValidation {
   private implicit def regexToPattern(regex: scala.util.matching.Regex): Pattern = regex.pattern

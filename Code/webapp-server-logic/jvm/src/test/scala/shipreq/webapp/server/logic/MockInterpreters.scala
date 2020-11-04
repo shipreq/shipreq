@@ -11,11 +11,10 @@ import shipreq.base.test.JsonTestUtil._
 import shipreq.base.test.SyncEffect
 import shipreq.base.util._
 import shipreq.taskman.api.{Task, TaskId, TaskStatus, TaskmanApi}
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic.dispatch.Cookie
 

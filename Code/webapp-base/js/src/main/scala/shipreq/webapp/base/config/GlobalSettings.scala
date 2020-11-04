@@ -1,4 +1,4 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.config
 
 import shipreq.webapp.base.lib.BrowserStorage
 

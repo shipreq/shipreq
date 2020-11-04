@@ -1,11 +1,13 @@
-package shipreq.webapp.base.user
+package shipreq.webapp.base.validation
 
 import shipreq.base.util.{Invalid, Validity}
+import shipreq.webapp.base.config.WebappConfig
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.ui.CommmonUiText
 import shipreq.webapp.base.util.TextMod
-import shipreq.webapp.base.validation.Implicits._
-import shipreq.webapp.base.validation.Simple._
-import shipreq.webapp.base.validation.{CommonValidation => CV, _}
-import shipreq.webapp.base.{CommmonUiText, WebappConfig}
+import shipreq.webapp.base.validation.lib.Implicits._
+import shipreq.webapp.base.validation.lib.Simple._
+import shipreq.webapp.base.validation.lib.{CommonValidation => CV, _}
 
 object UserValidators {
 

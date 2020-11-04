@@ -15,8 +15,8 @@ import scalaz.Monad
 import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util.log.WebappLogFields
-import shipreq.webapp.base.data.Obfuscated
-import shipreq.webapp.base.user._
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.util.Obfuscated
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic.Security.{SessionId, SessionRestoreResult, SessionToken}
 import shipreq.webapp.server.logic._

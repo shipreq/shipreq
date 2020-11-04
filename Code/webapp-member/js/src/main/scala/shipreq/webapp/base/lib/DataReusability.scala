@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import java.time.Duration
 import scalaz.Equal
 import shipreq.base.util._
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
@@ -18,7 +18,7 @@ import shipreq.webapp.base.text.Atom.CodeBlockDetail
 import shipreq.webapp.base.text.Text.Equality._
 import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
 import shipreq.webapp.base.text.{Atom, PlainText, ProjectText, TextSearch}
-import shipreq.webapp.base.user._
+import shipreq.webapp.base.util._
 
 object DataReusability extends DataReusability
 

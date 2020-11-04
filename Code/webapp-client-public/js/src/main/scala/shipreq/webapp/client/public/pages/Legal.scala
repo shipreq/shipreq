@@ -2,7 +2,7 @@ package shipreq.webapp.client.public.pages
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.client.public.Styles.{legal => *}
 import shipreq.webapp.client.public.spa.{Page, RouterCtl}
 

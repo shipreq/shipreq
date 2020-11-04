@@ -2,8 +2,7 @@ package shipreq.webapp.base.protocol.ajax
 
 import japgolly.scalajs.react.CallbackTo
 import org.scalajs.dom.window
-import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.base.user.Username
+import shipreq.webapp.base.data.{ProjectId, Username}
 
 object CommonProtocolsJs {
 

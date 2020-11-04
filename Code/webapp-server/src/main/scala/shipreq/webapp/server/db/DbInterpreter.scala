@@ -19,7 +19,6 @@ import shipreq.base.db.SqlHelpers._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.user._
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.db.DbInterpreter._
 import shipreq.webapp.server.logic.DB.EventFilter

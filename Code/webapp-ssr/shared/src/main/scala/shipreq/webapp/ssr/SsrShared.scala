@@ -1,10 +1,9 @@
 package shipreq.webapp.ssr
 
 import boopickle.DefaultBasic._
-import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.base.data.Project
+import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data.{Project, Username}
 import shipreq.webapp.base.protocol.binary.v1.BaseData._
-import shipreq.webapp.base.user.Username
 
 /** Values herein are all names of top-level functions in [SsrJs],
   * that can be called from [SsrInterpreter] on the JVM.

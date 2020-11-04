@@ -9,7 +9,7 @@ import scalaz.syntax.applicative._
 import shipreq.base.ops._
 import shipreq.base.util.FxModule._
 import shipreq.base.util._
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.server.logic.{DispatchLogic, ProjectSpaLogic, ScalaJsManifest}
 
 @Lenses

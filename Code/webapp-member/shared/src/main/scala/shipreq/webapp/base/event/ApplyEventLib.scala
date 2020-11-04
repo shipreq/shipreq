@@ -9,7 +9,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.SavedView
 import shipreq.webapp.base.text.PlainText
 import shipreq.webapp.base.util.GenericData
-import shipreq.webapp.base.validation.Composite
+import shipreq.webapp.base.validation.lib.Composite
 
 private[event] object ApplyEventLib {
 

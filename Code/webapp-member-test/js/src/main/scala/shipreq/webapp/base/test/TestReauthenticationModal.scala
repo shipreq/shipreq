@@ -4,10 +4,10 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.test.Simulate
 import org.scalajs.dom.{Element, document}
 import shipreq.base.util._
+import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.ReauthenticationModal
-import shipreq.webapp.base.user.Username
 
 class TestReauthenticationModal(initialResponse: Option[ErrorMsg \/ Permission]) {
 

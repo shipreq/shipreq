@@ -11,9 +11,10 @@ import shipreq.webapp.base.data
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data.derivation.DataLogic.IssueLookup
 import shipreq.webapp.base.data.derivation.VirtualProjectTags
-import shipreq.webapp.base.data.{FilterDead, HideDead, On, ShowDead}
+import shipreq.webapp.base.data.{FilterDead, HideDead, ShowDead}
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.text.{Atom, Grammar, PlainText, TextSearch}
+import shipreq.webapp.base.util._
 
 /** Algebras:
   *

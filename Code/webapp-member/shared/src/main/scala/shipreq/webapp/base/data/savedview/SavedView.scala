@@ -4,9 +4,9 @@ import monocle.macros.Lenses
 import scalaz.Equal
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.validation.Implicits._
-import shipreq.webapp.base.validation.Simple._
-import shipreq.webapp.base.validation.{CommonValidation => V, _}
+import shipreq.webapp.base.validation.lib.Implicits._
+import shipreq.webapp.base.validation.lib.Simple._
+import shipreq.webapp.base.validation.lib.{CommonValidation => V, _}
 
 /** A saved configuration of the ReqTable view.
   *

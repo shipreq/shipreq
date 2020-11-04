@@ -1,13 +1,13 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.validation
 
 /**
   * Validation and mandatory pre-processing (hereby called correction).
   *
   * Typical usage
   *
-  * import shipreq.webapp.base.validation.{CommonValidation => CV, _}
-  * import shipreq.webapp.base.validation.Simple._
-  * import shipreq.webapp.base.validation.Implicits._
+  * import shipreq.webapp.base.validation.lib.{CommonValidation => CV, _}
+  * import shipreq.webapp.base.validation.lib.Simple._
+  * import shipreq.webapp.base.validation.lib.Implicits._
   *
   * =======
   * Generic
@@ -68,5 +68,5 @@ package shipreq.webapp.base
   * CommonValidation - Reusable, low-level logic common to validation.
   * Uniqueness       - Utils that help validate that a subject is unique in some external context
   */
-package object validation {
+package object lib {
 }

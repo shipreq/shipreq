@@ -10,14 +10,14 @@ import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.UiText.FieldNames
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.data.ReqType.Mnemonic
 import shipreq.webapp.base.text.{Grammar, PlainText, Text}
 import shipreq.webapp.base.util.TextMod
-import shipreq.webapp.base.validation.Implicits._
-import shipreq.webapp.base.validation.Simple._
-import shipreq.webapp.base.validation.Uniqueness.Util._
-import shipreq.webapp.base.validation.{CommonValidation => V, _}
+import shipreq.webapp.base.validation.lib.Implicits._
+import shipreq.webapp.base.validation.lib.Simple._
+import shipreq.webapp.base.validation.lib.Uniqueness.Util._
+import shipreq.webapp.base.validation.lib.{CommonValidation => V, _}
 
 object DataValidators {
 

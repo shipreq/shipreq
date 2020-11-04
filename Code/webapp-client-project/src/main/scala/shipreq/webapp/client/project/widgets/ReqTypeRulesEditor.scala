@@ -33,8 +33,8 @@ object ReqTypeRulesEditor {
   val ApplicableTagDefault = new ReqTypeRulesEditor[ApplicableTagId](allowDefaults = true, keyFor = _.value.toString)
 
   final class Validation[D](state: State[D], reqTypes: ReqTypes) {
-    import shipreq.webapp.base.validation.Simple.Invalidity
-    import shipreq.webapp.base.validation._
+    import shipreq.webapp.base.validation.lib.Simple.Invalidity
+    import shipreq.webapp.base.validation.lib._
 
     private val mnemonic = DataValidators.reqTypeAuditor(reqTypes)
 

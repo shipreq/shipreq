@@ -1,9 +1,9 @@
-package shipreq.webapp.base.validation
+package shipreq.webapp.base.validation.lib
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scalaz.Applicative
 import shipreq.base.util.Validity
-import shipreq.webapp.base.validation.Implicits._
+import shipreq.webapp.base.validation.lib.Implicits._
 
 object Composite {
 

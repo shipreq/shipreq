@@ -7,8 +7,8 @@ import scalaz.{Catchable, Monad}
 import shipreq.base.util._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskmanApi, UserId => TaskmanUserId}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
-import shipreq.webapp.base.user._
 
 trait CommonProtocolLogic[F[_]] {
 

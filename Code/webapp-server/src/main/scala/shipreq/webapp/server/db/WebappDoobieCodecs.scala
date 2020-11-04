@@ -5,7 +5,6 @@ import doobie.postgres.implicits._
 import japgolly.microlibs.adt_macros.AdtMacros
 import shipreq.base.db.DoobieHelpers._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.user._
 import shipreq.webapp.server.logic._
 
 object WebappDoobieCodecs {

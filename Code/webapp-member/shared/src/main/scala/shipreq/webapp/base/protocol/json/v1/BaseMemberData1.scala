@@ -10,6 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.protocol.json.JsonCodec
 import shipreq.webapp.base.sort.SortMethod
+import shipreq.webapp.base.util._
 
 /** This is the minimum set of codecs required for event codecs.
   *

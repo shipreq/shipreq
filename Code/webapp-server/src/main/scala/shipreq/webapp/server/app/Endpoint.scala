@@ -1,8 +1,8 @@
 package shipreq.webapp.server.app
 
 import shipreq.base.util.FreeOption
-import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.base.WebappConfig.liftCtxPath
+import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.config.WebappConfig.liftCtxPath
 import shipreq.webapp.server.logic.{DispatchLogic, ScalaJsManifest}
 
 sealed abstract class Endpoint(final val `type`: String, final val name: String)

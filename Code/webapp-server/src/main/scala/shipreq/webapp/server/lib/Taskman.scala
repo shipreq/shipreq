@@ -6,8 +6,8 @@ import scala.jdk.CollectionConverters._
 import scala.util.Try
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.Task
-import shipreq.webapp.base.user.UserId
-import shipreq.webapp.base.{Urls, WebappConfig}
+import shipreq.webapp.base.config.{Urls, WebappConfig}
+import shipreq.webapp.base.data.UserId
 import shipreq.webapp.server.app.Global
 import shipreq.webapp.server.logic.WebappTaskmanConverters._
 

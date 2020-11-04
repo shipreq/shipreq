@@ -4,7 +4,7 @@ import com.typesafe.scalalogging.StrictLogging
 import java.time.Instant
 import java.util.UUID
 import scalaz.Monad
-import shipreq.webapp.base.user._
+import shipreq.webapp.base.data._
 import shipreq.webapp.server.logic.dispatch.Cookie
 
 object Security {

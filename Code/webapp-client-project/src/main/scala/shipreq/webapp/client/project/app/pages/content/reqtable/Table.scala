@@ -16,6 +16,7 @@ import shipreq.webapp.base.feature.{AsyncFeature, DragToReorderFeature, EditCont
 import shipreq.webapp.base.lib.DomUtil._
 import shipreq.webapp.base.text.{PlainText, ProjectText}
 import shipreq.webapp.base.ui.semantic
+import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.app.Style.reqtable.{table => *}
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 import shipreq.webapp.client.project.feature.SavedViewFeature.{ColumnLogic, ColumnPlus}

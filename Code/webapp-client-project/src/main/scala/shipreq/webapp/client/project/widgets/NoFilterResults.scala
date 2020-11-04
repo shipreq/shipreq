@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.webapp.base.ui.NoContentMessage
+import shipreq.webapp.base.ui.widgets.NoContentMessage
 import shipreq.webapp.client.project.app.Style
 
 object NoFilterResults {

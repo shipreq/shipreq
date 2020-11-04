@@ -17,7 +17,7 @@ import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.text.{PlainText, Text, TextSearch}
-import shipreq.webapp.base.util.ReqCodeTreeItem
+import shipreq.webapp.base.util._
 import sourcecode.Line
 import utest._
 

@@ -2,7 +2,7 @@ package shipreq.webapp.ssr
 
 import scala.xml.XML
 import shipreq.base.util.{Permission, Url}
-import shipreq.webapp.base.user.Username
+import shipreq.webapp.base.data.Username
 
 trait SsrAlgebra[F[_]] {
 

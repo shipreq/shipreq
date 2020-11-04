@@ -10,9 +10,8 @@ import scala.xml.NodeSeq
 import scalaz.Need
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{BinaryData, Url}
-import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.base.user.User
-import shipreq.webapp.base.{Urls, WebappConfig}
+import shipreq.webapp.base.config.{Urls, WebappConfig}
+import shipreq.webapp.base.data.{ProjectId, User}
 import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.logic.{DB, DispatchLogic, dispatch}

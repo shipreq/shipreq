@@ -10,9 +10,9 @@ import scalaz.{Catchable, Monad, ~>}
 import shipreq.base.util._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskId, TaskmanApi}
-import shipreq.webapp.base.Urls
-import shipreq.webapp.base.data.VerificationToken
-import shipreq.webapp.base.user._
+import shipreq.webapp.base.config.Urls
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.logic.Implicits._

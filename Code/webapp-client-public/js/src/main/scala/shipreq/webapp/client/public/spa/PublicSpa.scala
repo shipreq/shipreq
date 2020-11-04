@@ -6,8 +6,8 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import shipreq.base.util.Url
-import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.base.Urls.PublicSpaRoute
+import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.config.Urls.PublicSpaRoute
 import shipreq.webapp.base.feature.{AsyncFeature, ErrorHandlingFeature}
 import shipreq.webapp.base.protocol.ajax._
 import shipreq.webapp.client.public.pages._

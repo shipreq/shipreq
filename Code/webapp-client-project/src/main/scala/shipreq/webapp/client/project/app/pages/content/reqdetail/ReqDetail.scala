@@ -19,7 +19,7 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{CreateContentCmd, UpdateContentCmd}
 import shipreq.webapp.base.text.ProjectText.SetRenderStyle
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.ui.NoContentMessage
+import shipreq.webapp.base.ui.widgets.NoContentMessage
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.util.LastValueMemo
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}

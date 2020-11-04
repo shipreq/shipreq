@@ -3,8 +3,9 @@ package shipreq.webapp.client.project.app.state
 import japgolly.microlibs.utils.ConciseIntSetFormat
 import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{Callback, CallbackTo}
-import shipreq.webapp.base.data.{Project, ProjectMetaData, TCB}
+import shipreq.webapp.base.data.{Project, ProjectMetaData}
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.base.util.TCB
 import shipreq.webapp.client.project.lib.DataReusability.reusabilityProject
 
 /**

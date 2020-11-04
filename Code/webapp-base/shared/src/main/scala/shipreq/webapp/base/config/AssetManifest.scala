@@ -1,4 +1,4 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.config
 
 final case class AssetManifest(staticAssetCdn: Option[AssetManifest.StaticAssetCdn]) extends AbstractAssetManifest[String] {
 

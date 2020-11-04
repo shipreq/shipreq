@@ -7,8 +7,8 @@ import nyaya.util.{MultiValues, Multimap}
 import scala.reflect.ClassTag
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
-import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.json.JsonCodec
+import shipreq.webapp.base.util._
 
 private[v1] object BaseData {
   import JsonCodec.Implicits._

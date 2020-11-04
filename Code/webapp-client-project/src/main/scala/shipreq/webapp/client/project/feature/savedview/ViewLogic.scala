@@ -13,7 +13,7 @@ import shipreq.webapp.base.event.SavedViewGD
 import shipreq.webapp.base.filter.Filter.Implicits.univEqFilterValid
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.websocket.SavedViewCmd
-import shipreq.webapp.base.validation.Simple
+import shipreq.webapp.base.validation.lib.Simple
 
 object ViewLogic {
 

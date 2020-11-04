@@ -1,7 +1,7 @@
 package shipreq.webapp.server.protocol.entrypoint
 
 import shipreq.base.util.Util.quickJSB
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.config.AssetManifest
 
 /** Allows for loading resources after the page has been rendered.
   *

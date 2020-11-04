@@ -6,7 +6,7 @@ import japgolly.scalajs.react.{Callback, Reusability}
 import monocle._
 import monocle.macros._
 import shipreq.base.util.Url
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.text.PlainText

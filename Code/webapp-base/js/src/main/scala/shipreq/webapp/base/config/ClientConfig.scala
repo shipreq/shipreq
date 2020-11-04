@@ -1,4 +1,4 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.config
 
 object ClientConfig {
 

@@ -10,6 +10,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data.DataImplicits._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.ui.semantic.{Icon, Input, Message, Segment, Table}
+import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewTags}

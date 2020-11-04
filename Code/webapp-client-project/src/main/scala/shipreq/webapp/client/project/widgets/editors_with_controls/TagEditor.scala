@@ -13,7 +13,7 @@ import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
 import shipreq.webapp.base.lib.KeyHandlers
 import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
 import shipreq.webapp.base.text.SingleLine
-import shipreq.webapp.base.validation.Simple._
+import shipreq.webapp.base.validation.lib.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.lib.DataReusability._
 

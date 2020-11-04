@@ -3,9 +3,9 @@ package shipreq.webapp.client.public.spa
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.base.Urls.PublicSpaRoute.Login
-import shipreq.webapp.base.user.Username
-import shipreq.webapp.base.{AssetManifest, Urls, WebappConfig}
+import shipreq.webapp.base.config.Urls.PublicSpaRoute.Login
+import shipreq.webapp.base.config.{AssetManifest, Urls, WebappConfig}
+import shipreq.webapp.base.data.Username
 import shipreq.webapp.client.public.Styles.{layout => *}
 
 object Layout {

@@ -1,4 +1,4 @@
-package shipreq.webapp.base.ui
+package shipreq.webapp.base.ui.widgets
 
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.ui.semantic.{Icon, Message}

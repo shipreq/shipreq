@@ -3,9 +3,9 @@ package shipreq.webapp.base
 import monocle.{Optional => _, _}
 import nyaya.gen._
 import shipreq.base.util._
+import shipreq.webapp.base.config._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.user._
-import shipreq.webapp.base.util.PreProcessor
+import shipreq.webapp.base.util._
 
 object RandomDataSettings {
   var disableUnicode = false

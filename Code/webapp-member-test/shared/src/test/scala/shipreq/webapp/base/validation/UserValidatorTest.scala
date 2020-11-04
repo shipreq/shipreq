@@ -1,10 +1,11 @@
-package shipreq.webapp.base.user
+package shipreq.webapp.base.validation
 
 import scalaz.Equal
-import shipreq.base.test.BaseTestUtil._
+import shipreq.base.test.BaseTestUtil.{assertContainsCI, assertEq}
 import shipreq.base.util.{Invalid, Valid}
-import shipreq.webapp.base.WebappConfig
-import shipreq.webapp.base.validation.Simple._
+import shipreq.webapp.base.config.WebappConfig
+import shipreq.webapp.base.data._
+import shipreq.webapp.base.validation.lib.Simple.Validator
 import utest._
 
 object UserValidatorTest extends TestSuite {
@@ -40,7 +41,9 @@ object UserValidatorTest extends TestSuite {
   }
 
   def pass[A](a: A) = \/-(a)
+
   def fail(e: String) = (_: Any) => -\/(e)
+
   implicit def someString(e: String) = Option(e)
 
   override def tests = Tests {
@@ -54,16 +57,16 @@ object UserValidatorTest extends TestSuite {
       "plain" - test("hehe@asd.com")(pass)
       "plus" - test("ffs+yay@gmail.com")(pass)
       "invalid" - test.each(
-          "heheasd.com",
-          "hehe@asdcom",
-          "hehe@.com",
-          "hehe@asd.",
-          "h&ehe@asd.com",
-          "<hehe@asd.com",
-          ">hehe@asd.com",
-          "hehe@as&d.com",
-          "hehe@as<d.com",
-          "hehe@as>d.com")(fail("invalid"))
+        "heheasd.com",
+        "hehe@asdcom",
+        "hehe@.com",
+        "hehe@asd.",
+        "h&ehe@asd.com",
+        "<hehe@asd.com",
+        ">hehe@asd.com",
+        "hehe@as&d.com",
+        "hehe@as<d.com",
+        "hehe@as>d.com")(fail("invalid"))
     }
 
     "password" - {

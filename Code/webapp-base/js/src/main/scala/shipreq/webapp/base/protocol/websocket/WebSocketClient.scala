@@ -8,7 +8,7 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Failure, Success, Try}
 import shipreq.base.util.JsExt._
 import shipreq.base.util._
-import shipreq.webapp.base.GlobalSettings
+import shipreq.webapp.base.config.GlobalSettings
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler

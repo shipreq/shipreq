@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic
 
 import shipreq.taskman.{api => T}
-import shipreq.webapp.base.{user => W}
+import shipreq.webapp.base.{data => W}
 
 object WebappTaskmanConverters {
 

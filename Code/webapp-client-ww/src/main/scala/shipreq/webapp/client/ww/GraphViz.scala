@@ -5,9 +5,10 @@ import org.scalajs.dom.webworkers.DedicatedWorkerGlobalScope
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 import shipreq.base.util.{Backwards, Direction, ErrorMsg, Forwards}
+import shipreq.webapp.base.UiText
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data.Svg
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.GraphDir
-import shipreq.webapp.base.{AssetManifest, UiText}
 
 final class GraphViz(raw: GraphViz.RawFn) {
   import GraphViz._

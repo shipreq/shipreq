@@ -4,10 +4,10 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import scala.concurrent.duration._
 import shipreq.base.util.{Disabled, Enabled, Validity}
 import shipreq.webapp.base.CssSettings._
-import shipreq.webapp.base.data.{Off, On}
 import shipreq.webapp.base.feature.EditControlsFeature
 import shipreq.webapp.base.feature.PreviewFeature.Position
 import shipreq.webapp.base.ui.semantic.{Colour, Label}
+import shipreq.webapp.base.util.{Off, On}
 
 object BaseStyles extends StyleSheet.Inline {
   import dsl._

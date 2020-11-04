@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneOffset}
 import scalaz.Monad
 import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.validation.{Composite, Simple}
+import shipreq.webapp.base.validation.lib.{Composite, Simple}
 
 private[logic] object Implicits {
 

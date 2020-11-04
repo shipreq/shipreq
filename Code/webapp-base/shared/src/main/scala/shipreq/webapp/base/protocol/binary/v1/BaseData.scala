@@ -13,11 +13,11 @@ import scala.reflect.ClassTag
 import scalaz.Isomorphism.<=>
 import scalaz.{Functor, \&/}
 import shipreq.base.util._
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.Version
 import shipreq.webapp.base.protocol.binary._
-import shipreq.webapp.base.user._
+import shipreq.webapp.base.util._
 
 object BaseData {
 

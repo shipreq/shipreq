@@ -2,12 +2,11 @@ package shipreq.webapp.server.logic
 
 import scalaz.syntax.monad._
 import scalaz.{Monad, ~>}
-import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.base.data.{Project, ProjectMetaData}
+import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.protocol.ajax.HomeSpaProtocols
 import shipreq.webapp.base.protocol.entrypoint.HomeSpaEntryPoint
-import shipreq.webapp.base.user._
 
 trait HomeSpaLogic[F[_]] extends HomeSpaLogic.Ajax[F] {
   def initData(user: User): F[HomeSpaEntryPoint.InitData]

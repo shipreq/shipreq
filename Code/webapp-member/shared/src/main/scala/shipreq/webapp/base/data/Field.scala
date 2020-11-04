@@ -9,7 +9,7 @@ import scalaz.std.option.toRight
 import shipreq.base.util.IndexLabel._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.util.Must._
 
 // =====================================================================================================================

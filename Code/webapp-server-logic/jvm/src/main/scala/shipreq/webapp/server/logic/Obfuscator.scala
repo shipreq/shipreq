@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic
 
 import shipreq.base.util.{BaseX, Valid, Validity}
-import shipreq.webapp.base.data.Obfuscated
+import shipreq.webapp.base.util.Obfuscated
 
 final case class Obfuscator[@specialized(Int, Long) A](
     obfuscate  : A => Obfuscated[A],

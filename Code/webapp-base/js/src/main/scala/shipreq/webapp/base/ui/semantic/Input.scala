@@ -5,7 +5,7 @@ import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import shipreq.base.util._
-import shipreq.webapp.base.data.On
+import shipreq.webapp.base.util.On
 
 object Input {
   private[this] val disabled = ^.cls := "disabled"

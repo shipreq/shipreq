@@ -6,14 +6,14 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import shipreq.base.util.{Disabled, Enabled, ErrorMsg}
-import shipreq.webapp.base.data.VerificationToken
+import shipreq.webapp.base.data.{PlainTextPassword, VerificationToken}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Icon, Input, Message}
 import shipreq.webapp.base.ui.widgets.Form
-import shipreq.webapp.base.user.{PlainTextPassword, UserValidators}
+import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.client.public.PublicSpaProtocols.{ResetPassword2 => P}
 import shipreq.webapp.client.public.Styles.{resetPassword => *}
 

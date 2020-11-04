@@ -3,7 +3,7 @@ package shipreq.webapp.base.data.derivation
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import shipreq.webapp.base.UiText.sortedOrClause
-import shipreq.webapp.base.WebappConfig
+import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.data._
 
 final class UseCaseStepLabelLookup(reqs: Requirements) {

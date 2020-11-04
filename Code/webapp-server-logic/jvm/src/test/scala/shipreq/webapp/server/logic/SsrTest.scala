@@ -4,8 +4,8 @@ import shipreq.base.ops.Trace
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{Allow, Url}
-import shipreq.webapp.base.user.Username
-import shipreq.webapp.base.{AssetManifest, Urls}
+import shipreq.webapp.base.config.{AssetManifest, Urls}
+import shipreq.webapp.base.data.Username
 import shipreq.webapp.ssr._
 import utest._
 

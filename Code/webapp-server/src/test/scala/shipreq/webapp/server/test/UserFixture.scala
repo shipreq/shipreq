@@ -7,7 +7,7 @@ import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.test.db.{ImperativeXA, TestDb}
 import shipreq.base.util.FxModule._
-import shipreq.webapp.base.user._
+import shipreq.webapp.base.data._
 import shipreq.webapp.server.logic._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 

@@ -6,9 +6,8 @@ import scala.util.Random
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.test.db._
 import shipreq.base.util.FxModule._
-import shipreq.webapp.base.data.{Project, ProjectId}
+import shipreq.webapp.base.data.{Project, ProjectId, UserId, Username}
 import shipreq.webapp.base.event.ActiveEvent
-import shipreq.webapp.base.user.{UserId, Username}
 import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.logic.DB
 import shipreq.webapp.server.security.SecurityInterpreter

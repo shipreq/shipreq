@@ -7,7 +7,7 @@ import org.scalajs.dom.{EventTarget, document, html}
 import scala.scalajs.js
 import shipreq.base.util.JsExt._
 import shipreq.base.util.{Allow, ErrorMsg, JsTimers, PotentialChange, Retries}
-import shipreq.webapp.base.data.Project
+import shipreq.webapp.base.data.{Project, Username}
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol._
@@ -19,7 +19,6 @@ import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.ui.BaseStyles
-import shipreq.webapp.base.user.Username
 import shipreq.webapp.client.project.app.state.{Global, ProjectState}
 import shipreq.webapp.server.logic.{ApplyNewEvent, MakeEvent}
 

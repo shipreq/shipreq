@@ -6,11 +6,11 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.{Iso, Lens}
 import shipreq.base.util._
-import shipreq.webapp.base.data.On
 import shipreq.webapp.base.lib.ValidationUX
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Input, Segment, UsesSemanticUiManually}
-import shipreq.webapp.base.validation.Simple
+import shipreq.webapp.base.util.On
+import shipreq.webapp.base.validation.lib.Simple
 
 @UsesSemanticUiManually
 object Form {

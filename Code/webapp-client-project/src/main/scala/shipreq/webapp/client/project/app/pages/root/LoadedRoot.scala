@@ -18,7 +18,8 @@ import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.ui.semantic.Menu
-import shipreq.webapp.base.ui.{FeedbackModal, OptionalFullscreen, ProjectItem, Toast}
+import shipreq.webapp.base.ui.widgets.FeedbackModal
+import shipreq.webapp.base.ui.{OptionalFullscreen, ProjectItem, Toast}
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.app._
 import shipreq.webapp.client.project.app.pages._

@@ -17,7 +17,7 @@ import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{AsyncFeature, EditControlsFeature, EditorStatus, PreviewFeature}
 import shipreq.webapp.base.lib.KeyHandler
 import shipreq.webapp.base.text._
-import shipreq.webapp.base.validation.Simple._
+import shipreq.webapp.base.validation.lib.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets._

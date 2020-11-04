@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import org.scalajs.dom.{Element, document}
 import shipreq.base.util._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.SubmitFeedback
-import shipreq.webapp.base.ui.FeedbackModal
+import shipreq.webapp.base.ui.widgets.FeedbackModal
 
 class TestFeedbackModal(initialResponse: Option[ErrorMsg \/ Unit]) {
 

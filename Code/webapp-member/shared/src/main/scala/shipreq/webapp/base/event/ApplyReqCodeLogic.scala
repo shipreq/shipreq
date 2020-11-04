@@ -7,7 +7,7 @@ import shipreq.webapp.base.data.{DataValidators => V, _}
 import shipreq.webapp.base.event.ApplyEventLib._
 import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.text.Grammar
-import shipreq.webapp.base.validation.Implicits._
+import shipreq.webapp.base.validation.lib.Implicits._
 
 trait ApplyReqCodeLogic {
   this: ApplyEvent =>

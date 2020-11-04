@@ -9,8 +9,8 @@ import scalaz.Monad
 import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util.{Permission, Url}
-import shipreq.webapp.base.AssetManifest
-import shipreq.webapp.base.user.Username
+import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data.Username
 import shipreq.webapp.ssr._
 
 /** SSR interpreter that

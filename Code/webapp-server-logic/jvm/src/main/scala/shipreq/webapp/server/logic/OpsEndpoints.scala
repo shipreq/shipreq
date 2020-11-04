@@ -10,9 +10,9 @@ import scalaz.syntax.monad._
 import shipreq.base.util.ErrorMsg
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.{Task, TaskId, TaskmanApi}
-import shipreq.webapp.base.data.{Project, ProjectId}
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ApplyEvent, VerifiedEvent}
-import shipreq.webapp.base.user.{EmailAddr, UserId, UserValidators, Username}
+import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.server.logic.dispatch.{ResponseCmd, StatusCode}
 
 trait OpsEndpoints[F[_]] {

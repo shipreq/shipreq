@@ -4,11 +4,12 @@ import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.sort.SortMethod
-import shipreq.webapp.base.{AssetManifest, ClientResources}
+import shipreq.webapp.base.ui.ClientResources
 import shipreq.webapp.client.project.app.Style.reqtable.{sortEditor => *}
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 

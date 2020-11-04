@@ -2,10 +2,10 @@ package shipreq.webapp.client.loaders
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import shipreq.webapp.base.config.{AssetManifest, ClientConfig}
+import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.ui._
 import shipreq.webapp.base.ui.semantic.Breadcrumb
-import shipreq.webapp.base.user.Username
-import shipreq.webapp.base.{AssetManifest, ClientConfig}
 
 object HomeSpaLoader {
 

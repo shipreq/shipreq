@@ -1,7 +1,7 @@
 package shipreq.webapp.base.util
 
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.base.user.Username
+import shipreq.webapp.base.data.Username
 
 object Accessibility {
 

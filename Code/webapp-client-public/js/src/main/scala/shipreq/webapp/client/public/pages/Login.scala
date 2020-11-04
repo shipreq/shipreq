@@ -7,16 +7,17 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import org.scalajs.dom.{html, window}
 import shipreq.base.util._
-import shipreq.webapp.base.data.{On, TCB}
+import shipreq.webapp.base.config._
+import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.{BrowserStorage, ValidationUX}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login.Request
-import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.ui.widgets.Form
-import shipreq.webapp.base.user.{EmailAddr, UserValidators, Username}
-import shipreq.webapp.base.{CommmonUiText, GlobalSettings, Urls}
+import shipreq.webapp.base.ui.{CommmonUiText, GeneralTheme}
+import shipreq.webapp.base.util._
+import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.client.public.Styles.{login => *}
 
 object Login {

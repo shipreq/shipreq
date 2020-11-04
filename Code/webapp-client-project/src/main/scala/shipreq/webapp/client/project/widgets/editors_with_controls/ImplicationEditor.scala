@@ -14,8 +14,8 @@ import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
 import shipreq.webapp.base.lib.KeyHandlers
 import shipreq.webapp.base.text.{Grammar, PlainText, SingleLine, TextSearch}
-import shipreq.webapp.base.validation.Simple._
-import shipreq.webapp.base.validation._
+import shipreq.webapp.base.validation.lib.Simple._
+import shipreq.webapp.base.validation.lib._
 import shipreq.webapp.client.project.lib.DataReusability._
 
 object ImplicationEditor {

@@ -4,7 +4,7 @@ import boopickle.DefaultBasic._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.utils.StaticLookupFn
 import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.Urls
+import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.protocol._

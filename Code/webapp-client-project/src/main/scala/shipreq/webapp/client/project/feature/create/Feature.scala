@@ -42,7 +42,7 @@ object Feature {
   }
 
   object Editor {
-    type Invalidity = shipreq.webapp.base.validation.Simple.Invalidity
+    type Invalidity = shipreq.webapp.base.validation.lib.Simple.Invalidity
     type Value[+A] = Invalidity \/ A
 
     implicit def univEq[A, V]: UnivEq[Editor[A, V]] =

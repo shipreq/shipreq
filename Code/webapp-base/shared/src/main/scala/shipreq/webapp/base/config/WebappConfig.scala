@@ -1,7 +1,7 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.config
 
 import java.time.Year
-import shipreq.webapp.base.user.EmailAddr
+import shipreq.webapp.base.data.EmailAddr
 
 object WebappConfig {
 

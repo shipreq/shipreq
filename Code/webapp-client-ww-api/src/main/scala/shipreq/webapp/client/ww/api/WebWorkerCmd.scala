@@ -3,7 +3,7 @@ package shipreq.webapp.client.ww.api
 import boopickle.ConstPickler
 import boopickle.DefaultBasic._
 import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}

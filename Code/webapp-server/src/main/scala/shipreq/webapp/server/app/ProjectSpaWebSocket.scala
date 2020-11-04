@@ -9,7 +9,7 @@ import shipreq.base.util.BinaryData
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.WebappLogFields
 import shipreq.taskman.api.TaskmanApi
-import shipreq.webapp.base.Urls
+import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseReason
 import shipreq.webapp.server.lib.Taskman
 import shipreq.webapp.server.logic.ProjectSpaLogic._

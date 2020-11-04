@@ -1,4 +1,4 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.ui
 
 object CommmonUiText {
   def emailAddr = "Email address"

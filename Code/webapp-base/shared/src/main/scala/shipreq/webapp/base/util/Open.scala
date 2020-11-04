@@ -1,4 +1,4 @@
-package shipreq.webapp.base.data
+package shipreq.webapp.base.util
 
 import shipreq.base.util.IsoBool
 

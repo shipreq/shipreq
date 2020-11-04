@@ -1,6 +1,7 @@
-package shipreq.webapp.base
+package shipreq.webapp.base.ui
 
 import japgolly.scalajs.react.vdom.html_<^._
+import shipreq.webapp.base.config.AssetManifest
 
 final class ClientResources(am: AssetManifest) {
 

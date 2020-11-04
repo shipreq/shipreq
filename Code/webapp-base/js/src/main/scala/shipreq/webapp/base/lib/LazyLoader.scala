@@ -8,7 +8,7 @@ import scala.scalajs.js.Dynamic
 import scalaz.Applicative
 import scalaz.std.list.listInstance
 import scalaz.syntax.traverse._
-import shipreq.webapp.base.AssetManifest
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.lib.LazyLoader.State
 
 final class LazyLoader[A](initState: State.Pending[A]) {
