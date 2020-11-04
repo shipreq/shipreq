@@ -12,7 +12,7 @@ import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.data.{CustomReqType, ExternalPubid, Project, ReqType, StaticReqType}
 import shipreq.webapp.base.feature.{EditControlsFeature, PreviewFeature}
 import shipreq.webapp.base.protocol.websocket.CreateContentCmd
-import shipreq.webapp.base.text.{PlainText, Text, TextSearch}
+import shipreq.webapp.member.text.{PlainText, Text, TextSearch}
 import shipreq.webapp.base.ui.Toast
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table => SemTable}
 import shipreq.webapp.client.project.app.Style.reqtable.{creation => *}

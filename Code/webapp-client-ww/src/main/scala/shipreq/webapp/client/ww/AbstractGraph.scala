@@ -6,7 +6,7 @@ import nyaya.util.Multimap
 import shipreq.base.util.OptionalBoolFn
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.{Colours, LabelFormat}
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 
 abstract class AbstractGraph(protected val project   : Project,
                              protected val filterDead: FilterDead) {

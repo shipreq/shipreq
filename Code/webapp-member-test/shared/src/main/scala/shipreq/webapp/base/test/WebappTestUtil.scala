@@ -11,7 +11,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.protocol.json.v1.Latest._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 import shipreq.webapp.base.util._
 import sourcecode.Line
 

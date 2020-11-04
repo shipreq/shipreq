@@ -16,7 +16,7 @@ import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.member.text.{PlainText, TextSearch}
 import shipreq.webapp.base.ui.Toast
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.base.ui.widgets.NoContentMessage

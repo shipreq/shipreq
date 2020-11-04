@@ -4,7 +4,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.ProjectDsl._
 import shipreq.webapp.base.test.SampleProject4.{project => project0}
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.webapp.base.text._
+import shipreq.webapp.member.text._
 
 /**
  * Builds on SampleProject #4 to add:

@@ -10,7 +10,7 @@ import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{Atom, Text}
+import shipreq.webapp.member.text.{Atom, Text}
 
 object ProjectDslInternals {
   type Mod[A] = State[ProjectState, A]

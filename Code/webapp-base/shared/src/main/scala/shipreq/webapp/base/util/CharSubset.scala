@@ -9,11 +9,13 @@ import shipreq.webapp.base.util.CharSubset.EscapeChars
   */
 final class CharSubset(_direct: List[Int], _ranges: List[Range]) {
 
-  private[util] var direct = _direct
-  private[util] var ranges = _ranges
+  private var direct = _direct
+  private var ranges = _ranges
 
-  private[this] var initRemaining = 2 // Number of dependent lazy vals
-  private[util] def consume[A](a: A): A = {
+  private var initRemaining = 2 // Number of dependent lazy vals
+
+  def unsafeConsume[A](a: A): A = {
+    assert(initRemaining > 0)
     initRemaining -= 1
     if (initRemaining == 0) {
       direct = null
@@ -22,25 +24,30 @@ final class CharSubset(_direct: List[Int], _ranges: List[Range]) {
     a
   }
 
+  def unsafeForeach(f: Int => Unit): Unit = {
+    direct foreach f
+    ranges foreach (_ foreach f)
+  }
+
   /** Example: `"a-zA-Z"` */
   lazy val regexCharRange: String =
-  consume(
-    Util.quickSB { sb =>
-      val addChar: Int => Unit = i => {
-        if (EscapeChars.contains(i))
-          sb append '\\'
-        sb append i.toChar
-      }
+    unsafeConsume(
+      Util.quickSB { sb =>
+        val addChar: Int => Unit = i => {
+          if (EscapeChars.contains(i))
+            sb append '\\'
+          sb append i.toChar
+        }
 
-      direct foreach addChar
+        direct foreach addChar
 
-      ranges foreach { r =>
-        addChar(r.start)
-        sb append '-'
-        addChar(r.end)
+        ranges foreach { r =>
+          addChar(r.start)
+          sb append '-'
+          addChar(r.end)
+        }
       }
-    }
-  )
+    )
 
   /** Example: `"[a-zA-Z]"` */
   lazy val regexChar: String =

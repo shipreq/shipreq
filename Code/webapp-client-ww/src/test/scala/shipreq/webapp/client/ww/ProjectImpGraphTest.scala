@@ -9,7 +9,7 @@ import shipreq.webapp.base.event._
 import shipreq.webapp.base.filter.CompiledFilter
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 import shipreq.webapp.client.ww.GraphViz.DOT
 import utest._
 

@@ -1,4 +1,4 @@
-package shipreq.webapp.base.text
+package shipreq.webapp.member.text
 
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.data._

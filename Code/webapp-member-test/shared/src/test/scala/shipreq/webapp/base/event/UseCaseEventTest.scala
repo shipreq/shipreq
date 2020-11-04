@@ -6,8 +6,8 @@ import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.UnsafeTypes
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.Text
-import shipreq.webapp.base.text.Text.{UseCaseStep => UCST, UseCaseTitle => UCT}
+import shipreq.webapp.member.text.Text
+import shipreq.webapp.member.text.Text.{UseCaseStep => UCST, UseCaseTitle => UCT}
 import utest._
 
 object UseCaseEventTest extends TestSuite {

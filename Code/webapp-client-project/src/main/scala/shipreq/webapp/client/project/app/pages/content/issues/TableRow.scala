@@ -8,8 +8,8 @@ import shipreq.base.util.{ConsolidatedSeq, Disabled, Enabled, ErrorMsg, IfApplic
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.clipboard.ClipboardKeys
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
-import shipreq.webapp.base.text.Text
-import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.member.text.Text
+import shipreq.webapp.member.text.Text.Equality._
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.feature.EditorFeature

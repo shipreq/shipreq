@@ -8,7 +8,7 @@ import shipreq.base.util.{Enabled, Invalid, NaturalSort}
 import shipreq.webapp.base.RandomData
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 import sourcecode.Line
 import utest._
 

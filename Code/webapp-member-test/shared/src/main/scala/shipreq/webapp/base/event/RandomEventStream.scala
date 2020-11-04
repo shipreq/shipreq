@@ -27,7 +27,7 @@ import shipreq.webapp.base.test.DataTestExt._
 import shipreq.webapp.base.test.RandomBaseData
 import shipreq.webapp.base.test.RandomBaseData.unicodeString1
 import shipreq.webapp.base.test.WebappBaseGen._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 
 final case class RandomEventStreamConfig(retiredEvents: Boolean,
                                          reqCodeEvents: Boolean,

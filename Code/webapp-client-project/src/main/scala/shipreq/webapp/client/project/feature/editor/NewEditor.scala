@@ -15,7 +15,7 @@ import shipreq.webapp.base.lib.ConfirmJs
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
-import shipreq.webapp.base.text._
+import shipreq.webapp.member.text._
 import shipreq.webapp.base.ui.OptionalFullscreen
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.util.{LastValueMemo, LruMemo}
@@ -751,7 +751,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichText {
-      import shipreq.webapp.base.text._
+      import shipreq.webapp.member.text._
       import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       @inline def defaultStyle = EditControlsFeature.Style.default
@@ -882,7 +882,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichTextNonEmpty {
-      import shipreq.webapp.base.text._
+      import shipreq.webapp.member.text._
       import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       @inline def defaultStyle = EditControlsFeature.Style.default

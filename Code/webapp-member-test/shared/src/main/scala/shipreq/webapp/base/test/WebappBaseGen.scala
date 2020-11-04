@@ -3,7 +3,7 @@ package shipreq.webapp.base.test
 import nyaya.gen._
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.util.ScalaExt._
-import shipreq.webapp.base.util.GenericData
+import shipreq.webapp.member.util.GenericData
 
 object WebappBaseGen {
 

@@ -7,7 +7,7 @@ import shipreq.webapp.base.filter.{CompiledFilter, Filter, FilterAlgebra}
 import shipreq.webapp.base.test.SampleProject7.{project => project0}
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text._
+import shipreq.webapp.member.text._
 
 object SampleProject8 {
 

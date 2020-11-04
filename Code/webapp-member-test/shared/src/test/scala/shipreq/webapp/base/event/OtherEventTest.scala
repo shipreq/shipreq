@@ -6,7 +6,7 @@ import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.filter._
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 import sourcecode.Line
 import utest._
 

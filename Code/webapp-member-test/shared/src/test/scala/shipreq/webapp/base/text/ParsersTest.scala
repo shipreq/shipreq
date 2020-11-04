@@ -1,4 +1,4 @@
-package shipreq.webapp.base.text
+package shipreq.webapp.member.text
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.util.concurrent.atomic.AtomicInteger
@@ -16,7 +16,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.{ApplicableTagGD, Event}
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test.{ProjectDsl, SampleProject6 => SP, TextShrink, UnsafeTypes}
-import shipreq.webapp.base.text.Atom.{AnyAtom, CodeBlockDetail, DisplayReqRef}
+import shipreq.webapp.member.text.Atom.{AnyAtom, CodeBlockDetail, DisplayReqRef}
 import shipreq.webapp.base.{RandomData => $}
 import sourcecode.Line
 import utest._

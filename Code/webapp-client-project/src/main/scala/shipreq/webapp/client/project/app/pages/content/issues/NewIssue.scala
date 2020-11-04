@@ -8,7 +8,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.PreviewFeature
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.websocket.ManualIssueCmd
-import shipreq.webapp.base.text.{Text, TextSearch}
+import shipreq.webapp.member.text.{Text, TextSearch}
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.app.Style.{issues => *}

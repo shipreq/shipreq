@@ -11,10 +11,10 @@ import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data.{Contextualise, Plain, _}
 import shipreq.webapp.base.jsfacade.KaTeX
-import shipreq.webapp.base.text.Atom.DisplayReqRef
-import shipreq.webapp.base.text.ProjectText.SetRenderStyle
-import shipreq.webapp.base.text.Text.AnyOptional
-import shipreq.webapp.base.text.{Grammar => G, _}
+import shipreq.webapp.member.text.Atom.DisplayReqRef
+import shipreq.webapp.member.text.ProjectText.SetRenderStyle
+import shipreq.webapp.member.text.Text.AnyOptional
+import shipreq.webapp.member.text.{Grammar => G, _}
 import shipreq.webapp.base.util.ClientUtil.{renderSeq, renderVector, sepComma, sepSpace}
 import shipreq.webapp.base.util.ReqCodeTreeItem
 import shipreq.webapp.client.project.app.Style.{widgets => *}

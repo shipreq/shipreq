@@ -6,7 +6,7 @@ import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.autocomplete.strategies.AutoCompleteTestData._
 import shipreq.webapp.base.feature.autocomplete.strategies._
 import shipreq.webapp.base.test.SampleProject3._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 
 object Issue extends AutoCompleteTestModules.Issue {
   override implicit val strategies =

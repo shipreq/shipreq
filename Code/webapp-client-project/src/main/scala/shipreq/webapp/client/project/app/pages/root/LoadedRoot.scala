@@ -16,7 +16,7 @@ import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
 import shipreq.webapp.base.protocol.ajax.CommonProtocolsJs
 import shipreq.webapp.base.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.base.protocol.websocket._
-import shipreq.webapp.base.text.{PlainText, ProjectText, TextSearch}
+import shipreq.webapp.member.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.base.ui.semantic.Menu
 import shipreq.webapp.base.ui.widgets.FeedbackModal
 import shipreq.webapp.base.ui.{OptionalFullscreen, ProjectItem, Toast}

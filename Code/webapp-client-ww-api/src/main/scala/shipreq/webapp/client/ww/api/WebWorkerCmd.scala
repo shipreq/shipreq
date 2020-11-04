@@ -7,7 +7,7 @@ import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
-import shipreq.webapp.base.text.ProjectText
+import shipreq.webapp.member.text.ProjectText
 
 // Another idea could be to maintain a separate ClientData instance in the WW thread and feed it all the same updates
 // that the main thread processes.

@@ -11,7 +11,7 @@ import shipreq.webapp.base.protocol.websocket.ProjectSpaProtocols.{InitAppData, 
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.ReqId
 import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 import shipreq.webapp.base.util.Obfuscated
 import shipreq.webapp.server.logic.ProjectSpaLogic.{WebSocketState => _, _}
 import shipreq.webapp.server.logic.Redis.ProjectSnapshot

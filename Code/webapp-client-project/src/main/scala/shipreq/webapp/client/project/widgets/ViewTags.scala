@@ -8,7 +8,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.VirtualProjectTags.{DerivationDesc, VirtualTag}
-import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.member.text.Grammar
 import shipreq.webapp.base.ui.semantic.{Icon, Popup}
 import shipreq.webapp.base.util.ClientUtil
 import shipreq.webapp.client.project.app.Style.{tags => *}

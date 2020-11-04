@@ -10,7 +10,7 @@ import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.event.Event.{ContentRestore, ReqsDelete}
 import shipreq.webapp.base.test.TestOptics
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 
 /**
   * @param mode Mode being tested

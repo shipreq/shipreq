@@ -6,7 +6,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.CssSettings._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.DragToReorderFeature.{Status => DragStatus}
-import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.member.text.Grammar
 import shipreq.webapp.base.ui.BaseStyles
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
 import shipreq.webapp.base.util._

@@ -4,7 +4,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.test.WebappTestUtil._
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 import shipreq.webapp.client.ww.GraphViz.DOT
 import sourcecode.Line
 

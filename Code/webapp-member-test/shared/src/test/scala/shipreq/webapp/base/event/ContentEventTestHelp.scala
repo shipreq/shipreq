@@ -9,7 +9,7 @@ import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.event.RetiredGenericData._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.{Text => T}
+import shipreq.webapp.member.text.{Text => T}
 
 case class DetachedGenericReq(req       : GenericReq,
                               customText: CustomTextMap,

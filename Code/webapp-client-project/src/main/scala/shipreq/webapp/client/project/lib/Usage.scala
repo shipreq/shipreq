@@ -8,7 +8,7 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.filter._
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.member.text.{PlainText, TextSearch}
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.pages.root.SpecialRouterCtl
 

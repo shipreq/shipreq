@@ -9,7 +9,7 @@ import shipreq.base.util.VectorTree.{Location, ParentLocation, PartialLocation}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.text.{Grammar, Text}
+import shipreq.webapp.member.text.{Grammar, Text}
 import shipreq.webapp.base.util._
 
 final case class MakeEmpty[+A](empty: A) extends AnyVal

@@ -9,7 +9,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.event.ProjectAndOrd
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.base.ui.widgets.NoContentMessage
 import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}

@@ -7,8 +7,8 @@ import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.test.SampleProject
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.Atom.DisplayReqRef
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Atom.DisplayReqRef
+import shipreq.webapp.member.text.Text
 import sourcecode.Line
 import utest._
 

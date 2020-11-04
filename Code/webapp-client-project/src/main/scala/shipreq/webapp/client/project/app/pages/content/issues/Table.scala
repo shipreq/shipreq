@@ -10,7 +10,7 @@ import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.issue.Issues
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.sort.FusedSorters
-import shipreq.webapp.base.text.{PlainText, Text}
+import shipreq.webapp.member.text.{PlainText, Text}
 import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.app.pages.root.Routes

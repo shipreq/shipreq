@@ -7,7 +7,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.{Sorter => SorterBase}
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 
 object Sorter {
   import SorterBase._

@@ -5,7 +5,7 @@ import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.test.UnsafeTypes.AutoNES._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 import utest._
 
 object HighLevelEventTest extends TestSuite {

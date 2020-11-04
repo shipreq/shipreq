@@ -44,6 +44,7 @@ object ShipReqBuild {
   lazy val baseUtil =
     crossProject(JSPlatform, JVMPlatform)
       .in(file("base-util"))
+      .configureBoth(Common.macroModuleSettings)
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(UseNode))
       .dependsOn(basePredef)

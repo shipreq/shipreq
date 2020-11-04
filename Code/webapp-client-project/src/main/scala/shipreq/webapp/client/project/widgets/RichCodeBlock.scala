@@ -6,7 +6,7 @@ import scala.collection.immutable.TreeSet
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.jsfacade.DomPurify
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.text.Atom.CodeBlockDetail
+import shipreq.webapp.member.text.Atom.CodeBlockDetail
 import shipreq.webapp.base.ui.CodeBlockWithSyntaxHighlighting
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 import shipreq.webapp.client.project.app.WebWorkerClient

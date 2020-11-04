@@ -7,7 +7,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.Event
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text._
+import shipreq.webapp.member.text._
 
 /**
  * Builds on SampleProject #3 to add:

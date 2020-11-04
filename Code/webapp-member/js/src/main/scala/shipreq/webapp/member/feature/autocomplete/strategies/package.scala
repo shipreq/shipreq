@@ -1,0 +1,14 @@
+package shipreq.webapp.member.feature.autocomplete
+
+import shipreq.webapp.member.jsfacade.TextComplete.Strategy
+
+package object strategies extends strategies.QueryModule {
+
+  type Strategies = Vector[Strategy[_]]
+
+  implicit def autoLiftTextCompleteStrategy(s: Strategy[_]): Strategies =
+    (Vector.empty: Strategies) :+ s
+
+  private[feature] final val MaxResults = 12
+
+}

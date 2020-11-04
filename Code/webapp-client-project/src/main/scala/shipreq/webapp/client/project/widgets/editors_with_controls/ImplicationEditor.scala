@@ -12,7 +12,7 @@ import shipreq.webapp.base.data.{Plain, _}
 import shipreq.webapp.base.feature.AutoCompleteFeature.AutoComplete.Project.{ReqItem, ReqItems}
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
-import shipreq.webapp.base.text.{Grammar, PlainText, SingleLine, TextSearch}
+import shipreq.webapp.member.text.{Grammar, PlainText, SingleLine, TextSearch}
 import shipreq.webapp.base.util.KeyHandlers
 import shipreq.webapp.base.validation.lib.Simple._
 import shipreq.webapp.base.validation.lib._

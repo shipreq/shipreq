@@ -3,7 +3,7 @@ package shipreq.webapp.base.feature.autocomplete.strategies
 import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.member.text.{PlainText, TextSearch}
 
 object AutoCompleteTestData {
 

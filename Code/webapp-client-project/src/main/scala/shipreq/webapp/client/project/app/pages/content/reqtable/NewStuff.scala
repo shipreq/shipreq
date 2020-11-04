@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{ExternalPubid, Project}
 import shipreq.webapp.base.feature.PreviewFeature
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.member.text.{PlainText, TextSearch}
 import shipreq.webapp.base.ui.Toast
 import shipreq.webapp.client.project.app.pages.content.reqtable.NewStuff.State
 import shipreq.webapp.client.project.feature.CreateFeature

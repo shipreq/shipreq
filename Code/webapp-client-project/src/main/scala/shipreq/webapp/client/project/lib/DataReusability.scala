@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.lib
 
 import japgolly.scalajs.react._
-import shipreq.webapp.base.text.ProjectText
+import shipreq.webapp.member.text.ProjectText
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewTags}
 
 object DataReusability extends shipreq.webapp.base.lib.DataReusability {

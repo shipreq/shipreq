@@ -5,7 +5,7 @@ import shipreq.webapp.base.data.DataValidators.{reqCode => V}
 import shipreq.webapp.base.data.ReqCode._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.member.text.Grammar
 import utest._
 
 object ReqCodeTest extends TestSuite {

@@ -13,7 +13,7 @@ import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
 import shipreq.webapp.base.feature.{AsyncFeature, DragToReorderFeature, EditControlsFeature, TableNavigationFeature}
-import shipreq.webapp.base.text.{PlainText, ProjectText}
+import shipreq.webapp.member.text.{PlainText, ProjectText}
 import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.base.util.DomUtil._
 import shipreq.webapp.base.util._

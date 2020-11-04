@@ -8,7 +8,7 @@ import shipreq.webapp.base.data.savedview._
 import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.sort.Sorter._
 import shipreq.webapp.base.sort.{Sorter => SorterBase}
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 
 object Sorter {
   val Types = new WithTypes[Setup, Row]

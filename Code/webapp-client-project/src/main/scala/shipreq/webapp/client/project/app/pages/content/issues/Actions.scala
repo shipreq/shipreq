@@ -7,7 +7,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event.CustomTagFieldGD
 import shipreq.webapp.base.issue.{ContentRef, Issue}
 import shipreq.webapp.base.protocol.websocket.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 import shipreq.webapp.base.ui.semantic.{Button => Btn, Icon}
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.app.pages.root.Routes

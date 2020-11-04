@@ -8,7 +8,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.PotentialChange
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
-import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.member.text.Grammar
 import shipreq.webapp.base.ui.semantic.{Dropdown => _, _}
 import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}

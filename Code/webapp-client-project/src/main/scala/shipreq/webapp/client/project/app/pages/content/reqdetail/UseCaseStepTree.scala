@@ -9,8 +9,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
 import shipreq.webapp.base.lib.DataReusability._
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
-import shipreq.webapp.base.text.UseCaseStepFlowText.TextAndFlow
-import shipreq.webapp.base.text._
+import shipreq.webapp.member.text.UseCaseStepFlowText.TextAndFlow
+import shipreq.webapp.member.text._
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
 import shipreq.webapp.client.project.app.TestMarker
 

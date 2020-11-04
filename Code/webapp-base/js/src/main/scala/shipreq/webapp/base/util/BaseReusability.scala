@@ -3,6 +3,7 @@ package shipreq.webapp.base.util
 import japgolly.scalajs.react._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
+import shipreq.webapp.base.data.Username
 
 object BaseReusability extends BaseReusability {
 
@@ -49,4 +50,7 @@ abstract class BaseReusability {
 
   //implicit def reusabilityValidation[S, I, C, V]: Reusability[Validator[S, I, C, V]] =
   //  Reusability.byRef
+
+  implicit def reusabilityUsername: Reusability[Username] =
+    Reusability.derive
 }

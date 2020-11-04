@@ -19,7 +19,7 @@ import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.base.protocol.websocket.UpdateContentCmd.PatchImplications
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 import shipreq.webapp.base.util.DomUtil
 import shipreq.webapp.base.util.DomUtil._
 import shipreq.webapp.base.util.Must._

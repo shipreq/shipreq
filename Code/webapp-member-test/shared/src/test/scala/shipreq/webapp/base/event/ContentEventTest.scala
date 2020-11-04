@@ -11,9 +11,9 @@ import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.test.UnsafeTypes.AutoNES._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.Atom.DisplayReqRef
-import shipreq.webapp.base.text.Text.{CodeGroupTitle, CustomTextField => CTF, GenericReqTitle => GRT, InlineIssueDesc => IID}
-import shipreq.webapp.base.text.{Grammar, Text}
+import shipreq.webapp.member.text.Atom.DisplayReqRef
+import shipreq.webapp.member.text.Text.{CodeGroupTitle, CustomTextField => CTF, GenericReqTitle => GRT, InlineIssueDesc => IID}
+import shipreq.webapp.member.text.{Grammar, Text}
 import utest._
 
 // TODO Test atom validity in all events that accept text

@@ -5,7 +5,7 @@ import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.SampleProject6.{project => project0}
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.webapp.base.text._
+import shipreq.webapp.member.text._
 
 /**
  * Builds on SampleProject #6 with:

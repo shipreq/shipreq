@@ -17,8 +17,8 @@ import shipreq.webapp.base.event.{Event, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.feature.{AsyncFeature, EditControlsFeature, PreviewFeature, TableNavigationFeature}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.websocket.{CreateContentCmd, UpdateContentCmd}
-import shipreq.webapp.base.text.ProjectText.SetRenderStyle
-import shipreq.webapp.base.text._
+import shipreq.webapp.member.text.ProjectText.SetRenderStyle
+import shipreq.webapp.member.text._
 import shipreq.webapp.base.ui.widgets.NoContentMessage
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.util.LastValueMemo

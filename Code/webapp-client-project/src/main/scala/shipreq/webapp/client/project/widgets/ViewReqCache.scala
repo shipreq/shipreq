@@ -4,7 +4,7 @@ import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^.VdomTag
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.ProjectText
+import shipreq.webapp.member.text.ProjectText
 import shipreq.webapp.client.project.lib.DataReusability._
 
 final case class ViewReqDataCache(private[ViewReqDataCache] val project: Project) {

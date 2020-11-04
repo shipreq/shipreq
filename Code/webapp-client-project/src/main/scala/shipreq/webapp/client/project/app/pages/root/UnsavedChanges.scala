@@ -7,7 +7,7 @@ import japgolly.scalajs.react.{CallbackTo, Reusability}
 import shipreq.base.util._
 import shipreq.webapp.base.UiText
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.{PlainText, TextSearch}
+import shipreq.webapp.member.text.{PlainText, TextSearch}
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.app.pages
 import shipreq.webapp.client.project.feature.EditorFeature

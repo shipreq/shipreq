@@ -5,7 +5,7 @@ import monocle.{Iso, Prism}
 import scalaz.~~>
 import shipreq.base.util.{Direction, SetDiff}
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 import shipreq.webapp.client.project.feature.editor.{FieldKey => E}
 import shipreq.webapp.client.project.lib.DataReusability._
 

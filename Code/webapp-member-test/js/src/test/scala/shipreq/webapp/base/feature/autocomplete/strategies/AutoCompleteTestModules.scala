@@ -2,7 +2,7 @@ package shipreq.webapp.base.feature.autocomplete.strategies
 
 import shipreq.webapp.base.feature.AutoCompleteFeature.AutoComplete.Strategies
 import shipreq.webapp.base.test.AutoCompleteTestUtil._
-import shipreq.webapp.base.text.Grammar
+import shipreq.webapp.member.text.Grammar
 import utest._
 
 object AutoCompleteTestModules {

@@ -6,7 +6,7 @@ import shipreq.base.util.VectorTree.PartialLocation
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.GraphDir
-import shipreq.webapp.base.text.{PlainText, ProjectText}
+import shipreq.webapp.member.text.{PlainText, ProjectText}
 
 /**
  * Creates a graph of the flow of steps in a given UseCase.

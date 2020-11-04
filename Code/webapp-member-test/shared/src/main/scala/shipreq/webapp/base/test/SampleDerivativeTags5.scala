@@ -5,7 +5,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
 import shipreq.webapp.base.test.UnsafeTypes._
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 
 /** This is another collection of edge cases.
   *

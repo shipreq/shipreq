@@ -9,7 +9,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
-import shipreq.webapp.base.text.ProjectText
+import shipreq.webapp.member.text.ProjectText
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.lib.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets

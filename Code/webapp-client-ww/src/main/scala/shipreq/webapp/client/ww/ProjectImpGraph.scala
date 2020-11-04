@@ -5,7 +5,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation._
 import shipreq.webapp.base.data.savedview.ImpGraphConfig
 import shipreq.webapp.base.data.savedview.ImpGraphConfig.GraphDir
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 
 final class ProjectImpGraph(project   : Project,
                             plainText : PlainText.ForProject.NoCtx,

@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.feature.deletion
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 import shipreq.webapp.base.ui.semantic.{Colour, Icon, Table}
 import shipreq.webapp.base.util.On
 import shipreq.webapp.client.project.app.Style.{deletionRestorationForms => *}

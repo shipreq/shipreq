@@ -4,8 +4,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.ProjectDsl._
 import shipreq.webapp.base.test.SampleProject.{project => project0}
 import shipreq.webapp.base.test.UnsafeTypes._
-import shipreq.webapp.base.text.Atom.DisplayReqRef
-import shipreq.webapp.base.text.{Text => T, _}
+import shipreq.webapp.member.text.Atom.DisplayReqRef
+import shipreq.webapp.member.text.{Text => T, _}
 
 /**
  * Builds on SampleProject #1 (not #2) to add:

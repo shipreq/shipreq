@@ -2,9 +2,9 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.UiText
-import shipreq.webapp.base.text.Atom.TypeGroup
-import shipreq.webapp.base.text.Grammar.texTag
-import shipreq.webapp.base.text._
+import shipreq.webapp.member.text.Atom.TypeGroup
+import shipreq.webapp.member.text.Grammar.texTag
+import shipreq.webapp.member.text._
 import shipreq.webapp.base.ui.semantic.Modal
 
 object RichTextEditorHelp {

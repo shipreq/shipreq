@@ -10,8 +10,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.data.derivation.NaTags
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
-import shipreq.webapp.base.text.Grammar.{hashRefKey => G}
-import shipreq.webapp.base.text.SingleLine
+import shipreq.webapp.member.text.Grammar.{hashRefKey => G}
+import shipreq.webapp.member.text.SingleLine
 import shipreq.webapp.base.util.KeyHandlers
 import shipreq.webapp.base.validation.lib.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor

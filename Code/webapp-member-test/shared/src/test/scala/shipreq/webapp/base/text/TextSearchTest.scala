@@ -1,7 +1,7 @@
-package shipreq.webapp.base.text
+package shipreq.webapp.member.text
 
 import shipreq.webapp.base.test.WebappTestUtil._
-import shipreq.webapp.base.text.TextSearch._
+import shipreq.webapp.member.text.TextSearch._
 import utest._
 
 object TextSearchTest extends TestSuite {

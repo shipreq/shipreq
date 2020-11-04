@@ -6,8 +6,8 @@ import shipreq.webapp.base.event.EventEquality._
 import shipreq.webapp.base.event.RandomEventStream
 import shipreq.webapp.base.filter.Filter.Implicits.univEqFilterValid
 import shipreq.webapp.base.test.BinaryTestUtil._
-import shipreq.webapp.base.text.Text.Equality._
-import shipreq.webapp.base.text.Text._
+import shipreq.webapp.member.text.Text.Equality._
+import shipreq.webapp.member.text.Text._
 import shipreq.webapp.base.{RandomData => R}
 import utest._
 

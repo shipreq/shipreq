@@ -14,9 +14,9 @@ import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus, PreviewFeature, ScrollSyncFeature}
 import shipreq.webapp.base.jsfacade.{ScrollIntoViewIfNeeded, TextFieldEdit}
 import shipreq.webapp.base.lib._
-import shipreq.webapp.base.text.Atom.TypeGroup
-import shipreq.webapp.base.text.Text.Equality._
-import shipreq.webapp.base.text._
+import shipreq.webapp.member.text.Atom.TypeGroup
+import shipreq.webapp.member.text.Text.Equality._
+import shipreq.webapp.member.text._
 import shipreq.webapp.base.ui.OptionalFullscreen
 import shipreq.webapp.base.util.{KeyHandlers, PreProcessor, TaskRepeater}
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor

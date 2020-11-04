@@ -9,7 +9,7 @@ import shipreq.base.util.Url
 import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 import shipreq.webapp.base.util.GoogleAnalytics
 
 object Routes {

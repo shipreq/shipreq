@@ -1,0 +1,24 @@
+#!/bin/bash
+set -euo pipefail
+# cd "$(dirname "$0")" || exit 1
+# cd "$(dirname "$(readlink -e "$0")")" || exit 1
+# [ $# -ne 1 ] && echo "Usage: $0 <xxx>" && exit 1
+# tmp=/tmp/$(date +%Y%m%d-%H%M%S)-$$
+
+for f in $(find webapp-member -name '*.scala'); do
+
+  echo $f
+
+  # git checkout $f
+
+  perl -pi -e '
+    s/^package shipreq.webapp.base/package shipreq.webapp.member/;
+    # s/\bshipreq.webapp.base\.(UiText|\{|data|event|feature|filter|issue|jsfacade|lib|protocol|sort|text|ui|util)/shipreq.webapp.member.$1/g;
+    s/\bshipreq.webapp.member\.(util\.(?:On|Off)|ui.semantic)/shipreq.webapp.base.$1/g;
+    s/import shipreq.webapp.member.util._/import shipreq.webapp.member.util._\nimport shipreq.webapp.base.util._/;
+  ' $f
+
+  # git diff $f
+  # exit 1
+
+done

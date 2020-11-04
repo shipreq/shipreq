@@ -4,8 +4,8 @@ import japgolly.scalajs.react.Reusable
 import japgolly.scalajs.react.vdom.html_<^.VdomTag
 import shipreq.base.util.IfApplicable
 import shipreq.webapp.base.data._
-import shipreq.webapp.base.text.ProjectText
-import shipreq.webapp.base.text.ProjectText.{Context => PCtx}
+import shipreq.webapp.member.text.ProjectText
+import shipreq.webapp.member.text.ProjectText.{Context => PCtx}
 import shipreq.webapp.client.project.widgets.ViewReqCache
 
 /** Provides the ability to render for display, parts of a project using row & field keys.

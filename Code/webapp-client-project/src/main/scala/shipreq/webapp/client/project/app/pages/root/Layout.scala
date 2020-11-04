@@ -8,7 +8,7 @@ import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data.{Project, ProjectMetaData, Username}
 import shipreq.webapp.base.lib.DataReusability._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 import shipreq.webapp.base.ui._
 import shipreq.webapp.base.ui.semantic.Menu.DropdownType
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour, Dropdown, Icon, Menu, Size}

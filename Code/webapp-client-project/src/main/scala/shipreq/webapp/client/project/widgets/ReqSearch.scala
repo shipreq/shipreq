@@ -12,7 +12,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.filter._
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 import shipreq.webapp.base.ui.semantic.{Icon, Menu, UsesSemanticUiManually}
 import shipreq.webapp.base.util.DomUtil.PatchHtmlElement
 import shipreq.webapp.client.project.app.Style.widgets.{reqSearch => *}

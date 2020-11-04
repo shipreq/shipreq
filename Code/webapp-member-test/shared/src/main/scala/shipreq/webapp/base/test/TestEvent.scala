@@ -5,7 +5,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.event._
-import shipreq.webapp.base.text.Text
+import shipreq.webapp.member.text.Text
 
 object TestEvent {
   import Event._

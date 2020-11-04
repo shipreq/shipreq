@@ -8,8 +8,8 @@ import shipreq.webapp.base.data.DataValidators.{reqCode => V}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AutoCompleteFeature._
 import shipreq.webapp.base.feature.{EditControlsFeature, EditorStatus}
-import shipreq.webapp.base.text.GrammarSpec.SeqFormat
-import shipreq.webapp.base.text.{LineCardinality, MultiLine, SingleLine}
+import shipreq.webapp.member.text.GrammarSpec.SeqFormat
+import shipreq.webapp.member.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.base.util.KeyHandlers
 import shipreq.webapp.base.validation.lib.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor

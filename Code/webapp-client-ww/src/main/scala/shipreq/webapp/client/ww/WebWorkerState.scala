@@ -8,7 +8,7 @@ import shipreq.webapp.base.data.Project
 import shipreq.webapp.base.event.EventOrd.Implicits._
 import shipreq.webapp.base.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.base.text.PlainText
+import shipreq.webapp.member.text.PlainText
 
 final class WebWorkerState(logger: LoggerJs) {
   import WebWorkerState._

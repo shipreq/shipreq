@@ -27,7 +27,7 @@ import shipreq.webapp.base.event.ProjectAndOrd
 import shipreq.webapp.base.issue.IssueCategory
 import shipreq.webapp.base.sort.SortMethod
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.text.{Grammar, GrammarSpec, Text}
+import shipreq.webapp.member.text.{Grammar, GrammarSpec, Text}
 import shipreq.webapp.base.util._
 
 // TODO RandomData is inaccurate in that CorrectionParts aren't applied.
@@ -487,7 +487,7 @@ object RandomData {
 
   object TextGen {
     import scalaz.Name
-    import shipreq.webapp.base.text.{MultiLine => _, SingleLine => _, _}
+    import shipreq.webapp.member.text.{MultiLine => _, SingleLine => _, _}
     import Atom._
     import Text.{ReqTitle => _, _}
 

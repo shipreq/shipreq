@@ -14,8 +14,8 @@ import shipreq.webapp.base.data.savedview.{Column => C, SortCriterion => SC}
 import shipreq.webapp.base.filter.Filter
 import shipreq.webapp.base.sort.SortMethod._
 import shipreq.webapp.base.sort.Sorter.{BlankPlacement, BlanksFirst, BlanksLast, Dir, FlipDir, KeepDir}
-import shipreq.webapp.base.text.Text.Equality._
-import shipreq.webapp.base.text.{Atom, PlainText, TextSearch}
+import shipreq.webapp.member.text.Text.Equality._
+import shipreq.webapp.member.text.{Atom, PlainText, TextSearch}
 import shipreq.webapp.client.project.app.pages.content.reqtable.LogicTestUtil._
 import shipreq.webapp.client.project.test.ClientTestSettings._
 import utest._

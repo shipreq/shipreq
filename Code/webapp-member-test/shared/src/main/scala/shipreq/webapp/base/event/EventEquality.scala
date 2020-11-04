@@ -6,7 +6,7 @@ import scalaz.Equal
 import scalaz.std.list.listEqual
 import shipreq.webapp.base.event.Event._
 import shipreq.webapp.base.filter.Filter.Implicits._
-import shipreq.webapp.base.text.Text.Equality._
+import shipreq.webapp.member.text.Text.Equality._
 
 object EventEquality extends EventEquality
 trait EventEquality {
