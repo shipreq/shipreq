@@ -138,7 +138,7 @@ val gens = List(
     "FlowIn"  -> "SetDiff.NE[UseCaseStepId]",
     "FlowOut" -> "SetDiff.NE[UseCaseStepId]",
   ),
-  Gen("SavedViewGD", init = "import shipreq.webapp.base.filter.Filter.{Valid => ValidFilter}\nimport shipreq.webapp.base.data.savedview._")(
+  Gen("SavedViewGD", init = "import shipreq.webapp.member.filter.Filter.{Valid => ValidFilter}\nimport shipreq.webapp.member.data.savedview._")(
     "Name"           -> "SavedView.Name",
     "FilterDead"     -> "FilterDead",
     "Columns"        -> "NonEmptyVector[Column]",
@@ -153,16 +153,16 @@ val header = "// █████████████████████
 
 val content =
   s"""
-     |package shipreq.webapp.base.event
+     |package shipreq.webapp.member.event
      |
      |import japgolly.microlibs.nonempty._
      |import scalaz.{Equal, Order}
      |import shipreq.base.util._
-     |import shipreq.webapp.base.data._
-     |import shipreq.webapp.base.filter.Filter.Implicits._
-     |import shipreq.webapp.base.text.Text
-     |import shipreq.webapp.base.text.Text.Equality._
-     |import shipreq.webapp.base.util._
+     |import shipreq.webapp.member.data._
+     |import shipreq.webapp.member.filter.Filter.Implicits._
+     |import shipreq.webapp.member.text.Text
+     |import shipreq.webapp.member.text.Text.Equality._
+     |import shipreq.webapp.member.util.GenericData
      |
      |// DO NOT EDIT THIS
      |// This file is generated in its entirety by bin/gen-generic_data
@@ -172,6 +172,6 @@ val content =
 
 // println(content)
 
-val targetFile = "webapp-base-member/shared/src/main/scala/shipreq/webapp/base/event/GenericData.scala"
+val targetFile = "webapp-member/shared/src/main/scala/shipreq/webapp/member/event/GenericData.scala"
 println(s"Writing ${content.split('\n').size + 1} lines to $targetFile")
 writeToFile(targetFile, content)
