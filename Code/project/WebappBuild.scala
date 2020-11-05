@@ -84,7 +84,7 @@ object WebappBuild {
       .in(file("webapp-base"))
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
-      .dependsOn(baseUtil, webappMacro)
+      .dependsOn(baseUtil)
       .depsForBoth(Monocle.macros ++ Nyaya.prop ++ boopickle)
       .depsForJs(React.most ++ scalajsDom)
       .settings(
@@ -116,7 +116,7 @@ object WebappBuild {
       .in(file("webapp-member"))
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
-      .dependsOn(webappBase)
+      .dependsOn(webappBase, webappMacro)
       .depsForBoth(shapeless ++ parboiled)
       .depsForBoth(Circe.main % Provided) // Provided because for now, want to ensure JSON stuff isn't part of frontend
       .depsForJs(ScalaCSS.react)
