@@ -3,8 +3,8 @@ package shipreq.webapp.server.app
 import net.liftweb.common.Full
 import net.liftweb.http.provider.servlet.HTTPRequestServlet
 import shipreq.base.ops.Trace._
+import shipreq.webapp.server.logic.algebra.TraceLogic
 import shipreq.webapp.server.logic.dispatch.{Response, ResponseCmd}
-import shipreq.webapp.server.logic.effect.TraceLogic
 
 object TraceInterpreter {
 

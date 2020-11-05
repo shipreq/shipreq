@@ -16,10 +16,10 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.member.data._
 import shipreq.webapp.member.event._
 import shipreq.webapp.member.test.WebappTestUtil._
+import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.{ScalaJsManifest, ServerLogicConfig}
 import shipreq.webapp.server.logic.data.{IP, PasswordAndSalt, PasswordHash, Salt}
 import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.server.logic.effect._
 import shipreq.webapp.server.logic.event.ApplyEventLogic
 import shipreq.webapp.server.logic.impl._
 import shipreq.webapp.server.logic.util.Obfuscators
@@ -425,7 +425,7 @@ final class MockTaskman extends TaskmanApi[Name] {
 
 object MockSecurity {
   private[MockSecurity] object Codecs {
-    import shipreq.webapp.server.logic.effect.Security._
+    import shipreq.webapp.server.logic.algebra.Security._
 
     implicit val decoderSessionId: Decoder[SessionId] =
       Decoder[String].map(SessionId.apply)
@@ -461,7 +461,7 @@ object MockSecurity {
 
 final class MockSecurity(override val db: MockDb, now: Name[Instant], cfg: ServerLogicConfig.Security) extends Security.Algebra[Name] {
   import MockSecurity.Codecs._
-  import shipreq.webapp.server.logic.effect.Security._
+  import shipreq.webapp.server.logic.algebra.Security._
 
   override val F = Monad[Name]
 

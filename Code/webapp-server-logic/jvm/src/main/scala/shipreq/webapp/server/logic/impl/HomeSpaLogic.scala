@@ -8,7 +8,7 @@ import shipreq.webapp.member.data._
 import shipreq.webapp.member.event._
 import shipreq.webapp.member.protocol.ajax.HomeSpaProtocols
 import shipreq.webapp.member.protocol.entrypoint.HomeSpaEntryPoint
-import shipreq.webapp.server.logic.effect.DB
+import shipreq.webapp.server.logic.algebra.DB
 import shipreq.webapp.server.logic.event.ApplyNewEvent
 
 trait HomeSpaLogic[F[_]] extends HomeSpaLogic.Ajax[F] {

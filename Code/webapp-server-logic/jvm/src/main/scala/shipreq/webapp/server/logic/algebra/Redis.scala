@@ -1,4 +1,4 @@
-package shipreq.webapp.server.logic.effect
+package shipreq.webapp.server.logic.algebra
 
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._

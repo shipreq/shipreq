@@ -14,8 +14,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.member.data._
 import shipreq.webapp.member.event.{ApplyEvent, VerifiedEvent}
+import shipreq.webapp.server.logic.algebra.{DB, Server}
 import shipreq.webapp.server.logic.dispatch.{ResponseCmd, StatusCode}
-import shipreq.webapp.server.logic.effect.{DB, Server}
 
 trait OpsEndpoints[F[_]] {
   import OpsEndpoints._
@@ -174,7 +174,7 @@ object OpsEndpoints extends HasLogger {
                            latency2  : Duration,
                            tableStats: List[DB.ForOps.TableStat],
                            dbSize    : Long) extends HasJson {
-    import shipreq.webapp.server.logic.effect.DB.ForOps.TableStat
+    import shipreq.webapp.server.logic.algebra.DB.ForOps.TableStat
     override def toJson: Json = {
       val tables = {
         val fields = List.newBuilder[(String, Json)]

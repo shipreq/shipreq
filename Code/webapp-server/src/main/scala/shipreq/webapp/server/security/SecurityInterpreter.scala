@@ -17,11 +17,11 @@ import shipreq.base.ops.Trace
 import shipreq.base.util.log.WebappLogFields
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.Obfuscated
+import shipreq.webapp.server.logic.algebra.Security.{SessionId, SessionRestoreResult, SessionToken}
+import shipreq.webapp.server.logic.algebra.{DB, Security}
 import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.data.{PasswordAndSalt, PasswordHash, Salt}
 import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.server.logic.effect.Security.{SessionId, SessionRestoreResult, SessionToken}
-import shipreq.webapp.server.logic.effect.{DB, Security}
 import shipreq.webapp.server.logic.util.Obfuscators
 
 object SecurityInterpreter {

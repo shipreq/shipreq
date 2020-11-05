@@ -15,10 +15,10 @@ import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.{InitAppData
 import shipreq.webapp.member.protocol.websocket._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.text.Text
+import shipreq.webapp.server.logic.algebra.Redis
+import shipreq.webapp.server.logic.algebra.Redis.ProjectSnapshot
+import shipreq.webapp.server.logic.algebra.Security.{SessionId, SessionToken}
 import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.server.logic.effect.Redis
-import shipreq.webapp.server.logic.effect.Redis.ProjectSnapshot
-import shipreq.webapp.server.logic.effect.Security.{SessionId, SessionToken}
 import shipreq.webapp.server.logic.impl.ProjectSpaLogic.{WebSocketState => _, _}
 import shipreq.webapp.server.logic.test.MockInterpreters
 import shipreq.webapp.server.logic.util.Obfuscators

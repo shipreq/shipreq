@@ -12,11 +12,11 @@ import shipreq.webapp.base.protocol.Protocol
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.client.public.PublicSpaProtocols
+import shipreq.webapp.server.logic.algebra.Security.SessionRestoreResult
+import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.dispatch.DispatchLogic._
 import shipreq.webapp.server.logic.dispatch.Method._
-import shipreq.webapp.server.logic.effect.Security.SessionRestoreResult
-import shipreq.webapp.server.logic.effect._
 import shipreq.webapp.server.logic.test.{MockDb, MockInterpreters}
 import shipreq.webapp.server.logic.util.Obfuscators
 import sourcecode.Line

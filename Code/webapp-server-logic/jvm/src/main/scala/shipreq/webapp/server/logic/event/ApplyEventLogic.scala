@@ -8,7 +8,7 @@ import shipreq.base.ops.Trace
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.member.event._
-import shipreq.webapp.server.logic.effect.{MetricsLogic, Server}
+import shipreq.webapp.server.logic.algebra.{MetricsLogic, Server}
 
 trait ApplyEventLogic[F[_]] { self =>
   import ApplyEventLogic.{AppendFn, Result}

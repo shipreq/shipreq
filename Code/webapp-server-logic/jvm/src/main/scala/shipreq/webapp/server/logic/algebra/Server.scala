@@ -1,4 +1,4 @@
-package shipreq.webapp.server.logic.effect
+package shipreq.webapp.server.logic.algebra
 
 import java.time.{Duration, Instant}
 import shipreq.base.util.ErrorMsg

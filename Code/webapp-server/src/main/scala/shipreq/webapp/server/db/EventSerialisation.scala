@@ -8,7 +8,7 @@ import shipreq.webapp.member.protocol.json.v1.Events.EventData._
 import shipreq.webapp.member.protocol.json.v1.Rev1.EventData._
 import shipreq.webapp.member.protocol.json.v1.Rev6.EventData._
 import shipreq.webapp.member.protocol.json.v1.Rev7.EventData._
-import shipreq.webapp.server.logic.effect.DB.ReadProjectEventError
+import shipreq.webapp.server.logic.algebra.DB.ReadProjectEventError
 
 object EventSerialisation {
   import Event._

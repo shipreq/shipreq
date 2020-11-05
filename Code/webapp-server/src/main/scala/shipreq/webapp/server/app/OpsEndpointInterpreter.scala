@@ -3,7 +3,7 @@ package shipreq.webapp.server.app
 import nyaya.gen.Gen
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.TaskmanApi
-import shipreq.webapp.server.logic.effect.{DB, Server}
+import shipreq.webapp.server.logic.algebra.{DB, Server}
 import shipreq.webapp.server.logic.impl.OpsEndpoints
 
 final class OpsEndpointInterpreter(implicit

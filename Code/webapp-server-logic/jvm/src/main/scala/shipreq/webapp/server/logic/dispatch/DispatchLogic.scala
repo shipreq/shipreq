@@ -18,9 +18,9 @@ import shipreq.webapp.base.protocol.binary.SafePickler.DecodingFailure
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.server.logic._
+import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.dispatch.{Request => _}
-import shipreq.webapp.server.logic.effect._
 import shipreq.webapp.server.logic.impl._
 import shipreq.webapp.server.logic.util._
 

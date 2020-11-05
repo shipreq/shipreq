@@ -4,9 +4,9 @@ import java.time.Duration
 import scalaz.Name
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
+import shipreq.webapp.server.logic.algebra.Security.{SessionRestoreResult, SessionToken}
 import shipreq.webapp.server.logic.config.ServerLogicConfig.Security.JwtSecret
 import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.server.logic.effect.Security.{SessionRestoreResult, SessionToken}
 import shipreq.webapp.server.logic.impl.SimpleEndpoints
 import shipreq.webapp.server.logic.test.MockInterpreters
 import utest._

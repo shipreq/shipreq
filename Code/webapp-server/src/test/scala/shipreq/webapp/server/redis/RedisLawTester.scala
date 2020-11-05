@@ -16,7 +16,7 @@ import shipreq.base.util.FxModule._
 import shipreq.base.util._
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.member.event._
-import shipreq.webapp.server.logic.effect.Redis._
+import shipreq.webapp.server.logic.algebra.Redis._
 import shipreq.webapp.server.redis.RedisLaw.Test
 import shipreq.webapp.server.redis.RedisLawTester._
 import shipreq.webapp.server.redis.RedisLaws.DataGenerators
@@ -84,7 +84,7 @@ object RedisLawTester {
   // ===================================================================================================================
 
   private[RedisLawTester] final class Listener(id: ProjectId, alg: ProjectAlgebra[Fx]) {
-    import shipreq.webapp.server.logic.effect.Redis.ListenerError
+    import shipreq.webapp.server.logic.algebra.Redis.ListenerError
 
     private val state = new collection.mutable.ArrayBuffer[VerifiedEvent]
 

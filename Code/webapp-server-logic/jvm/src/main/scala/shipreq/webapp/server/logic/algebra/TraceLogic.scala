@@ -1,4 +1,4 @@
-package shipreq.webapp.server.logic.effect
+package shipreq.webapp.server.logic.algebra
 
 import doobie.ConnectionIO
 import scalaz.syntax.monad._

@@ -20,9 +20,9 @@ import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.WsReqRes.EventResult
 import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.member.protocol.websocket._
+import shipreq.webapp.server.logic.algebra.{DB, MetricsLogic, Redis, Security, Server}
 import shipreq.webapp.server.logic.config.ScalaJsManifest
 import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.server.logic.effect.{DB, MetricsLogic, Redis, Security, Server}
 import shipreq.webapp.server.logic.event.{ApplyEventLogic, ApplyNewEvent, MakeEvent}
 import shipreq.webapp.server.logic.util.Obfuscators
 

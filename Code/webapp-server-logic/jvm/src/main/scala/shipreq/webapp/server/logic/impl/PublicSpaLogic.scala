@@ -14,9 +14,9 @@ import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.client.public.PublicSpaProtocols
+import shipreq.webapp.server.logic.algebra.{DB, MetricsLogic, Security, Server}
 import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.data.PasswordAndSalt
-import shipreq.webapp.server.logic.effect.{DB, MetricsLogic, Security, Server}
 import shipreq.webapp.server.logic.util.Implicits._
 import shipreq.webapp.server.logic.util.WebappTaskmanConverters._
 
@@ -266,7 +266,7 @@ object PublicSpaLogic extends HasLogger {
           security.protectFn { user =>
 
             def resetInDb(now: Instant): F[(Option[Task], Security.Result)] = {
-              import shipreq.webapp.server.logic.effect.DB.PasswordResetState._
+              import shipreq.webapp.server.logic.algebra.DB.PasswordResetState._
               db.withTransactionLevel(runDB, Connection.TRANSACTION_SERIALIZABLE)(
                 db.getPasswordResetState(user).flatMap {
 

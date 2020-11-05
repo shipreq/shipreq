@@ -4,7 +4,7 @@ import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.member.data.Project
 import shipreq.webapp.member.event.{EventOrd, VerifiedEvent}
-import shipreq.webapp.server.logic.effect.Redis.ProjectSnapshot
+import shipreq.webapp.server.logic.algebra.Redis.ProjectSnapshot
 
 object RedisProtocol {
 

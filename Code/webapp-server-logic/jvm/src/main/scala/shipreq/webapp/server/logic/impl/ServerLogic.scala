@@ -3,8 +3,8 @@ package shipreq.webapp.server.logic.impl
 import scalaz.{BindRec, Catchable, Monad, ~>}
 import shipreq.base.ops.Trace
 import shipreq.taskman.api.TaskmanApi
+import shipreq.webapp.server.logic.algebra.{DB, MetricsLogic, Redis, Security, Server}
 import shipreq.webapp.server.logic.config.ServerLogicConfig
-import shipreq.webapp.server.logic.effect.{DB, MetricsLogic, Redis, Security, Server}
 import shipreq.webapp.server.logic.event.ApplyEventLogic
 
 /**

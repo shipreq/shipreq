@@ -1,4 +1,4 @@
-package shipreq.webapp.server.logic.effect
+package shipreq.webapp.server.logic.algebra
 
 import java.time.Duration
 import shipreq.webapp.member.event.Trust

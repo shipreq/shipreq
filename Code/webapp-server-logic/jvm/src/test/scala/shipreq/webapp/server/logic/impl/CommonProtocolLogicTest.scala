@@ -4,7 +4,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.server.logic.effect.Security
+import shipreq.webapp.server.logic.algebra.Security
 import shipreq.webapp.server.logic.test.MockInterpreters
 import utest._
 

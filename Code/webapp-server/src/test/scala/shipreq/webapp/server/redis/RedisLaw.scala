@@ -5,7 +5,7 @@ import scala.reflect.ClassTag
 import scalaz.{Equal, Monad, Semigroup}
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.server.logic.effect.Redis._
+import shipreq.webapp.server.logic.algebra.Redis._
 
 trait RedisLaw[Input] {
   import RedisLaw._

@@ -11,7 +11,7 @@ import shipreq.base.ops.Trace
 import shipreq.base.util.{Permission, Url}
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data.Username
-import shipreq.webapp.server.logic.effect.Server
+import shipreq.webapp.server.logic.algebra.Server
 import shipreq.webapp.ssr._
 
 /** SSR interpreter that

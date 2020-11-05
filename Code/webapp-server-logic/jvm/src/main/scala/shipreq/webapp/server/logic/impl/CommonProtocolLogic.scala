@@ -9,7 +9,7 @@ import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskmanApi, UserId => TaskmanUserId}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
-import shipreq.webapp.server.logic.effect.{MetricsLogic, Security, Server}
+import shipreq.webapp.server.logic.algebra.{MetricsLogic, Security, Server}
 import shipreq.webapp.server.logic.util.Obfuscators
 
 trait CommonProtocolLogic[F[_]] {

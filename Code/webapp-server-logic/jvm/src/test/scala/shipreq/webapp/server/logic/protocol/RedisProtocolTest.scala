@@ -11,7 +11,7 @@ import shipreq.webapp.member.event._
 import shipreq.webapp.member.test.UnsafeTypes._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.{RandomData => R}
-import shipreq.webapp.server.logic.effect.Redis
+import shipreq.webapp.server.logic.algebra.Redis
 import utest._
 
 object RedisProtocolTest extends TestSuite {
@@ -78,7 +78,7 @@ object RedisProtocolTest extends TestSuite {
     // =================================================================================================================
 
     "projectSnapshot" - {
-      import shipreq.webapp.server.logic.effect.Redis.ProjectSnapshot
+      import shipreq.webapp.server.logic.algebra.Redis.ProjectSnapshot
 
       def codec = RedisProtocol.picklerProjectSnapshot
 
