@@ -11,7 +11,7 @@ import shipreq.taskman.api.TaskmanApi
 import shipreq.taskman.api.impl.TaskmanApiImpl
 import shipreq.webapp.server.db.{DbInterpreter, StatRecorder}
 import shipreq.webapp.server.logic.algebra._
-import shipreq.webapp.server.logic.event.ApplyEventLogic
+import shipreq.webapp.server.logic.event.ApplyEventAlgebra
 import shipreq.webapp.server.logic.impl.ServerLogic
 import shipreq.webapp.server.redis.{RedisSchema, RedisViaRedisson}
 import shipreq.webapp.server.security.SecurityInterpreter
@@ -20,7 +20,7 @@ import shipreq.webapp.ssr.SsrAlgebra
 final case class Global(config      : ServerConfig,
                         runDB       : ConnectionIO ~> Fx,
                         logic       : ServerLogic[Fx],
-                        metrics     : MetricsLogic[Fx],
+                        metrics     : MetricsAlgebra[Fx],
                         ops         : OpsEndpointInterpreter,
                         security    : Security.Algebra[Fx],
                         ssr         : SsrAlgebra.Prepared[Fx],
@@ -70,11 +70,11 @@ object Global {
     implicit def configServer   = config.server
     implicit def configSecurity = config.server.security
 
-    implicit val metrics: MetricsLogic[Fx] =
+    implicit val metrics: MetricsAlgebra[Fx] =
       if (config.server.prometheus.enabled)
         new PrometheusMetrics
       else
-        MetricsLogic.const(Fx.unit)
+        MetricsAlgebra.const(Fx.unit)
 
     implicit val traceAlgebra =
       config.server.traceAlgebraFx
@@ -94,7 +94,7 @@ object Global {
         }
 
       implicit val trace = t("trace") {
-        TraceLogic.on: TraceInterpreter.ForHttp[Fx]
+        TraceAlgebra.on: TraceInterpreter.ForHttp[Fx]
       }
 
       implicit val runDB = t("runDB") {
@@ -134,9 +134,9 @@ object Global {
       }
 
       implicit val apEvents = t("apEvents") {
-        var a = ApplyEventLogic.trusted[Fx]
-        a = ApplyEventLogic.withMetricsAndLogging(a, config.server.applyEventThresholdMs)
-        a = ApplyEventLogic.traced(a, traceAlgebra)
+        var a = ApplyEventAlgebra.trusted[Fx]
+        a = ApplyEventAlgebra.withMetricsAndLogging(a, config.server.applyEventThresholdMs)
+        a = ApplyEventAlgebra.traced(a, traceAlgebra)
         a
       }
 

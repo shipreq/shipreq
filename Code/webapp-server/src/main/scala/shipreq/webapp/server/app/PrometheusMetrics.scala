@@ -320,7 +320,7 @@ object PrometheusMetrics extends HasLogger {
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-final class PrometheusMetrics extends MetricsLogic[Fx] {
+final class PrometheusMetrics extends MetricsAlgebra[Fx] {
   import PrometheusMetrics.Data._
   import PrometheusMetrics.Metrics._
 

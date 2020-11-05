@@ -17,8 +17,8 @@ import shipreq.webapp.member.event.{ApplyEvent, VerifiedEvent}
 import shipreq.webapp.server.logic.algebra.{DB, Server}
 import shipreq.webapp.server.logic.dispatch.{ResponseCmd, StatusCode}
 
-trait OpsEndpoints[F[_]] {
-  import OpsEndpoints._
+trait OpsEndpointLogic[F[_]] {
+  import OpsEndpointLogic._
 
   def dbStats: F[DbStats]
 
@@ -35,13 +35,13 @@ trait OpsEndpoints[F[_]] {
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-object OpsEndpoints extends HasLogger {
-  import shipreq.webapp.server.logic.util.Implicits._
+object OpsEndpointLogic extends HasLogger {
+  import shipreq.webapp.server.logic.util.LogicHelpers._
 
   abstract class Base[F[_]](implicit F: Monad[F],
                             db: DB.ForOps[F],
                             svr: Server.Time[F],
-                            taskman: TaskmanApi[F]) extends OpsEndpoints[F] {
+                            taskman: TaskmanApi[F]) extends OpsEndpointLogic[F] {
 
     import shipreq.webapp.member.protocol.json.v1.Latest.{decoderVerifiedEvent, encoderVerifiedEvent}
     import shipreq.webapp.server.logic.util.WebappTaskmanConverters._

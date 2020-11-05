@@ -28,13 +28,13 @@ object PrepareEnv {
     config       = cfg,
     runDB        = null,
     logic        = null,
-    metrics      = MetricsLogic.const(Fx.unit),
+    metrics      = MetricsAlgebra.const(Fx.unit),
     ops          = null,
     security     = null,
     ssr          = SsrOff.prepared,
     statRecorder = StatRecorder.Off,
     taskman      = null,
-    trace        = TraceLogic.off)
+    trace        = TraceAlgebra.off)
 
   def global() =
     Global.Instance

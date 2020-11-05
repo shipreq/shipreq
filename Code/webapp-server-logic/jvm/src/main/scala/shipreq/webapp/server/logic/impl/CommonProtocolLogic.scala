@@ -9,7 +9,7 @@ import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskmanApi, UserId => TaskmanUserId}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
-import shipreq.webapp.server.logic.algebra.{MetricsLogic, Security, Server}
+import shipreq.webapp.server.logic.algebra.{MetricsAlgebra, Security, Server}
 import shipreq.webapp.server.logic.util.Obfuscators
 
 trait CommonProtocolLogic[F[_]] {
@@ -32,12 +32,12 @@ object CommonProtocolLogic extends HasLogger {
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-  def apply[F[_]](implicit metrics : MetricsLogic[F],
-                           security: Security.Algebra[F],
-                           svr     : Server.Algebra[F],
-                           taskman : TaskmanApi[F],
-                           F       : Monad[F],
-                           FC      : Catchable[F]): CommonProtocolLogic[F] =
+  def apply[F[_]](implicit metrics : MetricsAlgebra[F],
+                  security: Security.Algebra[F],
+                  svr     : Server.Algebra[F],
+                  taskman : TaskmanApi[F],
+                  F       : Monad[F],
+                  FC      : Catchable[F]): CommonProtocolLogic[F] =
     new CommonProtocolLogic[F] {
       import CommonProtocols.Metadata
 

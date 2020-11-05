@@ -8,10 +8,10 @@ import shipreq.base.ops.Trace
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.member.event._
-import shipreq.webapp.server.logic.algebra.{MetricsLogic, Server}
+import shipreq.webapp.server.logic.algebra.{MetricsAlgebra, Server}
 
-trait ApplyEventLogic[F[_]] { self =>
-  import ApplyEventLogic.{AppendFn, Result}
+trait ApplyEventAlgebra[F[_]] { self =>
+  import ApplyEventAlgebra.{AppendFn, Result}
 
   def F: Applicative[F]
   def trust: Trust
@@ -29,7 +29,7 @@ trait ApplyEventLogic[F[_]] { self =>
       appendFn(pid, pao, VerifiedEvent.NonEmptySeq.force(events))
 }
 
-object ApplyEventLogic extends StrictLogging {
+object ApplyEventAlgebra extends StrictLogging {
 
   type Result = ErrorMsg \/ ProjectAndOrd
 
@@ -37,14 +37,14 @@ object ApplyEventLogic extends StrictLogging {
 
   def apply[F[_]](_trust: Trust)
                  (_appendFn: AppendFn[F])
-                 (implicit _F: Applicative[F]): ApplyEventLogic[F] =
-    new ApplyEventLogic[F] {
+                 (implicit _F: Applicative[F]): ApplyEventAlgebra[F] =
+    new ApplyEventAlgebra[F] {
       override def F = _F
       override def trust = _trust
       override val appendFn = _appendFn
     }
 
-  def trusted[F[_]](implicit _F: Applicative[F]): ApplyEventLogic[F] =
+  def trusted[F[_]](implicit _F: Applicative[F]): ApplyEventAlgebra[F] =
     apply(Trusted)((pid, pao, events) => _F.point {
       ApplyEvent.trusted.applyVerified(events)(pao.project) match {
         case \/-(p2) =>
@@ -55,15 +55,15 @@ object ApplyEventLogic extends StrictLogging {
       }
     })
 
-  def traced[F[_]](underlying: ApplyEventLogic[F], trace: Trace.Algebra[F])
-                  (implicit F: Monad[F]): ApplyEventLogic[F] =
+  def traced[F[_]](underlying: ApplyEventAlgebra[F], trace: Trace.Algebra[F])
+                  (implicit F: Monad[F]): ApplyEventAlgebra[F] =
     apply(underlying.trust)((a, b, c) =>
       trace.newSpan("ApplyEvents")(_ => underlying.appendFn(a, b, c)))
 
-  def withMetricsAndLogging[F[_]](underlying: ApplyEventLogic[F], warnIfDurExceedsMs: Int)
+  def withMetricsAndLogging[F[_]](underlying: ApplyEventAlgebra[F], warnIfDurExceedsMs: Int)
                                  (implicit F: Monad[F],
-                                  metrics: MetricsLogic.ForEvents[F],
-                                  svr: Server.Time[F]): ApplyEventLogic[F] = {
+                                  metrics: MetricsAlgebra.ForEvents[F],
+                                  svr: Server.Time[F]): ApplyEventAlgebra[F] = {
 
     val trust              = underlying.trust
     val warnIfDurExceedsNs = warnIfDurExceedsMs * 1000 * 1000

@@ -7,7 +7,7 @@ import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
 import shipreq.webapp.server.logic.algebra.Security.{SessionRestoreResult, SessionToken}
 import shipreq.webapp.server.logic.config.ServerLogicConfig.Security.JwtSecret
 import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.server.logic.impl.SimpleEndpoints
+import shipreq.webapp.server.logic.impl.SimpleEndpointLogic
 import shipreq.webapp.server.logic.test.MockInterpreters
 import utest._
 
@@ -45,7 +45,7 @@ object SecurityInterpreterTest extends TestSuite {
       cookieJar.update(sec.sessionPersist(s).value)
 
     def logout()(implicit sec: SecurityInterpreter[Name]): Unit =
-      cookieJar.update(SimpleEndpoints.logout(cookieJar).value)
+      cookieJar.update(SimpleEndpointLogic.logout(cookieJar).value)
 
     "standard" - {
       assertEq(sec.sessionRestore(cookieJar).value, SessionRestoreResult.None)

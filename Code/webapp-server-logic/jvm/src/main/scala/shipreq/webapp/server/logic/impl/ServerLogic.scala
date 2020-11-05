@@ -3,9 +3,9 @@ package shipreq.webapp.server.logic.impl
 import scalaz.{BindRec, Catchable, Monad, ~>}
 import shipreq.base.ops.Trace
 import shipreq.taskman.api.TaskmanApi
-import shipreq.webapp.server.logic.algebra.{DB, MetricsLogic, Redis, Security, Server}
+import shipreq.webapp.server.logic.algebra.{DB, MetricsAlgebra, Redis, Security, Server}
 import shipreq.webapp.server.logic.config.ServerLogicConfig
-import shipreq.webapp.server.logic.event.ApplyEventLogic
+import shipreq.webapp.server.logic.event.ApplyEventAlgebra
 
 /**
   * All server logic.
@@ -19,9 +19,9 @@ object ServerLogic {
 
   def create[D[_] : Monad
                   : DB.Algebra,
-             F[_] : ApplyEventLogic
+             F[_] : ApplyEventAlgebra
                   : Catchable
-                  : MetricsLogic
+                  : MetricsAlgebra
                   : Redis.ProjectAlgebra
                   : Security.Algebra
                   : Server.Algebra

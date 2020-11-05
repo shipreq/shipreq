@@ -54,7 +54,7 @@ object DispatchLogicTest extends TestSuite {
     def withConfig(f: ServerLogicConfig => ServerLogicConfig): Tester =
       Tester(mockInterpreters.withConfig(f))
 
-    implicit val traceLogic = TraceLogic.off[Name, TestRequest, Response]
+    implicit val traceLogic = TraceAlgebra.off[Name, TestRequest, Response]
 
     val dispatcher = new DispatchLogic[Name, TestRequest](
       _.toAbstract,

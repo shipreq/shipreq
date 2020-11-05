@@ -3,14 +3,14 @@ package shipreq.webapp.server.app
 import net.liftweb.common.Full
 import net.liftweb.http.provider.servlet.HTTPRequestServlet
 import shipreq.base.ops.Trace._
-import shipreq.webapp.server.logic.algebra.TraceLogic
+import shipreq.webapp.server.logic.algebra.TraceAlgebra
 import shipreq.webapp.server.logic.dispatch.{Response, ResponseCmd}
 
 object TraceInterpreter {
 
   type HttpReq = net.liftweb.http.Req
 
-  type ForHttp[F[_]] = TraceLogic[F, HttpReq, Response]
+  type ForHttp[F[_]] = TraceAlgebra[F, HttpReq, Response]
 
   object Implicits {
 

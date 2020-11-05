@@ -10,7 +10,7 @@ import shipreq.webapp.server.logic.test.MockServer
 import shipreq.webapp.ssr._
 import utest._
 
-object MinimalSsrTest extends TestSuite {
+object MinimalSsrLogicTest extends TestSuite {
   import SsrAlgebra._
   import SsrSharedData._
 
@@ -30,7 +30,7 @@ object MinimalSsrTest extends TestSuite {
   private lazy val ssr = {
     implicit val trace = Trace.Algebra.off[Fx]
     implicit val svr = new MockServer[Fx]
-    new MinimalSsr[Fx]().prepare(baseUrl, Allow).unsafeRun()
+    new MinimalSsrLogic[Fx]().prepare(baseUrl, Allow).unsafeRun()
   }
 
   override def tests = Tests {

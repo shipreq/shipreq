@@ -19,10 +19,10 @@ import shipreq.webapp.ssr._
   * - is minimal in that it only provides SSR for / and /project/id
   * - is minimal in that it only runs SSR on startup uses [[StrFnCache]] when serving
   */
-final class MinimalSsr[F[_]]()(implicit F: Monad[F],
-                               am: AssetManifest,
-                               trace: Trace.Algebra[F],
-                               svr: Server.Time[F]) extends SsrAlgebra[F] with StrictLogging {
+final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
+                                    am: AssetManifest,
+                                    trace: Trace.Algebra[F],
+                                    svr: Server.Time[F]) extends SsrAlgebra[F] with StrictLogging {
   import GraalJs._
   import SsrAlgebra._
   import SsrSharedData._

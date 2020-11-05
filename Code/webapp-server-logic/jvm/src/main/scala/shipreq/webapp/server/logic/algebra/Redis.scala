@@ -12,7 +12,7 @@ import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.member.data.Project
 import shipreq.webapp.member.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
-import shipreq.webapp.server.logic.event.ApplyEventLogic
+import shipreq.webapp.server.logic.event.ApplyEventAlgebra
 
 /** Why is this called Redis and not Cache?
   * Because our architecture relies on Redis for both caching and pub/sub.
@@ -48,13 +48,13 @@ object Redis extends StrictLogging {
         case None    => isEmpty
       }
 
-    def build[F[_]](pid: ProjectId)(implicit ae: ApplyEventLogic[F]) =
+    def build[F[_]](pid: ProjectId)(implicit ae: ApplyEventAlgebra[F]) =
       snapshot match {
         case Some(ss) => ae.append(pid, ss.toProjectAndOrd, events)
         case None     => ae.create(pid, events)
       }
 
-    def buildNonEmpty[F[_]](pid: ProjectId)(implicit ae: ApplyEventLogic[F]): F[Option[ProjectAndOrd]] =
+    def buildNonEmpty[F[_]](pid: ProjectId)(implicit ae: ApplyEventAlgebra[F]): F[Option[ProjectAndOrd]] =
       if (nonEmpty)
         ae.F.map(build(pid))(_.toOption)
       else
@@ -240,7 +240,7 @@ object Redis extends StrictLogging {
         wrap("publishEvents", id, underlying.publishEvents(id, events))
     }
 
-  def withMetricsAndLogging[F[_]](underlying: ProjectAlgebra[F], metrics: MetricsLogic.ForRedis[F])
+  def withMetricsAndLogging[F[_]](underlying: ProjectAlgebra[F], metrics: MetricsAlgebra.ForRedis[F])
                                  (implicit monadF: Monad[F], svr: Server.Time[F]): ProjectAlgebra[F] = {
 
     var report: (String, ProjectId, Duration) => F[Unit] =

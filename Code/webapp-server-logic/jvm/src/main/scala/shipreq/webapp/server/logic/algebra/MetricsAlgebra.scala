@@ -3,7 +3,7 @@ package shipreq.webapp.server.logic.algebra
 import java.time.Duration
 import shipreq.webapp.member.event.Trust
 
-trait MetricsLogic[F[_]] extends MetricsLogic.ForEvents[F] with MetricsLogic.ForRedis[F] {
+trait MetricsAlgebra[F[_]] extends MetricsAlgebra.ForEvents[F] with MetricsAlgebra.ForRedis[F] {
 
   // {HttpRequests, HttpIO, HttpDuration} done directly in webapp-server
   // Here we just set the names
@@ -26,7 +26,7 @@ trait MetricsLogic[F[_]] extends MetricsLogic.ForEvents[F] with MetricsLogic.For
   def projectSpaWebSocketStep[A](process: String, step: String)(f: F[A]): F[A]
 }
 
-object MetricsLogic {
+object MetricsAlgebra {
 
   trait ForEvents[F[_]] {
     def appliedEvents(eventCount: Int, dur: Duration, trust: Trust): F[Unit]
@@ -36,8 +36,8 @@ object MetricsLogic {
     def redis(opName: String, dur: Duration): F[Unit]
   }
 
-  def const[F[_]](f: F[Unit]): MetricsLogic[F] =
-    new MetricsLogic[F] {
+  def const[F[_]](f: F[Unit]): MetricsAlgebra[F] =
+    new MetricsAlgebra[F] {
       override def setHttpName                 (x: String)                                            = f
       override def setServerSideProcName       (x: String)                                            = f
       override def securityEvent               (x: Security.Event, y: Security.Result)                = f

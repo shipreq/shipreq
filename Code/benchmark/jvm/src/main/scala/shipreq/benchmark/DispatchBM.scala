@@ -235,11 +235,11 @@ object DispatchBM {
         } yield Duration.between(start, end)
     }
 
-    implicit val metrics: MetricsLogic[F] =
-      MetricsLogic.const(F.pure(()))
+    implicit val metrics: MetricsAlgebra[F] =
+      MetricsAlgebra.const(F.pure(()))
 
-    implicit val trace: TraceLogic[F, Request[Unit], Response] =
-      TraceLogic.off
+    implicit val trace: TraceAlgebra[F, Request[Unit], Response] =
+      TraceAlgebra.off
 
     implicit object common extends CommonProtocolLogic[F] {
       override def attemptLoginUnprotected(id      : Username \/ EmailAddr,
@@ -263,7 +263,7 @@ object DispatchBM {
       override val ajaxCreateProject = (_, _) => ???
     }
 
-    implicit object ops extends OpsEndpoints[F] {
+    implicit object ops extends OpsEndpointLogic[F] {
       override def dbStats                                            = F.pure(null)
       override def userStats                                          = F.pure(null)
       override def taskmanMsgStatus(id: TaskId)                       = F.pure(null)

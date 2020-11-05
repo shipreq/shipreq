@@ -7,7 +7,7 @@ import shipreq.base.ops.Trace
 import shipreq.base.ops.Trace.{Attr, AttrFor}
 import shipreq.base.util.Url
 
-trait TraceLogic[F[_], HttpReq, HttpRes] {
+trait TraceAlgebra[F[_], HttpReq, HttpRes] {
 
   val alg: Trace.Algebra[F]
 
@@ -33,10 +33,10 @@ trait TraceLogic[F[_], HttpReq, HttpRes] {
 }
 
 
-object TraceLogic {
+object TraceAlgebra {
 
-  def off[F[_]: Monad, HttpReq, HttpRes]: TraceLogic[F, HttpReq, HttpRes] =
-    new TraceLogic[F, HttpReq, HttpRes] {
+  def off[F[_]: Monad, HttpReq, HttpRes]: TraceAlgebra[F, HttpReq, HttpRes] =
+    new TraceAlgebra[F, HttpReq, HttpRes] {
       override val alg = Trace.Algebra.off
       override def http          (a: String, b: HttpReq, c: Url.Relative)(f: Span => F[HttpRes]) = f(())
       override def serverSideProc(a: String, b: HttpReq, c: Url.Relative)(f: Span => F[HttpRes]) = f(())
@@ -48,8 +48,8 @@ object TraceLogic {
   def on[F[_], HttpReq, HttpRes](implicit F: Monad[F],
                                  _alg: Trace.Algebra[F],
                                  attrForHttpReq: AttrFor[HttpReq],
-                                 attrForHttpRes: AttrFor[HttpRes]): TraceLogic[F, HttpReq, HttpRes] =
-    new TraceLogic[F, HttpReq, HttpRes] {
+                                 attrForHttpRes: AttrFor[HttpRes]): TraceAlgebra[F, HttpReq, HttpRes] =
+    new TraceAlgebra[F, HttpReq, HttpRes] {
       import _alg.{Span => _, _}
 
       override val alg: _alg.type = _alg

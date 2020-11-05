@@ -14,10 +14,10 @@ import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.client.public.PublicSpaProtocols
-import shipreq.webapp.server.logic.algebra.{DB, MetricsLogic, Security, Server}
+import shipreq.webapp.server.logic.algebra.{DB, MetricsAlgebra, Security, Server}
 import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.data.PasswordAndSalt
-import shipreq.webapp.server.logic.util.Implicits._
+import shipreq.webapp.server.logic.util.LogicHelpers._
 import shipreq.webapp.server.logic.util.WebappTaskmanConverters._
 
 trait PublicSpaLogic[F[_]] {
@@ -76,16 +76,16 @@ object PublicSpaLogic extends HasLogger {
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
   def apply[D[_], F[_]](implicit config  : ServerLogicConfig,
-                                 db      : DB.ForPublicSpa[D],
-                                 runDB   : D ~> F,
-                                 common  : CommonProtocolLogic[F],
-                                 metrics : MetricsLogic[F],
-                                 security: Security.Algebra[F],
-                                 svr     : Server.Algebra[F],
-                                 taskman : TaskmanApi[F],
-                                 D       : Monad[D],
-                                 F       : Monad[F],
-                                 FC      : Catchable[F]): PublicSpaLogic[F] =
+                        db      : DB.ForPublicSpa[D],
+                        runDB   : D ~> F,
+                        common  : CommonProtocolLogic[F],
+                        metrics : MetricsAlgebra[F],
+                        security: Security.Algebra[F],
+                        svr     : Server.Algebra[F],
+                        taskman : TaskmanApi[F],
+                        D       : Monad[D],
+                        F       : Monad[F],
+                        FC      : Catchable[F]): PublicSpaLogic[F] =
     new PublicSpaLogic[F] {
 
       override val ajaxLandingPage =

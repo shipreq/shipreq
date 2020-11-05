@@ -20,10 +20,10 @@ import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.WsReqRes.EventResult
 import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.member.protocol.websocket._
-import shipreq.webapp.server.logic.algebra.{DB, MetricsLogic, Redis, Security, Server}
+import shipreq.webapp.server.logic.algebra.{DB, MetricsAlgebra, Redis, Security, Server}
 import shipreq.webapp.server.logic.config.ScalaJsManifest
 import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.server.logic.event.{ApplyEventLogic, ApplyNewEvent, MakeEvent}
+import shipreq.webapp.server.logic.event.{ApplyEventAlgebra, ApplyNewEvent, MakeEvent}
 import shipreq.webapp.server.logic.util.Obfuscators
 
 trait ProjectSpaLogic[F[_]] {
@@ -127,9 +127,9 @@ object ProjectSpaLogic extends StrictLogging {
                        (implicit
                         D       : Monad[D],
                         F       : Monad[F] with BindRec[F],
-                        apEvent : ApplyEventLogic[F],
+                        apEvent : ApplyEventAlgebra[F],
                         db      : DB.ForProjectSpa[D],
-                        metrics : MetricsLogic[F],
+                        metrics : MetricsAlgebra[F],
                         redis   : Redis.ProjectAlgebra[F],
                         runDB   : D ~> F,
                         security: Security.Algebra[F],
@@ -664,9 +664,9 @@ object ProjectSpaLogic extends StrictLogging {
                                                  submitDataPropError: (UserId, ErrorMsg) => F[Unit])
                                                 (implicit
                                                  F       : Monad[F] with BindRec[F],
-                                                 apEvent : ApplyEventLogic[F],
+                                                 apEvent : ApplyEventAlgebra[F],
                                                  db      : DB.ForProjectSpa[D],
-                                                 metrics : MetricsLogic[F],
+                                                 metrics : MetricsAlgebra[F],
                                                  redis   : Redis.ProjectAlgebra[F],
                                                  runDB   : D ~> F,
                                                  trace   : Trace.Algebra[F]) {

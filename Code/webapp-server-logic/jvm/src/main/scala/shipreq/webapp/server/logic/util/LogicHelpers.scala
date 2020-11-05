@@ -5,19 +5,10 @@ import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneOffset}
 import scalaz.Monad
 import shipreq.base.util.ErrorMsg
+import shipreq.webapp.member.validation.lib.Implicits._
 import shipreq.webapp.member.validation.lib.{Composite, Simple}
 
-object Implicits {
-
-  implicit class SimpleInvalidityExt(private val e: Simple.Invalidity) extends AnyVal {
-    def toErrorMsg: ErrorMsg =
-      ErrorMsg(Simple.Invalidity.toText(e))
-  }
-
-  implicit class CompositeInvalidityExt(private val e: Composite.Invalidity) extends AnyVal {
-    def toErrorMsg: ErrorMsg =
-      ErrorMsg(Composite.Invalidity.toText(e))
-  }
+object LogicHelpers {
 
   implicit class LeftSimpleInvalidityExt[A](private val d: Simple.Invalidity \/ A) extends AnyVal {
     def onValid[F[_], B](g: A => F[ErrorMsg \/ B])(implicit F: Monad[F]): F[ErrorMsg \/ B] =

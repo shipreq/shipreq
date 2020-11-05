@@ -20,7 +20,7 @@ import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.{ScalaJsManifest, ServerLogicConfig}
 import shipreq.webapp.server.logic.data.{IP, PasswordAndSalt, PasswordHash, Salt}
 import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.server.logic.event.ApplyEventLogic
+import shipreq.webapp.server.logic.event.ApplyEventAlgebra
 import shipreq.webapp.server.logic.impl._
 import shipreq.webapp.server.logic.util.Obfuscators
 
@@ -568,8 +568,8 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
   implicit val security       = new MockSecurity(db, svr.now, config.security)
   implicit val taskman        = specificTaskman.getOrElse(new MockTaskman)
   implicit val nameToName     = NaturalTransformation.refl[Name]
-  implicit val apEvent        = ApplyEventLogic.trusted[Name]
-  implicit val metrics        = MetricsLogic.const(Name(()))
+  implicit val apEvent        = ApplyEventAlgebra.trusted[Name]
+  implicit val metrics        = MetricsAlgebra.const(Name(()))
   implicit val trace          = Trace.Algebra.off[Name]
   implicit val redis          = specificRedis.getOrElse(new Redis.InMemory[Name])
   implicit val common         = CommonProtocolLogic[Name]
@@ -577,7 +577,7 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
   implicit val homeSpa        = HomeSpaLogic[Name, Name]
   implicit val projectSpa     = ProjectSpaLogic[Name, Name](config.projectSpa)
 
-  implicit object ops extends OpsEndpoints.Base[Name] {
+  implicit object ops extends OpsEndpointLogic.Base[Name] {
     override val randomToken = Name("blah")
   }
 

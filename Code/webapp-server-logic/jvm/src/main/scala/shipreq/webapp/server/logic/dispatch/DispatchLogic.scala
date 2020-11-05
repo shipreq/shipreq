@@ -93,14 +93,14 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
                                         (implicit F: Monad[F],
                                          config    : ServerLogicConfig,
                                          db        : DB.VerificationTokenReadOnly[F],
-                                         metrics   : MetricsLogic[F],
-                                         ops       : OpsEndpoints[F],
+                                         metrics   : MetricsAlgebra[F],
+                                         ops       : OpsEndpointLogic[F],
                                          common    : CommonProtocolLogic[F],
                                          publicSpa : PublicSpaLogic[F],
                                          homeSpa   : HomeSpaLogic.Ajax[F],
                                          security  : Security.Algebra[F],
                                          svr       : Server.Time[F],
-                                         tracer    : TraceLogic[F, RealReq, dispatch.Response]) {
+                                         tracer    : TraceAlgebra[F, RealReq, dispatch.Response]) {
 
   import DispatchLogic._
   import Method._
@@ -287,7 +287,7 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
     val logout: Request ?=> F[Response] =
       getF(Urls.logout, req =>
         for {
-          cu <- SimpleEndpoints.logout(req.cookie)
+          cu <- SimpleEndpointLogic.logout(req.cookie)
         } yield Response(ResponseCmd.redirectToPublicHome, cu)
       )
 
@@ -525,7 +525,7 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
         case -\/(e) => response(ResponseCmd.Text(StatusCode.BadRequest, e.value))
       }
 
-    private def jsonResponse(r: OpsEndpoints.HasJson): Response =
+    private def jsonResponse(r: OpsEndpointLogic.HasJson): Response =
       response(ResponseCmd.Json(StatusCode.OK, r.toJson))
 
     /** Return a static 200.
