@@ -39,7 +39,7 @@ subgraph cluster_base {
     node[fillcolor="#ffffff"]
     webappMacro [label="webapp-macro\n(JVM & JS)"]
     webappBase [label="webapp-base\n(JVM & JS)"]
-    webappBaseMember [label="webapp-base-member\n(JVM & JS)"]
+    webappMember [label="webapp-member\n(JVM & JS)"]
     webappSampleData [label="webapp-sampledata\n(JVM & JS)"]
     webappServerLogic [label="webapp-server-logic\n(JVM & JS)"]
     webappClientWwApi [label="webapp-client-ww-api\n(JS)"]
@@ -58,6 +58,7 @@ subgraph cluster_base {
 
     node[fillcolor=white color=blue]
     webappBaseTest [label="webapp-base-test\n(JVM & JS)"]
+    webappMemberTest [label="webapp-member-test\n(JVM & JS)"]
 
     webapp [label="[aggregate]\nwebapp" fillcolor="#ffff80"]
   }
@@ -94,24 +95,25 @@ taskmanServerLogic -> taskmanApiLogic
 taskmanServer -> taskmanServerLogic,taskmanApi,taskmanDb
 
 webappMacro -> baseUtil
-webappBase -> webappMacro
-webappSampleData -> webappBaseMember
+webappMember -> webappMacro
+webappSampleData -> webappMember
 webappServerLogic -> taskmanApiLogic,webappClientPublic,webappSsrJvm
-webappServerLogic -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappBaseMember -> webappBase
-webappBaseTest -> baseTest,webappBaseMember [color="#111111"]
-webappBaseTest -> webappSampleData [color="#111111" label="JVM"]
-webappClientLoaders -> webappBaseMember
+webappServerLogic -> webappMemberTest [color="#111111" style=dashed label="test"]
+webappMember -> webappBase
+webappBaseTest -> baseTest,webappBase [color="#111111"]
+webappMemberTest -> webappBaseTest,webappMember [color="#111111"]
+webappMemberTest -> webappSampleData [color="#111111" label="JVM"]
+webappClientLoaders -> webappMember
 webappClientHome -> webappClientLoaders
-webappClientHome -> webappBaseTest [color="#111111" style=dashed label="test"]
+webappClientHome -> webappMemberTest [color="#111111" style=dashed label="test"]
 webappClientPublic -> webappBase
 webappClientPublic -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappClientWwApi -> webappBaseMember
+webappClientWwApi -> webappMember
 webappClientWw -> webappClientWwApi
-webappClientWw -> webappBaseTest [color="#111111" style=dashed label="test"]
+webappClientWw -> webappMemberTest [color="#111111" style=dashed label="test"]
 webappClientProject -> webappClientWwApi,webappClientLoaders
-webappClientProject -> webappBaseTest [color="#111111" style=dashed label="test"]
-webappSsrShared -> webappBaseMember,webappClientPublic
+webappClientProject -> webappMemberTest [color="#111111" style=dashed label="test"]
+webappSsrShared -> webappMember,webappClientPublic
 webappSsrJvm,webappSsrJs -> webappSsrShared
 webappSsrJs -> webappClientLoaders
 webappSsrJvm -> webappSsrJs [color="#111111" style=dashed label="JS"]
@@ -119,7 +121,7 @@ webappServer -> taskmanApi,webappServerLogic
 // webappServer -> baseDb // transitive through taskman-api
 webappServer -> webappClientPublic,webappClientHome,webappClientProject,webappClientWw [style=dashed]
 
-benchmarkShared -> webappSampleData,webappBaseTest
+benchmarkShared -> webappSampleData,webappMemberTest
 benchmarkJvm,benchmarkJs -> benchmarkShared
 benchmarkJvm -> webappServer
 benchmarkJs -> webappClientProject
