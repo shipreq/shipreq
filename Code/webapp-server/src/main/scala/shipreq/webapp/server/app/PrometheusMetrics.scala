@@ -9,7 +9,7 @@ import shipreq.base.util.FreeOption
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.member.event.{Trust, Trusted}
-import shipreq.webapp.server.logic.{MetricsLogic, Security}
+import shipreq.webapp.server.logic.effect._
 import shipreq.webapp.server.util.CommDir
 
 object PrometheusMetrics extends HasLogger {

@@ -23,7 +23,7 @@ import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.WsReqRes
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test._
 import shipreq.webapp.member.ui.BaseStyles
-import shipreq.webapp.server.logic.{ApplyNewEvent, MakeEvent}
+import shipreq.webapp.server.logic.event._
 
 final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) => Callback.empty, _ => Callback.empty, LoggerJs.off) {
 

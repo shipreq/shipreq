@@ -5,7 +5,7 @@ import doobie.postgres.implicits._
 import japgolly.microlibs.adt_macros.AdtMacros
 import shipreq.base.db.DoobieHelpers._
 import shipreq.webapp.base.data._
-import shipreq.webapp.server.logic._
+import shipreq.webapp.server.logic.data.{IP, PasswordAndSalt, PasswordHash, Salt}
 
 object WebappDoobieCodecs {
 

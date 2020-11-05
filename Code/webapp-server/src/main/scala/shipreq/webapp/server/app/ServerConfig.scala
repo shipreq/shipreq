@@ -4,8 +4,8 @@ import japgolly.clearconfig._
 import monocle.macros.Lenses
 import scalaz.syntax.applicative._
 import shipreq.base.db.DbConfig
-import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.db.StatRecorder
+import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.redis.RedissonConfig
 
 @Lenses

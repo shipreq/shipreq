@@ -10,7 +10,9 @@ import shipreq.base.util.ThreadUtils
 import shipreq.taskman.api.TaskmanApi
 import shipreq.taskman.api.impl.TaskmanApiImpl
 import shipreq.webapp.server.db.{DbInterpreter, StatRecorder}
-import shipreq.webapp.server.logic._
+import shipreq.webapp.server.logic.effect._
+import shipreq.webapp.server.logic.event.ApplyEventLogic
+import shipreq.webapp.server.logic.impl.ServerLogic
 import shipreq.webapp.server.redis.{RedisSchema, RedisViaRedisson}
 import shipreq.webapp.server.security.SecurityInterpreter
 import shipreq.webapp.ssr.SsrAlgebra

@@ -3,7 +3,8 @@ package shipreq.webapp.server.app
 import shipreq.base.util.FreeOption
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.config.WebappConfig.liftCtxPath
-import shipreq.webapp.server.logic.{DispatchLogic, ScalaJsManifest}
+import shipreq.webapp.server.logic.config.ScalaJsManifest
+import shipreq.webapp.server.logic.dispatch.DispatchLogic
 
 sealed abstract class Endpoint(final val `type`: String, final val name: String)
 object Endpoint {

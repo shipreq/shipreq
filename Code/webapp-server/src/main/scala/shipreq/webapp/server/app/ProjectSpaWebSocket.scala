@@ -12,7 +12,7 @@ import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseReason
 import shipreq.webapp.server.lib.Taskman
-import shipreq.webapp.server.logic.ProjectSpaLogic._
+import shipreq.webapp.server.logic.impl.ProjectSpaLogic._
 import shipreq.webapp.server.protocol.websocket.WebSocketUtil
 import shipreq.webapp.server.protocol.websocket.WebSocketUtil.Implicits._
 import shipreq.webapp.server.protocol.websocket.WebSocketUtil.{CloseReasons, UserPropsLens}

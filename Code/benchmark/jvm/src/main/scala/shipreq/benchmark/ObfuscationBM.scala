@@ -3,7 +3,7 @@ package shipreq.benchmark
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.server.logic._
+import shipreq.webapp.server.logic.util.Obfuscators
 
 /**
   * > sbt -DMODE=release

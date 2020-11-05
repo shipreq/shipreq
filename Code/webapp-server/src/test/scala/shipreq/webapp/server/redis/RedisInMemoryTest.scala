@@ -2,7 +2,7 @@ package shipreq.webapp.server.redis
 
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.server.logic.Redis
+import shipreq.webapp.server.logic.effect.Redis
 import utest._
 
 object RedisInMemoryTest extends TestSuite {

@@ -16,10 +16,11 @@ import shipreq.base.ops.{JdbcLogging, JdbcMetrics, SqlTracer}
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{Props => ShipReqProps}
 import shipreq.webapp.base.config.WebappConfig
-import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.app._
 import shipreq.webapp.server.lib.Taskman
-import shipreq.webapp.server.logic.{MinimalSsr, TraceLogic}
+import shipreq.webapp.server.logic.config.ServerLogicConfig
+import shipreq.webapp.server.logic.effect.TraceLogic
+import shipreq.webapp.server.logic.impl.MinimalSsr
 import shipreq.webapp.ssr.SsrOff
 
 /**

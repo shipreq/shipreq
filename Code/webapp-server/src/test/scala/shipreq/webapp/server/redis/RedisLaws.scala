@@ -11,7 +11,7 @@ import shipreq.webapp.member.event.EventOrd.Implicits._
 import shipreq.webapp.member.event._
 import shipreq.webapp.member.protocol.json.v1.Latest._
 import shipreq.webapp.member.protocol.json.v1.PostEvents._
-import shipreq.webapp.server.logic.Redis._
+import shipreq.webapp.server.logic.effect.Redis._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
 object RedisLaws {

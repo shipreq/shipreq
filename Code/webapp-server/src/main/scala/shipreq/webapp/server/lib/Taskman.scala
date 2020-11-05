@@ -9,7 +9,7 @@ import shipreq.taskman.api.Task
 import shipreq.webapp.base.config.{Urls, WebappConfig}
 import shipreq.webapp.base.data.UserId
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.logic.WebappTaskmanConverters._
+import shipreq.webapp.server.logic.util.WebappTaskmanConverters._
 
 object Taskman {
   import shipreq.taskman.api.CfgKeys.{Webapp => K}

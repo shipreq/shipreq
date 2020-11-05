@@ -8,7 +8,8 @@ import shipreq.webapp.client.public.PublicSpaProtocols.LandingPage.Request
 import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.member.data.Project
 import shipreq.webapp.member.protocol.entrypoint._
-import shipreq.webapp.server.logic.{Obfuscators, Security}
+import shipreq.webapp.server.logic.effect.Security
+import shipreq.webapp.server.logic.util.Obfuscators
 import shipreq.webapp.server.test._
 import utest._
 

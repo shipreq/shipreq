@@ -17,9 +17,9 @@ import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.member.event.{EventOrd, VerifiedEvent}
-import shipreq.webapp.server.logic.Redis
-import shipreq.webapp.server.logic.Redis.ProjectSnapshot
-import shipreq.webapp.server.logic.RedisProtocol._
+import shipreq.webapp.server.logic.effect.Redis
+import shipreq.webapp.server.logic.effect.Redis.ProjectSnapshot
+import shipreq.webapp.server.logic.protocol.RedisProtocol._
 
 object RedisViaRedisson {
 

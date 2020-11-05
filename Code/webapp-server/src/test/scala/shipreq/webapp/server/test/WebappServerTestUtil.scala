@@ -4,7 +4,7 @@ import japgolly.microlibs.scalaz_ext.ScalazMacros
 import java.time._
 import scalaz.Equal
 import shipreq.webapp.member.test.{WebappTestEquality, WebappTestUtil}
-import shipreq.webapp.server.logic.Redis
+import shipreq.webapp.server.logic.effect.Redis
 
 trait WebappServerTestEquality extends WebappTestEquality {
   implicit lazy val equalRedisProjectCache   : Equal[Redis.ProjectCache   ] = ScalazMacros.deriveEqual

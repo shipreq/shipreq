@@ -4,7 +4,7 @@ import doobie._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db._
 import shipreq.webapp.base.data._
-import shipreq.webapp.server.logic.IP
+import shipreq.webapp.server.logic.data.IP
 import shipreq.webapp.server.test._
 import sourcecode.Line
 import utest._

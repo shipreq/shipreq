@@ -13,9 +13,9 @@ import shipreq.webapp.base.protocol.Protocol
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.entrypoint.ClientSideProc
 import shipreq.webapp.server.app.Global
-import shipreq.webapp.server.logic.Security
-import shipreq.webapp.server.logic.Security.SessionRestoreResult
 import shipreq.webapp.server.logic.dispatch.Cookie
+import shipreq.webapp.server.logic.effect.Security
+import shipreq.webapp.server.logic.effect.Security.SessionRestoreResult
 import shipreq.webapp.server.security.SecurityInterpreter
 
 object LiveTestUtils {

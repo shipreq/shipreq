@@ -12,7 +12,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.member.data._
 import shipreq.webapp.member.event._
 import shipreq.webapp.server.app.{Global, ServerInterpreter}
-import shipreq.webapp.server.logic.PublicSpaLogic
+import shipreq.webapp.server.logic.impl.PublicSpaLogic
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._
 import sourcecode.Line

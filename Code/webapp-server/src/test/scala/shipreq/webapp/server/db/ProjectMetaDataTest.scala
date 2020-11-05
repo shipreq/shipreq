@@ -3,7 +3,7 @@ package shipreq.webapp.server.db
 import shipreq.base.test.db.TestDb
 import shipreq.webapp.member.data.Project
 import shipreq.webapp.member.event.{ActiveEvent, EventOrd, RandomEventStream, VerifiedEvent}
-import shipreq.webapp.server.logic.Obfuscators
+import shipreq.webapp.server.logic.util.Obfuscators
 import shipreq.webapp.server.test.DbUtil
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import utest._

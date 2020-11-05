@@ -13,8 +13,9 @@ import shipreq.base.util.{BinaryData, Url}
 import shipreq.webapp.base.config.{Urls, WebappConfig}
 import shipreq.webapp.base.data.{ProjectId, User}
 import shipreq.webapp.server.db.DbInterpreter
-import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.server.logic.{DB, DispatchLogic, dispatch}
+import shipreq.webapp.server.logic.dispatch
+import shipreq.webapp.server.logic.dispatch.{Cookie, DispatchLogic}
+import shipreq.webapp.server.logic.effect.DB
 
 object LiftDispatcher {
   object ProjectIdVar extends RequestVar[ProjectId](null)

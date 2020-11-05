@@ -20,10 +20,12 @@ import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.data._
 import shipreq.webapp.member.event._
-import shipreq.webapp.server.ServerLogicConfig
 import shipreq.webapp.server.db.DbInterpreter._
-import shipreq.webapp.server.logic.DB.EventFilter
-import shipreq.webapp.server.logic._
+import shipreq.webapp.server.logic.config.ServerLogicConfig
+import shipreq.webapp.server.logic.data.{IP, PasswordAndSalt, PasswordHash, Salt}
+import shipreq.webapp.server.logic.effect.DB
+import shipreq.webapp.server.logic.effect.DB.EventFilter
+import shipreq.webapp.server.logic.util.Obfuscators
 
 final class DbInterpreter(implicit config: ServerLogicConfig.Security)
     extends DB.Algebra[ConnectionIO]
@@ -120,7 +122,7 @@ object DbInterpreter {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait ForPublicSpa extends DB.ForPublicSpa[ConnectionIO] with VerificationTokenReadOnly {
-    import DB.{PasswordResetState, UserRegistration, UserRegistrationResult}
+    import shipreq.webapp.server.logic.effect.DB.{PasswordResetState, UserRegistration, UserRegistrationResult}
 
     protected val tokenGen: () => VerificationToken
 
@@ -444,7 +446,7 @@ object DbInterpreter {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   class ForOps(dbName: String) extends DB.ForOps[ConnectionIO] with GetProjectEvents {
-    import DB.ForOps._
+    import shipreq.webapp.server.logic.effect.DB.ForOps._
 
     private[db] final val nowSql =
       Query0[Instant]("select now()")
