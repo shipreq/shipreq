@@ -42,26 +42,26 @@ object WebappBuild {
     project
       .configure(Common.jvmSettings)
       .aggregate(
-        webappMacroJvm, webappMacroJs,
-        webappBaseJvm, webappBaseJs,
-        webappBaseTestJvm, webappBaseTestJs,
-        webappMemberJvm, webappMemberJs,
-        webappMemberTestJvm, webappMemberTestJs,
-        webappServerLogicJvm, webappServerLogicJs,
-        webappSampleDataJvm, webappSampleDataJs,
-        webappClientPublicJvm, webappClientPublicJs,
+        webappMacroJVM, webappMacroJS,
+        webappBaseJVM, webappBaseJS,
+        webappBaseTestJVM, webappBaseTestJS,
+        webappMemberJVM, webappMemberJS,
+        webappMemberTestJVM, webappMemberTestJS,
+        webappServerLogicJVM, webappServerLogicJS,
+        webappSampleDataJVM, webappSampleDataJS,
+        webappClientPublicJVM, webappClientPublicJS,
         webappClientLoaders,
         webappClientHome,
         webappClientWwApi, webappClientWw,
         webappClientProject,
-        webappSsrJvm, webappSsrJs,
+        webappSsrJVM, webappSsrJS,
         webappServer)
       .settings(
         jsSizesFast := jsSizesTask(Stage.FastOpt).value,
         jsSizesFull := jsSizesTask(Stage.FullOpt).value)
 
-  lazy val webappMacroJvm = webappMacro.jvm
-  lazy val webappMacroJs  = webappMacro.js
+  lazy val webappMacroJVM = webappMacro.jvm
+  lazy val webappMacroJS  = webappMacro.js
   lazy val webappMacro =
     crossProject(JSPlatform, JVMPlatform)
       .in(file("webapp-macro"))
@@ -77,8 +77,8 @@ object WebappBuild {
       .configureJvm(_.dependsOn(baseDb))
       .depsForJvm(postgresql)
 
-  lazy val webappBaseJvm = webappBase.jvm
-  lazy val webappBaseJs  = webappBase.js
+  lazy val webappBaseJVM = webappBase.jvm
+  lazy val webappBaseJS  = webappBase.js
   lazy val webappBase =
     crossProject(JSPlatform, JVMPlatform)
       .in(file("webapp-base"))
@@ -92,8 +92,8 @@ object WebappBuild {
       .jsSettings(
         genLastValueMemoBoilerplate := GenLastValueMemoBoilerplate(sourceDirectory.value / "main" / "scala"))
 
-  lazy val webappBaseTestJvm = webappBaseTest.jvm
-  lazy val webappBaseTestJs  = webappBaseTest.js
+  lazy val webappBaseTestJVM = webappBaseTest.jvm
+  lazy val webappBaseTestJS  = webappBaseTest.js
   lazy val webappBaseTest =
     crossProject(JSPlatform, JVMPlatform)
       .in(file("webapp-base-test"))
@@ -109,8 +109,8 @@ object WebappBuild {
         parallelExecution := false, // I don't know why this is needed
         jsDependencies in Test += ProvidedJS / "webapp-base-test.js")
 
-  lazy val webappMemberJvm = webappMember.jvm
-  lazy val webappMemberJs  = webappMember.js
+  lazy val webappMemberJVM = webappMember.jvm
+  lazy val webappMemberJS  = webappMember.js
   lazy val webappMember =
     crossProject(JSPlatform, JVMPlatform)
       .in(file("webapp-member"))
@@ -121,14 +121,14 @@ object WebappBuild {
       .depsForBoth(Circe.main % Provided) // Provided because for now, want to ensure JSON stuff isn't part of frontend
       .depsForJs(ScalaCSS.react)
 
-  lazy val webappMemberTestJvm = webappMemberTest.jvm
-  lazy val webappMemberTestJs  = webappMemberTest.js
+  lazy val webappMemberTestJVM = webappMemberTest.jvm
+  lazy val webappMemberTestJS  = webappMemberTest.js
   lazy val webappMemberTest =
     crossProject(JSPlatform, JVMPlatform)
       .in(file("webapp-member-test"))
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
-      .configureJvm(_.dependsOn(webappSampleDataJvm))
+      .configureJvm(_.dependsOn(webappSampleDataJVM))
       .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UsePhantomJs))
       .dependsOn(webappBaseTest, webappMember)
       .depsForBoth(Circe.main)
@@ -136,8 +136,8 @@ object WebappBuild {
         parallelExecution := false, // I don't know why this is needed
         jsDependencies in Test += ProvidedJS / "webapp-member-test.js")
 
-  lazy val webappSampleDataJvm = webappSampleData.jvm
-  lazy val webappSampleDataJs  = webappSampleData.js
+  lazy val webappSampleDataJVM = webappSampleData.jvm
+  lazy val webappSampleDataJS  = webappSampleData.js
   lazy val webappSampleData =
     crossProject(JSPlatform, JVMPlatform)
       .in(file("webapp-sampledata"))
@@ -153,11 +153,11 @@ object WebappBuild {
   private lazy val memberSpa: Project => Project =
     _.enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
       .configure(Common.jsSettings(UsePhantomJs))
-      .dependsOn(webappMemberJs, webappMemberTestJs % Test, webappServerLogicJs % Test)
+      .dependsOn(webappMemberJS, webappMemberTestJS % Test, webappServerLogicJS % Test)
       .settings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
 
-  lazy val webappClientPublicJvm = webappClientPublic.jvm
-  lazy val webappClientPublicJs  = webappClientPublic.js
+  lazy val webappClientPublicJVM = webappClientPublic.jvm
+  lazy val webappClientPublicJS  = webappClientPublic.js
   lazy val webappClientPublic =
     crossProject(JSPlatform, JVMPlatform)
       .in(file("webapp-client-public"))
@@ -171,7 +171,7 @@ object WebappBuild {
       .in(file("webapp-client-loaders"))
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(NoTests))
-      .dependsOn(webappMemberJs)
+      .dependsOn(webappMemberJS)
 
   lazy val webappClientHome =
     project
@@ -186,7 +186,7 @@ object WebappBuild {
       .in(file("webapp-client-ww-api"))
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(UsePhantomJs))
-      .dependsOn(webappMemberJs)
+      .dependsOn(webappMemberJS)
       .depsForJs(
         boopickle ++ scalajsDom ++
         testScope(μTest))
@@ -196,7 +196,7 @@ object WebappBuild {
       .in(file("webapp-client-ww"))
       .enablePlugins(ScalaJSPlugin)
       .configure(Common.jsSettings(UseNode))
-      .dependsOn(webappClientWwApi, webappMemberTestJs % Test)
+      .dependsOn(webappClientWwApi, webappMemberTestJS % Test)
       .depsForJs(
         boopickle ++ scalajsDom ++
         testScope(μTest))
@@ -220,29 +220,29 @@ object WebappBuild {
       .dependsOn(webappMember, webappClientPublic, baseTest % Test)
       .depsForBoth(ScalaGraal.extBoopickle ++ testScope(μTest))
 
-  lazy val webappSsrJvm = webappSsr.jvm
+  lazy val webappSsrJVM = webappSsr.jvm
     .deps(ScalaGraal.coreJs ++ ScalaGraal.extPrometheus ++ scalaXml)
     .settings(unmanagedResources in Compile += Def.taskDyn {
-      val stage = (scalaJSStage in Compile in webappSsrJs).value
+      val stage = (scalaJSStage in Compile in webappSsrJS).value
       val task = stageKey(stage)
-      Def.task((task in Compile in webappSsrJs).value.data)
+      Def.task((task in Compile in webappSsrJS).value.data)
     }.value)
 
-  lazy val webappSsrJs = webappSsr.js
+  lazy val webappSsrJS = webappSsr.js
     .dependsOn(webappClientLoaders)
     .settings(
       scalaJSLinkerConfig ~= { _.withSourceMap(emitSourceMapsValue) },
       artifactPath in (Compile, fastOptJS) := (crossTarget.value / "webapp-ssr.js"),
       artifactPath in (Compile, fullOptJS) := (crossTarget.value / "webapp-ssr.js"))
 
-  lazy val webappServerLogicJvm = webappServerLogic.jvm
-  lazy val webappServerLogicJs  = webappServerLogic.js
+  lazy val webappServerLogicJVM = webappServerLogic.jvm
+  lazy val webappServerLogicJS  = webappServerLogic.js
   lazy val webappServerLogic =
     crossProject(JSPlatform, JVMPlatform)
       .in(file("webapp-server-logic"))
       .configureJvm(
         Common.jvmSettings,
-        _.dependsOn(taskmanApiLogic, webappClientPublicJvm, webappSsrJvm))
+        _.dependsOn(taskmanApiLogic, webappClientPublicJVM, webappSsrJVM))
       .configureJs(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappMember)
       .dependsOn(baseTest % Test, webappMemberTest % Test)
@@ -277,7 +277,7 @@ object WebappBuild {
           implicit val log = streams.value.log
 
           val baseDirectoryValue     = baseDirectory.value
-          val jsWebappClientPublicJs = (scalaJSLinkedFile in Compile in webappClientPublicJs).value
+          val jsWebappClientPublicJs = (scalaJSLinkedFile in Compile in webappClientPublicJS).value
           val jsWebappClientHome     = (scalaJSLinkedFile in Compile in webappClientHome    ).value
           val jsWebappClientProject  = (scalaJSLinkedFile in Compile in webappClientProject ).value
           val jsWebappClientWw       = (scalaJSLinkedFile in Compile in webappClientWw      ).value
@@ -312,7 +312,7 @@ object WebappBuild {
 
     def testSettings = (_: Project)
       .configure(DockerEnv.test.required)
-      .dependsOn(webappBaseTestJvm % Test)
+      .dependsOn(webappBaseTestJVM % Test)
       .settings(inConfig(Test)(Seq(
         fork                         := true,
         javaOptions                  += "-Drun.mode=test",
@@ -350,8 +350,8 @@ object WebappBuild {
 
     def definition: Project => Project = _
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
-      .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJvm)
-      .dependsOn(webappMemberTestJvm % Test)
+      .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJVM)
+      .dependsOn(webappMemberTestJVM % Test)
       .deps(
         scalaz ++ Lift.webkit ++  scalaXml ++ SLF4J.jcl ++ commonsText ++ Nyaya.gen ++ Logback.withPlugins ++ JJWT.all ++
         Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ Prometheus.logback ++ redisson ++
@@ -392,7 +392,7 @@ object WebappBuild {
     println()
     println(header)
     println("=" * header.length)
-    report((moduleName in webappClientPublicJs).value, (stageKey(stage) in Compile in webappClientPublicJs).value)
+    report((moduleName in webappClientPublicJS).value, (stageKey(stage) in Compile in webappClientPublicJS).value)
     report((moduleName in webappClientHome    ).value, (stageKey(stage) in Compile in webappClientHome    ).value)
     report((moduleName in webappClientProject ).value, (stageKey(stage) in Compile in webappClientProject ).value)
     report((moduleName in webappClientWw      ).value, (stageKey(stage) in Compile in webappClientWw      ).value)

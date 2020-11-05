@@ -96,7 +96,7 @@ object ShipReqBuild {
     project
       .configure(Common.jvmSettings)
       .deps(commonsText ++ Nyaya.test)
-      .dependsOn(webappMemberTestJvm)
+      .dependsOn(webappMemberTestJVM)
       .settings(
         connectInput in run  := true,
         fork         in run  := true,
