@@ -114,11 +114,11 @@ gatherAllStats = do dirs <- dirsIn "."
 type TopLevelDeps = M.Map String [String]
 
 depsJvm = M.fromList [
-         ("webapp-ssr",              ["webapp-base-member", "webapp-client-public"]),
+         ("webapp-ssr",              ["webapp-member", "webapp-client-public"]),
          ("webapp-server-logic",     ["taskman-api-logic", "webapp-ssr"]) ,
          ("webapp-server",           ["base-db", "taskman-api", "webapp-server-logic", "webapp-gen"]) ,
          ("webapp-client-public",    ["webapp-base"]) ,
-         ("webapp-base-member",      ["webapp-base"]) ,
+         ("webapp-member",           ["webapp-base"]) ,
          ("webapp-base",             ["webapp-macro", "base-util"]) ,
          ("webapp-macro",            ["base-util", "base-db"]) ,
          ("taskman",                 ["taskman-server"]) ,
@@ -133,14 +133,14 @@ depsJvm = M.fromList [
          ("base-predef",             []) ]
 depsJs = M.fromList [
          ("webapp-ssr",              ["webapp-client-public", "webapp-client-loaders"]),
-         ("webapp-server-logic",     ["webapp-base-member"]) ,
+         ("webapp-server-logic",     ["webapp-member"]) ,
          ("webapp-client-public",    ["webapp-base"]) ,
-         ("webapp-client-loaders",   ["webapp-base-member"]) ,
+         ("webapp-client-loaders",   ["webapp-member"]) ,
          ("webapp-client-home",      ["webapp-client-loaders"]) ,
-         ("webapp-client-ww-api",    ["webapp-base-member"]) ,
+         ("webapp-client-ww-api",    ["webapp-member"]) ,
          ("webapp-client-ww",        ["webapp-client-ww-api"]) ,
          ("webapp-client-project",   ["webapp-client-loaders"]) ,
-         ("webapp-base-member",      ["webapp-base"]) ,
+         ("webapp-member",           ["webapp-base"]) ,
          ("webapp-base",             ["webapp-macro", "base-util"]) ,
          ("webapp-macro",            ["base-util"]) ,
          ("base-util",               []) ]
