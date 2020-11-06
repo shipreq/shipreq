@@ -19,11 +19,11 @@ import shipreq.webapp.client.project.feature.SavedViewFeature.{ColumnLogic, Colu
 import shipreq.webapp.client.project.feature.{EditorFeature, Selection}
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.{NoFilterResults, ProjectWidgets, ViewReq}
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.derivation._
-import shipreq.webapp.member.data.savedview._
 import shipreq.webapp.member.feature.EditControlsFeature
-import shipreq.webapp.member.text.{PlainText, ProjectText}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.derivation._
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.text.{PlainText, ProjectText}
 
 final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
                   pxPlainText         : Px[PlainText.ForProject.NoCtx]) {

@@ -6,14 +6,14 @@ import nyaya.util.Multimap
 import shipreq.base.util.PotentialChange._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
-import shipreq.webapp.member.data.DataImplicits._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.Event._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data.DataImplicits._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.Event._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.text.PlainText
+import shipreq.webapp.member.project.util.GenericDataMacros._
 import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.WsReqRes.{ProjectNameSet => _, _}
 import shipreq.webapp.member.protocol.websocket._
-import shipreq.webapp.member.text.PlainText
-import shipreq.webapp.member.util.GenericDataMacros._
 
 /**
  * Translates commands inputs into [[ActiveEvent]]s.
@@ -461,7 +461,7 @@ object MakeEvent {
     }
 
   def updateSavedViews(cmd: SavedViewCmd, project: Project): Result = {
-    import shipreq.webapp.member.data.savedview._
+    import shipreq.webapp.member.project.data.savedview._
     cmd match {
 
       case SavedViewCmd.Create(name, view) =>

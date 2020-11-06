@@ -2,7 +2,7 @@ package shipreq.webapp.sampledata
 
 import io.circe.Json
 import japgolly.microlibs.testutil.TestUtilImplicits._
-import shipreq.webapp.member.event.{Event, VerifiedEvent}
+import shipreq.webapp.member.project.event.{Event, VerifiedEvent}
 import shipreq.webapp.member.protocol.json.v1.Latest._
 
 final case class SampleDataMeta(filename: String,

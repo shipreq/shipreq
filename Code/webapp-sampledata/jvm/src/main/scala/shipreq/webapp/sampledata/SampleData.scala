@@ -4,7 +4,7 @@ import io.circe.Json
 import io.circe.parser.parse
 import japgolly.microlibs.testutil.TestUtilImplicits._
 import scala.io.{Codec, Source}
-import shipreq.webapp.member.event.Event
+import shipreq.webapp.member.project.event.Event
 
 final case class SampleData(meta: SampleDataMeta, events: Vector[Event]) extends AbstractSampleData(meta, events)
 

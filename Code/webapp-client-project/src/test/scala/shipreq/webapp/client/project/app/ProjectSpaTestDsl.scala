@@ -22,10 +22,11 @@ import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH, _}
 import shipreq.webapp.client.project.test._
 import shipreq.webapp.client.project.widgets.{ImplicationGraph, ReqSearch}
-import shipreq.webapp.member.data.{ExternalPubid, Project}
-import shipreq.webapp.member.event.Event
+import shipreq.webapp.member.project.data.{ExternalPubid, Project}
+import shipreq.webapp.member.project.event.Event
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.member.test._
+import shipreq.webapp.member.test.project.SampleProject5
 import shipreq.webapp.member.ui.OnlyVisibleOnMouseMove
 
 object ProjectSpaTestDsl {

@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.pages.content.issues
 
 import shipreq.base.util.{Backwards, Direction}
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 final case class IssueField[+FK <: FieldKey](key: FK, desc: Option[String])
 

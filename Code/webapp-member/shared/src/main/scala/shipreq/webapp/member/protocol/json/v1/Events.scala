@@ -6,10 +6,10 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.ParseInt
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview.SavedView
-import shipreq.webapp.member.event.RetiredGenericData._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview.SavedView
+import shipreq.webapp.member.project.event.RetiredGenericData._
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.protocol.json.JsonCodec
 
 object Events {

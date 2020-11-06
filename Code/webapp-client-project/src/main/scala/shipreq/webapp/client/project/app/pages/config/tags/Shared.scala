@@ -6,7 +6,7 @@ import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 private[tags] object Shared {
 

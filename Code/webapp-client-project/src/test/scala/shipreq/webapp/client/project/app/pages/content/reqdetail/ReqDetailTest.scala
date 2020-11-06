@@ -7,17 +7,17 @@ import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test._
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
-import shipreq.webapp.member.test.UnsafeTypes.autoExtPubid
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.text.PlainText
 import shipreq.webapp.member.test._
-import shipreq.webapp.member.test.event.TestEvent
-import shipreq.webapp.member.text.PlainText
+import shipreq.webapp.member.test.project.UnsafeTypes.autoExtPubid
+import shipreq.webapp.member.test.project.{SampleProject5, SampleProject6, SampleProject7, TestEvent}
 import utest._
 
 object ReqDetailTest extends TestSuite {
-  import SampleDerivativeTags3.step3.{project => DT3_3}
-  import SampleDerivativeTags4.{project => DT4}
+  import shipreq.webapp.member.test.project.SampleDerivativeTags3.step3.{project => DT3_3}
+  import shipreq.webapp.member.test.project.SampleDerivativeTags4.{project => DT4}
   import ReqDetailTestDsl._
   import WebappTestUtil._
   import global.press
@@ -601,8 +601,8 @@ object ReqDetailTest extends TestSuite {
     }
 
     "staticTagFields" - {
-      import SampleProject7.Values._
-      import UnsafeTypes._
+      import shipreq.webapp.member.test.project.SampleProject7.Values._
+      import shipreq.webapp.member.test.project.UnsafeTypes._
       import StaticField._
 
       val project =
@@ -796,7 +796,7 @@ object ReqDetailTest extends TestSuite {
         ))
 
         "other" - {
-          import SampleDerivativeTags4.Values._
+          import shipreq.webapp.member.test.project.SampleDerivativeTags4.Values._
           val p = applyEventsSuccessfully(DT4,
             Event.TagRestore(z4),
             TestEvent.applicableTagUpdate(z4, parents = Vector.empty),

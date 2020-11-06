@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.feature
 
-import shipreq.webapp.member.data.{Project, ReqId}
+import shipreq.webapp.member.project.data.{Project, ReqId}
 
 object DeletionFeature {
 

@@ -10,7 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.home.test.PrepareEnv
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.protocol.ajax.HomeSpaProtocols
 import shipreq.webapp.member.protocol.entrypoint.HomeSpaEntryPoint
 import shipreq.webapp.member.ui.BaseStyles
@@ -118,7 +118,7 @@ object HomeTest extends TestSuite {
   }
 
   object Data {
-    import shipreq.webapp.member.test.UnsafeTypes._
+    import shipreq.webapp.member.test.project.UnsafeTypes._
     val now = Instant.now()
     val piE = ProjectMetaData("abeF", "Empty", 0, 0, 0, 0, now.minus(18, DAYS), now.minus(19, DAYS), None)
     val piO = ProjectMetaData("qwe3F", "Old", 2, 1581, 311, 340, now.minus(92, DAYS), now.minus(7, MINUTES), Some(now.minus(7, MINUTES)))

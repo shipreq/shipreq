@@ -6,9 +6,9 @@ import scalaz.~~>
 import shipreq.base.util._
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.util.DataReusability._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.UseCaseStepGD
-import shipreq.webapp.member.text.Text
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.UseCaseStepGD
+import shipreq.webapp.member.project.text.Text
 
 /**
  * ADT representing all types of fields supported by the editor.

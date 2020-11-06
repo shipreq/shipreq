@@ -2,7 +2,7 @@ package shipreq.webapp.server.db
 
 import shipreq.base.test.db.TestDb
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.member.test.UnsafeTypes._
+import shipreq.webapp.member.test.project.UnsafeTypes._
 import shipreq.webapp.server.test.PrepareEnv
 import utest._
 

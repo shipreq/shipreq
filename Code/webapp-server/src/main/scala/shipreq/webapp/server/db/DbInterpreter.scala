@@ -18,8 +18,8 @@ import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.server.db.DbInterpreter._
 import shipreq.webapp.server.logic.algebra.DB
 import shipreq.webapp.server.logic.algebra.DB.EventFilter

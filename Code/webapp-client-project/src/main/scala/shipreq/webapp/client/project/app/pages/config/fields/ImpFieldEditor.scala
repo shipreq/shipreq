@@ -13,10 +13,10 @@ import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.ReqTypeRulesEditor
 import shipreq.webapp.member.UiText.FieldNames
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.CustomImpFieldGD
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.CustomImpFieldGD
+import shipreq.webapp.member.project.text.PlainText
 import shipreq.webapp.member.protocol.websocket.UpdateConfigCmd
-import shipreq.webapp.member.text.PlainText
 
 object ImpFieldEditor {
   import DataImplicits._

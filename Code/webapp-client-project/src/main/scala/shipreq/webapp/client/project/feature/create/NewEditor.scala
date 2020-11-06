@@ -9,10 +9,10 @@ import shipreq.base.util._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.util.{LastValueMemo, LruMemo}
 import shipreq.webapp.client.project.feature.create.Feature.{AsyncState, Editor, PreviewId, State}
-import shipreq.webapp.member.data._
 import shipreq.webapp.member.feature._
-import shipreq.webapp.member.text._
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text._
+import shipreq.webapp.member.project.util.DataReusability._
 
 object NewEditor {
 
@@ -353,7 +353,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichText {
-      import shipreq.webapp.member.text._
+      import shipreq.webapp.member.project.text._
       import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForValueType { base =>
@@ -416,7 +416,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichTextNonEmpty {
-      import shipreq.webapp.member.text._
+      import shipreq.webapp.member.project.text._
       import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       abstract class Base[T <: Text.Generic](val editor: RichTextEditor[T]) extends ForValueType { base =>

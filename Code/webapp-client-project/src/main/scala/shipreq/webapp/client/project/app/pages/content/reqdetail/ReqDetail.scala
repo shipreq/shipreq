@@ -25,13 +25,13 @@ import shipreq.webapp.client.project.widgets.ProjectWidgets.emptySpan
 import shipreq.webapp.client.project.widgets.{EditorNavParent, _}
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data.ExternalPubid.LookupFailure
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.{Event, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.member.feature.{EditControlsFeature, PreviewFeature}
+import shipreq.webapp.member.project.data.ExternalPubid.LookupFailure
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.{Event, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.text.ProjectText.SetRenderStyle
+import shipreq.webapp.member.project.text._
 import shipreq.webapp.member.protocol.websocket.{CreateContentCmd, UpdateContentCmd}
-import shipreq.webapp.member.text.ProjectText.SetRenderStyle
-import shipreq.webapp.member.text._
 
 object ReqDetail {
   import Shared.tableNavigationFeature

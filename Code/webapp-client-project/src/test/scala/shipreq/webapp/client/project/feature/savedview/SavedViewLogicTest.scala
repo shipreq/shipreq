@@ -5,12 +5,12 @@ import japgolly.scalajs.react.{CallbackOption, CallbackTo, Reusable}
 import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.event.SavedViewGD
-import shipreq.webapp.member.filter.Filter
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.event.SavedViewGD
+import shipreq.webapp.member.project.filter.Filter
+import shipreq.webapp.member.project.sort.SortMethod
 import shipreq.webapp.member.protocol.websocket.{SavedViewCmd => Cmd}
-import shipreq.webapp.member.sort.SortMethod
 import utest._
 
 object SavedViewLogicTest extends TestSuite {

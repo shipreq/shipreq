@@ -1,8 +1,8 @@
 package shipreq.webapp.member.feature.autocomplete.strategies
 
 import shipreq.webapp.member.feature.AutoCompleteFeature.AutoComplete.Strategies
+import shipreq.webapp.member.project.text.Grammar
 import shipreq.webapp.member.test.AutoCompleteTestUtil._
-import shipreq.webapp.member.text.Grammar
 import utest._
 
 object AutoCompleteTestModules {

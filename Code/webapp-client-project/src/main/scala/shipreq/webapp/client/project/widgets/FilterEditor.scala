@@ -9,14 +9,14 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.{Invalid, Valid, Validity}
 import shipreq.webapp.base.ui.semantic.{Button, Icon, Input}
 import shipreq.webapp.client.project.app.Style.reqtable.{filterEditor => *}
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.derivation.NaTags
 import shipreq.webapp.member.feature.AutoCompleteFeature
 import shipreq.webapp.member.feature.AutoCompleteFeature._
-import shipreq.webapp.member.filter._
-import shipreq.webapp.member.issue.IssueCategory
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.derivation.NaTags
+import shipreq.webapp.member.project.filter._
+import shipreq.webapp.member.project.issue.IssueCategory
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.ui.AutosizeInput
-import shipreq.webapp.member.util.DataReusability._
 
 /** Widget that allows users to edit the current filter.
   *

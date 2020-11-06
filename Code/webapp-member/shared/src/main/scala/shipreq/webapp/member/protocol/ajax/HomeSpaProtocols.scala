@@ -5,7 +5,7 @@ import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.protocol.Protocol
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.base.protocol.binary._
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 /**
   * Protocols for the Home SPA / webapp-client-home module.

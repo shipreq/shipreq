@@ -5,8 +5,8 @@ import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.webapp.client.project.feature.editor
 import shipreq.webapp.client.project.feature.editor.{Editability => EE}
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.util.DataReusability._
 
 /** Determinations of whether or not a field is allowed to be edited.
   *

@@ -4,7 +4,7 @@ import boopickle.DefaultBasic._
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data.{ProjectId, Username}
 import shipreq.webapp.base.protocol.entrypoint.ClientSideProc
-import shipreq.webapp.member.data.Project
+import shipreq.webapp.member.project.data.Project
 
 object ProjectSpaEntryPoint {
 

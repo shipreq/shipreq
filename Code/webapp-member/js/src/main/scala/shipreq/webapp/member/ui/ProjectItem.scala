@@ -11,9 +11,9 @@ import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
 import shipreq.webapp.base.ui.semantic.{Icon, Size, Statistic, StatisticGroup}
 import shipreq.webapp.member.UiText.EnglishStringExt
-import shipreq.webapp.member.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.member.feature.EditControlsFeature
 import shipreq.webapp.member.jsfacade.MomentJs
+import shipreq.webapp.member.project.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.member.ui.BaseStyles.{projectItems => *}
 
 /** Project name and summary.

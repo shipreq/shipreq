@@ -10,9 +10,9 @@ import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.app.Style.reqdetail.{impGraph => *}
 import shipreq.webapp.client.project.util.GraphColours
 import shipreq.webapp.client.project.widgets.ImplicationGraph
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview.ImpGraphConfig.Colours
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.Colours
+import shipreq.webapp.member.project.util.DataReusability._
 
 object ReqImplicationGraph {
 

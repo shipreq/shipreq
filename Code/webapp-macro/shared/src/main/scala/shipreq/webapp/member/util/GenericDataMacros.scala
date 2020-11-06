@@ -1,4 +1,4 @@
-package shipreq.webapp.member.util
+package shipreq.webapp.member.project.util
 
 import japgolly.microlibs.macro_utils._
 

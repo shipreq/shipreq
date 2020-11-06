@@ -7,7 +7,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.ui.semantic.{Colour, Icon}
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 import shipreq.webapp.client.project.feature.CreateFeature
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 /** A button to create a new req.
   *

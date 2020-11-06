@@ -13,8 +13,8 @@ import shipreq.base.util._
 import shipreq.taskman.api.{Task, TaskId, TaskStatus, TaskmanApi}
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.{ScalaJsManifest, ServerLogicConfig}

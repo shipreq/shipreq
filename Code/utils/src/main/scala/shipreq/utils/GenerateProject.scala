@@ -8,11 +8,11 @@ import nyaya.gen._
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.test.RandomDataSettings
-import shipreq.webapp.member.data.DataImplicits._
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data.DataImplicits._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.util.ShowSize
 import shipreq.webapp.member.protocol.binary.v1.Latest.picklerProject
-import shipreq.webapp.member.test.{RandomData => $}
-import shipreq.webapp.member.util.ShowSize
+import shipreq.webapp.member.test.project.{RandomData => $}
 
 object GenerateProject {
 

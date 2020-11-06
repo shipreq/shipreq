@@ -10,8 +10,8 @@ import scalaz.{BindRec, Monad}
 import shipreq.base.ops.Trace
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.protocol.binary.SafePickler
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.server.logic.event.ApplyEventAlgebra
 
 /** Why is this called Redis and not Cache?

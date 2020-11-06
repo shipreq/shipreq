@@ -6,7 +6,7 @@ import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.pages.config.Buttons
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.test.CommonObs._
 
 object IssueConfigObs {

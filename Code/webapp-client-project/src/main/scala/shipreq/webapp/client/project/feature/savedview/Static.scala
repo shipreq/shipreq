@@ -10,12 +10,12 @@ import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.client.project.app.Style.{savedViews => *}
 import shipreq.webapp.client.project.widgets.{FilterDeadButton, FilterEditor}
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.data.{FilterDead, Project, ProjectConfig, ReqId, ShowDead}
-import shipreq.webapp.member.event.VerifiedEvent
-import shipreq.webapp.member.filter.{CompiledFilter, Filter}
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.data.{FilterDead, Project, ProjectConfig, ReqId, ShowDead}
+import shipreq.webapp.member.project.event.VerifiedEvent
+import shipreq.webapp.member.project.filter.{CompiledFilter, Filter}
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.protocol.websocket.SavedViewCmd
-import shipreq.webapp.member.util.DataReusability._
 
 final case class Static(stateAccess                   : StateAccessPure[(State, FilterDead)],
                         pxProject                     : Px[Project],

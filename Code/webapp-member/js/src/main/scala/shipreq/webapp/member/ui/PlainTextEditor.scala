@@ -6,7 +6,7 @@ import shipreq.webapp.base.feature.EditorStatus
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.member.UiText
 import shipreq.webapp.member.feature.EditControlsFeature
-import shipreq.webapp.member.text.SingleLine
+import shipreq.webapp.member.project.text.SingleLine
 
 /**
   * Editor for single-line plain-text.

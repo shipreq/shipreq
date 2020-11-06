@@ -11,7 +11,7 @@ import shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetailTestDs
 import shipreq.webapp.client.project.feature.deletion.{DeletionFormObs, RestorationFormObs}
 import shipreq.webapp.client.project.test.TestGlobal
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data.{Dead, Live, ShowDead, StaticField}
+import shipreq.webapp.member.project.data.{Dead, Live, ShowDead, StaticField}
 import shipreq.webapp.member.test.CommonObs
 
 object ReqDetailObs {

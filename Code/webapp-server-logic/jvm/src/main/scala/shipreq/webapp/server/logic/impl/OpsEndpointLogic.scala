@@ -12,8 +12,8 @@ import shipreq.base.util.log.HasLogger
 import shipreq.taskman.api.{Task, TaskId, TaskmanApi}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.validation.UserValidators
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.{ApplyEvent, VerifiedEvent}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.{ApplyEvent, VerifiedEvent}
 import shipreq.webapp.server.logic.algebra.{DB, Server}
 import shipreq.webapp.server.logic.dispatch.{ResponseCmd, StatusCode}
 

@@ -6,10 +6,10 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.ParseInt
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
-import shipreq.webapp.member.data.DataImplicits._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.RetiredGenericData._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data.DataImplicits._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.RetiredGenericData._
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.protocol.json.JsonCodec
 
 /** v1.1 */
@@ -24,7 +24,7 @@ object Rev1 {
   import BaseMemberData1.SavedViewCodecs._
 
   object SavedViewCodecs {
-    import shipreq.webapp.member.data.savedview._
+    import shipreq.webapp.member.project.data.savedview._
 
     private[this] final val KeyCustomField    = "custom"
     private[this] final val KeyImplications   = "imps"

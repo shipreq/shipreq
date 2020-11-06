@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.feature.editor
 import japgolly.scalajs.react.{Reusability, Reusable}
 import shipreq.base.util._
 import shipreq.webapp.client.project.util.DataReusability._
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 /** Determinations of whether or not a field is allowed to be edited.
   *

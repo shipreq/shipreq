@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.widgets.dev
 
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.webapp.member.data.Colour
+import shipreq.webapp.member.project.data.Colour
 
 /** This renders a table of colours to compare black & white foregrounds.
   * It was used to test that [[Colour.foreground]] was choosing the desired colours.

@@ -6,8 +6,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.ui.semantic.{Button, Input}
 import shipreq.webapp.client.project.app.Style.{widgets => *}
-import shipreq.webapp.member.data.{Colour, DataValidators}
 import shipreq.webapp.member.jsfacade.ReactColor
+import shipreq.webapp.member.project.data.{Colour, DataValidators}
 
 /** Note: validation errors aren't presented as part of this. */
 object ColourPicker {

@@ -2,9 +2,9 @@ package shipreq.webapp.member.protocol.binary.v1
 
 import nyaya.util.Multimap
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.RetiredGenericData._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.RetiredGenericData._
+import shipreq.webapp.member.project.event._
 
 /** v1.1 */
 object Events {

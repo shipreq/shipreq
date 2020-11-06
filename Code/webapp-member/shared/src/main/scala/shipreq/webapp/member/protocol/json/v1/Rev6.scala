@@ -7,10 +7,10 @@ import scala.collection.immutable.TreeSet
 import scala.reflect.ClassTag
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.text.AtomTC
 import shipreq.webapp.member.protocol.json.JsonCodec
-import shipreq.webapp.member.text.AtomTC
 
 /** v1.6 */
 object Rev6 {
@@ -21,7 +21,7 @@ object Rev6 {
   import Events._
 
   object AtomCodecs extends AtomTC[JsonCodec] {
-    import shipreq.webapp.member.text._
+    import shipreq.webapp.member.project.text._
     import Atom._
 
     override def lazily[A](f: => JsonCodec[A]): JsonCodec[A] = codecLazily(f)

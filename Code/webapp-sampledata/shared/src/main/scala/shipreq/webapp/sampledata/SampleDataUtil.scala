@@ -1,8 +1,8 @@
 package shipreq.webapp.sampledata
 
 import java.time.Instant
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event._
 
 private[sampledata] object SampleDataUtil {
 

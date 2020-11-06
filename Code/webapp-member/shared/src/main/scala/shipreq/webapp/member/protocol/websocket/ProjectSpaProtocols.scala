@@ -10,8 +10,8 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.base.protocol.websocket.WebSocketShared
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 
 /**
   * Protocols for the Project SPA / webapp-client-project module.

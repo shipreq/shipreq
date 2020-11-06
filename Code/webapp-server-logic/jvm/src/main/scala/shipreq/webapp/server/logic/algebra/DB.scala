@@ -3,8 +3,8 @@ package shipreq.webapp.server.logic.algebra
 import java.time.Instant
 import scalaz.~>
 import shipreq.webapp.base.data._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.{ActiveEvent, EventOrd, VerifiedEvent}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.server.logic.data.{IP, PasswordAndSalt}
 
 /**

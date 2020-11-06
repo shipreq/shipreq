@@ -10,7 +10,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.client.ww.api.Protocol.Codec.{default => codec}
 import shipreq.webapp.client.ww.api._
-import shipreq.webapp.member.util.LruCache
+import shipreq.webapp.member.project.util.LruCache
 
 object WebWorkerClient {
 

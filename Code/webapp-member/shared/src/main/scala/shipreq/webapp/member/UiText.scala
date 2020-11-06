@@ -2,10 +2,10 @@ package shipreq.webapp.member
 
 import scala.collection.compat.IterableOnce
 import shipreq.base.util.LeftRight
-import shipreq.webapp.member.data.ReqType.Mnemonic
-import shipreq.webapp.member.data.{Dead, HashRefKey, Live, SpecialBuiltInField}
-import shipreq.webapp.member.issue.IssueCategory
-import shipreq.webapp.member.text.{PlainText, Text}
+import shipreq.webapp.member.project.data.ReqType.Mnemonic
+import shipreq.webapp.member.project.data.{Dead, HashRefKey, Live, SpecialBuiltInField}
+import shipreq.webapp.member.project.issue.IssueCategory
+import shipreq.webapp.member.project.text.{PlainText, Text}
 
 object UiText {
 

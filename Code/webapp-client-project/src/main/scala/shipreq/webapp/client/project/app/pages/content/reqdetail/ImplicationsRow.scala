@@ -11,7 +11,7 @@ import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.{EditorNavParent, _}
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 private[reqdetail] object ImplicationsRow {
   import Row.{Implications => row}

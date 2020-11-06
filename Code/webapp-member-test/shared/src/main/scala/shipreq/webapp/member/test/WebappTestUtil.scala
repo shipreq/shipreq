@@ -8,11 +8,12 @@ import java.time.temporal.ChronoUnit._
 import scalaz.Equal
 import shipreq.base.test._
 import shipreq.webapp.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
-import shipreq.webapp.member.filter._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.filter._
+import shipreq.webapp.member.project.text.Text
 import shipreq.webapp.member.protocol.json.v1.Latest._
-import shipreq.webapp.member.text.Text
+import shipreq.webapp.member.test.project.{EventEquality, IssueLite}
 import sourcecode.Line
 
 trait WebappTestEquality

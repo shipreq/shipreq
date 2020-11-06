@@ -2,7 +2,7 @@ package shipreq.utils
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.FxModule._
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 import shipreq.webapp.sampledata.SampleData
 
 object Profile {
@@ -10,14 +10,14 @@ object Profile {
   def main(args: Array[String]): Unit = {
     val sd = loadSampleData()
 
-//    import shipreq.webapp.member.data.derivation._
+//    import shipreq.webapp.member.project.data.derivation._
 //    val project = sd.project
 //    profile(1)(Array.fill(100)(AtomScan(project)))
 
 //    val trie = sd.project.content.reqCodes.trie
 //    profile(2)(Array.fill(100)(ReqCodes.benchmarkScan(trie)))
 
-    import shipreq.webapp.member.event._
+    import shipreq.webapp.member.project.event._
     val trusted = ApplyEvent.trusted
     val verifiedEvents = sd.verifiedEvents
     profile(1)(trusted.applyVerified(verifiedEvents)(Project.empty))

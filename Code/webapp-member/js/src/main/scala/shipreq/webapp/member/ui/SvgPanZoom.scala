@@ -3,8 +3,8 @@ package shipreq.webapp.member.ui
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scala.scalajs.js
-import shipreq.webapp.member.data.Svg
 import shipreq.webapp.member.jsfacade.{ReactSvgPanZoom, ReactVirtualized, TransformationMatrix}
+import shipreq.webapp.member.project.data.Svg
 
 object SvgPanZoom {
   import ReactSvgPanZoom.Exports._

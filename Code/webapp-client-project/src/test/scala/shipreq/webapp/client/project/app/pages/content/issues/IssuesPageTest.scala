@@ -4,8 +4,8 @@ import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test.PrepareEnv
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.test.SampleProject6
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.test.project.SampleProject6
 import utest._
 import utest.framework.TestPath
 

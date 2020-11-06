@@ -6,8 +6,8 @@ import scalaz.~~>
 import shipreq.base.util.{Direction, SetDiff}
 import shipreq.webapp.client.project.feature.editor.{FieldKey => E}
 import shipreq.webapp.client.project.util.DataReusability._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.Text
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.Text
 
 /**
  * ADT representing all types of fields supported by the editor.

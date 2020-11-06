@@ -6,7 +6,7 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.PotentialChange
 import shipreq.webapp.base.ui.semantic.{Button, Colour, ColourPlus, Icon}
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
-import shipreq.webapp.member.data.Project
+import shipreq.webapp.member.project.data.Project
 
 /** The row of buttons underneath editors.
   *

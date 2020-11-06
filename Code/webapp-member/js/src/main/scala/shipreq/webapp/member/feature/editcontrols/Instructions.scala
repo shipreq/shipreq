@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.member.feature.EditControlsFeature
-import shipreq.webapp.member.text.{LineCardinality, MultiLine, SingleLine}
+import shipreq.webapp.member.project.text.{LineCardinality, MultiLine, SingleLine}
 import shipreq.webapp.member.ui.BaseStyles.{editorInstructions => *}
 import shipreq.webapp.member.ui.OptionalFullscreen
 

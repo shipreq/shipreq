@@ -6,7 +6,7 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.util.BaseReusability._
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data.{FieldId, SpecialBuiltInField}
+import shipreq.webapp.member.project.data.{FieldId, SpecialBuiltInField}
 
 object TableHeader {
 

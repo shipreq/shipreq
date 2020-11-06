@@ -10,11 +10,11 @@ import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.create.Feature.PreviewId
 import shipreq.webapp.client.project.widgets.ProjectWidgets
-import shipreq.webapp.member.data._
 import shipreq.webapp.member.feature.PreviewFeature
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.{Text, TextSearch}
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.protocol.websocket.ManualIssueCmd
-import shipreq.webapp.member.text.{Text, TextSearch}
-import shipreq.webapp.member.util.DataReusability._
 
 object NewIssue {
 

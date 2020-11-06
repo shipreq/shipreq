@@ -1,8 +1,8 @@
 package shipreq.webapp.member.protocol.websocket
 
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
 
 sealed trait UpdateConfigCmd
 

@@ -9,7 +9,7 @@ import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.client.ww.api.WebWorkerCmd.NoResult
-import shipreq.webapp.member.data.Svg
+import shipreq.webapp.member.project.data.Svg
 
 final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
                                 logger     : LoggerJs) extends WebWorkerClient.Instance {

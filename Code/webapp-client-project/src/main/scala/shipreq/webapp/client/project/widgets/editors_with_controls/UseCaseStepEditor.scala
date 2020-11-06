@@ -17,11 +17,11 @@ import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAccepto
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets._
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.UseCaseStepGD
 import shipreq.webapp.member.feature.AutoCompleteFeature._
 import shipreq.webapp.member.feature.{EditControlsFeature, PreviewFeature}
-import shipreq.webapp.member.text._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.UseCaseStepGD
+import shipreq.webapp.member.project.text._
 
 object UseCaseStepEditor {
   import RichTextEditor.hardcodedLive

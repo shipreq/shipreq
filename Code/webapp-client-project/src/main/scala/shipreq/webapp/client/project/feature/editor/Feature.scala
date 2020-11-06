@@ -11,9 +11,9 @@ import shipreq.webapp.base.feature.clipboard.ClipboardData
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
-import shipreq.webapp.member.data._
 import shipreq.webapp.member.feature._
-import shipreq.webapp.member.text.ProjectText
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.ProjectText
 
 object Feature {
 

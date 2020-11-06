@@ -6,9 +6,9 @@ import java.time.Instant
 import nyaya.gen.Gen
 import scalaz.Semigroup
 import scalaz.syntax.monad._
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.event.EventOrd.Implicits._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.EventOrd.Implicits._
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.protocol.json.v1.Latest._
 import shipreq.webapp.member.protocol.json.v1.PostEvents._
 import shipreq.webapp.server.logic.algebra.Redis._

@@ -1,7 +1,7 @@
 package shipreq.webapp.member.protocol.websocket
 
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.event.SavedViewGD
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.event.SavedViewGD
 
 sealed trait SavedViewCmd
 object SavedViewCmd {

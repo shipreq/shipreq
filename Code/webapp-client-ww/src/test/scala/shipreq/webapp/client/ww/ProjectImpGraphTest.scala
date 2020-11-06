@@ -2,21 +2,20 @@ package shipreq.webapp.client.ww
 
 import shipreq.base.util.OptionalBoolFn
 import shipreq.webapp.client.ww.GraphViz.DOT
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview.ImpGraphConfig
-import shipreq.webapp.member.data.savedview.ImpGraphConfig.GraphDir
-import shipreq.webapp.member.event.Event._
-import shipreq.webapp.member.event._
-import shipreq.webapp.member.filter.CompiledFilter
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.GraphDir
+import shipreq.webapp.member.project.event.Event._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.filter.CompiledFilter
+import shipreq.webapp.member.project.text.PlainText
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.test._
-import shipreq.webapp.member.test.event.TestEvent
-import shipreq.webapp.member.text.PlainText
+import shipreq.webapp.member.test.project.TestEvent
 import utest._
 
 object ProjectImpGraphTest extends TestSuite {
   import GraphTestUtil._
-  import SampleImplicationGraph._, Values._
+  import shipreq.webapp.member.test.project.SampleImplicationGraph._, Values._
 
   private def render(fd: FilterDead,
                      p: Project,
@@ -408,8 +407,8 @@ object ProjectImpGraphTest extends TestSuite {
 
       "wedged" - {
         import ImpGraphConfig._
-        import SampleProject8.Values._
-        import SampleProject8._
+        import shipreq.webapp.member.test.project.SampleProject8.Values._
+        import shipreq.webapp.member.test.project.SampleProject8._
 
         val fd = HideDead
         val filter = needFilter("-MF-{10-27}", fd)
@@ -457,8 +456,8 @@ object ProjectImpGraphTest extends TestSuite {
 
       "striped" - {
         import ImpGraphConfig._
-        import SampleProject8.Values._
-        import SampleProject8._
+        import shipreq.webapp.member.test.project.SampleProject8.Values._
+        import shipreq.webapp.member.test.project.SampleProject8._
 
         val fd = HideDead
         val filter = needFilter("-MF-{10-27}", fd)
@@ -505,9 +504,9 @@ object ProjectImpGraphTest extends TestSuite {
     }
 
     "impRequired" - {
-      import UnsafeTypes._
+      import shipreq.webapp.member.test.project.UnsafeTypes._
       import AutoNES._
-      import SampleProject.Values._
+      import shipreq.webapp.member.test.project.SampleProject.Values._
       val GD = GenericReqGD
 
       // br3

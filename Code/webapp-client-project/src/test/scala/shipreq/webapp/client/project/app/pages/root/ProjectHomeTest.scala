@@ -6,7 +6,7 @@ import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test._
-import shipreq.webapp.member.data.Project
+import shipreq.webapp.member.project.data.Project
 import utest._
 
 class ProjectHomeObs($: DomZipperJs) {

@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.ui.semantic.{Button, Colour, ColourPlus, Icon}
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data.{Dead, Live}
+import shipreq.webapp.member.project.data.{Dead, Live}
 
 /**
   * Buttons to change life.

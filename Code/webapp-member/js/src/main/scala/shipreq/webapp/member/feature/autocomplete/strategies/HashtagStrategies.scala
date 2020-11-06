@@ -2,9 +2,9 @@ package shipreq.webapp.member.feature.autocomplete.strategies
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.derivation._
-import shipreq.webapp.member.text.Grammar
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.derivation._
+import shipreq.webapp.member.project.text.Grammar
 
 /** #ISSUE #TAG */
 private[strategies] object HashtagStrategies {

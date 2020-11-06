@@ -1,11 +1,11 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import nyaya.gen._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.filter.Filter
-import shipreq.webapp.member.test.RandomData
-import shipreq.webapp.member.test.RandomData.savedViews._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.filter.Filter
+import shipreq.webapp.member.test.project.RandomData
+import shipreq.webapp.member.test.project.RandomData.savedViews._
 
 object RandomSavedView {
 

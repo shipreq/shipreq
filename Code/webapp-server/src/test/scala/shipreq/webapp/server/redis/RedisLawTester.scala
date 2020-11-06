@@ -15,7 +15,7 @@ import shipreq.base.test._
 import shipreq.base.util.FxModule._
 import shipreq.base.util._
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.server.logic.algebra.Redis._
 import shipreq.webapp.server.redis.RedisLaw.Test
 import shipreq.webapp.server.redis.RedisLawTester._

@@ -11,7 +11,7 @@ import shipreq.webapp.base.ui.semantic.Dropdown.JsOptionsOps
 import shipreq.webapp.base.ui.semantic.{Colour, Dropdown, Icon, Menu => SemUiMenu, SemExtAny}
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.app.Style.{savedViews => *}
-import shipreq.webapp.member.event.{Event, VerifiedEvent}
+import shipreq.webapp.member.project.event.{Event, VerifiedEvent}
 import shipreq.webapp.member.protocol.websocket.SavedViewCmd
 
 object ViewManager {

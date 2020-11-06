@@ -8,9 +8,9 @@ import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.validation.ValidationUX
 import shipreq.webapp.client.project.app.Style.{reqTypeConfig => *}
 import shipreq.webapp.member.UiText.FieldNames
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.ui.AutosizeTextarea
-import shipreq.webapp.member.util.DataReusability._
 
 /** This isn't really an editor; it's read/only! But it's what appears in place of the editor. */
 private[reqtypes] object StaticReqTypeEditor {

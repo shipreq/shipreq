@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.util.KeyHandlers
-import shipreq.webapp.member.text.LineCardinality
+import shipreq.webapp.member.project.text.LineCardinality
 import shipreq.webapp.member.ui.OptionalFullscreen
 
 final case class Control[-P](keys: CallbackTo[_ <: P] => KeyHandlers,

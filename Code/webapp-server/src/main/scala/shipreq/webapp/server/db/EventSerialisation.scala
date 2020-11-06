@@ -3,7 +3,7 @@ package shipreq.webapp.server.db
 import io.circe._
 import io.circe.syntax._
 import shipreq.base.util.JsonUtil
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.protocol.json.v1.Events.EventData._
 import shipreq.webapp.member.protocol.json.v1.Rev1.EventData._
 import shipreq.webapp.member.protocol.json.v1.Rev6.EventData._

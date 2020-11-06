@@ -15,13 +15,13 @@ import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.util.{LastValueMemo, LruMemo}
 import shipreq.webapp.client.project.feature.editor.Feature.{AsyncError, AsyncState, Editor, PreviewId, State}
 import shipreq.webapp.client.project.widgets.ProjectWidgets
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.UseCaseStepGD
 import shipreq.webapp.member.feature._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.UseCaseStepGD
+import shipreq.webapp.member.project.text._
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.protocol.websocket.{ManualIssueCmd, UpdateContentCmd}
-import shipreq.webapp.member.text._
 import shipreq.webapp.member.ui.OptionalFullscreen
-import shipreq.webapp.member.util.DataReusability._
 
 /** Interface to start a new editor (if possible).
   * If not all required data is available then the execution of this Callback could result in a no-op.
@@ -752,7 +752,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichText {
-      import shipreq.webapp.member.text._
+      import shipreq.webapp.member.project.text._
       import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       @inline def defaultStyle = EditControlsFeature.Style.default
@@ -883,7 +883,7 @@ object NewEditor {
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     object EditRichTextNonEmpty {
-      import shipreq.webapp.member.text._
+      import shipreq.webapp.member.project.text._
       import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 
       @inline def defaultStyle = EditControlsFeature.Style.default

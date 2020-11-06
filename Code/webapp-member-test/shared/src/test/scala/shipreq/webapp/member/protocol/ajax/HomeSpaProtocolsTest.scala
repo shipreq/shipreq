@@ -6,8 +6,8 @@ import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.util.Obfuscated
-import shipreq.webapp.member.data.ProjectMetaData
-import shipreq.webapp.member.test.RandomData
+import shipreq.webapp.member.project.data.ProjectMetaData
+import shipreq.webapp.member.test.project.RandomData
 import utest._
 
 object HomeSpaProtocolsTest extends TestSuite {

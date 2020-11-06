@@ -10,7 +10,7 @@ import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.feature.savedview.{FilterDeadButtonObs, FilterEditorObs, SavedViewManagerObs}
 import shipreq.webapp.client.project.test._
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test._
 

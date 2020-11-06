@@ -4,9 +4,9 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
 import nyaya.util.Multimap
 import shipreq.base.util.OptionalBoolFn
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview.ImpGraphConfig.{Colours, LabelFormat}
-import shipreq.webapp.member.text.PlainText
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.{Colours, LabelFormat}
+import shipreq.webapp.member.project.text.PlainText
 
 abstract class AbstractGraph(protected val project   : Project,
                              protected val filterDead: FilterDead) {

@@ -10,9 +10,9 @@ import shipreq.webapp.client.project.feature.SavedViewFeature
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.feature.savedview.SavedViewTestDsl
 import shipreq.webapp.client.project.test._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.event.Event
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.event.Event
 import shipreq.webapp.member.test._
 
 object ReqTableTestDsl {

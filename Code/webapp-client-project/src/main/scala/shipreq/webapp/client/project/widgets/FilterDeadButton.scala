@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.ui.semantic._
-import shipreq.webapp.member.data.{Dead, FilterDead, HideDead, Live, ShowDead}
+import shipreq.webapp.member.project.data.{Dead, FilterDead, HideDead, Live, ShowDead}
 
 object FilterDeadButton {
 

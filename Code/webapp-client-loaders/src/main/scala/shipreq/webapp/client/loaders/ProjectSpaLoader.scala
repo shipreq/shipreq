@@ -5,7 +5,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.ui.semantic.Breadcrumb
-import shipreq.webapp.member.data.Project
+import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.ui._
 
 object ProjectSpaLoader {

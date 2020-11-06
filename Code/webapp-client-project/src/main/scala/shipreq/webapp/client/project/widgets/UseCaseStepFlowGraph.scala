@@ -7,8 +7,8 @@ import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.GraphComponent._
 import shipreq.webapp.client.ww.api.WebWorkerCmd
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.ProjectText
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.ProjectText
 
 object UseCaseStepFlowGraph {
 

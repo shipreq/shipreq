@@ -2,8 +2,8 @@ package shipreq.webapp.server.db
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.utils.Utils
-import shipreq.webapp.member.event.Event
-import shipreq.webapp.member.event.Event._
+import shipreq.webapp.member.project.event.Event
+import shipreq.webapp.member.project.event.Event._
 
 object EventTypes {
 

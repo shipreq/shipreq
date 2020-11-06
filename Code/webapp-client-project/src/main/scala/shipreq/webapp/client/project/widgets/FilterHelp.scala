@@ -3,8 +3,8 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.client.project.widgets.HelpModal._
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.filter.FilterAst
-import shipreq.webapp.member.issue.IssueCategory
+import shipreq.webapp.member.project.filter.FilterAst
+import shipreq.webapp.member.project.issue.IssueCategory
 
 object FilterHelp {
 

@@ -7,8 +7,8 @@ import shipreq.webapp.base.config._
 import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Dropdown, Icon, Menu, SemExtAny}
 import shipreq.webapp.base.ui.widgets.FeedbackModal
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.ui.BaseStyles.{layout => *}
-import shipreq.webapp.member.util.DataReusability._
 
 /** At top of member (logged-in) screens:
   *

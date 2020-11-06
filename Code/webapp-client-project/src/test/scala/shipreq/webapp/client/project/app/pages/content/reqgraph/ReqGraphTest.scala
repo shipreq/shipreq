@@ -6,11 +6,11 @@ import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.Event
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.Event
 import shipreq.webapp.member.protocol.websocket.UpdateContentCmd.PatchImplications
-import shipreq.webapp.member.test.UnsafeTypes.nesd
-import shipreq.webapp.member.test._
+import shipreq.webapp.member.test.project.UnsafeTypes.nesd
+import shipreq.webapp.member.test.project.{SampleProject3, SampleProject8}
 import utest._
 import utest.framework.TestPath
 
@@ -48,7 +48,7 @@ object ReqGraphTest extends TestSuite {
   }
 
   private def testColoursWithDeadTag()(implicit tp: TestPath): Unit = {
-    import SampleProject8.Values._
+    import shipreq.webapp.member.test.project.SampleProject8.Values._
 
     val allGood =
       ( savedViews.assert("> * yo")
@@ -100,7 +100,7 @@ object ReqGraphTest extends TestSuite {
     PatchImplications(from, Forwards, nesd()(to))
 
   private def testEdgeEditorNewEdgeOk(mod: *.Actions => *.Actions = identity)(implicit tp: TestPath): Unit = {
-    import SampleProject3._, Values._
+    import shipreq.webapp.member.test.project.SampleProject3._, Values._
 
     val test = mod(
       graph.dragNewEdge("MF-17" -> "MF-18")
@@ -116,7 +116,7 @@ object ReqGraphTest extends TestSuite {
   }
 
   private def testEdgeEditorNewEdgeInvalid(from: String, to: String)(implicit tp: TestPath): Unit = {
-    import SampleProject3._
+    import shipreq.webapp.member.test.project.SampleProject3._
     runActions(project, wwPrep.forSP3)(
 
       graph.dragNewEdge(from -> to)
@@ -132,7 +132,7 @@ object ReqGraphTest extends TestSuite {
                                              to       : String,
                                              dragState: DragState,
                                              mod      : *.Actions => *.Actions = identity)(implicit tp: TestPath): Unit = {
-    import SampleProject3._
+    import shipreq.webapp.member.test.project.SampleProject3._
 
     val test = mod(
       graph.dragNewEdge(from -> to)
@@ -147,7 +147,7 @@ object ReqGraphTest extends TestSuite {
   }
 
   private def testEdgeEditorNewEdgeRefl()(implicit tp: TestPath): Unit = {
-    import SampleProject3._
+    import shipreq.webapp.member.test.project.SampleProject3._
     val id = "MF-1"
     runActions(project, wwPrep.forSP3)(
       graph.dragNewEdge(id -> id)
@@ -159,7 +159,7 @@ object ReqGraphTest extends TestSuite {
     PatchImplications(from, Forwards, nesd(to)())
 
   private def edgeEditorDelEdgeOkTest = {
-    import SampleProject3._, Values._
+    import shipreq.webapp.member.test.project.SampleProject3._, Values._
 
     (graph.clickEdge("MF-1" -> "FR-2") +> graph.assertSelectedEdge("MF-1" -> "FR-2")
       >> graph.clickEdge("MF-1" -> "FR-2") +> graph.selectedEdgeId.assert(None)
@@ -176,17 +176,17 @@ object ReqGraphTest extends TestSuite {
   }
 
   private def testEdgeEditorDelEdgeOk()(implicit tp: TestPath): Unit = {
-    import SampleProject3._
+    import shipreq.webapp.member.test.project.SampleProject3._
     runActions(project, wwPrep.forSP3)(edgeEditorDelEdgeOkTest)
   }
 
   private def testEdgeEditorDelEdgeFocus()(implicit tp: TestPath): Unit = {
-    import SampleProject3._
+    import shipreq.webapp.member.test.project.SampleProject3._
     runActions(project, wwPrep.forSP3)(focusFilter >> edgeEditorDelEdgeOkTest)
   }
 
   private def testEdgeEditorDelEdgeNoOp(fromTo: (String, String) = null)(implicit tp: TestPath): Unit = {
-    import SampleProject3._
+    import shipreq.webapp.member.test.project.SampleProject3._
     val test = global.press(KB.Delete) +> global.requestCount.assert(0)
     runActions(project, wwPrep.forSP3)(
       Option(fromTo) match {
@@ -197,7 +197,7 @@ object ReqGraphTest extends TestSuite {
   }
 
   private def testEdgeEditorReplaceEdgeSameSrc()(implicit tp: TestPath): Unit = {
-    import SampleProject3._, Values._
+    import shipreq.webapp.member.test.project.SampleProject3._, Values._
     runActions(project, wwPrep.forSP3)(
 
       graph.clickEdge("MF-22" -> "FR-2")
@@ -215,7 +215,7 @@ object ReqGraphTest extends TestSuite {
   }
 
   private def testEdgeEditorReplaceEdgeSameTgt()(implicit tp: TestPath): Unit = {
-    import SampleProject3._, Values._
+    import shipreq.webapp.member.test.project.SampleProject3._, Values._
     runActions(project, wwPrep.forSP3)(
 
       graph.clickEdge("MF-22" -> "FR-2")

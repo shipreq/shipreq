@@ -1,14 +1,14 @@
 package shipreq.webapp.member.feature.autocomplete.strategies
 
 import shipreq.base.util.MTrie.Ops
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.test._
-import shipreq.webapp.member.text.{PlainText, TextSearch}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.{PlainText, TextSearch}
+import shipreq.webapp.member.test.project.SampleProject2
 
 object AutoCompleteTestData {
 
   lazy val fakeTrie: ReqCode.Trie = {
-    import shipreq.webapp.member.test.UnsafeTypes._
+    import shipreq.webapp.member.test.project.UnsafeTypes._
 
     val codes = Set[ReqCode.Value](
       "aaaa1", "abc", "amp", "apple", "apply",
@@ -37,8 +37,8 @@ object AutoCompleteTestData {
   }
 
   lazy val project2 = {
-    import ProjectDsl._
-    import UnsafeTypes._
+    import shipreq.webapp.member.test.project.ProjectDsl._
+    import shipreq.webapp.member.test.project.UnsafeTypes._
     val p = Project.reqCodes.set(ReqCodes(fakeTrie))(SampleProject2.project)
     (DeadReqCode("dead.ref", oldReqId = 1, id = Some(ApReqCodeId(90))) +
       DeadReqCode("dead.group", id = Some(ReqCodeGroupId(91)))) ! p

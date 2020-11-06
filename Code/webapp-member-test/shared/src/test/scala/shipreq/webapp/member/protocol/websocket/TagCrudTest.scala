@@ -6,13 +6,13 @@ import nyaya.test.PropTest._
 import shipreq.base.util.MMTree
 import shipreq.base.util.MMTree.Relations
 import shipreq.base.util.MMTree.Relations.derive
-import shipreq.webapp.member.data.DataImplicits._
-import shipreq.webapp.member.data.FlatTag.FilterPolicy._
-import shipreq.webapp.member.data.FlatTag._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.test.UnsafeTypes._
+import shipreq.webapp.member.project.data.DataImplicits._
+import shipreq.webapp.member.project.data.FlatTag.FilterPolicy._
+import shipreq.webapp.member.project.data.FlatTag._
+import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.test.{RandomData, SampleProject => S, TagId_T}
+import shipreq.webapp.member.test.project.UnsafeTypes._
+import shipreq.webapp.member.test.project.{RandomData, SampleProject => S, TagId_T}
 import utest._
 
 object TagCrudTest extends TestSuite {
@@ -94,7 +94,7 @@ object TagCrudTest extends TestSuite {
   //println(TagTree.prettyPrint(sampleTagTree_f))
 
   override def tests = Tests {
-    import S.Values._
+    import shipreq.webapp.member.test.project.SampleProject.Values._
 
     "PovRelations" - {
       "derive" - {

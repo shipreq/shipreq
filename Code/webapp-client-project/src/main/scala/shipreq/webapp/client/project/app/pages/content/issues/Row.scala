@@ -7,10 +7,10 @@ import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.widgets.{EditorNavParent, ProjectWidgets}
 import shipreq.webapp.member.UiText.{Issues => UI}
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.derivation._
 import shipreq.webapp.member.feature.EditControlsFeature
-import shipreq.webapp.member.issue._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.derivation._
+import shipreq.webapp.member.project.issue._
 
 sealed trait Row {
   val issue: Issue

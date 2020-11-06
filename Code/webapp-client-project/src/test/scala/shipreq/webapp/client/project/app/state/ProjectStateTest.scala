@@ -2,9 +2,10 @@ package shipreq.webapp.client.project.app.state
 
 import nyaya.gen.Gen
 import scala.collection.immutable.TreeSet
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.test.WebappTestUtil._
+import shipreq.webapp.member.test.project.RandomEventStream
 import utest._
 
 object ProjectStateTest extends TestSuite {

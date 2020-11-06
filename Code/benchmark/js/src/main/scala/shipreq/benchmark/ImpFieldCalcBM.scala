@@ -2,7 +2,7 @@ package shipreq.benchmark
 
 import japgolly.scalajs.benchmark._
 import japgolly.scalajs.benchmark.gui.GuiSuite
-import shipreq.webapp.member.data.{GenericReqId, HideDead}
+import shipreq.webapp.member.project.data.{GenericReqId, HideDead}
 import shipreq.webapp.sampledata.SampleData
 
 final case class ImpFieldCalcBM(data: BenchmarkData) {

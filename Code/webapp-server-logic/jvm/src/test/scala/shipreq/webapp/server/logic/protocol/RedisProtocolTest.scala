@@ -6,11 +6,11 @@ import nyaya.gen.Gen
 import scalaz.Equal
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.test.BinaryTestUtil._
-import shipreq.webapp.member.data.{Project, StaticField}
-import shipreq.webapp.member.event._
-import shipreq.webapp.member.test.UnsafeTypes._
+import shipreq.webapp.member.project.data.{Project, StaticField}
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.test.{RandomData => R}
+import shipreq.webapp.member.test.project.UnsafeTypes._
+import shipreq.webapp.member.test.project.{RandomData => R}
 import shipreq.webapp.server.logic.algebra.Redis
 import utest._
 

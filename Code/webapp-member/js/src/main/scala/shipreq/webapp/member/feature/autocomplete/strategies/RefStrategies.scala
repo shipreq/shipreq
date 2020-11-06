@@ -4,8 +4,8 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.{Grammar, PlainText, TextSearch}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.{Grammar, PlainText, TextSearch}
 import shipreq.webapp.member.ui.BaseStyles.{autoComplete => *}
 
 final case class ReqItem(reqId  : ReqId,

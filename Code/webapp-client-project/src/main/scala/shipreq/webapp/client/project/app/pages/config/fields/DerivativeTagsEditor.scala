@@ -12,8 +12,8 @@ import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewTags}
-import shipreq.webapp.member.data.DataImplicits._
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data.DataImplicits._
+import shipreq.webapp.member.project.data._
 
 private[fields] object DerivativeTagsEditor {
 

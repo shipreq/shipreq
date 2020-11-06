@@ -13,12 +13,12 @@ import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.feature.create.Feature.PreviewId
 import shipreq.webapp.client.project.feature.{CreateFeature, EditorFeature}
 import shipreq.webapp.client.project.widgets.{FilterEditor, ProjectWidgets}
-import shipreq.webapp.member.data._
 import shipreq.webapp.member.feature.PreviewFeature
-import shipreq.webapp.member.filter.{CompiledFilter, Filter}
-import shipreq.webapp.member.issue.Issues
-import shipreq.webapp.member.text.{PlainText, TextSearch}
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.filter.{CompiledFilter, Filter}
+import shipreq.webapp.member.project.issue.Issues
+import shipreq.webapp.member.project.text.{PlainText, TextSearch}
+import shipreq.webapp.member.project.util.DataReusability._
 
 object IssuesPage {
 

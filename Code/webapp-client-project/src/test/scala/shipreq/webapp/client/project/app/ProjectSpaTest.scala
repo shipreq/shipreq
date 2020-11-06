@@ -7,12 +7,12 @@ import shipreq.webapp.client.project.app.pages.content.reqtable.{ReqTableTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH}
 import shipreq.webapp.client.project.test._
-import shipreq.webapp.member.data.ExternalPubid
-import shipreq.webapp.member.event.Event.FieldCustomDelete
 import shipreq.webapp.member.feature.PreviewFeature.Position
-import shipreq.webapp.member.test.SampleProject.Values.priField
-import shipreq.webapp.member.test.UnsafeTypes._
-import shipreq.webapp.member.test._
+import shipreq.webapp.member.project.data.ExternalPubid
+import shipreq.webapp.member.project.event.Event.FieldCustomDelete
+import shipreq.webapp.member.test.project.SampleProject.Values.priField
+import shipreq.webapp.member.test.project.SampleProject5
+import shipreq.webapp.member.test.project.UnsafeTypes._
 import utest._
 
 /** These tests all involve changing routes */

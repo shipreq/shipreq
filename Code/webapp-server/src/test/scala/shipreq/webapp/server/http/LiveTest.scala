@@ -6,7 +6,7 @@ import shipreq.webapp.base.data.{EmailAddr, PersonName, ProjectId}
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
 import shipreq.webapp.client.public.PublicSpaProtocols.LandingPage.Request
 import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
-import shipreq.webapp.member.data.Project
+import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.protocol.entrypoint._
 import shipreq.webapp.server.logic.algebra.Security
 import shipreq.webapp.server.logic.util.Obfuscators

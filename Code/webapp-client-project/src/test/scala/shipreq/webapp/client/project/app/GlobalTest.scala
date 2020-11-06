@@ -3,9 +3,9 @@ package shipreq.webapp.client.project.app
 import java.time.Duration
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.client.project.test.TestGlobal
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.event.Event.ProjectNameSet
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.Event.ProjectNameSet
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.WsReqRes
 import utest._
 

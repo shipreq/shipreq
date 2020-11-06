@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.feature.editor
 import japgolly.scalajs.react.Reusability
 import shipreq.webapp.client.project.feature.editor.{FieldKey => AnyFieldKey}
 import shipreq.webapp.client.project.util.DataReusability._
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 sealed abstract class RowKey {
   type FieldKey <: AnyFieldKey

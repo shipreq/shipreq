@@ -1,8 +1,8 @@
 package shipreq.webapp.member.feature.autocomplete.strategies
 
-import shipreq.webapp.member.data._
 import shipreq.webapp.member.jsfacade.TextComplete.Strategy
-import shipreq.webapp.member.text.Grammar
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.Grammar
 
 private[strategies] object SmallStrategies {
 

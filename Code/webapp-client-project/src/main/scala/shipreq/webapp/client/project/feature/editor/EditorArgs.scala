@@ -6,11 +6,11 @@ import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.client.project.feature.editor.Feature.PreviewId
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.UseCaseStepGD
 import shipreq.webapp.member.feature.{EditControlsFeature, PreviewFeature}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.UseCaseStepGD
+import shipreq.webapp.member.project.text.{PlainText, TextSearch}
 import shipreq.webapp.member.protocol.websocket.UpdateContentCmd
-import shipreq.webapp.member.text.{PlainText, TextSearch}
 
 object EditorArgs {
 

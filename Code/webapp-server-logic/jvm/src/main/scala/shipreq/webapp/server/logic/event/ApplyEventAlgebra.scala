@@ -7,7 +7,7 @@ import scalaz.{Applicative, Monad}
 import shipreq.base.ops.Trace
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.server.logic.algebra.{MetricsAlgebra, Server}
 
 trait ApplyEventAlgebra[F[_]] { self =>

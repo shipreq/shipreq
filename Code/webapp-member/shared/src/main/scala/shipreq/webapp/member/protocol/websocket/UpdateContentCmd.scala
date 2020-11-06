@@ -2,10 +2,10 @@ package shipreq.webapp.member.protocol.websocket
 
 import shipreq.base.util.VectorTree.LocationOps
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.UseCaseStepGD
-import shipreq.webapp.member.text.Text
-import shipreq.webapp.member.text.Text.Equality._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.UseCaseStepGD
+import shipreq.webapp.member.project.text.Text
+import shipreq.webapp.member.project.text.Text.Equality._
 
 /**
  * A command to change a Project's content.

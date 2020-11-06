@@ -8,9 +8,9 @@ import monocle.macros._
 import shipreq.base.util.Url
 import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.base.util.GoogleAnalytics
-import shipreq.webapp.member.data.{ExternalPubid, ReqType, ReqTypePos}
-import shipreq.webapp.member.text.PlainText
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.data.{ExternalPubid, ReqType, ReqTypePos}
+import shipreq.webapp.member.project.text.PlainText
+import shipreq.webapp.member.project.util.DataReusability._
 
 object Routes {
 

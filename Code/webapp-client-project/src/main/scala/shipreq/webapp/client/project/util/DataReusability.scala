@@ -2,9 +2,9 @@ package shipreq.webapp.client.project.util
 
 import japgolly.scalajs.react._
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewTags}
-import shipreq.webapp.member.text.ProjectText
+import shipreq.webapp.member.project.text.ProjectText
 
-object DataReusability extends shipreq.webapp.member.util.DataReusability {
+object DataReusability extends shipreq.webapp.member.project.util.DataReusability {
 
   implicit def reusabilityProjectText[C <: ProjectText.Context, A]: Reusability[ProjectText[C, A]] =
     Reusability.byRef

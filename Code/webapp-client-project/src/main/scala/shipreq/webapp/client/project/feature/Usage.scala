@@ -7,10 +7,10 @@ import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.pages.root.SpecialRouterCtl
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.derivation._
-import shipreq.webapp.member.filter._
-import shipreq.webapp.member.text.{PlainText, TextSearch}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.derivation._
+import shipreq.webapp.member.project.filter._
+import shipreq.webapp.member.project.text.{PlainText, TextSearch}
 
 final class Usage(p: Project, router: SpecialRouterCtl) {
 

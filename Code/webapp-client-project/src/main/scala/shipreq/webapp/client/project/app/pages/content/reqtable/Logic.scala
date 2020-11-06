@@ -8,15 +8,15 @@ import scalaz.syntax.semigroup._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.base.util.fp.Monoid.Implicits._
-import shipreq.webapp.member.data.DataImplicits._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.derivation.VirtualProjectTags.DerivativeTagFactor
-import shipreq.webapp.member.data.derivation._
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.filter.{CompiledFilter, Filter}
-import shipreq.webapp.member.sort.FusedSorters
-import shipreq.webapp.member.text.PlainText
-import shipreq.webapp.member.util.ReqCodeTreeItem
+import shipreq.webapp.member.project.data.DataImplicits._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.derivation.VirtualProjectTags.DerivativeTagFactor
+import shipreq.webapp.member.project.data.derivation._
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.filter.{CompiledFilter, Filter}
+import shipreq.webapp.member.project.sort.FusedSorters
+import shipreq.webapp.member.project.text.PlainText
+import shipreq.webapp.member.project.util.ReqCodeTreeItem
 
 /*
  * Deletion complicates everything. See `Requirements/analysis-deletion.ods` for details.

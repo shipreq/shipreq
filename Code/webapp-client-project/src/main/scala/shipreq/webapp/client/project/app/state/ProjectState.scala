@@ -5,8 +5,8 @@ import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import shipreq.webapp.base.util.TCB
 import shipreq.webapp.client.project.util.DataReusability.reusabilityProject
-import shipreq.webapp.member.data.{Project, ProjectMetaData}
-import shipreq.webapp.member.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.data.{Project, ProjectMetaData}
+import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 
 /**
   * A [[Project]] built from an event stream, up-to-date [[ProjectMetaData]],

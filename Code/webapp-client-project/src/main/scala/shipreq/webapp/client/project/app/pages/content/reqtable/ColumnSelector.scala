@@ -8,8 +8,8 @@ import shipreq.webapp.base.ui.semantic.{Button, Icon, Popup}
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.widgets.CheckboxList
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.util.DataReusability._
 
 /**
   * Shows a little column button:

@@ -11,7 +11,7 @@ import shipreq.webapp.client.project.app.{Style, WebWorkerClient}
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.ww.api.WebWorkerCmd.picklerErrorMsgOrSvg
 import shipreq.webapp.client.ww.api._
-import shipreq.webapp.member.data.Svg
+import shipreq.webapp.member.project.data.Svg
 import shipreq.webapp.member.ui.SvgPanZoom
 
 /**

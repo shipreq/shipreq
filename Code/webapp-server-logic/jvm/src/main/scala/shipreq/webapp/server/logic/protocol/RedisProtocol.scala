@@ -2,8 +2,8 @@ package shipreq.webapp.server.logic.protocol
 
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.event.{EventOrd, VerifiedEvent}
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.server.logic.algebra.Redis.ProjectSnapshot
 
 object RedisProtocol {

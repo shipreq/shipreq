@@ -9,7 +9,7 @@ import shipreq.webapp.client.project.feature.Usage
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import shipreq.webapp.member.UiText.FieldNames
-import shipreq.webapp.member.data.{Colour => _, _}
+import shipreq.webapp.member.project.data.{Colour => _, _}
 
 private[reqtypes] object ReqTypeList {
 

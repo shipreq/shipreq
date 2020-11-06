@@ -1,9 +1,10 @@
 package shipreq.webapp.client.project.app.pages.config.fields
 
 import shipreq.base.util.{Enabled, PotentialChange}
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test._
+import shipreq.webapp.member.test.project.SampleProject
 import sourcecode.Line
 import utest._
 
@@ -37,7 +38,7 @@ object DerivativeTagRuleEditorTest extends TestSuite {
       ------------------------------------------------------------------------------------------------------------------
    */
   private object Data1 extends SampleProject.Values {
-    import SampleProject.projectConfig
+    import shipreq.webapp.member.test.project.SampleProject.projectConfig
 
     val dt = DerivativeTags(Enabled, Map(
       TagPair(wip, defer) -> prod, // in-scope

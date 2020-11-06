@@ -8,8 +8,8 @@ import shipreq.webapp.client.project.app.Style.{deletionRestorationForms => *}
 import shipreq.webapp.client.project.feature.Selection
 import shipreq.webapp.client.project.feature.deletion.DeletionRestorationLogic.{ActionableReqs, ReqRow}
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, Widgets}
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.PlainText
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.PlainText
 
 private[deletion] object SharedUI {
 

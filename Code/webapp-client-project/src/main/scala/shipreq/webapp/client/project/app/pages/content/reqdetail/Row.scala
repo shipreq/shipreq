@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.app.pages.content.reqdetail
 import japgolly.scalajs.react.{Key, Reusability}
 import shipreq.webapp.base.util.ReactKeyGen
 import shipreq.webapp.client.project.util.DataReusability._
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 sealed abstract class Row(_key: Key) {
   /** A value that can be passed to React to quickly identify columns. */

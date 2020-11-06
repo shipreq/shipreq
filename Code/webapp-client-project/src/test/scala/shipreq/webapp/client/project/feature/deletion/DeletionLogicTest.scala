@@ -6,16 +6,16 @@ import nyaya.test.PropTest._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.{IMap, Util}
 import shipreq.webapp.client.project.feature.deletion.DeletionRestorationLogic.{Data, GroupRow}
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.test.UnsafeTypes._
+import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.test._
+import shipreq.webapp.member.test.project.SampleProject
+import shipreq.webapp.member.test.project.UnsafeTypes._
 import utest._
 
 object DeletionLogicTestData {
-  import ProjectDsl._
-  import ProjectDslInternals.Composite
-  import SampleProject.Values._
+  import shipreq.webapp.member.test.project.ProjectDsl._
+  import shipreq.webapp.member.test.project.ProjectDslInternals.Composite
+  import shipreq.webapp.member.test.project.SampleProject.Values._
 
   private var _selectedReqIds = Set.empty[ReqId]
   private var _selectedRCGs = Set.empty[ReqCodeGroupId]

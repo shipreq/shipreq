@@ -14,15 +14,15 @@ import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAccepto
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets._
 import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor.hardcodedLive
-import shipreq.webapp.member.data
-import shipreq.webapp.member.data.derivation.NaTags
-import shipreq.webapp.member.data.{Optional => _, _}
 import shipreq.webapp.member.feature.AutoCompleteFeature._
 import shipreq.webapp.member.feature.{EditControlsFeature, PreviewFeature}
 import shipreq.webapp.member.jsfacade.{ScrollIntoViewIfNeeded, TextFieldEdit}
-import shipreq.webapp.member.text.Atom.TypeGroup
-import shipreq.webapp.member.text.Text.Equality._
-import shipreq.webapp.member.text._
+import shipreq.webapp.member.project.data
+import shipreq.webapp.member.project.data.derivation.NaTags
+import shipreq.webapp.member.project.data.{Optional => _, _}
+import shipreq.webapp.member.project.text.Atom.TypeGroup
+import shipreq.webapp.member.project.text.Text.Equality._
+import shipreq.webapp.member.project.text._
 import shipreq.webapp.member.ui.OptionalFullscreen
 
 sealed abstract class RichTextEditor[TextType <: Text.Generic](name: String, final val text: TextType) {

@@ -1,11 +1,11 @@
 package shipreq.webapp.client.ww
 
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.derivation._
-import shipreq.webapp.member.data.savedview.ImpGraphConfig
-import shipreq.webapp.member.data.savedview.ImpGraphConfig.GraphDir
-import shipreq.webapp.member.text.PlainText
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.derivation._
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.GraphDir
+import shipreq.webapp.member.project.text.PlainText
 
 final class ProjectImpGraph(project   : Project,
                             plainText : PlainText.ForProject.NoCtx,

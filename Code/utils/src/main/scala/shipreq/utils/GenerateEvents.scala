@@ -6,8 +6,8 @@ import japgolly.microlibs.utils.FileUtils
 import java.time.Instant
 import shipreq.utils.UtilUtils._
 import shipreq.webapp.base.test.RandomDataSettings
-import shipreq.webapp.member.event.{RandomEventStream, RandomEventStreamConfig}
 import shipreq.webapp.member.protocol.json.v1.Latest._
+import shipreq.webapp.member.test.project.{RandomEventStream, RandomEventStreamConfig}
 
 object GenerateEvents {
 

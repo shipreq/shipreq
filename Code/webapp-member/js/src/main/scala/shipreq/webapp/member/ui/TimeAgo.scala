@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.webapp.member.jsfacade.MomentJs
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.util.DataReusability._
 
 object TimeAgo {
 

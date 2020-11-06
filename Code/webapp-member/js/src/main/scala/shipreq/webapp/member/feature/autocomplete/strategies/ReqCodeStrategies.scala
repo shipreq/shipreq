@@ -8,10 +8,10 @@ import scala.collection.View
 import scala.scalajs.js.{UndefOr, undefined}
 import scalacss.ScalaCssReact._
 import shipreq.base.util.MTrie.Ops
-import shipreq.webapp.member.data.ReqCode.{ActiveGroup, ActiveReq, Node, Trie, Value => Path}
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.Grammar.{reqCode => G}
-import shipreq.webapp.member.text.PlainText
+import shipreq.webapp.member.project.data.ReqCode.{ActiveGroup, ActiveReq, Node, Trie, Value => Path}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.Grammar.{reqCode => G}
+import shipreq.webapp.member.project.text.PlainText
 import shipreq.webapp.member.ui.BaseStyles.{autoComplete => *}
 
 private[strategies] object ReqCodeStrategies {

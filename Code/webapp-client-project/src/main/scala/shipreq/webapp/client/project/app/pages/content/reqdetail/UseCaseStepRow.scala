@@ -11,7 +11,7 @@ import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
 import shipreq.webapp.client.project.app.TestMarker
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.protocol.websocket.UpdateContentCmd
 
 object UseCaseStepRow {

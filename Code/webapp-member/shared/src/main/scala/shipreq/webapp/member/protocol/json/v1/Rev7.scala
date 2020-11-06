@@ -4,10 +4,10 @@ import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.adt_macros.AdtMacros
 import shipreq.base.util.JsonUtil._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.RetiredGenericData._
-import shipreq.webapp.member.event._
-import shipreq.webapp.member.filter.Filter
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.RetiredGenericData._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.filter.Filter
 import shipreq.webapp.member.protocol.json.JsonCodec
 
 /** v1.7
@@ -43,7 +43,7 @@ object Rev7 {
   }
 
   implicit lazy val codecValidFilter: JsonCodec[Filter.Valid] = {
-    import shipreq.webapp.member.filter.{IntensionalReqSet, FilterAst}
+    import shipreq.webapp.member.project.filter.{IntensionalReqSet, FilterAst}
     import Filter._
     import Filter.Implicits._
     import Filter.Valid.FieldCriteriaF
@@ -339,7 +339,7 @@ object Rev7 {
   import Rev1.SavedViewCodecs._
 
   object SavedViewCodecs {
-    import shipreq.webapp.member.data.savedview._
+    import shipreq.webapp.member.project.data.savedview._
 
     implicit val decoderView: Decoder[View] =
       Decoder.instance { c =>

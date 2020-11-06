@@ -7,8 +7,8 @@ import shipreq.base.db.DoobieHelpers._
 import shipreq.base.test.db._
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.{ProjectId, UserId, Username}
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.event.ActiveEvent
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.ActiveEvent
 import shipreq.webapp.server.db.DbInterpreter
 import shipreq.webapp.server.interpreter.SecurityInterpreter
 import shipreq.webapp.server.logic.algebra.DB

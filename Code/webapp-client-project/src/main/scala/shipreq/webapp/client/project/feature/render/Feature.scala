@@ -5,9 +5,9 @@ import scala.reflect.ClassTag
 import shipreq.base.util.{IfApplicable, NotApplicable}
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.ViewReqCache
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.ProjectText
-import shipreq.webapp.member.text.ProjectText.{Context => PCtx}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.ProjectText
+import shipreq.webapp.member.project.text.ProjectText.{Context => PCtx}
 
 object Feature {
 

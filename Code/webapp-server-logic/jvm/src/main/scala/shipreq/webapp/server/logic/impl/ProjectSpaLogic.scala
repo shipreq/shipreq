@@ -13,9 +13,9 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.EventOrd.Implicits._
-import shipreq.webapp.member.event.{ApplyEvent, EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.EventOrd.Implicits._
+import shipreq.webapp.member.project.event.{ApplyEvent, EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.WsReqRes.EventResult
 import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}

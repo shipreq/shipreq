@@ -10,8 +10,8 @@ import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.validation.ValidationUX
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.ReqTypeRulesEditor
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.CustomTextFieldGD
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.CustomTextFieldGD
 import shipreq.webapp.member.protocol.websocket.UpdateConfigCmd
 
 object TextFieldEditor {

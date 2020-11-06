@@ -13,11 +13,11 @@ import shipreq.webapp.client.project.feature.Selection
 import shipreq.webapp.client.project.widgets.ProjectWidgets
 import shipreq.webapp.client.project.widgets.editors_with_controls.RichTextEditor
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.derivation.NaTags
 import shipreq.webapp.member.feature.{EditControlsFeature, PreviewFeature}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.derivation.NaTags
+import shipreq.webapp.member.project.text.TextSearch
 import shipreq.webapp.member.protocol.websocket.UpdateContentCmd.DeleteReqs
-import shipreq.webapp.member.text.TextSearch
 
 object DeletionForm {
   import DeletionRestorationLogic.Data

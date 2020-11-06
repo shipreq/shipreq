@@ -5,7 +5,7 @@ import io.circe.parser.parse
 import japgolly.microlibs.testutil.TestUtilImplicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Ajax
-import shipreq.webapp.member.event.Event
+import shipreq.webapp.member.project.event.Event
 
 final case class SampleData(meta: SampleDataMeta, events: Vector[Event]) extends AbstractSampleData(meta, events) {
   override val hashCode = meta.hashCode

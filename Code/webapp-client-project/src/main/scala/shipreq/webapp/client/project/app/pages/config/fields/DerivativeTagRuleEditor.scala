@@ -12,9 +12,9 @@ import shipreq.base.util._
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.util.DataReusability._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.derivation.TagGroupTags
 import shipreq.webapp.member.feature.AutoCompleteFeature._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.derivation.TagGroupTags
 import shipreq.webapp.member.ui.AutosizeTextarea
 
 private[fields] object DerivativeTagRuleEditor {

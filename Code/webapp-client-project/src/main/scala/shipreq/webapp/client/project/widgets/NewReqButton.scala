@@ -5,7 +5,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import shipreq.base.util._
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 /** A button to create a new req.
   *

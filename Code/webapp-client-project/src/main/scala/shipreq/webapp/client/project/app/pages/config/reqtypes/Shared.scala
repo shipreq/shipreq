@@ -7,7 +7,7 @@ import scalacss.ScalaCssReact._
 import shipreq.webapp.base.ui.semantic.{Colour, Icon}
 import shipreq.webapp.client.project.app.Style.{reqTypeConfig => *}
 import shipreq.webapp.member.UiText.FieldNames
-import shipreq.webapp.member.data.ReqType
+import shipreq.webapp.member.project.data.ReqType
 
 private[reqtypes] object Shared {
 

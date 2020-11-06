@@ -4,7 +4,7 @@ import boopickle.DefaultBasic._
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.protocol.entrypoint.ClientSideProc
-import shipreq.webapp.member.data.ProjectMetaData
+import shipreq.webapp.member.project.data.ProjectMetaData
 
 object HomeSpaEntryPoint {
 

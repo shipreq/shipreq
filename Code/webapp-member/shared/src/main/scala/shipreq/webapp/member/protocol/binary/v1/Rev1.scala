@@ -1,9 +1,9 @@
 package shipreq.webapp.member.protocol.binary.v1
 
-import shipreq.webapp.member.data.DataImplicits._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
-import shipreq.webapp.member.sort.SortMethod
+import shipreq.webapp.member.project.data.DataImplicits._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.sort.SortMethod
 
 /** v1.1 */
 object Rev1 {
@@ -16,7 +16,7 @@ object Rev1 {
   // ===================================================================================================================
 
   object SavedViewPicklers {
-    import shipreq.webapp.member.data.savedview._
+    import shipreq.webapp.member.project.data.savedview._
 
     implicit val picklerColumn: Pickler[Column] =
       new Pickler[Column] {

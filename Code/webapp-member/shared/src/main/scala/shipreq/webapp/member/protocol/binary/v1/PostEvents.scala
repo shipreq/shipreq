@@ -1,7 +1,7 @@
 package shipreq.webapp.member.protocol.binary.v1
 
 import boopickle.DefaultBasic._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.event._
 
 object PostEvents {
 

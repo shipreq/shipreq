@@ -6,10 +6,10 @@ import scala.collection.immutable.SortedSet
 import shipreq.base.util._
 import shipreq.webapp.client.project.feature.{EditorFeature, RenderFeature}
 import shipreq.webapp.client.project.widgets.ViewReq._
-import shipreq.webapp.member.data.FieldReqTypeRules.Resolution
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.ProjectText.SetRenderStyle
-import shipreq.webapp.member.text.{PlainText, ProjectText}
+import shipreq.webapp.member.project.data.FieldReqTypeRules.Resolution
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.ProjectText.SetRenderStyle
+import shipreq.webapp.member.project.text.{PlainText, ProjectText}
 
 /**
   * Easy means to view/render a requirement.

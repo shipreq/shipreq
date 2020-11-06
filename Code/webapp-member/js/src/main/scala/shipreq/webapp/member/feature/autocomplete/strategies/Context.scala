@@ -1,9 +1,9 @@
 package shipreq.webapp.member.feature.autocomplete.strategies
 
 import japgolly.microlibs.utils.{Utils => Util}
-import shipreq.webapp.member.data.{Contextualise, Plain}
 import shipreq.webapp.member.jsfacade.TextComplete.Strategy
-import shipreq.webapp.member.text.{Grammar, GrammarSpec}
+import shipreq.webapp.member.project.data.{Contextualise, Plain}
+import shipreq.webapp.member.project.text.{Grammar, GrammarSpec}
 
 private[strategies] final class Context(val prefixRegex : String,
                                         val suffixRegex : String,

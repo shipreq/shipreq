@@ -1,4 +1,4 @@
-package shipreq.webapp.member.text
+package shipreq.webapp.member.project.text
 
 import japgolly.microlibs.macro_utils.WhiteboxMacroUtils
 import scala.reflect.macros.whitebox.Context
@@ -15,9 +15,9 @@ object TextMacros {
 class TextMacroImpls(val c: Context) extends WhiteboxMacroUtils {
   import c.universe._
 
-  val atomFQN            = "shipreq.webapp.member.text.Atom.Base.Atom"
-  val headingsFQN        = "shipreq.webapp.member.text.Atom.Headings"
-  val plainTextMarkupFQN = "shipreq.webapp.member.text.Atom.PlainTextMarkup"
+  val atomFQN            = "shipreq.webapp.member.project.text.Atom.Base.Atom"
+  val headingsFQN        = "shipreq.webapp.member.project.text.Atom.Headings"
+  val plainTextMarkupFQN = "shipreq.webapp.member.project.text.Atom.PlainTextMarkup"
 
   val headingNo = "^heading(\\d)$".r
 

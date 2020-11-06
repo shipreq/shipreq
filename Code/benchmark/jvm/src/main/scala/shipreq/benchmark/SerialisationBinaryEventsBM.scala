@@ -3,7 +3,7 @@ package shipreq.benchmark
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import shipreq.base.test.BaseTestUtil._
-import shipreq.webapp.member.event.Event
+import shipreq.webapp.member.project.event.Event
 import shipreq.webapp.sampledata.SampleData
 
 object SerialisationBinaryEventsBM {

@@ -7,8 +7,8 @@ import scala.scalajs.js.JSON
 import shipreq.base.util.{Backwards, Direction, ErrorMsg, Forwards}
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data.Svg
-import shipreq.webapp.member.data.savedview.ImpGraphConfig.GraphDir
+import shipreq.webapp.member.project.data.Svg
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.GraphDir
 
 final class GraphViz(raw: GraphViz.RawFn) {
   import GraphViz._

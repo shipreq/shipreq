@@ -17,11 +17,11 @@ import shipreq.webapp.client.project.feature.create.Feature.PreviewId
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.{CloseButton, ProjectWidgets}
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.data.{CustomReqType, ExternalPubid, Project, ReqType, StaticReqType}
 import shipreq.webapp.member.feature.{EditControlsFeature, PreviewFeature}
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.data.{CustomReqType, ExternalPubid, Project, ReqType, StaticReqType}
+import shipreq.webapp.member.project.text.{PlainText, Text, TextSearch}
 import shipreq.webapp.member.protocol.websocket.CreateContentCmd
-import shipreq.webapp.member.text.{PlainText, Text, TextSearch}
 import shipreq.webapp.member.ui.Toast
 
 object NewForm {

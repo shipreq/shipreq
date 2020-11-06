@@ -5,10 +5,10 @@ import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import monocle.macros.Lenses
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.event.EventOrd.Implicits._
-import shipreq.webapp.member.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
-import shipreq.webapp.member.text.PlainText
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.EventOrd.Implicits._
+import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.text.PlainText
 
 final class WebWorkerState(logger: LoggerJs) {
   import WebWorkerState._

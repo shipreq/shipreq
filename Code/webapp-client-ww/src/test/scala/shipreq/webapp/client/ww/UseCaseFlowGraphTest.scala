@@ -1,12 +1,11 @@
 package shipreq.webapp.client.ww
 
 import shipreq.webapp.client.ww.GraphViz.DOT
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.Event._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.Event._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.text.ProjectText
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.test._
-import shipreq.webapp.member.text.ProjectText
 import utest._
 
 object UseCaseFlowGraphTest extends TestSuite {
@@ -17,7 +16,7 @@ object UseCaseFlowGraphTest extends TestSuite {
     // TODO Test Graphs.useCaseFlowGraph with more complicated flow
 
     "init" - {
-      import UnsafeTypes._
+      import shipreq.webapp.member.test.project.UnsafeTypes._
       val uc = UseCaseId(1)
       val project = applyEventsSuccessfully(Project.empty, UseCaseCreate(uc, 2, UseCaseGD.emptyValues))
       val actual = new UseCaseFlowGraph(uc, project, ProjectText.Context.Req(uc)).dot
@@ -40,7 +39,7 @@ object UseCaseFlowGraphTest extends TestSuite {
     }
 
     "sp6" - {
-      import SampleProject6._
+      import shipreq.webapp.member.test.project.SampleProject6._
       import Values._
       val actual = new UseCaseFlowGraph(uc1, project, ProjectText.Context.Req(uc1)).dot
       val expect = DOT(

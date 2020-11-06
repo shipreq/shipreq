@@ -7,8 +7,8 @@ import shipreq.webapp.base.CssSettings._
 import shipreq.webapp.base.feature.DragToReorderFeature.{Status => DragStatus}
 import shipreq.webapp.base.ui.semantic.UsesSemanticUiManually
 import shipreq.webapp.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.Grammar
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.Grammar
 import shipreq.webapp.member.ui.BaseStyles
 
 object Style extends StyleSheet.Inline {

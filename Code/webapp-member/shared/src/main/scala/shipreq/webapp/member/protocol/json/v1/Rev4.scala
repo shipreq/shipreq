@@ -1,6 +1,6 @@
 package shipreq.webapp.member.protocol.json.v1
 
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.protocol.json.JsonCodec
 
 /** v1.4 */

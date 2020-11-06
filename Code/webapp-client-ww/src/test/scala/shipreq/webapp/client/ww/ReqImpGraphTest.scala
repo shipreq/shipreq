@@ -1,9 +1,8 @@
 package shipreq.webapp.client.ww
 
 import shipreq.webapp.client.ww.GraphViz.DOT
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview.ImpGraphConfig.Colours
-import shipreq.webapp.member.test._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.Colours
 import utest._
 
 object ReqImpGraphTest extends TestSuite {
@@ -18,7 +17,7 @@ object ReqImpGraphTest extends TestSuite {
   override def tests = Tests {
 
     "basic" - {
-      import SampleImplicationGraph._
+      import shipreq.webapp.member.test.project.SampleImplicationGraph._
       val actual = render(mf3, HideDead, project)
       val expect = DOT(
         """
@@ -68,7 +67,7 @@ object ReqImpGraphTest extends TestSuite {
     }
 
     "hideDead" - {
-      import SampleImplicationGraph._
+      import shipreq.webapp.member.test.project.SampleImplicationGraph._
       val actual = render(mf3, HideDead, SIG_dead_FR7_MF4)
       val expect = DOT(
         """
@@ -114,7 +113,7 @@ object ReqImpGraphTest extends TestSuite {
     }
 
     "showDead" - {
-      import SampleImplicationGraph._
+      import shipreq.webapp.member.test.project.SampleImplicationGraph._
       val actual = render(mf3, ShowDead, SIG_dead_FR7_MF4)
       val expect = DOT(
         """
@@ -170,7 +169,7 @@ object ReqImpGraphTest extends TestSuite {
         // mf1 → [fr1] ↘
         //               fr2 → fr3
         //         mf2 ↗
-        import SampleImplicationGraph._
+        import shipreq.webapp.member.test.project.SampleImplicationGraph._
         val actual = render(fr1, HideDead, project)
         val expect = DOT(
           s"""
@@ -216,7 +215,7 @@ object ReqImpGraphTest extends TestSuite {
         // [FB4] → FB3 → FR1
         //          ↑     ↑
         //         MF4   MF1
-        import SampleImplicationGraph2._
+        import shipreq.webapp.member.test.project.SampleImplicationGraph2._
         val actual = render(fb4, HideDead, project)
         val expect = DOT(
           s"""
@@ -264,7 +263,7 @@ object ReqImpGraphTest extends TestSuite {
         //            UC3
         //           ↙   ↘
         // [FB4] → FB3 → FR1
-        import SampleImplicationGraph3._
+        import shipreq.webapp.member.test.project.SampleImplicationGraph3._
         val actual = render(fb4, HideDead, project)
         val expect = DOT(
           s"""
@@ -311,7 +310,7 @@ object ReqImpGraphTest extends TestSuite {
     }
 
     "colourByReqType" - {
-      import SampleImplicationGraph._
+      import shipreq.webapp.member.test.project.SampleImplicationGraph._
       val actual = render(mf3, HideDead, project, Some(Colours.ByReqType))
       val expect = DOT(
         """
@@ -361,8 +360,8 @@ object ReqImpGraphTest extends TestSuite {
     }
 
     "colourByReqType" - {
-      import SampleProject8.Values._
-      import SampleProject8._
+      import shipreq.webapp.member.test.project.SampleProject8.Values._
+      import shipreq.webapp.member.test.project.SampleProject8._
       val actual = render(mfs(1), HideDead, project, Some(Colours.ByTag(priTG)))
       val expect = DOT(
         """

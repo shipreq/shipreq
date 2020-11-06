@@ -15,8 +15,8 @@ import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, ReqTypeRulesEditor, ViewTags}
 import shipreq.webapp.member.UiText.FieldNames
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.CustomTagFieldGD
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.CustomTagFieldGD
 import shipreq.webapp.member.protocol.websocket.UpdateConfigCmd
 
 object TagFieldEditor {

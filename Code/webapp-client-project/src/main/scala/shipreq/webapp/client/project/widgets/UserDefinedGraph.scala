@@ -7,7 +7,7 @@ import shipreq.base.util.{ErrorMsg, Util}
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.widgets.GraphComponent._
 import shipreq.webapp.client.ww.api.WebWorkerCmd
-import shipreq.webapp.member.data.Svg
+import shipreq.webapp.member.project.data.Svg
 
 object UserDefinedGraph {
 

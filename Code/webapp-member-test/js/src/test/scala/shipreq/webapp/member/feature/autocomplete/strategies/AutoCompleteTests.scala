@@ -1,12 +1,12 @@
 package shipreq.webapp.member.feature.autocomplete.strategies
 
-import shipreq.webapp.member.data.derivation.NaTags
-import shipreq.webapp.member.data.{Contextualise, Plain, _}
 import shipreq.webapp.member.feature.AutoCompleteFeature._
 import shipreq.webapp.member.feature.autocomplete.strategies.AutoCompleteTestData._
 import shipreq.webapp.member.feature.autocomplete.strategies._
-import shipreq.webapp.member.test.SampleProject3._
-import shipreq.webapp.member.text.Text
+import shipreq.webapp.member.project.data.derivation.NaTags
+import shipreq.webapp.member.project.data.{Contextualise, Plain, _}
+import shipreq.webapp.member.project.text.Text
+import shipreq.webapp.member.test.project.SampleProject3._
 
 object Issue extends AutoCompleteTestModules.Issue {
   override implicit val strategies =

@@ -8,10 +8,10 @@ import shipreq.base.util.Valid
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.widgets.FilterEditor
-import shipreq.webapp.member.data.savedview.View
-import shipreq.webapp.member.data.{FilterDead, Project, ShowDead}
-import shipreq.webapp.member.filter.Filter
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.data.savedview.View
+import shipreq.webapp.member.project.data.{FilterDead, Project, ShowDead}
+import shipreq.webapp.member.project.filter.Filter
+import shipreq.webapp.member.project.util.DataReusability._
 
 @Lenses
 final case class State(view           : ViewLogic.State,

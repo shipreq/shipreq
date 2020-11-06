@@ -12,12 +12,12 @@ import shipreq.webapp.base.util.KeyHandlers
 import shipreq.webapp.base.validation.lib.Simple._
 import shipreq.webapp.base.validation.lib._
 import shipreq.webapp.client.project.util.DataReusability._
-import shipreq.webapp.member.data.DataImplicits._
-import shipreq.webapp.member.data.{Plain, _}
 import shipreq.webapp.member.feature.AutoCompleteFeature.AutoComplete.Project.{ReqItem, ReqItems}
 import shipreq.webapp.member.feature.AutoCompleteFeature._
 import shipreq.webapp.member.feature.EditControlsFeature
-import shipreq.webapp.member.text.{Grammar, PlainText, SingleLine, TextSearch}
+import shipreq.webapp.member.project.data.DataImplicits._
+import shipreq.webapp.member.project.data.{Plain, _}
+import shipreq.webapp.member.project.text.{Grammar, PlainText, SingleLine, TextSearch}
 
 object ImplicationEditor {
 

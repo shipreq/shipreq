@@ -7,7 +7,7 @@ import org.scalajs.dom.ext.KeyCode
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Allow, Permission}
 import shipreq.webapp.client.project.app.Style
-import shipreq.webapp.member.data.ExternalPubid
+import shipreq.webapp.member.project.data.ExternalPubid
 
 /** The prompt under the Req Lookup card in which the user can enter a pubid to lookup.
   */

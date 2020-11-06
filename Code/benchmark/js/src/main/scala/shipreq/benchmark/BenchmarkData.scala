@@ -5,8 +5,8 @@ import japgolly.scalajs.benchmark.gui._
 import japgolly.scalajs.react._
 import java.nio.ByteBuffer
 import scala.collection.immutable.BitSet
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.event.VerifiedEvent
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.VerifiedEvent
 import shipreq.webapp.sampledata.SampleData
 
 final case class BenchmarkData(data: Vector[SampleData]) {

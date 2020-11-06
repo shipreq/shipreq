@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic.algebra
 
 import java.time.Duration
-import shipreq.webapp.member.event.Trust
+import shipreq.webapp.member.project.event.Trust
 
 trait MetricsAlgebra[F[_]] extends MetricsAlgebra.ForEvents[F] with MetricsAlgebra.ForRedis[F] {
 

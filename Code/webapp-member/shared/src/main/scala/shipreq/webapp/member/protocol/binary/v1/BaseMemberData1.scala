@@ -4,9 +4,9 @@ import boopickle.DefaultBasic._
 import nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.issue.IssueCategory
-import shipreq.webapp.member.sort.SortMethod
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.issue.IssueCategory
+import shipreq.webapp.member.project.sort.SortMethod
 
 /** This is the minimum set of codecs required for event codecs.
   *
@@ -27,7 +27,7 @@ object BaseMemberData1 {
   // (implicit lazy vals, "pickler" prefix)
 
   object SavedViewPicklers {
-    import shipreq.webapp.member.data.savedview._
+    import shipreq.webapp.member.project.data.savedview._
 
     implicit val picklerColumnImplications: Pickler[Column.Implications] =
       transformPickler(Column.Implications.apply)(_.dir)

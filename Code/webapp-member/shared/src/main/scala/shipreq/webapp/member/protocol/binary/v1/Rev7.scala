@@ -3,10 +3,10 @@ package shipreq.webapp.member.protocol.binary.v1
 import java.time.Instant
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.util.On
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview.{ImpGraphConfig, SavedView}
-import shipreq.webapp.member.event._
-import shipreq.webapp.member.filter.Filter
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview.{ImpGraphConfig, SavedView}
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.filter.Filter
 
 /** v1.7
   *
@@ -27,7 +27,7 @@ object Rev7 {
   import PostEvents._
 
   implicit lazy val pickleValidFilter: Pickler[Filter.Valid] = {
-    import shipreq.webapp.member.filter.{IntensionalReqSet, FilterAst}
+    import shipreq.webapp.member.project.filter.{IntensionalReqSet, FilterAst}
     import Filter._
     import Filter.Implicits._
     import Filter.Valid.FieldCriteriaF
@@ -438,7 +438,7 @@ object Rev7 {
   import Rev1.SavedViewPicklers._
 
   object SavedViewPicklers {
-    import shipreq.webapp.member.data.savedview._
+    import shipreq.webapp.member.project.data.savedview._
 
     implicit val picklerView: Pickler[View] =
       new Pickler[View] {

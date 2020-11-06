@@ -1,6 +1,6 @@
 package shipreq.webapp.member.protocol.binary.v1
 
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 /** v1.4 */
 object Rev4 {

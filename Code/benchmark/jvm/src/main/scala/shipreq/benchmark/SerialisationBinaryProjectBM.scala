@@ -4,7 +4,7 @@ import boopickle.{PickleImpl, UnpickleImpl}
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import shipreq.webapp.member.data.Project
+import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.protocol.binary.v1.Latest.picklerProject
 import shipreq.webapp.sampledata.SampleData
 

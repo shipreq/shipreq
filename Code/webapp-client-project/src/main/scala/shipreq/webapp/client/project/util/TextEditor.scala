@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.util
 
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
-import shipreq.webapp.member.text._
+import shipreq.webapp.member.project.text._
 
 sealed abstract class TextEditor {
   type Dom <: html.Element

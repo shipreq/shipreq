@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.feature.deletion
 
 import shipreq.base.util.IsoBool
-import shipreq.webapp.member.data.{Dead, Live}
+import shipreq.webapp.member.project.data.{Dead, Live}
 
 object DeleteOrRestore extends IsoBool.Object[DeleteOrRestore] {
   override def positive = Delete

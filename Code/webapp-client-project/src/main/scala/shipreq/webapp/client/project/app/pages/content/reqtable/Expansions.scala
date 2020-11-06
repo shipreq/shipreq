@@ -5,8 +5,8 @@ import scalaz.Monoid
 import scalaz.std.map._
 import scalaz.syntax.semigroup._
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.util.ReqCodeTreeItem
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.util.ReqCodeTreeItem
 
 /**
  * Replacement values for a requirement at a specific row.

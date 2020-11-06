@@ -9,15 +9,15 @@ import scalaz.std.AllInstances._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.client.project.app.pages.content.reqtable.LogicTestUtil._
 import shipreq.webapp.client.project.test.ClientTestSettings._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.data.savedview.{Column => C, SortCriterion => SC}
-import shipreq.webapp.member.filter.Filter
-import shipreq.webapp.member.sort.SortMethod._
-import shipreq.webapp.member.sort.Sorter.{BlankPlacement, BlanksFirst, BlanksLast, Dir, FlipDir, KeepDir}
-import shipreq.webapp.member.test.RandomData
-import shipreq.webapp.member.text.Text.Equality._
-import shipreq.webapp.member.text.{Atom, PlainText, TextSearch}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.data.savedview.{Column => C, SortCriterion => SC}
+import shipreq.webapp.member.project.filter.Filter
+import shipreq.webapp.member.project.sort.SortMethod._
+import shipreq.webapp.member.project.sort.Sorter.{BlankPlacement, BlanksFirst, BlanksLast, Dir, FlipDir, KeepDir}
+import shipreq.webapp.member.project.text.Text.Equality._
+import shipreq.webapp.member.project.text.{Atom, PlainText, TextSearch}
+import shipreq.webapp.member.test.project.RandomData
 import utest._
 
 object LogicPropTest extends TestSuite {

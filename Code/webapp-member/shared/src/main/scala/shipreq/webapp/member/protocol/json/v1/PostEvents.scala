@@ -1,7 +1,7 @@
 package shipreq.webapp.member.protocol.json.v1
 
 import io.circe._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.event._
 
 object PostEvents {
 

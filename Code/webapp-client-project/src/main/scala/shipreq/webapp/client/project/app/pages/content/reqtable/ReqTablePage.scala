@@ -18,14 +18,14 @@ import shipreq.webapp.client.project.app.Style.reqtable.{page => *}
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.widgets.{FilterDeadButton, ProjectWidgets}
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview._
 import shipreq.webapp.member.feature.PreviewFeature
-import shipreq.webapp.member.filter.Filter
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.filter.Filter
+import shipreq.webapp.member.project.text.{PlainText, TextSearch}
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.protocol.websocket.UpdateContentCmd
-import shipreq.webapp.member.text.{PlainText, TextSearch}
 import shipreq.webapp.member.ui.Toast
-import shipreq.webapp.member.util.DataReusability._
 
 object ReqTablePage {
 

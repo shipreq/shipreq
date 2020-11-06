@@ -6,14 +6,14 @@ import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.test.BinaryTestUtil._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.EventEquality._
-import shipreq.webapp.member.event._
-import shipreq.webapp.member.sort.SortMethod._
-import shipreq.webapp.member.test.UnsafeTypes._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.sort.SortMethod._
+import shipreq.webapp.member.project.text.Atom.DisplayReqRef
+import shipreq.webapp.member.project.text.Text
 import shipreq.webapp.member.test.WebappTestUtil.verifiedEventsFromJson
-import shipreq.webapp.member.text.Atom.DisplayReqRef
-import shipreq.webapp.member.text.Text
+import shipreq.webapp.member.test.project.EventEquality._
+import shipreq.webapp.member.test.project.UnsafeTypes._
 import sourcecode.Line
 import utest._
 
@@ -355,7 +355,7 @@ object ProjectSpaProtocolsTest extends TestSuite {
     // =================================================================================================================
     "UpdateSavedViews" - {
       import SavedViewCmd._
-      import shipreq.webapp.member.data.savedview._
+      import shipreq.webapp.member.project.data.savedview._
       import SavedView._
       import SavedViewGD.{nev, ValueForName}
 

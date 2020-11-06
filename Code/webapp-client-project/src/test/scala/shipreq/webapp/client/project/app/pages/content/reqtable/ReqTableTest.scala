@@ -8,13 +8,13 @@ import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.test._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.event.{Event, GenericReqGD}
-import shipreq.webapp.member.filter.Filter
-import shipreq.webapp.member.test.SampleProject.Values._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.event.{Event, GenericReqGD}
+import shipreq.webapp.member.project.filter.Filter
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.test.{RandomData, _}
+import shipreq.webapp.member.test.project.SampleProject.Values._
+import shipreq.webapp.member.test.project.{RandomData, SampleImplicationGraph, SampleProject, SampleProject3, SampleProject4, SampleProject7}
 import utest._
 import utest.framework.TestPath
 
@@ -37,8 +37,8 @@ object ReqTableTest extends TestSuite {
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  import ProjectDsl._
-  import UnsafeTypes._
+  import shipreq.webapp.member.test.project.ProjectDsl._
+  import shipreq.webapp.member.test.project.UnsafeTypes._
 
   def testFilterTotal = Plan.action(
     sortByPubid
@@ -484,8 +484,8 @@ object ReqTableTest extends TestSuite {
   }
 
   def testFieldRulesAndSorting()(implicit path: TestPath) = {
-    import SampleProject7.Values._
-    import UnsafeTypes._
+    import shipreq.webapp.member.test.project.SampleProject7.Values._
+    import shipreq.webapp.member.test.project.UnsafeTypes._
 
     val project = applyEventsSuccessfully(
       SampleProject7.project,
@@ -508,8 +508,8 @@ object ReqTableTest extends TestSuite {
   }
 
   def testFieldRulesAndFilter()(implicit path: TestPath) = {
-    import SampleProject7.Values._
-    import UnsafeTypes._
+    import shipreq.webapp.member.test.project.SampleProject7.Values._
+    import shipreq.webapp.member.test.project.UnsafeTypes._
 
     val project = applyEventsSuccessfully(
       SampleProject7.project,

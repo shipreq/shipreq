@@ -7,7 +7,7 @@ import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.{ProjectWidgets, ViewTags}
 import shipreq.webapp.member.UiText.EnglishIntExt
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 /** This isn't really an editor; it's read/only! But it's what appears in place of the editor. */
 object StaticFieldEditor {

@@ -1,8 +1,8 @@
 package shipreq.webapp.member.protocol.websocket
 
-import shipreq.webapp.member.data.ManualIssueId
-import shipreq.webapp.member.text.Text
-import shipreq.webapp.member.text.Text.Equality._
+import shipreq.webapp.member.project.data.ManualIssueId
+import shipreq.webapp.member.project.text.Text
+import shipreq.webapp.member.project.text.Text.Equality._
 
 sealed trait ManualIssueCmd
 

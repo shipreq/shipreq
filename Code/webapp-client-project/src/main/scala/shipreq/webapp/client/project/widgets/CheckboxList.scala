@@ -7,7 +7,7 @@ import scalaz.Equal
 import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.widgets.CheckboxList._
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.util.DataReusability._
 
 object CheckboxList {
   final case class RenderItem(checkbox: VdomTagOf[html.Input], label: String)

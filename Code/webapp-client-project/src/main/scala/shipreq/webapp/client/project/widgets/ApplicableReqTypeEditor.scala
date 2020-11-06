@@ -12,9 +12,9 @@ import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.validation.ValidationUX
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data._
 import shipreq.webapp.member.feature.AutoCompleteFeature._
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.util.DataReusability._
 
 @UsesSemanticUiManually
 object ApplicableReqTypeEditor {

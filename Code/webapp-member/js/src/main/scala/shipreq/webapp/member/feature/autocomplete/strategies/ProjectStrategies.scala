@@ -1,9 +1,9 @@
 package shipreq.webapp.member.feature.autocomplete.strategies
 
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.derivation._
 import shipreq.webapp.member.jsfacade.TextComplete.Strategy
-import shipreq.webapp.member.text.{Atom, PlainText, Text, TextSearch}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.derivation._
+import shipreq.webapp.member.project.text.{Atom, PlainText, Text, TextSearch}
 
 object ProjectStrategies {
   import Atom.TypeGroup

@@ -25,13 +25,13 @@ import shipreq.webapp.client.project.feature.{Usage, _}
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets._
 import shipreq.webapp.client.ww.api.WebWorkerCmd
-import shipreq.webapp.member.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId}
-import shipreq.webapp.member.event.VerifiedEvent
 import shipreq.webapp.member.feature.PreviewFeature
-import shipreq.webapp.member.filter.Filter
+import shipreq.webapp.member.project.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId}
+import shipreq.webapp.member.project.event.VerifiedEvent
+import shipreq.webapp.member.project.filter.Filter
+import shipreq.webapp.member.project.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.member.protocol.websocket._
-import shipreq.webapp.member.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.member.ui.{OptionalFullscreen, ProjectItem, Toast}
 
 object LoadedRoot {

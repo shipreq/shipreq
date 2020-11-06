@@ -14,7 +14,7 @@ import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocolsJs}
 import shipreq.webapp.base.ui.semantic.{Breadcrumb, Colour}
 import shipreq.webapp.base.ui.widgets._
 import shipreq.webapp.base.util.CallbackHelpers._
-import shipreq.webapp.member.data.{DataValidators, ProjectMetaData}
+import shipreq.webapp.member.project.data.{DataValidators, ProjectMetaData}
 import shipreq.webapp.member.protocol.ajax.HomeSpaProtocols
 import shipreq.webapp.member.protocol.entrypoint.HomeSpaEntryPoint
 import shipreq.webapp.member.ui._

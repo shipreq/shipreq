@@ -2,14 +2,13 @@ package shipreq.webapp.member.protocol.json.v1
 
 import nyaya.gen.Gen
 import shipreq.base.test.JsonTestUtil._
-import shipreq.webapp.member.event.EventEquality._
-import shipreq.webapp.member.event.RandomEventStream
-import shipreq.webapp.member.filter.Filter.Implicits.univEqFilterValid
+import shipreq.webapp.member.project.filter.Filter.Implicits.univEqFilterValid
+import shipreq.webapp.member.project.text.Text.Equality._
+import shipreq.webapp.member.project.text.Text._
 import shipreq.webapp.member.protocol.json.JsonCodec.Implicits._
-import shipreq.webapp.member.test.RandomData.TextGenExt
-import shipreq.webapp.member.test.{RandomData => R}
-import shipreq.webapp.member.text.Text.Equality._
-import shipreq.webapp.member.text.Text._
+import shipreq.webapp.member.test.project.EventEquality._
+import shipreq.webapp.member.test.project.RandomData.TextGenExt
+import shipreq.webapp.member.test.project.{RandomData => R, RandomEventStream}
 import utest._
 
 object JsonProtocolTest extends TestSuite {

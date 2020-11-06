@@ -6,18 +6,18 @@ import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.config.Buttons
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test.PrepareEnv
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
-import shipreq.webapp.member.test.UnsafeTypes._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.test._
+import shipreq.webapp.member.test.project.UnsafeTypes._
+import shipreq.webapp.member.test.project.{SampleProject6, SampleProject7}
 import utest._
 import utest.framework.TestPath
 
 object FieldConfigTest extends TestSuite {
   import FieldConfigTestDsl._
   import Buttons.{displayFailure => displayButtonFailure}
-  import SampleProject7.Values._
+  import shipreq.webapp.member.test.project.SampleProject7.Values._
 
   PrepareEnv()
 

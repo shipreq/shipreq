@@ -11,11 +11,11 @@ import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.widgets.{EditorNavParent, NoFilterResults, ProjectWidgets}
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.issue.Issues
-import shipreq.webapp.member.sort.FusedSorters
-import shipreq.webapp.member.text.{PlainText, Text}
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.issue.Issues
+import shipreq.webapp.member.project.sort.FusedSorters
+import shipreq.webapp.member.project.text.{PlainText, Text}
+import shipreq.webapp.member.project.util.DataReusability._
 
 object Table {
 

@@ -1,12 +1,11 @@
 package shipreq.webapp.client.ww
 
 import shipreq.webapp.client.ww.GraphViz.DOT
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event.Event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.Event._
+import shipreq.webapp.member.project.text.Text
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.test._
-import shipreq.webapp.member.test.event.TestEvent
-import shipreq.webapp.member.text.Text
+import shipreq.webapp.member.test.project.{SampleImplicationGraph, TestEvent}
 import sourcecode.Line
 
 object GraphTestUtil {
@@ -44,7 +43,7 @@ object GraphTestUtil {
     applyEventsSuccessfully(SIG_dead_FR7, deleteReqs(SampleImplicationGraph.mf4))
 
   lazy val SIG_FRs_optional: Project = {
-    import SampleProject.Values._
+    import shipreq.webapp.member.test.project.SampleProject.Values._
     val e = TestEvent.customReqTypeUpdate(fr, implication = Optional)
     applyEventSuccessfully(SampleImplicationGraph.project, e)
   }

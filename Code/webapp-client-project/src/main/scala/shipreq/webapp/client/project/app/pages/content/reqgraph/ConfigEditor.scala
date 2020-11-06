@@ -9,10 +9,10 @@ import shipreq.webapp.base.ui.semantic.Icon
 import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}
 import shipreq.webapp.client.project.util.GraphColours
-import shipreq.webapp.member.data.savedview.ImpGraphConfig
-import shipreq.webapp.member.data.savedview.ImpGraphConfig.{Colours, GraphDir, LabelFormat}
-import shipreq.webapp.member.data.{FilterDead, ProjectConfig, SpecialBuiltInField, Tags}
-import shipreq.webapp.member.util.DataReusability._
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.{Colours, GraphDir, LabelFormat}
+import shipreq.webapp.member.project.data.{FilterDead, ProjectConfig, SpecialBuiltInField, Tags}
+import shipreq.webapp.member.project.util.DataReusability._
 
 private[reqgraph] object ConfigEditor {
 

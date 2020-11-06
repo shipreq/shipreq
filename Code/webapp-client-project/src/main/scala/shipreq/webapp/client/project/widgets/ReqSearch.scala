@@ -14,9 +14,9 @@ import shipreq.webapp.base.ui.semantic.{Icon, Menu, UsesSemanticUiManually}
 import shipreq.webapp.base.util.DomUtil.PatchHtmlElement
 import shipreq.webapp.client.project.app.Style.widgets.{reqSearch => *}
 import shipreq.webapp.client.project.util.DataReusability._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.filter._
-import shipreq.webapp.member.text.PlainText
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.filter._
+import shipreq.webapp.member.project.text.PlainText
 
 final class ReqSearch(SP: ReqSearch.StaticProps) {
   import ReqSearch._

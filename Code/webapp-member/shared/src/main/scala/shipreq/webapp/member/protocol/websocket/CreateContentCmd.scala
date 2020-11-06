@@ -1,8 +1,8 @@
 package shipreq.webapp.member.protocol.websocket
 
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.Text
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.Text
 
 /**
  * A command to create new content in a Project.

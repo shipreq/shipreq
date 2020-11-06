@@ -7,19 +7,18 @@ import scalaz.Equal
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.data.savedview.{Column => C, SortCriterion => SC}
-import shipreq.webapp.member.event.{CustomImpFieldGD, Event => E, GenericReqGD, UseCaseGD, UseCaseStepGD}
-import shipreq.webapp.member.filter.FilterAst.OrderOp
-import shipreq.webapp.member.filter.{Filter, FilterAst, IntensionalReqSet}
-import shipreq.webapp.member.issue.IssueCategory
-import shipreq.webapp.member.sort.SortMethod._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.data.savedview.{Column => C, SortCriterion => SC}
+import shipreq.webapp.member.project.event.{CustomImpFieldGD, Event => E, GenericReqGD, UseCaseGD, UseCaseStepGD}
+import shipreq.webapp.member.project.filter.FilterAst.OrderOp
+import shipreq.webapp.member.project.filter.{Filter, FilterAst, IntensionalReqSet}
+import shipreq.webapp.member.project.issue.IssueCategory
+import shipreq.webapp.member.project.sort.SortMethod._
+import shipreq.webapp.member.project.text.{PlainText, Text, TextSearch}
+import shipreq.webapp.member.project.util._
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.test._
-import shipreq.webapp.member.test.event.TestEvent
-import shipreq.webapp.member.text.{PlainText, Text, TextSearch}
-import shipreq.webapp.member.util._
+import shipreq.webapp.member.test.project.{SampleImplicationGraph, SampleProject, SampleProject3, SampleProject4, SampleProject6, SampleProject7, TestEvent, TestOptics}
 import sourcecode.Line
 import utest._
 
@@ -62,13 +61,13 @@ object LogicTestUtil {
 // Fucking IntelliJ crashes typing these tests inline
 
 object LogicTest extends TestSuite {
-  import ProjectDsl._
-  import UnsafeTypes._
-  import SampleProject7.Values._
-  import shipreq.webapp.member.filter.Filter.{Valid => F}
-  import shipreq.webapp.member.filter.FilterAst.Attr.{AnyIssue, AnyTag}
-  import shipreq.webapp.member.filter.FilterAst.{FieldAttr, FieldCriteria, ImpCriteria}
-  import shipreq.webapp.member.filter.IntensionalReqSet._
+  import shipreq.webapp.member.test.project.ProjectDsl._
+  import shipreq.webapp.member.test.project.UnsafeTypes._
+  import shipreq.webapp.member.test.project.SampleProject7.Values._
+  import shipreq.webapp.member.project.filter.Filter.{Valid => F}
+  import shipreq.webapp.member.project.filter.FilterAst.Attr.{AnyIssue, AnyTag}
+  import shipreq.webapp.member.project.filter.FilterAst.{FieldAttr, FieldCriteria, ImpCriteria}
+  import shipreq.webapp.member.project.filter.IntensionalReqSet._
   import LogicTestUtil._
 
   private implicit def liftFieldAttr(a: FieldAttr): F.FieldCriteria =
@@ -1052,7 +1051,7 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterImplies(): Unit = {
-    import SampleImplicationGraph._
+    import shipreq.webapp.member.test.project.SampleImplicationGraph._
     val justFR2 = ImpCriteria.Reqs(F.reqSet(SomeOfType(fr, NonEmptySet(2))))
     testFilter(project, F.impliesAnyOf(justFR2))("BR-1  FR-1  FR-2  MF-1  MF-2", "")
     //                                               reflexivity ↑
@@ -1062,7 +1061,7 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterImpliedBy(): Unit = {
-    import SampleImplicationGraph._
+    import shipreq.webapp.member.test.project.SampleImplicationGraph._
     val justMF2 = ImpCriteria.Reqs(F.reqSet(SomeOfType(mf, NonEmptySet(2))))
     testFilter(project, F.impliedByAnyOf(justMF2))("FR-2  FR-3  MF-2", "")
     //                                                 reflexivity ↑
@@ -1072,7 +1071,7 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterImpliedByQuery(): Unit = {
-    import SampleImplicationGraph._
+    import shipreq.webapp.member.test.project.SampleImplicationGraph._
     val justMF2 = ImpCriteria.Query(F.reqs(NonEmptyVector(IntensionalReqSet.SomeOfType(mf, NonEmptySet(2)))))
     testFilter(project, F.impliedByAnyOf(justMF2))("FR-2  FR-3  MF-2", "")
     //                                                 reflexivity ↑
@@ -1082,7 +1081,7 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterImplyNothing(): Unit = {
-    import SampleImplicationGraph._
+    import shipreq.webapp.member.test.project.SampleImplicationGraph._
     val e = ImpCriteria.Reqs(F.reqSet(SomeOfType(mf, NonEmptySet(9999999))))
     testFilter(project, F.impliedByAnyOf(e))("", "")
     testFilter(project, F.impliesAnyOf  (e))("", "")
@@ -1110,7 +1109,7 @@ object LogicTest extends TestSuite {
 
   def testFilterImpFieldPos(): Unit = {
     // Filter by field:MF=2
-    import SampleImplicationGraph2._
+    import shipreq.webapp.member.test.project.SampleImplicationGraph2._
     testFilter(project, F.fieldProp(\/-(mfField), FieldCriteria.ReqTypePosSet(NonEmptySet(2))))(
       "FB-1  IV-1  IV-2  MF-2  MF-3  UC-2",
       "UC-1")
@@ -1118,7 +1117,7 @@ object LogicTest extends TestSuite {
 
   def testFilterImpFieldQuery(): Unit = {
     // Filter by field:MF=(MF2)
-    import SampleImplicationGraph2._
+    import shipreq.webapp.member.test.project.SampleImplicationGraph2._
     val subQuery = F.reqs(NonEmptyVector(IntensionalReqSet.SomeOfType(mf, NonEmptySet(2))))
     testFilter(project, F.fieldProp(\/-(mfField), FieldCriteria.Query(subQuery)))(
       "FB-1  IV-1  IV-2  MF-2  MF-3  UC-2",
@@ -1422,7 +1421,7 @@ object LogicTest extends TestSuite {
 
   // https://shipreq.com/project/d6My#/reqs/FR-47
   def testFilterWithDerivativeTags1a(): Unit = {
-    import SampleProject.Values._
+    import shipreq.webapp.member.test.project.SampleProject.Values._
 
     val mf1 = GenericReqId(101) // Derives: v1.0 v1.1
     val mf2 = GenericReqId(102) // Same as MF-1 but declares v1.0 manually
@@ -1476,7 +1475,7 @@ object LogicTest extends TestSuite {
 
   // https://shipreq.com/project/d6My#/reqs/FR-47
   def testFilterWithDerivativeTags1b(): Unit = {
-    import SampleProject.Values._
+    import shipreq.webapp.member.test.project.SampleProject.Values._
 
     val mf1 = GenericReqId(101)
     val mf2 = GenericReqId(102)
@@ -1504,7 +1503,7 @@ object LogicTest extends TestSuite {
 
   /** Test that sub-filter only applies to derivation */
   def testFilterWithDerivativeTags2a(): Unit = {
-    import SampleProject.Values._
+    import shipreq.webapp.member.test.project.SampleProject.Values._
 
     val mf1 = GenericReqId(101) // Derives: v1.0 v1.1
     val mf2 = GenericReqId(102) // Same as MF-1 but declares v1.0 manually
@@ -1552,7 +1551,7 @@ object LogicTest extends TestSuite {
 
   /** Test that main-filter only applies to both derivation and main results */
   def testFilterWithDerivativeTags2b(): Unit = {
-    import SampleProject.Values._
+    import shipreq.webapp.member.test.project.SampleProject.Values._
 
     val mf1 = GenericReqId(101) // Derives: v1.0 v1.1
     val mf2 = GenericReqId(102) // Same as MF-1 but declares v1.0 manually
@@ -1602,7 +1601,7 @@ object LogicTest extends TestSuite {
   }
 
   def testFilterWithRelativeTags(op: OrderOp): Unit = {
-    import SampleProject.Values._
+    import shipreq.webapp.member.test.project.SampleProject.Values._
 
     val mf1 = GenericReqId(101)
     val mf2 = GenericReqId(102)

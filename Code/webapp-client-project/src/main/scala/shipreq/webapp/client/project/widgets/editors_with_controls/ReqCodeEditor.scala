@@ -10,12 +10,12 @@ import shipreq.webapp.base.validation.lib.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.util.TextEditor
-import shipreq.webapp.member.data.DataValidators.{reqCode => V}
-import shipreq.webapp.member.data._
 import shipreq.webapp.member.feature.AutoCompleteFeature._
 import shipreq.webapp.member.feature.EditControlsFeature
-import shipreq.webapp.member.text.GrammarSpec.SeqFormat
-import shipreq.webapp.member.text.{LineCardinality, MultiLine, SingleLine}
+import shipreq.webapp.member.project.data.DataValidators.{reqCode => V}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.GrammarSpec.SeqFormat
+import shipreq.webapp.member.project.text.{LineCardinality, MultiLine, SingleLine}
 
 sealed abstract class ReqCodeEditor[In: Reusability, Out] {
   final type Output = Out

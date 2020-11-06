@@ -1,14 +1,14 @@
 package shipreq.webapp.server.logic.event
 
 import shipreq.base.util.PotentialChange._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.text.Atom.DisplayReqRef
+import shipreq.webapp.member.project.text.Text
 import shipreq.webapp.member.protocol.websocket._
-import shipreq.webapp.member.test.SampleProject
-import shipreq.webapp.member.test.UnsafeTypes._
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.text.Atom.DisplayReqRef
-import shipreq.webapp.member.text.Text
+import shipreq.webapp.member.test.project.SampleProject
+import shipreq.webapp.member.test.project.UnsafeTypes._
 import sourcecode.Line
 import utest._
 

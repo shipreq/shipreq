@@ -9,12 +9,12 @@ import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.ReqId
 import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.util.Obfuscated
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.text.Text
 import shipreq.webapp.member.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.member.protocol.websocket._
 import shipreq.webapp.member.test.WebappTestUtil._
-import shipreq.webapp.member.text.Text
 import shipreq.webapp.server.logic.algebra.Redis
 import shipreq.webapp.server.logic.algebra.Redis.ProjectSnapshot
 import shipreq.webapp.server.logic.algebra.Security.{SessionId, SessionToken}

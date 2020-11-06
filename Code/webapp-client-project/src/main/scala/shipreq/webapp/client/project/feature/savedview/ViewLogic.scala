@@ -7,13 +7,13 @@ import monocle.Lens
 import monocle.macros.Lenses
 import shipreq.base.util.PotentialChange
 import shipreq.webapp.base.validation.lib.Simple
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview.SavedView.{Id, Name}
-import shipreq.webapp.member.data.savedview._
-import shipreq.webapp.member.event.SavedViewGD
-import shipreq.webapp.member.filter.Filter.Implicits.univEqFilterValid
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview.SavedView.{Id, Name}
+import shipreq.webapp.member.project.data.savedview._
+import shipreq.webapp.member.project.event.SavedViewGD
+import shipreq.webapp.member.project.filter.Filter.Implicits.univEqFilterValid
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.protocol.websocket.SavedViewCmd
-import shipreq.webapp.member.util.DataReusability._
 
 object ViewLogic {
 

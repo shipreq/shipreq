@@ -6,7 +6,7 @@ import shipreq.webapp.base.feature.TableNavigationFeature
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.widgets.EditorNavParent
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
 
 private[reqdetail] object Shared {
 

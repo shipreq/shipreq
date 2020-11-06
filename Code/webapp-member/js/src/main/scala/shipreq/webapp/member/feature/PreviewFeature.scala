@@ -11,8 +11,8 @@ import scalacss.ScalaCssReact._
 import shipreq.base.util.Intersection
 import shipreq.webapp.base.feature.TableNavigationFeature
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Transition}
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.ui.{BaseStyles => *, OnlyVisibleOnMouseMove}
-import shipreq.webapp.member.util.DataReusability._
 
 /** Supplies logic to determine whether or not to show a preview for some rich-text editor.
   *

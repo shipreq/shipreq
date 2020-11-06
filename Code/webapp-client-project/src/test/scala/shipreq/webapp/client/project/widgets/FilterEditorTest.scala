@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.widgets
 
-import shipreq.webapp.member.test._
+import shipreq.webapp.member.test.project.SampleProject3
 import utest._
 
 object FilterEditorTest extends TestSuite {

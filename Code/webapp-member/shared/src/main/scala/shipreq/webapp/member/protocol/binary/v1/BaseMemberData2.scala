@@ -5,9 +5,9 @@ import java.time.Instant
 import nyaya.util.Multimap
 import shipreq.base.util.{Direction, Exclusivity, SetDiff}
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.member.data.DataImplicits._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.ProjectText
+import shipreq.webapp.member.project.data.DataImplicits._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.ProjectText
 
 /** This is all remaining codecs not covered by [[BaseMemberData1]].
   *

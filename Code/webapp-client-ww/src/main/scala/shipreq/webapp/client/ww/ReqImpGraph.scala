@@ -2,8 +2,8 @@ package shipreq.webapp.client.ww
 
 import scala.collection.mutable
 import shipreq.base.util._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview.ImpGraphConfig.{Colours, GraphDir}
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.{Colours, GraphDir}
 
 final class ReqImpGraph(focus     : ReqId,
                         filterDead: FilterDead,

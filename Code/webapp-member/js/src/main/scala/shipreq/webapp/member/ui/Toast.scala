@@ -6,8 +6,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 import java.time.Duration
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.util.{Off, On, ReactKeyGen}
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.ui.BaseStyles.{toast => *}
-import shipreq.webapp.member.util.DataReusability._
 
 /** This is an interface that can be passed around so that downstream components can add messages.
  */

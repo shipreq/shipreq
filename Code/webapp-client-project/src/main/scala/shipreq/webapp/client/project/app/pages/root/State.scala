@@ -14,8 +14,8 @@ import shipreq.webapp.client.project.app.pages.content.{reqdetail, reqtable}
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.{NewReqButton, ReqSearch}
-import shipreq.webapp.member.data.{FilterDead, HideDead, Project}
 import shipreq.webapp.member.feature.PreviewFeature
+import shipreq.webapp.member.project.data.{FilterDead, HideDead, Project}
 import shipreq.webapp.member.protocol.websocket.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}
 import shipreq.webapp.member.ui.{ProjectItem, Toast}
 
@@ -44,7 +44,7 @@ object PreviewId {
 sealed abstract class AsyncKey
 object AsyncKey {
   import reqdetail.Row.UseCaseSteps
-  import shipreq.webapp.member.data.UseCaseStepId
+  import shipreq.webapp.member.project.data.UseCaseStepId
 
   /** The req itself. Eg. if a req is being deleted then the entire req should be locked */
   case object WholeReq                             extends AsyncKey

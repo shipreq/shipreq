@@ -15,10 +15,10 @@ import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.feature.Usage
 import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, EditorButtons, ProjectWidgets, SplitScreenCrud, ViewTags}
-import shipreq.webapp.member.data._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.member.ui.Toast
-import shipreq.webapp.member.util.DataReusability._
 
 object TagConfig {
 

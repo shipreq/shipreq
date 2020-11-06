@@ -9,9 +9,9 @@ import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.RowKey
 import shipreq.webapp.client.project.feature.SavedViewFeature.ColumnPlus
 import shipreq.webapp.client.project.widgets.{NewReqButton, ProjectWidgets}
-import shipreq.webapp.member.data.{ExternalPubid, Project}
 import shipreq.webapp.member.feature.PreviewFeature
-import shipreq.webapp.member.text.{PlainText, TextSearch}
+import shipreq.webapp.member.project.data.{ExternalPubid, Project}
+import shipreq.webapp.member.project.text.{PlainText, TextSearch}
 import shipreq.webapp.member.ui.Toast
 
 /**

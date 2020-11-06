@@ -3,8 +3,8 @@ package shipreq.webapp.client.project.feature.savedview
 import japgolly.scalajs.react.test.{SimEvent, Simulate}
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.test.TestPromptJs
-import shipreq.webapp.member.data.FilterDead
-import shipreq.webapp.member.data.savedview.SavedView
+import shipreq.webapp.member.project.data.FilterDead
+import shipreq.webapp.member.project.data.savedview.SavedView
 
 final case class SavedViewTestDsl[R, O, S](* : Dsl[Id, R, O, S, String])
                                           (getSavedViewManagerObs: O => SavedViewManagerObs,

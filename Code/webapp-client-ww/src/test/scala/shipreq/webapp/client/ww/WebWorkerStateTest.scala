@@ -4,9 +4,9 @@ import japgolly.microlibs.testutil.TestUtil._
 import japgolly.scalajs.react.AsyncCallback
 import java.time.Instant
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.event.{Event, EventOrd, ProjectAndOrd, VerifiedEvent}
-import shipreq.webapp.member.test.UnsafeTypes.autoSomeEventOrdLatest
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.{Event, EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.test.project.UnsafeTypes.autoSomeEventOrdLatest
 import sourcecode.Line
 import utest._
 

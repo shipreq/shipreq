@@ -4,8 +4,8 @@ import boopickle.PickleImpl
 import io.circe._
 import io.circe.syntax._
 import shipreq.base.util.BinaryData
-import shipreq.webapp.member.data.Project
-import shipreq.webapp.member.event.{Event, VerifiedEvent}
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.{Event, VerifiedEvent}
 import shipreq.webapp.member.protocol.binary.v1.Latest.{picklerProject, picklerVerifiedEventSeq}
 import shipreq.webapp.member.protocol.json.v1.Latest.encoderEvent
 

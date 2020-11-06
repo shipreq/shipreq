@@ -12,9 +12,9 @@ import shipreq.webapp.client.project.feature.EditorFeature
 import shipreq.webapp.client.project.feature.RenderFeature.FieldKey
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.{EditorNavParent, ProjectWidgets}
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.text.Text
-import shipreq.webapp.member.text.Text.Equality._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.Text
+import shipreq.webapp.member.project.text.Text.Equality._
 import shipreq.webapp.member.ui.BaseStyles
 
 object TableRow {

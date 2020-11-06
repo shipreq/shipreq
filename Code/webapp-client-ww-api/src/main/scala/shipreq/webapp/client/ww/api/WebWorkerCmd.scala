@@ -4,10 +4,10 @@ import boopickle.ConstPickler
 import boopickle.DefaultBasic._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.config.AssetManifest
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview.ImpGraphConfig
-import shipreq.webapp.member.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
-import shipreq.webapp.member.text.ProjectText
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
+import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.text.ProjectText
 
 // Another idea could be to maintain a separate ClientData instance in the WW thread and feed it all the same updates
 // that the main thread processes.

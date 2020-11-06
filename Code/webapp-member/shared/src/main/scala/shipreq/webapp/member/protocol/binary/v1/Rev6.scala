@@ -5,10 +5,10 @@ import japgolly.microlibs.adt_macros.AdtMacros
 import scala.collection.immutable.TreeSet
 import scala.reflect.ClassTag
 import shipreq.base.util.{Enabled, NonEmptyArraySeq}
-import shipreq.webapp.member.data.DataImplicits._
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.event._
-import shipreq.webapp.member.text.{AtomTC, Text}
+import shipreq.webapp.member.project.data.DataImplicits._
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.text.{AtomTC, Text}
 
 /** v1.6 */
 object Rev6 {
@@ -20,7 +20,7 @@ object Rev6 {
   import Events._
 
   object AtomPicklers extends AtomTC[Pickler] {
-    import shipreq.webapp.member.text._
+    import shipreq.webapp.member.project.text._
     import Atom._
 
     override def lazily[A](f: => Pickler[A]): Pickler[A] = pickleLazily(f)

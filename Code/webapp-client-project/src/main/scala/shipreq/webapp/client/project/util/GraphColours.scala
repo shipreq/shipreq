@@ -8,8 +8,8 @@ import shipreq.base.util.NonEmptyArraySeq
 import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.app.Style.{reqgraphPage => *}
 import shipreq.webapp.member.UiText
-import shipreq.webapp.member.data._
-import shipreq.webapp.member.data.savedview.ImpGraphConfig.Colours
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.Colours
 
 object GraphColours {
 

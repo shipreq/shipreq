@@ -11,9 +11,9 @@ import shipreq.webapp.base.ui.semantic.{Dropdown => _, _}
 import shipreq.webapp.base.ui.widgets.Dropdown
 import shipreq.webapp.client.project.app.Style.widgets.{reqTypeSelector => *}
 import shipreq.webapp.client.project.feature.editor.{PotentialValue, PotentialValueAcceptor}
-import shipreq.webapp.member.data._
 import shipreq.webapp.member.feature.EditControlsFeature
-import shipreq.webapp.member.text.Grammar
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.text.Grammar
 
 object ReqTypeSelector {
 
