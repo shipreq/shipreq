@@ -9,7 +9,7 @@ object SchemaMigrator {
   def apply(ds: DataSource, schema: Option[String]): SchemaMigrator = {
     var cfg = Flyway
       .configure()
-      .locations("db_migrations")
+      .locations("db_migrations", "shipreq/**/db/migration")
       .sqlMigrationPrefix("v")
       .dataSource(ds)
 
