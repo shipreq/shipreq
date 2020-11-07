@@ -1,7 +1,6 @@
 package shipreq.webapp.server.logic.impl
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import java.sql.Connection
 import java.time.{Duration, Instant}
 import scalaz.std.option.optionInstance
 import scalaz.syntax.monad._
@@ -14,6 +13,7 @@ import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.client.public.PublicSpaProtocols
+import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.server.logic.algebra.{DB, MetricsAlgebra, Security, Server}
 import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.data.PasswordAndSalt
@@ -152,11 +152,18 @@ object PublicSpaLogic extends HasLogger {
           def onNewUser(email: EmailAddr): D[(Task, Security.Result)] =
             db.createUserPlaceholder(email).map(registrationRequestedTask(email, _))
 
+          def logGlobalEvent(emailAddr: EmailAddr, ip: Option[IP]): D[Unit] =
+            db.getUserId(\/-(emailAddr)).flatMap {
+              case Some(id) => db.logGlobalEvent(GlobalEvent.UserRegister1(ip, id))
+              case None     => D.pure(())
+            }
+
           val main: F[ErrorMsg \/ (TaskId, Security.Result)] =
             UserValidators.emailAddr.named(emailAddrStr).onValid(emailAddr =>
               for {
                 now           <- svr.now
-                (msg, secRes) <- runDB(registerInDb(emailAddr, now))
+                ip            <- svr.clientIP
+                (msg, secRes) <- db.inStrictTxn(runDB)(registerInDb(emailAddr, now) <* logGlobalEvent(emailAddr, ip))
                 id            <- taskman.submit(msg)
               } yield \/-((id, secRes))
             )
@@ -217,7 +224,9 @@ object PublicSpaLogic extends HasLogger {
                       _  <- validateToken
                       ps <- security.hashPassword(req.password).toStack
                       id <- register(ps)
-                      _  <- svr.fork(taskman.submit(Task.RegistrationCompleted(id.toTaskman))).toStack
+                      ip <- svr.clientIP.toStack
+                      _  <- taskman.submit(Task.RegistrationCompleted(id.toTaskman)).toStack
+                      _  <- runDB(db.logGlobalEvent(GlobalEvent.UserRegister2(ip, id))).toStack
                       t  <- login
                     } yield t
 
@@ -265,42 +274,54 @@ object PublicSpaLogic extends HasLogger {
         val resetPassword1: PublicSpaProtocols.ResetPassword1.ajax.ServerSideFn[F] =
           security.protectFn { user =>
 
-            def resetInDb(now: Instant): F[(Option[Task], Security.Result)] = {
-              import shipreq.webapp.server.logic.algebra.DB.PasswordResetState._
-              db.withTransactionLevel(runDB, Connection.TRANSACTION_SERIALIZABLE)(
-                db.getPasswordResetState(user).flatMap {
+            def resetInDb(now: Instant, ip: Option[IP]): F[(Option[Task], Security.Result)] =
+              db.inStrictTxn(runDB) {
+                import shipreq.webapp.server.logic.algebra.DB.PasswordResetState._
 
-                  // No token
-                  case Some((email, t: NoToken)) =>
-                    db.createResetPasswordToken(t.reg.id).map(token =>
-                      (Some(resetMsg(email, token)), Security.Result.Failure))
-
-                  // Valid token available
-                  case Some((email, t: TokenExists)) if !isExpired_?(t.tokenSentAt, config.security.passwordResetTokenLifespan, now) =>
-                    db.updateResetPasswordTokenOnReissue(t.reg.id).map(_ =>
-                      (Some(resetMsg(email, t.token)), Security.Result.Success))
-
-                  // Token expired
-                  case Some((email, t: TokenExists)) =>
-                    db.createResetPasswordToken(t.reg.id).map(token =>
-                      (Some(resetMsg(email, token)), Security.Result.Failure))
-
-                  // Account not activated yet
-                  case Some((email, UserRegistrationPending(u))) =>
-                    RegisterFns.preRegistrationMsg(email, u, now).map(_.map1(Some(_)))
-
-                  // No associated account
-                  case None => D.pure((None, Security.Result.Failure))
+                val logGlobalEvent: D[Unit] = {
+                  val queryStr = user.fold(_.value, _.value)
+                  for {
+                    id <- db.getUserId(user)
+                    _  <- db.logGlobalEvent(GlobalEvent.UserPasswordResetRequest(ip, queryStr, id))
+                  } yield ()
                 }
-              )
-            }
+
+                val perform: D[(Option[Task], Security.Result)] =
+                  db.getPasswordResetState(user).flatMap {
+
+                    // No token
+                    case Some((email, t: NoToken)) =>
+                      db.createResetPasswordToken(t.reg.id).map(token =>
+                        (Some(resetMsg(email, token)), Security.Result.Failure))
+
+                    // Valid token available
+                    case Some((email, t: TokenExists)) if !isExpired_?(t.tokenSentAt, config.security.passwordResetTokenLifespan, now) =>
+                      db.updateResetPasswordTokenOnReissue(t.reg.id).map(_ =>
+                        (Some(resetMsg(email, t.token)), Security.Result.Success))
+
+                    // Token expired
+                    case Some((email, t: TokenExists)) =>
+                      db.createResetPasswordToken(t.reg.id).map(token =>
+                        (Some(resetMsg(email, token)), Security.Result.Failure))
+
+                    // Account not activated yet
+                    case Some((email, UserRegistrationPending(u))) =>
+                      RegisterFns.preRegistrationMsg(email, u, now).map(_.map1(Some(_)))
+
+                    // No associated account
+                    case None => D.pure((None, Security.Result.Failure))
+                  }
+
+                logGlobalEvent *> perform
+              }
 
             def resetMsg(email: EmailAddr, token: VerificationToken): Task =
               Task.PasswordResetRequested(email.toTaskman, absUrlRegister2(token).absoluteUrl)
 
             for {
               now           <- svr.now
-              (msg, secRes) <- resetInDb(now)
+              ip            <- svr.clientIP
+              (msg, secRes) <- resetInDb(now, ip)
               _             <- metrics.securityEvent(Security.Event.ResetPassword1, secRes)
               _             <- taskman.submitBulk_(msg)
             } yield ()
@@ -322,11 +343,18 @@ object PublicSpaLogic extends HasLogger {
                     case VerificationToken.Status.Expired => -\/(\/-(Result.TokenExpired))
                   }
 
+                def updateDB(ip: Option[IP], ps: PasswordAndSalt) =
+                  for {
+                    u <- db.updateUserPassword(req.token, ps)
+                    _ <- u.fold(D.pure(()))(id => db.logGlobalEvent(GlobalEvent.UserPasswordReset(ip, id)))
+                  } yield u
+
                 val main: Stack[Result.Success.type] =
                   for {
                     _  <- validateToken
                     ps <- security.hashPassword(newPassword).toStack
-                    u  <- runDB(db.updateUserPassword(req.token, ps)).toStack
+                    ip <- svr.clientIP.toStack
+                    u  <- runDB(updateDB(ip, ps)).toStack
                     id <- (u \/> (Result.TokenInvalid: Result)).toStack
                   } yield {
                     logger.info(s"Password reset for user #${id.value}.")

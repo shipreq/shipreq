@@ -66,6 +66,9 @@ object JsonCodec {
   lazy val str: JsonCodec[String] =
     summon
 
+  lazy val long: JsonCodec[Long] =
+    summon
+
   object Implicits {
     implicit def implicitJsonCodecToDecoder[A](implicit c: JsonCodec[A]): Decoder[A] = c.decoder
     implicit def implicitJsonCodecToEncoder[A](implicit c: JsonCodec[A]): Encoder[A] = c.encoder

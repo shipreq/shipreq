@@ -18,6 +18,7 @@ import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
+import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.server.db.DbInterpreter._
@@ -61,8 +62,14 @@ object DbInterpreter {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait Base extends DB.Base[ConnectionIO] {
 
-    override final def withTransactionLevel[D[_], A](runDB: ConnectionIO ~> D, level: Int)(f: ConnectionIO[A]): D[A] =
+    override final def withTransactionLevel[F[_], A](runDB: ConnectionIO ~> F, level: Int)(f: ConnectionIO[A]): F[A] =
       runDB(f.withTransactionLevel(level))
+
+    private[db] final val logGlobalEventSql =
+      Update[GlobalEventSerialisation.Row]("INSERT INTO global_event(type,data,ip,usr_id) VALUES(?,?,?,?)")
+
+    override def logGlobalEvent(e: GlobalEvent): ConnectionIO[Unit] =
+      logGlobalEventSql.toUpdate0(GlobalEventSerialisation.encode(e)).execute
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -144,6 +151,18 @@ object DbInterpreter {
       case (id, _      , _, Some(i)) => DB.UserRegistration.Complete(id, i)
       case _                         => throw new IllegalStateException() // Impossible due to CONSTRAINT usr_confirmation_invariants
     }
+
+    private[db] final val getUserIdByEmailSql =
+      Query[EmailAddr, UserId](s"SELECT id FROM usr WHERE email=?")
+
+    private[db] final val getUserIdByUsernameSql =
+      Query[Username, UserId](s"SELECT id FROM usr WHERE username=?")
+
+    override final def getUserId(e: Username \/ EmailAddr): ConnectionIO[Option[UserId]] =
+      e match {
+        case -\/(u) => getUserIdByUsernameSql.option(u)
+        case \/-(e) => getUserIdByEmailSql.option(e)
+      }
 
     private[db] final val getUserRegistrationSql =
       Query[EmailAddr, RegInfo](s"SELECT $colsRegInfo FROM usr WHERE email=?").map(parseRegInfo)
@@ -294,7 +313,7 @@ object DbInterpreter {
     type Result = DB.ReadProjectEventError \/ VerifiedEvent.Seq
 
     def query(where: Fragment): Query0[Row] =
-      (fr"SELECT ord,type,data,created_at FROM event WHERE " ++ where).query[Row]
+      (fr"SELECT ord,type,data,created_at FROM project_event WHERE " ++ where).query[Row]
 
     def all(projectId: ProjectId): Query0[Row] =
       query(fr"project_id=$projectId")
@@ -344,7 +363,7 @@ object DbInterpreter {
   object SaveProjectEventLogic {
 
     val insertEventQuery: Query[(ProjectId, EventOrd, Short, Json, UserId), Instant] =
-      Query("INSERT INTO event (project_id,ord,type,data,usr_id) VALUES(?,?,?,?,?) RETURNING created_at")
+      Query("INSERT INTO project_event (project_id,ord,type,data,usr_id) VALUES(?,?,?,?,?) RETURNING created_at")
 
     /** unsafe because the ord could be in-use */
     def unsafeInsertEvent(pid: ProjectId, ord: EventOrd, event: ActiveEvent, userId: UserId) = {
@@ -508,7 +527,7 @@ object DbInterpreter {
 
     private[db] val insertVerifiedEventSql: Update[(ProjectId, VerifiedEvent, UserId)] =
       Update[(ProjectId, EventOrd, Short, Json, UserId, Instant)](
-        "INSERT INTO event (project_id, ord, type, data, usr_id, created_at) VALUES(?,?,?,?,?,?)")
+        "INSERT INTO project_event (project_id, ord, type, data, usr_id, created_at) VALUES(?,?,?,?,?,?)")
         .contramap[(ProjectId, VerifiedEvent, UserId)] { case (pid, ve, uid) =>
           val (typeId, data) = ProjectEventSerialisation.encodeActiveOrRetired(ve.event)
           (pid, ve.ord, typeId, data, uid, ve.createdAt)

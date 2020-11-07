@@ -1,8 +1,10 @@
 package shipreq.webapp.server.logic.algebra
 
+import java.sql.Connection
 import java.time.Instant
 import scalaz.~>
 import shipreq.webapp.base.data._
+import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.server.logic.data.PasswordAndSalt
@@ -70,7 +72,12 @@ object DB {
       *
       * @param level See java.sql.Connection
       */
-    def withTransactionLevel[D[_], A](runDB: F ~> D, level: Int)(f: F[A]): D[A]
+    def withTransactionLevel[G[_], A](runDB: F ~> G, level: Int)(f: F[A]): G[A]
+
+    @inline final def inStrictTxn[G[_], A](runDB: F ~> G)(f: F[A]): G[A] =
+      withTransactionLevel(runDB, Connection.TRANSACTION_SERIALIZABLE)(f)
+
+    def logGlobalEvent(e: GlobalEvent): F[Unit]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -119,6 +126,8 @@ object DB {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait ForUserRegistration[F[_]] extends Base[F] with VerificationTokenReadOnly[F] {
+    def getUserId(e: Username \/ EmailAddr): F[Option[UserId]]
+
     def getUserRegistration(e: EmailAddr): F[Option[UserRegistration]]
 
     /** Creates an unconfirmed user account. No username, no password until email confirmed. */
@@ -194,9 +203,14 @@ object DB {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  trait ForPublicSpa[F[_]] extends ForUserRegistration[F] with ForPasswordReset[F]
+  trait ForPublicSpa[F[_]]
+      extends Base[F]
+         with ForUserRegistration[F]
+         with ForPasswordReset[F]
 
-  trait ForHomeSpa[F[_]] extends Base[F] with GetProjectMetaData[F] {
+  trait ForHomeSpa[F[_]]
+      extends Base[F]
+        with GetProjectMetaData[F] {
     def createProject(id: UserId, initEvents: Vector[ActiveEvent], project: Project): F[ProjectId]
     def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
   }

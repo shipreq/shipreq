@@ -57,7 +57,7 @@ final case class DbUtil(xa: ImperativeXA) {
     xa ! Query[UserId, Username]("SELECT username FROM usr WHERE id=?").toQuery0(id).unique
 
   def deleteUser(id: Long): Unit = {
-    xa ! sql"DELETE FROM usrh_name WHERE usr_id = $id".update.run
+    xa ! sql"DELETE FROM global_event WHERE usr_id = $id".update.run
     xa ! sql"DELETE FROM usrd WHERE usr_id = $id".update.run
     xa ! sql"DELETE FROM usr WHERE id = $id".update.execute
   }

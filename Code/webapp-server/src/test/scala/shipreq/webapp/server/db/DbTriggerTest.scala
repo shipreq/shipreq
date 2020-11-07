@@ -58,38 +58,6 @@ object DbTriggerTest extends TestSuite {
       }
     }
 
-    "usrd" - {
-      def nameHistory(userId: Long)(implicit xa: ImperativeXA) =
-        xa ! Query0[String](s"select name from usrh_name where usr_id=$userId order by updated_at").to[List]
-
-      def insert(userId: Long, name: String, newsletter: Boolean)(implicit xa: ImperativeXA) =
-        xa ! Update[(Long, String, Boolean)]("insert into usrd values(?,?,?)")
-          .toUpdate0((userId, name, newsletter)).run
-
-      def update(userId: Long, name: String, newsletter: Boolean)(implicit xa: ImperativeXA) =
-        xa ! Update[(String, Boolean, Long)]("update usrd set name=?, newsletter=? where usr_id=?")
-          .toUpdate0((name, newsletter, userId)).run
-
-      def read(userId: Long)(implicit xa: ImperativeXA) =
-        xa ! Query0[(String,Boolean)](s"select name, newsletter from usrd where usr_id=$userId").unique
-
-      "should record name changes" - TestDb.withImperativeXA { implicit xa =>
-        val u = DbUtil(xa).newUserId()
-        val (a,b,c) = ("Alice","Bob","Yay")
-        insert(u.value, a, true)
-        assertEq(nameHistory(u.value), Nil)
-        List(b,b,b,c).foreach(update(u.value, _, true))
-        assertEq(nameHistory(u.value), List(a, b))
-      }
-
-      "should updates without altercation by triggers" - TestDb.withImperativeXA { implicit xa =>
-        val u = DbUtil(xa).newUserId()
-        insert(u.value, "A", true)
-        update(u.value, "B", false)
-        assertEq(read(u.value), ("B", false))
-      }
-    }
-
     "project" - {
       "should update project_access_per_hour" - TestDb.withImperativeXA { implicit xa =>
 

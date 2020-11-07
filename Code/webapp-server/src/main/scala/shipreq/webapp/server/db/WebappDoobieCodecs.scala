@@ -1,6 +1,7 @@
 package shipreq.webapp.server.db
 
 import doobie._
+import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
 import japgolly.microlibs.adt_macros.AdtMacros
 import shipreq.base.db.DoobieHelpers._
@@ -48,6 +49,17 @@ object WebappDoobieCodecs {
   implicit val doobieReadUser: Read[User] =
     Read.apply2(User.apply)
 
+  implicit val doobieReadGlobalEventSerialisationRowData: Read[GlobalEventSerialisation.RowData] =
+    Read.apply3(GlobalEventSerialisation.RowData.apply)
+
+  implicit val doobieWriteGlobalEventSerialisationRowData: Write[GlobalEventSerialisation.RowData] =
+    Write.apply3(a => (a.data, a.ip, a.userId))
+
+  implicit val doobieReadGlobalEventSerialisationRow: Read[GlobalEventSerialisation.Row] =
+    Read.apply2(GlobalEventSerialisation.Row)
+
+  implicit val doobieWriteGlobalEventSerialisationRow: Write[GlobalEventSerialisation.Row] =
+    Write.apply2(a => (a.`type`, a.data))
 }
 
 /** @since DB migration v4.4 */

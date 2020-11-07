@@ -13,6 +13,10 @@ object SqlTest extends TestSuite {
 
   override def tests = Tests {
 
+    "base" - {
+      "logGlobalEventSql" - TestDb.check(db.logGlobalEventSql)
+    }
+
     "security" - {
       val db = ForSecurity
       "getUserAndPasswordByEmailSql"    - TestDb.check(db.getUserAndPasswordByEmailSql)
@@ -28,6 +32,8 @@ object SqlTest extends TestSuite {
     }
 
     "publicSpa" - {
+      "getUserIdByEmailSql"                  - TestDb.check(db.getUserIdByEmailSql)
+      "getUserIdByUsernameSql"               - TestDb.check(db.getUserIdByUsernameSql)
       "getUserRegistrationSql"               - TestDb.check(db.getUserRegistrationSql)
       "createUserPlaceholderSql"             - TestDb.check(db.createUserPlaceholderSql)
       "updateUserRegistrationTokenSql"       - TestDb.check(db.updateUserRegistrationTokenSql)

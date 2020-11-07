@@ -136,7 +136,7 @@ object DbTest extends TestSuite {
         val dbu = DbUtil(xa)
         val db = dbu.dbAlgebra
         val u = dbu.newUserId()
-        val pid = xa.assertRowCountChanges("project" -> 1, "event" -> 1, "project_access_per_hour" -> 1) {
+        val pid = xa.assertRowCountChanges("project" -> 1, "project_event" -> 1, "project_access_per_hour" -> 1) {
           createProject(u, "xxx")
         }
         val pmd = xa ! db.getProjectMetaData(pid)
@@ -174,7 +174,7 @@ object DbTest extends TestSuite {
 //      }
     }
 
-    "event" - {
+    "project_event" - {
 
       "prop" - {
         import IgnoreEqualityOfVerifiedEventTimestamps._

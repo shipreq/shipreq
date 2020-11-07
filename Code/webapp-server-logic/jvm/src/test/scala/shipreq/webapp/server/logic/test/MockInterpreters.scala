@@ -13,6 +13,7 @@ import shipreq.base.util._
 import shipreq.taskman.api.{Task, TaskId, TaskStatus, TaskmanApi}
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
+import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.test.WebappTestUtil._
@@ -70,6 +71,9 @@ object MockDb {
     def projectLoad: VerifiedEvent.Seq =
       events
   }
+
+  val nameUnit: Name[Unit] =
+    scalaz.Value(())
 }
 
 final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecurity[Name] with DB.ForOps[Name] {
@@ -299,8 +303,13 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     getUser(user).map(_.id)
   }
 
-  override def withTransactionLevel[D[_], A](runDB: Name ~> D, level: Int)(f: Name[A]): D[A] =
+  override def withTransactionLevel[G[_], A](runDB: Name ~> G, level: Int)(f: Name[A]): G[A] =
     runDB(f)
+
+  var globalEvents = Vector.empty[GlobalEvent]
+  override def logGlobalEvent(e: GlobalEvent) = Name[Unit] {
+    globalEvents :+= e
+  }
 
   def assertNoDbChange[A](a: => A): A =
     assertNoChange("assertNoChange:userPlaceholders", userPlaceholders.iterator.map(_.toString).mkString("\n"))(
