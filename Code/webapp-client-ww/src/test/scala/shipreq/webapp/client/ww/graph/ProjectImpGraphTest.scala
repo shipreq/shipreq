@@ -1,7 +1,7 @@
-package shipreq.webapp.client.ww
+package shipreq.webapp.client.ww.graph
 
 import shipreq.base.util.OptionalBoolFn
-import shipreq.webapp.client.ww.GraphViz.DOT
+import shipreq.webapp.client.ww.graph.GraphViz.DOT
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
 import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.GraphDir

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ww
+package shipreq.webapp.client.ww.graph
 
 import shipreq.base.util._
 import shipreq.webapp.member.project.data._

@@ -2,8 +2,9 @@ package shipreq.webapp.client.ww
 
 import japgolly.scalajs.react.AsyncCallback
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.client.ww.GraphViz.DOT
+import shipreq.webapp.client.ww.graph.GraphViz.DOT
 import shipreq.webapp.client.ww.api.WebWorkerCmd
+import shipreq.webapp.client.ww.graph.{ProjectImpGraph, ReqImpGraph, UseCaseFlowGraph}
 
 final class Service(logger: LoggerJs) extends Server.Service[WebWorkerCmd] {
   import WebWorkerCmd._

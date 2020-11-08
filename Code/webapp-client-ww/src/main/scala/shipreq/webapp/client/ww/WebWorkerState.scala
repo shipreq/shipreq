@@ -5,6 +5,7 @@ import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import monocle.macros.Lenses
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.lib.LoggerJs
+import shipreq.webapp.client.ww.graph.GraphViz
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.EventOrd.Implicits._
 import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}

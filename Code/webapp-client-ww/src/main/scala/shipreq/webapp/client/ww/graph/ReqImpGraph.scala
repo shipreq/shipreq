@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ww
+package shipreq.webapp.client.ww.graph
 
 import scala.collection.mutable
 import shipreq.base.util._

@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ww
+package shipreq.webapp.client.ww.graph
 
 import japgolly.scalajs.react.AsyncCallback
 import org.scalajs.dom.webworkers.DedicatedWorkerGlobalScope

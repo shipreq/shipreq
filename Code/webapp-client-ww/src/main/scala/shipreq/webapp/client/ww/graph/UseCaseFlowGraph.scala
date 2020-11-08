@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ww
+package shipreq.webapp.client.ww.graph
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.collection.mutable
