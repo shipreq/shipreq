@@ -5,10 +5,12 @@ import doobie.implicits._
 import java.time.Instant
 import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
+import shipreq.base.db.scalazDoobieConnectionIO
 import shipreq.base.test.db.{ImperativeXA, TestDb}
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data._
 import shipreq.webapp.server.logic.algebra._
+import shipreq.webapp.server.logic.data.UserEncryptionKey
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
 object UserFixture {
@@ -51,6 +53,8 @@ final case class UserFixture(xa: ImperativeXA) {
   val userWithExpiredToken = PendingTestUser(EmailAddr("b@p.com"), "poi098poi098", 4.weeks.ago)
   val pendingUsers = List(userWithCurrentToken, userWithExpiredToken)
 
+  val crypto = Crypto.default[ConnectionIO]
+
   def setup(): Unit = {
 
     // Insert mock users (registered)
@@ -58,7 +62,8 @@ final case class UserFixture(xa: ImperativeXA) {
         val cio: ConnectionIO[Unit] =
           for {
             token <- dbAlgebra.createUserPlaceholder(u.email)
-            res   <- dbAlgebra.completeUserRegistration(token, u.name, u.username, u.ps, u.newsletter)
+            key   <- crypto.generateKey256
+            res   <- dbAlgebra.completeUserRegistration(token, u.name, u.username, u.ps, u.newsletter, UserEncryptionKey(key))
           } yield res match {
             case DB.UserRegistrationResult.Success(id) => u._id = Some(id)
             case x                                     => sys.error(s"User registration failed: $x")

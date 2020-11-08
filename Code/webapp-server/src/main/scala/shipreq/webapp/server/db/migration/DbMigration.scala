@@ -35,4 +35,7 @@ private[migration] abstract class DbMigration extends BaseJavaMigration {
 
   protected final def point[A](a: => A): ConnectionIO[A] =
     Applicative[ConnectionIO].unit.map(_ => a)
+
+  protected final def execute(sql: String) =
+    Update0(sql, None).run
 }

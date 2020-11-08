@@ -75,7 +75,7 @@ object DispatchLogicTest extends TestSuite {
     db.users ::= user3
 
     val pid = ProjectId(9)
-    db.addProject(pid, user2.id)()
+    db.addProject(pid, user2.id, crypto.generateProjectKey())()
 
     def run(url    : Url.Relative,
             method : Method                   = Get,

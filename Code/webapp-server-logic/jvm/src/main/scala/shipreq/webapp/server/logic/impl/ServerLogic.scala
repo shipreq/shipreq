@@ -3,7 +3,7 @@ package shipreq.webapp.server.logic.impl
 import scalaz.{BindRec, Catchable, Monad, ~>}
 import shipreq.base.ops.Trace
 import shipreq.taskman.api.TaskmanApi
-import shipreq.webapp.server.logic.algebra.{DB, MetricsAlgebra, Redis, Security, Server}
+import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.event.ApplyEventAlgebra
 
@@ -28,8 +28,10 @@ object ServerLogic {
                   : TaskmanApi
                   : Trace.Algebra]
             (implicit F: Monad[F] with BindRec[F],
-             runDB: D ~> F,
-             config: ServerLogicConfig): ServerLogic[F] = {
+             runDB  : D ~> F,
+             config : ServerLogicConfig,
+             cryptoD: Crypto[D],
+             cryptoF: Crypto[F]): ServerLogic[F] = {
 
     implicit val common = CommonProtocolLogic[F]
     implicit val assetManifest = config.assetManifest

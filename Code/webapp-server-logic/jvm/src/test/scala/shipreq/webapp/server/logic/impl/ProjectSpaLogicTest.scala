@@ -82,7 +82,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       val verifiedEvents       = verifyEvents(Project.empty)(events: _*)
       val instance             = applyVerifiedEventSuccessfully(Project.empty, verifiedEvents.toList: _*)
       val latestOrd            = verifiedEvents.last.ord.asLatest
-      val id                   = db.createProject(user2.id, events.map(_.active), instance).value
+      val id                   = db.createProject(user2.id, events.map(_.active), instance, crypto.generateProjectKey()).value
       val data1                = db.getProjectMetaData(id).value.get
 
       lazy val projectAndOrd   = ProjectAndOrd(instance, Some(verifiedEvents.last.ord.asLatest))

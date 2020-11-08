@@ -14,9 +14,9 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.client.public.PublicSpaProtocols
 import shipreq.webapp.member.global.GlobalEvent
-import shipreq.webapp.server.logic.algebra.{DB, MetricsAlgebra, Security, Server}
+import shipreq.webapp.server.logic.algebra.{Crypto, DB, MetricsAlgebra, Security, Server}
 import shipreq.webapp.server.logic.config.ServerLogicConfig
-import shipreq.webapp.server.logic.data.PasswordAndSalt
+import shipreq.webapp.server.logic.data.{PasswordAndSalt, UserEncryptionKey}
 import shipreq.webapp.server.logic.util.LogicHelpers._
 import shipreq.webapp.server.logic.util.WebappTaskmanConverters._
 
@@ -79,6 +79,7 @@ object PublicSpaLogic extends HasLogger {
                         db      : DB.ForPublicSpa[D],
                         runDB   : D ~> F,
                         common  : CommonProtocolLogic[F],
+                        crypto  : Crypto[F],
                         metrics : MetricsAlgebra[F],
                         security: Security.Algebra[F],
                         svr     : Server.Algebra[F],
@@ -206,8 +207,8 @@ object PublicSpaLogic extends HasLogger {
                       case VerificationToken.Status.Expired => -\/(\/-(Result.TokenExpired))
                     }
 
-                  def register(ps: PasswordAndSalt): Stack[UserId] =
-                    runDB(db.completeUserRegistration(req.token, req.personName, req.username, ps, req.newsletter)).mapToStack {
+                  def register(ps: PasswordAndSalt, k: UserEncryptionKey): Stack[UserId] =
+                    runDB(db.completeUserRegistration(req.token, req.personName, req.username, ps, req.newsletter, k)).mapToStack {
                       case DB.UserRegistrationResult.Success(i)    => \/-(i)
                       case DB.UserRegistrationResult.TokenNotFound => -\/(\/-(Result.TokenInvalid))
                       case DB.UserRegistrationResult.UsernameTaken => -\/(\/-(Result.UsernameTaken))
@@ -223,7 +224,8 @@ object PublicSpaLogic extends HasLogger {
                     for {
                       _  <- validateToken
                       ps <- security.hashPassword(req.password).toStack
-                      id <- register(ps)
+                      ek <- crypto.generateKey256.toStack
+                      id <- register(ps, UserEncryptionKey(ek))
                       ip <- svr.clientIP.toStack
                       _  <- taskman.submit(Task.RegistrationCompleted(id.toTaskman)).toStack
                       _  <- runDB(db.logGlobalEvent(GlobalEvent.UserRegister2(ip, id))).toStack

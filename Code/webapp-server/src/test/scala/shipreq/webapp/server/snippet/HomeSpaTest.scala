@@ -1,8 +1,10 @@
 package shipreq.webapp.server.snippet
 
+import doobie.ConnectionIO
 import shipreq.base.db.scalazDoobieConnectionIO
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.Event.FieldStaticRemove
+import shipreq.webapp.server.logic.algebra.Crypto
 import shipreq.webapp.server.logic.impl.HomeSpaLogic
 import shipreq.webapp.server.logic.util.Obfuscators
 import shipreq.webapp.server.test.WebappServerTestUtil._
@@ -19,12 +21,13 @@ object HomeSpaTest extends TestSuite {
           import uf.xa
           val uid = uf.user1.id
           implicit val db = uf.dbUtil.dbAlgebra
+          implicit val crypto = Crypto.default[ConnectionIO]
 
           // Confirm starting empty
           assertEq(xa ! db.getAllProjectMetaDataForUser(uid), Nil)
 
           // Create
-          val pi = xa ! HomeSpaLogic.createProject(uid, name)
+          val pi = xa ! HomeSpaLogic.createProject[ConnectionIO](uid, name)
           val initEvents = 2
 
           val pid = Obfuscators.projectId.deobfuscate(pi.id).toOption.get

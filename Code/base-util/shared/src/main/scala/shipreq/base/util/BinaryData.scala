@@ -81,6 +81,9 @@ final class BinaryData(private[BinaryData] val bytes: Array[Byte], val length: I
       .take(length)
       .map(b => "%02X".format(b & 0xff))
       .mkString
+
+  def ++(that: BinaryData): BinaryData =
+    BinaryData.unsafeFromArray(this.unsafeArray ++ that.unsafeArray)
 }
 
 object BinaryData {

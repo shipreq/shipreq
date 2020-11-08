@@ -5,6 +5,7 @@ import doobie.implicits.javatime.JavaOffsetDateTimeMeta
 import doobie.postgres.implicits._
 import java.time._
 import org.postgresql.util.PGInterval
+import shipreq.base.util.BinaryData
 
 object BaseDoobieCodecs {
 
@@ -20,5 +21,8 @@ object BaseDoobieCodecs {
 
   implicit val doobieMetaInstant: Meta[Instant] =
     Meta[OffsetDateTime].timap(_.toInstant)(OffsetDateTime.ofInstant(_, UTC))
+
+  implicit val doobieMetaBinaryData: Meta[BinaryData] =
+    Meta[Array[Byte]].timap(BinaryData.unsafeFromArray)(_.unsafeArray)
 
 }

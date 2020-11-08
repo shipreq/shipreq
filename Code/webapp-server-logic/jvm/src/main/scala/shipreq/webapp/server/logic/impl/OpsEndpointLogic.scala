@@ -14,7 +14,8 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{ApplyEvent, VerifiedEvent}
-import shipreq.webapp.server.logic.algebra.{DB, Server}
+import shipreq.webapp.server.logic.algebra.{Crypto, DB, Server}
+import shipreq.webapp.server.logic.data.ProjectEncryptionKey
 import shipreq.webapp.server.logic.dispatch.{ResponseCmd, StatusCode}
 
 trait OpsEndpointLogic[F[_]] {
@@ -39,6 +40,7 @@ object OpsEndpointLogic extends HasLogger {
   import shipreq.webapp.server.logic.util.LogicHelpers._
 
   abstract class Base[F[_]](implicit F: Monad[F],
+                            crypto: Crypto[F],
                             db: DB.ForOps[F],
                             svr: Server.Time[F],
                             taskman: TaskmanApi[F]) extends OpsEndpointLogic[F] {
@@ -112,7 +114,10 @@ object OpsEndpointLogic extends HasLogger {
             case Some(uid) =>
               ApplyEvent.untrusted.applyVerified(ves)(Project.empty) match {
                 case \/-(p) =>
-                  db.createProject(uid, ves, p).map { pid =>
+                  for {
+                    key <- crypto.generateKey256
+                    pid <- db.createProject(uid, ves, p, ProjectEncryptionKey(key))
+                  } yield {
                     val response = CreateProjectResult(uid, pid)
                     ResponseCmd.Json(StatusCode.OK, response.toJson)
                   }

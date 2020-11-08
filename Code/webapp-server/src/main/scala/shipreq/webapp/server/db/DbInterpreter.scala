@@ -192,17 +192,18 @@ object DbInterpreter {
           RETURNING id""".sql)
 
     private[db] final val sqlInsertUsrd =
-      Update[(UserId, PersonName, Boolean)]("INSERT INTO usrd VALUES(?,?,?)")
+      Update[(UserId, PersonName, Boolean, UserEncryptionKey)]("INSERT INTO usrd VALUES(?,?,?,?)")
 
     override final def completeUserRegistration(token     : VerificationToken,
                                                 name      : PersonName,
                                                 username  : Username,
                                                 ps        : PasswordAndSalt,
-                                                newsletter: Boolean): ConnectionIO[UserRegistrationResult] = {
+                                                newsletter: Boolean,
+                                                encKey    : UserEncryptionKey): ConnectionIO[UserRegistrationResult] = {
       import UserRegistrationResult._
-      sqlRegisterUser.toQuery0((username, ps, token)).option.attemptSql flatMap {
+      sqlRegisterUser.toQuery0((username, ps, token)).option.attemptSql.flatMap {
         case Right(Some(id)) =>
-          sqlInsertUsrd.toUpdate0((id, name, newsletter)).run.map(_ => Success(id))
+          sqlInsertUsrd.toUpdate0((id, name, newsletter, encKey)).run.map(_ => Success(id))
 
         case Right(None) =>
           Free pure TokenNotFound
@@ -420,10 +421,10 @@ object DbInterpreter {
     override def getAllProjectMetaDataForUser(id: UserId): ConnectionIO[List[ProjectMetaData]] =
       getAllProjectMetaDataForUserQuery.toQuery0(id).to[List]
 
-    override def createProject(uid: UserId, es: Vector[ActiveEvent], p: Project): ConnectionIO[ProjectId] = {
+    override def createProject(uid: UserId, es: Vector[ActiveEvent], p: Project, k: ProjectEncryptionKey): ConnectionIO[ProjectId] = {
       val events = es.length
       val name   = es.reverseIterator.collectFirst { case e: Event.ProjectNameSet => e.name }.getOrElse("")
-      val data   = (uid, events, events, p.liveReqCount, p.content.reqs.size, name)
+      val data   = (uid, events, events, p.liveReqCount, p.content.reqs.size, name, k)
       for {
         pid  <- ForHomeSpa.createProjectQuery.toQuery0(data).unique
         adds = es.iterator.zipWithIndex.map(x => SaveProjectEventLogic.unsafeInsertEvent(pid, EventOrd.fromIndex(x._2), x._1, uid))
@@ -434,11 +435,11 @@ object DbInterpreter {
 
   object ForHomeSpa {
 
-    private[db] val createProjectQuery: Query[(UserId, Int, Int, Int, Int, String), ProjectId] =
+    private[db] val createProjectQuery: Query[(UserId, Int, Int, Int, Int, String, ProjectEncryptionKey), ProjectId] =
       Query(
         """
-          |INSERT INTO project(usr_id, events_init, events_total, reqs_live, reqs_total, name)
-          |VALUES(?,?,?,?,?,?)
+          |INSERT INTO project(usr_id, events_init, events_total, reqs_live, reqs_total, name, encryption_key)
+          |VALUES(?,?,?,?,?,?,?)
           |RETURNING id
         """.stripMargin.sql)
   }
@@ -533,13 +534,16 @@ object DbInterpreter {
           (pid, ve.ord, typeId, data, uid, ve.createdAt)
         }
 
-    override def createProject(userId: UserId, events: VerifiedEvent.Seq, project: Project): ConnectionIO[ProjectId] = {
+    override def createProject(userId : UserId,
+                               events : VerifiedEvent.Seq,
+                               project: Project,
+                               encKey : ProjectEncryptionKey): ConnectionIO[ProjectId] = {
       val events_init  = 0
       val events_total = events.size
       val reqs_live    = project.content.reqs.reqIterator().count(_.live(project.config.reqTypes) is Live)
       val reqs_total   = project.content.reqs.size
       val name         = project.name
-      val creationArgs = (userId, events_init, events_total, reqs_live, reqs_total, name)
+      val creationArgs = (userId, events_init, events_total, reqs_live, reqs_total, name, encKey)
       val eventArgs    = (pid: ProjectId) => events.iterator.map((pid, _, userId)).toVector
       for {
         pid <- ForHomeSpa.createProjectQuery.toQuery0(creationArgs).unique

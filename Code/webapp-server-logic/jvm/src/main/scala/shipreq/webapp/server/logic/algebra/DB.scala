@@ -7,7 +7,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}
-import shipreq.webapp.server.logic.data.PasswordAndSalt
+import shipreq.webapp.server.logic.data._
 
 /**
   * Naming conventions:
@@ -139,7 +139,8 @@ object DB {
                                  name      : PersonName,
                                  username  : Username,
                                  ps        : PasswordAndSalt,
-                                 newsletter: Boolean): F[UserRegistrationResult]
+                                 newsletter: Boolean,
+                                 encKey    : UserEncryptionKey): F[UserRegistrationResult]
   }
 
   trait ForPasswordReset[F[_]] extends Base[F] with VerificationTokenReadOnly[F] {
@@ -211,7 +212,12 @@ object DB {
   trait ForHomeSpa[F[_]]
       extends Base[F]
         with GetProjectMetaData[F] {
-    def createProject(id: UserId, initEvents: Vector[ActiveEvent], project: Project): F[ProjectId]
+
+    def createProject(userId    : UserId,
+                      initEvents: Vector[ActiveEvent],
+                      project   : Project,
+                      encKey    : ProjectEncryptionKey): F[ProjectId]
+
     def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
   }
 
@@ -232,7 +238,11 @@ object DB {
     val dbSize    : F[Long]
 
     def getUserId(user: Username \/ EmailAddr): F[Option[UserId]]
-    def createProject(userId: UserId, events: VerifiedEvent.Seq, project: Project): F[ProjectId]
+
+    def createProject(userId : UserId,
+                      events : VerifiedEvent.Seq,
+                      project: Project,
+                      encKey : ProjectEncryptionKey): F[ProjectId]
   }
 
   object ForOps {
@@ -249,13 +259,16 @@ object DB {
 
     def trans[F[_], G[_]](f: ForOps[F])(t: F ~> G): ForOps[G] =
       new ForOps[G] {
-        override val now                                                        = t(f.now)
-        override val userStats                                                  = t(f.userStats)
-        override val tableStats                                                 = t(f.tableStats)
-        override val dbSize                                                     = t(f.dbSize)
-        override def getProjectEvents(a: ProjectId, b: EventFilter)             = t(f.getProjectEvents(a, b))
-        override def getUserId(a: Username \/ EmailAddr)                        = t(f.getUserId(a))
-        override def createProject(a: UserId, b: VerifiedEvent.Seq, c: Project) = t(f.createProject(a, b, c))
+        override val now                                            = t(f.now)
+        override val userStats                                      = t(f.userStats)
+        override val tableStats                                     = t(f.tableStats)
+        override val dbSize                                         = t(f.dbSize)
+        override def getProjectEvents(a: ProjectId, b: EventFilter) = t(f.getProjectEvents(a, b))
+        override def getUserId(a: Username \/ EmailAddr)            = t(f.getUserId(a))
+        override def createProject(a: UserId,
+                                   b: VerifiedEvent.Seq,
+                                   c: Project,
+                                   d: ProjectEncryptionKey)         = t(f.createProject(a, b, c, d))
       }
   }
 

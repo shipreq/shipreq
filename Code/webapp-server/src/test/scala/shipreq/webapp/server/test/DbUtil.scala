@@ -10,13 +10,17 @@ import shipreq.webapp.base.data.{ProjectId, UserId, Username}
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.ActiveEvent
 import shipreq.webapp.server.db.DbInterpreter
+import shipreq.webapp.server.db.WebappDoobieCodecs._
 import shipreq.webapp.server.interpreter.SecurityInterpreter
-import shipreq.webapp.server.logic.algebra.DB
+import shipreq.webapp.server.logic.algebra.{Crypto, DB}
+import shipreq.webapp.server.logic.data._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 
 object DbUtil {
 
   private[DbUtil] val Random = new Random()
+
+  val crypto = Crypto.default[Fx]
 }
 
 final case class DbUtil(xa: ImperativeXA) {
@@ -42,7 +46,8 @@ final case class DbUtil(xa: ImperativeXA) {
                    initEvents: Vector[ActiveEvent] = Vector.empty,
                   ): ProjectId = {
     val p = applyEventsSuccessfully(Project.empty, initEvents: _*)
-    xa ! dbAlgebra.createProject(userId, initEvents, p)
+    val k = ProjectEncryptionKey(DbUtil.crypto.generateKey256.unsafeRun())
+    xa ! dbAlgebra.createProject(userId, initEvents, p, k)
   }
 
   def getOrCreateUserId(): UserId =

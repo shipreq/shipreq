@@ -19,7 +19,7 @@ import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.{ScalaJsManifest, ServerLogicConfig}
-import shipreq.webapp.server.logic.data.{PasswordAndSalt, PasswordHash, Salt}
+import shipreq.webapp.server.logic.data._
 import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.logic.event.ApplyEventAlgebra
 import shipreq.webapp.server.logic.impl._
@@ -30,6 +30,7 @@ object MockDb {
                              username     : Username,
                              emailAddr    : EmailAddr,
                              ps           : PasswordAndSalt,
+                             encKey       : UserEncryptionKey,
                              createdAt    : Instant,
                              resetPassword: Option[(VerificationToken, Instant)] = None) {
     def pubids: List[Username \/ EmailAddr] =
@@ -50,6 +51,7 @@ object MockDb {
 
   final case class ProjectEntry(projectId    : ProjectId,
                                 userId       : UserId,
+                                encKey       : ProjectEncryptionKey,
                                 initEvents   : Int,
                                 events       : VerifiedEvent.Seq,
                                 createdAt    : Instant,
@@ -163,18 +165,19 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     r
   }
 
-  override def completeUserRegistration(token: VerificationToken,
-                                        name: PersonName,
-                                        username: Username,
-                                        ps: PasswordAndSalt,
-                                        newsletter: Boolean) =
+  override def completeUserRegistration(token     : VerificationToken,
+                                        name      : PersonName,
+                                        username  : Username,
+                                        ps        : PasswordAndSalt,
+                                        newsletter: Boolean,
+                                        key       : UserEncryptionKey) =
     now.map { n =>
       (getPendingUserRegistration(token), getUser(-\/(username))) match {
         case (None, _)          => DB.UserRegistrationResult.TokenNotFound
         case (Some(_), Some(_)) => DB.UserRegistrationResult.UsernameTaken
         case (Some((ea, reg)), None) =>
           userPlaceholders = userPlaceholders - ea
-          users ::= MockDb.UserEntry(reg.id, username, ea, ps, n)
+          users ::= MockDb.UserEntry(reg.id, username, ea, ps, key, n)
           DB.UserRegistrationResult.Success(reg.id)
       }
     }
@@ -195,7 +198,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
 
   override def getResetPasswordTokenIssueDate(t: VerificationToken) = Name[Option[Instant]] {
     users.collectFirst {
-      case MockDb.UserEntry(_, _, _, _, _, Some((t2, i))) if t ==* t2 => i
+      case MockDb.UserEntry(_, _, _, _, _, _, Some((t2, i))) if t ==* t2 => i
     }
   }
 
@@ -222,11 +225,11 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
   private var projects: IMap[ProjectId, MockDb.ProjectEntry] =
     IMap.empty(_.projectId)
 
-  def addProject(projectId: ProjectId, userId: UserId)(events: Event*): Unit = {
+  def addProject(projectId: ProjectId, userId: UserId, key: ProjectEncryptionKey)(events: Event*): Unit = {
     val initEvents = events.size
     val ves = verifyEvents(Project.empty)(events: _*)
     val now = Instant.now()
-    val mde = MockDb.ProjectEntry(projectId, userId, initEvents, ves, now, now, Some(now))
+    val mde = MockDb.ProjectEntry(projectId, userId, key, initEvents, ves, now, now, Some(now))
     projects = projects.add(mde)
   }
 
@@ -237,9 +240,9 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
   private def nextProjectId(): ProjectId =
     ProjectId(1 + projects.underlyingMap.keysIterator.map(_.value).foldLeft(0L)(_ max _))
 
-  override def createProject(id: UserId, initEvents: Vector[ActiveEvent], p: Project) = Name[ProjectId] {
+  override def createProject(id: UserId, initEvents: Vector[ActiveEvent], p: Project, k: ProjectEncryptionKey) = Name[ProjectId] {
     val pid = nextProjectId()
-    addProject(pid, id)(initEvents: _*)
+    addProject(pid, id, k)(initEvents: _*)
     pid
   }
 
@@ -290,9 +293,9 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       -\/(DB.SaveProjectEventError.OrdInUse)
   }
 
-  override def createProject(uid: UserId, events: VerifiedEvent.Seq, project: Project) = Name[ProjectId] {
+  override def createProject(uid: UserId, events: VerifiedEvent.Seq, project: Project, key: ProjectEncryptionKey) = Name[ProjectId] {
     val pid = nextProjectId()
-    addProject(pid, uid)()
+    addProject(pid, uid, key)()
     val entry = projects.need(pid)
     val newEntry = entry.copy(events = events, lastUpdatedAt = events.lastOption.map(_.createdAt).orElse(Some(Instant.now())))
     projects = projects + newEntry
@@ -518,6 +521,37 @@ final class MockSecurity(override val db: MockDb, now: Name[Instant], cfg: Serve
   }
 }
 
+final class MockCrypto extends Crypto[Name] {
+
+  private val default = Crypto.default[Name]
+
+  private var nextKey = 0
+
+  override def generateKey256 = Name[BinaryData] {
+    val i = nextKey
+    nextKey += 1
+    MockCrypto.generateKey256(i)
+  }
+
+  def generateUserKey() =
+    UserEncryptionKey(generateKey256.value)
+
+  def generateProjectKey() =
+    ProjectEncryptionKey(generateKey256.value)
+
+  override def sha256(input: BinaryData): BinaryData =
+    default.sha256(input)
+}
+
+object MockCrypto {
+  def generateKey256(i: Int): BinaryData = {
+    val a = new Array[Byte](32)
+    a(31) = (i & 0xff).toByte
+    a(30) = ((i >> 8) & 0xff).toByte
+    BinaryData.unsafeFromArray(a)
+  }
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 object MockInterpreters {
@@ -572,6 +606,7 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
   implicit val config         = modCfg(MockInterpreters.config)
   implicit val assetManifest  = config.assetManifest
   implicit val sjsManifest    = config.scalaJsManifest
+  implicit val crypto         = new MockCrypto
   implicit val svr            = new MockServer[Name]
   implicit val db             = specificMockDb.getOrElse(new MockDb(svr.now))
   implicit val security       = new MockSecurity(db, svr.now, config.security)
@@ -596,6 +631,7 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
     Username("blurp"),
     EmailAddr("blurp@bar.com"),
     security.hashPassword(user2password).value,
+    UserEncryptionKey(crypto.generateKey256.value),
     svr.clock minus Duration.ofDays(50))
 
   val user3password = PlainTextPassword("user3secret")
@@ -604,6 +640,7 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
     Username("user3"),
     EmailAddr("u3@test.com"),
     security.hashPassword(user3password).value,
+    UserEncryptionKey(crypto.generateKey256.value),
     svr.clock minus Duration.ofDays(2))
 
   def withConfig(f: ServerLogicConfig => ServerLogicConfig): MockInterpreters =

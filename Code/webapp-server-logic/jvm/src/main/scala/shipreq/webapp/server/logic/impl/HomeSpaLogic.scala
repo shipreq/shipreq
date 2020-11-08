@@ -8,7 +8,8 @@ import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.protocol.ajax.HomeSpaProtocols
 import shipreq.webapp.member.protocol.entrypoint.HomeSpaEntryPoint
-import shipreq.webapp.server.logic.algebra.DB
+import shipreq.webapp.server.logic.algebra.{Crypto, DB}
+import shipreq.webapp.server.logic.data.ProjectEncryptionKey
 import shipreq.webapp.server.logic.event.ApplyNewEvent
 
 trait HomeSpaLogic[F[_]] extends HomeSpaLogic.Ajax[F] {
@@ -26,22 +27,26 @@ object HomeSpaLogic {
   val InitProject       = ApplyNewEvent.mustApply(InitProjectEvent, Project.empty)
   val InitProjectEventV = Vector.empty[ActiveEvent] :+ InitProject.event
 
-  def createProject[D[_]](userId: UserId,
-                          name: Project.Name)
-                         (implicit db: DB.ForHomeSpa[D], D: Monad[D]): D[ProjectMetaData] = {
+  def createProject[D[_]](userId    : UserId,
+                          name      : Project.Name)
+                         (implicit D: Monad[D],
+                          db        : DB.ForHomeSpa[D],
+                          crypto    : Crypto[D]): D[ProjectMetaData] = {
 
     val e2 = ProjectNameSet(name)
     val p2 = ApplyNewEvent.mustApply(e2, InitProject.project).project
     val events = InitProjectEventV :+ e2
 
     for {
-      pid <- db.createProject(userId, events, p2)
+      key <- crypto.generateKey256
+      pid <- db.createProject(userId, events, p2, ProjectEncryptionKey(key))
       pmd <- db.getProjectMetaData(pid)
     } yield pmd.get
   }
 
   def apply[D[_], F[_]](implicit db: DB.ForHomeSpa[D],
                         am: AssetManifest,
+                        crypto: Crypto[D],
                         runDB: D ~> F,
                         D: Monad[D],
                         F: Monad[F]): HomeSpaLogic[F] =
@@ -53,6 +58,6 @@ object HomeSpaLogic {
         } yield HomeSpaEntryPoint.InitData(user.username, p, am)
 
       override val ajaxCreateProject =
-        (user, name) => runDB(createProject(user.id, name))
+        (user, name) => runDB(createProject[D](user.id, name))
     }
 }

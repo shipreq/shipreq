@@ -4,7 +4,9 @@ import doobie._
 import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
 import japgolly.microlibs.adt_macros.AdtMacros
+import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
+import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data._
 import shipreq.webapp.server.logic.data._
 
@@ -60,6 +62,12 @@ object WebappDoobieCodecs {
 
   implicit val doobieWriteGlobalEventSerialisationRow: Write[GlobalEventSerialisation.Row] =
     Write.apply2(a => (a.`type`, a.data))
+
+  implicit val doobieMetaProjectEncryptionKey: Meta[ProjectEncryptionKey] =
+    Meta[BinaryData].timap(ProjectEncryptionKey.apply)(_.value)
+
+  implicit val doobieMetaUserEncryptionKey: Meta[UserEncryptionKey] =
+    Meta[BinaryData].timap(UserEncryptionKey.apply)(_.value)
 }
 
 /** @since DB migration v4.4 */

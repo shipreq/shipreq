@@ -19,6 +19,8 @@ import shipreq.webapp.server.util.AnalyticsProxy
 import shipreq.webapp.ssr.SsrAlgebra
 
 final case class Global(config      : ServerConfig,
+                        cryptoD     : Crypto[ConnectionIO],
+                        cryptoF     : Crypto[Fx],
                         runDB       : ConnectionIO ~> Fx,
                         logic       : ServerLogic[Fx],
                         metrics     : MetricsAlgebra[Fx],
@@ -94,6 +96,10 @@ object Global {
           x
         }
 
+      implicit val (cryptoD, cryptoF) = t("crypto") {
+        (Crypto.default[ConnectionIO], Crypto.default[Fx])
+      }
+
       implicit val trace = t("trace") {
         TraceAlgebra.on: TraceInterpreter.ForHttp[Fx]
       }
@@ -159,6 +165,8 @@ object Global {
 
       Global(
         config       = config,
+        cryptoD      = cryptoD,
+        cryptoF      = cryptoF,
         runDB        = runDB,
         logic        = logic,
         metrics      = metrics,

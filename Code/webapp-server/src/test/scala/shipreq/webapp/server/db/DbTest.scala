@@ -14,6 +14,7 @@ import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.test.project.RandomEventStream
 import shipreq.webapp.server.config.Global
 import shipreq.webapp.server.interpreter.ServerInterpreter
+import shipreq.webapp.server.logic.data.ProjectEncryptionKey
 import shipreq.webapp.server.logic.impl.PublicSpaLogic
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._
@@ -21,6 +22,7 @@ import sourcecode.Line
 import utest._
 
 object DbTest extends TestSuite {
+  import DbUtil.crypto
 
   override def tests = Tests {
     PrepareEnv.dbOnce()
@@ -126,21 +128,25 @@ object DbTest extends TestSuite {
 
     "project" - {
 
-      def createProject(u: UserId, name: String)(implicit xa: ImperativeXA): ProjectId = {
+      def createProject(u: UserId, name: String, key: ProjectEncryptionKey)(implicit xa: ImperativeXA): ProjectId = {
         val e = Event.ProjectNameSet(name)
         val p = applyEventsSuccessfully(Project.empty, e)
-        xa ! DbUtil(xa).dbAlgebra.createProject(u, Vector(e), p)
+        xa ! DbUtil(xa).dbAlgebra.createProject(u, Vector(e), p, key)
       }
 
       "create" - TestDb.withImperativeXA { implicit xa =>
         val dbu = DbUtil(xa)
         val db = dbu.dbAlgebra
         val u = dbu.newUserId()
+        val k = crypto.generateKey256.unsafeRun()
         val pid = xa.assertRowCountChanges("project" -> 1, "project_event" -> 1, "project_access_per_hour" -> 1) {
-          createProject(u, "xxx")
+          createProject(u, "xxx", ProjectEncryptionKey(k.duplicate))
         }
         val pmd = xa ! db.getProjectMetaData(pid)
         assertEq(pmd.map(_.name), Some("xxx"))
+
+        val k2 = xa ! sql"SELECT encryption_key FROM project WHERE id = $pid".query[ProjectEncryptionKey].unique
+        assertEq(k2.value, k)
       }
 
 //      "rename" - {
@@ -186,7 +192,8 @@ object DbTest extends TestSuite {
           val dbu   = DbUtil(xa)
           val db    = dbu.dbAlgebra
           val uid   = dbu.newUserId()
-          val pid   = xa ! db.createProject(uid, data1.map(_._1.event.active), data1.last._2)
+          val k     = ProjectEncryptionKey(crypto.generateKey256.unsafeRun())
+          val pid   = xa ! db.createProject(uid, data1.map(_._1.event.active), data1.last._2, k)
 
           def assertPMD(expect: ProjectMetaData => ProjectMetaData)(implicit l: Line): Unit = {
             val a = (xa ! db.getProjectMetaData(pid)).get
