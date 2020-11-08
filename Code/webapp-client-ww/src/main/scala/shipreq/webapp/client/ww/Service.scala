@@ -2,14 +2,15 @@ package shipreq.webapp.client.ww
 
 import japgolly.scalajs.react.AsyncCallback
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.client.ww.graph.GraphViz.DOT
 import shipreq.webapp.client.ww.api.WebWorkerCmd
+import shipreq.webapp.client.ww.graph.GraphViz.DOT
 import shipreq.webapp.client.ww.graph.{ProjectImpGraph, ReqImpGraph, UseCaseFlowGraph}
+import shipreq.webapp.client.ww.state.WorkerState
 
 final class Service(logger: LoggerJs) extends Server.Service[WebWorkerCmd] {
   import WebWorkerCmd._
 
-  val state = new WebWorkerState(logger)
+  val state = new WorkerState(logger)
   import state.Implicits._
 
   override def apply[A](cmd: WebWorkerCmd[A]): AsyncCallback[A] =

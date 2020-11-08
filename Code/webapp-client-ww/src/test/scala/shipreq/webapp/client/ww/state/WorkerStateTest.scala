@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ww
+package shipreq.webapp.client.ww.state
 
 import japgolly.microlibs.testutil.TestUtil._
 import japgolly.scalajs.react.AsyncCallback
@@ -10,7 +10,7 @@ import shipreq.webapp.member.test.project.UnsafeTypes.autoSomeEventOrdLatest
 import sourcecode.Line
 import utest._
 
-object WebWorkerStateTest extends TestSuite {
+object WorkerStateTest extends TestSuite {
 
   private class Promise {
     var called = 0
@@ -26,7 +26,7 @@ object WebWorkerStateTest extends TestSuite {
     Instant.now()
 
   override def tests = Tests {
-    val s = new WebWorkerState(LoggerJs.off)
+    val s = new WorkerState(LoggerJs.off)
 
     def setProject(ord: Int): Unit =
       s.setProject(ProjectAndOrd(Project.empty, ord)).runNow()

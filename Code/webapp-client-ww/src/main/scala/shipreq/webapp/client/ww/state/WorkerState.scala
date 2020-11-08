@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ww
+package shipreq.webapp.client.ww.state
 
 import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
@@ -11,8 +11,8 @@ import shipreq.webapp.member.project.event.EventOrd.Implicits._
 import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
 import shipreq.webapp.member.project.text.PlainText
 
-final class WebWorkerState(logger: LoggerJs) {
-  import WebWorkerState._
+final class WorkerState(logger: LoggerJs) {
+  import WorkerState._
 
   private var _am: AssetManifest =
     null
@@ -29,12 +29,12 @@ final class WebWorkerState(logger: LoggerJs) {
   object Implicits {
 
     implicit def assetManifest: AssetManifest = {
-      assert(_am ne null, "WebWorkerState AssetManifest not set.")
+      assert(_am ne null, "WorkerState AssetManifest not set.")
       _am
     }
 
     implicit def graphviz: GraphViz = {
-      assert(_graphviz ne null, "WebWorkerState GraphViz not set.")
+      assert(_graphviz ne null, "WorkerState GraphViz not set.")
       _graphviz
     }
   }
@@ -134,7 +134,7 @@ final class WebWorkerState(logger: LoggerJs) {
 
 // =====================================================================================================================
 
-object WebWorkerState {
+object WorkerState {
 
   @Lenses
   final case class Immutable(pao: ProjectAndOrd, ordPromises: List[OrdPromise])
