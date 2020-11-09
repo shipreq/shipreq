@@ -5,6 +5,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
 import scala.util.{Failure, Success, Try}
+import shipreq.base.util.BinaryData
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.test.TestState._
@@ -22,7 +23,7 @@ import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.app.pages.root.{ProjectHomeTestDsl => PH, _}
 import shipreq.webapp.client.project.test._
 import shipreq.webapp.client.project.widgets.{ImplicationGraph, ReqSearch}
-import shipreq.webapp.member.project.data.{ExternalPubid, Project}
+import shipreq.webapp.member.project.data.{ClientSideProjectEncryptionKey, ExternalPubid, Project}
 import shipreq.webapp.member.project.event.Event
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.member.test._
@@ -288,6 +289,8 @@ object ProjectSpaTestDsl {
     ()
   }
 
+  private val encKey = ClientSideProjectEncryptionKey(BinaryData.empty)
+
   def runTestReturnReport(action    : *.Actions,
                           page      : Page,
                           project   : Project                  = SampleProject5.project,
@@ -303,7 +306,7 @@ object ProjectSpaTestDsl {
     val global       = TestGlobal(project)
     val confirmJs    = TestConfirmJs()
     val promptJs     = TestPromptJs()
-    val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name, AssetManifest(None), "/ww.js")
+    val initPageData = ProjectSpaEntryPoint.InitData(Username("testuser"), Obfuscated("xyz"), project.name, AssetManifest(None), "/ww.js", encKey)
     val ww           = TestWebWorkerClient(wwPrep)
     val spa          = new LoadedRoot(initPageData, global, confirmJs, promptJs, global.optionalFullscreen, ww)
     val rc           = MockRouterCtl[Page]()

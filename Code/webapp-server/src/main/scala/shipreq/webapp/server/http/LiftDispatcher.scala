@@ -6,6 +6,7 @@ import net.liftweb.common.{Box, Empty, Failure => BoxFailure, Full}
 import net.liftweb.http.{RedirectResponse => _, Req => LiftReq, _}
 import net.liftweb.util.Props
 import org.eclipse.jetty.http.HttpCookie
+import scala.util.control.NonFatal
 import scala.xml.NodeSeq
 import scalaz.Need
 import shipreq.base.util.FxModule._
@@ -18,6 +19,7 @@ import shipreq.webapp.server.interpreter.ServerInterpreter
 import shipreq.webapp.server.logic.algebra.DB
 import shipreq.webapp.server.logic.dispatch
 import shipreq.webapp.server.logic.dispatch.{Cookie, DispatchLogic}
+import shipreq.webapp.server.snippet.SnippetError
 
 object LiftDispatcher {
   object ProjectIdVar extends RequestVar[ProjectId](null)
@@ -150,17 +152,22 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
           response.cookies.remove.foreach(deleteCookie)
           response.cookies.add.foreach(addCookie)
 
-          response.cmd match {
-            case ServePublicSpa(ou)     => ou.foreach(UserVar.set); templatePublic.render(req)
-            case ServeHomeSpa(u)        => UserVar.set(u); templateHome.render(req)
-            case ProjectSpa.Serve(u, p) => UserVar.set(u); ProjectIdVar.set(p); templateProject.render(req)
-            case ProjectSpa.NotOwner
-               | ProjectSpa.InvalidId   => Full(RedirectResponse(Urls.memberHome.relativeUrl))
-            case Redirect(to)           => Full(RedirectResponse(to.relativeUrl))
-            case r: Binary              => Full(BinaryResponse(r.status, r.body))
-            case r: Text                => Full(GenericResponse(r.status, r.body, "text/plain"))
-            case r: Json                => Full(GenericResponse(r.status, r.body, "application/json"))
-            case StatusOnly(status)     => Full(StatusOnlyResponse(status))
+          try
+            response.cmd match {
+              case ServePublicSpa(ou)     => ou.foreach(UserVar.set); templatePublic.render(req)
+              case ServeHomeSpa(u)        => UserVar.set(u); templateHome.render(req)
+              case ProjectSpa.Serve(u, p) => UserVar.set(u); ProjectIdVar.set(p); templateProject.render(req)
+              case ProjectSpa.NotOwner
+                 | ProjectSpa.InvalidId   => Full(RedirectResponse(Urls.memberHome.relativeUrl))
+              case Redirect(to)           => Full(RedirectResponse(to.relativeUrl))
+              case r: Binary              => Full(BinaryResponse(r.status, r.body))
+              case r: Text                => Full(GenericResponse(r.status, r.body, "text/plain"))
+              case r: Json                => Full(GenericResponse(r.status, r.body, "application/json"))
+              case StatusOnly(status)     => Full(StatusOnlyResponse(status))
+            }
+          catch {
+            case SnippetError.MemberDataNotFound => Full(RedirectResponse(Urls.memberHome.relativeUrl))
+            case NonFatal(t)                     => throw t
           }
         }
       }

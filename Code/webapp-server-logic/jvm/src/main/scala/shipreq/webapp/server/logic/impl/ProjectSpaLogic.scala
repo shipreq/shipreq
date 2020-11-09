@@ -20,7 +20,7 @@ import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WsRe
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.member.project.protocol.websocket._
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
-import shipreq.webapp.server.logic.algebra.{DB, MetricsAlgebra, Redis, Security, Server}
+import shipreq.webapp.server.logic.algebra.{Crypto, DB, MetricsAlgebra, Redis, Security, Server}
 import shipreq.webapp.server.logic.config.ScalaJsManifest
 import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.logic.event.{ApplyEventAlgebra, ApplyNewEvent, MakeEvent}
@@ -29,7 +29,10 @@ import shipreq.webapp.server.logic.util.Obfuscators
 trait ProjectSpaLogic[F[_]] {
   import ProjectSpaLogic._
 
-  def initPage(projectId: ProjectId, username: Username, am: AssetManifest): F[ProjectSpaEntryPoint.InitData]
+  def initPage(projectId: ProjectId,
+               userId   : UserId,
+               username : Username,
+               am       : AssetManifest): F[Option[ProjectSpaEntryPoint.InitData]]
 
   def onConnect(cookies  : Cookie.LookupFn,
                 projectId: ProjectId.Public): F[ConnectRejection \/ (WebSocketStatic, WebSocketState[F])]
@@ -128,6 +131,7 @@ object ProjectSpaLogic extends StrictLogging {
                         D       : Monad[D],
                         F       : Monad[F] with BindRec[F],
                         apEvent : ApplyEventAlgebra[F],
+                        crypto  : Crypto[F],
                         db      : DB.ForProjectSpa[D],
                         metrics : MetricsAlgebra[F],
                         redis   : Redis.ProjectAlgebra[F],
@@ -153,12 +157,18 @@ object ProjectSpaLogic extends StrictLogging {
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      override def initPage(pid: ProjectId, username: Username, am: AssetManifest): F[ProjectSpaEntryPoint.InitData] =
+      override def initPage(pid: ProjectId, uid: UserId, username: Username, am: AssetManifest): F[Option[ProjectSpaEntryPoint.InitData]] =
         for {
-          name <- runDB(db.projectSpaInitPage(pid))
-        } yield {
-          val pidPub = Obfuscators.projectId.obfuscate(pid)
-          ProjectSpaEntryPoint.InitData(username, pidPub, name, am, webWorkerJsUrl = sjsUrls.webWorker)
+          o <- runDB(db.projectSpaInitPage(pid, uid))
+        } yield o.map { i =>
+          ProjectSpaEntryPoint.InitData(
+            username       = username,
+            projectId      = Obfuscators.projectId.obfuscate(pid),
+            projectName    = i.name,
+            assetManifest  = am,
+            webWorkerJsUrl = sjsUrls.webWorker,
+            encryptionKey  = crypto.clientSideProjectEncryptionKey(i.userKey, i.projectKey),
+          )
         }
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

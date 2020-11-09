@@ -259,8 +259,11 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     projects.get(id).map(_.projectMetaData)
   }
 
-  override def projectSpaInitPage(id: ProjectId) = Name[Project.Name] {
-    projects.get(id).fold("")(_.project.name)
+  override def projectSpaInitPage(pid: ProjectId, uid: UserId) = Name[Option[DB.ProjectSpaInitPage]] {
+    for {
+      u <- users.find(_.id ==* uid)
+      p <- projects.get(pid)
+    } yield DB.ProjectSpaInitPage(p.project.name, u.encKey, p.encKey)
   }
 
   var loadProjectLog = Vector.empty[ProjectId]

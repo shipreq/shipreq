@@ -1992,6 +1992,12 @@ object RandomData {
     Gen.choose(am1, am2)
   }
 
+  def genBinaryData(sizeSpec: SizeSpec): Gen[BinaryData] =
+    Gen.byte.arraySeq(sizeSpec).map(BinaryData.fromArraySeq)
+
+  lazy val genClientSideProjectEncryptionKey: Gen[ClientSideProjectEncryptionKey] =
+    genBinaryData(32).map(ClientSideProjectEncryptionKey.apply)
+
   // ===================================================================================================================
   object routines {
     import shipreq.webapp.member.protocol.entrypoint._
@@ -2010,7 +2016,8 @@ object RandomData {
         i <- projectIdPublic
         n <- projectName
         a <- genAssetManifest
-      } yield ProjectSpaEntryPoint.InitData(u, i, n, a, "/j/ww.js")
+        k <- genClientSideProjectEncryptionKey
+      } yield ProjectSpaEntryPoint.InitData(u, i, n, a, "/j/ww.js", k)
 
 //    class CrudActionGens[I, V](idG: Gen[I], vG: Gen[V]) {
 //      lazy val create  = vG.map(CrudAction.Create[I, V])

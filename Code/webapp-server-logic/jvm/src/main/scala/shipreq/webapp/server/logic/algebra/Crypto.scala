@@ -3,6 +3,8 @@ package shipreq.webapp.server.logic.algebra
 import java.security._
 import scalaz.Applicative
 import shipreq.base.util.BinaryData
+import shipreq.webapp.member.project.data.ClientSideProjectEncryptionKey
+import shipreq.webapp.server.logic.data.{ProjectEncryptionKey, UserEncryptionKey}
 
 trait Crypto[F[_]] {
 
@@ -10,6 +12,13 @@ trait Crypto[F[_]] {
   def generateKey256: F[BinaryData]
 
   def sha256(input: BinaryData): BinaryData
+
+  final def clientSideProjectEncryptionKey(u: UserEncryptionKey,
+                                           p: ProjectEncryptionKey): ClientSideProjectEncryptionKey = {
+    val b =  u.value ++ p.value
+    ClientSideProjectEncryptionKey(sha256(b))
+  }
+
 }
 
 object Crypto {

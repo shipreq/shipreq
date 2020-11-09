@@ -226,8 +226,12 @@ object DB {
          with GetProjectMetaData[F]
          with GetProjectEvents[F]
          with SaveProjectEvent[F] {
-    def projectSpaInitPage(id: ProjectId): F[Project.Name]
+    def projectSpaInitPage(id: ProjectId, uid: UserId): F[Option[ProjectSpaInitPage]]
   }
+
+  final case class ProjectSpaInitPage(name      : Project.Name,
+                                      userKey   : UserEncryptionKey,
+                                      projectKey: ProjectEncryptionKey)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

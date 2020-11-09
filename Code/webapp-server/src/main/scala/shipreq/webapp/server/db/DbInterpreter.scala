@@ -454,13 +454,14 @@ object DbInterpreter {
       Update[ProjectId](s"UPDATE project SET accessed_at=now() WHERE id=?")
 
     private[db] val projectSpaInitPageQuery =
-      Query[ProjectId, Project.Name]("SELECT name FROM project WHERE id=?")
+      Query[(ProjectId, UserId), (Project.Name, ProjectEncryptionKey, UserEncryptionKey)](
+        "SELECT p.name, p.encryption_key pk, u.encryption_key uk FROM usrd u, project p WHERE p.id=? AND u.usr_id=?")
 
-    override def projectSpaInitPage(id: ProjectId): ConnectionIO[Project.Name] =
+    override def projectSpaInitPage(pid: ProjectId, uid: UserId): ConnectionIO[Option[DB.ProjectSpaInitPage]] =
       for {
-        _ <- logProjectRead.toUpdate0(id).run
-        o <- projectSpaInitPageQuery.toQuery0(id).option
-      } yield o.getOrElse("")
+        _ <- logProjectRead.toUpdate0(pid).run
+        o <- projectSpaInitPageQuery.toQuery0((pid, uid)).option
+      } yield o.map { case (name, pk, uk) => DB.ProjectSpaInitPage(name, uk, pk) }
 
   }
 

@@ -63,8 +63,8 @@ object DbTriggerTest extends TestSuite {
 
         val db = new DbInterpreter()(PrepareEnv.global().config.server.security)
 
-        def read(p: ProjectId): Unit =
-          xa ! db.projectSpaInitPage(p)
+        def read(p: ProjectId)(implicit u: UserId): Unit =
+          xa ! db.projectSpaInitPage(p, u)
 
         def writeTo(p: ProjectId): Unit =
           assertEq(xa ! DbInterpreter.SaveProjectEventLogic.updateProjectN.toUpdate0(("A", p)).run, 1)
@@ -83,9 +83,10 @@ object DbTriggerTest extends TestSuite {
         considerHourBoundary {
           xa ! DbTables.ProjectAccessPerHour.truncate
           assertState(0)(0, 0)(0, 0)
-          val a = DbUtil(xa).newProjectId()
+          implicit val u = DbUtil(xa).getOrCreateUserId()
+          val a = DbUtil(xa).newProjectId(u)
           assertState(1)(0, 0)(1, 1)
-          val b = DbUtil(xa).newProjectId()
+          val b = DbUtil(xa).newProjectId(u)
           assertState(1)(0, 0)(2, 2)
           writeTo(a); assertState(1)(0, 0)(3, 2)
           read(b)   ; assertState(2)(1, 1)(3, 2)

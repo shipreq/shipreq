@@ -468,4 +468,8 @@ object BaseData {
 
   implicit lazy val pickleAssetManifest =
     transformPickler(AssetManifest.apply)(_.staticAssetCdn)
+
+  implicit lazy val picklerBinaryData: Pickler[BinaryData] =
+    transformPickler(BinaryData.unsafeFromArray)(_.unsafeArray)
+
 }

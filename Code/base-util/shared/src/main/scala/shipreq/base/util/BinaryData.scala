@@ -92,13 +92,16 @@ object BinaryData {
 
   val DefaultByteLimitInDesc = 50
 
-//  val empty: BinaryData =
-//    unsafeFromArray(new Array(0))
+  def empty: BinaryData =
+    unsafeFromArray(new Array(0))
 
   def fromArray(a: Array[Byte]): BinaryData = {
     val a2 = Arrays.copyOf(a, a.length)
     unsafeFromArray(a2)
   }
+
+  def fromArraySeq(a: ArraySeq[Byte]): BinaryData =
+    unsafeFromArray(a.unsafeArray.asInstanceOf[Array[Byte]])
 
   def fromByteBuffer(bb: ByteBuffer): BinaryData =
     if (bb.hasArray) {
