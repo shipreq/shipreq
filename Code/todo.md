@@ -1,5 +1,7 @@
 ### Problems
-
+* editor with preview scrolling problems
+  - when fullscreen when editing right at the bottom (IV-47)
+  - when not fullscreen when editing right at the bottom (IV-47)
 
 
 ### Improvements
