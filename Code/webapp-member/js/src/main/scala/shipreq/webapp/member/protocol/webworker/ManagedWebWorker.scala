@@ -95,6 +95,9 @@ object ManagedWebWorker {
     }
 
     private final case class Promise[A](id: Int, complete: A => Callback)
+
+    implicit def reusability[Req[_], R[_], Enc]: Reusability[Client[Req, R, Enc]] =
+      Reusability.byRef
   }
 
   // ===================================================================================================================
@@ -113,14 +116,14 @@ object ManagedWebWorker {
       def apply[A](client: Client, req: Req[A]): AsyncCallback[A]
     }
 
-    trait ResponseEncoder[Req[_], W[_]] {
+    trait ResponseEncoder[W[_], Req[_]] {
       def apply[A](req: Req[A]): W[A]
     }
 
-    def apply[Req[_], Push](worker              : AbstractWebWorker.Server,
+    def start[Req[_], Push](worker              : AbstractWebWorker.Server,
                             protocol            : WebWorkerProtocol)
                            (serviceMaker        : ServiceMaker[Req, Push],
-                            responseEncoder     : ResponseEncoder[Req, protocol.Writer],
+                            responseEncoder     : ResponseEncoder[protocol.Writer, Req],
                             onError             : OnError,
                             logger              : LoggerJs,
                            )(implicit pushWriter: protocol.Writer[Push],

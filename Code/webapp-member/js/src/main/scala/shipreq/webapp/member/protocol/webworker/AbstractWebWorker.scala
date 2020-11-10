@@ -14,13 +14,20 @@ object AbstractWebWorker {
   type TransferList = js.UndefOr[js.Array[Transferable]]
 
   trait Client {
-
     def onError(f: OnError): Callback
     def listen(f: js.Any => Callback): Callback
     def send(msg: js.Any, transferList: TransferList): Callback
   }
 
   object Client {
+
+    def apply(url: String, name: String): CallbackTo[Client] =
+      CallbackTo {
+        if (js.isUndefined(js.Dynamic.global.SharedWorker))
+          dedicated(new Worker(url))
+        else
+          shared(new SharedWorker(url, name))
+      }
 
     def dedicated(worker: Worker): Client =
       this.worker(worker, worker.asInstanceOf[js.Dynamic])

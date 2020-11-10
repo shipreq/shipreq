@@ -22,7 +22,7 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
   override def encode(cmd: WebWorkerCmd[_]): ArrayBuffer =
     null
 
-  override def postEnc[A](cmd: WebWorkerCmd[A], enc: ArrayBuffer)(implicit readResult: Pickler[A]): AsyncCallback[A] =
+  override def sendEncoded[A](cmd: WebWorkerCmd[A], enc: ArrayBuffer)(implicit readResult: Pickler[A]): AsyncCallback[A] =
     AsyncCallback.byName {
       val id = requests.length
       requests :+= cmd

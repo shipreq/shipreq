@@ -593,7 +593,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       val sendProjectToWebWorker: Callback =
         for {
           pao <- pxProjectAndOrd.toCallback
-          _   <- webWorkerClient.post(WebWorkerCmd.Init(pao, initPageData.assetManifest)).toCallback
+          _   <- webWorkerClient.send(WebWorkerCmd.Init(pao, initPageData.assetManifest)).toCallback
         } yield ()
 
       val installHooks: Callback =
@@ -615,7 +615,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     def onProjectChange(u: ProjectState.Update): Callback = {
       val updateWebWorker: Callback =
         Callback.traverseOption(VerifiedEvent.NonEmptySeq.maybe(u.newlyAppliedEvents))(ves =>
-          webWorkerClient.post(WebWorkerCmd.UpdateProject(ves)).toCallback)
+          webWorkerClient.send(WebWorkerCmd.UpdateProject(ves)).toCallback)
 
       updateWebWorker >> $.forceUpdate
     }

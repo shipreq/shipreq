@@ -1,32 +1,38 @@
 package shipreq.webapp.client.project.app
 
+import boopickle.DefaultBasic.unitPickler
 import boopickle.Pickler
-import japgolly.scalajs.react.AsyncCallback
+import japgolly.scalajs.react._
 import java.time.Duration
-import org.scalajs.dom.webworkers.Worker
 import scala.scalajs.js.typedarray.ArrayBuffer
 import shipreq.base.util.JsExt._
 import shipreq.base.util._
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.client.ww.api.Protocol.Codec.{default => codec}
 import shipreq.webapp.client.ww.api._
 import shipreq.webapp.member.project.util.LruCache
+import shipreq.webapp.member.protocol.webworker._
 
 object WebWorkerClient {
 
-  type Instance = Client[WebWorkerCmd, codec.Reader, codec.Encoded]
+  val protocol = WebWorkerProtocol.default
 
-  def apply(wwJsUrl: String, logger: LoggerJs): Instance = {
-    val real = withoutCache(wwJsUrl, logger)
-    cache(real, logger)
+  type Instance = ManagedWebWorker.Client[WebWorkerCmd, protocol.Reader, protocol.Encoded]
+
+  def apply(worker: AbstractWebWorker.Client, logger: LoggerJs): CallbackTo[Instance] = {
+    val onPush = (_: Unit) => Callback.empty
+    ManagedWebWorker.Client[WebWorkerCmd, Unit](
+      worker,
+      protocol,
+      onPush,
+      OnError.logToConsole, // TODO do better
+      logger
+    )
   }
 
-  def withoutCache(wwJsUrl: String, logger: LoggerJs): Instance = {
-    lazy val worker = new Worker(wwJsUrl)
-    Client.default[WebWorkerCmd](worker, logger)
-  }
+  def default(worker: AbstractWebWorker.Client, logger: LoggerJs): CallbackTo[Instance] =
+    apply(worker, logger).map(addCaching(_, logger))
 
-  def cache(instance: Instance, logger: LoggerJs): Instance = {
+  def addCaching(instance: Instance, logger: LoggerJs): Instance = {
 
     type Cache = LruCache.ToAny[String]
 
@@ -49,11 +55,12 @@ object WebWorkerClient {
       cacheByProject.reset.asAsyncCallback
 
     new Instance {
+
       override def encode(cmd: WebWorkerCmd[_]): ArrayBuffer =
         instance.encode(cmd)
 
-      override def postEnc[A](cmd: WebWorkerCmd[A], enc: ArrayBuffer)(implicit p: Pickler[A]): AsyncCallback[A] = {
-        @inline def real = instance.postEnc(cmd, enc)
+      override def sendEncoded[A](req: WebWorkerCmd[A], enc: ArrayBuffer)(implicit p: Pickler[A]): AsyncCallback[A] = {
+        @inline def real = instance.sendEncoded(req, enc)
 
         @inline def useCache(c: Cache) = {
           val bin = BinaryData.unsafeFromArrayBuffer(enc)
@@ -61,7 +68,7 @@ object WebWorkerClient {
           c.asyncGetOrSetR(key, real)
         }
 
-        cmd match {
+        req match {
           case _: WebWorkerCmd.GraphAllImplications
              | _: WebWorkerCmd.GraphReqImplications
              | _: WebWorkerCmd.GraphUseCaseFlow =>
