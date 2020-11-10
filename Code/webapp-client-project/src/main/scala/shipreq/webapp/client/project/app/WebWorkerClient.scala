@@ -84,6 +84,9 @@ object WebWorkerClient {
             real
         }
       }
+
+      override def close: Callback =
+        instance.close
     }
   }
 }

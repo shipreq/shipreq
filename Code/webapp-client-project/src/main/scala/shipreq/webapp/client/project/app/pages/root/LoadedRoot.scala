@@ -598,6 +598,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
       val installHooks: Callback =
         Callback {
+
           window.onbeforeunload = event => {
             val u = pxUnsavedChanges.value()
             if (u.nonEmpty) {
@@ -606,6 +607,10 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
               ""
             } else
               ()
+          }
+
+          window.onunload = _ => {
+            webWorkerClient.close.runNow()
           }
         }
 

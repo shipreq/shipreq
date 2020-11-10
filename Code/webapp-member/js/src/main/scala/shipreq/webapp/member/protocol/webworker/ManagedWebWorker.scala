@@ -17,6 +17,8 @@ object ManagedWebWorker {
     def encode(req: Req[_]): Enc
 
     def sendEncoded[A](req: Req[A], enc: Enc)(implicit readResult: R[A]): AsyncCallback[A]
+
+    def close: Callback
   }
 
   object Client {
@@ -32,6 +34,7 @@ object ManagedWebWorker {
 
       import protocol.{Encoded, Reader}
 
+      var closed        = false
       var lastPromiseId = 0
       var promises      = List.empty[Promise[Encoded]]
       val initBarrier   = AsyncCallback.barrier.runNow()
@@ -63,6 +66,15 @@ object ManagedWebWorker {
           CallbackTo(protocol.decode[Push](msg.body)).flatMap(onPush)
         }
 
+      val ensureNotClosed: AsyncCallback[Unit] =
+        AsyncCallback.delay {
+          if (closed)
+            throw new RuntimeException("Closed")
+        }
+
+      val preSend: AsyncCallback[Unit] =
+        ensureNotClosed >> initBarrier.waitForCompletion >> ensureNotClosed
+
       worker.onError(onError).runNow()
       worker.listen(receive).runNow()
 
@@ -72,7 +84,7 @@ object ManagedWebWorker {
           protocol.encode[Req[_]](req)
 
         override def sendEncoded[A](req: Req[A], enc: Encoded)(implicit readResult: Reader[A]): AsyncCallback[A] =
-          initBarrier.waitForCompletion >> AsyncCallback.promise[A].map { case (result, complete) =>
+          preSend >> AsyncCallback.promise[A].map { case (result, complete) =>
             lastPromiseId += 1
             val id = lastPromiseId
 
@@ -91,6 +103,14 @@ object ManagedWebWorker {
 
             result
           }.asAsyncCallback.flatten.memo()
+
+        override def close =
+          Callback {
+            if (!closed) {
+              closed = true
+              worker.send(ClientClosing, ()).runNow()
+            }
+          }
       }
     }
 
@@ -134,8 +154,16 @@ object ManagedWebWorker {
         var clients = List.empty[C]
 
         def registerClient(client: C): Callback =
-          Callback(clients ::= client) >>
-            worker.send(client :: Nil, ServerIsReady, ())
+          Callback {
+            clients ::= client
+            logger(_.info("New client: ", client.asInstanceOf[js.Any]))
+          } >> worker.send(client :: Nil, ServerIsReady, ())
+
+        def deregisterClient(client: C): Callback =
+          Callback {
+            clients = clients.filter(_ != client)
+            logger(_.info("De-registering client: ", client.asInstanceOf[js.Any]))
+          }
 
         val server: Server[C, Push] = new Server[C, Push] {
           override def broadcast(push: Push, exclude: Option[C]): Callback =
@@ -167,17 +195,24 @@ object ManagedWebWorker {
               AsyncCallback.unit
           }
 
+        def onMessage(client: C): js.Any => Callback =
+          data =>
+            (data: Any) match {
+              case ClientClosing => deregisterClient(client)
+              case _ =>
+                Callback.byName {
+                  val msg = data.asInstanceOf[MessageWithId[protocol.Encoded]]
+                  val req = protocol.decode[Req[_]](msg.body)
+                  respond(client, msg.id, req).toCallback
+                }
+            }
+
         worker.onError(onError).runNow()
 
         worker.listen { client =>
           for {
             _ <- registerClient(client)
-          } yield (data: js.Any) =>
-            Callback.byName {
-              val msg = data.asInstanceOf[MessageWithId[protocol.Encoded]]
-              val req = protocol.decode[Req[_]](msg.body)
-              respond(client, msg.id, req).toCallback
-            }
+          } yield onMessage(client)
         }.runNow()
 
       }
@@ -190,5 +225,6 @@ object ManagedWebWorker {
   private final class PushMessage[+A](val body: A) extends js.Object
 
   private final val ServerIsReady = "."
+  private final val ClientClosing = ";"
 
 }
