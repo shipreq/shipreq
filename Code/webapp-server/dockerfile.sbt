@@ -10,7 +10,7 @@ dockerfile in docker := {
   val base      = "/shipreq"
   val srcDocker = sourceDirectory.value / "docker"
   val tmp       = target.value / "docker-prep" // must be distinct from (target in docker)
-  val wsjar     = "webapp-server.jar"
+  val wsjar     = "webappserver.jar"
 
   def prepareClean(f: String): Unit =
     execInBash(s"""rm -rf "$f" && mkdir -p "$f"""")
@@ -126,6 +126,8 @@ dockerfile in docker := {
   val compGz = s"pigz -kT${if (releaseMode) 11 else 9}"
   val compBr = s"brotli -k${if (releaseMode) "Z" else "9"}"
 
+  var wsjarEncountered = false
+
   val warStages =
     warTiers.map { case (i, fixJars, batch) =>
       val stage = tmpWar / s"bucket-$i"
@@ -145,11 +147,16 @@ dockerfile in docker := {
 
       // Jetty's WebAppClassLoader doesn't seem to access resources in lib jars which prevents FlyWay from
       // finding the db migrations
-      if (batch.exists(_._2 endsWith s"/$wsjar"))
+      if (batch.exists(_._2 endsWith s"/$wsjar")) {
+        wsjarEncountered = true
         execInBash(s"cd $stageDir/WEB-INF && mkdir classes && cd classes && unzip -l ../lib/$wsjar | sed 1,3d | head -n -2 | tr -s ' ' | cut -d' ' -f5- | grep -v '\\.class$$' | xargs unzip ../lib/$wsjar")
+      }
 
       stage
     }
+
+  if (!wsjarEncountered)
+    throw new RuntimeException("Didn't encounter: " + wsjar)
 
   // Clear file timestamps to allow Docker layer caching
   // execInBash(s"""find "${tmp.getAbsolutePath}" -exec touch -t 201304010000 {} +""")

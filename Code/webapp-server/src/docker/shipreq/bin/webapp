@@ -13,7 +13,9 @@ cmd+=("$@")
 import-files || exit 1
 
 mkdir -p resources
-[ ! -e resources/logback.xml ] && cp webapps/ROOT/WEB-INF/classes/logback.xml resources/logback.xml
+if [ ! -e resources/logback.xml ]; then
+  cp webapps/ROOT/WEB-INF/classes/logback.xml resources/logback.xml || exit 1
+fi
 
 # Replace static links in webpack output :(
 i="$(printenv shipreq.staticAssetCdn)"
