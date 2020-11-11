@@ -1,4 +1,8 @@
 ### Problems
+* master is broken only on AWS somehow
+  * spin up new dev env and try things out there, trim task def
+  * capture interrupts from webapp and capture diagnostic info after its killed
+
 * editor with preview scrolling problems
   - when fullscreen when editing right at the bottom (IV-47)
   - when not fullscreen when editing right at the bottom (IV-47)
