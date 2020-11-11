@@ -142,7 +142,7 @@ resource "aws_ecs_task_definition" "shipreq_webapp" {
         "CMD-SHELL",
         "curl -f http://localhost:8080/ops/ok || exit 1"
       ],
-      "startPeriod": 90,
+      "startPeriod": 150,
       "interval": 60,
       "timeout": 10,
       "retries": 3
