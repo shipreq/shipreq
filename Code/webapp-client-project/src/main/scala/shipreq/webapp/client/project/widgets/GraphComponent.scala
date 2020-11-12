@@ -65,7 +65,7 @@ object GraphComponent {
 
     def refresh(p: Props): Callback =
       $.modState(_.copy(validity = Invalid)) >>
-        p.webWorker.post(cmd(p))
+        p.webWorker.send(cmd(p))
           .flatMapSync(result => $.setState(State(Some(result), Valid)))
           .toCallback
 

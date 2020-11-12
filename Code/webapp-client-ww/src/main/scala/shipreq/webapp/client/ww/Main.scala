@@ -1,8 +1,10 @@
 package shipreq.webapp.client.ww
 
+import boopickle.DefaultBasic.unitPickler
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.client.ww.api.Protocol.Codec.default.Writer
 import shipreq.webapp.client.ww.api._
+import shipreq.webapp.client.ww.state.WorkerState
+import shipreq.webapp.member.protocol.webworker._
 
 /**
  * Initialises the WebWorker thread.
@@ -11,17 +13,29 @@ import shipreq.webapp.client.ww.api._
  */
 object Main {
 
+  val protocol = WebWorkerProtocol.default
+
   def main(args: Array[String]): Unit = {
-    val logger = LoggerJs.devOnly.prefixedWith("[WW] ")
-    Server.startDefault(
-      new Service(logger),
-      ResultEncoder,
-      logger
-    ).runNow()
+    val logger       = LoggerJs.devOnly.prefixedWith("[WW] ")
+    val onError      = OnError.logToConsole
+    val worker       = AbstractWebWorker.Server()
+    val state        = new WorkerState(logger)
+    val serviceMaker = Service.maker(state)
+
+    val start =
+      ManagedWebWorker.Server.start(
+        worker,
+        protocol)(
+        serviceMaker,
+        ResponseEncoder,
+        onError,
+        logger)
+
+    start.runNow()
   }
 
-  object ResultEncoder extends Server.ResultEncoder[WebWorkerCmd, Writer] {
-    override def apply[A](cmd: WebWorkerCmd[A]): Writer[A] =
-      cmd.resultPickler
+  object ResponseEncoder extends ManagedWebWorker.Server.ResponseEncoder[protocol.Writer, WebWorkerCmd] {
+    override def apply[A](req: WebWorkerCmd[A]) =
+      req.resultPickler
   }
 }

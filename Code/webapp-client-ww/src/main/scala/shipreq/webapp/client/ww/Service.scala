@@ -1,20 +1,20 @@
 package shipreq.webapp.client.ww
 
 import japgolly.scalajs.react.AsyncCallback
-import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.client.ww.graph.GraphViz.DOT
 import shipreq.webapp.client.ww.graph.{ProjectImpGraph, ReqImpGraph, UseCaseFlowGraph}
 import shipreq.webapp.client.ww.state.WorkerState
+import shipreq.webapp.member.protocol.webworker._
 
-final class Service(logger: LoggerJs) extends Server.Service[WebWorkerCmd] {
+final class Service[Client](server: Service.Server[Client], state: WorkerState) extends ManagedWebWorker.Server.Service[Client, WebWorkerCmd] {
+  import state.Implicits._
   import WebWorkerCmd._
 
-  val state = new WorkerState(logger)
-  import state.Implicits._
+  locally(server) // TODO remove
 
-  override def apply[A](cmd: WebWorkerCmd[A]): AsyncCallback[A] =
-    cmd match {
+  override def apply[A](client: Client, request: WebWorkerCmd[A]): AsyncCallback[A] =
+    request match {
 
       case Init(p, am) =>
         (state.setProject(p) >> state.setAssetManifest(am)).asAsyncCallback.ret(NoResult)
@@ -52,5 +52,20 @@ final class Service(logger: LoggerJs) extends Server.Service[WebWorkerCmd] {
 
       case GraphInline(dot) =>
         state.withGraphViz(graphviz.render(DOT(dot)))
+    }
+}
+
+object Service {
+
+  type Push = Unit
+
+  type Server[Client] = ManagedWebWorker.Server[Client, Push]
+
+  type Maker = ManagedWebWorker.Server.ServiceMaker[WebWorkerCmd, Push]
+
+  def maker(state: WorkerState): Maker =
+    new Maker {
+      override def apply[Client](server: ManagedWebWorker.Server[Client, Push]) =
+        new Service(server, state)
     }
 }
