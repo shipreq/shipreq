@@ -78,7 +78,7 @@ module "shipreq" {
   shipreq_taskman_properties            = file("taskman.properties")
   shipreq_webapp_google_analytics_id    = "UA-105581783-2"
   shipreq_webapp_properties             = file("webapp.properties")
-  shipreq_webapp_log_level_root         = "DEBUG"
+  shipreq_webapp_log_level_root         = "INFO"
   shipreq_webapp_log_level_shipreq      = "DEBUG"
 
   app_analytics_proxy_image_tag   = "latest"
