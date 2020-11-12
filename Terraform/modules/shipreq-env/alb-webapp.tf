@@ -20,11 +20,12 @@ resource "aws_lb_target_group" "webapp" {
   health_check {
     path                = "/ops/ok"
     protocol            = "HTTP"
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    interval            = 30
-    timeout             = 5
     matcher             = "200"
+    healthy_threshold   = 2  # The number of consecutive health checks successes required before considering an unhealthy target healthy.
+    unhealthy_threshold = 4  # The number of consecutive health check failures required before considering the target unhealthy.
+    interval            = 30 # The approximate amount of time, in seconds, between health checks of an individual target. [5,300]
+    timeout             = 10 # The amount of time, in seconds, during which no response means a failed health check. [2,120]
+    # There's also the health_check_grace_period_seconds setting in aws_ecs_service.shipreq_webapp
   }
 
   depends_on = [aws_lb.webapp]
