@@ -31,7 +31,7 @@ object ProjectImpGraphTest extends TestSuite {
 
   override def tests = Tests {
 
-    // webapp-client-ww/testOnly -- shipreq.webapp.client.ww.ProjectImpGraphTest.extractDot
+    // webappClientWw/testOnly -- shipreq.webapp.client.ww.ProjectImpGraphTest.extractDot
 //    "extractDot" - {
 //      val dot = render(ShowDead, SampleProject3.project)
 //      println(s"\n\n${dot.content}\n\n")

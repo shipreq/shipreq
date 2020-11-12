@@ -21,7 +21,7 @@ object RedisProtocolTest extends TestSuite {
 
   override def tests = Tests {
 
-    // webapp-server-logic-jvm/testOnly -- shipreq.webapp.server.logic.protocol.RedisProtocolTest.generateTestData
+    // webappServerLogicJVM/testOnly -- shipreq.webapp.server.logic.protocol.RedisProtocolTest.generateTestData
 //    "generateTestData" - {
 //      shipreq.webapp.member.test.RandomDataSettings.disableUnicode = true
 //      RedisProtocolTestData.main(Array.empty)

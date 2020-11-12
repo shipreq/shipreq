@@ -10,7 +10,7 @@ dockerfile in docker := {
   val base      = "/shipreq"
   val srcDocker = sourceDirectory.value / "docker"
   val tmp       = target.value / "docker-prep" // must be distinct from (target in docker)
-  val wsjar     = "webapp-server.jar"
+  val wsjar     = "webappserver.jar"
 
   def prepareClean(f: String): Unit =
     execInBash(s"""rm -rf "$f" && mkdir -p "$f"""")
@@ -95,10 +95,9 @@ dockerfile in docker := {
         case (p, None)    if p ==          scalaJsPathPublic  => (85, false)
         case (p, None)    if p ==          scalaJsPathWw      => (84, false) // 472K
       //case (p, None)    if p endsWith   ".js"               => (83, false) // 808K *
-        case (_, Some(l)) if l startsWith "webapp-server"     => (76, true)  // 1.1M *
-        case (_, Some(l)) if l startsWith "webapp-"           => (74, true)  // 3.2M ***
+        case (_, Some(l)) if l startsWith "webapp"            => (74, true)  // 4.3M ****
         case (_, Some(l)) if l startsWith "taskman"           => (66, true)  // 128K
-        case (_, Some(l)) if l startsWith "base-"             => (60, true)  // 924K *
+        case (_, Some(l)) if l startsWith "base"              => (60, true)  // 924K *
         case (_, Some(l)) if l matches     japgollyLib        => (54, false) // 896K *
       //case (p, None)    if p endsWith   ".css"              => (35, false) // 392K
       //case (p, None)    if p matches     images             => (33, false) // 136K
@@ -126,6 +125,8 @@ dockerfile in docker := {
   val compGz = s"pigz -kT${if (releaseMode) 11 else 9}"
   val compBr = s"brotli -k${if (releaseMode) "Z" else "9"}"
 
+  var wsjarEncountered = false
+
   val warStages =
     warTiers.map { case (i, fixJars, batch) =>
       val stage = tmpWar / s"bucket-$i"
@@ -145,11 +146,16 @@ dockerfile in docker := {
 
       // Jetty's WebAppClassLoader doesn't seem to access resources in lib jars which prevents FlyWay from
       // finding the db migrations
-      if (batch.exists(_._2 endsWith s"/$wsjar"))
+      if (batch.exists(_._2 endsWith s"/$wsjar")) {
+        wsjarEncountered = true
         execInBash(s"cd $stageDir/WEB-INF && mkdir classes && cd classes && unzip -l ../lib/$wsjar | sed 1,3d | head -n -2 | tr -s ' ' | cut -d' ' -f5- | grep -v '\\.class$$' | xargs unzip ../lib/$wsjar")
+      }
 
       stage
     }
+
+  if (!wsjarEncountered)
+    throw new RuntimeException("Didn't encounter: " + wsjar)
 
   // Clear file timestamps to allow Docker layer caching
   // execInBash(s"""find "${tmp.getAbsolutePath}" -exec touch -t 201304010000 {} +""")

@@ -22,12 +22,12 @@ while [ $# -gt 0 ]; do
 done
 
 target="${SHIPREQ_RELEASE_TARGET:-.}"
-jsPublic="$target/webapp-client-public/js/target/scala-2.13/webapp-client-public-opt.js"
-jsHome="$target/webapp-client-home/target/scala-2.13/webapp-client-home-opt.js"
-jsProject="$target/webapp-client-project/target/scala-2.13/webapp-client-project-opt.js"
+jsPublic="$target/webapp-client-public/js/target/scala-2.13/webappclientpublic-opt.js"
+jsHome="$target/webapp-client-home/target/scala-2.13/webappclienthome-opt.js"
+jsProject="$target/webapp-client-project/target/scala-2.13/webappclientproject-opt.js"
 
 # Run SBT if necessary
-updateCmd="sbt -DMODE=release -DemitSourceMaps=1 $clean webapp-server/webappPostProcess"
+updateCmd="sbt -DMODE=release -DemitSourceMaps=1 $clean webappServer/webappPostProcess"
 echo "Update command: $updateCmd"
 if [ -e "$jsProject" -a -z "$force" ]; then
   echo "  Skipping..."

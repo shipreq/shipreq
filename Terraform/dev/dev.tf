@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 0.12"
+  required_version = ">= 0.13"
 
   backend "s3" {
     bucket = "shipreq-terraform-state"
@@ -10,21 +10,28 @@ terraform {
 
 provider "aws" {
   region  = "ap-southeast-2"
-  version = "~> 2.39"
+  version = "~> 3.4"
 }
 
 provider "aws" {
   alias   = "ap-southeast-2"
   region  = "ap-southeast-2"
-  version = "~> 2.39"
+  version = "~> 3.4"
+}
+
+provider "aws" {
+  alias   = "us-east-1"
+  region  = "us-east-1"
+  version = "~> 3.4"
 }
 
 module "shipreq" {
   source = "../modules/shipreq-env"
 
   providers = {
-    aws     = aws
-    aws.ecr = aws.ap-southeast-2
+    aws           = aws
+    aws.ecr       = aws.ap-southeast-2
+    aws.us-east-1 = aws.us-east-1
   }
 
   env                 = "dev"
@@ -34,13 +41,13 @@ module "shipreq" {
   deletion_protection = false
   vpc_ip_prefix       = "10.0"
 
-  app_cluster_size                      = 0
+  app_cluster_size                      = 1
   app_instance_type                     = "t3a.small"
   app_public_key                        = file("key-app.rsa.pub")
   bastion_public_key                    = file("key-bastion.rsa.pub")
   elasticsearch_enable                  = true
   elasticsearch_instance_type           = "t2.small.elasticsearch"
-  elasticsearch_retention_days          = 45
+  elasticsearch_retention_days          = 32
   elasticsearch_volume_size             = 10
   elasticsearch_volume_type             = "standard" # Save money
   grafana_db_name                       = "grafana"
@@ -71,11 +78,14 @@ module "shipreq" {
   shipreq_taskman_properties            = file("taskman.properties")
   shipreq_webapp_google_analytics_id    = "UA-105581783-2"
   shipreq_webapp_properties             = file("webapp.properties")
+  shipreq_webapp_log_level_root         = "INFO"
+  shipreq_webapp_log_level_shipreq      = "DEBUG"
 
+  app_analytics_proxy_image_tag   = "latest"
   app_cadvisor_image_tag          = "latest"
   app_filebeat_image_tag          = "latest"
   app_node_exporter_image_tag     = "latest"
-  app_shipreq_images_tag          = "latest"
+  app_shipreq_images_tag          = "dev"
   bastion_filebeat_image_tag      = "latest"
   bastion_portal_image_tag        = "latest"
   nat_cadvisor_image_tag          = "latest"

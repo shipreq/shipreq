@@ -56,8 +56,8 @@ function run {
   return $r
 }
 
-docker_args=(taskman-server/docker webapp-server/docker)
-[ "${DOCKER_PUSH:-}" != 0 ] && docker_args+=(taskman-server/dockerPush webapp-server/dockerPush)
+docker_args=(taskmanServer/docker webappServer/docker)
+[ "${DOCKER_PUSH:-}" != 0 ] && docker_args+=(taskmanServer/dockerPush webappServer/dockerPush)
 
 echo "Ensuring S3 access..." \
   && aws s3 ls s3://shipreq-tmp/ \

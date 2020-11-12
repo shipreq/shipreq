@@ -61,7 +61,7 @@ object ReqDetailTest extends TestSuite {
   private val deadCanRestore = UiText.Life.dead + "." + UiText.Life.restore
   private val deadNoRestore  = UiText.Life.dead + "."
 
-  // webapp-client-project/testOnly -- shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetailTest.uc.propTest
+  // webappClientProject/testOnly -- shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetailTest.uc.propTest
   protected def useCaseStepEditorPropTest(reps         : Int,
                                           sets         : Int,
                                           stopWhenFound: Boolean): Unit = {
@@ -240,7 +240,7 @@ object ReqDetailTest extends TestSuite {
         +> stepText("2.0.3").assert("dog←2.0.2→2.0.4, 2.0.6")
       ))
 
-      // webapp-client-project/testOnly -- shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetailTest.uc.propTest
+      // webappClientProject/testOnly -- shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetailTest.uc.propTest
 //      'propTest - useCaseStepEditorPropTest(
 //                    reps          = 100,
 //                    sets          = 3,

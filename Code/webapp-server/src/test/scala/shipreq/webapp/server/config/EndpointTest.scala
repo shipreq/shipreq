@@ -55,7 +55,7 @@ object EndpointTest extends TestSuite {
       "woff2" - test(Endpoint.AssetGeneric("woff2"),  "/blah/x.woff2")
       "woff2" - test(Endpoint.AssetGeneric("woff2"),  "/assets/icons.woff2")
       "jsMap" - test(Endpoint.AssetGeneric("js.map"), "/blah/x.js.map")
-      "jsMap" - test(Endpoint.AssetGeneric("js.map"), "/j/webapp-client-public-fastopt.js.map")
+      "jsMap" - test(Endpoint.AssetGeneric("js.map"), "/j/webappclientpublic-fastopt.js.map")
     }
 
     "unknown" - {

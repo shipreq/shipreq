@@ -1,4 +1,4 @@
-.PHONY: build_env ci-local info deploy diff_prod prod_ver publish pull_images push rm_targets since_prod watch_codebuild
+.PHONY: build_env ci-local info deploy diff_prod docker-push-dev prod_ver publish pull_images push rm_targets since_prod watch_codebuild
 
 GIT_SHA  := $(shell git rev-parse HEAD)
 BRANCH   := $(shell git rev-parse --abbrev-ref HEAD)
@@ -32,6 +32,7 @@ info:
 	@echo "  * ci-local        -- Do what CI does but from the local machine (and for real)."
 	@echo "  * deploy          -- Publish to AWS, start a build, update prod Terraform."
 	@echo "  * diff_prod       -- Show a diff between ShipReq that's currently in production, and local HEAD."
+	@echo "  * docker-push-dev -- Pushes {webapp,taskman}:latest to ECR tagged as dev"
 	@echo "  * prod_ver        -- Show the Git SHA of ShipReq that's currently in production."
 	@echo "  * publish         -- Publish to AWS, start a build."
 	@echo "  * pull_images     -- Pull ShipReq images from ECR."
@@ -67,6 +68,13 @@ deploy: publish
 
 diff_prod:
 	git diff -w $(PROD_REV)... -- '*.scala' '*.sbt' frontend/{package.json,src,w*}
+
+docker-push-dev:
+	$$(aws ecr get-login --no-include-email)
+	docker tag shipreq/webapp:latest $(ECR)/shipreq/webapp:dev
+	docker tag shipreq/taskman:latest $(ECR)/shipreq/taskman:dev
+	docker push $(ECR)/shipreq/webapp:dev
+	docker push $(ECR)/shipreq/taskman:dev
 
 prod_ver:
 	@echo $(PROD_REV)

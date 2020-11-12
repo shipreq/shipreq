@@ -1,29 +1,63 @@
 #!/bin/bash
 
+set -euo pipefail
+
+####################################################################################################
+
+function onExit() {
+  # Note: echos are in a sub-shell because STDOUT is likely already closed
+  exitStatus="$1"
+  lineNo="$2"
+  (echo "Exiting with status $exitStatus from line $lineNo")
+  exit $exitStatus
+}
+
+function onSig() {
+  # Note: echos are in a sub-shell because STDOUT is likely already closed
+  exitStatus="$1"
+  name="$2"
+  (echo "Recieved SIG$name")
+  exit $exitStatus
+}
+
+trap "onSig 129 HUP" HUP
+trap "onSig 130 INT" INT
+trap "onSig 137 KILL" KILL
+trap "onSig 139 SEGV" SEGV
+trap "onSig 143 TERM" TERM
+trap "onSig 152 XCPU" XCPU
+trap "onSig 153 XFSZ" XFSZ
+
+trap 'onExit $? $LINENO' EXIT
+
+####################################################################################################
+
 cmd=("$JETTY_BASE/bin/jetty")
 
 i="$(printenv run.mode)"
 [ -n "$i" ] && cmd+=("-Drun.mode=$i")
-[ -n "$RUN_MODE" ] && cmd+=("-Drun.mode=$RUN_MODE")
+[ -n "${RUN_MODE:-}" ] && cmd+=("-Drun.mode=$RUN_MODE")
 
 cmd+=("$@")
 
 # This is a little util in shipreq/base that imports files from an external
 # source depending on config. For example, SSL passwords.
-import-files || exit 1
+import-files
 
 mkdir -p resources
-[ ! -e resources/logback.xml ] && cp webapps/ROOT/WEB-INF/classes/logback.xml resources/logback.xml
+if [ ! -e resources/logback.xml ]; then
+  cp webapps/ROOT/WEB-INF/classes/logback.xml resources/logback.xml
+fi
 
 # Replace static links in webpack output :(
-i="$(printenv shipreq.staticAssetCdn)"
+i="$(printenv shipreq.staticAssetCdn || true)"
 echo "shipreq.staticAssetCdn = [$i]"
 if [ -n "$i" ]; then
   src=/shipreq/webapps/ROOT
   orig=/shipreq/original-res
 
   for dir in s templates-hidden; do
-    [ ! -e $orig/$dir ] && mkdir -p $orig/$dir
+    mkdir -p $orig/$dir
   done
 
   for f in $(find $src -name '*.html' -o -path '*/s/*.xml' | sed "s,$src/,,"); do
@@ -42,6 +76,8 @@ if [ -n "$i" ]; then
   done
 fi
 
-"${cmd[@]}" --list-config | grep -iv password
+####################################################################################################
 
-exec "${cmd[@]}"
+"${cmd[@]}" --list-config | grep -iv password || true
+
+"${cmd[@]}"

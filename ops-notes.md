@@ -47,3 +47,35 @@ aws s3 cp s3://shipreq-tmp/project-$id.json .
  auth="-F secret=Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid"
  curl -v http://localhost:8080/ops/project/create -X POST $auth -F events='<'project-$id.json -F user=japgolly
 ```
+
+
+Prod Issues
+============
+
+There are currently two issues that occur in prod semi-regularly.
+
+1. NAT going down.
+  Usually the entire EC2 will be screwed, it will likely have disappeared from metrics.
+  In which case, terminate the EC2 then re-run Terraform.
+
+2. ElasticSearch being out of space.
+
+   Modify `elasticsearch_retention_days` in `prod.tf`, and apply it. Then:
+
+  ```sh
+  ssh shipreq-bastion-prod
+  ssh ops.prod.sd.internal
+  ```
+
+  and then either
+
+  ```sh
+  sudo elasticsearch_maintenance
+  ```
+
+  or
+
+  ```sh
+  curl -s -k -X GET "https://es.prod.internal:443/_cat/indices?v&bytes=mb"
+  curl -k -X DELETE "https://es.prod.internal:443/filebeat-2020.11.11"
+  ```

@@ -41,7 +41,7 @@ resource "aws_ecs_service" "shipreq_webapp" {
   scheduling_strategy                = "DAEMON"
   propagate_tags                     = "SERVICE"
   deployment_minimum_healthy_percent = local.app_min_healthy_percent
-  health_check_grace_period_seconds  = 40
+  health_check_grace_period_seconds  = 180 # 3min here + 2min in ALB TG HC = 5min total
   tags                               = local.shipreq_webapp_tags
 
   load_balancer {
@@ -136,20 +136,11 @@ resource "aws_ecs_task_definition" "shipreq_webapp" {
       }
     ],
     "cpu": ${local.app_cluster_cpu.shipreq_webapp},
-    "memoryReservation": ${local.app_cluster_mem_res.shipreq_webapp},
-    "healthCheck": {
-      "command": [
-        "CMD-SHELL",
-        "curl -f http://localhost:8080/ops/ok || exit 1"
-      ],
-      "startPeriod": 90,
-      "interval": 60,
-      "timeout": 10,
-      "retries": 3
-    }
+    "memoryReservation": ${local.app_cluster_mem_res.shipreq_webapp}
   }
 ]
 EOB
+# Note: no healthcheck above because it's covered by health_check_grace_period_seconds & the ALB TG healthcheck
 }
 
 resource "aws_iam_role" "shipreq_webapp" {
