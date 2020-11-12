@@ -65,5 +65,17 @@ There are currently two issues that occur in prod semi-regularly.
   ```sh
   ssh shipreq-bastion-prod
   ssh ops.prod.sd.internal
+  ```
+
+  and then either
+
+  ```sh
   sudo elasticsearch_maintenance
+  ```
+
+  or
+
+  ```sh
+  curl -s -k -X GET "https://es.prod.internal:443/_cat/indices?v&bytes=mb"
+  curl -k -X DELETE "https://es.prod.internal:443/filebeat-2020.11.11"
   ```
