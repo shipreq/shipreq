@@ -36,6 +36,8 @@ class Boot {
   val packageRoot = "shipreq.webapp.server"
   lazy val logger = Logger(s"$packageRoot.Boot")
 
+  installSignalHandlers()
+
   def boot(): Unit = {
     // Read config
     val (cfg, runMode, cfgReport) = readConfig()
@@ -253,5 +255,33 @@ class Boot {
     } else
       new SsrOff[Fx]
     ssr.prepare(cfg.baseUrl, cfg.publicRegistration)
+  }
+
+  def installSignalHandlers(): Unit = {
+    import sun.misc._
+
+    val handler: SignalHandler = sig => {
+      logger.warn(s"Signal received: SIG${sig.getName}")
+    }
+
+    val signals = Seq[String](
+      "HUP",
+      "INT",
+      "TERM",
+      "XCPU",
+      "XFSZ",
+//      "KILL", // Signal already used by VM or OS
+//      "QUIT", // Signal already used by VM or OS
+//      "SEGV", // Signal already used by VM or OS
+    )
+
+    for (name <- signals) {
+      try
+      Signal.handle(new Signal(name), handler)
+      catch {
+        case t: Throwable =>
+          logger.warn(s"Failed to install SIG$name handler. ", t)
+      }
+    }
   }
 }
