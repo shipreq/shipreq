@@ -6,10 +6,13 @@ import org.scalajs.dom.{Element, document}
 import shipreq.base.util._
 import shipreq.webapp.base.data.Username
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.member.ui.ReauthenticationModal
 
 class TestReauthenticationModal(initialResponse: Option[ErrorMsg \/ Permission]) {
+
+  val localStorage = AbstractWebStorage.inMemory()
 
   var nextResponse: Option[ErrorMsg \/ Permission] =
     initialResponse
@@ -28,7 +31,7 @@ class TestReauthenticationModal(initialResponse: Option[ErrorMsg \/ Permission])
       }.flatten
 
   def modal(username: Username, rootDom: Element = document.body) =
-    ReauthenticationModal(username, proc, rootDom, 0)
+    ReauthenticationModal(username, proc, rootDom, 0)(localStorage)
 }
 
 object TestReauthenticationModal {

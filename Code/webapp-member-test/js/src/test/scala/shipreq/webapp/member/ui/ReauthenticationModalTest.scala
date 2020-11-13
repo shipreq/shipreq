@@ -6,6 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.{Element, document, html}
 import shipreq.base.util._
 import shipreq.webapp.base.data.Username
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.member.test.TestReauthenticationModal
 import utest._
@@ -21,8 +22,10 @@ object ReauthenticationModalTest extends TestSuite {
     final class Backend($: BackendScope[Props, Unit]) {
       var modal: ReauthenticationModal = null
 
+      val localStorage = AbstractWebStorage.inMemory()
+
       def render(props: Props): VdomElement = {
-        modal = ReauthenticationModal(username, props.login, props.root, 0)
+        modal = ReauthenticationModal(username, props.login, props.root, 0)(localStorage)
         <.div(modal.render)
       }
 

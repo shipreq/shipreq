@@ -46,6 +46,8 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
                        webWorkerClient   : WebWorkerClient.Instance,
                       ) {
 
+  implicit def webStorage = global.localStorage
+
   val pxProjectAndOrd = global.pxProjectAndOrd
   val pxProject       = global.pxProject
   def unsafeProject() = global.unsafeProject()

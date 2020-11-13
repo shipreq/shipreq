@@ -8,6 +8,7 @@ import shipreq.webapp.base.config.GlobalSettings
 import shipreq.webapp.base.data.{PlainTextPassword, Username}
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
 import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocols}
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Colour, Icon, Label, UsesSemanticUiManually}
 import shipreq.webapp.base.ui.widgets.ModalForm
@@ -35,15 +36,15 @@ object ReauthenticationModal {
 
   type AttemptLogin = Login.Request => AsyncCallback[ErrorMsg \/ Permission]
 
-  def apply(username: Username): ReauthenticationModal =
+  def apply(username: Username)(implicit localStorage: AbstractWebStorage): ReauthenticationModal =
     apply(username, AjaxClient.Binary)
 
-  def apply(username: Username, ajaxClient: AjaxClient.Binary): ReauthenticationModal = {
+  def apply(username: Username, ajaxClient: AjaxClient.Binary)(implicit localStorage: AbstractWebStorage): ReauthenticationModal = {
     val sspLogin = ajaxClient.invoker(CommonProtocols.Login.ajax)
     apply(username, sspLogin(_))
   }
 
-  def apply(username: Username, attemptLogin: AttemptLogin): ReauthenticationModal =
+  def apply(username: Username, attemptLogin: AttemptLogin)(implicit localStorage: AbstractWebStorage): ReauthenticationModal =
     apply(username, attemptLogin, document.body, 280)
 
   private[ui] final val header =
@@ -52,7 +53,8 @@ object ReauthenticationModal {
   def apply(username    : Username,
             attemptLogin: AttemptLogin,
             rootDom     : Element,
-            delayMs     : Double): ReauthenticationModal = {
+            delayMs     : Double)
+           (implicit localStorage: AbstractWebStorage): ReauthenticationModal = {
 
     import ModalForm.SetState
 

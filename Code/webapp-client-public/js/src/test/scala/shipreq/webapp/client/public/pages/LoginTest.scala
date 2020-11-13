@@ -5,11 +5,13 @@ import org.scalajs.dom.{html, window}
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax._
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.base.test.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.public._
 import shipreq.webapp.client.public.spa._
+import sourcecode.Line
 import utest._
 
 object LoginTester {
@@ -92,11 +94,16 @@ object LoginTest extends TestSuite {
   val invariants: *.Invariants =
     *.emptyInvariant
 
-  def test(actions: *.Actions, loggedInUser: Boolean = false): Unit =
-    testPlan(Plan(actions, invariants), loggedInUser)
+  def test(actions: *.Actions,
+           loggedInUser: Boolean = false)
+          (implicit l: Line, localStorage: AbstractWebStorage = AbstractWebStorage.inMemory()): Unit =
+    testPlan(Plan(actions, invariants), loggedInUser, localStorage)
 
-  def testPlan(plan: *.Plan, loggedInUser: Boolean = false): Unit = {
-    val t = new PublicSpaTestUtil.ForTestState
+  def testPlan(plan: *.Plan,
+               loggedInUser: Boolean = false,
+               localStorage: AbstractWebStorage = AbstractWebStorage.inMemory(),
+              )(implicit l: Line): Unit = {
+    val t = new PublicSpaTestUtil.ForTestState(localStorage)
     if (loggedInUser)
       t.initData = t.initData.copy(loggedInUser = Some(Username("dude")))
     import t.ajax
@@ -135,6 +142,7 @@ object LoginTest extends TestSuite {
           >> success)
 
       "rememberMe" - {
+        implicit val localStorage = AbstractWebStorage.inMemory()
         test(assertForm("", "", On) +> enterUser("b") >> enterPassword("x"))
         test(assertForm("b", "", On) +> toggleRememberMe +> assertForm("b", "", Off))
         test(assertForm("", "", Off) +> enterUser("b") >> enterPassword("x"))
