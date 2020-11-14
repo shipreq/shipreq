@@ -42,6 +42,12 @@ final class IndexedDb(raw: IDBFactory) {
 }
 
 object IndexedDb {
+
+  def apply(raw: IDBFactory): IndexedDb =
+    new IndexedDb(raw)
+
+  // ===================================================================================================================
+
   import Dsl._
 
   final case class DatabaseName(value: String) extends AnyVal

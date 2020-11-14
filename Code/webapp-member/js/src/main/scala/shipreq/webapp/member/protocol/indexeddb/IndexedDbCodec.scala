@@ -42,4 +42,15 @@ object IndexedDbCodec {
     }
   }
 
+  object String extends IndexedDbCodec[String] {
+
+    override val encode =
+      s => s
+
+    override val decodeOrThrow = {
+      case s: String => s
+      case x         => throw new RuntimeException("String expected: " + x)
+    }
+  }
+
 }
