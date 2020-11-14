@@ -10,7 +10,7 @@ abstract class AbstractAssetManifest[+A] {
 
   protected def modify(f: String): A
 
-  final val analyticsJs = modify("/s/160e616806adf95cb3d223d7151f4940.js")
+  final val analyticsJs = modify("/s/1104de59b052ed4f7de85b930ae8bdf5.js")
 
   final val favicon16X16Png = modify("/s/fed79b5fe13954bcbb0ebbd3fe18be61.png")
 
@@ -56,7 +56,7 @@ abstract class AbstractAssetManifest[+A] {
 
   final val loadjs = modify("/s/9e706a6f7bc551ddf626c15cd76c1c25.js")
 
-  final val memberLibBundleJs = modify("/s/cf0cc1c28183a5763ea1ec853e12ed24.js")
+  final val memberLibBundleJs = modify("/s/5e221489d42474535f71147a6e00f2b6.js")
 
   final val prismJsAutoloader = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/autoloader/prism-autoloader.min.js",
@@ -98,7 +98,7 @@ abstract class AbstractAssetManifest[+A] {
     href = "https://cdnjs.cloudflare.com/ajax/libs/react/16.13.1/umd/react.production.min.js",
     integrity = Some("sha256-yUhvEmYVhZ/GGshIQKArLvySDSh6cdmdcIx0spR3UP4="))
 
-  final val semanticCss = modify("/s/0a68d81662f0ef5dc41e500660834cfd.css")
+  final val semanticCss = modify("/s/ce410ecc8d9ae34fb5f56a6e3c3b0f0c.css")
 
   final val semanticCssUrls: List[A] =
     modify("icons.eot") ::
@@ -109,7 +109,7 @@ abstract class AbstractAssetManifest[+A] {
     modify("icons.svg#icons") ::
     Nil
 
-  final val semanticJs = modify("/s/feb255b394c85459e34484e5b2c41e84.js")
+  final val semanticJs = modify("/s/2bef13940cfe4601a0d2b43ac0d82554.js")
 
   final val shipreqBannerSvg = modify("/s/878536f0a4ad0029794669f88dbf5f35.svg")
 
