@@ -12,7 +12,7 @@ object IndexedDbTest extends TestSuite {
   override def tests = Tests {
 
     "basic" - asyncTest {
-      val store = ObjectStoreDef("test")(IndexedDbCodec.String)
+      val store = ObjectStoreDef("test")(IndexedDbCodec.string)
 
       val openCallbacks =
         TestIndexedDb.unusedOpenCallbacks.copy(

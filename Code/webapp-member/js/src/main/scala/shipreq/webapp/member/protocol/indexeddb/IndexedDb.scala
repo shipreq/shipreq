@@ -166,12 +166,17 @@ object IndexedDb {
       import defn.codec
 
       def add(key: Key, value: A): AsyncCallback[Unit] =
-        asyncRequest_(raw.add(codec.encode(value), key.js))
+        for {
+          v <- codec.encode(value)
+          _ <- asyncRequest_(raw.add(v, key.js))
+        } yield ()
 
       def get(key: Key): AsyncCallback[Option[A]] =
-        asyncRequest(raw.get(key.js)) { r =>
-          val x = r.result
-          Option.unless(js.isUndefined(x))(codec.decodeOrThrow(x))
+        asyncRequest(raw.get(key.js))(_.result).flatMap { result =>
+          if (js.isUndefined(result))
+            AsyncCallback.pure(None)
+          else
+            codec.decode(result).map(Some(_))
         }
     }
   }
