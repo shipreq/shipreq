@@ -3,7 +3,7 @@ package shipreq.base.util
 import org.scalajs.dom.raw.Blob
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.typedarray.ArrayBuffer
+import scala.scalajs.js.typedarray.{ArrayBuffer, Uint8Array}
 
 object JsExt {
 
@@ -25,6 +25,9 @@ object JsExt {
     def toArrayBuffer: ArrayBuffer =
       BinaryJs.byteBufferToArrayBuffer(self.toByteBuffer)
 
+    def toUint8Array: Uint8Array =
+      new Uint8Array(toArrayBuffer)
+
     def toBlob: Blob =
       BinaryJs.byteBufferToBlob(self.toByteBuffer)
 
@@ -33,6 +36,9 @@ object JsExt {
 
     def unsafeArrayBuffer: ArrayBuffer =
       BinaryJs.byteBufferToArrayBuffer(self.unsafeByteBuffer)
+
+    def unsafeUint8Array: Uint8Array =
+      new Uint8Array(unsafeArrayBuffer)
 
     def unsafeBlob: Blob =
       BinaryJs.byteBufferToBlob(self.unsafeByteBuffer)
@@ -45,8 +51,14 @@ object JsExt {
     def fromArrayBuffer(ab: ArrayBuffer): BinaryData =
       BinaryData.fromByteBuffer(BinaryJs.arrayBufferToByteBuffer(ab))
 
+    def fromUint8Array(a: Uint8Array): BinaryData =
+      fromArrayBuffer(a.buffer)
+
     def unsafeFromArrayBuffer(ab: ArrayBuffer): BinaryData =
       BinaryData.unsafeFromByteBuffer(BinaryJs.arrayBufferToByteBuffer(ab))
+
+    def unsafeFromUint8Array(a: Uint8Array): BinaryData =
+      unsafeFromArrayBuffer(a.buffer)
   }
 
 }

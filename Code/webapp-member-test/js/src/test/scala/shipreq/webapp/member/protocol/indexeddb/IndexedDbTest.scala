@@ -1,9 +1,9 @@
 package shipreq.webapp.member.protocol.indexeddb
 
-import utest._
-import shipreq.webapp.member.test.TestIndexedDb
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.Node.asyncTest
+import shipreq.webapp.member.test.TestIndexedDb
+import utest._
 
 object IndexedDbTest extends TestSuite {
   import IndexedDb._

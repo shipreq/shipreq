@@ -4,21 +4,21 @@ import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 import shipreq.base.util.BinaryData
 import shipreq.base.util.JsExt._
+import shipreq.webapp.member.protocol.binary.Zip
 
 trait IndexedDbCodec[A] { self =>
 
   val encode       : A => js.Any
   val decodeOrThrow: Any => A
 
-  final def xmap[B](f: A => B)(g: B => A): IndexedDbCodec[B] =
+  final def xmap[B](onDecode: A => B)(onEncode: B => A): IndexedDbCodec[B] =
     new IndexedDbCodec[B] {
-      override val encode        = b => self.encode(g(b))
-      override val decodeOrThrow = d => f(self.decodeOrThrow(d))
+      override val encode        = b => self.encode(onEncode(b))
+      override val decodeOrThrow = d => onDecode(self.decodeOrThrow(d))
     }
 
-//  TODO def compress(implicit ev: IndexedDbCodec[A] =:= IndexedDbCodec[BinaryData]): IndexedDbCodec[BinaryData] = {
-//    val self = ev(this)
-//  }
+  def compress(zip: Zip)(implicit ev: IndexedDbCodec[A] =:= IndexedDbCodec[BinaryData]): IndexedDbCodec[BinaryData] =
+    ev(this).xmap(zip.decompressOrThrow)(zip.compress)
 
 //  TODO def encrypt(implicit ev: IndexedDbCodec[A] =:= IndexedDbCodec[BinaryData]): IndexedDbCodec[BinaryData] = {
 //    val self = ev(this)
