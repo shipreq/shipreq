@@ -88,7 +88,7 @@ object Encryption {
             algorithm   = "AES-GCM",
             extractable = false,
             keyUsages   = js.Array(KeyUsage.encrypt, KeyUsage.decrypt),
-          ).asInstanceOf[js.Promise[CryptoKey]]
+          ).asInstanceOf[js.Promise[CryptoKey]] // TODO remove after https://github.com/scala-js/scala-js-dom/pull/431
         )
 
       for {

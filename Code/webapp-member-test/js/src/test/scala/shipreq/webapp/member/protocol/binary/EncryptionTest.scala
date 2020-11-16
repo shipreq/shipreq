@@ -3,9 +3,9 @@ package shipreq.webapp.member.protocol.binary
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.Node
 import shipreq.base.util.BinaryData
-import utest._
 import shipreq.webapp.member.test.TestEncryption
 import shipreq.webapp.member.test.TestEncryption.UnsafeTypes._
+import utest._
 
 object EncryptionTest extends TestSuite {
 
