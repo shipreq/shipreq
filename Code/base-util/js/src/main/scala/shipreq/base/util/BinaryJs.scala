@@ -46,16 +46,14 @@ trait BinaryJs {
     arrayBufferToBlob(byteBufferToArrayBuffer(bb))
 
   final def byteBufferToInt8Array(bb: ByteBuffer): Int8Array = {
-    val l = bb.limit()
-    if (bb.hasTypedArray()) {
-      val array = bb.typedArray()
-      if (l == array.length)
-        array
-      else
-        array.subarray(0, l)
-    } else if (bb.hasArray) {
+    val limit = bb.limit()
+    if (bb.hasTypedArray())
+      bb.typedArray()
+    else if (bb.hasArray) {
       var array = bb.array()
-      if (l != array.length) array = array.take(l)
+      val offset = bb.arrayOffset()
+      if (limit != array.length)
+        array = array.slice(offset, offset + limit)
       new Int8Array(array.toJSArray)
     } else {
       val array = BinaryData.unsafeFromByteBuffer(bb).unsafeJsArray
@@ -63,7 +61,13 @@ trait BinaryJs {
     }
   }
 
-  final def int8ArrayToArrayBuffer(a: Int8Array): ArrayBuffer =
-    a.buffer.slice(0, a.length)
+  final def int8ArrayToArrayBuffer(v: Int8Array): ArrayBuffer = {
+    val off = v.byteOffset
+    val len = v.byteLength
+    if (len == v.buffer.byteLength)
+      v.buffer
+    else
+      v.buffer.slice(off, off + len)
+  }
 
 }
