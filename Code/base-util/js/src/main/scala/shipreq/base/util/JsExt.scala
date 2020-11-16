@@ -26,13 +26,13 @@ object JsExt {
 
   implicit class BinaryDataJsExt(private val self: BinaryData) extends AnyVal {
     def toArrayBuffer: ArrayBuffer =
-      BinaryJs.byteBufferToArrayBuffer(self.toByteBuffer)
+      BinaryJs.byteBufferToArrayBuffer(self.unsafeByteBuffer)
 
     def toUint8Array: Uint8Array =
       new Uint8Array(toArrayBuffer)
 
     def toBlob: Blob =
-      BinaryJs.byteBufferToBlob(self.toByteBuffer)
+      BinaryJs.byteBufferToBlob(self.unsafeByteBuffer)
 
     def toNewJsArray: js.Array[Byte] =
       self.toNewArray.toJSArray
