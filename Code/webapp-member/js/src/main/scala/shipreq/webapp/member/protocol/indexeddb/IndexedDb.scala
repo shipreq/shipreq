@@ -127,6 +127,8 @@ object IndexedDb {
 
     } // TxnStep2
 
+    // Convenience methods
+
     def add[K, V](store: ObjectStoreDef.Sync[K, V])(key: K, value: V): AsyncCallback[Unit] =
       transactionRW(store)(_.objectStore(store).flatMap(_.add(key, value)))
 
@@ -140,6 +142,9 @@ object IndexedDb {
     def get[K, V](store: ObjectStoreDef.Async[K, V])(key: K): AsyncCallback[Option[V]] =
       transactionRO(store)(_.objectStore(store).flatMap(_.get(key)))
         .flatMap(AsyncCallback.traverseOption(_)(_.decode))
+
+    def getAllKeys[K, V](store: ObjectStoreDef[K, V]): AsyncCallback[ArraySeq[K]] =
+      transactionRO(store)(_.objectStore(store.sync).flatMap(_.getAllKeys))
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -161,6 +166,9 @@ object IndexedDb {
 
     def get(key: K): Txn[Option[V]] =
       Txn.StoreGet(this, keyCodec.encode(key))
+
+    def getAllKeys: Txn[ArraySeq[K]] =
+      Txn.StoreGetAllKeys(this)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -200,12 +208,13 @@ object IndexedDb {
   }
 
   private object Txn {
-    final case class Map         [A, B](from: Txn[A], f: A => B)                                    extends Txn[B]
-    final case class FlatMap     [A, B](from: Txn[A], f: A => Txn[B])                               extends Txn[B]
-    final case class EvalCallback[A]   (callback: CallbackTo[A])                                    extends Txn[A]
-    final case class GetStore    [K, V](defn: ObjectStoreDef.Sync[K, V])                            extends Txn[ObjectStore[K, V]]
-    final case class StoreAdd          (store: ObjectStore[_, _], key: IndexedDbKey, value: js.Any) extends Txn[Unit]
-    final case class StoreGet    [K, V](store: ObjectStore[K, V], key: IndexedDbKey)                extends Txn[Option[V]]
+    final case class Map            [A, B](from: Txn[A], f: A => B)                                    extends Txn[B]
+    final case class FlatMap        [A, B](from: Txn[A], f: A => Txn[B])                               extends Txn[B]
+    final case class EvalCallback   [A]   (callback: CallbackTo[A])                                    extends Txn[A]
+    final case class GetStore       [K, V](defn: ObjectStoreDef.Sync[K, V])                            extends Txn[ObjectStore[K, V]]
+    final case class StoreAdd             (store: ObjectStore[_, _], key: IndexedDbKey, value: js.Any) extends Txn[Unit]
+    final case class StoreGet       [K, V](store: ObjectStore[K, V], key: IndexedDbKey)                extends Txn[Option[V]]
+    final case class StoreGetAllKeys[K, V](store: ObjectStore[K, V])                                   extends Txn[ArraySeq[K]]
 
     def interpret[A](txn: IDBTransaction, dsl: Txn[A]): AsyncCallback[A] =
       AsyncCallback.byName {
@@ -249,6 +258,23 @@ object IndexedDb {
 
             case Map(fa, f) =>
               interpret(fa).map(f)
+
+            case StoreGetAllKeys(s) =>
+              import s.defn.{keyCodec, Key}
+              getStore(s).flatMap { store =>
+                asyncRequest(store.asInstanceOf[IDBObjectStoreMissing].getAllKeys()) { req =>
+                  val rawKeys = req.result.asInstanceOf[js.Array[IndexedDbKey.Raw]]
+                  val keys = new Array[Key](rawKeys.length)
+                  var i = rawKeys.length
+                  while (i > 0) {
+                    i -= 1
+                    val rawKey = rawKeys(i)
+                    val k = keyCodec.decode(IndexedDbKey(rawKey)).runNow() // safe in asyncRequest onSuccess
+                    keys(i) = k
+                  }
+                  ArraySeq.unsafeWrapArray(keys)
+                }
+              }
           }
 
         interpret(dsl)
@@ -295,6 +321,12 @@ object IndexedDb {
     @nowarn
     class IDBDatabaseMissing extends IDBDatabase {
       var onversionchange: js.Function1[IDBVersionChangeEvent, _] = js.native
+    }
+
+    @js.native
+    @JSGlobal("IDBObjectStore")
+    class IDBObjectStoreMissing extends IDBObjectStore {
+      def getAllKeys(): IDBRequest = js.native
     }
   }
 

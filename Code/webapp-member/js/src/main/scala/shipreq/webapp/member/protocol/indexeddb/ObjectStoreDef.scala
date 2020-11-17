@@ -6,13 +6,20 @@ import scala.scalajs.js
 sealed trait ObjectStoreDef[K, V] {
   val name: String
   val keyCodec: KeyCodec[K]
+
+  final type Key = K
+
+  def sync: ObjectStoreDef.Sync[K, _]
 }
 
 object ObjectStoreDef {
 
   final case class Sync[K, V](name      : String,
                               keyCodec  : KeyCodec[K],
-                              valueCodec: ValueCodec[V]) extends ObjectStoreDef[K, V]
+                              valueCodec: ValueCodec[V]) extends ObjectStoreDef[K, V] {
+    override def sync: this.type =
+      this
+  }
 
   final case class Async[K, V](name      : String,
                                keyCodec  : KeyCodec[K],
@@ -35,7 +42,7 @@ object ObjectStoreDef {
         override val value = v
       }
 
-    val sync: Sync[K, Value] = {
+    override val sync: Sync[K, Value] = {
       val syncValueCodec = ValueCodec[Value](
         encode = v => CallbackTo.pure(v.value),
         decode = v => CallbackTo.pure(value(v)),
