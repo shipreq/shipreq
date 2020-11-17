@@ -133,15 +133,13 @@ object IndexedDb {
       transactionRW(store)(_.objectStore(store).flatMap(_.add(key, value)))
 
     def add[K, V](store: ObjectStoreDef.Async[K, V])(key: K, value: V): AsyncCallback[Unit] =
-      store.encode(value).flatMap(value =>
-        transactionRW(store)(_.objectStore(store).flatMap(_.add(key, value))))
+      store.encode(value).flatMap(add(store.sync)(key, _))
 
     def get[K, V](store: ObjectStoreDef.Sync[K, V])(key: K): AsyncCallback[Option[V]] =
       transactionRO(store)(_.objectStore(store).flatMap(_.get(key)))
 
     def get[K, V](store: ObjectStoreDef.Async[K, V])(key: K): AsyncCallback[Option[V]] =
-      transactionRO(store)(_.objectStore(store).flatMap(_.get(key)))
-        .flatMap(AsyncCallback.traverseOption(_)(_.decode))
+      get(store.sync)(key).flatMap(AsyncCallback.traverseOption(_)(_.decode))
 
     def getAllKeys[K, V](store: ObjectStoreDef[K, V]): AsyncCallback[ArraySeq[K]] =
       transactionRO(store)(_.objectStore(store.sync).flatMap(_.getAllKeys))
