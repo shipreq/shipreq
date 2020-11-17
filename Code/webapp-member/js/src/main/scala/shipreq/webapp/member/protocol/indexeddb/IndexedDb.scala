@@ -55,8 +55,18 @@ object IndexedDb {
   final case class OpenCallbacks(upgradeNeeded: VersionChange => Callback,
                                  blocked      : Callback)
 
-  final case class Error(event: ErrorEvent) extends RuntimeException(event.message) {
-    import event.{message => msg}
+  final case class Error(event: ErrorEvent) extends RuntimeException(
+    event.asInstanceOf[js.Dynamic].message.asInstanceOf[js.UndefOr[String]].getOrElse(null)
+  ) {
+
+    // Note: allowing .message to be undefined is presumably only required due to use of fake-indexeddb in tests
+
+    val msg: String =
+      event.asInstanceOf[js.Dynamic].message.asInstanceOf[js.UndefOr[String]].getOrElse("")
+
+    @elidable(elidable.FINEST)
+    override def toString =
+      s"IndexedDb.Error($msg)"
 
     def isStoredDatabaseHigherThanRequested: Boolean = {
       // Chrome: The requested version (1) is less than the existing version (2).
@@ -129,11 +139,21 @@ object IndexedDb {
 
     // Convenience methods
 
+    /** Note: insert only */
     def add[K, V](store: ObjectStoreDef.Sync[K, V])(key: K, value: V): AsyncCallback[Unit] =
       transactionRW(store)(_.objectStore(store).flatMap(_.add(key, value)))
 
+    /** Note: insert only */
     def add[K, V](store: ObjectStoreDef.Async[K, V])(key: K, value: V): AsyncCallback[Unit] =
       store.encode(value).flatMap(add(store.sync)(key, _))
+
+    /** aka upsert */
+    def put[K, V](store: ObjectStoreDef.Sync[K, V])(key: K, value: V): AsyncCallback[Unit] =
+      transactionRW(store)(_.objectStore(store).flatMap(_.put(key, value)))
+
+    /** aka upsert */
+    def put[K, V](store: ObjectStoreDef.Async[K, V])(key: K, value: V): AsyncCallback[Unit] =
+      store.encode(value).flatMap(put(store.sync)(key, _))
 
     def get[K, V](store: ObjectStoreDef.Sync[K, V])(key: K): AsyncCallback[Option[V]] =
       transactionRO(store)(_.objectStore(store).flatMap(_.get(key)))
@@ -160,9 +180,16 @@ object IndexedDb {
   final class ObjectStore[K, V](val defn: ObjectStoreDef.Sync[K, V]) {
     import defn.{keyCodec, valueCodec}
 
+    /** Note: insert only */
     def add(key: K, value: V): Txn[Unit] = {
       val k = keyCodec.encode(key)
       Txn.EvalCallback(valueCodec.encode(value)).flatMap(Txn.StoreAdd(this, k, _))
+    }
+
+    /** aka upsert */
+    def put(key: K, value: V): Txn[Unit] = {
+      val k = keyCodec.encode(key)
+      Txn.EvalCallback(valueCodec.encode(value)).flatMap(Txn.StorePut(this, k, _))
     }
 
     def get(key: K): Txn[Option[V]] =
@@ -217,6 +244,7 @@ object IndexedDb {
     final case class EvalCallback   [A]   (callback: CallbackTo[A])                                    extends Txn[A]
     final case class GetStore       [K, V](defn: ObjectStoreDef.Sync[K, V])                            extends Txn[ObjectStore[K, V]]
     final case class StoreAdd             (store: ObjectStore[_, _], key: IndexedDbKey, value: js.Any) extends Txn[Unit]
+    final case class StorePut             (store: ObjectStore[_, _], key: IndexedDbKey, value: js.Any) extends Txn[Unit]
     final case class StoreGet       [K, V](store: ObjectStore[K, V], key: IndexedDbKey)                extends Txn[Option[V]]
     final case class StoreGetAllKeys[K, V](store: ObjectStore[K, V])                                   extends Txn[ArraySeq[K]]
     final case class StoreDelete    [K, V](store: ObjectStore[K, V], key: IndexedDbKey)                extends Txn[Unit]
@@ -256,9 +284,12 @@ object IndexedDb {
 
             case StoreAdd(s, k, v) =>
               getStore(s).flatMap { store =>
-                asyncRequest_ {
-                  store.add(v, k.asJs)
-                }
+                asyncRequest_(store.add(v, k.asJs))
+              }
+
+            case StorePut(s, k, v) =>
+              getStore(s).flatMap { store =>
+                asyncRequest_(store.put(v, k.asJs))
               }
 
             case Map(fa, f) =>

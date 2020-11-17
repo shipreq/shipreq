@@ -98,5 +98,23 @@ object IndexedDbTest extends TestSuite {
       }
     }
 
+    "put" - asyncTest {
+      val store = ObjectStoreDef.Sync("test", KeyCodec.int, ValueCodec.string)
+      for {
+        db    <- TestIndexedDb(store)
+        _     <- db.add(store)(1, "x1")
+        add2  <- db.add(store)(1, "x2").attempt
+        _     <- db.put(store)(2, "y1")
+        _     <- db.put(store)(2, "y2")
+        get1  <- db.get(store)(1)
+        get2  <- db.get(store)(2)
+      } yield {
+        assertEq(get1, Some("x1"))
+        assertEq(get2, Some("y2"))
+        assert(add2.isLeft)
+        add2
+      }
+    }
+
   }
 }
