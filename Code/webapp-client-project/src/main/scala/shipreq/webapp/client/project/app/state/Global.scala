@@ -13,6 +13,7 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Metadata
 import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.websocket._
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.client.project.app.pages.root.ConnectionStatus
 import shipreq.webapp.client.project.app.state.Global.State
 import shipreq.webapp.member.project.data.{Project, ProjectMetaData}
@@ -22,9 +23,11 @@ import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{Ini
 import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.ui.ReauthenticationModal
 
-abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
-                      onInitFailure   : ErrorMsg => Callback,
-                      final val logger: LoggerJs) extends Broadcaster[ProjectState.Update] {
+abstract class Global(onFirstLoad           : (Global, InitAppData) => Callback,
+                      onInitFailure         : ErrorMsg => Callback,
+                      final val logger      : LoggerJs) extends Broadcaster[ProjectState.Update] {
+
+  val localStorage: AbstractWebStorage
 
   val reauthModal: ReauthenticationModal
 
@@ -293,8 +296,14 @@ object Global {
             wscBuilder   : WebSocketClient.Builder[WsReqRes, Push],
             onFirstLoad  : (Global, InitAppData) => Callback,
             onInitFailure: ErrorMsg => Callback,
-            logger       : LoggerJs): Global =
+            localStorage : AbstractWebStorage,
+            logger       : LoggerJs): Global = {
+
+    val _localStorage = localStorage
+
     new Global(onFirstLoad, onInitFailure, logger) {
+
+      override val localStorage = _localStorage
 
       override val reauthModal = reauth
 
@@ -305,9 +314,12 @@ object Global {
           onServerPush  = onPush,
           onStateChange = _ => onWebSocketStateChange,
           timers        = JsTimers.real,
-          logger        = logger)
+          localStorage  = _localStorage,
+          logger        = logger,
+        )
       }
     }
+  }
 
   sealed trait State
   object State {

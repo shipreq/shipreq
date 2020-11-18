@@ -10,6 +10,7 @@ import scalacss.internal.StyleA
 import shipreq.base.test.BaseTestUtil
 import shipreq.base.util.{Debug, Disabled, Enabled, ErrorMsg}
 import shipreq.webapp.base.util.DomUtil._
+import sourcecode.Line
 import teststate.domzipper.DomZipperJsF.Dom
 import teststate.run.Report.AssertionSettings
 
@@ -83,7 +84,8 @@ object TestState
   final val y = true
   final val n = false
 
-  def assertTestState(r: Report[String], onFailure: => Unit = ())(implicit as: AssertionSettings, se: DisplayError[String]): Unit =
+  def assertTestState(r: Report[String], onFailure: => Unit = ())
+                     (implicit as: AssertionSettings, se: DisplayError[String], l: Line): Unit =
     r.failureReason match {
       case None =>
         // as.onPass.print(r)

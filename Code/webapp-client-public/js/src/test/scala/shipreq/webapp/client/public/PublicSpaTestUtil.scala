@@ -4,28 +4,32 @@ import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.base.util._
 import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.base.test.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.public.spa.{Page, PublicSpa}
+import sourcecode.Line
 import teststate.data.Id
 
 object PublicSpaTestUtil {
 
   val initData = PublicSpaEntryPoint.InitData(Allow, None, AssetManifest(None))
 
-  class ForTestState {
-    val ajax     = new TestAjaxClient(false)
-    val rc       = MockRouterCtl[Page]()
-    var initData = PublicSpaTestUtil.initData
+  class ForTestState(localStorage: AbstractWebStorage) {
+    def this() = this(AbstractWebStorage.inMemory())
+
+    val ajax       = new TestAjaxClient(false)
+    val rc         = MockRouterCtl[Page]()
+    var initData   = PublicSpaTestUtil.initData
 
     def render[A](initPage: Page)(f: DomZipperJs => A): A = {
-      val spa = new PublicSpa(initData, ajax)
+      val spa = new PublicSpa(initData, ajax, localStorage)
       ReactTestUtils.withRenderedIntoDocument(spa.Component(PublicSpa.Props(initPage, rc, initData.assetManifest))) { m =>
         f(m.domZipper)
       }
     }
 
-    def apply(initPage: Page)(f: DomZipperJs => Report[String]): Unit =
+    def apply(initPage: Page)(f: DomZipperJs => Report[String])(implicit l: Line): Unit =
       render(initPage) { h =>
         val r = f(h)
         assertTestState(r)

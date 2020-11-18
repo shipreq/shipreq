@@ -1,5 +1,5 @@
 #!/bin/bash
 cd "$(dirname "$(readlink -e "$0")")" || exit 1
 args="$@"
-[ $# -eq 0 ] && args=(dev prod test ssr)
+[ $# -eq 0 ] && args=(dev prod test test-node ssr)
 time parallel ./build ::: ${args[@]}

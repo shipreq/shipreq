@@ -78,6 +78,9 @@ final case class SafePickler[A](header : Option[MagicNumber],
   def decode(bin: BinaryData): SafePickler.Result[A] =
     wrapRead(UnpickleImpl(picklerCombined).fromBytes(bin.unsafeByteBuffer))
 
+  def decodeOrThrow(bin: BinaryData): A =
+    decode(bin).fold(throw _, identity)
+
   val decodeBytes: Array[Byte] => SafePickler.Result[A] =
     bytes => decode(BinaryData.unsafeFromArray(bytes))
 
@@ -98,7 +101,7 @@ object SafePickler {
   def success[A](a: A): Result[A] =
     \/-(a)
 
-  sealed trait DecodingFailure {
+  sealed trait DecodingFailure extends RuntimeException {
     val localVer: Version
     val upstreamVer: Option[Version]
 
@@ -128,7 +131,7 @@ object SafePickler {
 
     final case class ExceptionOccurred(localVer   : Version,
                                        exception  : Throwable,
-                                       upstreamVer: Option[Version]) extends DecodingFailure {
+                                       upstreamVer: Option[Version]) extends RuntimeException with DecodingFailure {
 
       @elidable(elidable.ASSERTION)
       private def devOnly(): Unit = {

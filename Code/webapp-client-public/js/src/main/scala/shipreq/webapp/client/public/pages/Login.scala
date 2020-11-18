@@ -10,9 +10,9 @@ import shipreq.base.util._
 import shipreq.webapp.base.config._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
-import shipreq.webapp.base.lib.BrowserStorage
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login.Request
+import shipreq.webapp.base.protocol.webstorage._
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.base.ui.widgets.Form
 import shipreq.webapp.base.ui.{CommmonUiText, GeneralTheme}
@@ -26,7 +26,8 @@ object Login {
                          asyncW         : AsyncFeature.Write.D0[ErrorMsg],
                          attemptLogin   : ServerSideProcInvoker[Request, ErrorMsg, Permission],
                          resetPassword  : ServerSideProcInvoker[Username \/ EmailAddr, ErrorMsg, Unit],
-                         redirectOnLogin: Option[Url.Relative]) {
+                         redirectOnLogin: Option[Url.Relative],
+                         localStorage   : AbstractWebStorage) {
 
     val inFlight: Boolean =
       AsyncFeature.isInProgress(state.value.async)
@@ -43,28 +44,26 @@ object Login {
 
   object LocalStorage {
 
-    private implicit def storage = BrowserStorage.localOrEmpty
-
     private final val KeyPrefix = "login-"
-    private val FieldRememberMe = BrowserStorage.Field.boolean(KeyPrefix + "remember-me")
-    private val FieldUser       = BrowserStorage.Field        (KeyPrefix + "user")
+    private val KeyRememberMe = WebStorageKey.boolean(KeyPrefix + "remember-me")
+    private val KeyUser       = WebStorageKey.string (KeyPrefix + "user")
 
-    def read: CallbackTo[LocalStorage] =
+    def read(implicit storage: AbstractWebStorage): CallbackTo[LocalStorage] =
       for {
-        rm <- FieldRememberMe.get
-        u  <- FieldUser.get
+        rm <- KeyRememberMe.get
+        u  <- KeyUser.get
       } yield LocalStorage(rm, u)
 
-    def write(s: State) =
+    def write(s: State)(implicit storage: AbstractWebStorage): Callback =
       if (s.rememberMe)
         for {
-          _ <- FieldRememberMe.set(true)
-          _ <- FieldUser.set(UserValidators.usernameOrEmail.corrector(s.req.usernameOrEmail))
+          _ <- KeyRememberMe.set(true)
+          _ <- KeyUser.set(UserValidators.usernameOrEmail.corrector(s.req.usernameOrEmail))
         } yield ()
       else
         for {
-          _ <- FieldRememberMe.set(false)
-          _ <- FieldUser.remove
+          _ <- KeyRememberMe.set(false)
+          _ <- KeyUser.remove
         } yield ()
   }
 
@@ -96,7 +95,7 @@ object Login {
     def empty: State =
       State(Request.Untyped("", ""), true, None, None, None)
 
-    def init: CallbackTo[State] =
+    def init(implicit storage: AbstractWebStorage): CallbackTo[State] =
       for {
         s <- LocalStorage.read
       } yield empty(s)
@@ -112,7 +111,7 @@ object Login {
 
     /** Stores the current state in client's local storage according to the remember-me setting */
     val writeCredentials: Callback =
-      $.props.flatMap(p => LocalStorage.write(p.state.value))
+      $.props.flatMap(p => LocalStorage.write(p.state.value)(p.localStorage))
 
     // Else a user might go to home thinking they've reloaded, and another user might click Login and see the
     // previous user's password populated.
@@ -163,8 +162,12 @@ object Login {
 
     private def onLoginSuccess: TCB.Success =
       TCB.Success(
-        GlobalSettings.SessionExpired.remove >>
-        $.props.map(p => window.location.href = p.redirectOnLogin.getOrElse(Urls.memberHome).relativeUrl)
+        for {
+          p <- $.props
+          _ <- GlobalSettings.SessionExpired.remove(p.localStorage)
+        } yield {
+          window.location.href = p.redirectOnLogin.getOrElse(Urls.memberHome).relativeUrl
+        }
       )
 
     private def onLoginFailure(user: Username \/ EmailAddr): Callback =

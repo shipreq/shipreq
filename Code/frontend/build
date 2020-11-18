@@ -9,7 +9,7 @@ fi
 
 # ====================================================================================================================
 
-valid_targets=(dev prod test ssr)
+valid_targets=(dev prod test test-node ssr)
 
 args="$@"
 [ $# -eq 0 ] && args="${valid_targets[@]}"
@@ -61,6 +61,14 @@ for mode in ${args[@]}; do
       target=dist/test
       rm -rf $target
       $webpack webpack/test.js || exit $?
+      echo
+      ls -l $target
+      ;;
+
+    test-node)
+      target=dist/test-node
+      rm -rf $target
+      $webpack webpack/test-node.js || exit $?
       echo
       ls -l $target
       ;;

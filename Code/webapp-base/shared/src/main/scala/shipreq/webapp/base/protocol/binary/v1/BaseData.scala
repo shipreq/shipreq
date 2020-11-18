@@ -32,11 +32,14 @@ object BaseData {
     state.enc.writeInt(ver)
   }
 
+  def unsupportedVer(ver: Int, maxSupportedVer: Int): Nothing =
+    throw UnsupportedVersionException(found = Version.v1(ver), maxSupported = Version.v1(maxSupportedVer))
+
   def readByVersion[A](maxSupportedVer: Int)(f: PartialFunction[Int, A])(implicit state: UnpickleState): A = {
     assert(maxSupportedVer > 0)
 
     def unsupportedVer(ver: Int): Nothing =
-      throw UnsupportedVersionException(found = Version.v1(ver), maxSupported = Version.v1(maxSupportedVer))
+      BaseData.unsupportedVer(ver, maxSupportedVer)
 
     def readVer(ver: Int): A =
       f.applyOrElse[Int, A](ver, unsupportedVer)
@@ -475,4 +478,29 @@ object BaseData {
   implicit lazy val picklerBinaryData: Pickler[BinaryData] =
     transformPickler(BinaryData.unsafeFromArray)(_.unsafeArray)
 
+  def picklerBinaryDataFixedLength(len: Int): Pickler[BinaryData] =
+    new Pickler[BinaryData] {
+
+      override def pickle(bin: BinaryData)(implicit state: PickleState): Unit = {
+        assert(bin.length == len)
+        val enc = state.enc
+        val bytes = bin.unsafeArray
+        var i = 0
+        while (i < len) {
+          enc.writeByte(bytes(i))
+          i += 1
+        }
+      }
+
+      override def unpickle(implicit state: UnpickleState): BinaryData = {
+        val dec = state.dec
+        val bytes = new Array[Byte](len)
+        var i = 0
+        while (i < len) {
+          bytes(i) = dec.readByte
+          i += 1
+        }
+        BinaryData.unsafeFromArray(bytes)
+      }
+    }
 }

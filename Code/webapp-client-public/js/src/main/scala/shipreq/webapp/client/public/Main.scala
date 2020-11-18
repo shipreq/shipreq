@@ -7,6 +7,7 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 import shipreq.webapp.base.feature.ErrorHandlingFeature
 import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocolsJs}
 import shipreq.webapp.base.protocol.entrypoint.ClientSideProcImpl
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.client.public.spa._
 
 @JSExportTopLevel(PublicSpaEntryPoint.Name)
@@ -16,7 +17,8 @@ object Main extends ClientSideProcImpl(PublicSpaEntryPoint.proc) {
     ErrorHandlingFeature.enable()
     Styles.addToDocument()
 
-    val spa      = new PublicSpa(i, AjaxClient.Binary)
+    val storage  = AbstractWebStorage.localOrEmpty()
+    val spa      = new PublicSpa(i, AjaxClient.Binary, storage)
     val reactApp = component(i, spa)
     ReactDOM.hydrateOrRender(reactApp, `#root`)
   }

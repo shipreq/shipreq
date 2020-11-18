@@ -5,10 +5,14 @@ import java.nio.ByteBuffer
 import java.util.Arrays
 
 /** Immutable blob of binary data. */
-final class BinaryData(private[BinaryData] val bytes: Array[Byte], val length: Int) {
+final class BinaryData(private[BinaryData] val bytes: Array[Byte],
+                       private[BinaryData] val offset: Int,
+                       val length: Int) {
+
+  private val lastIndExcl = offset + length
 
   // Note: It's acceptable to have excess bytes beyond the declared length
-  assert(length <= bytes.length, s"length ($length) exceeds number of bytes (${bytes.length})")
+  assert(lastIndExcl <= bytes.length, s"offset($offset) + length ($length) exceeds number of bytes (${bytes.length})")
 
   override def toString = s"BinaryData(${describe()})"
 
@@ -18,9 +22,20 @@ final class BinaryData(private[BinaryData] val bytes: Array[Byte], val length: I
 
   override def equals(o: Any): Boolean =
     o match {
-      case b: BinaryData => (length == b.length) && (0 until length).forall(i => bytes(i) == b.bytes(i))
-      case _             => false
+      case b: BinaryData =>
+        @inline def sameRef = this eq b
+        @inline def sameLen = length == b.length
+        @inline def sameBin = (0 until length).forall(i => bytes(offset + i) == b.bytes(b.offset + i))
+        sameRef || (sameLen && sameBin)
+      case _ =>
+        false
     }
+
+  @inline def isEmpty: Boolean =
+    length == 0
+
+  @inline def nonEmpty: Boolean =
+    length != 0
 
   def duplicate: BinaryData =
     BinaryData.unsafeFromArray(toNewArray)
@@ -32,7 +47,7 @@ final class BinaryData(private[BinaryData] val bytes: Array[Byte], val length: I
   }
 
   def describeBytes(limit: Int = BinaryData.DefaultByteLimitInDesc, sep: String = ",") = {
-    var i = bytes.iterator.map(b => "%02X".format(b & 0xff))
+    var i = bytes.iterator.drop(offset).map(b => "%02X".format(b & 0xff))
     if (length > limit)
       i = i.take(limit) ++ Iterator.single("…")
     else
@@ -41,59 +56,72 @@ final class BinaryData(private[BinaryData] val bytes: Array[Byte], val length: I
   }
 
   def writeTo(os: OutputStream): Unit =
-    os.write(bytes, 0, length)
+    os.write(bytes, offset, length)
 
-  def toByteBuffer: ByteBuffer =
-    unsafeByteBuffer.asReadOnlyBuffer()
+  // Note: the below must remain a `def` because ByteBuffers themselves have mutable state
+  /** unsafe in that the underlying bytes could be modified via access to unsafeArray */
+  def unsafeByteBuffer: ByteBuffer =
+    if (offset > 0)
+      ByteBuffer.wrap(bytes, 0, lastIndExcl).position(offset).slice()
+    else
+      ByteBuffer.wrap(bytes, 0, length)
 
   def toNewByteBuffer: ByteBuffer =
     ByteBuffer.wrap(toNewArray, 0, length)
 
   def toNewArray: Array[Byte] =
-    Arrays.copyOf(bytes, length)
+    Arrays.copyOfRange(bytes, offset, lastIndExcl)
 
   /** unsafe in that you might get back the underlying array which is mutable */
-  def unsafeArray: Array[Byte] =
-    if (length == bytes.length)
+  lazy val unsafeArray: Array[Byte] =
+    if (offset == 0 && length == bytes.length)
       bytes
     else
-      bytes.take(length)
+      toNewArray
 
   def binaryLikeString: String = {
     val chars = new Array[Char](length)
     var j = length
     while (j > 0) {
       j -= 1
-      val b = bytes(j)
+      val b = bytes(offset + j)
       val i = b.toInt & 0xff
       chars.update(j, i.toChar)
     }
     String.valueOf(chars)
   }
 
-  /** unsafe in that the result is mutable */
-  def unsafeByteBuffer: ByteBuffer =
-    ByteBuffer.wrap(bytes, 0, length)
-
   def hex: String =
     bytes
       .iterator
-      .take(length)
+      .slice(offset, lastIndExcl)
       .map(b => "%02X".format(b & 0xff))
       .mkString
 
   def ++(that: BinaryData): BinaryData =
     BinaryData.unsafeFromArray(this.unsafeArray ++ that.unsafeArray)
+
+  def drop(n: Int): BinaryData = {
+    val m = n.min(length)
+    new BinaryData(bytes, offset + m, length - m)
+  }
 }
 
 object BinaryData {
 
-  implicit def univEq: UnivEq[BinaryData] = UnivEq.force
+  implicit def univEq: UnivEq[BinaryData] =
+    UnivEq.force
 
-  val DefaultByteLimitInDesc = 50
+  final val DefaultByteLimitInDesc = 50
 
   def empty: BinaryData =
     unsafeFromArray(new Array(0))
+
+  def byte(b: Byte): BinaryData = {
+    val a = new Array[Byte](1)
+    a(0) = b
+    unsafeFromArray(a)
+  }
 
   def fromArray(a: Array[Byte]): BinaryData = {
     val a2 = Arrays.copyOf(a, a.length)
@@ -105,7 +133,8 @@ object BinaryData {
 
   def fromByteBuffer(bb: ByteBuffer): BinaryData =
     if (bb.hasArray) {
-      val a = Arrays.copyOf(bb.array(), bb.limit())
+      val offset = bb.arrayOffset()
+      val a = Arrays.copyOfRange(bb.array(), offset, offset + bb.limit())
       unsafeFromArray(a)
     } else {
       val a = new Array[Byte](bb.remaining)
@@ -129,12 +158,12 @@ object BinaryData {
 
   /** unsafe because the array could be modified later and affect the underlying array we use here */
   def unsafeFromArray(a: Array[Byte]): BinaryData =
-    new BinaryData(a, a.length)
+    new BinaryData(a, 0, a.length)
 
   /** unsafe because the ByteBuffer could be modified later and affect the underlying array we use here */
   def unsafeFromByteBuffer(bb: ByteBuffer): BinaryData =
     if (bb.hasArray)
-      new BinaryData(bb.array(), bb.limit())
+      new BinaryData(bb.array(), bb.arrayOffset(), bb.limit())
     else
       fromByteBuffer(bb)
 }

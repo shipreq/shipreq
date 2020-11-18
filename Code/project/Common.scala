@@ -19,9 +19,10 @@ import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import LibDependency.{Dep, HasBoth, HasJs, HasJvm, JS, JVM, ModDepScope}
 
 sealed trait JsTestType
-case object NoTests      extends JsTestType
-case object UseNode      extends JsTestType
-case object UsePhantomJs extends JsTestType
+case object NoTests         extends JsTestType
+case object UseNode         extends JsTestType
+case object UseNodeAdvanced extends JsTestType
+case object UsePhantomJs    extends JsTestType
 
 object Common {
 
@@ -256,7 +257,6 @@ object Common {
       jsTests(t),
       debugOrRelease(jsDevSettings, jsProdSettings),
       InBrowserTesting.js)
-    .depsForJs(Dependencies.scalajsJavaTime)
     .settings(
       parallelExecution in testOnly := false,
       scalaJSLinkerConfig ~= { _.withSourceMap(emitSourceMapsValue) })
@@ -303,6 +303,14 @@ object Common {
       case UseNode =>
         _.settings(
           jsEnv in Test := new JSDOMNodeJSEnv(JSDOMNodeJSEnv.Config()))
+      case UseNodeAdvanced =>
+        _.settings(
+          jsEnv in Test := new AdvancedNodeJSEnv(
+            AdvancedNodeJSEnv.Config().withEnv(Map(
+              "SBT_ROOT" -> (ThisBuild / baseDirectory).value.getAbsolutePath,
+              "CI"       -> (if (inCI) "1" else "0"),
+            ))
+          ))
       case UsePhantomJs =>
         _.settings(
           Test / scalaJSLinkerConfig ~= { _.withESFeatures(_.withUseECMAScript2015(false)) },

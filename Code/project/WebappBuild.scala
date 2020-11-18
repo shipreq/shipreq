@@ -129,11 +129,11 @@ object WebappBuild {
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
       .configureJvm(_.dependsOn(webappSampleDataJVM))
-      .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UsePhantomJs))
+      .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UseNodeAdvanced))
       .dependsOn(webappBaseTest, webappMember)
       .depsForBoth(Circe.main)
       .jsSettings(
-        parallelExecution := false, // I don't know why this is needed
+        parallelExecution := false, // Faster
         jsDependencies in Test += ProvidedJS / "webapp-member-test.js")
 
   lazy val webappSampleDataJVM = webappSampleData.jvm

@@ -1,4 +1,4 @@
-// This generates stuff needed locally (as opposed to assets that will be served.)
+// This generates stuff needed locally for unit tests (as opposed to assets that will be served.)
 
 const
   Path = require('path'),
@@ -8,8 +8,8 @@ const
 
 const config = {
 
-    // Projects access these via symlinks in src/test/resources
-    entry: {
+  // Projects access these via symlinks in src/test/resources
+  entry: {
     'webapp-base-test'  : './src/js/webapp-base-test.js',
     'webapp-member-test': './src/js/webapp-member-test.js',
     'webapp-client-test': './src/js/webapp-client-test.js',
