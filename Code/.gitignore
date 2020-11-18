@@ -10,3 +10,4 @@ target
 *.err
 project/metals.sbt
 .vscode
+.bsp
