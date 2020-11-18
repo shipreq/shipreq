@@ -1,11 +1,10 @@
-~*
+.*.swn
+.*.swo
+.*.swp
 .~*
+.metals
+.vscode/settings.json
 *.bak
 *.log
 *.tmp
-.*.swp
-.*.swo
-.*.swn
-
-.metals
-.vscode/settings.json
+~*
