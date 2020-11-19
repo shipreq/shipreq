@@ -1,11 +1,11 @@
-package shipreq.webapp.member.project.protocol.json.v1
+package shipreq.webapp.member.project.protocol.json
 
 /** This is a convenience for usages that don't need to care about versioning (eg. benchmarks, WW, tests).
   * It reduces the amount of busy-work required when bumping versions by allowing you to modify just this one
   * object rather than all uses that don't care and just need the latest.
   */
 object Latest {
-  import shipreq.webapp.member.project.protocol.json.v1.{Rev7 => L}
+  import v1.{Rev7 => L}
 
   @inline implicit def decoderEvent         = L.decoderEvent
   @inline implicit def encoderEvent         = L.encoderEvent
@@ -13,6 +13,6 @@ object Latest {
   @inline implicit def encoderVerifiedEvent = L.encoderVerifiedEvent
   @inline implicit def codecValidFilter     = L.codecValidFilter
 
-  val AtomCodecs      = Rev6.AtomCodecs
+  val AtomCodecs      = v1.Rev6.AtomCodecs
   val SavedViewCodecs = L.SavedViewCodecs
 }

@@ -50,7 +50,7 @@ object RandomEventStreamConfig {
   */
 object RandomEventStream extends RandomEventStreamDsl(ApplicableEventGen(_)) {
 
-  type State = (Project, EventOrd)
+  type State = Project
 
   type ProjectDepGen[A] = StateGen[State, A]
 
@@ -58,20 +58,24 @@ object RandomEventStream extends RandomEventStreamDsl(ApplicableEventGen(_)) {
     liftPGE(_ => eventGen)
 
   def liftPGE(eventGen: State => Gen[Event], maxAttempts: Int = 40): ProjectDepGen[VerifiedEvent] =
-    StateGen(s =>
-      eventGen(s).map(e =>
-        ApplyEvent.untrusted.apply1(e)(s._1) match {
-          case \/-(p2) => Some(((p2, s._2 + 1), VerifiedEvent(s._2, e, Instant.now())))
+    StateGen(p1 =>
+      eventGen(p1).map(e =>
+        ApplyEvent.untrusted.partialApplyUnverified(e)(p1) match {
+          case \/-(p2) => Some {
+            val ve = VerifiedEvent(p1.history.nextOrd, e, Instant.now())
+            val p3 = Project.history.modify(_ + ve)(p2)
+            (p3, ve)
+          }
           case -\/(_)  => None
         }
       ).optionGetLimit(maxAttempts)
     )
 
   private[project] def keepProject[A](g: ProjectDepGen[A]): ProjectDepGen[(A, Project)] =
-    StateGen(s => g.run(s).map(x => (x._1, (x._2, x._1._1))))
+    StateGen(s => g.run(s).map(x => (x._1, (x._2, x._1))))
 
-  private[project] val emptyState: State =
-    (Project.empty, EventOrd.first)
+  @inline private[project] def emptyState: State =
+    Project.empty
 
   val InitialEventCount = 2
 
@@ -178,7 +182,7 @@ object ApplicableEventGen {
 }
 
 final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig) {
-  val p = curState._1
+  val p = curState
 
   private implicit val gss: SizeSpec = 0 to 3
 
@@ -1142,21 +1146,23 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
 //  def applyEventSG[S](observe: ObserveFn[S]): StateGen[S, (Event, Project)] =
 //    StateGen.tailrec[S, (Event, Project)](s =>
 //      eventGen.map { e =>
-//        val r = ApplyEvent.untrusted.apply1(e)(p)
+//        val r = ApplyEvent.untrusted(e)(p)
 //        val s2 = observe(s, e, r)
 //        r.bimap(_ => s2, p2 => (s2, (e, p2)))
 //      }
 //    )
 
-  def applicableEventS[S](init: S)(observe: ObserveFn[S]): Gen[((S, Project), Event)] =
+  def applicableEventS[S](init: S)(observe: ObserveFn[S]): Gen[((S, Project), Event)] = {
+    import Project.Equality.WithHistoryByOrd._
     BindRec[Gen].tailrecM((s: S) =>
       eventGen.map { e =>
-        var r = ApplyEvent.untrusted.apply1(e)(p)
+        var r = ApplyEvent.untrusted.partialApplyUnverified(e)(p)
         r foreach { p2 => if (p === p2) r = -\/(ErrorMsg("No change")) }
         val s2 = observe(s, e, r)
         r.bimap(_ => s2, p2 => ((s2, p2), e))
       }
     )(init)
+  }
 
   def verifiedEvent: Gen[(State, VerifiedEvent)] =
     RandomEventStream.liftGE(eventGen).run(curState)

@@ -594,7 +594,7 @@ object VirtualProjectTagsTest extends TestSuite {
       "real1"  - assertProps(RealProject1.project)
 
       "rnd3" - {
-        val p = RandomData.project.withSeed(3).sample()
+        val p = RandomData.projectNoHistory.withSeed(3).sample()
         assertProps(p)
       }
 
@@ -604,7 +604,7 @@ object VirtualProjectTagsTest extends TestSuite {
 //        import nyaya.test.DefaultSettings._
 //        RandomData.project.bugHunt(308, seeds = 1000)(Prop.eval(p => Eval.atom("Props", (), { assertProps(p); None })))
 
-        RandomData.project.samples().take(3).foreach(assertProps)
+        RandomData.projectNoHistory.samples().take(3).foreach(assertProps)
       }
     }
   }

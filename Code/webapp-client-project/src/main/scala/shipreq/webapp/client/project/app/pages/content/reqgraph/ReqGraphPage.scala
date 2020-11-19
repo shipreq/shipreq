@@ -14,20 +14,18 @@ import shipreq.webapp.client.project.feature.SavedViewFeature
 import shipreq.webapp.client.project.widgets.ImplicationGraph
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
-import shipreq.webapp.member.project.event.ProjectAndOrd
 import shipreq.webapp.member.project.text.PlainText
 import shipreq.webapp.member.project.util.DataReusability._
 
 object ReqGraphPage {
 
-  final case class Props(projectAndOrd   : ProjectAndOrd,
+  final case class Props(project         : Project,
                          plainText       : PlainText.ForProject.AnyCtx,
                          reqDetailRC     : RouterCtl[ExternalPubid],
                          webWorker       : WebWorkerClient.Instance,
                          savedViewFeature: SavedViewFeature,
                          edgeEditorArgs  : Option[ImplicationGraph.EdgeEditor.Args],
                         ) {
-    @inline def project = projectAndOrd.project
     @inline def render: VdomElement = Component(this)
   }
 
@@ -46,7 +44,6 @@ object ReqGraphPage {
         p.savedViewFeature.activeView.impGraphConfig.getOrElse(ImpGraphConfig.default)
 
       val impGraph = ImplicationGraph.Props.All(
-        ord            = p.projectAndOrd.ord,
         reqWhitelist   = p.savedViewFeature.reqWhitelist,
         filterDead     = filterDead,
         config         = impGraphConfig,

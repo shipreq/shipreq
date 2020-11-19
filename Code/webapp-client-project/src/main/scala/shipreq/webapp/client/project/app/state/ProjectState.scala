@@ -6,7 +6,7 @@ import japgolly.scalajs.react.{Callback, CallbackTo}
 import shipreq.webapp.base.util.TCB
 import shipreq.webapp.client.project.util.DataReusability.reusabilityProject
 import shipreq.webapp.member.project.data.{Project, ProjectMetaData}
-import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 
 /**
   * A [[Project]] built from an event stream, up-to-date [[ProjectMetaData]],
@@ -16,12 +16,11 @@ import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEve
   *
   * @param futureEvents Events that been received but not applied yet.
   */
-final case class ProjectState(projectAndOrd  : ProjectAndOrd,
+final case class ProjectState(project        : Project,
                               projectMetaData: ProjectMetaData,
                               futureEvents   : VerifiedEvent.Seq) {
 
-  def project = projectAndOrd.project
-  def ord = projectAndOrd.ord
+  @inline def ord = project.ord
 
   override def toString = s"ProjectState($descState)"
 
@@ -36,7 +35,7 @@ final case class ProjectState(projectAndOrd  : ProjectAndOrd,
     }, s"Error: old events found in futureEvents. $descState")
 
   assert(
-    !futureEvents.iterator.map(_.ord).contains(projectAndOrd.nextOrd),
+    !futureEvents.iterator.map(_.ord).contains(project.history.nextOrd),
     s"Error: applicable event found in futureEvents. $descState")
 
   def addEvents(events: VerifiedEvent.Seq): Option[ProjectState.Update] = {
@@ -45,9 +44,9 @@ final case class ProjectState(projectAndOrd  : ProjectAndOrd,
     ProjectState.removeConsecutive(pendingEvents, _.immediatelyFollowsLatest(ord)) match {
 
       case Some((ves, remainingFutureEvents)) =>
-        val pao2 = projectAndOrd.mustApplyVerified(ves)
-        val md2 = projectMetaData.applyEvents(ves, pao2.project, ves.last.createdAt)
-        val s2  = ProjectState(pao2, md2, remainingFutureEvents)
+        val p2  = project.updateOrThrow(ves)
+        val md2 = projectMetaData.applyEvents(ves, p2, ves.last.createdAt)
+        val s2  = ProjectState(p2, md2, remainingFutureEvents)
         Some(ProjectState.Update(s2, ves.values))
 
       case None =>
@@ -66,7 +65,7 @@ final case class ProjectState(projectAndOrd  : ProjectAndOrd,
 
 object ProjectState {
 
-  def init(p: ProjectAndOrd, md: ProjectMetaData): ProjectState =
+  def init(p: Project, md: ProjectMetaData): ProjectState =
     ProjectState(p, md, VerifiedEvent.Seq.empty)
 
   final case class Update(newState: ProjectState, newlyAppliedEvents: VerifiedEvent.Seq) {

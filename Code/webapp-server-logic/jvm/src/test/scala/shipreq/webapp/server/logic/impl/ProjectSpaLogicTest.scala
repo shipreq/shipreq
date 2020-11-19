@@ -14,6 +14,7 @@ import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.member.project.protocol.websocket._
 import shipreq.webapp.member.project.text.Text
+import shipreq.webapp.member.test.WebappTestUtil.ImplicitProjectEqualityDeep._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.server.logic.algebra.Redis
 import shipreq.webapp.server.logic.algebra.Redis.ProjectSnapshot
@@ -79,14 +80,16 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         Event.ProjectNameSet("hello"),
       )
 
-      val verifiedEvents       = verifyEvents(Project.empty)(events: _*)
-      val instance             = applyVerifiedEventSuccessfully(Project.empty, verifiedEvents.toList: _*)
+      var verifiedEvents       = verifyEvents(Project.empty)(events: _*)
+      var instance             = applyVerifiedEventSuccessfully(Project.empty, verifiedEvents.toList: _*)
       val latestOrd            = verifiedEvents.last.ord.asLatest
       val id                   = db.createProject(user2.id, events.map(_.active), instance, crypto.generateProjectKey()).value
       val data1                = db.getProjectMetaData(id).value.get
+      verifiedEvents           = db.getAllProjectEvents(id).value.getOrThrow()
+      instance                 = applyVerifiedEventSuccessfully(Project.empty, verifiedEvents.toList: _*)
+      db.loadProjectLog        = Vector.empty
 
-      lazy val projectAndOrd   = ProjectAndOrd(instance, Some(verifiedEvents.last.ord.asLatest))
-      lazy val initAppData     = InitAppData(projectAndOrd, data1)
+      lazy val initAppData     = InitAppData(instance, data1)
       lazy val static          = WebSocketStatic(user2.toUser, id, SessionId.random(), (), svr.now.value, svr.now.value.plusSeconds(99999))
 
       lazy val eventsA         = events.take(1)
@@ -255,11 +258,15 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
             val result = sendMsg(initAppMsg, p1.static, subscribedState)
             val actual = result._1
             val expect = \/-(p1.initAppData)
+
+//            val f = (p: Project) => p.history
+//            assertEq(actual.map(_.map(_.project).map(f)), \/-(expect.map(_.project).map(f)))
+
             assertEq(actual, \/-(expect))
             assert(result._2.isEmpty)
 
             val cache = redis.read(p1.id).value.getOrThrow()
-            assertEq(cache.ord, Some(p1.latestOrd))
+            assertEq(cache.ord, p1.instance.ord)
           }
         }
       }
@@ -338,8 +345,8 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       val initData2 = sendMsgAndBroadcast(initAppMsg, static, subState2).getOrThrow()
       assertEq("[3]", recv2, Vector.empty)
       assertEq("[4]", recv1, Vector(ves1))
-      assertEq("[5]", initData2.project.ord, Some(initData1.project.nextOrd.asLatest))
-      assertEq("[6]", initData2.project.project.content.reqs.size, 1)
+      assertEq("[5]", initData2.project.ord, Some(initData1.project.history.nextOrd.asLatest))
+      assertEq("[6]", initData2.project.content.reqs.size, 1)
 
       val ves2 = sendMsgAndBroadcast(newUC, static, subState2).getOrThrow().needNES
       assertEq("[7]", recv1, Vector(ves1, ves2))
@@ -360,7 +367,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       "current" - {
         implicit val t = new Tester; import t._
         assertDifference("db reads", db.loadProjectLog.length)(0) {
-          val (\/-(events), newState) = sendMsg(WsReqRes.Reconnect.AndReq(p1.projectAndOrd.ord), p1.static, emptyState)
+          val (\/-(events), newState) = sendMsg(WsReqRes.Reconnect.AndReq(p1.instance.ord), p1.static, emptyState)
           assertEq(events, VerifiedEvent.Seq.empty)
           assert(newState.exists(_.sub.isDefined))
         }

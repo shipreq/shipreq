@@ -1,0 +1,46 @@
+digraph D {
+  node[style=filled]
+
+  node[fillcolor=lightgreen]
+  // {rank=min
+  validate1
+  validate
+  partialApplyUnverified
+  partialApplyUnverified1
+  apply1
+  applyNE
+  apply
+  // }
+
+  node[fillcolor=yellow2]
+  // {rank=same
+  safelyApplyUnverified
+  safelyApplyUnverified1
+  safelyApply1
+  // }
+  validateDataProps
+  safely
+  updateHistory [fillcolor=skyblue]
+
+  node[fillcolor=darkred fontcolor=white]
+  unsafelyApply
+  unsafelyApply1
+
+  validate1 -> partialApplyUnverified1 [minlen=2]
+  validate -> partialApplyUnverified [minlen=2]
+  partialApplyUnverified1 -> safelyApplyUnverified1
+  partialApplyUnverified -> safelyApplyUnverified
+  apply -> applyNE [minlen=2]
+  applyNE -> safelyApplyUnverified,safelyApply1,updateHistory
+  apply1 -> safelyApply1,updateHistory
+
+  safely -> validateDataProps
+  safelyApplyUnverified -> safely,unsafelyApply
+  safelyApplyUnverified1 -> safely,unsafelyApply1
+  safelyApply1 -> safelyApplyUnverified1 [minlen=2]
+
+  unsafelyApply -> unsafelyApply1
+
+  // Display purposes
+  validateDataProps -> unsafelyApply [style=invis]
+}

@@ -254,7 +254,7 @@ object DeletionProps {
       } yield IdCeilings.supply(ic => project.copy(idCeilings = ic))
 
     val genProjectFree: Gen[Project] =
-      *.project
+      *.projectNoHistory
 
     val genProps: Gen[DeletionProps] =
       for {

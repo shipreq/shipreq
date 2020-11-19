@@ -23,12 +23,11 @@ import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.ProjectWidgets.emptySpan
 import shipreq.webapp.client.project.widgets.{EditorNavParent, _}
-import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.member.UiText
 import shipreq.webapp.member.feature.{EditControlsFeature, PreviewFeature}
 import shipreq.webapp.member.project.data.ExternalPubid.LookupFailure
 import shipreq.webapp.member.project.data._
-import shipreq.webapp.member.project.event.{Event, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{Event, VerifiedEvent}
 import shipreq.webapp.member.project.protocol.websocket.{CreateContentCmd, UpdateContentCmd}
 import shipreq.webapp.member.project.text.ProjectText.SetRenderStyle
 import shipreq.webapp.member.project.text._
@@ -53,11 +52,10 @@ object ReqDetail {
                                sspCreateContent     : ServerSideProcInvoker[CreateContentCmd, ErrorMsg, NewEvents],
                                reqDetailRC          : RouterCtl[ExternalPubid],
                                webWorker            : WebWorkerClient.Instance,
-                               pxProjectAndOrd      : Px[ProjectAndOrd],
+                               pxProject            : Px[Project],
                                pxViewReqDataCache   : Px[ViewReqDataCache],
                                pxTextSearch         : Px[TextSearch],
                                pxProjectWidgetsNoCtx: Px[ProjectWidgets.NoCtx]) {
-    val pxProject = pxProjectAndOrd.map(_.project)
     val pxProjectConfig = pxProject.map(_.config).withReuse
   }
 
@@ -91,7 +89,6 @@ object ReqDetail {
    */
   private final class Data(sp              : StaticProps,
                        val project         : Project,
-                       val ord             : WebWorkerCmd.Ord,
                        val req             : Req,
                            viewReqDataCache: ViewReqDataCache,
                            upstreamFD      : FilterDead) {
@@ -174,12 +171,12 @@ object ReqDetail {
 
     private val pxData: Px[LookupFailure \/ Data] =
       for {
-        p <- pxProjectAndOrd
+        p <- pxProject
         e <- pxExtPubid
         v <- pxViewReqDataCache
         f <- pxUpstreamFD
       } yield
-        e.lookup(p.project).map(new Data(SP, p.project, p.ord, _, v, f))
+        e.lookup(p).map(new Data(SP, p, _, v, f))
 
     private val cbData: CallbackOption[Data] =
       Callback(refreshPx()).toCBO >> pxData.toCallback.map(_.toOption).asCBO
@@ -499,7 +496,6 @@ object ReqDetail {
               cell.nonDirectlyEditableNavParent {
                 val graph =
                   ImplicationGraph.Props.FocusReq(
-                    ord         = data.ord,
                     focus       = req.id,
                     filterDead  = data.filterDead,
                     project     = project,
@@ -520,7 +516,7 @@ object ReqDetail {
           case Row.StepGraph =>
             withoutReusability(StaticField.StepGraph.name) { cell =>
               val ucId = data.useCaseData.get.uc.id
-              cell.nonDirectlyEditableNavParent(UseCaseStepFlowGraph.Props(data.ord, ucId, pw.ctx, webWorker).render)
+              cell.nonDirectlyEditableNavParent(UseCaseStepFlowGraph.Props(project.ord, ucId, pw.ctx, webWorker).render)
             }
 
           case Row.Codes =>

@@ -4,7 +4,7 @@ import japgolly.microlibs.adt_macros.AdtMacros._
 import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import java.time.Instant
+import java.time.{Duration, Instant}
 import monocle.function.Field1.first
 import monocle.function.Field2.second
 import monocle.{Optional => _, _}
@@ -25,7 +25,7 @@ import shipreq.webapp.base.config._
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data._
-import shipreq.webapp.member.project.event.ProjectAndOrd
+import shipreq.webapp.member.project.event.ProjectEvents
 import shipreq.webapp.member.project.issue.IssueCategory
 import shipreq.webapp.member.project.sort.SortMethod
 import shipreq.webapp.member.project.text
@@ -1672,11 +1672,11 @@ object RandomData {
       fields         <- fieldSet(reqTypeIdSet, tags.keySet)
     } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
 
-  def genProject(cfg            : ProjectConfig,
-                 reqsWithoutText: Requirements,
-                 reqCodes1      : ReqCodes,
-                 reqTags        : ReqData.Tags,
-                 reqImps        : Implications): Gen[Project] = {
+  def genProjectNoHistory(cfg            : ProjectConfig,
+                          reqsWithoutText: Requirements,
+                          reqCodes1      : ReqCodes,
+                          reqTags        : ReqData.Tags,
+                          reqImps        : Implications): Gen[Project] = {
     val cissueIds       = cfg.customIssueTypes.keySet
     val cissueIdG       = Gen tryGenChoose cissueIds.toSeq
     val activeCodeIds   = reqCodes1.trie.allValues.flatMap(_.activeId.iterator)
@@ -1710,12 +1710,13 @@ object RandomData {
                        dr),
                      mis,
                      savedview.SavedViews.empty,
+                     ProjectEvents.empty,
                      IdCeilings.zero)
       savedViews <- savedViews.savedViewsForProject(p1)
     } yield IdCeilings.supply(ic => p1.copy(savedViews = savedViews, idCeilings = ic))
   }
 
-  lazy val project: Gen[Project] =
+  lazy val projectNoHistory: Gen[Project] =
     for {
       cfg             <- projectConfig
       atagIds         = cfg.tags.tree.valuesIterator.map(_.tag).filterSubType[ApplicableTag].map(_.id).toSet
@@ -1730,23 +1731,28 @@ object RandomData {
       reqCodes        <- reqCodes(reqCode.trie(reqCodeDataG, 2 `JVM|JS` 2))
       reqTags         <- reqFieldDataTags(reqIdSet, atagIds)
       reqImps         <- reqFieldDataImplications(reqIdSet)
-      p               <- genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
+      p               <- genProjectNoHistory(cfg, reqsWithoutText, reqCodes, reqTags, reqImps)
     } yield p
 
-  lazy val projectAndOrd: Gen[ProjectAndOrd] =
+  lazy val projectNonsenseHistory: Gen[Project] =
     for {
-      o <- events.eventOrd.map(_.asLatest).option
-      p <- project
-    } yield ProjectAndOrd(p, o)
+      p <- projectNoHistory
+      es <- events.verifiedEventSeq(1 to 16)
+    } yield p.copy(history = ProjectEvents(es))
 
   def projectName: Gen[Project.Name] =
     shortText1
 
-  lazy val instantPast: Gen[Instant] = {
+  def instantPast(maxAge: Duration): Gen[Instant] = {
     val now = Instant.now()
-    val secPerDay = 86400
-    Gen.chooseLong(0, 365 * 5 * secPerDay).map(now.minusSeconds)
+    milliseconds(maxAge).map(now.plusMillis)
   }
+
+  def milliseconds(max: Duration): Gen[Long] =
+    Gen.chooseLong(0, max.toMillis)
+
+  lazy val instantPast: Gen[Instant] =
+    instantPast(Duration.ofDays(365 * 5))
 
   lazy val projectMetaData: Gen[ProjectMetaData] =
     for {
@@ -2006,7 +2012,7 @@ object RandomData {
 
     def projectSpaInitAppData: Gen[ProjectSpaProtocols.InitAppData] =
       for {
-        a <- projectAndOrd
+        a <- projectNonsenseHistory
         b <- projectMetaData
       } yield ProjectSpaProtocols.InitAppData(a, b)
 
@@ -2941,5 +2947,22 @@ object RandomData {
 
     val verifiedEvent: Gen[VerifiedEvent] =
       Gen.apply3(VerifiedEvent.apply)(eventOrd, event, instantPast)
+
+    def verifiedEventSeq(implicit sizeSpec: SizeSpec): Gen[VerifiedEvent.Seq] =
+      Gen { ctx =>
+        var events = VerifiedEvent.Seq.empty
+        var t = instantPast.run(ctx)
+        val genMs = milliseconds(Duration.ofDays(45))
+        var i = sizeSpec.gen.run(ctx)
+        while (i > 0) {
+          i -= 1
+          val e = event.run(ctx)
+          val o = EventOrd(i)
+          val ve = VerifiedEvent(o, e, t)
+          events += ve
+          t = t.minusMillis(genMs.run(ctx))
+        }
+        events
+      }
   }
 }

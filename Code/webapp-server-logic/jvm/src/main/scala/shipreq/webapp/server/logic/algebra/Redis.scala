@@ -11,7 +11,7 @@ import shipreq.base.ops.Trace
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.member.project.data.Project
-import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.server.logic.event.ApplyEventAlgebra
 
 /** Why is this called Redis and not Cache?
@@ -20,11 +20,27 @@ import shipreq.webapp.server.logic.event.ApplyEventAlgebra
   */
 object Redis extends StrictLogging {
 
+  // This class seems redundant now that Project includes its history but I'm keeping it around for two reasons:
+  //
+  // 1) It represents a snapshot stored in Redis. In Redis we store the ord explicitly for use by the lua fns.
+  //    It's important to model the state as seen from Redis's point of view.
+  //
+  // 2) It provides type-level proof that we never store empty projects. ord is not an Option here.
   final case class ProjectSnapshot(project: Project, ord: EventOrd.Latest) {
+    assert(
+      project.history.ordAsInt == ord.value,
+      s"""
+         |--------------------------------------------------------------------------------------------------------------
+         |Project v${project.history.ordAsInt} saved in Redis as v${ord.value}
+         |
+         |Latest 3 events:
+         |${project.history.events.to(Vector).reverseIterator.take(3).mkString("\n")}
+         |--------------------------------------------------------------------------------------------------------------
+         |""".stripMargin)
+
     override def toString = s"ProjectSnapshot(${ord.value})"
     def min(b: ProjectSnapshot): ProjectSnapshot = if (ord < b.ord) this else b
     def max(b: ProjectSnapshot): ProjectSnapshot = if (ord > b.ord) this else b
-    def toProjectAndOrd = ProjectAndOrd(project, Some(ord))
   }
 
   final case class ProjectCache(snapshot: Option[ProjectSnapshot], events: VerifiedEvent.Seq) {
@@ -50,11 +66,11 @@ object Redis extends StrictLogging {
 
     def build[F[_]](pid: ProjectId)(implicit ae: ApplyEventAlgebra[F]) =
       snapshot match {
-        case Some(ss) => ae.append(pid, ss.toProjectAndOrd, events)
+        case Some(ss) => ae.append(pid, ss.project, events)
         case None     => ae.create(pid, events)
       }
 
-    def buildNonEmpty[F[_]](pid: ProjectId)(implicit ae: ApplyEventAlgebra[F]): F[Option[ProjectAndOrd]] =
+    def buildNonEmpty[F[_]](pid: ProjectId)(implicit ae: ApplyEventAlgebra[F]): F[Option[Project]] =
       if (nonEmpty)
         ae.F.map(build(pid))(_.toOption)
       else
@@ -162,10 +178,10 @@ object Redis extends StrictLogging {
       }
 
     final def writeSnapshot(id         : ProjectId,
-                            snapshot   : ProjectAndOrd,
+                            project    : Project,
                             publishOnly: VerifiedEvent.Seq): F[Boolean] =
-      snapshot.ord match {
-        case Some(ord) => writeSnapshot(id, ProjectSnapshot(snapshot.project, ord), publishOnly)
+      project.ord match {
+        case Some(ord) => writeSnapshot(id, ProjectSnapshot(project, ord), publishOnly)
         case None      =>
           VerifiedEvent.NonEmptySeq.maybe(publishOnly) match {
             case Some(s) => F.map(publishEvents(id, s))(_ => true)

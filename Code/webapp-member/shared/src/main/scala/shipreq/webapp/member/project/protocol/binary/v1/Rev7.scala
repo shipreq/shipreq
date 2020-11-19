@@ -912,42 +912,4 @@ object Rev7 {
 
   implicit lazy val picklerErrorMsgOrVerifiedEventSeq: Pickler[ErrorMsg \/ VerifiedEvent.Seq] =
     pickleDisj
-
-  // ===================================================================================================================
-
-  import Rev7.SavedViewPicklers._
-
-  implicit lazy val picklerProject: Pickler[Project] =
-    new Pickler[Project] {
-      override def pickle(a: Project)(implicit state: PickleState): Unit = {
-        state.pickle(a.name)
-        state.pickle(a.config)
-        state.pickle(a.content)
-        state.pickle(a.manualIssues)
-        state.pickle(a.savedViews)
-        state.pickle(a.idCeilings)
-      }
-      override def unpickle(implicit state: UnpickleState): Project = {
-        val name          = state.unpickle[Project.Name]
-        val config        = state.unpickle[ProjectConfig]
-        val content       = state.unpickle[ProjectContent]
-        val manualIssues  = state.unpickle[ManualIssues]
-        val savedViews    = state.unpickle[savedview.SavedViews.Optional]
-        val idCeilings    = state.unpickle[IdCeilings]
-        Project(name, config, content, manualIssues, savedViews, idCeilings)
-      }
-    }
-
-  implicit lazy val picklerProjectAndOrd: Pickler[ProjectAndOrd] =
-    new Pickler[ProjectAndOrd] {
-      override def pickle(a: ProjectAndOrd)(implicit state: PickleState): Unit = {
-        state.pickle(a.project)
-        state.pickle(a.ord)
-      }
-      override def unpickle(implicit state: UnpickleState): ProjectAndOrd = {
-        val project = state.unpickle[Project]
-        val ord     = state.unpickle[Option[EventOrd.Latest]]
-        ProjectAndOrd(project, ord)
-      }
-    }
 }

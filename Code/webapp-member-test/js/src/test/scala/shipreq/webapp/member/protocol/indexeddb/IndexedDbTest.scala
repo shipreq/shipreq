@@ -1,10 +1,11 @@
 package shipreq.webapp.member.protocol.indexeddb
 
-import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.Node.asyncTest
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.protocol.binary.Compression
+import shipreq.webapp.member.test.WebappTestUtil.ImplicitProjectEqualityDeep._
+import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project._
 import shipreq.webapp.member.test.{TestEncryption, TestIndexedDb}
 import utest._
@@ -48,7 +49,7 @@ object IndexedDbTest extends TestSuite {
     }
 
     "pickleCompressEncrypt" - asyncTest {
-      import shipreq.webapp.member.project.protocol.binary.v1.Latest.picklerProject
+      import shipreq.webapp.member.project.protocol.binary.Latest.picklerProject
       import SampleProject8.{project => project1}
       import SampleProject5.{project => project2}
       import SafePickler.ConstructionHelperImplicits._

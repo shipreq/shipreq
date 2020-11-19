@@ -11,7 +11,7 @@ import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.base.protocol.websocket.WebSocketShared
 import shipreq.webapp.member.project.data._
-import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 
 /**
   * Protocols for the Project SPA / webapp-client-project module.
@@ -35,7 +35,7 @@ object ProjectSpaProtocols {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private final val wsrrVersion = 7 // Bump this when any of following imports change
+  private final val wsrrVersion = Version.fromInts(1, 7) // Bump this when any of following imports change
   import CreateContentCmd.CodecsV4._
   import ManualIssueCmd  .CodecsV4._
   import SavedViewCmd    .CodecsV4._
@@ -68,17 +68,18 @@ object ProjectSpaProtocols {
         }
 
       pickler
-        .asV1(wsrrVersion)
+        .asVersion(wsrrVersion)
         .withMagicNumbers(0x1DB44559, 0x53562938)
     }
 
-    protected final val responseVersion = 7  // Bump this when any of following imports change
+    protected final val responseVersion = Version.fromInts(2, 0) // Bump this when any of following imports change
     import boopickle.DefaultBasic.unitPickler
     import shipreq.webapp.base.protocol.binary.v1.BaseData._
     import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData1._
     import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData2._
     import shipreq.webapp.member.project.protocol.binary.v1.PostEvents._
     import shipreq.webapp.member.project.protocol.binary.v1.Rev7._
+    import shipreq.webapp.member.project.protocol.binary.v2.Rev0._
 
     implicit val picklerInitAppData: Pickler[InitAppData] =
       new Pickler[InitAppData] {
@@ -87,7 +88,7 @@ object ProjectSpaProtocols {
           state.pickle(a.projectMetaData)
         }
         override def unpickle(implicit state: UnpickleState): InitAppData = {
-          val project         = state.unpickle[ProjectAndOrd]
+          val project         = state.unpickle[Project]
           val projectMetaData = state.unpickle[ProjectMetaData]
           InitAppData(project, projectMetaData)
         }
@@ -120,22 +121,22 @@ object ProjectSpaProtocols {
 
     implicit val safePicklerInitAppRes: SafePickler[ErrorMsg \/ InitAppData] =
       picklerInitAppRes
-        .asV1(responseVersion)
+        .asVersion(responseVersion)
         .withMagicNumberFooter(0x8819303B)
 
     implicit val safePicklerEventResult: SafePickler[WsReqRes.EventResult] =
       picklerEventResult
-        .asV1(responseVersion)
+        .asVersion(responseVersion)
         .withMagicNumberFooter(0x86DA8677)
 
     implicit val safePicklerVerifiedEventSeq: SafePickler[VerifiedEvent.Seq] =
       picklerVerifiedEventSeq
-        .asV1(responseVersion)
+        .asVersion(responseVersion)
         .withMagicNumberFooter(0x85651C09)
 
     val safePicklerVerifiedEventNonEmptySeq: SafePickler[VerifiedEvent.NonEmptySeq] =
       picklerVerifiedEventNonEmptySeq
-        .asV1(responseVersion)
+        .asVersion(responseVersion)
         .withMagicNumberFooter(0x06F60C06)
   }
 
@@ -143,7 +144,7 @@ object ProjectSpaProtocols {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final case class InitAppData(project        : ProjectAndOrd,
+  final case class InitAppData(project        : Project,
                                projectMetaData: ProjectMetaData)
 
   sealed trait WsReqRes extends Protocol.RequestResponse[SafePickler] { self =>

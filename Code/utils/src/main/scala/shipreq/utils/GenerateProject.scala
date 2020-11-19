@@ -10,7 +10,8 @@ import shipreq.base.util.BinaryData
 import shipreq.webapp.base.test.RandomDataSettings
 import shipreq.webapp.member.project.data.DataImplicits._
 import shipreq.webapp.member.project.data._
-import shipreq.webapp.member.project.protocol.binary.v1.Latest.picklerProject
+import shipreq.webapp.member.project.event.ProjectEvents
+import shipreq.webapp.member.project.protocol.binary.Latest.picklerProject
 import shipreq.webapp.member.project.util.ShowSize
 import shipreq.webapp.member.test.project.{RandomData => $}
 
@@ -88,7 +89,10 @@ object GenerateProject {
     val reqTags         = sample($.reqFieldDataTags(reqIdSet, atagIds), Size.Tags)
     val impMethod       = $.implicationsMethod2(Size.ImplicationsPerSrc, Size.Implications)
     val reqImps         = sample($.reqFieldDataImplications(reqIdSet, impMethod), Size.Implications)
-    val p               = sample($.genProject(cfg, reqsWithoutText, reqCodes, reqTags, reqImps), Size.Reqs)
+    val p1              = sample($.genProjectNoHistory(cfg, reqsWithoutText, reqCodes, reqTags, reqImps), Size.Reqs)
+    // TODO HISTORY IS NONSENSE
+    val events          = $.events.verifiedEventSeq(1 to 16).sample()
+    val p               = p1.copy(history = ProjectEvents(events))
     val filename        = s"/tmp/project-${Size.Reqs}-${Instant.now().toString.filter(_.isDigit)}.bin"
     val bin             = BinaryData.unsafeFromByteBuffer(PickleImpl intoBytes p)
 

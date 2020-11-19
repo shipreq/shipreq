@@ -6,7 +6,7 @@ import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
-import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.member.project.text.ProjectText
 
 // Another idea could be to maintain a separate ClientData instance in the WW thread and feed it all the same updates
@@ -19,7 +19,7 @@ object WebWorkerCmd {
   // Using instead of Unit so that we can define an implicit Pickler here and have it be universally in scope
   case object NoResult
 
-  final case class Init(projectAndOrd: ProjectAndOrd, am: AssetManifest) extends WebWorkerCmd[NoResult.type]
+  final case class Init(project: Project, am: AssetManifest) extends WebWorkerCmd[NoResult.type]
 
   final case class UpdateProject(events: VerifiedEvent.NonEmptySeq) extends WebWorkerCmd[NoResult.type]
 
@@ -47,7 +47,7 @@ object WebWorkerCmd {
   import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData1._
   import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData2._
   import shipreq.webapp.member.project.protocol.binary.v1.Rev1.SavedViewPicklers._
-  import shipreq.webapp.member.project.protocol.binary.v1.Latest._
+  import shipreq.webapp.member.project.protocol.binary.Latest._
 
   implicit val picklerSvg: Pickler[Svg] =
     transformPickler(Svg.apply)(_.content)
@@ -69,11 +69,11 @@ object WebWorkerCmd {
   private implicit val picklerInit: Pickler[Init] =
     new Pickler[Init] {
       override def pickle(a: Init)(implicit state: PickleState): Unit = {
-        state.pickle(a.projectAndOrd)
+        state.pickle(a.project)
         state.pickle(a.am)
       }
       override def unpickle(implicit state: UnpickleState): Init = {
-        val pao = state.unpickle[ProjectAndOrd]
+        val pao = state.unpickle[Project]
         val am  = state.unpickle[AssetManifest]
         Init(pao, am)
       }

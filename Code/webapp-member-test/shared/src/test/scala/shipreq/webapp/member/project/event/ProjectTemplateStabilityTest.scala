@@ -2,7 +2,7 @@ package shipreq.webapp.member.project.event
 
 import io.circe.syntax._
 import shipreq.base.test.JsonTestUtil._
-import shipreq.webapp.member.project.protocol.json.v1.Latest._
+import shipreq.webapp.member.project.protocol.json.Latest._
 import shipreq.webapp.member.test.project.EventEquality._
 import utest._
 

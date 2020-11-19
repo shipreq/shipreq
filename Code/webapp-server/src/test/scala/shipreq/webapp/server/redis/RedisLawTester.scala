@@ -20,6 +20,7 @@ import shipreq.webapp.server.logic.algebra.Redis._
 import shipreq.webapp.server.redis.RedisLaw.Test
 import shipreq.webapp.server.redis.RedisLawTester._
 import shipreq.webapp.server.redis.RedisLaws.DataGenerators
+import shipreq.webapp.server.test.WebappServerTestUtil.ImplicitRedisEqualityDeepExceptEventTime._
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import sourcecode.Line
 
@@ -217,8 +218,24 @@ final case class RedisLawTester[F <: ProjectAlgebra[Fx], G <: ProjectAlgebra[Fx]
   protected implicit val retryInterval = utest.asserts.RetryInterval(5.millis.asFiniteDuration)
 
   private def testEq[A](name: => String, lhs: A, rhs: A)(implicit e: Equal[A], q: Line): Unit =
-    if (!e.equal(lhs, rhs))
+    if (!e.equal(lhs, rhs)) {
       failures add Failure(name, lhs, rhs)
+
+//      def breakItDown(lhs: Any, rhs: Any): Unit = {
+//        @nowarn def again[A](typ: A)(f: A => Any) = breakItDown(f(lhs.asInstanceOf[A]), f(rhs.asInstanceOf[A]))
+//        (lhs, rhs) match {
+//          case (t: ProjectCache, _) => again(t)(_.snapshot.get.project.history)
+//          case _ =>
+//            println(
+//              s"""
+//                 |lhs: $lhs
+//                 |rhs: $rhs
+//                 |
+//                 |""".stripMargin)
+//        }
+//      }
+//      breakItDown(lhs, rhs)
+    }
 
   private def assertState(name: String): Unit = {
     // Test state: read
@@ -307,7 +324,7 @@ final case class RedisLawTester[F <: ProjectAlgebra[Fx], G <: ProjectAlgebra[Fx]
     apply(cmd)
     if (failures.nonEmpty()) {
       failures.print()
-      fail(failures.failureSummary(name))
+      fail(failures.failureSummary(name), false)
     }
   }
 
@@ -376,7 +393,7 @@ final case class RedisLawTester[F <: ProjectAlgebra[Fx], G <: ProjectAlgebra[Fx]
     shrunkCmds.indices.foreach(i => println(s"  ${i + 1}. ${shrunkCmds(i).name}"))
     println()
 
-    fail(failures.failureSummary())
+    fail(failures.failureSummary(), false)
   }
 
   private def resetAndValidateCmds(newCmds: Vector[Cmd]): Fx[Validity] =
@@ -507,7 +524,7 @@ final case class RedisLawTester[F <: ProjectAlgebra[Fx], G <: ProjectAlgebra[Fx]
 
         if (failures.nonEmpty()) {
           failures.print()
-          fail(failures.failureSummary(prefix))
+          fail(failures.failureSummary(prefix), false)
         }
       }
     }

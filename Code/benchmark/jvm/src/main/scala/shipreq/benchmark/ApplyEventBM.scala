@@ -28,7 +28,7 @@ class ApplyEventBM {
   }
 
   private def go(ae: ApplyEvent): Project =
-    ae.applyVerified(es)(pe) match {
+    ae(es)(pe) match {
       case \/-(p) => p
       case -\/(e) => println(e); e.throwException()
     }

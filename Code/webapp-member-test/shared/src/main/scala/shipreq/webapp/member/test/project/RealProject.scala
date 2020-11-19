@@ -6,8 +6,8 @@ import shipreq.base.test.JsonTestUtil._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
-import shipreq.webapp.member.project.protocol.binary.v1.Latest._
-import shipreq.webapp.member.project.protocol.json.v1.Latest._
+import shipreq.webapp.member.project.protocol.binary.Latest._
+import shipreq.webapp.member.project.protocol.json.Latest._
 import shipreq.webapp.member.test.WebappTestUtil._
 
 abstract class RealProject {

@@ -186,7 +186,7 @@ object ParsersTest extends TestSuite {
   }
 
   protected def tester: Gen[Tester] =
-    Gen.lift2($.project, $.TextGen.genCharML.string1.list1)(new Tester(_, _))
+    Gen.lift2($.projectNoHistory, $.TextGen.genCharML.string1.list1)(new Tester(_, _))
 
   // -------------------------------------------------------------------------------------------------------------------
 

@@ -138,7 +138,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
     CallbackTo {
       val s = unsafeState.asInstanceOf[Global.State.Active].projectState
       // assert(s.futureEvents.isEmpty, s"TestGlobal.nextEventOrd: s.futureEvents = ${s.futureEvents.map(_.ord.value)}")
-      s.projectAndOrd.nextOrd
+      s.project.history.nextOrd
     }
 
   def ws() = _fakeWS.last
@@ -155,9 +155,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
 
   def verifyEventsCB(es: Event*): CallbackTo[VerifiedEvent.Seq] = {
     val eventList = es.toList // avoid Scala bug
-    pxProject.toCallback.flatMap(p =>
-      CallbackTo.liftTraverse((e: Event) => nextEventOrd.map(verifyEvent(p, e, _))).std[List]
-        .map(VerifiedEvent.Seq.empty ++ _ (eventList)))
+    pxProject.toCallback.map(verifyEvents(_)(eventList: _*))
   }
 
   def applyTestEventsCB(es: Event*): Callback =
@@ -247,9 +245,8 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
 object TestGlobal {
 
   def apply(p: Project): TestGlobal = {
-    val md  = looseProjectMetaData(p, eventsTotal = 200)
-    val pao = ProjectAndOrd(p, Some(EventOrd.Latest(200)))
-    val ps  = ProjectState.init(pao, md)
+    val md = looseProjectMetaData(p, eventsTotal = p.history.ordAsInt)
+    val ps = ProjectState.init(p, md)
     new TestGlobal(ps)
   }
 

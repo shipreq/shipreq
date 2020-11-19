@@ -1,11 +1,11 @@
 package shipreq.webapp.client.ww.state
 
-import japgolly.microlibs.testutil.TestUtil._
 import japgolly.scalajs.react.AsyncCallback
 import java.time.Instant
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.member.project.data.Project
-import shipreq.webapp.member.project.event.{Event, EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{Event, EventOrd, VerifiedEvent}
+import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project.UnsafeTypes.autoSomeEventOrdLatest
 import sourcecode.Line
 import utest._
@@ -29,7 +29,7 @@ object WorkerStateTest extends TestSuite {
     val s = new WorkerState(LoggerJs.off)
 
     def setProject(ord: Int): Unit =
-      s.setProject(ProjectAndOrd(Project.empty, ord)).runNow()
+      s.setProject(setOrd(Project.empty, EventOrd(ord))).runNow()
 
     def updateProject(ords: Int*): Unit = {
       val ves = VerifiedEvent.Seq.empty ++ ords.map(i => VerifiedEvent(EventOrd(i), Event.ProjectNameSet(i.toString), now))

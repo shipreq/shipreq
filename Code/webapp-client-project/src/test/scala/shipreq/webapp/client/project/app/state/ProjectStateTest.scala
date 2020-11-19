@@ -11,20 +11,17 @@ import utest._
 object ProjectStateTest extends TestSuite {
 
   override def tests = Tests {
+    import ImplicitProjectEqualityDeep._
 
     val p1 = Project.empty
 
-    val genTest: Gen[(ProjectState, Vector[VerifiedEvent], Project, ProjectState)] =
+    val genTest: Gen[(ProjectState, Vector[VerifiedEvent], Project, ProjectState)] = {
+      val s1 = ProjectState.init(p1, looseProjectMetaData(p1, eventsTotal = p1.history.ordAsInt, eventsInit = 0))
       for {
-        initEventCount    <- Gen.chooseInt(4)
-        totalEvents1      <- Gen.chooseInt(40).map(_ + initEventCount)
-        latestOrd1        = Option.when(totalEvents1 > 0)(EventOrd.Latest(totalEvents1))
-        pao1              = ProjectAndOrd(p1, latestOrd1)
-        s1                = ProjectState.init(pao1, looseProjectMetaData(p1, eventsTotal = totalEvents1, eventsInit = initEventCount))
-        ((p2, _), ves)    <- RandomEventStream.verifiedEvents(80).run((p1, pao1.nextOrd))
-        batches           <- Gen.batches(ves, 0 to 7)
-                              .pair.map(x => x._1 ++ x._2) // duplicate all events (in different batches) to test idempotency
-                              .shuffle // shuffle to test commutivity
+        (p2, ves) <- RandomEventStream.verifiedEvents(80).run(p1)
+        batches   <- Gen.batches(ves, 0 to 7)
+                      .pair.map(x => x._1 ++ x._2) // duplicate all events (in different batches) to test idempotency
+                      .shuffle // shuffle to test commutivity
       } yield {
         val m = new ProjectState.Mutable(s1)
 //        println(s"Generated ${ves.length} events and ${batches.length} batches starting at #${initialOrd.value + 1}")
@@ -33,6 +30,7 @@ object ProjectStateTest extends TestSuite {
         batches.foreach(b => m.applyEventSeqCB(b.to(TreeSet)).runNow())
         (s1, ves, p2, m.state())
       }
+    }
 
     val (s1, ves, p2, s2) = genTest.sample()
 

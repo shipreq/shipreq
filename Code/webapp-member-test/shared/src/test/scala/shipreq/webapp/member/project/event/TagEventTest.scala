@@ -44,6 +44,7 @@ abstract class SharedTagEventTests extends TestSuite {
   override def tests = Tests {
     "create" - {
       "three" - {
+        import Project.Equality.IgnoringHistory._
         val a = _assertPass(c1, c2, c3)
         val b = _assertPass(c1, c3, c2)
         assertEq(a, b)

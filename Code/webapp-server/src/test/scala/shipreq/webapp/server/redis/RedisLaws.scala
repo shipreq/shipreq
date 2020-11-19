@@ -9,7 +9,7 @@ import scalaz.syntax.monad._
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.EventOrd.Implicits._
 import shipreq.webapp.member.project.event._
-import shipreq.webapp.member.project.protocol.json.v1.Latest._
+import shipreq.webapp.member.project.protocol.json.Latest._
 import shipreq.webapp.member.project.protocol.json.v1.PostEvents._
 import shipreq.webapp.server.logic.algebra.Redis._
 import shipreq.webapp.server.test.WebappServerTestUtil._
@@ -156,7 +156,7 @@ object RedisLaws {
   // ===================================================================================================================
 
   def projectSnapshotFromOrd(ord: EventOrd): ProjectSnapshot = {
-    val p = Project.empty.copy(name = ord.value.toString)
+    val p = setOrd(Project.empty, ord).copy(name = ord.value.toString)
     ProjectSnapshot(p, ord.asLatest)
   }
 

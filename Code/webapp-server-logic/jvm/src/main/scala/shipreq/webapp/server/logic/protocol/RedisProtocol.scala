@@ -1,5 +1,6 @@
 package shipreq.webapp.server.logic.protocol
 
+import shipreq.webapp.base.protocol.Version
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.member.project.data.Project
@@ -9,11 +10,13 @@ import shipreq.webapp.server.logic.algebra.Redis.ProjectSnapshot
 object RedisProtocol {
 
   val picklerProjectSnapshot: SafePickler[ProjectSnapshot] = {
+
+    val ver = Version.fromInts(2, 0) // Bump this when any of following imports change
     import boopickle.DefaultBasic._
     import shipreq.webapp.member.project.protocol.binary.v1.PostEvents.picklerEventOrdLatest
-    import shipreq.webapp.member.project.protocol.binary.v1.Rev7.picklerProject
+    import shipreq.webapp.member.project.protocol.binary.v2.Rev0.picklerProject
 
-    val p: Pickler[ProjectSnapshot] =
+    val pickler: Pickler[ProjectSnapshot] =
       new Pickler[ProjectSnapshot] {
         override def pickle(a: ProjectSnapshot)(implicit state: PickleState): Unit = {
           state.pickle(a.project)
@@ -26,7 +29,9 @@ object RedisProtocol {
         }
       }
 
-    p.asV1(7).withMagicNumbers(0x713D305C, 0xB72AC2DE)
+    pickler
+      .asVersion(ver)
+      .withMagicNumbers(0x713D305C, 0xB72AC2DE)
   }
 
   // ===================================================================================================================

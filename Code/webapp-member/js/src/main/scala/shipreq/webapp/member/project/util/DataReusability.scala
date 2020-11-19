@@ -10,7 +10,7 @@ import shipreq.webapp.member.jsfacade.MomentJs
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.derivation._
 import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
-import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd}
+import shipreq.webapp.member.project.event.{EventOrd, ProjectEvents}
 import shipreq.webapp.member.project.filter.Filter.Implicits._
 import shipreq.webapp.member.project.filter.{CompiledFilter, Filter}
 import shipreq.webapp.member.project.issue.{Issue, Issues}
@@ -87,8 +87,11 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityEventOrdLatest: Reusability[EventOrd.Latest] =
     Reusability.byUnivEq
 
-  implicit def reusabilityProjectAndOrd: Reusability[ProjectAndOrd] =
-    Reusability.byRef || Reusability.derive
+  // Safe to only check ord because:
+  // 1) Each client only ever has one Project in memory at one time
+  // 2) Project history is immutable
+  implicit def reusabilityProjectEvents: Reusability[ProjectEvents] =
+    Reusability.by(_.ordAsInt)
 
   implicit def reusabilityProject: Reusability[Project] =
     Reusability.byRef

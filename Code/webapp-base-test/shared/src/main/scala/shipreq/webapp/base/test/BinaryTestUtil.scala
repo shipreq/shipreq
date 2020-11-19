@@ -20,40 +20,93 @@ object BinaryTestUtil {
   implicit def equalSafePicklerDecoderFailure: Equal[SafePickler.DecodingFailure] =
     Equal.equalA
 
+  def assertEqBinary(actual: BinaryData, expect: BinaryData)(implicit l: Line): Unit =
+    binaryDiff(actual, expect).foreach(fail(_))
+
+  def binaryDiff(actual    : BinaryData,
+                 expect    : BinaryData,
+                 descActual: String = "Actual",
+                 descExpect: String = "Expect"): Option[String] =
+    Option.when(actual !=* expect) {
+      val limit = 100
+
+      var failures = List.empty[String]
+
+      if (actual.length != expect.length)
+        failures ::= s"Actual length (${actual.length}) != expect ${expect.length}"
+
+      var b1 = actual
+      var b2 = expect
+
+      var pre = ""
+      var post = ""
+
+      def tooBig() = b1.length > limit || b2.length > limit
+
+      if (tooBig()) {
+        while (tooBig() && b1.unsafeArray(0) == b2.unsafeArray(0)) {
+          b1 = b1.drop(1)
+          b2 = b2.drop(1)
+          pre = "…"
+        }
+
+        if (tooBig()) {
+          b1 = b1.take(limit)
+          b2 = b2.take(limit)
+          post = "…"
+        }
+      }
+
+      val (s1, s2) = {
+        var r1 = Console.BLACK_B
+        var r2 = Console.BLACK_B
+        var h1 = b1.hex
+        var h2 = b2.hex
+        while (h1.nonEmpty || h2.nonEmpty) {
+          val b1 = h1.take(2)
+          val b2 = h2.take(2)
+          if (b1 ==* b2) {
+            r1 += b1
+            r2 += b2
+          } else {
+            r1 += Console.YELLOW_B + b1 + Console.BLACK_B
+            r2 += Console.YELLOW_B + b2 + Console.BLACK_B
+          }
+          h1 = h1.drop(2)
+          h2 = h2.drop(2)
+        }
+        (r1, r2)
+      }
+      failures :+=
+        s"""
+           |$descActual: $pre$s1$post
+           |$descExpect: $pre$s2$post
+           |""".stripMargin
+
+      failures.mkString("\n")
+    }
+
   def assertDecodeVia[A, B: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[B])
                                   (f: A => B, g: B => A)(implicit l: Line): Unit = {
     val actual = p.decode(bin).map(f)
-    def info = {
-      val limit = 200
-      val descBin: BinaryData => String = _.describe(limit).filter(_ != ',')
+    def info: Option[String] =
       expect match {
-        case \/-(a) =>
-          val bin2 = p.encode(g(a))
-          val (b1, b2) = shrinkUnequalStrings(bin.hex, bin2.hex, limit)
-          val binaryMatches = b1.isEmpty && b2.isEmpty
-          if (binaryMatches) {
-            val (x1, x2) = shrinkUnequalStrings(actual.toString, expect.toString, limit)
-            val toStringMatches = x1.isEmpty && x2.isEmpty
-            if (toStringMatches)
-              descBin(bin)
-            else
-              s"""
-                 |Actual: $x1
-                 |Expect: $x2
-                 |""".stripMargin
-          } else
-            s"""
-               |Subject:    ${bin.length} bytes
-               |            $b1
-               |Re-encoded: ${bin2.length} bytes
-               |            $b2
-               |""".stripMargin
-        case -\/(_) => descBin(bin)
-      }
+        case \/-(expectedB) =>
+          val diff = binaryDiff(
+            actual     = bin,
+            expect     = p.encode(g(expectedB)),
+            descActual = "Supplied  ",
+            descExpect = "Re-encoded"
+          )
+          diff
+        case -\/(_) =>
+          None
     }
-    // assertEq(info, actual, expect)
-    if (!Equal[SafePickler.Result[B]].equal(actual, expect))
-      fail(info)
+
+    assertEqO(info, actual, expect)
+//    if (!Equal[SafePickler.Result[B]].equal(actual, expect)) {
+//      fail(info)
+//    }
   }
 
   def assertDecode[A: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[A])(implicit l: Line): Unit =

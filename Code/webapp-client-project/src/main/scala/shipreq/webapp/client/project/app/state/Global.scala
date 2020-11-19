@@ -17,15 +17,15 @@ import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.client.project.app.pages.root.ConnectionStatus
 import shipreq.webapp.client.project.app.state.Global.State
 import shipreq.webapp.member.project.data.{Project, ProjectMetaData}
-import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WebSocket.Push
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.ui.ReauthenticationModal
 
-abstract class Global(onFirstLoad           : (Global, InitAppData) => Callback,
-                      onInitFailure         : ErrorMsg => Callback,
-                      final val logger      : LoggerJs) extends Broadcaster[ProjectState.Update] {
+abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
+                      onInitFailure   : ErrorMsg => Callback,
+                      final val logger: LoggerJs) extends Broadcaster[ProjectState.Update] {
 
   val localStorage: AbstractWebStorage
 
@@ -40,7 +40,7 @@ abstract class Global(onFirstLoad           : (Global, InitAppData) => Callback,
 
   final protected def unsafeSetState(s: State): Unit = {
     _state = s
-    _pxProjectAndOrd.refresh()
+    _pxProject.refresh()
   }
 
   final val cbProjectMetaData: CallbackTo[ProjectMetaData] =
@@ -52,19 +52,16 @@ abstract class Global(onFirstLoad           : (Global, InitAppData) => Callback,
   final val pxProjectMetaData: Px[ProjectMetaData] =
     Px.callback(cbProjectMetaData).withReuse.autoRefresh
 
-  final private val _pxProjectAndOrd: Px.ThunkM[ProjectAndOrd] = {
+  final private val _pxProject: Px.ThunkM[Project] = {
     def f() = unsafeState match {
-      case s: State.Active  => s.projectState.projectAndOrd
-      case _: State.Loading => ProjectAndOrd.empty
+      case s: State.Active  => s.projectState.project
+      case _: State.Loading => Project.empty
     }
     Px(f()).withReuse.manualRefresh
   }
 
-  final val pxProjectAndOrd: Px[ProjectAndOrd] =
-    _pxProjectAndOrd
-
   final val pxProject: Px[Project] =
-    _pxProjectAndOrd.map(_.project)
+    _pxProject
 
   final def unsafeProject(): Project =
     pxProject.value()
@@ -74,7 +71,7 @@ abstract class Global(onFirstLoad           : (Global, InitAppData) => Callback,
       case s: State.Active =>
         Metadata.Project(
           id           = id,
-          ord          = Some(s.projectState.projectAndOrd.ordAsInt),
+          ord          = Some(s.projectState.project.history.ordAsInt),
           futureEvents = s.projectState.futureEvents.iterator.map(_.ord.value).toSet)
 
       case _: State.Loading =>
@@ -247,7 +244,7 @@ abstract class Global(onFirstLoad           : (Global, InitAppData) => Callback,
             stalePeriod = Duration.between(staleSince, unsafeNow())
             _           <- Option.when(stalePeriod.isLongerThan(tolerance))(())
             lastEvent   <- s.projectState.futureEvents.lastOption
-            first       = s.projectState.projectAndOrd.nextOrd.value
+            first       = s.projectState.project.history.nextOrd.value
             last        = lastEvent.ord.value - 1
             got         = s.projectState.futureEvents.iterator.map(_.ord.value).toSet
             missing     = first.to(last).iterator.filterNot(got.contains).map(EventOrd(_)).toSet

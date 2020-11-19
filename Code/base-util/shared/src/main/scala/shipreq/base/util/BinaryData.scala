@@ -105,6 +105,11 @@ final class BinaryData(private[BinaryData] val bytes: Array[Byte],
     val m = n.min(length)
     new BinaryData(bytes, offset + m, length - m)
   }
+
+  def take(n: Int): BinaryData = {
+    val m = n.min(length)
+    new BinaryData(bytes, offset, m)
+  }
 }
 
 object BinaryData {

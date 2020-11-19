@@ -8,7 +8,7 @@ import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.client.ww.graph.GraphViz
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.EventOrd.Implicits._
-import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.member.project.text.PlainText
 
 final class WorkerState(logger: LoggerJs) {
@@ -77,18 +77,18 @@ final class WorkerState(logger: LoggerJs) {
 
   private def modState(f: Immutable => Immutable): Callback =
     Callback {
-      val old = state.pao
+      val old = state.project
       state = f(state)
-      logger(_.debug(s"State updated to ord=${state.pao.ord}, ordPromises=${state.ordPromises.length}"))
-      val projectChanged = state.pao ne old
+      logger(_.debug(s"State updated to ord=${state.project.ord}, ordPromises=${state.ordPromises.length}"))
+      val projectChanged = state.project ne old
 
       if (projectChanged && state.ordPromises.nonEmpty) {
-        val newOrd = state.pao.ord
+        val newOrd = state.project.ord
 
         // Remove releasable promises
         val (releasable, pending) = state.ordPromises.partition(_.ord <= newOrd)
         state = state.copy(ordPromises = pending)
-        logger(_.debug(s"State updated to ord=${state.pao.ord}, ordPromises=${state.ordPromises.length}"))
+        logger(_.debug(s"State updated to ord=${state.project.ord}, ordPromises=${state.ordPromises.length}"))
 
         // Execute releasable promises
         for (p <- releasable) {
@@ -101,16 +101,16 @@ final class WorkerState(logger: LoggerJs) {
       }
     }
 
-  def setProject(pao: ProjectAndOrd): Callback =
-    modState(_.copy(pao = pao))
+  def setProject(project: Project): Callback =
+    modState(_.copy(project = project))
 
   def updateProject(ves: VerifiedEvent.NonEmptySeq): Callback = {
-    assert(ves.min.ord.immediatelyFollowsLatest(state.pao.ord), s"${ves.min.ord} doesn't follow ${state.pao.ord}")
-    modState(Immutable.pao.modify(_.mustApplyVerified(ves)))
+    assert(ves.min.ord.immediatelyFollowsLatest(state.project.ord), s"${ves.min.ord} doesn't follow ${state.project.ord}")
+    modState(Immutable.project.modify(_.updateOrThrow(ves)))
   }
 
   val pxProject: Px[Project] =
-    Px(state.pao.project).withoutReuse.autoRefresh // auto cos manual is strict
+    Px(state.project).withoutReuse.autoRefresh // auto cos manual is strict
 
   val pxPlainText: Px[PlainText.ForProject.NoCtx] =
     pxProject.map(PlainText.ForProject.noCtx.apply)
@@ -120,7 +120,7 @@ final class WorkerState(logger: LoggerJs) {
 
   def await(ord: Option[EventOrd.Latest]): AsyncCallback[Unit] =
     getStateAsync.flatMap { s =>
-      if (ord <= s.pao.ord)
+      if (ord <= s.project.ord)
         // No need to wait
         AsyncCallback.unit
       else
@@ -137,11 +137,11 @@ final class WorkerState(logger: LoggerJs) {
 object WorkerState {
 
   @Lenses
-  final case class Immutable(pao: ProjectAndOrd, ordPromises: List[OrdPromise])
+  final case class Immutable(project: Project, ordPromises: List[OrdPromise])
 
   object Immutable {
     def init: Immutable =
-      apply(ProjectAndOrd.empty, Nil)
+      apply(Project.empty, Nil)
   }
 
   final case class OrdPromise(ord: Option[EventOrd.Latest], complete: Callback)

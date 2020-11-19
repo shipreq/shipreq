@@ -15,7 +15,7 @@ import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.EventOrd.Implicits._
-import shipreq.webapp.member.project.event.{ApplyEvent, EventOrd, ProjectAndOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{ApplyEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WsReqRes.EventResult
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.member.project.protocol.websocket._
@@ -501,7 +501,7 @@ object ProjectSpaLogic extends StrictLogging {
 
         def ignoreCache(c: Redis.ProjectCache): F[MsgError \/ Result] = {
 
-          def readDb(p: ProjectAndOrd): F[MsgError \/ Result] =
+          def readDb(p: Project): F[MsgError \/ Result] =
             step("readDb")(
               for {
                 (mdo, read) <- runDB(
@@ -534,7 +534,7 @@ object ProjectSpaLogic extends StrictLogging {
 
           for {
             cache  <- c.buildNonEmpty(pid)
-            result <- readDb(cache getOrElse ProjectAndOrd.empty)
+            result <- readDb(cache getOrElse Project.empty)
             _      <- result match {
                         case \/-(\/-(d)) => writeRedis(d)
                         case _           => fUnit
@@ -726,7 +726,7 @@ object ProjectSpaLogic extends StrictLogging {
 
           case WriteRedis1(newEvents) =>
             val writeRedis: F[Boolean] =
-              if (writeSnapshot(s.local.ordAsInt))
+              if (writeSnapshot(s.local.history.ordAsInt))
                 redis.writeSnapshot(pid, s.local, VerifiedEvent.Seq.empty)
               else
                 redis.writeEvents(pid, newEvents, VerifiedEvent.Seq.empty)
@@ -735,11 +735,12 @@ object ProjectSpaLogic extends StrictLogging {
             } yield -\/(s.copy(status = if (ok) WriteDb else ReadRedis))
 
           case WriteDb =>
-            mkEvent(s.local.project).flatMap(ApplyNewEvent(_, s.local.project)) match {
+            mkEvent(s.local).flatMap(ApplyNewEvent(_, s.local)) match {
               case PotentialChange.Success(updated) =>
-                runDB(db.saveProjectEvent(pid, s.local.nextOrd, updated.event, updated.project, userId)) map {
+                runDB(db.saveProjectEvent(pid, s.local.history.nextOrd, updated.event, updated.projectPartial, userId)) map {
                   case \/-(ve) =>
-                    val nextStatus = WriteRedis2(updated.project, ve)
+                    val p2 = updated.completeProject(ve)
+                    val nextStatus = WriteRedis2(p2, ve)
                     -\/(s.copy(status = nextStatus))
                   case -\/(DB.SaveProjectEventError.OrdInUse) =>
                     -\/(s.copy(status = ReadRedis))
@@ -791,12 +792,12 @@ object ProjectSpaLogic extends StrictLogging {
       final case class Ok                  (events: VerifiedEvent.Seq)        extends Result
     }
 
-    final case class State(local : ProjectAndOrd,
+    final case class State(local : Project,
                            redis : Redis.ProjectCache,
                            status: Status)
 
     val initialState = State(
-      local  = ProjectAndOrd.empty,
+      local  = Project.empty,
       redis  = Redis.ProjectCache.empty,
       status = Status.ReadRedis)
 
@@ -819,7 +820,7 @@ object ProjectSpaLogic extends StrictLogging {
     import org.apache.commons.text.StringEscapeUtils
     import scala.collection.immutable.TreeSet
     import ProjectSpaProtocols.WebSocket
-    import shipreq.webapp.member.project.protocol.json.v1.Latest.encoderVerifiedEvent
+    import shipreq.webapp.member.project.protocol.json.Latest.encoderVerifiedEvent
 
     type WSH = WebSocketServerHelper[WebSocket#Req, WebSocket.Push]
 

@@ -1,11 +1,10 @@
-package shipreq.webapp.member.project.protocol.binary.v1
+package shipreq.webapp.member.project.protocol.binary
 
 import nyaya.gen.Gen
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.member.project.filter.Filter.Implicits.univEqFilterValid
-import shipreq.webapp.member.project.text.Text.Equality._
 import shipreq.webapp.member.project.text.Text._
-import shipreq.webapp.member.test.project.EventEquality._
+import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project.RandomData.TextGenExt
 import shipreq.webapp.member.test.project.{RandomData => R, RandomEventStream}
 import utest._
@@ -21,7 +20,7 @@ object BinaryProtocolTest extends TestSuite {
 
     "filters" - propTestRoundTripP(R.projectConfig.flatMap(R.filter.valid.forProjectConfig))
 
-    "savedViews" - propTestRoundTripP(R.project.flatMap(R.savedViews.nonEmptySavedViewsForProject))
+    "savedViews" - propTestRoundTripP(R.projectNoHistory.flatMap(R.savedViews.nonEmptySavedViewsForProject))
 
     "text" - {
       def gr = R.reqId
@@ -38,7 +37,10 @@ object BinaryProtocolTest extends TestSuite {
 
     "event" - assertRoundTripsP(RandomEventStream.sampleEventStreamWithProjects.map(_._1))
 
-    "project" - assertRoundTripsP(RandomEventStream.sampleEventStreamWithProjects.map(_._2))
+    "project" - {
+      import ImplicitProjectEqualityDeep._
+      assertRoundTripsP(RandomEventStream.sampleEventStreamWithProjects.map(_._2))
+    }
 
   }
 }

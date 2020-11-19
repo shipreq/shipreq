@@ -26,7 +26,7 @@ import shipreq.webapp.server.logic.algebra.Redis
  *
  */
 object RedisProtocolTestData {
-  import shipreq.webapp.member.project.protocol.json.v1.Latest._
+  import shipreq.webapp.member.project.protocol.json.Latest._
   import shipreq.webapp.server.logic.protocol.RedisProtocol._
 
   private[this] val RowEvent          = "event"
@@ -60,7 +60,7 @@ object RedisProtocolTestData {
     Encoder.forProduct3(RowEvent, RowEventBinary, RowSnapshotBinary)(a => (a.eventJson, a.eventJson, a.snapshotBinary))
 
   def resourceName(ver: Int): String =
-    s"RedisProtocolTestData/v1.$ver.json"
+    s"RedisProtocolTestData/v2.$ver.json"
 
   def load(ver: Int): Vector[Row] =
     decode[Vector[Row]](FileUtils.readResource(resourceName(ver))).getOrThrow()
@@ -105,12 +105,12 @@ object RedisProtocolTestData {
         NonEmptySet.option(pending) match {
           case Some(pendingNES) =>
 
-            val s  = (ps.last, EventOrd.first)
+            val s  = ps.last
             Try(RandomEventStream.verifiedEventOfTypes(pendingNES).run(s).samplesUsing(genCtx).next()) match {
               case Success(r) =>
                 // print(s"${pending.size}... ")
                 val e  = r._2.event
-                val p2 = r._1._1
+                val p2 = r._1
                 go(pending - EventName(e), e :: events, ps :+ p2, retries)
               case Failure(e) =>
                 if (retries > 0 && events.nonEmpty) {
@@ -126,7 +126,7 @@ object RedisProtocolTestData {
             events.reverse
         }
 
-      val ((initProject, _), initEvents) = RandomEventStream.initialEvents.samplesUsing(genCtx).next()
+      val (initProject, initEvents) = RandomEventStream.initialEvents.samplesUsing(genCtx).next()
 
       go(
         EventName.all.whole -- initEvents.map(v => EventName(v.event)),

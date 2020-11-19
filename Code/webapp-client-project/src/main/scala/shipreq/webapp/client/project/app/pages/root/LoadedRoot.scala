@@ -48,7 +48,6 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
   implicit def webStorage = global.localStorage
 
-  val pxProjectAndOrd = global.pxProjectAndOrd
   val pxProject       = global.pxProject
   def unsafeProject() = global.unsafeProject()
 
@@ -366,7 +365,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       sspCreateContent      = sspCreateContent,
       reqDetailRC           = routerCtlEP,
       webWorker             = webWorkerClient,
-      pxProjectAndOrd       = pxProjectAndOrd,
+      pxProject             = pxProject,
       pxViewReqDataCache    = pxViewReqDataCache,
       pxTextSearch          = pxTextSearch,
       pxProjectWidgetsNoCtx = pxProjectWidgets,
@@ -452,7 +451,6 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       def editRW           = editW.toReadWrite(editR)
       def filterDeadSS     = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
       def project          = unsafeProject()
-      def projectAndOrd    = pxProjectAndOrd.value()
       def projectWidgets   = pxProjectWidgets.value.value()
       def renderFeature    = pxRenderFeatureText.value()(s.filterDead)
       def savedViewFeature = SavedViewFeature(savedViewFeatureStatic, s.savedViews, project, s.filterDead)
@@ -563,7 +561,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
         case Page.ReqGraph =>
           content.reqgraph.ReqGraphPage.Props(
-            projectAndOrd    = projectAndOrd,
+            project          = project,
             plainText        = pxPlainText.value(),
             reqDetailRC      = routerCtlEP,
             webWorker        = webWorkerClient,
@@ -594,8 +592,8 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     def onMount: Callback = {
       val sendProjectToWebWorker: Callback =
         for {
-          pao <- pxProjectAndOrd.toCallback
-          _   <- webWorkerClient.send(WebWorkerCmd.Init(pao, initPageData.assetManifest)).toCallback
+          p <- pxProject.toCallback
+          _ <- webWorkerClient.send(WebWorkerCmd.Init(p, initPageData.assetManifest)).toCallback
         } yield ()
 
       val installHooks: Callback =

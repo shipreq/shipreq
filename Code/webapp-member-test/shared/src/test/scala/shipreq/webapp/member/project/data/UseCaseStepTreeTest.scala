@@ -50,7 +50,7 @@ object UseCaseStepTreeTest extends TestSuite {
     val nextStepId = UseCaseStepId(p.idCeilings.useCaseStep + 1)
 
     def compare(actual: Permission, event: Event) = {
-      val result = ApplyEvent.untrusted.apply1(event)(p)
+      val result = ApplyEvent.untrusted.partialApplyUnverified(event)(p)
       result match {
         case \/-(_) => Eval.equal(event.toString, actual, actual, Allow)
         case -\/(e) => Eval.atom(event.toString, actual, actual match {

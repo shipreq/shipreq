@@ -17,7 +17,7 @@ object ApplyEventBM {
 
     final lazy val bm: Benchmark[SampleData] =
       BenchmarkData.verifiedEvents(name) { events =>
-        ae.applyVerified(events)(pe).getOrThrow()
+        ae(events)(pe).getOrThrow()
       }
   }
 

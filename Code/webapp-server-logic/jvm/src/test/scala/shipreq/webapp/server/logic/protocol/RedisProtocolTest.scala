@@ -6,8 +6,9 @@ import nyaya.gen.Gen
 import scalaz.Equal
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.test.BinaryTestUtil._
-import shipreq.webapp.member.project.data.{Project, StaticField}
+import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.test.WebappTestUtil.ImplicitProjectEqualityDeep._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project.UnsafeTypes._
 import shipreq.webapp.member.test.project.{RandomData => R}
@@ -23,7 +24,7 @@ object RedisProtocolTest extends TestSuite {
 
     // webappServerLogicJVM/testOnly -- shipreq.webapp.server.logic.protocol.RedisProtocolTest.generateTestData
 //    "generateTestData" - {
-//      shipreq.webapp.member.test.RandomDataSettings.disableUnicode = true
+//      shipreq.webapp.base.test.RandomDataSettings.disableUnicode = true
 //      RedisProtocolTestData.main(Array.empty)
 //    }
 
@@ -47,14 +48,7 @@ object RedisProtocolTest extends TestSuite {
         }
       }
 
-      "v10" - run(0, false) // Snapshot differs now cos OtherTags has been added to Project.empty and thus the result
-      "v11" - run(1)
-      "v12" - run(2)
-      "v13" - run(3)
-      "v14" - run(4)
-      "v15" - run(5)
-      "v16" - run(6)
-      "v17" - run(7)
+      "v20" - run(0)
     }
 
     // =================================================================================================================
@@ -85,25 +79,15 @@ object RedisProtocolTest extends TestSuite {
       "roundTrip" - {
         val gen: Gen[ProjectSnapshot] =
           for {
-            p <- R.project
-            o <- Gen.chooseInt(10000)
-          } yield ProjectSnapshot(p, o)
+            p <- R.projectNonsenseHistory
+          } yield ProjectSnapshot(p, p.history.ord.get)
         propTestRoundTrip(codec)(gen)
       }
 
-      "v1.0" - {
+      "v2.0" - {
         "empty" - {
-          val bin        = BinaryData.fromHex("5C303D7101000000000004494E4547000000000000000000000000010100000000000000007BDEC22AB7")
-          val oldProject = applyEventsSuccessfully(Project.empty, Event.FieldStaticRemove(StaticField.OtherTags))
-          val expect     = ProjectSnapshot(oldProject, 123)
-          assertDecodeOk(codec)(bin, expect)
-        }
-      }
-
-      "v1.1" - {
-        "empty" - {
-          val bin    = BinaryData.fromHex("5C303D710101000000000523494E4547000000000000000000000000010100000000000000007BDEC22AB7")
-          val expect = ProjectSnapshot(Project.empty, 123)
+          val bin    = BinaryData.fromHex("5C303D710200000000000523494E4547000000000000000000000000010100000000000000000000DEC22AB7")
+          val expect = ProjectSnapshot(Project.empty, 0)
           assertDecodeOk(codec)(bin, expect)
         }
       }

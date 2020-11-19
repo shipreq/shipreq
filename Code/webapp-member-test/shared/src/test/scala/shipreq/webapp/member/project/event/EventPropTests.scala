@@ -8,6 +8,7 @@ import scalaz.std.vector.vectorInstance
 import shipreq.base.util.DeletionMethod
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.Event._
+import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project.DataTestExt._
 import shipreq.webapp.member.test.project.RandomData
 import utest._
@@ -22,7 +23,9 @@ object EventPropTests extends TestSuite {
     // Ensure project is valid. Only need to do this once globally and here it is.
     p assertSatisfies DataProp.project.allIncludingConfig
 
-    private def deletableStepProps =
+    private def deletableStepProps = {
+      import Project.Equality.IgnoringHistory._
+
       E.forall(p.useCaseStepsDeletable.map(_.id).toList) { id =>
         p.deletionMethodForUseCaseStep(id) match {
 
@@ -30,7 +33,7 @@ object EventPropTests extends TestSuite {
             val a = UseCaseStepDelete (id)
             val b = UseCaseStepRestore(id)
             E.equal("DeleteUseCaseStep + RestoreUseCaseStep = id",
-              actual = AE.apply1(a)(p).flatMap(AE.apply1(b)),
+              actual = AE.partialApplyUnverified(a)(p).flatMap(AE.partialApplyUnverified(b)),
               expect = \/-(p))
 
           case DeletionMethod.Hard =>
@@ -39,10 +42,11 @@ object EventPropTests extends TestSuite {
             val allIds  = f.subtree.locAndValueIterator(f.loc, (_, a) => a.id).toSet + id
             val e       = UseCaseStepDelete(id)
             E.equal("DeleteUseCaseStep hard delete",
-              actual = AE.apply1(e)(p).map(_.content.reqs.useCases.stepIdSet),
+              actual = AE.partialApplyUnverified(e)(p).map(_.content.reqs.useCases.stepIdSet),
               expect = \/-(stepIds -- allIds))
         }
       }
+    }
 
     // Any live custom req-types can be deleted
     // Whether deletion is soft or hard doesn't matter, so long as the event succeeds and the resulting project is valid
@@ -50,7 +54,7 @@ object EventPropTests extends TestSuite {
     private def customReqTypeDeletion =
       E.forall(p.config.reqTypes.liveCustomReqTypes) { rt =>
         val event = CustomReqTypeDelete(rt.id)
-        val error = ApplyEvent.untrusted.apply1(event)(p).swap.toOption
+        val error = ApplyEvent.untrusted.partialApplyUnverified(event)(p).swap.toOption
         E.equal(s"$event must succeed", error, None)
       }
 
@@ -61,7 +65,7 @@ object EventPropTests extends TestSuite {
   val prop = Prop.eval((p: Project) => new Tester(p).all)
 
   override def tests = Tests {
-    RandomData.project.mustSatisfy(prop)(defaultPropSettings
+    RandomData.projectNoHistory.mustSatisfy(prop)(defaultPropSettings
       .setGenSize(4 `JVM|JS` 2)
       .setSampleSize(10 `JVM|JS` 4)
     )

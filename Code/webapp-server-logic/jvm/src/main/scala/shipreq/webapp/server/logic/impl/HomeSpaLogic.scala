@@ -34,7 +34,13 @@ object HomeSpaLogic {
                           crypto    : Crypto[D]): D[ProjectMetaData] = {
 
     val e2 = ProjectNameSet(name)
-    val p2 = ApplyNewEvent.mustApply(e2, InitProject.project).project
+
+    // It's ok to use projectPartial and not worry about updating history here because:
+    //
+    // 1. History never affects subsequent event application
+    // 2. db.createProject only needs a Project instance to extract a few stats for the header record
+    val p2 = ApplyNewEvent.mustApply(e2, InitProject.projectPartial).projectPartial
+
     val events = InitProjectEventV :+ e2
 
     for {
