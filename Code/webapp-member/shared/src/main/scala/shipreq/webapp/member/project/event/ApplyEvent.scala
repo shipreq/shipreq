@@ -38,26 +38,26 @@ final class ApplyEvent(implicit val trust: Trust)
 
   import ApplyEvent.{Events, Result}
 
-  def apply(events: Events)(p: Project): Result =
-    safelyApply(events).exec(p)
+  def applyUnverified(events: Events)(p: Project): Result =
+    safelyApplyUnverified(events).exec(p)
 
-  def apply1(event: Event)(p: Project): Result =
-    safelyApply1(event).exec(p)
+  def applyUnverified1(event: Event)(p: Project): Result =
+    safelyApplyUnverified1(event).exec(p)
 
-  def applyVerified(ves: VerifiedEvent.Seq)(p: Project): Result =
+  def apply(ves: VerifiedEvent.Seq)(p: Project): Result =
     if (ves.isEmpty)
       \/-(p)
     else
-      applyVerified(VerifiedEvent.NonEmptySeq.force(ves))(p)
+      apply(VerifiedEvent.NonEmptySeq.force(ves))(p)
 
-  def applyVerified(ves: VerifiedEvent.NonEmptySeq)(p: Project): Result =
-    safelyApply(ves.iterator.map(_.event)).exec(p) match {
+  def apply(ves: VerifiedEvent.NonEmptySeq)(p: Project): Result =
+    safelyApplyUnverified(ves.iterator.map(_.event)).exec(p) match {
       case ok @ \/-(_) => ok
-      case -\/(_)      => Eval.foldMapRun(ves)(safelyApplyVerified1).exec(p)
+      case -\/(_)      => Eval.foldMapRun(ves)(safelyApply1).exec(p)
     }
 
-  def applyVerified1(event: VerifiedEvent)(p: Project): Result =
-    safelyApplyVerified1(event).exec(p)
+  def apply1(event: VerifiedEvent)(p: Project): Result =
+    safelyApply1(event).exec(p)
 
   // ===================================================================================================================
   // Safe
@@ -83,16 +83,16 @@ final class ApplyEvent(implicit val trust: Trust)
     i => (i >> validateDataProps).catchErrors(onError)
   }
 
-  private def safelyApply(events: Events): Eval[Unit] =
+  private def safelyApplyUnverified(events: Events): Eval[Unit] =
     safely(unsafelyApply(events))
 
-  private def safelyApply1(event: Event): Eval[Unit] =
+  private def safelyApplyUnverified1(event: Event): Eval[Unit] =
     safely(unsafelyApply1(event))
 
-  private def safelyApplyVerified1(ve: VerifiedEvent): Eval[Unit] = {
+  private def safelyApply1(ve: VerifiedEvent): Eval[Unit] = {
     val onFailure: ErrorMsg => Eval[Unit] =
       err => Eval.fail(err.withPrefix(s"[#${ve.ord.value}] "))
-    safelyApply1(ve.event).handleFailure(onFailure)
+    safelyApplyUnverified1(ve.event).handleFailure(onFailure)
   }
 
   // ===================================================================================================================
@@ -172,7 +172,7 @@ final class ApplyEvent(implicit val trust: Trust)
       case e: UseCaseStepShiftRight   => UseCaseEvents           applyStepShiftRight        e
       case e: UseCaseStepUpdate       => UseCaseEvents           applyStepUpdate            e
       case e: UseCaseTitleSet         => UseCaseEvents           applyTitleSet              e
-      case e: ProjectTemplateApply    => safelyApply(e.template.events)
+      case e: ProjectTemplateApply    => safelyApplyUnverified(e.template.events)
     }
   }
 }

@@ -43,7 +43,7 @@ trait WebappTestUtil extends BaseTestUtil {
     _verifyEvent(p, e, o)._2
 
   def _verifyEvent(p: Project, e: Event, o: EventOrd = EventOrd.first): (Project, VerifiedEvent) = {
-    val p2 = ApplyEvent.untrusted.apply1(e)(p).fold(err => sys error s"Failed to apply event $e: $err", identity)
+    val p2 = ApplyEvent.untrusted.applyUnverified1(e)(p).fold(err => sys error s"Failed to apply event $e: $err", identity)
     (p2, VerifiedEvent(o, e, Instant.now()))
   }
 
@@ -63,7 +63,7 @@ trait WebappTestUtil extends BaseTestUtil {
     es.foldLeft(p)(applyEventSuccessfully)
 
   def applyVerifiedEventSuccessfully(p: Project, e: VerifiedEvent): Project =
-    ApplyEvent.untrusted.applyVerified1(e)(p).fold(_.throwException(), identity)
+    ApplyEvent.untrusted.apply1(e)(p).fold(_.throwException(), identity)
 
   def applyVerifiedEventSuccessfully(p: Project, es: VerifiedEvent*): Project =
     es.foldLeft(p)(applyVerifiedEventSuccessfully)
@@ -72,13 +72,13 @@ trait WebappTestUtil extends BaseTestUtil {
     es.foldLeft(p)(applyVerifiedEventSuccessfully)
 
   def assertEventFails(p: Project, e: Event, errFrag: String = "")(implicit l: Line): Unit =
-    ApplyEvent.untrusted.apply1(e)(p) match {
+    ApplyEvent.untrusted.applyUnverified1(e)(p) match {
       case -\/(f) => assertContainsCI(f.value, errFrag)
       case \/-(_) => fail(s"Failure expected but didn't occur applying $e")
     }
 
   def restoreProject(es: VerifiedEvent.Seq): Project =
-    ApplyEvent.trusted.applyVerified(es)(Project.empty).getOrThrow()
+    ApplyEvent.trusted(es)(Project.empty).getOrThrow()
 
   implicit final class WebappTestUtilExt_VerifiedEventSeq(private val self: VerifiedEvent.Seq) {
     def needNES: VerifiedEvent.NonEmptySeq =

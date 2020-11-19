@@ -47,7 +47,7 @@ object MakeEventTest extends TestSuite {
       f(MakeEvent, p) match {
         case Failure(_) => ()
         case Success(e) =>
-          ApplyEvent.untrusted.apply1(e)(p) match {
+          ApplyEvent.untrusted.applyUnverified1(e)(p) match {
             case -\/(_) => ()
             case \/-(_) => fail(s"Failure expected, instead created and applied: $e")
           }
@@ -55,7 +55,7 @@ object MakeEventTest extends TestSuite {
       }
 
     def assertApplies[E <: ActiveEvent](e: E)(implicit l: Line): E = {
-      ApplyEvent.untrusted.apply1(e)(p) match {
+      ApplyEvent.untrusted.applyUnverified1(e)(p) match {
         case \/-(p2)  => p = p2; e
         case -\/(err) => fail(s"ApplyEvent failed.\nEvent: $e\nReason: $err")
       }

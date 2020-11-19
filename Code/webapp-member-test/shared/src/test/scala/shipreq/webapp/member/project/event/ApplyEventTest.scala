@@ -9,7 +9,7 @@ import utest._
 object ApplyEventTest extends TestSuite {
 
   def verifyEvent(p1: Project, e1: Event) = {
-    val p2 = ApplyEvent.untrusted.apply1(e1)(p1) match {
+    val p2 = ApplyEvent.untrusted.applyUnverified1(e1)(p1) match {
       case \/-(p) => p
       case -\/(x) => fail(s"Init failed: $x")
     }
@@ -20,7 +20,7 @@ object ApplyEventTest extends TestSuite {
   }
 
   def assertApplicationFailure(vef: VerifiedEvent, p1: Project): Unit =
-    ApplyEvent.untrusted.applyVerified1(vef)(p1) match {
+    ApplyEvent.untrusted.apply1(vef)(p1) match {
       case \/-(_) => fail(s"applyVerified passed when it shouldn't have.")
       case -\/(_) => ()
     }
@@ -122,7 +122,7 @@ object ApplyEventTest extends TestSuite {
 //            println()
 //          }
 
-        AE.applyVerified(ves)(Project.empty) match {
+        AE(ves)(Project.empty) match {
           case \/-(_) => None
           case -\/(failure) =>
             for (p2 <- getP2)
@@ -160,7 +160,7 @@ object ApplyEventTest extends TestSuite {
     "applyVerified" - {
       "pass" - {
         import Data1._
-        ApplyEvent.untrusted.applyVerified1(ve)(p1) match {
+        ApplyEvent.untrusted.apply1(ve)(p1) match {
           case \/-(p) => assertEq(p, p2)
           case -\/(e) => fail(s"applyVerified failed: $e")
         }

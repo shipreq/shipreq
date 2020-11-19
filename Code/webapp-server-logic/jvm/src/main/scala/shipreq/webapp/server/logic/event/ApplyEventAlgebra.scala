@@ -46,7 +46,7 @@ object ApplyEventAlgebra extends StrictLogging {
 
   def trusted[F[_]](implicit _F: Applicative[F]): ApplyEventAlgebra[F] =
     apply(Trusted)((pid, pao, events) => _F.point {
-      ApplyEvent.trusted.applyVerified(events)(pao.project) match {
+      ApplyEvent.trusted(events)(pao.project) match {
         case \/-(p2) =>
           \/-(ProjectAndOrd(p2, Some(events.lastKey.ord.asLatest)))
         case -\/(e) =>

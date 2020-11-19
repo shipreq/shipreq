@@ -112,7 +112,7 @@ object OpsEndpointLogic extends HasLogger {
         case \/-(ves) =>
           db.getUserId(user).flatMap {
             case Some(uid) =>
-              ApplyEvent.untrusted.applyVerified(ves)(Project.empty) match {
+              ApplyEvent.untrusted(ves)(Project.empty) match {
                 case \/-(p) =>
                   for {
                     key <- crypto.generateKey256

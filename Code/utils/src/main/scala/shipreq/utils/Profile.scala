@@ -20,7 +20,7 @@ object Profile {
     import shipreq.webapp.member.project.event._
     val trusted = ApplyEvent.trusted
     val verifiedEvents = sd.verifiedEvents
-    profile(1)(trusted.applyVerified(verifiedEvents)(Project.empty))
+    profile(1)(trusted(verifiedEvents)(Project.empty))
   }
 
   private def loadSampleData(): SampleData = {

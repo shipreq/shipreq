@@ -60,7 +60,7 @@ object RandomEventStream extends RandomEventStreamDsl(ApplicableEventGen(_)) {
   def liftPGE(eventGen: State => Gen[Event], maxAttempts: Int = 40): ProjectDepGen[VerifiedEvent] =
     StateGen(s =>
       eventGen(s).map(e =>
-        ApplyEvent.untrusted.apply1(e)(s._1) match {
+        ApplyEvent.untrusted.applyUnverified1(e)(s._1) match {
           case \/-(p2) => Some(((p2, s._2 + 1), VerifiedEvent(s._2, e, Instant.now())))
           case -\/(_)  => None
         }
@@ -1151,7 +1151,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
   def applicableEventS[S](init: S)(observe: ObserveFn[S]): Gen[((S, Project), Event)] =
     BindRec[Gen].tailrecM((s: S) =>
       eventGen.map { e =>
-        var r = ApplyEvent.untrusted.apply1(e)(p)
+        var r = ApplyEvent.untrusted.applyUnverified1(e)(p)
         r foreach { p2 => if (p === p2) r = -\/(ErrorMsg("No change")) }
         val s2 = observe(s, e, r)
         r.bimap(_ => s2, p2 => ((s2, p2), e))

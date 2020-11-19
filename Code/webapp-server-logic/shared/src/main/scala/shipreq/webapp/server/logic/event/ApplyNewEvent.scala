@@ -13,7 +13,7 @@ object ApplyNewEvent {
   type Result = PotentialChange[ErrorMsg, Updated]
 
   def apply(e: ActiveEvent, p1: Project): Result =
-    ApplyEvent.untrusted.apply1(e)(p1) match {
+    ApplyEvent.untrusted.applyUnverified1(e)(p1) match {
       case \/-(p2) =>
         if (p1 === p2)
           Unchanged

@@ -26,7 +26,7 @@ object ApplyEventTestFns {
     val es2 = init ++ es
 
     def go(ae: ApplyEvent): Project = {
-      val r = ae(es2)(Project.empty)
+      val r = ae.applyUnverified(es2)(Project.empty)
       val p =
         r match {
           case \/-(v) => v
@@ -51,7 +51,7 @@ object ApplyEventTestFns {
     val p1 = _assertPass(ev.init: _*)(NoInitialEvents.init, l)
 
     // Now apply the last event
-    val r = apply.apply1(ev.last)(p1)
+    val r = apply.applyUnverified1(ev.last)(p1)
     r match {
       case -\/(e) => assertContainsCI(e.value, errFrag)
       case \/-(_) => fail(s"\nFailure expected but didn't occur.\nEvents were:\n${fmtEvents(es)}")
@@ -210,7 +210,7 @@ class EventTester(implicit init: InitialEvents, l: Line) {
   def apply(e: Event)(test: (=> String) => Unit)(implicit l: Line): Unit = {
     testNo += 1
     def name = makeName(testNo, e)
-    ApplyEventTestFns.apply.apply1(e)(p) match {
+    ApplyEventTestFns.apply.applyUnverified1(e)(p) match {
       case \/-(p2)  => p = p2
       case -\/(err) => fail(s"$name failed: $err")
     }

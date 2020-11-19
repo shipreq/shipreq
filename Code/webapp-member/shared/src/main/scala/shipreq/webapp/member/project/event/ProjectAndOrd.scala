@@ -30,7 +30,7 @@ final case class ProjectAndOrd(project: Project, ord: Option[EventOrd.Latest]) {
     ord.fold(0)(_.value)
 
   def applyVerified(ves: VerifiedEvent.NonEmptySeq): ErrorMsg \/ ProjectAndOrd =
-    ApplyEvent.trusted.applyVerified(ves)(project)
+    ApplyEvent.trusted(ves)(project)
       .map(ProjectAndOrd(_, Some(ves.lastKey.ord.asLatest)))
 
   def mustApplyVerified(ves: VerifiedEvent.NonEmptySeq): ProjectAndOrd =
