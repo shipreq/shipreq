@@ -63,7 +63,12 @@ object BinaryTestUtil {
                  |Actual: $x1
                  |Expect: $x2
                  |""".stripMargin
-          } else
+          } else if (bin.length ==* bin2.length)
+            s"""
+               |Subject:    $b1
+               |Re-encoded: $b2
+               |""".stripMargin
+          else
             s"""
                |Subject:    ${bin.length} bytes
                |            $b1
