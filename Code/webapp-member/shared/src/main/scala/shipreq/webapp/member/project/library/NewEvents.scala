@@ -1,4 +1,4 @@
-package shipreq.webapp.client.project.app.state
+package shipreq.webapp.member.project.library
 
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.{EventSeqSummary, VerifiedEvent}

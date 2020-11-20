@@ -18,6 +18,7 @@ import shipreq.webapp.client.project.app.pages.root.ConnectionStatus
 import shipreq.webapp.client.project.app.state.Global.State
 import shipreq.webapp.member.project.data.{Project, ProjectMetaData}
 import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
+import shipreq.webapp.member.project.library.{NewEvents, ProjectLibrary}
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WebSocket.Push
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.member.project.util.DataReusability._
@@ -25,7 +26,7 @@ import shipreq.webapp.member.ui.ReauthenticationModal
 
 abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
                       onInitFailure   : ErrorMsg => Callback,
-                      final val logger: LoggerJs) extends Broadcaster[ProjectState.Update] {
+                      final val logger: LoggerJs) extends Broadcaster[ProjectLibrary.Update] {
 
   val localStorage: AbstractWebStorage
 
@@ -45,7 +46,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
 
   final val cbProjectMetaData: CallbackTo[ProjectMetaData] =
     CallbackTo(unsafeState match {
-      case s: State.Active  => s.projectState.projectMetaData
+      case s: State.Active  => s.projectLibrary.latestMetaData
       case _: State.Loading => null // Safe because I know I don't access this before initial load
     })
 
@@ -54,7 +55,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
 
   final private val _pxProject: Px.ThunkM[Project] = {
     def f() = unsafeState match {
-      case s: State.Active  => s.projectState.project
+      case s: State.Active  => s.projectLibrary.latest
       case _: State.Loading => Project.empty
     }
     Px(f()).withReuse.manualRefresh
@@ -71,8 +72,8 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
       case s: State.Active =>
         Metadata.Project(
           id           = id,
-          ord          = Some(s.projectState.project.history.ordAsInt),
-          futureEvents = s.projectState.futureEvents.iterator.map(_.ord.value).toSet)
+          ord          = Some(s.projectLibrary.latest.history.ordAsInt),
+          futureEvents = s.projectLibrary.futureEvents.iterator.map(_.ord.value).toSet)
 
       case _: State.Loading =>
         Metadata.Project(
@@ -120,7 +121,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
         case g: State.Active =>
           s match {
             case Authorised(ReadyState.Open) =>
-              reconnect(g.projectState)
+              reconnect(g.projectLibrary)
 
             case Authorised(ReadyState.Closed)
                | Authorised(ReadyState.Connecting)
@@ -158,7 +159,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
               case Success(\/-(i)) => Callback {
                 unsafeState match {
                   case State.Loading(es) =>
-                    val s = ProjectState.init(i.project, i.projectMetaData).addEventsSimple(es)
+                    val s = ProjectLibrary.init(i.project, i.projectMetaData).addEvents(es)
                     unsafeSetState(State.Active(s, None))
                     onFirstLoad(this, i).runNow()
                   case _: State.Active =>
@@ -174,10 +175,10 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
             }
     } yield ()
 
-  protected def reconnect(ps: ProjectState): Callback =
+  protected def reconnect(pl: ProjectLibrary): Callback =
     for {
       _  <- logger.pure(l => l.info("WebSocket re-established. Requesting Reconnect...") >> l.time("reconnect"))
-      a1 <- wsClient.send(WsReqRes.Reconnect)(ps.ord)
+      a1 <- wsClient.send(WsReqRes.Reconnect)(pl.ord)
       a2  = a1 <* logger.async(_.timeEnd("reconnect"))
       _  <- a2.completeWith {
               case Success(ves) => addEvents(ves).void
@@ -191,20 +192,20 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
       unsafeState match {
 
         case s1: State.Active =>
-          s1.projectState.addEvents(recvEvents) match {
+          s1.projectLibrary.update(recvEvents) match {
 
             case Some(update) =>
 
               // Update state
-              val similarlyStale = update.newState.ord ==* s1.projectState.ord
+              val similarlyStale = update.newLibrary.ord ==* s1.projectLibrary.ord
               val staleSince =
                 if (similarlyStale)
                   s1.staleSince.orElse(Some(unsafeNow()))
-                else if (update.newState.futureEvents.nonEmpty)
+                else if (update.newLibrary.futureEvents.nonEmpty)
                   Some(unsafeNow())
                 else
                   None
-              unsafeSetState(State.Active(update.newState, staleSince))
+              unsafeSetState(State.Active(update.newLibrary, staleSince))
 
               // Broadcast changes
               if (update.newlyAppliedEvents.nonEmpty) {
@@ -216,7 +217,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
             case None =>
               // This usually happens when a SSP returns the events it creates, but the server push happens first
               // meaning that the events have already been applied.
-              NewEvents(recvEvents, s1.projectState.project)
+              NewEvents(recvEvents, s1.projectLibrary.latest)
           }
 
         case State.Loading(es) =>
@@ -241,13 +242,13 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
         case s: State.Active =>
           for {
             staleSince  <- s.staleSince
-            stalePeriod = Duration.between(staleSince, unsafeNow())
+            stalePeriod  = Duration.between(staleSince, unsafeNow())
             _           <- Option.when(stalePeriod.isLongerThan(tolerance))(())
-            lastEvent   <- s.projectState.futureEvents.lastOption
-            first       = s.projectState.project.history.nextOrd.value
-            last        = lastEvent.ord.value - 1
-            got         = s.projectState.futureEvents.iterator.map(_.ord.value).toSet
-            missing     = first.to(last).iterator.filterNot(got.contains).map(EventOrd(_)).toSet
+            lastEvent   <- s.projectLibrary.futureEvents.lastOption
+            first        = s.projectLibrary.latest.history.nextOrd.value
+            last         = lastEvent.ord.value - 1
+            got          = s.projectLibrary.futureEvents.iterator.map(_.ord.value).toSet
+            missing      = first.to(last).iterator.filterNot(got.contains).map(EventOrd(_)).toSet
             missingNE   <- NonEmptySet.option(missing)
           } yield {
             logger(_.info {
@@ -321,7 +322,7 @@ object Global {
   sealed trait State
   object State {
     final case class Loading(events: VerifiedEvent.Seq) extends State
-    final case class Active(projectState: ProjectState, staleSince: Option[Instant]) extends State
+    final case class Active(projectLibrary: ProjectLibrary, staleSince: Option[Instant]) extends State
   }
 
   implicit def reusability: Reusability[Global] = Reusability.always
