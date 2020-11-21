@@ -66,18 +66,14 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
 
   def projectAt(ord: EventOrd): AsyncCallback[Project] =
     AsyncCallback.byName {
-      _state.projectAt(ord) match {
-
-        case Some(p) =>
-          AsyncCallback.pure(p)
-
-        case None =>
-          AsyncCallback.barrier.asAsyncCallback.flatMap { barrier =>
-            val ordPromise = OrdPromise(ord, barrier.complete)
-            val save = AsyncCallback.delay(_ordPromises ::= ordPromise)
-            save >> barrier.waitForCompletion >> projectAt(ord)
-          }
-      }
+      if (ord <= _state.ord)
+        AsyncCallback.delay(_state.projectAt(ord).get)
+      else
+        AsyncCallback.barrier.asAsyncCallback.flatMap { barrier =>
+          val ordPromise = OrdPromise(ord, barrier.complete)
+          val save = AsyncCallback.delay(_ordPromises ::= ordPromise)
+          save >> barrier.waitForCompletion >> projectAt(ord)
+        }
     }
 }
 
