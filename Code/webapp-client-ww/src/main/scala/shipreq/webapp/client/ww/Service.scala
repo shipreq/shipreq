@@ -16,10 +16,10 @@ final class Service[Client](server: Service.Server[Client], state: WorkerState) 
     request match {
 
       case Init(p, am) =>
-        (state.setProject(p) >> state.setAssetManifest(am)).asAsyncCallback.ret(NoResult)
+        (state.update(p) >> state.setAssetManifest(am)).asAsyncCallback.ret(NoResult)
 
       case UpdateProject(ves) =>
-        state.updateProject(ves).asAsyncCallback.ret(NoResult)
+        state.update(ves).asAsyncCallback.ret(NoResult)
 
       case GraphUseCaseFlow(ord, id, ctx) =>
         state.withGraphViz { implicit g =>

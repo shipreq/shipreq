@@ -75,12 +75,19 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
           save >> barrier.waitForCompletion >> projectAt(ord)
         }
     }
+
+  // For tests
+  def pendingPromiseCount(): Int =
+    _ordPromises.size
 }
 
 object MutableProjectLibrary {
 
   def apply[PL <: ProjectLibrary](initialState: PL): MutableProjectLibrary[PL] =
     new MutableProjectLibrary(initialState)
+
+  def empty(): MutableProjectLibrary[ProjectLibrary] =
+    apply(ProjectLibrary.empty(CacheJs()))
 
   private final case class OrdPromise(ord: EventOrd, complete: Callback)
 }

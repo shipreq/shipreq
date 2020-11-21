@@ -16,8 +16,10 @@ final case class EventOrd(value: Int) extends AnyVal {
   def <=(o: EventOrd): Boolean = value <= o.value
   def >=(o: EventOrd): Boolean = value >= o.value
 
-  def < (o: Option[EventOrd.Latest]): Boolean = if (o.isEmpty) false else value < o.get.value
-  def > (o: Option[EventOrd.Latest]): Boolean = if (o.isEmpty) true  else value > o.get.value
+  def < (o: Option[EventOrd.Latest]): Boolean = if (o.isEmpty) false else value <  o.get.value
+  def <=(o: Option[EventOrd.Latest]): Boolean = if (o.isEmpty) false else value <= o.get.value
+  def > (o: Option[EventOrd.Latest]): Boolean = if (o.isEmpty) true  else value >  o.get.value
+  def >=(o: Option[EventOrd.Latest]): Boolean = if (o.isEmpty) true  else value >= o.get.value
 
   def immediatelyFollows(prev: EventOrd): Boolean =
     (prev.value + 1) ==* this.value

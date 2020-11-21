@@ -2,7 +2,6 @@ package shipreq.webapp.client.ww.state
 
 import japgolly.scalajs.react.AsyncCallback
 import java.time.Instant
-import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.{Event, EventOrd, VerifiedEvent}
 import shipreq.webapp.member.test.WebappTestUtil._
@@ -26,14 +25,14 @@ object WorkerStateTest extends TestSuite {
     Instant.now()
 
   override def tests = Tests {
-    val s = new WorkerState(LoggerJs.off)
+    val s = new WorkerState()
 
     def setProject(ord: Int): Unit =
-      s.setProject(setOrd(Project.empty, EventOrd(ord))).runNow()
+      s.update(setOrd(Project.empty, EventOrd(ord))).runNow()
 
     def updateProject(ords: Int*): Unit = {
       val ves = VerifiedEvent.Seq.empty ++ ords.map(i => VerifiedEvent(EventOrd(i), Event.ProjectNameSet(i.toString), now))
-      s.updateProject(VerifiedEvent.NonEmptySeq.force(ves)).runNow()
+      s.update(VerifiedEvent.NonEmptySeq.force(ves)).runNow()
     }
 
     def await(ord: Option[EventOrd.Latest]): Promise = {
@@ -44,7 +43,7 @@ object WorkerStateTest extends TestSuite {
     }
 
     def pendingPromiseCount(): Int =
-      s.getState.runNow().ordPromises.size
+      s.pendingPromiseCount()
 
     "await" - {
 
