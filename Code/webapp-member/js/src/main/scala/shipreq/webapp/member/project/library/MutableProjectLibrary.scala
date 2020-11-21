@@ -1,12 +1,14 @@
 package shipreq.webapp.member.project.library
 
 import japgolly.scalajs.react.extra.Px
-import japgolly.scalajs.react.{Callback, CallbackTo}
+import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
+import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.member.project.data.Project
-import shipreq.webapp.member.project.event.VerifiedEvent
+import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.member.project.util.DataReusability.reusabilityProject
 
 final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
+  import MutableProjectLibrary.OrdPromise
 
   private var _state: PL =
     initialState
@@ -26,14 +28,49 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
         Callback.traverseOption(s1.update(ves))(u => Callback {
 
           // Update state
-
-          // if (s2.futureEvents.nonEmpty)
-          //   console.warn(s"Not all events applied: stuck at #${s2.latestEventOrd.value} pending ${s2.futureEventRange}")
           _state = u.newLibrary.asInstanceOf[PL] // cbf jumping through hoops for type-level proof of this
-          if (u.newlyAppliedEvents.nonEmpty)
+
+          // Refresh Pxs
+          val projectChanged = u.newlyAppliedEvents.nonEmpty
+          if (projectChanged)
             _pxProject.refresh()
 
+          // Complete ord promises
+          if (projectChanged && _ordPromises.nonEmpty) {
+            val newOrd = _state.latest.history.ordAsInt
+
+            // Remove releasable promises
+            val (releasable, pending) = _ordPromises.partition(_.ord.value <= newOrd)
+            _ordPromises = pending
+
+            // Execute releasable promises
+            for (p <- releasable)
+              p.complete.attempt.runNow() match {
+                case Right(_) =>
+                case Left(e)  => LoggerJs.exception(e)
+              }
+          }
+
         })
+      }
+    }
+
+  private var _ordPromises: List[OrdPromise] =
+    Nil
+
+  def projectAt(ord: EventOrd): AsyncCallback[Project] =
+    AsyncCallback.byName {
+      _state.projectAt(ord) match {
+
+        case Some(p) =>
+          AsyncCallback.pure(p)
+
+        case None =>
+          AsyncCallback.barrier.asAsyncCallback.flatMap { barrier =>
+            val ordPromise = OrdPromise(ord, barrier.complete)
+            val save = AsyncCallback.delay(_ordPromises ::= ordPromise)
+            save >> barrier.waitForCompletion >> projectAt(ord)
+          }
       }
     }
 }
@@ -43,4 +80,5 @@ object MutableProjectLibrary {
   def apply[PL <: ProjectLibrary](initialState: PL): MutableProjectLibrary[PL] =
     new MutableProjectLibrary(initialState)
 
+  private final case class OrdPromise(ord: EventOrd, complete: Callback)
 }
