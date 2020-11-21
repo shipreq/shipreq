@@ -6,7 +6,7 @@ import org.scalajs.dom.window
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.typedarray.TypedArrayBufferOps._
-import scala.scalajs.js.typedarray.{ArrayBuffer, Int8Array, TypedArrayBuffer}
+import scala.scalajs.js.typedarray._
 
 object BinaryJs extends BinaryJs
 
@@ -61,7 +61,13 @@ trait BinaryJs {
     }
   }
 
-  final def int8ArrayToArrayBuffer(v: Int8Array): ArrayBuffer = {
+  final def int8ArrayToArrayBuffer(v: Int8Array): ArrayBuffer =
+    arrayBufferViewToArrayBuffer(v)
+
+  final def uint8ArrayToArrayBuffer(v: Uint8Array): ArrayBuffer =
+    arrayBufferViewToArrayBuffer(v)
+
+  final private def arrayBufferViewToArrayBuffer(v: ArrayBufferView): ArrayBuffer = {
     val off = v.byteOffset
     val len = v.byteLength
     if (len == v.buffer.byteLength)

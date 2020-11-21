@@ -55,13 +55,13 @@ object JsExt {
       BinaryData.fromByteBuffer(BinaryJs.arrayBufferToByteBuffer(ab))
 
     def fromUint8Array(a: Uint8Array): BinaryData =
-      fromArrayBuffer(a.buffer)
+      fromArrayBuffer(BinaryJs.uint8ArrayToArrayBuffer(a))
 
     def unsafeFromArrayBuffer(ab: ArrayBuffer): BinaryData =
       BinaryData.unsafeFromByteBuffer(BinaryJs.arrayBufferToByteBuffer(ab))
 
     def unsafeFromUint8Array(a: Uint8Array): BinaryData =
-      unsafeFromArrayBuffer(a.buffer)
+      unsafeFromArrayBuffer(BinaryJs.uint8ArrayToArrayBuffer(a))
   }
 
 }

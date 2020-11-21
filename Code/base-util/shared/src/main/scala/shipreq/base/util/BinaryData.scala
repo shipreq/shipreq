@@ -110,6 +110,16 @@ final class BinaryData(private[BinaryData] val bytes: Array[Byte],
     val m = n.min(length)
     new BinaryData(bytes, offset, m)
   }
+
+  def dropRight(n: Int): BinaryData = {
+    val m = n.min(length)
+    take(length - m)
+  }
+
+  def takeRight(n: Int): BinaryData = {
+    val m = n.min(length)
+    drop(length - m)
+  }
 }
 
 object BinaryData {
@@ -171,4 +181,7 @@ object BinaryData {
       new BinaryData(bb.array(), bb.arrayOffset(), bb.limit())
     else
       fromByteBuffer(bb)
+
+  def fromStringBytes(str: String): BinaryData =
+    unsafeFromArray(str.getBytes)
 }
