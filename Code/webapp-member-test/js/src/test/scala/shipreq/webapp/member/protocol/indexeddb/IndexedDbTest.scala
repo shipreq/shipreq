@@ -24,14 +24,18 @@ object IndexedDbTest extends TestSuite {
         get2  <- db.get(store)(2)
         get3  <- db.get(store)(3)
         keys1 <- db.getAllKeys(store)
+        vals1 <- db.getAllValues(store)
         _     <- db.delete(store)(1)
         keys2 <- db.getAllKeys(store)
+        vals2 <- db.getAllValues(store)
       } yield {
         assertEq(get1, Some("hello"))
         assertEq(get2, None)
         assertEq(get3, Some("three"))
         assertSeqIgnoreOrder(keys1)(1, 3)
         assertSeqIgnoreOrder(keys2)(3)
+        assertSeqIgnoreOrder(vals1)("hello", "three")
+        assertSeqIgnoreOrder(vals2)("three")
       }
     }
 

@@ -164,6 +164,12 @@ object IndexedDb {
     def getAllKeys[K, V](store: ObjectStoreDef[K, V]): AsyncCallback[ArraySeq[K]] =
       transactionRO(store)(_.objectStore(store.sync).flatMap(_.getAllKeys))
 
+    def getAllValues[K, V](store: ObjectStoreDef.Sync[K, V]): AsyncCallback[ArraySeq[V]] =
+      transactionRO(store)(_.objectStore(store).flatMap(_.getAllValues))
+
+    def getAllValues[K, V](store: ObjectStoreDef.Async[K, V]): AsyncCallback[ArraySeq[V]] =
+      getAllValues(store.sync).flatMap(AsyncCallback.traverse(_)(_.decode))
+
     def delete[K, V](store: ObjectStoreDef[K, V])(key: K): AsyncCallback[Unit] =
       transactionRW(store)(_.objectStore(store.sync).flatMap(_.delete(key)))
   }
@@ -197,6 +203,9 @@ object IndexedDb {
 
     def getAllKeys: Txn[ArraySeq[K]] =
       Txn.StoreGetAllKeys(this)
+
+    def getAllValues: Txn[ArraySeq[V]] =
+      Txn.StoreGetAllVals(this)
 
     def delete(key: K): Txn[Unit] =
       Txn.StoreDelete(this, keyCodec.encode(key))
@@ -256,6 +265,7 @@ object IndexedDb {
     final case class StorePut             (store: ObjectStore[_, _], key: IndexedDbKey, value: js.Any) extends Txn[Unit]
     final case class StoreGet       [K, V](store: ObjectStore[K, V], key: IndexedDbKey)                extends Txn[Option[V]]
     final case class StoreGetAllKeys[K, V](store: ObjectStore[K, V])                                   extends Txn[ArraySeq[K]]
+    final case class StoreGetAllVals[K, V](store: ObjectStore[K, V])                                   extends Txn[ArraySeq[V]]
     final case class StoreDelete    [K, V](store: ObjectStore[K, V], key: IndexedDbKey)                extends Txn[Unit]
 
     def interpret[A](txn: IDBTransaction, dsl: Txn[A]): AsyncCallback[A] =
@@ -325,7 +335,25 @@ object IndexedDb {
                   ArraySeq.unsafeWrapArray(keys)
                 }
               }
-          }
+
+            case StoreGetAllVals(s) =>
+              import s.defn.{valueCodec, Value}
+              getStore(s).flatMap { store =>
+                asyncRequest(store.asInstanceOf[IDBObjectStoreMissing].getAll()) { req =>
+                  val rawVals = req.result.asInstanceOf[js.Array[js.Any]]
+                  val vals = new Array[Value](rawVals.length)
+                  var i = rawVals.length
+                  while (i > 0) {
+                    i -= 1
+                    val rawVal = rawVals(i)
+                    val v = valueCodec.decode(rawVal).runNow() // safe in asyncRequest onSuccess
+                    vals(i) = v
+                  }
+                  ArraySeq.unsafeWrapArray(vals)
+                }
+              }
+
+          } // dsl match
 
         interpret(dsl)
       }
@@ -377,6 +405,7 @@ object IndexedDb {
     @JSGlobal("IDBObjectStore")
     class IDBObjectStoreMissing extends IDBObjectStore {
       def getAllKeys(): IDBRequest = js.native
+      def getAll(): IDBRequest = js.native
     }
   }
 
