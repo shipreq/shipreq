@@ -11,8 +11,6 @@ trait Cache {
    */
   def apply(ord: EventOrd): Option[Project]
 
-  def milestoneIterator(): Iterator[Project]
-
   def update(latest: Project): Cache
 }
 
@@ -20,7 +18,6 @@ object Cache {
 
   object Disabled extends Cache {
     override def apply(ord: EventOrd)    = None
-    override def milestoneIterator()     = Iterator.empty
     override def update(latest: Project) = new Instance(latest)
 
     final class Instance(latest: Project) extends Cache {
@@ -29,9 +26,6 @@ object Cache {
         val events = latest.history.events.take(ord.value)
         Project.empty.updateOrThrow(events)
       }
-
-      override def milestoneIterator() =
-        Iterator.empty
 
       override def update(latest: Project) =
         new Instance(latest)

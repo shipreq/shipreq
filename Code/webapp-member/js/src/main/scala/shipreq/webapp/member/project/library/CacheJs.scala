@@ -21,9 +21,6 @@ object CacheJs {
     override def apply(ord: EventOrd): Option[Project] =
       None
 
-    override def milestoneIterator() =
-      Iterator.empty
-
     override def update(latest: Project): Cache =
       new NonEmpty(
         latest      = latest,
@@ -114,13 +111,6 @@ object CacheJs {
       val nextMilestone = ((startOrd / retainEvery) + 1) * retainEvery
       go(startOrd, startProject, nextMilestone)
     }
-
-    override def milestoneIterator(): Iterator[Project] =
-      milestones.indices
-        .iterator
-        .map(getMilestone)
-        .filter(_.isDefined)
-        .map(_.get)
 
     override def update(newLatest: Project): NonEmpty =
       new NonEmpty(
