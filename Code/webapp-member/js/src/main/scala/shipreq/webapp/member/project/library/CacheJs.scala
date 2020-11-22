@@ -11,6 +11,12 @@ object CacheJs {
   def apply(): Cache =
     Empty
 
+  /** Retain projects as milestones every n events.
+    *
+    * See https://shipreq.com/project/d6My#/reqs/DE-3
+    */
+  final val MilestonesEvery = 4000
+
   private object Empty extends Cache {
     override def apply(ord: EventOrd): Option[Project] =
       None
@@ -18,15 +24,15 @@ object CacheJs {
     override def update(latest: Project): Cache =
       new NonEmpty(
         latest      = latest,
-        retainEvery = 4000,
+        retainEvery = MilestonesEvery,
         milestones  = new js.Array,
         lru         = LruMemo.ExternalFn.byUnivEq(20),
       )
   }
 
   private[library] final class NonEmpty(latest     : Project,
-                                        retainEvery: Int               = 4000,
-                                        milestones : js.Array[Project] = new js.Array,
+                                        retainEvery: Int,
+                                        milestones : js.Array[Project],
                                         private[library] val
                                         lru         : LruMemo.ExternalFn[Int, Project]) extends Cache {
 
