@@ -17,7 +17,7 @@ object MutableProjectLibraryTest extends TestSuite {
     val p1 = Project.empty
 
     val genTest: Gen[(WithMetaData, Vector[VerifiedEvent], Project, WithMetaData)] = {
-      val md1 = looseProjectMetaData(p1, eventsTotal = p1.history.ordAsInt, eventsInit = 0)
+      val md1 = looseProjectMetaData(p1, eventsTotal = p1.ordAsInt, eventsInit = 0)
       val s1 = WithMetaData.init(p1, md1, Cache.Disabled)
       for {
         (p2, ves) <- RandomEventStream.verifiedEvents(80).run(p1)

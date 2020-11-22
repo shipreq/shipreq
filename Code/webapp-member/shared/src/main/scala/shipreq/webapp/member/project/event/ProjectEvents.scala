@@ -2,7 +2,7 @@ package shipreq.webapp.member.project.event
 
 import scalaz.Equal
 
-final case class ProjectEvents(events: VerifiedEvent.Seq) extends AnyVal {
+final case class ProjectEvents(events: VerifiedEvent.Seq) extends AnyVal with EventOrd.CmpOps {
 
   def +(e: VerifiedEvent): ProjectEvents =
     ProjectEvents(events + e)
@@ -13,7 +13,7 @@ final case class ProjectEvents(events: VerifiedEvent.Seq) extends AnyVal {
   def ord: Option[EventOrd.Latest] =
     Option.when(events.nonEmpty)(events.last.ord.asLatest)
 
-  def ordAsInt: Int =
+  override def ordAsInt: Int =
     if (events.isEmpty)
       0
     else
@@ -24,23 +24,6 @@ final case class ProjectEvents(events: VerifiedEvent.Seq) extends AnyVal {
       EventOrd.first
     else
       events.last.ord + 1
-
-  def >(x: ProjectEvents): Boolean =
-    (ord, x.ord) match {
-      case (Some(a), Some(b)) => a > b
-      case (Some(_), None   ) => true
-      case (None   , Some(_))
-         | (None   , None   ) => false
-    }
-
-  @inline def <(x: ProjectEvents): Boolean =
-    x > this
-
-  @inline def <=(x: ProjectEvents): Boolean =
-    !(this > x)
-
-  @inline def >=(x: ProjectEvents): Boolean =
-    !(this < x)
 
   def max(p: ProjectEvents): ProjectEvents =
     if (this > p) this else p
@@ -53,6 +36,9 @@ object ProjectEvents {
 
   val empty: ProjectEvents =
     apply(VerifiedEvent.Seq.empty)
+
+  implicit val canCmp: EventOrd.CanCmp[ProjectEvents] =
+    EventOrd.CanCmp(_.ordAsInt)
 
   // Not universally safe/desirable so opt-in only
   object ImplicitEqualityByOrd {

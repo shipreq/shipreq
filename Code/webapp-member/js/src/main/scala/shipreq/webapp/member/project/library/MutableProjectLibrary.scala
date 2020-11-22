@@ -44,7 +44,7 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
 
         // Complete ord promises
         if (projectChanged && _ordPromises.nonEmpty) {
-          val newOrd = _state.latest.history.ordAsInt
+          val newOrd = _state.latest.ordAsInt
 
           // Remove releasable promises
           val (releasable, pending) = _ordPromises.partition(_.ord.value <= newOrd)

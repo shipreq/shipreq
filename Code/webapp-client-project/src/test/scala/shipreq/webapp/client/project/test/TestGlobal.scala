@@ -246,7 +246,7 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData) exten
 object TestGlobal {
 
   def apply(p: Project): TestGlobal = {
-    val md = looseProjectMetaData(p, eventsTotal = p.history.ordAsInt)
+    val md = looseProjectMetaData(p, eventsTotal = p.ordAsInt)
     val ps = ProjectLibrary.WithMetaData.init(p, md, CacheJs())
     new TestGlobal(ps)
   }

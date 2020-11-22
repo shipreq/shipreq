@@ -72,7 +72,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
       case s: State.Active =>
         Metadata.Project(
           id           = id,
-          ord          = Some(s.projectLibrary.latest.history.ordAsInt),
+          ord          = Some(s.projectLibrary.latest.ordAsInt),
           futureEvents = s.projectLibrary.futureEvents.iterator.map(_.ord.value).toSet)
 
       case _: State.Loading =>

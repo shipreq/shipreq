@@ -70,15 +70,15 @@ object ApplyEventAlgebra extends StrictLogging {
       for {
         (res, dur) <- svr.measureDuration(underlying.appendFn(pid, p1, events))
         eventCount = res match {
-                       case \/-(p2) => p2.history.ordAsInt - p1.history.ordAsInt
+                       case \/-(p2) => p2.ordAsInt - p1.ordAsInt
                        case -\/(_)    => events.size
                      }
         _          <- metrics.appliedEvents(eventCount, dur, trust = trust)
       } yield {
         if (dur.getSeconds == 0 && dur.getNano < warnIfDurExceedsNs)
-          logger.info(s"Applied $eventCount events to project #${pid.value} v${p1.history.ordAsInt} in ${dur.conciseDesc}")
+          logger.info(s"Applied $eventCount events to project #${pid.value} v${p1.ordAsInt} in ${dur.conciseDesc}")
         else
-          logger.warn(s"Applied $eventCount events to project #${pid.value} v${p1.history.ordAsInt} in ${dur.conciseDesc}")
+          logger.warn(s"Applied $eventCount events to project #${pid.value} v${p1.ordAsInt} in ${dur.conciseDesc}")
         res
       }
     }

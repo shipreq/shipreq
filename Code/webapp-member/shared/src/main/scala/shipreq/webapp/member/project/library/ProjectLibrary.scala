@@ -8,7 +8,7 @@ import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
   *
   * Event application is idempotent and commutative.
   */
-trait ProjectLibrary {
+trait ProjectLibrary extends EventOrd.CmpOps {
   type This <: ProjectLibrary
 
   def self: This
@@ -43,6 +43,9 @@ trait ProjectLibrary {
 
   final def futureEventRange: String =
     "[" + ConciseIntSetFormat(futureEvents.iterator.map(_.ord.value).toSet) + "]"
+
+  final override protected def ordAsInt =
+    latest.ordAsInt
 }
 
 object ProjectLibrary {
@@ -143,8 +146,8 @@ object ProjectLibrary {
   sealed abstract class Shared(latest: Project, prevCache: Cache) extends ProjectLibrary {
 
     assert(
-      futureEvents.isEmpty || futureEvents.head.ord.value > latest.history.ordAsInt + 1,
-      s"Project is v${latest.history.ordAsInt} but youngest future event is v${futureEvents.head.ord.value}")
+      futureEvents.isEmpty || futureEvents.head.ord.value > latest.ordAsInt + 1,
+      s"Project is v${latest.ordAsInt} but youngest future event is v${futureEvents.head.ord.value}")
 
     protected def _update(events      : VerifiedEvent.Seq,
                           updateLatest: (Project, VerifiedEvent.NonEmptySeq, VerifiedEvent.Seq) => This,
@@ -173,7 +176,7 @@ object ProjectLibrary {
       prevCache.update(latest)
 
     private val latestOrd =
-      latest.history.ordAsInt
+      latest.ordAsInt
 
     override final def projectAt(ord: EventOrd): Option[Project] =
       if (ord.value == latestOrd)
@@ -200,4 +203,6 @@ object ProjectLibrary {
         (VerifiedEvent.NonEmptySeq(ve1, ves), remainder)
       }
 
+  implicit val canCmp: EventOrd.CanCmp[ProjectLibrary] =
+    EventOrd.CanCmp(_.latest.ordAsInt)
 }

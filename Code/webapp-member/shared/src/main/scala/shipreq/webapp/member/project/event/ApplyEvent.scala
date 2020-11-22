@@ -88,7 +88,7 @@ final class ApplyEvent(implicit val trust: Trust)
     if (ve.ord.immediatelyFollowsLatest(p.ord))
       onOk
     else
-      -\/(ErrorMsg(s"Event v${ve.ord.value} can't be applied to project v${p.history.ordAsInt}"))
+      -\/(ErrorMsg(s"Event v${ve.ord.value} can't be applied to project v${p.ordAsInt}"))
 
   // ===================================================================================================================
   // Safe
