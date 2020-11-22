@@ -38,10 +38,10 @@ object CacheJsTest extends TestSuite {
     val retainEvery = 3
 
     var cache = new CacheJs.NonEmpty(
-      latest      = projectAt(9),
-      retainEvery = retainEvery,
-      milestones  = milestones,
-      lru         = LruMemo.ExternalFn.byUnivEq[Int, Project](1),
+      latest         = projectAt(9),
+      milestoneEvery = retainEvery,
+      milestones     = milestones,
+      lru            = LruMemo.ExternalFn.byUnivEq[Int, Project](1),
     )
 
     def lru = cache.lru

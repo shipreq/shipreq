@@ -26,24 +26,24 @@ object CacheJs {
 
     override def update(latest: Project): Cache =
       new NonEmpty(
-        latest      = latest,
-        retainEvery = MilestonesEvery,
-        milestones  = new js.Array,
-        lru         = LruMemo.ExternalFn.byUnivEq(20),
+        latest         = latest,
+        milestoneEvery = MilestonesEvery,
+        milestones     = new js.Array,
+        lru            = LruMemo.ExternalFn.byUnivEq(20),
       )
   }
 
-  private[library] final class NonEmpty(latest     : Project,
-                                        retainEvery: Int,
-                                        milestones : js.Array[Project],
+  private[library] final class NonEmpty(latest        : Project,
+                                        milestoneEvery: Int,
+                                        milestones    : js.Array[Project],
                                         private[library] val
-                                        lru         : LruMemo.ExternalFn[Int, Project]) extends Cache {
+                                        lru           : LruMemo.ExternalFn[Int, Project]) extends Cache {
 
     @inline private def isMilestone(i: Int): Boolean =
-      (i % retainEvery) == 0
+      (i % milestoneEvery) == 0
 
     @inline private def ordToMilestoneIdx(o: Int): Int =
-      o / retainEvery - 1
+      o / milestoneEvery - 1
 
 //    @inline private def milestoneIdxToOrd(i: Int): Int =
 //      (i + 1) * retainEvery
@@ -81,12 +81,12 @@ object CacheJs {
       // Scan milestones
       if (c != tgt) {
         var i = 0
-        var o = retainEvery
+        var o = milestoneEvery
         while (o <= tgt) {
           if (o > c && getMilestone(i).isDefined)
             c = o
           i += 1
-          o += retainEvery
+          o += milestoneEvery
         }
       }
 
@@ -106,12 +106,12 @@ object CacheJs {
         if (to == tgt)
           p2
         else
-          go(to, p2, nextMilestone + retainEvery)
+          go(to, p2, nextMilestone + milestoneEvery)
       }
 
       val startOrd      = closest(tgt)
       val startProject  = need(startOrd)
-      val nextMilestone = ((startOrd / retainEvery) + 1) * retainEvery
+      val nextMilestone = ((startOrd / milestoneEvery) + 1) * milestoneEvery
       go(startOrd, startProject, nextMilestone)
     }
 
@@ -132,10 +132,10 @@ object CacheJs {
 
     override def update(newLatest: Project): NonEmpty =
       new NonEmpty(
-        latest      = newLatest,
-        retainEvery = retainEvery,
-        milestones  = milestones, // could shallow copy via .jsSlice() but latestOrd check means can reuse safely
-        lru         = lru.duplicate(),
+        latest         = newLatest,
+        milestoneEvery = milestoneEvery,
+        milestones     = milestones, // could shallow copy via .jsSlice() but latestOrd check means can reuse safely
+        lru            = lru.duplicate(),
       )
   }
 
