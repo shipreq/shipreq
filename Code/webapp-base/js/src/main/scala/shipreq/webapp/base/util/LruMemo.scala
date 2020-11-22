@@ -51,6 +51,10 @@ object LruMemo {
     def foreachKey(f: K => Unit): Unit =
       state.foreachKey(f)
 
+    /** By "IgnoreAccess" I mean that the lastAccessed field of these values won't be updated. */
+    def foreachValueIgnoreAccess(f: V => Unit): Unit =
+      state.foreachValueIgnoreAccess(f)
+
     def duplicate(): ExternalFn[K, V] =
       new ExternalFn(isSame, state.duplicate())
   }
@@ -112,11 +116,17 @@ object LruMemo {
       b
     }
 
-    def foreachKey(f: K => Unit): Unit = {
+    def foreachKey(f: K => Unit): Unit =
+      foreach(r => f(r.key))
+
+    def foreachValueIgnoreAccess(f: V => Unit): Unit =
+      foreach(r => f(r.value))
+
+    private def foreach(f: Result[K, V] => Unit): Unit = {
       var i = 0
       while (i < size) {
         val r = cache(i)
-        f(r.key)
+        f(r)
         i += 1
       }
     }
