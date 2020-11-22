@@ -35,6 +35,9 @@ object Compression {
       )
   }
 
+  val maxNoHeaders: Compression =
+    Compression(level = 9, addHeaders = false)
+
   private implicit def binaryDataToPakoData(b: BinaryData): Pako.Data =
     b.unsafeUint8Array
 

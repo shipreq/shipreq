@@ -1,7 +1,7 @@
 package shipreq.webapp.base.protocol.webstorage
 
 import japgolly.scalajs.react.{AsyncCallback, CallbackTo}
-import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage.Value
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage.{Key, Value}
 
 final case class ValueCodec[A](encode: A => CallbackTo[Value],
                                decode: Value => CallbackTo[A]) {
@@ -54,6 +54,15 @@ object ValueCodec {
       Async[B](
         encode = onEncode(_).flatMap(encode),
         decode = decode(_).flatMap(onDecode))
+
+    def xmapRaw(afterEncode : (A, Value) => Value,
+                beforeDecode: Value => Value): Async[A] =
+      Async[A](
+        encode = a => encode(a).map(afterEncode(a, _)),
+        decode = v => decode(beforeDecode(v)))
+
+    def webStorageKey(key: Key): WebStorageKey.Async[A] =
+      WebStorageKey.Async(key, this)
   }
 
 }

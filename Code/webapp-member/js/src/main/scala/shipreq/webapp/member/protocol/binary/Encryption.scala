@@ -77,13 +77,16 @@ object Encryption {
           ).asInstanceOf[js.Promise[CryptoKey]] // TODO remove after https://github.com/scala-js/scala-js-dom/pull/431
         )
 
-      for {
-        key <- importKey
-      } yield
-        Encryption(
-          encrypt = encrypt(key),
-          decrypt = decrypt(key),
-        )
+      val main: AsyncCallback[Encryption] =
+        for {
+          key <- importKey
+        } yield
+          Encryption(
+            encrypt = encrypt(key),
+            decrypt = decrypt(key),
+          )
+
+      main.memo()
     }
   }
 

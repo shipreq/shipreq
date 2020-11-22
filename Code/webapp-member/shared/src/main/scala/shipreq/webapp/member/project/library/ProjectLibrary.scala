@@ -38,14 +38,14 @@ trait ProjectLibrary extends EventOrd.CmpOps {
   @inline final def ord =
     latest.ord
 
+  final override protected def ordAsInt =
+    latest.ordAsInt
+
   final def descState: String =
-    s"ord = $ord, future = $futureEventRange"
+    s"ord = $ordAsInt, future = $futureEventRange"
 
   final def futureEventRange: String =
     "[" + ConciseIntSetFormat(futureEvents.iterator.map(_.ord.value).toSet) + "]"
-
-  final override protected def ordAsInt =
-    latest.ordAsInt
 }
 
 object ProjectLibrary {

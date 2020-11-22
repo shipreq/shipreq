@@ -38,7 +38,11 @@ object AbstractWebStorage {
     Reusability.byRef
 
   final case class Key(value: String) extends AnyVal
-  final case class Value(value: String) extends AnyVal
+
+  final case class Value(value: String) extends AnyVal {
+    def mod(f: String => String): Value =
+      Value(f(value))
+  }
 
   // ===================================================================================================================
 

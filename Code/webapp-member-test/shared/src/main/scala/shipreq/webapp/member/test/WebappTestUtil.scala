@@ -110,7 +110,7 @@ trait WebappTestUtil extends BaseTestUtil {
     if (events.isEmpty)
       events += ve(EventOrd.first)
     var last = events.last
-    while(last.ord < ord) {
+    while (last.ord < ord) {
       last = ve(last.ord + 1)
       events += last
     }
@@ -120,6 +120,12 @@ trait WebappTestUtil extends BaseTestUtil {
 //    println()
     p.copy(history = ProjectEvents(events))
   }
+
+  def newProject(ord: Int): Project =
+    if (ord == 0)
+      Project.empty
+    else
+      setOrd(Project.empty, EventOrd(ord))
 
   implicit final class WebappTestUtilExt_VerifiedEventSeq(private val self: VerifiedEvent.Seq) {
     def needNES: VerifiedEvent.NonEmptySeq =
