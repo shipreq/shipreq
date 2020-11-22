@@ -8,8 +8,12 @@ import shipreq.webapp.member.protocol.binary.Encryption
 
 object TestEncryption {
 
+  lazy val engine: Encryption.Engine =
+    Encryption.Engine.from(Node.webCrypto)
+      .getOrThrow("Node.webCrypto not accepted as an Encryption.Engine")
+
   def apply(key: BinaryData): AsyncCallback[Encryption] =
-    Encryption(Node.webCrypto, key).map(_.getOrThrow("webCrypto not available"))
+    engine(key)
 
   object UnsafeTypes {
     implicit def binaryDataFromString(str: String): BinaryData = {

@@ -14,23 +14,9 @@ final case class Encryption(encrypt: BinaryData => AsyncCallback[BinaryData],
 
 object Encryption {
 
-  def isAvailable(crypto: Any): Boolean =
-    Try[Boolean] {
-      val c = crypto.asInstanceOf[js.Dynamic]
-      val subtle = c.subtle
-      (
-        (c.getRandomValues: Any).truthy
-          && (subtle.importKey: Any).truthy
-          && (subtle.encrypt: Any).truthy
-          && (subtle.decrypt: Any).truthy
-      )
-    }.fold(_ => false, identity)
+  final class Engine(val crypto: Crypto) {
 
-  def apply(cryptoInstance: Any, symmetricKey: BinaryData): AsyncCallback[Option[Encryption]] =
-    if (!isAvailable(cryptoInstance))
-      AsyncCallback.pure(None)
-    else {
-      val crypto = cryptoInstance.asInstanceOf[Crypto]
+    def apply(symmetricKey: BinaryData): AsyncCallback[Encryption] = {
 
       val newIV: AsyncCallback[Uint8Array] =
         AsyncCallback.delay {
@@ -93,13 +79,42 @@ object Encryption {
 
       for {
         key <- importKey
-      } yield Some {
+      } yield
         Encryption(
           encrypt = encrypt(key),
           decrypt = decrypt(key),
         )
-      }
     }
+  }
+
+  object Engine {
+
+    private def isAvailable(crypto: Any): Boolean =
+      Try[Boolean] {
+        val c = crypto.asInstanceOf[js.Dynamic]
+        val subtle = c.subtle
+        (
+          (c.getRandomValues: Any).truthy
+          && (subtle.importKey: Any).truthy
+          && (subtle.encrypt: Any).truthy
+          && (subtle.decrypt: Any).truthy
+        )
+      }.fold(_ => false, identity)
+
+    def from(a: => Any): Option[Engine] =
+      try {
+        val untyped = a
+        Option.when(isAvailable(untyped)) {
+          val crypto = untyped.asInstanceOf[Crypto]
+          new Engine(crypto)
+        }
+      } catch {
+        case _: Throwable => None
+      }
+
+    lazy val global: Option[Engine] =
+      from(js.Dynamic.global.crypto)
+  }
 
   // ===================================================================================================================
   import shipreq.webapp.base.protocol.binary.v1.BaseData.{picklerBinaryDataFixedLength, unsupportedVer}
