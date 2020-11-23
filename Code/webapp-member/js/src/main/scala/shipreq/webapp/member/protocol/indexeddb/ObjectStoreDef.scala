@@ -17,6 +17,9 @@ object ObjectStoreDef {
   final case class Sync[K, V](name      : String,
                               keyCodec  : KeyCodec[K],
                               valueCodec: ValueCodec[V]) extends ObjectStoreDef[K, V] {
+
+    type Value = V
+
     override def sync: this.type =
       this
   }

@@ -10,11 +10,11 @@ import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
-import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.{ImplyNewReqButton, ProjectWidgets, ViewReq}
 import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.library.NewEvents
 import shipreq.webapp.member.project.protocol.websocket.CreateContentCmd
 
 private[reqdetail] object ReqTypeRow {

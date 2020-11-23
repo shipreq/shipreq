@@ -11,10 +11,10 @@ import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
 import shipreq.webapp.client.project.app.Style.{issueConfig => *}
 import shipreq.webapp.client.project.app.pages.root.Routes
-import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.feature.Usage
 import shipreq.webapp.client.project.widgets.{EditorButtons, ProjectWidgets, SplitScreenCrud}
 import shipreq.webapp.member.project.data.{Colour => _, _}
+import shipreq.webapp.member.project.library.NewEvents
 import shipreq.webapp.member.project.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.ui.Toast

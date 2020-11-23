@@ -17,7 +17,6 @@ import shipreq.webapp.base.util.CallbackHelpers._
 import shipreq.webapp.base.util.LastValueMemo
 import shipreq.webapp.client.project.app.Style.{reqdetail => *}
 import shipreq.webapp.client.project.app.WebWorkerClient
-import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.feature.EditorFeature.FieldKey
 import shipreq.webapp.client.project.feature._
 import shipreq.webapp.client.project.util.DataReusability._
@@ -28,6 +27,7 @@ import shipreq.webapp.member.feature.{EditControlsFeature, PreviewFeature}
 import shipreq.webapp.member.project.data.ExternalPubid.LookupFailure
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{Event, VerifiedEvent}
+import shipreq.webapp.member.project.library.NewEvents
 import shipreq.webapp.member.project.protocol.websocket.{CreateContentCmd, UpdateContentCmd}
 import shipreq.webapp.member.project.text.ProjectText.SetRenderStyle
 import shipreq.webapp.member.project.text._

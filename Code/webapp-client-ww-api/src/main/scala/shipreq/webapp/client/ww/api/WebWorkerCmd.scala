@@ -4,6 +4,7 @@ import boopickle.ConstPickler
 import boopickle.DefaultBasic._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.protocol.Version
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
 import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
@@ -43,11 +44,13 @@ object WebWorkerCmd {
 
   // ===================================================================================================================
 
+  val protocolVer = Version.fromInts(2, 0) // Bump this when any of following imports change
   import shipreq.webapp.base.protocol.binary.v1.BaseData._
   import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData1._
   import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData2._
   import shipreq.webapp.member.project.protocol.binary.v1.Rev1.SavedViewPicklers._
-  import shipreq.webapp.member.project.protocol.binary.Latest._
+  import shipreq.webapp.member.project.protocol.binary.v1.Rev7._
+  import shipreq.webapp.member.project.protocol.binary.v2.Rev0._
 
   implicit val picklerSvg: Pickler[Svg] =
     transformPickler(Svg.apply)(_.content)

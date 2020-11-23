@@ -102,21 +102,30 @@ trait WebappTestUtil extends BaseTestUtil {
     Project.empty.updateOrThrow(es)
 
   def setOrd(p: Project, ord: EventOrd): Project = {
-    def ve(o: EventOrd) = VerifiedEvent(o, Event.ProjectNameSet(o.value.toString), Instant.now())
+    val now = Instant.now().minusSeconds(ord.value + 1)
+    def ve(o: EventOrd) = VerifiedEvent(o, Event.ProjectNameSet(o.value.toString), now.plusSeconds(o.value))
     var events = p.history.events
     if (events.nonEmpty)
       events = events.takeWhile(_.ord <= ord)
     if (events.isEmpty)
-      events += ve(ord)
-    else {
-      var last = events.last
-      while(last.ord < ord) {
-        last = ve(last.ord + 1)
-        events += last
-      }
+      events += ve(EventOrd.first)
+    var last = events.last
+    while (last.ord < ord) {
+      last = ve(last.ord + 1)
+      events += last
     }
+//    println()
+//    println(s"setOrd($p, $ord):")
+//    events.foreach(e => println("  " + e))
+//    println()
     p.copy(history = ProjectEvents(events))
   }
+
+  def newProject(ord: Int): Project =
+    if (ord == 0)
+      Project.empty
+    else
+      setOrd(Project.empty, EventOrd(ord))
 
   implicit final class WebappTestUtilExt_VerifiedEventSeq(private val self: VerifiedEvent.Seq) {
     def needNES: VerifiedEvent.NonEmptySeq =

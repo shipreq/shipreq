@@ -726,7 +726,7 @@ object ProjectSpaLogic extends StrictLogging {
 
           case WriteRedis1(newEvents) =>
             val writeRedis: F[Boolean] =
-              if (writeSnapshot(s.local.history.ordAsInt))
+              if (writeSnapshot(s.local.ordAsInt))
                 redis.writeSnapshot(pid, s.local, VerifiedEvent.Seq.empty)
               else
                 redis.writeEvents(pid, newEvents, VerifiedEvent.Seq.empty)

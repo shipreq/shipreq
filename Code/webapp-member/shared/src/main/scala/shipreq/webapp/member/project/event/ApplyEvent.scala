@@ -65,18 +65,30 @@ final class ApplyEvent(implicit val trust: Trust)
       apply(VerifiedEvent.NonEmptySeq.force(ves))(p)
 
   def apply(events: VerifiedEvent.NonEmptySeq)(p: Project): Result =
-    safelyApplyUnverified(events.iterator.map(_.event)).exec(p) match {
-      case \/-(p) =>
-        \/-(Project.history.modify(_ ++ events)(p))
+    ensureEventFollows(p, events.head) {
+      safelyApplyUnverified(events.iterator.map(_.event)).exec(p) match {
+        case \/-(p) =>
+          \/-(Project.history.modify(_ ++ events)(p))
 
-      case -\/(_) =>
-        // Failure. Do it from scratch one-by-one so that the error is caught on the specific event that breaks things
-        Eval.foldMapRun(events)(safelyApply1).exec(p)
+        case -\/(_) =>
+          // Failure. Do it from scratch one-by-one so that the error is caught on the specific event that breaks things
+          Eval.foldMapRun(events)(safelyApply1).exec(p)
+      }
     }
 
   def apply(event: VerifiedEvent)(p: Project): Result =
-    safelyApply1(event).exec(p)
-      .map(Project.history.modify(_ + event))
+    ensureEventFollows(p, event) {
+      safelyApply1(event).exec(p)
+        .map(Project.history.modify(_ + event))
+    }
+
+  // Note: onOk is by-ref instead of by-name because outside of tests this will never fail.
+  // No point allocating a function for no reason.
+  private def ensureEventFollows(p: Project, ve: VerifiedEvent)(onOk: Result): Result =
+    if (ve.ord.immediatelyFollowsLatest(p.ord))
+      onOk
+    else
+      -\/(ErrorMsg(s"Event v${ve.ord.value} can't be applied to project v${p.ordAsInt}"))
 
   // ===================================================================================================================
   // Safe

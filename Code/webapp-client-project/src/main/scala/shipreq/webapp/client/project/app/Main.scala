@@ -16,6 +16,7 @@ import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.client.loaders.ProjectSpaLoader
 import shipreq.webapp.client.project.app.pages.root._
 import shipreq.webapp.client.project.app.state.Global
+import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint.InitData
@@ -59,11 +60,15 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
     global.wsClient.connect.runNow()
   }
 
+  private def loadWebWorker(i: InitData, logger: LoggerJs): WebWorkerClient.Instance = {
+    val scope  = i.userId.value + ":" + i.projectId.value + ":" + WebWorkerCmd.protocolVer.verNum
+    val worker = AbstractWebWorker.Client(i.webWorkerJsUrl, scope).runNow()
+    WebWorkerClient.default(worker, logger).runNow()
+  }
+
   private def onLoad(i: InitData, g: Global): Callback =
     Callback {
-      val wwScope  = i.userId.value + ":" + i.projectId.value
-      val ww       = AbstractWebWorker.Client(i.webWorkerJsUrl, wwScope).runNow()
-      val wwClient = WebWorkerClient.default(ww, g.logger).runNow()
+      val wwClient = loadWebWorker(i, g.logger)
       val root     = new LoadedRoot(i, g, ConfirmJs.real, PromptJs.real, OptionalFullscreen.real, wwClient)
       val baseUrl  = determineBaseUrl(location.href)
       val router   = Router(baseUrl, Routes.routerConfig(root))

@@ -9,7 +9,7 @@ import monocle.{Lens, Traversal}
 import scalaz.Equal
 import shipreq.base.util._
 import shipreq.webapp.member.project.data.derivation._
-import shipreq.webapp.member.project.event.{ApplyEvent, ProjectEvents, VerifiedEvent}
+import shipreq.webapp.member.project.event.{ApplyEvent, EventOrd, ProjectEvents, VerifiedEvent}
 import shipreq.webapp.member.project.issue.IssueTracker
 import shipreq.webapp.member.project.text.PlainText
 
@@ -89,6 +89,12 @@ object Project {
       new Equality
     }
   }
+
+  implicit val canCmp: EventOrd.CanCmp[Project] =
+    EventOrd.CanCmp(_.ordAsInt)
+
+  implicit val canCmpOption: EventOrd.CanCmp[Option[Project]] =
+    canCmp.option
 }
 
 // =====================================================================================================================
@@ -100,14 +106,14 @@ final case class Project(name        : Project.Name,
                          manualIssues: ManualIssues,
                          savedViews  : savedview.SavedViews.Optional,
                          history     : ProjectEvents,
-                         idCeilings  : IdCeilings) {
+                         idCeilings  : IdCeilings) extends EventOrd.CmpOps {
 
   override def toString =
     s"Project{v${history.ordAsInt}}"
     //ShowSize(this).showTree
 
   @inline def update(ves: VerifiedEvent.NonEmptySeq): ErrorMsg \/ Project =
-    ApplyEvent.trusted(ves)(this)
+    update(ves.values)
 
   @inline def update(ves: VerifiedEvent.Seq): ErrorMsg \/ Project =
     ApplyEvent.trusted(ves)(this)
@@ -127,11 +133,11 @@ final case class Project(name        : Project.Name,
   def updateOrThrow(ve: VerifiedEvent): Project =
     _updateOrThrow(update(ve))
 
-  @inline def > (x: Project) = history >  x.history
-  @inline def < (x: Project) = history <  x.history
-  @inline def <=(x: Project) = history <= x.history
-  @inline def >=(x: Project) = history >= x.history
-  @inline def ord            = history.ord
+  @inline def ord =
+    history.ord
+
+  override def ordAsInt =
+    history.ordAsInt
 
   def min(p: Project): Project = if (this < p) this else p
   def max(p: Project): Project = if (this > p) this else p

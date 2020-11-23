@@ -16,9 +16,10 @@ import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseCode
 import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.base.test._
-import shipreq.webapp.client.project.app.state.{Global, ProjectState}
+import shipreq.webapp.client.project.app.state.Global
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.project.library.{CacheJs, ProjectLibrary}
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WsReqRes
 import shipreq.webapp.member.test.WebappTestUtil._
@@ -26,7 +27,7 @@ import shipreq.webapp.member.test._
 import shipreq.webapp.member.ui.BaseStyles
 import shipreq.webapp.server.logic.event._
 
-final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) => Callback.empty, _ => Callback.empty, LoggerJs.off) {
+final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData) extends Global((_, _) => Callback.empty, _ => Callback.empty, LoggerJs.off) {
 
   override def toString = unsafeState match {
     case Global.State.Active(a, b) => s"TestGlobal(Active($a, $b))"
@@ -49,7 +50,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
   def advanceTime(d: Duration): Unit = now = now.plusNanos(d.getNano).plusSeconds(d.getSeconds)
   def advanceTimeByMs(ms: Long) = advanceTime(Duration.ofMillis(ms))
 
-  lazy val protocol = ProjectSpaProtocols.WebSocket(initialProjectState.projectMetaData.id)
+  lazy val protocol = ProjectSpaProtocols.WebSocket(initialProjectLibrary.latestMetaData.id)
 
   lazy val svr = WebSocketServerHelper(protocol)
 
@@ -136,9 +137,9 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
 
   val nextEventOrd: CallbackTo[EventOrd] =
     CallbackTo {
-      val s = unsafeState.asInstanceOf[Global.State.Active].projectState
+      val s = unsafeState.asInstanceOf[Global.State.Active].projectLibrary
       // assert(s.futureEvents.isEmpty, s"TestGlobal.nextEventOrd: s.futureEvents = ${s.futureEvents.map(_.ord.value)}")
-      s.project.history.nextOrd
+      s.latest.history.nextOrd
     }
 
   def ws() = _fakeWS.last
@@ -180,7 +181,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
   def failLast(): Unit =
     _reqs.last.fail()
 
-  override def reconnect(ps: ProjectState): Callback =
+  override def reconnect(ps: ProjectLibrary): Callback =
     Callback.empty
 
   private def autoEventResponse: TestGlobal#Req => Option[TestGlobal#Response] = {
@@ -238,15 +239,15 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
     }
   }
 
-  unsafeSetState(Global.State.Active(initialProjectState, None))
+  unsafeSetState(Global.State.Active(initialProjectLibrary, None))
   wsClient.connect.runNow()
 }
 
 object TestGlobal {
 
   def apply(p: Project): TestGlobal = {
-    val md = looseProjectMetaData(p, eventsTotal = p.history.ordAsInt)
-    val ps = ProjectState.init(p, md)
+    val md = looseProjectMetaData(p, eventsTotal = p.ordAsInt)
+    val ps = ProjectLibrary.WithMetaData.init(p, md, CacheJs())
     new TestGlobal(ps)
   }
 

@@ -28,10 +28,10 @@ object Redis extends StrictLogging {
   // 2) It provides type-level proof that we never store empty projects. ord is not an Option here.
   final case class ProjectSnapshot(project: Project, ord: EventOrd.Latest) {
     assert(
-      project.history.ordAsInt == ord.value,
+      project.ordAsInt == ord.value,
       s"""
          |--------------------------------------------------------------------------------------------------------------
-         |Project v${project.history.ordAsInt} saved in Redis as v${ord.value}
+         |Project v${project.ordAsInt} saved in Redis as v${ord.value}
          |
          |Latest 3 events:
          |${project.history.events.to(Vector).reverseIterator.take(3).mkString("\n")}

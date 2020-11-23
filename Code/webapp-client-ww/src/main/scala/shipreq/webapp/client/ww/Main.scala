@@ -19,7 +19,7 @@ object Main {
     val logger       = LoggerJs.devOnly.prefixedWith("[WW] ")
     val onError      = OnError.logToConsole
     val worker       = AbstractWebWorker.Server()
-    val state        = new WorkerState(logger)
+    val state        = new WorkerState()
     val serviceMaker = Service.maker(state)
 
     val start =
