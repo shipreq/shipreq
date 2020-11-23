@@ -1,16 +1,16 @@
 package shipreq.webapp.member.project.storage
 
 import japgolly.scalajs.react.AsyncCallback
-import java.time.Instant
 import scalaz.Equal
 import shipreq.base.test.Node.asyncTest
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data.{ProjectId, UserId}
 import shipreq.webapp.base.util.Obfuscated
 import shipreq.webapp.member.project.data.ClientSideProjectEncryptionKey
-import shipreq.webapp.member.project.event.{Event, EventOrd, VerifiedEvent}
-import shipreq.webapp.member.project.library.{CacheJs, ProjectLibrary}
-import shipreq.webapp.member.test.WebappTestUtil.ImplicitProjectEqualityDeepExceptEventTime._
+import shipreq.webapp.member.project.event.EventOrd
+import shipreq.webapp.member.project.library.ProjectLibrary
+import shipreq.webapp.member.test.ProjectLibraryTestUtil._
+import shipreq.webapp.member.test.WebappTestUtil.ImplicitProjectEqualityDeep._
 import shipreq.webapp.member.test.WebappTestUtil._
 import utest._
 
@@ -35,23 +35,6 @@ abstract class ClientSideStorageLaws extends TestSuite {
       assert(s.length <= 32)
       val s2 = (s + padding).take(32)
       ClientSideProjectEncryptionKey(BinaryData.fromStringBytes(s2))
-    }
-
-    private val now = Instant.now().minusSeconds(999999)
-
-    private val plCache = CacheJs()
-
-    def newProjectLibrary(latest: Int, futureEvents: Int*): ProjectLibrary = {
-      val fes = VerifiedEvent.Seq.empty ++ futureEvents.iterator.map { i =>
-        assert(i > (latest + 1))
-        VerifiedEvent(
-          EventOrd(i),
-          Event.ProjectNameSet(i.toString),
-          now.plusSeconds(i),
-        )
-      }
-      val p = newProject(latest)
-      ProjectLibrary.init(p, plCache).addEvents(fes)
     }
 
     val u1p1 = Context(userId(1), projectId(1), encKey("u1p1"))
