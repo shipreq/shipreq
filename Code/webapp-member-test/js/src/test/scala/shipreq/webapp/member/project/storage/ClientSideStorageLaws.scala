@@ -3,10 +3,6 @@ package shipreq.webapp.member.project.storage
 import japgolly.scalajs.react.AsyncCallback
 import scalaz.Equal
 import shipreq.base.test.Node.asyncTest
-import shipreq.base.util.BinaryData
-import shipreq.webapp.base.data.{ProjectId, UserId}
-import shipreq.webapp.base.util.Obfuscated
-import shipreq.webapp.member.project.data.ClientSideProjectEncryptionKey
 import shipreq.webapp.member.project.event.EventOrd
 import shipreq.webapp.member.project.library.ProjectLibrary
 import shipreq.webapp.member.test.ProjectLibraryTestUtil._
@@ -15,6 +11,7 @@ import shipreq.webapp.member.test.WebappTestUtil._
 import utest._
 
 abstract class ClientSideStorageLaws extends TestSuite {
+  import TestData._
 
   protected final implicit val equalProjectLibrary: Equal[ProjectLibrary] =
     Equal.equalBy(l => (l.latest, l.futureEvents))
@@ -22,24 +19,6 @@ abstract class ClientSideStorageLaws extends TestSuite {
   protected def createInstance(ctx: Context): AsyncCallback[ClientSideStorage.ReadWrite]
 
   private final object Internals {
-
-    def userId(i: Int): UserId.Public =
-      Obfuscated("user-" + i)
-
-    def projectId(i: Int): ProjectId.Public =
-      Obfuscated("project-" + i)
-
-    private val padding = "_" * 32
-
-    def encKey(s: String): ClientSideProjectEncryptionKey = {
-      assert(s.length <= 32)
-      val s2 = (s + padding).take(32)
-      ClientSideProjectEncryptionKey(BinaryData.fromStringBytes(s2))
-    }
-
-    val u1p1 = Context(userId(1), projectId(1), encKey("u1p1"))
-    val u2p1 = Context(userId(2), projectId(1), encKey("u2p1"))
-    val u1p2 = Context(userId(1), projectId(2), encKey("u1p2"))
 
     val newInstance = createInstance(u1p1)
 
