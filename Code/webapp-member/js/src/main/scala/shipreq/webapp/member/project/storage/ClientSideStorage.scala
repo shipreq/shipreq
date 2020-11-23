@@ -5,6 +5,7 @@ import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.member.project.event.EventOrd
 import shipreq.webapp.member.project.library.ProjectLibrary
 import shipreq.webapp.member.protocol.binary.Encryption
+import shipreq.webapp.member.protocol.indexeddb.IndexedDb
 
 object ClientSideStorage {
 
@@ -26,11 +27,17 @@ object ClientSideStorage {
     def apply(): Option[Available] =
       Encryption.Engine.global.flatMap { crypto =>
 
+        def indexedDb: Option[Available] =
+          IndexedDb.global().map(idb => usingIndexedDb(_, crypto, idb))
+
         def localStorage: Option[Available] =
           AbstractWebStorage.local().map(ws => usingWebStorage(_, crypto, ws))
 
-        localStorage
+        indexedDb orElse localStorage
       }
+
+    def usingIndexedDb(ctx: Context, crypto: Encryption.Engine, idb: IndexedDb): AsyncCallback[ReadWrite] =
+      crypto(ctx.encKey.value).flatMap(IndexedDbStorage(idb, ctx, _))
 
     def usingWebStorage(ctx: Context, crypto: Encryption.Engine, ws: AbstractWebStorage): AsyncCallback[ReadWrite] =
       crypto(ctx.encKey.value).map(new WebStorage(ws, ctx, _))
@@ -44,9 +51,6 @@ object ClientSideStorage {
 
     def apply(): Option[Available] =
       ReadWrite().map(_.andThen(f => f))
-
-    def usingWebStorage(ctx: Context, crypto: Encryption.Engine, ws: AbstractWebStorage): AsyncCallback[ReadOnly] =
-      ReadWrite.usingWebStorage(ctx, crypto, ws)
   }
 
 }

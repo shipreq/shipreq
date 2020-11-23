@@ -33,6 +33,9 @@ object EventOrd {
   implicit def univEq: UnivEq[EventOrd] =
     UnivEq.derive
 
+  implicit val ordering: Ordering[EventOrd] =
+    (x: EventOrd, y: EventOrd) => x.value - y.value
+
   def first = apply(1)
 
   def fromIndex(idx: Int) = apply(1 + idx)

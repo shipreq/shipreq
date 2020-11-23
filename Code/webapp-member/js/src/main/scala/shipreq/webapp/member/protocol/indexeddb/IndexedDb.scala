@@ -58,7 +58,10 @@ object IndexedDb {
 
   import Internals._
 
-  final case class VersionChange(db: DatabaseInVersionChange, oldVersion: Int, newVersion: Option[Int])
+  final case class VersionChange(db: DatabaseInVersionChange, oldVersion: Int, newVersion: Option[Int]) {
+    def createObjectStore[K, V](ver: Int, defn: ObjectStoreDef[K, V]): Callback =
+      db.createObjectStore(defn).when_(oldVersion < ver && newVersion.exists(_ >= ver))
+  }
 
   final case class OpenCallbacks(upgradeNeeded: VersionChange => Callback,
                                  blocked      : Callback)
@@ -226,11 +229,25 @@ object IndexedDb {
     def eval[A](c: CallbackTo[A]): Txn[A] =
       Txn.EvalCallback(c)
 
+    val unit: Txn[Unit] =
+      eval(Callback.empty)
+
     def objectStore[K, V](s: ObjectStoreDef.Sync[K, V]): Txn[ObjectStore[K, V]] =
       Txn.GetStore(s)
 
     @inline def objectStore[K, V](s: ObjectStoreDef.Async[K, V]): Txn[ObjectStore[K, s.Value]] =
       objectStore(s.sync)
+
+    def traverse_[A](as: IterableOnce[A])(f: A => Txn[_]): Txn[Unit] = {
+      val it = as.iterator
+      if (it.isEmpty)
+        unit
+      else {
+        val first = f(it.next())
+        it.foldLeft[Txn[_]](first)(_ >> f(_)) >> unit
+      }
+    }
+
   }
 
   private val TxnDsl = new TxnDsl()
@@ -262,6 +279,9 @@ object IndexedDb {
 
     final def flatMap[B](f: A => Txn[B]): Txn[B] =
       FlatMap(this, f)
+
+    final def >>[B](f: Txn[B]): Txn[B] =
+      flatMap(_ => f)
   }
 
   private object Txn {

@@ -13,6 +13,8 @@ trait ProjectLibrary extends EventOrd.CmpOps {
 
   def self: This
 
+  val cache: Cache
+
   val latest: Project
 
   /** Events that can't be applied yet because there are events missing between the earliest here and
@@ -70,6 +72,12 @@ object ProjectLibrary {
 
   def init(p: Project, cache: Cache): ProjectLibrary =
     new Basic(p, VerifiedEvent.Seq.empty, cache)
+
+  def load(ps: Iterable[Project], cache: Cache): Option[ProjectLibrary] =
+    Option.when(ps.nonEmpty) {
+      val latest = ps.maxBy(_.ordAsInt)
+      new Basic(latest, VerifiedEvent.Seq.empty, cache.update(ps))
+    }
 
   private final class Basic(val latest        : Project,
                             val futureEvents  : VerifiedEvent.Seq,
@@ -172,7 +180,7 @@ object ProjectLibrary {
       }
     }
 
-    protected final val cache =
+    override final val cache =
       prevCache.update(latest)
 
     private val latestOrd =
