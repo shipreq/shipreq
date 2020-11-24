@@ -14,6 +14,8 @@
   * new table: invpage
   * new table: draft
 
+* recreate RedisProtocolTest at the end of topic/v3.0
+
 ========================================================================================================================
 ### Problems
 * editor with preview scrolling problems
