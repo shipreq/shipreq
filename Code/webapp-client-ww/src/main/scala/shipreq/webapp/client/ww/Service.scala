@@ -17,8 +17,8 @@ final class Service[Client](server: Service.Server[Client], state: WorkerState) 
       case i: Init =>
         state.init(i).ret(NoResult)
 
-      case UpdateProject(ves) =>
-        state.update(ves).asAsyncCallback.ret(NoResult)
+      case UpdateProject(u) =>
+        state.update(u).asAsyncCallback.ret(NoResult)
 
       case GraphUseCaseFlow(ord, id, ctx) =>
         state.withGraphViz { implicit g =>
