@@ -1,6 +1,5 @@
 package shipreq.webapp.member.project.protocol.websocket
 
-import boopickle.DefaultBasic._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.utils.StaticLookupFn
 import shipreq.base.util.ErrorMsg
@@ -30,16 +29,21 @@ object ProjectSpaProtocols {
     type Push = VerifiedEvent.NonEmptySeq
 
     private[WebSocket] val pushProtocol: Protocol.Of[SafePickler, Push] =
-      Protocol(Codecs.safePicklerVerifiedEventNonEmptySeq)
+      Protocol(Codecs.Push.safePickler)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private final val wsrrVersion = Version.fromInts(1, 7) // Bump this when any of following imports change
+  // Bump when *any* codec changes happen
+  private val wsrrVersion = Version.fromInts(1, 7)
+
+  // When any of the following change, bump wsrrVersion
+  import boopickle.DefaultBasic._
+  import shipreq.webapp.base.protocol.binary.v1.BaseData._
   import CreateContentCmd.CodecsV4._
-  import ManualIssueCmd  .CodecsV4._
-  import SavedViewCmd    .CodecsV4._
-  import UpdateConfigCmd .CodecsV2._
+  import ManualIssueCmd.CodecsV4._
+  import SavedViewCmd.CodecsV4._
+  import UpdateConfigCmd.CodecsV2._
   import UpdateContentCmd.CodecsV4._
 
   private object Codecs {
@@ -72,75 +76,86 @@ object ProjectSpaProtocols {
         .withMagicNumbers(0x1DB44559, 0x53562938)
     }
 
-    protected final val responseVersion = Version.fromInts(2, 0) // Bump this when any of following imports change
-    import boopickle.DefaultBasic.unitPickler
-    import shipreq.webapp.base.protocol.binary.v1.BaseData._
-    import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData1._
-    import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData2._
-    import shipreq.webapp.member.project.protocol.binary.v1.PostEvents._
-    import shipreq.webapp.member.project.protocol.binary.v1.Rev7._
-    import shipreq.webapp.member.project.protocol.binary.v2.Rev0._
+    object Requests {
+      // When any of the following change (import or impls), bump wsrrVersion
 
-    implicit val picklerInitAppData: Pickler[InitAppData] =
-      new Pickler[InitAppData] {
-        override def pickle(a: InitAppData)(implicit state: PickleState): Unit = {
-          state.pickle(a.projectData)
-          state.pickle(a.projectMetaData)
+      import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData1._
+      import shipreq.webapp.member.project.protocol.binary.v1.PostEvents._
+
+      implicit val picklerOptionEventOrdLatest: Pickler[Option[EventOrd.Latest]] =
+        optionPickler
+
+      implicit val picklerNonEmptySetEventOrd: Pickler[NonEmptySet[EventOrd]] =
+        pickleNES
+
+      implicit val picklerFieldMandatorinessModReq: Pickler[(CustomFieldId, Mandatory)] =
+        Tuple2Pickler
+
+      implicit val picklerReqTypeImplicationModReq: Pickler[(CustomReqTypeId, Mandatory)] =
+        Tuple2Pickler
+    }
+
+    object Responses {
+      protected val responseVersion = Version.fromInts(2, 0) // Bump this when any of following imports change
+      import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData2._
+      import shipreq.webapp.member.project.protocol.binary.v1.Rev7._
+      import shipreq.webapp.member.project.protocol.binary.v2.Rev0._
+
+      private implicit val picklerInitAppData: Pickler[InitAppData] =
+        new Pickler[InitAppData] {
+          override def pickle(a: InitAppData)(implicit state: PickleState): Unit = {
+            state.pickle(a.projectData)
+            state.pickle(a.projectMetaData)
+          }
+          override def unpickle(implicit state: UnpickleState): InitAppData = {
+            val project         = state.unpickle[Project \/ VerifiedEvent.Seq]
+            val projectMetaData = state.unpickle[ProjectMetaData]
+            InitAppData(project, projectMetaData)
+          }
         }
-        override def unpickle(implicit state: UnpickleState): InitAppData = {
-          val project         = state.unpickle[Project \/ VerifiedEvent.Seq]
-          val projectMetaData = state.unpickle[ProjectMetaData]
-          InitAppData(project, projectMetaData)
-        }
-      }
 
-    implicit val picklerInitAppRes: Pickler[ErrorMsg \/ InitAppData] =
-      pickleDisj
+      private implicit val picklerInitAppRes: Pickler[ErrorMsg \/ InitAppData] =
+        pickleDisj
 
-    implicit val picklerOptionEventOrdLatest: Pickler[Option[EventOrd.Latest]] =
-      optionPickler
+      private implicit val picklerEventResult: Pickler[WsReqRes.EventResult] =
+        pickleDisj
 
-    implicit val picklerNonEmptySetEventOrd: Pickler[NonEmptySet[EventOrd]] =
-      pickleNES
+      // These SafePicklers below are for responses.
+      // We're ditching the magic header because there's not much point; they can trust us.
+      // We're keeping a magic footer just in case.
 
-    implicit val picklerFieldMandatorinessModReq: Pickler[(CustomFieldId, Mandatory)] =
-      Tuple2Pickler
+      implicit val safePicklerUnit: SafePickler[Unit] =
+        unitPickler.asV1(0) // no magic numbers because no data
 
-    implicit val picklerReqTypeImplicationModReq: Pickler[(CustomReqTypeId, Mandatory)] =
-      Tuple2Pickler
+      implicit val safePicklerInitAppRes: SafePickler[ErrorMsg \/ InitAppData] =
+        picklerInitAppRes
+          .asVersion(responseVersion)
+          .withMagicNumberFooter(0x8819303B)
 
-    implicit val picklerEventResult: Pickler[WsReqRes.EventResult] =
-      pickleDisj
+      implicit val safePicklerEventResult: SafePickler[WsReqRes.EventResult] =
+        picklerEventResult
+          .asVersion(responseVersion)
+          .withMagicNumberFooter(0x86DA8677)
 
-    // These SafePicklers below are for responses.
-    // We're ditching the magic header because there's not much point; they can trust us.
-    // We're keeping a magic footer just in case.
+      implicit val safePicklerVerifiedEventSeq: SafePickler[VerifiedEvent.Seq] =
+        picklerVerifiedEventSeq
+          .asVersion(responseVersion)
+          .withMagicNumberFooter(0x85651C09)
+    }
 
-    implicit val safePicklerUnit: SafePickler[Unit] =
-      unitPickler.asV1(0) // no magic numbers because no data
+    object Push {
+      protected val version = Version.fromInts(2, 0) // Bump this when any of following imports change
+      import shipreq.webapp.member.project.protocol.binary.v1.Rev7._
 
-    implicit val safePicklerInitAppRes: SafePickler[ErrorMsg \/ InitAppData] =
-      picklerInitAppRes
-        .asVersion(responseVersion)
-        .withMagicNumberFooter(0x8819303B)
-
-    implicit val safePicklerEventResult: SafePickler[WsReqRes.EventResult] =
-      picklerEventResult
-        .asVersion(responseVersion)
-        .withMagicNumberFooter(0x86DA8677)
-
-    implicit val safePicklerVerifiedEventSeq: SafePickler[VerifiedEvent.Seq] =
-      picklerVerifiedEventSeq
-        .asVersion(responseVersion)
-        .withMagicNumberFooter(0x85651C09)
-
-    val safePicklerVerifiedEventNonEmptySeq: SafePickler[VerifiedEvent.NonEmptySeq] =
-      picklerVerifiedEventNonEmptySeq
-        .asVersion(responseVersion)
-        .withMagicNumberFooter(0x06F60C06)
+      val safePickler: SafePickler[VerifiedEvent.NonEmptySeq] =
+        picklerVerifiedEventNonEmptySeq
+          .asVersion(version)
+          .withMagicNumberFooter(0x06F60C06)
+    }
   }
 
-  import Codecs._
+  import Codecs.Requests._
+  import Codecs.Responses._
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
