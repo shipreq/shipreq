@@ -29,8 +29,7 @@ object ClientSideStorage {
 
   object ReadWrite {
 
-    def apply(userId: UserId.Public, projectId: ProjectId.Public, encKey: ClientSideProjectEncryptionKey): AsyncCallback[ReadOnly] =
-      apply(Context(userId, projectId), encKey)
+    type Provider = (Context, ClientSideProjectEncryptionKey) => AsyncCallback[ReadWrite]
 
     def apply(ctx: Context, encKey: ClientSideProjectEncryptionKey): AsyncCallback[ReadWrite] =
       get(ctx, encKey).getOrElse(AsyncCallback.pure(AlwaysEmpty))

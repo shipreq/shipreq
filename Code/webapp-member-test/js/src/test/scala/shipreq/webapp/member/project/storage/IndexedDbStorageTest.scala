@@ -6,6 +6,7 @@ import shipreq.webapp.member.project.data.{ClientSideProjectEncryptionKey, Proje
 import shipreq.webapp.member.project.event.EventOrd
 import shipreq.webapp.member.project.library.{Cache, CacheJs}
 import shipreq.webapp.member.test.ProjectLibraryTestUtil._
+import shipreq.webapp.member.test.TestClientSideStorage._
 import shipreq.webapp.member.test.WebappTestUtil.ImplicitProjectEqualityDeep._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project.UnsafeTypes.autoEventOrd
@@ -15,7 +16,6 @@ import utest._
 
 object IndexedDbStorageTest extends TestSuite {
   import IndexedDbStorage._
-  import TestData._
 
   private val nextIdbPrefix: AsyncCallback[String] = {
     var prev = 0

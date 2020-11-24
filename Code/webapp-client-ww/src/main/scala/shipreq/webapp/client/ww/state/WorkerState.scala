@@ -1,12 +1,11 @@
 package shipreq.webapp.client.ww.state
 
 import japgolly.scalajs.react.extra.Px
-import japgolly.scalajs.react.{AsyncCallback, Callback}
-import org.scalajs.dom.webworkers.DedicatedWorkerGlobalScope
-import scala.scalajs.js
+import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.util.AsyncRef
+import shipreq.webapp.client.ww.WebWorkerUtil
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.client.ww.graph.GraphViz
 import shipreq.webapp.member.project.data.Project
@@ -15,7 +14,8 @@ import shipreq.webapp.member.project.library.{MutableProjectLibrary, ProjectLibr
 import shipreq.webapp.member.project.storage.ClientSideStorage
 import shipreq.webapp.member.project.text.PlainText
 
-final class WorkerState(logger: LoggerJs) {
+final class WorkerState(logic : WorkerState.Logic,
+                        logger: LoggerJs) {
 
   private val assetManifest  = AsyncRef[AssetManifest]()
   private val graphViz       = AsyncRef[GraphViz]()
@@ -25,11 +25,11 @@ final class WorkerState(logger: LoggerJs) {
   def init(cmd: WebWorkerCmd.Init): AsyncCallback[Unit] = {
     import cmd._
     for {
-      _ <- assetManifest.setIfUnset(am)
-      _ <- AsyncCallback.delay(DedicatedWorkerGlobalScope.self.importScripts(js.Array(am.wwJs)))
-      _ <- graphViz.setIfUnset(GraphViz.load(am))
-      s <- storage.setIfUnsetAsync(ClientSideStorage.ReadWrite(cssCtx, encKey))
-      _ <- storage.get.flatMap(_.getProjectLibraryOrEmpty).flatMapSync(projectLibrary.set).when_(s)
+      firstTime <- assetManifest.setIfUnset(am)
+      _         <- logic.importScripts(am.wwJs).asAsyncCallback.when_(firstTime)
+      _         <- graphViz.setIfUnsetSync(logic.loadGraphViz(am))
+      _         <- storage.setIfUnsetAsync(logic.cssProvider(cssCtx, encKey))
+      _         <- storage.get.flatMap(_.getProjectLibraryOrEmpty).flatMapSync(projectLibrary.set).when_(firstTime)
     } yield ()
   }
 
@@ -43,7 +43,7 @@ final class WorkerState(logger: LoggerJs) {
 
         case result =>
           val createNewInstance: AsyncCallback[Unit] =
-            graphViz.set(GraphViz.newInstance)
+            graphViz.setSync(GraphViz.newInstance)
 
           val next: AsyncCallback[A] =
             if (retries > 0)
@@ -92,4 +92,28 @@ final class WorkerState(logger: LoggerJs) {
   // For tests
   private[state] def pendingPromiseCount(): Int =
     projectLibrary.pendingPromiseCount()
+
+  // For tests
+  private[state] def ordAsInt(): Int =
+    projectLibrary.get.runNow().ordAsInt
+}
+
+object WorkerState {
+
+  trait Logic {
+    val importScriptList: List[String] => Callback
+    val loadGraphViz    : AssetManifest => CallbackTo[GraphViz]
+    val cssProvider     : ClientSideStorage.ReadWrite.Provider
+
+    final def importScripts(urls: String*) =
+      importScriptList(urls.toList)
+  }
+
+  object Logic {
+    object Real extends Logic {
+      override val importScriptList = WebWorkerUtil.importScriptList
+      override val loadGraphViz     = GraphViz.load
+      override val cssProvider      = ClientSideStorage.ReadWrite.apply
+    }
+  }
 }

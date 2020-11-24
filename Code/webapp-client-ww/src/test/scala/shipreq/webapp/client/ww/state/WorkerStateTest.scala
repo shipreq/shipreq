@@ -1,9 +1,12 @@
 package shipreq.webapp.client.ww.state
 
-import japgolly.scalajs.react.AsyncCallback
+import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
+import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.lib.LoggerJs
+import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.member.project.event.EventOrd
 import shipreq.webapp.member.test.ProjectLibraryTestUtil._
+import shipreq.webapp.member.test.TestClientSideStorage
 import shipreq.webapp.member.test.WebappTestUtil.{newProject => _, _}
 import shipreq.webapp.member.test.project.UnsafeTypes.autoSomeEventOrdLatest
 import sourcecode.Line
@@ -21,8 +24,27 @@ object WorkerStateTest extends TestSuite {
       assertEq(called, 1)
   }
 
+  private final class TestLogic extends WorkerState.Logic {
+    private var _graphVizLoads = 0
+    private var _importedScripts = Vector.empty[String]
+
+    val css               = TestClientSideStorage()
+    def graphVizLoads()   = _graphVizLoads
+    def importedScripts() = _importedScripts
+
+    override val importScriptList = ss => Callback { _importedScripts ++= ss }
+    override val loadGraphViz     = _ => CallbackTo { _graphVizLoads += 1; null }
+    override val cssProvider      = TestClientSideStorage.provide(css)
+  }
+
+  private val am = AssetManifest(None)
+
+  // ===================================================================================================================
+
   override def tests = Tests {
-    val s = new WorkerState(LoggerJs.off)
+    val testLogic = new TestLogic
+    val s = new WorkerState(testLogic, LoggerJs.off)
+    import testLogic._
 
     def setProject(ord: Int): Unit =
       s.update(-\/(newProject(ord))).runNow()
@@ -41,6 +63,41 @@ object WorkerStateTest extends TestSuite {
 
     def pendingPromiseCount(): Int =
       s.pendingPromiseCount()
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    "init" - {
+      import TestClientSideStorage._
+
+      val cmd = WebWorkerCmd.Init(am, u1p1, key_u1p1)
+
+      def init(): Unit = {
+        s.init(cmd).runNow()
+        assertEq(graphVizLoads(), 1)
+        assertEq(importedScripts(), Vector1(am.wwJs))
+      }
+
+      "fresh" - {
+        init()
+        assertEq(s.ordAsInt(), 0)
+      }
+
+      "cached" - {
+        css.saveProjectLibrary(newProjectLibrary(3)).runNow()
+        init()
+        assertEq(s.ordAsInt(), 3)
+      }
+
+      "idempotent" - {
+        css.saveProjectLibrary(newProjectLibrary(1)).runNow()
+        init()
+        assertEq(s.ordAsInt(), 1)
+
+        css.saveProjectLibrary(newProjectLibrary(2)).runNow()
+        init()
+        assertEq(s.ordAsInt(), 1)
+      }
+    }
 
     "await" - {
 
