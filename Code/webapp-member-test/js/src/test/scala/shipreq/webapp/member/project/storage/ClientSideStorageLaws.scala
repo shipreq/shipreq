@@ -17,7 +17,7 @@ abstract class ClientSideStorageLaws extends TestSuite {
   protected final implicit val equalProjectLibrary: Equal[ProjectLibrary] =
     Equal.equalBy(l => (l.latest, l.futureEvents))
 
-  protected def createInstance: (Context, ClientSideProjectEncryptionKey) => AsyncCallback[ClientSideStorage.ReadWrite]
+  protected def createInstance: (ClientSideStorage.Context, ClientSideProjectEncryptionKey) => AsyncCallback[ClientSideStorage.ReadWrite]
 
   private final object Internals {
 

@@ -25,7 +25,7 @@ object IndexedDbStorageTest extends TestSuite {
     }
   }
 
-  def newStorage(ctx: Context, key: ClientSideProjectEncryptionKey, plCache: Cache = CacheJs()): AsyncCallback[IndexedDbStorage] =
+  def newStorage(ctx: ClientSideStorage.Context, key: ClientSideProjectEncryptionKey, plCache: Cache = CacheJs()): AsyncCallback[IndexedDbStorage] =
     for {
       enc <- TestEncryption.engine(key.value)
       pre <- nextIdbPrefix

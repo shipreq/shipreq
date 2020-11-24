@@ -119,4 +119,13 @@ object ClientSideStorage {
     def get(ctx: Context, encKey: ClientSideProjectEncryptionKey): Option[AsyncCallback[ReadOnly]] =
       ReadWrite.get(ctx, encKey).map(f => f)
   }
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  final case class Context(userId: UserId.Public, projectId: ProjectId.Public) {
+
+    val namespace: String =
+      s"${userId.value}:${projectId.value}"
+  }
+
 }

@@ -21,7 +21,7 @@ import shipreq.webapp.member.protocol.webstorage.WebStorageCodecs
  *
  */
 final class WebStorage(ws        : AbstractWebStorage,
-                       ctx       : Context,
+                       ctx       : ClientSideStorage.Context,
                        encryption: Encryption) extends ClientSideStorage.ReadWrite {
 
   @inline private implicit def _ws = ws
