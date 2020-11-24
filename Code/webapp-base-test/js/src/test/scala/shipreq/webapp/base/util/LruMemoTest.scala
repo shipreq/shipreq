@@ -17,7 +17,7 @@ object LruMemoTest extends TestSuite {
             calls += 1
             i + 1
           }
-        LruMemo.byReusability(g, 3)
+        LruMemo(g, 3).byReusability
       }
 
       def test(i: Int, expectedCalls: Int)(implicit l: Line): Unit = {

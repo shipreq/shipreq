@@ -1,10 +1,9 @@
 package shipreq.webapp.client.ww
 
-import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.base.util.AsyncRef
+import shipreq.webapp.base.util.{AsyncRef, LruMemo}
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.client.ww.graph.GraphViz
 import shipreq.webapp.member.project.data.Project
@@ -81,20 +80,14 @@ final class WorkerState(logic : WorkerState.Logic,
       _ <- s.saveProjectLibrary(pl)
     } yield ()
 
-  val pxProject: Px[Project] =
-    projectLibrary.pxProject
+  def getProject(ord: Option[EventOrd.Latest]): AsyncCallback[Project] =
+    projectLibrary.projectAt(ord)
 
-  val pxPlainText: Px[PlainText.ForProject.NoCtx] =
-    pxProject.map(PlainText.ForProject.noCtx.apply)
+  private val plainTextMemo: LruMemo[Project, PlainText.ForProject.NoCtx] =
+    LruMemo(PlainText.ForProject.noCtx.apply, 3).by(_.ordAsInt).byUnivEq
 
-  val acProject   = pxProject  .toCallback.asAsyncCallback
-  val acPlainText = pxPlainText.toCallback.asAsyncCallback
-
-  def await(ord: Option[EventOrd.Latest]): AsyncCallback[Unit] =
-    ord match {
-      case Some(o) => projectLibrary.projectAt(o).void
-      case None    => AsyncCallback.unit
-    }
+  def getPlainText(p: Project): AsyncCallback[PlainText.ForProject.NoCtx] =
+    AsyncCallback.pure(plainTextMemo(p))
 
   // For tests
   private[ww] def pendingPromiseCount(): Int =

@@ -13,14 +13,35 @@ final class LruMemo[@specialized(Int) A, B](f     : A => B,
 
 object LruMemo {
 
-  def byUnivEq[A, B](f: A => B, maxSize: Int)(implicit e: UnivEq[A]): LruMemo[A, B] =
-    apply(f, maxSize, e.univEq)
+  def apply[A, B](f: A => B, maxSize: Int): Dsl[A, B] =
+    new Dsl(f, maxSize)
 
-  def byReusability[A, B](f: A => B, maxSize: Int)(implicit r: Reusability[A]): LruMemo[A, B] =
-    apply(f, maxSize, r.test)
+  final class Dsl[@specialized(Int) A, B](f: A => B, maxSize: Int) {
 
-  private def apply[A, B](f: A => B, maxSize: Int, isSame: (A, A) => Boolean): LruMemo[A, B] =
-    new LruMemo(f, isSame, newState(maxSize))
+    def apply(isSame: (A, A) => Boolean): LruMemo[A, B] =
+      new LruMemo(f, isSame, newState(maxSize))
+
+    def by[K](k: A => K): DslBy[A, B, K] =
+      new DslBy(f, k, maxSize)
+
+    def byUnivEq(implicit e: UnivEq[A]): LruMemo[A, B] =
+      apply(e.univEq)
+
+    def byReusability(implicit r: Reusability[A]): LruMemo[A, B] =
+      apply(r.test)
+  }
+
+  final class DslBy[@specialized(Int) A, B, @specialized(Int) K](f: A => B, k: A => K, maxSize: Int) {
+
+    def apply(isSame: (K, K) => Boolean): LruMemo[A, B] =
+      new LruMemo(f, (x, y) => isSame(k(x), k(y)), newState(maxSize))
+
+    def byUnivEq(implicit e: UnivEq[K]): LruMemo[A, B] =
+      apply(e.univEq)
+
+    def byReusability(implicit r: Reusability[K]): LruMemo[A, B] =
+      apply(r.test)
+  }
 
   // ===================================================================================================================
 

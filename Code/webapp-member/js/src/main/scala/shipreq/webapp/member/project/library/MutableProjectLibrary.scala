@@ -75,6 +75,12 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
   private var _ordPromises: List[OrdPromise] =
     Nil
 
+  def projectAt(ord: Option[EventOrd.Latest]): AsyncCallback[Project] =
+    ord match {
+      case Some(o) => projectAt(o.asEventOrd)
+      case None    => AsyncCallback.pure(Project.empty)
+    }
+
   def projectAt(ord: EventOrd): AsyncCallback[Project] =
     AsyncCallback.byName {
       if (ord <= _state.ord)

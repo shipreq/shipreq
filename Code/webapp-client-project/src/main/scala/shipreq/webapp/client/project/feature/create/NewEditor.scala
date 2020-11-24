@@ -129,7 +129,7 @@ object NewEditor {
       a.map(_.value)
 
     def newPropsMemo[I, P](f: I => P)(implicit r: Reusability[I]): I => P =
-      LruMemo.byReusability(f, 4)
+      LruMemo(f, 4).byReusability
 
     // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████
     object EditReqCodes {

@@ -57,7 +57,7 @@ object WorkerStateTest extends TestSuite {
     def await(ord: Option[EventOrd.Latest]): Promise = {
       val p = new Promise
       // Have to run it because the creation has been flattened with the promise itself
-      (s.await(ord) >> AsyncCallback.delay(p.called += 1)).toCallback.runNow()
+      (s.getProject(ord) >> AsyncCallback.delay(p.called += 1)).toCallback.runNow()
       p
     }
 

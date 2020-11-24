@@ -286,7 +286,7 @@ object NewEditor {
     }
 
     def newPropsMemo[I, P](f: I => P)(implicit r: Reusability[I]): I => P =
-      LruMemo.byReusability(f, 4)
+      LruMemo(f, 4).byReusability
 
     def setPotentialValueStd[A](pvaCBO: CallbackOption[PotentialValueAcceptor[A]])
                                (p: PotentialValue,

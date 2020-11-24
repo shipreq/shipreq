@@ -23,8 +23,7 @@ final class Service[Client](server: Service.Server[Client], state: WorkerState) 
       case GraphUseCaseFlow(ord, id, ctx) =>
         state.withGraphViz { implicit g =>
           for {
-            _ <- state.await(ord)
-            p <- state.acProject
+            p <- state.getProject(ord)
             x <- new UseCaseFlowGraph(id, p, ctx).svg
           } yield x
         }
@@ -32,8 +31,7 @@ final class Service[Client](server: Service.Server[Client], state: WorkerState) 
       case GraphReqImplications(ord, focus, filterDead, colours) =>
         state.withGraphViz { implicit g =>
           for {
-            _ <- state.await(ord)
-            p <- state.acProject
+            p <- state.getProject(ord)
             x <- new ReqImpGraph(focus, filterDead, p, colours).svg
           } yield x
         }
@@ -41,9 +39,8 @@ final class Service[Client](server: Service.Server[Client], state: WorkerState) 
       case GraphAllImplications(ord, filterDead, scope, config) =>
         state.withGraphViz { implicit g =>
           for {
-            _  <- state.await(ord)
-            p  <- state.acProject
-            pt <- state.acPlainText
+            p  <- state.getProject(ord)
+            pt <- state.getPlainText(p)
             x  <- new ProjectImpGraph(p, pt, filterDead, scope, config).svg
           } yield x
         }
