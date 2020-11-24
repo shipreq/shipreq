@@ -1,11 +1,10 @@
-package shipreq.webapp.client.ww.state
+package shipreq.webapp.client.ww
 
 import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.util.AsyncRef
-import shipreq.webapp.client.ww.WebWorkerUtil
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.client.ww.graph.GraphViz
 import shipreq.webapp.member.project.data.Project
@@ -98,11 +97,11 @@ final class WorkerState(logic : WorkerState.Logic,
     }
 
   // For tests
-  private[state] def pendingPromiseCount(): Int =
+  private[ww] def pendingPromiseCount(): Int =
     projectLibrary.pendingPromiseCount()
 
   // For tests
-  private[state] def ordAsInt(): Int =
+  private[ww] def ordAsInt(): Int =
     projectLibrary.get.runNow().ordAsInt
 }
 

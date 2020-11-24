@@ -4,7 +4,6 @@ import japgolly.scalajs.react.AsyncCallback
 import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.client.ww.graph.GraphViz.DOT
 import shipreq.webapp.client.ww.graph.{ProjectImpGraph, ReqImpGraph, UseCaseFlowGraph}
-import shipreq.webapp.client.ww.state.WorkerState
 import shipreq.webapp.member.protocol.webworker._
 
 final class Service[Client](server: Service.Server[Client], state: WorkerState) extends ManagedWebWorker.Server.Service[Client, WebWorkerCmd] {

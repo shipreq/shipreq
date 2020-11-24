@@ -1,4 +1,4 @@
-package shipreq.webapp.client.ww.state
+package shipreq.webapp.client.ww
 
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import shipreq.webapp.base.config.AssetManifest
