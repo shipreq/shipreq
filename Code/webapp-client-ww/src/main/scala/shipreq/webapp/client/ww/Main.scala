@@ -16,7 +16,7 @@ object Main {
   val protocol = WebWorkerProtocol.default
 
   def main(args: Array[String]): Unit = {
-    val logger       = LoggerJs.devOnly.prefixedWith("[WW] ")
+    val logger       = LoggerJs.devOnly
     val onError      = OnError.logToConsole
     val worker       = AbstractWebWorker.Server()
     val state        = new WorkerState()

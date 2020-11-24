@@ -22,6 +22,14 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
   val pxProject: Px[Project] =
     _pxProject
 
+  def set(p: PL): Callback =
+    Callback {
+      _state = p
+    }
+
+  def setOption(o: Option[PL]): Callback =
+    Callback.traverseOption(o)(set)
+
   def update(ves: VerifiedEvent.Seq): Callback =
     Callback.unless(ves.isEmpty) {
       updateBy(_.update(ves))
@@ -29,6 +37,9 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
 
   def update(p: Project): Callback =
     updateBy(_.update(p))
+
+  def update(u: Project \/ VerifiedEvent.Seq): Callback =
+    u.fold(update, update)
 
   private def updateBy(f: PL => Option[ProjectLibrary.UpdateFor[PL#This]]): Callback =
     get.flatMap { s1 =>

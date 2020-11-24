@@ -48,7 +48,7 @@ trait ProjectLibrary extends EventOrd.CmpOps {
   @inline final def ord =
     latest.ord
 
-  final override protected def ordAsInt =
+  final override def ordAsInt =
     latest.ordAsInt
 
   final def descState: String =

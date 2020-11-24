@@ -15,8 +15,8 @@ final class Service[Client](server: Service.Server[Client], state: WorkerState) 
   override def apply[A](client: Client, request: WebWorkerCmd[A]): AsyncCallback[A] =
     request match {
 
-      case Init(p, am) =>
-        (state.update(p) >> state.setAssetManifest(am)).asAsyncCallback.ret(NoResult)
+      case i: Init =>
+        state.init(i).ret(NoResult)
 
       case UpdateProject(ves) =>
         state.update(ves).asAsyncCallback.ret(NoResult)

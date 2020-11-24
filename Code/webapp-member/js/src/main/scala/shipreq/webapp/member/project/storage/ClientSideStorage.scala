@@ -48,7 +48,10 @@ object ClientSideStorage {
         )
       }
 
-    object AlwaysEmpty extends ReadWrite {
+    def alwaysEmpty: ReadWrite =
+      AlwaysEmpty
+
+    private object AlwaysEmpty extends ReadWrite {
       private val none = AsyncCallback.pure(Option.empty[Nothing])
       override val isAvailable                            = CallbackTo.pure(false)
       override def getProjectLibraryOrd                   = none

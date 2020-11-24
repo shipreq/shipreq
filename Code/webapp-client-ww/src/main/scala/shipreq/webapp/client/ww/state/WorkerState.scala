@@ -3,21 +3,30 @@ package shipreq.webapp.client.ww.state
 import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{AsyncCallback, Callback}
 import shipreq.webapp.base.config.AssetManifest
-import shipreq.webapp.base.util.AsyncVar
+import shipreq.webapp.base.util.AsyncRef
+import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.client.ww.graph.GraphViz
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.member.project.library.MutableProjectLibrary
+import shipreq.webapp.member.project.storage.ClientSideStorage
 import shipreq.webapp.member.project.text.PlainText
 
 final class WorkerState() {
 
-  private val assetManifest  = AsyncVar[AssetManifest]()
-  private val graphViz       = AsyncVar[GraphViz]()
+  private val assetManifest  = AsyncRef[AssetManifest]()
+  private val graphViz       = AsyncRef[GraphViz]()
+  private val storage        = AsyncRef[ClientSideStorage.ReadWrite]()
   private val projectLibrary = MutableProjectLibrary.empty()
 
-  def setAssetManifest(am: AssetManifest): Callback =
-    assetManifest.set(am) >> graphViz.set(GraphViz.load(am))
+  def init(cmd: WebWorkerCmd.Init): AsyncCallback[Unit] = {
+    for {
+      _ <- assetManifest.setIfUnset(cmd.am)
+      _ <- graphViz.setIfUnset(GraphViz.load(cmd.am))
+      s <- storage.setIfUnsetAsync(ClientSideStorage.ReadWrite(cmd.cssCtx, cmd.encKey))
+      _ <- storage.get.flatMap(_.getProjectLibraryOrEmpty).flatMapSync(projectLibrary.set).when_(s)
+    } yield ()
+  }
 
   def withGraphViz[A](f: GraphViz => AsyncCallback[A], retries: Int = 4): AsyncCallback[A] = {
     val main = graphViz.get.flatMap(f).attempt.timeoutMs(2000)
@@ -29,7 +38,7 @@ final class WorkerState() {
 
         case result =>
           val createNewInstance: AsyncCallback[Unit] =
-            graphViz.set(GraphViz.newInstance).asAsyncCallback
+            graphViz.set(GraphViz.newInstance)
 
           val next: AsyncCallback[A] =
             if (retries > 0)
@@ -46,11 +55,12 @@ final class WorkerState() {
     go(retries)
   }
 
-  def update(p: Project): Callback =
-    projectLibrary.update(p)
-
-  def update(ves: VerifiedEvent.Seq): Callback =
-    projectLibrary.update(ves)
+  def update(u: Project \/ VerifiedEvent.Seq): Callback =
+    for {
+      _  <- projectLibrary.update(u)
+      pl <- projectLibrary.get
+      _  <- storage.get.flatMap(_.saveProjectLibrary(pl)).toCallback
+    } yield ()
 
   val pxProject: Px[Project] =
     projectLibrary.pxProject

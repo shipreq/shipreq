@@ -13,7 +13,7 @@ object ProjectLibraryTestUtil {
 
   private val now = Instant.now().minusSeconds(999999)
 
-  private val newVerifiedEvent: Int => VerifiedEvent =
+  val newVerifiedEvent: Int => VerifiedEvent =
     Memo.int { i =>
       VerifiedEvent(
         EventOrd(i),
@@ -21,6 +21,9 @@ object ProjectLibraryTestUtil {
         now.plusSeconds(i),
       )
     }
+
+  def newVerifiedEvents(ords: Int*): VerifiedEvent.Seq =
+    VerifiedEvent.Seq.empty ++ ords.map(newVerifiedEvent)
 
   def newVerifiedEvents(range: Range): VerifiedEvent.Seq =
     VerifiedEvent.Seq.empty ++ range.iterator.map(newVerifiedEvent)

@@ -1,10 +1,9 @@
 package shipreq.webapp.client.ww.state
 
 import japgolly.scalajs.react.AsyncCallback
-import java.time.Instant
-import shipreq.webapp.member.project.data.Project
-import shipreq.webapp.member.project.event.{Event, EventOrd, VerifiedEvent}
-import shipreq.webapp.member.test.WebappTestUtil._
+import shipreq.webapp.member.project.event.EventOrd
+import shipreq.webapp.member.test.ProjectLibraryTestUtil._
+import shipreq.webapp.member.test.WebappTestUtil.{newProject => _, _}
 import shipreq.webapp.member.test.project.UnsafeTypes.autoSomeEventOrdLatest
 import sourcecode.Line
 import utest._
@@ -21,18 +20,15 @@ object WorkerStateTest extends TestSuite {
       assertEq(called, 1)
   }
 
-  private val now =
-    Instant.now()
-
   override def tests = Tests {
     val s = new WorkerState()
 
     def setProject(ord: Int): Unit =
-      s.update(setOrd(Project.empty, EventOrd(ord))).runNow()
+      s.update(-\/(newProject(ord))).runNow()
 
     def updateProject(ords: Int*): Unit = {
-      val ves = VerifiedEvent.Seq.empty ++ ords.map(i => VerifiedEvent(EventOrd(i), Event.ProjectNameSet(i.toString), now))
-      s.update(VerifiedEvent.NonEmptySeq.force(ves)).runNow()
+      val ves = newVerifiedEvents(ords: _*)
+      s.update(\/-(ves)).runNow()
     }
 
     def await(ord: Option[EventOrd.Latest]): Promise = {

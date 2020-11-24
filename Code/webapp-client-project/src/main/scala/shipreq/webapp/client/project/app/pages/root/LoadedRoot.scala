@@ -590,38 +590,28 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
       ).render
     }
 
-    def onMount: Callback = {
-      val sendProjectToWebWorker: Callback =
-        for {
-          p <- pxProject.toCallback
-          _ <- webWorkerClient.send(WebWorkerCmd.Init(p, initPageData.assetManifest)).toCallback
-        } yield ()
+    def onMount: Callback =
+      Callback {
 
-      val installHooks: Callback =
-        Callback {
-
-          window.onbeforeunload = event => {
-            val u = pxUnsavedChanges.value()
-            if (u.nonEmpty) {
-              event.preventDefault()
-              event.returnValue = ""
-              ""
-            } else
-              ()
-          }
-
-          window.onunload = _ => {
-            webWorkerClient.close.runNow()
-          }
+        window.onbeforeunload = event => {
+          val u = pxUnsavedChanges.value()
+          if (u.nonEmpty) {
+            event.preventDefault()
+            event.returnValue = ""
+            ""
+          } else
+            ()
         }
 
-      sendProjectToWebWorker >> installHooks
-    }
+        window.onunload = _ => {
+          webWorkerClient.close.runNow()
+        }
+      }
 
     def onProjectChange(u: ProjectLibrary.Update): Callback = {
       val updateWebWorker: Callback =
         Callback.traverseOption(VerifiedEvent.NonEmptySeq.maybe(u.newlyAppliedEvents))(ves =>
-          webWorkerClient.send(WebWorkerCmd.UpdateProject(ves)).toCallback)
+          webWorkerClient.send(WebWorkerCmd.UpdateProject(\/-(ves))).toCallback)
 
       updateWebWorker >> $.forceUpdate
     }
