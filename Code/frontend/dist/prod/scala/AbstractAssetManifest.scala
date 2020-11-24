@@ -128,4 +128,6 @@ abstract class AbstractAssetManifest[+A] {
   final val vizJs = modify("/s/9a73b4b3e629569bd6402c2bbbb4a178.js")
 
   final val vizWasm = modify("/s/c77e522115f8de011debe84fc7946e52.wasm")
+
+  final val wwJs = modify("/s/9a26448d33b224cbee77e3e085cc1136.js")
 }

@@ -1,5 +1,6 @@
 package shipreq.webapp.member.project.protocol.binary.v2
 
+import shipreq.webapp.base.protocol.binary.v1.BaseData.pickleDisj
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
 
@@ -37,4 +38,6 @@ object Rev0 {
       }
     }
 
+  implicit lazy val picklerProjectOrEvents: Pickler[Project \/ VerifiedEvent.Seq] =
+    pickleDisj
 }

@@ -18,7 +18,7 @@ import shipreq.webapp.client.project.app.pages.root.ConnectionStatus
 import shipreq.webapp.client.project.app.state.Global.State
 import shipreq.webapp.member.project.data.{Project, ProjectMetaData}
 import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
-import shipreq.webapp.member.project.library.{CacheJs, NewEvents, ProjectLibrary}
+import shipreq.webapp.member.project.library.{NewEvents, ProjectLibrary}
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WebSocket.Push
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{InitAppData, WsReqRes}
 import shipreq.webapp.member.project.util.DataReusability._
@@ -26,6 +26,7 @@ import shipreq.webapp.member.ui.ReauthenticationModal
 
 abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
                       onInitFailure   : ErrorMsg => Callback,
+                      initialState    : State,
                       final val logger: LoggerJs) extends Broadcaster[ProjectLibrary.Update] {
 
   val localStorage: AbstractWebStorage
@@ -35,9 +36,12 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
   protected def unsafeNow() = Instant.now()
 
   private var _state: State =
-    State.Loading(VerifiedEvent.Seq.empty)
+    initialState
 
-  final protected def unsafeState = _state
+  private val state =
+    CallbackTo(_state)
+
+  final protected def unsafeState() = _state
 
   final protected def unsafeSetState(s: State): Unit = {
     _state = s
@@ -45,7 +49,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
   }
 
   final val cbProjectMetaData: CallbackTo[ProjectMetaData] =
-    CallbackTo(unsafeState match {
+    CallbackTo(unsafeState() match {
       case s: State.Active  => s.projectLibrary.latestMetaData
       case _: State.Loading => null // Safe because I know I don't access this before initial load
     })
@@ -54,7 +58,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
     Px.callback(cbProjectMetaData).withReuse.autoRefresh
 
   final private val _pxProject: Px.ThunkM[Project] = {
-    def f() = unsafeState match {
+    def f() = unsafeState() match {
       case s: State.Active  => s.projectLibrary.latest
       case _: State.Loading => Project.empty
     }
@@ -68,7 +72,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
     pxProject.value()
 
   def projectMetadata(id: ProjectId.Public): CallbackTo[Metadata.Project] =
-    CallbackTo(unsafeState match {
+    CallbackTo(unsafeState() match {
       case s: State.Active =>
         Metadata.Project(
           id           = id,
@@ -100,7 +104,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
       }
 
     val action: Callback =
-      unsafeState match {
+      unsafeState() match {
         case _: State.Loading =>
           s match {
             case Authorised(ReadyState.Open) =>
@@ -152,14 +156,16 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
   final private def load: Callback =
     for {
       _  <- logger.pure(l => l.info("WebSocket opened. Requesting InitApp...") >> l.time("initApp"))
-      a1 <- wsClient.send(WsReqRes.InitApp)(())
+      s1 <- state
+      a1 <- wsClient.send(WsReqRes.InitApp)(s1.ord)
       a2  = a1 <* logger.async(_.timeEnd("initApp"))
       _  <- a2.completeWith {
 
               case Success(\/-(i)) => Callback {
-                unsafeState match {
-                  case State.Loading(es) =>
-                    val s = ProjectLibrary.WithMetaData.init(i.project, i.projectMetaData, CacheJs()).addEvents(es)
+                unsafeState() match {
+                  case State.Loading(pl1) =>
+                    val pl2 = pl1.updated(i.projectData)
+                    val s = ProjectLibrary.WithMetaData(pl2, i.projectMetaData)
                     unsafeSetState(State.Active(s, None))
                     onFirstLoad(this, i).runNow()
                   case _: State.Active =>
@@ -189,7 +195,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
   final def addEvents(recvEvents: VerifiedEvent.Seq): CallbackTo[NewEvents] =
     CallbackTo[NewEvents] {
       logger(_.debug("Adding events: " + recvEvents))
-      unsafeState match {
+      unsafeState() match {
 
         case s1: State.Active =>
           s1.projectLibrary.update(recvEvents) match {
@@ -220,8 +226,8 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
               NewEvents(recvEvents, s1.projectLibrary.latest)
           }
 
-        case State.Loading(es) =>
-          unsafeSetState(State.Loading(es ++ recvEvents))
+        case State.Loading(pl) =>
+          unsafeSetState(State.Loading(pl.addEvents(recvEvents)))
           NewEvents.empty
       }
     }
@@ -238,7 +244,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
 
   def requestSyncIfStaleFor(tolerance: Duration): Callback = {
     val missingEvents = CallbackTo[Option[NonEmptySet[EventOrd]]] {
-      unsafeState match {
+      unsafeState() match {
         case s: State.Active =>
           for {
             staleSince  <- s.staleSince
@@ -295,11 +301,14 @@ object Global {
             onFirstLoad  : (Global, InitAppData) => Callback,
             onInitFailure: ErrorMsg => Callback,
             localStorage : AbstractWebStorage,
+            initialData  : ProjectLibrary,
             logger       : LoggerJs): Global = {
 
     val _localStorage = localStorage
 
-    new Global(onFirstLoad, onInitFailure, logger) {
+    val initialState = State.Loading(initialData)
+
+    new Global(onFirstLoad, onInitFailure, initialState, logger) {
 
       override val localStorage = _localStorage
 
@@ -319,10 +328,20 @@ object Global {
     }
   }
 
-  sealed trait State
+  sealed trait State {
+    def ord: Option[EventOrd.Latest]
+  }
+
   object State {
-    final case class Loading(events: VerifiedEvent.Seq) extends State
-    final case class Active(projectLibrary: ProjectLibrary.WithMetaData, staleSince: Option[Instant]) extends State
+
+    /** Waiting to be initialised by the web socket. */
+    final case class Loading(projectLibrary: ProjectLibrary) extends State {
+      override def ord = projectLibrary.ord
+    }
+
+    final case class Active(projectLibrary: ProjectLibrary.WithMetaData, staleSince: Option[Instant]) extends State {
+      override def ord = projectLibrary.ord
+    }
   }
 
   implicit def reusability: Reusability[Global] = Reusability.always

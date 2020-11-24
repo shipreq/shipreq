@@ -23,11 +23,14 @@ object AbstractWebStorage {
 
   // Keep this as a def. It might be undefined at first, then later user grants access and it becomes available.
   // Is that a valid scenario? I don't know but may as well support it if possible.
-  def local(): Option[AbstractWebStorage] = {
-    val available = org.scalajs.dom.window.localStorage.asInstanceOf[js.UndefOr[StorageJs]]
-    val option = available.toOption.flatMap(Option(_))
-    option.map(ls => localStorageInstance.getOrSet(new Real(ls)))
-  }
+  def local(): Option[AbstractWebStorage] =
+    try {
+      val available = js.Dynamic.global.localStorage.asInstanceOf[js.UndefOr[StorageJs]]
+      val option = available.toOption.flatMap(Option(_))
+      option.map(ls => localStorageInstance.getOrSet(new Real(ls)))
+    } catch {
+      case _: Throwable => None
+    }
 
   private val localStorageInstance = SetOnceVar[Real]
 

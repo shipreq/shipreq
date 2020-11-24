@@ -7,17 +7,17 @@ import shipreq.webapp.member.project.data.ClientSideProjectEncryptionKey
 import shipreq.webapp.member.project.event.EventOrd
 import shipreq.webapp.member.project.library.{CacheJs, ProjectLibrary}
 import shipreq.webapp.member.test.ProjectLibraryTestUtil._
+import shipreq.webapp.member.test.TestClientSideStorage._
 import shipreq.webapp.member.test.WebappTestUtil.ImplicitProjectEqualityDeep._
 import shipreq.webapp.member.test.WebappTestUtil._
 import utest._
 
 abstract class ClientSideStorageLaws extends TestSuite {
-  import TestData._
 
   protected final implicit val equalProjectLibrary: Equal[ProjectLibrary] =
     Equal.equalBy(l => (l.latest, l.futureEvents))
 
-  protected def createInstance: (Context, ClientSideProjectEncryptionKey) => AsyncCallback[ClientSideStorage.ReadWrite]
+  protected def createInstance: (ClientSideStorage.Context, ClientSideProjectEncryptionKey) => AsyncCallback[ClientSideStorage.ReadWrite]
 
   private final object Internals {
 

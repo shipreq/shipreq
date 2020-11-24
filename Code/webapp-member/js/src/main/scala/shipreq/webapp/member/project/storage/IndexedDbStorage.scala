@@ -63,12 +63,12 @@ final class IndexedDbStorage(db            : IndexedDb.Database,
 object IndexedDbStorage {
 
   def apply(idb         : IndexedDb,
-            ctx         : Context,
+            ctx         : ClientSideStorage.Context,
             encryption  : Encryption): AsyncCallback[IndexedDbStorage] =
     nonStandard(idb, ctx, encryption)
 
   private[storage] def nonStandard(idb         : IndexedDb,
-                                   ctx         : Context,
+                                   ctx         : ClientSideStorage.Context,
                                    encryption  : Encryption,
                                    dbNamePrefix: String = "",
                                    plCache     : Cache = CacheJs(),
@@ -116,7 +116,7 @@ object IndexedDbStorage {
 
   // ===================================================================================================================
 
-  private[IndexedDbStorage] final class Schema(ctx: Context, encryption: Encryption, dbNamePrefix: String) {
+  private[IndexedDbStorage] final class Schema(ctx: ClientSideStorage.Context, encryption: Encryption, dbNamePrefix: String) {
     import SafePickler.ConstructionHelperImplicits._
 
     val dbName = IndexedDb.DatabaseName(dbNamePrefix + ctx.namespace)

@@ -28,6 +28,9 @@ object VerifiedEvent {
 
     def one(e: VerifiedEvent): Seq =
       empty + e
+
+    def describe(s: Seq): String =
+      "[" + VerifiedEvent.NonEmptySeq.maybe(s).fold("")(_.describeEvents) + "]"
   }
 
   final case class NonEmptySeq(head: VerifiedEvent, tail: Seq) {

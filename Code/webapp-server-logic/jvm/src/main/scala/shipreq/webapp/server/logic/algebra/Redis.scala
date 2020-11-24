@@ -177,6 +177,9 @@ object Redis extends StrictLogging {
         case None    => fUnit
       }
 
+    /**
+     * @return Whether the write was accepted (stale data is rejected), or there was nothing to write.
+     */
     final def writeSnapshot(id         : ProjectId,
                             project    : Project,
                             publishOnly: VerifiedEvent.Seq): F[Boolean] =

@@ -5,12 +5,18 @@
 * Upgrade sbt to 1.4.4 in docker build env
 * upgrade graal & docker images
 
+* WW should ask clients to keep it sync, just like SPA does to svr
+
+* add test ProjectSpaProtocolsTest:InitApp:resp:success
+
 * DB tables:
   * new table: user_group
   * new table: project_group
   * new table: inv
   * new table: invpage
   * new table: draft
+
+* recreate RedisProtocolTest at the end of topic/v3.0
 
 ========================================================================================================================
 ### Problems

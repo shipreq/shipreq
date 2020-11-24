@@ -489,8 +489,9 @@ object ProjectSpaLogic extends StrictLogging {
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-      private def onInitApp: MsgFn[Unit, ErrorMsg \/ InitAppData] = in => {
-        val pid = in.static.projectId
+      private def onInitApp: MsgFn[Option[EventOrd.Latest], ErrorMsg \/ InitAppData] = in => {
+        val pid     = in.static.projectId
+        val userOrd = in.input
 
         type Result = ErrorMsg \/ InitAppData
 
@@ -499,9 +500,22 @@ object ProjectSpaLogic extends StrictLogging {
         def step[A](name: String)(f: F[A]): F[A] =
           trace.newSpan(name)(_ => metrics.projectSpaWebSocketStep("load", name)(f))
 
+        def projectData(p: Project): Project \/ VerifiedEvent.Seq = {
+          // Now that:
+          //   1) projects are cached on the client-side and we only send updates back
+          //   2) projects contain all their history
+          // the only reason to send a Project instead of events is to save users time to apply all the events and
+          // increase the startup time. The size of events is always going to be less than the size of the project.
+          val eventsBeingSent = p.ordAsInt - userOrd.fold(0)(_.value)
+          if (eventsBeingSent < 1000)
+            \/-(p.history.events.takeRight(eventsBeingSent))
+          else
+            -\/(p)
+        }
+
         def ignoreCache(c: Redis.ProjectCache): F[MsgError \/ Result] = {
 
-          def readDb(p: Project): F[MsgError \/ Result] =
+          def readDb(p: Project): F[MsgError \/ (ErrorMsg \/ (Project, InitAppData))] =
             step("readDb")(
               for {
                 (mdo, read) <- runDB(
@@ -515,7 +529,7 @@ object ProjectSpaLogic extends StrictLogging {
                 result match {
                   case \/-(buildResult) =>
                     mdo match {
-                      case Some(md) => \/-(buildResult.map(InitAppData(_, md)))
+                      case Some(md) => \/-(buildResult.map(p => p -> InitAppData(projectData(p), md)))
                       case None     => \/-(projectNotFound)
                     }
                   case -\/(e) =>
@@ -524,29 +538,29 @@ object ProjectSpaLogic extends StrictLogging {
 
             )
 
-          def writeRedis(i: InitAppData): F[Boolean] =
+          def writeRedis(p: Project): F[Boolean] =
             step("writeRedis")(
               // Maybe write events instead of snapshot here...
               // But really it's going to be such low % that writing events in (TLA+) Load would be worth the logic.
               // The snapshot/event writing decision is much more relevant in (TLA+) Update.
-              redis.writeSnapshot(pid, i.project, VerifiedEvent.Seq.empty)
+              redis.writeSnapshot(pid, p, VerifiedEvent.Seq.empty)
             )
 
           for {
             cache  <- c.buildNonEmpty(pid)
             result <- readDb(cache getOrElse Project.empty)
             _      <- result match {
-                        case \/-(\/-(d)) => writeRedis(d)
-                        case _           => fUnit
+                        case \/-(\/-((p, _))) => writeRedis(p)
+                        case _                => fUnit
                       }
-          } yield result
-        }
+          } yield result.map(_.map(_._2))
+        } // ignoreCache
 
         def useCache(c: Redis.ProjectCache, md: ProjectMetaData): F[\/-[Result]] =
           step("useCache") {
             for {
               r <- c.build(pid)
-            } yield \/-(r.map(InitAppData(_, md)))
+            } yield \/-(r.map(p => InitAppData(projectData(p), md)))
           }
 
         for {

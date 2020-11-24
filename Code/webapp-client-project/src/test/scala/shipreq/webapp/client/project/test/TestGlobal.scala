@@ -27,11 +27,16 @@ import shipreq.webapp.member.test._
 import shipreq.webapp.member.ui.BaseStyles
 import shipreq.webapp.server.logic.event._
 
-final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData) extends Global((_, _) => Callback.empty, _ => Callback.empty, LoggerJs.off) {
+final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData)
+  extends Global(
+    (_, _) => Callback.empty,
+    _ => Callback.empty,
+    Global.State.Loading(initialProjectLibrary.withoutMetaData),
+    LoggerJs.off) {
 
-  override def toString = unsafeState match {
+  override def toString = unsafeState() match {
     case Global.State.Active(a, b) => s"TestGlobal(Active($a, $b))"
-    case Global.State.Loading(es)  => s"TestGlobal(Loading(${es.map(_.ord.value).mkString(",")}))"
+    case Global.State.Loading(pl)  => s"TestGlobal(Loading($pl))"
   }
 
   override val localStorage: AbstractWebStorage.InMemory =
@@ -137,7 +142,7 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData) exten
 
   val nextEventOrd: CallbackTo[EventOrd] =
     CallbackTo {
-      val s = unsafeState.asInstanceOf[Global.State.Active].projectLibrary
+      val s = unsafeState().asInstanceOf[Global.State.Active].projectLibrary
       // assert(s.futureEvents.isEmpty, s"TestGlobal.nextEventOrd: s.futureEvents = ${s.futureEvents.map(_.ord.value)}")
       s.latest.history.nextOrd
     }

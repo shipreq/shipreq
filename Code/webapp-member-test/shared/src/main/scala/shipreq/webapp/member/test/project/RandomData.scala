@@ -2012,7 +2012,7 @@ object RandomData {
 
     def projectSpaInitAppData: Gen[ProjectSpaProtocols.InitAppData] =
       for {
-        a <- projectNonsenseHistory
+        a <- projectNonsenseHistory \/ events.verifiedEventSeq(0 to 4)
         b <- projectMetaData
       } yield ProjectSpaProtocols.InitAppData(a, b)
 

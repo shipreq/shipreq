@@ -4,10 +4,12 @@ import boopickle.ConstPickler
 import boopickle.DefaultBasic._
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data.{ProjectId, UserId}
 import shipreq.webapp.base.protocol.Version
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
 import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
+import shipreq.webapp.member.project.storage.ClientSideStorage
 import shipreq.webapp.member.project.text.ProjectText
 
 // Another idea could be to maintain a separate ClientData instance in the WW thread and feed it all the same updates
@@ -20,9 +22,11 @@ object WebWorkerCmd {
   // Using instead of Unit so that we can define an implicit Pickler here and have it be universally in scope
   case object NoResult
 
-  final case class Init(project: Project, am: AssetManifest) extends WebWorkerCmd[NoResult.type]
+  final case class Init(am    : AssetManifest,
+                        cssCtx: ClientSideStorage.Context,
+                        encKey: ClientSideProjectEncryptionKey) extends WebWorkerCmd[NoResult.type]
 
-  final case class UpdateProject(events: VerifiedEvent.NonEmptySeq) extends WebWorkerCmd[NoResult.type]
+  final case class UpdateProject(data: Project \/ VerifiedEvent.Seq) extends WebWorkerCmd[NoResult.type]
 
   type Ord = Option[EventOrd.Latest]
 
@@ -50,6 +54,7 @@ object WebWorkerCmd {
   import shipreq.webapp.member.project.protocol.binary.v1.BaseMemberData2._
   import shipreq.webapp.member.project.protocol.binary.v1.Rev1.SavedViewPicklers._
   import shipreq.webapp.member.project.protocol.binary.v1.Rev7._
+  import shipreq.webapp.member.project.protocol.binary.v1.Rev8._
   import shipreq.webapp.member.project.protocol.binary.v2.Rev0._
 
   implicit val picklerSvg: Pickler[Svg] =
@@ -64,21 +69,36 @@ object WebWorkerCmd {
       _.fold(0)(_.value))
 
   implicit val picklerUpdateProject: Pickler[UpdateProject] =
-    transformPickler(UpdateProject.apply)(_.events)
+    transformPickler(UpdateProject.apply)(_.data)
 
   implicit val picklerErrorMsgOrSvg: Pickler[ErrorMsg \/ Svg] =
     pickleDisj
 
+  private implicit val picklerCssCtx: Pickler[ClientSideStorage.Context] =
+    new Pickler[ClientSideStorage.Context] {
+      override def pickle(a: ClientSideStorage.Context)(implicit state: PickleState): Unit = {
+        state.pickle(a.userId)
+        state.pickle(a.projectId)
+      }
+      override def unpickle(implicit state: UnpickleState): ClientSideStorage.Context = {
+        val uid = state.unpickle[UserId.Public]
+        val pid = state.unpickle[ProjectId.Public]
+        ClientSideStorage.Context(uid, pid)
+      }
+    }
+
   private implicit val picklerInit: Pickler[Init] =
     new Pickler[Init] {
       override def pickle(a: Init)(implicit state: PickleState): Unit = {
-        state.pickle(a.project)
         state.pickle(a.am)
+        state.pickle(a.cssCtx)
+        state.pickle(a.encKey)
       }
       override def unpickle(implicit state: UnpickleState): Init = {
-        val pao = state.unpickle[Project]
-        val am  = state.unpickle[AssetManifest]
-        Init(pao, am)
+        val am     = state.unpickle[AssetManifest]
+        val cssCtx = state.unpickle[ClientSideStorage.Context]
+        val encKey = state.unpickle[ClientSideProjectEncryptionKey]
+        Init(am, cssCtx, encKey)
       }
     }
 
