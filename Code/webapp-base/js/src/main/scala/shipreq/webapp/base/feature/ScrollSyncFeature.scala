@@ -121,6 +121,10 @@ final class ScrollSyncFeature {
 
   // -------------------------------------------------------------------------------------------------------------------
 
+  private final val previewLineHeightPx = 20
+  private final val snapToTopPx         = previewLineHeightPx * 2
+  private final val snapToBottomPx      = previewLineHeightPx * 3
+
   private def sync(sourceId: Int): Callback = {
 
     @inline def getY1Max(dom: html.Element): Double =
@@ -160,11 +164,23 @@ final class ScrollSyncFeature {
 
               // Sync pane
               for (dom <- p.dom.runNow()) {
-                val y1Max = getY1Max(dom)
-                if (y1Max > 0) {
-                  val newY1 = y1Max * srcPct
-                  dom.scrollTop = newY1
-                  madeChanges = true
+                val maxY1 = getY1Max(dom)
+                if (maxY1 > 0) {
+
+                  // Determine new scroll position
+                  var newY1 = maxY1 * srcPct
+                  if ((maxY1 - newY1) <= snapToBottomPx)
+                    // snap to bottom
+                    newY1 = maxY1
+                  else if (newY1 <= snapToTopPx)
+                    // snap to top
+                    newY1 = 0
+
+                  // Scroll to new position
+                  if (dom.scrollTop != newY1) {
+                    dom.scrollTop = newY1
+                    madeChanges = true
+                  }
                 }
               }
             }
