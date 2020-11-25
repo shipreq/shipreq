@@ -2,6 +2,7 @@
 
 
 ### Improvements
+* In ReqGraph when coloured by tags, allow a paintbrush-like tool (and a selected tag/colour) to click nodes to change their tag value
 * have an option in ReqGraph to show simplified graphs (i.e. remove redundant edges)
 * add a new ReqGraph config option: Align = {none | beginning | end | justify} to control `rank=same` blocks
 * add option to show simplified UC graphs (using the `merged-a` style)
