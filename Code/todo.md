@@ -5,7 +5,10 @@
 * Upgrade sbt to 1.4.4 in docker build env
 * upgrade graal & docker images
 
+* fix duplicated scalacOptions
+
 * WW should ask clients to keep it sync, just like SPA does to svr
+* Test (and implement?) expected behaviour when multiple clients are attached
 
 * add test ProjectSpaProtocolsTest:InitApp:resp:success
 
