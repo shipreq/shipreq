@@ -73,7 +73,7 @@ object ManagedWebWorker {
         }
 
       val preSend: AsyncCallback[Unit] =
-        ensureNotClosed >> initBarrier.waitForCompletion >> ensureNotClosed
+        ensureNotClosed >> initBarrier.await >> ensureNotClosed
 
       worker.onError(onError).runNow()
       worker.listen(receive).runNow()

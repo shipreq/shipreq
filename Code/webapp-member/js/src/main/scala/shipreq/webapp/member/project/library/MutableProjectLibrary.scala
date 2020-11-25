@@ -89,7 +89,7 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
         AsyncCallback.barrier.asAsyncCallback.flatMap { barrier =>
           val ordPromise = OrdPromise(ord, barrier.complete)
           val save = AsyncCallback.delay(_ordPromises ::= ordPromise)
-          save >> barrier.waitForCompletion >> projectAt(ord)
+          save >> barrier.await >> projectAt(ord)
         }
     }
 

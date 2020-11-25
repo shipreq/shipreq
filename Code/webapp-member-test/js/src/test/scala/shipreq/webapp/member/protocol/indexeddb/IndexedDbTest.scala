@@ -145,8 +145,8 @@ object IndexedDbTest extends TestSuite {
         db2    <- tdb.open(name, 2)(c.copy(
                     upgradeNeeded = _ => Callback.log("db2 upgrading")))
 
-        _      <- verChg.waitForCompletion
-        _      <- closed.waitForCompletion
+        _      <- verChg.await
+        _      <- closed.await
         v1     <- db1.get(store)(1).attempt
         v2     <- db2.get(store)(1)
       } yield {

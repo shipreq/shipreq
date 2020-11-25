@@ -51,7 +51,7 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
 
     val load: AsyncCallback[Unit] =
       for {
-        _   <- wwClient.send(initWW).toCallback.asAsyncCallback // TODO https://github.com/japgolly/scalajs-react/issues/819
+        _   <- wwClient.send(initWW).fork_.asAsyncCallback
         css <- ClientSideStorage.ReadOnly(i.userId, i.projectId, ik.encryptionKey)
         pl  <- css.getProjectLibraryOrEmpty
       } yield {
