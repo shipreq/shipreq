@@ -42,6 +42,6 @@ object ManualIssues {
 
   def empty: ManualIssues =
     apply(ManualIssue.emptyIMap, ManualIssueId(1))
-  
+
   implicit def univEq: UnivEq[ManualIssues] = UnivEq.derive
 }

@@ -189,8 +189,8 @@ object ReactSvgPanZoom {
   @js.native
   sealed trait ViewerMouseEvent extends js.Object {
     val originalEvent: SyntheticEvent[dom.Node]
-    // SVGViewer	SVGSVGElement	Reference to SVGViewer
-    // point	Object	Coordinates (x,y) of the event mapped to SVG coordinates
+    // SVGViewer  SVGSVGElement  Reference to SVGViewer
+    // point  Object  Coordinates (x,y) of the event mapped to SVG coordinates
     val x           : Double
     val y           : Double
     val scaleFactor : Double
@@ -226,13 +226,13 @@ object ReactSvgPanZoom {
     /** Zoom in or out the SVG */
     def zoom(SVGPointX: Double, SVGPointY: Double, scaleFactor: Double): Unit
 
-    // def fitSelection(selectionSVGPointX, selectionSVGPointY, selectionWidth, selectionHeight)	Fit an SVG area to viewer
-    // def setPointOnViewerCenter(SVGPointX, SVGPointY, zoomLevel)	Set a point on Viewer center
-    // def zoomOnViewerCenter(scaleFactor)	Zoom SVG on center
-    // def getTool()	Get current tool
-    // def changeTool(tool)	Change the tool (one of none,pan,zoom-in,zoom-out,auto)
-    // def openMiniature	Open the miniature
-    // def closeMiniature	Close the miniature
+    // def fitSelection(selectionSVGPointX, selectionSVGPointY, selectionWidth, selectionHeight)  Fit an SVG area to viewer
+    // def setPointOnViewerCenter(SVGPointX, SVGPointY, zoomLevel)  Set a point on Viewer center
+    // def zoomOnViewerCenter(scaleFactor)  Zoom SVG on center
+    // def getTool()  Get current tool
+    // def changeTool(tool)  Change the tool (one of none,pan,zoom-in,zoom-out,auto)
+    // def openMiniature  Open the miniature
+    // def closeMiniature  Close the miniature
   }
 
   val Component = JsComponent[Props, Children.Varargs, State](Exports.ReactSVGPanZoom)

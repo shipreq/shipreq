@@ -58,7 +58,7 @@ object JwtBM {
     assert(keyBytes.length == len)
 
     val key: Key = Keys.hmacShaKeyFor(keyBytes)
-    
+
     val parser = Jwts.parserBuilder().setSigningKey(key).build()
 
     def encode() = {

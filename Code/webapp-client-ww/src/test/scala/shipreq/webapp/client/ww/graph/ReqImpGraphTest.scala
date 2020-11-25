@@ -13,7 +13,7 @@ object ReqImpGraphTest extends TestSuite {
                      project   : Project,
                      colours   : Option[Colours] = None): DOT =
     new ReqImpGraph(focus, filterDead, project, colours).dot
-  
+
   override def tests = Tests {
 
     "basic" - {

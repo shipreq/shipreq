@@ -136,7 +136,7 @@ object FieldReqTypeRules {
     def isDefault = false
     def isMandatory = false
   }
-  
+
   object Resolution {
 
     case object Mandatory extends Resolution[Nothing](Applicable) {
