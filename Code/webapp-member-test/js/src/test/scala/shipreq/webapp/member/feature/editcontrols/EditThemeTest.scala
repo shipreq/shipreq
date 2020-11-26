@@ -186,7 +186,7 @@ object EditThemeTest extends TestSuite {
             |            Preview
             |          </div>
             |          <div class="BaseStyles-richTextPreviewBodyOuter ui segment">
-            |            <div class="BaseStyles-richTextPreviewBodyInner-2">
+            |            <div class="BaseStyles-richTextPreviewBodyInner-4">
             |              {previewBody}
             |            </div>
             |          </div>
@@ -225,7 +225,7 @@ object EditThemeTest extends TestSuite {
             |            Preview
             |          </div>
             |          <div class="BaseStyles-richTextPreviewBodyOuter ui segment">
-            |            <div class="BaseStyles-richTextPreviewBodyInner-2">
+            |            <div class="BaseStyles-richTextPreviewBodyInner-4">
             |              {previewBody}
             |            </div>
             |          </div>
@@ -264,7 +264,7 @@ object EditThemeTest extends TestSuite {
             |            Preview
             |          </div>
             |          <div class="BaseStyles-richTextPreviewBodyOuter ui segment">
-            |            <div class="BaseStyles-richTextPreviewBodyInner-2">
+            |            <div class="BaseStyles-richTextPreviewBodyInner-4">
             |              {previewBody}
             |            </div>
             |          </div>
@@ -360,7 +360,7 @@ object EditThemeTest extends TestSuite {
             |            Preview
             |          </div>
             |          <div class="BaseStyles-richTextPreviewBodyOuter ui segment">
-            |            <div class="BaseStyles-richTextPreviewBodyInner-2">
+            |            <div class="BaseStyles-richTextPreviewBodyInner-4">
             |              {previewBody}
             |            </div>
             |          </div>
@@ -451,7 +451,7 @@ object EditThemeTest extends TestSuite {
             |              Preview
             |            </div>
             |            <div class="BaseStyles-richTextPreviewBodyOuter ui segment">
-            |              <div class="BaseStyles-richTextPreviewBodyInner-2">
+            |              <div class="BaseStyles-richTextPreviewBodyInner-4">
             |                {previewBody}
             |              </div>
             |            </div>
@@ -502,7 +502,7 @@ object EditThemeTest extends TestSuite {
             |              Preview
             |            </div>
             |            <div class="BaseStyles-richTextPreviewBodyOuter ui segment">
-            |              <div class="BaseStyles-richTextPreviewBodyInner-2">
+            |              <div class="BaseStyles-richTextPreviewBodyInner-4">
             |                {previewBody}
             |              </div>
             |            </div>
@@ -551,7 +551,7 @@ object EditThemeTest extends TestSuite {
             |          Preview
             |        </div>
             |        <div class="BaseStyles-richTextPreviewBodyOuter ui segment">
-            |          <div class="BaseStyles-richTextPreviewBodyInner-2">
+            |          <div class="BaseStyles-richTextPreviewBodyInner-4">
             |            {previewBody}
             |          </div>
             |        </div>
@@ -600,7 +600,7 @@ object EditThemeTest extends TestSuite {
             |          Preview
             |        </div>
             |        <div class="BaseStyles-richTextPreviewBodyOuter ui segment">
-            |          <div class="BaseStyles-richTextPreviewBodyInner-1">
+            |          <div class="BaseStyles-richTextPreviewBodyInner-3">
             |            {previewBody}
             |          </div>
             |        </div>
@@ -681,7 +681,7 @@ object EditThemeTest extends TestSuite {
             |          Preview
             |        </div>
             |        <div class="BaseStyles-richTextPreviewBodyOuter ui segment">
-            |          <div class="BaseStyles-richTextPreviewBodyInner-1">
+            |          <div class="BaseStyles-richTextPreviewBodyInner-3">
             |            {previewBody}
             |          </div>
             |        </div>
