@@ -69,8 +69,8 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
         )
 
         val keepAliveEvery     = Duration.ofSeconds(21)
-        val syncEvery          = Duration.ofSeconds(30)
-        val syncStaleTolerance = Duration.ofSeconds(30)
+        val syncEvery          = Duration.ofSeconds(60)
+        val syncStaleTolerance = Duration.ofSeconds(20)
 
         val keepAliveHnd = global.wsClient.keepAlive.setInterval(keepAliveEvery).runNow()
         val staleSyncHnd = global.requestSyncIfStaleFor(syncStaleTolerance).setInterval(syncEvery).runNow()
