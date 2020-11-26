@@ -2,12 +2,13 @@ package shipreq.webapp.member.project.library
 
 import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
+import java.time.Instant
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 import shipreq.webapp.member.project.util.DataReusability.reusabilityProject
 
-final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
+final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL, clock: CallbackTo[Instant]) {
   import MutableProjectLibrary.OrdPromise
 
   private var _state: PL =
@@ -32,18 +33,20 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
 
   def update(ves: VerifiedEvent.Seq): Callback =
     Callback.unless(ves.isEmpty) {
-      updateBy(_.update(ves))
+      updateBy(_.update(ves, _))
     }
 
   def update(p: Project): Callback =
-    updateBy(_.update(p))
+    updateBy(_.update(p, _))
 
   def update(u: Project \/ VerifiedEvent.Seq): Callback =
     u.fold(update, update)
 
-  private def updateBy(f: PL => Option[ProjectLibrary.UpdateFor[PL#This]]): Callback =
-    get.flatMap { s1 =>
-      Callback.traverseOption(f(s1))(u => Callback {
+  private def updateBy(f: (PL, Instant) => Option[ProjectLibrary.UpdateFor[PL#This]]): Callback =
+    for {
+      s1 <- get
+      now <- clock
+      _ <- Callback.traverseOption(f(s1, now))(u => Callback {
 
         // Update state
         _state = u.newLibrary.asInstanceOf[PL] // cbf jumping through hoops for type-level proof of this
@@ -65,12 +68,12 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
           for (p <- releasable)
             p.complete.attempt.runNow() match {
               case Right(_) =>
-              case Left(e)  => LoggerJs.exception(e)
+              case Left(e) => LoggerJs.exception(e)
             }
         }
 
       })
-    }
+    } yield ()
 
   private var _ordPromises: List[OrdPromise] =
     Nil
@@ -100,11 +103,12 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL) {
 
 object MutableProjectLibrary {
 
-  def apply[PL <: ProjectLibrary](initialState: PL): MutableProjectLibrary[PL] =
-    new MutableProjectLibrary(initialState)
+  def apply[PL <: ProjectLibrary](initialState: PL,
+                                  clock: CallbackTo[Instant] = CallbackTo.now): MutableProjectLibrary[PL] =
+    new MutableProjectLibrary(initialState, clock)
 
-  def empty(): MutableProjectLibrary[ProjectLibrary] =
-    apply(ProjectLibrary.empty(CacheJs()))
+  def empty(clock: CallbackTo[Instant] = CallbackTo.now): MutableProjectLibrary[ProjectLibrary] =
+    apply(ProjectLibrary.empty(CacheJs()), clock)
 
   private final case class OrdPromise(ord: EventOrd, complete: Callback)
 }

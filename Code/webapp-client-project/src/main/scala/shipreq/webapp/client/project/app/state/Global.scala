@@ -164,7 +164,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
               case Success(\/-(i)) => Callback {
                 unsafeState() match {
                   case State.Loading(pl1) =>
-                    val pl2 = pl1.updated(i.projectData)
+                    val pl2 = pl1.updated(i.projectData, unsafeNow())
                     val s = ProjectLibrary.WithMetaData(pl2, i.projectMetaData)
                     unsafeSetState(State.Active(s, None))
                     onFirstLoad(this, i).runNow()
@@ -198,7 +198,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
       unsafeState() match {
 
         case s1: State.Active =>
-          s1.projectLibrary.update(recvEvents) match {
+          s1.projectLibrary.update(recvEvents, unsafeNow()) match {
 
             case Some(update) =>
 
@@ -227,7 +227,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
           }
 
         case State.Loading(pl) =>
-          unsafeSetState(State.Loading(pl.addEvents(recvEvents)))
+          unsafeSetState(State.Loading(pl.addEvents(recvEvents, unsafeNow())))
           NewEvents.empty
       }
     }

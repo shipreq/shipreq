@@ -11,14 +11,14 @@ import utest._
 
 object ProjectLibraryTestUtil {
 
-  private val now = Instant.now().minusSeconds(999999)
+  private val t = Instant.now().minusSeconds(999999)
 
   val newVerifiedEvent: Int => VerifiedEvent =
     Memo.int { i =>
       VerifiedEvent(
         EventOrd(i),
         Event.ProjectNameSet(i.toString),
-        now.plusSeconds(i),
+        t.plusSeconds(i),
       )
     }
 
@@ -49,7 +49,7 @@ object ProjectLibraryTestUtil {
       newVerifiedEvent(i)
     }
     val p = newProject(latest)
-    ProjectLibrary.init(p, cache).addEvents(fes)
+    ProjectLibrary.init(p, cache).addEvents(fes, fes.lastOption.fold(t)(_.createdAt))
   }
 
   def newCache(milestoneEvery: Int               = CacheJs.MilestonesEvery,

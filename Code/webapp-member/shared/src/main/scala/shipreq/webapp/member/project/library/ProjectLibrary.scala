@@ -1,6 +1,7 @@
 package shipreq.webapp.member.project.library
 
 import japgolly.microlibs.utils.ConciseIntSetFormat
+import java.time.Instant
 import shipreq.webapp.member.project.data.{Project, ProjectMetaData}
 import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
 
@@ -22,7 +23,9 @@ trait ProjectLibrary extends EventOrd.CmpOps {
     */
   val futureEvents: VerifiedEvent.Seq
 
-  def update(events: VerifiedEvent.Seq): Option[Update]
+  val staleSince: Option[Instant]
+
+  def update(events: VerifiedEvent.Seq, now: Instant): Option[Update]
 
   def projectAt(ord: EventOrd): Option[Project]
 
@@ -30,20 +33,20 @@ trait ProjectLibrary extends EventOrd.CmpOps {
 
   final type Update = ProjectLibrary.UpdateFor[This]
 
-  final def addEvents(events: VerifiedEvent.Seq): This =
-    update(events).fold(self)(_.newLibrary)
+  final def addEvents(events: VerifiedEvent.Seq, now: Instant): This =
+    update(events, now).fold(self)(_.newLibrary)
 
-  final def update(newProject: Project): Option[Update] =
+  final def update(newProject: Project, now: Instant): Option[Update] =
     if (newProject > latest)
-      update(newProject.history.events)
+      update(newProject.history.events, now)
     else
       None
 
-  final def update(u: Project \/ VerifiedEvent.Seq): Option[Update] =
-    u.fold(update, update)
+  final def update(u: Project \/ VerifiedEvent.Seq, now: Instant): Option[Update] =
+    u.fold(update(_, now), update(_, now))
 
-  final def updated(u: Project \/ VerifiedEvent.Seq): This =
-    update(u).fold(self)(_.newLibrary)
+  final def updated(u: Project \/ VerifiedEvent.Seq, now: Instant): This =
+    update(u, now).fold(self)(_.newLibrary)
 
   @inline final def ord =
     latest.ord
@@ -56,6 +59,8 @@ trait ProjectLibrary extends EventOrd.CmpOps {
 
   final def futureEventRange: String =
     "[" + ConciseIntSetFormat(futureEvents.iterator.map(_.ord.value).toSet) + "]"
+
+  assert(futureEvents.isEmpty == staleSince.isEmpty)
 }
 
 object ProjectLibrary {
@@ -79,16 +84,17 @@ object ProjectLibrary {
     init(Project.empty, cache)
 
   def init(p: Project, cache: Cache): ProjectLibrary =
-    new Basic(p, VerifiedEvent.Seq.empty, cache)
+    new Basic(p, VerifiedEvent.Seq.empty, None, cache)
 
   def load(ps: Iterable[Project], cache: Cache): Option[ProjectLibrary] =
     Option.when(ps.nonEmpty) {
       val latest = ps.maxBy(_.ordAsInt)
-      new Basic(latest, VerifiedEvent.Seq.empty, cache.update(ps))
+      new Basic(latest, VerifiedEvent.Seq.empty, None, cache.update(ps))
     }
 
   private final class Basic(val latest        : Project,
                             val futureEvents  : VerifiedEvent.Seq,
+                            val staleSince    : Option[Instant],
                             prevCache         : Cache) extends Shared(latest, prevCache) {
 
     override type This = Basic
@@ -101,22 +107,26 @@ object ProjectLibrary {
 
     private def copy(latest        : Project           = latest,
                      futureEvents  : VerifiedEvent.Seq,
+                     staleSince    : Option[Instant],
                     ): This =
       new Basic(
         latest         = latest,
         futureEvents   = futureEvents,
+        staleSince     = staleSince,
         prevCache      = cache,
       )
 
-    override def update(events: VerifiedEvent.Seq): Option[Update] =
+    override def update(events: VerifiedEvent.Seq, now: Instant): Option[Update] =
       _update(
         events       = events,
-        updateLatest = (p2, _, fe2) => copy(p2, fe2),
-        updateFuture = fe2 => copy(futureEvents = fe2)
+        now          = now,
+        staleSince   = staleSince,
+        updateLatest = (p2, _, fe2, ss) => copy(p2, fe2, ss),
+        updateFuture = (fe2, ss) => copy(futureEvents = fe2, staleSince = ss)
       )
 
     override def withoutFutureEvents: This =
-      new Basic(latest, VerifiedEvent.Seq.empty, cache)
+      copy(futureEvents = VerifiedEvent.Seq.empty, staleSince = None)
   }
 
   // ===================================================================================================================
@@ -125,15 +135,21 @@ object ProjectLibrary {
     type Update = UpdateFor[WithMetaData]
 
     def apply(pl: ProjectLibrary, md: ProjectMetaData): WithMetaData =
-      new WithMetaData(pl.latest, md, pl.futureEvents, pl.cache)
+      new WithMetaData(
+        pl.latest,
+        md,
+        pl.futureEvents,
+        pl.staleSince,
+        pl.cache)
 
     def init(p: Project, md: ProjectMetaData, cache: Cache): WithMetaData =
-      new WithMetaData(p, md, VerifiedEvent.Seq.empty, cache)
+      new WithMetaData(p, md, VerifiedEvent.Seq.empty, None, cache)
   }
 
   final class WithMetaData(val latest        : Project,
                            val latestMetaData: ProjectMetaData,
                            val futureEvents  : VerifiedEvent.Seq,
+                           val staleSince    : Option[Instant],
                            prevCache         : Cache) extends Shared(latest, prevCache) {
 
     override type This = WithMetaData
@@ -147,26 +163,30 @@ object ProjectLibrary {
     private def copy(latest        : Project           = latest,
                      latestMetaData: ProjectMetaData   = latestMetaData,
                      futureEvents  : VerifiedEvent.Seq,
+                     staleSince    : Option[Instant],
                     ): This =
       new WithMetaData(
         latest         = latest,
         latestMetaData = latestMetaData,
         futureEvents   = futureEvents,
+        staleSince     = staleSince,
         prevCache      = cache,
       )
 
-    override def update(events: VerifiedEvent.Seq): Option[Update] =
+    override def update(events: VerifiedEvent.Seq, now: Instant): Option[Update] =
       _update(
         events       = events,
-        updateLatest = (p2, ves, fe2) => copy(p2, latestMetaData.applyEvents(ves, p2, ves.last.createdAt), fe2),
-        updateFuture = fe2 => copy(futureEvents = fe2)
+        now          = now,
+        staleSince   = staleSince,
+        updateLatest = (p2, ves, fe2, ss) => copy(p2, latestMetaData.applyEvents(ves, p2, ves.last.createdAt), fe2, ss),
+        updateFuture = (fe2, ss) => copy(futureEvents = fe2, staleSince = ss)
       )
 
     override def withoutFutureEvents: This =
-      new WithMetaData(latest, latestMetaData, VerifiedEvent.Seq.empty, cache)
+      new WithMetaData(latest, latestMetaData, VerifiedEvent.Seq.empty, None, cache)
 
     def withoutMetaData: ProjectLibrary =
-      new Basic(latest, futureEvents, cache)
+      new Basic(latest, futureEvents, staleSince, cache)
   }
 
   // ===================================================================================================================
@@ -178,24 +198,31 @@ object ProjectLibrary {
       s"Project is v${latest.ordAsInt} but youngest future event is v${futureEvents.head.ord.value}")
 
     protected def _update(events      : VerifiedEvent.Seq,
-                          updateLatest: (Project, VerifiedEvent.NonEmptySeq, VerifiedEvent.Seq) => This,
-                          updateFuture: VerifiedEvent.Seq => This
+                          now         : Instant,
+                          staleSince  : Option[Instant],
+                          updateLatest: (Project, VerifiedEvent.NonEmptySeq, VerifiedEvent.Seq, Option[Instant]) => This,
+                          updateFuture: (VerifiedEvent.Seq, Option[Instant]) => This
                          ): Option[Update] = {
-      val newEvents = ord.fold(events)(o => events.filter(_.ord > o))
+
+      val newEvents     = ord.fold(events)(o => events.filter(_.ord > o))
       val pendingEvents = futureEvents ++ newEvents
+      def newStaleSince = staleSince.getOrElse(now)
+
       removeConsecutive(pendingEvents, _.immediatelyFollowsLatest(ord)) match {
 
         case Some((ves, remainingFutureEvents)) =>
-          val p2  = latest.updateOrThrow(ves)
-          val s2  = updateLatest(p2, ves, remainingFutureEvents)
-          Some(UpdateFor(s2, ves.values))
+          val p2         = latest.updateOrThrow(ves)
+          val staleSince = Option.when(remainingFutureEvents.nonEmpty)(newStaleSince)
+          val pl2        = updateLatest(p2, ves, remainingFutureEvents, staleSince)
+          Some(UpdateFor(pl2, ves.values))
 
         case None =>
           if (newEvents.isEmpty)
             None
           else {
-            val s2 = updateFuture(pendingEvents)
-            Some(UpdateFor(s2, VerifiedEvent.Seq.empty))
+            val staleSince = Option.when(pendingEvents.nonEmpty)(newStaleSince)
+            val pl2        = updateFuture(pendingEvents, staleSince)
+            Some(UpdateFor(pl2, VerifiedEvent.Seq.empty))
           }
       }
     }
