@@ -5,6 +5,7 @@ import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
+import java.util.regex.Pattern
 import monocle.function.Field1.first
 import monocle.function.Field2.second
 import monocle.{Optional => _, _}
@@ -2066,15 +2067,9 @@ object RandomData {
         s
     }
 
-    /** An odd number of backslashes cannot precede a slash */
-    private val fixSlashEscaping = """(^|[^\\])(?:\\(?:\\\\)*)/""".r
-
     private def fixRegex(s0: String): String = {
-      val s = FilterParser.preProcessor(s0).asString
-      if (s endsWith "\\")
-        s + "d"
-      else
-        fixSlashEscaping.replaceAllIn(s, "$1/")
+      val s1 = FilterParser.preProcessor(s0).asString
+      Pattern.quote(s1)
     }
 
     val simpleText =
