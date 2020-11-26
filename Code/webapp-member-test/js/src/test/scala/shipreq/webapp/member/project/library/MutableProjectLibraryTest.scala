@@ -54,24 +54,41 @@ object MutableProjectLibraryTest extends TestSuite {
       def staleSince = pl.get.runNow().staleSince
       assertEq(staleSince, None)
 
+      // 3 {}
       pl.update(newProject(3)).runNow()
       assertEq(staleSince, None)
 
+      // 4 {}
       pl.update(newVerifiedEvents(4)).runNow()
       assertEq(staleSince, None)
 
+      // 4 {6}
       pl.update(newVerifiedEvents(6)).runNow()
       assertEq(staleSince, Some(t))
       val t1 = t
       t = t.plusSeconds(1)
 
+      // 4 {6, 9}
       pl.update(newVerifiedEvents(9)).runNow()
       assertEq(staleSince, Some(t1))
 
+      // 6 {9}
       pl.update(newVerifiedEvents(5)).runNow()
-      assertEq(staleSince, Some(t1))
+      assertEq(staleSince, Some(t)) // staleSince changes because Project advanced
+      t = t.plusSeconds(1)
 
-      pl.update(newVerifiedEvents(7 to 8)).runNow()
+      // 7 {9}
+      pl.update(newVerifiedEvents(7)).runNow()
+      assertEq(staleSince, Some(t)) // staleSince changes because Project advanced
+      val t2 = t
+      t = t.plusSeconds(1)
+
+      // 7 {9, 10}
+      pl.update(newVerifiedEvents(10)).runNow()
+      assertEq(staleSince, Some(t2))
+
+      // 10 {}
+      pl.update(newVerifiedEvents(8)).runNow()
       assertEq(staleSince, None)
     }
   }

@@ -206,22 +206,21 @@ object ProjectLibrary {
 
       val newEvents     = ord.fold(events)(o => events.filter(_.ord > o))
       val pendingEvents = futureEvents ++ newEvents
-      def newStaleSince = staleSince.getOrElse(now)
 
       removeConsecutive(pendingEvents, _.immediatelyFollowsLatest(ord)) match {
 
         case Some((ves, remainingFutureEvents)) =>
-          val p2         = latest.updateOrThrow(ves)
-          val staleSince = Option.when(remainingFutureEvents.nonEmpty)(newStaleSince)
-          val pl2        = updateLatest(p2, ves, remainingFutureEvents, staleSince)
+          val p2  = latest.updateOrThrow(ves)
+          val ss  = Option.when(remainingFutureEvents.nonEmpty)(now)
+          val pl2 = updateLatest(p2, ves, remainingFutureEvents, ss)
           Some(UpdateFor(pl2, ves.values))
 
         case None =>
           if (newEvents.isEmpty)
             None
           else {
-            val staleSince = Option.when(pendingEvents.nonEmpty)(newStaleSince)
-            val pl2        = updateFuture(pendingEvents, staleSince)
+            val ss  = Option.when(pendingEvents.nonEmpty)(staleSince.getOrElse(now))
+            val pl2 = updateFuture(pendingEvents, ss)
             Some(UpdateFor(pl2, VerifiedEvent.Seq.empty))
           }
       }
