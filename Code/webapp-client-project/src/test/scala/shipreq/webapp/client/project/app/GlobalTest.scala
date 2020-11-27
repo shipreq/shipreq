@@ -2,17 +2,21 @@ package shipreq.webapp.client.project.app
 
 import java.time.Duration
 import shipreq.base.test.BaseTestUtil._
-import shipreq.webapp.client.project.test.TestGlobal
-import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.client.project.test.{TestGlobal, TestWebWorkerClient}
+import shipreq.webapp.client.ww.api._
 import shipreq.webapp.member.project.event.Event.ProjectNameSet
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WsReqRes
+import shipreq.webapp.member.test.ProjectLibraryTestUtil._
 import utest._
 
 object GlobalTest extends TestSuite {
 
+  private implicit def univEqWwCmd: UnivEq[WebWorkerCmd[_]] =
+    UnivEq.force
+
   class SyncTest {
-    val t = TestGlobal(Project.empty)
+    val t = TestGlobal()
 
     val initialNextOrd = t.nextEventOrd.runNow()
 
@@ -100,6 +104,17 @@ object GlobalTest extends TestSuite {
         syncIfStaleForMs(1)
         t.assertReqsSent(1) // i.e. no new reqs sent
       }
+    }
+
+    "wwMissingEvents" - {
+      val ww = TestWebWorkerClient()
+      val g = TestGlobal(newProject(4), ww)
+      g.addEvents(newVerifiedEvents(6, 7)).runNow()
+      assertEq(ww.requestCount(), 0)
+
+      ww.push(WebWorkerPushCmd.MissingEvents(NonEmptySet(3, 4, 7, 8).map(EventOrd.apply)))
+      assertEq(ww.requestCount(), 1)
+      assertEq(ww.lastRequest(), Some(WebWorkerCmd.UpdateProject(\/-(newVerifiedEvents(3, 4, 7)))))
     }
   }
 }

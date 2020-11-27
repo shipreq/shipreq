@@ -7,8 +7,8 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Success, Try}
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.client.project.app.WebWorkerClient
-import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.client.ww.api.WebWorkerCmd.NoResult
+import shipreq.webapp.client.ww.api._
 import shipreq.webapp.member.project.data.Svg
 
 final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
@@ -18,10 +18,12 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
   private var responses = Vector.empty[(WebWorkerCmd[_], Int) => Option[Any]]
   private var requests  = Vector.empty[WebWorkerCmd[_]]
   private var pending   = Vector.empty[Pending]
-  private var onPush    = (_: Unit) => Callback.empty
+  private var onPush    = (cmd: WebWorkerPushCmd) => Callback.log("Ignoring WebWorkerPushCmd." + cmd)
 
-  override def modOnPush(f: (Unit => Callback) => Unit => Callback): Callback =
-    Callback { onPush = f(onPush) }
+  override def modOnPush(f: (WebWorkerPushCmd => Callback) => WebWorkerPushCmd => Callback): Callback =
+    Callback {
+      onPush = f(onPush)
+    }
 
   override def close: Callback =
     Callback.empty
@@ -99,8 +101,12 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
     }
   }
 
-//  def requestCount() = requests.length
-//  def lastRequest()  = requests.lastOption
+  def requestCount() = requests.length
+  def lastRequest()  = requests.lastOption
+
+  def push(cmd: WebWorkerPushCmd): Unit = {
+    onPush(cmd).runNow()
+  }
 
   initialPrep(this)
 }

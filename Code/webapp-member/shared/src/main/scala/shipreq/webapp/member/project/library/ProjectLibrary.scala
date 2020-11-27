@@ -80,6 +80,14 @@ trait ProjectLibrary extends EventOrd.CmpOps {
       _          <- Option.when(stalePeriod.isLongerThan(tolerance))(())
       missing    <- missingEvents
     } yield missing
+
+  final def events(ords: Set[EventOrd]): VerifiedEvent.Seq = {
+    // This could be much more efficient but it's currently only called when WebWorker sends a MissingEvents command.
+    // Keeping in mind that the app keeps it's own ProjectLibrary in sync, the circumstances that app will be in sync
+    // and WW wont is very, very rare. In practice this, literally, may never be called.
+    val f = (e: VerifiedEvent) => ords.contains(e.ord)
+    latest.history.events.filter(f) ++ futureEvents.filter(f)
+  }
 }
 
 object ProjectLibrary {

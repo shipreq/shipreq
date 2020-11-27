@@ -167,11 +167,7 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
                 unsafeState() match {
 
                   case State.Loading(pl1) =>
-                    val pl2 = pl1.updated(i.projectData, unsafeNow())
-                    val s = ProjectLibrary.WithMetaData(pl2, i.projectMetaData)
-                    unsafeSetState(State.Active(s))
-                    onFirstLoad(this, i).runNow()
-                    ww.send(WebWorkerCmd.UpdateProject(i.projectData)).runNow()
+                    unsafeOnSuccessfulFirstLoad(i, pl1)
 
                   case _: State.Active =>
                     logger(_.warn("InitApp response received but already State.Active"))
@@ -185,6 +181,32 @@ abstract class Global(onFirstLoad     : (Global, InitAppData) => Callback,
                 logger.pure(_.warn(s"Connection failure: ${err.getMessage}"))
             }
     } yield ()
+
+  final private def unsafeOnSuccessfulFirstLoad(i: InitAppData, pl1: ProjectLibrary): Unit = {
+    // Update state
+    val pl2 = pl1.updated(i.projectData, unsafeNow())
+    val s = ProjectLibrary.WithMetaData(pl2, i.projectMetaData)
+    unsafeSetState(State.Active(s))
+
+    // Notify first-load listener
+    onFirstLoad(this, i).runNow()
+
+    // Update web worker state
+    ww.send(WebWorkerCmd.UpdateProject(i.projectData)).runNow()
+
+    // Start handling web worker pushes
+    ww.replaceOnPush(onWebWorkerPush).runNow()
+  }
+
+  final protected def onWebWorkerPush: WebWorkerPushCmd => Callback = {
+
+    case WebWorkerPushCmd.MissingEvents(ords) =>
+      state.flatMap { s =>
+        val events = s.projectLibrary.events(ords.whole)
+        val cmd    = WebWorkerCmd.UpdateProject(\/-(events))
+        ww.send(cmd).toCallback.when_(events.nonEmpty)
+      }
+  }
 
   protected def reconnect(pl: ProjectLibrary): Callback =
     for {
@@ -330,19 +352,17 @@ object Global {
   }
 
   sealed trait State {
-    def ord: Option[EventOrd.Latest]
+    val projectLibrary: ProjectLibrary
+
+    @inline final def ord = projectLibrary.ord
   }
 
   object State {
 
     /** Waiting to be initialised by the web socket. */
-    final case class Loading(projectLibrary: ProjectLibrary) extends State {
-      override def ord = projectLibrary.ord
-    }
+    final case class Loading(projectLibrary: ProjectLibrary) extends State
 
-    final case class Active(projectLibrary: ProjectLibrary.WithMetaData) extends State {
-      override def ord = projectLibrary.ord
-    }
+    final case class Active(projectLibrary: ProjectLibrary.WithMetaData) extends State
   }
 
   implicit def reusability: Reusability[Global] = Reusability.always

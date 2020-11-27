@@ -1,6 +1,5 @@
 package shipreq.webapp.client.ww
 
-import boopickle.DefaultBasic.unitPickler
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.client.ww.api._
 import shipreq.webapp.member.protocol.webworker._

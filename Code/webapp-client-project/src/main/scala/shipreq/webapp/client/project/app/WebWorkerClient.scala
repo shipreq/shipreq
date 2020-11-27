@@ -1,6 +1,5 @@
 package shipreq.webapp.client.project.app
 
-import boopickle.DefaultBasic.unitPickler
 import boopickle.Pickler
 import japgolly.scalajs.react._
 import java.time.Duration
@@ -16,24 +15,26 @@ object WebWorkerClient {
 
   val protocol = WebWorkerProtocol.default
 
-  type Instance = ManagedWebWorker.Client[WebWorkerCmd, Unit, protocol.Reader, protocol.Encoded]
+  type Instance = ManagedWebWorker.Client[WebWorkerCmd, WebWorkerPushCmd, protocol.Reader, protocol.Encoded]
 
-  def apply(worker: AbstractWebWorker.Client, logger: LoggerJs): CallbackTo[Instance] = {
-    val onPush = (_: Unit) => Callback.empty
-    ManagedWebWorker.Client[WebWorkerCmd, Unit](
+  def apply(worker: AbstractWebWorker.Client,
+            onPush: WebWorkerPushCmd => Callback,
+            logger: LoggerJs): CallbackTo[Instance] =
+    ManagedWebWorker.Client[WebWorkerCmd, WebWorkerPushCmd](
       worker,
       protocol,
       onPush,
       OnError.logToConsole, // TODO do better
       logger
     )
-  }
 
-  def default(worker: AbstractWebWorker.Client, logger: LoggerJs): CallbackTo[Instance] =
-    apply(worker, logger).map(addCaching(_, logger))
+  def default(worker: AbstractWebWorker.Client,
+              onPush: WebWorkerPushCmd => Callback,
+              logger: LoggerJs): CallbackTo[Instance] =
+    apply(worker, onPush, logger).map(addCaching(_, logger))
 
   def addCaching(instance: Instance, logger: LoggerJs): Instance = {
-    type Push = Unit
+    type Push = WebWorkerPushCmd
 
     type Cache = LruCache.ToAny[String]
 

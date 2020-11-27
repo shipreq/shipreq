@@ -29,7 +29,7 @@ import shipreq.webapp.member.ui.BaseStyles
 import shipreq.webapp.server.logic.event._
 
 final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
-                       ww                   : WebWorkerClient.Instance = TestWebWorkerClient())
+                       ww                   : WebWorkerClient.Instance)
   extends Global(
     (_, _) => Callback.empty,
     _ => Callback.empty,
@@ -249,14 +249,17 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
 
   unsafeSetState(Global.State.Active(initialProjectLibrary))
   wsClient.connect.runNow()
+  ww.replaceOnPush(onWebWorkerPush).runNow()
 }
 
 object TestGlobal {
 
-  def apply(p: Project): TestGlobal = {
+  def apply(p : Project                  = Project.empty,
+            ww: WebWorkerClient.Instance = TestWebWorkerClient(),
+           ): TestGlobal = {
     val md = looseProjectMetaData(p, eventsTotal = p.ordAsInt)
     val ps = ProjectLibrary.WithMetaData.init(p, md, CacheJs())
-    new TestGlobal(ps)
+    new TestGlobal(ps, ww)
   }
 
   import shipreq.webapp.base.test.TestState._

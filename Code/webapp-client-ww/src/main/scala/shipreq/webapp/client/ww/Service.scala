@@ -1,7 +1,7 @@
 package shipreq.webapp.client.ww
 
 import japgolly.scalajs.react.AsyncCallback
-import shipreq.webapp.client.ww.api.WebWorkerCmd
+import shipreq.webapp.client.ww.api._
 import shipreq.webapp.client.ww.graph.GraphViz.DOT
 import shipreq.webapp.client.ww.graph.{ProjectImpGraph, ReqImpGraph, UseCaseFlowGraph}
 import shipreq.webapp.member.protocol.webworker._
@@ -52,7 +52,7 @@ final class Service[Client](server: Service.Server[Client], state: WorkerState) 
 
 object Service {
 
-  type Push = Unit
+  type Push = WebWorkerPushCmd
 
   type Server[Client] = ManagedWebWorker.Server[Client, Push]
 

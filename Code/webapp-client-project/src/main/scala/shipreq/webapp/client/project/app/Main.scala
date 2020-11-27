@@ -16,7 +16,7 @@ import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.client.loaders.ProjectSpaLoader
 import shipreq.webapp.client.project.app.pages.root._
 import shipreq.webapp.client.project.app.state.Global
-import shipreq.webapp.client.ww.api.WebWorkerCmd
+import shipreq.webapp.client.ww.api.{WebWorkerCmd, WebWorkerPushCmd}
 import shipreq.webapp.member.project.event.VerifiedEvent
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.InitAppData
@@ -86,8 +86,19 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
 
   private def loadWebWorker(i: InitDataWithoutEncKey, logger: LoggerJs): WebWorkerClient.Instance = {
     val scope  = i.userId.value + ":" + i.projectId.value + ":" + WebWorkerCmd.protocolVer.verNum
-    val worker = AbstractWebWorker.Client(i.webWorkerJsUrl, scope).runNow()
-    WebWorkerClient.default(worker, logger).runNow()
+
+    // This will be replaced by Global when it first loads
+    val onPush: WebWorkerPushCmd => Callback = {
+      case _: WebWorkerPushCmd.MissingEvents =>
+        // Ignore until app is loaded
+        Callback.empty
+    }
+
+    WebWorkerClient.default(
+      worker = AbstractWebWorker.Client(i.webWorkerJsUrl, scope).runNow(),
+      onPush = onPush,
+      logger = logger,
+    ).runNow()
   }
 
   private def onLoad(i: InitDataWithoutEncKey, ia: InitAppData, g: Global, ww: WebWorkerClient.Instance): Callback =
