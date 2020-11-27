@@ -9,7 +9,7 @@ import shipreq.webapp.base.lib.LoggerJs
 
 object ManagedWebWorker {
 
-  trait Client[Req[_], R[_], Enc] {
+  trait Client[Req[_], Push, R[_], Enc] {
 
     final def send[A](req: Req[A])(implicit readResult: R[A]): AsyncCallback[A] =
       sendEncoded(req, encode(req))
@@ -17,6 +17,11 @@ object ManagedWebWorker {
     def encode(req: Req[_]): Enc
 
     def sendEncoded[A](req: Req[A], enc: Enc)(implicit readResult: R[A]): AsyncCallback[A]
+
+    def modOnPush(f: (Push => Callback) => (Push => Callback)): Callback
+
+    final def replaceOnPush(f: Push => Callback): Callback =
+      modOnPush(_ => f)
 
     def close: Callback
   }
@@ -30,7 +35,7 @@ object ManagedWebWorker {
                             logger            : LoggerJs)
                            (implicit reqWriter: protocol.Writer[Req[_]],
                             pushReader        : protocol.Reader[Push],
-                           ): CallbackTo[Client[Req, protocol.Reader, protocol.Encoded]] = CallbackTo {
+                           ): CallbackTo[Client[Req, Push, protocol.Reader, protocol.Encoded]] = CallbackTo {
 
       import protocol.{Encoded, Reader}
 
@@ -38,6 +43,7 @@ object ManagedWebWorker {
       var lastPromiseId = 0
       var promises      = List.empty[Promise[Encoded]]
       val initBarrier   = AsyncCallback.barrier.runNow()
+      var _onPush       = onPush
 
       def popPromise(id: Int): CallbackTo[Option[Promise[Encoded]]] =
         CallbackTo {
@@ -63,7 +69,7 @@ object ManagedWebWorker {
           }
         } else {
           val msg = data.asInstanceOf[PushMessage[Encoded]]
-          CallbackTo(protocol.decode[Push](msg.body)).flatMap(onPush)
+          CallbackTo(protocol.decode[Push](msg.body)).flatMap(_onPush)
         }
 
       val ensureNotClosed: AsyncCallback[Unit] =
@@ -78,7 +84,10 @@ object ManagedWebWorker {
       worker.onError(onError).runNow()
       worker.listen(receive).runNow()
 
-      new Client[Req, Reader, Encoded] {
+      new Client[Req, Push, Reader, Encoded] {
+
+        override def modOnPush(f: (Push => Callback) => (Push => Callback)): Callback =
+          Callback { _onPush = f(_onPush) }
 
         override def encode(req: Req[_]): Encoded =
           protocol.encode[Req[_]](req)
@@ -116,7 +125,7 @@ object ManagedWebWorker {
 
     private final case class Promise[A](id: Int, complete: A => Callback)
 
-    implicit def reusability[Req[_], R[_], Enc]: Reusability[Client[Req, R, Enc]] =
+    implicit def reusability[Req[_], Push, R[_], Enc]: Reusability[Client[Req, Push, R, Enc]] =
       Reusability.byRef
   }
 

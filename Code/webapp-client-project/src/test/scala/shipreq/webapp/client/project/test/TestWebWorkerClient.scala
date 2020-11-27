@@ -18,6 +18,10 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
   private var responses = Vector.empty[(WebWorkerCmd[_], Int) => Option[Any]]
   private var requests  = Vector.empty[WebWorkerCmd[_]]
   private var pending   = Vector.empty[Pending]
+  private var onPush    = (_: Unit) => Callback.empty
+
+  override def modOnPush(f: (Unit => Callback) => Unit => Callback): Callback =
+    Callback { onPush = f(onPush) }
 
   override def close: Callback =
     Callback.empty

@@ -16,7 +16,7 @@ object WebWorkerClient {
 
   val protocol = WebWorkerProtocol.default
 
-  type Instance = ManagedWebWorker.Client[WebWorkerCmd, protocol.Reader, protocol.Encoded]
+  type Instance = ManagedWebWorker.Client[WebWorkerCmd, Unit, protocol.Reader, protocol.Encoded]
 
   def apply(worker: AbstractWebWorker.Client, logger: LoggerJs): CallbackTo[Instance] = {
     val onPush = (_: Unit) => Callback.empty
@@ -33,6 +33,7 @@ object WebWorkerClient {
     apply(worker, logger).map(addCaching(_, logger))
 
   def addCaching(instance: Instance, logger: LoggerJs): Instance = {
+    type Push = Unit
 
     type Cache = LruCache.ToAny[String]
 
@@ -55,6 +56,9 @@ object WebWorkerClient {
       cacheByProject.reset.asAsyncCallback
 
     new Instance {
+
+      override def modOnPush(f: (Push => Callback) => Push => Callback): Callback =
+        instance.modOnPush(f)
 
       override def encode(cmd: WebWorkerCmd[_]): ArrayBuffer =
         instance.encode(cmd)
