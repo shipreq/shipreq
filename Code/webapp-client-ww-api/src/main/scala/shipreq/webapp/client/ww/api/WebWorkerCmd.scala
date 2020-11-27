@@ -102,7 +102,7 @@ object WebWorkerCmd {
       }
     }
 
-  private implicit val picklerGraphUseCaseStepFlow: Pickler[GraphUseCaseFlow] =
+  private implicit val picklerGraphUseCaseFlow: Pickler[GraphUseCaseFlow] =
     new Pickler[GraphUseCaseFlow] {
       override def pickle(a: GraphUseCaseFlow)(implicit state: PickleState): Unit = {
         state.pickle(a.ord)
