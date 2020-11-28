@@ -1,5 +1,7 @@
 TLC := tlc-colour -difftrace
 
+SHARED := Makefile Util.tla
+
 info:
 	@echo "Commands:"
 	@echo
@@ -15,32 +17,32 @@ info:
 drafts:
 	$(TLC) drafts
 drafts-watch:
-	ls -1 drafts* Makefile | entr -cr make drafts
+	ls -1 drafts* $(SHARED) | entr -cr make drafts
 
 
 .PHONY: encryption encryption-watch
 encryption:
 	$(TLC) encryption
 encryption-watch:
-	ls -1 encryption* Makefile | entr -cr make encryption
+	ls -1 encryption* $(SHARED) | entr -cr make encryption
 
 
 .PHONY: project project-watch
 project:
 	./project
 project-watch:
-	ls -1 project* Makefile | entr -cr make project
+	ls -1 project* $(SHARED) | entr -cr make project
 
 
 .PHONY: websocket_client websocket_client-watch
 websocket_client:
 	$(TLC) websocket_client
 websocket_client-watch:
-	ls -1 websocket_client* Makefile | entr -cr make websocket_client
+	ls -1 websocket_client* $(SHARED) | entr -cr make websocket_client
 
 
 .PHONY: websockets websockets-watch
 websockets:
 	$(TLC) websockets
 websockets-watch:
-	ls -1 websockets* Makefile | entr -cr make websockets
+	ls -1 websockets* $(SHARED) | entr -cr make websockets
