@@ -92,15 +92,15 @@ VARIABLES serverSeen,   \* Keys & secrets the server has ever had undecrypted ac
           keyKeySecret, \* secret decrypted with keyKey
           oldSecrets    \* Previously used secrets (undecrypted)
 
-vars == << serverSeen, userSeen, pcReplaceKey, data, key, secret, keyKeySecret, oldSecrets >>
+vars = << serverSeen, userSeen, pcReplaceKey, data, key, secret, keyKeySecret, oldSecrets >>
 
-UsedSecrets        == oldSecrets ++ {secret}
-UsersWithoutKeyKey == {u \in Users : key.key \notin userSeen[u]}
-UsersWithKeyKey    == {u \in Users : key.key \in userSeen[u]}
+UsedSecrets        = oldSecrets ++ {secret}
+UsersWithoutKeyKey = {u \in Users : key.key \notin userSeen[u]}
+UsersWithKeyKey    = {u \in Users : key.key \in userSeen[u]}
 
 -----------------------------------------------------------------------------------------------------------------------
 
-TypeInvariants ==
+TypeInvariants =
   & serverSeen   \in SUBSET (Keys ++ Secrets)
   & userSeen     \in [Users -> SUBSET (Keys ++ Secrets ++ [decrypted: Secrets ++ Keys, key: Keys])]
   & pcReplaceKey \in [Users -> [old: Secrets, new: Secrets, active: {TRUE}] ++ [active: {FALSE}]]
@@ -110,46 +110,46 @@ TypeInvariants ==
   & secret       \in Secrets
   & oldSecrets   \in SUBSET Secrets
 
-KeyKeyUnlocksDataKey ==
-  key.decrypted = data.key
+KeyKeyUnlocksDataKey =
+  key.decrypted == data.key
 
-ValueInvariants ==
-  & keyKeySecret.key = key.key
-  & keyKeySecret.decrypted = secret
+ValueInvariants =
+  & keyKeySecret.key == key.key
+  & keyKeySecret.decrypted == secret
   \* debug
   \*/\ PrintT([serverSeen |-> serverSeen, userSeen |-> userSeen, pcReplaceKey |-> pcReplaceKey, data |-> data, key |-> key, secret |-> secret, keyKeySecret |-> keyKeySecret, oldSecrets |-> oldSecrets])
 
-SanityChecksT ==
+SanityChecksT =
   & serverSeen \subseteq serverSeen'
   & \A u \in Users : userSeen[u] \subseteq userSeen'[u]
 
-SanityChecks == [][SanityChecksT]_<<vars>>
+SanityChecks = [][SanityChecksT]_<<vars>>
 
 -----------------------------------------------------------------------------------------------------------------------
 
-UserSees(u, s) == userSeen' = [userSeen EXCEPT ![u] = @ ++ s]
-ServerSees(s)  == serverSeen' = serverSeen ++ s
+UserSees(u, s) = userSeen' == [userSeen EXCEPT ![u] == @ ++ s]
+ServerSees(s)  = serverSeen' == serverSeen ++ s
 
 -----------------------------------------------------------------------------------------------------------------------
 
-Init ==
-  LET u         == CHOOSE u \in Users : TRUE
-      dataKey   == CHOOSE k \in Keys  : TRUE
-      keyKey    == CHOOSE k \in Keys  : TRUE
-      encData   == [decrypted |-> Data,    key |-> dataKey]
-      encKey    == [decrypted |-> dataKey, key |-> keyKey]
-      encSecret == [decrypted |-> secret,  key |-> keyKey]
+Init =
+  LET u         = CHOOSE u \in Users : TRUE
+      dataKey   = CHOOSE k \in Keys  : TRUE
+      keyKey    = CHOOSE k \in Keys  : TRUE
+      encData   = [decrypted |-> Data,    key |-> dataKey]
+      encKey    = [decrypted |-> dataKey, key |-> keyKey]
+      encSecret = [decrypted |-> secret,  key |-> keyKey]
   IN
-    & secret       = CHOOSE s \in Secrets : TRUE
-    & serverSeen   = {secret}
-    & data         = encData
-    & key          = encKey
-    & keyKeySecret = encSecret
-    & userSeen     = [i \in Users |-> IF i = u THEN {dataKey, keyKey, secret, encKey, encSecret} ELSE {}]
-    & oldSecrets   = {}
-    & pcReplaceKey = [i \in Users |-> [active |-> FALSE]]
+    & secret       == CHOOSE s \in Secrets : TRUE
+    & serverSeen   == {secret}
+    & data         == encData
+    & key          == encKey
+    & keyKeySecret == encSecret
+    & userSeen     == [i \in Users |-> IF i == u THEN {dataKey, keyKey, secret, encKey, encSecret} ELSE {}]
+    & oldSecrets   == {}
+    & pcReplaceKey == [i \in Users |-> [active |-> FALSE]]
 
-ReadProject(u) ==
+ReadProject(u) =
   & | key.key \in userSeen[u]
      | keyKeySecret \in userSeen[u] & data.key \in userSeen[u]
   & UserSees(u, {secret, keyKeySecret, data.key})
@@ -158,7 +158,7 @@ ReadProject(u) ==
 \* Users can share secrets between themselves offline
 \* In terms of keyKeys, that's expected and recommended.
 \* In terms of secrets & dataKeys, those are hacking attempts.
-UsersShareSecrets ==
+UsersShareSecrets =
   \E u1 \in Users :
   \E s  \in userSeen[u1] :
   \E u2 \in Users :
@@ -167,34 +167,34 @@ UsersShareSecrets ==
     & UserSees(u2, {s})
     & UNCHANGED << serverSeen, pcReplaceKey, data, key, secret, keyKeySecret, oldSecrets >>
 
-ReplaceKey1(u) ==
-  LET seen      == userSeen[u]
-      hasKeyKey == key.key \in seen
-      secret2   == CHOOSE s \in Secrets : s \notin UsedSecrets
-      seenDK2   == IF hasKeyKey THEN {data.key} ELSE {}
+ReplaceKey1(u) =
+  LET seen      = userSeen[u]
+      hasKeyKey = key.key \in seen
+      secret2   = CHOOSE s \in Secrets : s \notin UsedSecrets
+      seenDK2   = IF hasKeyKey THEN {data.key} ELSE {}
   IN
     & | hasKeyKey
        | keyKeySecret \in seen & data.key \in seen
     & UserSees(u, {secret2} ++ seenDK2)
     & ServerSees({secret2})
-    & pcReplaceKey' = [pcReplaceKey EXCEPT ![u] = [old |-> secret, new |-> secret2, active |-> TRUE]]
+    & pcReplaceKey' == [pcReplaceKey EXCEPT ![u] == [old |-> secret, new |-> secret2, active |-> TRUE]]
     & UNCHANGED << data, key, secret, keyKeySecret, oldSecrets >>
 
-ReplaceKey2(u) ==
-  LET s == pcReplaceKey[u] IN
+ReplaceKey2(u) =
+  LET s = pcReplaceKey[u] IN
   & s.active
   & \E keyKey1 \in Keys \intersect userSeen[u] :
      \E keyKey2 \in Keys :
      \E dataKey2 \in Keys : \* Either user decrypts actual dataKey using keyKey (expected), or attacker uses bullshit
-       & LET UserKeyKeySecret == [decrypted |-> s.old, key |-> keyKey1]
+       & LET UserKeyKeySecret = [decrypted |-> s.old, key |-> keyKey1]
           IN
-            & keyKeySecret = UserKeyKeySecret \* server-side assertion
+            & keyKeySecret == UserKeyKeySecret \* server-side assertion
             & UserSees(u, {keyKey2, dataKey2, s.new})
-            & secret'       = s.new
-            & keyKeySecret' = [decrypted |-> s.new  ,  key |-> keyKey2]
-            & key'          = [decrypted |-> dataKey2, key |-> keyKey2]
-            & oldSecrets'   = oldSecrets ++ {secret}
-            & pcReplaceKey' = [pcReplaceKey EXCEPT ![u] = [active |-> FALSE]]
+            & secret'       == s.new
+            & keyKeySecret' == [decrypted |-> s.new  ,  key |-> keyKey2]
+            & key'          == [decrypted |-> dataKey2, key |-> keyKey2]
+            & oldSecrets'   == oldSecrets ++ {secret}
+            & pcReplaceKey' == [pcReplaceKey EXCEPT ![u] == [active |-> FALSE]]
             & UNCHANGED << serverSeen, data >>
 (*
   TODO Server needs
@@ -216,7 +216,7 @@ ReplaceKey2(u) ==
       - D2
       - K1
       - K2
-    - to test whether D1 = D2
+    - to test whether D1 == D2
 
 Say Alice has two encryption keys (K1, K2), and two data (D1, D2).
 Now say Bob has encrypted copies of Alice's data (D1/K1, D2/K2) and isn't allowed to know any of {K1, K2, D1, D2}.
@@ -226,7 +226,7 @@ Or put another way, how can Alice prove to Bob that D1 is/isn't D2.
 *)
 
 
-Next ==
+Next =
   | UsersShareSecrets
   | \E u \in Users :
     | ReadProject(u)
@@ -235,21 +235,21 @@ Next ==
 
 -----------------------------------------------------------------------------------------------------------------------
 
-SafeFromServer ==
-  LET CanDecryptData == data.key \in serverSeen
-      CanDecryptKey  == key.key \in serverSeen
+SafeFromServer =
+  LET CanDecryptData = data.key \in serverSeen
+      CanDecryptKey  = key.key \in serverSeen
   IN ~(CanDecryptData | CanDecryptKey)
 
-SafeFromUsersWithoutKeyKey ==
+SafeFromUsersWithoutKeyKey =
   & \A u \in UsersWithoutKeyKey :
     & ~ENABLED(ReadProject(u))
 
-OpenToUsersWithKeyKey ==
+OpenToUsersWithKeyKey =
   & \A u \in UsersWithKeyKey :
     & ENABLED(ReadProject(u))
 
 -----------------------------------------------------------------------------------------------------------------------
 
-Spec == Init & [][Next]_<<vars>>
+Spec = Init & [][Next]_<<vars>>
 
 ========================================================================================================================

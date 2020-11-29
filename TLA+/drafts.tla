@@ -55,16 +55,16 @@ CONSTANT Worker
 ASSUME & IsFiniteSet(Browser)
        & IsFiniteSet(Worker)
 
-MCSymmetry == Permutations(Browser) ++ Permutations(Worker)
+MCSymmetry = Permutations(Browser) ++ Permutations(Worker)
 
 VARIABLE browsers \* browser state
 VARIABLE workers  \* worker states
 VARIABLE remote   \* remote state
 VARIABLE network  \* network between WW and remote
 
-vars == << browsers, workers, network, remote >>
+vars = << browsers, workers, network, remote >>
 
-varDesc == [
+varDesc = [
   browsers |-> browsers,
   workers  |-> workers,
   network  |-> network,
@@ -73,27 +73,27 @@ varDesc == [
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Types
 
-Provenance  == [Worker -> Nat]                               \* i.e. Map[WorkerId, Time]
-Draft       == [worker: Worker, time: Nat, prov: Provenance] \* no need to include draft content
-Storage     == SUBSET Draft                                  \* i.e. Set[Draft]
+Provenance  = [Worker -> Nat]                               \* i.e. Map[WorkerId, Time]
+Draft       = [worker: Worker, time: Nat, prov: Provenance] \* no need to include draft content
+Storage     = SUBSET Draft                                  \* i.e. Set[Draft]
 
-nonExistant == "nonExistant"
-live        == "live"
-closed      == "closed"
-dirty       == "dirty"
+nonExistant = "nonExistant"
+live        = "live"
+closed      = "closed"
+dirty       = "dirty"
 
-BrowserState == [
+BrowserState = [
   ls  : Storage, \* localStorage
   idb : Storage] \* indexedDB
 
-EditorState ==
+EditorState =
   [status: {closed}] ++
   [
     status: {dirty},
     draft: Draft
   ]
 
-WorkerState ==
+WorkerState =
   [status: {nonExistant}] ++
   [
     status   : {live},
@@ -104,16 +104,16 @@ WorkerState ==
     syncQueue: SUBSET Draft \* Drafts to send to the server
   ]
 
-Msg == [
+Msg = [
   worker: Worker,
   toSvr : BOOLEAN,
   drafts: SUBSET Draft \* i.e. Set[Draft]
 ]
 
-NetworkState ==
+NetworkState =
   Seq(Msg) \* i.e. List[Msg]
 
-TypeInvariants ==
+TypeInvariants =
   & browsers \in [Browser -> BrowserState]
   & workers \in [Worker -> WorkerState]
   & network \in NetworkState
@@ -122,89 +122,89 @@ TypeInvariants ==
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Data
 
-StorageInvariants(s) ==
+StorageInvariants(s) =
   Assert1(
-    Cardinality(s) = Cardinality({d.worker : d \in s}),
+    Cardinality(s) == Cardinality({d.worker : d \in s}),
     "Duplicate drafts/worker:", s)
 
-DataInvariants ==
+DataInvariants =
   \* & PrintT(varDesc)
 
   & \A b \in Browser :
-    LET bs == browsers[b]
+    LET bs = browsers[b]
     IN & StorageInvariants(bs.idb)
        & StorageInvariants(bs.ls)
 
   & \A w \in Worker :
-    LET ws == workers[w]
-    IN & ws.status = live => ws.time > 0 & ws.lastEdit < ws.time
+    LET ws = workers[w]
+    IN & ws.status == live => ws.time > 0 & ws.lastEdit < ws.time
 
   & StorageInvariants(remote)
 
-Init ==
-  & browsers = [b \in Browser |-> [ls |-> {}, idb |-> {}]]
-  & workers = [w \in Worker |-> [status |-> nonExistant]]
-  & network = <<>>
-  & remote = {}
+Init =
+  & browsers == [b \in Browser |-> [ls |-> {}, idb |-> {}]]
+  & workers == [w \in Worker |-> [status |-> nonExistant]]
+  & network == <<>>
+  & remote == {}
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Functions
 
-SendMsg(msg) ==
-  network' = Append(network, msg)
+SendMsg(msg) =
+  network' == Append(network, msg)
 
-RecvMsg(i) ==
-  network' = RemoveAt(network, i)
+RecvMsg(i) =
+  network' == RemoveAt(network, i)
 
-NoProv ==
+NoProv =
  [w \in Worker |-> 0]
 
-NewDraft(w, prevProv) ==
+NewDraft(w, prevProv) =
   [
     worker |-> w,
     time   |-> workers[w].time,
-    prov   |-> [prevProv EXCEPT ![w] = 0]
+    prov   |-> [prevProv EXCEPT ![w] == 0]
   ]
 
-Store(storage, draft) ==
-  LET withoutOld == {d \in storage : d.worker != draft.worker}
+Store(storage, draft) =
+  LET withoutOld = {d \in storage : d.worker != draft.worker}
   IN  withoutOld ++ {draft}
 
-StoreAll(storage, drafts) ==
+StoreAll(storage, drafts) =
   SetReduce(drafts, storage, Store)
 
 \* TODO assumes idb always works
-StoreClientSide(b, draft) ==
-  LET bs  == browsers[b]
-      bs2 == [bs EXCEPT !.idb = Store(@, draft)]
-      bs3 == [bs EXCEPT !.ls = Store(@, draft)]
-  IN { [browsers EXCEPT ![b] = bs2]
-    \* , [browsers EXCEPT ![b] = bs3]
+StoreClientSide(b, draft) =
+  LET bs  = browsers[b]
+      bs2 = [bs EXCEPT !.idb == Store(@, draft)]
+      bs3 = [bs EXCEPT !.ls == Store(@, draft)]
+  IN { [browsers EXCEPT ![b] == bs2]
+    \* , [browsers EXCEPT ![b] == bs3]
   }
 
-OnEdit(w) ==
+OnEdit(w) =
   LET
-    ws        == workers[w]
-    t         == ws.time
-    lastEdit2 == IF ws.editor.status = closed THEN ws.lastEdit ELSE t
-    prevProv  == IF ws.editor.status = closed THEN NoProv ELSE ws.editor.draft.prov
-    draft2    == NewDraft(w, prevProv)
-    editor2   == [status |-> dirty, draft |-> draft2]
-  IN [workers EXCEPT ![w] = [ws EXCEPT
-        !.time      = t + 1,
-        !.editor    = editor2,
-        !.lastEdit  = lastEdit2,
-        !.syncQueue = Store(@, draft2)
+    ws        = workers[w]
+    t         = ws.time
+    lastEdit2 = IF ws.editor.status == closed THEN ws.lastEdit ELSE t
+    prevProv  = IF ws.editor.status == closed THEN NoProv ELSE ws.editor.draft.prov
+    draft2    = NewDraft(w, prevProv)
+    editor2   = [status |-> dirty, draft |-> draft2]
+  IN [workers EXCEPT ![w] == [ws EXCEPT
+        !.time      == t + 1,
+        !.editor    == editor2,
+        !.lastEdit  == lastEdit2,
+        !.syncQueue == Store(@, draft2)
       ]]
 
 ------------------------------------------------------------------------------------------------------------------------
 \* Actions
 
-WorkerNew ==
-  \E w \in Worker : workers[w].status = nonExistant
+WorkerNew =
+  \E w \in Worker : workers[w].status == nonExistant
     & \E b \in Browser :
      \* TODO load from CSS
-      & workers' = [workers EXCEPT ![w] = [
+      & workers' == [workers EXCEPT ![w] == [
             status    |-> live,
             browser   |-> b,
             time      |-> 1,
@@ -214,59 +214,59 @@ WorkerNew ==
           ]]
       & UNCHANGED << browsers, network, remote >>
 
-DraftNew ==
-  \E w \in Worker : workers[w].status = live
-    & LET ws == workers[w]
-       IN & ws.editor.status = closed
-          & workers' = OnEdit(w)
+DraftNew =
+  \E w \in Worker : workers[w].status == live
+    & LET ws = workers[w]
+       IN & ws.editor.status == closed
+          & workers' == OnEdit(w)
           & browsers' \in StoreClientSide(ws.browser, NewDraft(w, NoProv))
           & UNCHANGED << network, remote >>
 
-DraftEdit ==
-  \E w \in Worker : workers[w].status = live
-    & LET ws == workers[w]
-       IN & ws.editor.status = dirty
+DraftEdit =
+  \E w \in Worker : workers[w].status == live
+    & LET ws = workers[w]
+       IN & ws.editor.status == dirty
           & ws.lastEdit != ws.time - 1 \* Avoid consecutive edits / infinite model
-          & workers' = OnEdit(w)
+          & workers' == OnEdit(w)
           & browsers' \in StoreClientSide(ws.browser, NewDraft(w, ws.editor.draft.prov))
           & UNCHANGED << network, remote >>
 
-WorkerSend ==
+WorkerSend =
   & \E w \in Worker :
-    & workers[w].status = live
+    & workers[w].status == live
     & workers[w].syncQueue != {}
-    & workers' = [workers EXCEPT ![w].syncQueue = {}] \* In reality we'll only clear after confirmed received
+    & workers' == [workers EXCEPT ![w].syncQueue == {}] \* In reality we'll only clear after confirmed received
     & SendMsg([worker |-> w, toSvr |-> TRUE, drafts |-> workers[w].syncQueue])
     & UNCHANGED << browsers, remote >>
 
-RemoteRecv ==
+RemoteRecv =
   \E i \in (1..Len(network)) :
     & network[i].toSvr
     & RecvMsg(i)
-    & remote' = StoreAll(remote, network[i].drafts)
+    & remote' == StoreAll(remote, network[i].drafts)
     & UNCHANGED << browsers, workers >>
 
 \* Will websockets periodically push? Will workers request?
 \* As far as the spec goes it doesn't matter.
-RemoteSend ==
+RemoteSend =
   & remote != {}
   & \E w \in Worker:
-    & workers[w].status = live
-    & ~(\E i \in DOMAIN network : ~network[i].toSvr & network[i].worker = w) \* Don't re-send if msg already on the way
+    & workers[w].status == live
+    & ~(\E i \in DOMAIN network : ~network[i].toSvr & network[i].worker == w) \* Don't re-send if msg already on the way
     & SendMsg([worker |-> w, toSvr |-> FALSE, drafts |-> remote])
     & UNCHANGED << browsers, workers, remote >>
 
-WorkerRecv ==
+WorkerRecv =
   \E i \in (1..Len(network)) :
     & ~network[i].toSvr
     & RecvMsg(i)
-    & workers' = workers \* TODO #########################################
+    & workers' == workers \* TODO #########################################
     & UNCHANGED << browsers, remote >>
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Spec
 
-Next ==
+Next =
   | WorkerNew
   | DraftNew
   | DraftEdit
@@ -275,6 +275,6 @@ Next ==
   | RemoteSend
   | WorkerRecv
 
-Spec == Init & [][Next]_<<vars>>
+Spec = Init & [][Next]_<<vars>>
 
 ========================================================================================================================

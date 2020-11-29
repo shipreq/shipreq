@@ -20,48 +20,48 @@ EXTENDS TLC
 
 VARIABLES cli, svr
 
-vars == << cli, svr >>
+vars = << cli, svr >>
 
-connecting == "connecting"
-open       == "open      "
-closing    == "closing   "
-closed     == "closed    "
+connecting = "connecting"
+open       = "open      "
+closing    = "closing   "
+closed     = "closed    "
 
-WSStates == {connecting, open, closing, closed}
+WSStates = {connecting, open, closing, closed}
 
-TypeInvariants ==
+TypeInvariants =
   & PrintT([cli |-> cli, svr |-> svr])
   & cli \in WSStates
   & svr \in WSStates
 
-Init ==
-  & cli = closed
-  & svr = closed
+Init =
+  & cli == closed
+  & svr == closed
 
 -----------------------------------------------------------------------------------------
 
-ClientConnect ==
-  & cli = closed
-  & svr = closed
-  & cli' = connecting
+ClientConnect =
+  & cli == closed
+  & svr == closed
+  & cli' == connecting
   & UNCHANGED svr
 
-ClientConnected ==
-  & cli = connecting
+ClientConnected =
+  & cli == connecting
   & svr \in {connecting,open}
-  & cli' = open
+  & cli' == open
   & UNCHANGED svr
 
-ClientClose ==
+ClientClose =
   & cli != closed
-  & cli' = closing
+  & cli' == closing
   & UNCHANGED svr
 
-ClientClosed ==
-  & cli' = closed
+ClientClosed =
+  & cli' == closed
   & UNCHANGED svr
 
-Client ==
+Client =
   | ClientConnect
   | ClientConnected
   | ClientClose
@@ -69,28 +69,28 @@ Client ==
 
 -----------------------------------------------------------------------------------------
 
-ServerConnect ==
-  & svr = closed
-  & cli = connecting
-  & svr' = connecting
+ServerConnect =
+  & svr == closed
+  & cli == connecting
+  & svr' == connecting
   & UNCHANGED cli
 
-ServerConnected ==
-  & svr = connecting
+ServerConnected =
+  & svr == connecting
   & cli \in {connecting,open}
-  & svr' = open
+  & svr' == open
   & UNCHANGED cli
 
-ServerClose ==
+ServerClose =
   & svr != closed
-  & svr' = closing
+  & svr' == closing
   & UNCHANGED cli
 
-ServerClosed ==
-  & svr' = closed
+ServerClosed =
+  & svr' == closed
   & UNCHANGED cli
 
-Server ==
+Server =
   | ServerConnect
   | ServerConnected
   | ServerClose
@@ -98,10 +98,10 @@ Server ==
 
 -----------------------------------------------------------------------------------------
 
-Next ==
+Next =
   | Client
   | Server
 
-Spec == Init & [][Next]_vars
+Spec = Init & [][Next]_vars
 
 ========================================================================================================================
