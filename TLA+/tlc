@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -uo pipefail
+
+# cd "$(dirname "$0")" || exit 1
+[ $# -eq 0 ] && echo "Usage: $0 [args] <module>" && exit 1
+
+cmd=(tlc-colour)
+
+while [ $# -gt 1 ]; do
+  cmd+=("$1")
+  shift
+done
+module="$1"
+
+tmp=/tmp/$(date +%Y%m%d-%H%M%S)-$$
+mkdir $tmp
+# trap "rm -rf $tmp" EXIT
+
+./convert <$module.tla >$tmp/$module.tla
+cp $module.cfg $tmp
+cmd+=($module)
+
+echo "> cd $tmp && ${cmd[@]}"
+cd $tmp
+
+"${cmd[@]}"
+r=$?
+
+if [ $r -eq 0 ]; then
+  rm -rf $tmp
+fi
+
+exit $r

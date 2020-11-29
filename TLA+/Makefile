@@ -1,6 +1,6 @@
-TLC := tlc-colour -difftrace
+TLC := ./tlc -difftrace
 
-SHARED := Makefile Util.tla
+SHARED := convert Makefile tlc Util.tla
 
 info:
 	@echo "Commands:"
