@@ -23,6 +23,19 @@ Min[x \in Nat, y \in Nat] = IF x < y THEN x ELSE y
 Max[x \in Nat, y \in Nat] = IF x > y THEN x ELSE y
 
 ------------------------------------------------------------------------------------------------------------------------
+\* Option
+
+None =
+  [isEmpty |-> TRUE, isDefined |-> FALSE]
+
+Option(S) =
+  [get: S, isEmpty: {FALSE}, isDefined: {TRUE}] ++
+  {None}
+
+Some(s) =
+  [get |-> s, isEmpty |-> FALSE, isDefined |-> TRUE]
+
+------------------------------------------------------------------------------------------------------------------------
 \* Sets
 
 kSubset(k, S) =

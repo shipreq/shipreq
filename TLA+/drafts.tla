@@ -85,9 +85,9 @@ NetworkParticipant =
   Worker ++ Tab ++ server
 
 Msg = [
-  from  : NetworkParticipant,
-  to    : NetworkParticipant,
-  drafts: SUBSET Draft \* i.e. Set[Draft]
+  from: NetworkParticipant,
+  to  : NetworkParticipant,
+  body: SUBSET Draft \* i.e. Set[Draft]
 ]
 
 NetworkState =
@@ -98,21 +98,21 @@ BrowserState = [
   idb: Storage] \* indexedDB
 
 TabState =
-  [status: {nonExistant}] ++
+  [ status: {nonExistant}] ++
   [
-    status    : {clean},
-    worker    : Worker
+    status: {clean},
+    worker: Worker
   ] ++
   [
-    status    : {dirty},
-    worker    : Worker,
-    draft     : Draft,
-    dirtySince: Nat \* Value is worker time
+    status        : {dirty},
+    worker        : Worker,
+    prevDraft     : Option(Draft),
+    hasLocalChange: BOOLEAN
   ] ++
   [
-    status    : {conflicted},
-    worker    : Worker,
-    drafts    : SUBSET Draft
+    status  : {conflicted},
+    worker  : Worker,
+    drafts  : SUBSET Draft
   ]
 
 WorkerState =
@@ -155,7 +155,9 @@ DataInvariants =
 
   & \A t \in Tab :
     LET ts = tabs[t]
-    IN ts.status == conflicted => ts.drafts != {}
+    IN
+      & ts.status == dirty      => (ts.hasLocalChange | ts.prevDraft.isDefined)
+      & ts.status == conflicted => ts.drafts != {}
 
   & \A w \in Worker :
     LET ws = workers[w]
@@ -167,8 +169,10 @@ DataInvariants =
           | msg.from \in a & msg.to \in b
           | msg.from \in b & msg.to \in a
     IN
-      | participants(Tab, Worker)
-      | participants(Tab, {server})
+      & participants(Tab, Worker) | participants(Tab, {server})
+      & msg.to \in Worker => workers[msg.to].status == live
+      & msg.to \in Tab => tabs[msg.to].status \in {clean, dirty, conflicted}
+
 
   & StorageInvariants(remote)
 
@@ -182,8 +186,14 @@ Init =
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Functions
 
+NewMsg(from, to, body) =
+  [from |-> from, to |-> to, body |-> body]
+
 SendMsg(msg) =
   network' == Append(network, msg)
+
+SendMsgs(msg1, msg2) =
+  network' == network \o <<msg1, msg2>>
 
 RecvMsg(i) =
   network' == RemoveAt(network, i)
@@ -258,15 +268,6 @@ PruneByEq(ds) =
 Prune(drafts) =
   PruneByEq(drafts) ++ {PruneByProv(drafts)}
 
-\* \* TODO assumes idb always works
-\* StoreClientSide(b, draft) =
-\*   LET bs  = browsers[b]
-\*       bs2 = [bs EXCEPT !.idb == Store(@, draft)]
-\*       bs3 = [bs EXCEPT !.ls == Store(@, draft)]
-\*   IN { [browsers EXCEPT ![b] == bs2]
-\*     \* , [browsers EXCEPT ![b] == bs3]
-\*   }
-
 \* OnEdit(w) =
 \*   LET
 \*     ws        = workers[w]
@@ -284,7 +285,7 @@ Prune(drafts) =
 
 NewTabState(w, prunedDrafts) =
   LET cleanState    = [worker |-> w, status |-> clean]
-      dirtyState(d) = [worker |-> w, status |-> dirty, draft |-> d, dirtySince |-> 0]
+      dirtyState(d) = [worker |-> w, status |-> dirty, prevDraft |-> Some(d), hasLocalChange |-> FALSE]
       conflictState = [worker |-> w, status |-> conflicted, drafts |-> prunedDrafts]
       soleDraft     = SetSoleElement(prunedDrafts)
   IN
@@ -323,19 +324,55 @@ TabNew =
         LET ws        = workers'[w]
             bs        = browsers[ws.browser]
             drafts1   = remote
-            drafts2   = AddDrafts(drafts1, bs.ls)
+            drafts2   = AddDrafts(drafts1, bs.ls) \* TODO reading ls & idb not atomic
             drafts    = AddDrafts(drafts2, bs.idb) \* TODO Sometimes unavailable
             draftSets = Prune(drafts)
             nextT(ds) = [tabs EXCEPT ![t] == NewTabState(w, ds)]
-            msgWW(ds) = [from |-> t, to |-> w, drafts |-> ds]
+            msgWW(ds) = NewMsg(t, w, ds)
             nextN(ds) = IF remote == {} THEN network ELSE Append(network, msgWW(ds))
             nexts     = { << nextT(ds), nextN(ds) >> : ds \in draftSets }
         IN
           & tabs'    \in { n[1] : n \in nexts }
           & network' \in { n[2] : n \in nexts }
 
+UserEditClean =
+  \E t \in Tab:
+    LET ts  = tabs[t]
+        w   = ts.worker
+        ts2 = [worker |-> w, status |-> dirty, prevDraft |-> None, hasLocalChange |-> TRUE]
+    IN
+      & ts.status == clean
+      & tabs' == [tabs EXCEPT ![t] == ts2]
+      & UNCHANGED << browsers, workers, network, remote >>
+
+TabBroadcast =
+  \E t \in Tab:
+    LET ts  = tabs[t]
+        w   = ts.worker
+    IN
+      & ts.status == clean
+      & tabs' == [tabs EXCEPT ![t] == ts2]
+      & UNCHANGED << browsers, workers, network, remote >>
+
+WorkerRecv =
+  \E i \in (1..Len(network)) :
+    LET msg   = network[i]
+        w     = msg.to
+        ws    = workers[w]
+        b     = ws.browser
+        bs    = browsers[b]
+        dss   = Prune(AddDrafts(bs.idb, msg.body))
+        bss   = { [browsers EXCEPT ![b].idb == ds] : ds \in dss }
+        \* TODO Doesn't handle IDB unavailability, or LS (un)?availability
+    IN
+      & w \in Worker
+      & RecvMsg(i)
+      & UNCHANGED << remote, tabs, workers >>
+      & browsers' \in bss
+
 \* DraftNew =
-\*   \E w \in Worker : workers[w].status == live
+\*   \E w \in Worker:
+\*     & workers[w].status == live
 \*     & LET ws = workers[w]
 \*        IN & ws.editor.status == closed
 \*           & workers' == OnEdit(w)
@@ -376,24 +413,14 @@ TabNew =
 \*     & SendMsg([worker |-> w, toSvr |-> FALSE, drafts |-> remote])
 \*     & UNCHANGED << browsers, workers, remote >>
 
-\* WorkerRecv =
-\*   \E i \in (1..Len(network)) :
-\*     & ~network[i].toSvr
-\*     & RecvMsg(i)
-\*     & workers' == workers \* TODO #########################################
-\*     & UNCHANGED << browsers, remote >>
-
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Spec
 
 Next =
+  | TabBroadcast
   | TabNew
-\*   | DraftNew
-\*   | DraftEdit
-\*   | WorkerSend
-\*   | RemoteRecv
-\*   | RemoteSend
-\*   | WorkerRecv
+  | UserEditClean
+  | WorkerRecv
 
 Spec = Init & [][Next]_<<vars>>
 
