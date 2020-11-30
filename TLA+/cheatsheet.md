@@ -11,10 +11,16 @@
 | (A,B)    | <<a,b>>          | A \X B   |
 +----------+------------------+----------+
 
-+------------+---------------------+
-| x map f    | {   f(x) : x \in X} |
-| x filter f | {x \in X : f(x)   } |
-+------------+---------------------+
++--------+---------------------+
+| map    | {   f(e) : e \in S} | Remember `fmap` like in Haskell, f comes first. [f]map
+| filter | {e \in S : f(e)   } | TLA+ makes me want to forfeit => ff => f…f => [f]ilter S [f]
++--------+---------------------+
+
+CHOOSE x \in S : P(x)
+
+CASE x = 1 -> a
+  [] x = 2 -> b
+  [] OTHER -> c
 ```
 
 # Templates
