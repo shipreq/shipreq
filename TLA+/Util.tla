@@ -16,8 +16,8 @@ Assert1(ok, msg, data1) =
 ------------------------------------------------------------------------------------------------------------------------
 \* Sets
 
-Min[as \in SUBSET Nat] = CHOOSE a \in as : \A b \in as : a <= b
-Max[as \in SUBSET Nat] = CHOOSE a \in as : \A b \in as : a >= b
+SetMin[as \in SUBSET Nat] = CHOOSE a \in as : \A b \in as : a <= b
+SetMax[as \in SUBSET Nat] = CHOOSE a \in as : \A b \in as : a >= b
 
 SetReplace(set, old, new) = { IF a == old THEN new ELSE a : a \in set }
 

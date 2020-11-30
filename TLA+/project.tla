@@ -119,9 +119,9 @@ IsUserInUse(u) =
 RedisTotalVer =
   LET IsComplete =
         | redis.events == {}
-        | redis.ver + 1 == Min[redis.events]
+        | redis.ver + 1 == SetMin[redis.events]
       Ver =
-        IF redis.events == {} THEN redis.ver ELSE Max[redis.events]
+        IF redis.events == {} THEN redis.ver ELSE SetMax[redis.events]
   IN IF IsComplete
      THEN Ver
      ELSE redis.ver \* really this is the largest subset that is complete, i.e. the snapshot + events up to the gap
@@ -158,7 +158,7 @@ DataInvariants =
     & \* No gaps in Redis events
        IF redis.ver > 0
        THEN (e - 1) \in (redis.events ++ {redis.ver}) \* all events proceed snapshot
-       ELSE (e - 1) \in (redis.events) | e == Min[redis.events]
+       ELSE (e - 1) \in (redis.events) | e == SetMin[redis.events]
 
 MCAllowAct = db.ver < MCVerLimit
 
@@ -194,7 +194,7 @@ RedisWriteEvents(eventsToCache, eventsToCacheAndPublish, OnOk, OnFail) =
                    & redis' == [redis EXCEPT !.events == @ ++ newEvents]
   IN & IF newEvents == {} THEN
           fail
-        ELSE IF Min[newEvents] > RedisTotalVer + 1 THEN
+        ELSE IF SetMin[newEvents] > RedisTotalVer + 1 THEN
           fail \* Gaps in redis.events prohibited
         ELSE
           apply
@@ -410,7 +410,7 @@ SyncRequest =
     & s.status == "active"
     & s.reqs == {}
     & s.future != {} \* by this point we know we have missing events
-    & LET missing = ((s.ver + 1) .. (Max[s.future] - 1)) -- s.future
+    & LET missing = ((s.ver + 1) .. (SetMax[s.future] - 1)) -- s.future
        IN procsS' == [procsS EXCEPT ![u] == missing]
     & UNCHANGED << db, redis, procsU, procsL, procsR, pub, userState, sub >>
 
