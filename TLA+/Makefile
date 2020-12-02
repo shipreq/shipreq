@@ -1,6 +1,7 @@
-TLC := ./tlc -difftrace
-
-SHARED := convert_dialect Makefile tlc Util.tla
+TLC      := ./tlc -difftrace
+TLC1     := TLC_OPTS="-workers 1" $(TLC)
+SHOW_SEP := @echo -e "\e[46m========================================================================================================================\e[0m"
+SHARED   := convert_dialect Makefile tlc Util.tla
 
 info:
 	@echo "Commands:"
@@ -15,7 +16,8 @@ info:
 
 .PHONY: drafts drafts-watch
 drafts:
-	$(TLC) drafts
+	$(SHOW_SEP)
+	$(TLC1) -deadlock drafts
 drafts-watch:
 	ls -1 drafts* $(SHARED) | entr -cr make drafts
 

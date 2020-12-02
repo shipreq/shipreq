@@ -16,6 +16,24 @@ Assert1(ok, msg, data1) ==
     & PrintT("Error: " \o msg)
     & ~PrintT(data1)
 
+Log(msg) ==
+  LET sep == "----------------------------------------------------------------------------------------------------"
+  IN
+    & PrintT(sep)
+    & PrintT(msg)
+    & PrintT(sep)
+
+TapF(f(_), a) ==
+  IF Log(f(a))
+  THEN a
+  ELSE "impossible"
+
+Tap(a) ==
+  TapF(LAMBDA x: x, a)
+
+Show(name, a) ==
+  TapF(LAMBDA x: [n \in {name} |-> x], a)
+
 ------------------------------------------------------------------------------------------------------------------------
 \* Nats
 
@@ -53,6 +71,9 @@ OptionMap(o, f(_)) ==
 
 OptionFlatmap(o, f(_)) ==
   IF o.isEmpty THEN o ELSE f(o.get)
+
+SomeWhen(cond, s) ==
+  IF cond THEN Some(s) ELSE None
 
 NoneAndSome(a) ==
   {None, Some(a)}
@@ -108,6 +129,12 @@ SetReduce(set, op(_, _)) ==
     IN op(f[s -- {x}], x)
   IN f[set]
 
+SetReduceOr(set, ifEmpty, op(_, _)) ==
+  IF set = {} THEN
+    ifEmpty
+  ELSE
+    SetReduce(set, op)
+
 SetSoleElement(set) ==
   IF Cardinality(set) = 1
   THEN Some(CHOOSE x \in set: TRUE)
@@ -131,6 +158,12 @@ SeqFind(seq, pred(_)) ==
   IN IF i = 0
      THEN None
      ELSE Some(seq[i])
+
+SeqExists(seq, f(_)) ==
+  SeqIndexOf(seq, f) != 0
+
+SeqForall(seq, f(_)) ==
+  ~SeqExists(seq, LAMBDA a: ~f(a))
 
 RemoveAt(s, i) ==
   SubSeq(s, 1, i-1) \o SubSeq(s, i+1, Len(s))

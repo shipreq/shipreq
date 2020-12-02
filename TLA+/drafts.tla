@@ -50,11 +50,14 @@ CONSTANT BrowserSrcSync
 CONSTANT Tab
 CONSTANT Worker
 
+CONSTANT MCBrowserStorageAlwaysAvailable
+
 ASSUME & IsFiniteSet(Browser)
        & IsFiniteSet(BrowserSrcAsync)
        & IsFiniteSet(BrowserSrcSync)
        & IsFiniteSet(Tab)
        & IsFiniteSet(Worker)
+       & MCBrowserStorageAlwaysAvailable \in BOOLEAN
 
 MCSymmetry ==
   Permutations(Browser) ++
@@ -71,7 +74,7 @@ VARIABLE workers
 
 vars == << browsers, network, remote, tabs, workers >>
 
-varDesc == [
+state == [
   browsers |-> browsers,
   network  |-> network,
   remote   |-> remote,
@@ -95,7 +98,9 @@ loading     == "loading"
 Remote      == "Remote"
 
 Msg ==
-  [from: Tab, to: Worker, drafts: Drafts, newEdit: BOOLEAN]
+  [from: Tab,    to: Worker,   drafts: Drafts, newEdit: Option(Provenance)] ++
+  [from: Worker, to: Tab,      drafts: Drafts, newEdit: Option(Draft)] ++
+  [from: Tab,    to: {Remote}, drafts: Drafts]
 
 NetworkState ==
   Seq(Msg) \* i.e. List[Msg]
@@ -128,9 +133,10 @@ TabState ==
     localChange: BOOLEAN        \* editor has change that hasn't been sent to WW yet
   ] ++
   [
-    status: {conflicted},
-    worker: Worker,
-    drafts: { ds \in Drafts : Cardinality(ds) > 1 }
+    status     : {conflicted},
+    worker     : Worker,
+    drafts     : { ds \in Drafts : Cardinality(ds) > 1 },
+    localChange: BOOLEAN \* editor has change that hasn't been sent to WW yet
   ]
 
 WorkerState ==
@@ -166,16 +172,13 @@ DataInvariantsBrowsers ==
       bs[src].isEmpty | StorageInvariants(bs[src].get)
 
 DataInvariantsNetwork ==
-  \A i \in DOMAIN network :
-    LET msg == network[i]
-        to == msg.to
-        participants(a, b) ==
-          | msg.from \in a & to \in b
-          | msg.from \in b & to \in a
-    IN
-      & participants(Tab, Worker) | participants(Tab, {server})
-      & to \in Worker => workers[to].status = live
-      & to \in Tab => tabs[to].status \in {clean, dirty, conflicted}
+  TRUE
+  \* \A i \in DOMAIN network :
+  \*   LET msg == network[i]
+  \*       to == msg.to
+  \*   IN
+  \*     & to \in Worker => workers[to].status = live
+  \*     & to \in Tab => tabs[to].status \in {clean, dirty, conflicted}
 
 DataInvariantsRemote ==
   StorageInvariants(remote)
@@ -190,14 +193,29 @@ DataInvariantsWorkers ==
     IN ws.status = live => ws.time > 0
 
 Init ==
-  & browsers \in [Browser -> [BrowserSrc -> NoneAndSome({})]]
   & network    = <<>>
   & remote     = {}
   & tabs       = [t \in Tab |-> [status |-> nonExistant]]
   & workers    = [w \in Worker |-> [status |-> nonExistant]]
+  & IF MCBrowserStorageAlwaysAvailable
+    THEN browsers = [b \in Browser |-> [s \in BrowserSrc |-> Some({})]]
+    ELSE browsers \in [Browser -> [BrowserSrc -> NoneAndSome({})]]
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Functions
+
+Connected(tab, worker) ==
+  & tabs[tab].status != nonExistant
+  & tabs[tab].worker = worker
+
+TabDrafts(t) ==
+  LET ts == tabs[t]
+      s  == ts.status
+  IN CASE s = nonExistant -> {}
+       [] s = loading     -> ts.drafts
+       [] s = clean       -> {}
+       [] s = dirty       -> ts.draft.toSet
+       [] s = conflicted  -> ts.drafts
 
 SendMsg(msg) ==
   network' = Append(network, msg)
@@ -223,10 +241,16 @@ AddProv(draft, prov) ==
 
 (* NOTE: Doesn't prune *)
 AddDraft(storage, draft) ==
-  LET old == SetFind(storage, LAMBDA d: d.worker = draft.worker)
-  IN IF old.isEmpty
-     THEN storage ++ {draft}
-     ELSE (storage -- {old.get}) ++ {AddProv(draft, old.get.prov)}
+  LET sibling == SetFind(storage, LAMBDA d: d.worker = draft.worker)
+  IN IF sibling.isEmpty THEN
+       storage ++ {draft}
+     ELSE
+      LET s   == sibling.get
+          new == IF s.time > draft.time THEN s ELSE draft
+          old == IF s.time > draft.time THEN draft ELSE s
+      IN IF s = draft
+         THEN storage
+         ELSE (storage -- {s}) ++ {AddProv(new, old.prov)}
 
 (* NOTE: Doesn't prune *)
 AddDrafts(storage, drafts) ==
@@ -252,9 +276,10 @@ or if w1 and w3 drafts have the same content:
 RECURSIVE PruneByProv(_)
 PruneByProv(ds) ==
   LET f2(d1, d2) ==
-        LET t == d1.prov[d2.worker]
-            p == d1.worker != d2.worker & t > 0 & d2.time <= t
-        IN IF p THEN Some(<<d1, d2>>) ELSE None
+        LET pt     == d1.prov[d2.worker]
+            byProv == d1.worker != d2.worker & pt > 0 & d2.time < pt
+            bySrc  == d1.worker = d2.worker & d1.time > d2.time
+        IN SomeWhen(bySrc | byProv, <<d1, d2>>)
       f(d1) == SetCollectFirst(ds, LAMBDA d2: f2(d1, d2))
       match == SetCollectFirst(ds, f)
   IN IF match.isEmpty
@@ -290,10 +315,10 @@ Prune(drafts) ==
 \*         !.syncQueue = Store(@, draft2)
 \*       ]]
 
-NewTabState(w, prunedDrafts) ==
+NewTabState(w, prunedDrafts, localChange) ==
   LET cleanState    == [worker |-> w, status |-> clean]
-      dirtyState(d) == [worker |-> w, status |-> dirty, prevDraft |-> Some(d), localChange |-> FALSE]
-      conflictState == [worker |-> w, status |-> conflicted, drafts |-> prunedDrafts]
+      dirtyState(d) == [worker |-> w, status |-> dirty, draft |-> Some(d), localChange |-> localChange]
+      conflictState == [worker |-> w, status |-> conflicted, drafts |-> prunedDrafts, localChange |-> localChange]
       soleDraft     == SetSoleElement(prunedDrafts)
   IN
     IF prunedDrafts = {} THEN
@@ -305,6 +330,38 @@ NewTabState(w, prunedDrafts) ==
 
 \* ------------------------------------------------------------------------------------------------------------------------
 \* Actions
+
+RemoteHearTab ==
+  LET i == SeqIndexOf(network, LAMBDA m: m.to = Remote & m.from \in Tab)
+  IN
+    & i != 0
+    & RecvMsg(i)
+    & remote' \in Prune(AddDrafts(remote, network[i].drafts))
+    & UNCHANGED << browsers, tabs, workers >>
+
+TabHearWorker ==
+  LET i == SeqIndexOf(network, LAMBDA m: m.from \in Worker & m.to \in Tab)
+  IN
+    & i != 0
+    & LET msg == network[i]
+          t   == msg.to
+          ts  == tabs[t]
+          w   == ts.worker
+          dss == Prune(AddDrafts(TabDrafts(t), msg.drafts))
+          localChanges ==
+            IF msg.newEdit.isDefined & ts.status \in {dirty,conflicted} & ts.localChange THEN
+              BOOLEAN \* Maybe the new draft clears out the status, maybe there are more changes since
+            ELSE
+              {FALSE}
+          results ==
+            UNION {{
+              [tabs EXCEPT ![t] = NewTabState(w, ds, ls)]
+              : ls \in localChanges }
+              : ds \in dss }
+      IN
+        & RecvMsg(i)
+        & tabs' \in results
+        & UNCHANGED << browsers, remote, workers >>
 
 TabLoad ==
   \E t \in Tab:
@@ -362,9 +419,40 @@ TabStart ==
     IN
       & ts.status = loading
       & ts.awaiting = {}
-      & tabs' = [tabs EXCEPT ![t] = NewTabState(w, ts.drafts)]
-      & SendMsg([from |-> t, to |-> w, drafts |-> ts.drafts, newEdit |-> FALSE])
+      & tabs' = [tabs EXCEPT ![t] = NewTabState(w, ts.drafts, FALSE)]
+      & IF ts.drafts = {}
+        THEN UNCHANGED network
+        ELSE SendMsg([from |-> t, to |-> w, drafts |-> ts.drafts, newEdit |-> None])
       & UNCHANGED << browsers, remote, workers >>
+
+TabTellRemote ==
+  \E t \in Tab:
+    LET ds == TabDrafts(t)
+    IN
+      & ds != {}
+      & ds != remote
+      & ~SeqExists(network, LAMBDA m: m.from = t & m.to = Remote)
+      & SendMsg([
+          from    |-> t,
+          to      |-> Remote,
+          drafts  |-> ds
+        ])
+      & UNCHANGED << browsers, workers, remote, tabs >>
+
+TabTellWorker ==
+  \E t \in Tab:
+    LET ts == tabs[t]
+    IN
+      & ts.status = dirty
+      & ts.localChange
+      & tabs' = [tabs EXCEPT ![t].localChange = FALSE]
+      & SendMsg([
+          from    |-> t,
+          to      |-> ts.worker,
+          drafts  |-> {},
+          newEdit |-> SomeWhen(ts.localChange, IF ts.draft.isEmpty THEN NoProv ELSE ts.draft.get.prov)
+        ])
+      & UNCHANGED << browsers, workers, remote >>
 
 UserEditClean ==
   \E t \in Tab:
@@ -380,35 +468,48 @@ WorkerHearTab ==
   LET i == SeqIndexOf(network, LAMBDA m: m.to \in Worker)
   IN
     & i != 0
-    & LET msg == network[i]
-          w   == msg.to
-          ws  == workers[w]
-          dss == Prune(AddDrafts(ws.drafts, msg.drafts))
-          wss == { [workers EXCEPT ![w].drafts = ds] : ds \in dss }
+    & LET msg      == network[i]
+          w        == msg.to
+          ws       == workers[w]
+          t2       == IF msg.newEdit.isEmpty THEN ws.time ELSE ws.time + 1
+          new      == OptionMap(msg.newEdit, LAMBDA n: NewDraft(w, n))
+          dss      == Prune(AddDrafts(ws.drafts, AddDrafts(msg.drafts, new.toSet)))
+          ws2(ds)  == [workers EXCEPT ![w].drafts = ds, ![w].time = t2]
+          msgs(ds) == IF ds = ws.drafts THEN
+                        {}
+                      ELSE
+                        LET toTabs    == { t \in Tab : Connected(t, w) }
+                            newMsg(t) == [from |-> w, to |-> t, drafts |-> ds, newEdit |-> new]
+                        IN { newMsg(t) : t \in toTabs }
+          results == { <<ws2(ds), msgs(ds)>> : ds \in dss }
+          network2 == RemoveAt(network, i)
       IN
-        & ~msg.newEdit \* TODO later
-        & RecvMsg(i)
-        & workers' \in wss
+        & workers' \in { r[1] : r \in results }
+        & network' \in { SetFold(r[2], network2, Append) : r \in results }
         & UNCHANGED << browsers, remote, tabs >>
 
-\* WorkerSync ==
-\*   \E w \in Worker:
-\*     & workers[w].status = live
-\*     & LET ws == workers[w]
-\*           b  == workers[w].browser
-\*           bs == browsers[b]
-\*           SyncWith(src)
-\*       IN
-
-\* TabTellWorker ==
-\*   \E t \in Tab:
-\*     LET ts == tabs[t]
-\*     IN
-\*       & ts.status = dirty
-\*       & ts.localChange
-\*       & tabs' = [tabs EXCEPT ![t].localChange = FALSE]
-\*       & SendMsg([from |-> t, to |-> ts.worker, drafts |-> ts.prevDraft.toSet, newEdit |-> TRUE])
-\*       & UNCHANGED << browsers, workers, remote >>
+\* This happens periodically without a trigger event
+WorkerSyncBrowser ==
+  \E w \in Worker:
+    LET ws == workers[w]
+        b  == workers[w].browser
+        bs == browsers[b]
+        Attempt(src) ==
+          IF bs[src].isEmpty | bs[src].get = ws.drafts THEN
+            {}
+          ELSE
+            LET dss == Prune(AddDrafts(ws.drafts, bs[src].get))
+                ws2(ds) == [workers EXCEPT ![w].drafts = ds]
+                bs2(ds) == [browsers EXCEPT ![b][src] = Some(ds)]
+            IN
+              \* IF ~Log([WW |-> ws.drafts, BS |-> bs[src].get, RES |-> dss]) THEN {} ELSE
+              { <<ws2(ds), bs2(ds)>> : ds \in dss }
+        results == UNION { Attempt(s) : s \in BrowserSrc }
+    IN
+      & workers[w].status = live
+      & workers'  \in { r[1] : r \in results }
+      & browsers' \in { r[2] : r \in results }
+      & UNCHANGED << remote, network, tabs >>
 
 \* UserEditDirty ==
 \*   \E t \in Tab:
@@ -464,15 +565,34 @@ WorkerHearTab ==
 \* Spec
 
 Next ==
-  \* | TabTellWorker
-  \* | UserEditDirty
+  | RemoteHearTab
+  | TabHearWorker
   | TabLoad
   | TabNew
   | TabStart
+  | TabTellRemote
+  | TabTellWorker
   | UserEditClean
   | WorkerHearTab
-  \* | WorkerSync
+  | WorkerSyncBrowser
 
 Spec == Init & [][Next]_<<vars>>
+
+FinalInvariants ==
+  ~ENABLED(Next) =>
+    & network = <<>>
+    & remote != {}
+    & \A t \in Tab : tabs[t].status != loading
+    \* & Log(state)
+
+\* TODO More final invariants
+
+EventualConsistency ==
+  ~ENABLED(Next) =>
+    LET draftsB == UNION UNION UNION {{ browsers[b][s].toSet : b \in Browser } : s \in BrowserSrc }
+        draftsT == UNION { TabDrafts(t) : t \in Tab }
+        draftsW == UNION { IF workers[w].status = nonExistant THEN {} ELSE workers[w].drafts : w \in Worker }
+        drafts  == remote ++ draftsB ++ draftsT ++ draftsW
+    IN Assert1(Cardinality(drafts) = 1, "Drafts are not eventually-consistent", drafts)
 
 ========================================================================================================================
