@@ -40,20 +40,29 @@ Important notes
 
 TODO
 ====
-- When starting a new tab, add separate steps for reading ls & idb
+- make each browser storage potentially unavailable
 *)
 
 EXTENDS FiniteSets, Naturals, Sequences, TLC, Util
 
 CONSTANT Browser
+CONSTANT BrowserSrcAsync
+CONSTANT BrowserSrcSync
 CONSTANT Tab
 CONSTANT Worker
 
 ASSUME & IsFiniteSet(Browser)
+       & IsFiniteSet(BrowserSrcAsync)
+       & IsFiniteSet(BrowserSrcSync)
        & IsFiniteSet(Tab)
        & IsFiniteSet(Worker)
 
-MCSymmetry == Permutations(Browser) ++ Permutations(Tab) ++ Permutations(Worker)
+MCSymmetry ==
+  Permutations(Browser) ++
+  Permutations(BrowserSrcAsync) ++
+  Permutations(BrowserSrcSync) ++
+  Permutations(Tab) ++
+  Permutations(Worker)
 
 VARIABLE browsers
 VARIABLE network
@@ -85,8 +94,6 @@ nonExistant == "nonExistant"
 server      == "server"
 loading     == "loading"
 Remote      == "Remote"
-IDB         == "IDB"
-LS          == "LS"
 
 Msg ==
   [from: Tab, to: Worker, drafts: Drafts, newEdit: BOOLEAN]
@@ -94,9 +101,14 @@ Msg ==
 NetworkState ==
   Seq(Msg) \* i.e. List[Msg]
 
-BrowserState == [
-  ls : Drafts, \* localStorage
-  idb: Drafts] \* indexedDB
+BrowserSrc ==
+  BrowserSrcAsync ++ BrowserSrcSync
+
+BrowserState ==
+  [BrowserSrc -> Drafts]
+
+AnySrc ==
+  BrowserSrc ++ {Remote}
 
 TabState ==
   [ status: {nonExistant}] ++
@@ -104,17 +116,17 @@ TabState ==
     status  : {loading},
     worker  : Worker,
     drafts  : Drafts,
-    awaiting: SUBSET {Remote, IDB, LS}
+    awaiting: SUBSET AnySrc
   ] ++
   [
     status: {clean},
     worker: Worker
   ] ++
   [
-    status        : {dirty},
-    worker        : Worker,
-    draft         : Option(Draft), \* last known draft for editor state
-    hasLocalChange: BOOLEAN        \* editor has change that hasn't been sent to WW yet
+    status     : {dirty},
+    worker     : Worker,
+    draft      : Option(Draft), \* last known draft for editor state
+    localChange: BOOLEAN        \* editor has change that hasn't been sent to WW yet
   ] ++
   [
     status: {conflicted},
@@ -151,8 +163,7 @@ StorageInvariants(s) ==
 DataInvariantsBrowsers ==
   \A b \in Browser :
     LET bs == browsers[b]
-    IN & StorageInvariants(bs.idb)
-       & StorageInvariants(bs.ls)
+    IN \A src \in BrowserSrc : StorageInvariants(bs[src])
 
 DataInvariantsNetwork ==
   \A i \in DOMAIN network :
@@ -178,7 +189,7 @@ DataInvariantsWorkers ==
     IN ws.status = live => ws.time > 0
 
 Init ==
-  & browsers = [b \in Browser |-> [ls |-> {}, idb |-> {}]]
+  & browsers = [b \in Browser |-> [s \in BrowserSrc |-> {}]]
   & network  = <<>>
   & remote   = {}
   & tabs     = [t \in Tab |-> [status |-> nonExistant]]
@@ -280,7 +291,7 @@ Prune(drafts) ==
 
 NewTabState(w, prunedDrafts) ==
   LET cleanState    == [worker |-> w, status |-> clean]
-      dirtyState(d) == [worker |-> w, status |-> dirty, prevDraft |-> Some(d), hasLocalChange |-> FALSE]
+      dirtyState(d) == [worker |-> w, status |-> dirty, prevDraft |-> Some(d), localChange |-> FALSE]
       conflictState == [worker |-> w, status |-> conflicted, drafts |-> prunedDrafts]
       soleDraft     == SetSoleElement(prunedDrafts)
   IN
@@ -310,11 +321,8 @@ TabLoad ==
                      awaiting2 == ts.awaiting -- {src}
                      ts2(ds2)  == [ts EXCEPT !.drafts = ds2, !.awaiting = awaiting2]
                  IN {[tabs EXCEPT ![t] = ts2(ds2)] : ds2 \in drafts2s }
-      IN tabs' \in UNION {
-        Attempt(Remote, remote),
-        Attempt(IDB, bs.idb),
-        Attempt(LS, bs.ls)
-      }
+          browserAttempts == UNION { Attempt(src, bs[src]) : src \in BrowserSrc }
+      IN tabs' \in (browserAttempts ++ Attempt(Remote, remote))
 
 TabNew ==
   \E t \in Tab:
@@ -338,7 +346,7 @@ TabNew ==
           status   |-> loading,
           worker   |-> w,
           drafts   |-> {},
-          awaiting |-> {Remote, IDB, LS}
+          awaiting |-> AnySrc
         ]]
 
 TabStart ==
@@ -356,14 +364,14 @@ UserEditClean ==
   \E t \in Tab:
     LET ts  == tabs[t]
         w   == ts.worker
-        ts2 == [worker |-> w, status |-> dirty, prevDraft |-> None, hasLocalChange |-> TRUE]
+        ts2 == [worker |-> w, status |-> dirty, draft |-> None, localChange |-> TRUE]
     IN
       & ts.status = clean
       & tabs' = [tabs EXCEPT ![t] = ts2]
       & UNCHANGED << browsers, workers, network, remote >>
 
 WorkerHearTab ==
-  LET i   == SeqIndexOf(network, LAMBDA m: m.to \in Worker)
+  LET i == SeqIndexOf(network, LAMBDA m: m.to \in Worker)
   IN
     & i != 0
     & LET msg == network[i]
@@ -377,21 +385,30 @@ WorkerHearTab ==
         & workers' \in wss
         & UNCHANGED << browsers, remote, tabs >>
 
+\* WorkerSync ==
+\*   \E w \in Worker:
+\*     & workers[w].status = live
+\*     & LET ws == workers[w]
+\*           b  == workers[w].browser
+\*           bs == browsers[b]
+\*           SyncWith(src)
+\*       IN
+
 \* TabTellWorker ==
 \*   \E t \in Tab:
 \*     LET ts == tabs[t]
 \*     IN
 \*       & ts.status = dirty
-\*       & ts.hasLocalChange
-\*       & tabs' = [tabs EXCEPT ![t].hasLocalChange = FALSE]
+\*       & ts.localChange
+\*       & tabs' = [tabs EXCEPT ![t].localChange = FALSE]
 \*       & SendMsg([from |-> t, to |-> ts.worker, drafts |-> ts.prevDraft.toSet, newEdit |-> TRUE])
 \*       & UNCHANGED << browsers, workers, remote >>
 
 \* UserEditDirty ==
 \*   \E t \in Tab:
 \*     & tabs[t].status = dirty
-\*     & ~tabs[t].hasLocalChange
-\*     & tabs' = [tabs EXCEPT ![t].hasLocalChange = TRUE]
+\*     & ~tabs[t].localChange
+\*     & tabs' = [tabs EXCEPT ![t].localChange = TRUE]
 \*     & UNCHANGED << browsers, workers, network, remote >>
 
 \* DraftNew ==
@@ -448,6 +465,7 @@ Next ==
   | TabStart
   | UserEditClean
   | WorkerHearTab
+  \* | WorkerSync
 
 Spec == Init & [][Next]_<<vars>>
 
