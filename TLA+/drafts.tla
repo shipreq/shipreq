@@ -466,6 +466,20 @@ UserEditClean ==
       & tabs' = [tabs EXCEPT ![t] = ts2]
       & UNCHANGED << browsers, workers, network, remote >>
 
+\* No need for this because
+\* 1. In TabHearWorker we handle the case that a local change has been made after sending it to WW
+\* 2. Enabling makes it very hard to keep the model space finite
+\* 3. The only thing we're missing is an editor sending multiple revisions of a draft to WW before getting a result
+\*    which is extremely low probability (if possible at all) PLUS we can handle that logic easily enough
+\*    outside of the model. Having it in the model shouldn't change anything.
+UserEditDirty ==
+  FALSE
+\*   \E t \in Tab:
+\*     & tabs[t].status = dirty
+\*     & ~tabs[t].localChange
+\*     & tabs' = [tabs EXCEPT ![t].localChange = TRUE]
+\*     & UNCHANGED << browsers, workers, network, remote >>
+
 WorkerHearTab ==
   LET i == SeqIndexOf(network, LAMBDA m: m.to \in Worker)
   IN
@@ -512,13 +526,6 @@ WorkerSyncBrowser ==
       & workers'  \in { r[1] : r \in results }
       & browsers' \in { r[2] : r \in results }
       & UNCHANGED << remote, network, tabs >>
-
-\* UserEditDirty ==
-\*   \E t \in Tab:
-\*     & tabs[t].status = dirty
-\*     & ~tabs[t].localChange
-\*     & tabs' = [tabs EXCEPT ![t].localChange = TRUE]
-\*     & UNCHANGED << browsers, workers, network, remote >>
 
 \* DraftNew ==
 \*   \E w \in Worker:
@@ -575,6 +582,7 @@ Next ==
   | TabTellRemote
   | TabTellWorker
   | UserEditClean
+  | UserEditDirty
   | WorkerHearTab
   | WorkerSyncBrowser
 
