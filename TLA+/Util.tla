@@ -133,10 +133,8 @@ SetFold(set, acc, op(_, _)) ==
 
 (* Example usage: Sum(set) == SetReduce(set, LAMBDA a, b: a + b) *)
 SetReduce(set, op(_, _)) ==
-  LET f[s \in SUBSET set] ==
-    LET x == CHOOSE x \in s: TRUE
-    IN op(f[s -- {x}], x)
-  IN f[set]
+  LET x == CHOOSE x \in set: TRUE
+  IN SetFold(set -- {x}, x, op)
 
 SetReduceOr(set, ifEmpty, op(_, _)) ==
   IF set = {} THEN

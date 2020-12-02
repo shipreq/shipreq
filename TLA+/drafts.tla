@@ -296,7 +296,7 @@ PruneByProv(ds) ==
 PruneByEq(ds) ==
   LET equalSets == { x \in SUBSET(ds) : Cardinality(x) > 1 }
       merge(es) == SetReduce(es, LAMBDA x,y: AddProv(x, y.prov))
-  IN  { (ds -- es) ++ merge(es) : es \in equalSets }
+  IN { (ds -- es) ++ {merge(es)} : es \in equalSets }
 
 \* Returns a set of possible outcomes
 Prune(drafts) ==
