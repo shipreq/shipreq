@@ -333,7 +333,7 @@ NewTabState(w, prunedDrafts, localChange) ==
 \* ------------------------------------------------------------------------------------------------------------------------
 \* Actions
 
-RemoteHearTab ==
+RemoteRecvFromTab ==
   LET i == SeqIndexOf(network, LAMBDA m: m.to = Remote & m.from \in Tab)
   IN
     & i != 0
@@ -341,7 +341,7 @@ RemoteHearTab ==
     & remote' \in Prune(AddDrafts(remote, network[i].drafts))
     & UNCHANGED << browsers, tabs, workers >>
 
-TabHearWorker ==
+TabRecvFromWorker ==
   LET i == SeqIndexOf(network, LAMBDA m: m.from \in Worker & m.to \in Tab)
   IN
     & i != 0
@@ -427,7 +427,7 @@ TabStart ==
         ELSE SendMsg([from |-> t, to |-> w, drafts |-> ts.drafts, newEdit |-> None])
       & UNCHANGED << browsers, remote, workers >>
 
-TabTellRemote ==
+TabSendToRemote ==
   \E t \in Tab:
     LET ds == TabDrafts(t)
     IN
@@ -441,7 +441,7 @@ TabTellRemote ==
         ])
       & UNCHANGED << browsers, workers, remote, tabs >>
 
-TabTellWorker ==
+TabSendToWorker ==
   \E t \in Tab:
     LET ts == tabs[t]
     IN
@@ -467,7 +467,7 @@ UserEditClean ==
       & UNCHANGED << browsers, workers, network, remote >>
 
 \* No need for this because
-\* 1. In TabHearWorker we handle the case that a local change has been made after sending it to WW
+\* 1. In TabRecvFromWorker we handle the case that a local change has been made after sending it to WW
 \* 2. Enabling makes it very hard to keep the model space finite
 \* 3. The only thing we're missing is an editor sending multiple revisions of a draft to WW before getting a result
 \*    which is extremely low probability (if possible at all) PLUS we can handle that logic easily enough
@@ -480,7 +480,7 @@ UserEditDirty ==
 \*     & tabs' = [tabs EXCEPT ![t].localChange = TRUE]
 \*     & UNCHANGED << browsers, workers, network, remote >>
 
-WorkerHearTab ==
+WorkerRecvFromTab ==
   LET i == SeqIndexOf(network, LAMBDA m: m.to \in Worker)
   IN
     & i != 0
@@ -574,16 +574,16 @@ WorkerSyncBrowser ==
 \* Spec
 
 Next ==
-  | RemoteHearTab
-  | TabHearWorker
+  | RemoteRecvFromTab
+  | TabRecvFromWorker
   | TabLoad
   | TabNew
   | TabStart
-  | TabTellRemote
-  | TabTellWorker
+  | TabSendToRemote
+  | TabSendToWorker
   | UserEditClean
   | UserEditDirty
-  | WorkerHearTab
+  | WorkerRecvFromTab
   | WorkerSyncBrowser
 
 Spec == Init & [][Next]_<<vars>>
