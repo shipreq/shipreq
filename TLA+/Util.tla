@@ -54,6 +54,9 @@ OptionMap(o, f(_)) ==
 OptionFlatmap(o, f(_)) ==
   IF o.isEmpty THEN o ELSE f(o.get)
 
+NoneAndSome(a) ==
+  {None, Some(a)}
+
 ------------------------------------------------------------------------------------------------------------------------
 \* Sets
 

@@ -40,7 +40,6 @@ Important notes
 
 TODO
 ====
-- make each browser storage potentially unavailable
 *)
 
 EXTENDS FiniteSets, Naturals, Sequences, TLC, Util
@@ -105,7 +104,7 @@ BrowserSrc ==
   BrowserSrcAsync ++ BrowserSrcSync
 
 BrowserState ==
-  [BrowserSrc -> Drafts]
+  [BrowserSrc -> Option(Drafts)] \* None means not supported by browser
 
 AnySrc ==
   BrowserSrc ++ {Remote}
@@ -163,7 +162,8 @@ StorageInvariants(s) ==
 DataInvariantsBrowsers ==
   \A b \in Browser :
     LET bs == browsers[b]
-    IN \A src \in BrowserSrc : StorageInvariants(bs[src])
+    IN \A src \in BrowserSrc:
+      bs[src].isEmpty | StorageInvariants(bs[src].get)
 
 DataInvariantsNetwork ==
   \A i \in DOMAIN network :
@@ -181,6 +181,7 @@ DataInvariantsRemote ==
   StorageInvariants(remote)
 
 DataInvariantsTabs ==
+  \* PrintT(browsers)
   TRUE
 
 DataInvariantsWorkers ==
@@ -189,11 +190,11 @@ DataInvariantsWorkers ==
     IN ws.status = live => ws.time > 0
 
 Init ==
-  & browsers = [b \in Browser |-> [s \in BrowserSrc |-> {}]]
-  & network  = <<>>
-  & remote   = {}
-  & tabs     = [t \in Tab |-> [status |-> nonExistant]]
-  & workers  = [w \in Worker |-> [status |-> nonExistant]]
+  & browsers \in [Browser -> [BrowserSrc -> NoneAndSome({})]]
+  & network    = <<>>
+  & remote     = {}
+  & tabs       = [t \in Tab |-> [status |-> nonExistant]]
+  & workers    = [w \in Worker |-> [status |-> nonExistant]]
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Functions
@@ -321,7 +322,12 @@ TabLoad ==
                      awaiting2 == ts.awaiting -- {src}
                      ts2(ds2)  == [ts EXCEPT !.drafts = ds2, !.awaiting = awaiting2]
                  IN {[tabs EXCEPT ![t] = ts2(ds2)] : ds2 \in drafts2s }
-          browserAttempts == UNION { Attempt(src, bs[src]) : src \in BrowserSrc }
+          AttemptOption(src, o) ==
+            IF o.isEmpty
+            THEN {[tabs EXCEPT ![t].awaiting = @ -- {src}]}
+            ELSE Attempt(src, o.get)
+          browserAttempts ==
+            UNION { AttemptOption(src, bs[src]) : src \in BrowserSrc }
       IN tabs' \in (browserAttempts ++ Attempt(Remote, remote))
 
 TabNew ==
