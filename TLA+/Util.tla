@@ -175,6 +175,9 @@ SeqExists(seq, f(_)) ==
 SeqForall(seq, f(_)) ==
   ~SeqExists(seq, LAMBDA a: ~f(a))
 
+SeqContains(seq, a) ==
+  SeqIndexOf(seq, LAMBDA b: a = b) != 0
+
 RemoveAt(s, i) ==
   SubSeq(s, 1, i-1) \o SubSeq(s, i+1, Len(s))
 

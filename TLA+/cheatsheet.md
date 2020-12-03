@@ -23,6 +23,30 @@ CASE x = 1 -> a
   [] OTHER -> c
 ```
 
+□  = continuously
+◇  = eventually
+□◇ = infinitely occurring (eg. ABABABABABAB..)
+◇□ = eventually becomes true and stays true continuously
+⤳  = leads to. F ⤳ G = □(F ⇒ ◇G)
+
+# Fairness
+
+Fairness: X has to happen
+
+Weak fairness:
+* If A ever becomes CONTINUOUSLY enabled, then an A step must eventually occur.
+* A cannot REMAIN enabled forever without another A step occurring.
+
+Strong fairness:
+* If A ever becomes REPEATEDLY enabled, then an A step must eventually occur.
+* A cannot BE REPEATEDLY enabled forever without another A step occurring.
+
+> fairness is specified and liveness is checked
+https://old.reddit.com/r/tlaplus/comments/iwvw3b/very_basic_liveness_not_working/
+
+Don't include liveness checks as part of the spec.
+
+
 # Templates
 
 ```tla
@@ -83,4 +107,6 @@ CONSTRAINT MCContinue
 CONSTANTS User = {u1,u2}
 
 SYMMETRY MCSymmetry
+
+PROPERTIES Liveness
 ```

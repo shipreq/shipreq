@@ -57,6 +57,7 @@ ASSUME & IsFiniteSet(Browser)
        & IsFiniteSet(BrowserSrcSync)
        & IsFiniteSet(Tab)
        & IsFiniteSet(Worker)
+       & Cardinality(Browser) = Cardinality(Worker)
        & MCBrowserStorageAlwaysAvailable \in BOOLEAN
 
 MCSymmetry ==
@@ -98,11 +99,17 @@ nonExistant == "nonExistant"
 server      == "server"
 loading     == "loading"
 Remote      == "Remote"
+syncTW      == "sync: T -> W"
+syncWT      == "sync: W -> T"
+syncTR      == "sync: T -> R"
+syncRT      == "sync: R -> T"
+doSyncR     == "do remote sync"
 
 Msg ==
-  [from: Tab,    to: Worker,   drafts: Drafts, newEdit: Option(Provenance)] ++
-  [from: Worker, to: Tab,      drafts: Drafts, newEdit: Option(Draft)] ++
-  [from: Tab,    to: {Remote}, drafts: Drafts]
+  [type: {syncTW},  from: Tab,    to: Worker,   drafts: Drafts, newEdit: Option(Provenance)] ++
+  [type: {syncWT},  from: Worker, to: Tab,      drafts: Drafts, newEdit: Option(Draft)] ++
+  [type: {syncTR},  from: Tab,    to: {Remote}, drafts: Drafts] ++
+  [type: {doSyncR}, from: Worker, to: Tab]
 
 NetworkState ==
   Seq(Msg) \* i.e. List[Msg]
@@ -144,10 +151,10 @@ TabState ==
 WorkerState ==
   [status: {nonExistant}] ++
   [
-    status : {live},
-    browser: Browser,
-    time   : Nat,
-    drafts : Drafts
+    status        : {live},
+    browser       : Browser,
+    time          : Nat,
+    drafts        : Drafts
   ]
 
 TypeInvariantsBrowsers == browsers \in [Browser -> BrowserState]
@@ -209,6 +216,9 @@ Init ==
 Connected(tab, worker) ==
   & tabs[tab].status != nonExistant
   & tabs[tab].worker = worker
+
+WorkerTabs(w) ==
+  { t \in Tab : Connected(t, w) }
 
 TabDrafts(t) ==
   LET ts == tabs[t]
@@ -334,7 +344,7 @@ NewTabState(w, prunedDrafts, localChange) ==
 \* Actions
 
 RemoteRecvFromTab ==
-  LET i == SeqIndexOf(network, LAMBDA m: m.to = Remote & m.from \in Tab)
+  LET i == SeqIndexOf(network, LAMBDA m: m.type = syncTR)
   IN
     & i != 0
     & RecvMsg(i)
@@ -342,7 +352,7 @@ RemoteRecvFromTab ==
     & UNCHANGED << browsers, tabs, workers >>
 
 TabRecvFromWorker ==
-  LET i == SeqIndexOf(network, LAMBDA m: m.from \in Worker & m.to \in Tab)
+  LET i == SeqIndexOf(network, LAMBDA m: m.type = syncWT)
   IN
     & i != 0
     & LET msg == network[i]
@@ -424,22 +434,34 @@ TabStart ==
       & tabs' = [tabs EXCEPT ![t] = NewTabState(w, ts.drafts, FALSE)]
       & IF ts.drafts = {}
         THEN UNCHANGED network
-        ELSE SendMsg([from |-> t, to |-> w, drafts |-> ts.drafts, newEdit |-> None])
+        ELSE SendMsg([
+              type    |-> syncTW,
+              from    |-> t,
+              to      |-> w,
+              drafts  |-> ts.drafts,
+              newEdit |-> None
+             ])
       & UNCHANGED << browsers, remote, workers >>
 
-TabSendToRemote ==
-  \E t \in Tab:
-    LET ds == TabDrafts(t)
-    IN
-      & ds != {}
-      & ds != remote
-      & ~SeqExists(network, LAMBDA m: m.from = t & m.to = Remote)
-      & SendMsg([
-          from    |-> t,
-          to      |-> Remote,
-          drafts  |-> ds
-        ])
-      & UNCHANGED << browsers, workers, remote, tabs >>
+TabRecvSyncRemoteInstruction ==
+  LET i == SeqIndexOf(network, LAMBDA m: m.type = doSyncR)
+  IN
+    & i != 0
+    & LET msg        == network[i]
+          t          == msg.to
+          inProgress == SeqExists(network, LAMBDA m: m.from = t & m.to = Remote)
+          ds         == TabDrafts(t)
+          syncMsg    == [
+                          type    |-> syncTR,
+                          from    |-> t,
+                          to      |-> Remote,
+                          drafts  |-> ds
+                        ]
+          syncMsgs   == IF ds = {} THEN <<>> ELSE <<syncMsg>>
+      IN
+        & ~inProgress
+        & network' = RemoveAt(network, i) \o syncMsgs
+        & UNCHANGED << browsers, workers, remote, tabs >>
 
 TabSendToWorker ==
   \E t \in Tab:
@@ -449,6 +471,7 @@ TabSendToWorker ==
       & ts.localChange
       & tabs' = [tabs EXCEPT ![t].localChange = FALSE]
       & SendMsg([
+          type    |-> syncTW,
           from    |-> t,
           to      |-> ts.worker,
           drafts  |-> {},
@@ -494,9 +517,14 @@ WorkerRecvFromTab ==
           msgs(ds) == IF ds = ws.drafts THEN
                         {}
                       ELSE
-                        LET toTabs    == { t \in Tab : Connected(t, w) }
-                            newMsg(t) == [from |-> w, to |-> t, drafts |-> ds, newEdit |-> new]
-                        IN { newMsg(t) : t \in toTabs }
+                        { [
+                            type    |-> syncWT,
+                            from    |-> w,
+                            to      |-> t,
+                            drafts  |-> ds,
+                            newEdit |-> new
+                          ] : t \in WorkerTabs(w)
+                        }
           results == { <<ws2(ds), msgs(ds)>> : ds \in dss }
           network2 == RemoveAt(network, i)
       IN
@@ -527,38 +555,17 @@ WorkerSyncBrowser ==
       & browsers' \in { r[2] : r \in results }
       & UNCHANGED << remote, network, tabs >>
 
-\* DraftNew ==
-\*   \E w \in Worker:
-\*     & workers[w].status = live
-\*     & LET ws == workers[w]
-\*        IN & ws.editor.status = closed
-\*           & workers' = OnEdit(w)
-\*           & browsers' \in StoreClientSide(ws.browser, NewDraft(w, NoProv))
-\*           & UNCHANGED << network, remote >>
-
-\* DraftEdit ==
-\*   \E w \in Worker : workers[w].status = live
-\*     & LET ws == workers[w]
-\*        IN & ws.editor.status = dirty
-\*           & ws.lastEdit != ws.time - 1 \* Avoid consecutive edits / infinite model
-\*           & workers' = OnEdit(w)
-\*           & browsers' \in StoreClientSide(ws.browser, NewDraft(w, ws.editor.draft.prov))
-\*           & UNCHANGED << network, remote >>
-
-\* WorkerSend ==
-\*   & \E w \in Worker :
-\*     & workers[w].status = live
-\*     & workers[w].syncQueue != {}
-\*     & workers' = [workers EXCEPT ![w].syncQueue = {}] \* In reality we'll only clear after confirmed received
-\*     & SendMsg([worker |-> w, toSvr |-> TRUE, drafts |-> workers[w].syncQueue])
-\*     & UNCHANGED << browsers, remote >>
-
-\* RemoteRecv ==
-\*   \E i \in (1..Len(network)) :
-\*     & network[i].toSvr
-\*     & RecvMsg(i)
-\*     & remote' = StoreAll(remote, network[i].drafts)
-\*     & UNCHANGED << browsers, workers >>
+\* TODO Track online/offline status of tabs
+WorkerInstructTabToSyncRemote ==
+  \E w \in Worker:
+    & workers[w].status = live
+    & workers[w].drafts != {}
+    & LET t   == CHOOSE t \in WorkerTabs(w) : TRUE \* TODO CHOOSE or \E?
+          cmd == [type |-> doSyncR, from |-> w, to |-> t]
+      IN
+        & ~SeqContains(network, cmd)
+        & SendMsg(cmd)
+        & UNCHANGED << browsers, remote, tabs, workers >>
 
 \* \* Will websockets periodically push? Will workers request?
 \* \* As far as the spec goes it doesn't matter.
@@ -579,30 +586,35 @@ Next ==
   | TabLoad
   | TabNew
   | TabStart
-  | TabSendToRemote
+  \* | TabSendToRemote
   | TabSendToWorker
   | UserEditClean
   | UserEditDirty
   | WorkerRecvFromTab
   | WorkerSyncBrowser
+  | WorkerInstructTabToSyncRemote
+  | TabRecvSyncRemoteInstruction
 
 Spec == Init & [][Next]_<<vars>>
 
-FinalInvariants ==
-  ~ENABLED(Next) =>
-    & network = <<>>
-    & remote != {}
-    & \A t \in Tab : tabs[t].status != loading
-    \* & Log(state)
+SpecIsFinite ==
+  <>(~ENABLED(Next))
 
-\* TODO More final invariants
+\* FinalInvariants ==
+\*   ~ENABLED(Next) =>
+\*     & network = <<>>
+\*     & remote != {}
+\*     & \A t \in Tab : tabs[t].status != loading
+\*     & Log(state)
 
-EventualConsistency ==
-  ~ENABLED(Next) =>
-    LET draftsB == UNION UNION UNION {{ browsers[b][s].toSet : b \in Browser } : s \in BrowserSrc }
-        draftsT == UNION { TabDrafts(t) : t \in Tab }
-        draftsW == UNION { IF workers[w].status = nonExistant THEN {} ELSE workers[w].drafts : w \in Worker }
-        drafts  == remote ++ draftsB ++ draftsT ++ draftsW
-    IN Assert1(Cardinality(drafts) = 1, "Drafts are not eventually-consistent", drafts)
+\* \* TODO More final invariants
+
+\* EventualConsistency ==
+\*   ~ENABLED(Next) =>
+\*     LET draftsB == UNION UNION UNION {{ browsers[b][s].toSet : b \in Browser } : s \in BrowserSrc }
+\*         draftsT == UNION { TabDrafts(t) : t \in Tab }
+\*         draftsW == UNION { IF workers[w].status = nonExistant THEN {} ELSE workers[w].drafts : w \in Worker }
+\*         drafts  == remote ++ draftsB ++ draftsT ++ draftsW
+\*     IN Assert1(Cardinality(drafts) = 1, "Drafts are not eventually-consistent", drafts)
 
 ========================================================================================================================

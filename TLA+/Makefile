@@ -17,7 +17,7 @@ info:
 .PHONY: drafts drafts-watch
 drafts:
 	$(SHOW_SEP)
-	$(TLC1) -deadlock drafts
+	$(TLC) -deadlock drafts
 drafts-watch:
 	ls -1 drafts* $(SHARED) | entr -cr make drafts
 
