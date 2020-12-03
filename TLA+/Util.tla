@@ -56,24 +56,13 @@ Max[x \in Nat, y \in Nat] == IF x > y THEN x ELSE y
 \* Option
 
 None ==
-  [
-    isEmpty   |-> TRUE,
-    toSet     |-> {}
-  ]
+  [isEmpty |-> TRUE]
 
 Some(s) ==
-  [
-    get       |-> s,
-    isEmpty   |-> FALSE,
-    toSet     |-> {s}
-  ]
+  [isEmpty |-> FALSE, get |-> s]
 
 Option(S) ==
-  {None} ++ [
-    get      : S,
-    isEmpty  : {FALSE},
-    toSet    : SUBSET S
-  ]
+  {None} ++ [isEmpty: {FALSE}, get: S]
 
 OptionMap(o, f(_)) ==
   IF o.isEmpty THEN o ELSE Some(f(o.get))
@@ -86,6 +75,11 @@ SomeWhen(cond, s) ==
 
 NoneAndSome(a) ==
   {None, Some(a)}
+
+OptionToSet(o) ==
+  IF o.isEmpty
+  THEN {}
+  ELSE {o.get}
 
 ------------------------------------------------------------------------------------------------------------------------
 \* Sets

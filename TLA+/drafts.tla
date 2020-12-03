@@ -270,11 +270,11 @@ TabDrafts(t) ==
   IN CASE s = nonExistant -> {}
        [] s = loading     -> ts.drafts
        [] s = clean       -> {}
-       [] s = dirty       -> ts.draft.toSet
+       [] s = dirty       -> OptionToSet(ts.draft)
        [] s = conflicted  -> ts.drafts
 
 AllDrafts ==
-  LET draftsB == UNION UNION UNION {{ browsers[b][s].toSet : b \in Browser } : s \in BrowserSrc }
+  LET draftsB == UNION UNION UNION {{ OptionToSet(browsers[b][s]) : b \in Browser } : s \in BrowserSrc }
       draftsT == UNION { TabDrafts(t) : t \in Tab }
       draftsW == UNION { IF workers[w].status = nonExistant THEN {} ELSE workers[w].drafts : w \in Worker }
       draftsR == remote
@@ -581,7 +581,7 @@ WorkerRecvFromTab ==
           ws       == workers[w]
           t2       == IF msg.newEdit.isEmpty THEN ws.time ELSE ws.time + 1
           new      == OptionMap(msg.newEdit, LAMBDA n: NewDraft(w, n))
-          dss      == Prune(AddDrafts(ws.drafts, AddDrafts(msg.drafts, new.toSet)))
+          dss      == Prune(AddDrafts(ws.drafts, AddDrafts(msg.drafts, OptionToSet(new))))
           ws2(ds)  == [workers EXCEPT ![w].drafts = ds, ![w].time = t2]
           msgs(ds) == IF ds = ws.drafts THEN
                         {}
