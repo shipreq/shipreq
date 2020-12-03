@@ -6,6 +6,9 @@ What's does this spec provide?
 - Drafts are never lost unless they're merged (manually or automatically), or completed by a user (whether aborted or committed)
 - Drafts are removed from all storage locations once obsolete
 - Users are prompted to keep a tab open iff we can't guarantee the draft won't be lost
+- Reliability in the face of failures such as
+  - network packet loss
+  - machines crashing or dying without warning
 
 See https://shipreq.com/project/d6My#/reqs/DE-5
 
@@ -84,12 +87,16 @@ state == [
   tabs     |-> tabs,
   workers  |-> workers]
 
+LogStates ==
+  Log(state)
+
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Types
 
 Provenance  == [Worker -> Nat]                               \* i.e. Map[WorkerId, Time]
 Draft       == [worker: Worker, time: Nat, prov: Provenance] \* no need to include draft content
 Drafts      == SUBSET Draft                                  \* i.e. Set[Draft]
+DraftsNE    == Drafts -- {{}}                                \* i.e. NonEmptySet[Draft]
 
 clean       == "clean"
 conflicted  == "conflicted"
@@ -104,12 +111,43 @@ syncWT      == "sync: W -> T"
 syncTR      == "sync: T -> R"
 syncRT      == "sync: R -> T"
 doSyncR     == "do remote sync"
+ackRT       == "ack: R -> T"
+ackTW       == "ack: T -> W"
 
-Msg ==
-  [type: {syncTW},  from: Tab,    to: Worker,   drafts: Drafts, newEdit: Option(Provenance)] ++
-  [type: {syncWT},  from: Worker, to: Tab,      drafts: Drafts, newEdit: Option(Draft)] ++
-  [type: {syncTR},  from: Tab,    to: {Remote}, drafts: Drafts] ++
-  [type: {doSyncR}, from: Worker, to: Tab]
+Msg == [
+  type   : {syncTW},
+  from   : Tab,
+  to     : Worker,
+  drafts : Drafts,
+  newEdit: Option(Provenance)
+] ++ [
+  type   : {syncWT},
+  from   : Worker,
+  to     : Tab,
+  drafts : Drafts,
+  newEdit: Option(Draft)
+] ++ [
+  type   : {syncTR},
+  from   : Tab,
+  to     : {Remote},
+  drafts : DraftsNE,
+  time   : Nat
+] ++ [
+  type   : {doSyncR},
+  from   : Worker,
+  to     : Tab,
+  time   : Nat
+] ++ [
+  type   : {ackRT},
+  from   : {Remote},
+  to     : Tab,
+  time   : Nat
+] ++ [
+  type   : {ackTW},
+  from   : Tab,
+  to     : Worker,
+  time   : Nat
+]
 
 NetworkState ==
   Seq(Msg) \* i.e. List[Msg]
@@ -154,7 +192,9 @@ WorkerState ==
     status        : {live},
     browser       : Browser,
     time          : Nat,
-    drafts        : Drafts
+    drafts        : Drafts,
+    remoteSyncedTo: Nat,
+    awaitingAck   : Option(Nat)
   ]
 
 TypeInvariantsBrowsers == browsers \in [Browser -> BrowserState]
@@ -234,6 +274,9 @@ SendMsg(msg) ==
 
 RecvMsg(i) ==
   network' = RemoveAt(network, i)
+
+RecvResp(recv, resp) ==
+  network' = Append(RemoveAt(network, recv), resp)
 
 NewDraft(w, prevProv) ==
   [
@@ -347,9 +390,17 @@ RemoteRecvFromTab ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = syncTR)
   IN
     & i != 0
-    & RecvMsg(i)
-    & remote' \in Prune(AddDrafts(remote, network[i].drafts))
-    & UNCHANGED << browsers, tabs, workers >>
+    & LET msg == network[i]
+          resp == [
+                    type |-> ackRT,
+                    from |-> Remote,
+                    to   |-> msg.from,
+                    time |-> msg.time
+                  ]
+      IN
+        & remote' \in Prune(AddDrafts(remote, msg.drafts))
+        & RecvResp(i, resp)
+        & UNCHANGED << browsers, tabs, workers >>
 
 TabRecvFromWorker ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = syncWT)
@@ -409,10 +460,12 @@ TabNew ==
           & workers[w].status = nonExistant
           & \E b \in Browser:
             & workers' = [workers EXCEPT ![w] = [
-                  status  |-> live,
-                  browser |-> b,
-                  time    |-> 1,
-                  drafts  |-> {} \* TODO load in stages just like TabNew
+                  status         |-> live,
+                  browser        |-> b,
+                  time           |-> 1,
+                  drafts         |-> {}, \* TODO load in stages just like TabNew
+                  remoteSyncedTo |-> 1,
+                  awaitingAck    |-> None
                 ]]
         | \* Existing worker
           & workers[w].status = live
@@ -455,7 +508,8 @@ TabRecvSyncRemoteInstruction ==
                           type    |-> syncTR,
                           from    |-> t,
                           to      |-> Remote,
-                          drafts  |-> ds
+                          drafts  |-> ds,
+                          time    |-> msg.time
                         ]
           syncMsgs   == IF ds = {} THEN <<>> ELSE <<syncMsg>>
       IN
@@ -504,7 +558,7 @@ UserEditDirty ==
 \*     & UNCHANGED << browsers, workers, network, remote >>
 
 WorkerRecvFromTab ==
-  LET i == SeqIndexOf(network, LAMBDA m: m.to \in Worker)
+  LET i == SeqIndexOf(network, LAMBDA m: m.type = syncTW)
   IN
     & i != 0
     & LET msg      == network[i]
@@ -556,16 +610,51 @@ WorkerSyncBrowser ==
       & UNCHANGED << remote, network, tabs >>
 
 \* TODO Track online/offline status of tabs
+\* TODO Assumes that awaitingAck will always be responded to (for the sake of model checking)
 WorkerInstructTabToSyncRemote ==
   \E w \in Worker:
-    & workers[w].status = live
-    & workers[w].drafts != {}
-    & LET t   == CHOOSE t \in WorkerTabs(w) : TRUE \* TODO CHOOSE or \E?
-          cmd == [type |-> doSyncR, from |-> w, to |-> t]
+    LET ws == workers[w]
+    IN
+      & ws.status = live
+      & ws.awaitingAck.isEmpty
+      & ws.remoteSyncedTo < ws.time
+      & ws.drafts != {}
+      & LET t   == CHOOSE t \in WorkerTabs(w) : TRUE \* TODO CHOOSE or \E?
+            cmd == [type |-> doSyncR, from |-> w, to |-> t, time |-> ws.time]
+        IN
+          & SendMsg(cmd)
+          & workers' = [workers EXCEPT ![w].awaitingAck = Some(ws.time)]
+          & UNCHANGED << browsers, remote, tabs >>
+
+TabRecvRemoteAck ==
+  LET i == SeqIndexOf(network, LAMBDA m: m.type = ackRT)
+  IN
+    & i != 0
+    & LET msg    == network[i]
+          t      == msg.to
+          newMsg == [
+            type |-> ackTW,
+            from |-> t,
+            to   |-> tabs[t].worker,
+            time |-> msg.time
+          ]
       IN
-        & ~SeqContains(network, cmd)
-        & SendMsg(cmd)
-        & UNCHANGED << browsers, remote, tabs, workers >>
+        & RecvResp(i, newMsg)
+        & UNCHANGED << browsers, remote, workers, tabs >>
+
+WorkerRecvRemoteAck ==
+  LET i == SeqIndexOf(network, LAMBDA m: m.type = ackTW)
+  IN
+    & i != 0
+    & LET msg == network[i]
+          w   == msg.to
+          ws  == workers[w]
+          t   == Max[ws.remoteSyncedTo, msg.time]
+      IN
+        & Assert1(ws.awaitingAck = Some(msg.time), "Worker not awaiting the msg", [ws |-> ws, msgTime |-> msg.time])
+        & workers' = [workers EXCEPT ![w].remoteSyncedTo = t, ![w].awaitingAck = None]
+        & RecvMsg(i)
+        & UNCHANGED << browsers, remote, tabs >>
 
 \* \* Will websockets periodically push? Will workers request?
 \* \* As far as the spec goes it doesn't matter.
@@ -582,23 +671,41 @@ WorkerInstructTabToSyncRemote ==
 
 Next ==
   | RemoteRecvFromTab
-  | TabRecvFromWorker
   | TabLoad
   | TabNew
-  | TabStart
-  \* | TabSendToRemote
+  | TabRecvFromWorker
+  | TabRecvRemoteAck
+  | TabRecvSyncRemoteInstruction
   | TabSendToWorker
+  | TabStart
   | UserEditClean
   | UserEditDirty
-  | WorkerRecvFromTab
-  | WorkerSyncBrowser
   | WorkerInstructTabToSyncRemote
-  | TabRecvSyncRemoteInstruction
+  | WorkerRecvFromTab
+  | WorkerRecvRemoteAck
+  | WorkerSyncBrowser
 
-Spec == Init & [][Next]_<<vars>>
+Fairness ==
+  & SF_<<vars>>(RemoteRecvFromTab)
+  & SF_<<vars>>(TabLoad)
+  \* & SF_<<vars>>(TabNew)
+  & SF_<<vars>>(TabRecvFromWorker)
+  & SF_<<vars>>(TabRecvRemoteAck)
+  & SF_<<vars>>(TabRecvSyncRemoteInstruction)
+  & SF_<<vars>>(TabSendToWorker)
+  & SF_<<vars>>(TabStart)
+  \* & SF_<<vars>>(UserEditClean)
+  \* & SF_<<vars>>(UserEditDirty)
+  & SF_<<vars>>(WorkerInstructTabToSyncRemote)
+  & SF_<<vars>>(WorkerRecvFromTab)
+  & SF_<<vars>>(WorkerRecvRemoteAck)
+  & SF_<<vars>>(WorkerSyncBrowser)
 
-SpecIsFinite ==
-  <>(~ENABLED(Next))
+Spec == Init & [][Next]_<<vars>> & Fairness
+
+\* SpecIsFinite ==
+  \* <><Next>_<<vars>>
+  \* <>(~ENABLED(Next))
 
 \* FinalInvariants ==
 \*   ~ENABLED(Next) =>
