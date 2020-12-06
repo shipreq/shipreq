@@ -8,13 +8,21 @@ LOCAL INSTANCE TLC
 ------------------------------------------------------------------------------------------------------------------------
 \* TLC
 
+Fail(msg) ==
+  ~PrintT("Error: " \o msg)
+
+Fail1(msg, data1) ==
+  & PrintT("Error: " \o msg)
+  & ~PrintT(data1)
+
 Assert0(ok, msg) ==
-  ~ok => ~PrintT("Error: " \o msg)
+  ~ok => Fail(msg)
 
 Assert1(ok, msg, data1) ==
-  ~ok =>
-    & PrintT("Error: " \o msg)
-    & ~PrintT(data1)
+  ~ok => Fail1(msg, data1)
+
+AssertEq(name, a, e) ==
+  Assert1(a = e, name \o " failure", [ACTUAL |-> a, EXPECT |-> e])
 
 Log(msg) ==
   LET sep == "----------------------------------------------------------------------------------------------------"
@@ -171,5 +179,21 @@ SeqContains(seq, a) ==
 
 RemoveAt(s, i) ==
   SubSeq(s, 1, i-1) \o SubSeq(s, i+1, Len(s))
+
+SeqFold(seq, acc, op(_, _)) ==
+  SetFold(DOMAIN seq, acc, LAMBDA q,i: op(q, seq[i]))
+
+SeqReduce(seq, op(_, _)) ==
+  SetReduce(DOMAIN seq, LAMBDA q,i: op(q, seq[i]))
+
+------------------------------------------------------------------------------------------------------------------------
+
+LOCAL SetFindTest ==
+  & AssertEq("SetFindTest1", SetFind({}, LAMBDA x: TRUE), None)
+  & AssertEq("SetFindTest2", SetFind({1}, LAMBDA x: FALSE), None)
+  & AssertEq("SetFindTest3", SetFind({1}, LAMBDA x: TRUE), Some(1))
+
+UtilSanityCheck ==
+  & SetFindTest
 
 ========================================================================================================================

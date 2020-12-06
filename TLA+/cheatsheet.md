@@ -23,13 +23,13 @@ CASE x = 1 -> a
   [] OTHER -> c
 ```
 
+# Temporal properties
+
 □  = continuously
 ◇  = eventually
 □◇ = infinitely occurring (eg. ABABABABABAB..)
 ◇□ = eventually becomes true and stays true continuously
 ⤳  = leads to. F ⤳ G = □(F ⇒ ◇G)
-
-# Temporal properties
 
 A is an action
 <<A>>_v is a step where action A changes v
@@ -127,6 +127,14 @@ Include fairness (but not other liveness properties) as part of the `Spec`.
   * b does not have a suffix that has infinitely many states satisfying ENABLED <<A>>_v and has no <<A>>_v step
 
 * Any behaviour satisfying SF_v(A) also satisfies WF_v(A)
+
+# TLC
+
+- TLCGet("distinct") = total number of distinct states found by TLC so far, globally.
+- TLCGet("queue")    = number of states currently in the queue to be checked.
+- TLCGet("duration") = number of seconds elapsed since model checking began.
+- TLCGet("diameter") = length of the longest behaviour found by TLC so far, globally (equals one in the initial predicate).
+- TLCGet("level")    = length of the current behaviour (equals zero in the evaluation of the initial predicate).
 
 
 # Templates

@@ -60,6 +60,7 @@ ASSUME & IsFiniteSet(Browser)
        & IsFiniteSet(BrowserSrcSync)
        & IsFiniteSet(Tab)
        & IsFiniteSet(Worker)
+       & Cardinality(Worker) <= Cardinality(Tab) \* each tab is assigned a worker. More workers than tabs is useless.
        & Cardinality(Worker) >= Cardinality(Browser) \* 2w in 1b = diff versions, 1w in 2b doesn't make sense
        & MCBrowserStorageAlwaysAvailable \in BOOLEAN
 
@@ -131,23 +132,23 @@ Msg == [
   from   : Tab,
   to     : {Remote},
   drafts : DraftsNE,
-  time   : Nat
+  id     : Nat
 ] ++ [
   type   : {RemoteStoreCmd},
   from   : Worker,
   to     : Tab,
   drafts : Drafts,
-  time   : Nat
+  id     : Nat
 ] ++ [
   type   : {ackRT},
   from   : {Remote},
   to     : Tab,
-  time   : Nat
+  id     : Nat
 ] ++ [
   type   : {ackTW},
   from   : Tab,
   to     : Worker,
-  time   : Nat
+  id     : Nat
 ] ++ [
   type   : {syncRT},
   from   : {Remote},
@@ -195,6 +196,13 @@ TabState ==
     localChange: BOOLEAN \* editor has change that hasn't been sent to WW yet
   ]
 
+WorkerSyncState ==
+  [
+    desired: Nat, \* The promise id we want ack'd to know that we've synced
+    lastReq: Nat, \* The last promise id issued
+    lastAck: Nat  \* The highest ack'd promise id
+  ]
+
 WorkerState ==
   [status: {nonExistant}] ++
   [
@@ -202,8 +210,7 @@ WorkerState ==
     browser       : Browser,
     time          : Nat,
     drafts        : Drafts,
-    remoteSyncedTo: Nat,
-    awaitingAck   : Option(Nat)
+    sync          : [AnySrc -> WorkerSyncState]
   ]
 
 TypeInvariantsBrowsers == browsers \in [Browser -> BrowserState]
@@ -222,6 +229,14 @@ StorageInvariants(s) ==
   & \A d \in s: Assert1(
       d.prov[d.worker] = 0,
       "Draft contains itself in its own provenance:", d)
+
+WorkerSyncStateInvariants(s) ==
+  & s.lastReq <= s.desired
+  & s.lastAck <= s.lastReq
+
+WorkerSyncStateIsStable(s) ==
+  & s.lastReq = s.desired
+  & s.lastAck = s.lastReq
 
 DataInvariantsBrowsers ==
   \A b \in Browser :
@@ -250,11 +265,7 @@ DataInvariantsWorkers ==
     LET ws == workers[w]
     IN ws.status = live =>
         & ws.time > 0
-        & ws.remoteSyncedTo <= ws.time
-        & ~ws.awaitingAck.isEmpty =>
-          & ws.awaitingAck.get > ws.remoteSyncedTo
-          & ws.awaitingAck.get <= ws.time
-        & network = <<>> => ws.awaitingAck.isEmpty
+        & \A s \in AnySrc : WorkerSyncStateInvariants(ws.sync[s])
 
 Init ==
   & network    = <<>>
@@ -267,6 +278,35 @@ Init ==
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Functions
+
+WorkerSyncStateEmpty ==
+  [desired |-> 0, lastReq |-> 0, lastAck |-> 0]
+
+\* WorkerSyncState => Option[WorkerSyncState]
+WorkerSyncStart(s) ==
+  LET doIt == & s.desired > s.lastReq \* we have new content to sync
+              & s.lastAck = s.lastReq \* wait for ACK so that model checking isn't infinite
+      next == [s EXCEPT !.lastReq = s.desired]
+  IN SomeWhen(doIt, next)
+
+WorkerSyncAck(s, id) ==
+  IF id <= s.lastReq & id != s.lastAck THEN
+    [s EXCEPT !.lastAck = Max[@, id]]
+  ELSE
+    Fail1("Invalid ACK", [syncState |-> s, id |-> id])
+
+WorkerSyncLater(syncState) ==
+  LET f(s) == IF s.desired > s.lastReq THEN s ELSE [s EXCEPT !.desired = @ + 1]
+  IN [src \in AnySrc |-> f(syncState[src])]
+
+StartWorker(b) ==
+  [
+    status  |-> live,
+    browser |-> b,
+    time    |-> 1,
+    drafts  |-> {}, \* TODO load in stages just like new tabs (?)
+    sync    |-> [s \in AnySrc |-> WorkerSyncStateEmpty]
+  ]
 
 Connected(tab, worker) ==
   & tabs[tab].status != nonExistant
@@ -291,14 +331,22 @@ TabDrafts(t) ==
        [] s = dirty       -> OptionToSet(ts.draft)
        [] s = conflicted  -> ts.drafts
 
-TabHasLocalChange(t) ==
-  LET ts == tabs[t]
+TabHasLocalChange(tOrTS) ==
+  LET ts == IF tOrTS \in Tab THEN tabs[tOrTS] ELSE tOrTS
       s  == ts.status
   IN CASE s = nonExistant -> FALSE
        [] s = loading     -> FALSE
        [] s = clean       -> FALSE
        [] s = dirty       -> ts.localChange
        [] s = conflicted  -> ts.localChange
+
+TabStateWithLocalChange(ts, lc) ==
+  LET s  == ts.status
+  IN CASE s = nonExistant -> ts
+       [] s = loading     -> ts
+       [] s = clean       -> ts
+       [] s = dirty       -> [ts EXCEPT !.localChange = lc]
+       [] s = conflicted  -> [ts EXCEPT !.localChange = lc]
 
 NewTabState(w, prunedDrafts, localChange) ==
   LET cleanState    == [worker |-> w, status |-> clean]
@@ -403,50 +451,100 @@ or if w1 and w3 drafts have the same content:
     (w1:4, prov: {w1:0, w2:3, w3:2})
   }
 *)
-RECURSIVE PruneByProv(_)
-PruneByProv(ds) ==
-  LET f2(d1, d2) ==
-        LET pt     == d1.prov[d2.worker]
-            byProv == d1.worker != d2.worker & pt > 0 & d2.time < pt
-            bySrc  == d1.worker = d2.worker & d1.time > d2.time
-        IN SomeWhen(bySrc | byProv, <<d1, d2>>)
-      f(d1) == SetCollectFirst(ds, LAMBDA d2: f2(d1, d2))
-      match == SetCollectFirst(ds, f)
-  IN IF match.isEmpty
-     THEN ds
-     ELSE LET d1  == match.get[1]
-              d2  == match.get[2]
-              d   == AddProv(d1, d2.prov)
-              ds2 == (ds -- {d1, d2}) ++ {d}
-          IN PruneByProv(ds2)
+RECURSIVE _PruneByProv(_, _)
+_PruneByProv(ds, depth) ==
+
+  \* LET f2(d1, d2) ==
+  \*       LET pt     == d1.prov[d2.worker]
+  \*           byProv == d1.worker != d2.worker & pt > 0 & d2.time <= pt
+  \*           bySrc  == d1.worker = d2.worker & d1.time > d2.time
+  \*       IN SomeWhen(bySrc | byProv, <<d1, d2>>)
+  \*     f(d1) == SetCollectFirst(ds, LAMBDA d2: f2(d1, d2))
+  \*     match == SetCollectFirst(ds, f)
+
+  LET mergeByProv(x,y) == LET pt == x.prov[y.worker]
+                          IN x.worker != y.worker & pt > 0 & y.time <= pt
+      mergeBySrc(x,y)  == x.worker = y.worker & x.time > y.time
+      merge(xy)        == LET x == xy[1]
+                              y == xy[2]
+                          IN mergeByProv(x,y) | mergeBySrc(x,y)
+      pairs            == { x \in (ds \X ds) : x[1] != x[2] }
+      match            == SetFind(pairs, merge)
+  IN
+    IF depth >= 3 THEN
+      Fail("Maximum depth of PruneByProv exceeded")
+    ELSE IF match.isEmpty THEN
+      ds
+    ELSE
+      LET d1  == match.get[1]
+          d2  == match.get[2]
+          d   == AddProv(d1, AddSelfToOwnProv(d2).prov) \* TODO Need AddSelfToOwnProv here?
+          ds2 == (ds -- {d1, d2}) ++ {d}
+      IN \* LogRet(
+        \* [BEFORE |-> ds, AFTER |-> ds2],
+        \* IF Cardinality(ds2) <= 1 THEN ds2 ELSE
+        _PruneByProv(ds2, depth + 1)
+      \* )
+PruneByProv(ds) == _PruneByProv(ds, 1)
 
 \* Returns a set of possible outcomes
 PruneByEq(ds) ==
   LET equalSets    == { x \in SUBSET(ds) : Cardinality(x) > 1 } \* Set[Set[Drafts]]
       merge(x, y)  == AddProv(x, AddSelfToOwnProv(y).prov)
       mergeAll(es) == SetReduce(es, merge)
-  IN { (ds -- es) ++ {mergeAll(es)} : es \in equalSets }
+      result       == { (ds -- es) ++ {mergeAll(es)} : es \in equalSets } ++ {ds}
+  IN
+    \* LogRet([ BEFORE |-> ds, AFTER |-> result ], result)
+    result
 
 \* Returns a set of possible outcomes
 Prune(drafts) ==
-  PruneByEq(drafts) ++ {PruneByProv(drafts)}
+  {PruneByProv(ds) : ds \in PruneByEq(drafts)}
 
-\* OnEdit(w) ==
-\*   LET
-\*     ws        == workers[w]
-\*     t         == ws.time
-\*     lastEdit2 == IF ws.editor.status = closed THEN ws.lastEdit ELSE t
-\*     prevProv  == IF ws.editor.status = closed THEN NoProv ELSE ws.editor.draft.prov
-\*     draft2    == NewDraft(w, prevProv)
-\*     editor2   == [status |-> dirty, draft |-> draft2]
-\*   IN [workers EXCEPT ![w] = [ws EXCEPT
-\*         !.time      = t + 1,
-\*         !.editor    = editor2,
-\*         !.lastEdit  = lastEdit2,
-\*         !.syncQueue = Store(@, draft2)
-\*       ]]
+\* Returns multiple possibilities in the form of Set[(tabs',Seq[NetworkMsg])]
+AddDraftsToTab(t, ds, canResolveLocalChanges) ==
+  LET ts2          == TabStateWithDrafts(t, ds)
+      lc2          == TabHasLocalChange(ts2)
+      w            == ts2.worker
+      localChanges == IF canResolveLocalChanges & lc2 THEN
+                        BOOLEAN \* Maybe the new draft clears out the status, maybe there are more changes since
+                      ELSE
+                        {lc2}
+      msgWW(ts3)   == [
+                        type    |-> syncTW,
+                        from    |-> t,
+                        to      |-> w,
+                        drafts  |-> ds,
+                        newEdit |-> IF TabHasLocalChange(ts3) & ts3.status = dirty
+                                    THEN OptionMap(ts3.draft, LAMBDA d: d.prov)
+                                    ELSE None
+                      ]
+  IN {
+    LET ts3   == TabStateWithLocalChange(ts2, lc3)
+        tabs3 == [tabs EXCEPT ![t] = ts3]
+        msgs  == IF ds = TabDrafts(t) THEN <<>> ELSE <<msgWW(ts3)>>
+    IN << tabs3, msgs >>
+    : lc3 \in localChanges
+  }
 
-\* ------------------------------------------------------------------------------------------------------------------------
+\* ███████████████████████████████████████████████████████████████████████████████████████████████████
+\* Tests
+
+PruneTest ==
+  LET w1     == CHOOSE w \in Worker : TRUE
+      w2     == CHOOSE w \in Worker : w != w1
+      input  == {[worker |-> w1, time |-> 1, prov |-> (w1 :> 0 @@ w2 :> 1)],
+                 [worker |-> w2, time |-> 1, prov |-> (w1 :> 0 @@ w2 :> 0)]}
+      exp1   == {[worker |-> w1, time |-> 1, prov |-> (w1 :> 0 @@ w2 :> 1)]}
+      expect == {exp1}
+      actual == Prune(input)
+  IN (Cardinality(Worker) >= 2) => Assert1(actual = expect, "Prune test failed.", actual)
+
+SanityCheck ==
+  & UtilSanityCheck
+  & PruneTest
+
+\* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Actions
 
 RemoteRecvDrafts ==
@@ -458,7 +556,7 @@ RemoteRecvDrafts ==
             type |-> ackRT,
             from |-> Remote,
             to   |-> msg.from,
-            time |-> msg.time
+            id   |-> msg.id
           ]
           broadcastTo(tab, ds) == [
             type   |-> syncRT,
@@ -469,7 +567,8 @@ RemoteRecvDrafts ==
           otherTabs      == { t \in RemoteConnectedTabs : t != msg.from }
           broadcasts(ds) == SetFold(otherTabs, <<>>, LAMBDA q,t: q \o <<broadcastTo(t, ds)>>)
           result(ds)     == <<ds, <<resp>> \o broadcasts(ds)>>
-          dss            == Prune(AddDrafts(remote, msg.drafts))
+          dss            == \*LogRet([ADD |-> AddDrafts(remote, msg.drafts), PRU |-> Prune(AddDrafts(remote, msg.drafts))],
+                            Prune(AddDrafts(remote, msg.drafts))
           results        == { result(ds) : ds \in dss }
       IN
         & remote' \in { r[1] : r \in results }
@@ -485,46 +584,61 @@ TabRecvDraftsFromRemote ==
           ts        == tabs[t]
           w         == ts.worker
           dss       == Prune(AddDrafts(TabDrafts(t), msg.drafts))
-          newTS(ds) == [tabs EXCEPT ![t] = TabStateWithDrafts(t, ds)]
+          \* newTS(ds) == [tabs EXCEPT ![t] = TabStateWithDrafts(t, ds)]
           net1      == RemoveAt(network, i)
-          msgWW(ds) == [
-                         type    |-> syncTW,
-                         from    |-> t,
-                         to      |-> w,
-                         drafts  |-> ds,
-                         newEdit |-> IF TabHasLocalChange(t) & ts.status = dirty
-                                     THEN Some(ts.draft)
-                                     ELSE None
-                       ]
-          newN(ds)  == IF ds = TabDrafts(t) THEN net1 ELSE Append(net1, msgWW(ds))
-          results   == { <<newTS(ds), newN(ds)>> : ds \in dss }
+          \* msgWW(ds) == [
+          \*                type    |-> syncTW,
+          \*                from    |-> t,
+          \*                to      |-> w,
+          \*                drafts  |-> ds,
+          \*                newEdit |-> IF TabHasLocalChange(t) & ts.status = dirty
+          \*                            THEN OptionMap(ts.draft, LAMBDA d: d.prov)
+          \*                            ELSE None
+          \*              ]
+          \* newN(ds)  == IF ds = TabDrafts(t) THEN net1 ELSE Append(net1, msgWW(ds))
+          results   == UNION { AddDraftsToTab(t, ds, FALSE) : ds \in dss }
       IN
         & tabs'    \in { r[1] : r \in results }
-        & network' \in { r[2] : r \in results }
+        & network' \in { net1 \o r[2] : r \in results }
         & UNCHANGED << browsers, remote, workers >>
 
 TabRecvDraftsFromWorker ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = syncWT)
   IN
     & i != 0
-    & LET msg == network[i]
-          t   == msg.to
-          ts  == tabs[t]
-          w   == ts.worker
-          dss == Prune(AddDrafts(TabDrafts(t), msg.drafts))
-          localChanges ==
-            IF ~msg.newEdit.isEmpty & TabHasLocalChange(t) THEN
-              BOOLEAN \* Maybe the new draft clears out the status, maybe there are more changes since
-            ELSE
-              {FALSE}
-          results ==
-            UNION {{
-              [tabs EXCEPT ![t] = NewTabState(w, ds, ls)]
-              : ls \in localChanges }
-              : ds \in dss }
+    & LET msg            == network[i]
+          t              == msg.to
+          ts             == tabs[t]
+          w              == ts.worker
+          dss            == Prune(AddDrafts(TabDrafts(t), msg.drafts))
+          \* localChanges   == IF ~msg.newEdit.isEmpty & TabHasLocalChange(t) THEN
+          \*                     BOOLEAN \* Maybe the new draft clears out the status, maybe there are more changes since
+          \*                   ELSE
+          \*                     {FALSE}
+          \* paths          == localChanges \X dss
+          net1           == RemoveAt(network, i)
+          \* msgWW(ds, ts2) == [
+          \*                     type    |-> syncTW,
+          \*                     from    |-> t,
+          \*                     to      |-> w,
+          \*                     drafts  |-> ds,
+          \*                     newEdit |-> IF TabHasLocalChange(ts2) & ts2.status = dirty
+          \*                                 THEN OptionMap(ts2.draft, LAMBDA d: d.prov)
+          \*                                 ELSE None
+          \*                   ]
+          \* newN(ds, ts2)  == IF ds = TabDrafts(t) THEN net1 ELSE Append(net1, msgWW(ds, ts2))
+          \* results ==
+          \*   { LET lc1 == p[1]
+          \*         ds  == p[2]
+          \*         ts2 == NewTabState(w, ds, lc1)
+          \*     IN << [tabs EXCEPT ![t] = ts2], newN(ds, ts2) >>
+          \*   : p \in paths
+          \*   }
+          canResolveLocalChanges == ~msg.newEdit.isEmpty
+          results   == UNION { AddDraftsToTab(t, ds, canResolveLocalChanges) : ds \in dss }
       IN
-        & RecvMsg(i)
-        & tabs' \in results
+        & tabs'    \in { r[1] : r \in results }
+        & network' \in { net1 \o r[2] : r \in results }
         & UNCHANGED << browsers, remote, workers >>
 
 TabLoad ==
@@ -557,19 +671,10 @@ TabNew ==
     & UNCHANGED << browsers, network, remote >>
     & \E w \in Worker:
       & \* Connect to worker
-        | \* New worker
-          & workers[w].status = nonExistant
+        | & workers[w].status = nonExistant
           & \E b \in Browser:
-            & workers' = [workers EXCEPT ![w] = [
-                  status         |-> live,
-                  browser        |-> b,
-                  time           |-> 1,
-                  drafts         |-> {}, \* TODO load in stages just like TabNew
-                  remoteSyncedTo |-> 1,
-                  awaitingAck    |-> None
-                ]]
-        | \* Existing worker
-          & workers[w].status = live
+            & workers' = [workers EXCEPT ![w] = StartWorker(b)]
+        | & workers[w].status = live
           & UNCHANGED workers
       & tabs' = [tabs EXCEPT ![t] = [
           status   |-> loading,
@@ -605,17 +710,17 @@ TabRecvRemoteStoreCmd ==
           t         == msg.to
           dss       == Prune(AddDrafts(TabDrafts(t), msg.drafts))
           msgW      == [
-                         type    |-> ackTW,
-                         from    |-> t,
-                         to      |-> msg.from,
-                         time    |-> msg.time
+                         type |-> ackTW,
+                         from |-> t,
+                         to   |-> msg.from,
+                         id   |-> msg.id
                        ]
           msgR(ds)  == [
-                         type    |-> syncTR,
-                         from    |-> t,
-                         to      |-> Remote,
-                         drafts  |-> ds,
-                         time    |-> msg.time
+                         type   |-> syncTR,
+                         from   |-> t,
+                         to     |-> Remote,
+                         drafts |-> ds,
+                         id     |-> msg.id
                        ]
           saveT(ds) == [tabs EXCEPT ![t] = TabStateWithDrafts(t, ds)]
           send(res) == Append(RemoveAt(network, i), res)
@@ -679,7 +784,10 @@ WorkerRecvChanges ==
           t2       == IF msg.newEdit.isEmpty THEN ws.time ELSE ws.time + 1
           new      == OptionMap(msg.newEdit, LAMBDA n: NewDraft(w, n))
           dss      == Prune(AddDrafts(ws.drafts, AddDrafts(msg.drafts, OptionToSet(new))))
-          ws2(ds)  == [workers EXCEPT ![w].drafts = ds, ![w].time = t2]
+          ws2(ds)  == IF ds = ws.drafts THEN
+                        workers
+                      ELSE
+                        [workers EXCEPT ![w].drafts = ds, ![w].time = t2, ![w].sync = WorkerSyncLater(@)]
           msgs(ds) == IF ds = ws.drafts THEN
                         {}
                       ELSE
@@ -700,49 +808,51 @@ WorkerRecvChanges ==
 
 \* This happens periodically without a trigger event
 WorkerSyncWithBrowserStorage ==
-  \E w \in Worker:
-    LET ws == workers[w]
-        b  == workers[w].browser
-        bs == browsers[b]
-        Attempt(src) ==
-          IF bs[src].isEmpty | bs[src].get = ws.drafts THEN
-            {}
-          ELSE
-            LET dss == Prune(AddDrafts(ws.drafts, bs[src].get))
-                ws2(ds) == [workers EXCEPT ![w].drafts = ds]
-                bs2(ds) == [browsers EXCEPT ![b][src] = Some(ds)]
-            IN
-              \* IF ~Log([WW |-> ws.drafts, BS |-> bs[src].get, RES |-> dss]) THEN {} ELSE
-              { <<ws2(ds), bs2(ds)>> : ds \in dss }
-        results == UNION { Attempt(s) : s \in BrowserSrc }
-    IN
-      & workers[w].status = live
-      & workers'  \in { r[1] : r \in results }
-      & browsers' \in { r[2] : r \in results }
-      & UNCHANGED << remote, network, tabs >>
+  FALSE
+  \* TODO
+  \* \E w \in Worker:
+  \*   LET ws == workers[w]
+  \*       b  == workers[w].browser
+  \*       bs == browsers[b]
+  \*       Attempt(src) ==
+  \*         IF bs[src].isEmpty | bs[src].get = ws.drafts THEN
+  \*           {}
+  \*         ELSE
+  \*           LET dss == Prune(AddDrafts(ws.drafts, bs[src].get))
+  \*               ws2(ds) == [workers EXCEPT ![w].drafts = ds]
+  \*               bs2(ds) == [browsers EXCEPT ![b][src] = Some(ds)]
+  \*           IN
+  \*             \* IF ~Log([WW |-> ws.drafts, BS |-> bs[src].get, RES |-> dss]) THEN {} ELSE
+  \*             { <<ws2(ds), bs2(ds)>> : ds \in dss }
+  \*       results == UNION { Attempt(s) : s \in BrowserSrc }
+  \*   IN
+  \*     & workers[w].status = live
+  \*     & workers'  \in { r[1] : r \in results }
+  \*     & browsers' \in { r[2] : r \in results }
+  \*     & UNCHANGED << remote, network, tabs >>
 
 \* TODO Track online/offline status of tabs
-\* TODO Assumes that awaitingAck will always be responded to (for the sake of model checking)
+\* TODO Assumes that an ack will always be received to (for the sake of model checking)
 WorkerSendRemoteStoreCmd ==
   \E w \in Worker:
-    LET ws == workers[w]
+    LET ws  == workers[w]
+        s1  == ws.sync[Remote]
+        s2  == WorkerSyncStart(s1)
+        t   == CHOOSE t \in WorkerTabs(w) : TRUE \* TODO CHOOSE or \E?
+        cmd == [
+          type   |-> RemoteStoreCmd,
+          from   |-> w,
+          to     |-> t,
+          drafts |-> ws.drafts,
+          id     |-> s2.get.lastReq
+        ]
     IN
       & ws.status = live
-      & ws.awaitingAck.isEmpty
-      & ws.remoteSyncedTo < ws.time
+      & ~s2.isEmpty
       & ws.drafts != {}
-      & LET t   == CHOOSE t \in WorkerTabs(w) : TRUE \* TODO CHOOSE or \E?
-            cmd == [
-              type   |-> RemoteStoreCmd,
-              from   |-> w,
-              to     |-> t,
-              drafts |-> ws.drafts,
-              time   |-> ws.time
-            ]
-        IN
-          & SendMsg(cmd)
-          & workers' = [workers EXCEPT ![w].awaitingAck = Some(ws.time)]
-          & UNCHANGED << browsers, remote, tabs >>
+      & SendMsg(cmd)
+      & workers' = [workers EXCEPT ![w].sync[Remote] = s2.get]
+      & UNCHANGED << browsers, remote, tabs >>
 
 TabRecvRemoteAck ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = ackRT)
@@ -754,7 +864,7 @@ TabRecvRemoteAck ==
             type |-> ackTW,
             from |-> t,
             to   |-> tabs[t].worker,
-            time |-> msg.time
+            id   |-> msg.id
           ]
       IN
         & RecvResp(i, newMsg)
@@ -767,22 +877,10 @@ WorkerRecvRemoteAck ==
     & LET msg == network[i]
           w   == msg.to
           ws  == workers[w]
-          t   == Max[ws.remoteSyncedTo, msg.time]
       IN
-        & Assert1(ws.awaitingAck = Some(msg.time), "Worker not awaiting the msg", [ws |-> ws, msgTime |-> msg.time])
-        & workers' = [workers EXCEPT ![w].remoteSyncedTo = t, ![w].awaitingAck = None]
+        & workers' = [workers EXCEPT ![w].sync[Remote] = WorkerSyncAck(@, msg.id)]
         & RecvMsg(i)
         & UNCHANGED << browsers, remote, tabs >>
-
-\* \* Will websockets periodically push? Will workers request?
-\* \* As far as the spec goes it doesn't matter.
-\* RemoteSend ==
-\*   & remote != {}
-\*   & \E w \in Worker:
-\*     & workers[w].status = live
-\*     & ~(\E i \in DOMAIN network : ~network[i].toSvr & network[i].worker = w) \* Don't re-send if msg already on the way
-\*     & SendMsg([worker |-> w, toSvr |-> FALSE, drafts |-> remote])
-\*     & UNCHANGED << browsers, workers, remote >>
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Spec
@@ -804,22 +902,26 @@ Next ==
   | WorkerSyncWithBrowserStorage
 
 Fairness ==
-  & SF_<<vars>>(RemoteRecvDrafts)
-  & SF_<<vars>>(TabLoad)
-  \* & SF_<<vars>>(TabNew)
-  & SF_<<vars>>(TabRecvDraftsFromRemote)
-  & SF_<<vars>>(TabRecvDraftsFromWorker)
-  & SF_<<vars>>(TabRecvRemoteAck)
-  & SF_<<vars>>(TabRecvRemoteStoreCmd)
-  & SF_<<vars>>(TabSendChangesToWorker)
-  & SF_<<vars>>(TabStart)
-  \* & SF_<<vars>>(UserEditClean)
-  & SF_<<vars>>(WorkerRecvChanges)
-  & SF_<<vars>>(WorkerRecvRemoteAck)
+  & WF_<<vars>>(RemoteRecvDrafts)
+  & WF_<<vars>>(TabLoad)
+  \* & WF_<<vars>>(TabNew)
+  & WF_<<vars>>(TabRecvDraftsFromRemote)
+  & WF_<<vars>>(TabRecvDraftsFromWorker)
+  & WF_<<vars>>(TabRecvRemoteAck)
+  & WF_<<vars>>(TabRecvRemoteStoreCmd)
+  & WF_<<vars>>(TabSendChangesToWorker)
+  & WF_<<vars>>(TabStart)
+  \* & WF_<<vars>>(UserEditClean)
+  & WF_<<vars>>(WorkerRecvChanges)
+  & WF_<<vars>>(WorkerRecvRemoteAck)
   & SF_<<vars>>(WorkerSendRemoteStoreCmd)
   & SF_<<vars>>(WorkerSyncWithBrowserStorage)
 
-Spec == Init & [][Next]_<<vars>> & Fairness
+Spec ==
+  & SanityCheck
+  & Init
+  & [][Next]_<<vars>>
+  & Fairness
 
 \* Have all mechanical processes stopped such that the world is in a stable state that will stutter until
 \* the user does something.
@@ -844,6 +946,10 @@ StableInvariants ==
       "Local changes aren't stored", tabs)
 
     & Assert1(
+      \A w \in ActiveWorkers : \A s \in AnySrc : WorkerSyncStateIsStable(workers[w].sync[s]),
+      "Worker failed to sync.", workers)
+
+    & Assert1(
       Cardinality(AllStores) <= 1,
       "Drafts are not eventually-consistent", [
           AB     |-> AvailableBrowserStores,
@@ -855,5 +961,14 @@ StableInvariants ==
     & Assert1(
       remote = AllDrafts,
       "Drafts are not stored remotely", [all |-> AllDrafts, remote |-> remote])
+
+MCContinue ==
+  TLCGet("diameter") <= 50
+  \* TLCGet("level") <= 22
+  \* TLCGet("duration") <= 4
+  \* \A w \in ActiveWorkers:
+  \*   & workers[w].time < 4
+  \*   & \A s \in AnySrc:
+  \*       workers[w].sync[s].desired < 4
 
 ========================================================================================================================
