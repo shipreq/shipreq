@@ -43,6 +43,8 @@ Important notes
 
 TODO
 ====
+- Add a user-write budget (maybe)
+- Merge invariants by var, instead of data vs type
 *)
 
 EXTENDS FiniteSets, Naturals, Sequences, TLC, Util
@@ -53,6 +55,9 @@ CONSTANT BrowserSrcSync
 CONSTANT Tab
 CONSTANT Worker
 
+\* Legal combinations of {browser, worker, tab}
+CONSTANT Assignments
+
 CONSTANT MCBrowserStorageAlwaysAvailable
 
 ASSUME & IsFiniteSet(Browser)
@@ -60,6 +65,7 @@ ASSUME & IsFiniteSet(Browser)
        & IsFiniteSet(BrowserSrcSync)
        & IsFiniteSet(Tab)
        & IsFiniteSet(Worker)
+       & IsFiniteSet(Assignments)
        & Cardinality(Worker) <= Cardinality(Tab) \* each tab is assigned a worker. More workers than tabs is useless.
        & Cardinality(Worker) >= Cardinality(Browser) \* 2w in 1b = diff versions, 1w in 2b doesn't make sense
        & MCBrowserStorageAlwaysAvailable \in BOOLEAN
@@ -114,6 +120,9 @@ syncRT         == "sync:R->T"
 RemoteStoreCmd == "RemoteStoreCmd"
 ackRT          == "ack:R->T"
 ackTW          == "ack:T->W"
+
+IsValidAssignment(b, w, t) ==
+  {b,w,t} \in Assignments
 
 Msg == [
   type   : {syncTW},
@@ -579,24 +588,13 @@ TabRecvDraftsFromRemote ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = syncRT)
   IN
     & i != 0
-    & LET msg       == network[i]
-          t         == msg.to
-          ts        == tabs[t]
-          w         == ts.worker
-          dss       == Prune(AddDrafts(TabDrafts(t), msg.drafts))
-          \* newTS(ds) == [tabs EXCEPT ![t] = TabStateWithDrafts(t, ds)]
-          net1      == RemoveAt(network, i)
-          \* msgWW(ds) == [
-          \*                type    |-> syncTW,
-          \*                from    |-> t,
-          \*                to      |-> w,
-          \*                drafts  |-> ds,
-          \*                newEdit |-> IF TabHasLocalChange(t) & ts.status = dirty
-          \*                            THEN OptionMap(ts.draft, LAMBDA d: d.prov)
-          \*                            ELSE None
-          \*              ]
-          \* newN(ds)  == IF ds = TabDrafts(t) THEN net1 ELSE Append(net1, msgWW(ds))
-          results   == UNION { AddDraftsToTab(t, ds, FALSE) : ds \in dss }
+    & LET msg     == network[i]
+          t       == msg.to
+          ts      == tabs[t]
+          w       == ts.worker
+          dss     == Prune(AddDrafts(TabDrafts(t), msg.drafts))
+          net1    == RemoveAt(network, i)
+          results == UNION { AddDraftsToTab(t, ds, FALSE) : ds \in dss }
       IN
         & tabs'    \in { r[1] : r \in results }
         & network' \in { net1 \o r[2] : r \in results }
@@ -606,36 +604,13 @@ TabRecvDraftsFromWorker ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = syncWT)
   IN
     & i != 0
-    & LET msg            == network[i]
-          t              == msg.to
-          ts             == tabs[t]
-          w              == ts.worker
-          dss            == Prune(AddDrafts(TabDrafts(t), msg.drafts))
-          \* localChanges   == IF ~msg.newEdit.isEmpty & TabHasLocalChange(t) THEN
-          \*                     BOOLEAN \* Maybe the new draft clears out the status, maybe there are more changes since
-          \*                   ELSE
-          \*                     {FALSE}
-          \* paths          == localChanges \X dss
-          net1           == RemoveAt(network, i)
-          \* msgWW(ds, ts2) == [
-          \*                     type    |-> syncTW,
-          \*                     from    |-> t,
-          \*                     to      |-> w,
-          \*                     drafts  |-> ds,
-          \*                     newEdit |-> IF TabHasLocalChange(ts2) & ts2.status = dirty
-          \*                                 THEN OptionMap(ts2.draft, LAMBDA d: d.prov)
-          \*                                 ELSE None
-          \*                   ]
-          \* newN(ds, ts2)  == IF ds = TabDrafts(t) THEN net1 ELSE Append(net1, msgWW(ds, ts2))
-          \* results ==
-          \*   { LET lc1 == p[1]
-          \*         ds  == p[2]
-          \*         ts2 == NewTabState(w, ds, lc1)
-          \*     IN << [tabs EXCEPT ![t] = ts2], newN(ds, ts2) >>
-          \*   : p \in paths
-          \*   }
-          canResolveLocalChanges == ~msg.newEdit.isEmpty
-          results   == UNION { AddDraftsToTab(t, ds, canResolveLocalChanges) : ds \in dss }
+    & LET msg     == network[i]
+          t       == msg.to
+          ts      == tabs[t]
+          w       == ts.worker
+          dss     == Prune(AddDrafts(TabDrafts(t), msg.drafts))
+          net1    == RemoveAt(network, i)
+          results == UNION { AddDraftsToTab(t, ds, ~msg.newEdit.isEmpty) : ds \in dss }
       IN
         & tabs'    \in { r[1] : r \in results }
         & network' \in { net1 \o r[2] : r \in results }
@@ -671,10 +646,14 @@ TabNew ==
     & UNCHANGED << browsers, network, remote >>
     & \E w \in Worker:
       & \* Connect to worker
-        | & workers[w].status = nonExistant
+        | \* New worker
+          & workers[w].status = nonExistant
           & \E b \in Browser:
+            & IsValidAssignment(b, w, t)
             & workers' = [workers EXCEPT ![w] = StartWorker(b)]
-        | & workers[w].status = live
+        | \* Existing worker
+          & workers[w].status = live
+          & IsValidAssignment(workers[w].browser, w, t)
           & UNCHANGED workers
       & tabs' = [tabs EXCEPT ![t] = [
           status   |-> loading,
@@ -940,6 +919,7 @@ Liveness ==
 
 StableInvariants ==
   IsStable =>
+    \* & LogStates
 
     & Assert1(
       \A t \in Tab : ~TabHasLocalChange(t),
