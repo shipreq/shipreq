@@ -44,7 +44,6 @@ Important notes
 TODO
 ====
 - Add a user-write budget (maybe)
-- Merge invariants by var, instead of data vs type
 *)
 
 EXTENDS FiniteSets, Naturals, Sequences, TLC, Util
@@ -97,14 +96,6 @@ state == [
 LogStates ==
   Log(state)
 
-\* ███████████████████████████████████████████████████████████████████████████████████████████████████
-\* Types
-
-Provenance  == [Worker -> Nat]                               \* i.e. Map[WorkerId, Time]
-Draft       == [worker: Worker, time: Nat, prov: Provenance] \* no need to include draft content
-Drafts      == SUBSET Draft                                  \* i.e. Set[Draft]
-DraftsNE    == Drafts -- {{}}                                \* i.e. NonEmptySet[Draft]
-
 clean          == "clean"
 conflicted     == "conflicted"
 dirty          == "dirty"
@@ -120,6 +111,14 @@ syncRT         == "sync:R->T"
 RemoteStoreCmd == "RemoteStoreCmd"
 ackRT          == "ack:R->T"
 ackTW          == "ack:T->W"
+
+\* ███████████████████████████████████████████████████████████████████████████████████████████████████
+\* Invariants
+
+Provenance  == [Worker -> Nat]                               \* i.e. Map[WorkerId, Time]
+Draft       == [worker: Worker, time: Nat, prov: Provenance] \* no need to include draft content
+Drafts      == SUBSET Draft                                  \* i.e. Set[Draft]
+DraftsNE    == Drafts -- {{}}                                \* i.e. NonEmptySet[Draft]
 
 IsValidAssignment(b, w, t) ==
   {b,w,t} \in Assignments
@@ -222,15 +221,6 @@ WorkerState ==
     sync          : [AnySrc -> WorkerSyncState]
   ]
 
-TypeInvariantsBrowsers == browsers \in [Browser -> BrowserState]
-TypeInvariantsNetwork  == network  \in NetworkState
-TypeInvariantsRemote   == remote   \in Drafts
-TypeInvariantsTabs     == tabs     \in [Tab -> TabState]
-TypeInvariantsWorkers  == workers  \in [Worker -> WorkerState]
-
-\* ███████████████████████████████████████████████████████████████████████████████████████████████████
-\* Data
-
 StorageInvariants(s) ==
   & Assert1(
       Cardinality(s) = Cardinality({d.worker : d \in s}),
@@ -243,50 +233,37 @@ WorkerSyncStateInvariants(s) ==
   & s.lastReq <= s.desired
   & s.lastAck <= s.lastReq
 
-WorkerSyncStateIsStable(s) ==
-  & s.lastReq = s.desired
-  & s.lastAck = s.lastReq
+InvariantsForBrowsers ==
+  & browsers \in [Browser -> BrowserState]
+  & \A b \in Browser :
+      LET bs == browsers[b]
+      IN \A src \in BrowserSrc:
+        bs[src].isEmpty | StorageInvariants(bs[src].get)
 
-DataInvariantsBrowsers ==
-  \A b \in Browser :
-    LET bs == browsers[b]
-    IN \A src \in BrowserSrc:
-      bs[src].isEmpty | StorageInvariants(bs[src].get)
+InvariantsForNetwork ==
+  network \in NetworkState
 
-DataInvariantsNetwork ==
-  TRUE
-  \* \A i \in DOMAIN network :
-  \*   LET msg == network[i]
-  \*       to == msg.to
-  \*   IN
-  \*     & to \in Worker => workers[to].status = live
-  \*     & to \in Tab => tabs[to].status \in {clean, dirty, conflicted}
+InvariantsForRemote ==
+  & remote \in Drafts
+  & StorageInvariants(remote)
 
-DataInvariantsRemote ==
-  StorageInvariants(remote)
+InvariantsForTabs ==
+  tabs \in [Tab -> TabState]
 
-DataInvariantsTabs ==
-  \* PrintT(browsers)
-  TRUE
-
-DataInvariantsWorkers ==
-  \A w \in Worker :
-    LET ws == workers[w]
-    IN ws.status = live =>
-        & ws.time > 0
-        & \A s \in AnySrc : WorkerSyncStateInvariants(ws.sync[s])
-
-Init ==
-  & network    = <<>>
-  & remote     = {}
-  & tabs       = [t \in Tab |-> [status |-> nonExistant]]
-  & workers    = [w \in Worker |-> [status |-> nonExistant]]
-  & IF MCBrowserStorageAlwaysAvailable
-    THEN browsers = [b \in Browser |-> [s \in BrowserSrc |-> Some({})]]
-    ELSE browsers \in [Browser -> [BrowserSrc -> NoneAndSome({})]]
+InvariantsForWorkers ==
+  & workers \in [Worker -> WorkerState]
+  & \A w \in Worker :
+      LET ws == workers[w]
+      IN ws.status = live =>
+          & ws.time > 0
+          & \A s \in AnySrc : WorkerSyncStateInvariants(ws.sync[s])
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Functions
+
+WorkerSyncStateIsStable(s) ==
+  & s.lastReq = s.desired
+  & s.lastAck = s.lastReq
 
 WorkerSyncStateEmpty ==
   [desired |-> 0, lastReq |-> 0, lastAck |-> 0]
@@ -860,6 +837,15 @@ WorkerRecvRemoteAck ==
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Spec
+
+Init ==
+  & network    = <<>>
+  & remote     = {}
+  & tabs       = [t \in Tab |-> [status |-> nonExistant]]
+  & workers    = [w \in Worker |-> [status |-> nonExistant]]
+  & IF MCBrowserStorageAlwaysAvailable
+    THEN browsers = [b \in Browser |-> [s \in BrowserSrc |-> Some({})]]
+    ELSE browsers \in [Browser -> [BrowserSrc -> NoneAndSome({})]]
 
 Next ==
   | RemoteRecvDrafts
