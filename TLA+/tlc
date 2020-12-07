@@ -5,7 +5,7 @@ set -uo pipefail
 # cd "$(dirname "$0")" || exit 1
 [ $# -eq 0 ] && echo "Usage: $0 [args] <module>" && exit 1
 
-cmd=(tlc-colour)
+cmd=(unbuffer tlc-colour)
 
 while [ $# -gt 1 ]; do
   cmd+=("$1")
