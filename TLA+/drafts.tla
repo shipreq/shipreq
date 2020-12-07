@@ -579,9 +579,9 @@ RemoteRecvDrafts ==
           dss            == \*LogRet([ADD |-> AddDrafts(remote, msg.drafts), PRU |-> Prune(AddDrafts(remote, msg.drafts))],
                             Prune(AddDrafts(remote, msg.drafts))
           results        == { result(ds) : ds \in dss }
-      IN
-        & remote' \in { r[1] : r \in results }
-        & network' \in { RemoveAt(network, i) \o r[2] : r \in results }
+      IN \E r \in results:
+        & remote' = r[1]
+        & network' = RemoveAt(network, i) \o r[2]
         & UNCHANGED << browsers, tabs, workers >>
 
 TabRecvDraftsFromRemote ==
@@ -595,9 +595,9 @@ TabRecvDraftsFromRemote ==
           dss     == Prune(AddDrafts(TabDrafts(t), msg.drafts))
           net1    == RemoveAt(network, i)
           results == UNION { AddDraftsToTab(t, ds, FALSE) : ds \in dss }
-      IN
-        & tabs'    \in { r[1] : r \in results }
-        & network' \in { net1 \o r[2] : r \in results }
+      IN \E r \in results:
+        & tabs'    = r[1]
+        & network' = net1 \o r[2]
         & UNCHANGED << browsers, remote, workers >>
 
 TabRecvDraftsFromWorker ==
@@ -611,9 +611,9 @@ TabRecvDraftsFromWorker ==
           dss     == Prune(AddDrafts(TabDrafts(t), msg.drafts))
           net1    == RemoveAt(network, i)
           results == UNION { AddDraftsToTab(t, ds, ~msg.newEdit.isEmpty) : ds \in dss }
-      IN
-        & tabs'    \in { r[1] : r \in results }
-        & network' \in { net1 \o r[2] : r \in results }
+      IN \E r \in results:
+        & tabs'    = r[1]
+        & network' = net1 \o r[2]
         & UNCHANGED << browsers, remote, workers >>
 
 TabLoad ==
@@ -709,9 +709,10 @@ TabRecvRemoteStoreCmd ==
           & RecvResp(i, msgW)
           & UNCHANGED << browsers, workers, remote, tabs >>
         ELSE
-          & tabs'    \in { r[1] : r \in resultsNE }
-          & network' \in { r[2] : r \in resultsNE }
-          & UNCHANGED << browsers, workers, remote >>
+          \E r \in resultsNE:
+            & tabs'    = r[1]
+            & network' = r[2]
+            & UNCHANGED << browsers, workers, remote >>
 
 TabSendChangesToWorker ==
   \E t \in Tab:
@@ -763,26 +764,22 @@ WorkerRecvChanges ==
           t2       == IF msg.newEdit.isEmpty THEN ws.time ELSE ws.time + 1
           new      == OptionMap(msg.newEdit, LAMBDA n: NewDraft(w, n))
           dss      == Prune(AddDrafts(ws.drafts, AddDrafts(msg.drafts, OptionToSet(new))))
-          ws2(ds)  == IF ds = ws.drafts THEN
-                        workers
-                      ELSE
-                        [workers EXCEPT ![w].drafts = ds, ![w].time = t2, ![w].sync = WorkerSyncLater(@)]
-          msgs(ds) == IF ds = ws.drafts THEN
-                        {}
-                      ELSE
-                        { [
-                            type    |-> syncWT,
-                            from    |-> w,
-                            to      |-> t,
-                            drafts  |-> ds,
-                            newEdit |-> new
-                          ] : t \in WorkerTabs(w)
-                        }
-          results == { <<ws2(ds), msgs(ds)>> : ds \in dss }
-          network2 == RemoveAt(network, i)
-      IN
-        & workers' \in { r[1] : r \in results }
-        & network' \in { SetFold(r[2], network2, Append) : r \in results }
+          dss2     == { ds \in dss : ds != ws.drafts }
+          ws2(ds)  == [workers EXCEPT ![w].drafts = ds, ![w].time = t2, ![w].sync = WorkerSyncLater(@)]
+          msgs(ds) == { [
+                          type    |-> syncWT,
+                          from    |-> w,
+                          to      |-> t,
+                          drafts  |-> ds,
+                          newEdit |-> new
+                        ]
+                        : t \in WorkerTabs(w)
+                      }
+          results  == { <<ws2(ds), msgs(ds)>> : ds \in dss2 }
+          net1     == RemoveAt(network, i)
+      IN \E r \in results:
+        & workers' = r[1]
+        & network' = SetFold(r[2], net1, Append)
         & UNCHANGED << browsers, remote, tabs >>
 
 \* This happens periodically without a trigger event
@@ -804,10 +801,10 @@ WorkerSyncWithBrowserStorage ==
   \*             \* IF ~Log([WW |-> ws.drafts, BS |-> bs[src].get, RES |-> dss]) THEN {} ELSE
   \*             { <<ws2(ds), bs2(ds)>> : ds \in dss }
   \*       results == UNION { Attempt(s) : s \in BrowserSrc }
-  \*   IN
+  \*   IN \E r \in results:
   \*     & workers[w].status = live
-  \*     & workers'  \in { r[1] : r \in results }
-  \*     & browsers' \in { r[2] : r \in results }
+  \*     & workers'  = r[1]
+  \*     & browsers' = r[2]
   \*     & UNCHANGED << remote, network, tabs >>
 
 \* TODO Track online/offline status of tabs
