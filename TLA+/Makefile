@@ -22,8 +22,7 @@ info:
 drafts:
 	$(SHOW_SEP)
 	@$(TLC) drafts | tee drafts.log
-	# @$(TLC) -dump /home/golly/BeardedLogic/projects/shipreq/TLA+/xxx drafts
-	# @$(TLC) -dump dot:colorize,actionlabels,snapshot /home/golly/BeardedLogic/projects/shipreq/TLA+/xxx drafts
+	@fgrep -q 'State 1:' drafts.log && echo && $(MAKE) drafts-trace || test 1
 drafts-watch:
 	ls -1 drafts.{cfg,tla} $(SHARED) | entr -cr $(MAKE) drafts
 drafts-trace:

@@ -745,10 +745,15 @@ WorkerRecvChanges ==
                       }
           results  == { <<ws2(ds), msgs(ds)>> : ds \in dss2 }
           net1     == RemoveAt(network, i)
-      IN \E r \in results:
-        & workers' = r[1]
-        & network' = SetFold(r[2], net1, Append)
-        & UNCHANGED << browsers, remote, tabs >>
+      IN
+        IF results = {} THEN
+          & RecvMsg(i)
+          & UNCHANGED << browsers, remote, tabs, workers >>
+        ELSE
+          \E r \in results:
+            & workers' = r[1]
+            & network' = SetFold(r[2], net1, Append)
+            & UNCHANGED << browsers, remote, tabs >>
 
 \* This happens periodically without a trigger event
 WorkerSyncWithBrowserStorage ==
