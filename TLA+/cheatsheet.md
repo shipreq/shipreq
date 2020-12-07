@@ -130,11 +130,12 @@ Include fairness (but not other liveness properties) as part of the `Spec`.
 
 # TLC
 
-- TLCGet("distinct") = total number of distinct states found by TLC so far, globally.
-- TLCGet("queue")    = number of states currently in the queue to be checked.
-- TLCGet("duration") = number of seconds elapsed since model checking began.
-- TLCGet("diameter") = length of the longest behaviour found by TLC so far, globally (equals one in the initial predicate).
-- TLCGet("level")    = length of the current behaviour (equals zero in the evaluation of the initial predicate).
+- TLCGet("diameter")  = length of the longest behaviour found by TLC so far, globally (equals one in the initial predicate).
+- TLCGet("distinct")  = total number of distinct states found by TLC so far, globally.
+- TLCGet("duration")  = number of seconds elapsed since model checking began.
+- TLCGet("generated") = the number of states generated
+- TLCGet("level")     = length of the current behaviour (equals zero in the evaluation of the initial predicate).
+- TLCGet("queue")     = number of states currently in the queue to be checked.
 
 
 # Templates
@@ -202,4 +203,10 @@ CONSTANTS User = {u1,u2}
 SYMMETRY MCSymmetry
 
 PROPERTIES Liveness
+
+\* Custom value to print in place of state in traces
+ALIAS xxx
+
+\* Runs xxx at the end of model-checking
+POSTCONDITION xxx
 ```
