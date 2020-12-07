@@ -11,9 +11,26 @@
     .no,
     .name,
     (.state.remote? // "-" | tostring),
-    (.state.tabs? | with_entries(.value |= (.draft?.get? // .drafts // []))? // "-" | tostring),
-    (.state.workers? | with_entries(.value |= (.drafts? // "-"))? // "-" | tostring),
-    ( .state.network? | ([ .[] | select(.drafts?) | "\(.from)→\(.to):\(.drafts)" ] | sort)? // [] | tostring)
+    (.state.tabs?
+      | with_entries(.value |= "\(.draft?.get? // .drafts // [])\(if .localChange? then "*" else "" end)")?
+      // "-"
+      | tostring
+    ),
+    (.state.workers?
+      | with_entries(.value |= (.drafts? // "-"))?
+      // "-"
+      | tostring
+    ),
+    (.state.network?
+      | ([ .[]
+          | select(.drafts?)
+          | "\(.type | sub(":.*";"")):\(.from)→\(.to):\(.drafts)\(if .newEdit.get? then "*" else "" end)" ]
+          | sort
+        )?
+      // "-"
+      | tostring
+      | if . == "[]" then "-" else . end
+    )
   ]
 )
 | @tsv
