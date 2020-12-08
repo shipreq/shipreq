@@ -35,6 +35,7 @@
         )?
       // "-"
       | tostring
+      | gsub("Remote"; "R")
       | if . == "[]" then "-" else . end
     ),
     (.state.browsers?

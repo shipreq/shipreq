@@ -43,7 +43,6 @@ Important notes
 
 TODO
 ====
-- Add a user-write budget (maybe)
 *)
 
 EXTENDS FiniteSets, Naturals, Sequences, TLC, Util
@@ -117,7 +116,7 @@ syncTW         == "sync:T->W"
 syncWT         == "sync:W->T"
 syncTR         == "sync:T->R"
 syncRT         == "sync:R->T"
-RemoteStoreCmd == "RemoteStoreCmd"
+RemoteStoreCmd == "cmd:T->R"
 ackRT          == "ack:R->T"
 ackTW          == "ack:T->W"
 
@@ -801,7 +800,6 @@ WorkerSyncWithBrowserStorage ==
         & UNCHANGED << remote, tabs >>
 
 \* TODO: Track online/offline status of tabs
-\* TODO: Assumes that an ack will always be received to (for the sake of model checking)
 WorkerSendRemoteStoreCmd ==
   \E w \in Worker:
     LET ws  == workers[w]

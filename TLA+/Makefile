@@ -4,7 +4,7 @@ TLC1      := TLC_OPTS="-workers 1" $(TLC)
 TLCs      := $(TLC1) -simulate -seed 0
 SHOW_SEP  := @echo -e "\e[46m========================================================================================================================\e[0m"
 SHARED    := convert_dialect Makefile tlc Util.tla
-TLA_QUERY := /home/golly/projects/public/tla-query/run -s
+TLA_QUERY := /home/golly/projects/public/tla-query/run -sl
 
 info:
 	@echo "Commands:"
