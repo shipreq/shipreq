@@ -1,5 +1,5 @@
-["#", "Step", "Remote", "Tabs", "Workers", "Network"],
-["=", "====", "======", "====", "=======", "======="],
+["#", "Step", "Remote", "Tabs", "Workers", "Network", "Browser"],
+["=", "====", "======", "====", "=======", "=======", "======="],
 (
   .
 
@@ -30,6 +30,11 @@
       // "-"
       | tostring
       | if . == "[]" then "-" else . end
+    ),
+    (.state.browsers?
+      | with_entries(.value |= (with_entries(.value |= (.get? // "-"))))?
+      // "-"
+      | tostring
     )
   ]
 )

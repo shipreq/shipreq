@@ -9,7 +9,8 @@ TLA_QUERY := /home/golly/projects/public/tla-query/run -s
 info:
 	@echo "Commands:"
 	@echo
-	@echo "  * drafts[-last,-trace,-watch]"
+	@echo "  * drafts-last"
+	@echo "  * drafts[-trace][-watch]"
 	@echo "  * encryption[-watch]"
 	@echo "  * jq-test[T]"
 	@echo "  * project[-watch]"
@@ -18,7 +19,7 @@ info:
 	@echo
 
 
-.PHONY: drafts drafts-watch drafts-trace drafts-last
+.PHONY: drafts drafts-watch drafts-trace drafts-trace-watch drafts-last
 drafts:
 	$(SHOW_SEP)
 	@$(TLC) drafts | tee drafts.log
@@ -27,8 +28,10 @@ drafts-watch:
 	ls -1 drafts.{cfg,tla} $(SHARED) | entr -cr $(MAKE) drafts
 drafts-trace:
 	@$(TLA_QUERY) drafts.log | jq -rf drafts.jq | column -t -s$$'\t'
+drafts-trace-watch:
+	ls -1 drafts.{log,jq} $(SHARED) | entr -cr $(MAKE) drafts-last
 drafts-last:
-	@cat drafts.log
+	@sed '0,/^Starting\.\.\./d' <drafts.log
 	@echo
 	@$(MAKE) drafts-trace
 
