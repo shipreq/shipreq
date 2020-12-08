@@ -785,7 +785,10 @@ WorkerSyncWithBrowserStorage ==
       LET b             == ws.browser
           bs            == browsers[b]
           browsers2(ds) == [browsers EXCEPT ![b][s] = Some(ds)]
-          workers2(ds)  == [workers EXCEPT ![w].drafts = ds]
+          workers2(ds)  == [workers EXCEPT
+                             ![w].drafts = ds,
+                             ![w].sync = IF ws.drafts = ds THEN @ ELSE WorkerSyncLater(@)
+                           ]
           network2(ds)  == SetFold(WorkerBroadcastToTabMsgs(w, ds, LAMBDA t: None), network, Append)
           dss           == Prune(AddDrafts(bs[s].get, ws.drafts))
           results       == { <<browsers2(ds), workers2(ds), network2(ds)>> : ds \in dss }
@@ -805,8 +808,7 @@ WorkerSendRemoteStoreCmd ==
     LET ws  == workers[w]
         s1  == ws.sync[Remote]
         s2  == WorkerSyncStart(s1)
-        t   == CHOOSE t \in WorkerTabs(w) : TRUE \* TODO: CHOOSE or \E?
-        cmd == [
+        cmd(t) == [
           type   |-> RemoteStoreCmd,
           from   |-> w,
           to     |-> t,
@@ -817,9 +819,10 @@ WorkerSendRemoteStoreCmd ==
       & ws.status = live
       & ~s2.isEmpty
       & ws.drafts != {}
-      & SendMsg(cmd)
-      & workers' = [workers EXCEPT ![w].sync[Remote] = s2.get]
-      & UNCHANGED << browsers, remote, tabs >>
+      & \E t \in WorkerTabs(w):
+        & SendMsg(cmd(t))
+        & workers' = [workers EXCEPT ![w].sync[Remote] = s2.get]
+        & UNCHANGED << browsers, remote, tabs >>
 
 TabRecvRemoteAck ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = ackRT)
