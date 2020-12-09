@@ -60,6 +60,9 @@ SymmetrySets(Ss) ==
 Min[x \in Nat, y \in Nat] == IF x < y THEN x ELSE y
 Max[x \in Nat, y \in Nat] == IF x > y THEN x ELSE y
 
+NormaliseNats(value, maxGap, setSize) ==
+  value
+
 ------------------------------------------------------------------------------------------------------------------------
 \* Option
 

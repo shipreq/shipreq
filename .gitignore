@@ -9,7 +9,6 @@
 .metals
 .target
 .vscode
-.vscode/settings.json
 *.bak
 *.err
 *.log

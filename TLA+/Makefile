@@ -3,12 +3,16 @@ TLC       := ./tlc -gzip -difftrace
 TLC1      := TLC_OPTS="-workers 1" $(TLC)
 TLCs      := $(TLC1) -simulate -seed 0
 SHOW_SEP  := @echo -e "\e[46m========================================================================================================================\e[0m"
-SHARED    := convert_dialect Makefile tlc Util.tla
 TLA_QUERY := /home/golly/projects/public/tla-query/run -sl
+TLA_JAR   := /usr/share/java/tla2tools.jar
+SCALA     := $(wildcard *.scala)
+JAVA      := $(wildcard *.java)
+SHARED    := convert_dialect Makefile tlc Util.tla $(SCALA) $(JAVA)
 
 info:
 	@echo "Commands:"
 	@echo
+	@echo "  * classes"
 	@echo "  * drafts-last"
 	@echo "  * drafts[-trace][-watch]"
 	@echo "  * encryption[-watch]"
@@ -19,10 +23,17 @@ info:
 	@echo
 
 
+# .PHONY: classes
+classes:
+	cd $@ \
+	&& rm -f *.class \
+	&& scalac -cp $(TLA_JAR) -Xlint -opt:l:method -opt:l:inline -opt-inline-from:** $(SCALA:%=../%) \
+	&& javac -cp $(TLA_JAR):. -d . $(JAVA:%=../%)
+
 .PHONY: drafts drafts-watch drafts-trace drafts-trace-watch drafts-last
-drafts:
+drafts: classes
 	$(SHOW_SEP)
-	@$(TLC) drafts | tee drafts.log
+	$(TLC) drafts | tee drafts.log
 	@fgrep -q 'State 1:' drafts.log && echo && $(MAKE) drafts-trace || test 1
 drafts-watch:
 	ls -1 drafts.{cfg,tla} $(SHARED) | entr -cr $(MAKE) drafts

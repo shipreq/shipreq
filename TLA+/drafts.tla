@@ -60,6 +60,7 @@ CONSTANT MCBrowserStorageAlwaysAvailable
 CONSTANT MCMaxLocalChangesInFlight
 CONSTANT MCMaxEditsPerTab
 CONSTANT MCMaxPruneByProvDepth
+CONSTANT MCNormaliseNatsSetSize
 
 ASSUME IsFiniteSet(Browser)
 ASSUME IsFiniteSet(BrowserSrcAsync)
@@ -73,6 +74,7 @@ ASSUME MCBrowserStorageAlwaysAvailable \in SUBSET (BrowserSrcSync ++ BrowserSrcA
 ASSUME MCMaxLocalChangesInFlight \in Nat
 ASSUME MCMaxEditsPerTab \in Nat
 ASSUME MCMaxPruneByProvDepth \in Nat
+ASSUME MCNormaliseNatsSetSize \in Nat
 
 \* Async browser storage (like idb) not supported yet (if ever).
 \* In other to faithfully spec it out, we need to break the process into multiple steps
@@ -121,6 +123,9 @@ syncRT         == "sync:R->T"
 RemoteStoreCmd == "cmd:T->R"
 ackRT          == "ack:R->T"
 ackTW          == "ack:T->W"
+
+StateWithNormalisedNats ==
+  NormaliseNats(state, 0, MCNormaliseNatsSetSize)
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Invariants
