@@ -35,6 +35,8 @@
 * Consider edge replacement in validation (eg. turning A->B into B->A) -- requires new event
 * add a KB shortcut to show/hide preview
 * add a req type filter to field config
+* add autocomplete from ` [lab` to ` [label="$CURSOR$"]`
+* add trailing NL to multiline editor text
 
 
 
