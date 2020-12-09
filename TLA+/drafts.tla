@@ -260,8 +260,8 @@ InvariantsForNetwork ==
   network \in NetworkState
 
 InvariantsForRemote ==
-  & remote \in Drafts
-  & StorageInvariants(remote)
+  & remote \in [ord: Nat, drafts: Drafts]
+  & StorageInvariants(remote.drafts)
 
 InvariantsForTabs ==
   & tabs \in [Tab -> TabState]
@@ -356,7 +356,7 @@ AllStores ==
   LET draftsB == { browsers[x[1]][x[2]].get : x \in AvailableBrowserStores }
       draftsT == { TabDrafts(t) : t \in ActiveTabs }
       draftsW == { workers[w].drafts : w \in ActiveWorkers }
-      draftsR == { remote }
+      draftsR == { remote.drafts }
   IN draftsB ++ draftsT ++ draftsW ++ draftsR
 
 \* Set[Draft]
@@ -538,10 +538,10 @@ RemoteRecvDrafts ==
           broadcasts(ds) == SetFold(otherTabs, <<>>, LAMBDA q,t: q \o <<broadcastTo(t, ds)>>)
           result(ds)     == <<ds, <<resp>> \o broadcasts(ds)>>
           dss            == \*LogRet([ADD |-> AddDrafts(remote, msg.drafts), PRU |-> Prune(AddDrafts(remote, msg.drafts))],
-                            Prune(AddDrafts(remote, msg.drafts))
+                            Prune(AddDrafts(remote.drafts, msg.drafts))
           results        == { result(ds) : ds \in dss }
       IN \E r \in results:
-        & remote' = r[1]
+        & remote' = [remote EXCEPT !.drafts = r[1]]
         & network' = RemoveAt(network, i) \o r[2]
         & UNCHANGED << browsers, tabs, workers >>
 
@@ -602,7 +602,7 @@ TabLoad ==
             ELSE Attempt(src, o.get)
           browserAttempts ==
             UNION { AttemptOption(src, bs[src]) : src \in BrowserSrc }
-      IN tabs' \in (browserAttempts ++ Attempt(Remote, remote))
+      IN tabs' \in (browserAttempts ++ Attempt(Remote, remote.drafts))
 
 TabNew ==
   \E t \in Tab:
@@ -852,7 +852,7 @@ WorkerRecvRemoteAck ==
 
 Init ==
   & network = <<>>
-  & remote  = {}
+  & remote  = [ord |-> 0, drafts |-> {}]
   & tabs    = [t \in Tab |-> [status |-> nonExistant]]
   & workers = [w \in Worker |-> [status |-> nonExistant]]
   & browsers \in [Browser -> (
@@ -938,8 +938,8 @@ StableInvariants ==
         ])
 
     & Assert1(
-      remote = AllDrafts,
-      "Drafts are not stored remotely", [all |-> AllDrafts, remote |-> remote])
+      remote.drafts = AllDrafts,
+      "Drafts are not stored remotely", [all |-> AllDrafts, remote |-> remote.drafts])
 
 MCContinue ==
   TLCGet("diameter") <= 50

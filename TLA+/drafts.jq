@@ -10,7 +10,7 @@
   | [
     .no,
     .name,
-    (.state.remote? // "-" | tostring),
+    (.state.remote.drafts? // "-" | tostring),
     (.state.tabs?
       | with_entries(
           if .value.status == "-" then
