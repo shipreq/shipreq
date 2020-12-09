@@ -1,13 +1,13 @@
-MAKE      := make -s
-TLC       := ./tlc -gzip -difftrace
-TLC1      := TLC_OPTS="-workers 1" $(TLC)
-TLCs      := $(TLC1) -simulate -seed 0
-SHOW_SEP  := @echo -e "\e[46m========================================================================================================================\e[0m"
-TLA_QUERY := /home/golly/projects/public/tla-query/run -sl
-TLA_JAR   := /usr/share/java/tla2tools.jar
-SCALA     := $(wildcard *.scala)
-JAVA      := $(wildcard *.java)
-SHARED    := convert_dialect Makefile tlc Util.tla $(SCALA) $(JAVA)
+MAKE     := make -s
+TLC      := ./tlc -gzip -difftrace
+TLC1     := TLC_OPTS="-workers 1" $(TLC)
+TLCs     := $(TLC1) -simulate -seed 0
+SHOW_SEP := @echo -e "\e[46m========================================================================================================================\e[0m"
+TLA2JSON := /home/golly/projects/public/tla2json/run -sl
+TLA_JAR  := /usr/share/java/tla2tools.jar
+SCALA    := $(wildcard *.scala)
+JAVA     := $(wildcard *.java)
+SHARED   := convert_dialect Makefile tlc Util.tla $(SCALA) $(JAVA)
 
 info:
 	@echo "Commands:"
@@ -38,7 +38,7 @@ drafts: classes
 drafts-watch:
 	ls -1 drafts.{cfg,tla} $(SHARED) | entr -cr $(MAKE) drafts
 drafts-trace:
-	@$(TLA_QUERY) drafts.log | jq -rf drafts.jq | column -t -s$$'\t'
+	@$(TLA2JSON) drafts.log | jq -rf drafts.jq | column -t -s$$'\t'
 drafts-trace-watch:
 	ls -1 drafts.{log,jq} $(SHARED) | entr -cr $(MAKE) drafts-last
 drafts-last:
