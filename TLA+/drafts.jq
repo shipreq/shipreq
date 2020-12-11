@@ -17,8 +17,11 @@
     .name,
     (
       (.state.target.drafts? // "-" | tostring) as $drafts
-      | ((.state.target.pending | [.[] | "\(.tab):\(.editCount)"] | join(","))? // "") as $pending
-      | if $pending == "" then $drafts else "\($drafts)+{\($pending)}" end
+      | ((.state.target.pending | [.[] | "\(.tab):\(.editCount)\(if .tombstone then "d" else "" end)"] | join(","))? // "") as $pending
+      | ((.state.target.returning | [.[] | "\(.tab):\(.draft)"] | join(","))? // "") as $returning
+      | $drafts as $a
+      | (if $returning == "" then $a else "\($a)←{\($returning)}" end) as $b
+      | if $pending == "" then $b else "\($b)→{\($pending)}" end
     ),
     (.state.remote.drafts? // "-" | tostring),
     (.state.tabs?
@@ -75,3 +78,4 @@
 | @tsv
 | gsub("[\"\\\\]"; "")
 | gsub(","; ", ")
+| if contains("\tUser") then "\u001b[36m\(.)\u001b[0m" else . end

@@ -177,7 +177,7 @@ Msg == [
   from   : Worker,
   to     : Tab,
   drafts : Drafts,
-  edit   : Option([draft: Draft, rev: Nat])
+  edit   : Option([draft: Draft, rev: Nat, editCount: Nat]) \* editCount is just for updating target
 ] ++ [
   type   : {syncTR},
   from   : Tab,
@@ -324,8 +324,9 @@ InvariantsForWorkers ==
 
 InvariantsForTarget ==
   target \in [
-    pending: SUBSET [tab: Tab, editCount: Nat],
-    drafts : Drafts
+    pending  : SUBSET [tab: Tab, editCount: Nat, tombstone: BOOLEAN],
+    returning: SUBSET [tab: Tab, editCount: Nat, draft: Draft],
+    drafts   : Drafts
   ]
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
@@ -524,8 +525,10 @@ PruneByEq(ds) ==
 Prune(drafts) ==
   {PruneByProv(ds) : ds \in PruneByEq(drafts)}
 
-TargetAddPending(tgt, t, newEditCount) ==
-  [tgt EXCEPT !.pending = @ ++ {[tab |-> t, editCount |-> newEditCount]}]
+TargetAddPending(tgt, t, newEditCount, wantLive) ==
+  LET add == [tab |-> t, editCount |-> newEditCount, tombstone |-> ~wantLive]
+      rem == [add EXCEPT !.tombstone = ~@]
+  IN [tgt EXCEPT !.pending = (@ -- {rem}) ++ {add}]
 
 TargetDelPending(tgt, t, editCount) ==
   LET del(p) == p.tab = t & p.editCount <= editCount
@@ -755,12 +758,14 @@ RemoteRecvDrafts ==
           otherTabs      == { t \in RemoteConnectedTabs : t != msg.from }
           broadcasts(ds) == SetFold(otherTabs, <<>>, LAMBDA q,t: q \o <<broadcastTo(t, ds)>>)
           result(ds)     == <<ds, <<resp>> \o broadcasts(ds)>>
-          dss            == \*LogRet([ADD |-> AddDrafts(remote, msg.drafts), PRU |-> Prune(AddDrafts(remote, msg.drafts))],
-                            Prune(AddDrafts(remote.drafts, msg.drafts))
+          ds1            == { d \in msg.drafts : ~d.tombstone } \* Don't store tombstones for now
+          dss            == \*LogRet([ADD |-> AddDrafts(remote.drafts, ds1), PRU |-> Prune(AddDrafts(remote.drafts, ds1))],
+                            Prune(AddDrafts(remote.drafts, ds1))
           results        == { result(ds) : ds \in dss }
-      IN \E r \in results:
-        & remote' = [remote EXCEPT !.drafts = r[1]]
-        & network' = RemoveAt(network, i) \o r[2]
+      IN
+        & \E r \in results:
+          & remote' = [remote EXCEPT !.drafts = r[1]]
+          & network' = RemoveAt(network, i) \o r[2]
         & UNCHANGED << browsers, tabs, workers, target >>
 
 TabRecvDraftsFromRemote ==
@@ -796,7 +801,15 @@ TabRecvDraftsFromWorker ==
         & \E ts2 \in tss:
           tabs' = [tabs EXCEPT ![t] = ts2]
         & RecvMsg(i)
-        & UNCHANGED << browsers, remote, workers, target >>
+        & IF msg.edit.isEmpty THEN
+            UNCHANGED target
+          ELSE
+            LET e    == msg.edit.get
+                ret  == CHOOSE r \in target.returning : r.tab = t & r.editCount = e.editCount
+                tgt1 == [target EXCEPT !.returning = @ -- {ret}]
+                tgt2 == TargetAddDrafts(tgt1, {ret.draft})
+            IN target' = tgt2
+        & UNCHANGED << browsers, remote, workers >>
 
 TabLoad ==
   \E t \in Tab:
@@ -948,22 +961,35 @@ UserAbort ==
       & ts.status = dirty
       & ~ts.aborted
       & ts.editCount < MCMaxEditsPerTab
-      & IF ts.drafts /= {} THEN
-          \* At least one confirmed drafts exists that now needs to be deleted
-          LET ds == MergeDraftsIntoTombstoneNE(ts.drafts)
-          IN \E d \in ds:
-            tabs' = [tabs EXCEPT ![t].aborted   = TRUE,
-                                 ![t].editDraft = SomeWhen(~@.isEmpty, d),
-                                 ![t].editRev   = @ + 1, \* Inc to activate TabSendChangesToWorker
-                                 ![t].editCount = @ + 1]
-        ELSE IF ts.editRev /= ts.editRevAck THEN
-          \* First edit sent to worker, waiting for first draft
-          tabs' = [tabs EXCEPT ![t].aborted = TRUE]
-        ELSE
-          \* No non-local state exists, act immediately
-          tabs' = [tabs EXCEPT ![t] = NewCleanTabState(ts, {})]
-      & target' = TargetDelPending(TargetDelDrafts(target, ts.drafts), t, ts.editCount)
-      & UNCHANGED << browsers, workers, network, remote >>
+      & LET tgt1 == TargetDelDrafts(target, ts.drafts)
+            tgt2 == [tgt1 EXCEPT
+                      !.returning = { IF r.tab = t THEN [r EXCEPT !.draft.tombstone = TRUE] ELSE r : r \in @ },
+                      !.pending =  { IF p.tab = t THEN [p EXCEPT !.tombstone = TRUE] ELSE p : p \in @ }
+                    ]
+            updateTarget(pendingEditCount) ==
+              IF pendingEditCount = 0 THEN
+                tgt2
+              ELSE
+                TargetAddPending(tgt2, t, pendingEditCount, FALSE)
+        IN
+          & IF ts.drafts /= {} THEN
+              \* At least one confirmed drafts exists that now needs to be deleted
+              LET ds == MergeDraftsIntoTombstoneNE(ts.drafts)
+              IN \E d \in ds:
+                & tabs' = [tabs EXCEPT ![t].aborted   = TRUE,
+                                       ![t].editDraft = SomeWhen(~@.isEmpty, d),
+                                       ![t].editRev   = @ + 1, \* Inc to activate TabSendChangesToWorker
+                                       ![t].editCount = @ + 1]
+                & target' = updateTarget(ts.editCount + 1)
+            ELSE IF ts.editRev != ts.editRevAck THEN
+              \* First edit sent to worker, waiting for first draft
+              & tabs' = [tabs EXCEPT ![t].aborted = TRUE]
+              & target' = updateTarget(0)
+            ELSE
+              \* No non-local state exists, act immediately
+              & tabs' = [tabs EXCEPT ![t] = NewCleanTabState(ts, {})]
+              & target' = updateTarget(0)
+          & UNCHANGED << browsers, workers, network, remote >>
 
 UserEditClean ==
   \E t \in Tab:
@@ -974,7 +1000,7 @@ UserEditClean ==
       & ts.status = clean
       & ts.editCount < MCMaxEditsPerTab
       & tabs' = [tabs EXCEPT ![t] = ts2]
-      & target' = TargetAddPending(target, t, ts2.editCount)
+      & target' = TargetAddPending(target, t, ts2.editCount, TRUE)
       & UNCHANGED << browsers, workers, network, remote >>
 
 UserEditDirty ==
@@ -986,7 +1012,7 @@ UserEditDirty ==
       & ts.editRev < MCMaxLocalChangesInFlight
       & ts.editRevSent = IF ts.editRev = 0 THEN 0 ELSE ts.editRev - 1
     & tabs' = [tabs EXCEPT ![t].editRev = @ + 1, ![t].editCount = @ + 1]
-    & target' = TargetAddPending(target, t, tabs'[t].editCount)
+    & target' = TargetAddPending(target, t, tabs'[t].editCount, TRUE)
     & UNCHANGED << browsers, workers, network, remote >>
 
 WorkerBroadcastToTabMsgs(w, newDrafts, edit(_)) ==
@@ -1011,7 +1037,7 @@ WorkerRecvChanges ==
           w        == msg.to
           ws       == workers[w]
           t2       == IF msg.edit.isEmpty THEN ws.time ELSE ws.time + 1
-          editF(e) == [draft |-> NewDraft(w, e.prov), rev |-> e.rev]
+          editF(e) == [draft |-> NewDraft(w, e.prov), rev |-> e.rev, editCount |-> e.editCount]
           edit     == OptionMap(msg.edit, editF)
           dss      == Prune(AddDrafts(ws.drafts, AddDrafts(msg.drafts, {e.draft : e \in OptionToSet(edit)})))
           dss2     == { ds \in dss : ds != ws.drafts }
@@ -1031,16 +1057,13 @@ WorkerRecvChanges ==
         & IF msg.edit.isEmpty THEN
             UNCHANGED target
           ELSE
-            LET e    == msg.edit.get
-                t    == msg.from
-                d    == NewDraft(w, e.prov)
-                tgt2 == TargetDelPending(target, t, e.editCount)
-            IN
-              IF tgt2 = target THEN
-                \* The edit was removed from target.pending meaning we don't want it added to target.drafts anymore
-                UNCHANGED target
-              ELSE
-                target' = TargetAddDrafts(tgt2, {d})
+            LET e  == msg.edit.get
+                t  == msg.from
+                p  == CHOOSE p \in target.pending : p.tab = t & p.editCount = e.editCount
+                d1 == NewDraft(w, e.prov)
+                d  == IF p.tombstone THEN [d1 EXCEPT !.tombstone = TRUE] ELSE d1
+                r  == [tab |-> t, editCount |-> e.editCount, draft |-> d]
+            IN target' = [target EXCEPT !.pending = @ -- {p}, !.returning = @ ++ {r}]
 
 ActiveBrowserSrcs(b) ==
   { s \in BrowserSrc : ~browsers[b][s].isEmpty }
@@ -1123,7 +1146,7 @@ WorkerRecvRemoteAck ==
           ws    == workers[w]
           sync  == ws.sync[Remote]
           sync2 == WorkerSyncAck(sync, id)
-          tombs == SetFind(sync.tombstones, LAMBDA e: e[1] = id)
+          tombs == SetFind(sync.tombstones, LAMBDA e: e[1] = id) \* find and not filter cos it's (ID,Drafts), not (ID,Draft)*
           ds2   == IF tombs.isEmpty THEN ws.drafts ELSE ws.drafts -- tombs.get[2]
           ws2   == [ws EXCEPT !.sync[Remote] = sync2, !.drafts = ds2]
       IN
@@ -1135,7 +1158,7 @@ WorkerRecvRemoteAck ==
 \* Spec
 
 Init ==
-  & target  = [pending |-> {}, drafts |-> {}]
+  & target  = [pending |-> {}, returning |-> {}, drafts |-> {}]
   & network = <<>>
   & remote  = [ord |-> 0, drafts |-> {}]
   & tabs    = [t \in Tab |-> [status |-> nonExistant]]
@@ -1219,8 +1242,8 @@ StableInvariants ==
         | ts.status = nonExistant
 
     & Assert1(
-        target.pending = {},
-        "Incomplete edits in target ", target.pending)
+        target.pending = {} & target.returning = {},
+        "Incomplete edits in target ", [pending |-> target.pending, returning |-> target.returning])
 
     & \A w \in ActiveWorkers : \A s \in AsyncSrc :
       Assert1(

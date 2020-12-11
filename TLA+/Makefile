@@ -3,7 +3,7 @@ TLC      := ./tlc -gzip -difftrace
 TLC1     := TLC_OPTS="-workers 1" $(TLC)
 TLCs     := $(TLC1) -simulate -seed 0
 SHOW_SEP := @echo -e "\e[46m========================================================================================================================\e[0m"
-TLA2JSON := /home/golly/projects/public/tla2json/run -sl
+TLA2JSON := /home/golly/projects/public/tla2json/run -sld
 TLA_JAR  := /usr/share/java/tla2tools.jar
 SCALA    := $(wildcard *.scala)
 JAVA     := $(wildcard *.java)
