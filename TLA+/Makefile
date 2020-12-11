@@ -13,8 +13,7 @@ info:
 	@echo "Commands:"
 	@echo
 	@echo "  * classes"
-	@echo "  * drafts-last"
-	@echo "  * drafts[-trace][-watch]"
+	@echo "  * drafts[-trace][-last]"
 	@echo "  * encryption[-watch]"
 	@echo "  * jq-test[T]"
 	@echo "  * project[-watch]"
@@ -33,19 +32,22 @@ classes:
 .PHONY: drafts drafts-watch drafts-trace drafts-trace-watch drafts-last
 drafts: classes
 	$(SHOW_SEP)
-	$(TLC) drafts | tee drafts.log
-	@fgrep -q 'State 1:' drafts.log && echo && $(MAKE) drafts-trace || test 1
-drafts-watch:
-	ls -1 drafts.{cfg,tla} $(SHARED) | entr -cr $(MAKE) drafts
+	$(TLC1) drafts | tee drafts.log
+	@fgrep -q 'State 1:' drafts.log \
+	  && fgrep Error drafts.log | fgrep -v "behavior up to this point" \
+	  && echo \
+	  && $(MAKE) drafts-trace \
+	  || test 1
 drafts-trace:
 	@$(TLA2JSON) drafts.log | jq -rf drafts.jq | column -t -s$$'\t'
-drafts-trace-watch:
+drafts-watch:
+	ls -1 drafts.{cfg,tla,jq} $(SHARED) | entr -cr $(MAKE) drafts
+drafts-watch-last:
 	ls -1 drafts.{log,jq} $(SHARED) | entr -cr $(MAKE) drafts-last
 drafts-last:
 	@sed '0,/^Starting\.\.\./d' <drafts.log
 	@echo
 	@$(MAKE) drafts-trace
-
 
 .PHONY: encryption encryption-watch
 encryption:

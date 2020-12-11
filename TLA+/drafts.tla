@@ -136,10 +136,30 @@ StateWithNormalisedNats ==
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Invariants
 
-Provenance  == [Worker -> Nat]                               \* i.e. Map[WorkerId, Time]
-Draft       == [worker: Worker, time: Nat, prov: Provenance] \* no need to include draft content
-Drafts      == SUBSET Draft                                  \* i.e. Set[Draft]
-DraftsNE    == Drafts -- {{}}                                \* i.e. NonEmptySet[Draft]
+Provenance ==
+  [Worker -> Nat] \* i.e. Map[WorkerId, Time]
+
+DraftWithTombstoneIn(T) == [
+  worker   : Worker,
+  time     : Nat,
+  prov     : Provenance,
+  tombstone: T
+]
+
+DraftsWithTombstoneIn(T) ==
+  SUBSET DraftWithTombstoneIn(T) \* i.e. Set[Draft]
+
+Draft ==
+  DraftWithTombstoneIn(BOOLEAN)
+
+Drafts ==
+  SUBSET Draft \* i.e. Set[Draft]
+
+DraftsNE ==
+  Drafts -- {{}} \* i.e. NonEmptySet[Draft]
+
+Tombstones ==
+  DraftsWithTombstoneIn({TRUE})
 
 IsValidAssignment(b, w, t) ==
   {b,w,t} \in Assignments
@@ -212,24 +232,31 @@ TabState ==
     awaiting: SUBSET AnySrc
   ] ++
   [
-    status: {clean},
-    worker: Worker
+    status     : {clean},
+    worker     : Worker,
+    \* editRevSent: Nat, \* dirty state we want to maintain between clean <-> dirty transitions
+    \* editRevAck : Nat, \* dirty state we want to maintain between clean <-> dirty transitions
+    editCount  : Nat, \* dirty state we want to maintain between clean <-> dirty transitions
+    tombstones : Tombstones \* Tombstones drafts that need to be sent to WW
   ] ++
   [
     status     : {dirty},
     worker     : Worker,
     drafts     : Drafts, \* includes editDraft when its defined
     editDraft  : Option(Draft), \* last known draft for editor state - defined iff editRev>0
-    editRev    : Nat, \* Local change revision (is reset back to zero when moved into a draft)
-    editRevSent: Nat, \* The highest revision sent to WW to be turned into a draft (is reset back to zero like above)
-    editCount  : Nat \* The number of edits made by a user in this tab
+    editRev    : Nat, \* Local change revision                                     (is reset back to zero when moved into a draft)
+    editRevSent: Nat, \* The highest revision sent to WW to be turned into a draft (is reset back to zero when moved into a draft)
+    editRevAck : Nat, \* The highest revision ack'd by WW                          (is reset back to zero when moved into a draft)
+    editCount  : Nat, \* The number of edits made by a user in this tab
+    aborted    : BOOLEAN
   ]
 
 WorkerSyncState ==
   [
-    desired: Nat, \* The promise id we want ack'd to know that we've synced
-    lastReq: Nat, \* The last promise id issued
-    lastAck: Nat  \* The highest ack'd promise id
+    desired   : Nat, \* The promise id we want ack'd to know that we've synced
+    lastReq   : Nat, \* The last promise id issued
+    lastAck   : Nat, \* The highest ack'd promise id
+    tombstones: SUBSET (Nat \X Tombstones) \* Set[(ReqId, Tombstones)]
   ]
 
 WorkerState ==
@@ -253,6 +280,10 @@ StorageInvariants(s) ==
 WorkerSyncStateInvariants(s) ==
   & s.lastReq <= s.desired
   & s.lastAck <= s.lastReq
+  & \A e \in s.tombstones :
+    & e[1] > s.lastAck
+    & e[1] <= s.desired
+    & \A f \in s.tombstones : (e[1] = f[1]) => (e[2] = f[2]) \* Prevent multiple entries per reqId
 
 InvariantsForBrowsers ==
   & browsers \in [Browser -> BrowserState]
@@ -273,12 +304,15 @@ InvariantsForTabs ==
   & \A t \in Tab :
       LET ts == tabs[t]
       IN
+        & ts.status \in {clean,dirty} =>
+          & ts.editCount <= MCMaxEditsPerTab
         & ts.status = dirty =>
           & ts.editRevSent <= ts.editRev
+          & ts.editRev <= ts.editCount
+          & ts.editRevAck <= ts.editRevSent
           & ~ts.editDraft.isEmpty => ts.editDraft.get \in ts.drafts \* drafts includes editDraft
           & ~(ts.editRev = 0 & ts.drafts = {}) \* ensure actually dirty
           & ~ts.editDraft.isEmpty => ts.editRev != 0 \* editDraft only defined when there are local changes
-          & ts.editCount <= MCMaxEditsPerTab
 
 InvariantsForWorkers ==
   & workers \in [Worker -> WorkerState]
@@ -295,19 +329,26 @@ WorkerSyncStateIsStable(s) ==
   & s.lastReq = s.desired
   & s.lastAck = s.lastReq
 
-WorkerSyncStateEmpty ==
-  [desired |-> 0, lastReq |-> 0, lastAck |-> 0]
+WorkerSyncStateEmpty == [
+  desired    |-> 0,
+  lastReq    |-> 0,
+  lastAck    |-> 0,
+  tombstones |-> {}
+]
 
 \* WorkerSyncState => Option[WorkerSyncState]
-WorkerSyncStart(s) ==
-  LET doIt == & s.desired > s.lastReq \* we have new content to sync
-              & s.lastAck = s.lastReq \* wait for ACK so that model checking isn't infinite
-      next == [s EXCEPT !.lastReq = s.desired]
+WorkerSyncStart(s, drafts) ==
+  LET doIt  == & s.desired > s.lastReq \* we have new content to sync
+               & s.lastAck = s.lastReq \* wait for ACK so that model checking isn't infinite
+      id    == s.desired
+      tombs == LET ts == << id, { d \in drafts : d.tombstone } >>
+               IN IF ts[2] = {} THEN {} ELSE {ts}
+      next  == [s EXCEPT !.lastReq = id, !.tombstones = @ ++ tombs]
   IN SomeWhen(doIt, next)
 
 WorkerSyncAck(s, id) ==
   IF id <= s.lastReq & id != s.lastAck THEN
-    [s EXCEPT !.lastAck = Max[@, id]]
+    [s EXCEPT !.lastAck = Max[@, id], !.tombstones = {e \in @ : e[1] != id}]
   ELSE
     Fail1("Invalid ACK", [syncState |-> s, id |-> id])
 
@@ -379,9 +420,10 @@ RecvResp(recv, resp) ==
 
 NewDraft(w, prevProv) ==
   [
-    worker |-> w,
-    time   |-> workers[w].time,
-    prov   |-> [prevProv EXCEPT ![w] = 0]
+    worker    |-> w,
+    time      |-> workers[w].time,
+    prov      |-> [prevProv EXCEPT ![w] = 0],
+    tombstone |-> FALSE
   ]
 
 NoProv ==
@@ -447,16 +489,17 @@ _PruneByProv(ds, depth) ==
     ELSE IF match.isEmpty THEN
       ds
     ELSE
-      LET d1  == match.get[1]
-          d2  == match.get[2]
-          d   == AddProv(d1, AddSelfToOwnProv(d2).prov) \* TODO: Need AddSelfToOwnProv here?
-          ds2 == (ds -- {d1, d2}) ++ {d}
+      LET d1a == match.get[1]
+          d1b == match.get[2]
+          d2a == AddProv(d1a, AddSelfToOwnProv(d1b).prov) \* TODO: Need AddSelfToOwnProv here?
+          d2  == [d2a EXCEPT !.tombstone = @ | d1b.tombstone]
+          ds2 == (ds -- {d1a, d1b}) ++ {d2}
       IN _PruneByProv(ds2, depth + 1)
 PruneByProv(ds) == _PruneByProv(ds, 0)
 
 \* Returns a set of possible outcomes
 PruneByEq(ds) ==
-  LET equalSets    == { x \in SUBSET(ds) : Cardinality(x) > 1 } \* Set[Set[Drafts]]
+  LET equalSets    == { es \in SUBSET(ds) : Cardinality(es) > 1 & (\A d \in es : ~d.tombstone) } \* Set[Set[Drafts]]
       merge(x, y)  == AddProv(x, AddSelfToOwnProv(y).prov)
       mergeAll(es) == SetReduce(es, merge)
       result       == { (ds -- es) ++ {mergeAll(es)} : es \in equalSets } ++ {ds}
@@ -466,54 +509,129 @@ PruneByEq(ds) ==
 Prune(drafts) ==
   {PruneByProv(ds) : ds \in PruneByEq(drafts)}
 
-NewDirtyTabState(w, ds, editDraft, editRev) ==
-  [
-    status      |-> dirty,
+NewCleanTabState(workerOrPrevState, tombstones) ==
+  LET havePrev  == workerOrPrevState \notin Worker
+      w         == IF havePrev THEN workerOrPrevState.worker ELSE workerOrPrevState
+      wasActive == havePrev & workerOrPrevState.status \in {clean,dirty}
+  IN [
+    status      |-> clean,
     worker      |-> w,
+    \* editRevSent |-> IF wasActive THEN workerOrPrevState.editRevSent ELSE 0,
+    \* editRevAck  |-> IF wasActive THEN workerOrPrevState.editRevAck  ELSE 0,
+    editCount   |-> IF wasActive THEN workerOrPrevState.editCount   ELSE 0,
+    tombstones  |-> tombstones
+  ]
+
+NewDirtyTabState(prevState, ds, editDraft, editRevInc) ==
+  LET wasActive == prevState.status \in {clean,dirty}
+      wasDirty  == wasActive & prevState.status = dirty
+  IN [
+    status      |-> dirty,
+    worker      |-> prevState.worker,
     drafts      |-> ds,
     editDraft   |-> editDraft,
-    editRev     |-> editRev,
-    editRevSent |-> 0,
-    editCount   |-> editRev
+    editRev     |-> (IF wasDirty  THEN prevState.editRev     ELSE 0) + editRevInc,
+    editRevSent |-> (IF wasDirty  THEN prevState.editRevSent ELSE 0),
+    editRevAck  |-> (IF wasDirty  THEN prevState.editRevAck  ELSE 0),
+    editCount   |-> (IF wasActive THEN prevState.editCount   ELSE 0) + editRevInc,
+    aborted     |-> FALSE
   ]
+
+\* Set[Draft] => possibilities :: Set[Set[Draft] : .length <= 1]
+MergeDraftsIntoTombstone(ds) ==
+  IF ds = {} THEN
+    {}
+  ELSE
+    LET squashInto(d) ==
+      SetFold(ds -- {d},
+              [d EXCEPT !.tombstone = TRUE],
+              LAMBDA x,y: AddProv(x, AddSelfToOwnProv(y).prov))
+    IN { squashInto(d) : d \in ds }
 
 \* editResp is from WW: Option (draft,rev)
 \* Returns multiple possibilities in the form of Set[TabState]
-AddDraftsToTab(ts, newDrafts, editResp) ==
-  LET ds2  == AddDrafts(TabDrafts(ts), newDrafts)
-      ds3  == IF editResp.isEmpty THEN ds2 ELSE AddDraft(ds2, editResp.get.draft)
-      dss  == Prune(ds3)
-      ts2  == IF editResp.isEmpty THEN
-                ts
-              ELSE
-                LET e == editResp.get
-                IN
-                  IF ts.status != dirty THEN
-                    Fail1("AddDraftsToTab has an edit response but tab isn't ditry.", ts)
-                  ELSE IF e.rev = ts.editRev THEN
-                    IF ts.editRev != ts.editRevSent THEN
-                      Fail1(
-                        "editResp.rev = ts.editRev but ts.editRev != ts.editRevSent",
-                        [resp |-> e.rev, editRev |-> ts.editRev, editRevSent |-> ts.editRevSent])
-                    ELSE
-                      [ts EXCEPT !.editRev = 0, !.editRevSent = 0, !.editDraft = None]
-                  ELSE
-                      ts
-  IN CASE ts.status \in {dirty,loading} -> { [ts2 EXCEPT !.drafts = ds] : ds \in dss }
-       [] ts.status = clean             -> { NewDirtyTabState(ts.worker, ds, None, 0) : ds \in dss }
+AddDraftsToTab(ts, newDrafts, editResp, retainTombstones) ==
+  LET ds2       == AddDrafts(TabDrafts(ts), newDrafts)
+      ds3       == IF editResp.isEmpty THEN ds2 ELSE AddDraft(ds2, editResp.get.draft)
+      ds4       == IF retainTombstones THEN ds3 ELSE { d \in ds3 : ~d.tombstone }
+      dss       == Prune(ds4)
+      noDrafts  == dss = {{}}
+      resolveEd == ~editResp.isEmpty & ts.status = dirty & editResp.get.rev = ts.editRev
+      editDraft == IF ts.status = dirty THEN ts.editDraft ELSE None
+      ts2       == IF editResp.isEmpty THEN
+                     ts
+                   ELSE
+                     LET e == editResp.get
+                     IN
+                       IF ts.status != dirty THEN
+                         Fail1("[AddDraftsToTab] Edit response but tab isn't dirty.", ts)
+                       ELSE IF e.rev != ts.editRev THEN
+                         ts \* Newer response expected from WW soon...
+                       ELSE IF ts.editRev != ts.editRevSent THEN
+                         Fail1(
+                           "[AddDraftsToTab] editResp.rev = ts.editRev but ts.editRev != ts.editRevSent",
+                           [resp |-> e.rev, editRev |-> ts.editRev, editRevSent |-> ts.editRevSent, editRevAck |-> ts.editRevAck])
+                       ELSE
+                         \* Latest edit=>draft request ACK'd
+                         [ts EXCEPT !.editRev = 0, !.editRevSent = 0, !.editRevAck = 0, !.editDraft = None]
+      tss       == IF noDrafts THEN
+                     { NewCleanTabState(ts2, {}) }
+                   ELSE
+                     LET ed == IF resolveEd THEN None ELSE editDraft
+                     IN { NewDirtyTabState(ts2, ds, ed, 0) : ds \in dss }
+  IN
+    IF ts.status \in {clean,dirty} THEN
+      tss
+    ELSE
+      Fail1("[AddDraftsToTab] Don't know how to handle tab state:", ts)
+
+    \* IF ts.status \in {dirty,loading} THEN
+    \*   IF ts.aborted & ~editResp.isEmpty & ts2.editRev = 0 THEN
+    \*     { NewCleanTabState(ts2, {d}) : d \in MergeDraftsIntoTombstone(ds4) }
+    \*   ELSE IF dss = {{}} THEN
+    \*     { NewCleanTabState(ts2, {}) }
+    \*   ELSE
+    \*     { [ts2 EXCEPT !.drafts = ds] : ds \in dss }
+    \* ELSE IF ts.status = clean THEN
+    \*   IF dss = {{}} THEN
+    \*     { NewCleanTabState(ts2, {}) }
+    \*   ELSE
+    \*     { NewDirtyTabState(ts, ds, None, 0) : ds \in dss }
+    \* ELSE
+    \*   Fail1("[AddDraftsToTab] Don't know how to handle tab state:", ts)
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Tests
 
 PruneTest ==
-  LET w1     == CHOOSE w \in Worker : TRUE
-      w2     == CHOOSE w \in Worker : w != w1
-      input  == {[worker |-> w1, time |-> 1, prov |-> (w1 :> 0 @@ w2 :> 1)],
-                 [worker |-> w2, time |-> 1, prov |-> (w1 :> 0 @@ w2 :> 0)]}
-      exp1   == {[worker |-> w1, time |-> 1, prov |-> (w1 :> 0 @@ w2 :> 1)]}
-      expect == {exp1}
-      actual == Prune(input)
-  IN (Cardinality(Worker) >= 2) => Assert1(actual = expect, "Prune test failed.", actual)
+  IF Cardinality(Worker) < 2 THEN
+    PrintT("Skipping PruneTest")
+  ELSE
+    LET w1 == CHOOSE w \in Worker : TRUE
+        w2 == CHOOSE w \in Worker : w != w1
+    IN
+
+      & LET input  == {[worker |-> w1, time |-> 1, prov |-> (w1 :> 0 @@ w2 :> 1), tombstone |-> FALSE],
+                       [worker |-> w2, time |-> 1, prov |-> (w1 :> 0 @@ w2 :> 0), tombstone |-> FALSE]}
+            actual == Prune(input)
+            exp1   == {[worker |-> w1, time |-> 1, prov |-> (w1 :> 0 @@ w2 :> 1), tombstone |-> FALSE]}
+            expect == {exp1}
+        IN Assert1(actual = expect, "Prune test 1 failed.", actual)
+
+      & \A b \in BOOLEAN :
+        LET input  == {[worker |-> w1, time |-> 2, prov |-> (w1 :> 0 @@ w2 :> 4), tombstone |-> b],
+                       [worker |-> w2, time |-> 3, prov |-> (w1 :> 0 @@ w2 :> 0), tombstone |-> ~b]}
+            actual == Prune(input)
+            exp1   == {[worker |-> w1, time |-> 2, prov |-> (w1 :> 0 @@ w2 :> 4), tombstone |-> TRUE]}
+            expect == {exp1}
+        IN Assert1(actual = expect, "Prune test 2 failed.", actual)
+
+      & \A b \in BOOLEAN :
+        LET input  == {[worker |-> w1, time |-> 2, prov |-> (w1 :> 0 @@ w2 :> 0), tombstone |-> b],
+                       [worker |-> w2, time |-> 3, prov |-> (w1 :> 0 @@ w2 :> 0), tombstone |-> ~b]}
+            actual == Prune(input)
+            expect == {input}
+        IN Assert1(actual = expect, "Prune test 3 failed.", actual)
 
 SanityCheck ==
   & UtilSanityCheck
@@ -558,7 +676,7 @@ TabRecvDraftsFromRemote ==
           t          == msg.to
           ts         == tabs[t]
           w          == ts.worker
-          tss        == AddDraftsToTab(ts, msg.drafts, None)
+          tss        == AddDraftsToTab(ts, msg.drafts, None, TRUE)
           msgWW(ts2) == [
             type   |-> syncTW,
             from   |-> t,
@@ -578,8 +696,7 @@ TabRecvDraftsFromWorker ==
     & LET msg == network[i]
           t   == msg.to
           ts  == tabs[t]
-          w   == ts.worker
-          tss == AddDraftsToTab(ts, msg.drafts, msg.edit)
+          tss == AddDraftsToTab(ts, msg.drafts, msg.edit, FALSE)
       IN \E ts2 \in tss:
         & tabs' = [tabs EXCEPT ![t] = ts2]
         & RecvMsg(i)
@@ -637,7 +754,7 @@ TabStart ==
         w   == ts.worker
         ts2 ==
           IF ts.drafts = {} THEN
-            [status |-> clean, worker |-> w]
+            NewCleanTabState(w, {})
           ELSE
             NewDirtyTabState(w, ts.drafts, None, 0)
     IN
@@ -663,7 +780,8 @@ TabRecvRemoteStoreCmd ==
     & LET msg       == network[i]
           t         == msg.to
           ts        == tabs[t]
-          tss       == AddDraftsToTab(ts, msg.drafts, None)
+          tss       == AddDraftsToTab(ts, msg.drafts, None, FALSE)
+          tombs     == { d \in msg.drafts : d.tombstone }
           msgW      == [
                          type |-> ackTW,
                          from |-> t,
@@ -674,7 +792,7 @@ TabRecvRemoteStoreCmd ==
                          type   |-> syncTR,
                          from   |-> t,
                          to     |-> Remote,
-                         drafts |-> ds,
+                         drafts |-> ds ++ tombs,
                          id     |-> msg.id
                        ]
           \* saveT(ds) == [tabs EXCEPT ![t] = TabStateWithDrafts(t, ds)]
@@ -697,7 +815,6 @@ TabSendChangesToWorker ==
     IN
       & ts.status = dirty
       & ts.editRev > ts.editRevSent
-      & tabs' = [tabs EXCEPT ![t].editRevSent = ts.editRev]
       & SendMsg([
           type   |-> syncTW,
           from   |-> t,
@@ -708,13 +825,54 @@ TabSendChangesToWorker ==
                        rev  |-> ts.editRev
                      ])
         ])
+      & tabs' = [tabs EXCEPT ![t].editRevSent = ts.editRev]
       & UNCHANGED << browsers, workers, remote >>
+
+TabSendTombstonesToWorker ==
+  \E t \in Tab:
+    LET ts == tabs[t]
+    IN
+      & ts.status = clean
+      & ts.tombstones != {}
+      & SendMsg([
+          type   |-> syncTW,
+          from   |-> t,
+          to     |-> ts.worker,
+          drafts |-> ts.tombstones,
+          edit   |-> None
+        ])
+      & tabs' = [tabs EXCEPT ![t].tombstones = {}]
+      & UNCHANGED << browsers, workers, remote >>
+
+UserAbort ==
+  \E t \in Tab:
+    LET ts == tabs[t]
+        w  == ts.worker
+    IN
+      & ts.status = dirty
+      & ~ts.aborted
+      & ts.editCount < MCMaxEditsPerTab
+      & UNCHANGED << browsers, workers, network, remote >>
+      & IF ts.drafts /= {} THEN
+          \* At least one confirmed drafts exists that now needs to be deleted
+          LET dss == MergeDraftsIntoTombstone(ts.drafts)
+          IN \E ds \in dss:
+            tabs' = [tabs EXCEPT ![t].aborted   = TRUE,
+                                 ![t].editDraft = SomeWhen(~@.isEmpty, CHOOSE d \in ds: TRUE),
+                                 ![t].editRev   = @ + 1, \* Inc to activate TabSendChangesToWorker
+                                 ![t].editCount = @ + 1]
+        ELSE IF ts.editRev /= ts.editRevAck THEN
+          \* First edit send to worker, waiting for first draft
+          tabs' = [tabs EXCEPT ![t].aborted = TRUE]
+        ELSE
+          \* No non-local state exists, act immediately
+          tabs' = [tabs EXCEPT ![t] = NewCleanTabState(ts, {})]
 
 UserEditClean ==
   \E t \in Tab:
     LET ts  == tabs[t]
         w   == ts.worker
-        ts2 == NewDirtyTabState(w, {}, None, 1)
+        ts2 == NewDirtyTabState(ts, ts.tombstones, None, 1)
     IN
       & ts.status = clean
       & tabs' = [tabs EXCEPT ![t] = ts2]
@@ -723,6 +881,7 @@ UserEditClean ==
 UserEditDirty ==
   \E t \in Tab: LET ts == tabs[t] IN
     & ts.status = dirty
+    & ~ts.aborted
     & \* Limit model space
       & ts.editCount < MCMaxEditsPerTab
       & ts.editRev < MCMaxLocalChangesInFlight
@@ -806,13 +965,14 @@ WorkerSyncWithBrowserStorage ==
 WorkerSendRemoteStoreCmd ==
   \E w \in Worker:
     LET ws  == workers[w]
+        ds  == ws.drafts
         s1  == ws.sync[Remote]
-        s2  == WorkerSyncStart(s1)
+        s2  == WorkerSyncStart(s1, ds)
         cmd(t) == [
           type   |-> RemoteStoreCmd,
           from   |-> w,
           to     |-> t,
-          drafts |-> ws.drafts,
+          drafts |-> ds,
           id     |-> s2.get.lastReq
         ]
     IN
@@ -844,11 +1004,17 @@ WorkerRecvRemoteAck ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = ackTW)
   IN
     & i != 0
-    & LET msg == network[i]
-          w   == msg.to
-          ws  == workers[w]
+    & LET msg   == network[i]
+          id    == msg.id
+          w     == msg.to
+          ws    == workers[w]
+          sync  == ws.sync[Remote]
+          sync2 == WorkerSyncAck(sync, id)
+          tombs == SetFind(sync.tombstones, LAMBDA e: e[1] = id)
+          ds2   == IF tombs.isEmpty THEN ws.drafts ELSE ws.drafts -- tombs.get[2]
+          ws2   == [ws EXCEPT !.sync[Remote] = sync2, !.drafts = ds2]
       IN
-        & workers' = [workers EXCEPT ![w].sync[Remote] = WorkerSyncAck(@, msg.id)]
+        & workers' = [workers EXCEPT ![w] = ws2]
         & RecvMsg(i)
         & UNCHANGED << browsers, remote, tabs >>
 
@@ -875,7 +1041,9 @@ Next ==
   | TabRecvRemoteAck
   | TabRecvRemoteStoreCmd
   | TabSendChangesToWorker
+  | TabSendTombstonesToWorker
   | TabStart
+  | UserAbort
   | UserEditClean
   | UserEditDirty
   | WorkerRecvChanges
@@ -886,14 +1054,13 @@ Next ==
 Fairness ==
   & WF_<<vars>>(RemoteRecvDrafts)
   & WF_<<vars>>(TabLoad)
-  \* & WF_<<vars>>(TabNew)
   & WF_<<vars>>(TabRecvDraftsFromRemote)
   & WF_<<vars>>(TabRecvDraftsFromWorker)
   & WF_<<vars>>(TabRecvRemoteAck)
   & WF_<<vars>>(TabRecvRemoteStoreCmd)
   & WF_<<vars>>(TabSendChangesToWorker)
+  & WF_<<vars>>(TabSendTombstonesToWorker)
   & WF_<<vars>>(TabStart)
-  \* & WF_<<vars>>(UserEditClean)
   & WF_<<vars>>(WorkerRecvChanges)
   & WF_<<vars>>(WorkerRecvRemoteAck)
   & SF_<<vars>>(WorkerSendRemoteStoreCmd)
@@ -911,6 +1078,7 @@ IsStable ==
   & network = <<>>
   & ~ENABLED(TabLoad)
   & ~ENABLED(TabSendChangesToWorker)
+  & ~ENABLED(TabSendTombstonesToWorker)
   & ~ENABLED(TabStart)
   & ~ENABLED(WorkerSendRemoteStoreCmd)
   & ~ENABLED(WorkerSyncWithBrowserStorage)
@@ -923,15 +1091,23 @@ StableInvariants ==
   IsStable =>
     \* & LogStates
 
-    & Assert1(
-      \A t \in Tab : LET ts == tabs[t] IN
-        | ts.status \in {nonExistant, clean}
-        | ts.status = dirty & ts.editDraft.isEmpty,
-      "Local changes aren't stored", tabs)
+    & \A t \in Tab :
+      LET ts            == tabs[t]
+          info          == [tab |-> t, tabState |-> ts]
+          hasEditBudget == ts.editCount < MCMaxEditsPerTab
+      IN
+        | ts.status = clean
+          & Assert1(ts.tombstones = {}, "Tombstones not cleared out from tab", info)
+        | ts.status = dirty
+          & Assert1(ts.editDraft.isEmpty, "Local changes not propagated", info)
+          & Assert1(~ts.aborted, "Tab stuck in aborted state", info)
+          & hasEditBudget => Assert1(ENABLED(UserAbort), "Tab has draft but can't be aborted", info)
+        | ts.status = nonExistant
 
-    & Assert1(
-      \A w \in ActiveWorkers : \A s \in AsyncSrc : WorkerSyncStateIsStable(workers[w].sync[s]),
-      "Worker failed to sync.", workers)
+    & \A w \in ActiveWorkers : \A s \in AsyncSrc :
+      Assert1(
+        WorkerSyncStateIsStable(workers[w].sync[s]),
+        "Worker failed to sync", w :> s)
 
     & Assert1(
       Cardinality(AllStores) <= 1,
@@ -945,6 +1121,10 @@ StableInvariants ==
     & Assert1(
       remote.drafts = AllDrafts,
       "Drafts are not stored remotely", [all |-> AllDrafts, remote |-> remote.drafts])
+
+    & Assert1(
+      \A d \in AllDrafts : ~d.tombstone,
+      "Tombstones not removed", AllDrafts)
 
 MCContinue ==
   TLCGet("diameter") <= 50
