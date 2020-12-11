@@ -1,5 +1,5 @@
-["#", "Step", "Remote", "Tabs", "Workers", "Network", "Browser"],
-["=", "====", "======", "====", "=======", "=======", "======="],
+["#", "Step", "Target", "Remote", "Tabs", "Workers", "Network", "Browser"],
+["=", "====", "======", "======", "====", "=======", "=======", "======="],
 (
   .
 
@@ -15,6 +15,11 @@
   | [
     .no,
     .name,
+    (
+      (.state.target.drafts? // "-" | tostring) as $drafts
+      | ((.state.target.pending | [.[] | "\(.tab):\(.editCount)"] | join(","))? // "") as $pending
+      | if $pending == "" then $drafts else "\($drafts)+{\($pending)}" end
+    ),
     (.state.remote.drafts? // "-" | tostring),
     (.state.tabs?
       | with_entries(

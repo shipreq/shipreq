@@ -3,7 +3,7 @@
 What's does this spec provide?
 ==============================
 - [x] Drafts should eventually propagate to all live tabs
-- [ ] Drafts and new events interact as expected
+- [ ] Drafts and new events interact as targeted
 - [ ] Drafts are never lost unless they're merged (manually or automatically), or completed by a user (whether aborted or committed)
 - [ ] Drafts are removed from all storage locations once obsolete
 - [ ] Users are prompted to keep a tab open iff we can't guarantee the draft won't be lost
@@ -102,15 +102,17 @@ VARIABLE network
 VARIABLE remote
 VARIABLE tabs
 VARIABLE workers
+VARIABLE target \* Expected result state
 
-vars == << browsers, network, remote, tabs, workers >>
+vars == << browsers, network, remote, tabs, workers, target >>
 
 state == [
   browsers |-> browsers,
   network  |-> network,
   remote   |-> remote,
   tabs     |-> tabs,
-  workers  |-> workers]
+  workers  |-> workers,
+  target   |-> target]
 
 LogStates ==
   Log(state)
@@ -169,7 +171,7 @@ Msg == [
   from   : Tab,
   to     : Worker,
   drafts : Drafts,
-  edit   : Option([prov: Provenance, rev: Nat])
+  edit   : Option([prov: Provenance, rev: Nat, editCount: Nat]) \* editCount is just for updating target
 ] ++ [
   type   : {syncWT},
   from   : Worker,
@@ -321,6 +323,12 @@ InvariantsForWorkers ==
       IN ws.status = live =>
           & ws.time > 0
           & \A s \in AsyncSrc : WorkerSyncStateInvariants(ws.sync[s])
+
+InvariantsForTarget ==
+  target \in [
+    pending: SUBSET [tab: Tab, editCount: Nat],
+    drafts : Drafts
+  ]
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Functions
@@ -477,7 +485,9 @@ RECURSIVE _PruneByProv(_, _)
 _PruneByProv(ds, depth) ==
   LET mergeByProv(x,y) == LET pt == x.prov[y.worker]
                           IN x.worker != y.worker & pt > 0 & y.time <= pt
-      mergeBySrc(x,y)  == x.worker = y.worker & x.time > y.time
+      mergeBySrc(x,y)  == x.worker = y.worker &
+                            | x.time > y.time
+                            | x.time = y.time & x != y
       merge(xy)        == LET x == xy[1]
                               y == xy[2]
                           IN mergeByProv(x,y) | mergeBySrc(x,y)
@@ -509,6 +519,21 @@ PruneByEq(ds) ==
 Prune(drafts) ==
   {PruneByProv(ds) : ds \in PruneByEq(drafts)}
 
+TargetAddPending(tgt, t, newEditCount) ==
+  [tgt EXCEPT !.pending = @ ++ {[tab |-> t, editCount |-> newEditCount]}]
+
+TargetDelPending(tgt, t, editCount) ==
+  LET del(p) == p.tab = t & p.editCount <= editCount
+  IN [tgt EXCEPT !.pending = { p \in @ : ~del(p) }]
+
+TargetAddDrafts(tgt, drafts) ==
+  \* IF drafts \notin Drafts THEN Fail1("Not a set: ", drafts) ELSE
+  [tgt EXCEPT !.drafts = PruneByProv(AddDrafts(@, drafts))]
+
+TargetDelDrafts(tgt, drafts) ==
+  \* IF drafts \notin Drafts THEN Fail1("Not a set: ", drafts) ELSE
+  TargetAddDrafts(tgt, { [d EXCEPT !.tombstone = TRUE] : d \in drafts })
+
 NewCleanTabState(workerOrPrevState, tombstones) ==
   LET havePrev  == workerOrPrevState \notin Worker
       w         == IF havePrev THEN workerOrPrevState.worker ELSE workerOrPrevState
@@ -537,16 +562,13 @@ NewDirtyTabState(prevState, ds, editDraft, editRevInc) ==
     aborted     |-> FALSE
   ]
 
-\* Set[Draft] => possibilities :: Set[Set[Draft] : .length <= 1]
-MergeDraftsIntoTombstone(ds) ==
-  IF ds = {} THEN
-    {}
-  ELSE
-    LET squashInto(d) ==
-      SetFold(ds -- {d},
-              [d EXCEPT !.tombstone = TRUE],
-              LAMBDA x,y: AddProv(x, AddSelfToOwnProv(y).prov))
-    IN { squashInto(d) : d \in ds }
+\* NonEmptySet[Draft] => Possibilities[Draft]
+MergeDraftsIntoTombstoneNE(ds) ==
+  LET squashInto(d) ==
+    SetFold(ds -- {d},
+            [d EXCEPT !.tombstone = TRUE],
+            LAMBDA x,y: AddProv(x, AddSelfToOwnProv(y).prov))
+  IN { squashInto(d) : d \in ds }
 
 \* editResp is from WW: Option (draft,rev)
 \* Returns multiple possibilities in the form of Set[TabState]
@@ -566,7 +588,7 @@ AddDraftsToTab(ts, newDrafts, editResp, retainTombstones) ==
                        IF ts.status != dirty THEN
                          Fail1("[AddDraftsToTab] Edit response but tab isn't dirty.", ts)
                        ELSE IF e.rev != ts.editRev THEN
-                         ts \* Newer response expected from WW soon...
+                         ts \* Newer response targeted from WW soon...
                        ELSE IF ts.editRev != ts.editRevSent THEN
                          Fail1(
                            "[AddDraftsToTab] editResp.rev = ts.editRev but ts.editRev != ts.editRevSent",
@@ -666,7 +688,7 @@ RemoteRecvDrafts ==
       IN \E r \in results:
         & remote' = [remote EXCEPT !.drafts = r[1]]
         & network' = RemoveAt(network, i) \o r[2]
-        & UNCHANGED << browsers, tabs, workers >>
+        & UNCHANGED << browsers, tabs, workers, target >>
 
 TabRecvDraftsFromRemote ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = syncRT)
@@ -687,7 +709,7 @@ TabRecvDraftsFromRemote ==
       IN \E ts2 \in tss:
         & tabs' = [tabs EXCEPT ![t] = ts2]
         & RecvResp(i, msgWW(ts2))
-        & UNCHANGED << browsers, remote, workers >>
+        & UNCHANGED << browsers, remote, workers, target >>
 
 TabRecvDraftsFromWorker ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = syncWT)
@@ -697,16 +719,17 @@ TabRecvDraftsFromWorker ==
           t   == msg.to
           ts  == tabs[t]
           tss == AddDraftsToTab(ts, msg.drafts, msg.edit, FALSE)
-      IN \E ts2 \in tss:
-        & tabs' = [tabs EXCEPT ![t] = ts2]
+      IN
+        & \E ts2 \in tss:
+          tabs' = [tabs EXCEPT ![t] = ts2]
         & RecvMsg(i)
-        & UNCHANGED << browsers, remote, workers >>
+        & UNCHANGED << browsers, remote, workers, target >>
 
 TabLoad ==
   \E t \in Tab:
     & tabs[t].status = loading
     & tabs[t].awaiting != {}
-    & UNCHANGED << browsers, network, remote, workers >>
+    & UNCHANGED << browsers, network, remote, workers, target >>
     & LET ts == tabs[t]
           w  == ts.worker
           b  == workers[w].browser
@@ -729,7 +752,7 @@ TabLoad ==
 TabNew ==
   \E t \in Tab:
     & tabs[t].status = nonExistant
-    & UNCHANGED << browsers, network, remote >>
+    & UNCHANGED << browsers, network, remote, target >>
     & \E w \in Worker:
       & \* Connect to worker
         | \* New worker
@@ -771,7 +794,7 @@ TabStart ==
             drafts |-> ts.drafts,
             edit   |-> None
            ])
-      & UNCHANGED << browsers, remote, workers >>
+      & UNCHANGED << browsers, remote, workers, target >>
 
 TabRecvRemoteStoreCmd ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = RemoteStoreCmd)
@@ -802,12 +825,12 @@ TabRecvRemoteStoreCmd ==
         IF TabDrafts(ts2) = {} THEN
           \* Nothing to send
           & RecvResp(i, msgW)
-          & UNCHANGED << browsers, workers, remote, tabs >>
+          & UNCHANGED << browsers, workers, remote, tabs, target >>
         ELSE
           \* Send drafts to remote
           & tabs' = [tabs EXCEPT ![t] = ts2]
           & RecvResp(i, msgR(ts2.drafts))
-          & UNCHANGED << browsers, workers, remote >>
+          & UNCHANGED << browsers, workers, remote, target >>
 
 TabSendChangesToWorker ==
   \E t \in Tab:
@@ -821,12 +844,13 @@ TabSendChangesToWorker ==
           to     |-> ts.worker,
           drafts |-> {},
           edit   |-> Some([
-                       prov |-> IF ts.editDraft.isEmpty THEN NoProv ELSE ts.draft.get.prov,
-                       rev  |-> ts.editRev
+                       prov      |-> IF ts.editDraft.isEmpty THEN NoProv ELSE ts.draft.get.prov,
+                       rev       |-> ts.editRev,
+                       editCount |-> ts.editCount
                      ])
         ])
       & tabs' = [tabs EXCEPT ![t].editRevSent = ts.editRev]
-      & UNCHANGED << browsers, workers, remote >>
+      & UNCHANGED << browsers, workers, remote, target >>
 
 TabSendTombstonesToWorker ==
   \E t \in Tab:
@@ -842,7 +866,7 @@ TabSendTombstonesToWorker ==
           edit   |-> None
         ])
       & tabs' = [tabs EXCEPT ![t].tombstones = {}]
-      & UNCHANGED << browsers, workers, remote >>
+      & UNCHANGED << browsers, workers, remote, target >>
 
 UserAbort ==
   \E t \in Tab:
@@ -852,21 +876,22 @@ UserAbort ==
       & ts.status = dirty
       & ~ts.aborted
       & ts.editCount < MCMaxEditsPerTab
-      & UNCHANGED << browsers, workers, network, remote >>
       & IF ts.drafts /= {} THEN
           \* At least one confirmed drafts exists that now needs to be deleted
-          LET dss == MergeDraftsIntoTombstone(ts.drafts)
-          IN \E ds \in dss:
+          LET ds == MergeDraftsIntoTombstoneNE(ts.drafts)
+          IN \E d \in ds:
             tabs' = [tabs EXCEPT ![t].aborted   = TRUE,
-                                 ![t].editDraft = SomeWhen(~@.isEmpty, CHOOSE d \in ds: TRUE),
+                                 ![t].editDraft = SomeWhen(~@.isEmpty, d),
                                  ![t].editRev   = @ + 1, \* Inc to activate TabSendChangesToWorker
                                  ![t].editCount = @ + 1]
         ELSE IF ts.editRev /= ts.editRevAck THEN
-          \* First edit send to worker, waiting for first draft
+          \* First edit sent to worker, waiting for first draft
           tabs' = [tabs EXCEPT ![t].aborted = TRUE]
         ELSE
           \* No non-local state exists, act immediately
           tabs' = [tabs EXCEPT ![t] = NewCleanTabState(ts, {})]
+      & target' = TargetDelPending(TargetDelDrafts(target, ts.drafts), t, ts.editCount)
+      & UNCHANGED << browsers, workers, network, remote >>
 
 UserEditClean ==
   \E t \in Tab:
@@ -876,6 +901,7 @@ UserEditClean ==
     IN
       & ts.status = clean
       & tabs' = [tabs EXCEPT ![t] = ts2]
+      & target' = TargetAddPending(target, t, ts2.editCount)
       & UNCHANGED << browsers, workers, network, remote >>
 
 UserEditDirty ==
@@ -887,6 +913,7 @@ UserEditDirty ==
       & ts.editRev < MCMaxLocalChangesInFlight
       & ts.editRevSent = IF ts.editRev = 0 THEN 0 ELSE ts.editRev - 1
     & tabs' = [tabs EXCEPT ![t].editRev = @ + 1, ![t].editCount = @ + 1]
+    & target' = TargetAddPending(target, t, tabs'[t].editCount)
     & UNCHANGED << browsers, workers, network, remote >>
 
 WorkerBroadcastToTabMsgs(w, newDrafts, edit(_)) ==
@@ -920,14 +947,27 @@ WorkerRecvChanges ==
           results  == { <<ws2(ds), msgs(ds)>> : ds \in dss2 }
           net1     == RemoveAt(network, i)
       IN
-        IF results = {} THEN
-          & RecvMsg(i)
-          & UNCHANGED << browsers, remote, tabs, workers >>
-        ELSE
-          \E r \in results:
-            & workers' = r[1]
-            & network' = SetFold(r[2], net1, Append)
-            & UNCHANGED << browsers, remote, tabs >>
+        & IF results = {} THEN
+            & RecvMsg(i)
+            & UNCHANGED workers
+          ELSE
+            \E r \in results:
+              & workers' = r[1]
+              & network' = SetFold(r[2], net1, Append)
+        & UNCHANGED << browsers, remote, tabs >>
+        & IF msg.edit.isEmpty THEN
+            UNCHANGED target
+          ELSE
+            LET e    == msg.edit.get
+                t    == msg.from
+                d    == NewDraft(w, e.prov)
+                tgt2 == TargetDelPending(target, t, e.editCount)
+            IN
+              IF tgt2 = target THEN
+                \* The edit was removed from target.pending meaning we don't want it added to target.drafts anymore
+                UNCHANGED target
+              ELSE
+                target' = TargetAddDrafts(tgt2, {d})
 
 ActiveBrowserSrcs(b) ==
   { s \in BrowserSrc : ~browsers[b][s].isEmpty }
@@ -957,7 +997,7 @@ WorkerSyncWithBrowserStorage ==
           | browsers != browsers'
           | workers != workers'
           | network != network'
-        & UNCHANGED << remote, tabs >>
+        & UNCHANGED << remote, tabs, target >>
 
 \* No need to track online/offline status of tabs. This works by broadcasting to any live tab.
 \* If all tabs are offline then it would just be a no-op.
@@ -982,7 +1022,7 @@ WorkerSendRemoteStoreCmd ==
       & \E t \in WorkerTabs(w):
         & SendMsg(cmd(t))
         & workers' = [workers EXCEPT ![w].sync[Remote] = s2.get]
-        & UNCHANGED << browsers, remote, tabs >>
+        & UNCHANGED << browsers, remote, tabs, target >>
 
 TabRecvRemoteAck ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = ackRT)
@@ -998,7 +1038,7 @@ TabRecvRemoteAck ==
           ]
       IN
         & RecvResp(i, newMsg)
-        & UNCHANGED << browsers, remote, workers, tabs >>
+        & UNCHANGED << browsers, remote, workers, tabs, target >>
 
 WorkerRecvRemoteAck ==
   LET i == SeqIndexOf(network, LAMBDA m: m.type = ackTW)
@@ -1016,12 +1056,13 @@ WorkerRecvRemoteAck ==
       IN
         & workers' = [workers EXCEPT ![w] = ws2]
         & RecvMsg(i)
-        & UNCHANGED << browsers, remote, tabs >>
+        & UNCHANGED << browsers, remote, tabs, target >>
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Spec
 
 Init ==
+  & target  = [pending |-> {}, drafts |-> {}]
   & network = <<>>
   & remote  = [ord |-> 0, drafts |-> {}]
   & tabs    = [t \in Tab |-> [status |-> nonExistant]]
@@ -1104,6 +1145,10 @@ StableInvariants ==
           & hasEditBudget => Assert1(ENABLED(UserAbort), "Tab has draft but can't be aborted", info)
         | ts.status = nonExistant
 
+    & Assert1(
+        target.pending = {},
+        "Incomplete edits in target ", target.pending)
+
     & \A w \in ActiveWorkers : \A s \in AsyncSrc :
       Assert1(
         WorkerSyncStateIsStable(workers[w].sync[s]),
@@ -1122,9 +1167,12 @@ StableInvariants ==
       remote.drafts = AllDrafts,
       "Drafts are not stored remotely", [all |-> AllDrafts, remote |-> remote.drafts])
 
-    & Assert1(
-      \A d \in AllDrafts : ~d.tombstone,
-      "Tombstones not removed", AllDrafts)
+    & LET targetLive == { d \in target.drafts : ~d.tombstone }
+          missing    == targetLive -- AllDrafts
+          unexpected == AllDrafts -- targetLive
+      IN Assert1(missing = {} & unexpected = {},
+           "Final state doesn't match target state",
+           [missing |-> missing, unexpected |-> unexpected])
 
 MCContinue ==
   TLCGet("diameter") <= 50
