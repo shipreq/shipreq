@@ -461,12 +461,14 @@ AddSelfToOwnProv(draft) ==
   LET w == draft.worker
   IN  [draft EXCEPT !.prov[w] = draft.time]
 
+DraftsHaveSameId(x, y) ==
+  & x.worker = y.worker
+  & x.time = y.time
+
 MergeDrafts(new, old) ==
-  LET sameWorker == new.worker = old.worker
-      sameTime   == new.time = old.time
-      d         == AddProv(new, old.prov)
+  LET d == AddProv(new, old.prov)
   IN
-    IF old.tombstone & sameWorker & sameTime THEN
+    IF old.tombstone & DraftsHaveSameId(new, old) THEN
       [d EXCEPT !.tombstone = TRUE]
     ELSE
       d
@@ -773,9 +775,9 @@ RemoteRecvDrafts ==
           otherTabs      == { t \in RemoteConnectedTabs : t != msg.from }
           broadcasts(ds) == SetFold(otherTabs, <<>>, LAMBDA q,t: q \o <<broadcastTo(t, ds)>>)
           result(ds)     == <<ds, <<resp>> \o broadcasts(ds)>>
-          ds1            == { d \in msg.drafts : ~d.tombstone } \* Don't store tombstones for now
-          dss            == \*LogRet([ADD |-> AddDrafts(remote.drafts, ds1), PRU |-> Prune(AddDrafts(remote.drafts, ds1))],
-                            Prune(AddDrafts(remote.drafts, ds1))
+          ds1            == AddDrafts(remote.drafts, msg.drafts)
+          ds2            == { d \in ds1 : ~d.tombstone } \* Don't store tombstones for now
+          dss            == Prune(ds2)
           results        == { result(ds) : ds \in dss }
       IN
         & \E r \in results:
@@ -902,13 +904,14 @@ TabRecvRemoteStoreCmd ==
   IN
     & i != 0
     & LET msg      == network[i]
+          w        == msg.from
           t        == msg.to
           ts       == tabs[t]
           tss      == AddDraftsToTab(ts, msg.drafts, None, FALSE)
-          msgW     == [
+          ackNow   == [
                         type |-> ackTW,
                         from |-> t,
-                        to   |-> msg.from,
+                        to   |-> w,
                         id   |-> msg.id
                       ]
           msgR(ds) == [
@@ -918,19 +921,45 @@ TabRecvRemoteStoreCmd ==
                         drafts |-> ds,
                         id     |-> msg.id
                       ]
-          \* saveT(ds) == [tabs EXCEPT ![t] = TabStateWithDrafts(t, ds)]
-          \* send(res) == Append(RemoveAt(network, i), res)
-          \* resultsNE == { <<saveT(ds), send(msgR(ds))>> : ds \in dss }
-      IN \E ts2 \in tss:
-        IF TabDrafts(ts2) = {} THEN
-          \* Nothing to send
-          & RecvResp(i, msgW)
-          & UNCHANGED << browsers, workers, remote, tabs, target >>
-        ELSE
-          \* Send drafts to remote
-          & tabs' = [tabs EXCEPT ![t] = ts2]
-          & RecvResp(i, msgR(TabDrafts(ts2)))
-          & UNCHANGED << browsers, workers, remote, target >>
+          msgW(ds) == [
+                        type   |-> syncTW,
+                        from   |-> t,
+                        to     |-> w,
+                        drafts |-> ds,
+                        edit   |-> None
+                      ]
+      IN
+        & \E ts2 \in tss:
+          LET ds == TabDrafts(ts2)
+          IN
+            IF ds = {} THEN
+              \* Nothing to send
+              & RecvResp(i, ackNow)
+              & UNCHANGED tabs
+            ELSE
+              \* Send drafts to remote
+              LET tombs ==
+                    { d \in ds : d.tombstone }
+                  ts3 ==
+                    \* This will probably change but for now: if we're sending a tombstone to Remote, then delete it locally too
+                    IF tombs = {} THEN
+                      ts2
+                    ELSE IF ts2.status \in {dirty,loading} THEN
+                      [ts2 EXCEPT !.drafts = @ -- tombs]
+                    ELSE IF ts2.status = clean THEN
+                      [ts2 EXCEPT !.tombstones = @ -- tombs]
+                    ELSE
+                      ts2
+                  tombsForWorker ==
+                    { x \in tombs : \E d \in msg.drafts : DraftsHaveSameId(d, x) }
+                  net2 ==
+                    Append(RemoveAt(network, i), msgR(ds))
+              IN
+                & tabs' = [tabs EXCEPT ![t] = ts3]
+                \* TODO: If we turn a .1 from W into a .1d, we send the .1d off to remote but we don't send the .1d back to W
+                \* & network' = IF tombsForWorker = {} THEN net2 ELSE Append(net2, msgW(tombsForWorker))
+                & network' = net2
+        & UNCHANGED << browsers, workers, remote, target >>
 
 TabSendChangesToWorker ==
   \E t \in Tab:
