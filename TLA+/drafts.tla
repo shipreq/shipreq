@@ -167,44 +167,45 @@ IsValidAssignment(b, w, t) ==
   {b,w,t} \in Assignments
 
 Msg == [
-  type   : {syncTW},
-  from   : Tab,
-  to     : Worker,
-  drafts : Drafts,
-  edit   : Option([prov: Provenance, rev: Nat, editCount: Nat]) \* editCount is just for updating target
+  type    : {syncTW},
+  from    : Tab,
+  to      : Worker,
+  drafts  : Drafts,
+  edit    : Option([prov: Provenance, rev: Nat, editCount: Nat]) \* editCount is just for updating target
 ] ++ [
-  type   : {syncWT},
-  from   : Worker,
-  to     : Tab,
-  drafts : Drafts,
-  edit   : Option([draft: Draft, rev: Nat, editCount: Nat]) \* editCount is just for updating target
+  type    : {syncWT},
+  from    : Worker,
+  to      : Tab,
+  drafts  : Drafts,
+  edit    : Option([draft: Draft, rev: Nat, editCount: Nat]) \* editCount is just for updating target
 ] ++ [
-  type   : {syncTR},
-  from   : Tab,
-  to     : {Remote},
-  drafts : DraftsNE,
-  id     : Nat
+  type    : {syncTR},
+  from    : Tab,
+  to      : {Remote},
+  drafts  : DraftsNE,
+  id      : Nat
 ] ++ [
-  type   : {RemoteStoreCmd},
-  from   : Worker,
-  to     : Tab,
-  drafts : Drafts,
-  id     : Nat
+  type    : {RemoteStoreCmd},
+  from    : Worker,
+  to      : Tab,
+  drafts  : Drafts,
+  id      : Nat
+] ++  [
+  type    : {ackRT},
+  from    : {Remote},
+  to      : Tab,
+  id      : Nat
 ] ++ [
-  type   : {ackRT},
-  from   : {Remote},
-  to     : Tab,
-  id     : Nat
+  type    : {ackTW},
+  from    : Tab,
+  to      : Worker,
+  id      : Nat,
+  rejected: BOOLEAN
 ] ++ [
-  type   : {ackTW},
-  from   : Tab,
-  to     : Worker,
-  id     : Nat
-] ++ [
-  type   : {syncRT},
-  from   : {Remote},
-  to     : Tab,
-  drafts : DraftsNE
+  type    : {syncRT},
+  from    : {Remote},
+  to      : Tab,
+  drafts  : DraftsNE
 ]
 
 NetworkState ==
@@ -332,6 +333,9 @@ InvariantsForTarget ==
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Functions
 
+NonTombs(ds) == {d \in ds : ~d.tombstone}
+JustTombs(ds) == {d \in ds : d.tombstone}
+
 \* Find the index of a msg on the network and, make sure it's the next msg between .from and .to.
 \* This is the communication channels between a source and target are not commutative; we can rely on the order not
 \* changing.
@@ -363,7 +367,7 @@ WorkerSyncStart(s, drafts) ==
   LET doIt  == & s.desired > s.lastReq \* we have new content to sync
                & s.lastAck = s.lastReq \* wait for ACK so that model checking isn't infinite
       id    == s.desired
-      tombs == LET ts == << id, { d \in drafts : d.tombstone } >>
+      tombs == LET ts == << id, JustTombs(drafts) >>
                IN IF ts[2] = {} THEN {} ELSE {ts}
       next  == [s EXCEPT !.lastReq = id, !.tombstones = @ ++ tombs]
   IN SomeWhen(doIt, next)
@@ -374,9 +378,14 @@ WorkerSyncAck(s, id) ==
   ELSE
     Fail1("Invalid ACK", [syncState |-> s, id |-> id])
 
+SyncDesiredInc(s) ==
+  IF s.desired > s.lastReq THEN
+    s
+  ELSE
+    [s EXCEPT !.desired = @ + 1]
+
 WorkerSyncLater(syncState) ==
-  LET f(s) == IF s.desired > s.lastReq THEN s ELSE [s EXCEPT !.desired = @ + 1]
-  IN [src \in AsyncSrc |-> f(syncState[src])]
+  [src \in AsyncSrc |-> SyncDesiredInc(syncState[src])]
 
 StartWorker(b) ==
   [
@@ -776,7 +785,7 @@ RemoteRecvDrafts ==
           broadcasts(ds) == SetFold(otherTabs, <<>>, LAMBDA q,t: q \o <<broadcastTo(t, ds)>>)
           result(ds)     == <<ds, <<resp>> \o broadcasts(ds)>>
           ds1            == AddDrafts(remote.drafts, msg.drafts)
-          ds2            == { d \in ds1 : ~d.tombstone } \* Don't store tombstones for now
+          ds2            == NonTombs(ds1) \* Don't store tombstones for now
           dss            == Prune(ds2)
           results        == { result(ds) : ds \in dss }
       IN
@@ -899,67 +908,36 @@ TabStart ==
            ])
       & UNCHANGED << browsers, remote, workers, target >>
 
+\* In order to avoid lots of annoying and difficult logic, a tab will refuse to send drafts to remote
+\* when the tab and worker are out of sync.
 TabRecvRemoteStoreCmd ==
   LET i == PopMsgOfType(RemoteStoreCmd)
   IN
     & i != 0
-    & LET msg      == network[i]
-          w        == msg.from
-          t        == msg.to
-          ts       == tabs[t]
-          tss      == AddDraftsToTab(ts, msg.drafts, None, FALSE)
-          ackNow   == [
-                        type |-> ackTW,
-                        from |-> t,
-                        to   |-> w,
-                        id   |-> msg.id
-                      ]
-          msgR(ds) == [
-                        type   |-> syncTR,
-                        from   |-> t,
-                        to     |-> Remote,
-                        drafts |-> ds,
-                        id     |-> msg.id
-                      ]
-          msgW(ds) == [
-                        type   |-> syncTW,
-                        from   |-> t,
-                        to     |-> w,
-                        drafts |-> ds,
-                        edit   |-> None
-                      ]
+    & LET msg    == network[i]
+          w      == msg.from
+          t      == msg.to
+          ds     == msg.drafts
+          reject == [
+                      type     |-> ackTW,
+                      from     |-> t,
+                      to       |-> w,
+                      id       |-> msg.id,
+                      rejected |-> TRUE
+                    ]
+          send   == [
+                      type   |-> syncTR,
+                      from   |-> t,
+                      to     |-> Remote,
+                      drafts |-> ds,
+                      id     |-> msg.id
+                    ]
       IN
-        & \E ts2 \in tss:
-          LET ds == TabDrafts(ts2)
-          IN
-            IF ds = {} THEN
-              \* Nothing to send
-              & RecvResp(i, ackNow)
-              & UNCHANGED tabs
-            ELSE
-              \* Send drafts to remote
-              LET tombs ==
-                    { d \in ds : d.tombstone }
-                  ts3 ==
-                    \* This will probably change but for now: if we're sending a tombstone to Remote, then delete it locally too
-                    IF tombs = {} THEN
-                      ts2
-                    ELSE IF ts2.status \in {dirty,loading} THEN
-                      [ts2 EXCEPT !.drafts = @ -- tombs]
-                    ELSE IF ts2.status = clean THEN
-                      [ts2 EXCEPT !.tombstones = @ -- tombs]
-                    ELSE
-                      ts2
-                  tombsForWorker ==
-                    { x \in tombs : \E d \in msg.drafts : DraftsHaveSameId(d, x) }
-                  net2 ==
-                    Append(RemoveAt(network, i), msgR(ds))
-              IN
-                & tabs' = [tabs EXCEPT ![t] = ts3]
-                \* TODO: If we turn a .1 from W into a .1d, we send the .1d off to remote but we don't send the .1d back to W
-                \* & network' = IF tombsForWorker = {} THEN net2 ELSE Append(net2, msgW(tombsForWorker))
-                & network' = net2
-        & UNCHANGED << browsers, workers, remote, target >>
+        & IF NonTombs(ds) = NonTombs(TabDrafts(t)) THEN
+            RecvResp(i, send)
+          ELSE
+            RecvResp(i, reject)
+        & UNCHANGED << browsers, workers, remote, tabs, target >>
 
 TabSendChangesToWorker ==
   \E t \in Tab:
@@ -1158,11 +1136,17 @@ WorkerSendRemoteStoreCmd ==
     IN
       & ws.status = live
       & ~s2.isEmpty
-      & ws.drafts != {}
-      & \E t \in WorkerTabs(w):
-        & SendMsg(cmd(t))
-        & workers' = [workers EXCEPT ![w].sync[Remote] = s2.get]
-        & UNCHANGED << browsers, remote, tabs, target >>
+      & IF ws.drafts != {} THEN
+          \E t \in WorkerTabs(w):
+            & SendMsg(cmd(t))
+            & workers' = [workers EXCEPT ![w].sync[Remote] = s2.get]
+        ELSE IF s1.lastReq = s1.lastAck & s1.tombstones = {} THEN
+          \* Nothing to send
+          & workers' = [workers EXCEPT ![w].sync[Remote] = WorkerSyncStateEmpty]
+          & UNCHANGED network
+        ELSE
+          FALSE
+      & UNCHANGED << browsers, remote, tabs, target >>
 
 TabRecvRemoteAck ==
   LET i == PopMsgOfType(ackRT)
@@ -1171,10 +1155,11 @@ TabRecvRemoteAck ==
     & LET msg    == network[i]
           t      == msg.to
           newMsg == [
-            type |-> ackTW,
-            from |-> t,
-            to   |-> tabs[t].worker,
-            id   |-> msg.id
+            type     |-> ackTW,
+            from     |-> t,
+            to       |-> tabs[t].worker,
+            id       |-> msg.id,
+            rejected |-> FALSE
           ]
       IN
         & RecvResp(i, newMsg)
@@ -1190,6 +1175,7 @@ WorkerRecvRemoteAck ==
           ws    == workers[w]
           sync  == ws.sync[Remote]
           sync2 == WorkerSyncAck(sync, id)
+          \* sync3 == IF msg.rejected THEN SyncDesiredInc(sync2) ELSE sync2
           tombs == SetFind(sync.tombstones, LAMBDA e: e[1] = id) \* find and not filter cos it's (ID,Drafts), not (ID,Draft)*
           ds2   == IF tombs.isEmpty THEN ws.drafts ELSE ws.drafts -- tombs.get[2]
           ws2   == [ws EXCEPT !.sync[Remote] = sync2, !.drafts = ds2]
@@ -1307,7 +1293,7 @@ StableInvariants ==
       remote.drafts = AllDrafts,
       "Drafts are not stored remotely", [all |-> AllDrafts, remote |-> remote.drafts])
 
-    & LET targetLive == { d \in target.drafts : ~d.tombstone }
+    & LET targetLive == NonTombs(target.drafts)
           missing    == targetLive -- AllDrafts
           unexpected == AllDrafts -- targetLive
       IN Assert1(missing = {} & unexpected = {},
@@ -1315,6 +1301,6 @@ StableInvariants ==
            [missing |-> missing, unexpected |-> unexpected])
 
 MCContinue ==
-  TLCGet("diameter") <= 50
+  TLCGet("diameter") <= 60
 
 ========================================================================================================================

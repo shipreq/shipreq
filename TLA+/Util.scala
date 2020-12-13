@@ -74,11 +74,12 @@ object UtilScala {
     }
 
     run = {
-      case a: RecordValue  => a.values.foreach(run) // ignores the domain
-      case a: FcnRcdValue  => a.values.foreach(run)
-      case a: SetEnumValue => valueVec(a.elems)
-      case a: TupleValue   => a.elems.foreach(run)
-      case a: IntValue     => onInt(a.`val`)
+      case a: RecordValue    => a.values.foreach(run) // ignores the domain
+      case a: FcnLambdaValue => run(a.toFcnRcd)
+      case a: FcnRcdValue    => a.values.foreach(run)
+      case a: SetEnumValue   => valueVec(a.elems)
+      case a: TupleValue     => a.elems.foreach(run)
+      case a: IntValue       => onInt(a.`val`)
 
       case _: BoolValue
          | _: ModelValue
@@ -119,6 +120,9 @@ object UtilScala {
       case a: FcnRcdValue  =>
         val newValues = a.values.map(run)
         new FcnRcdValue(a.domain, newValues, a.isNormalized())
+
+      case a: FcnLambdaValue =>
+        run(a.toFcnRcd)
 
       case a: SetEnumValue => new SetEnumValue(valueVec(a.elems), a.isNormalized())
       case a: TupleValue   => new TupleValue(a.elems.map(run))
