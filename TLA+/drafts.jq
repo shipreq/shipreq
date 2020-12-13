@@ -17,7 +17,7 @@
     .name,
     (
       (.state.target.drafts? // "-" | tostring) as $drafts
-      | ((.state.target.pending | [.[] | "\(.tab):\(.editCount)\(if .tombstone then "d" else "" end)"] | join(","))? // "") as $pending
+      | ((.state.target.pending | [.[] | "\(.tab):e\(.editCount)\(if .tombstone then "d" else "" end)"] | join(","))? // "") as $pending
       | ((.state.target.returning | [.[] | "\(.tab):\(.draft)"] | join(","))? // "") as $returning
       | $drafts as $a
       | (if $returning == "" then $a else "\($a)←{\($returning)}" end) as $b

@@ -617,7 +617,8 @@ AddDraftsToTab(ts, newDrafts, editResp, retainTombstones) ==
                         ELSE NewDirtyTabState(ts2, ds, None, FALSE)
                       : ds \in dss }
                     ELSE IF pending THEN
-                      { [ts2 EXCEPT !.drafts = ds] : ds \in dss } \* TODO: Add editDraft back in?
+                      LET e == OptionToSet(editDraft2)
+                      IN { [ts2 EXCEPT !.drafts = ds ++ e] : ds \in dss }
                     ELSE IF aborted THEN
                       { NewCleanTabState(ts2, JustTombs(ds), 0) : ds \in dss }
                     ELSE IF dss = {{}} THEN
@@ -942,34 +943,37 @@ UserAbort ==
       & LET tgt1 == TargetDelDrafts(target, ts.drafts)
             tgt2 == [tgt1 EXCEPT
                       !.returning = { IF r.tab = t THEN [r EXCEPT !.draft.tombstone = TRUE] ELSE r : r \in @ },
-                      !.pending =  { IF p.tab = t THEN [p EXCEPT !.tombstone = TRUE] ELSE p : p \in @ }
+                      !.pending   = { IF p.tab = t THEN [p EXCEPT !.tombstone       = TRUE] ELSE p : p \in @ }
                     ]
-            updateTarget(pendingEditCount) ==
-              IF pendingEditCount = 0 THEN
-                tgt2
-              ELSE
-                TargetAddPending(tgt2, t, pendingEditCount, FALSE)
+            tgt3 == TargetDelDrafts(tgt2, ts.drafts)
+            \* clearPending(tgt) == [tgt EXCEPT !.pending = { p \in @ : p.tab != t }]
         IN
-          & IF ts.drafts /= {} THEN
-              \* At least one confirmed drafts exists that now needs to be deleted
-              LET ds == MergeDraftsIntoTombstoneNE(ts.drafts)
-              IN
-                & \E d \in ds:
-                    tabs' = [tabs EXCEPT ![t].aborted    = TRUE,
+          & IF ts.editSent THEN
+              \* Edit in-flight to worker.
+              \* Note: If there's a queued edit, we still let it go through to WW so the user can restore it later.
+              & tabs' = [tabs EXCEPT ![t].aborted = TRUE, ![t].editCount = @ + 1]
+              & target' = tgt3
+            ELSE IF ts.editUnsent THEN
+              \* New edit queued.
+              \* Note: We'll still let the queued edit go through before abortion because we still want it saved
+              \* so the user can restore it later.
+              & tabs' = [tabs EXCEPT ![t].aborted = TRUE, ![t].editCount = @ + 1]
+              & target' = tgt3
+            ELSE
+              \* No non-local edit exists
+              IF ts.drafts = {} THEN
+                Fail1("[UserAbort] Tab has no local change and no drafts.", ts)
+              ELSE
+                \* User has marked existing drafts as aborted.
+                \* Update the local state and mark it as needing to be sent to WW
+                LET ds == MergeDraftsIntoTombstoneNE(ts.drafts)
+                IN
+                  & \E d \in ds:
+                      tabs' = [tabs EXCEPT ![t].aborted    = TRUE,
                                            ![t].editDraft  = SomeWhen(~@.isEmpty, d),
                                            ![t].editUnsent = TRUE,
                                            ![t].editCount  = @ + 1]
-                & target' = updateTarget(ts.editCount + 1)
-            ELSE IF ts.editSent THEN
-              \* Edit in-flight to worker, waiting for first draft
-              & tabs' = [tabs EXCEPT ![t].aborted = TRUE, ![t].editCount = @ + 1]
-              & target' = updateTarget(0)
-            ELSE
-              \* No non-local state exists, act immediately
-              LET tgt3 == [tgt2 EXCEPT !.pending = { p \in @ : p.tab != t }]
-              IN
-                & tabs' = [tabs EXCEPT ![t] = NewCleanTabState(ts, {}, 1)]
-                & target' = tgt3
+                  & target' = TargetAddPending(tgt3, t, ts.editCount + 1, FALSE)
           & UNCHANGED << browsers, workers, network, remote >>
 
 UserEditClean ==
@@ -1038,7 +1042,7 @@ WorkerRecvChanges ==
           ELSE
             LET e  == msg.edit.get
                 t  == msg.from
-                p  == CHOOSE p \in target.pending : p.tab = t & p.editCount = e.editCount
+                p  == SetSoleElement({p \in target.pending : p.tab = t & p.editCount <= e.editCount}).get
                 d1 == NewDraft(w, e.prov)
                 d  == IF p.tombstone THEN [d1 EXCEPT !.tombstone = TRUE] ELSE d1
                 r  == [tab |-> t, editCount |-> e.editCount, draft |-> d]
