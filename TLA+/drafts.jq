@@ -79,4 +79,5 @@
 | gsub("[\"\\\\]"; "")
 | gsub(","; ", ")
 | if contains("\tTabStart") then "\u001b[32m\(.)\u001b[0m" else . end
-| if contains("\tUser") then "\u001b[93m\(.)\u001b[0m" else . end
+| if contains("\tUserEdit") then "\u001b[93m\(.)\u001b[0m" else . end
+| if contains("\tUserAbort") then "\u001b[91m\(.)\u001b[0m" else . end

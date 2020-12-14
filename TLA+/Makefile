@@ -32,7 +32,8 @@ classes:
 .PHONY: drafts drafts-watch drafts-trace drafts-trace-watch drafts-last
 drafts: classes
 	$(SHOW_SEP)
-	$(TLCs) drafts | tee drafts.log
+	# $(TLC) -dump /tmp/states drafts | tee drafts.log
+	$(TLC) drafts | tee drafts.log
 	@fgrep -q 'State 1:' drafts.log \
 	  && fgrep Error drafts.log | fgrep -v "behavior up to this point" \
 	  && echo \
