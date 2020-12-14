@@ -78,4 +78,5 @@
 | @tsv
 | gsub("[\"\\\\]"; "")
 | gsub(","; ", ")
-| if contains("\tUser") then "\u001b[36m\(.)\u001b[0m" else . end
+| if contains("\tTabStart") then "\u001b[32m\(.)\u001b[0m" else . end
+| if contains("\tUser") then "\u001b[93m\(.)\u001b[0m" else . end

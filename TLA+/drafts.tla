@@ -560,17 +560,20 @@ NewCleanTabState(workerOrPrevState, tombstones, editCountInc) ==
     tombstones  |-> tombstones
   ]
 
-NewDirtyTabState(prevState, ds, editDraft, editUnsent) ==
-  LET wasActive == prevState.status \in {clean,dirty}
-      wasDirty  == wasActive & prevState.status = dirty
+NewDirtyTabState(workerOrPrevState, ds, editDraft, editUnsent) ==
+  LET havePrev  == workerOrPrevState \notin Worker
+      w         == IF havePrev THEN workerOrPrevState.worker ELSE workerOrPrevState
+      ps        == workerOrPrevState
+      wasActive == havePrev & ps.status \in {clean,dirty}
+      wasDirty  == wasActive & ps.status = dirty
   IN [
     status      |-> dirty,
-    worker      |-> prevState.worker,
+    worker      |-> w,
     drafts      |-> ds,
     editDraft   |-> editDraft,
-    editUnsent  |-> (IF wasDirty THEN prevState.editUnsent | editUnsent ELSE editUnsent),
-    editSent    |-> (IF wasDirty THEN prevState.editSent ELSE FALSE),
-    editCount   |-> (IF wasActive THEN prevState.editCount ELSE 0) + (IF editUnsent THEN 1 ELSE 0),
+    editUnsent  |-> (IF wasDirty THEN ps.editUnsent | editUnsent ELSE editUnsent),
+    editSent    |-> (IF wasDirty THEN ps.editSent ELSE FALSE),
+    editCount   |-> (IF wasActive THEN ps.editCount ELSE 0) + (IF editUnsent THEN 1 ELSE 0),
     aborted     |-> FALSE
   ]
 
@@ -616,6 +619,8 @@ AddDraftsToTab(ts, newDrafts, editResp, retainTombstones) ==
                         THEN NewCleanTabState(ts2, ds, 0)
                         ELSE NewDirtyTabState(ts2, ds, None, FALSE)
                       : ds \in dss }
+                    ELSE IF ts.status = loading THEN
+                      { [ts2 EXCEPT !.drafts = ds] : ds \in dss }
                     ELSE IF pending THEN
                       LET e == OptionToSet(editDraft2)
                       IN { [ts2 EXCEPT !.drafts = ds ++ e] : ds \in dss }
@@ -626,7 +631,7 @@ AddDraftsToTab(ts, newDrafts, editResp, retainTombstones) ==
                     ELSE
                       { NewDirtyTabState(ts2, ds, editDraft2, FALSE) : ds \in dss }
   IN
-    IF ts.status \in {clean,dirty} THEN
+    IF ts.status \in {clean,dirty,loading} THEN
       \* LET lookingFor(tsx) == & TLCGet("diameter") = 13 & ts.status = dirty & tsx.status = dirty & ~editResp.isEmpty & editResp.get.rev = 1
       \*                        & \E ds \in dss : \E d \in ds : d.tombstone & d.time = 2
       \*     debug           == \E x \in tss : lookingFor(x)
@@ -741,7 +746,7 @@ RemoteRecvDrafts ==
             drafts |-> ds
           ]
           otherTabs      == { t \in RemoteConnectedTabs : t != msg.from }
-          broadcasts(ds) == SetFold(otherTabs, <<>>, LAMBDA q,t: q \o <<broadcastTo(t, ds)>>)
+          broadcasts(ds) == IF ds = {} THEN <<>> ELSE SetFold(otherTabs, <<>>, LAMBDA q,t: q \o <<broadcastTo(t, ds)>>)
           result(ds)     == <<ds, <<resp>> \o broadcasts(ds)>>
           ds1            == AddDrafts(remote.drafts, msg.drafts)
           ds2            == NonTombs(ds1) \* Don't store tombstones for now
@@ -762,11 +767,12 @@ TabRecvDraftsFromRemote ==
           ts         == tabs[t]
           w          == ts.worker
           tss        == AddDraftsToTab(ts, msg.drafts, None, TRUE)
+          dsForWW    == PruneByProv(msg.drafts ++ TabDrafts(ts))
           msgWW(ts2) == [
             type   |-> syncTW,
             from   |-> t,
             to     |-> w,
-            drafts |-> ts2.drafts,
+            drafts |-> dsForWW,
             edit   |-> None
           ]
       IN \E ts2 \in tss:
