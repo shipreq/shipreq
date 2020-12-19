@@ -13,7 +13,7 @@ info:
 	@echo "Commands:"
 	@echo
 	@echo "  * classes"
-	@echo "  * drafts[-trace][-last]"
+	@echo "  * tombstones[-trace][-last]"
 	@echo "  * encryption[-watch]"
 	@echo "  * jq-test[T]"
 	@echo "  * project[-watch]"
@@ -69,6 +69,27 @@ project:
 	./project
 project-watch:
 	ls -1 project project.{cfg,tla} $(SHARED) | entr -cr $(MAKE) project
+
+
+.PHONY: tombstones tombstones-watch tombstones-trace tombstones-trace-watch tombstones-last
+tombstones: classes
+	$(SHOW_SEP)
+	$(TLC) tombstones | tee tombstones.log
+	@fgrep -q 'State 1:' tombstones.log \
+	  && fgrep Error tombstones.log | fgrep -v "behavior up to this point" \
+	  && echo \
+	  && $(MAKE) tombstones-trace \
+	  || test 1
+tombstones-trace:
+	@$(TLA2JSON) tombstones.log | jq -rf tombstones.jq | column -t -s$$'\t'
+tombstones-watch:
+	ls -1 tombstones.{cfg,tla,jq} $(SHARED) | entr -cr $(MAKE) tombstones
+tombstones-watch-last:
+	ls -1 tombstones.{log,jq} $(SHARED) | entr -cr $(MAKE) tombstones-last
+tombstones-last:
+	@sed '0,/^Starting\.\.\./d' <tombstones.log
+	@echo
+	@$(MAKE) tombstones-trace
 
 
 .PHONY: websocket_client websocket_client-watch

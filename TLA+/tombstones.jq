@@ -20,7 +20,7 @@
     .name,
     (.state.target? // "-" | tostring),
     (
-      .state.nodes.r?
+      .state.nodes?.r?
       // "-"
       | tostring
       | gsub("[{}]"; "")
