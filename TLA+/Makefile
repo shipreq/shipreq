@@ -1,5 +1,5 @@
 MAKE     := make -s
-TLC      := ./tlc -gzip -difftrace
+TLC      := ./tlc -gzip
 TLC1     := TLC_OPTS="-workers 1" $(TLC)
 TLCs     := $(TLC1) -simulate -seed 0
 SHOW_SEP := @echo -e "\e[46m========================================================================================================================\e[0m"
@@ -74,7 +74,7 @@ project-watch:
 .PHONY: tombstones tombstones-watch tombstones-trace tombstones-trace-watch tombstones-last
 tombstones: classes
 	$(SHOW_SEP)
-	$(TLCs) tombstones | tee tombstones.log
+	$(TLC) tombstones | tee tombstones.log
 	@fgrep -q 'State 1:' tombstones.log \
 	  && fgrep Error tombstones.log | fgrep -v "behavior up to this point" \
 	  && echo \

@@ -76,10 +76,19 @@ LogStates ==
 
 Draft == [rev: Nat, live: BOOLEAN]
 
+send == "send"
+resp == "resp"
+
 Msg == [
+  type : {send},
   from : Node,
   to   : Node,
   draft: Draft
+] ++ [
+  type : {resp},
+  from : Node,
+  to   : Node,
+  draft: Option(Draft)
 ]
 
 InvariantsForNetwork ==
@@ -89,8 +98,18 @@ InvariantsForNetwork ==
         Len(network) <= MCNetworkLimit,
         "Max network size (" \o ToString(MCNetworkLimit) \o ") exceeded. " \o ToString(SeqCountDups(network)) \o " dups found.")
 
+NodeState == [
+  draft    : Option(Draft),
+  broadcast: SUBSET Node, \* Nodes we want to broadcast our state to
+  awaiting : SUBSET Node  \* Nodes from which we're awaiting a response
+]
+
 InvariantsForNodes ==
-  nodes \in [Node -> Option(Draft)]
+  & nodes \in [Node -> NodeState]
+  & \A n \in Node: LET ns == nodes[n] IN
+    & n \notin ns.broadcast
+    & n \notin ns.awaiting
+    & (ns.broadcast != {}) => ~ns.draft.isEmpty
 
 InvariantsForTarget ==
   target \in Option(Draft)
@@ -118,35 +137,59 @@ Reachable(node1, node2) ==
     & node1 \in g
     & node2 \in g
 
-Broadcast(from, draft) ==
-  LET tgts    == { n \in Node : n != from & Reachable(n, from) }
-      msg(to) == [from |-> from, to |-> to, draft |-> draft]
+BroadcastTargets(from) ==
+  { n \in Node : n != from & Reachable(n, from) }
+
+\* Inputs:
+\*   msg     :: Msg
+\*   before  :: Option[Draft]
+\*   received :: Draft
+\*   updated :: Draft
+\* Output:
+\*   Set[Node]
+BroadcastTargetsOnRecv(msg, before, received, updated) ==
+  LET from == msg.from
+      n    == msg.to
   IN
-    IF tgts = {} THEN
-      Fail1("No targets exist to broadcast to.", [from |-> from])
+    IF received != updated THEN
+      \* Merging the draft resulted in a new value; share with everyone
+      \* {from} being removed here because it gets a direct response
+      BroadcastTargets(n) -- {from}
+
+    ELSE IF before = Some(updated) THEN
+      \* Msg provided nothing new
+      {}
+
     ELSE
-      {msg(to) : to \in tgts}
+      \* Msg is new info; share with everyone else
+      BroadcastTargets(n) -- {from}
 
-BroadcastExcept(from, draft, except) ==
-  LET tgts    == { n \in Node : n != from & n != except & Reachable(n, from) }
-      msg(to) == [from |-> from, to |-> to, draft |-> draft]
-  IN {msg(to) : to \in tgts}
+\* (Node, Draft) => Option[Draft]
+ApplyHardDel(n, d) ==
+  LET hardDel == MCAllowRemoval & ~d.live & n != Remote
+  IN SomeWhen(~hardDel, d)
 
-SetNodeDraft(n, d) ==
-  LET hardDel  == MCAllowRemoval & ~d.live & n != Remote
-      newState == SomeWhen(~hardDel, d)
-  IN nodes' = [nodes EXCEPT ![n] = newState]
+ApplyHardDelOption(n, od) ==
+  OptionFlatmap(od, LAMBDA d: ApplyHardDel(n, d))
+
+FilterLive(od) ==
+  IF ~od.isEmpty & od.get.live THEN od ELSE None
+
+StableNodeState(ns) ==
+  & ns.broadcast = {}
+  & ns.awaiting = {}
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Actions
 
 UserChange(n, live) ==
-  LET d == [rev |-> NextRev, live |-> live]
+  LET d    == [rev |-> NextRev, live |-> live]
+      od   == Some(d) \* ApplyHardDel(n, d)
+      tgts == BroadcastTargets(n)
   IN
-    & Network!NothingInFlightFromTo(n, Remote)
-    & SetNodeDraft(n, d)
-    & Network!SendSet(Broadcast(n, d))
+    & nodes' = [nodes EXCEPT ![n].draft = od, ![n].broadcast = tgts]
     & target' = Some(d)
+    & UNCHANGED network
 
 Edit ==
   & NextRev <= MCMaxRev
@@ -156,31 +199,67 @@ Edit ==
 Kill ==
   & NextRev <= MCMaxRev
   & \E n \in UserNode:
-    & ~nodes[n].isEmpty
-    & nodes[n].get.live
+    & ~nodes[n].draft.isEmpty
+    & nodes[n].draft.get.live
     & UserChange(n, FALSE)
 
-Recv ==
-  \E i \in Network!NextMsgs:
+Send ==
+  \E n \in Node:
+    LET ns      == nodes[n]
+        tgts    == ns.broadcast
+        d       == ns.draft.get
+        msg(to) == [type |-> send, from |-> n, to |-> to, draft |-> d]
+        await   == IF n = Remote THEN {} ELSE tgts
+    IN
+      & ns.awaiting = {}
+      & tgts != {}
+      & nodes' = [nodes EXCEPT ![n].awaiting = await, ![n].broadcast = {}]
+      & Network!SendSet({ msg(t) : t \in tgts })
+      & UNCHANGED target
+
+RecvSend ==
+  \E i \in Network!NextMsgsByType(send):
     LET msg     == network[i]
         n       == msg.to
-        before  == nodes[n]
+        ns      == nodes[n]
+        before  == ns.draft
         d       == MergeOption(before, msg.draft)
+        od      == Some(d) \* ApplyHardDel(n, d)
+        tgts    == BroadcastTargetsOnRecv(msg, before, msg.draft, d)
+        altRes  == d != msg.draft
+        respMsg == [type |-> resp, from |-> n, to |-> msg.from, draft |-> SomeWhen(altRes, d)]
     IN
-      & SetNodeDraft(n, d)
-      &
-        IF d != msg.draft THEN
-          \* Merging the draft resulted in a new value; share with everyone
-          Network!RecvSendSet(i, Broadcast(n, d))
-
-        ELSE IF before = Some(d) THEN
-          \* Msg provided nothing new
-          Network!Recv(i)
-
+      & IF msg.from = Remote THEN
+          & Network!Recv(i)
+          & nodes' = [nodes EXCEPT ![n].draft = IF ~msg.draft.live & @.isEmpty & tgts = {} THEN None ELSE od,
+                                   ![n].broadcast = @ ++ (IF altRes THEN tgts ++ {Remote} ELSE tgts)]
         ELSE
-          \* Msg is new info; share with everyone else
-          Network!RecvSendSet(i, BroadcastExcept(n, d, msg.from))
+          & Network!RecvSend(i, respMsg)
+          & nodes' = [nodes EXCEPT ![n].draft = od,
+                                   ![n].broadcast = @ ++ tgts]
+      & UNCHANGED target
 
+RecvResp ==
+  \E i \in Network!NextMsgsByType(resp):
+    LET msg  == network[i]
+        n    == msg.to
+        ns   == nodes[n]
+        ns2  == [ns EXCEPT !.awaiting = @ -- {msg.from}]
+        ns3  == IF ~msg.draft.isEmpty THEN
+                  LET before  == ns.draft
+                      recv    == msg.draft.get
+                      upd     == MergeOption(before, recv)
+                      tgts    == BroadcastTargetsOnRecv(msg, before, recv, upd)
+                      ns3     == [ns2 EXCEPT !.broadcast = @ ++ tgts]
+                      od      == IF StableNodeState(ns3) THEN ApplyHardDel(n, upd) ELSE Some(upd)
+                  IN [ns3 EXCEPT !.draft = od]
+                ELSE IF MCAllowRemoval & n != Remote & StableNodeState(ns2) THEN
+                  [ns2 EXCEPT !.draft = FilterLive(@)]
+                ELSE
+                  ns2
+    IN
+      & nodes' = [nodes EXCEPT ![n] = ns3]
+      & Network!Recv(i)
       & UNCHANGED target
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
@@ -188,16 +267,24 @@ Recv ==
 
 Init ==
   & Network!Init
-  & nodes = [n \in Node |-> None]
+  & nodes = [n \in Node |-> [
+                draft     |-> None,
+                broadcast |-> {},
+                awaiting  |-> {}
+            ]]
   & target = None
 
 Next ==
   | Edit
   | Kill
-  | Recv
+  | Send
+  | RecvSend
+  | RecvResp
 
 Fairness ==
-  & WF_<<vars>>(Recv)
+  & WF_<<vars>>(Send)
+  & WF_<<vars>>(RecvSend)
+  & WF_<<vars>>(RecvResp)
 
 Spec ==
   & Init
@@ -207,28 +294,40 @@ Spec ==
 View ==
   NormaliseNats(state, 0, MCMaxRev + 1, "")
 
+NodesAreStable ==
+  \A n \in Node : StableNodeState(nodes[n])
+
 IsStable ==
-  Network!IsEmpty
+  & ~ENABLED(Send)
+  & ~ENABLED(RecvSend)
+  & ~ENABLED(RecvResp)
 
 StableInvariants ==
   IsStable =>
     \* & LogStates
 
+    & Assert0(
+        Network!IsEmpty,
+        "Network still has activity on it.")
+
+    & \A n \in Node :
+        Assert1(
+          StableNodeState(nodes[n]),
+          "Node is not stable: " \o ToString(n), nodes[n])
+
     & LET targetRev == LiveRev(target) IN
         \A n \in Node:
           Assert1(
-            LiveRev(nodes[n]) = targetRev,
+            LiveRev(nodes[n].draft) = targetRev,
             "Node doesn't have expected draft value.",
             [node |-> n, expect |-> targetRev, actual |-> LiveRev(nodes[n])])
 
-    &
-      & MCCheckRemoval
-      & LiveRev(target) = 0 =>
-          \A n \in Node:
-            Assert1(
-              n = Remote | nodes[n].isEmpty,
-              "Node tombstone not removed.",
-              [node |-> n, state |-> nodes[n]])
+    & MCCheckRemoval & LiveRev(target) = 0 =>
+        \A n \in Node:
+          Assert1(
+            n = Remote | nodes[n].draft.isEmpty,
+            "Node tombstone not removed.",
+            [node |-> n, state |-> nodes[n]])
 
 Liveness ==
   []<>IsStable \* We always, eventually stablise

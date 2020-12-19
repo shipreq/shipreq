@@ -14,6 +14,13 @@
     | "\(.rev)\($tomb)"
   )
 
+  # Condense node states
+  | (.. | objects | select(has("awaiting"))) |= ( .
+    | (.broadcast | if . == [] then "" else "←\(.)" end) as $broadcast
+    | (.awaiting |  if . == [] then "" else "←\(.)" end) as $awaiting
+    | "(\(.draft))\($broadcast)\($awaiting)"
+  )
+
   | .[]
   | [
     .no,
@@ -27,7 +34,9 @@
     ),
     (
       .state.nodes?
-      | with_entries(select(.key != "r" and .value != "-"))?
+      | with_entries(
+          select(.key != "r" and .value != "(-)")
+        )?
       // "-"
       | tostring
       | gsub("[{}]"; "")
@@ -35,7 +44,13 @@
     (
       .state
       | if .network? then (
-          [ .network[] | "\(.from)(\(.draft))\(.to)" ]
+          [ .network[] |
+            if .type == "send" then
+              "\(.from)→\(.to)(\(.draft))"
+            else
+              "\(.to)←\(.from)(\(.draft))"
+            end
+          ]
           | tostring
         ) else
           "-"
