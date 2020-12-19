@@ -1,6 +1,8 @@
 ---------------------------------------------------- MODULE Network ----------------------------------------------------
 
-EXTENDS Naturals, Sequences, Util
+LOCAL INSTANCE Naturals
+LOCAL INSTANCE Sequences
+LOCAL INSTANCE Util
 
 VARIABLE queue
 
@@ -45,6 +47,15 @@ NextMsgsByType(type) ==
 \*   sameChannel = (n,m) => (n.from = m.from) && (n.to = m.to)
 NextMsgs ==
   { i \in DOMAIN queue : IsNextPerChannel(i, SameFromAndTo) }
+
+CountInFlightFrom(from) ==
+  SeqCount(queue, LAMBDA m: m.from = from)
+
+CountInFlightFromTo(from, to) ==
+  SeqCount(queue, LAMBDA m: m.from = from | m.to = to)
+
+CountInFlightInvolving(n) ==
+  SeqCount(queue, LAMBDA m: m.from = n | m.to = n)
 
 NothingInFlightFrom(from) ==
   ~SeqExists(queue, LAMBDA m: m.from = from)

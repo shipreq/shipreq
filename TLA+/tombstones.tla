@@ -22,18 +22,31 @@ EXTENDS FiniteSets, Naturals, Sequences, TLC, Util
 CONSTANT Node
 CONSTANT NodeGraph \* Set[Set[Node]] where if nodes X and Y are in a set together, they can talk to each other directly
 CONSTANT Remote
+CONSTANT UserNode \* Nodes which users access directly
 
 CONSTANT MCMaxRev
 CONSTANT MCAllowRemoval
 CONSTANT MCCheckRemoval
+CONSTANT MCNetworkLimit
 
 ASSUME IsFiniteSet(Node)
 ASSUME IsFiniteSet(NodeGraph)
-ASSUME NodeGraph \in SUBSET {s \in SUBSET Node : Cardinality(s) > 1}
+ASSUME IsFiniteSet(UserNode)
+ASSUME NodeGraph \in SUBSET SUBSET SUBSET Node
 ASSUME Remote \in Node
+ASSUME Remote \notin UserNode
 ASSUME MCMaxRev \in Nat
 ASSUME MCAllowRemoval \in BOOLEAN
 ASSUME MCCheckRemoval \in BOOLEAN
+ASSUME MCNetworkLimit \in Nat
+
+NodeGraph2 ==
+  UNION {
+    SetReduce(el, LAMBDA a,b:{ SeqToSet(s) : s \in (a \X b) })
+    : el \in NodeGraph }
+
+\* ASSUME Log("NodeGraph result: " \o ToString(NodeGraph2))
+ASSUME NodeGraph2 \in SUBSET {s \in SUBSET Node : Cardinality(s) > 1}
 
 MCSymmetry == SymmetrySet(Node)
 
@@ -70,7 +83,11 @@ Msg == [
 ]
 
 InvariantsForNetwork ==
-  Network!Invariants(Msg)
+  & Network!Invariants(Msg)
+  & (MCNetworkLimit != 0) =>
+      Assert0(
+        Len(network) <= MCNetworkLimit,
+        "Max network size (" \o ToString(MCNetworkLimit) \o ") exceeded. " \o ToString(SeqCountDups(network)) \o " dups found.")
 
 InvariantsForNodes ==
   nodes \in [Node -> Option(Draft)]
@@ -97,7 +114,7 @@ NextRev ==
   IF target.isEmpty THEN 1 ELSE target.get.rev + 1
 
 Reachable(node1, node2) ==
-  \E g \in NodeGraph :
+  \E g \in NodeGraph2 :
     & node1 \in g
     & node2 \in g
 
@@ -133,14 +150,12 @@ UserChange(n, live) ==
 
 Edit ==
   & NextRev <= MCMaxRev
-  & \E n \in Node:
-    & n != Remote
+  & \E n \in UserNode:
     & UserChange(n, TRUE)
 
 Kill ==
   & NextRev <= MCMaxRev
-  & \E n \in Node:
-    & n != Remote
+  & \E n \in UserNode:
     & ~nodes[n].isEmpty
     & nodes[n].get.live
     & UserChange(n, FALSE)
@@ -151,15 +166,21 @@ Recv ==
         n       == msg.to
         before  == nodes[n]
         d       == MergeOption(before, msg.draft)
-        changed == before != Some(d)
     IN
       & SetNodeDraft(n, d)
-      & IF ~changed THEN
-          Network!Recv(i)
-        ELSE IF d = msg.draft & d.live THEN
-          Network!RecvSendSet(i, BroadcastExcept(n, d, msg.from))
-        ELSE
+      &
+        IF d != msg.draft THEN
+          \* Merging the draft resulted in a new value; share with everyone
           Network!RecvSendSet(i, Broadcast(n, d))
+
+        ELSE IF before = Some(d) THEN
+          \* Msg provided nothing new
+          Network!Recv(i)
+
+        ELSE
+          \* Msg is new info; share with everyone else
+          Network!RecvSendSet(i, BroadcastExcept(n, d, msg.from))
+
       & UNCHANGED target
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
@@ -211,5 +232,8 @@ StableInvariants ==
 
 Liveness ==
   []<>IsStable \* We always, eventually stablise
+
+MCContinue ==
+  (TLCGet("diameter") <= 60) | LogRet(state, FALSE)
 
 ========================================================================================================================

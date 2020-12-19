@@ -74,7 +74,7 @@ project-watch:
 .PHONY: tombstones tombstones-watch tombstones-trace tombstones-trace-watch tombstones-last
 tombstones: classes
 	$(SHOW_SEP)
-	$(TLC) tombstones | tee tombstones.log
+	$(TLCs) tombstones | tee tombstones.log
 	@fgrep -q 'State 1:' tombstones.log \
 	  && fgrep Error tombstones.log | fgrep -v "behavior up to this point" \
 	  && echo \

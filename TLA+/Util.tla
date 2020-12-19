@@ -196,6 +196,18 @@ SeqFold(seq, acc, op(_, _)) ==
 SeqReduce(seq, op(_, _)) ==
   SetReduce(DOMAIN seq, LAMBDA q,i: op(q, seq[i]))
 
+SeqCount(seq, f(_)) ==
+  SeqFold(seq, 0, LAMBDA q,e: IF f(e) THEN q + 1 ELSE q)
+
+SeqToSet(seq) ==
+  { seq[i] : i \in DOMAIN seq}
+
+SeqCountUniq(seq) ==
+  Cardinality(SeqToSet(seq))
+
+SeqCountDups(seq) ==
+  Len(seq) - SeqCountUniq(seq)
+
 ------------------------------------------------------------------------------------------------------------------------
 
 LOCAL SetFindTest ==
