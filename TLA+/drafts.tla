@@ -1,4 +1,4 @@
--------------------------------------------------- MODULE tombstones --------------------------------------------------
+---------------------------------------------------- MODULE drafts ----------------------------------------------------
 (*
 
 Drafts are greatly generalised here. There are only two properties we need drafts to exhibit:
