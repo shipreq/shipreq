@@ -208,6 +208,9 @@ SeqCountUniq(seq) ==
 SeqCountDups(seq) ==
   Len(seq) - SeqCountUniq(seq)
 
+SeqFilter(seq, f(_)) ==
+  SeqFold(seq, <<>>, LAMBDA q,e: IF f(e) THEN Append(q, e) ELSE q)
+
 ------------------------------------------------------------------------------------------------------------------------
 
 LOCAL SetFindTest ==

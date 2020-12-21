@@ -15,6 +15,11 @@ Drafts are greatly generalised here. There are only two properties we need draft
 
 Therefore all we need to model drafts here is: (Rev, Live).
 
+Conclusions:
+
+  1) Drafts are eventually consistent in this spec.
+  2) Tombstones are required at all layers (i.e. remote, tab, workers)
+
 *)
 
 EXTENDS FiniteSets, Naturals, Sequences, TLC, Util
@@ -76,10 +81,15 @@ LogStates ==
 
 Draft == [rev: Nat, live: BOOLEAN]
 
+req  == "req"
 send == "send"
 resp == "resp"
 
 Msg == [
+  type : {req},
+  from : Node,
+  to   : Node
+] ++ [
   type : {send},
   from : Node,
   to   : Node,
@@ -97,8 +107,10 @@ InvariantsForNetwork ==
       Assert0(
         Len(network) <= MCNetworkLimit,
         "Max network size (" \o ToString(MCNetworkLimit) \o ") exceeded. " \o ToString(SeqCountDups(network)) \o " dups found.")
+  & SeqForall(network, LAMBDA m: Assert1(nodes[m.to].online, "Network target offline.", [msg |-> m, node |-> nodes[m.to]]))
 
 NodeState == [
+  online   : BOOLEAN,
   draft    : Option(Draft),
   broadcast: SUBSET Node, \* Nodes we want to broadcast our state to
   awaiting : SUBSET Node  \* Nodes from which we're awaiting a response
@@ -109,7 +121,10 @@ InvariantsForNodes ==
   & \A n \in Node: LET ns == nodes[n] IN
     & n \notin ns.broadcast
     & n \notin ns.awaiting
-    & (ns.broadcast != {}) => ~ns.draft.isEmpty
+    & (ns.broadcast != {}) =>
+        Assert1(~ns.draft.isEmpty, "Node " \o ToString(n) \o " wants to broadcast but has no draft.", ns)
+    & ~ns.online =>
+        ns.awaiting = {}
 
 InvariantsForTarget ==
   target \in Option(Draft)
@@ -132,13 +147,23 @@ LiveRev(optionalDraft) ==
 NextRev ==
   IF target.isEmpty THEN 1 ELSE target.get.rev + 1
 
+WorkerNodes ==
+  (Node -- UserNode) -- {Remote}
+
+OnlineNodes ==
+  { n \in Node : nodes[n].online }
+
+OfflineNodes ==
+  { n \in Node : ~nodes[n].online }
+
 Reachable(node1, node2) ==
-  \E g \in NodeGraph2 :
+  & node1 != node2
+  & \E g \in NodeGraph2 :
     & node1 \in g
     & node2 \in g
 
 BroadcastTargets(from) ==
-  { n \in Node : n != from & Reachable(n, from) }
+  { n \in Node : nodes[n].online & Reachable(n, from) }
 
 \* Inputs:
 \*   msg     :: Msg
@@ -164,10 +189,15 @@ BroadcastTargetsOnRecv(msg, before, received, updated) ==
       \* Msg is new info; share with everyone else
       BroadcastTargets(n) -- {from}
 
+AllowRemoval(n, d) ==
+  & MCAllowRemoval
+  & ~d.live
+  & n != Remote \* Keep tombstones on server, delete by age
+  & n \notin UserNode \* Make tabs keep tombstones in memory
+
 \* (Node, Draft) => Option[Draft]
 ApplyHardDel(n, d) ==
-  LET hardDel == MCAllowRemoval & ~d.live & n != Remote
-  IN SomeWhen(~hardDel, d)
+  SomeWhen(~AllowRemoval(n, d), d)
 
 ApplyHardDelOption(n, od) ==
   OptionFlatmap(od, LAMBDA d: ApplyHardDel(n, d))
@@ -176,8 +206,9 @@ FilterLive(od) ==
   IF ~od.isEmpty & od.get.live THEN od ELSE None
 
 StableNodeState(ns) ==
-  & ns.broadcast = {}
-  & ns.awaiting = {}
+  ns.online =>
+    & ns.broadcast = {}
+    & ns.awaiting = {}
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
 \* Actions
@@ -211,6 +242,7 @@ Send ==
         msg(to) == [type |-> send, from |-> n, to |-> to, draft |-> d]
         await   == IF n = Remote THEN {} ELSE tgts
     IN
+      & ns.online
       & ns.awaiting = {}
       & tgts != {}
       & nodes' = [nodes EXCEPT ![n].awaiting = await, ![n].broadcast = {}]
@@ -230,16 +262,30 @@ RecvSend ==
         respMsg == [type |-> resp, from |-> n, to |-> msg.from, draft |-> SomeWhen(altRes, d)]
     IN
       & IF msg.from = Remote THEN
-          & Network!Recv(i)
-          & nodes' = [nodes EXCEPT ![n].draft = IF ~msg.draft.live & @.isEmpty & tgts = {} THEN None ELSE od,
-                                   ![n].broadcast = @ ++ (IF altRes THEN tgts ++ {Remote} ELSE tgts)]
+          LET tgts2   == ns.broadcast ++ (IF altRes THEN tgts ++ {Remote} ELSE tgts)
+              hardDel == AllowRemoval(n, msg.draft) & before.isEmpty & tgts2 = {}
+          IN
+            & Network!Recv(i)
+            & nodes' = [nodes EXCEPT ![n].draft = IF hardDel THEN None ELSE od,
+                                     ![n].broadcast = tgts2]
         ELSE
           & Network!RecvSend(i, respMsg)
           & nodes' = [nodes EXCEPT ![n].draft = od,
                                    ![n].broadcast = @ ++ tgts]
       & UNCHANGED target
 
-RecvResp ==
+RecvRequest ==
+  \E i \in Network!NextMsgsByType(req):
+    LET msg == network[i]
+        n   == msg.to
+        ns  == nodes[n]
+        res == [type |-> resp, from |-> n, to |-> msg.from, draft |-> ns.draft]
+    IN
+      & Network!RecvSend(i, res)
+      & UNCHANGED nodes
+      & UNCHANGED target
+
+RecvResponse ==
   \E i \in Network!NextMsgsByType(resp):
     LET msg  == network[i]
         n    == msg.to
@@ -253,13 +299,45 @@ RecvResp ==
                       ns3     == [ns2 EXCEPT !.broadcast = @ ++ tgts]
                       od      == IF StableNodeState(ns3) THEN ApplyHardDel(n, upd) ELSE Some(upd)
                   IN [ns3 EXCEPT !.draft = od]
-                ELSE IF MCAllowRemoval & n != Remote & StableNodeState(ns2) THEN
-                  [ns2 EXCEPT !.draft = FilterLive(@)]
+                ELSE IF ~ns2.draft.isEmpty & StableNodeState(ns2) THEN
+                  LET d == ns2.draft.get
+                  IN IF AllowRemoval(n, d) THEN
+                       [ns2 EXCEPT !.draft = FilterLive(@)]
+                     ELSE
+                      ns2
                 ELSE
                   ns2
     IN
       & nodes' = [nodes EXCEPT ![n] = ns3]
       & Network!Recv(i)
+      & UNCHANGED target
+
+Disconnect ==
+  \E n \in UserNode:
+    LET ns       == nodes[n]
+        ns2      == [ns EXCEPT !.online    = FALSE,
+                               !.broadcast = IF ns.draft.isEmpty THEN @ ELSE @ ++ ns.awaiting,
+                               !.awaiting  = {}
+                    ]
+        other(s) == [s EXCEPT !.broadcast = @ -- {n},
+                              !.awaiting  = @ -- {n}
+                    ]
+        upd(m)   == IF m = n THEN ns2 ELSE other(nodes[m])
+    IN
+      & ns.online
+      & nodes' = [m \in Node |-> upd(m)]
+      & Network!RemoveAllFromOrTo(n)
+      & UNCHANGED target
+
+Reconnect ==
+  \E n \in UserNode:
+    LET ns   == nodes[n]
+        tgts == {m \in Node : nodes[m].online & Reachable(n, m)}
+        ns2  == [ns EXCEPT !.online = TRUE, !.awaiting = tgts]
+    IN
+      & ~ns.online
+      & nodes' = [nodes EXCEPT ![n] = ns2]
+      & Network!SendSet({[type |-> req, from |-> n, to |-> to] : to \in tgts})
       & UNCHANGED target
 
 \* ███████████████████████████████████████████████████████████████████████████████████████████████████
@@ -268,6 +346,7 @@ RecvResp ==
 Init ==
   & Network!Init
   & nodes = [n \in Node |-> [
+                online    |-> TRUE,
                 draft     |-> None,
                 broadcast |-> {},
                 awaiting  |-> {}
@@ -279,12 +358,16 @@ Next ==
   | Kill
   | Send
   | RecvSend
-  | RecvResp
+  | RecvRequest
+  | RecvResponse
+  | Disconnect
+  | Reconnect
 
 Fairness ==
   & WF_<<vars>>(Send)
   & WF_<<vars>>(RecvSend)
-  & WF_<<vars>>(RecvResp)
+  & WF_<<vars>>(RecvRequest)
+  & WF_<<vars>>(RecvResponse)
 
 Spec ==
   & Init
@@ -300,34 +383,58 @@ NodesAreStable ==
 IsStable ==
   & ~ENABLED(Send)
   & ~ENABLED(RecvSend)
-  & ~ENABLED(RecvResp)
+  & ~ENABLED(RecvRequest)
+  & ~ENABLED(RecvResponse)
 
 StableInvariants ==
   IsStable =>
-    \* & LogStates
 
-    & Assert0(
-        Network!IsEmpty,
-        "Network still has activity on it.")
+    LET assertLiveRevs(nodeSet, expect) ==
+          \A n \in nodeSet:
+            Assert1(
+              LiveRev(nodes[n].draft) = expect,
+              "Node " \o ToString(n) \o " doesn't have expected draft value.",
+              [node |-> n, expect |-> expect, actual |-> LiveRev(nodes[n].draft)])
 
-    & \A n \in Node :
-        Assert1(
-          StableNodeState(nodes[n]),
-          "Node is not stable: " \o ToString(n), nodes[n])
+        assertTombstoneRemoval(nodeSet, expect) ==
+          MCCheckRemoval & expect = 0 =>
+            \A n \in nodeSet:
+              Assert1(
+                n = Remote | nodes[n].draft.isEmpty,
+                "Node " \o ToString(n) \o " tombstone not removed.",
+                [node |-> n, state |-> nodes[n]])
 
-    & LET targetRev == LiveRev(target) IN
-        \A n \in Node:
+        assertConsistency(nodeSet, expect) ==
+          & assertLiveRevs(nodeSet, expect)
+          & assertTombstoneRemoval(nodeSet, expect)
+
+        allNodesAreOnline ==
+          \A n \in Node : nodes[n].online
+    IN
+
+      \* & LogStates
+
+      & Assert0(
+          Network!IsEmpty,
+          "Network still has activity on it.")
+
+      & \A n \in Node :
           Assert1(
-            LiveRev(nodes[n].draft) = targetRev,
-            "Node doesn't have expected draft value.",
-            [node |-> n, expect |-> targetRev, actual |-> LiveRev(nodes[n])])
+            StableNodeState(nodes[n]),
+            "Node " \o ToString(n) \o " is not stable: " \o ToString(n), nodes[n])
 
-    & MCCheckRemoval & LiveRev(target) = 0 =>
-        \A n \in Node:
-          Assert1(
-            n = Remote | nodes[n].draft.isEmpty,
-            "Node tombstone not removed.",
-            [node |-> n, state |-> nodes[n]])
+      & IF allNodesAreOnline THEN
+          assertConsistency(Node, LiveRev(target))
+        ELSE
+          LET onlineTabs == {n \in UserNode : nodes[n].online}
+              workers    == {w \in WorkerNodes : \E t \in onlineTabs : Reachable(w,t) }
+              clientSide == onlineTabs ++ workers
+              nodeSet    == IF nodes[Remote].online THEN clientSide ++ {Remote} ELSE clientSide
+              targetRev  == LiveRev(target)
+              hasTarget  == \E n \in nodeSet : LiveRev(nodes[n].draft) = targetRev
+              expect     == IF hasTarget THEN targetRev ELSE LiveRev(nodes[CHOOSE n \in nodeSet : TRUE].draft)
+          IN nodeSet != {} =>
+               assertConsistency(nodeSet, expect)
 
 Liveness ==
   []<>IsStable \* We always, eventually stablise

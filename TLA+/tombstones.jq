@@ -18,7 +18,8 @@
   | (.. | objects | select(has("awaiting"))) |= ( .
     | (.broadcast | if . == [] then "" else "→\(.)" end) as $broadcast
     | (.awaiting |  if . == [] then "" else "←\(.)" end) as $awaiting
-    | "(\(.draft))\($broadcast)\($awaiting)"
+    | (if .online then "" else "~" end) as $online
+    | "\($online)(\(.draft))\($broadcast)\($awaiting)"
   )
 
   | .[]
@@ -61,5 +62,8 @@
 | @tsv
 | gsub("[\"\\\\]"; "")
 | gsub(","; ", ")
-| if contains("\tEdit") then "\u001b[93m\(.)\u001b[0m" else . end
-| if contains("\tKill") then "\u001b[94m\(.)\u001b[0m" else . end
+| gsub("~\\(-\\)"; "~")
+| if contains("\tEdit")       then "\u001b[93m\(.)\u001b[0m" else . end
+| if contains("\tKill")       then "\u001b[94m\(.)\u001b[0m" else . end
+| if contains("\tDisconnect") then "\u001b[91m\(.)\u001b[0m" else . end
+| if contains("\tReconnect")  then "\u001b[92m\(.)\u001b[0m" else . end

@@ -70,11 +70,16 @@ ModRecvSend   (q, i, msg)  == ModSend(ModRecv(q, i), msg)
 ModRecvSendSeq(q, i, msgs) == ModRecv(q, i) \o msgs
 ModRecvSendSet(q, i, msgs) == ModSendSet(ModRecv(q, i), msgs)
 
+------------------------------------------------------------------------------------------------------------------------
+
 Recv       (i)       == queue' = ModRecv       (queue, i)
 Send       (msg)     == queue' = ModSend       (queue, msg)
 SendSet    (msgs)    == queue' = ModSendSet    (queue, msgs)
 RecvSend   (i, msg)  == queue' = ModRecvSend   (queue, i, msg)
 RecvSendSeq(i, msgs) == queue' = ModRecvSendSeq(queue, i, msgs)
 RecvSendSet(i, msgs) == queue' = ModRecvSendSet(queue, i, msgs)
+
+RemoveAllFromOrTo(n) ==
+  queue' = SeqFilter(queue, LAMBDA m: m.from != n & m.to != n)
 
 ========================================================================================================================
