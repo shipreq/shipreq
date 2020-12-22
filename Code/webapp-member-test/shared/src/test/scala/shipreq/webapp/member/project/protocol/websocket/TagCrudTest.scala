@@ -42,7 +42,7 @@ object TagCrudTest extends TestSuite {
       val fbp = flatTree(OmitAnythingWithBadParent)
 
       def sizeProps: EvalL = {
-        val List(no,bb,bp) = List("no","bb","bp").map(n => s"flatTree.$n.size")
+        val List(no,bb,bp) = List("no","bb","bp").map(n => s"flatTree.$n.size"): @unchecked
         def cmpsize(as: String, a: Int, bs: String, b: Int) = E.test(s"$as ($a) ≥ $bs ($b)", a >= b)
         s"$no ≥ $bb ≥ $bp" rename_: (cmpsize(no, fno.size, bb, fbb.size) ∧ cmpsize(bb, fbb.size, bp, fbp.size))
       }

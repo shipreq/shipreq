@@ -642,7 +642,7 @@ object ContentEventTest extends TestSuite {
                           req(ContentEventTest.reqB) :: rcg(RCG2_code) ::
                           req(ContentEventTest.reqC) :: rcg(RCG3_code) :: Nil
             val expectL = reqA :: rcg1 :: reqB :: rcg2 :: live :: live :: Nil
-            val List(a,e) = List(actualL, expectL).map(_ mkString "  ")
+            val List(a,e) = List(actualL, expectL).map(_ mkString "  "): @unchecked
             assertEq(name, a, e)
           })
 

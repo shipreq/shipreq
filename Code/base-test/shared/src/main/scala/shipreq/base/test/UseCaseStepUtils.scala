@@ -32,7 +32,8 @@ object UseCaseStepUtils {
   def assertTreeValues(actual: VectorTree[FakeStep], expect: VectorTree[FakeStep]): Unit =
     if (!TreeEqByFakeStepValue.equal(actual, expect)) {
       def removeIds(t: VectorTree[FakeStep]) = t.map(_.value)
-      val List(a, e) = List(actual, expect) map removeIds
+      val a = removeIds(actual)
+      val e = removeIds(expect)
       //assertEq(a, e)
       println(compareTrees("Expected", e, "Actual", a))
       fail("Trees differ.")
@@ -77,7 +78,7 @@ object UseCaseStepUtils {
     val parents   = MutableMap.empty[Int, FakeStep]
     val children  = MutableMap.empty[FakeStep, B]
 
-    val lines = txt.split("""\s*[\r\n]+""").iterator.map(_.replaceFirst("\\s+$", "")).filter(!_.isEmpty).toList
+    val lines = txt.split("""\s*[\r\n]+""").iterator.map(_.replaceFirst("\\s+$", "")).filter(_.nonEmpty).toList
     val commonIndentSize   = lines.map(_.replaceFirst("\\S.+", "").length).min
     val linesWithoutIndent = lines.map(_.substring(commonIndentSize))
 

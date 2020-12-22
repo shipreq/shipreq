@@ -119,7 +119,7 @@ abstract class Intersection[A, B] {
     ev(this).flattenL[L].flattenR[R]
 
   final def getThenFlatMap[C](f: B => Option[C]): A => Option[C] =
-    id.fold[A => Option[C]](getOption(_).flatMap(f))(_.subst[? => Option[C]](f))
+    id.fold[A => Option[C]](getOption(_).flatMap(f))(_.subst[* => Option[C]](f))
 }
 
 object Intersection {

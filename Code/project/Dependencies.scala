@@ -15,7 +15,7 @@ object Dependencies {
 
   object Scala {
     private val mm = scalaItself(version)
-    def version  = "2.13.3"
+    def version  = "2.13.4"
     val library  = mm("scala-library")
     val reflect  = mm("scala-reflect")
     val compiler = mm("scala-compiler") ++ reflect ++ scalaXml
@@ -107,11 +107,11 @@ object Dependencies {
     val core = mm("logback-classic") ++ mm("logback-core")
 
     val withPlugins = core ++
-      jvmOnly("net.logstash.logback" % "logstash-logback-encoder" % "6.4")
+      jvmOnly("net.logstash.logback" % "logstash-logback-encoder" % "6.5")
   }
 
   object Lift {
-    private val mm = MultiModule.scala("net.liftweb", "3.4.2")
+    private val mm = MultiModule.scala("net.liftweb", "3.4.3")
     val webkit  = mm("lift-webkit") ++ Scala.all // because it contains lift-json
     val testkit = mm("lift-testkit")
   }
@@ -197,25 +197,25 @@ object Dependencies {
   val μTest       = jvmAndJs("com.github.japgolly.fork",         "utest",       "1.0.3")
   val pprint      = jvmAndJs("com.lihaoyi",                      "pprint",      "0.6.0")
 
-  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.2.0")
+  val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.3.1")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.9")
-  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "7.1.1")
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "7.3.2")
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.5")
-  val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.13")
+  val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.14")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
-  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.4.0")
+  val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.5.0")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.18")
   val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.14.0")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "4.0.2")
-  val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.14.3")
+  val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.15.2")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
   val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.3.0")
 
   val betterMonadicFor = compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
   val useBetterMonadicFor = (_: Project).settings(addCompilerPlugin(betterMonadicFor))
 
-  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.1" cross CrossVersion.full)
+  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.2" cross CrossVersion.full)
   val useKindProjector = (_: Project).settings(addCompilerPlugin(kindProjector))
 
   val updateExclusions: ModuleFilter = {
