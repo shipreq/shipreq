@@ -23,6 +23,23 @@ final case class ProvSet[K, V, M](repr: Repr[K, V, M])(implicit module: Module[K
   @inline def isEmpty  = repr.isEmpty
   @inline def nonEmpty = repr.nonEmpty
 
+  @elidable(elidable.FINEST)
+  override def toString =
+    repr.iterator.map(_.toString).toList.sorted.mkString("ProvSet(", ",\n        ", ")")
+
+  @elidable(elidable.ASSERTION)
+  def assertProps_(msg: => String = ""): Unit =
+    (new Props(module))
+      .provSet(this)
+      .rename(_ => scalaz.Value("ProvSet.assertProps()" + Option(msg).filter(_.nonEmpty).fold("")(" - " + _)))
+      .assertSuccess()
+
+  @inline
+  def assertProps(msg: => String = ""): this.type = {
+    assertProps_(msg)
+    this
+  }
+
   def ++(s: Self): Self =
     s.repr.foldLeft(this)(_ + _)
 
@@ -64,10 +81,19 @@ final case class ProvSet[K, V, M](repr: Repr[K, V, M])(implicit module: Module[K
       )
     }
 
+    // TODO: Update TLA+
     @tailrec
     def go(base: Set[Entry], e: Entry): Set[Entry] =
       base.find(into => e.key.isComparableTo(into.key) || into.provenance.exists(e.key <= _)) match {
-        case None    => base + e
+        case None =>
+          base.find(f => e.provenance.exists(f.key <= _)) match {
+            case None =>
+              base + e
+            case Some(m) =>
+              val merged = mergeEntries(m, into = e)
+              go(base - m, merged)
+          }
+
         case Some(i) =>
           val merged =
             if (e.key > i.key)
@@ -147,10 +173,72 @@ object ProvSet {
       ProvSet[K, V, M](Set.empty[Entry] + entry)(this)
 
     def consolidate(entries: Entry*): ProvSet =
-      entries.foldLeft(empty)(_ + _)
+      entries.foldLeft(empty)((s, e) => (s + e).assertProps(s"$s + $e"))
   }
 
   // ===================================================================================================================
+
+  final class Props[K, V, M](val module: Module[K, V, M]) {
+    import nyaya.prop._
+    import module.{Entry => E, ProvSet => S, partialOrder}
+    import ScalazExtra._
+
+    type Prov = Set[K]
+
+    def prov: Prop[Prov] =
+      Prop.atom[Prov]("Provenance", ps => {
+        var failure = Option.empty[String]
+        for {
+          p <- ps
+          q <- ps - p
+        } if (p isComparableTo q)
+            failure = Some("Comparable keys in same provenance.")
+        failure
+      })
+
+    def entry: Prop[E] = {
+      def keyAndProv =
+        Prop.forall[E, Set, K](_.provenance)(e =>
+          Prop.atom("Entry key & provenance", p => Option.when(p <= e.key)(
+            s"Entry ${e.key} has in its provenance, a key $p that is <= itself.")))
+
+      (keyAndProv & prov.contramap((_: E).provenance)).rename("entry")
+    }
+
+    def provSet: Prop[S] =
+      Prop.forall[S, Set, E](_.repr) { s =>
+
+        def compareEntries(name: => String)(c: (E, E) => Boolean): Prop[E] =
+          Prop.test[E](name, e => s.repr.forall(f => (e eq f) || c(e, f)))
+
+        def coexistenceK: Prop[E] =
+          compareEntries("Comparable sibling entries.")((e, f) =>
+            e.key.isSeparateTo(f.key))
+
+        def coexistenceP: Prop[E] =
+          compareEntries("Sibling provenance.")((e, f) =>
+            f.provenance.forall(p => !(e.key <= p)))
+
+        (entry & coexistenceK & coexistenceP).rename("provSet")
+      }
+  }
+
+  // ===================================================================================================================
+
+  object Laws {
+    final case class Input[K, V, M](a: ProvSet[K, V, M],
+                                    b: ProvSet[K, V, M],
+                                    c: ProvSet[K, V, M]) {
+      import japgolly.microlibs.stdlib_ext.StdlibExt._
+
+      override def toString =
+        s"""ProvSet.Laws.Input(
+           |  a = ${a.toString.indent(6).trim},
+           |  b = ${b.toString.indent(6).trim},
+           |  c = ${c.toString.indent(6).trim})
+           |""".stripMargin.trim
+    }
+  }
 
   final class Laws[K, V, M](module: Module[K, V, M]) {
     import nyaya.prop._
@@ -160,17 +248,26 @@ object ProvSet {
 
     type ProvSet = shipreq.base.util.ProvSet[K, V, M]
     type Entry   = shipreq.base.util.ProvSet.Entry[K, Value[V], M]
-    type Input   = (ProvSet, ProvSet, ProvSet)
+    type Input   = Laws.Input[K, V, M]
     type Laws    = Prop[Input]
+
+    private def prop2[A](name: String, p: Prop[A])(g: (ProvSet, ProvSet) => A): Laws = {
+      def f(desc: String, f1: Input => ProvSet, f2: Input => ProvSet): Laws =
+        Prop.evaln(s"$name ($desc)", i => {
+          val a = g(f1(i), f2(i))
+          p(a).liftL
+        })
+      f("a,b", _.a, _.b) & f("a,c", _.a, _.c) & f("b,c", _.b, _.c)
+    }
 
     private def equal2[B: Equal](name: String,
                                  e: (ProvSet, ProvSet) => B,
                                  a: (ProvSet, ProvSet) => B): Laws = {
-      def f(desc: String, f1: Input => ProvSet, f2: Input => ProvSet) = {
+      def f(desc: String, f1: Input => ProvSet, f2: Input => ProvSet): Laws = {
         def mk(g: (ProvSet, ProvSet) => B): Input => B = i => g(f1(i), f2(i))
         Prop.equal[Input, B](s"$name ($desc)", mk(a), expect = mk(e))
       }
-      f("1,2", _._1, _._2) & f("1,3", _._1, _._3) & f("2,3", _._2, _._3)
+      f("a,b", _.a, _.b) & f("a,c", _.a, _.c) & f("b,c", _.b, _.c)
     }
 
     private val idempotency: Laws =
@@ -180,19 +277,25 @@ object ProvSet {
 
     private val associativity: Laws =
       Prop.equal[Input, ProvSet]("associativity",
-        i => (i._1 ++ i._2) ++ i._3,
-        i => i._1 ++ (i._2 ++ i._3))
+        i => (i.a ++ i.b) ++ i.c,
+        i => i.a ++ (i.b ++ i.c))
 
     private val commutativity: Laws =
       equal2("commutativity",
         (x, y) => x ++ y,
         (x, y) => y ++ x)
 
-    // TODO: Assert invariants encoded in TLA+ spec
-    // Assert self never in own prov
-    // Assert there should be no two items in prov that are comparable
+    private val validity: Laws = {
+      val props = new Props(module)
+      prop2("validity", props.provSet)(_ ++ _)
+    }
 
     val laws: Laws =
-      idempotency & associativity & commutativity
+      List(
+        idempotency,
+        associativity,
+        commutativity,
+        validity,
+      ).reduce(_ & _)
   }
 }
