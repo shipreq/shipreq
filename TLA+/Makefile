@@ -17,6 +17,7 @@ info:
 	@echo "  * encryption[-watch]"
 	@echo "  * jq-test[T]"
 	@echo "  * project[-watch]"
+	@echo "  * provset[-trace][-last]"
 	@echo "  * websocket_client[-watch]"
 	@echo "  * websockets[-watch]"
 	@echo
@@ -69,6 +70,27 @@ project:
 	./project
 project-watch:
 	ls -1 project project.{cfg,tla} $(SHARED) | entr -cr $(MAKE) project
+
+
+.PHONY: provset provset-watch provset-trace provset-trace-watch provset-last
+provset: classes
+	$(SHOW_SEP)
+	$(TLC) provset | tee provset.log
+	@fgrep -q 'State 1:' provset.log \
+	  && fgrep Error provset.log | fgrep -v "behavior up to this point" \
+	  && echo \
+	  && $(MAKE) provset-trace \
+	  || test 1
+provset-trace:
+	@$(TLA2JSON) provset.log | jq -rf provset.jq | column -t -s$$'\t'
+provset-watch:
+	ls -1 provset.{cfg,tla,jq} $(SHARED) | entr -cr $(MAKE) provset
+provset-watch-last:
+	ls -1 provset.{log,jq} $(SHARED) | entr -cr $(MAKE) provset-last
+provset-last:
+	@sed '0,/^Starting\.\.\./d' <provset.log
+	@echo
+	@$(MAKE) provset-trace
 
 
 .PHONY: websocket_client websocket_client-watch

@@ -211,6 +211,12 @@ SeqCountDups(seq) ==
 SeqFilter(seq, f(_)) ==
   SeqFold(seq, <<>>, LAMBDA q,e: IF f(e) THEN Append(q, e) ELSE q)
 
+SeqJoin(seq, sep) ==
+  IF Len(seq) = 0 THEN
+    ""
+  ELSE
+    SetFold(DOMAIN seq -- {1}, ToString(seq[1]), LAMBDA q,i: q \o sep \o ToString(seq[i]))
+
 ------------------------------------------------------------------------------------------------------------------------
 
 LOCAL SetFindTest ==
