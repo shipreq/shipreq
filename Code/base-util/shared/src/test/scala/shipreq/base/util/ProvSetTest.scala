@@ -8,7 +8,6 @@ import nyaya.test.PropTest._
 import shipreq.base.util.PartialOrder.Cmp
 
 object ProvSetTest extends TestSuite {
-  import ProvSet.Value
   import PartialOrder.Cmp._
 
   private object Internals {
@@ -20,10 +19,8 @@ object ProvSetTest extends TestSuite {
 
     implicit def univEqK: UnivEq[K] = UnivEq.derive
     implicit val keyOrder = keyedInt((_: K).id, (_: K).rev)
-    val module = ProvSet.Module[K, V, M](_.into, (x, y, _, _) => x.toString < y.toString)
+    val module = ProvSet.Module[K, V](_.into, _.key.toString < _.key.toString)
     import module.{Entry, empty}
-
-    implicit def autoValue(v: V): Value[V] = Value.Live(v)
 
     private val parseK: String => K = {
       val regex = "^([A-Za-z]+)(\\d+)$".r
@@ -36,7 +33,7 @@ object ProvSetTest extends TestSuite {
     def entry(id: String, prov: String = ""): Entry = {
       val k = parseK(id)
       val provs = prov.split(',').iterator.filter(_.nonEmpty).map(parseK).toSet
-      module.entry(k, Value.Live(id), "M" + id, provs)
+      module.entry(k, id, provs)
     }
 
     implicit def strToEntry(s: String): Entry =
@@ -80,10 +77,8 @@ object ProvSetTest extends TestSuite {
           k    <- genK
           prov <- genId.set(0 to size).map(_ - k.id).flatMap(Gen.traverse(_)(id => genRev.map(K(id, _))))
         } yield {
-          val m    = s"M${k.id}${k.rev}"
-          val live = (m.hashCode & 1) == 1
-          val v    = if (live) Value.Live(s"${k.id}=${k.rev}") else Value.Tombstone
-          module.entry(k, v, m, prov)
+          val v = s"${k.id}${k.rev}"
+          module.entry(k, v, prov)
         }
 
       val genPS: Gen[ProvSet] =
@@ -96,13 +91,6 @@ object ProvSetTest extends TestSuite {
 //      gen.withSeed(0).samples().take(100).drain()
 //      laws.mustBeSatisfiedBy(gen.withSeed(0))
     }
-
-    /*
-  a = ProvSet({A1 = Live(A=1) (MA1) ≤{B0}},
-              {C0 = Tombstone (MC0) ≤{A0}}),
-  c = ProvSet({A0 = Tombstone (MA0) ≤{B1}}))
-
-     */
 
     "partialOrderE" - {
       def test(x: Entry, y: Entry)(expect: Cmp)(implicit l: Line): Unit = {
