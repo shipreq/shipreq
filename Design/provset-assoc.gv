@@ -1,0 +1,29 @@
+digraph G {
+  // rankdir=TB
+  // edge[dir=back]
+
+  a   [label=  "(a)\nA1:B0<-A1"]
+  b   [label=  "(b)\nC0:A0<-C0"]
+  c   [label=  "(c)\nA0:B1<-A0"]
+  ab  [label= "(ab)\nA1:B0<-A1\nC0:A0<-C0"]
+  ac  [label= "(ac)\nA1:B0<-A1\n       B1<-A0"]
+  bc  [label= "(bc)\nC0:A0<-C0\n       B1<-A0"]
+  abc [label="(abc)\nA1:B0<-A1\n       B1<-A0\nC0:A0<-C0\n       B1<-A0"]
+
+  // a   [label=  "(a)\nA1:B0"]
+  // b   [label=  "(b)\nC0:A0"]
+  // c   [label=  "(c)\nA0:B1"]
+  // ab  [label= "(ab)\nA1:B0\nC0:A0"]
+  // ac  [label= "(ac)\nA1:B1"]
+  // bc  [label= "(bc)\nC0:A0,B1"]
+  // abc [label="(abc)\nA1:B0\nC0:A0,B1"]
+
+  a,b -> ab [color=lightred]
+  b,c -> bc [color=lightblue]
+  a,c -> ac [color=lightgreen]
+
+  ab,c -> abc [color=red]
+  bc,a -> abc [color=blue]
+  ac,b -> abc [color=green]
+
+}
