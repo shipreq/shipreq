@@ -15,156 +15,223 @@ import shipreq.base.util.PartialOrder.Cmp._
  *
  * This is modelled in `../TLA+/provset.tla`.
  */
-final case class ProvSet[K, V](repr: Repr[K, V])(implicit module: Module[K, V]) {
-  import module.{one, partialOrderE, partialOrderK}
+final case class ProvSet[K, V](values: Map[K, V], provenance: Set[ProvEntry[K]])(implicit module: Module[K, V]) {
+  import module.univEqK
 
   type Self = ProvSet[K, V]
-  type Entry = ProvSet.Entry[K, V]
 
-  @inline def isEmpty  = repr.isEmpty
-  @inline def nonEmpty = repr.nonEmpty
+  def isEmpty =
+    values.isEmpty & provenance.isEmpty
+
+  @inline def nonEmpty =
+    !isEmpty
 
   @elidable(elidable.FINEST)
-  override def toString =
-    repr.iterator.map(_.toString).toList.sorted.mkString("ProvSet(", ",\n        ", ")")
+  override def toString = {
+    val vs = values.iterator.map { case (k, v) => if (k.toString == v.toString) k.toString else s"$k=$v"}.toArray.sortInPlace().mkString("{", ", ", "}")
+    if (provenance.isEmpty)
+      s"ProvSet($vs)"
+    else {
+      val ps = provenance.iterator.map(_.toString).toArray.sortInPlace().mkString("{", ", ", "}")
+      s"ProvSet($vs, $ps)"
+    }
+  }
+
+  val partialOrderP: PartialOrder[K] =
+    PartialOrder[K] { (x, y) =>
+      import module.partialOrderK
+
+//   *   |A| |B| |C|
+//   *   |=| |=| |=|
+//   *   |3| | | | |
+//   *   | |↖| | | |
+//   *   |2| |2| | |
+//   *   | | | |↖| |
+//   *   |1| |1| |1|
+//   *
+//   *   ProvEntry(from = B2, to = A3)
+//   *   ProvEntry(from = C1, to = B2)
+//   *
+//   *   Anything <= B2 is now < A3.
+//   *   Anything <= C1 is now < B2.
+//   *
+//   *   Anything <= C1 is now < A3.
+//   *
+//   *   B1 < A3
+//   *   B2 < A3
+//   *   C1 < B2
+//   *   C1 < A3
+
+
+      // x = C0
+      // y = A4
+      // if we can find a path from x (C0) to y (A4), then x < y
+
+//      println()
+
+      def pathExists(from: K, to: K): Boolean = {
+//        println(s"pathExists($provenance : $from -> $to)")
+
+//        try {
+
+          if (from <= to)
+            true
+          else {
+            val it = provenance.iterator
+            var found = false
+            while (it.nonEmpty && !found) {
+              val p = it.next()
+              if (from <= p.from && !(p.to <= from) && pathExists(p.to, to))
+                found = true
+            }
+            found
+          }
+
+//        } catch {
+//          case t: Throwable =>
+//            val msg =
+//              s"""FAILURE: ${t.getMessage}
+//                 |  set : $this
+//                 |  from: $from
+//                 |  to  : $to
+//                 |
+//                 |""".stripMargin
+//            throw new RuntimeException(msg)
+//        }
+
+      }
+
+      if (pathExists(from = x, to = y)) {
+        assert(!pathExists(from = y, to = x), "Provenance isn't a lawful partial order! " + provenance)
+        Lesser
+      } else if (pathExists(from = y, to = x))
+        Greater
+      else
+        Separate
+    }
+
+  val partialOrder: PartialOrder[K] =
+    module.partialOrderK orElse partialOrderP
+
+  def allKeys: Set[K] =
+    values.keySet ++ provenance.iterator.flatMap(e => e.from :: e.to :: Nil)
 
   @elidable(elidable.ASSERTION)
+  def assertProps(): Unit = {
+    PartialOrder.Props.assert(allKeys)(partialOrder)
+  }
+
+  /*
+  @elidable(elidable.ASSERTION)
   def assertProps_(msg: => String = ""): Unit =
-    () // TODO
-//    (new Props(module))
-//      .provSet(this)
-//      .rename(_ => scalaz.Value("ProvSet.assertProps()" + Option(msg).filter(_.nonEmpty).fold("")(" - " + _)))
-//      .assertSuccess()
+    (new Props(module))
+      .provSet(this)
+      .rename(_ => scalaz.Value("ProvSet.assertProps()" + Option(msg).filter(_.nonEmpty).fold("")(" - " + _)))
+      .assertSuccess()
 
   @inline
   def assertProps(msg: => String = ""): this.type = {
     assertProps_(msg)
     this
   }
-
-  def ++(s: Self): Self =
-    s.repr.foldLeft(this)(_ + _)
+*/
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-  def +(add: Entry): Self = {
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
+  def ++(s: Self): Self = {
+    val debug = !true
 
-    type Prov = Set[ProvEntry[K]]
+    if (this.isEmpty) return s
+    if (s.isEmpty) return this
 
-    def addProv(p: Prov, k: ProvEntry[K]): Prov =
-      p + k
-//      p.find(_.height isComparableTo k.height) match {
-//        case None    => p :+ k
-//        case Some(j) =>
-//          if (j.height >= k.height)
-//            p
-//          else
-//            p.map(e => if (e eq j) k else e)
+    try {
+
+      new ProvSet(
+        this.values ++ s.values,
+        this.provenance ++ s.provenance
+      )(module)
+        .pruneValues
+
+//      val x = new ProvSet(Map.empty, this.provenance ++ s.provenance)(module)
+//      implicit val po = x.partialOrder
+//
+//      PartialOrder.Props.assert(this.allKeys ++ s.allKeys)(partialOrder)
+//
+//      val allKeys = this.values.keySet ++ s.values.keySet
+//      var keys = allKeys
+//      for (k <- allKeys) {
+//        if (keys.exists(k < _))
+//          keys -= k
 //      }
+//      var values2 = Map.empty[K, V]
+//      for (k <- keys)
+//        values2 = values2.updated(k, this.values.getOrElse(k, s.values(k)))
+//
+//      if (debug)
+//        println(
+//          s"""===========================================================================
+//             |allKeys = ${allKeys.toList.map(_.toString).sorted.mkString(", ")}
+//             |delKeys = ${(allKeys -- keys).toList.map(_.toString).sorted.mkString(", ")}
+//             |newKeys = ${keys.toList.map(_.toString).sorted.mkString(", ")}
+//             |
+//             |""".stripMargin)
+//
+//      new ProvSet(values2, x.provenance)(module)
 
-    def mergeProvs(x: Prov, y: Prov): Prov =
-      y.foldLeft(x)(addProv)
-
-    def mergeEntries(e: Entry, into: Entry): Entry = {
-      val newProvToAdd =
-        if (e.key isComparableTo into.key)
-          e.provenance
-        else
-        addProv(e.provenance, ProvEntry(src = into.key, height = e.key)).filterNot { k =>
-          // No need for this check. As verified in ../TLA+/provset.tla this will never occur with monotonic clocks &
-          // gossiping (as is the case with Drafts).
-          // assert(!(k > into.key), s"Discarding provenance $k in order to add ${e.key} to ${into.key}")
-//          k <= into.key
-          false // TODO xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-        }
-
-      val valuePair =
-        MergePair(
-          subject        = e.value,
-          into           = into.value,
-          subjectGreater = e.key > into.key)
-
-      Entry(
-        key        = into.key,
-        value      = module.mergeValues(valuePair),
-        provenance = mergeProvs(into.provenance, newProvToAdd)
-      )
-    }
-
-    def inform(base: Set[Entry], e: Entry): Entry = {
-      val newProv =
-        base
-          .iterator
-          .flatMap(_.provenance)
-//          .filter(p => p.src <= e.key || )
-          .filter(p => e.provenance.exists(p.src <= _.height))
-          .toSeq
-      println(s"Informing $e of prov: ${newProv.filterNot(e.provenance.contains)}")
-      e.copy(provenance = e.provenance ++ newProv)
-    }
-
-    // TODO: Update TLA+
-    @tailrec
-    def go(base: Set[Entry], e: Entry): Set[Entry] = {
-
-      val debug = true
-
-      val mo = base.find(_ isComparableTo e)
-
-      if (debug) {
-        println(
-          s"""=======================================================================================
-             |$base + $e
+    } catch {
+      case t: Throwable =>
+        val msg =
+          s"""FAILURE: ${t.getMessage}
+             |  lhs: $this
+             |  rhs: $s
              |
-             |mo: $mo
-             |
-             |""".stripMargin)
-      }
+             |""".stripMargin
+        throw new RuntimeException(msg)
+    }
+  }
 
-      mo match {
-        case None =>
-          val e2 = inform(base, e)
-          base + e2
+  def pruneValues: Self = {
+    implicit val po = partialOrder
 
-        case Some(i) =>
-          val merged =
-            if (e < i)
-              mergeEntries(e, into = i)
-            else
-              mergeEntries(i, into = e)
+    PartialOrder.Props.assert(this.allKeys)(partialOrder)
 
-          go(base - i, merged)
-      }
+    var values2 = values
+    for (k <- values.keysIterator) {
+      if (values2.exists(k < _._1))
+        values2 -= k
     }
 
-    if (isEmpty)
-      one(add)
-    else if (repr contains add)
-      this
-    else
-      ProvSet(go(repr, add))
+    new ProvSet(values2, provenance)(module)
   }
 }
 
 object ProvSet {
 
-  type Repr[K, V] = Set[Entry[K, V]]
-
-  final case class ProvEntry[K](src: K, height: K) {
+  /**
+   * Imagine that there's a conflict between A2 and B2, and it's resolved into A3.
+   *
+   * {{{
+   *   |A| |B|
+   *   |=| |=|
+   *   |3| | |
+   *   | |↖| |
+   *   |2| |2|
+   *   | | | |
+   *   |1| |1|
+   *
+   *   ProvEntry(from = B2, to = A3)
+   *
+   *   Anything <= B2 is now < A3.
+   *
+   *   B1 < A3
+   *   B2 < A3
+   * }}}
+   */
+  final case class ProvEntry[K](from: K, to: K) {
     @elidable(elidable.FINEST)
-    override def toString = s"$height<-$src"
+    override def toString = s"$from<$to"
   }
 
-  final case class Entry[K, V](key       : K,
-                               value     : V,
-                               provenance: Set[ProvEntry[K]]) {
-    @elidable(elidable.FINEST)
-    override def toString = {
-      val prov = if (provenance.isEmpty) "" else provenance.iterator.map(_.toString).toArray.sortInPlace().mkString(" ≤{", ",", "}")
-      val showValue = if (key.toString == value.toString) "" else s" = $value"
-      s"{$key$showValue$prov}"
-    }
-  }
+  final case class Entry[+K, +V](key: K, value: V)
 
   final case class MergePair[+A](subject: A, into: A, subjectGreater: Boolean) {
     def greater: A = if (subjectGreater) subject else into
@@ -172,7 +239,6 @@ object ProvSet {
   }
 
   implicit def univEqP[K: UnivEq           ]: UnivEq[ProvEntry [K]] = UnivEq.derive
-  implicit def univEqE[K: UnivEq, V: UnivEq]: UnivEq[Entry  [K, V]] = UnivEq.derive
   implicit def univEq [K: UnivEq, V: UnivEq]: UnivEq[ProvSet[K, V]] = UnivEq.derive
 
   object Module {
@@ -190,96 +256,111 @@ object ProvSet {
                           ) {
 
     type ProvSet = shipreq.base.util.ProvSet[K, V]
-    type Entry   = ProvSet.Entry[K, V]
 
     implicit def univEq: UnivEq[ProvSet] =
       ProvSet.univEq
 
+    def apply(values: Map[K, V], provenance: Set[ProvEntry[K]]): ProvSet =
+      new ProvSet(values, provenance)(this)
+
     val empty: ProvSet =
-      ProvSet[K, V](Set.empty)(this)
+      ProvSet[K, V](Map.empty, Set.empty)(this)
 
-    val entry = Entry.apply[K, V] _
+    def one(k: K, v: V): ProvSet =
+      ProvSet[K, V](Map.empty.updated(k, v), Set.empty)(this)
+/*
+//    implicit val entryOrdering: Ordering[Entry[K, V]] =
+//      new Ordering[Entry[K, V]] {
+//        override def compare(x: Entry[K, V], y: Entry[K, V]): Int = {
+//          partialOrderK(x.key, y.key) match {
+//            case Lesser   => -1
+//            case Equal    => 0
+//            case Greater  => 1
+//            case Separate => if (isAscending(x, y)) -1 else 1
+//          }
+//        }
+//      }
 
-    def one(entry: Entry): ProvSet =
-      ProvSet[K, V](Set.empty[Entry] + entry)(this)
+//    implicit val entryOrdering: Ordering[Entry[K, V]] =
+    def entryOrdering(prov: Set[ProvEntry[K]]): Ordering[Entry[K, V]] = {
+      new Ordering[Entry[K, V]] {
+        override def compare(x: Entry[K, V], y: Entry[K, V]): Int = {
 
-    def consolidate(entries: Entry*): ProvSet =
-      entries.foldLeft(empty)((s, e) => (s + e).assertProps(s"$s + $e"))
+          partialOrderK(x.key, y.key) match {
+            case Lesser   => -1
+            case Equal    => 0
+            case Greater  => 1
+            case Separate =>
 
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-    implicit val partialOrderE: PartialOrder[Entry] =
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
-      PartialOrder((x, y) =>
-        partialOrderK(x.key, y.key) match {
-          case Separate =>
-            val `x<=y` = y.provenance.exists(x.key <= _.height)
-            val `y<=x` = x.provenance.exists(y.key <= _.height)
-            (`x<=y`, `y<=x`) match {
-              case (false, false) => Separate
-              case (true , false) => Lesser
-              case (false, true ) => Greater
-              case (true , true ) => if (isAscending(x, y)) Lesser else Greater
-            }
+              val `x<=y` = prov.exists(x.key <= _.height)
+              val `y<=x` = prov.exists(y.key <= _.height)
+              (`x<=y`, `y<=x`) match {
+                case (true , false) => -1
+                case (false, true ) => 1
+                case (false, false)
+                   | (true , true ) => if (isAscending(x, y)) -1 else 1
+              }
 
-          case byKey =>
-            byKey
+//              if (isAscending(x, y)) -1 else 1
+          }
         }
-      )
+      }
+    */
   }
 
   // ===================================================================================================================
 
-  final class Props[K, V](val module: Module[K, V]) {
-    import nyaya.prop._
-    import module.{Entry => E, ProvSet => S, partialOrderK}
-    import ScalazExtra._
-
-    def prov: Prop[Set[ProvEntry[K]]] = {
-      ???
-//      Prop.atom[Prov]("Provenance", ps => {
-//        var failure = Option.empty[String]
-//        for {
-//          p <- ps
-//          q <- ps - p
-//        } if (p isComparableTo q)
-//            failure = Some("Comparable keys in same provenance.")
-//        failure
-//      })
-    }
-
-    def entry: Prop[E] = {
-      def keyAndProv =
-        Prop.forall[E, Set, ProvEntry[K]](_.provenance)(e =>
-          Prop.atom("Entry key & provenance", p => Option.when(p.height <= e.key)(
-            s"Entry ${e.key} has in its provenance a key $p, that is <= itself.")))
-
-      (keyAndProv & prov.contramap((_: E).provenance)).rename("entry")
-    }
-
-    def provSet: Prop[S] =
-      Prop.forall[S, Set, E](_.repr) { s =>
-
-        def compareEntries(name: => String)(c: (E, E) => Boolean): Prop[E] =
-          Prop.test[E](name, e => s.repr.forall(f => (e eq f) || c(e, f)))
-
-        def coexistenceK: Prop[E] =
-          compareEntries("Comparable sibling entries.")((e, f) =>
-            e.key.isSeparateTo(f.key))
-
-        def coexistenceP: Prop[E] =
-          compareEntries("Sibling provenance.")((e, f) =>
-            f.provenance.forall(p => !(e.key <= p.height)))
-
-        (entry & coexistenceK & coexistenceP).rename("provSet")
-      }
-  }
+//  final class Props[K, V](val module: Module[K, V]) {
+//    import nyaya.prop._
+////    import module.{Entry => E, ProvSet => S, partialOrderK}
+//    import ScalazExtra._
+//
+//    def prov: Prop[Set[ProvEntry[K]]] = {
+//      ???
+////      Prop.atom[Prov]("Provenance", ps => {
+////        var failure = Option.empty[String]
+////        for {
+////          p <- ps
+////          q <- ps - p
+////        } if (p isComparableTo q)
+////            failure = Some("Comparable keys in same provenance.")
+////        failure
+////      })
+//    }
+//
+//    def entry: Prop[E] = {
+//      def keyAndProv =
+//        Prop.forall[E, Set, ProvEntry[K]](_.provenance)(e =>
+//          Prop.atom("Entry key & provenance", p => Option.when(p.height <= e.key)(
+//            s"Entry ${e.key} has in its provenance a key $p, that is <= itself.")))
+//
+//      (keyAndProv & prov.contramap((_: E).provenance)).rename("entry")
+//    }
+//
+//    def provSet: Prop[S] =
+//      Prop.forall[S, Set, E](_.repr) { s =>
+//
+//        def compareEntries(name: => String)(c: (E, E) => Boolean): Prop[E] =
+//          Prop.test[E](name, e => s.repr.forall(f => (e eq f) || c(e, f)))
+//
+//        def coexistenceK: Prop[E] =
+//          compareEntries("Comparable sibling entries.")((e, f) =>
+//            e.key.isSeparateTo(f.key))
+//
+//        def coexistenceP: Prop[E] =
+//          compareEntries("Sibling provenance.")((e, f) =>
+//            f.provenance.forall(p => !(e.key <= p.height)))
+//
+//        (entry & coexistenceK & coexistenceP).rename("provSet")
+//      }
+//  }
 
   // ===================================================================================================================
 
   object Laws {
     final case class Input[K, V](a: ProvSet[K, V],
-                                    b: ProvSet[K, V],
-                                    c: ProvSet[K, V]) {
+                                 b: ProvSet[K, V],
+                                 c: ProvSet[K, V]) {
       import japgolly.microlibs.stdlib_ext.StdlibExt._
 
       override def toString =
@@ -298,7 +379,7 @@ object ProvSet {
     private implicit val equality = scalazEqualFromUnivEq(module.univEq)
 
     type ProvSet = shipreq.base.util.ProvSet[K, V]
-    type Entry   = shipreq.base.util.ProvSet.Entry[K, V]
+//    type Entry   = shipreq.base.util.ProvSet.Entry[K, V]
     type Input   = Laws.Input[K, V]
     type Laws    = Prop[Input]
 
@@ -336,17 +417,17 @@ object ProvSet {
         (x, y) => x ++ y,
         (x, y) => y ++ x)
 
-    private val validity: Laws = {
-      val props = new Props(module)
-      prop2("validity", props.provSet)(_ ++ _)
-    }
+//    private val validity: Laws = {
+//      val props = new Props(module)
+//      prop2("validity", props.provSet)(_ ++ _)
+//    }
 
     val laws: Laws =
       List(
         idempotency,
         associativity,
         commutativity,
-        validity,
+//        validity,
       ).reduce(_ & _)
   }
 }

@@ -2,13 +2,13 @@ digraph G {
   // rankdir=TB
   // edge[dir=back]
 
-  a   [label=  "(a)\nA1:B0<-A1"]
-  b   [label=  "(b)\nC0:A0<-C0"]
-  c   [label=  "(c)\nA0:B1<-A0"]
-  ab  [label= "(ab)\nA1:B0<-A1\nC0:A0<-C0"]
-  ac  [label= "(ac)\nA1:B0<-A1\n       B1<-A0"]
-  bc  [label= "(bc)\nC0:A0<-C0\n       B1<-A0"]
-  abc [label="(abc)\nA1:B0<-A1\n       B1<-A0\nC0:A0<-C0\n       B1<-A0"]
+  a   [label=  "(a)\n{A1}:\n{A1→B0}"]
+  b   [label=  "(b)\n{C0}:\n{C0→A0}"]
+  c   [label=  "(c)\n{A0}:\n{A0→B1}"]
+  ab  [label= "(ab)\n{A1,C0}:\n{C0→A0,A1→B0}"]
+  ac  [label= "(ac)\n{A1}:\n{A1→B0,A0→B1}"]
+  bc  [label= "(bc)\n{C0}:\n{C0→A0,A0→B1}"]
+  abc [label="(abc)\n{A1,C0}:\n{C0→A0,A1→B0,A0→B1}"]
 
   // a   [label=  "(a)\nA1:B0"]
   // b   [label=  "(b)\nC0:A0"]
