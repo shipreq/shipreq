@@ -46,6 +46,7 @@ object ProvSetTest extends TestSuite {
 
     private val regexPS1 = "^\\{(.+?)}:\\{(.+)}$".r
     private val regexPS2 = "^\\{(.+?)}$".r
+
     implicit def strToProvSet(s: String): ProvSet = {
 
       def singleVal(id: String, prov: String): ProvSet = {
@@ -70,11 +71,7 @@ object ProvSetTest extends TestSuite {
             case n  => singleVal(s.take(n), s.drop(n + 1))
           }
       }
-
     }
-
-    //    implicit def strSeqToEntry(ss: Seq[String]): Seq[Entry] =
-//      ss.map(strToEntry)
 
     def assertAdd(i: ProvSet, j: ProvSet)(expect: ProvSet)(implicit l: Line): Unit = {
       i.assertProps()
@@ -82,14 +79,6 @@ object ProvSetTest extends TestSuite {
       assertEq(s"$i + $j", i ++ j, expect)
       assertEq(s"$j + $i [reverse]", j ++ i, expect)
     }
-
-//    def assertConsolidation(inputs: Entry*)(expect: Entry*)(implicit l: Line): Unit = {
-//      val actual = module.consolidate(inputs: _*).repr
-////      assertSet(actual)(expect: _*)
-//      assertEq(
-//        actual = actual.toList.sortBy(_.toString),
-//        expect = expect.toList.sortBy(_.toString))
-//    }
 
     def assertCmp[A](x: A, y: A)(expect: Cmp)(implicit l: Line, p: PartialOrder[A]): Unit = {
       assertEq(s"$x cmp $y", p(x, y), expect)
@@ -107,8 +96,8 @@ object ProvSetTest extends TestSuite {
       val Laws = new ProvSet.Laws(module)
       import Laws._
 
-      val range = 3
-      val size = 2
+      val range = 6
+      val size = 8
 
       val genId  = Gen.choose_!(('A' to 'Z').take(range).map(_.toString))
       val genRev = Gen.chooseInt(range)
@@ -145,6 +134,7 @@ object ProvSetTest extends TestSuite {
         "eq"  - assertAdd("A2", "A2")("A2")
         "sep" - assertAdd("A2", "B3")("{A2,B3}")
       }
+
       "prov" - {
         "eq"     - assertAdd("A2:B3<A1", "B3")("A2:B3<A1")
         "gt"     - assertAdd("A2:B3<A1", "B2")("A2:B3<A1")
@@ -183,6 +173,24 @@ object ProvSetTest extends TestSuite {
           "C0_D1" - assertCmp("C0", "D1")(Lesser)
           "C1_D1" - assertCmp("C1", "D1")(Lesser)
           "add"   - assertAdd("{B1}:{B1<C0,A2<B1,C0<B1}", "{D2}:{C1<D1}")(expect)
+        }
+      }
+
+      "fromLaws" - {
+        "1" - {
+          val allProv = "{A4<B3,A5<C4,A5<F1,B1<E3,B2<F1,B3<F4,B4<D1,B5<D1,B5<D3,D2<E0,D3<C3,D4<A5,E4<D2,E5<B1,F2<B2,F3<B3}"
+          val a  : ProvSet = "{F1}:{A5<C4,B3<F4,B5<D3,D4<A5}"
+          val b  : ProvSet = "{A5,D4}:{A4<B3,B1<E3,B2<F1,B4<D1,B5<D1,E5<B1,F3<B3}"
+          val c  : ProvSet = "{A2,B0}:{A5<F1,D2<E0,D3<C3,E4<D2,F2<B2}"
+          val ab : ProvSet = "{A5}:{A4<B3,A5<C4,B1<E3,B2<F1,B3<F4,B4<D1,B5<D1,B5<D3,D4<A5,E5<B1,F3<B3}"
+          val bc : ProvSet = "{D4}:{A4<B3,A5<F1,B1<E3,B2<F1,B4<D1,B5<D1,D2<E0,D3<C3,E4<D2,E5<B1,F2<B2,F3<B3}"
+          val abc: ProvSet = "{F1}:" + allProv
+
+          "ab"   - assertAdd(a, b)(ab)
+          "bc"   - assertAdd(b, c)(bc)
+          "ab_c" - assertAdd(ab, c)(abc)
+          "a_bc" - assertAdd(a, bc)(abc)
+          "abc"  - assertEq(s"{F1,A5,D4,A2,B0}:$allProv".pruneValues, abc)
         }
       }
     }

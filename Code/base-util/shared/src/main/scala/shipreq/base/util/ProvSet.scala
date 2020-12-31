@@ -28,16 +28,35 @@ final case class ProvSet[K, V](values: Map[K, V], provenance: Set[ProvEntry[K]])
 
   @elidable(elidable.FINEST)
   override def toString = {
-    val vs = values.iterator.map { case (k, v) => if (k.toString == v.toString) k.toString else s"$k=$v"}.toArray.sortInPlace().mkString("{", ", ", "}")
+    val vs = values.iterator.map { case (k, v) => if (k.toString == v.toString) k.toString else s"$k=$v"}.toArray.sortInPlace().mkString("{", ",", "}")
     if (provenance.isEmpty)
-      s"ProvSet($vs)"
+      vs
     else {
-      val ps = provenance.iterator.map(_.toString).toArray.sortInPlace().mkString("{", ", ", "}")
-      s"ProvSet($vs, $ps)"
+      val ps = provenance.iterator.map(_.toString).toArray.sortInPlace().mkString("{", ",", "}")
+      s"$vs:$ps"
     }
   }
 
-  val partialOrderP: PartialOrder[K] =
+  @elidable(elidable.ASSERTION)
+  def assertProps_(msg: => String = ""): Unit =
+    new Props(module)
+      .provSet(this)
+      .rename(_ => scalaz.Value("ProvSet.assertProps()" + Option(msg).filter(_.nonEmpty).fold("")(" - " + _)))
+      .assertSuccess()
+
+  @inline
+  def assertProps(msg: => String = ""): this.type = {
+    assertProps_(msg)
+    this
+  }
+
+  def allKeys: Set[K] =
+    values.keySet ++ provenance.iterator.flatMap(e => e.from :: e.to :: Nil)
+
+  val partialOrder: PartialOrder[K] =
+    module.partialOrderK orElse partialOrderP
+
+  private def partialOrderP: PartialOrder[K] =
     PartialOrder[K] { (x, y) =>
       import module.partialOrderK
 
@@ -62,7 +81,6 @@ final case class ProvSet[K, V](values: Map[K, V], provenance: Set[ProvEntry[K]])
 //   *   C1 < B2
 //   *   C1 < A3
 
-
       // x = C0
       // y = A4
       // if we can find a path from x (C0) to y (A4), then x < y
@@ -73,58 +91,14 @@ final case class ProvSet[K, V](values: Map[K, V], provenance: Set[ProvEntry[K]])
 
       val components = provGraph.stronglyConnectedComponents
 
-//      var newGraph = Digraph.emptyUniDir[NonEmptySet[K]]
-//      for (p <- provenance) {
-//        def expand(k: K): NonEmptySet[K] =
-//          components.find(_.contains(k)).get
-//        val f = expand(p.from)
-//        val t = expand(p.to)
-//        if (f != t)
-//          newGraph = newGraph.add(f, t)
-//      }
-//      println()
-//      newGraph.kvIterator.foreach(x => println(s"${x._1} -> ${x._2}"))
-//      println()
-
-//      for (comp <- components) {
-//        for (k <- comp) {
-//        }
-//      }
-
-      def println(a: Any*) = ()
-
-      println()
-      println(s"$x cmp $y")
-      var cycleFound: Set[K] = null
-
-      var runOnce = false
-
       def lesserPathExists(from: K, to: K): Boolean = {
 
-        if (runOnce) println("+") else runOnce = true
-
-        val targets = components.find(_.contains(to)).getOrElse(NonEmptySet.one(to))
-//        println("lesserPathExists targets: " + targets)
-
         def go(from: K, seen: Set[K]): Boolean = {
-          println(s"lesserPathExists($from -> $targets)  { prov=$provenance, seen=${seen.map(_.toString).toList.sorted.mkString("{", ",", "}")} }")
-
-//        try {
-
-
-//          if (targets.exists(from <= _)) { TODO hmmm
-          if (from <= to) {
+          if (from <= to)
             true
-          } else if (seen.contains(from)) {
-//            cycleFound = seen
-//            println("  cycle found!")
-//            true
+          else if (seen.contains(from))
             false
-          } else {
-
-            val comp = components.find(_.contains(from))
-            println(s"  comp for $from = $comp")
-
+          else {
             var found = false
             val seen2 = seen + from
 
@@ -134,28 +108,14 @@ final case class ProvSet[K, V](values: Map[K, V], provenance: Set[ProvEntry[K]])
               // if from <= p.from < p.to, check if p.to <= to
               // I'm subsumed by something greater than me, does *it* have a lesser path to our destination?
               if (c.exists(from <= _)) {
-                println(s"  trying $c...")
                 for (p <- provenance) {
                   if (!found && c.contains(p.from)) {
-                    println(s"    trying $p...")
                     if (go(p.to, seen2))
                       found = true
                   }
                 }
               }
             }
-
-//            val it = provenance.iterator
-//            while (it.nonEmpty && !found) {
-//              val p = it.next()
-//              // if from <= p.from < p.to, check if p.to <= to
-//              // I'm subsumed by something greater than me, does *it* have a lesser path to our destination?
-//              if (from <= p.from && !(p.to <= from)) {
-//                println(s"  trying $p...")
-//                if (go(p.to, seen2))
-//                  found = true
-//              }
-//            }
 
             found
           }
@@ -169,108 +129,36 @@ final case class ProvSet[K, V](values: Map[K, V], provenance: Set[ProvEntry[K]])
         Entry(y, null.asInstanceOf[V])
       )) Lesser else Greater
 
-      import scala.util.chaining.scalaUtilChainingOps
+      val `x<y` = lesserPathExists(from = x, to = y)
+      val `y<x` = lesserPathExists(from = y, to = x)
 
-      val result =
-      if (lesserPathExists(from = x, to = y).tap(r => println("  x<y = " + r))) {
-
-        val hasCycle = cycleFound ne null
-        val bi = if (hasCycle) false else lesserPathExists(from = y, to = x)
-        if (hasCycle || bi) {
-
-          if (hasCycle) println("! cycle found")
-          if (bi)       println("! bidirection found")
-
+      if (`x<y`) {
+        if (`y<x`)
           byTotal
-
-        } else
-//        assert(!pathExists(from = y, to = x), "Provenance isn't a lawful partial order! " + provenance)
-        Lesser
-      } else if (lesserPathExists(from = y, to = x).tap(r => println("  y<x = " + r)))
+        else
+          Lesser
+      } else if (`y<x`)
         Greater
       else
         Separate
 
-      println("= " + result)
-      result
     }.memo
 
-  val partialOrder: PartialOrder[K] =
-    module.partialOrderK orElse partialOrderP
-
-  def allKeys: Set[K] =
-    values.keySet ++ provenance.iterator.flatMap(e => e.from :: e.to :: Nil)
-
-  @elidable(elidable.ASSERTION)
-  def assertProps_(msg: => String = ""): Unit =
-    new Props(module)
-      .provSet(this)
-      .rename(_ => scalaz.Value("ProvSet.assertProps()" + Option(msg).filter(_.nonEmpty).fold("")(" - " + _)))
-      .assertSuccess()
-
-  @inline
-  def assertProps(msg: => String = ""): this.type = {
-    assertProps_(msg)
-    this
-  }
-
-  // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
   def ++(s: Self): Self = {
-    val debug = !true
-
-    if (this.isEmpty) return s
-    if (s.isEmpty) return this
-
-    try {
-
+    if (this.isEmpty)
+      s
+    else if (s.isEmpty)
+      this
+    else
       new ProvSet(
         this.values ++ s.values,
         this.provenance ++ s.provenance
       )(module)
         .pruneValues
-
-//      val x = new ProvSet(Map.empty, this.provenance ++ s.provenance)(module)
-//      implicit val po = x.partialOrder
-//
-//      PartialOrder.Props.assert(this.allKeys ++ s.allKeys)(partialOrder)
-//
-//      val allKeys = this.values.keySet ++ s.values.keySet
-//      var keys = allKeys
-//      for (k <- allKeys) {
-//        if (keys.exists(k < _))
-//          keys -= k
-//      }
-//      var values2 = Map.empty[K, V]
-//      for (k <- keys)
-//        values2 = values2.updated(k, this.values.getOrElse(k, s.values(k)))
-//
-//      if (debug)
-//        println(
-//          s"""===========================================================================
-//             |allKeys = ${allKeys.toList.map(_.toString).sorted.mkString(", ")}
-//             |delKeys = ${(allKeys -- keys).toList.map(_.toString).sorted.mkString(", ")}
-//             |newKeys = ${keys.toList.map(_.toString).sorted.mkString(", ")}
-//             |
-//             |""".stripMargin)
-//
-//      new ProvSet(values2, x.provenance)(module)
-
-    } catch {
-      case t: Throwable =>
-        val msg =
-          s"""FAILURE: ${t.getMessage}
-             |  lhs: $this
-             |  rhs: $s
-             |
-             |""".stripMargin
-        throw new RuntimeException(msg)
-    }
   }
 
-  def pruneValues: Self = {
+  private[util] def pruneValues: Self = {
     implicit val po = partialOrder
-
-    PartialOrder.Props.assert(this.allKeys)(partialOrder)
 
     var values2 = values
     for (k <- values.keysIterator) {
@@ -355,13 +243,13 @@ object ProvSet {
     import module.{ProvSet => S, partialOrderK}
     import ScalazExtra._
 
-    private def provEntry: Prop[ProvEntry[K]] =
+    private val provEntry: Prop[ProvEntry[K]] =
       Prop.test("unrelated", p => p.from isSeparateTo p.to)
 
-    private def provenance: Prop[Set[ProvEntry[K]]] =
+    private val provenance: Prop[Set[ProvEntry[K]]] =
       provEntry.forallF[Set]
 
-    private def separateValues: Prop[Map[K, V]] =
+    private val separateValues: Prop[Map[K, V]] =
       Prop.forall[Map[K, V], Set, K](_.keySet) { m =>
         Prop.atom[K]("value has no comparable siblings", k => {
           val bad = (m - k).find(_._1 isComparableTo k)
@@ -369,7 +257,7 @@ object ProvSet {
         })
       }
 
-    private def partialOrder: Prop[S] =
+    private val partialOrder: Prop[S] =
       Prop.evaln[S]("partialOrder", s => PartialOrder.Props.eval(s.allKeys)(s.partialOrder).liftL)
 
     val provSet: Prop[S] =
