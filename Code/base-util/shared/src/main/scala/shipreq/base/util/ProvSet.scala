@@ -202,14 +202,8 @@ final case class ProvSet[K, V](values: Map[K, V], provenance: Set[ProvEntry[K]])
     values.keySet ++ provenance.iterator.flatMap(e => e.from :: e.to :: Nil)
 
   @elidable(elidable.ASSERTION)
-  def assertProps(): Unit = {
-    PartialOrder.Props.assert(allKeys)(partialOrder)
-  }
-
-  /*
-  @elidable(elidable.ASSERTION)
   def assertProps_(msg: => String = ""): Unit =
-    (new Props(module))
+    new Props(module)
       .provSet(this)
       .rename(_ => scalaz.Value("ProvSet.assertProps()" + Option(msg).filter(_.nonEmpty).fold("")(" - " + _)))
       .assertSuccess()
@@ -219,7 +213,6 @@ final case class ProvSet[K, V](values: Map[K, V], provenance: Set[ProvEntry[K]])
     assertProps_(msg)
     this
   }
-*/
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
   def ++(s: Self): Self = {
@@ -353,92 +346,39 @@ object ProvSet {
 
     def one(k: K, v: V): ProvSet =
       ProvSet[K, V](Map.empty.updated(k, v), Set.empty)(this)
-/*
-//    implicit val entryOrdering: Ordering[Entry[K, V]] =
-//      new Ordering[Entry[K, V]] {
-//        override def compare(x: Entry[K, V], y: Entry[K, V]): Int = {
-//          partialOrderK(x.key, y.key) match {
-//            case Lesser   => -1
-//            case Equal    => 0
-//            case Greater  => 1
-//            case Separate => if (isAscending(x, y)) -1 else 1
-//          }
-//        }
-//      }
-
-//    implicit val entryOrdering: Ordering[Entry[K, V]] =
-    def entryOrdering(prov: Set[ProvEntry[K]]): Ordering[Entry[K, V]] = {
-      new Ordering[Entry[K, V]] {
-        override def compare(x: Entry[K, V], y: Entry[K, V]): Int = {
-
-          partialOrderK(x.key, y.key) match {
-            case Lesser   => -1
-            case Equal    => 0
-            case Greater  => 1
-            case Separate =>
-
-              val `x<=y` = prov.exists(x.key <= _.height)
-              val `y<=x` = prov.exists(y.key <= _.height)
-              (`x<=y`, `y<=x`) match {
-                case (true , false) => -1
-                case (false, true ) => 1
-                case (false, false)
-                   | (true , true ) => if (isAscending(x, y)) -1 else 1
-              }
-
-//              if (isAscending(x, y)) -1 else 1
-          }
-        }
-      }
-    */
   }
 
   // ===================================================================================================================
 
-//  final class Props[K, V](val module: Module[K, V]) {
-//    import nyaya.prop._
-////    import module.{Entry => E, ProvSet => S, partialOrderK}
-//    import ScalazExtra._
-//
-//    def prov: Prop[Set[ProvEntry[K]]] = {
-//      ???
-////      Prop.atom[Prov]("Provenance", ps => {
-////        var failure = Option.empty[String]
-////        for {
-////          p <- ps
-////          q <- ps - p
-////        } if (p isComparableTo q)
-////            failure = Some("Comparable keys in same provenance.")
-////        failure
-////      })
-//    }
-//
-//    def entry: Prop[E] = {
-//      def keyAndProv =
-//        Prop.forall[E, Set, ProvEntry[K]](_.provenance)(e =>
-//          Prop.atom("Entry key & provenance", p => Option.when(p.height <= e.key)(
-//            s"Entry ${e.key} has in its provenance a key $p, that is <= itself.")))
-//
-//      (keyAndProv & prov.contramap((_: E).provenance)).rename("entry")
-//    }
-//
-//    def provSet: Prop[S] =
-//      Prop.forall[S, Set, E](_.repr) { s =>
-//
-//        def compareEntries(name: => String)(c: (E, E) => Boolean): Prop[E] =
-//          Prop.test[E](name, e => s.repr.forall(f => (e eq f) || c(e, f)))
-//
-//        def coexistenceK: Prop[E] =
-//          compareEntries("Comparable sibling entries.")((e, f) =>
-//            e.key.isSeparateTo(f.key))
-//
-//        def coexistenceP: Prop[E] =
-//          compareEntries("Sibling provenance.")((e, f) =>
-//            f.provenance.forall(p => !(e.key <= p.height)))
-//
-//        (entry & coexistenceK & coexistenceP).rename("provSet")
-//      }
-//  }
+  final class Props[K, V](val module: Module[K, V]) {
+    import nyaya.prop._
+    import module.{ProvSet => S, partialOrderK}
+    import ScalazExtra._
+
+    private def provEntry: Prop[ProvEntry[K]] =
+      Prop.test("unrelated", p => p.from isSeparateTo p.to)
+
+    private def provenance: Prop[Set[ProvEntry[K]]] =
+      provEntry.forallF[Set]
+
+    private def separateValues: Prop[Map[K, V]] =
+      Prop.forall[Map[K, V], Set, K](_.keySet) { m =>
+        Prop.atom[K]("value has no comparable siblings", k => {
+          val bad = (m - k).find(_._1 isComparableTo k)
+          bad.map(x => s"Comparable siblings found: $k & ${x._1}")
+        })
+      }
+
+    private def partialOrder: Prop[S] =
+      Prop.evaln[S]("partialOrder", s => PartialOrder.Props.eval(s.allKeys)(s.partialOrder).liftL)
+
+    val provSet: Prop[S] =
+      (
+        separateValues.contramap[S](_.values) &
+        provenance.contramap[S](_.provenance) &
+        partialOrder
+      ).rename("ProvSet props")
+  }
 
   // ===================================================================================================================
 
@@ -464,7 +404,6 @@ object ProvSet {
     private implicit val equality = scalazEqualFromUnivEq(module.univEq)
 
     type ProvSet = shipreq.base.util.ProvSet[K, V]
-//    type Entry   = shipreq.base.util.ProvSet.Entry[K, V]
     type Input   = Laws.Input[K, V]
     type Laws    = Prop[Input]
 
@@ -502,17 +441,33 @@ object ProvSet {
         (x, y) => x ++ y,
         (x, y) => y ++ x)
 
-//    private val validity: Laws = {
-//      val props = new Props(module)
-//      prop2("validity", props.provSet)(_ ++ _)
-//    }
+    private val validity: Laws = {
+      val props = new Props(module)
+      prop2("validity", props.provSet)(_ ++ _)
+    }
+
+    private val valueRetention: Laws = {
+      val prop = Prop.atom[(ProvSet, ProvSet)]("value retention", { case (x, y) =>
+        val s = x ++ y
+        val values = x.values.keySet ++ y.values.keySet
+        if (values.isEmpty)
+          Option.unless(s.values.isEmpty)("Where did these values come from?! " + s.values)
+        else
+          Option.unless(s.values.nonEmpty)("Values lost!").orElse {
+            val badKeys = s.values.keySet -- values
+            Option.unless(badKeys.isEmpty)("Mystery values found: " + badKeys)
+          }
+      })
+      prop2("value retention", prop)((_, _))
+    }
 
     val laws: Laws =
       List(
         idempotency,
         associativity,
         commutativity,
-//        validity,
+        validity,
+        valueRetention,
       ).reduce(_ & _).rename("ProvSet (++) laws")
   }
 }

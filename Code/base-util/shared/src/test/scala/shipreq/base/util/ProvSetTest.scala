@@ -114,17 +114,6 @@ object ProvSetTest extends TestSuite {
       val genRev = Gen.chooseInt(range)
       val genK   = Gen.lift2(genId, genRev)(K.apply)
 
-//      val genE: Gen[Entry] =
-//        for {
-//          k    <- genK
-//          prov <- genId.set(0 to size).map(_ - k.id).flatMap(Gen.traverse(_)(id => genRev.map(K(id, _))))
-//        } yield {
-//          val v = s"${k.id}${k.rev}"
-//          module.entry(k, v, prov)
-//        }
-
-      // TODO Prop test by op
-
       val getPE: Gen[ProvEntry[K]] =
         for {
           k <- genK
@@ -138,19 +127,6 @@ object ProvSetTest extends TestSuite {
           valueKeys <- genK.arraySeq(0 to provSize)
         } yield {
           val values = valueKeys.iterator.map(k => k -> s"${k.id}${k.rev}").toMap
-
-//          @tailrec
-//          def go(prov: Set[ProvEntry[K]], provSize: Int): ProvSet = {
-//            val s = module(values.take(provSize), prov)
-//            val e = PartialOrder.Props.eval(s.allKeys)(s.partialOrder)
-//            if (e.success)
-//              s.pruneValues
-//            else
-//              go(prov.tail, provSize - 1)
-//          }
-//
-//          go(prov, provSize)
-
           module(values, prov).pruneValues
         }
 
@@ -161,23 +137,6 @@ object ProvSetTest extends TestSuite {
 //      gen.withSeed(0).samples().take(100).drain()
       laws.mustBeSatisfiedBy(gen.withSeed(6))
     }
-
-//    "partialOrderE" - {
-//      def test(x: Entry, y: Entry)(expect: Cmp)(implicit l: Line): Unit = {
-//        assertEq(s"$x cmp $y", module.partialOrderE(x, y), expect)
-//        assertEq(s"$y cmp $x", module.partialOrderE(y, x), expect.flip)
-//      }
-//      "eq"      - test("A2", "A2")(Equal)
-//      "lt"      - test("A1", "A2")(Lesser)
-//      "sep"     - test("A2", "B2")(Separate)
-//      "prov12"  - test("A0:B1", "B2")(Separate)
-//      "prov22"  - test("A0:B2", "B2")(Greater)
-//      "prov32"  - test("A0:B3", "B2")(Greater)
-//      "sepP"    - test("A0:C1", "B2:D1")(Separate)
-//      "mutual1" - test("A2:B2", "B2:A2")(Lesser) // by key for commutativity
-//      "mutual2" - test("A2:B9", "B2:A9")(Lesser) // by key for commutativity
-//      "misc1"   - test("A0", "C2:A2")(Lesser)
-//    }
 
     "manual" - {
       "basic" - {
@@ -192,10 +151,9 @@ object ProvSetTest extends TestSuite {
         "lt"     - assertAdd("A2:B3<A1", "B4")("{A2,B4}:{B3<A1}")
         "sep"    - assertAdd("A2:B3<A1", "C2:B2<C1")("{A2,C2}:{B3<A1,B2<C1}")
         "merge"  - assertAdd("A2:B3<A1", "B2:C6<B1")("{A2}:{B3<A1,C6<B1}")
-//        "merge<" - assertAdd("A2:B3<A1,C5<A1", "B2:C6<B1")("{A2}:{B3<A1,C6<B1}")
-//        "merge>" - assertAdd("A2:B3<A1,C5<A1", "B2:C4<B1")("{A2}:{B3<A1,C5<A1}")
-        "cycle1" - assertAdd("B2:A1<B1,C0<A0", "C1:B2<C0")("C1:A1<B1,C0<A0,B2<C0")
-        "cycle2" - {
+        "cycle1" - assertAdd("A1:B1<A1", "B1:A1<B1")("{B1}:{A1<B1,B1<A1}")
+        "cycle2" - assertAdd("B2:A1<B1,C0<A0", "C1:B2<C0")("C1:A1<B1,C0<A0,B2<C0")
+        "cycle3" - {
           val expect: ProvSet = "{B1}:{A1<C0,A2<B1,C0<A1}"
           implicit val po = expect.partialOrder.contramap(parseK)
           "A1_A2" - assertCmp("A1", "A2")(Lesser)
@@ -206,7 +164,7 @@ object ProvSetTest extends TestSuite {
           "B1_C0" - assertCmp("B1", "C0")(Greater)
           "add"   - assertAdd("{B1}:{A1<C0,A2<B1}", "{A2}:{C0<A1}")(expect)
         }
-        "cycle3" - {
+        "cycle4" - {
           val expect: ProvSet = "{D2}:{B1<C0,A2<B1,C0<B1,C1<D1}"
           implicit val po = expect.partialOrder.contramap(parseK)
           "A1_A2" - assertCmp("A1", "A2")(Lesser)
@@ -227,25 +185,6 @@ object ProvSetTest extends TestSuite {
           "add"   - assertAdd("{B1}:{B1<C0,A2<B1,C0<B1}", "{D2}:{C1<D1}")(expect)
         }
       }
-
-//      "misc" - {
-//        "1" - assertAdd("A0", "C2:A2<C1")("C2:A2<C1")
-////        "2" - assertAdd("B1:A0<B0,C2<B0", "C1:B2<C0")("{C0}:{A0<B0,C2<B0,B2<C0}")
-//        "3" - {
-//          val a   = "A1:B0"
-//          val b   = "C0:A0"
-//          val c   = "A0:B1"
-//          val ab  = "{A1,C0}:{C0->A0,A1->B0}"
-//          val ac  = "{A1}:{A1->B0,A0->B1}"
-//          val bc  = "{C0}:{C0->A0,A0->B1}"
-//          val abc = "{A1,C0}:{A0->B1,A1->B0,C0->A0}"
-//          "ab"  - assertAdd(a, b)(ab)
-////          "ac"  - assertAdd(a, c)(ac)
-////          "bc"  - assertAdd(b, c)(bc)
-////          "abc" - assertAdd(ab, c)(abc)
-////          "acb" - assertAdd(ac, b)(abc)
-//        }
-//      }
     }
 
   }
