@@ -13,6 +13,9 @@ final class PartialOrder[-A](asFn: (A, A) => Cmp) extends AbstractFunction2[A, A
   override def apply(a: A, b: A): Cmp =
     asFn(a, b)
 
+  def contramap[B](f: B => A): PartialOrder[B] =
+    PartialOrder((x, y) => self(f(x), f(y)))
+
   def orElse[AA <: A](next: PartialOrder[AA]): PartialOrder[AA] =
     PartialOrder((x, y) =>
       self(x, y) match {
@@ -20,6 +23,15 @@ final class PartialOrder[-A](asFn: (A, A) => Cmp) extends AbstractFunction2[A, A
         case c            => c
       }
     )
+
+  def memo[AA <: A](implicit ev: UnivEq[AA]): PartialOrder[AA] = {
+    val cache = collection.mutable.Map.empty[(AA, AA), Cmp]
+    PartialOrder { (x, y) =>
+      val k = (x, y)
+      cache.getOrElseUpdate(k, self(x, y))
+    }
+  }
+
 }
 
 object PartialOrder {
@@ -117,10 +129,10 @@ object PartialOrder {
       Eval.test("reflexivity", a, a <= a)
 
     private def antisymmetry(a: A, b: A): EvalL =
-      Eval.atom("antisymmetry", (a, b), imply(a <= b && b <= a)(a === b, s"a cmp b = ${p(a, b)}"))
+      Eval.atom("antisymmetry", (a, b), imply(a <= b && b <= a)(a === b, s"$a cmp $b = ${p(a, b)}"))
 
     private def transitivity(a: A, b: A, c: A): EvalL =
-      Eval.atom("transitivity", (a, b, c), imply(a <= b && b <= c)(a <= c, s"a cmp c = ${p(a, c)}"))
+      Eval.atom("transitivity", (a, b, c), imply(a <= b && b <= c)(a <= c, s"$a ≤ $b ≤ $c but ($a cmp $c) = ${p(a, c)}"))
 
     val prop: Prop[Set[A]] =
       Prop.eval[Set[A]] { as =>
@@ -139,7 +151,8 @@ object PartialOrder {
           }
         }
 
-        if (result == null) Eval.pass() else result
+        val name = "PartialOrder laws"
+        if (result == null) Eval.pass(name) else result.rename(name)
       }
   }
 

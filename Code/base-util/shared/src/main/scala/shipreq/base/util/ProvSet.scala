@@ -67,48 +67,133 @@ final case class ProvSet[K, V](values: Map[K, V], provenance: Set[ProvEntry[K]])
       // y = A4
       // if we can find a path from x (C0) to y (A4), then x < y
 
+      val provGraph = Digraph.BiDir {
+        provenance.foldLeft(Digraph.emptyUniDir[K])((g, p) => g.add(p.from, p.to))
+      }
+
+      val components = provGraph.stronglyConnectedComponents
+
+//      var newGraph = Digraph.emptyUniDir[NonEmptySet[K]]
+//      for (p <- provenance) {
+//        def expand(k: K): NonEmptySet[K] =
+//          components.find(_.contains(k)).get
+//        val f = expand(p.from)
+//        val t = expand(p.to)
+//        if (f != t)
+//          newGraph = newGraph.add(f, t)
+//      }
+//      println()
+//      newGraph.kvIterator.foreach(x => println(s"${x._1} -> ${x._2}"))
 //      println()
 
-      def pathExists(from: K, to: K): Boolean = {
-//        println(s"pathExists($provenance : $from -> $to)")
+//      for (comp <- components) {
+//        for (k <- comp) {
+//        }
+//      }
+
+      def println(a: Any*) = ()
+
+      println()
+      println(s"$x cmp $y")
+      var cycleFound: Set[K] = null
+
+      var runOnce = false
+
+      def lesserPathExists(from: K, to: K): Boolean = {
+
+        if (runOnce) println("+") else runOnce = true
+
+        val targets = components.find(_.contains(to)).getOrElse(NonEmptySet.one(to))
+//        println("lesserPathExists targets: " + targets)
+
+        def go(from: K, seen: Set[K]): Boolean = {
+          println(s"lesserPathExists($from -> $targets)  { prov=$provenance, seen=${seen.map(_.toString).toList.sorted.mkString("{", ",", "}")} }")
 
 //        try {
 
-          if (from <= to)
+
+//          if (targets.exists(from <= _)) { TODO hmmm
+          if (from <= to) {
             true
-          else {
-            val it = provenance.iterator
+          } else if (seen.contains(from)) {
+//            cycleFound = seen
+//            println("  cycle found!")
+//            true
+            false
+          } else {
+
+            val comp = components.find(_.contains(from))
+            println(s"  comp for $from = $comp")
+
             var found = false
+            val seen2 = seen + from
+
+            val it = components.iterator
             while (it.nonEmpty && !found) {
-              val p = it.next()
-              if (from <= p.from && !(p.to <= from) && pathExists(p.to, to))
-                found = true
+              val c = it.next()
+              // if from <= p.from < p.to, check if p.to <= to
+              // I'm subsumed by something greater than me, does *it* have a lesser path to our destination?
+              if (c.exists(from <= _)) {
+                println(s"  trying $c...")
+                for (p <- provenance) {
+                  if (!found && c.contains(p.from)) {
+                    println(s"    trying $p...")
+                    if (go(p.to, seen2))
+                      found = true
+                  }
+                }
+              }
             }
+
+//            val it = provenance.iterator
+//            while (it.nonEmpty && !found) {
+//              val p = it.next()
+//              // if from <= p.from < p.to, check if p.to <= to
+//              // I'm subsumed by something greater than me, does *it* have a lesser path to our destination?
+//              if (from <= p.from && !(p.to <= from)) {
+//                println(s"  trying $p...")
+//                if (go(p.to, seen2))
+//                  found = true
+//              }
+//            }
+
             found
           }
+        }
 
-//        } catch {
-//          case t: Throwable =>
-//            val msg =
-//              s"""FAILURE: ${t.getMessage}
-//                 |  set : $this
-//                 |  from: $from
-//                 |  to  : $to
-//                 |
-//                 |""".stripMargin
-//            throw new RuntimeException(msg)
-//        }
-
+        go(from, Set.empty)
       }
 
-      if (pathExists(from = x, to = y)) {
-        assert(!pathExists(from = y, to = x), "Provenance isn't a lawful partial order! " + provenance)
+      val byTotal = if (module.isAscending(
+        Entry(x, null.asInstanceOf[V]),
+        Entry(y, null.asInstanceOf[V])
+      )) Lesser else Greater
+
+      import scala.util.chaining.scalaUtilChainingOps
+
+      val result =
+      if (lesserPathExists(from = x, to = y).tap(r => println("  x<y = " + r))) {
+
+        val hasCycle = cycleFound ne null
+        val bi = if (hasCycle) false else lesserPathExists(from = y, to = x)
+        if (hasCycle || bi) {
+
+          if (hasCycle) println("! cycle found")
+          if (bi)       println("! bidirection found")
+
+          byTotal
+
+        } else
+//        assert(!pathExists(from = y, to = x), "Provenance isn't a lawful partial order! " + provenance)
         Lesser
-      } else if (pathExists(from = y, to = x))
+      } else if (lesserPathExists(from = y, to = x).tap(r => println("  y<x = " + r)))
         Greater
       else
         Separate
-    }
+
+      println("= " + result)
+      result
+    }.memo
 
   val partialOrder: PartialOrder[K] =
     module.partialOrderK orElse partialOrderP
@@ -428,6 +513,6 @@ object ProvSet {
         associativity,
         commutativity,
 //        validity,
-      ).reduce(_ & _)
+      ).reduce(_ & _).rename("ProvSet (++) laws")
   }
 }

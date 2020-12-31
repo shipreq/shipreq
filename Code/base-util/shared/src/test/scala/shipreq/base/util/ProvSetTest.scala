@@ -26,7 +26,7 @@ object ProvSetTest extends TestSuite {
     val module = ProvSet.Module[K, V](_.into, _.key.toString < _.key.toString)
     import module.{ProvSet, empty}
 
-    private val parseK: String => K = {
+    val parseK: String => K = {
       val regex = "^([A-Za-z]+)(\\d+)$".r
       s => {
         val regex(id, rev) = s
@@ -90,6 +90,11 @@ object ProvSetTest extends TestSuite {
 //        actual = actual.toList.sortBy(_.toString),
 //        expect = expect.toList.sortBy(_.toString))
 //    }
+
+    def assertCmp[A](x: A, y: A)(expect: Cmp)(implicit l: Line, p: PartialOrder[A]): Unit = {
+      assertEq(s"$x cmp $y", p(x, y), expect)
+      assertEq(s"$y cmp $x [reverse]", p(y, x), expect.flip)
+    }
   }
 
   // ===================================================================================================================
@@ -128,23 +133,25 @@ object ProvSetTest extends TestSuite {
 
       val genPS: Gen[ProvSet] =
         for {
-          prov      <- getPE.set(0 to size)
-          provSize   = prov.size
+          prov       <- getPE.set(0 to size)
+          provSize    = prov.size
           valueKeys <- genK.arraySeq(0 to provSize)
         } yield {
           val values = valueKeys.iterator.map(k => k -> s"${k.id}${k.rev}").toMap
 
-          @tailrec
-          def go(prov: Set[ProvEntry[K]], provSize: Int): ProvSet = {
-            val s = module(values.take(provSize), prov)
-            val e = PartialOrder.Props.eval(s.allKeys)(s.partialOrder)
-            if (e.success)
-              s.pruneValues
-            else
-              go(prov.tail, provSize - 1)
-          }
+//          @tailrec
+//          def go(prov: Set[ProvEntry[K]], provSize: Int): ProvSet = {
+//            val s = module(values.take(provSize), prov)
+//            val e = PartialOrder.Props.eval(s.allKeys)(s.partialOrder)
+//            if (e.success)
+//              s.pruneValues
+//            else
+//              go(prov.tail, provSize - 1)
+//          }
+//
+//          go(prov, provSize)
 
-          go(prov, provSize)
+          module(values, prov).pruneValues
         }
 
       val gen: Gen[Input] =
@@ -152,7 +159,7 @@ object ProvSetTest extends TestSuite {
 
 //      import japgolly.microlibs.stdlib_ext.StdlibExt._
 //      gen.withSeed(0).samples().take(100).drain()
-      laws.mustBeSatisfiedBy(gen.withSeed(0))
+      laws.mustBeSatisfiedBy(gen.withSeed(6))
     }
 
 //    "partialOrderE" - {
@@ -187,6 +194,38 @@ object ProvSetTest extends TestSuite {
         "merge"  - assertAdd("A2:B3<A1", "B2:C6<B1")("{A2}:{B3<A1,C6<B1}")
 //        "merge<" - assertAdd("A2:B3<A1,C5<A1", "B2:C6<B1")("{A2}:{B3<A1,C6<B1}")
 //        "merge>" - assertAdd("A2:B3<A1,C5<A1", "B2:C4<B1")("{A2}:{B3<A1,C5<A1}")
+        "cycle1" - assertAdd("B2:A1<B1,C0<A0", "C1:B2<C0")("C1:A1<B1,C0<A0,B2<C0")
+        "cycle2" - {
+          val expect: ProvSet = "{B1}:{A1<C0,A2<B1,C0<A1}"
+          implicit val po = expect.partialOrder.contramap(parseK)
+          "A1_A2" - assertCmp("A1", "A2")(Lesser)
+          "A1_B1" - assertCmp("A1", "B1")(Lesser)
+          "A1_C0" - assertCmp("A1", "C0")(Lesser)
+          "A2_B1" - assertCmp("A2", "B1")(Lesser)
+          "A2_C0" - assertCmp("A2", "C0")(Greater)
+          "B1_C0" - assertCmp("B1", "C0")(Greater)
+          "add"   - assertAdd("{B1}:{A1<C0,A2<B1}", "{A2}:{C0<A1}")(expect)
+        }
+        "cycle3" - {
+          val expect: ProvSet = "{D2}:{B1<C0,A2<B1,C0<B1,C1<D1}"
+          implicit val po = expect.partialOrder.contramap(parseK)
+          "A1_A2" - assertCmp("A1", "A2")(Lesser)
+          "A1_B1" - assertCmp("A1", "B1")(Lesser)
+          "A1_C0" - assertCmp("A1", "C0")(Lesser)
+          "A1_C1" - assertCmp("A1", "C1")(Lesser)
+          "A1_D1" - assertCmp("A1", "D1")(Lesser)
+          "A2_B1" - assertCmp("A2", "B1")(Lesser)
+          "A2_C0" - assertCmp("A2", "C0")(Lesser)
+          "A2_C1" - assertCmp("A2", "C1")(Lesser)
+          "A2_D1" - assertCmp("A2", "D1")(Lesser)
+          "B1_C0" - assertCmp("B1", "C0")(Lesser)
+          "B1_C1" - assertCmp("B1", "C1")(Lesser)
+          "B1_D1" - assertCmp("B1", "D1")(Lesser)
+          "C0_C1" - assertCmp("C0", "C1")(Lesser)
+          "C0_D1" - assertCmp("C0", "D1")(Lesser)
+          "C1_D1" - assertCmp("C1", "D1")(Lesser)
+          "add"   - assertAdd("{B1}:{B1<C0,A2<B1,C0<B1}", "{D2}:{C1<D1}")(expect)
+        }
       }
 
 //      "misc" - {
