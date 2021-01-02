@@ -10,7 +10,7 @@ abstract class AbstractAssetManifest[+A] {
 
   protected def modify(f: String): A
 
-  final val analyticsJs = modify("/s/1104de59b052ed4f7de85b930ae8bdf5.js")
+  final val analyticsJs = modify("/s/cbca936b51d06fbeee8680c739b6e195.js")
 
   final val favicon16X16Png = modify("/s/fed79b5fe13954bcbb0ebbd3fe18be61.png")
 
@@ -56,7 +56,7 @@ abstract class AbstractAssetManifest[+A] {
 
   final val loadjs = modify("/s/9e706a6f7bc551ddf626c15cd76c1c25.js")
 
-  final val memberLibBundleJs = modify("/s/bcb8bfbf104ee6bff0ec59651c066ec8.js")
+  final val memberLibBundleJs = modify("/s/92286371c387d7115bdb3e94f148c918.js")
 
   final val prismJsAutoloader = CDN(
     href = "https://cdnjs.cloudflare.com/ajax/libs/prism/1.21.0/plugins/autoloader/prism-autoloader.min.js",
@@ -109,7 +109,7 @@ abstract class AbstractAssetManifest[+A] {
     modify("icons.svg#icons") ::
     Nil
 
-  final val semanticJs = modify("/s/2bef13940cfe4601a0d2b43ac0d82554.js")
+  final val semanticJs = modify("/s/342b3e5e26ac606d2dc460815f6836a8.js")
 
   final val shipreqBannerSvg = modify("/s/878536f0a4ad0029794669f88dbf5f35.svg")
 

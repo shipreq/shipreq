@@ -1,12 +1,10 @@
 {
-  "errors": [
-  ],
-  "warnings": [
-  ],
+  "errors": [],
+  "warnings": [],
   "version": "4.44.2",
   "hash": "98d6e848d2ffd6bf3782",
-  "time": 793,
-  "builtAt": 1606203947917,
+  "time": 710,
+  "builtAt": 1609548826268,
   "publicPath": "",
   "outputPath": "/tmp/shipreq.webpack.prod.ww",
   "assetsByChunkName": {
@@ -22,8 +20,7 @@
       "chunkNames": [
         "ww"
       ],
-      "info": {
-      },
+      "info": {},
       "emitted": true
     }
   ],
@@ -36,10 +33,8 @@
       "assets": [
         "ww.js"
       ],
-      "children": {
-      },
-      "childAssets": {
-      }
+      "children": {},
+      "childAssets": {}
     }
   },
   "namedChunkGroups": {
@@ -50,10 +45,8 @@
       "assets": [
         "ww.js"
       ],
-      "children": {
-      },
-      "childAssets": {
-      }
+      "children": {},
+      "childAssets": {}
     }
   },
   "chunks": [
@@ -70,14 +63,10 @@
         "ww.js"
       ],
       "hash": "5a6ff04c3847a513ed20",
-      "siblings": [
-      ],
-      "parents": [
-      ],
-      "children": [
-      ],
-      "childrenByOrder": {
-      },
+      "siblings": [],
+      "parents": [],
+      "children": [],
+      "childrenByOrder": {},
       "modules": [
         {
           "id": 0,
@@ -106,8 +95,7 @@
           "failed": false,
           "errors": 0,
           "warnings": 0,
-          "assets": [
-          ],
+          "assets": [],
           "reasons": [
             {
               "moduleId": 1,
@@ -148,8 +136,7 @@
           "failed": false,
           "errors": 0,
           "warnings": 0,
-          "assets": [
-          ],
+          "assets": [],
           "reasons": [
             {
               "moduleId": null,
@@ -166,8 +153,7 @@
             "Pako",
             "B32768"
           ],
-          "optimizationBailout": [
-          ],
+          "optimizationBailout": [],
           "depth": 0,
           "modules": [
             {
@@ -181,8 +167,7 @@
               "built": true,
               "optional": false,
               "prefetched": false,
-              "chunks": [
-              ],
+              "chunks": [],
               "issuer": null,
               "issuerId": null,
               "issuerName": null,
@@ -190,8 +175,7 @@
               "failed": false,
               "errors": 0,
               "warnings": 0,
-              "assets": [
-              ],
+              "assets": [],
               "reasons": [
                 {
                   "moduleId": null,
@@ -225,8 +209,7 @@
               "built": true,
               "optional": false,
               "prefetched": false,
-              "chunks": [
-              ],
+              "chunks": [],
               "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/src/js/ww.js",
               "issuerId": null,
               "issuerName": "./src/js/ww.js",
@@ -240,8 +223,7 @@
               "failed": false,
               "errors": 0,
               "warnings": 0,
-              "assets": [
-              ],
+              "assets": [],
               "reasons": [
                 {
                   "moduleId": null,
@@ -267,8 +249,7 @@
                 "decode",
                 "encode"
               ],
-              "optimizationBailout": [
-              ],
+              "optimizationBailout": [],
               "depth": 1,
               "source": "/**\r\n  Base32768 is a binary-to-text encoding optimised for UTF-16-encoded text.\r\n  (e.g. Windows, Java, JavaScript)\r\n*/\n// Z is a number, usually a uint15 but sometimes a uint7\nconst BITS_PER_CHAR = 15; // Base32768 is a 15-bit encoding\n\nconst BITS_PER_BYTE = 8; // Base32768 uses blocks of 32 characters.\n\nconst blockSize = 1 << 5;\nconst repertoires = ['ҠԀڀڠݠހ߀ကႠᄀᄠᅀᆀᇠሀሠበዠጠᎠᏀᐠᑀᑠᒀᒠᓀᓠᔀᔠᕀᕠᖀᖠᗀᗠᘀᘠᙀᚠᛀកᠠᡀᣀᦀ᧠ᨠᯀᰀᴀ⇠⋀⍀⍠⎀⎠⏀␀─┠╀╠▀■◀◠☀☠♀♠⚀⚠⛀⛠✀✠❀➀➠⠀⠠⡀⡠⢀⢠⣀⣠⤀⤠⥀⥠⦠⨠⩀⪀⪠⫠⬀⬠⭀ⰀⲀⲠⳀⴀⵀ⺠⻀㇀㐀㐠㑀㑠㒀㒠㓀㓠㔀㔠㕀㕠㖀㖠㗀㗠㘀㘠㙀㙠㚀㚠㛀㛠㜀㜠㝀㝠㞀㞠㟀㟠㠀㠠㡀㡠㢀㢠㣀㣠㤀㤠㥀㥠㦀㦠㧀㧠㨀㨠㩀㩠㪀㪠㫀㫠㬀㬠㭀㭠㮀㮠㯀㯠㰀㰠㱀㱠㲀㲠㳀㳠㴀㴠㵀㵠㶀㶠㷀㷠㸀㸠㹀㹠㺀㺠㻀㻠㼀㼠㽀㽠㾀㾠㿀㿠䀀䀠䁀䁠䂀䂠䃀䃠䄀䄠䅀䅠䆀䆠䇀䇠䈀䈠䉀䉠䊀䊠䋀䋠䌀䌠䍀䍠䎀䎠䏀䏠䐀䐠䑀䑠䒀䒠䓀䓠䔀䔠䕀䕠䖀䖠䗀䗠䘀䘠䙀䙠䚀䚠䛀䛠䜀䜠䝀䝠䞀䞠䟀䟠䠀䠠䡀䡠䢀䢠䣀䣠䤀䤠䥀䥠䦀䦠䧀䧠䨀䨠䩀䩠䪀䪠䫀䫠䬀䬠䭀䭠䮀䮠䯀䯠䰀䰠䱀䱠䲀䲠䳀䳠䴀䴠䵀䵠䶀䷀䷠一丠乀习亀亠什仠伀传佀你侀侠俀俠倀倠偀偠傀傠僀僠儀儠兀兠冀冠净几刀删剀剠劀加勀勠匀匠區占厀厠叀叠吀吠呀呠咀咠哀哠唀唠啀啠喀喠嗀嗠嘀嘠噀噠嚀嚠囀因圀圠址坠垀垠埀埠堀堠塀塠墀墠壀壠夀夠奀奠妀妠姀姠娀娠婀婠媀媠嫀嫠嬀嬠孀孠宀宠寀寠尀尠局屠岀岠峀峠崀崠嵀嵠嶀嶠巀巠帀帠幀幠庀庠廀廠开张彀彠往徠忀忠怀怠恀恠悀悠惀惠愀愠慀慠憀憠懀懠戀戠所扠技抠拀拠挀挠捀捠掀掠揀揠搀搠摀摠撀撠擀擠攀攠敀敠斀斠旀无昀映晀晠暀暠曀曠最朠杀杠枀枠柀柠栀栠桀桠梀梠检棠椀椠楀楠榀榠槀槠樀樠橀橠檀檠櫀櫠欀欠歀歠殀殠毀毠氀氠汀池沀沠泀泠洀洠浀浠涀涠淀淠渀渠湀湠満溠滀滠漀漠潀潠澀澠激濠瀀瀠灀灠炀炠烀烠焀焠煀煠熀熠燀燠爀爠牀牠犀犠狀狠猀猠獀獠玀玠珀珠琀琠瑀瑠璀璠瓀瓠甀甠畀畠疀疠痀痠瘀瘠癀癠皀皠盀盠眀眠着睠瞀瞠矀矠砀砠础硠碀碠磀磠礀礠祀祠禀禠秀秠稀稠穀穠窀窠竀章笀笠筀筠简箠節篠簀簠籀籠粀粠糀糠紀素絀絠綀綠緀締縀縠繀繠纀纠绀绠缀缠罀罠羀羠翀翠耀耠聀聠肀肠胀胠脀脠腀腠膀膠臀臠舀舠艀艠芀芠苀苠茀茠荀荠莀莠菀菠萀萠葀葠蒀蒠蓀蓠蔀蔠蕀蕠薀薠藀藠蘀蘠虀虠蚀蚠蛀蛠蜀蜠蝀蝠螀螠蟀蟠蠀蠠血衠袀袠裀裠褀褠襀襠覀覠觀觠言訠詀詠誀誠諀諠謀謠譀譠讀讠诀诠谀谠豀豠貀負賀賠贀贠赀赠趀趠跀跠踀踠蹀蹠躀躠軀軠輀輠轀轠辀辠迀迠退造遀遠邀邠郀郠鄀鄠酀酠醀醠釀釠鈀鈠鉀鉠銀銠鋀鋠錀錠鍀鍠鎀鎠鏀鏠鐀鐠鑀鑠钀钠铀铠销锠镀镠門閠闀闠阀阠陀陠隀隠雀雠需霠靀靠鞀鞠韀韠頀頠顀顠颀颠飀飠餀餠饀饠馀馠駀駠騀騠驀驠骀骠髀髠鬀鬠魀魠鮀鮠鯀鯠鰀鰠鱀鱠鲀鲠鳀鳠鴀鴠鵀鵠鶀鶠鷀鷠鸀鸠鹀鹠麀麠黀黠鼀鼠齀齠龀龠ꀀꀠꁀꁠꂀꂠꃀꃠꄀꄠꅀꅠꆀꆠꇀꇠꈀꈠꉀꉠꊀꊠꋀꋠꌀꌠꍀꍠꎀꎠꏀꏠꐀꐠꑀꑠ꒠ꔀꔠꕀꕠꖀꖠꗀꗠꙀꚠꛀ꜀꜠ꝀꞀꡀ', // length = 1 << 10\n'ƀɀɠʀ' // length = 1 << 2\n];\nconst lookupE = {};\nrepertoires.forEach((repertoire, r) => {\n  const numZBits = BITS_PER_CHAR - BITS_PER_BYTE * r; // 0 -> 15, 1 -> 7\n\n  const encodeRepertoire = [];\n\n  for (let i = 0; i < repertoire.length; i++) {\n    const charCode = repertoire.charCodeAt(i);\n\n    for (let offset = 0; offset < blockSize; offset++) {\n      encodeRepertoire.push(String.fromCharCode(charCode + offset));\n    }\n  }\n\n  lookupE[numZBits] = encodeRepertoire;\n});\nconst lookupD = {};\nObject.entries(lookupE).forEach(([numZBits, encodeRepertoire]) => {\n  encodeRepertoire.forEach((chr, z) => {\n    lookupD[chr] = [Number(numZBits), z];\n  });\n});\n\nconst encode = uint8Array => {\n  const length = uint8Array.length;\n  let str = '';\n  let z = 0;\n  let numZBits = 0;\n\n  for (let i = 0; i < length; i++) {\n    const uint8 = uint8Array[i]; // Take most significant bit first\n\n    for (let j = BITS_PER_BYTE - 1; j >= 0; j--) {\n      const bit = uint8 >> j & 1;\n      z = (z << 1) + bit;\n      numZBits++;\n\n      if (numZBits === BITS_PER_CHAR) {\n        str += lookupE[numZBits][z];\n        z = 0;\n        numZBits = 0;\n      }\n    }\n  }\n\n  if (numZBits !== 0) {\n    // Final bits require special treatment.\n    // z = bbbbbbcccccccc, numZBits = 14, padBits = 1\n    // z = bbbbbcccccccc, numZBits = 13, padBits = 2\n    // z = bbbbcccccccc, numZBits = 12, padBits = 3\n    // z = bbbcccccccc, numZBits = 11, padBits = 4\n    // z = bbcccccccc, numZBits = 10, padBits = 5\n    // z = bcccccccc, numZBits = 9, padBits = 6\n    // z = cccccccc, numZBits = 8, padBits = 7\n    // => Pad `z` out to 15 bits using 1s, then encode as normal (r = 0)\n    // z = ccccccc, numZBits = 7, padBits = 0\n    // z = cccccc, numZBits = 6, padBits = 1\n    // z = ccccc, numZBits = 5, padBits = 2\n    // z = cccc, numZBits = 4, padBits = 3\n    // z = ccc, numZBits = 3, padBits = 4\n    // z = cc, numZBits = 2, padBits = 5\n    // z = c, numZBits = 1, padBits = 6\n    // => Pad `z` out to 7 bits using 1s, then encode specially (r = 1)\n    while (!(numZBits in lookupE)) {\n      z = (z << 1) + 1;\n      numZBits++;\n    }\n\n    str += lookupE[numZBits][z];\n  }\n\n  return str;\n};\n\nconst decode = str => {\n  const length = str.length; // This length is a guess. There's a chance we allocate one more byte here\n  // than we actually need. But we can count and slice it off later\n\n  const uint8Array = new Uint8Array(Math.floor(length * BITS_PER_CHAR / BITS_PER_BYTE));\n  let numUint8s = 0;\n  let uint8 = 0;\n  let numUint8Bits = 0;\n\n  for (let i = 0; i < length; i++) {\n    const chr = str.charAt(i);\n\n    if (!(chr in lookupD)) {\n      throw new Error(`Unrecognised Base32768 character: ${chr}`);\n    }\n\n    const [numZBits, z] = lookupD[chr];\n\n    if (numZBits !== BITS_PER_CHAR && i !== length - 1) {\n      throw new Error('Secondary character found before end of input at position ' + String(i));\n    } // Take most significant bit first\n\n\n    for (let j = numZBits - 1; j >= 0; j--) {\n      const bit = z >> j & 1;\n      uint8 = (uint8 << 1) + bit;\n      numUint8Bits++;\n\n      if (numUint8Bits === BITS_PER_BYTE) {\n        uint8Array[numUint8s] = uint8;\n        numUint8s++;\n        uint8 = 0;\n        numUint8Bits = 0;\n      }\n    }\n  } // Final padding bits! Requires special consideration!\n  // Remember how we always pad with 1s?\n  // Note: there could be 0 such bits, check still works though\n\n\n  if (uint8 !== (1 << numUint8Bits) - 1) {\n    throw new Error('Padding mismatch');\n  }\n\n  return new Uint8Array(uint8Array.buffer, 0, numUint8s);\n};\n\nexport { decode, encode };"
             }
@@ -284,8 +265,7 @@
           "moduleName": "",
           "loc": "ww",
           "request": "./src/js/ww.js",
-          "reasons": [
-          ]
+          "reasons": []
         }
       ]
     }
@@ -318,8 +298,7 @@
       "failed": false,
       "errors": 0,
       "warnings": 0,
-      "assets": [
-      ],
+      "assets": [],
       "reasons": [
         {
           "moduleId": 1,
@@ -360,8 +339,7 @@
       "failed": false,
       "errors": 0,
       "warnings": 0,
-      "assets": [
-      ],
+      "assets": [],
       "reasons": [
         {
           "moduleId": null,
@@ -378,8 +356,7 @@
         "Pako",
         "B32768"
       ],
-      "optimizationBailout": [
-      ],
+      "optimizationBailout": [],
       "depth": 0,
       "modules": [
         {
@@ -393,8 +370,7 @@
           "built": true,
           "optional": false,
           "prefetched": false,
-          "chunks": [
-          ],
+          "chunks": [],
           "issuer": null,
           "issuerId": null,
           "issuerName": null,
@@ -402,8 +378,7 @@
           "failed": false,
           "errors": 0,
           "warnings": 0,
-          "assets": [
-          ],
+          "assets": [],
           "reasons": [
             {
               "moduleId": null,
@@ -437,8 +412,7 @@
           "built": true,
           "optional": false,
           "prefetched": false,
-          "chunks": [
-          ],
+          "chunks": [],
           "issuer": "/host/node_modules/babel-loader/lib/index.js??ref--4!/host/src/js/ww.js",
           "issuerId": null,
           "issuerName": "./src/js/ww.js",
@@ -452,8 +426,7 @@
           "failed": false,
           "errors": 0,
           "warnings": 0,
-          "assets": [
-          ],
+          "assets": [],
           "reasons": [
             {
               "moduleId": null,
@@ -479,8 +452,7 @@
             "decode",
             "encode"
           ],
-          "optimizationBailout": [
-          ],
+          "optimizationBailout": [],
           "depth": 1,
           "source": "/**\r\n  Base32768 is a binary-to-text encoding optimised for UTF-16-encoded text.\r\n  (e.g. Windows, Java, JavaScript)\r\n*/\n// Z is a number, usually a uint15 but sometimes a uint7\nconst BITS_PER_CHAR = 15; // Base32768 is a 15-bit encoding\n\nconst BITS_PER_BYTE = 8; // Base32768 uses blocks of 32 characters.\n\nconst blockSize = 1 << 5;\nconst repertoires = ['ҠԀڀڠݠހ߀ကႠᄀᄠᅀᆀᇠሀሠበዠጠᎠᏀᐠᑀᑠᒀᒠᓀᓠᔀᔠᕀᕠᖀᖠᗀᗠᘀᘠᙀᚠᛀកᠠᡀᣀᦀ᧠ᨠᯀᰀᴀ⇠⋀⍀⍠⎀⎠⏀␀─┠╀╠▀■◀◠☀☠♀♠⚀⚠⛀⛠✀✠❀➀➠⠀⠠⡀⡠⢀⢠⣀⣠⤀⤠⥀⥠⦠⨠⩀⪀⪠⫠⬀⬠⭀ⰀⲀⲠⳀⴀⵀ⺠⻀㇀㐀㐠㑀㑠㒀㒠㓀㓠㔀㔠㕀㕠㖀㖠㗀㗠㘀㘠㙀㙠㚀㚠㛀㛠㜀㜠㝀㝠㞀㞠㟀㟠㠀㠠㡀㡠㢀㢠㣀㣠㤀㤠㥀㥠㦀㦠㧀㧠㨀㨠㩀㩠㪀㪠㫀㫠㬀㬠㭀㭠㮀㮠㯀㯠㰀㰠㱀㱠㲀㲠㳀㳠㴀㴠㵀㵠㶀㶠㷀㷠㸀㸠㹀㹠㺀㺠㻀㻠㼀㼠㽀㽠㾀㾠㿀㿠䀀䀠䁀䁠䂀䂠䃀䃠䄀䄠䅀䅠䆀䆠䇀䇠䈀䈠䉀䉠䊀䊠䋀䋠䌀䌠䍀䍠䎀䎠䏀䏠䐀䐠䑀䑠䒀䒠䓀䓠䔀䔠䕀䕠䖀䖠䗀䗠䘀䘠䙀䙠䚀䚠䛀䛠䜀䜠䝀䝠䞀䞠䟀䟠䠀䠠䡀䡠䢀䢠䣀䣠䤀䤠䥀䥠䦀䦠䧀䧠䨀䨠䩀䩠䪀䪠䫀䫠䬀䬠䭀䭠䮀䮠䯀䯠䰀䰠䱀䱠䲀䲠䳀䳠䴀䴠䵀䵠䶀䷀䷠一丠乀习亀亠什仠伀传佀你侀侠俀俠倀倠偀偠傀傠僀僠儀儠兀兠冀冠净几刀删剀剠劀加勀勠匀匠區占厀厠叀叠吀吠呀呠咀咠哀哠唀唠啀啠喀喠嗀嗠嘀嘠噀噠嚀嚠囀因圀圠址坠垀垠埀埠堀堠塀塠墀墠壀壠夀夠奀奠妀妠姀姠娀娠婀婠媀媠嫀嫠嬀嬠孀孠宀宠寀寠尀尠局屠岀岠峀峠崀崠嵀嵠嶀嶠巀巠帀帠幀幠庀庠廀廠开张彀彠往徠忀忠怀怠恀恠悀悠惀惠愀愠慀慠憀憠懀懠戀戠所扠技抠拀拠挀挠捀捠掀掠揀揠搀搠摀摠撀撠擀擠攀攠敀敠斀斠旀无昀映晀晠暀暠曀曠最朠杀杠枀枠柀柠栀栠桀桠梀梠检棠椀椠楀楠榀榠槀槠樀樠橀橠檀檠櫀櫠欀欠歀歠殀殠毀毠氀氠汀池沀沠泀泠洀洠浀浠涀涠淀淠渀渠湀湠満溠滀滠漀漠潀潠澀澠激濠瀀瀠灀灠炀炠烀烠焀焠煀煠熀熠燀燠爀爠牀牠犀犠狀狠猀猠獀獠玀玠珀珠琀琠瑀瑠璀璠瓀瓠甀甠畀畠疀疠痀痠瘀瘠癀癠皀皠盀盠眀眠着睠瞀瞠矀矠砀砠础硠碀碠磀磠礀礠祀祠禀禠秀秠稀稠穀穠窀窠竀章笀笠筀筠简箠節篠簀簠籀籠粀粠糀糠紀素絀絠綀綠緀締縀縠繀繠纀纠绀绠缀缠罀罠羀羠翀翠耀耠聀聠肀肠胀胠脀脠腀腠膀膠臀臠舀舠艀艠芀芠苀苠茀茠荀荠莀莠菀菠萀萠葀葠蒀蒠蓀蓠蔀蔠蕀蕠薀薠藀藠蘀蘠虀虠蚀蚠蛀蛠蜀蜠蝀蝠螀螠蟀蟠蠀蠠血衠袀袠裀裠褀褠襀襠覀覠觀觠言訠詀詠誀誠諀諠謀謠譀譠讀讠诀诠谀谠豀豠貀負賀賠贀贠赀赠趀趠跀跠踀踠蹀蹠躀躠軀軠輀輠轀轠辀辠迀迠退造遀遠邀邠郀郠鄀鄠酀酠醀醠釀釠鈀鈠鉀鉠銀銠鋀鋠錀錠鍀鍠鎀鎠鏀鏠鐀鐠鑀鑠钀钠铀铠销锠镀镠門閠闀闠阀阠陀陠隀隠雀雠需霠靀靠鞀鞠韀韠頀頠顀顠颀颠飀飠餀餠饀饠馀馠駀駠騀騠驀驠骀骠髀髠鬀鬠魀魠鮀鮠鯀鯠鰀鰠鱀鱠鲀鲠鳀鳠鴀鴠鵀鵠鶀鶠鷀鷠鸀鸠鹀鹠麀麠黀黠鼀鼠齀齠龀龠ꀀꀠꁀꁠꂀꂠꃀꃠꄀꄠꅀꅠꆀꆠꇀꇠꈀꈠꉀꉠꊀꊠꋀꋠꌀꌠꍀꍠꎀꎠꏀꏠꐀꐠꑀꑠ꒠ꔀꔠꕀꕠꖀꖠꗀꗠꙀꚠꛀ꜀꜠ꝀꞀꡀ', // length = 1 << 10\n'ƀɀɠʀ' // length = 1 << 2\n];\nconst lookupE = {};\nrepertoires.forEach((repertoire, r) => {\n  const numZBits = BITS_PER_CHAR - BITS_PER_BYTE * r; // 0 -> 15, 1 -> 7\n\n  const encodeRepertoire = [];\n\n  for (let i = 0; i < repertoire.length; i++) {\n    const charCode = repertoire.charCodeAt(i);\n\n    for (let offset = 0; offset < blockSize; offset++) {\n      encodeRepertoire.push(String.fromCharCode(charCode + offset));\n    }\n  }\n\n  lookupE[numZBits] = encodeRepertoire;\n});\nconst lookupD = {};\nObject.entries(lookupE).forEach(([numZBits, encodeRepertoire]) => {\n  encodeRepertoire.forEach((chr, z) => {\n    lookupD[chr] = [Number(numZBits), z];\n  });\n});\n\nconst encode = uint8Array => {\n  const length = uint8Array.length;\n  let str = '';\n  let z = 0;\n  let numZBits = 0;\n\n  for (let i = 0; i < length; i++) {\n    const uint8 = uint8Array[i]; // Take most significant bit first\n\n    for (let j = BITS_PER_BYTE - 1; j >= 0; j--) {\n      const bit = uint8 >> j & 1;\n      z = (z << 1) + bit;\n      numZBits++;\n\n      if (numZBits === BITS_PER_CHAR) {\n        str += lookupE[numZBits][z];\n        z = 0;\n        numZBits = 0;\n      }\n    }\n  }\n\n  if (numZBits !== 0) {\n    // Final bits require special treatment.\n    // z = bbbbbbcccccccc, numZBits = 14, padBits = 1\n    // z = bbbbbcccccccc, numZBits = 13, padBits = 2\n    // z = bbbbcccccccc, numZBits = 12, padBits = 3\n    // z = bbbcccccccc, numZBits = 11, padBits = 4\n    // z = bbcccccccc, numZBits = 10, padBits = 5\n    // z = bcccccccc, numZBits = 9, padBits = 6\n    // z = cccccccc, numZBits = 8, padBits = 7\n    // => Pad `z` out to 15 bits using 1s, then encode as normal (r = 0)\n    // z = ccccccc, numZBits = 7, padBits = 0\n    // z = cccccc, numZBits = 6, padBits = 1\n    // z = ccccc, numZBits = 5, padBits = 2\n    // z = cccc, numZBits = 4, padBits = 3\n    // z = ccc, numZBits = 3, padBits = 4\n    // z = cc, numZBits = 2, padBits = 5\n    // z = c, numZBits = 1, padBits = 6\n    // => Pad `z` out to 7 bits using 1s, then encode specially (r = 1)\n    while (!(numZBits in lookupE)) {\n      z = (z << 1) + 1;\n      numZBits++;\n    }\n\n    str += lookupE[numZBits][z];\n  }\n\n  return str;\n};\n\nconst decode = str => {\n  const length = str.length; // This length is a guess. There's a chance we allocate one more byte here\n  // than we actually need. But we can count and slice it off later\n\n  const uint8Array = new Uint8Array(Math.floor(length * BITS_PER_CHAR / BITS_PER_BYTE));\n  let numUint8s = 0;\n  let uint8 = 0;\n  let numUint8Bits = 0;\n\n  for (let i = 0; i < length; i++) {\n    const chr = str.charAt(i);\n\n    if (!(chr in lookupD)) {\n      throw new Error(`Unrecognised Base32768 character: ${chr}`);\n    }\n\n    const [numZBits, z] = lookupD[chr];\n\n    if (numZBits !== BITS_PER_CHAR && i !== length - 1) {\n      throw new Error('Secondary character found before end of input at position ' + String(i));\n    } // Take most significant bit first\n\n\n    for (let j = numZBits - 1; j >= 0; j--) {\n      const bit = z >> j & 1;\n      uint8 = (uint8 << 1) + bit;\n      numUint8Bits++;\n\n      if (numUint8Bits === BITS_PER_BYTE) {\n        uint8Array[numUint8s] = uint8;\n        numUint8s++;\n        uint8 = 0;\n        numUint8Bits = 0;\n      }\n    }\n  } // Final padding bits! Requires special consideration!\n  // Remember how we always pad with 1s?\n  // Note: there could be 0 such bits, check still works though\n\n\n  if (uint8 !== (1 << numUint8Bits) - 1) {\n    throw new Error('Padding mismatch');\n  }\n\n  return new Uint8Array(uint8Array.buffer, 0, numUint8s);\n};\n\nexport { decode, encode };"
         }
@@ -491,12 +463,10 @@
   "filteredModules": 0,
   "logging": {
     "webpack.buildChunkGraph.visitModules": {
-      "entries": [
-      ],
+      "entries": [],
       "filteredEntries": 2,
       "debug": false
     }
   },
-  "children": [
-  ]
+  "children": []
 }
