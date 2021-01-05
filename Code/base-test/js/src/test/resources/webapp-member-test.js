@@ -1,0 +1,1 @@
+../../../../../frontend/dist/test/webapp-member-test.js

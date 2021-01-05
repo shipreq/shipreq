@@ -92,6 +92,11 @@ object ShipReqBuild {
       .depsForJvm(providedScope(scalaCheck))
       .depsForJs(providedScope(React.core))
 
+      .jsSettings(
+        parallelExecution := false, // Faster
+        jsDependencies in Test += ProvidedJS / "webapp-member-test.js")
+      .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UseNodeAdvanced))
+
   // ===================================================================================================================
   // utils & benchmark-*
 
