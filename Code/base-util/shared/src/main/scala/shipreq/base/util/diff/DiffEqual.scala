@@ -4,6 +4,6 @@ final case class DiffEqual[A](eql: (A, A) => Boolean) extends AnyVal
 
 object DiffEqual {
 
-  def byUnivEq[@specialized A: UnivEq]: DiffEqual[A] =
+  implicit def byUnivEq[A: UnivEq]: DiffEqual[A] =
     DiffEqual(_ == _)
 }

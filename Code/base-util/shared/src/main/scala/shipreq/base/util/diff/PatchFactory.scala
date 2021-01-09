@@ -1,16 +1,31 @@
 package shipreq.base.util.diff
 
-trait PatchFactory[+A] {
-  def newBuilder(): PatchFactory.Builder[A]
+trait PatchFactory[-I, +P] {
+  def newBuilder(ctx: PatchFactory.Ctx[I]): PatchFactory.Builder[P]
 }
 
 object PatchFactory {
 
-  trait Builder[+A] {
-    def delete(srcIdx: Int, length: Int): Unit
-    def insert(srcIdx: Int, tgtIdx: Int, length: Int): Unit
-    def result(): A
+  final case class Ctx[+I](src: I, tgt: I)
+
+  trait Builder[+P] extends PatchWriter {
+    def result(): P
   }
+
+  def apply[I, P](b: Ctx[I] => Builder[P]): PatchFactory[I, P] =
+    b(_)
+
+  // ===================================================================================================================
+
+  trait CtxFree[+P] extends PatchFactory[Any, P] {
+    final override def newBuilder(ctx: PatchFactory.Ctx[Any]): PatchFactory.Builder[P] =
+      newBuilder()
+
+    def newBuilder(): PatchFactory.Builder[P]
+  }
+
+  def ctxFree[P](b: => Builder[P]): CtxFree[P] =
+    () => b
 
   // ===================================================================================================================
 
@@ -44,7 +59,7 @@ object PatchFactory {
 
   type Ops = ArraySeq[Op]
 
-  object Ops extends PatchFactory[Ops] {
+  object Ops extends CtxFree[Ops] {
 
     override def newBuilder(): PatchFactory.Builder[Ops] =
       new Builder

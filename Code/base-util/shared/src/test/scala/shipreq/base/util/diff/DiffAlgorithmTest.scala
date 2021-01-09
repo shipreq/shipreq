@@ -22,7 +22,7 @@ abstract class DiffAlgorithmTest(algo: DiffAlgorithm) extends TestSuite {
   }
 
   private def assertCharDiff(src: String, tgt: String)(expectedOps: String*)(implicit l: Line): Unit = {
-    val ops = algo.diff(src, tgt, Ops)(DiffEqual.byUnivEq)
+    val ops = algo.diff(src, tgt)(Ops)
     val pp = ppOp(src, tgt) _
     assertSeq(ops.map(pp), expectedOps)
     val patched = applyPatch(src, tgt, ops)
@@ -64,7 +64,7 @@ abstract class DiffAlgorithmTest(algo: DiffAlgorithm) extends TestSuite {
     "prop" - {
       val prop = Prop.equal[(String, String)]("p(a, Δᵃᵇ) = b")(
         actual = _._2,
-        expect = { case (x, y) => applyPatch(x, y, algo.diff(x, y, Ops)(DiffEqual.byUnivEq)) },
+        expect = { case (x, y) => applyPatch(x, y, algo.diff(x, y)(Ops)) },
       )
       val genStr = Gen.chooseChar_!('A' to 'D').string(0 to 92)
       prop.mustBeSatisfiedBy(genStr.pair) //(defaultPropSettings.setSampleSize(1000))

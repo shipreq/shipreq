@@ -46,6 +46,15 @@ object DiffSource {
       this
   }
 
+  // ===================================================================================================================
+
+  final case class Auto[-A, +E](wrap: A => DiffSource[E]) extends AnyVal
+
+  object Auto {
+    implicit def string: Auto[String, Char] =
+      Auto(fromString)
+  }
+
   def fromString(str: String): DiffSource[Char] =
     new DiffSource[Char] {
       override def length          = str.length

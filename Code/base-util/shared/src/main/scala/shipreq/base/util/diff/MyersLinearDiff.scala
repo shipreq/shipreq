@@ -14,16 +14,15 @@ package shipreq.base.util.diff
   */
 object MyersLinearDiff extends DiffAlgorithm {
 
-  override def diff[A, P](original    : DiffSource[A],
-                          revised     : DiffSource[A],
-                          patchFactory: PatchFactory[P])
-                         (implicit A  : DiffEqual[A]): P = {
+  override def writeDiff[A](original  : DiffSource[A],
+                            revised   : DiffSource[A],
+                            patch     : PatchWriter)
+                           (implicit A: DiffEqual[A]): Unit = {
 
     import DiffSource.{Empty => emptyView}
 
-    val patch = patchFactory.newBuilder()
-    val g     = new Array[Int]((Math.min(original.length, revised.length) + 1) << 1)
-    val p     = new Array[Int](g.length)
+    val g = new Array[Int]((Math.min(original.length, revised.length) + 1) << 1)
+    val p = new Array[Int](g.length)
 
     def go(e: DiffSource[A],
            f: DiffSource[A],
@@ -120,8 +119,6 @@ object MyersLinearDiff extends DiffAlgorithm {
     }
 
     go(original, revised, 0, 0)
-
-    patch.result()
   }
 
   @inline
