@@ -132,18 +132,15 @@ object PatienceDiff {
         }
 
       def go(slice: Slice): Unit = {
-        println(s">  GO : $slice")
 
-        // TODO cache unique
         var m: Match = null
+
         if (slice.abNonEmpty)
           m = patienceSort(unique(a, b, slice))
 
-        println(s"MATCH : $m")
         if (m == null) {
 
           if (slice.aNonEmpty | slice.bNonEmpty) {
-            println(s" DIFF : $slice")
             f(slice)
           }
 
@@ -152,7 +149,8 @@ object PatienceDiff {
           var bIdx = slice.bStart
           var aNext = 0
           var bNext = 0
-          while ( {
+
+          while(true) {
             if (m == null) {
               aNext = slice.aEndExcl
               bNext = slice.bEndExcl
@@ -161,105 +159,20 @@ object PatienceDiff {
               bNext = m.bIdx
             }
 
-            // TODO Opt - reuse slice? or reuse var
             val subSlice = new Slice(aIdx, aNext, bIdx, bNext)
             matchHead(subSlice)
             matchTail(subSlice)
             go(subSlice)
-            println(s"<  GO")
 
-            if (m == null) {
-              false
-            } else {
-              aIdx = m.aIdx
-              bIdx = m.bIdx
-              m = m.next
-              true
-            }
-          }) ()
+            if (m == null)
+              return
+
+            aIdx = m.aIdx
+            bIdx = m.bIdx
+            m = m.next
+          }
         }
 
-        /*
-        ==============================================================================================
-        line[12] = [ab]Idx
-        end[12]  = slice.[ab]EndExcl - 1
-        next[12] = [ab]Next / m.[ab]Idx
-        ==============================================================================================
-
-        var aIdx = slice.aStart
-        var bIdx = slice.bStart
-        var aNext = 0
-        var bNext = 0
-        while ({
-
-          if (m == null) {
-            aNext = slice.aEndExcl - 1
-            bNext = slice.bEndExcl - 1
-          } else {
-            aNext = m.aIdx
-            bNext = m.bIdx
-
-            while (aNext > aIdx && bNext > bIdx && a(aNext - 1) == b(bNext - 1)) {
-              aNext -= 1
-              bNext -= 1
-            }
-          }
-
-          while (aIdx < aNext && bIdx < bNext && a(aIdx) == b(bIdx)) {
-            aIdx += 1
-            bIdx += 1
-          }
-
-          if (aNext > aIdx || bNext > bIdx) {
-            val subSlice = new Slice(aIdx, aNext, bIdx, bNext)
-            go(subSlice)
-            println(s"<  GO")
-          }
-
-          if (m == null) {
-            false
-
-          } else {
-
-            while (
-              m.next != null &&
-                m.next.aIdx == m.aIdx + 1 &&
-                m.next.bIdx == m.bIdx + 1
-            )
-              m = m.next
-
-            aIdx = m.aIdx + 1
-            bIdx = m.bIdx + 1
-            m = m.next
-            true
-          }
-
-        }) ()
-
-//        var end1 = slice.aEndExcl
-//        var end2 = slice.bEndExcl
-//        var next1, next2 = 0
-//
-//        var first: Match = null
-//        if (slice.abNonEmpty)
-//          first = patienceSort(unique(a, b, slice))
-//
-//        while ({
-//
-//          if (first != null) {
-//            next1 = first.aIdx
-//            next2 = first.bIdx
-//            val subSlice = new Slice(aIdx, next1, bIdx, next2)
-//            matchTail(s)
-//
-//          } else {
-//
-//          }
-//
-//
-//          ???
-//        }) ()
-*/
       }
 
       go(new Slice(0, a.length, 0, b.length))
@@ -276,107 +189,6 @@ object PatienceDiff {
 //      }
 //    }
 
-    def patienceDiff_Git[A: UnivEq](a: DiffSource[A],
-                                    b: DiffSource[A],
-                                    p: PatchWriter
-                                   )
-                                   (f: Slice => Unit): Unit = {
-
-      var walk_common_sequence: (Match, Int, Int, Int, Int) => Unit =
-        null
-
-      def patience_diff(line1: Int, count1: Int,
-                        line2: Int, count2: Int,
-                       ): Unit = {
-
-        if (count1 == 0) {
-          if (count2 != 0) {
-            // nothing on left, lines on right
-            p.insert(
-              srcIdx = line1,
-              tgtIdx = line2,
-              length = count2
-            )
-          }
-        } else if (count2 == 0) {
-          // lines on left, nothing on right
-          p.delete(
-            srcIdx = line1,
-            length = count1
-          )
-        } else
-        {
-          var s = new Slice(line1, line1 + count1, line2, line2 + count2)
-          var m: Match = patienceSort(unique(a, b, s))
-          if (m == null) {
-            f(s)
-          } else {
-            walk_common_sequence(m, line1, count1, line2, count2)
-          }
-        }
-
-      }
-
-      walk_common_sequence = (_first, _line1, count1, _line2, count2) => {
-        var line1 = _line1
-        var line2 = _line2
-        val end1 = line1 + count1
-        val end2 = line2 + count2
-        var next1,next2 = 0
-        var first = _first
-
-        while ({
-
-          if (first != null) {
-            next1 = first.aIdx
-            next2 = first.bIdx
-            while (next1 > line1 && next2 > line2 && a(next1 - 1) == b(next2 - 1)) {
-              next1 -= 1
-              next2 -= 1
-            }
-          } else {
-            next1 = end1
-            next2 = end2
-          }
-
-          while (line1 < next1 && line2 < next2 && a(line1) == b(line2)) {
-            line1 += 1
-            line2 += 1
-          }
-
-          if (next1 > line1 || next2 > line2) {
-            patience_diff(
-              line1, next1 - line1,
-              line2, next2 - line2,
-            )
-            // break?
-          }
-
-          if (first == null) {
-            false
-          } else {
-
-            while (
-              first.next != null
-              && first.next.aIdx == first.aIdx + 1
-              && first.next.bIdx == first.bIdx + 1
-            ) {
-              first = first.next
-            }
-
-            line1 = first.aIdx + 1
-            line2 = first.bIdx + 1
-            first = first.next
-
-            true
-          }
-
-        }) ()
-      }
-
-      patience_diff(0, a.length, 0, b.length)
-    }
-
   } // Internals
 }
 
@@ -389,7 +201,6 @@ final class PatienceDiff[A: UnivEq](fallback: DiffAlgorithm[A]) extends DiffAlgo
 
     val pw2 = new PatchWriter.WithMutableOffsets(pw)
 
-//    patienceDiff_Git(a, b, pw) { slice =>
     patienceDiff(a, b) { slice =>
       val a2 = a.slice(slice.aStart, slice.aEndExcl)
       val b2 = b.slice(slice.bStart, slice.bEndExcl)
