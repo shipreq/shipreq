@@ -90,8 +90,8 @@ object DiffSource {
           def go(remainder: String, offset: Int): Unit = {
             var n = remainder.indexOf('\n')
             if (n >= 0) {
-              if (n != 0) b += new StringSource(input, offset, n)
-//                b += new StringSource(input, offset, n + 1)
+//              if (n != 0) b += new StringSource(input, offset, n)
+                b += new StringSource(input, offset, n + 1)
 
               n += 1
               go(remainder.drop(n), offset + n)
@@ -106,27 +106,39 @@ object DiffSource {
 
         val root = Str(input)
 
-        def newInstance(off: Int, len: Int): Lines =
+        def newInstance(linesOffset: Int, linesLength: Int): Lines =
           new Lines {
-            override def offset        = off
-            override def length        = len
-            override def apply(i: Int) = lines(off + i)
+            override def offset        = linesOffset
+            override def length        = linesLength
+            override def apply(i: Int) = lines(linesOffset + i)
 
             override protected def _slice(start: Int, newLen: Int) =
-              newInstance(off + start, newLen)
+              newInstance(linesOffset + start, newLen)
 
-            override def value =
-              if (off == 0 && len == lines.length)
+            override def value = {
+              val v =
+              if (linesOffset == 0 && linesLength == lines.length)
                 root
               else {
-                val strStart    = if (off == 0) 0 else lines(off - 1).endExclusive
-                val lineEndExcl = off + len
-                val strEndExcl  = if (lineEndExcl == lines.length) input.length else lines(lineEndExcl - 1).endExclusive
+                val strStart    = if (linesOffset == 0) 0 else lines(linesOffset).offset
+                val lineEndExcl = linesOffset + linesLength
+                val strEndExcl  = if (lineEndExcl >= lines.length) input.length else lines(lineEndExcl).offset
                 root.slice(strStart, strEndExcl)
               }
+//            println(s"----- .value(${input.quote}, $linesOffset, $linesLength) = ${v}")
+            v
+            }
 
-            override def empty(offset: Int) =
-              DiffSource.empty(DiffSource.empty("", offset), offset)
+            override def empty(o: Int) = {
+              val strOffset =
+                if (o < linesLength)
+                  lines(o).offset
+                else if (linesLength > 0)
+                  lines(linesOffset + linesLength - 1).endExclusive
+                else
+                  0
+              DiffSource.empty(DiffSource.empty("", strOffset), o)
+            }
           }
 
         newInstance(0, lines.length)

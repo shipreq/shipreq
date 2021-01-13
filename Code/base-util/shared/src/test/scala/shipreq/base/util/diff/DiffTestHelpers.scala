@@ -35,7 +35,7 @@ object DiffTestHelpers {
       assertEq("patched", patched, tgt)
     catch {
       case t: Throwable =>
-//        println(ops.map("  - " + _).mkString("Ops:\n", "\n", ""))
+        println(ops.map("  - " + _).mkString("Ops:\n", "\n", ""))
         throw t
     }
     ops

@@ -49,12 +49,24 @@ object PatienceDiffTest extends TestSuite {
       implicit def algo = algoByLines
 
 
-      "prop" - propTestLines(1000)
+      "prop" - propTestLines(4000000)
 
       "1" - {
         val x = "CBBC\nADBABCCB\nAAB\nDCCD\nADA\n\nCA\nADBBBBA\nCCBCDAC\nABCAABDC\nC"
         val y = "DCCD\nB\nAD\nCBAB\nC\nC\nCCDCAC\nADCBC\nBDD\nDCA\nDAD\nAABCDDD"
         assertRoundTrip(x, y)
+      }
+
+      "2" - {
+        val x = "DACA\nCAAC\nCDDD\nD"
+        val y = "D\nCCBA\nA\nC"
+        assertRoundTrip(x, y)
+        /*
+        0123456789012345
+        DACA CAAC CDDD D
+        D CCBA A C
+
+         */
       }
 
     }
