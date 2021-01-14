@@ -22,7 +22,7 @@ object Client {
   }
 
   final class MutableDraftStream {
-    private var s = Option.empty[DraftStream]
+//    private var s = Option.empty[DraftStream]
 
 //    def init(event: Option[Event]): Doc = {
 //      assert(s.isEmpty, "DraftStream already exists")
@@ -130,7 +130,7 @@ final class Client(protected val network: Network, val id: String) extends Node 
       case None    => doc.toUpdate
     }
 
-  def recvRemoteStateOnConnect(state: Option[DraftStream]): Unit = {
+  def recvRemoteStateOnConnect(state: Option[DraftStream[Any]]): Unit = {
 //    for (s <- state) {
 //
 //    }

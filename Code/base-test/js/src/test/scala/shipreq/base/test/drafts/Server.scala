@@ -12,7 +12,7 @@ final class Server(protected val network: Network) extends Node {
   network.register(this)
 
   var connected = Set.empty[Ref[Node]]
-  var drafts = Option.empty[DraftStream]
+  var drafts = Option.empty[DraftStream[Any]]
   var events = new js.Array[Event]
 
   def connect(nodes: Client*): Unit = {

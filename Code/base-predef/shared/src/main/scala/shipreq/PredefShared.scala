@@ -1,6 +1,7 @@
 package shipreq
 
 import java.lang.CharSequence
+import java.util.UUID
 import nyaya.util.{MultiValues, Multimap}
 import scala.annotation.elidable.ASSERTION
 import scala.collection.{ArrayOps, StringOps, immutable}
@@ -138,6 +139,12 @@ sealed abstract class LowPriorityImplicits {
   @inline implicit final def predefWrapBooleanArray         (xs: Array[Boolean])    = scala.Predef.wrapBooleanArray(xs)
   @inline implicit final def predefWrapUnitArray            (xs: Array[Unit])       = scala.Predef.wrapUnitArray   (xs)
   @inline implicit final def predefWrapString               (s: java.lang.String)   = scala.Predef.wrapString      (s)
+
+  import japgolly.univeq.UnivEq
+
+  // TODO Add univEqUUID to UnivEq
+  @inline implicit final def univEqUUID: UnivEq[UUID] =
+    UnivEq.force
 }
 
 sealed abstract class PredefScala extends LowPriorityImplicits {
