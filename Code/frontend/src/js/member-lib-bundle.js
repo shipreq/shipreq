@@ -65,9 +65,5 @@ export { Pako }
 import * as B32768 from 'base32768/dist/es6/base32768'
 export { B32768 }
 
-// yjs
-import * as Y from './yjs'
-export { Y }
-
 // Paste the following into web console for quick testing.
-// console.log("G: ", {autosize, B32768, ChromePicker, clipboard, GithubPicker, HRP, LRUC, moment, Pako, ReactCollapse, RSPZ, RVAS, scrollIntoView, screenfull, TextComplete, TextCompleteTA, TM, TFE, tinycolor, Y})
+// console.log("G: ", {autosize, B32768, ChromePicker, clipboard, GithubPicker, HRP, LRUC, moment, Pako, ReactCollapse, RSPZ, RVAS, scrollIntoView, screenfull, TextComplete, TextCompleteTA, TM, TFE, tinycolor})

@@ -2,7 +2,6 @@ package shipreq
 
 import org.scalajs.dom.raw.Console
 import scala.scalajs.js
-import scala.scalajs.js.|
 
 // JS
 object Predef extends PredefShared {
@@ -13,8 +12,6 @@ object Predef extends PredefShared {
   @inline def JSON = scala.scalajs.js.JSON
 
   @inline def BREAKPOINT() = scala.scalajs.js.special.debugger()
-
-  type JsNumber = Byte | Short | Int | Float | Double
 
   override implicit def predefExtString(s: String): AnyVal with PredefShared.ExtString =
     new PredefJs.ExtString(s)

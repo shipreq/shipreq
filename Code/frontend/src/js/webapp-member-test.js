@@ -10,6 +10,3 @@ export { Pako }
 
 import * as B32768 from 'base32768/dist/es6/base32768'
 export { B32768 }
-
-import * as Y from './yjs'
-export { Y }
