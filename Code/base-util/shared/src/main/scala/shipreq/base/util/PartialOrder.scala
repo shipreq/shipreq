@@ -1,7 +1,7 @@
 package shipreq.base.util
 
 import scala.runtime.AbstractFunction2
-import PartialOrder.Cmp
+import shipreq.base.util.PartialOrder.Cmp
 
 /** Laws:
   *   - reflexivity

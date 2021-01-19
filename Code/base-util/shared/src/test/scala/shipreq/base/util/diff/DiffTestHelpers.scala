@@ -1,11 +1,11 @@
 package shipreq.base.util.diff
 
+import japgolly.microlibs.testutil.TestUtil._
 import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._
-import japgolly.microlibs.testutil.TestUtil._
+import shipreq.base.util.diff.PatchFactory._
 import sourcecode.Line
-import PatchFactory._
 
 object DiffTestHelpers {
 
