@@ -112,7 +112,7 @@ object Dependencies {
     val core = mm("logback-classic") ++ mm("logback-core")
 
     val withPlugins = core ++
-      jvmOnly("net.logstash.logback" % "logstash-logback-encoder" % "6.5")
+      jvmOnly("net.logstash.logback" % "logstash-logback-encoder" % "6.6")
   }
 
   object Lift {
@@ -147,7 +147,7 @@ object Dependencies {
   }
 
   object Akka {
-    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.10")
+    private val mm = MultiModule.scala("com.typesafe.akka", "2.6.11")
     val actor   = mm("akka-actor") ++ mm("akka-slf4j")
     val testkit = mm("akka-testkit")
   }
@@ -159,7 +159,7 @@ object Dependencies {
   }
 
   object LibJetty {
-    private def ver = "9.4.35.v20201120"
+    private def ver = "9.4.36.v20210114"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
@@ -205,13 +205,13 @@ object Dependencies {
   val catsEffect   = jvmOnly("org.typelevel"              %% "cats-effect"           % "2.3.1")
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.9")
-  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "7.3.2")
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "7.5.1")
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.5")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.14")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.5.0")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.18")
-  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.14.0")
+  val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.14.1")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "4.0.2")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.15.2")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.2")
@@ -220,7 +220,7 @@ object Dependencies {
   val betterMonadicFor = compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
   val useBetterMonadicFor = (_: Project).settings(addCompilerPlugin(betterMonadicFor))
 
-  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.2" cross CrossVersion.full)
+  val kindProjector = compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full)
   val useKindProjector = (_: Project).settings(addCompilerPlugin(kindProjector))
 
   val updateExclusions: ModuleFilter = {
