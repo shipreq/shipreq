@@ -53,7 +53,7 @@ services:
     links:
       - postgres
       - redis
-      - jaeger
+      - fake_cdn
     ports:
       - $PORT_SHIPREQ_WEBAPP:8080
     volumes:
@@ -89,8 +89,6 @@ services:
   fake_cdn:
     image: shipreq/dev/fake_cdn
     container_name: shipreq_dev_fake_cdn
-    links:
-      - webapp
     environment:
       - TARGET=http://webapp:8080
     ports:

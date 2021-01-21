@@ -14,6 +14,7 @@ import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseCode
 import shipreq.webapp.base.protocol.websocket._
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.base.test._
 import shipreq.webapp.client.project.app.state.{Global, ProjectState}
 import shipreq.webapp.member.project.data.Project
@@ -126,6 +127,7 @@ final class TestGlobal(initialProjectState: ProjectState) extends Global((_, _) 
         onServerPush  = onPush,
         onStateChange = _ => onWebSocketStateChange,
         timers        = JsTimers.real,
+        localStorage  = AbstractWebStorage.inMemory(),
         logger        = logger)
   }
 

@@ -12,6 +12,7 @@ import shipreq.webapp.base.lib.{ConfirmJs, LoggerJs, PromptJs}
 import shipreq.webapp.base.protocol.ajax.CommonProtocolsJs
 import shipreq.webapp.base.protocol.entrypoint.ClientSideProcImpl
 import shipreq.webapp.base.protocol.websocket.WebSocketClient
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.client.loaders.ProjectSpaLoader
 import shipreq.webapp.client.project.app.pages.root._
 import shipreq.webapp.client.project.app.state.Global
@@ -30,11 +31,19 @@ object Main extends ClientSideProcImpl(ProjectSpaEntryPoint.proc) {
     ErrorHandlingFeature.enable()
     Style.addToDocument()
 
-    val reauth    = ReauthenticationModal(i.username)
-    val protocol  = ProjectSpaProtocols.WebSocket(i.projectId)
-    val wsUrlBase = Url.Absolute.Base(location.protocol + "//" + location.host).forWebSocket
-    val wsClient  = WebSocketClient.Builder(wsUrlBase, protocol, wsRetries)
-    val global    = Global(reauth, wsClient, (g, _) => onLoad(i, g), onFailure(i), LoggerJs.devOnly.prefixedWith("[WCP] "))
+    val localStorage = AbstractWebStorage.localOrEmpty()
+    val reauth       = ReauthenticationModal(i.username)(localStorage)
+    val protocol     = ProjectSpaProtocols.WebSocket(i.projectId)
+    val wsUrlBase    = Url.Absolute.Base(location.protocol + "//" + location.host).forWebSocket
+    val wsClient     = WebSocketClient.Builder(wsUrlBase, protocol, wsRetries)
+
+    val global = Global(
+      reauth        = reauth,
+      wscBuilder    = wsClient,
+      onFirstLoad   = (g, _) => onLoad(i, g),
+      onInitFailure = onFailure(i),
+      localStorage  = localStorage,
+      logger        = LoggerJs.devOnly.prefixedWith("[WCP] "))
 
     val keepAliveEvery     = Duration.ofSeconds(21)
     val syncEvery          = Duration.ofSeconds(30)

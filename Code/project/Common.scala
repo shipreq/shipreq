@@ -256,7 +256,6 @@ object Common {
       jsTests(t),
       debugOrRelease(jsDevSettings, jsProdSettings),
       InBrowserTesting.js)
-    .depsForJs(Dependencies.scalajsJavaTime)
     .settings(
       parallelExecution in testOnly := false,
       scalaJSLinkerConfig ~= { _.withSourceMap(emitSourceMapsValue) })
@@ -274,9 +273,14 @@ object Common {
           .withAsInstanceOfs(CheckedBehavior.Unchecked)
           .withProductionMode(true)
         )
-          .withPrettyPrint(false)
-          .withClosureCompiler(true)
-          .withCheckIR(true)
+        .withESFeatures(_
+          // Choose to be slow on Firefox but much smaller JS size
+          // See https://www.scala-js.org/news/2020/11/16/announcing-scalajs-1.3.1/
+          .withAvoidClasses(false)
+        )
+        .withPrettyPrint(false)
+        .withClosureCompiler(true)
+        .withCheckIR(true)
       },
       // More than 1 running instance of Google Closure exponentially increases time & mem-usage
       Global / concurrentRestrictions += Tags.limit(ScalaJSTags.Link, 1)

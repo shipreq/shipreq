@@ -39,7 +39,7 @@ class SerialisationBinaryProjectBM {
   def setup(): Unit = {
     val d = SampleData.byParams(`type`, events)
     p = d.project
-    b = d.projectBinary.toByteBuffer
+    b = d.projectBinary.unsafeByteBuffer
     ()
   }
 

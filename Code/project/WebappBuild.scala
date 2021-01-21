@@ -132,8 +132,9 @@ object WebappBuild {
       .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UsePhantomJs))
       .dependsOn(webappBaseTest, webappMember)
       .depsForBoth(Circe.main)
+      .depsForBoth(ScalaCSS.core % Test) // for NaturalOrdering
       .jsSettings(
-        parallelExecution := false, // I don't know why this is needed
+        parallelExecution := false, // Faster
         jsDependencies in Test += ProvidedJS / "webapp-member-test.js")
 
   lazy val webappSampleDataJVM = webappSampleData.jvm

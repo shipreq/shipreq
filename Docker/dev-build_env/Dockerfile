@@ -1,9 +1,17 @@
-FROM archlinux/base
+FROM archlinux:base-20201213.0.11146
 
 RUN pacman -Sy --noconfirm --needed archlinux-keyring
 
-RUN pacman -Sy --noconfirm reflector \
- && reflector --country Australia --country Canada --latest 100 --sort rate --save /etc/pacman.d/mirrorlist
+RUN pacman -Sy --noconfirm reflector rsync \
+ && reflector \
+      --connection-timeout 2 \
+      --download-timeout 2 \
+      --country Australia \
+      --country Canada \
+      --country "United States" \
+      --latest 8 \
+      --sort rate \
+      --save /etc/pacman.d/mirrorlist
 
 RUN pacman -Syyu --noconfirm
 
@@ -51,11 +59,15 @@ RUN sed -i 's/^COMPRESSXZ/#COMPRESSXZ/' /etc/makepkg.conf \
 # Graal #
 #########
 
+# Note: when changing this, make sure to also change:
+#   - :/Code/project/Dependencies.scala
+#   - :/Docker/shipreq-base/Dockerfile
 RUN n=jdk11-graalvm-bin \
+ && gitsha=4900009ab7455050557f35b379a7541a5e800356 \
  && cd /tmp \
  && git clone https://aur.archlinux.org/$n.git \
  && cd $n \
- && git checkout 765c34b29bde6b03b76569c232c9daec19f1344c 2>/dev/null \
+ && git checkout $gitsha 2>/dev/null \
  && makepkg -sri --noconfirm \
  && cd /tmp \
  && rm -rf $n
@@ -100,8 +112,8 @@ RUN cd /usr/local/bin \
 RUN mkdir /tmp/scala \
  && cd /tmp/scala \
  && mkdir project \
- && echo 'sbt.version=1.3.13' > project/build.properties \
- && echo 'scalaVersion := "2.13.3"' > build.sbt \
+ && echo 'sbt.version=1.4.6' > project/build.properties \
+ && echo 'scalaVersion := "2.13.4"' > build.sbt \
  && echo 'object Build{}' > project/Build.scala \
  && echo 'object M{}' > M.scala \
  && sbt test \

@@ -54,7 +54,7 @@ object Client {
         codec.encode[Cmd[_]](cmd)
 
       override def postEnc[A](cmd: Cmd[A], enc: Encoded)(implicit readResult: Reader[A]): AsyncCallback[A] =
-        initBarrier.waitForCompletion >> AsyncCallback.promise[A].map { case (result, complete) =>
+        initBarrier.await >> AsyncCallback.promise[A].map { case (result, complete) =>
           lastPromiseId += 1
           val id = lastPromiseId
           def listener(msg: Encoded): Callback = {

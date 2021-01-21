@@ -14,6 +14,7 @@ import shipreq.webapp.member.test.WebappTestUtil
  *    - live: BR, CO, FR, MF, UC
  *    - dead: DD, SI
  */
+@nowarn("msg=match may not be exhaustive")
 object SampleProject {
   import DataImplicits._
   import UnsafeTypes._

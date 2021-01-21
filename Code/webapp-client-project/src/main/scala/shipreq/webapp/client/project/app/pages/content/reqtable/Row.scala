@@ -137,7 +137,7 @@ object Row {
   }(nv => {
     case ForReq(r, l, e, f, i)             => ForReq(r, l, e.copyReqCodes(nv), f, i)
     case r: ForCodeGroup if nv.length == 1 => r.copy(reqCode = nv.head)
-    case r: ForCodeGroup if nv.length != 1 => assert(false, s"Can't apply $nv to $r") ;r
+    case r: ForCodeGroup                   => assert(false, s"Can't apply $nv to $r") ;r
   })
   val reqCodesO = reqCodes.asOptional
 

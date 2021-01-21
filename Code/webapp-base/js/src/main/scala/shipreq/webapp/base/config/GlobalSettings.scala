@@ -1,10 +1,9 @@
 package shipreq.webapp.base.config
 
-import shipreq.webapp.base.lib.BrowserStorage
+import shipreq.webapp.base.protocol.webstorage._
 
 object GlobalSettings {
 
-  private implicit def storage = BrowserStorage.localOrEmpty
+  val SessionExpired = WebStorageKey.boolean("session-expired")
 
-  val SessionExpired = BrowserStorage.Field.boolean("session-expired")
 }

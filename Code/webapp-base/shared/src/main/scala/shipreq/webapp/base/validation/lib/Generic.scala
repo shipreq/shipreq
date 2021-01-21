@@ -346,8 +346,8 @@ object Generic {
         case (-\/(e1), -\/(e2)) => -\/(E.append(e1, e2))
       }
 
-    def applicativeInstance[E](implicit E: Semigroup[E]): Applicative[E \/ ?] =
-      new Applicative[E \/ ?] {
+    def applicativeInstance[E](implicit E: Semigroup[E]): Applicative[E \/ *] =
+      new Applicative[E \/ *] {
         override def point[A](a: => A) = \/-(a)
         override def ap[A, B](fa: => E \/ A)(fab: => E \/ (A => B)) = AccumuateErrors(fa, fab)((a, f) => f(a))(E)
       }

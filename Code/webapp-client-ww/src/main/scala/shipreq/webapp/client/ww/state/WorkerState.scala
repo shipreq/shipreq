@@ -43,7 +43,7 @@ final class WorkerState(logger: LoggerJs) {
     AsyncCallback.barrier.runNow()
 
   private val awaitGraphViz: AsyncCallback[Unit] =
-    graphvizBarrier.waitForCompletion
+    graphvizBarrier.await
 
   def withGraphViz[A](f: => AsyncCallback[A], retries: Int = 3): AsyncCallback[A] = {
     val main = AsyncCallback.byName(f).attempt.timeoutMs(2000)
@@ -127,7 +127,7 @@ final class WorkerState(logger: LoggerJs) {
         AsyncCallback.barrier.asAsyncCallback.flatMap { barrier =>
           val ordPromise = OrdPromise(ord, barrier.complete)
           val save = modState(Immutable.ordPromises.modify(ordPromise :: _)).asAsyncCallback
-          save >> barrier.waitForCompletion
+          save >> barrier.await
         }
     }
 }

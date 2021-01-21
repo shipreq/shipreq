@@ -13,6 +13,7 @@ import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplici
 import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.ReqId
 import shipreq.webapp.base.protocol.websocket._
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.base.test.FakeWebSocket
 import shipreq.webapp.base.test.FakeWebSocket.Message
 import shipreq.webapp.member.test.WebappTestUtil._
@@ -87,12 +88,16 @@ class WebSocketClientTester {
       debugPrintln(s"State change: $s")
     }
 
+  val localStorage =
+    AbstractWebStorage.inMemory()
+
   val client = WebSocketClient.Builder(newWS, P, retries)
     .build(
       reauthorise   = AsyncCallback.delay{reauthAttempts += 1; nextReauthResult()},
       onServerPush  = p => Callback(receivedPushes :+= p),
       onStateChange = _ => onStateChange,
       timers        = timers,
+      localStorage  = localStorage,
       logger        = LoggerJs.on) // don't turn this off - it being on has caught bugs before
 
   val invoker = client.invoker(P.ReqRes)

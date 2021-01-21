@@ -12,6 +12,7 @@ import shipreq.webapp.member.test.project.UnsafeTypes._
  *
  * Not extended by [[SampleProject3]].
  */
+@nowarn("msg=match may not be exhaustive")
 object SampleProject2 {
 
   lazy val project = {

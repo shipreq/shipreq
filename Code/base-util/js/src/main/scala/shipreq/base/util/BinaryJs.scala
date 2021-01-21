@@ -6,7 +6,7 @@ import org.scalajs.dom.window
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.typedarray.TypedArrayBufferOps._
-import scala.scalajs.js.typedarray.{ArrayBuffer, Int8Array, TypedArrayBuffer}
+import scala.scalajs.js.typedarray._
 
 object BinaryJs extends BinaryJs
 
@@ -46,16 +46,14 @@ trait BinaryJs {
     arrayBufferToBlob(byteBufferToArrayBuffer(bb))
 
   final def byteBufferToInt8Array(bb: ByteBuffer): Int8Array = {
-    val l = bb.limit()
-    if (bb.hasTypedArray()) {
-      val array = bb.typedArray()
-      if (l == array.length)
-        array
-      else
-        array.subarray(0, l)
-    } else if (bb.hasArray) {
+    val limit = bb.limit()
+    if (bb.hasTypedArray())
+      bb.typedArray()
+    else if (bb.hasArray) {
       var array = bb.array()
-      if (l != array.length) array = array.take(l)
+      val offset = bb.arrayOffset()
+      if (limit != array.length)
+        array = array.slice(offset, offset + limit)
       new Int8Array(array.toJSArray)
     } else {
       val array = BinaryData.unsafeFromByteBuffer(bb).unsafeJsArray
@@ -63,7 +61,19 @@ trait BinaryJs {
     }
   }
 
-  final def int8ArrayToArrayBuffer(a: Int8Array): ArrayBuffer =
-    a.buffer.slice(0, a.length)
+  final def int8ArrayToArrayBuffer(v: Int8Array): ArrayBuffer =
+    arrayBufferViewToArrayBuffer(v)
+
+  final def uint8ArrayToArrayBuffer(v: Uint8Array): ArrayBuffer =
+    arrayBufferViewToArrayBuffer(v)
+
+  final private def arrayBufferViewToArrayBuffer(v: ArrayBufferView): ArrayBuffer = {
+    val off = v.byteOffset
+    val len = v.byteLength
+    if (len == v.buffer.byteLength)
+      v.buffer
+    else
+      v.buffer.slice(off, off + len)
+  }
 
 }

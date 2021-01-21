@@ -32,11 +32,14 @@ object BaseData {
     state.enc.writeInt(ver)
   }
 
+  def unsupportedVer(ver: Int, maxSupportedVer: Int): Nothing =
+    throw UnsupportedVersionException(found = Version.v1(ver), maxSupported = Version.v1(maxSupportedVer))
+
   def readByVersion[A](maxSupportedVer: Int)(f: PartialFunction[Int, A])(implicit state: UnpickleState): A = {
     assert(maxSupportedVer > 0)
 
     def unsupportedVer(ver: Int): Nothing =
-      throw UnsupportedVersionException(found = Version.v1(ver), maxSupported = Version.v1(maxSupportedVer))
+      BaseData.unsupportedVer(ver, maxSupportedVer)
 
     def readVer(ver: Int): A =
       f.applyOrElse[Int, A](ver, unsupportedVer)

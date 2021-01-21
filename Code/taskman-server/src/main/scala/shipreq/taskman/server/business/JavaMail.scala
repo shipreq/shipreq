@@ -68,7 +68,7 @@ object JavaMail extends HasLogger {
 
   implicit class EAExtF[F[_]](val f: F[Addr]) extends AnyVal {
     def parsed(implicit F: Traverse[F]): ArticulateError \/ F[Address] =
-      F.traverse[ArticulateError \/ ?, Addr, Address](f)(_.parsed)
+      F.traverse[ArticulateError \/ *, Addr, Address](f)(_.parsed)
   }
 }
 

@@ -10,6 +10,7 @@ import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.config.Urls.PublicSpaRoute
 import shipreq.webapp.base.feature.{AsyncFeature, ErrorHandlingFeature}
 import shipreq.webapp.base.protocol.ajax._
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.client.public.pages._
 import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 
@@ -25,7 +26,7 @@ object PublicSpa {
 
     val recorder = ErrorHandlingFeature.StateRecorder[State]
 
-    def init: CallbackTo[State] =
+    def init(implicit storage: AbstractWebStorage): CallbackTo[State] =
       for {
         login <- Login.State.init
       } yield State(
@@ -36,11 +37,13 @@ object PublicSpa {
   }
 }
 
-final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClient.Binary) {
+final class PublicSpa(val initData: PublicSpaEntryPoint.InitData,
+                      ajax: AjaxClient.Binary,
+                      storage: AbstractWebStorage) {
   import PublicSpa._
 
   val Component = ScalaComponent.builder[Props]
-    .initialStateCallback(State.recorder.getOrElseCB(State.init))
+    .initialStateCallback(State.recorder.getOrElseCB(State.init(storage)))
     .renderBackend[Backend]
     .build
 
@@ -62,7 +65,7 @@ final class PublicSpa(val initData: PublicSpaEntryPoint.InitData, ajax: AjaxClie
 
       def loginPage(redirectOnLogin: Option[Url.Relative]): VdomElement = {
         val ss = StateSnapshot.zoomL(State.login)(s).setStateVia($)
-        Login.Props(ss, awLogin, sspLogin, sspResetPassword1, redirectOnLogin).render
+        Login.Props(ss, awLogin, sspLogin, sspResetPassword1, redirectOnLogin, storage).render
       }
 
       val content: VdomElement =

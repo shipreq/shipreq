@@ -11,6 +11,7 @@ import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project.UnsafeTypes._
 import utest._
 
+@nowarn("msg=match may not be exhaustive")
 abstract class SharedTagEventTests extends TestSuite {
   type CE <: Event
   val c1 : CE
@@ -154,6 +155,7 @@ abstract class SharedTagEventTests extends TestSuite {
 
 
 // =====================================================================================================================
+@nowarn("msg=match may not be exhaustive")
 trait TagGroupEvents {
   import TagGroupGD._
 
@@ -244,6 +246,7 @@ object TagGroupEventTest extends TestSuite with TagGroupEvents {
 }
 
 // =====================================================================================================================
+@nowarn("msg=match may not be exhaustive")
 trait ApplicableTagEvents {
   import ApplicableTagGD._
 

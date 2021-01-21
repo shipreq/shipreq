@@ -3,8 +3,9 @@ package shipreq.webapp.member.project.data.derivation
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
+import scalacss.internal.NaturalOrdering
 import shipreq.base.test.BaseTestUtil._
-import shipreq.base.util.{Enabled, Invalid, NaturalSort}
+import shipreq.base.util.{Enabled, Invalid}
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.text.PlainText
 import shipreq.webapp.member.test.project.{RandomData, RealProject1, SampleDerivativeTags1, SampleDerivativeTags2, SampleDerivativeTags3, SampleDerivativeTags4, SampleDerivativeTags5}
@@ -87,7 +88,7 @@ object VirtualProjectTagsTest extends TestSuite {
         val factors =
           MutableArray(
             tags(r.id).derivativeTagFactors(fieldId).iterator.map("\n  + " + showFactor(_))
-          ).sort(NaturalSort).mkString
+          ).sort(NaturalOrdering).mkString
 
         var result = pubid + factors + "\n  = " + liveResults
 
@@ -592,11 +593,6 @@ object VirtualProjectTagsTest extends TestSuite {
       "sdt4"   - assertProps(SampleDerivativeTags4.project)
       "sdt5"   - assertProps(SampleDerivativeTags5.project)
       "real1"  - assertProps(RealProject1.project)
-
-      "rnd3" - {
-        val p = RandomData.project.withSeed(3).sample()
-        assertProps(p)
-      }
 
       "random" - {
 //        import nyaya.prop._

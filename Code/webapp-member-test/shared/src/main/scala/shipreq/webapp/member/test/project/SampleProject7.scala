@@ -64,6 +64,7 @@ import shipreq.webapp.member.test.project.UnsafeTypes._
  *
  * @since 2.1
  */
+@nowarn("msg=match may not be exhaustive")
 object SampleProject7 {
 
   trait Values extends SampleProject6.Values {

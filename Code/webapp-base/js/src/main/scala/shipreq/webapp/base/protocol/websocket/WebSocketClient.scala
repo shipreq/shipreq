@@ -14,6 +14,7 @@ import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
 import shipreq.webapp.base.protocol.websocket.WebSocket.ReadyState
 import shipreq.webapp.base.protocol.websocket.WebSocketShared._
+import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 
 trait WebSocketClient[ReqRes <: Protocol.RequestResponse[SafePickler]] {
   val readyState: CallbackTo[Option[ReadyState]]
@@ -33,6 +34,7 @@ object WebSocketClient {
               onServerPush : Push => Callback,
               onStateChange: WebSocketClient[ReqRes] => State => Callback,
               timers       : JsTimers,
+              localStorage : AbstractWebStorage,
               logger       : LoggerJs): WebSocketClient[ReqRes]
   }
 
@@ -54,6 +56,7 @@ object WebSocketClient {
                            onServerPush : p.Push => Callback,
                            onStateChange: WebSocketClient[p.ReqRes] => State => Callback,
                            timers       : JsTimers,
+                           localStorage : AbstractWebStorage,
                            logger       : LoggerJs) =
           new Impl(
             w,
@@ -64,6 +67,7 @@ object WebSocketClient {
             protocolSC(_)(p.push.codec),
             onServerPush,
             timers,
+            localStorage,
             logger)
       }
   }
@@ -94,7 +98,10 @@ object WebSocketClient {
       mkProtocolSC      : (ReqId => Option[Protocol[SafePickler]]) => Protocol.Of[SafePickler, ServerToClient[Push]],
       recvPush          : Push => Callback,
       timers            : JsTimers,
+      localStorage      : AbstractWebStorage,
       logger            : LoggerJs) extends WebSocketClient[ReqRes] { self =>
+
+    private implicit def implicitStorage = localStorage
 
     private val requestManager: RequestManager[ReqId, Protocol.AndValue[SafePickler], Request[ReqRes]] =
       RequestManager.arrayStore

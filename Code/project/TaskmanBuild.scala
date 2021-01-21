@@ -82,7 +82,7 @@ object TaskmanBuild {
       .settings(
         dependencyOverrides ++= OkHttp.core(LibDependency.JVM), // because jaegerClient wants okhttp 4
 
-        mainClass := Some(serverClass),
+        mainClass in Compile := Some(serverClass),
         javaOptions in(Compile, run) += "-XX:+UseG1GC",
 
         // Remove versions from package filenames for Docker layer reuse.

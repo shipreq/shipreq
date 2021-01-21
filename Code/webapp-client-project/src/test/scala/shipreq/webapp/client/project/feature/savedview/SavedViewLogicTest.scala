@@ -127,6 +127,7 @@ object SavedViewLogicTest extends TestSuite {
     SavedView.Name("  xxx  ") ::
     SavedView.Name("") :: Nil
 
+  @nowarn("msg=match may not be exhaustive")
   def testNameFn[A >: Null](default: SavedView.Name => A)
                            (sva  : A = null,
                             svb  : A = null,

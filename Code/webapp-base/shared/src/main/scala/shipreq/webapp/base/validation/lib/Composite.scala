@@ -39,7 +39,7 @@ object Composite {
     def toText(invalidity: Invalidity): String =
       toLines(invalidity).whole.mkString("\n")
 
-    lazy val applicative: Applicative[Invalidity \/ ?] =
+    lazy val applicative: Applicative[Invalidity \/ *] =
       Generic.AccumuateErrors.applicativeInstance[Invalidity]
   }
 

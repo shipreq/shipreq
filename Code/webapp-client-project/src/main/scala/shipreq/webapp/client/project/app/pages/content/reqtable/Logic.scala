@@ -570,26 +570,22 @@ private[reqtable] object Logic {
 
   def mkReqCodeTreeItem(prevV: ReqCode.Value, prevI: ReqCodeTreeItem, cur: ReqCode.Value): ReqCodeTreeItem = {
     import ReqCodeTreeItem._
-    import VectorCase.{Empty, NonEmpty}
 
     @tailrec
     def go(ci: Vector[Indent], cv: ReqCode.Value)(pi: Vector[Indent], pv: ReqCode.Value): ReqCodeTreeItem =
-      cv.tail match {
-        case NonEmpty(nextc) if cv.head ==* pv.head =>
-          pv.tail match {
-            case Empty() =>
-              ReqCodeTreeItem(ci :+ IndentChild, nextc)
-            case NonEmpty(nextp) =>
-              pi match {
-                case Empty() =>
-                  go(ci :+ IndentSpace(pv.head.value.length), nextc)(Vector.empty, nextp)
-                case NonEmpty(is) =>
-                  go(ci :+ is.head, nextc)(is.tail, nextp)
-              }
-          }
-        case _ =>
-          ReqCodeTreeItem(ci, cv)
-      }
+      if (cv.tail.nonEmpty && cv.head ==* pv.head) {
+        val nextc = NonEmptyVector.force(cv.tail)
+        if (pv.tail.isEmpty)
+          ReqCodeTreeItem(ci :+ IndentChild, nextc)
+        else {
+          val nextp = NonEmptyVector.force(pv.tail)
+          if (pi.isEmpty)
+            go(ci :+ IndentSpace(pv.head.value.length), nextc)(Vector.empty, nextp)
+          else
+            go(ci :+ pi.head, nextc)(pi.tail, nextp)
+        }
+      } else
+        ReqCodeTreeItem(ci, cv)
 
     go(Vector.empty, cur)(prevI.indent, prevV)
   }
