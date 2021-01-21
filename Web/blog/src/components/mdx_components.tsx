@@ -50,6 +50,7 @@ export default {
   Heart     : () => <span style={{color:'#f10a0e'}}>❤️</span>,
   Katsokaa  : addClass("katsokaa"),
   NextJS    : () => <A href="https://nextjs.org">Next.js</A>,
+  Nyaya     : () => <A href="https://github.com/japgolly/nyaya">Nyaya</A>,
   odersky   : () => <A href="https://twitter.com/odersky">Martin Odersky</A>,
   Prometheus: () => <A href="https://prometheus.io">Prometheus</A>,
   Rust      : () => <A href="https://www.rust-lang.org">Rust</A>,

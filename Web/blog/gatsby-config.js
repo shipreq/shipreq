@@ -63,7 +63,7 @@ module.exports = {
       options: {
         name  : "pages",
         path  : "content/pages/",
-        ignore: process.env.NODE_ENV === `production` && [`**/draft-*`]
+        ignore: process.env.NODE_ENV === `production` ? [`**/draft-*`] : []
       },
     },
     {
@@ -71,7 +71,7 @@ module.exports = {
       options: {
         name  : "posts",
         path  : "content/posts/",
-        ignore: process.env.NODE_ENV === `production` && [`**/draft-*`]
+        ignore: process.env.NODE_ENV === `production` ? [`**/draft-*`] : []
       },
     },
     {

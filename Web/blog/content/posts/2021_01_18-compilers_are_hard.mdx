@@ -1,0 +1,426 @@
+---
+title  : Compilers are hard
+slug   : compilers_are_hard
+date   : 2021-01-18T14:14:00+1100
+desc   : Writing (something like) a compiler is hard. Here I explore what some of the difficulties are, and provide some strategies to ensure you still maintain quality.
+tags   : ["tech"]
+hn     : https://news.ycombinator.com/item?id=25817777
+reddit : https://reddit.com/r/programming/comments/kzm3rj/compilers_are_hard
+twitter: https://twitter.com/japgolly/status/1351009782883299329
+---
+
+I've often heard that writing a compiler is hard, and different than writing other kinds of software.
+Some recent experience hsa provided me insight as to why this is the case and proved quite interesting!
+
+I recently completed work on a new big feature in <ShipReq/>. I'd been working on it for ~2 months and it ended up being the hardest code that I'd ever written in my life.
+I've been coding for decades and have worked on so many different projects, and for some very big organisations;
+I tell you this for context. When I say this is the hardest code I've *ever written*, it had a lot of competition.
+Concurrent systems usually has the reputation of being very difficult and I've designed and written a massively concurrent project
+from the ground up in my OO days, included writing all the scheduling and concurrency primitives, and managing all the thread-safety myself (those were different times).
+I found this piece of work an order of magnitude harder than that.
+
+I say in the ShipReq <About/> page that <ShipReq/> is like a compiler.
+The big feature that I completed recently was the most compiler-like feature yet, and to my surprise it's specifically that property that made it so deceptively hard.
+What is the feature?
+Basically when you have a bunch of requirements / issues / design documents / whatever,
+this feature adds automation to populate certain fields according to their relationships and related fields so that
+users don't have to manually edit or maintain it all themselves, which is both tedious and error-prone.
+An example would be if someone raises a bug which requires a few dev tasks to fix, one could setup their project so that when all those dev marks are marked as
+"complete" the bug itself automatically changes to "ready for testing".
+This feature doesn't have any knowledge of "completion" or "testing", but allows users to define whatever states and rules they want.
+That might not sound like it relates to writing a compiler.
+(It probably doesn't even sound hard.)
+Nor do requirements, bug reports, project documents seem very relatable to code.
+But there are surprising similarities. Let's take a look...
+
+## Similarity #1: Relationships
+
+Nearly all data relationships in <ShipReq/> are many-to-many / <A href="https://en.wikipedia.org/wiki/Directed_acyclic_graph">DAGs</A>.
+Some views in <ShipReq/> present data as flat lists but under-the-hood it's very rare that anything is stored as a flat list,
+and there's nearly always a way to view the same data as a graph or tree.
+
+If you squint a bit, source code is kind of like that too.
+Packages have multiple classes / objects which have multiple methods / fields / inner classes that have multiple statements that have multiple clauses, etc.
+In terms of declaration, it's more one-to-many than many-to-many but it's still all a big DAG.
+When we start considering relationships like imports and methods calling other methods, then it becomes many-to-many too and we get a cyclic graph.
+
+## Similarity #2: Interactions
+
+Secondly, this new feature in <ShipReq/> is very configurable by users.
+It's a major goal of <ShipReq/> to avoid hardcoding implicit assumptions and find appropriate and configurable abstractions.
+Obviously having users need to reconfigure everything all the time would be a terrible burden so we provide pre-configured
+complete setups with best-practices which users can (optionally) use, and can reconfigure without restriction to best serve their needs.
+What that means from a coding point of view, is that we never know the automation rules at compile-time.
+The code needs to understand and apply all the rules at runtime, and it needs to be able to
+recognise and handle data and logic combinations that invalidate invariants. That might not sound like a big deal but there are
+many invariants in a complex system and invariants don't stop at their immediate domain boundary - they propagate
+though all relevant graphs and compose, with various levels of complexity, with other invariants.
+
+For example you may have 10 simple invariants in 10 isolated domains, but when they're all combined the number of states
+to consider becomes 10,000,000,000 and there's going to be a very significant percentage of those states that you'd consider
+illegal (i.e. bugs).
+
+This too is like writing a compiler.
+For example, the Java compiler doesn't hardcode the privacy level of your classes; it allows you to set it yourself.
+Where as <ShipReq/> might have a UI page for config, in Java you have modifier keywords such that `java→public class Hello` is different than `java→private class Hello`.
+From the perspective of writing a compiler, these are runtime values with runtime rules.
+When we consider additional keywords like `final` and `abstract` we start getting into what I meant about combinational explosions.
+The Java compiler, at runtime, has to ensure all possible combinations are valid. For example, it will reject the following code:
+
+```java
+final public class Hello {
+  public abstract void doSomething(); // abstract method in final class not allowed
+}
+```
+
+and
+
+```java
+abstract class Hello {
+  private abstract void doSomething(); // private + abstract not allowed
+}
+```
+
+Imagine you were writing your own Java compiler.
+It's entirely up to you to think about those illegal combinations and then write the code to catch them.
+I think we all take for granted things like marking a method as private and then knowing it's impossible to
+call externally, but under-the-hood that it's not impossible at all. You're literally relying on someone's
+`if` statement in the right place. Just like my <ShipReq/> example, it's all value inspection at runtime,
+with no guarantees about how all the features will interact. The class/method privacy feature interacting
+with `final` and `abstract` features is mentally easy enough but every single feature has the ability to
+interact badly with something else and it's not always easy to identify those combinations.
+
+I recently saw <A href="https://github.com/scala/scala/pull/9211">a PR to Scala</A> that's a great
+demonstration of exactly this.
+The `private` and `sealed` keywords have been in Scala forever and someone only *just* recently
+came up with the realisation that private classes are effectively sealed.
+Scala's been in existence for 16 years!
+When you have hundreds of features it doesn't seem feasible to manually consider each possible combination.
+100 features yields 4950 unique pairs. There's nothing special about pairs though, some issues may only
+manifest when three specific features intersect. For 100 features there are:
+* 4950 unique sets of 2
+* 161,700 unique sets of 3
+* 3,921,225 unique sets of 4
+* ...
+* 17,310,309,456,440 unique sets of 10
+
+It's not unlikely to have a bad interaction between 10 features out of a possible 100.
+It's just impossible to manually consider.
+
+
+## Similarity #3: Type-Unsafety
+
+Type-safety is a pillar that I depend on all the time. And no please don't think of Java's type system
+when you think type-safety, that's not really what I mean, although it's a start.
+I mean more the type systems in languages like <Scala/> and <Haskell/>, think features like existential and dependent types.
+Type systems like Java's and Typescript's are great! They add value! But you can be an order of magnitude or two
+more safe with more advanced type systems and it's profoundly beneficial when you learn how to make good use of them.
+
+Unfortunately, type-safety didn't help me very much when developing my big feature.
+Say you've got one data location than can accept a set of values. At compile-time, every runtime value is acceptable
+because there always exists a configuration that would allow each possible value to be legal.
+It's like having a 'Name' field of type `String`, and then a runtime rule dictating the required first letter of the name.
+*(Unrealistic but it's the concept I'm highlighting.)*
+The configuration might be `scala→firstNameLetter: Option[Char]`. In such a case you *have to* have the name field
+be something accommodating of all possibilities, like `scala→name: String`.
+You could be tricky an create a type that encodes a proof of the name such that it adheres to the rule, but that's only
+a derivation of `scala→(name: String, firstNameLetter: Option[Char])`.
+Unless the name and the configuration and atomically modifiable as a single, composite value, you still need to
+store both values independently before such a derivation.
+The first-letter of a name restriction is a toy example but it demonstrates the fact that you have runtime configuration
+in one location, runtime data in the other, and no type-safety at compile-time to enforce that the right thing happens at runtime.
+
+Compilers have the same problem. They maintain a huge repository of runtime data, and it's entirely up to the compiler authors
+to apply all of the rules, move data in and out of scope depending on other runtime-only conditions, etc, etc.
+And unlike us compiler *users*, they don't have the benefit of being able to rely on (much of) a type system.
+They're on their own and can only use type safety to guard the bottom layers of their very-complex domain.
+
+## Similarity #4: Feedback
+
+It's a necessary part of the process that things will go wrong, and users need to be provided meaningful feedback.
+
+In the case of <ShipReq/>, it will...
+
+* detect changes that are always wrong, and prevent the user from making those changes. These are errors.
+* detect data/config that has become wrong, modify derivation accordingly, and present them to users in a fully-comprehensible manner. These are warnings.
+* collect all info required to explain to users exactly how, why and from where, derived data came to be.
+  Automatedly populating/amending users' data is one thing, but I believe users should be able to inspect and understand things like
+  what steps were performed, and what data were factors.
+  This is provenance.
+  It doesn't sound that hard but in practice it was surprisingly challenging to implement.
+
+Compilers do the same thing. They...
+
+* detect illegal data and combinations of data at runtime, and explain them to users. Those are errors.
+* detect data that is acceptably or potentially wrong, handle them, maybe by ignoring the statement, or modifying the generated code somehow,
+  and then finally, they flag this to users. These are warnings.
+* some compilers calculate how something has come to be and present it, usually in a compilation error.
+  Some compilers have error messages that run for 10-30 lines because they provide so much information about the context and calculations up
+  to that point. This is a form of provenance.
+
+Similar to the point above, this is all just dedicated people writing quadrillions of `if` conditions (not literally),
+collecting all kinds of runtime data in very strategic locations,
+and doing lots of conditional data transformation to be able to concisely explain a much larger underlying dataset.
+
+## Similarity #5: Performance
+
+Slow compilers frustrate masses.
+Every two years or so, <Scala/> compilation speed increases *very* significantly and will continue to do so,
+yet the bad reputation of being slow still persists in a lot of people's minds.
+I think the <Rust/> community is starting to accrue this reputation right now.
+Proponents of <Go/> proudly declare super-fast compilation speed as one of the major selling points of the language.
+Speed is very important when you're writing a compiler.
+
+The feature that I wrote has the same requirement. It has the potential to require recalculation across the board
+on every single user change! Anything that happens on every change needs to be **fast**.
+
+I've been a strong proponent of FP (functional programming) for around 9 years now but for this feature,
+I had to use a large number of variables and mutability.
+The fantastic thing about FP is that you can encapsulate mutable code in an immutable and referentially-transparent way
+such that the "atom" of work is itself FP, despite all the mutability under-the-hood.
+That's exactly what I did and I was able to have my cake and eat it: the code is super fast and the entire "compilation" step
+is atomic and pure, meaning I don't sacrifice FP.
+In other words, same immutable data in; same immutable result, but I just happen to use lots of mutability to arrive at that
+immutable result.
+This is a fantastic property of <Scala/> and it's multi-paradigm nature by the way.
+I'm sure that evangelists of <Haskell/> (which is strictly an FP-only language) would argue that you could
+have the same speed in <Haskell/>, but I'm not sure about the veracity of that statement, nor the means by which
+one would accomplish it. Would the code just do the exact same thing but with more boilerplate using `IORef`s or
+huge `StateT` stacks?
+Would <Haskell/> be so efficient in its optimisation that a more straight-forward FP approach would be sufficiently fast?
+I don't actually know but it'd very interesting to find out.
+I imagine that looking at the internals of the Haskell compiler would be a treasure trove of profoundly awesome insight.
+But I've digressed.
+
+With the possible exception of <Haskell/>, writing a fast compiler means having lots of mutable state; and mutate state
+is exponentially harder to reason about and keep correct. With a tear in my eye, it's something I had to reach for to
+have lightning-fast performance (and this is after lots of very strategic caching), and as far as I know, it's in nearly
+every compiler out there.
+
+
+## Solutions (1/3)
+
+We've talked a lot about the difficulties, but what kind of solutions are there?
+How on earth do you ensure code with this type of complexity actually works?
+This is my approach.
+
+First things first is to make your tests, and specifically your test data representations, as easy
+to read and write as possible.
+
+For example, say your expectations look like this:
+
+```scala
+final case class Result(accounts: Set[Account])
+
+final case class Account(id     : Long,
+                         name   : String,
+                         roles  : Set[Role],
+                         aliases: Set[String])
+
+sealed trait Role
+object Role {
+  case object Admin   extends Role
+  case object User    extends Role
+  case object Offline extends Role
+}
+```
+
+You might be inclined to start writing tests like this:
+
+```scala
+val result = doStuff(…)
+
+val accounts = result.accounts.toVector.sortBy(_.id)
+assertEqual(accounts.length, 3)
+
+assertEqual(accounts(0),
+  Account(2, "David",
+    Set(Role.Admin, Role.User),
+    Set("Baz", "Bazza", "Dave", "Davo")))
+
+assertEqual(accounts(1),
+  Account(7, "Bob",
+    Set(Role.User), Set.empty))
+
+assertEqual(accounts(2),
+  Account(13, "John",
+    Set(Role.User, Role.Offline),
+    Set("Jono", "Johnny")))
+```
+
+Don't do it!
+
+* It's painful to write
+* You only get a subset of failure at a time. Maybe "4 is not 3", maybe one account failure when you've got multiple
+* If "Davo" is missing it's pretty hard to tell from the results exactly what is wrong with the `Account`, even more so for larger data
+* If you change the data structure you have to change every single test. Imagine when writing your 51st test case that you need to change `Set[Role]`
+  to a new class called `Roles`.
+  That's 50 tests with who-knows-how-many occurrences you need to manually update.
+
+Instead pamper yourself and your team.
+Invest an hour or two in being nice to yourself.
+You're going to be writing lots of tests so make it as easy as possible for yourself to:
+
+* write new tests
+* modify existing tests
+* comprehend test failures
+* read and comprehend test cases
+
+In our example above, we'll write a function that converts a `Result` to a `String` by doing the following:
+
+* Sort accounts by id
+* Represent a `Set[Role]` as `auo` flags for `Admin`,`User` and `Offline`; just like in Linux how you have `rwx` permissions
+* When aliases are present, sort and print them like YAML
+
+Also if your testing library doesn't handle multi-line strings well, find one that does.
+Ideally you'd want to see coloured side-by-side comparison when two multi-line strings don't match.
+
+
+Our new test would look like this:
+
+```scala
+def assertResult(actual: Result, expect: String): Unit =
+  assertEqual(formatForTests(actual), expect.trim)
+
+val result = doStuff(…)
+
+def expect =
+ """#2) David [au-]
+   |    Aliases:
+   |      - Baz
+   |      - Bazza
+   |      - Dave
+   |      - Davo
+   |
+   |#7) Bob [-u-]
+   |
+   |#13) John [-uo]
+   |     Aliases:
+   |       - Jono
+   |       - Johnny
+ """.stripMargin
+
+assertResult(result, expect)
+```
+
+Much better!
+
+* Faster to write
+* Faster to modify
+* Failures are easy to comprehend (especially with coloured side-by-side comparison)
+* We can change the data structure without changing all the tests
+* When a test fails, we see everything at once in a concise way
+
+Now go forth and unit test!
+Write all the tests you normally would.
+Put similar effort to make generating test inputs as easy as possible if you need to.
+Write a test for every problematic combination of data that you can think of.
+Make sure to add comments describing why the combination is problematic as it's not always going to be obvious.
+
+
+## Solutions (2/3)
+
+Once you've gone through all the pain and suffering to make all your unit tests pass,
+it's time for the next step: property testing.
+
+If you don't know what "property testing" is, give it a search it because it's an invaluable tool.
+It's life-changing.
+
+Think of all the properties (i.e. invariants) that resulting data should satisfy.
+I find that thinking of properties for compiler-like code is much easier than usual run-of-the-mill code,
+probably because the domain is so heavily about data and data relationships.
+
+Even with our toy accounts example above, you could come up with properties like:
+* ids should be unique
+* names should be unique
+* aliases must never be the same as another user's name (maybe the code was supposed to filter those out)
+
+If you're dealing with graphs instead of lists there are usually properties that each node should
+adhere to, in relation to it's children or parents.
+
+Make sure that your property testing library is able to reproduce its tests.
+Each time it finds a failure, extract the data and add it as a unit test.
+My OSS <Nyaya/> library has a feature called a bug-hunt that allows me to tell it
+*"hey, run n tests across m threads starting at seed x and one test per seed"*.
+When I was working on aforementioned <ShipReq/> feature it found many issues,
+usually within 30 seconds, until it ended up running for an hour or two without finding a failure.
+I can't guarantee that my code doesn't still have some crazy bug in it but with all of my unit tests
+and over a few hours of systematic testing, I can at least rest assured that it's
+extremely mathematically improbable. That's the best you're going to get for a reasonable amount of effort.
+
+## Solutions (3/3)
+
+You can also invest an *unreasonable* amount of effort and go further if you like!
+You could attempt to write a formal, machine-verifiable proof. Once you have a verified
+proof, you have a guarantee that your logic will work in *all* cases without any unexpected bugs
+(assuming you implement the proven logic correctly). Whilst this is the outcome we'd all love,
+it's rarely feasible because it can takes *years* of work to complete.
+
+An interesting example of this is <Scala/>.
+It's been around for ages and over the years many bugs were encountered by the community.
+These days, it's pretty rare to run up against a compiler bug because there's been so much continual effort to fix them.
+But one of the most exciting things about the upcoming <Scala3/>, is that after nearly 10 years of multiple PhD students' work,
+the foundations of the Scala language have been *formally proven*. That's not even the full language.
+The interaction between higher-kinded types and subtyping is still an open research question, for example.
+This isn't Scala-specific by the way; *any* language that attempts to include both of those features will have the
+problem that we'll never really know if there are any remaining bugs, and until we get a proof, we'll only know
+that everything added to the language test suites work. I love that Scala has what it calls a "Community Build"
+that compiles and tests hundreds (or so) of the most popular OSS Scala libraries and frameworks. This is a great
+way to catch regressions. But I've really digressed now. The point is: formal proof = very hard.
+
+I should also mention that you can use <TLA/> to obtain a proof but with *much* less effort.
+You basically build up a very abstract state machine and it will brute-force a proof by testing all possible combinations.
+In very specific cases, it's a godsend!
+No matter how rare the edge case, <TLA/> will find it; usually within seconds.
+I've used it with <ShipReq/> to guarantee things like eventual consistency, and making sure that users never see stale data.
+You could spend a few days and end up with a guarantee that your logic holds in all possible cases.
+For verifying compiler-like code though, I haven't tried it and you'd likely have to sit down and think
+very, *very*, **very** hard about how to model your logic in a compatible and efficient way.
+The state space is likely going to be too large.
+Depending on exactly what you're doing, it might be feasible though, so I at least recommend considering it.
+
+Am I missing anything else?
+Sorry if the solutions I'm presenting are a bit anti-climactic.
+If you can think of other solutions I'd really love to know so please
+let me and other readers know in the Reddit or HackerNews comments!
+
+
+## Conclusion
+
+There are a few reasons I wanted to write this.
+I've heard compiler authors say that writing a compiler is very different than writing anything else
+but I didn't properly understand why.
+Sadly I've also seen many instances of people being rude and derisive towards certain compiler authors and languages
+because of tradeoffs or bugs.
+Some more mild-mannered people have said things like *"wouldn't FP solve problem X so easily?"*,
+*"why so much mutability?! It's so obviously a recipe for disaster"*, etc. and whilst they seem like reasonable positions,
+I'd often find myself thinking that these compiler authors who're smart enough to produce such complex systems surely
+already know about these tactics and their benefits. So what's really going on?
+
+I think I have my answer now, and
+I hope this article and my reflections provide you some insight as well.
+The work that I did pales in comparison to the complexity of a full language compiler,
+and yet it was literally the hardest code I've ever written.
+*(And I've been coding over 30 years since a kid!)*
+
+I hope that you found these insights as interesting as I did.
+I think I further understand now the statement that writing a compiler is very different than writing anything else.
+I would actually go a step further back in abstraction though, and say
+that <span style="color:#b00; font-weight:bold">writing a highly-configurable and highly-flexible system is very hard</span>.
+
+## Thanks, Giants!
+
+We're all standing on the shoulders of giants.
+Remember to stop and appreciate the work and effort that's gone in the tools
+that we all rely on every single day. Think of all the `if` statements that must be in your language's
+compiler that make it mirror what we all think is so obvious.
+All that sophistication we rely on is built on layers of primitive tedium.
+So maybe buy your everyday-language's authors a coffee if you can, or
+show your appreciation with just a nice *thank you* message.
+
+I'm so grateful to all the people upon whose work I base my own.
+Part of what drives me personally, is that I hope that I can produce a new generation of benefit and quality in <ShipReq/>
+that my users will just take for granted and think to themselves
+*"yep, tech's evolved again, this 2021 tech is my baseline now"*,
+then go on to build what they think is revolutionary.
+It's a beautiful cycle.

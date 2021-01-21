@@ -167,9 +167,6 @@ object ThreadUtils {
           complete(None)
       }
 
-      thread = new Thread(taskRunnable)
-      thread.start()
-
       val timeout = new TimerTask {
         override def run(): Unit = {
           complete(None)
@@ -177,6 +174,12 @@ object ThreadUtils {
       }
 
       timer.schedule(timeout, maxDur.toMillis)
+
+      // Note: it's important that this task start *after* the call to timer.schedule above.
+      // Otherwise this thread can complete can cancel the timer before the .schedule call, which results in .schedule
+      // throwing a runtime exception because the timer has already been cancelled.
+      thread = new Thread(taskRunnable)
+      thread.start()
 
       sync.synchronized {
         sync.wait(maxDur.toMillis)
