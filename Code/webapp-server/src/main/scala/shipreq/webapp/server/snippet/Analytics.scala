@@ -72,21 +72,26 @@ object Analytics extends DispatchSnippet with SnippetHelpers {
   }
 
   private def statcounter(cfg: Statcounter): Logic[Group] = {
+
     // www.statcounter.com/counter/counter.js
-    val url = Global.analyticsProxy.masked("*(d3d3LnN0YXRjb3VudGVyLmNvbQ)*/*(Y291bnRlcg)*/*(Y291bnRlci5qcw)*")
+    val jsUrl = Global.analyticsProxy.masked("*(d3d3LnN0YXRjb3VudGVyLmNvbQ)*/*(Y291bnRlcg)*/*(Y291bnRlci5qcw)*")
+
+    // c.statcounter.com
+    val apiUrl = Global.analyticsProxy.masked("*(Yy5zdGF0Y291bnRlci5jb20)*")
 
     val vars = Map[String, String](
       "sc_project"     -> cfg.project.toString,
-      "sc_security"    -> s"'${cfg.security}'",
+      "sc_security"    -> cfg.security.quote,
       "sc_invisible"   -> "1",
       "sc_https"       -> "1",
       "sc_remove_link" -> "1",
+      "sc_local"       -> (apiUrl.absoluteUrl + "/").quote,
     )
 
     val setVarsJs = vars.iterator.map(x => x._1 + "=" + x._2).mkString("var ", ",", "")
 
     val script1 = <script type="text/javascript" data-lift="head">{setVarsJs}</script>
-    val script2 = <script type="text/javascript" async="async" src={url.absoluteUrl}></script>
+    val script2 = <script type="text/javascript" async="async" src={jsUrl.absoluteUrl}></script>
 
     val all = Group(script1 :: script2 :: Nil)
 

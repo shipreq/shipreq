@@ -1,0 +1,8 @@
+{
+  "name": "dev_tools",
+  "version": "0",
+  "private": true,
+  "dependencies": {
+    "js-beautify": "^1.13.4"
+  }
+}
