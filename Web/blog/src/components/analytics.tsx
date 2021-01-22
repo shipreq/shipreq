@@ -67,7 +67,8 @@ export default function() {
       sc_invisible=1,
       sc_remove_link=1,
       sc_security='${s.security}',
-      sc_project=${s.project}
+      sc_project=${s.project},
+      sc_local="https://ap.shipreq.com/*(Yy5zdGF0Y291bnRlci5jb20)*/"
     `)
     return (
       <Helmet>

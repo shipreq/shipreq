@@ -11,6 +11,8 @@ unset JVM_OPTS
 unset SBT_OPTS
 unset SBTX_OPTS
 
+arg1="$1"
+
 set -uo pipefail
 
 cd "$(dirname "$0")"/..
@@ -26,6 +28,7 @@ sbt+=(
   -DCI=1
   -DMODE=release
   -Dsbt.server.autostart=false
+  -Dsbt.server.forcestart=true # https://github.com/sbt/sbt/issues/6101
   -Dsbt.supershell=never
   -J-XX:+ExitOnOutOfMemoryError
   -J-XX:+HeapDumpOnOutOfMemoryError
@@ -65,7 +68,10 @@ function run {
 docker_args=(taskmanServer/docker webappServer/docker)
 [ "${DOCKER_PUSH:-}" != 0 ] && docker_args+=(taskmanServer/dockerPush webappServer/dockerPush)
 
-if [ "$1" = shell ]; then
+TMP_TARGET="$(ls -l | fgrep 'target -> ' | sed 's/^.* //')"
+[ -n "$TMP_TARGET" ] && mkdir -p "$TMP_TARGET"
+
+if [ "$arg1" = shell ]; then
   echo "> ${sbt[@]}"
   exec "${sbt[@]}"
 fi

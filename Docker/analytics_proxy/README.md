@@ -47,13 +47,24 @@ cd Docker/analytics_proxy
 ```sh
 npm install
 npm run mask 'www.googletagmanager.com/gtag/js?id=UA-173267009-2'
-make mask_sc # stat counter
+make sc_mask # stat counter
 ```
 
-# Testing
+# Testing 1
 
 1. Run `make test` or `make run`
 2. Open up static-test/index.html in a browser
 3. In the browser tab, click the AdBlock button, then click Open Logger (the 3rd button under the power button)
 4. Reload and look at the network tab, ensure all requests succeed
    If you see `net::ERR_BLOCKED_BY_CLIENT` errors, that means AdBlock is blocking requests.
+
+# Testing 2
+
+1. Run `make build`
+2. From SBT: `dockers`
+3. Run `:/Code/bin/dev up -d`
+4. Install a Chrome plugin to disable CORS:
+   https://chrome.google.com/webstore/detail/moesif-origin-cors-change/digfbfaphojjndkpccljibejjbppifbc/related?hl=en-US
+5. Open http://localhost:14080/
+6. Disable CORS, open Dev Tools, reload
+7. Ensure that analytics requests went through successfully

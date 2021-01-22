@@ -16,24 +16,20 @@ console.log(`APP__STRIPPED_PATH=${strippedPath} (path added to original host in 
 console.log(`APP__ENV_NAME=${env} (should not be local nor test in production)`);
 console.log(`APP__HOSTS_WHITELIST_REGEX=${hostsWhitelistRegex}${hostsWhitelistRegex.toString() === `/${MATCH_EVERYTHING_STRING}/` ? ' (YAY!! Anyone can use your proxy!)' : ''}`);
 
+/* Disabled because setting sc_local seems to be enough.
 function wwwStatcounterCom() {
-    // Here we replace
-    //
-    //     _e = _13 + "://" + _15 + "." + _14 + "/"
-    //              subdomain ^^^         ^^^ domain
-    //                    "c"       "."   "statcounter.com"
-    //
-    // in www.statcounter.com/counter/counter.js, so that it's like this:
-    //
-    //     _e = location.protocol + '//' + _14.replace('/', '/' + _15 + '.')
-    //                   "https:"   "//"  "localhost:3000/statcounter.com".replace('/', '/' + "c" + '.')
-    //                   "https:"   "//"  "localhost:3000/c.statcounter.com"
+    var replacementExpr = 'location.origin.replace(/\\/?$/,"/")'
+    if (isLocal)
+      replacementExpr += '.replace("file://","http://localhost:3000/")'
+    const hack = `_b=_b.replace(/^.+?:\\/\\//, ${replacementExpr})`
 
-    const regex = /_\d+\+":\/\/"\+(_\d+)\+"."\+(_\d+)/
-    let replace = isLocal ? "(location.protocol=='file:'?'http:':location.protocol)" : "location.protocol"
-    replace = replace + `+'//'+$2.replace('/','/'+$1+'.')`
+    const regex = /xxxxxxxxxxxxxx(if\(window\.sc_project\))/
+    // const replace = `${hack};alert(_b);$1`
+    const replace = `alert(_b);$1`
+
     return { regex, replace }
 }
+*/
 
 export default {
     isLocalEnv: isLocal,
@@ -83,9 +79,10 @@ export default {
             "cm.g.doubleclick.net"
         ],
         specialContentReplace: { // Special regex rules for domains
-            "www.statcounter.com": [
-                wwwStatcounterCom()
-            ],
+            // Disabled because setting sc_local seems to be enough.
+            // "www.statcounter.com": [
+            //     wwwStatcounterCom()
+            // ],
             "www.googletagmanager.com": [
                 {
                     regex: /"https\:\/\/s","http:\/\/a","\.adroll\.com/,

@@ -8,11 +8,11 @@ locals {
   versions = {
 
     app = {
-      analytics_proxy = "git-23eb822def42ea21654951293c1273e904db7094"
+      analytics_proxy = "git-d64a217fd2b96837959e40c37d322d5667cddc0b"
       cadvisor        = local.versions_common.cadvisor
       filebeat        = "git-10f2f46aad4df3ea32622dad2ff3e8eef4d0a81a"
       node_exporter   = local.versions_common.node_exporter
-      shipreq         = "git-09e22e652308ea0092f7e77a6efd5c231952f6f6"
+      shipreq         = "git-285ab6a1f569be8ffd6de9658c736ca6b11977c0"
     }
 
     bastion = {
