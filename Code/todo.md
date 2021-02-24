@@ -1,4 +1,12 @@
 ### Problems
+* Not convinced that `AbstractWebStorage.localOrEmpty()` works as expected.
+  There were still some reports in Freshdesk (±1 day of latest deployment) that seem to indicate lack of
+  `localStorage` is still a problem and crashes Safari.
+  Can the permission be revoked?
+  In Safari is `localStorage` defined but just throws when you try to use it?
+  AbstractWebStorage should probably act like a multi-tier proxy; i.e. on each call attempt `localStorage` catch, try next tier.
+  Also maybe use https://github.com/marcuswestin/store.js/ as well
+  store.js tests it before use: https://github.com/marcuswestin/store.js/blob/b8e22fea8738fc19da4d9e7dbf1cda6e5185c481/src/store-engine.js#L108-L117
 
 
 ### Improvements
