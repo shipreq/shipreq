@@ -1,7 +1,7 @@
 package shipreq.taskman.server.logic
 
 import java.time.{Duration, Instant}
-import org.scalacheck.Arbitrary._
+import org.scalacheck.Arbitrary.{arbInstant => _, _}
 import org.scalacheck.{Arbitrary, Gen}
 import scala.reflect.ClassTag
 import scalaz.Lens.lensg
