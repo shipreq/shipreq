@@ -34,6 +34,7 @@ object ServerLogic {
     implicit val common = CommonProtocolLogic[F]
     implicit val assetManifest = config.assetManifest
     implicit val scalaJsManifest = config.scalaJsManifest
+    implicit val projectAccessHacks = config.security.projectAccessHacks
 
     ServerLogic(
       common,

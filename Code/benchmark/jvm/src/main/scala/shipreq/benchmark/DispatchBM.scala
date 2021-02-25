@@ -163,6 +163,7 @@ object DispatchBM {
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
+      projectAccessHacks         = ProjectAccessHacks.empty,
       verificationTokenLength    = 8,
       registrationTokenLifespan  = 7 days,
       passwordResetTokenLifespan = 4 days))
@@ -213,6 +214,9 @@ object DispatchBM {
         val cookie = Cookie(cookieName, value, None, None, None)
         Cookie.Update.add(cookie)
       }
+
+      override def allowProjectAccess(requester: User, projectId: ProjectId, projectOwner: UserId) =
+        Allow.when(requester.id ==* projectOwner)
     }
 
     implicit val svrSession: Server.Session[F] = new Server.Session[F] {

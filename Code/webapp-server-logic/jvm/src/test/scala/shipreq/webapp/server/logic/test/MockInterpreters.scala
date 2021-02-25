@@ -17,7 +17,7 @@ import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.server.logic.algebra._
-import shipreq.webapp.server.logic.config.{ScalaJsManifest, ServerLogicConfig}
+import shipreq.webapp.server.logic.config.{ProjectAccessHacks, ScalaJsManifest, ServerLogicConfig}
 import shipreq.webapp.server.logic.data.{PasswordAndSalt, PasswordHash, Salt}
 import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.logic.event.ApplyEventAlgebra
@@ -239,9 +239,11 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     pid
   }
 
-  override def getAllProjectMetaDataForUser(id: UserId) = Name[List[ProjectMetaData]] {
+  override def getAllProjectMetaDataForUser(id: UserId, hacks: ProjectAccessHacks) = Name[List[ProjectMetaData]] {
+    val extraProjectIds = hacks.additionalAccess(id)
+
     projects.valuesIterator
-      .filter(_.userId ==* id)
+      .filter(p => (p.userId ==* id) || extraProjectIds.contains(p.projectId))
       .map(_.projectMetaData)
       .toList
   }
@@ -507,6 +509,9 @@ final class MockSecurity(override val db: MockDb, now: Name[Instant], cfg: Serve
         SessionRestoreResult.None
     }
   }
+
+  override def allowProjectAccess(requester: User, projectId: ProjectId, projectOwner: UserId): Permission =
+    Allow.when(requester.id ==* projectOwner) | cfg.projectAccessHacks(requester, projectId)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -534,7 +539,8 @@ object MockInterpreters {
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
-      verificationTokenLength        = 8,
+      projectAccessHacks         = ProjectAccessHacks.empty,
+      verificationTokenLength    = 8,
       registrationTokenLifespan  = 7 days,
       passwordResetTokenLifespan = 4 days))
 
@@ -563,6 +569,7 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
   implicit val config         = modCfg(MockInterpreters.config)
   implicit val assetManifest  = config.assetManifest
   implicit val sjsManifest    = config.scalaJsManifest
+  implicit val accessHacks    = config.security.projectAccessHacks
   implicit val svr            = new MockServer[Name]
   implicit val db             = specificMockDb.getOrElse(new MockDb(svr.now))
   implicit val security       = new MockSecurity(db, svr.now, config.security)

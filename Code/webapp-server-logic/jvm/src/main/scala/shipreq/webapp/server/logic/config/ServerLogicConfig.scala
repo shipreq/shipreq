@@ -74,6 +74,8 @@ object ServerLogicConfig {
                             /** Number of bytes that will comprise the salt for new passwords */
                             passwordSaltLength: Int,
 
+                            projectAccessHacks: ProjectAccessHacks,
+
                             /** Number of characters in tokens used for email & reset-password verification. */
                             verificationTokenLength: Int,
 
@@ -117,6 +119,7 @@ object ServerLogicConfig {
         ConfigDef.need    [JwtSecret]("jwt.secret") |@|
         ConfigDef.get     [JwtSecret]("jwt.secret.previous") |@|
         ConfigDef.getOrUse[Int      ]("password.salt", 64) |@|
+        ConfigDef.getOrUse           ("hack.project_access", ProjectAccessHacks.empty) |@|
         ConfigDef.need    [Int      ]("verification_token.length") |@|
         ConfigDef.need    [Duration ]("verification_token.lifespan.register") |@|
         ConfigDef.need    [Duration ]("verification_token.lifespan.resetpw")

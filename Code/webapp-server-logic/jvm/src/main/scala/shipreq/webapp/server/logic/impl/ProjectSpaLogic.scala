@@ -183,7 +183,7 @@ object ProjectSpaLogic extends StrictLogging {
             _       <- C.rightF(trace.addAttrs(Trace.Attr.ShipReqUserId(user.id.value) ::
                                                Trace.Attr.ShipReqProjectId(pid.value) :: Nil)(span))
             owner   <- C.optionF(security.db.getProjectOwner(pid), ProjectNotFound)
-            _       <- C.ensure(user.id ==* owner, AccessDenied)
+            _       <- C.ensure(security.allowProjectAccess(user, pid, projectOwner = owner) is Allow, AccessDenied)
             now     <- C.rightF(svr.now)
           } yield {
             val static = WebSocketStatic(

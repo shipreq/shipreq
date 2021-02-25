@@ -5,6 +5,7 @@ import scalaz.~>
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}
+import shipreq.webapp.server.logic.config.ProjectAccessHacks
 import shipreq.webapp.server.logic.data.PasswordAndSalt
 
 /**
@@ -198,7 +199,7 @@ object DB {
 
   trait ForHomeSpa[F[_]] extends Base[F] with GetProjectMetaData[F] {
     def createProject(id: UserId, initEvents: Vector[ActiveEvent], project: Project): F[ProjectId]
-    def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
+    def getAllProjectMetaDataForUser(id: UserId, hacks: ProjectAccessHacks): F[List[ProjectMetaData]]
   }
 
   trait ForProjectSpa[F[_]]
