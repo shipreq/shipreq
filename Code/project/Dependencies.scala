@@ -159,7 +159,7 @@ object Dependencies {
   }
 
   object LibJetty {
-    private def ver = "9.4.37.v20210219"
+    private def ver = "9.4.38.v20210224"
     private val mm = MultiModule.java("org.eclipse.jetty", ver)
     private val ws = MultiModule.java("org.eclipse.jetty.websocket", ver)
 
