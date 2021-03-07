@@ -7,6 +7,7 @@ addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject"  % "1.0.0")
 addSbtPlugin("org.scala-js"       % "sbt-jsdependencies"        % "1.0.2")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs-env-phantomjs" % "1.0.0")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs"               % "1.5.0")
+addSbtPlugin("org.scalameta"      % "sbt-scalafmt"              % "2.4.2")
 addSbtPlugin("pl.project13.scala" % "sbt-jmh"                   % "0.4.0")
 addSbtPlugin("se.marcuslonnberg"  % "sbt-docker"                % "1.8.2")
 
