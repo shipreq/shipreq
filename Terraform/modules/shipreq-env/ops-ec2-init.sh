@@ -28,7 +28,7 @@ EOB
 ${install_nat_cert}
 ${wait_for_nat}
 yum -y update
-yum -y install htop nc tree
+yum -y install htop nc rsync tree
 
 ####################################################################################################
 
