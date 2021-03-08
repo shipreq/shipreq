@@ -166,11 +166,10 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - data-prometheus:/data
+    environment:
+      - EXTERNAL_URL=http://prometheus-tech:9090/prometheus/tech/
     command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.path=/data/
       - --storage.tsdb.retention.time=730d
-      - --web.external-url=http://prometheus-tech:9090/prometheus/tech/
     cpus: 2
     mem_limit: 200m
 
