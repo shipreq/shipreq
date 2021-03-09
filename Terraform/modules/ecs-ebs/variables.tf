@@ -32,7 +32,7 @@ variable "ec2_role" {
 variable "type" {
   description = "Volumes type of each drive."
   type        = string
-  default     = "gp2"
+  default     = "gp3"
 }
 
 variable "device_path" {
