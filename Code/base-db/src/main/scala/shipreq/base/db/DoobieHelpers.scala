@@ -8,6 +8,7 @@ import doobie.free.{connection => C}
 import doobie.implicits._
 import java.sql.SQLException
 import java.time.{Duration, Instant}
+
 object DoobieHelpers {
 
   val ConnectionIoUnit: ConnectionIO[Unit] =
