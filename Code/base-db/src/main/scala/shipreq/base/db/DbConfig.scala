@@ -90,7 +90,7 @@ object DbConfig {
         _.get("idleTimeout"              , _.setIdleTimeout),
         _.get("initializationFailTimeout", _.setInitializationFailTimeout),
         _.get("isolateInternalQueries"   , _.setIsolateInternalQueries),
-        _.get("keepaliveTimeMs"          , _.setKeepaliveTime),
+        // _.get("keepaliveTimeMs"          , _.setKeepaliveTime),
         _.get("leakDetectionThreshold"   , _.setLeakDetectionThreshold),
         _.get("maxLifetime"              , _.setMaxLifetime),
         _.get("maximumPoolSize"          , _.setMaximumPoolSize),

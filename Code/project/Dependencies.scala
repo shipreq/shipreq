@@ -206,7 +206,7 @@ object Dependencies {
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.9")
   val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "7.9.0")
-  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "4.0.3")
+  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.5") // don't go to v4 yet, wait for Doobie
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.14")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.5.0")
