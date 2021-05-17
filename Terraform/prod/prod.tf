@@ -49,6 +49,7 @@ module "shipreq" {
   app_instance_type                     = "t3a.small"
   app_public_key                        = file("key-app.rsa.pub")
   bastion_public_key                    = file("key-bastion.rsa.pub")
+  elasticsearch_enable                  = false
   elasticsearch_instance_type           = "t2.small.elasticsearch"
   elasticsearch_retention_days          = 40
   elasticsearch_volume_size             = 10
