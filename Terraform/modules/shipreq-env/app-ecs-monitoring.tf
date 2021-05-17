@@ -13,6 +13,7 @@ module "app_ecs_monitoring" {
   cadvisor_port    = local.ports.cadvisor
 
   filebeat_cpu      = local.app_cluster_cpu.filebeat
+  filebeat_enabled  = local.filebeat_enabled
   filebeat_es_hosts = local.es_root_url_with_port
   filebeat_image    = "${data.aws_ecr_repository.filebeat.repository_url}:${var.app_filebeat_image_tag}"
   filebeat_mem_res  = local.app_cluster_mem_res.filebeat
