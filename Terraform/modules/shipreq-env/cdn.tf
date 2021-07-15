@@ -63,7 +63,7 @@ resource "aws_cloudfront_distribution" "static" {
 
 resource "aws_acm_certificate" "cdn" {
   count             = var.shipreq_cdn_subdomain == null ? 0 : 1
-  provider          = aws.us-east-1 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#acm_certificate_arn
+  provider          = aws.us_east_1 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#acm_certificate_arn
   domain_name       = local.shipreq_cdn_domain
   validation_method = "DNS"
   tags              = local.cdn_tags
@@ -90,7 +90,7 @@ resource "aws_route53_record" "cdn_cert_validation" {
 
 resource "aws_acm_certificate_validation" "cdn" {
   count                   = var.shipreq_cdn_subdomain == null ? 0 : 1
-  provider                = aws.us-east-1 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#acm_certificate_arn
+  provider                = aws.us_east_1 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#acm_certificate_arn
   certificate_arn         = aws_acm_certificate.cdn[0].arn
   validation_record_fqdns = [for r in aws_route53_record.cdn_cert_validation : r.fqdn]
 }

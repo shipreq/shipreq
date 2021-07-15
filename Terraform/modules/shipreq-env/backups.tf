@@ -1,6 +1,10 @@
 resource "aws_backup_vault" "sole" {
   name = var.env
   tags = local.default_tags
+
+  lifecycle {
+    ignore_changes = [recovery_points]
+  }
 }
 
 locals {

@@ -1,13 +1,14 @@
-provider "aws" {
-}
-
-provider "aws" {
-  alias = "ecr"
-}
-
-// Needed for CloudFront SSL
-provider "aws" {
-  alias = "us-east-1"
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 3.31"
+      configuration_aliases = [
+        aws.ecr,
+        aws.us_east_1, // Needed for CloudFront SSL
+      ]
+    }
+  }
 }
 
 variable "env" {

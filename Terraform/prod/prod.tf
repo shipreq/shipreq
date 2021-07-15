@@ -1,6 +1,4 @@
 terraform {
-  required_version = ">= 0.13"
-
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -25,7 +23,7 @@ provider "aws" {
 }
 
 provider "aws" {
-  alias  = "us-east-1"
+  alias  = "us_east_1"
   region = "us-east-1"
 }
 
@@ -35,7 +33,7 @@ module "shipreq" {
   providers = {
     aws           = aws
     aws.ecr       = aws.ap-southeast-2
-    aws.us-east-1 = aws.us-east-1
+    aws.us_east_1 = aws.us_east_1
   }
 
   env                 = "prod"
