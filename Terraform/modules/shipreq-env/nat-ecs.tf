@@ -25,6 +25,10 @@ resource "aws_instance" "nat" {
   tags                        = local.nat_tags
   volume_tags                 = local.nat_tags
 
+  credit_specification {
+    cpu_credits = "standard"
+  }
+
   user_data = trimspace(templatefile("${path.module}/nat-ec2-init.sh", {
     cluster = aws_ecs_cluster.nat.name
   }))
