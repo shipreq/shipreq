@@ -11,6 +11,12 @@ object Dependencies {
     val testkit = mm("akka-testkit")
   }
 
+  object Cats {
+    private val mm = MultiModule.jvmAndJs("org.typelevel", "2.6.1")
+    val core = mm("cats-core")
+    val free = mm("cats-free")
+  }
+
   object Circe {
     private val mm = MultiModule.jvmAndJs("io.circe", "0.14.1")
     val core    = mm("circe-core")
@@ -89,13 +95,13 @@ object Dependencies {
   object Microlibs {
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "3.0")
     val adtMacros   = mm("adt-macros")
+    val catsExt     = mm("cats-ext") ++ Cats.core
     val compileTime = mm("compile-time")
     val disjunction = mm("disjunction")
     val macroUtils  = mm("macro-utils")
     val multimap    = mm("multimap")
     val nonempty    = mm("nonempty")
     val recursion   = mm("recursion")
-    val catsExt   = mm("cats-ext")
     val stdlibExt   = mm("stdlib-ext")
     val testUtil    = mm("test-util")
     val types       = mm("types")
@@ -110,10 +116,10 @@ object Dependencies {
 
   object Nyaya {
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.11.0")
-    val gen  = mm("nyaya-gen")  ++ cats
-    val prop = mm("nyaya-prop") ++ cats
+    val gen  = mm("nyaya-gen")  ++ Cats.core
+    val prop = mm("nyaya-prop") ++ Cats.core
     val test = mm("nyaya-test")
-    val util = mm("nyaya-util") ++ cats
+    val util = mm("nyaya-util") ++ Cats.core
   }
 
   object OkHttp {
@@ -183,22 +189,21 @@ object Dependencies {
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", Ver)
     private val js = MultiModule.js("com.github.japgolly.test-state", Ver)
     val core            = mm("core")
-    val cats            = mm("ext-cats") ++ core ++ Dependencies.cats
+    val cats            = mm("ext-cats") ++ core ++ Cats.core
     val domZipperSizzle = js("dom-zipper-sizzle")
-    val nyaya           = mm("ext-nyaya") ++ Dependencies.cats ++ Nyaya.gen ++ Nyaya.test
+    val nyaya           = mm("ext-nyaya") ++ Cats.core ++ Nyaya.gen ++ Nyaya.test
     val scalajsReact    = js("ext-scalajs-react")
   }
 
   object UnivEq {
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.6.0")
     val univeq = mm("univeq")
-    val cats   = mm("univeq-cats") ++ univeq ++ Dependencies.cats
+    val cats   = mm("univeq-cats") ++ univeq ++ Cats.core
   }
 
   // ===================================================================================================================
 
   val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.4.0")
-  val cats        = jvmAndJs("org.typelevel",                    "cats",        "2.6.1")
   val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "2.0.0")
   val parboiled   = jvmAndJs("org.parboiled",                    "parboiled",   "2.3.0")
   val pprint      = jvmAndJs("com.lihaoyi",                      "pprint",      "0.6.6")

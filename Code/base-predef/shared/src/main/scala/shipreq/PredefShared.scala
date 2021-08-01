@@ -1,14 +1,14 @@
 package shipreq
 
 import java.lang.CharSequence
-import nyaya.util.{MultiValues, Multimap}
 import scala.annotation.elidable.ASSERTION
 import scala.collection.{ArrayOps, StringOps, immutable}
 import scala.reflect.ClassTag
 
 abstract class PredefShared
   extends PredefScala
-     with japgolly.univeq.UnivEqScalaz
+     with japgolly.microlibs.disjunction.Exports
+     with japgolly.univeq.UnivEqCats
      with japgolly.univeq.UnivEqExports {
 
   final type elidable = scala.annotation.elidable
@@ -19,18 +19,17 @@ abstract class PredefShared
   final type ArraySeq[+A] = scala.collection.immutable.ArraySeq[A]
   final val  ArraySeq     = scala.collection.immutable.ArraySeq
 
-  final type \/ [+A, +B] = scalaz.\/[A, B]
-  final type \/-[+A]     = scalaz.\/-[A]
-  final type -\/[+A]     = scalaz.-\/[A]
-  final val  \/          = scalaz.\/
-  final val  \/-         = scalaz.\/-
-  final val  -\/         = scalaz.-\/
-
   final type NonEmptySet[A] = japgolly.microlibs.nonempty.NonEmptySet[A]
   final val  NonEmptySet    = japgolly.microlibs.nonempty.NonEmptySet
 
   final type NonEmptyVector[+A] = japgolly.microlibs.nonempty.NonEmptyVector[A]
   final val  NonEmptyVector     = japgolly.microlibs.nonempty.NonEmptyVector
+
+  final type Multimap[K, L[_], V] = japgolly.microlibs.multimap.Multimap[K, L, V]
+  final val  Multimap             = japgolly.microlibs.multimap.Multimap
+
+  final type MultiValues[L[_]] = japgolly.microlibs.multimap.MultiValues[L]
+  final val  MultiValues       = japgolly.microlibs.multimap.MultiValues
 
   @inline
   @scala.annotation.nowarn("cat=unused")
@@ -70,6 +69,7 @@ abstract class PredefShared
 }
 
 object PredefShared {
+  import japgolly.microlibs.multimap._
   import japgolly.univeq._
   import java.lang.String
 

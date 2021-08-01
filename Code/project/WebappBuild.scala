@@ -355,7 +355,7 @@ object WebappBuild {
       .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJVM)
       .dependsOn(webappMemberTestJVM % Test)
       .deps(
-        cats ++ Lift.webkit ++  scalaXml ++ SLF4J.jcl ++ commonsText ++ Nyaya.gen ++ Logback.withPlugins ++ JJWT.all ++
+        Lift.webkit ++  scalaXml ++ SLF4J.jcl ++ commonsText ++ Nyaya.gen ++ Logback.withPlugins ++ JJWT.all ++
         Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ Prometheus.logback ++ redisson ++
         JettyDep.http ++
         providedScope(JettyDep.javaxServletApi ++ JettyDep.javaxWebsocketApi ++ JettyDep.servlets) ++
