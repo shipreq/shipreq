@@ -1,7 +1,7 @@
 import com.typesafe.sbt.packager.{Keys => PackagerKeys}
 import TaskmanBuild.TaskmanServer._
 
-dockerfile in docker := {
+docker / dockerfile := {
   val root = "/taskman"
   val lib = s"$root/lib/"
   val stageDir = PackagerKeys.stage.value

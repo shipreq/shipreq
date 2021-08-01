@@ -101,10 +101,10 @@ object ShipReqBuild {
       .deps(commonsText ++ Nyaya.test)
       .dependsOn(webappMemberTestJVM)
       .settings(
-        connectInput in run  := true,
-        fork         in run  := true,
-      //javaOptions  in run  += jprofilerAgent(wait = false),
-        javaOptions  in run ++= Seq("-Xmx8g", "-Xss8m"))
+        run / connectInput  := true,
+        run / fork          := true,
+      //run / javaOptions   += jprofilerAgent(wait = false),
+        run / javaOptions  ++= Seq("-Xmx8g", "-Xss8m"))
 
   object Benchmark {
     def commonSettings: Project => Project =
@@ -130,7 +130,7 @@ object ShipReqBuild {
           Common.jsSettings(NoTests))
         .settings(
           scalaJSLinkerConfig ~= { _.withSourceMap(true) },
-          skip in packageJSDependencies := false)
+          packageJSDependencies / skip := false)
     }
   }
 

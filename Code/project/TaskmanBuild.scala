@@ -31,7 +31,7 @@ object TaskmanBuild {
       .dependsOn(taskmanApiLogic, baseDb)
       .dependsOn(taskmanServerSchema % Test)
       .dependsOn(baseTestJvm % Test)
-      .settings(parallelExecution in Test := false)
+      .settings(Test / parallelExecution := false)
 
   lazy val taskmanServerLogic =
     project
@@ -63,10 +63,11 @@ object TaskmanBuild {
     def runWithDockerDev: Project => Project =
       _.configure(DockerEnv.dev.commands)
       .settings(
-        fork                in (Compile, run)  := true,
-        fullClasspathAsJars in Runtime         += DockerEnv.dev.resDir("taskman", baseDirectory.value),
-        javaOptions         in (Compile, run) ++= DockerEnv.dev.javaOptions("taskman", baseDirectory.value),
-        runner              in (Compile, run)  := (runner in (Compile, run)).dependsOn(DockerEnv.dev.devEnvStart).value)
+        Compile / run / fork           := true,
+        Compile / run / javaOptions   ++= DockerEnv.dev.javaOptions("taskman", baseDirectory.value),
+        Compile / run / runner         := (Compile / run / runner).dependsOn(DockerEnv.dev.devEnvStart).value,
+        Runtime / fullClasspathAsJars  += DockerEnv.dev.resDir("taskman", baseDirectory.value),
+      )
 
     Project("taskmanServer", file("taskman-server"))
       .enablePlugins(JavaAppPackaging, DockerPlugin)
@@ -82,16 +83,16 @@ object TaskmanBuild {
       .settings(
         dependencyOverrides ++= OkHttp.core(LibDependency.JVM), // because jaegerClient wants okhttp 4
 
-        mainClass in Compile := Some(serverClass),
-        javaOptions in(Compile, run) += "-XX:+UseG1GC",
+        Compile / mainClass := Some(serverClass),
+        Compile / run / javaOptions += "-XX:+UseG1GC",
 
         // Remove versions from package filenames for Docker layer reuse.
-        mappings in Universal :=
-          (mappings in Universal).value.map {
+        Universal / mappings :=
+          (Universal / mappings).value.map {
             case (f, n) => (f, fixJarFilename.value(n))
           },
 
-        parallelExecution in Test := false)
+        Test / parallelExecution := false)
       .configure(dontInline) // because Akka docs
   }
 

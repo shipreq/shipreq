@@ -5,11 +5,11 @@ import java.math.BigInteger
 import java.nio.file.Files
 import java.security.MessageDigest
 
-dockerfile in docker := {
+docker / dockerfile := {
   val jettyHome = "/jetty"
   val base      = "/shipreq"
   val srcDocker = sourceDirectory.value / "docker"
-  val tmp       = target.value / "docker-prep" // must be distinct from (target in docker)
+  val tmp       = target.value / "docker-prep" // must be distinct from (docker / target)
   val wsjar     = "webappserver.jar"
 
   def prepareClean(f: String): Unit =
@@ -22,7 +22,7 @@ dockerfile in docker := {
   }
 
   // Prepare jetty-dist
-  val depFiles = Classpaths.managedJars(DockerDeps, (classpathTypes in DockerDeps).value, update.value).map(_.data)
+  val depFiles = Classpaths.managedJars(DockerDeps, (DockerDeps / classpathTypes).value, update.value).map(_.data)
   assert(depFiles.size == 1)
   val jettyDistTarGz = depFiles.head
   val tmpJetty = prepareTmpDir("jetty")

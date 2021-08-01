@@ -37,11 +37,11 @@ object ScalafixBuild {
     .configure(settings)
     .settings(
       libraryDependencies                    += "ch.epfl.scala" % "scalafix-testkit" % ScalafixVer % Test cross CrossVersion.full,
-      scalafixTestkitOutputSourceDirectories := sourceDirectories.in(`scalafix-output`, Compile).value,
-      scalafixTestkitInputSourceDirectories  := sourceDirectories.in(`scalafix-input`, Compile).value,
-      scalafixTestkitInputClasspath          := fullClasspath.in(`scalafix-input`, Compile).value,
-      scalafixTestkitInputScalacOptions      := scalacOptions.in(`scalafix-input`, Compile).value,
-      scalafixTestkitInputScalaVersion       := scalaVersion.in(`scalafix-input`, Compile).value
+      scalafixTestkitOutputSourceDirectories := (`scalafix-output` / Compile / sourceDirectories).value,
+      scalafixTestkitInputSourceDirectories  := (`scalafix-input` / Compile / sourceDirectories).value,
+      scalafixTestkitInputClasspath          := (`scalafix-input` / Compile / fullClasspath).value,
+      scalafixTestkitInputScalacOptions      := (`scalafix-input` / Compile / scalacOptions).value,
+      scalafixTestkitInputScalaVersion       := (`scalafix-input` / Compile / scalaVersion).value
     )
     .dependsOn(`scalafix-input`, `scalafix-rules`)
     .enablePlugins(ScalafixTestkitPlugin)

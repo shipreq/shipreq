@@ -168,18 +168,18 @@ object Common {
 
   def packageBinaryOnly = (_: Project)
     .settings(
-      sources in (Compile, doc) := Nil,
-      publishArtifact in (Compile, packageDoc) := false,
-      publishArtifact in (Compile, packageSrc) := false,
-      publishArtifact in packageDoc := false,
-      publishArtifact in packageSrc := false)
+      Compile / doc / sources := Nil,
+      Compile / packageDoc / publishArtifact := false,
+      Compile / packageSrc / publishArtifact := false,
+      packageDoc / publishArtifact := false,
+      packageSrc / publishArtifact := false)
 
   def dockerLayerReuse = (_: Project)
     .settings(
       // Remove versions from filenames
-      artifactName in (Compile, packageBin) := ((_, _, a) => a.name + "." + a.extension),
+      Compile / packageBin / artifactName := ((_, _, a) => a.name + "." + a.extension),
       // Remove versions from manifests
-      packageOptions in (Compile, packageBin) := Nil)
+      Compile / packageBin / packageOptions := Nil)
 
   lazy val settingsMinForScalafix = (p: Project) => p
     .settings(
@@ -187,13 +187,11 @@ object Common {
       organizationName            := "Bearded Logic",
       isSnapshot                  := git.gitUncommittedChanges.value,
       version                     := versionFn(git.gitHeadCommit.value, isSnapshot.value),
-      shellPrompt in ThisBuild    := ((s: State) => Project.extract(s).currentRef.project + "> "),
       incOptions                  := incOptions.value.withLogRecompileOnMacro(false),
       updateOptions               := updateOptions.value.withCachedResolution(true),
-      aggregate in update         := true,
+      update / aggregate          := true,
       scalaVersion                := Dependencies.Scala.version,
       scalacOptions              ++= scalacFlags,
-    //cancelable in Global        := true, // Allows ctrl-c to kill apps started with run without exiting SBT
       dependencyUpdatesFilter     -= Dependencies.updateExclusions,
       minForcegcInterval          := 3.minutes,
       target                      := redirectTargetDir(target.value))
@@ -218,13 +216,13 @@ object Common {
     _.configure(settingsMin)
       .settings(
         excludeDependencies += "commons-logging" % "commons-logging", // commons-logging should be replaced by jcl-over-slf4j
-        scalacOptions in Test ++= scalacTestFlags,
-        scalacOptions in Test --= scalacTestNonFlags)
+        Test / scalacOptions ++= scalacTestFlags,
+        Test / scalacOptions --= scalacTestNonFlags)
       .configure(debugOrRelease(debugSettings, optimisationSettings))
 
   lazy val jvmSettings: Project => Project =
     _.configure(settings, InBrowserTesting.jvm)
-      .settings(testOptions in Test += Tests.Cleanup(shutdownTestDb(_)))
+      .settings(Test / testOptions += Tests.Cleanup(shutdownTestDb(_)))
 
   /** This doesn't work when fork := true */
   def shutdownTestDb(loader: ClassLoader): Unit = {
@@ -257,7 +255,7 @@ object Common {
       debugOrRelease(jsDevSettings, jsProdSettings),
       InBrowserTesting.js)
     .settings(
-      parallelExecution in testOnly := false,
+      testOnly / parallelExecution := false,
       scalaJSLinkerConfig ~= { _.withSourceMap(emitSourceMapsValue) })
 
   private def jsDevSettings: Project => Project =
@@ -306,7 +304,7 @@ object Common {
         _.settings(test := {})
       case UseNode =>
         _.settings(
-          jsEnv in Test := new JSDOMNodeJSEnv(JSDOMNodeJSEnv.Config()))
+          Test / jsEnv := new JSDOMNodeJSEnv(JSDOMNodeJSEnv.Config()))
       case UsePhantomJs =>
         _.settings(
           Test / scalaJSLinkerConfig ~= { _.withESFeatures(_.withUseECMAScript2015(false)) },
@@ -321,11 +319,11 @@ object Common {
 
   def nonTestCompilerFlags(flags: String*): Project => Project =
     _.settings(
-      scalacOptions in Compile ++= flags,
-      scalacOptions in Test --= flags)
+      Compile / scalacOptions ++= flags,
+      Test / scalacOptions --= flags)
 
   def dontOptimise: Project => Project =
-    _.settings(scalacOptions in Compile --= optimisationScalacFlags)
+    _.settings(Compile / scalacOptions --= optimisationScalacFlags)
 
   def dontInline: Project => Project =
     debugOrRelease(identity, _

@@ -88,7 +88,7 @@ object WebappBuild {
       .depsForBoth(Monocle.macros ++ Nyaya.prop ++ boopickle)
       .depsForJs(React.most ++ scalajsDom)
       .settings(
-        unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / Frontend.scala)
+        Compile / unmanagedSourceDirectories += baseDirectory.value / ".." / Frontend.scala)
       .jsSettings(
         genLastValueMemoBoilerplate := GenLastValueMemoBoilerplate(sourceDirectory.value / "main" / "scala"))
 
@@ -107,7 +107,7 @@ object WebappBuild {
         TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact)
       .jsSettings(
         parallelExecution := false, // I don't know why this is needed
-        jsDependencies in Test += ProvidedJS / "webapp-base-test.js")
+        Test / jsDependencies += ProvidedJS / "webapp-base-test.js")
 
   lazy val webappMemberJVM = webappMember.jvm
   lazy val webappMemberJS  = webappMember.js
@@ -135,7 +135,7 @@ object WebappBuild {
       .depsForBoth(ScalaCSS.core % Test) // for NaturalOrdering
       .jsSettings(
         parallelExecution := false, // Faster
-        jsDependencies in Test += ProvidedJS / "webapp-member-test.js")
+        Test / jsDependencies += ProvidedJS / "webapp-member-test.js")
 
   lazy val webappSampleDataJVM = webappSampleData.jvm
   lazy val webappSampleDataJS  = webappSampleData.js
@@ -155,7 +155,7 @@ object WebappBuild {
     _.enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
       .configure(Common.jsSettings(UsePhantomJs))
       .dependsOn(webappMemberJS, webappMemberTestJS % Test, webappServerLogicJS % Test)
-      .settings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
+      .settings(Test / jsDependencies += ProvidedJS / "webapp-client-test.js")
 
   lazy val webappClientPublicJVM = webappClientPublic.jvm
   lazy val webappClientPublicJS  = webappClientPublic.js
@@ -165,7 +165,7 @@ object WebappBuild {
       .configureJvm(Common.jvmSettings)
       .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UsePhantomJs))
       .dependsOn(webappBase, webappBaseTest % Test)
-      .jsSettings(jsDependencies in Test += ProvidedJS / "webapp-client-test.js")
+      .jsSettings(Test / jsDependencies += ProvidedJS / "webapp-client-test.js")
 
   lazy val webappClientLoaders =
     project
@@ -202,9 +202,9 @@ object WebappBuild {
         boopickle ++ scalajsDom ++
         testScope(μTest))
       .settings(
-        scalacOptions in Compile -= "-Xno-forwarders", // https://github.com/scala-js/scala-js/issues/4030
+        Compile / scalacOptions -= "-Xno-forwarders", // https://github.com/scala-js/scala-js/issues/4030
         scalaJSUseMainModuleInitializer := true,
-        mainClass in Compile := Some("shipreq.webapp.client.ww.Main"))
+        Compile / mainClass := Some("shipreq.webapp.client.ww.Main"))
 
   lazy val webappClientProject =
     project
@@ -223,18 +223,19 @@ object WebappBuild {
 
   lazy val webappSsrJVM = webappSsr.jvm
     .deps(ScalaGraal.coreJs ++ ScalaGraal.extPrometheus ++ scalaXml)
-    .settings(unmanagedResources in Compile += Def.taskDyn {
-      val stage = (scalaJSStage in Compile in webappSsrJS).value
+    .settings(Compile / unmanagedResources += Def.taskDyn {
+      val stage = (webappSsrJS / Compile / scalaJSStage).value
       val task = stageKey(stage)
-      Def.task((task in Compile in webappSsrJS).value.data)
+      Def.task((webappSsrJS / Compile / task).value.data)
     }.value)
 
   lazy val webappSsrJS = webappSsr.js
     .dependsOn(webappClientLoaders)
     .settings(
       scalaJSLinkerConfig ~= { _.withSourceMap(emitSourceMapsValue) },
-      artifactPath in (Compile, fastOptJS) := (crossTarget.value / "webapp-ssr.js"),
-      artifactPath in (Compile, fullOptJS) := (crossTarget.value / "webapp-ssr.js"))
+      Compile / fastOptJS / artifactPath := (crossTarget.value / "webapp-ssr.js"),
+      Compile / fullOptJS / artifactPath := (crossTarget.value / "webapp-ssr.js"),
+    )
 
   lazy val webappServerLogicJVM = webappServerLogic.jvm
   lazy val webappServerLogicJS  = webappServerLogic.js
@@ -268,7 +269,7 @@ object WebappBuild {
 
     def assetSettings: Project => Project =
       _.settings(
-        javaOptions in Jetty ++= Seq(
+        Jetty / javaOptions ++= Seq(
           "-Dshipreq.scalajs.public="    + Frontend.scalaJsDevPathPublic,
           "-Dshipreq.scalajs.home="      + Frontend.scalaJsDevPathHome,
           "-Dshipreq.scalajs.project="   + Frontend.scalaJsDevPathProject,
@@ -278,10 +279,10 @@ object WebappBuild {
           implicit val log = streams.value.log
 
           val baseDirectoryValue     = baseDirectory.value
-          val jsWebappClientPublicJs = (scalaJSLinkedFile in Compile in webappClientPublicJS).value
-          val jsWebappClientHome     = (scalaJSLinkedFile in Compile in webappClientHome    ).value
-          val jsWebappClientProject  = (scalaJSLinkedFile in Compile in webappClientProject ).value
-          val jsWebappClientWw       = (scalaJSLinkedFile in Compile in webappClientWw      ).value
+          val jsWebappClientPublicJs = (webappClientPublicJS / Compile / scalaJSLinkedFile).value
+          val jsWebappClientHome     = (webappClientHome     / Compile / scalaJSLinkedFile).value
+          val jsWebappClientProject  = (webappClientProject  / Compile / scalaJSLinkedFile).value
+          val jsWebappClientWw       = (webappClientWw       / Compile / scalaJSLinkedFile).value
           val pathScalaJsPathPublic  = Frontend.scalaJsDevPathPublic
           val pathScalaJsPathHome    = Frontend.scalaJsDevPathHome
           val pathScalaJsPathProject = Frontend.scalaJsDevPathProject
@@ -332,7 +333,7 @@ object WebappBuild {
       .deps(LibJetty.distTarGz % DockerDeps)
       .settings(
         cleanFiles += baseDirectory.value / "target",
-        classpathTypes in DockerDeps += "tar.gz", // for jetty-distribution
+        DockerDeps / classpathTypes += "tar.gz", // for jetty-distribution
         webappWebInfClasses := false)
 
     /** Does the following on the `up` command:
@@ -345,9 +346,9 @@ object WebappBuild {
     def connectToDockerDevEnv: Project => Project =
       _.configure(DockerEnv.dev.commands)
         .settings(
-          containerArgs in Jetty ++= "--classes" :: (DockerEnv.dev.resDir("webapp", baseDirectory.value) / "resources").absolutePath :: Nil,
-          javaOptions   in Jetty ++= DockerEnv.dev.javaOptions("webapp", baseDirectory.value),
-          start         in Jetty  := (start in Jetty).dependsOn(DockerEnv.dev.devEnvStart).value)
+          Jetty / containerArgs ++= "--classes" :: (DockerEnv.dev.resDir("webapp", baseDirectory.value) / "resources").absolutePath :: Nil,
+          Jetty / javaOptions   ++= DockerEnv.dev.javaOptions("webapp", baseDirectory.value),
+          Jetty / start          := (Jetty / start).dependsOn(DockerEnv.dev.devEnvStart).value)
 
     def definition: Project => Project = _
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
@@ -368,8 +369,8 @@ object WebappBuild {
         dockerSettings)
       .settings(
         scalacOptions -= "-Yno-generic-signatures", // Without this, snippets break. LiveTest confirms.
-        containerLibs in Jetty := LibJetty.devRun(JVM),
-        javaOptions in Jetty ++= List(
+        Jetty / containerLibs := LibJetty.devRun(JVM),
+        Jetty / javaOptions ++= List(
           "-XX:+UseJVMCINativeLibrary",
           // "-XX:+BootstrapJVMCI",
           //"-XX:-TieredCompilation",
@@ -378,7 +379,8 @@ object WebappBuild {
           "-Xmx1g",
           "-XX:+UseG1GC"), // TODO use everywhere then including tests
         initialCommands += consoleCmds,
-        fullClasspath in console in Compile += file("src/main/webapp")) // So templates can be loaded from console
+        Compile / console / fullClasspath += file("src/main/webapp"), // So templates can be loaded from console
+      )
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -393,10 +395,10 @@ object WebappBuild {
     println()
     println(header)
     println("=" * header.length)
-    report((moduleName in webappClientPublicJS).value, (stageKey(stage) in Compile in webappClientPublicJS).value)
-    report((moduleName in webappClientHome    ).value, (stageKey(stage) in Compile in webappClientHome    ).value)
-    report((moduleName in webappClientProject ).value, (stageKey(stage) in Compile in webappClientProject ).value)
-    report((moduleName in webappClientWw      ).value, (stageKey(stage) in Compile in webappClientWw      ).value)
+    report((webappClientPublicJS / moduleName).value, (webappClientPublicJS / Compile / stageKey(stage)).value)
+    report((webappClientHome     / moduleName).value, (webappClientHome     / Compile / stageKey(stage)).value)
+    report((webappClientProject  / moduleName).value, (webappClientProject  / Compile / stageKey(stage)).value)
+    report((webappClientWw       / moduleName).value, (webappClientWw       / Compile / stageKey(stage)).value)
     println()
   }
 

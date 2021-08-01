@@ -15,10 +15,10 @@ object Docker {
   def settingsFor(name: String): Project => Project =
     _.settings(
 
-      buildOptions in docker :=
+      docker / buildOptions :=
         BuildOptions(pullBaseImage = BuildOptions.Pull.IfMissing),
 
-      imageNames in docker := {
+      docker / imageNames := {
         val imageUrl = propOrEnv(name.toUpperCase + "_IMAGE_URL")
         val isLocal  = imageUrl.isEmpty
         val image    = imageUrl.getOrElse(s"shipreq/$name")
