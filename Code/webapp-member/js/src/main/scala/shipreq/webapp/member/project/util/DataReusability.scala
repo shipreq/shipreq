@@ -72,7 +72,7 @@ abstract class DataReusability extends BaseReusability {
 
   implicit lazy val reusabilityProjectMetaData: Reusability[ProjectMetaData] = {
     @nowarn("cat=unused") implicit val instant = Reusability.instant(Duration.ofMillis(500))
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
   }
 
   implicit def reusabilityReactKey: Reusability[Key] =
@@ -88,7 +88,7 @@ abstract class DataReusability extends BaseReusability {
     Reusability.byUnivEq
 
   implicit def reusabilityProjectAndOrd: Reusability[ProjectAndOrd] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 
   implicit def reusabilityProject: Reusability[Project] =
     Reusability.byRef
@@ -211,7 +211,7 @@ abstract class DataReusability extends BaseReusability {
     Reusability.byRef
 
   implicit lazy val reusabilityIssues: Reusability[Issues] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 
   implicit lazy val reusabilitySavedViewColumn: Reusability[savedview.Column] =
     Reusability.byUnivEq
@@ -235,7 +235,7 @@ abstract class DataReusability extends BaseReusability {
     Reusability.byUnivEq
 
   implicit lazy val reusabilitySavedView: Reusability[savedview.SavedView] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 
   implicit lazy val reusabilitySavedViewCmdD: Reusability[SavedViewCmd.Delete] =
     Reusability.byUnivEq
@@ -253,5 +253,5 @@ abstract class DataReusability extends BaseReusability {
     Reusability.derive
 
   implicit lazy val reusabilityImpGraphConfig: Reusability[ImpGraphConfig] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 }

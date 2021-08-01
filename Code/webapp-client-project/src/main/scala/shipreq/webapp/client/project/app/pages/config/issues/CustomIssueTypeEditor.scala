@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.pages.config.issues
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -94,8 +94,8 @@ private[issues] object CustomIssueTypeEditor {
       )
   }
 
-  implicit val reusabilityState: Reusability[State ] = Reusability.byRef || Reusability.derive
-  implicit val reusabilityProps: Reusability[Props ] = Reusability.byRef || Reusability.derive
+  implicit val reusabilityState: Reusability[State ] = Reusability.derive
+  implicit val reusabilityProps: Reusability[Props ] = Reusability.derive
 
   // ===================================================================================================================
 

@@ -15,7 +15,7 @@ object CharWidthsGen {
 
     private val ref = Ref[html.Element]
 
-    private val span = <.span(^.wordBreak.`keep-all`, ^.margin := "0", ^.padding := "0", ^.outline := "0")
+    private val span = <.span(^.wordBreak.keepAll, ^.margin := "0", ^.padding := "0", ^.outline := "0")
 
     private val lenAttrName = "data-len"
     private val lenAttr = VdomAttr(lenAttrName)

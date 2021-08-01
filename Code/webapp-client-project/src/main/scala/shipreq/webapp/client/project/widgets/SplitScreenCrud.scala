@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -182,7 +182,7 @@ final class SplitScreenCrud[
     private def _select(project: Option[Project], id: Id): Callback =
       for {
         p           <- $.props.toCBO
-        editorState <- CallbackOption.liftOption(p.initEditor(project.getOrElse(p.project), \/-(id)))
+        editorState <- CallbackOption.option(p.initEditor(project.getOrElse(p.project), \/-(id)))
         right        = S.Right.Update(id, editorState)
         _           <- p.state.modState(_.copy(right = right))
       } yield ()
@@ -204,7 +204,7 @@ final class SplitScreenCrud[
         ns =>
           for {
             p           <- $.props.toCBO
-            editorState <- CallbackOption.liftOption(p.initEditor(p.project, -\/(ns)))
+            editorState <- CallbackOption.option(p.initEditor(p.project, -\/(ns)))
             right        = S.Right.Create(editorState)
             _           <- p.state.modState(_.copy(right = right))
           } yield ()
@@ -245,7 +245,7 @@ final class SplitScreenCrud[
           case Enabled =>
             SplitScreenCrud.NewArgs.Enabled(
               state      = p.state.zoomStateL(newStateLens),
-              openEditor = Callback.byName(openNewEditor(p.state.value.newState)))
+              openEditor = Callback.suspend(openNewEditor(p.state.value.newState)))
 
           case Disabled =>
             SplitScreenCrud.NewArgs.Disabled(p.state.value.newState)

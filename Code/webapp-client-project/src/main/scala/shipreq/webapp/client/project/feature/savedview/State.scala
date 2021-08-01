@@ -78,7 +78,7 @@ object State {
     init.updateFilterText(p)
 
   implicit def reusability: Reusability[State] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 
   val manualView: Optional[State, View] =
     view ^|-> ViewLogic.State.manualView ^<-? pSome

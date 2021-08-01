@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.pages.content.issues
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -69,7 +69,7 @@ object IssuesPage {
     )
 
     implicit val reusability: Reusability[State] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
   }
 
   final class Backend(static: StaticProps, $: BackendScope[Props, Unit]) {

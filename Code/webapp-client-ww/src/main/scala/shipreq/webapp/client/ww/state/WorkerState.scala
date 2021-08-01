@@ -46,7 +46,7 @@ final class WorkerState(logger: LoggerJs) {
     graphvizBarrier.await
 
   def withGraphViz[A](f: => AsyncCallback[A], retries: Int = 3): AsyncCallback[A] = {
-    val main = AsyncCallback.byName(f).attempt.timeoutMs(2000)
+    val main = AsyncCallback.suspend(f).attempt.timeoutMs(2000)
 
     def go(retries: Int): AsyncCallback[A] =
       main.flatMap {

@@ -88,7 +88,7 @@ object Feature {
   }
 
   implicit def reusabilityForProject[Ctx <: PCtx, V, Out]: Reusability[ForProject[Ctx, V, Out]] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
@@ -113,7 +113,7 @@ object Feature {
   }
 
   implicit def reusabilityForFields[Ctx <: PCtx, FK <: FieldKey, Out]: Reusability[ForFields[Ctx, FK, Out]] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 
   type ForCodeGroup   [+Ctx <: PCtx, Out] = ForFields[Ctx, FieldKey.ForCodeGroup , Out]
   type ForGenericReq  [+Ctx <: PCtx, Out] = ForFields[Ctx, FieldKey.ForGenericReq, Out]

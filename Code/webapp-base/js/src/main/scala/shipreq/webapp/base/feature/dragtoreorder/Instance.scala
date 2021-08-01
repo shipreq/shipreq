@@ -31,7 +31,7 @@ private[feature] final class Instance[A](getData            : CallbackTo[Vector[
 
     // This prevents the need to check e.dataTransfer.types
     val getDragState: CallbackOption[DragState[A]] =
-      CallbackOption.liftOption(_state)
+      CallbackOption.option(_state)
 
     def setState(s: State): Callback =
       Callback { _state = s } >> updateUI

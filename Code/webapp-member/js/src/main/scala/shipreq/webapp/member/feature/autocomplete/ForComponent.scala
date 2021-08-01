@@ -49,7 +49,7 @@ object ForComponent {
     private[this] var hideNext        : Boolean                 = false
 
     final protected val textCompleteCBO: CallbackOption[TextComplete] =
-      CallbackOption.liftOption(textComplete)
+      CallbackOption.option(textComplete)
 
     final def autoCompleteMount(implicit ac: AutoCompletable[D]): Callback =
       for {
@@ -134,7 +134,7 @@ object ForComponent {
       for {
         tc  <- textCompleteCBO
         ctx <- autoCompleteCtx
-        txt <- CallbackOption.liftOption(text(ctx.dom))
+        txt <- CallbackOption.option(text(ctx.dom))
       } yield {
         tc.trigger(txt)
         ()

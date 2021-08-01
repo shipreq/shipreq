@@ -90,5 +90,5 @@ object Style {
   )
 
   implicit def univEq: UnivEq[Style] = UnivEq.derive
-  implicit def reusability: Reusability[Style] = Reusability.byRef || Reusability.derive
+  implicit def reusability: Reusability[Style] = Reusability.derive
 }

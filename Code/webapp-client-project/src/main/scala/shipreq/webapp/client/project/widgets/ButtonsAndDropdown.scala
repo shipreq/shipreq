@@ -203,8 +203,8 @@ object ButtonsAndDropdown {
       for {
         p <- $.props.toCBO
         _ <- CallbackOption.unless(p.inProgress)
-        s <- CallbackOption.liftOption(p.selectItem)
-        i <- CallbackOption.liftOption(p.items.find(_.key ==* key))
+        s <- CallbackOption.option(p.selectItem)
+        i <- CallbackOption.option(p.items.find(_.key ==* key))
         _ <- s.value(i.value).toCBO
       } yield ()
 

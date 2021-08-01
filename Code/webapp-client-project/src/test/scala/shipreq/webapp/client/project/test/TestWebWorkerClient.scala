@@ -23,7 +23,7 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
     null
 
   override def postEnc[A](cmd: WebWorkerCmd[A], enc: ArrayBuffer)(implicit readResult: Pickler[A]): AsyncCallback[A] =
-    AsyncCallback.byName {
+    AsyncCallback.suspend {
       val id = requests.length
       requests :+= cmd
       logger(_.info(s"WW received request #${id + 1}: ${cmd.toString.quoteInner.take(100)}"))

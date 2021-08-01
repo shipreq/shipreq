@@ -46,7 +46,7 @@ object SelectionCtrls {
   final case class ActionInfo(affects: Int, perform: Callback)
 
   implicit def reusabilityProps: Reusability[Props] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

@@ -121,7 +121,7 @@ object ReauthenticationModal {
 
       /** Check if re-authorisation has occurred in a different tab */
       lazy val checkBackgroundReauthorisation: Callback = {
-        Callback.byName {
+        Callback.suspend {
           if (isModalOpen()) {
             val sessionExpired = GlobalSettings.SessionExpired.get.runNow().contains(true)
             if (sessionExpired)

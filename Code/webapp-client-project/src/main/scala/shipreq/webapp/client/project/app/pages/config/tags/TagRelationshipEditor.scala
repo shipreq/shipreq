@@ -43,7 +43,7 @@ object TagRelationshipEditor {
   }
 
   implicit val reusabilityProps: Reusability[Props] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 
   @Lenses
   final case class State(groups: Set[TagGroupId],

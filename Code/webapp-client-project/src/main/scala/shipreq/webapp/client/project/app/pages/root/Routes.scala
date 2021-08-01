@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.pages.root
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react.extra.router.{RouterCtl => RouterCtl_, _}
 import japgolly.scalajs.react.{Callback, Reusability}
 import monocle._

@@ -204,11 +204,11 @@ object EditorArgs {
                                         shiftRunner   : Option[AsyncFeature.Runner.D0[UpdateContentCmd.ForUseCaseStep, Any]],
                                         addStepRunner : Option[AsyncFeature.Runner.D0[UpdateContentCmd.AddUseCaseStep, Any]])
 
-  implicit val reusabilityForAny                : Reusability[ForAny                ] = Reusability.byRef || Reusability.derive
-  implicit val reusabilityForReqCodeEditor      : Reusability[ForReqCodeEditor      ] = Reusability.byRef || Reusability.derive
-  implicit val reusabilityForReqTypeEditor      : Reusability[ForReqTypeEditor      ] = Reusability.byRef || Reusability.derive
-  implicit val reusabilityForImplicationEditor  : Reusability[ForImplicationEditor  ] = Reusability.byRef || Reusability.derive
-  implicit val reusabilityForTagEditor          : Reusability[ForTagEditor          ] = Reusability.byRef || Reusability.derive
-  implicit val reusabilityForTextEditor         : Reusability[ForTextEditor         ] = Reusability.byRef || Reusability.derive
-  implicit val reusabilityForUseCaseStepEditor  : Reusability[ForUseCaseStepEditor  ] = Reusability.byRef || Reusability.derive
+  implicit val reusabilityForAny                : Reusability[ForAny                ] = Reusability.derive
+  implicit val reusabilityForReqCodeEditor      : Reusability[ForReqCodeEditor      ] = Reusability.derive
+  implicit val reusabilityForReqTypeEditor      : Reusability[ForReqTypeEditor      ] = Reusability.derive
+  implicit val reusabilityForImplicationEditor  : Reusability[ForImplicationEditor  ] = Reusability.derive
+  implicit val reusabilityForTagEditor          : Reusability[ForTagEditor          ] = Reusability.derive
+  implicit val reusabilityForTextEditor         : Reusability[ForTextEditor         ] = Reusability.derive
+  implicit val reusabilityForUseCaseStepEditor  : Reusability[ForUseCaseStepEditor  ] = Reusability.derive
 }

@@ -63,7 +63,7 @@ object Editability {
       ForFields[FK](Reusable.implicitly(ee).map(e => f => e(map(f))))
   }
 
-  implicit val reusabilityForProject               : Reusability[ForProject        ] = Reusability.byRef || Reusability.derive
-  private  val reusabilityForFieldsAny             : Reusability[ForFields[Nothing]] = Reusability.byRef || Reusability.derive
+  implicit val reusabilityForProject               : Reusability[ForProject        ] = Reusability.derive
+  private  val reusabilityForFieldsAny             : Reusability[ForFields[Nothing]] = Reusability.derive
   implicit def reusabilityForFields[FK <: FieldKey]: Reusability[ForFields[FK]     ] = reusabilityForFieldsAny.narrow
 }

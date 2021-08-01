@@ -63,7 +63,7 @@ object UnsavedChanges {
                          useCases      : UseCases)
 
   object Input {
-    implicit def reusability: Reusability[Input] = Reusability.byRef || Reusability.derive
+    implicit def reusability: Reusability[Input] = Reusability.derive
   }
 
   def determine(input: Input): CallbackTo[UnsavedChanges] =

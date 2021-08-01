@@ -1,7 +1,7 @@
 package shipreq.webapp.base.feature
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import scala.reflect.ClassTag
 import shipreq.base.util.{ErrorMsg, Intersection, Optics}
@@ -350,7 +350,7 @@ object AsyncFeature {
               create(onSuccess)
 
             def onFailure: F => Callback =
-              f => setState(Some(Status.Failed(f, Callback byName doIt, clearStatus)))
+              f => setState(Some(Status.Failed(f, Callback suspend doIt, clearStatus)))
 
             def taskSF =
               taskS.leftFlatTap(onFailure(_).asAsyncCallback)

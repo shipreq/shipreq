@@ -64,7 +64,7 @@ object Dropdown {
              clearSelected: Boolean = false): Callback =
     for {
       n <- getDom.toCBO
-      e <- CallbackOption.liftOption(n.toElement)
+      e <- CallbackOption.option(n.toElement)
     } yield {
       val sel = ".ui.dropdown"
       var j = JQuery(e)

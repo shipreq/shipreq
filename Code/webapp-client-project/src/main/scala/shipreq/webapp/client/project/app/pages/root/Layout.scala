@@ -126,7 +126,7 @@ object Layout {
     }
 
     implicit def reusability: Reusability[UnsavedChangeData] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
   }
 
   private val connectedIcon =

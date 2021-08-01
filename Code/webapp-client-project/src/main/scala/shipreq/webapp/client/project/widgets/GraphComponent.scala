@@ -42,7 +42,7 @@ object GraphComponent {
       apply(None, Valid)
 
     implicit def reusability: Reusability[State] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
   }
 
   sealed trait DisplayMode

@@ -358,7 +358,7 @@ private[fields] object DerivativeTagRuleEditor {
     override val autoCompleteCtx: CallbackOption[AutoCompleteCtx] =
       for {
         r <- editorRef.get
-        h <- CallbackOption.liftOption(r.getDOMNode.toHtml)
+        h <- CallbackOption.option(r.getDOMNode.toHtml)
       } yield AutoCompleteCtx(pxAutoComplete.value(), h.domCast[html.TextArea])
 
     override protected def getTextFromHeadToCaret =

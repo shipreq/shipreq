@@ -48,7 +48,7 @@ object NewEditor {
     val onStart = hooks ^|-> Hooks.onStart
 
     implicit val reusability: Reusability[CreationArgs] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
   }
 
   @Lenses
@@ -61,7 +61,7 @@ object NewEditor {
     implicit val reusability: Reusability[Hooks] = {
       @nowarn("cat=unused")
       implicit val x: Reusability[Callback] = Reusability.callbackByRef
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
     }
   }
 
@@ -141,7 +141,7 @@ object NewEditor {
         case Some(pv) =>
           for {
             pva <- pvaCB.toCBO
-            a   <- CallbackOption.liftOption(pva.accept(pv)) // halt here if PotentialValueAcceptor rejects value
+            a   <- CallbackOption.option(pva.accept(pv)) // halt here if PotentialValueAcceptor rejects value
             e   <- userInit(Some(a))(args)
           } yield e
       }
@@ -244,7 +244,7 @@ object NewEditor {
           def newEditor: B => Some[E] =
             b => Some(editorCtor(StateSnapshot.withReuse(b)(update)))
 
-          CallbackOption.liftOption(newEditor(initialValue(s)))
+          CallbackOption.option(newEditor(initialValue(s)))
         }
 
       def startWithStateSnapshot[S, B: Reusability, E <: Editor[A, C]](initialData      : CallbackOption[S],
@@ -293,7 +293,7 @@ object NewEditor {
                                 ss: StateSnapshot[A]): CallbackOption[Unit] =
       for {
         pva <- pvaCBO
-        v   <- CallbackOption.liftOption(pva.accept(p))
+        v   <- CallbackOption.option(pva.accept(p))
         _   <- ss.setState(v).toCBO
       } yield ()
 
@@ -324,7 +324,7 @@ object NewEditor {
                 p      <- pxProject.toCallback.toCBO
                 choices = ReqTypeSelector.choices(current, p.config.reqTypes)
                 pva     = ReqTypeSelector.potentialValueAcceptor(choices.whole)
-                i      <- CallbackOption.liftOption(pva.accept(pv))
+                i      <- CallbackOption.option(pva.accept(pv))
               } yield i
           }
 
