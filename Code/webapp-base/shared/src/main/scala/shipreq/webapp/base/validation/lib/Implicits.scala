@@ -1,6 +1,5 @@
 package shipreq.webapp.base.validation.lib
 
-import scalaz.Endo
 import shipreq.base.util.ErrorMsg
 
 object Implicits {
@@ -18,9 +17,9 @@ object Implicits {
        }
   }
 
-  implicit class SimpleExt_ScalazEndo[A](private val self: Endo[A]) extends AnyVal {
-    def correctLive: Simple.EndoCorrector[A] = Simple.EndoCorrector.live(self.run)
-    def correctFull: Simple.EndoCorrector[A] = Simple.EndoCorrector.full(self.run)
+  implicit class SimpleExt_Endo[A](private val self: A => A) extends AnyVal {
+    def correctLive: Simple.EndoCorrector[A] = Simple.EndoCorrector.live(self)
+    def correctFull: Simple.EndoCorrector[A] = Simple.EndoCorrector.full(self)
   }
 
   implicit class SimpleExt_InvalidatorObj(private val ε: Generic.Invalidator.type) extends AnyVal {

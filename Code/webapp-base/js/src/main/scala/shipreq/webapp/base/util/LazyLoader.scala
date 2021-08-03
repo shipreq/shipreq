@@ -1,13 +1,14 @@
 package shipreq.webapp.base.util
 
+import cats.Applicative
+import cats.instances.list._
+import cats.syntax.foldable._
+import cats.syntax.functor._
 import japgolly.scalajs.react.{Callback, CallbackTo}
 import org.scalajs.dom.{document, html}
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js.Dynamic
-import scalaz.Applicative
-import scalaz.std.list.listInstance
-import scalaz.syntax.traverse._
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.util.LazyLoader.State
 
@@ -127,11 +128,11 @@ object LazyLoader {
     final case class Loaded[A](value: A) extends State[A]
   }
 
-  implicit val scalazInstance: Applicative[LazyLoader] =
+  implicit val catsInstance: Applicative[LazyLoader] =
     new Applicative[LazyLoader] {
-      override def point[A](a: => A) = LazyLoader.sync(a)
+      override def pure[A](a: A) = LazyLoader.sync(a)
       override def map[A, B](fa: LazyLoader[A])(f: A => B) = fa map f
-      override def ap[A, B](la: => LazyLoader[A])(lf: => LazyLoader[A => B]): LazyLoader[B] =
+      override def ap[A, B](lf: LazyLoader[A => B])(la: LazyLoader[A]): LazyLoader[B] =
         LazyLoader.async[B] { complete =>
           val pf = Promise[A => B]()
           val pa = Promise[A]()

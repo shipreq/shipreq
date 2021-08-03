@@ -5,6 +5,35 @@ import scala.annotation.elidable.ASSERTION
 import scala.collection.{ArrayOps, StringOps, immutable}
 import scala.reflect.ClassTag
 
+// ===================================================================================================================
+object \/ {
+  def fromTryCatchNonFatal[A](a: => A): Either[Throwable, A] =
+    try Right(a) catch { case scala.util.control.NonFatal(e) => Left(e) }
+
+  def fromTryCatch[A](a: => A): Either[Throwable, A] =
+    try Right(a) catch { case e: Throwable => Left(e) }
+
+  @inline def right[A](a: A): Right[Nothing, A] = Right(a)
+  @inline def left [A](a: A): Left[A, Nothing] = Left(a)
+}
+
+final class EitherOps[E, A](private val e: Either[E, A]) extends AnyVal {
+
+  def leftMap[B](f: E => B): Either[B, A] =
+    e match {
+      case r: Right[E, A] => r.asInstanceOf[Right[B, A]]
+      case Left(e)        => Left(f(e))
+    }
+
+  def toList: List[A] =
+    e match {
+      case Right(a) => a :: Nil
+      case Left(_)  => Nil
+    }
+}
+// ===================================================================================================================
+
+
 abstract class PredefShared
   extends PredefScala
     //  with japgolly.microlibs.disjunction.Exports
@@ -20,9 +49,18 @@ abstract class PredefShared
   @scala.annotation.showAsInfix
   final type \/[+A, +B] = Either[A, B]
 
-  @inline final val \/  = japgolly.microlibs.disjunction.Exports.\/
+  @inline final val \/  = shipreq.\/
   @inline final val -\/ = Left
   @inline final val \/- = Right
+  // object \/- {
+  //   @inline def apply[A](a: A): \/-[A] = Right(a)
+  //   def unapply[A, B](e: Right[B, A]): Option[A] = if (e.isRight) Some(e.value) else None
+  //   Right.un
+  // }
+  // object -\/ {
+  //   @inline def apply[A](a: A): -\/[A] = Left(a)
+  //   def unapply[A, B](e: Left[A, B]): Option[A] = if (e.isLeft) Some(e.value) else None
+  // }
 
   @inline final implicit def implicitIgnoreLeftTypeOnRight[A, B, R](r: Right[A, R]): Right[B, R] =
     r.asInstanceOf[Right[B, R]]
@@ -30,8 +68,8 @@ abstract class PredefShared
   @inline final implicit def implicitIgnoreRightTypeOnLeft[A, B, L](r: Left[L, A]): Left[L, B] =
     r.asInstanceOf[Left[L, B]]
 
-  @inline final implicit def implicitDisjEitherOps[E, A](a: Either[E, A]): japgolly.microlibs.disjunction.Exports.EitherOps[E, A] =
-    new japgolly.microlibs.disjunction.Exports.EitherOps(a)
+  @inline final implicit def implicitDisjEitherOps[E, A](a: Either[E, A]): shipreq.EitherOps[E, A] =
+    new shipreq.EitherOps(a)
 // ===================================================================================================================
 
 

@@ -1,12 +1,12 @@
 package shipreq.webapp.base.util
 
+import cats.Eq
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import scalaz.Equal
 
 object Reorder {
 
-  def usingEqual[@specialized(Int) A](from: A, to: A)(as: Vector[A])(implicit e: Equal[A]): Vector[A] =
-    apply(from, to, as)(e.equal)
+  def usingEqual[@specialized(Int) A](from: A, to: A)(as: Vector[A])(implicit e: Eq[A]): Vector[A] =
+    apply(from, to, as)(e.eqv)
 
   @nowarn("cat=unused")
   def usingUnivEq[@specialized(Int) A](from: A, to: A)(as: Vector[A])(implicit e: UnivEq[A]): Vector[A] =

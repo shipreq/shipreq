@@ -211,12 +211,12 @@ object AsyncFeature {
                   case Some(k) => (k, x._2)
                   case None    => null
                 }).filter(_ ne null)
-              )(_.subst[λ[X => Iterator[(X, Status[F])]]](state.iterator))
+              )(_.substitute[λ[X => Iterator[(X, Status[F])]]](state.iterator))
 
             override def keySet: Set[K] =
               i.reverse.id.fold(
                 state.keysIterator.map(i.getOption).filterDefined.toSet
-              )(_.subst(state.keySet))
+              )(_.substitute(state.keySet))
           }
 
       private[D1] def either[K1, K2, F](d1: D1[K1, F], d2: D1[K2, F]): D1[K1 \/ K2, F] =
@@ -284,7 +284,7 @@ object AsyncFeature {
               state.iterator
                 .map(x => i2.fold(x._1, (_, D1.mapped(x._2, i1)))(null))
                 .filter(_ ne null)
-            )(_.subst[λ[X => Iterator[(X, State.D1[SK1, F])]]](state.iterator)
+            )(_.substitute[λ[X => Iterator[(X, State.D1[SK1, F])]]](state.iterator)
               .map(_.map2(D1.mapped(_, i1))))
 
           override def withKey1(k1: K1): D1[K2, F] = {
@@ -420,7 +420,7 @@ object AsyncFeature {
                 val value = _value
                 ks.foldLeft(initialState)((s, k) =>
                   i.reverse.foldWarnFlip(k, s)(sk =>
-                    lensAt(sk).set(value)(s))) })
+                    lensAt(sk).replace(value)(s))) })
         })
 
       def init[K: UnivEq : ClassTag, F]($: StateAccessPure[State.D1[K, F]]): D1[K, F] =
