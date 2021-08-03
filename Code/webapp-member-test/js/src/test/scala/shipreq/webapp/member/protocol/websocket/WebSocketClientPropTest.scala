@@ -44,16 +44,16 @@ object WebSocketClientPropTest extends TestSuite {
     import tester._
 
     val constPossibilities = List[Possibility](
-      Possibility("client.connect", Gen.point(client.connect.runNow())),
-      Possibility("client.close", Gen.point(client.close.runNow())),
-      Possibility("client.keepAlive", Gen.point(client.keepAlive.runNow())),
-      Possibility("user.sendMsg", Gen.point(sendMsg())),
+      Possibility("client.connect", Gen.delay(client.connect.runNow())),
+      Possibility("client.close", Gen.delay(client.close.runNow())),
+      Possibility("client.keepAlive", Gen.delay(client.keepAlive.runNow())),
+      Possibility("user.sendMsg", Gen.delay(sendMsg())),
     )
 
-    val wsOpen     = Possibility("ws.open", Gen.point(ws().open()))
-    val wsClosing  = Possibility("ws.closing", Gen.point(ws().closing()))
+    val wsOpen     = Possibility("ws.open", Gen.delay(ws().open()))
+    val wsClosing  = Possibility("ws.closing", Gen.delay(ws().closing()))
     val wsClose    = Possibility("ws.close", Gen.choose_!(closeCodes).map(ws().close(_)))
-    val wsPush     = Possibility("ws.push", Gen.point(server.push()))
+    val wsPush     = Possibility("ws.push", Gen.delay(server.push()))
 
     implicit val ctx = GenCtx(GenSize(32), ThreadNumber(1))
     val seed = explicitSeed.getOrElse(Gen.long.samplesUsing(ctx).next())
@@ -76,7 +76,7 @@ object WebSocketClientPropTest extends TestSuite {
         add(Possibility(name, g))
 
       def addProc(name: String, f: => Any): Unit =
-        addGen(name, Gen.point(f))
+        addGen(name, Gen.delay(f))
 
       // ---------------------------------------------------------------------------------------------------------------
       // Possibilities

@@ -1,10 +1,10 @@
 package shipreq.webapp.member.project.event
 
+import cats.instances.list._
+import cats.instances.vector._
 import nyaya.prop._
 import nyaya.test.PropTest._
 import nyaya.util.NyayaUtilAnyExt
-import scalaz.std.list.listInstance
-import scalaz.std.vector.vectorInstance
 import shipreq.base.util.DeletionMethod
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.Event._

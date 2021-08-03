@@ -1,11 +1,11 @@
 package shipreq.webapp.member.project.filter
 
+import cats.Functor
 import nyaya.gen.Gen
 import nyaya.prop._
 import nyaya.test.PropTestOps._
 import nyaya.test._
 import org.parboiled2.ErrorFormatter
-import scalaz.Functor
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data.ReqType.Mnemonic
 import shipreq.webapp.member.project.data._

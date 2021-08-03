@@ -133,7 +133,7 @@ object ApplyEventTest extends TestSuite {
                   import h._
                   hash.fold("pass") { e =>
                     val a = recalc(p)
-                    val op = if (e ==* a) "=" else "≠"
+                    val op = if (e ==* a) "=" else "=!="
                     s"[$logicVer $scheme $scope $e  $op  $a]"
                   }
                 }

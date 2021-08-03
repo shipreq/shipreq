@@ -1,8 +1,8 @@
 package shipreq.webapp.member.project.protocol.websocket
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
+import cats.Eq
+import japgolly.microlibs.cats_ext.CatsMacros
 import java.time.Instant
-import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.test.BinaryTestUtil._
@@ -32,13 +32,13 @@ object ProjectSpaProtocolsTest extends TestSuite {
   private val codecCS   = WebSocketShared.protocolCS(webSocket.req.codec).codec
 
   private implicit def univEqWsReq: UnivEq[WsReqRes.AndReq] = UnivEq.force
-  protected implicit val equalProjectAndOrd: Equal[ProjectAndOrd] = ScalazMacros.deriveEqual
-  private implicit val equalInitAppData: Equal[InitAppData] = ScalazMacros.deriveEqual
+  protected implicit val equalProjectAndOrd: Eq[ProjectAndOrd] = CatsMacros.deriveEq
+  private implicit val equalInitAppData: Eq[InitAppData] = CatsMacros.deriveEq
 
   private def assertRequest(bin: BinaryData, expect: codecCS.Data)(implicit l: Line) =
     assertDecodeOk(codecCS)(bin, expect)
 
-  private def assertResponse(res: WsReqRes)(bin: BinaryData, expect: WebSocket.Push \/ (ReqId, res.ResponseType))(implicit l: Line, eq: Equal[res.ResponseType]) = {
+  private def assertResponse(res: WsReqRes)(bin: BinaryData, expect: WebSocket.Push \/ (ReqId, res.ResponseType))(implicit l: Line, eq: Eq[res.ResponseType]) = {
     val codecSC = WebSocketShared.protocolSC(_ => res.protocolRes)(webSocket.push.codec).codec
     assertDecodeVia(codecSC)(bin, \/-(expect))(
       _.map { case (reqId, protocolAndValue) => (reqId, protocolAndValue.value.asInstanceOf[res.ResponseType]) },

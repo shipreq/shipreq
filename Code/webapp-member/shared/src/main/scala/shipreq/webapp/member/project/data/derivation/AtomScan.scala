@@ -1,7 +1,6 @@
 package shipreq.webapp.member.project.data.derivation
 
 import scala.collection.mutable
-import shipreq.base.util.fp.Monoid.Implicits._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.text.Atom._
 import shipreq.webapp.member.project.text.Text

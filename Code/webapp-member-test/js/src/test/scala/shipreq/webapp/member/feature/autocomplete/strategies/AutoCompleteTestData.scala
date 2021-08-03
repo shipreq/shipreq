@@ -39,7 +39,7 @@ object AutoCompleteTestData {
   lazy val project2 = {
     import shipreq.webapp.member.test.project.ProjectDsl._
     import shipreq.webapp.member.test.project.UnsafeTypes._
-    val p = Project.reqCodes.set(ReqCodes(fakeTrie))(SampleProject2.project)
+    val p = Project.reqCodes.replace(ReqCodes(fakeTrie))(SampleProject2.project)
     (DeadReqCode("dead.ref", oldReqId = 1, id = Some(ApReqCodeId(90))) +
       DeadReqCode("dead.group", id = Some(ReqCodeGroupId(91)))) ! p
   }

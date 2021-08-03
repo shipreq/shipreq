@@ -204,9 +204,9 @@ object OtherEventTest extends TestSuite {
           "sortBadCFTag"   - assertFail("resolve")(SV1.modSort(_.copy(init = Vector(badColTag / AscThenBlanks))))
           "sortBadCFTxt"   - assertFail("resolve")(SV1.modSort(_.copy(init = Vector(badColTxt / AscThenBlanks))))
           "sortInvis"      - assertFail("visible")(SV1.modSort(_.copy(init = Vector(ColCF1 / BlanksThenDesc))))
-          "filterBadRT"    - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createFR), implicitly)
-          "filterBadTag"   - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createAT1), implicitly)
-          "filterBadIssue" - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createIssueType1), implicitly)
+          "filterBadRT"    - assertFail("resolve")(SV2)(initialEvents.filter(_ =!= ContentEventTestHelp.createFR), implicitly)
+          "filterBadTag"   - assertFail("resolve")(SV2)(initialEvents.filter(_ =!= ContentEventTestHelp.createAT1), implicitly)
+          "filterBadIssue" - assertFail("resolve")(SV2)(initialEvents.filter(_ =!= ContentEventTestHelp.createIssueType1), implicitly)
 
           // Note: mandatory columns may increase in future in which case they will just be tacked on the SavedViews
           // without them at runtime. Not going to bother adding a mandatory check cos it will invalidate past events in
@@ -246,9 +246,9 @@ object OtherEventTest extends TestSuite {
           "sortBadCFTag"   - assertFail("resolve")(SV1.modSort(_.copy(init = Vector(badColTag / AscThenBlanks))))
           "sortBadCFTxt"   - assertFail("resolve")(SV1.modSort(_.copy(init = Vector(badColTxt / AscThenBlanks))))
           "sortInvis"      - assertFail("visible")(SV1.modSort(_.copy(init = Vector(ColCF1 / BlanksThenDesc))))
-          "filterBadRT"    - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createFR), implicitly)
-          "filterBadTag"   - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createAT1), implicitly)
-          "filterBadIssue" - assertFail("resolve")(SV2)(initialEvents.filter(_ ≠ ContentEventTestHelp.createIssueType1), implicitly)
+          "filterBadRT"    - assertFail("resolve")(SV2)(initialEvents.filter(_ =!= ContentEventTestHelp.createFR), implicitly)
+          "filterBadTag"   - assertFail("resolve")(SV2)(initialEvents.filter(_ =!= ContentEventTestHelp.createAT1), implicitly)
+          "filterBadIssue" - assertFail("resolve")(SV2)(initialEvents.filter(_ =!= ContentEventTestHelp.createIssueType1), implicitly)
 
           // Note: mandatory columns may increase in future in which case they will just be tacked on the SavedViews
           // without them at runtime. Not going to bother adding a mandatory check cos it will invalidate past events in
@@ -272,7 +272,7 @@ object OtherEventTest extends TestSuite {
           "name1"   - test(SV1, SV2)(SV1.id, ValueForName("hehe!"))     (SavedViews(SV1.copy(name = "hehe!")) + SV2)
           "name2"   - test(SV1, SV2)(SV2.id, ValueForName("hehe!"))     (SavedViews(SV1) + SV2.copy(name = "hehe!"))
           "notName" - test(SV1)     (SV1.id, SV2.valuesWithoutName)     (SavedViews(SV2.copy(id = SV1.id, name = SV1.name)))
-          "filter"  - test(SV1)     (SV1.id, ValueForFilter(SV2.filter))(SavedViews(SavedView.filter.set(SV2.view.filter)(SV1)))
+          "filter"  - test(SV1)     (SV1.id, ValueForFilter(SV2.filter))(SavedViews(SavedView.filter.replace(SV2.view.filter)(SV1)))
         }
         "invalid" - {
           implicit def initialEvents = SVIE.add(SV1)
@@ -291,9 +291,9 @@ object OtherEventTest extends TestSuite {
           "sortBadCFTag"   - assertFail("resolve")  (SavedViewUpdateV1(SV1.id, SV1.vmodSort(_.copy(init = Vector(badColTag / AscThenBlanks)))))
           "sortBadCFTxt"   - assertFail("resolve")  (SavedViewUpdateV1(SV1.id, SV1.vmodSort(_.copy(init = Vector(badColTxt / AscThenBlanks)))))
           "sortInvis"      - assertFail("visible")  (SavedViewUpdateV1(SV1.id, SV1.vmodSort(_.copy(init = Vector(ColCF1 / BlanksThenDesc)))))
-          "filterBadRT"    - assertFail("resolve")  (SavedViewUpdateV1(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createFR), implicitly)
-          "filterBadTag"   - assertFail("resolve")  (SavedViewUpdateV1(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createAT1), implicitly)
-          "filterBadIssue" - assertFail("resolve")  (SavedViewUpdateV1(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createIssueType1), implicitly)
+          "filterBadRT"    - assertFail("resolve")  (SavedViewUpdateV1(SV1.id, SV2.values))(initialEvents.filter(_ =!= ContentEventTestHelp.createFR), implicitly)
+          "filterBadTag"   - assertFail("resolve")  (SavedViewUpdateV1(SV1.id, SV2.values))(initialEvents.filter(_ =!= ContentEventTestHelp.createAT1), implicitly)
+          "filterBadIssue" - assertFail("resolve")  (SavedViewUpdateV1(SV1.id, SV2.values))(initialEvents.filter(_ =!= ContentEventTestHelp.createIssueType1), implicitly)
         }
       }
 
@@ -312,7 +312,7 @@ object OtherEventTest extends TestSuite {
           "name1"   - test(SV1, SV2)(SV1.id, ValueForName("hehe!"))     (SavedViews(SV1.copy(name = "hehe!")) + SV2)
           "name2"   - test(SV1, SV2)(SV2.id, ValueForName("hehe!"))     (SavedViews(SV1) + SV2.copy(name = "hehe!"))
           "notName" - test(SV1)     (SV1.id, SV2.valuesWithoutName)     (SavedViews(SV2.copy(id = SV1.id, name = SV1.name)))
-          "filter"  - test(SV1)     (SV1.id, ValueForFilter(SV2.filter))(SavedViews(SavedView.filter.set(SV2.view.filter)(SV1)))
+          "filter"  - test(SV1)     (SV1.id, ValueForFilter(SV2.filter))(SavedViews(SavedView.filter.replace(SV2.view.filter)(SV1)))
         }
         "invalid" - {
           implicit def initialEvents = SVIE.add(SV1)
@@ -331,9 +331,9 @@ object OtherEventTest extends TestSuite {
           "sortBadCFTag"   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV1.vmodSort(_.copy(init = Vector(badColTag / AscThenBlanks)))))
           "sortBadCFTxt"   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV1.vmodSort(_.copy(init = Vector(badColTxt / AscThenBlanks)))))
           "sortInvis"      - assertFail("visible")  (SavedViewUpdate(SV1.id, SV1.vmodSort(_.copy(init = Vector(ColCF1 / BlanksThenDesc)))))
-          "filterBadRT"    - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createFR), implicitly)
-          "filterBadTag"   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createAT1), implicitly)
-          "filterBadIssue" - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ ≠ ContentEventTestHelp.createIssueType1), implicitly)
+          "filterBadRT"    - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ =!= ContentEventTestHelp.createFR), implicitly)
+          "filterBadTag"   - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ =!= ContentEventTestHelp.createAT1), implicitly)
+          "filterBadIssue" - assertFail("resolve")  (SavedViewUpdate(SV1.id, SV2.values))(initialEvents.filter(_ =!= ContentEventTestHelp.createIssueType1), implicitly)
         }
       }
 

@@ -104,7 +104,7 @@ object BinaryTestUtil {
     }
 
     assertEqO(info, actual, expect)
-//    if (!Eq[SafePickler.Result[B]].equal(actual, expect)) {
+//    if (!Eq[SafePickler.Result[B]].eqv(actual, expect)) {
 //      fail(info)
 //    }
   }

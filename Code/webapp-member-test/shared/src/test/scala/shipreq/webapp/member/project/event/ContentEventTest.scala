@@ -1,7 +1,7 @@
 package shipreq.webapp.member.project.event
 
+import cats.data.Ior
 import japgolly.microlibs.nonempty.NonEmpty
-import scalaz.\&/
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util._
 import shipreq.webapp.member.project.data._
@@ -84,11 +84,11 @@ object ContentEventTest extends TestSuite {
 
   val reqC = GenericReqId(99)
 
-  def contentIds(reqIds: ReqId*)(reqCodeIds: ReqCodeId*): NonEmptySet[ReqId] \&/ NonEmptySet[ReqCodeId] =
+  def contentIds(reqIds: ReqId*)(reqCodeIds: ReqCodeId*): NonEmptySet[ReqId] Ior NonEmptySet[ReqCodeId] =
     (NonEmptySet.option(reqIds.toSet), NonEmptySet.option(reqCodeIds.toSet)) match {
-      case (Some(a), None)    => \&/.This(a)
-      case (None,    Some(b)) => \&/.That(b)
-      case (Some(a), Some(b)) => \&/.Both(a, b)
+      case (Some(a), None)    => Ior.Left(a)
+      case (None,    Some(b)) => Ior.Right(b)
+      case (Some(a), Some(b)) => Ior.Both(a, b)
       case (None,    None)    => sys.error("At least 1 ID required.")
     }
 

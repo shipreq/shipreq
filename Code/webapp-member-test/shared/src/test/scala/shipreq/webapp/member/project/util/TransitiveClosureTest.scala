@@ -1,8 +1,8 @@
 package shipreq.webapp.member.project.util
 
+import cats.instances.list._
 import nyaya.prop._
 import nyaya.test.PropTest._
-import scalaz.std.list._
 import shipreq.base.util.TransitiveClosure
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.test.project.RandomData

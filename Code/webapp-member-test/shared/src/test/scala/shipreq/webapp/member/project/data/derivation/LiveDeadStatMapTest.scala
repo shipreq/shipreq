@@ -1,9 +1,8 @@
 package shipreq.webapp.member.project.data.derivation
 
+import cats.Monoid
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.LazyVal
-import shipreq.base.util.fp.Monoid
-import shipreq.base.util.fp.Monoid.Implicits._
 import shipreq.webapp.member.project.data.{Dead, Live}
 import utest._
 

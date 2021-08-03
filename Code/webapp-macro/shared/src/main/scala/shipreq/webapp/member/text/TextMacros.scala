@@ -1,6 +1,6 @@
 package shipreq.webapp.member.project.text
 
-import japgolly.microlibs.macro_utils.WhiteboxMacroUtils
+import japgolly.microlibs.compiletime.WhiteboxMacroUtils
 import scala.reflect.macros.whitebox.Context
 
 object TextMacros {

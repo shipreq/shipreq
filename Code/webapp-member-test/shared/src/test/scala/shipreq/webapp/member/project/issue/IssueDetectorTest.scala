@@ -1,7 +1,6 @@
 package shipreq.webapp.member.project.issue
 
 import japgolly.microlibs.nonempty.NonEmpty
-import nyaya.util.Multimap
 import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.webapp.member.project.data._
