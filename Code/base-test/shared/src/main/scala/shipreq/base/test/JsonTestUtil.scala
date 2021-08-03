@@ -1,11 +1,11 @@
 package shipreq.base.test
 
+import cats.Eq
+import cats.instances.either._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import nyaya.gen.Gen
-import scalaz.Equal
-import scalaz.std.either._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.JsonUtil
 import sourcecode.Line
@@ -14,9 +14,9 @@ object JsonTestUtil {
 
   private val propTestSize = 33
 
-  implicit def equalDecodingFailure: Equal[DecodingFailure] = Equal.equalA
+  implicit def equalDecodingFailure: Eq[DecodingFailure] = Eq.fromUniversalEquals
 
-  implicit def equalCirceError: Equal[io.circe.Error] = Equal.equalA
+  implicit def equalCirceError: Eq[io.circe.Error] = Eq.fromUniversalEquals
 
   implicit final class JsonUtilExtString(private val self: String) extends AnyVal {
     def toJsonOrThrow: Json =
@@ -32,22 +32,22 @@ object JsonTestUtil {
       case Left(e)  => throw new RuntimeException(JsonUtil.errorMsg(e))
     }
 
-  def assertDecode[A: Decoder: Equal](json: Json, expect: Decoder.Result[A])(implicit l: Line): Unit =
+  def assertDecode[A: Decoder: Eq](json: Json, expect: Decoder.Result[A])(implicit l: Line): Unit =
     assertEq(json.noSpacesSortKeys.take(180), json.as[A], expect)
 
-  def assertDecodeOk[A: Decoder: Equal](json: String, expect: A)(implicit l: Line): Unit =
+  def assertDecodeOk[A: Decoder: Eq](json: String, expect: A)(implicit l: Line): Unit =
     assertDecodeOk(json.toJsonOrThrow, expect)
 
-  def assertDecodeOk[A: Decoder: Equal](json: Json, expect: A)(implicit l: Line): Unit =
+  def assertDecodeOk[A: Decoder: Eq](json: Json, expect: A)(implicit l: Line): Unit =
     assertDecode(json, Right(expect))
 
-  def assertAllDecodeOk[A: Decoder: Equal](json: Seq[String], expect: Seq[A])(implicit l: Line): Unit =
+  def assertAllDecodeOk[A: Decoder: Eq](json: Seq[String], expect: Seq[A])(implicit l: Line): Unit =
     assertSeq(json.map(decode[A](_)), expect.map(Right(_)))
 
-  def assertRoundTrip[A: Decoder: Encoder: Equal](a: A)(implicit l: Line): Unit =
+  def assertRoundTrip[A: Decoder: Encoder: Eq](a: A)(implicit l: Line): Unit =
     assertDecodeOk(a.asJson, a)
 
-  def assertRoundTrips[A: Decoder: Encoder: Equal](as: Iterable[A])(implicit l: Line): Unit = {
+  def assertRoundTrips[A: Decoder: Encoder: Eq](as: Iterable[A])(implicit l: Line): Unit = {
     var i = 0
     for (a <- as) {
       i += 1
@@ -56,16 +56,16 @@ object JsonTestUtil {
     }
   }
 
-  def propTestRoundTrip[A: Decoder: Encoder: Equal](g: Gen[A])(implicit l: Line): Unit =
+  def propTestRoundTrip[A: Decoder: Encoder: Eq](g: Gen[A])(implicit l: Line): Unit =
     g.samples().take(propTestSize).foreach(assertRoundTrip(_))
 
-  def decoderTester[A: Equal](d: Decoder[A]): JsonDecoderTest[A] =
+  def decoderTester[A: Eq](d: Decoder[A]): JsonDecoderTest[A] =
     new JsonDecoderTest()(d, implicitly)
 }
 
 // =====================================================================================================================
 
-final class JsonDecoderTest[A: Decoder: Equal] {
+final class JsonDecoderTest[A: Decoder: Eq] {
 
   def decodeOrThrow(s: String): A =
     JsonTestUtil.decodeOrThrow(s)

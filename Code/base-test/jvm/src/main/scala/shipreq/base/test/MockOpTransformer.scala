@@ -1,7 +1,7 @@
 package shipreq.base.test
 
+import cats.{Applicative, Eq, Eval, ~>}
 import scala.reflect.ClassTag
-import scalaz.{Applicative, Equal, Name, ~>}
 import shipreq.base.test.BaseTestUtil._
 
 trait OpTypeProvider[Op[_]] {
@@ -33,7 +33,7 @@ trait MockOpTransformerResults[Op[_]] {
   def opClassTag[A](o: Op[A]) = opTypeProvider.apply(o).asInstanceOf[ClassTag[Op[A]]]
 
   def assertOpTypes(expected: ClassTag[_ <: Op[_]]*): Unit =
-    assertSeq(allOpTypes, expected)(Equal.equalA, implicitly)
+    assertSeq(allOpTypes, expected)(Eq.fromUniversalEquals, implicitly)
 
   private def CT[A](implicit m: ClassTag[A]) = m
 
@@ -79,10 +79,10 @@ abstract class MockOpTransformer[Op[_], I[_]] extends (Op ~> I) with MockOpTrans
   def trans[A]: Op[A] => I[A]
 
   case class MockResponse[A](default: A) {
-    private var rs = List.empty[Name[A]]
+    private var rs = List.empty[Eval[A]]
 
     def <<(a: => A) = {
-      rs = Name(a) :: rs
+      rs = Eval.always(a) :: rs
       this
     }
 

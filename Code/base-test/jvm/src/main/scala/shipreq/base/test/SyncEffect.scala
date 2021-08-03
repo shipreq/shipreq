@@ -1,21 +1,22 @@
 package shipreq.base.test
 
+import cats.Eval
+import shipreq.base.util.FxModule._
+
 trait SyncEffect[F[_]] {
   def unsafeRun[A](fa: F[A]): A
 }
 
 object SyncEffect {
 
-  import shipreq.base.util.FxModule._
   implicit val syncEffectFx: SyncEffect[Fx] =
     new SyncEffect[Fx] {
       override def unsafeRun[A](fa: Fx[A]): A = new FxOps(fa).unsafeRun()
     }
 
-  import scalaz.Name
-  implicit val syncEffectName: SyncEffect[Name] =
-    new SyncEffect[Name] {
-      override def unsafeRun[A](fa: Name[A]): A = fa.value
+  implicit val syncEffectName: SyncEffect[Eval] =
+    new SyncEffect[Eval] {
+      override def unsafeRun[A](fa: Eval[A]): A = fa.value
     }
 
   object Ops {
