@@ -1,11 +1,11 @@
 package shipreq.webapp.server.db
 
+import cats.syntax.apply._
+import cats.~>
 import com.typesafe.scalalogging.StrictLogging
 import doobie.ConnectionIO
 import japgolly.clearconfig._
 import java.time.Duration
-import scalaz.syntax.applicative._
-import scalaz.~>
 import shipreq.base.util.FxModule._
 import shipreq.base.util.ThreadUtils
 
@@ -30,9 +30,9 @@ object StatRecorder extends StrictLogging {
                           batcher: AsyncBatcher.Config)
 
   def config: ConfigDef[Config] =
-    ( ConfigDef.getOrUse("enabled", true) |@|
-      AsyncBatcher.config
-    ) (Config.apply)
+    ( ConfigDef.getOrUse("enabled", true),
+      AsyncBatcher.config,
+    ).mapN(Config.apply)
       .withPrefix("statRecorder.")
 
   // ===================================================================================================================
@@ -60,10 +60,10 @@ object StatRecorder extends StrictLogging {
     }
 
     def config: ConfigDef[Config] =
-      ( ConfigDef.getOrUse("submitEvery", Config.default.submitEvery) |@|
-        ConfigDef.getOrUse("maxAttempts", Config.default.maxAttempts) |@|
-        ConfigDef.getOrUse("retryGap", Config.default.retryGap)
-      ) (Config.apply)
+      ( ConfigDef.getOrUse("submitEvery", Config.default.submitEvery),
+        ConfigDef.getOrUse("maxAttempts", Config.default.maxAttempts),
+        ConfigDef.getOrUse("retryGap", Config.default.retryGap),
+      ).mapN(Config.apply)
       .withPrefix("batcher.")
 
     private[this] val noIps = Set.empty[String]

@@ -1,8 +1,8 @@
 package shipreq.webapp.server.redis
 
+import cats.{Eq, Monad, Semigroup}
 import io.circe._
 import scala.reflect.ClassTag
-import scalaz.{Equal, Monad, Semigroup}
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.server.logic.algebra.Redis._
@@ -44,8 +44,8 @@ object RedisLaw {
 
   // ===================================================================================================================
 
-  private implicit val equalUnit: Equal[Unit] =
-    Equal((_, _) => true)
+  private implicit val equalUnit: Eq[Unit] =
+    Eq.instance((_, _) => true)
 
   final case class Logic[A](run: (ProjectAlgebra[Fx], ProjectId) => Fx[A]) {
 
@@ -63,10 +63,10 @@ object RedisLaw {
         for {
           a <- run(x, y)
           b <- fb.run(x, y)
-        } yield A.append(a, b)
+        } yield A.combine(a, b)
       )
 
-    def ===(fb: Logic[A])(implicit e: Equal[A]): Equation[A] =
+    def ===(fb: Logic[A])(implicit e: Eq[A]): Equation[A] =
       Equation(this, fb, e)
 
     def <->(fb: Logic[A]): Equation[Unit] =
@@ -76,7 +76,7 @@ object RedisLaw {
   object Logic {
 
     implicit val monadLogic: Monad[Logic] = new Monad[Logic] {
-      override def point[A](a: => A): Logic[A] = {
+      override def pure[A](a: A): Logic[A] = {
         val fx = Fx(a)
         Logic((_, _) => fx)
       }
@@ -84,14 +84,17 @@ object RedisLaw {
       override def map[A, B](fa: Logic[A])(f: A => B): Logic[B] =
         fa.map(f)
 
-      override def bind[A, B](fa: Logic[A])(f: A => Logic[B]): Logic[B] =
+      override def flatMap[A, B](fa: Logic[A])(f: A => Logic[B]): Logic[B] =
         fa.flatMap(f)
+
+      override def tailRecM[A, B](a: A)(f: A => Logic[Either[A,B]]): Logic[B] =
+        ???
     }
   }
 
   final case class Equation[O](lhs     : Logic[O],
                                rhs     : Logic[O],
-                               equality: Equal[O])
+                               equality: Eq[O])
 
   // ===================================================================================================================
 

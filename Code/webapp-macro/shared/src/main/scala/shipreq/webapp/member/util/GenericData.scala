@@ -1,8 +1,8 @@
 package shipreq.webapp.member.project.util
 
+import cats.{Eq, Order}
 import japgolly.microlibs.nonempty.NonEmpty
 import scala.collection.IterableOnce
-import cats.{Eq, Order}
 import shipreq.base.util.IMap
 
 abstract class GenericData { self =>

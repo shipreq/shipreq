@@ -1,6 +1,5 @@
 package shipreq.webapp.server.snippet
 
-import shipreq.base.db.scalazDoobieConnectionIO
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.Event.FieldStaticRemove
 import shipreq.webapp.server.logic.config.ProjectAccessHacks

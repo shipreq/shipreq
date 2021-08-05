@@ -1,5 +1,6 @@
 package shipreq.webapp.server.redis
 
+import cats.Eq
 import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
@@ -9,7 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import nyaya.gen._
 import scala.collection.View
 import scala.reflect.ClassTag
-import scalaz.Equal
 import shipreq.base.test.JsonTestUtil._
 import shipreq.base.test._
 import shipreq.base.util.FxModule._
@@ -167,7 +167,7 @@ object RedisLawTester {
 
   // ===================================================================================================================
 
-  final case class Failure[A](name: String, lhs: A, rhs: A)(implicit val equality: Equal[A], line: Line) {
+  final case class Failure[A](name: String, lhs: A, rhs: A)(implicit val equality: Eq[A], line: Line) {
     def print(): Unit = {
       try {
         assertEq(name, expect = lhs, actual = rhs)
@@ -216,8 +216,8 @@ final case class RedisLawTester[F <: ProjectAlgebra[Fx], G <: ProjectAlgebra[Fx]
   protected implicit val retryMax = utest.asserts.RetryMax(5000.millis.asFiniteDuration)
   protected implicit val retryInterval = utest.asserts.RetryInterval(5.millis.asFiniteDuration)
 
-  private def testEq[A](name: => String, lhs: A, rhs: A)(implicit e: Equal[A], q: Line): Unit =
-    if (!e.equal(lhs, rhs))
+  private def testEq[A](name: => String, lhs: A, rhs: A)(implicit e: Eq[A], q: Line): Unit =
+    if (!e.eqv(lhs, rhs))
       failures add Failure(name, lhs, rhs)
 
   private def assertState(name: String): Unit = {

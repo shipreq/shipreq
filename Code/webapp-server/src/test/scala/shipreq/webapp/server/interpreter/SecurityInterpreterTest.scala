@@ -1,7 +1,7 @@
 package shipreq.webapp.server.interpreter
 
+import cats.Eval
 import java.time.Duration
-import scalaz.Name
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login
 import shipreq.webapp.server.logic.algebra.Security.{SessionRestoreResult, SessionToken}
@@ -36,15 +36,15 @@ object SecurityInterpreterTest extends TestSuite {
     import mocks.{common, db, trace, user2, user2password}
 
     db.users ::= user2
-    implicit val sec = new SecurityInterpreter[Name]
+    implicit val sec = new SecurityInterpreter[Eval]
 
     def loginUser2(s: SessionToken[Any]): SessionToken[Unit] =
       common.ajaxLogin(s)(Login.Request(-\/(user2.username), user2password)).value._2.get
 
-    def sessionPersist(s: SessionToken[Any])(implicit sec: SecurityInterpreter[Name]): Unit =
+    def sessionPersist(s: SessionToken[Any])(implicit sec: SecurityInterpreter[Eval]): Unit =
       cookieJar.update(sec.sessionPersist(s).value)
 
-    def logout()(implicit sec: SecurityInterpreter[Name]): Unit =
+    def logout()(implicit sec: SecurityInterpreter[Eval]): Unit =
       cookieJar.update(SimpleEndpointLogic.logout(cookieJar).value)
 
     "standard" - {
@@ -74,13 +74,13 @@ object SecurityInterpreterTest extends TestSuite {
       val secret1 = new JwtSecret("1" * 64)
       val sec1 = {
         implicit def config = mocks.config.security.copy(jwtSecretPrevious = None, jwtSecret = secret1)
-        new SecurityInterpreter[Name]
+        new SecurityInterpreter[Eval]
       }
 
       val secret2 = new JwtSecret("2" * 64)
       val sec2 = {
         implicit def config = mocks.config.security.copy(jwtSecretPrevious = Some(secret1), jwtSecret = secret2)
-        new SecurityInterpreter[Name]
+        new SecurityInterpreter[Eval]
       }
 
       val s = sec.sessionRestoreOrCreate(cookieJar).value.withoutExpiry
@@ -95,7 +95,7 @@ object SecurityInterpreterTest extends TestSuite {
 
     "expired" - {
       implicit val config = mocks.config.security.copy(jwtLifespan = Duration.ZERO)
-      implicit val sec = new SecurityInterpreter[Name]
+      implicit val sec = new SecurityInterpreter[Eval]
 
       val s1 = loginUser2(SessionToken.anonymous())
       sessionPersist(s1)

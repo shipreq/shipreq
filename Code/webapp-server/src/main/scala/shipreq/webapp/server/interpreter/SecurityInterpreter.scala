@@ -1,5 +1,7 @@
 package shipreq.webapp.server.interpreter
 
+import cats.Monad
+import cats.syntax.all._
 import com.typesafe.scalalogging.StrictLogging
 import io.jsonwebtoken.security.{Keys, SignatureException}
 import io.jsonwebtoken.{Claims, ExpiredJwtException, JwtParser, Jwts}
@@ -11,8 +13,6 @@ import org.apache.commons.text.StringEscapeUtils
 import scala.Predef.classOf
 import scala.concurrent.blocking
 import scala.util.{Failure, Success, Try}
-import scalaz.Monad
-import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util.log.WebappLogFields
 import shipreq.base.util.{Allow, Permission}

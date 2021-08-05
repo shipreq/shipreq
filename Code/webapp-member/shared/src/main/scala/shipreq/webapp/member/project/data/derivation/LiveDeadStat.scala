@@ -1,10 +1,9 @@
 package shipreq.webapp.member.project.data.derivation
 
-import cats.Semigroup
+import cats.{Monoid, Semigroup}
 import scala.collection.mutable.Builder
 import shipreq.base.util.LazyVal
 import shipreq.webapp.member.project.data._
-import cats.Monoid
 
 /**
  * Stats partitioned into Live & Dead.

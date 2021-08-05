@@ -5,6 +5,7 @@ import cats.effect.IO
 import java.time.{Duration, Instant}
 import scala.collection.Factory
 import scala.concurrent.blocking
+import cats.effect.Sync
 
 /**
   * The chosen target for algebra interpretation.
@@ -29,6 +30,9 @@ object FxModule {
           f <- ff
         } yield f(a)
     }
+
+  val fxCatsSync: Sync[Fx] =
+    Sync[IO]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

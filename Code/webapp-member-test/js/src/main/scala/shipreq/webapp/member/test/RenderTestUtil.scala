@@ -18,7 +18,7 @@ object RenderTestUtil {
         val closer = s.startsWith("</")
         if (closer && indent > 0)
           indent -= 1
-        val s2 = s.indent(indent << 1)
+        val s2 = s.indentLines(indent << 1)
         if (!closer && s.startsWith("<"))
           indent += 1
         s2

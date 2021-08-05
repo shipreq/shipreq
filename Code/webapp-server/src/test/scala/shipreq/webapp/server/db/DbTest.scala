@@ -104,13 +104,13 @@ object DbTest extends TestSuite {
         val username = dbu.getUsername(u)
 
         val realisticSql: Fx[VerificationToken] =
-          db.withTransactionLevel(xa.transZ, Connection.TRANSACTION_SERIALIZABLE)(
+          db.withTransactionLevel(xa.trans, Connection.TRANSACTION_SERIALIZABLE)(
             db.getPasswordResetState(-\/(username)) *> db.createResetPasswordToken(u)
           )
 
         val token = realisticSql.unsafeRunSync()
 
-        val tokenStatus = PublicSpaLogic.passwordResetTokenStatusFn(db, xa.transZ, Global.config.server.security)
+        val tokenStatus = PublicSpaLogic.passwordResetTokenStatusFn(db, xa.trans, Global.config.server.security)
         assertEq(tokenStatus(token).unsafeRun(), VerificationToken.Status.Valid)
 
         xa ! db.updateResetPasswordTokenOnReissue(u)

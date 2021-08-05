@@ -25,7 +25,7 @@ final case class DbUtil(xa: ImperativeXA) {
     val g = PrepareEnv.global()
     implicit val t = g.config.server.traceAlgebraFx
     implicit val c = g.config.server.security
-    implicit val d = DB.ForSecurity.trans(DbInterpreter.ForSecurity)(xa.transZ)
+    implicit val d = DB.ForSecurity.trans(DbInterpreter.ForSecurity)(xa.trans)
     new SecurityInterpreter[Fx]()
   }
 

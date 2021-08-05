@@ -1,9 +1,9 @@
 package shipreq.webapp.server.config
 
+import cats.~>
 import doobie.ConnectionIO
 import java.util.concurrent.{Executors, TimeUnit}
 import org.redisson.api.RedissonClient
-import scalaz.~>
 import shipreq.base.db._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.ThreadUtils
@@ -99,7 +99,7 @@ object Global {
       }
 
       implicit val runDB = t("runDB") {
-        trace.injectDb(xa.transZ)
+        trace.injectDb(xa.trans)
       }
 
       implicit val statRecorder = t("statRecorder") {

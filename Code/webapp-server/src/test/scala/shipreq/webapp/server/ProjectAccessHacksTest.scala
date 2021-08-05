@@ -1,6 +1,5 @@
 package shipreq.webapp.server
 
-import shipreq.base.db.scalazDoobieConnectionIO
 import shipreq.webapp.base.data.UserId
 import shipreq.webapp.server.logic.config.ProjectAccessHacks
 import shipreq.webapp.server.logic.impl.HomeSpaLogic
