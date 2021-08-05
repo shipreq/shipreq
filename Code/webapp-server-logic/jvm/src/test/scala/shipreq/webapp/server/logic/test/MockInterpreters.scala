@@ -1,11 +1,13 @@
 package shipreq.webapp.server.logic.test
 
+import cats.arrow.FunctionK
+import cats.effect.{ExitCase, Sync}
+import cats.syntax.all._
+import cats.{Eval, Monad, ~>}
 import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
-import scalaz.syntax.monad._
-import scalaz.{Catchable, Monad, Name, NaturalTransformation, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.test.JsonTestUtil._
 import shipreq.base.test.SyncEffect
@@ -72,21 +74,21 @@ object MockDb {
   }
 }
 
-final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecurity[Name] with DB.ForOps[Name] {
+final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecurity[Eval] with DB.ForOps[Eval] {
 
-  override val now: Name[Instant] =
+  override val now: Eval[Instant] =
     _now
 
-  override def getUserAndPasswordByEmail(email: EmailAddr) = Name[Option[(User, PasswordAndSalt)]] {
+  override def getUserAndPasswordByEmail(email: EmailAddr) = Eval.always[Option[(User, PasswordAndSalt)]] {
     getUser(\/-(email)).map(_.toUserAndPassword)
   }
 
-  override def getUserAndPasswordByUsername(username: Username) = Name[Option[(User, PasswordAndSalt)]] {
+  override def getUserAndPasswordByUsername(username: Username) = Eval.always[Option[(User, PasswordAndSalt)]] {
     getUser(-\/(username)).map(_.toUserAndPassword)
   }
 
   var usrLoginLog = Vector.empty[(UserId, Option[IP])]
-  override def logLoginSuccess(id: UserId, ip: Option[IP]) = Name[Unit] {
+  override def logLoginSuccess(id: UserId, ip: Option[IP]) = Eval.always[Unit] {
     usrLoginLog :+= ((id, ip))
   }
 
@@ -116,7 +118,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       t
     }
 
-  override def getUserRegistration(e: EmailAddr) = Name[Option[DB.UserRegistration]] {
+  override def getUserRegistration(e: EmailAddr) = Eval.always[Option[DB.UserRegistration]] {
     userPlaceholders.get(e) orElse
       getUser(\/-(e)).map(x => DB.UserRegistration.Complete(x.id, x.createdAt))
   }
@@ -134,7 +136,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       case (ea, p: DB.UserRegistration.Pending) if p.token ==* t => (ea, p)
     }.nextOption()
 
-  override def getUserRegistrationTokenIssueDate(t: VerificationToken) = Name[Option[Instant]] {
+  override def getUserRegistrationTokenIssueDate(t: VerificationToken) = Eval.always[Option[Instant]] {
     getPendingUserRegistration(t).map(_._2.tokenSentAt)
   }
 
@@ -175,7 +177,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       }
     }
 
-  override def getPasswordResetState(u: Username \/ EmailAddr) = Name[Option[(EmailAddr, DB.PasswordResetState)]] {
+  override def getPasswordResetState(u: Username \/ EmailAddr) = Eval.always[Option[(EmailAddr, DB.PasswordResetState)]] {
     getUserOrPlaceholder(u) map {
       case \/-(e) =>
         val u = DB.UserRegistration.Complete(e.id, e.createdAt)
@@ -189,7 +191,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     }
   }
 
-  override def getResetPasswordTokenIssueDate(t: VerificationToken) = Name[Option[Instant]] {
+  override def getResetPasswordTokenIssueDate(t: VerificationToken) = Eval.always[Option[Instant]] {
     users.collectFirst {
       case MockDb.UserEntry(_, _, _, _, _, Some((t2, i))) if t ==* t2 => i
     }
@@ -208,7 +210,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       ()
     }
 
-  override def updateUserPassword(token: VerificationToken, ps: PasswordAndSalt) = Name[Option[UserId]] {
+  override def updateUserPassword(token: VerificationToken, ps: PasswordAndSalt) = Eval.always[Option[UserId]] {
     users.find(_.resetPassword.exists(_._1 ==* token)).map { u =>
       updateUser(_.id ==* u.id, _.copy(ps = ps, resetPassword = None))
       u.id
@@ -226,20 +228,20 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     projects = projects.add(mde)
   }
 
-  override def getProjectOwner(id: ProjectId) = Name[Option[UserId]] {
+  override def getProjectOwner(id: ProjectId) = Eval.always[Option[UserId]] {
     projects.get(id).map(_.userId)
   }
 
   private def nextProjectId(): ProjectId =
     ProjectId(1 + projects.underlyingMap.keysIterator.map(_.value).foldLeft(0L)(_ max _))
 
-  override def createProject(id: UserId, initEvents: Vector[ActiveEvent], p: Project) = Name[ProjectId] {
+  override def createProject(id: UserId, initEvents: Vector[ActiveEvent], p: Project) = Eval.always[ProjectId] {
     val pid = nextProjectId()
     addProject(pid, id)(initEvents: _*)
     pid
   }
 
-  override def getAllProjectMetaDataForUser(id: UserId, hacks: ProjectAccessHacks) = Name[List[ProjectMetaData]] {
+  override def getAllProjectMetaDataForUser(id: UserId, hacks: ProjectAccessHacks) = Eval.always[List[ProjectMetaData]] {
     val extraProjectIds = hacks.additionalAccess(id)
 
     projects.valuesIterator
@@ -249,17 +251,17 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
   }
 
   var loadProjectMetaDataLog = Vector.empty[ProjectId]
-  override def getProjectMetaData(id: ProjectId) = Name[Option[ProjectMetaData]] {
+  override def getProjectMetaData(id: ProjectId) = Eval.always[Option[ProjectMetaData]] {
     loadProjectMetaDataLog :+= id
     projects.get(id).map(_.projectMetaData)
   }
 
-  override def projectSpaInitPage(id: ProjectId) = Name[Project.Name] {
+  override def projectSpaInitPage(id: ProjectId) = Eval.always[Project.Name] {
     projects.get(id).fold("")(_.project.name)
   }
 
   var loadProjectLog = Vector.empty[ProjectId]
-  override def getProjectEvents(id: ProjectId, f: DB.EventFilter) = Name {
+  override def getProjectEvents(id: ProjectId, f: DB.EventFilter) = Eval.always {
     loadProjectLog :+= id
     val r = projects.need(id).projectLoad
     \/-(f match {
@@ -273,7 +275,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
                                 ord: EventOrd,
                                 e  : ActiveEvent,
                                 p  : Project,
-                                uid: UserId) = Name[DB.SaveProjectEventError \/ VerifiedEvent] {
+                                uid: UserId) = Eval.always[DB.SaveProjectEventError \/ VerifiedEvent] {
     val entry = projects.need(pid)
     def update(events: VerifiedEvent.Seq): Unit =
       projects = projects + entry.copy(events = events, lastUpdatedAt = Some(Instant.now()))
@@ -288,7 +290,7 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
       -\/(DB.SaveProjectEventError.OrdInUse)
   }
 
-  override def createProject(uid: UserId, events: VerifiedEvent.Seq, project: Project) = Name[ProjectId] {
+  override def createProject(uid: UserId, events: VerifiedEvent.Seq, project: Project) = Eval.always[ProjectId] {
     val pid = nextProjectId()
     addProject(pid, uid)()
     val entry = projects.need(pid)
@@ -297,11 +299,11 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
     pid
   }
 
-  override def getUserId(user: Username \/ EmailAddr) = Name[Option[UserId]] {
+  override def getUserId(user: Username \/ EmailAddr) = Eval.always[Option[UserId]] {
     getUser(user).map(_.id)
   }
 
-  override def withTransactionLevel[D[_], A](runDB: Name ~> D, level: Int)(f: Name[A]): D[A] =
+  override def withTransactionLevel[D[_], A](runDB: Eval ~> D, level: Int)(f: Eval[A]): D[A] =
     runDB(f)
 
   def assertNoDbChange[A](a: => A): A =
@@ -310,16 +312,16 @@ final class MockDb(_now: Name[Instant]) extends DB.Algebra[Name] with DB.ForSecu
         assertNoChange("assertNoChange:projects", projects.values.mkString("\n"))(
           a)))
 
-  override val userStats: Name[DB.ForOps.UserStats] =
-    Name(DB.ForOps.UserStats(
+  override val userStats: Eval[DB.ForOps.UserStats] =
+    Eval.always(DB.ForOps.UserStats(
       registered = users.size,
       total = users.size + userPlaceholders.size))
 
   override val tableStats =
-    Name(Nil)
+    Eval.now(Nil)
 
   override val dbSize =
-    Name(0L)
+    Eval.now(0L)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -381,7 +383,7 @@ final class MockServer[F[_]]()(implicit F: Monad[F], se: SyncEffect[F]) extends 
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-final class MockTaskman extends TaskmanApi[Name] {
+final class MockTaskman extends TaskmanApi[Eval] {
   private var prevMsgId = 0L
   var msgs = Vector.empty[(TaskId, Task)]
 
@@ -390,18 +392,18 @@ final class MockTaskman extends TaskmanApi[Name] {
     msgs = Vector.empty
   }
 
-  override def cfgPut(key: String, value: String) = Name[Unit] {
+  override def cfgPut(key: String, value: String) = Eval.always[Unit] {
     ()
   }
 
-  override def submit(m: Task) = Name[TaskId] {
+  override def submit(m: Task) = Eval.always[TaskId] {
     prevMsgId += 1
     val id = TaskId(prevMsgId)
     msgs :+= ((id, m))
     id
   }
 
-  override def getStatus(id: TaskId) = Name[Option[TaskStatus]] {
+  override def getStatus(id: TaskId) = Eval.always[Option[TaskStatus]] {
     None
   }
 
@@ -461,27 +463,27 @@ object MockSecurity {
   }
 }
 
-final class MockSecurity(override val db: MockDb, now: Name[Instant], cfg: ServerLogicConfig.Security) extends Security.Algebra[Name] {
+final class MockSecurity(override val db: MockDb, now: Eval[Instant], cfg: ServerLogicConfig.Security) extends Security.Algebra[Eval] {
   import MockSecurity.Codecs._
   import shipreq.webapp.server.logic.algebra.Security._
 
-  override val F = Monad[Name]
+  override val F = Monad[Eval]
 
   var protectedActions = 0
-  override def protect[A](vulnerable: Name[A]): Name[A] =
+  override def protect[A](vulnerable: Eval[A]): Eval[A] =
     vulnerable.map { a =>
       protectedActions += 1
       a
     }
 
-  override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = Name[Option[User]] {
+  override def attemptLogin(u: Username \/ EmailAddr, p: PlainTextPassword) = Eval.always[Option[User]] {
     db.getUser(u)
       .filter(e => e.ps ==* mkPasswordAndSalt(p, e.ps.salt))
       .map(_.toUser)
   }
 
   var prevSalt = 0
-  override def hashPassword(p: PlainTextPassword) = Name[PasswordAndSalt] {
+  override def hashPassword(p: PlainTextPassword) = Eval.always[PasswordAndSalt] {
     prevSalt += 1
     mkPasswordAndSalt(p, Salt(prevSalt.toString))
   }
@@ -493,14 +495,14 @@ final class MockSecurity(override val db: MockDb, now: Name[Instant], cfg: Serve
 
   def expiry() = now.value.plus(cfg.jwtLifespan)
 
-  override def sessionPersist(token: SessionToken[Any]) = Name[Cookie.Update] {
+  override def sessionPersist(token: SessionToken[Any]) = Eval.always[Cookie.Update] {
     val token2 = token.copy(expiry = expiry())
     val json   = token2.asJson.noSpaces
     val cookie = Cookie(cookieName, json, None, None, None)
     Cookie.Update.add(cookie)
   }
 
-  override def sessionRestore(cookies: Cookie.LookupFn) = Name[SessionRestoreResult[Instant]] {
+  override def sessionRestore(cookies: Cookie.LookupFn) = Eval.always[SessionRestoreResult[Instant]] {
     cookies(cookieName) match {
       case Some(cookieValue) =>
         SessionRestoreResult.Success(decodeOrThrow[SessionToken[Instant]](cookieValue))
@@ -544,48 +546,88 @@ object MockInterpreters {
       registrationTokenLifespan  = 7 days,
       passwordResetTokenLifespan = 4 days))
 
-  implicit val catchableName: Catchable[Name] =
-    new Catchable[Name] {
-      override def attempt[A](f: Name[A]): Name[Throwable \/ A] =
-        Name {
-          try \/-(f.value)
+  implicit val syncEval: Sync[Eval] =
+    new Sync[Eval] {
+
+      override def pure[A](a: A): Eval[A] =
+        Eval.now(a)
+
+      override def raiseError[A](e: Throwable): Eval[A] =
+        Eval.always(throw e)
+
+      override def handleErrorWith[A](fa: Eval[A])(f: Throwable => Eval[A]): Eval[A] =
+        Eval.always {
+          try
+            fa.value
           catch {
-            case t: Throwable => -\/(t)
+            case t: Throwable => f(t).value
           }
         }
-      override def fail[A](err: Throwable): Name[A] =
-        Name(throw err)
+
+      override def flatMap[A, B](fa: Eval[A])(f: A => Eval[B]): Eval[B] =
+        fa flatMap f
+
+      override def tailRecM[A, B](z: A)(f: A => Eval[Either[A,B]]): Eval[B] =
+        Eval.always {
+          @tailrec
+          def go(a: A): B =
+            f(a).value match {
+              case -\/(a2) => go(a2)
+              case \/-(b) => b
+            }
+          go(z)
+        }
+
+      override def bracketCase[A, B](acquire: Eval[A])(use: A => Eval[B])(release: (A, ExitCase[Throwable]) => Eval[Unit]): Eval[B] =
+        acquire.flatMap { a =>
+          Eval.always {
+            val result: Throwable \/ B =
+              try
+                \/-(use(a).value)
+              catch {
+                case t: Throwable => -\/(t)
+              }
+            release(a, ExitCase.attempt(result)).value
+            result match {
+              case \/-(b) => b
+              case -\/(e) => throw e
+            }
+          }
+        }
+
+      override def suspend[A](thunk: => Eval[A]): Eval[A] =
+        Eval.defer(thunk)
     }
 }
 
 class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig = Identity[ServerLogicConfig],
                        specificMockDb : Option[MockDb]                         = None,
-                       specificRedis  : Option[Redis.InMemory[Name]]           = None,
+                       specificRedis  : Option[Redis.InMemory[Eval]]           = None,
                        specificTaskman: Option[MockTaskman]                    = None,
                       ) {
 
-  import MockInterpreters.catchableName
+  implicit def syncEval: Sync[Eval] = MockInterpreters.syncEval
 
   implicit val config         = modCfg(MockInterpreters.config)
   implicit val assetManifest  = config.assetManifest
   implicit val sjsManifest    = config.scalaJsManifest
   implicit val accessHacks    = config.security.projectAccessHacks
-  implicit val svr            = new MockServer[Name]
+  implicit val svr            = new MockServer[Eval]
   implicit val db             = specificMockDb.getOrElse(new MockDb(svr.now))
   implicit val security       = new MockSecurity(db, svr.now, config.security)
   implicit val taskman        = specificTaskman.getOrElse(new MockTaskman)
-  implicit val nameToName     = NaturalTransformation.refl[Name]
-  implicit val apEvent        = ApplyEventAlgebra.trusted[Name]
-  implicit val metrics        = MetricsAlgebra.const(Name(()))
-  implicit val trace          = Trace.Algebra.off[Name]
-  implicit val redis          = specificRedis.getOrElse(new Redis.InMemory[Name])
-  implicit val common         = CommonProtocolLogic[Name]
-  implicit val publicSpa      = PublicSpaLogic[Name, Name]
-  implicit val homeSpa        = HomeSpaLogic[Name, Name]
-  implicit val projectSpa     = ProjectSpaLogic[Name, Name](config.projectSpa)
+  implicit val nameToName     = FunctionK.id[Eval]
+  implicit val apEvent        = ApplyEventAlgebra.trusted[Eval]
+  implicit val metrics        = MetricsAlgebra.const(Eval.Unit)
+  implicit val trace          = Trace.Algebra.off[Eval]
+  implicit val redis          = specificRedis.getOrElse(new Redis.InMemory[Eval])
+  implicit val common         = CommonProtocolLogic[Eval]
+  implicit val publicSpa      = PublicSpaLogic[Eval, Eval]
+  implicit val homeSpa        = HomeSpaLogic[Eval, Eval]
+  implicit val projectSpa     = ProjectSpaLogic[Eval, Eval](config.projectSpa)
 
-  implicit object ops extends OpsEndpointLogic.Base[Name] {
-    override val randomToken = Name("blah")
+  implicit object ops extends OpsEndpointLogic.Base[Eval] {
+    override val randomToken = Eval.now("blah")
   }
 
   val user2password = PlainTextPassword("blurp12345")

@@ -1,12 +1,12 @@
 package shipreq.webapp.server.logic.impl
 
+import cats.effect.Sync
+import cats.syntax.all._
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalagraal._
 import japgolly.scalagraal.js._
 import japgolly.scalagraal.util._
-import scalaz.Monad
-import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util.{Permission, Url}
 import shipreq.webapp.base.config.AssetManifest
@@ -19,7 +19,7 @@ import shipreq.webapp.ssr._
   * - is minimal in that it only provides SSR for / and /project/id
   * - is minimal in that it only runs SSR on startup uses [[StrFnCache]] when serving
   */
-final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
+final class MinimalSsrLogic[F[_]]()(implicit F: Sync[F],
                                     am: AssetManifest,
                                     trace: Trace.Algebra[F],
                                     svr: Server.Time[F]) extends SsrAlgebra[F] with StrictLogging {
@@ -30,7 +30,7 @@ final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
   private def logDuration[A](name: String)(fa: F[A]): F[A] =
     for {
       (a, dur) <- svr.measureDuration(fa)
-      _        <- F.point(logger.info(s"$name completed in ${dur.conciseDesc}."))
+      _        <- F.delay(logger.info(s"$name completed in ${dur.conciseDesc}."))
     } yield a
 
   private def logAndTrace[A](name: String)(fa: F[A]): F[A] =
@@ -38,7 +38,7 @@ final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
       logDuration("SSR:" + name)(fa))
 
   private def assertOk[A](result: Expr.Result[A]): F[A] =
-    F.point {
+    F.delay {
       result match {
         case Right(a) => a
         case Left(e) => throw e
@@ -47,11 +47,11 @@ final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
 
   private def withCtx[A](f: GraalContext => F[A]): F[A] =
     for {
-      ctx <- F.point(GraalContext.fixedContext())
-      res <- logAndTrace("setup")(F.point(ctx.eval(RealSsr.setup)))
+      ctx <- F.delay(GraalContext.fixedContext())
+      res <- logAndTrace("setup")(F.delay(ctx.eval(RealSsr.setup)))
       _   <- assertOk(res)
       a   <- f(ctx)
-      _   <- F.point(ctx.close())
+      _   <- F.delay(ctx.close())
     } yield a
 
   override def prepare(baseUrl: Url.Absolute.Base,
@@ -73,7 +73,7 @@ final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
       StrFnCacheParam.apply3(ProjectSpaLoaderData.apply)(d => (d.username, d.projectName, d.assetManifest))
 
     def wrap1[A](name: String, f: A => Expr.Result[String]): A => F[Output] =
-      a => F.point {
+      a => F.delay {
         f(a) match {
           case Right(s) =>
             Some(Html(s))
@@ -84,7 +84,7 @@ final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
       }
 
     def wrapOpt2[A, B](name: String, f: (A, B) => Expr.Result[Option[String]]): (A, B) => F[Output] =
-      (a, b) => F.point {
+      (a, b) => F.delay {
         f(a, b) match {
           case Right(o) =>
             o.map(Html(_))
@@ -98,7 +98,7 @@ final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
 
       // ===============================================================================================================
 
-      val public: F[Public[F]] = logAndTrace("public")(F.point {
+      val public: F[Public[F]] = logAndTrace("public")(F.delay {
 
         def render(path: Url.Relative, u: Option[Username]): Expr.Result[String] =
           ctx.eval(ReactSsr.setUrl((baseUrl / path).absoluteUrl)) >>
@@ -113,7 +113,7 @@ final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
 
       // ===============================================================================================================
 
-      val home: F[HomeSpaLoader[F]] = logAndTrace("home")(F.point {
+      val home: F[HomeSpaLoader[F]] = logAndTrace("home")(F.delay {
 
         def render(d: HomeSpaLoaderData): Expr.Result[String] =
           ctx.eval(RealSsr.renderHomeSpaLoader(d))
@@ -123,7 +123,7 @@ final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
 
       // ===============================================================================================================
 
-      val project: F[ProjectSpaLoader[F]] = logAndTrace("project")(F.point {
+      val project: F[ProjectSpaLoader[F]] = logAndTrace("project")(F.delay {
 
         def render(d: ProjectSpaLoaderData): Expr.Result[String] =
           ctx.eval(RealSsr.renderProjectSpaLoader(d))
@@ -133,7 +133,7 @@ final class MinimalSsrLogic[F[_]]()(implicit F: Monad[F],
 
       // ===============================================================================================================
 
-      F.apply3(public, home, project)(Prepared.apply[F])
+      F.map3(public, home, project)(Prepared.apply[F])
     }
 
     logDuration("SSR preparation")(prep)

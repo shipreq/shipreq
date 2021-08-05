@@ -1,9 +1,9 @@
 package shipreq.webapp.server.logic.event
 
+import cats.syntax.all._
+import cats.{Applicative, Monad}
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import scalaz.syntax.monad._
-import scalaz.{Applicative, Monad}
 import shipreq.base.ops.Trace
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.ProjectId
@@ -24,7 +24,7 @@ trait ApplyEventAlgebra[F[_]] { self =>
                    pao: ProjectAndOrd,
                    events: VerifiedEvent.Seq): F[Result] =
     if (events.isEmpty)
-      F.point(\/-(pao))
+      F.pure(\/-(pao))
     else
       appendFn(pid, pao, VerifiedEvent.NonEmptySeq.force(events))
 }
@@ -45,7 +45,7 @@ object ApplyEventAlgebra extends StrictLogging {
     }
 
   def trusted[F[_]](implicit _F: Applicative[F]): ApplyEventAlgebra[F] =
-    apply(Trusted)((pid, pao, events) => _F.point {
+    apply(Trusted)((pid, pao, events) => _F.unit.map { _ =>
       ApplyEvent.trusted.applyVerified(events)(pao.project) match {
         case \/-(p2) =>
           \/-(ProjectAndOrd(p2, Some(events.lastKey.ord.asLatest)))

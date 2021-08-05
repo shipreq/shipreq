@@ -368,7 +368,7 @@ object PlainText {
 
                 val lastLine = if (includeMarkup) "\n" ~ indent ~ "```" else ""
 
-                head ~ firstLine ~ a.code.indent(indent) ~ lastLine ~ tail
+                head ~ firstLine ~ a.code.indentLines(indent) ~ lastLine ~ tail
               }
 
           }

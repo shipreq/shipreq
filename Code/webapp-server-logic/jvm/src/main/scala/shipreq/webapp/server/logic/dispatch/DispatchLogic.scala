@@ -1,13 +1,13 @@
 package shipreq.webapp.server.logic.dispatch
 
+import cats.effect.Sync
+import cats.syntax.all._
 import com.typesafe.scalalogging.StrictLogging
 import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.ParseLong
 import japgolly.microlibs.utils.Utils
 import java.time.Instant
-import scalaz.Monad
-import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.webapp.base.config.Urls
@@ -90,7 +90,7 @@ object DispatchLogic {
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Request[RealReq])
-                                        (implicit F: Monad[F],
+                                        (implicit F: Sync[F],
                                          config    : ServerLogicConfig,
                                          db        : DB.VerificationTokenReadOnly[F],
                                          metrics   : MetricsAlgebra[F],
@@ -361,7 +361,7 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
               case \/-(req) =>
                 f(token, req)
               case -\/(err) =>
-                F.point {
+                F.delay {
                   err match {
 
                     case DecodingFailure.UnsupportedMajorVer(_, clientVer) =>

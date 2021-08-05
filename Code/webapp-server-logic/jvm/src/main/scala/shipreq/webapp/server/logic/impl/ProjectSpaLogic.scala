@@ -1,10 +1,11 @@
 package shipreq.webapp.server.logic.impl
 
+import cats.effect.Sync
+import cats.syntax.all.{catsSyntaxEither => _, _}
+import cats.{Monad, ~>}
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
-import scalaz.syntax.monad._
-import scalaz.{BindRec, Monad, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.taskman.api.{Task, TaskmanApi, UserId => TaskmanUserId}
@@ -66,15 +67,15 @@ object ProjectSpaLogic extends StrictLogging {
 
   object Config {
     import japgolly.clearconfig._
-    import scalaz.syntax.applicative._
+    import cats.syntax.apply._
 
     def default = Config(100, true, true) // see calculations.ods
 
     def defn: ConfigDef[Config] =
-      ( ConfigDef.getOrUse("eventSnapshotCacheRatio", default.eventSnapshotCacheRatio) |@|
-        ConfigDef.getOrUse("writeSnapshots", default.writeSnapshots) |@|
-        ConfigDef.getOrUse("writeEvents", default.writeEvents)
-      )(apply)
+      ( ConfigDef.getOrUse("eventSnapshotCacheRatio", default.eventSnapshotCacheRatio),
+        ConfigDef.getOrUse("writeSnapshots", default.writeSnapshots),
+        ConfigDef.getOrUse("writeEvents", default.writeEvents),
+      ).mapN(apply)
   }
 
   val userFacingErrorMsgWhenDataPropFails =
@@ -126,7 +127,7 @@ object ProjectSpaLogic extends StrictLogging {
   def apply[D[_], F[_]](config: Config)
                        (implicit
                         D       : Monad[D],
-                        F       : Monad[F] with BindRec[F],
+                        F       : Sync[F],
                         apEvent : ApplyEventAlgebra[F],
                         db      : DB.ForProjectSpa[D],
                         metrics : MetricsAlgebra[F],
@@ -252,13 +253,13 @@ object ProjectSpaLogic extends StrictLogging {
 
         case -\/(Redis.ListenerError.DecodingFailure(err)) =>
           for {
-            _ <- F.point(logger.warn("Failed to parse pub/sub event from Redis: ", err))
+            _ <- F.delay(logger.warn("Failed to parse pub/sub event from Redis: ", err))
             _ <- onError(ListenerError.RedisDecodingFailure(err))
           } yield ()
 
         case -\/(Redis.ListenerError.RedisLibraryException(err)) =>
           for {
-            _ <- F.point(logger.warn("Failed to parse pub/sub event from Redis: ", err))
+            _ <- F.delay(logger.warn("Failed to parse pub/sub event from Redis: ", err))
             _ <- onError(ListenerError.RedisLibraryException(err))
           } yield ()
       }
@@ -307,7 +308,7 @@ object ProjectSpaLogic extends StrictLogging {
       type OptionState = Option[WebSocketState[F]]
 
       private def logError(err: MsgError, descMsg: () => String): F[Unit] =
-        F.point {
+        F.delay {
           err match {
             case MsgError.SessionExpired =>
               logger.info("Session expired.")
@@ -354,7 +355,7 @@ object ProjectSpaLogic extends StrictLogging {
         def body(implicit span: Span): F[MsgResult[F]] = {
 
           def handleError(wsReqRes: FreeOption[WsReqRes], err: MsgError): F[MsgResult[F]] =
-            onError(err) >> logError(err, () => msg.describe(1000)) >| new MsgResult(wsReqRes, -1L, None)
+            onError(err) >> logError(err, () => msg.describe(1000)) as new MsgResult(wsReqRes, -1L, None)
 
           val mainResponseLogic: F[MsgResult[F]] =
             parseClientMsg(msg) match {
@@ -369,7 +370,7 @@ object ProjectSpaLogic extends StrictLogging {
                   logger.debug(s"Responding to $reqId with $fullRes -- $resBin")
                   // GenerateUnitTest.resp(webSocketHelper, req, fullRes)(resBin)
                   respond(resBin).flatMap {
-                    case \/-(_) => F.point(new MsgResult(wsReqRes, resBin.length, msgFnOut.newState))
+                    case \/-(_) => F.delay(new MsgResult(wsReqRes, resBin.length, msgFnOut.newState))
                     case -\/(e) => handleError(wsReqRes, MsgError.RespondError(e))
                   }
                 }
@@ -378,9 +379,9 @@ object ProjectSpaLogic extends StrictLogging {
                   msgFnIn     = MsgFnIn(req.req, static, state, push, onListenerError)
                   msgErrOrOut <- msgFold(req.reqRes)(msgFnIn): F[MsgError \/ MsgFnOut[F, req.reqRes.ResponseType]]
                   result      <- msgErrOrOut match {
-                                     case \/-(msgFnOut) => respondWith(msgFnOut)
-                                     case -\/(e)        => handleError(FreeOption.empty, e)
-                                   }
+                                   case \/-(msgFnOut) => respondWith(msgFnOut)
+                                   case -\/(e)        => handleError(FreeOption.empty, e)
+                                 }
                 } yield result
 
               case -\/(e) =>
@@ -399,7 +400,7 @@ object ProjectSpaLogic extends StrictLogging {
           (r, dur) <- svr.measureDuration(trace.newSubSpan("onMessage", span)(body(_)))
           pid      = static.projectId.value
           _        <- metrics.projectSpaWebSocketMsg(r.msgType, msg.length, r.bytesOut, dur, r.ok)
-          _        <- F.point(logger.info(s"WebSocket for project #$pid processed request in ${dur.conciseDesc}"))
+          _        <- F.delay(logger.info(s"WebSocket for project #$pid processed request in ${dur.conciseDesc}"))
         } yield r.newState
       }
 
@@ -442,7 +443,7 @@ object ProjectSpaLogic extends StrictLogging {
       private val submitDataPropError: (UserId, ErrorMsg) => F[Unit] = {
         var submitted = false
         (userId, err) =>
-          F.point {
+          F.delay {
             if (submitted)
               F.pure(())
             else {
@@ -457,7 +458,7 @@ object ProjectSpaLogic extends StrictLogging {
                 )
               for {
                 _ <- taskman.submit(task)
-                _ <- F.point { submitted = true }
+                _ <- F.delay { submitted = true }
               } yield ()
             }
           }.flatMap(identity)
@@ -609,7 +610,7 @@ object ProjectSpaLogic extends StrictLogging {
                 F pure -\/(MsgError.ServerBehindRedis(err))
               else
                 for {
-                  _    <- F.point(logger.warn("Failed to parse cache. Rebuilding. Error: ", err))
+                  _    <- F.delay(logger.warn("Failed to parse cache. Rebuilding. Error: ", err))
                   load <- loadEventsFromDb(userOrd)
                 } yield load
           }
@@ -663,7 +664,7 @@ object ProjectSpaLogic extends StrictLogging {
   private final class ProjectUpdater[D[_], F[_]](writeSnapshot: Int => Boolean,
                                                  submitDataPropError: (UserId, ErrorMsg) => F[Unit])
                                                 (implicit
-                                                 F       : Monad[F] with BindRec[F],
+                                                 F       : Sync[F],
                                                  apEvent : ApplyEventAlgebra[F],
                                                  db      : DB.ForProjectSpa[D],
                                                  metrics : MetricsAlgebra[F],
@@ -694,7 +695,7 @@ object ProjectSpaLogic extends StrictLogging {
                 if (err.isLocalKnownToBeOutOfDate)
                   F pure \/-(Result.ServerBehindRedis(err))
                 else
-                  F.point {
+                  F.delay {
                     logger.warn("Failed to parse cache. Rebuilding. Error: ", err)
                   } >> useCache(Redis.ProjectCache.empty)
             }
@@ -766,7 +767,7 @@ object ProjectSpaLogic extends StrictLogging {
             main))
       }
 
-      F.tailrecM(loop)(initialState)
+      F.tailRecM(initialState)(loop)
     }
   }
 

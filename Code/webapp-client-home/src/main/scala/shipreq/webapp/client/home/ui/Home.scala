@@ -55,9 +55,6 @@ object Home {
     val setCreateProjectText: Reusable[SetStateFnPure[String]] =
       Reusable.fn.state($ zoomStateL State.createProjectText).setStateFn
 
-    val setCreateProjectText2 =
-      setCreateProjectText.map(z => (x: Option[String], y: Callback) => z.setStateOption(x, y))
-
     val createProjectAF: AsyncFeature.Write.D0[ErrorMsg] =
       AsyncFeature.Write.D0.init($ zoomStateL State.createProjectAAS)
 
@@ -84,8 +81,7 @@ object Home {
       def mainContent(m: TagMod): VdomElement =
         HomeContent.Props(
           s.projects,
-          // StateSnapshot.withReuse(s.createProjectText)(setCreateProjectText),// TODO: sjs #953
-          StateSnapshot.withReuse(s.createProjectText)(setCreateProjectText2),
+          StateSnapshot.withReuse(s.createProjectText)(setCreateProjectText),
           s.createProjectAAS,
           createProjectIO,
           m)

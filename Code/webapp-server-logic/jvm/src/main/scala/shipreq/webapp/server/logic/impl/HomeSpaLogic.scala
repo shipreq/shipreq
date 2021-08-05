@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic.impl
 
-import scalaz.syntax.monad._
-import scalaz.{Monad, ~>}
+import cats.syntax.all._
+import cats.{Monad, ~>}
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.project.data._

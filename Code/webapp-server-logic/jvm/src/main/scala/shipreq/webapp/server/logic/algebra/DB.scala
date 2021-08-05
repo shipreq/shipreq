@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic.algebra
 
+import cats.~>
 import java.time.Instant
-import scalaz.~>
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}

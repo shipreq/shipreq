@@ -1,12 +1,13 @@
 package shipreq.webapp.server.logic.algebra
 
+import cats.Monad
+import cats.effect.Sync
+import cats.syntax.all._
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import scalaz.syntax.monad._
-import scalaz.{BindRec, Monad}
 import shipreq.base.ops.Trace
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.protocol.binary.SafePickler
@@ -58,7 +59,7 @@ object Redis extends StrictLogging {
       if (nonEmpty)
         ae.F.map(build(pid))(_.toOption)
       else
-        ae.F.point(None)
+        ae.F.pure(None)
   }
 
   object ProjectCache {
@@ -186,7 +187,7 @@ object Redis extends StrictLogging {
       private def traced[A](name: String, id: ProjectId, f: F[A]): F[A] =
         trace.newSpan("Redis: " + name) { span =>
           val addAttrs = trace.addAttrs(Trace.Attr.ShipReqProjectId(id) :: Nil)(span)
-          F.bind(addAttrs)(_ => f)
+          F.flatMap(addAttrs)(_ => f)
         }
 
       override def subscribe(id: ProjectId, listener: Listener[F]) =
@@ -241,14 +242,14 @@ object Redis extends StrictLogging {
     }
 
   def withMetricsAndLogging[F[_]](underlying: ProjectAlgebra[F], metrics: MetricsAlgebra.ForRedis[F])
-                                 (implicit monadF: Monad[F], svr: Server.Time[F]): ProjectAlgebra[F] = {
+                                 (implicit F: Sync[F], svr: Server.Time[F]): ProjectAlgebra[F] = {
 
     var report: (String, ProjectId, Duration) => F[Unit] =
       (op, _, dur) => metrics.redis(op, dur)
 
     logger.whenInfoEnabled {
       report = (op, id, dur) => {
-        val log = monadF.point(logger.info(s"Redis $op for project #${id.value} completed in ${dur.conciseDesc}."))
+        val log = F.delay(logger.info(s"Redis $op for project #${id.value} completed in ${dur.conciseDesc}."))
         val write = metrics.redis(op, dur)
         write *> log
       }
@@ -278,7 +279,7 @@ object Redis extends StrictLogging {
     }
   }
 
-  final class InMemory[F[_]](implicit FF: Monad[F] with BindRec[F]) extends ProjectAlgebra[F] {
+  final class InMemory[F[_]](implicit FF: Sync[F]) extends ProjectAlgebra[F] {
     import com.github.blemale.scaffeine._
     import InMemory.PubSub
 
@@ -292,7 +293,7 @@ object Redis extends StrictLogging {
     private[this] val writeCounter = new AtomicInteger(0)
 
     private def modPubSub[A](id: ProjectId)(f: PubSubs => (PubSubs, A)): F[A] =
-      F.point(unsafeModPubSubNow(id)(f))
+      F.delay(unsafeModPubSubNow(id)(f))
 
     private def unsafeModPubSubNow[A](id: ProjectId)(f: PubSubs => (PubSubs, A)): A = {
       @volatile var result: Any = null
@@ -320,15 +321,15 @@ object Redis extends StrictLogging {
     private def readCacheNow(id: ProjectId) =
       globalCache.getIfPresent(id).getOrElse(ProjectCache.empty)
 
-    override protected def _read(id: ProjectId) = F.point {
+    override protected def _read(id: ProjectId) = F.delay {
       \/-(readCacheNow(id))
     }
 
-    override def readEvents(id: ProjectId, beyond: Option[EventOrd.Latest]) = F.point {
+    override def readEvents(id: ProjectId, beyond: Option[EventOrd.Latest]) = F.delay {
       \/-(readCacheNow(id).events.filter(_.ord > beyond))
     }
 
-    override def writeSnapshot(id: ProjectId, snapshot: ProjectSnapshot, publishOnly: VerifiedEvent.Seq) = F.point {
+    override def writeSnapshot(id: ProjectId, snapshot: ProjectSnapshot, publishOnly: VerifiedEvent.Seq) = F.delay {
       writeCounter.getAndIncrement()
       val cache = readCacheNow(id)
       if (cache.snapshot.forall(snapshot.ord > _.ord)) {
@@ -340,7 +341,7 @@ object Redis extends StrictLogging {
     } <* publishEvents(id, publishOnly)
 
     override def writeEvents(id: ProjectId, cacheOnly: VerifiedEvent.Seq, cacheAndPublish: VerifiedEvent.Seq) =
-      F.point {
+      F.delay {
         val cache = ensureComplete(readCacheNow(id))
         writeCounter.getAndIncrement()
         val newEvents = cache.ord match {
@@ -373,7 +374,7 @@ object Redis extends StrictLogging {
         }
       } <* publishEvents(id, cacheAndPublish)
 
-    override def publishEvents(id: ProjectId, events: VerifiedEvent.NonEmptySeq) = F.point {
+    override def publishEvents(id: ProjectId, events: VerifiedEvent.NonEmptySeq) = F.delay {
       val pubSubs = readPubSubsNow(id)
       globalQueue.unsafeAdd(events, pubSubs)
     }
@@ -384,8 +385,8 @@ object Redis extends StrictLogging {
     def writeCount() = writeCounter.get()
 
     private def _publishOne[A](ok: A, ko: F[A]): F[A] =
-      F.point(globalQueue.unsafeDequeue()).flatMap {
-        case Some((p, e)) => p.pub(\/-(e)) >| ok
+      F.delay(globalQueue.unsafeDequeue()).flatMap {
+        case Some((p, e)) => p.pub(\/-(e)) as ok
         case None         => ko
       }
 
@@ -394,12 +395,12 @@ object Redis extends StrictLogging {
 
     /** Simulates Redis publishing events to listeners */
     val publishAll: F[Unit] = {
-      type T       = scalaz.\/[Unit, Unit]
-      val stop : T = scalaz.\/-(())
-      val again: T = scalaz.-\/(())
+      type T       = Unit \/ Unit
+      val stop : T = \/-(())
+      val again: T = -\/(())
       val stopF    = F.pure(stop)
       val pub1     = _publishOne(again, stopF)
-      def unsafe   = FF.tailrecM[Unit, Unit](_ => pub1)(())
+      def unsafe   = FF.tailRecM[Unit, Unit](())(_ => pub1)
       stopF.flatMap(_ => unsafe)
     }
 

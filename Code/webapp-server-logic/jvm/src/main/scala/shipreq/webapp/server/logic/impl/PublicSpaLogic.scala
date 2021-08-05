@@ -1,12 +1,12 @@
 package shipreq.webapp.server.logic.impl
 
+import cats.effect.Sync
+import cats.instances.option._
+import cats.syntax.all._
+import cats.{Monad, ~>}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.sql.Connection
 import java.time.{Duration, Instant}
-import scalaz.std.option.optionInstance
-import scalaz.syntax.monad._
-import scalaz.syntax.std.option._
-import scalaz.{Catchable, Monad, ~>}
 import shipreq.base.util._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskId, TaskmanApi}
@@ -84,8 +84,7 @@ object PublicSpaLogic extends HasLogger {
                         svr     : Server.Algebra[F],
                         taskman : TaskmanApi[F],
                         D       : Monad[D],
-                        F       : Monad[F],
-                        FC      : Catchable[F]): PublicSpaLogic[F] =
+                        F       : Sync[F]): PublicSpaLogic[F] =
     new PublicSpaLogic[F] {
 
       override val ajaxLandingPage =
@@ -175,7 +174,7 @@ object PublicSpaLogic extends HasLogger {
               case Deny  => _ =>
                 for {
                   _ <- metrics.securityEvent(Security.Event.Register1, Security.Result.Failure)
-                  _ <- F.point(logger.warn("Denying public registration."))
+                  _ <- F.delay(logger.warn("Denying public registration."))
                 } yield -\/(ErrorMsg("Registration is disabled."))
             }
           )
@@ -222,7 +221,7 @@ object PublicSpaLogic extends HasLogger {
                     } yield t
 
                   def logAndMap(i: StackLeft \/ Option[Security.SessionToken[Unit]]): F[(ErrorMsg \/ (Result, Option[Security.SessionToken[Unit]]), Security.Result)] =
-                    F.point(i match {
+                    F.delay(i match {
                       case \/-(t) =>
                         logger.info(s"${req.username.with_@} completed user registration.")
                         (\/-((Result.Success, t)), Security.Result.Success)
@@ -327,14 +326,14 @@ object PublicSpaLogic extends HasLogger {
                     _  <- validateToken
                     ps <- security.hashPassword(newPassword).toStack
                     u  <- runDB(db.updateUserPassword(req.token, ps)).toStack
-                    id <- (u \/> (Result.TokenInvalid: Result)).toStack
+                    id <- u.toRight(Result.TokenInvalid: Result).toStack
                   } yield {
                     logger.info(s"Password reset for user #${id.value}.")
                     Result.Success
                   }
 
                 def logAndMap(i: StackLeft \/ Result.Success.type): F[(ErrorMsg \/ Result, Security.Result)] =
-                  F.point(i match {
+                  F.delay(i match {
                     case r@ \/-(_) =>
                       (r, Security.Result.Success)
                     case -\/(r@ \/-(f)) =>

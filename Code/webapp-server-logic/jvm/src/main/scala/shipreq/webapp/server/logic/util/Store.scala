@@ -1,10 +1,9 @@
 package shipreq.webapp.server.logic.util
 
+import cats.syntax.all._
+import cats.{Applicative, Monad}
 import java.util.concurrent.ConcurrentHashMap
 import monocle.macros.Lenses
-import scalaz.syntax.monad._
-import scalaz.syntax.std.option._
-import scalaz.{Applicative, Monad}
 import shipreq.base.util.FreeOption.Implicits._
 import shipreq.base.util._
 
@@ -66,7 +65,7 @@ object Store {
 
     final def storeModOrTryInit[E](key: K, mod: V => V, tryInit: => F[E \/ V])(implicit F: Monad[F]): F[E \/ V] = {
       lazy val tryInit2 = tryInit
-      storeUpdateQuickOrSetLong[E, V](key, _.map(mod), _ \/> tryInit2)(_ getOrElse _)
+      storeUpdateQuickOrSetLong[E, V](key, _.map(mod), _ toRight tryInit2)(_ getOrElse _)
     }
   }
 
@@ -153,7 +152,7 @@ object Store {
 
       def registerAttempt[E](key: K, registrantData: A, init: => F[E \/ V], verify: V => Option[E]): F[E \/ RegId[K]] =
         alg.storeModOrTryInit(key, _.register(registrantData), init.map(_.map(v => Node.init(v, registrantData))))
-          .map(_.flatMap(n => verify(n.value) <\/ RegId(key, n.maxRegId)))
+          .map(_.flatMap(n => verify(n.value) toLeft RegId(key, n.maxRegId)))
 
       def unregister(r: RegId[K]): F[Unit] =
         alg.storeMod(r.key)(_.map(_.unregister(r.id)).filter(_.registrants.nonEmpty)).void

@@ -53,7 +53,7 @@ object HomeTestDsl {
   @Lenses
   case class State(cpText: String, cpState: CPState, projects: Vector[String], reqs: Int)
 
-  val clearCP = State.cpText.set("") compose State.cpState.set(CPState.Blank)
+  val clearCP = State.cpText.replace("") compose State.cpState.replace(CPState.Blank)
 
   val * = Dsl[TestAjaxClient, HomeObs, State]
 
@@ -86,7 +86,7 @@ object HomeTestDsl {
     *.action("Click CreateProject")(Simulate click _.obs.createProject.button)
 
   val reqCreateProject =
-    clickCreateProject.updateState(State.reqs.modify(_ + 1) compose State.cpState.set(CPState.Locked))
+    clickCreateProject.updateState(State.reqs.modify(_ + 1) compose State.cpState.replace(CPState.Locked))
 
   val ajaxFailLast =
     *.action("Simulate AJAX error")(_.ref.failLast())
@@ -131,8 +131,8 @@ object HomeTest extends TestSuite {
       setCPText("    ")
         >> setCPText("Oh and I see and I know, and suddenly I'm on my own, but it's now and it's no, at least it isn't tomorrow. " * 3, CPState.InputError)
         >> setCPText("  ahhhh ness  ", CPState.Ready)
-        >> reqCreateProject >> ajaxFailLast.updateState(State.cpState set CPState.AsyncError)
-        >> reqCreateProject.rename("Retry") >> ajaxFailLast.updateState(State.cpState set CPState.AsyncError)
+        >> reqCreateProject >> ajaxFailLast.updateState(State.cpState replace CPState.AsyncError)
+        >> reqCreateProject.rename("Retry") >> ajaxFailLast.updateState(State.cpState replace CPState.AsyncError)
         >> setCPText("  ahh ness  ", CPState.Ready) // AJAX failure ---[edit]---> Ready
         >> reqCreateProject >> ajaxCreatedProject(Data.piN)
     )).assert()

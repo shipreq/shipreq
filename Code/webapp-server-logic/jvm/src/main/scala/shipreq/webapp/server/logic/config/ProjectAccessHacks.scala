@@ -3,7 +3,6 @@ package shipreq.webapp.server.logic.config
 import io.circe._
 import io.circe.parser.decode
 import japgolly.clearconfig._
-import nyaya.util.Multimap
 import shipreq.base.util.{Allow, Permission}
 import shipreq.webapp.base.data._
 
@@ -24,7 +23,7 @@ object ProjectAccessHacks {
     }
 
   implicit def config: ConfigValueParser[ProjectAccessHacks] =
-    ConfigValueParser(s => \/.fromEither(decode[ProjectAccessHacks](s)).leftMap(_.getMessage))
+    ConfigValueParser(decode[ProjectAccessHacks](_).leftMap(_.getMessage))
 
   def empty: ProjectAccessHacks =
     apply(Multimap.empty)

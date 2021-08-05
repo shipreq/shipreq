@@ -1,11 +1,11 @@
 package shipreq.webapp.server.logic.config
 
+import cats.syntax.apply._
 import io.jaegertracing.Configuration
 import japgolly.clearconfig._
 import java.nio.charset.Charset
 import java.time.Duration
 import monocle.macros.Lenses
-import scalaz.syntax.applicative._
 import shipreq.base.ops._
 import shipreq.base.util.FxModule._
 import shipreq.base.util._
@@ -113,17 +113,17 @@ object ServerLogicConfig {
     }
 
     def config: ConfigDef[Security] =
-      ( ConfigDef.getOrUse[Duration ]("attack_frustration_delay", Duration.ofMillis(120)) |@|
-        ConfigDef.need    [Boolean  ]("jwt.cookie.secure") |@|
-        ConfigDef.need    [Duration ]("jwt.lifespan") |@|
-        ConfigDef.need    [JwtSecret]("jwt.secret") |@|
-        ConfigDef.get     [JwtSecret]("jwt.secret.previous") |@|
-        ConfigDef.getOrUse[Int      ]("password.salt", 64) |@|
-        ConfigDef.getOrUse           ("hack.project_access", ProjectAccessHacks.empty) |@|
-        ConfigDef.need    [Int      ]("verification_token.length") |@|
-        ConfigDef.need    [Duration ]("verification_token.lifespan.register") |@|
-        ConfigDef.need    [Duration ]("verification_token.lifespan.resetpw")
-      ) (apply)
+      ( ConfigDef.getOrUse[Duration ]("attack_frustration_delay", Duration.ofMillis(120)),
+        ConfigDef.need    [Boolean  ]("jwt.cookie.secure"),
+        ConfigDef.need    [Duration ]("jwt.lifespan"),
+        ConfigDef.need    [JwtSecret]("jwt.secret"),
+        ConfigDef.get     [JwtSecret]("jwt.secret.previous"),
+        ConfigDef.getOrUse[Int      ]("password.salt", 64),
+        ConfigDef.getOrUse           ("hack.project_access", ProjectAccessHacks.empty),
+        ConfigDef.need    [Int      ]("verification_token.length"),
+        ConfigDef.need    [Duration ]("verification_token.lifespan.register"),
+        ConfigDef.need    [Duration ]("verification_token.lifespan.resetpw"),
+      ).mapN(apply)
   }
 
   final case class Prometheus(enabled    : Boolean,
@@ -142,13 +142,13 @@ object ServerLogicConfig {
       bearerToken = None)
 
     def config: ConfigDef[Prometheus] =
-      ( ConfigDef.getOrUse[Boolean]("enabled"    , default.enabled) |@|
-        ConfigDef.getOrUse[Boolean]("hikaricp"   , default.hikaricp) |@|
-        ConfigDef.getOrUse[Boolean]("hotspot"    , default.hotspot) |@|
-        ConfigDef.getOrUse[Boolean]("jdbc"       , default.jdbc) |@|
-        ConfigDef.getOrUse[String ]("path"       , default.path).map(_.replaceFirst("^/*", "/")) |@|
-        ConfigDef.get     [String ]("bearerToken")
-    ) (apply)
+      ( ConfigDef.getOrUse[Boolean]("enabled"    , default.enabled),
+        ConfigDef.getOrUse[Boolean]("hikaricp"   , default.hikaricp),
+        ConfigDef.getOrUse[Boolean]("hotspot"    , default.hotspot),
+        ConfigDef.getOrUse[Boolean]("jdbc"       , default.jdbc),
+        ConfigDef.getOrUse[String ]("path"       , default.path).map(_.replaceFirst("^/*", "/")),
+        ConfigDef.get     [String ]("bearerToken"),
+    ).mapN(apply)
   }
 
   final case class SsrConfig(enabled: Boolean)
@@ -161,26 +161,26 @@ object ServerLogicConfig {
   def config: ConfigDef[ServerLogicConfig] = {
 
     val part1 = (
-      ConfigDef.need     [String  ]("url").map(Url.Absolute.Base.apply) |@|
-      ConfigDef.get      [String  ]("staticAssetCdn").map(_.map(AssetManifest.StaticAssetCdn)) |@|
-      ConfigDef.getOrUse [Boolean ]("feature.publicRegistration", true).map(Allow.when) |@|
-      ConfigDef.getOrUse [Int     ]("applyEvent.thresholdMs", 200).ensure_>=(0).ensure_<(1000) |@|
-      ConfigDef.get      [String  ]("googleAnalytics.trackingId") |@|
-      ConfigDef.need     [String  ]("taskman.schema") |@|
-      ConfigDef.getOrUse [Boolean ]("taskman.init", true)
+      ConfigDef.need     [String  ]("url").map(Url.Absolute.Base.apply),
+      ConfigDef.get      [String  ]("staticAssetCdn").map(_.map(AssetManifest.StaticAssetCdn)),
+      ConfigDef.getOrUse [Boolean ]("feature.publicRegistration", true).map(Allow.when),
+      ConfigDef.getOrUse [Int     ]("applyEvent.thresholdMs", 200).ensure_>=(0).ensure_<(1000),
+      ConfigDef.get      [String  ]("googleAnalytics.trackingId"),
+      ConfigDef.need     [String  ]("taskman.schema"),
+      ConfigDef.getOrUse [Boolean ]("taskman.init", true),
     ).tupled
 
     val part2 = (
-      RetriesJvm.config.withPrefix             ("taskman.init.retry.") |@|
-      ProjectSpaLogic.Config.defn.withPrefix   ("projectSpa.") |@|
-      Prometheus.config.withPrefix             ("prometheus.") |@|
-      Security.config.withPrefix               ("security.") |@|
-      ScalaJsManifest.config[String].withPrefix("scalajs.") |@|
-      SsrConfig.config.withPrefix              ("ssr.") |@|
-      JaegerTracingConfig.main                 ("webapp")
+      RetriesJvm.config.withPrefix             ("taskman.init.retry."),
+      ProjectSpaLogic.Config.defn.withPrefix   ("projectSpa."),
+      Prometheus.config.withPrefix             ("prometheus."),
+      Security.config.withPrefix               ("security."),
+      ScalaJsManifest.config[String].withPrefix("scalajs."),
+      SsrConfig.config.withPrefix              ("ssr."),
+      JaegerTracingConfig.main                 ("webapp"),
     ).tupled
 
-    val parts = (part1 |@| part2) {
+    val parts = (part1, part2).mapN {
       case ((
           baseUrl,
           staticAssetCdn,

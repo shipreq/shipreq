@@ -1,8 +1,8 @@
 package shipreq.webapp.server.logic.algebra
 
+import cats.syntax.all._
+import cats.{Monad, ~>}
 import doobie.ConnectionIO
-import scalaz.syntax.monad._
-import scalaz.{Monad, ~>}
 import shipreq.base.ops.Trace
 import shipreq.base.ops.Trace.{Attr, AttrFor}
 import shipreq.base.util.Url

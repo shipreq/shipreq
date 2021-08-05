@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic.impl
 
-import scalaz.Monad
-import scalaz.syntax.monad._
+import cats.Monad
+import cats.syntax.all._
 import shipreq.base.util.log.HasLogger
 import shipreq.webapp.server.logic.algebra.Security
 import shipreq.webapp.server.logic.dispatch.Cookie
