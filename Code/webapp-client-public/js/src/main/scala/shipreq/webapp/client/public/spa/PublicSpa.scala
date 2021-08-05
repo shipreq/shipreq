@@ -56,9 +56,9 @@ final class PublicSpa(val initData: PublicSpaEntryPoint.InitData,
     val sspRegister1      = ajax.invoker(PublicSpaProtocols.Register1.ajax).mergeFailure
     val sspRegister2      = ajax.invoker(PublicSpaProtocols.Register2.ajax).mergeFailure
 
-    val awLandingPage = AsyncFeature.Write.D0.init($.zoomStateL(State.landingPage ^|-> LandingPage.State.async))
-    val awLogin       = AsyncFeature.Write.D0.init($.zoomStateL(State.login       ^|-> Login      .State.async))
-    val awRegister1   = AsyncFeature.Write.D0.init($.zoomStateL(State.register1   ^|-> Register1  .State.async))
+    val awLandingPage = AsyncFeature.Write.D0.init($.zoomStateL(State.landingPage andThen LandingPage.State.async))
+    val awLogin       = AsyncFeature.Write.D0.init($.zoomStateL(State.login       andThen Login      .State.async))
+    val awRegister1   = AsyncFeature.Write.D0.init($.zoomStateL(State.register1   andThen Register1  .State.async))
 
     def render(p: Props, s: State): VdomElement = {
       State.recorder.record(s)

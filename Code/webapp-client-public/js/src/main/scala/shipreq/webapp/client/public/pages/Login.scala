@@ -79,18 +79,18 @@ object Login {
     def apply(localStorage: LocalStorage) = {
       var s = this
       for (rm <- localStorage.rememberMe) {
-        s = State.rememberMe.set(rm)(s)
+        s = State.rememberMe.replace(rm)(s)
         if (rm)
-          localStorage.user.foreach(u => s = State.usernameOrEmail.set(u)(s))
+          localStorage.user.foreach(u => s = State.usernameOrEmail.replace(u)(s))
       }
       s
     }
   }
 
   object State {
-    val usernameOrEmail = req ^|-> Request.Untyped.usernameOrEmail
-    val password        = req ^|-> Request.Untyped.password
-    val rememberMeOn    = rememberMe ^<-> On.isoWhen(true).reverse
+    val usernameOrEmail = req andThen Request.Untyped.usernameOrEmail
+    val password        = req andThen Request.Untyped.password
+    val rememberMeOn    = rememberMe andThen On.isoWhen(true).reverse
 
     def empty: State =
       State(Request.Untyped("", ""), true, None, None, None)
@@ -124,7 +124,7 @@ object Login {
     private def focusForm(retries: Int): Callback =
       $.props.flatMap { p =>
         val ref = if (p.state.value.req.usernameOrEmail.isEmpty) refUser else refPassword
-        ref.get.filterNot(_.disabled).asCallback.flatMap {
+        ref.get.asCBO.filterNot(_.disabled).asCallback.flatMap {
           case Some(i) => Callback(i.focus())
           case None    => focusForm(retries - 1).delayMs(20).toCallback.when_(retries > 1)
         }
