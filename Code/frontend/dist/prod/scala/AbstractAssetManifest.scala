@@ -87,16 +87,16 @@ abstract class AbstractAssetManifest[+A] {
     integrity = Some("sha256-Qr3kZtoWj5+ax8ifwd0asqiDHBSyxWOKltSh2AH2XBA="))
 
   final val reactDomJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.13.1/umd/react-dom.production.min.js",
-    integrity = Some("sha256-vFt3l+illeNlwThbDUdoPTqF81M8WNSZZZt3HEjsbSU="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js",
+    integrity = Some("sha256-nbMykgB6tsOFJ7OdVmPpdqMFVk4ZsqWocT6issAPUF0="))
 
   final val reactDomServerJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.13.1/umd/react-dom-server.browser.production.min.js",
-    integrity = Some("sha256-fXCNPwvpS8aREogOH9Bf1ZSE+eV8Kpu3bdwfMam3UHU="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom-server.browser.production.min.js",
+    integrity = Some("sha256-taKBOZXMPIREv1OFgBx+OkhJta3ewZGQjV9BVbg0JjY="))
 
   final val reactJs = CDN(
-    href = "https://cdnjs.cloudflare.com/ajax/libs/react/16.13.1/umd/react.production.min.js",
-    integrity = Some("sha256-yUhvEmYVhZ/GGshIQKArLvySDSh6cdmdcIx0spR3UP4="))
+    href = "https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js",
+    integrity = Some("sha256-Ipu/TQ50iCCVZBUsZyNJfxrDk0E2yhaEIz0vqI+kFG8="))
 
   final val semanticCss = modify("/s/0a68d81662f0ef5dc41e500660834cfd.css")
 
