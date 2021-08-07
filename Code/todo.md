@@ -1,4 +1,5 @@
 ### Problems
+* ReqTable: ctrl-home, top-left input should show purple focus, press space twice, focus appears but is black
 * Use full name in Req Type column - the abbreviation is already in the ID (which is always on the screen)
 * Auto list-item spacing is annoying
 * Fullscreen editor with preview below, zooming in breaks the preview
