@@ -102,7 +102,7 @@ object Dependencies {
   }
 
   object Microlibs {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "3.1")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "3.0.1")
     val adtMacros   = mm("adt-macros")
     val catsExt     = mm("cats-ext") ++ Cats.core
     val compileTime = mm("compile-time")
