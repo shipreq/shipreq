@@ -1,13 +1,5 @@
 # https://hub.docker.com/_/archlinux?tab=tags&page=1&ordering=last_updated
-FROM archlinux:base-20210221.0.15908
-
-# https://serverfault.com/questions/1052963/pacman-doesnt-work-in-docker-image
-# https://github.com/sickcodes/Docker-OSX/pull/150/files
-# TEMP-FIX for pacman issue
-RUN patched_glibc=glibc-linux4-2.33-4-x86_64.pkg.tar.zst && \
-      curl -LO "https://repo.archlinuxcn.org/x86_64/$patched_glibc" && \
-      bsdtar -C / -xvf "$patched_glibc"
-# TEMP-FIX for pacman issue
+FROM archlinux:base-20210926.0.35054
 
 RUN pacman -Syy --noconfirm --needed archlinux-keyring
 
