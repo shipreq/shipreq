@@ -52,7 +52,7 @@ done
 
 cmd=(
   # In project name (-p) dashes and underscores and removed automatically
-  docker-compose
+  docker compose
   -p shipreq$env
 )
 
