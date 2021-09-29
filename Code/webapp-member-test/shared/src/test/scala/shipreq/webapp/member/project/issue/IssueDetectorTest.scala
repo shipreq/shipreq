@@ -11,6 +11,7 @@ import shipreq.webapp.member.project.text.Atom.DisplayReqRef
 import shipreq.webapp.member.project.text.{Text => T}
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project.SampleDerivativeTags4.yDerivativeTags
+import shipreq.webapp.member.test.project.TemplateProjects.{V1 => TP1}
 import shipreq.webapp.member.test.project.UnsafeTypes._
 import shipreq.webapp.member.test.project.{IssueLite, SampleProject3, TestEvent}
 import sourcecode.Line
@@ -557,13 +558,23 @@ object IssueDetectorTest extends TestSuite {
   private object UninhabitableTagFieldTests {
     private implicit val filter = IssueFilter[Issue.UninhabitableTagField]
 
-    def ko() = test(p3)(
-      Event.TagDelete(P3.priTG),
-    )(IssueLite.UninhabitableTagField(P3.priField))
-
-    def deadField() = test(p3)(
+    def deadFieldAndTag() = test(p3)(
       Event.FieldCustomDelete(P3.priField),
       Event.TagDelete(P3.priTG),
+    )()
+
+    def deadTag1() = {
+      val p = applyEventSuccessfully(p3, Event.TagDelete(P3.priTG))
+      val f = p.config.fields.customFields.need(P3.priField)
+      // This was the misunderstanding in the old test ("ko")
+      // A field over a dead tag is implicitly dead too, so no issues should be reported
+      assertEq(f.live(p.config), Dead)
+      test(p)()()
+    }
+
+    // Real bug caught in prod :(
+    def deadTag2() = test(TP1.project)(
+      Event.TagDelete(TP1.priTG),
     )()
   }
 
@@ -729,8 +740,9 @@ object IssueDetectorTest extends TestSuite {
 
     "UninhabitableTagField" - {
       import UninhabitableTagFieldTests._
-      "ko"        - ko()
-      "deadField" - deadField()
+      "deadFieldAndTag" - deadFieldAndTag()
+      "deadTag1"        - deadTag1()
+      "deadTag2"        - deadTag2()
     }
   }
 }

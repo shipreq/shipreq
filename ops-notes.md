@@ -31,6 +31,8 @@ port=$(sudo docker ps | fgrep webapp | sed -e 's/.*:\([0-9][0-9]*\)->8080.*/\1/'
 ### Download a project as json
 
 ShipReq is #3
+CryptoFolio is #12
+Poetry Hub is #13
 
 ```sh
 id=3
@@ -43,7 +45,7 @@ and then locally, with ShipReq local/dev running
 
 ```sh
 id=3
-aws s3 cp s3://shipreq-tmp/project-$id.json .
+aws --profile=shipreq s3 cp s3://shipreq-tmp/project-$id.json .
  auth="-F secret=Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid"
  curl -v http://localhost:8080/ops/project/create -X POST $auth -F events='<'project-$id.json -F user=japgolly
 ```
