@@ -2,6 +2,11 @@
 
 set -euo pipefail
 
+# Attempt to workaround docker bug building dev-build_env
+# https://github.com/docker/buildx/issues/426
+export DOCKER_BUILDKIT=0
+export COMPOSE_DOCKER_CLI_BUILD=0
+
 # Parse args
 pull=yes
 push=yes
