@@ -77,9 +77,10 @@ if [ "$arg1" = shell ]; then
   exec "${sbt[@]}"
 fi
 
-java -version \
-  && echo "Ensuring S3 access..." \
-  && $aws s3 ls s3://shipreq-tmp/ \
-  && run Test/compile \
-  && run test \
-  && run "${docker_args[@]}"
+set -e
+java -version
+echo "Ensuring S3 access..."
+$aws s3 ls s3://shipreq-tmp/
+run Test/compile
+[ -n "${SKIP_TESTS:-}" ] || run test
+run "${docker_args[@]}"

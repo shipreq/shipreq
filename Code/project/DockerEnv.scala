@@ -81,8 +81,8 @@ object DockerEnv {
     def fromDockerCompose(env: String, only: Iterable[String] = Nil): Services = {
       val names = only.mkString(" ")
       new Services(
-        () => s"bin/env $env up -d $names".!!,
-        () => s"bin/env $env stop $names".!!)
+        () => s"bin/env $env up -d $names".!,
+        () => s"bin/env $env stop $names".!)
     }
   }
 

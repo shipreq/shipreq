@@ -139,6 +139,7 @@ RUN pacman -Sy --noconfirm --needed aws-cli
 COPY strip-ansi /bin
 COPY .bashrc /root/.bashrc
 
-RUN chmod -R a=u /root \
- && ln -s /root/.bashrc /.bashrc \
+RUN chmod -R a=u /root || true
+
+RUN ln -s /root/.bashrc /.bashrc \
  && ln -s /root/.npmrc /.npmrc
