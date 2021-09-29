@@ -117,8 +117,9 @@ object Common {
 
   def optimisationScalacFlags = Seq(
     "-opt:l:method",
-    "-opt:l:inline",
-    "-opt-inline-from:**",
+    // Inlining disabled due to https://github.com/scala/bug/issues/11812
+      // "-opt:l:inline",
+      // "-opt-inline-from:**",
     //"-opt-warnings:at-inline-failed",
   )
 
