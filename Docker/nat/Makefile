@@ -76,18 +76,18 @@ version: build
 
 REMOTE_VER = $(shell fgrep ' nat ' ../../Terraform/prod/versions.tf | tail -1 | sed 's/.*"\(.*\)"/\1/')
 remote-version:
-	$$(aws ecr get-login --no-include-email)
+	$$(../aws ecr get-login --no-include-email)
 	docker pull $(ECR)/$(IMAGE):$(REMOTE_VER)
 	docker run $(DOCKER_ARGS) $(ECR)/$(IMAGE):$(REMOTE_VER) /usr/sbin/squid -v
 
 export:
 	-rm -f /tmp/$(EXPORT)
 	tar cvzf /tmp/$(EXPORT) .
-	aws s3 cp /tmp/$(EXPORT) s3://shipreq-tmp/
+	../aws s3 cp /tmp/$(EXPORT) s3://shipreq-tmp/
 
 import:
 	-rm -f /tmp/$(EXPORT)
-	aws s3 cp s3://shipreq-tmp/$(EXPORT) /tmp/
+	../aws s3 cp s3://shipreq-tmp/$(EXPORT) /tmp/
 	@echo
 	@echo "Extract /tmp/$(EXPORT) yourself"
 	@echo

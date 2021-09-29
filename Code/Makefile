@@ -5,6 +5,7 @@ BRANCH   := $(shell git rev-parse --abbrev-ref HEAD)
 CHANGES  := $(shell git status --porcelain)
 PROD_REV := $(shell fgrep shipreq ../Terraform/prod/versions.tf | perl -pe 's/.*git-(.+?)".*/$$1/')
 ECR      := 930801536115.dkr.ecr.ap-southeast-2.amazonaws.com
+AWS      := bin/aws
 
 WATCH_CODEBUILD = watch -n 6 -c aws-codebuild-status -t 'Name:shipreq'
 
@@ -48,7 +49,7 @@ info:
 	@echo
 
 build_env:
-	$$(aws ecr get-login --no-include-email)
+	$$($(AWS) ecr get-login --no-include-email)
 	docker pull $(ECR)/shipreq/dev/build_env
 	make -f ../Docker/dev-build_env/Makefile exec2
 
@@ -58,7 +59,7 @@ ifneq ($(BRANCH),master)
 else ifneq ($(CHANGES),)
 	$(error You have unsaved changes)
 else
-	$$(aws ecr get-login --no-include-email)
+	$$($(AWS) ecr get-login --no-include-email)
 	docker pull $(ECR)/shipreq/dev/build_env
 	docker pull $(ECR)/shipreq/base
 	docker pull $(ECR)/shipreq/taskman
@@ -71,7 +72,7 @@ else
 endif
 
 ci-shell:
-	$$(aws ecr get-login --no-include-email)
+	$$($(AWS) ecr get-login --no-include-email)
 	docker pull $(ECR)/shipreq/dev/build_env
 	docker pull $(ECR)/shipreq/base
 	docker pull $(ECR)/shipreq/taskman
@@ -93,7 +94,7 @@ diff_prod:
 	git diff -w $(PROD_REV)... -- '*.scala' '*.sbt' frontend/{package.json,src,w*}
 
 docker-push-dev:
-	$$(aws ecr get-login --no-include-email)
+	$$($(AWS) ecr get-login --no-include-email)
 	docker tag shipreq/webapp:latest $(ECR)/shipreq/webapp:dev
 	docker tag shipreq/taskman:latest $(ECR)/shipreq/taskman:dev
 	docker push $(ECR)/shipreq/webapp:dev
@@ -113,7 +114,7 @@ else
 endif
 
 pull_images:
-	$$(aws ecr get-login --no-include-email)
+	$$($(AWS) ecr get-login --no-include-email)
 	docker pull $(ECR)/shipreq/taskman
 	docker pull $(ECR)/shipreq/webapp
 	docker tag $(ECR)/shipreq/taskman shipreq/taskman

@@ -1,6 +1,10 @@
 #!/bin/bash
 
-$(aws ecr get-login --no-include-email) || exit 1
+set -euo pipefail
+
+cd "$(dirname "$0")"
+
+$(./aws ecr get-login --profile=shipreq --region=ap-southeast-2 --no-include-email) || exit 1
 
 for app in webapp taskman; do
   echo

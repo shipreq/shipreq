@@ -13,5 +13,5 @@ if [ -z "$IMPORT_S3" ]; then
   echo "IMPORT_S3 not set - nothing to import"
 else
   echo "Importing from S3: $IMPORT_S3"
-  aws s3 sync "$IMPORT_S3" .
+  ../aws s3 sync "$IMPORT_S3" .
 fi
