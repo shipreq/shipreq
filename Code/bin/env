@@ -50,9 +50,11 @@ done
   && echo "2..." && sleep 1 \
   && echo "1..." && sleep 1
 
-cmd=(
+cmd=(docker-compose)
+which docker-compose 2>/dev/null || cmd=(docker compose)
+
+cmd+=(
   # In project name (-p) dashes and underscores and removed automatically
-  docker compose
   -p shipreq$env
 )
 
