@@ -23,6 +23,7 @@
 Backlog (maybe-probably soon)
 ========================================================================================================================
 
+* Need a way to import/export project config
 * Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
 * Bulk tag add/remove
 * Advanced colour picker doesn't work
