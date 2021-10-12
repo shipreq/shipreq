@@ -171,7 +171,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
           <.th(
             *.selectionColumnHeader,
             tableNavigationFeature.onKeyDown,
-            p.selection.total.checkboxAndOnClick) // TODO *.selectionCheckbox
+            p.selection.total.checkboxAndOnClick(Reusable.always(*.selectionCheckbox)))
 
         val cols =
           items.toVdomArray { i =>
