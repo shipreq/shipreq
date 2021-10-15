@@ -1,7 +1,7 @@
 package shipreq.webapp.member.project.storage
 
+import cats.Eq
 import japgolly.scalajs.react.AsyncCallback
-import scalaz.Equal
 import shipreq.base.test.Node.asyncTest
 import shipreq.webapp.member.project.data.ClientSideProjectEncryptionKey
 import shipreq.webapp.member.project.event.EventOrd
@@ -14,8 +14,8 @@ import utest._
 
 abstract class ClientSideStorageLaws extends TestSuite {
 
-  protected final implicit val equalProjectLibrary: Equal[ProjectLibrary] =
-    Equal.equalBy(l => (l.latest, l.futureEvents))
+  protected final implicit val equalProjectLibrary: Eq[ProjectLibrary] =
+    Eq.by(l => (l.latest, l.futureEvents))
 
   protected def createInstance: (ClientSideStorage.Context, ClientSideProjectEncryptionKey) => AsyncCallback[ClientSideStorage.ReadWrite]
 

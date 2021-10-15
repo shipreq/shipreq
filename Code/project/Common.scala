@@ -316,7 +316,7 @@ object Common {
         )
       case UseNodeAdvanced =>
         _.settings(
-          jsEnv in Test := new AdvancedNodeJSEnv(
+          Test / jsEnv := new AdvancedNodeJSEnv(
             AdvancedNodeJSEnv.Config().withEnv(Map(
               "SBT_ROOT" -> (ThisBuild / baseDirectory).value.getAbsolutePath,
               "CI"       -> (if (inCI) "1" else "0"),

@@ -157,7 +157,7 @@ object IndexedDb {
 
           (awaitTxnCompletion, complete) <- AsyncCallback.promise[Unit].asAsyncCallback
 
-          result <- AsyncCallback.byName {
+          result <- AsyncCallback.suspend {
             val txn = raw.transaction(stores, mode)
 
             txn.onerror = event => {
@@ -328,7 +328,7 @@ object IndexedDb {
     final case class StoreDelete    [K, V](store: ObjectStore[K, V], key: IndexedDbKey)                extends Txn[Unit]
 
     def interpret[A](txn: IDBTransaction, dsl: Txn[A]): AsyncCallback[A] =
-      AsyncCallback.byName {
+      AsyncCallback.suspend {
         val stores = js.Dynamic.literal().asInstanceOf[js.Dictionary[IDBObjectStore]]
 
         def getStore(s: ObjectStore[_, _]) =

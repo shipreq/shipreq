@@ -71,7 +71,7 @@ object ApplyEventAlgebra extends StrictLogging {
         (res, dur) <- svr.measureDuration(underlying.appendFn(pid, p1, events))
         eventCount = res match {
                        case \/-(p2) => p2.ordAsInt - p1.ordAsInt
-                       case -\/(_)    => events.size
+                       case -\/(_)  => events.size
                      }
         _          <- metrics.appliedEvents(eventCount, dur, trust = trust)
       } yield {

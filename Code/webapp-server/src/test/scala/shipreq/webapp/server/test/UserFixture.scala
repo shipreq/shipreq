@@ -5,7 +5,6 @@ import doobie.implicits._
 import java.time.Instant
 import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
-import shipreq.base.db.scalazDoobieConnectionIO
 import shipreq.base.test.db.{ImperativeXA, TestDb}
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data._

@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic.algebra
 
+import cats.Applicative
 import java.security._
-import scalaz.Applicative
 import shipreq.base.util.BinaryData
 import shipreq.webapp.member.project.data.ClientSideProjectEncryptionKey
 import shipreq.webapp.server.logic.data.{ProjectEncryptionKey, UserEncryptionKey}

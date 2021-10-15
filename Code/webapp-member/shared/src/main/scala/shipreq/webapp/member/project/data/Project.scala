@@ -74,9 +74,9 @@ object Project {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  final class Equality(implicit val equalProjectEvents: Equal[ProjectEvents]) {
-    implicit val equalProject: Equal[Project] =
-      ScalazMacros.deriveEqual
+  final class Equality(implicit val equalProjectEvents: Eq[ProjectEvents]) {
+    implicit val equalProject: Eq[Project] =
+      CatsMacros.deriveEq
   }
 
   object Equality {
@@ -86,7 +86,7 @@ object Project {
     }
 
     lazy val IgnoringHistory: Equality = {
-      implicit val equalProjectEvents: Equal[ProjectEvents] =
+      implicit val equalProjectEvents: Eq[ProjectEvents] =
         (_, _) => true
       new Equality
     }

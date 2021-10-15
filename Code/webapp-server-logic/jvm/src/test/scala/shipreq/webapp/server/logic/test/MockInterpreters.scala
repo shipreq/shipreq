@@ -23,8 +23,6 @@ import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.{ScalaJsManifest, ServerLogicConfig}
 import shipreq.webapp.server.logic.data._
-import shipreq.webapp.server.logic.config.{ProjectAccessHacks, ScalaJsManifest, ServerLogicConfig}
-import shipreq.webapp.server.logic.data.{PasswordAndSalt, PasswordHash, Salt}
 import shipreq.webapp.server.logic.dispatch.Cookie
 import shipreq.webapp.server.logic.event.ApplyEventAlgebra
 import shipreq.webapp.server.logic.impl._
@@ -78,9 +76,6 @@ object MockDb {
     def projectLoad: VerifiedEvent.Seq =
       events
   }
-
-  val nameUnit: Name[Unit] =
-    scalaz.Value(())
 }
 
 final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecurity[Eval] with DB.ForOps[Eval] {
@@ -251,11 +246,9 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     pid
   }
 
-  override def getAllProjectMetaDataForUser(id: UserId, hacks: ProjectAccessHacks) = Eval.always[List[ProjectMetaData]] {
-    val extraProjectIds = hacks.additionalAccess(id)
-
+  override def getAllProjectMetaDataForUser(id: UserId) = Eval.always[List[ProjectMetaData]] {
     projects.valuesIterator
-      .filter(p => (p.userId ==* id) || extraProjectIds.contains(p.projectId))
+      .filter(_.userId ==* id)
       .map(_.projectMetaData)
       .toList
   }
@@ -320,7 +313,7 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     runDB(f)
 
   var globalEvents = Vector.empty[GlobalEvent]
-  override def logGlobalEvent(e: GlobalEvent) = Name[Unit] {
+  override def logGlobalEvent(e: GlobalEvent) = Eval.always[Unit] {
     globalEvents :+= e
   }
 
@@ -532,16 +525,16 @@ final class MockSecurity(override val db: MockDb, now: Eval[Instant], cfg: Serve
   }
 
   override def allowProjectAccess(requester: User, projectId: ProjectId, projectOwner: UserId): Permission =
-    Allow.when(requester.id ==* projectOwner) | cfg.projectAccessHacks(requester, projectId)
+    Allow.when(requester.id ==* projectOwner)
 }
 
-final class MockCrypto extends Crypto[Name] {
+final class MockCrypto extends Crypto[Eval] {
 
-  private val default = Crypto.default[Name]
+  private val default = Crypto.default[Eval]
 
   private var nextKey = 0
 
-  override def generateKey256 = Name[BinaryData] {
+  override def generateKey256 = Eval.always[BinaryData] {
     val i = nextKey
     nextKey += 1
     MockCrypto.generateKey256(i)
@@ -591,7 +584,6 @@ object MockInterpreters {
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
-      projectAccessHacks         = ProjectAccessHacks.empty,
       verificationTokenLength    = 8,
       registrationTokenLifespan  = 7 days,
       passwordResetTokenLifespan = 4 days))
@@ -662,7 +654,6 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
   implicit val assetManifest  = config.assetManifest
   implicit val sjsManifest    = config.scalaJsManifest
   implicit val crypto         = new MockCrypto
-  implicit val accessHacks    = config.security.projectAccessHacks
   implicit val svr            = new MockServer[Eval]
   implicit val db             = specificMockDb.getOrElse(new MockDb(svr.now))
   implicit val security       = new MockSecurity(db, svr.now, config.security)

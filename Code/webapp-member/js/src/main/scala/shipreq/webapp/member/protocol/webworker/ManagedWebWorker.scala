@@ -176,7 +176,7 @@ object ManagedWebWorker {
 
         val server: Server[C, Push] = new Server[C, Push] {
           override def broadcast(push: Push, exclude: Option[C]): Callback =
-            Callback.byName {
+            Callback.suspend {
               var cs = clients.iterator
               for (c <- exclude) {
                 cs = cs.filter(_ != c)
@@ -209,7 +209,7 @@ object ManagedWebWorker {
             (data: Any) match {
               case ClientClosing => deregisterClient(client)
               case _ =>
-                Callback.byName {
+                Callback.suspend {
                   val msg = data.asInstanceOf[MessageWithId[protocol.Encoded]]
                   val req = protocol.decode[Req[_]](msg.body)
                   respond(client, msg.id, req).toCallback

@@ -2,7 +2,6 @@ package shipreq.webapp.member.protocol.entrypoint
 
 import cats.Eq
 import japgolly.microlibs.cats_ext.CatsMacros
-import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.member.test.project.RandomData

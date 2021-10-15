@@ -45,10 +45,10 @@ import teststate.run.Report.AssertionSettings
 //   implicit def catsNatTransToTestState[F[_], G[_]](implicit t: T.~~>[F, G]): F ~> G =
 //     new (F ~> G) { def apply[A](fa: F[A]) = t(fa) }
 
-//   implicit def catsEqualFromTestState[A](implicit e: Equal[A]): Eq[A] =
+//   implicit def catsEqualFromTestState[A](implicit e: Eq[A]): Eq[A] =
 //     Eq.instance(e.equal)
 
-//   implicit def catsEqualToTestState[A](implicit e: Eq[A]): Equal[A] =
+//   implicit def catsEqualToTestState[A](implicit e: Eq[A]): Eq[A] =
 //     Equal(e.eqv)
 // }
 

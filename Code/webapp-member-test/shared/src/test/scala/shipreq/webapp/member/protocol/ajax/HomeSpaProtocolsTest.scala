@@ -2,7 +2,6 @@ package shipreq.webapp.member.protocol.ajax
 
 import java.time.Instant
 import nyaya.gen.Gen
-import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.util.Obfuscated

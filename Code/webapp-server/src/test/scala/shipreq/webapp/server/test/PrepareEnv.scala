@@ -2,7 +2,7 @@ package shipreq.webapp.server.test
 
 import java.time.Duration
 import org.redisson.Redisson
-import shipreq.base.db.{DbAccessor, XA, scalazDoobieConnectionIO}
+import shipreq.base.db.{DbAccessor, XA}
 import shipreq.base.test.BaseTestUtil.onceUnit
 import shipreq.base.test.db.{ImperativeXA, TestDb}
 import shipreq.base.util.FxModule._

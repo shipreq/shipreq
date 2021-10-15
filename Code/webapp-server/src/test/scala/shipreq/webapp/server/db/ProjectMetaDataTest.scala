@@ -4,7 +4,6 @@ import shipreq.base.test.db.TestDb
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.member.test.project.RandomEventStream
-import shipreq.webapp.server.logic.config.ProjectAccessHacks
 import shipreq.webapp.server.logic.util.Obfuscators
 import shipreq.webapp.server.test.DbUtil
 import shipreq.webapp.server.test.WebappServerTestUtil._
@@ -19,7 +18,6 @@ object ProjectMetaDataTest extends TestSuite {
     "test" - TestDb.withImperativeXA { xa =>
       val dbu = DbUtil(xa)
       import dbu.dbAlgebra
-      val hacks = ProjectAccessHacks.empty
 
       val uid = dbu.newUserId()
 
@@ -50,7 +48,7 @@ object ProjectMetaDataTest extends TestSuite {
           p = applyEventSuccessfully(p, ve.event)
           writeEvent(ve, idx2, p)
 
-          val md = (xa ! dbAlgebra.getAllProjectMetaDataForUser(uid, hacks)).find(_.id == pidPub).getOrElse(
+          val md = (xa ! dbAlgebra.getAllProjectMetaDataForUser(uid)).find(_.id == pidPub).getOrElse(
             fail(s"ProjectMetaData not found for $pid."))
 
           val expectTotal = idx2 + 1

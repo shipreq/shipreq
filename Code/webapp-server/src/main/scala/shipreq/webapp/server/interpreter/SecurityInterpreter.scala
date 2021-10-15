@@ -182,5 +182,5 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
     }
 
   override def allowProjectAccess(requester: User, projectId: ProjectId, projectOwner: UserId): Permission =
-    Allow.when(requester.id ==* projectOwner) | config.projectAccessHacks(requester, projectId)
+    Allow.when(requester.id ==* projectOwner)
 }

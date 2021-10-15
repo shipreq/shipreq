@@ -3,7 +3,6 @@ package shipreq.webapp.member.project.protocol.websocket
 import cats.Eq
 import japgolly.microlibs.cats_ext.CatsMacros
 import java.time.Instant
-import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.protocol.websocket.WebSocketShared
 import shipreq.webapp.base.test.BinaryTestUtil._

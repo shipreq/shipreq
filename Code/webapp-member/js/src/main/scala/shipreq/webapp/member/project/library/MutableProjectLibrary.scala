@@ -86,7 +86,7 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL,
     }
 
   def projectAt(ord: EventOrd): AsyncCallback[Project] =
-    AsyncCallback.byName {
+    AsyncCallback.suspend {
       if (ord <= _state.ord)
         AsyncCallback.delay(_state.projectAt(ord).get)
       else
@@ -105,7 +105,7 @@ final class MutableProjectLibrary[PL <: ProjectLibrary](initialState: PL,
       for {
         pl      <- get.toCBO
         now     <- clock.toCBO
-        missing <- CallbackOption.liftOption(pl.missingEventsIfStale(now, tolerance))
+        missing <- CallbackOption.option(pl.missingEventsIfStale(now, tolerance))
         _       <- handle(missing).toCBO
        } yield ()
 

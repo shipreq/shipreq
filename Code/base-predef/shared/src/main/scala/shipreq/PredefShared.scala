@@ -18,33 +18,15 @@ object \/ {
 }
 
 final class EitherOps[E, A](private val e: Either[E, A]) extends AnyVal {
-
-  def leftMap[B](f: E => B): Either[B, A] =
-    e match {
-      case r: Right[E, A] => r.asInstanceOf[Right[B, A]]
-      case Left(e)        => Left(f(e))
-    }
-
-  def toList: List[A] =
-    e match {
-      case Right(a) => a :: Nil
-      case Left(_)  => Nil
-    }
-
   @inline def castLeft() = e.asInstanceOf[Left[E, Nothing]]
   @inline def castRight() = e.asInstanceOf[Right[Nothing, A]]
-
-  def bimap[F, B](f: E => F, g: A => B): Either[F, B] =
-    if (e.isRight)
-      Right(g(castRight().value))
-    else
-      Left(f(castLeft().value))
 }
 // ===================================================================================================================
 
 
 abstract class PredefShared
   extends PredefScala
+     with cats.syntax.EitherSyntax
     //  with japgolly.microlibs.disjunction.Exports
      with japgolly.univeq.UnivEqCats
      with japgolly.univeq.UnivEqExports {

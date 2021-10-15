@@ -1,15 +1,13 @@
 package shipreq.webapp.server.logic.algebra
 
-import java.sql.Connection
 import cats.~>
+import java.sql.Connection
 import java.time.Instant
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.server.logic.data._
-import shipreq.webapp.server.logic.config.ProjectAccessHacks
-import shipreq.webapp.server.logic.data.PasswordAndSalt
 
 /**
   * Naming conventions:

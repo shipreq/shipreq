@@ -1,7 +1,6 @@
 package shipreq.webapp.base.protocol.ajax
 
 import nyaya.gen.Gen
-import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data.{PlainTextPassword, Username}
 import shipreq.webapp.base.test.BinaryTestUtil._

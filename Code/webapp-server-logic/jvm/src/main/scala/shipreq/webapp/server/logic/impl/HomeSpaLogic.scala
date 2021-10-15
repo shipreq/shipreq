@@ -10,8 +10,6 @@ import shipreq.webapp.member.protocol.ajax.HomeSpaProtocols
 import shipreq.webapp.member.protocol.entrypoint.HomeSpaEntryPoint
 import shipreq.webapp.server.logic.algebra.{Crypto, DB}
 import shipreq.webapp.server.logic.data.ProjectEncryptionKey
-import shipreq.webapp.server.logic.algebra.DB
-import shipreq.webapp.server.logic.config.ProjectAccessHacks
 import shipreq.webapp.server.logic.event.ApplyNewEvent
 
 trait HomeSpaLogic[F[_]] extends HomeSpaLogic.Ajax[F] {
@@ -55,7 +53,6 @@ object HomeSpaLogic {
   def apply[D[_], F[_]](implicit db: DB.ForHomeSpa[D],
                         am: AssetManifest,
                         crypto: Crypto[D],
-                        hacks: ProjectAccessHacks,
                         runDB: D ~> F,
                         D: Monad[D],
                         F: Monad[F]): HomeSpaLogic[F] =
@@ -63,7 +60,7 @@ object HomeSpaLogic {
 
       override def initData(user: User): F[HomeSpaEntryPoint.InitData] =
         for {
-          p <- runDB(db.getAllProjectMetaDataForUser(user.id, hacks))
+          p <- runDB(db.getAllProjectMetaDataForUser(user.id))
         } yield HomeSpaEntryPoint.InitData(user.username, p, am)
 
       override val ajaxCreateProject =

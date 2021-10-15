@@ -27,16 +27,16 @@ trait WebappTestEquality
 object WebappTestUtil extends WebappTestEquality with WebappTestUtil {
 
   @nowarn("cat=unused")
-  def projectEqualityWithHistoryTimestampEquality(implicit equalInstant: Equal[Instant]): Project.Equality = {
+  def projectEqualityWithHistoryTimestampEquality(implicit equalInstant: Eq[Instant]): Project.Equality = {
 
-    implicit val equalVerifiedEvent: Equal[VerifiedEvent] =
-      ScalazMacros.deriveEqual
+    implicit val equalVerifiedEvent: Eq[VerifiedEvent] =
+      CatsMacros.deriveEq
 
-    implicit val equalVerifiedEventSeq: Equal[VerifiedEvent.Seq] =
-      Equal.equalBy(_.toList)
+    implicit val equalVerifiedEventSeq: Eq[VerifiedEvent.Seq] =
+      Eq.by(_.toList)
 
-    implicit val equalProjectEvents: Equal[ProjectEvents] =
-      ScalazMacros.deriveEqual
+    implicit val equalProjectEvents: Eq[ProjectEvents] =
+      CatsMacros.deriveEq
 
     new Project.Equality
   }

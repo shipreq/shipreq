@@ -71,7 +71,7 @@ object BinaryFormat {
       encoder.encode(a).map(latestVerHeader ++ _)
 
     def decode(bin: BinaryData): AsyncCallback[A] =
-      AsyncCallback.byName {
+      AsyncCallback.suspend {
 
         if (bin.isEmpty)
           throw js.JavaScriptException("No data")

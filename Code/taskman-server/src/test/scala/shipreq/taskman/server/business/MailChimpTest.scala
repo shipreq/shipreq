@@ -1,6 +1,5 @@
 package shipreq.taskman.server.business
 
-import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.JsonTestUtil._
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.EmailAddr

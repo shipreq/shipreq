@@ -98,7 +98,7 @@ object PartialOrder {
       @inline def >(rhs: A)(implicit po: PartialOrder[A]): Boolean =
         po(lhs, rhs) == Greater
 
-      @inline def ===(rhs: A)(implicit po: PartialOrder[A]): Boolean =
+      @inline def ====(rhs: A)(implicit po: PartialOrder[A]): Boolean =
         po(lhs, rhs) == Equal
 
       @inline def isComparableTo(rhs: A)(implicit po: PartialOrder[A]): Boolean =
@@ -130,7 +130,7 @@ object PartialOrder {
       Eval.test("reflexivity", a, a <= a)
 
     private def antisymmetry(a: A, b: A): EvalL =
-      Eval.atom("antisymmetry", (a, b), imply(a <= b && b <= a)(a === b, s"$a cmp $b = ${p(a, b)}"))
+      Eval.atom("antisymmetry", (a, b), imply(a <= b && b <= a)(a ==== b, s"$a cmp $b = ${p(a, b)}"))
 
     private def transitivity(a: A, b: A, c: A): EvalL =
       Eval.atom("transitivity", (a, b, c), imply(a <= b && b <= c)(a <= c, s"$a ≤ $b ≤ $c but ($a cmp $c) = ${p(a, c)}"))

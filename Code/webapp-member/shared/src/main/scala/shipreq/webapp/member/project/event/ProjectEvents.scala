@@ -1,6 +1,6 @@
 package shipreq.webapp.member.project.event
 
-import scalaz.Equal
+import cats.Eq
 
 final case class ProjectEvents(events: VerifiedEvent.Seq) extends AnyVal with EventOrd.CmpOps {
 
@@ -42,7 +42,7 @@ object ProjectEvents {
 
   // Not universally safe/desirable so opt-in only
   object ImplicitEqualityByOrd {
-    implicit val equalProjectEvents: Equal[ProjectEvents] =
+    implicit val equalProjectEvents: Eq[ProjectEvents] =
       (x, y) => x.ordAsInt == y.ordAsInt
   }
 }

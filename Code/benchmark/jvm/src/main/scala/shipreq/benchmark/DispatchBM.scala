@@ -158,7 +158,6 @@ object DispatchBM {
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
-      projectAccessHacks         = ProjectAccessHacks.empty,
       verificationTokenLength    = 8,
       registrationTokenLifespan  = 7 days,
       passwordResetTokenLifespan = 4 days))
