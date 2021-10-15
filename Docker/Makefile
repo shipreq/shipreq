@@ -12,7 +12,7 @@ info:
 	@echo
 
 build-local:
-	$$(aws ecr get-login --no-include-email)
+	$$(aws ecr get-login --profile=shipreq --region=ap-southeast-2 --no-include-email)
 	PULL_REPO=930801536115.dkr.ecr.ap-southeast-2.amazonaws.com \
 	ANALYTICS_PROXY_URL="shipreq/analytics_proxy" \
 	DEV_BUILD_ENV_URL="shipreq/dev/build_env" \
@@ -38,5 +38,5 @@ ifneq ($(BRANCH),master)
 	$(error You need to be on the master branch, not $(BRANCH))
 else
 	git push aws master
-	aws codebuild start-build --project-name images
+	./aws codebuild start-build --project-name images
 endif

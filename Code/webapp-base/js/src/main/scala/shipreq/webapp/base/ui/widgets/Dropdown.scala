@@ -114,7 +114,7 @@ object Dropdown {
             item(
               ^.key := i.key,
               semantic.Dropdown.itemValue := i.key,
-              ^.onClick --> Callback.byName(onChange(i)),
+              ^.onClick --> Callback.suspend(onChange(i)),
               i.label))
 
         p match {

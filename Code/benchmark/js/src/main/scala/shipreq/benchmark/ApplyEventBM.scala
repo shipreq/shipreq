@@ -28,7 +28,7 @@ object ApplyEventBM {
     // case object Untrusted extends Method(ApplyEvent.untrusted)
 
     lazy val all      = AdtMacros.adtValues[Method]
-    lazy val guiParam = GuiParam.`enum`("Method", all.whole.sortBy(_.name): _*)(_.name)
+    lazy val guiParam = GuiParam.enumOf("Method", all.whole.sortBy(_.name): _*)(_.name)
   }
 }
 

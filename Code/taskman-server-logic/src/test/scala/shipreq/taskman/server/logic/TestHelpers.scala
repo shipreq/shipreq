@@ -1,11 +1,11 @@
 package shipreq.taskman.server.logic
 
 import java.time.{Duration, Instant}
-import org.scalacheck.Arbitrary._
+import monocle.Lens
+import org.scalacheck.Arbitrary.{arbInstant => _, _}
 import org.scalacheck.{Arbitrary, Gen}
 import scala.reflect.ClassTag
-import scalaz.Lens.lensg
-import scalaz.{Endo, Heap}
+import scalaz.Heap
 import shipreq.base.test.{MockOpTransformer, MockOpTransformerA, OpTypeProvider}
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
@@ -24,14 +24,15 @@ import shipreq.taskman.server.logic.business._
 
 object TestHelpers {
 
-  implicit class JobQueueExt(val j: JobQueue) {
+  implicit class JobQueueExt(private val j: JobQueue) extends AnyVal {
     def mod(f: Heap[TaskHeader] => Heap[TaskHeader]) = JobQueue(f(j.q))
     def -(a: TaskHeader) = j.mod(_.filter(_ != a))
     def +(a: TaskHeader) = j.mod(_ insert a)
     def ++(as: Seq[TaskHeader]) = j.mod(i => as.foldLeft(i)(_ + _))
   }
 
-  final def endoMod[A](f: A => Unit) = Endo[A](a => {f(a); a})
+  final def endoMod[A](f: A => Unit): A => A =
+    a => {f(a); a}
 
   val timeNow = Instant.now()
   val timePast = timeNow minusSeconds 600
@@ -54,20 +55,20 @@ object TestHelpers {
 
   object lenses {
     object taskDetail {
-      val failureCountL = lensg[TaskDetail, Int](m => f => m.copy(failureCount = f.toShort), _.failureCount)
-      val headerL       = lensg[TaskDetail, TaskHeader](m => h => m.copy(hdr = h), _.hdr)
-      val priorityL     = headerL >=> taskHeader.priorityL
-      val createdL      = headerL >=> taskHeader.createdL
+      val failureCountL = Lens[TaskDetail, Int](_.failureCount)(f => _.copy(failureCount = f.toShort))
+      val headerL       = Lens[TaskDetail, TaskHeader](_.hdr)(h => _.copy(hdr = h))
+      val priorityL     = headerL andThen taskHeader.priorityL
+      val createdL      = headerL andThen taskHeader.createdL
     }
     object taskHeader {
-      val priorityL = lensg[TaskHeader, Priority](m => p => m.copy(priority = p), _.priority)
-      val createdL  = lensg[TaskHeader, Instant](m => c => m.copy(created = c), _.created)
+      val priorityL = Lens[TaskHeader, Priority](_.priority)(p => _.copy(priority = p))
+      val createdL  = Lens[TaskHeader, Instant](_.created)(c => _.copy(created = c))
     }
     object failureCtx {
-      val taskDetailL   = lensg[FailureCtx, TaskDetail](c => md => c.copy(taskDetail = md), _.taskDetail)
-      val failureCountL = taskDetailL >=> taskDetail.failureCountL
-      val priorityL     = taskDetailL >=> taskDetail.priorityL
-      val createdL      = taskDetailL >=> taskDetail.createdL
+      val taskDetailL   = Lens[FailureCtx, TaskDetail](_.taskDetail)(md => _.copy(taskDetail = md))
+      val failureCountL = taskDetailL andThen taskDetail.failureCountL
+      val priorityL     = taskDetailL andThen taskDetail.priorityL
+      val createdL      = taskDetailL andThen taskDetail.createdL
     }
   }
 

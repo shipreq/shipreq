@@ -1,11 +1,11 @@
 package shipreq.webapp.member.project.filter
 
+import cats.syntax.nonEmptyTraverse._
+import cats.{Functor, Traverse}
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat
 import java.util.regex.Pattern
-import scalaz.syntax.traverse1._
-import scalaz.{Functor, Traverse}
 import shipreq.base.util.{Applicable, ErrorMsg, OptionalBoolFn, TransitiveClosure}
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data
@@ -177,7 +177,7 @@ object FilterAlgebra {
       Traverse[IntensionalReqSet].traverse(_)(lookupReqType(_).map(_.reqTypeId))
 
     def byReqSet(reqs: Potential.ReqSet, f: Valid.ReqSet => ValidF[Valid]): R =
-      reqs.traverse1(lookupReqSubset).map(nev => Valid(f(nev)))
+      reqs.nonEmptyTraverse(lookupReqSubset).map(nev => Valid(f(nev)))
 
     def byRegex(regex: String): R =
       try {
@@ -276,7 +276,7 @@ object FilterAlgebra {
 
     def scoped(main: Boolean, scope: Potential.Scope, clause: Valid, mainClause: Option[Valid]): R = {
       val scopeResult: ErrorMsg \/ NonEmptyVector[Scope[data.CustomField.Tag.Id]] =
-        scope.traverse1 {
+        scope.nonEmptyTraverse {
           case Scope.Derivation(None) =>
             \/-(Scope.Derivation(None))
 
@@ -317,7 +317,7 @@ object FilterAlgebra {
       case ImpliedByAnyOf(criteria)        => impCriteria(criteria, ImpliedByAnyOf.apply)
       case Reqs          (reqs)            => byReqSet(reqs, Reqs.apply)
       case Presence      (attr)            => byAttr(attr, Presence.apply)
-      case HasIssue      (on, c)           => c.traverse1(FilterAst.issueCategoryFromStr).bimap(ErrorMsg.apply, Valid.hasIssue(on, _))
+      case HasIssue      (on, c)           => c.nonEmptyTraverse(FilterAst.issueCategoryFromStr).bimap(ErrorMsg.apply, Valid.hasIssue(on, _))
       case Regex         (regex)           => byRegex(regex)
       case ReqType       (mn)              => lookupReqType(mn).map(rt => Valid(ReqType(rt.reqTypeId)))
       case FieldProp     (field, criteria) => byField(field, criteria)

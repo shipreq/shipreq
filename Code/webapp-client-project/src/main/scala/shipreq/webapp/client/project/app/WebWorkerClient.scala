@@ -64,8 +64,8 @@ object WebWorkerClient {
       override def encode(cmd: WebWorkerCmd[_]): ArrayBuffer =
         instance.encode(cmd)
 
-      override def sendEncoded[A](req: WebWorkerCmd[A], enc: ArrayBuffer)(implicit p: Pickler[A]): AsyncCallback[A] = {
-        @inline def real = instance.sendEncoded(req, enc)
+      override def postEnc[A](req: WebWorkerCmd[A], enc: ArrayBuffer)(implicit p: Pickler[A]): AsyncCallback[A] = {
+        @inline def real = instance.postEnc(req, enc)
 
         @inline def useCache(c: Cache) = {
           val bin = BinaryData.unsafeFromArrayBuffer(enc)

@@ -4,9 +4,9 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import scalaz.~~>
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
+import shipreq.base.util.fp.~~>
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.feature.clipboard.ClipboardData
 import shipreq.webapp.base.lib.ConfirmJs
@@ -44,11 +44,11 @@ object NewEditor {
   }
 
   object CreationArgs {
-    val onClose = hooks ^|-> Hooks.onClose
-    val onStart = hooks ^|-> Hooks.onStart
+    val onClose = hooks andThen Hooks.onClose
+    val onStart = hooks andThen Hooks.onStart
 
     implicit val reusability: Reusability[CreationArgs] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
   }
 
   @Lenses
@@ -61,7 +61,7 @@ object NewEditor {
     implicit val reusability: Reusability[Hooks] = {
       @nowarn("cat=unused")
       implicit val x: Reusability[Callback] = Reusability.callbackByRef
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
     }
   }
 
@@ -141,7 +141,7 @@ object NewEditor {
         case Some(pv) =>
           for {
             pva <- pvaCB.toCBO
-            a   <- CallbackOption.liftOption(pva.accept(pv)) // halt here if PotentialValueAcceptor rejects value
+            a   <- CallbackOption.option(pva.accept(pv)) // halt here if PotentialValueAcceptor rejects value
             e   <- userInit(Some(a))(args)
           } yield e
       }
@@ -244,7 +244,7 @@ object NewEditor {
           def newEditor: B => Some[E] =
             b => Some(editorCtor(StateSnapshot.withReuse(b)(update)))
 
-          CallbackOption.liftOption(newEditor(initialValue(s)))
+          CallbackOption.option(newEditor(initialValue(s)))
         }
 
       def startWithStateSnapshot[S, B: Reusability, E <: Editor[A, C]](initialData      : CallbackOption[S],
@@ -282,7 +282,7 @@ object NewEditor {
       final type EditorImpl = Internal.EditorImpl[Args, Change]
       final type Init       = Internal.Init[Args, Change]
       final type InitFn     = InternalCtx[Args, Change] => Init
-      final type SetStateFn = japgolly.scalajs.react.SetStateFn[CallbackTo, State.ForEditor[Args, Change]]
+      final type SetStateFn = SetStateFnPure[State.ForEditor[Args, Change]]
     }
 
     def newPropsMemo[I, P](f: I => P)(implicit r: Reusability[I]): I => P =
@@ -293,7 +293,7 @@ object NewEditor {
                                 ss: StateSnapshot[A]): CallbackOption[Unit] =
       for {
         pva <- pvaCBO
-        v   <- CallbackOption.liftOption(pva.accept(p))
+        v   <- CallbackOption.option(pva.accept(p))
         _   <- ss.setState(v).toCBO
       } yield ()
 
@@ -324,7 +324,7 @@ object NewEditor {
                 p      <- pxProject.toCallback.toCBO
                 choices = ReqTypeSelector.choices(current, p.config.reqTypes)
                 pva     = ReqTypeSelector.potentialValueAcceptor(choices.whole)
-                i      <- CallbackOption.liftOption(pva.accept(pv))
+                i      <- CallbackOption.option(pva.accept(pv))
               } yield i
           }
 
@@ -851,7 +851,7 @@ object NewEditor {
       object CodeGroupTitle extends Base(RichTextEditor.CodeGroupTitle) {
         def apply(id: ReqCodeGroupId, pid: PreviewId): InitFn = start(
           cmd            = UpdateContentCmd.SetCodeGroupTitle(id, _),
-          initialValueCB = getCodeGroup(id).map(_.title).widen,
+          initialValueCB = getCodeGroup(id).map(_.title),
           pid            = pid,
           reqId          = None)
       }

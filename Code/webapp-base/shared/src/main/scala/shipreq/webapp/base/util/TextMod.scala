@@ -1,28 +1,28 @@
 package shipreq.webapp.base.util
 
+import cats.Endo
+import monocle.Iso
 import scala.util.matching.Regex
-import scalaz.Endo
-import scalaz.Isomorphism.<=>
 
 object TextMod {
 
-  def literal(from: Char, to: Char) = Endo[String](_.replace(from, to))
-  def literal(from: String, to: String) = Endo[String](_.replace(from, to))
+  def literal(from: Char, to: Char): Endo[String] = _.replace(from, to)
+  def literal(from: String, to: String): Endo[String] = _.replace(from, to)
 
-  def regexReplace(regex: Regex, repl: String) = Endo[String](regex.replaceAllIn(_, repl))
+  def regexReplace(regex: Regex, repl: String): Endo[String] = regex.replaceAllIn(_, repl)
 
-  def regexReplaceFirst(regex: Regex, repl: String) = Endo[String](regex.replaceFirstIn(_, repl))
+  def regexReplaceFirst(regex: Regex, repl: String): Endo[String] = regex.replaceFirstIn(_, repl)
 
-  private[this] def symbol(from: String, to: String) =
-    Endo(CharSubset.PunctuationOrSymbol.notAroundReplaceAll(from, to))
+  private[this] def symbol(from: String, to: String): Endo[String] =
+    CharSubset.PunctuationOrSymbol.notAroundReplaceAll(from, to)
 
   // ---------------------------------------------------------------------------
 
-  val trim = Endo[String](_.trim)
+  val trim: Endo[String] = _.trim
 
-  val lowerCase = Endo[String](_.toLowerCase)
+  val lowerCase: Endo[String] = _.toLowerCase
 
-  val upperCase = Endo[String](_.toUpperCase)
+  val upperCase: Endo[String] = _.toUpperCase
 
   val niceSymbols =
     symbol("<=", "≤") compose
@@ -66,16 +66,14 @@ object TextMod {
     truncateToLength(range.end)
 
   def truncateToLength(maxLen: Int): Endo[String] =
-    Endo(s => if (s.length <= maxLen) s else s.take(maxLen))
+    s => if (s.length <= maxLen) s else s.take(maxLen)
 
-  object nonBlank extends (String <=> Option[String]) {
-    override def to = s => if (s.isEmpty) None else Some(s)
-    override def from = _ getOrElse ""
-  }
+  lazy val nonBlank: Iso[String, Option[String]] =
+    Iso[String, Option[String]](s => if (s.isEmpty) None else Some(s))(_ getOrElse "")
 
   def removeTrailingChar(c: Char): Endo[String] =
-    Endo(s => if (s.length != 0 && s(0) == c) s.substring(1) else s)
+    s => if (s.length != 0 && s(0) == c) s.substring(1) else s
 
   def blacklistChars(isBlacklisted: Char => Boolean): Endo[String] =
-    Endo(_.filterNot(isBlacklisted))
+    _.filterNot(isBlacklisted)
 }

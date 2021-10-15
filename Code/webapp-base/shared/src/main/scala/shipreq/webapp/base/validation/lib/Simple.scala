@@ -1,6 +1,6 @@
 package shipreq.webapp.base.validation.lib
 
-import scalaz.Applicative
+import cats.Applicative
 
 object Simple {
 

@@ -1,0 +1,20 @@
+#!/bin/bash
+set -u
+cd "$(dirname "$0")/../analysis" || exit 1
+
+[ $# -gt 1 ] && echo "Usage: $0 [<sleep in sec>]" && exit 1
+
+sleepSec="${1:-4}"
+
+function run {
+  echo "==================================================================================================== $(date +%Y%m%d-%H%M%S)"
+  jmem
+  echo
+  jsmem
+  echo
+}
+
+while true; do
+  sleep "$sleepSec"
+  run | tee -a memory_log.txt
+done

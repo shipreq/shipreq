@@ -4,7 +4,6 @@ import japgolly.microlibs.stdlib_ext.{MutableArray, ParseInt}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import scalaz.syntax.either._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.feature.EditorStatus
@@ -142,7 +141,7 @@ object ImplicationEditor {
               reqId <- l.legalPubids.get(pubid)
             } yield \/-(reqId)
 
-          @inline def legalByPubid: O = l.legalByPubidStrNorm.get(s).map(_.reqId.right)
+          @inline def legalByPubid: O = l.legalByPubidStrNorm.get(s).map(i => \/-(i.reqId))
           @inline def illegal     : O = l.illegal.get(s).map(-\/.apply)
           @inline def unknown     : R = -\/(Invalidity("Invalid: " + s))
 

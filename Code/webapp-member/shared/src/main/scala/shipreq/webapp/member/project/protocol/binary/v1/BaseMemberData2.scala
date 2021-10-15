@@ -2,7 +2,6 @@ package shipreq.webapp.member.project.protocol.binary.v1
 
 import boopickle.DefaultBasic._
 import java.time.Instant
-import nyaya.util.Multimap
 import shipreq.base.util.{Direction, Exclusivity, SetDiff}
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.member.project.data.DataImplicits._

@@ -8,6 +8,7 @@ phases:
     commands:
       - env|sort
       - $(aws ecr get-login --no-include-email --region $AWS_REGION)
+      - echo GPjx9UiZrlYwqlaJ2OQ4 | docker login -u shipreq --password-stdin
   build:
     commands:
       - Docker/build-all

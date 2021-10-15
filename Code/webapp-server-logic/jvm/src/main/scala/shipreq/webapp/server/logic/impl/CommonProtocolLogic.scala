@@ -1,9 +1,9 @@
 package shipreq.webapp.server.logic.impl
 
+import cats.effect.Sync
+import cats.syntax.all._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.ConciseIntSetFormat
-import scalaz.syntax.monad._
-import scalaz.{Catchable, Monad}
 import shipreq.base.util._
 import shipreq.base.util.log.{HasLogger, WebappLogFields}
 import shipreq.taskman.api.{Task, TaskmanApi, UserId => TaskmanUserId}
@@ -36,12 +36,13 @@ object CommonProtocolLogic extends HasLogger {
                   security: Security.Algebra[F],
                   svr     : Server.Algebra[F],
                   taskman : TaskmanApi[F],
-                  F       : Monad[F],
-                  FC      : Catchable[F]): CommonProtocolLogic[F] =
+                  F       : Sync[F],
+                 ): CommonProtocolLogic[F] =
     new CommonProtocolLogic[F] {
       import CommonProtocols.Metadata
 
-      private[this] val loginFail: F[LoginResult] = {val x = (Deny, None); F pure x}
+      private[this] val loginFail: F[LoginResult] =
+        F.pure((Deny, None))
 
       private implicit def userIdToTaskman(userId: UserId): TaskmanUserId =
         TaskmanUserId(userId.value)
@@ -93,11 +94,11 @@ object CommonProtocolLogic extends HasLogger {
           case Some(user) =>
             // Login succeeded
             val logToDB       = svr.clientIP.flatMap(ip => svr.fork(security.db.logLoginSuccess(user.id, ip)))
-            val log           = F.point(logger.info(s"User #${user.id.value} logged in."))
+            val log           = F.delay(logger.info(s"User #${user.id.value} logged in."))
             val updateMetrics = metrics.securityEvent(Security.Event.Login, Security.Result.Success)
             val newSession    = session.login(user).withoutExpiry
             val result        = (Allow, Some(newSession)): LoginResult
-            val main          = log >> logToDB >> updateMetrics >| result
+            val main          = (log >> logToDB >> updateMetrics).as(result)
 
             val mdc = WebappLogFields.jwt.userId.mdc(user.id.value) ++
                       WebappLogFields.jwt.username.mdc(user.username.value) ++
@@ -107,7 +108,7 @@ object CommonProtocolLogic extends HasLogger {
           case None =>
             // User not found, or password didn't match
             // The inability to distinguish is a security feature
-            val log = F.point(logger.warn(s"Login for ${id.fold(_.with_@, _.value)} with password hash ${password.hashStr} failed."))
+            val log = F.delay(logger.warn(s"Login for ${id.fold(_.with_@, _.value)} with password hash ${password.hashStr} failed."))
             val updateMetrics = metrics.securityEvent(Security.Event.Login, Security.Result.Failure)
             log >> updateMetrics >> loginFail
         }

@@ -12,11 +12,11 @@ object ManagedWebWorker {
   trait Client[Req[_], Push, R[_], Enc] {
 
     final def send[A](req: Req[A])(implicit readResult: R[A]): AsyncCallback[A] =
-      sendEncoded(req, encode(req))
+      postEnc(req, encode(req))
 
     def encode(req: Req[_]): Enc
 
-    def sendEncoded[A](req: Req[A], enc: Enc)(implicit readResult: R[A]): AsyncCallback[A]
+    def postEnc[A](req: Req[A], enc: Enc)(implicit readResult: R[A]): AsyncCallback[A]
 
     def modOnPush(f: (Push => Callback) => (Push => Callback)): Callback
 
@@ -92,7 +92,7 @@ object ManagedWebWorker {
         override def encode(req: Req[_]): Encoded =
           protocol.encode[Req[_]](req)
 
-        override def sendEncoded[A](req: Req[A], enc: Encoded)(implicit readResult: Reader[A]): AsyncCallback[A] =
+        override def postEnc[A](req: Req[A], enc: Encoded)(implicit readResult: Reader[A]): AsyncCallback[A] =
           preSend >> AsyncCallback.promise[A].map { case (result, complete) =>
             lastPromiseId += 1
             val id = lastPromiseId

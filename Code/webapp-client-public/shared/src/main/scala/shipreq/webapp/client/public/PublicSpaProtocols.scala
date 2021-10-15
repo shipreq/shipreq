@@ -39,7 +39,7 @@ object PublicSpaProtocols {
 
       def validatorName  = UserValidators.personName.unnamed
       def validatorEmail = UserValidators.emailAddr.unnamed
-      def validatorMsg   = CommonValidation.optionalLargeText.mapCorrector(_ prependLive TextMod.maxTwoConsecutiveNewLines.run)
+      def validatorMsg   = CommonValidation.optionalLargeText.mapCorrector(_ prependLive TextMod.maxTwoConsecutiveNewLines)
 
       implicit def univEq: UnivEq[Request] = UnivEq.derive
 

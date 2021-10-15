@@ -3,11 +3,12 @@ package shipreq.webapp.client.public.pages
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.{html, window}
 import shipreq.base.util._
+import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol.ajax._
 import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
-import shipreq.webapp.base.test.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.test.{TestAjaxClient, TestLocation}
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.public._
 import shipreq.webapp.client.public.spa._
@@ -21,7 +22,8 @@ object LoginTester {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  final class Obs(val $: DomZipperJs, ajax: TestAjaxClient) {
+  final class Obs(val $: DomZipperJs, ajax: TestAjaxClient, location: TestLocation) {
+    val href = location.href
     val reqsSent = ajax.reqs
 
     val form: Option[FormObs] =
@@ -43,7 +45,6 @@ object LoginTester {
     val forgotPwdEnabled = Disabled.when(semanticUiDisabled(forgotPwd))
   }
 
-
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   val reqsSent         = *.focus("Requests sent").value(_.obs.reqsSent.length)
@@ -54,6 +55,7 @@ object LoginTester {
   val forgotPwdEnabled = *.focus("Forgot password").value(_.obs.form.get.forgotPwdEnabled)
   val errorTitle       = *.focus("Error title").value(_.obs.form.get.errorTitle)
   val formVisibility   = *.focus("Login form visibility").value(_.obs.form.isDefined)
+  val href             = *.focus("window.location.href").value(_.obs.href.relativeUrl)
 
   def assertLoginFailed     = errorTitle.assert(Some("Login failed"))
   def assertForgotPwdFailed = errorTitle.assert(Some("Forgotten password"))
@@ -106,8 +108,8 @@ object LoginTest extends TestSuite {
     val t = new PublicSpaTestUtil.ForTestState(localStorage)
     if (loggedInUser)
       t.initData = t.initData.copy(loggedInUser = Some(Username("dude")))
-    import t.ajax
-    t(Page.Login)(h => plan.test(Observer.watch(new Obs(h, ajax))).stateless.withRef(ajax).run())
+    import t.{ajax, location}
+    t(Page.Login)(h => plan.test(Observer.watch(new Obs(h, ajax, location))).stateless.withRef(ajax).run())
   }
 
   // Can't test window.location.href because relative URLs are rejected by PhantomJS
@@ -115,7 +117,9 @@ object LoginTest extends TestSuite {
     clickLogin
       +> loginEnabled.assert(Disabled)
       +> reqsSent.assert.increment
-      >> serverLoginResponse(Allow))
+      >> serverLoginResponse(Allow)
+      +> href.assert.equal(Urls.memberHome)
+  )
 
   override def tests = Tests {
     window.localStorage.clear()

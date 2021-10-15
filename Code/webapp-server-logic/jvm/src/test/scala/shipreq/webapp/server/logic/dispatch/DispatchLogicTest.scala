@@ -1,9 +1,9 @@
 package shipreq.webapp.server.logic.dispatch
 
+import cats.Eval
 import io.circe._
 import io.circe.syntax._
 import java.time.Instant
-import scalaz.{Name, Need}
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{BinaryData, Deny, Invalid, Url}
 import shipreq.webapp.base.config.Urls
@@ -31,7 +31,7 @@ object DispatchLogicTest extends TestSuite {
                                cookies: Map[Cookie.Name, String]) {
 
     def toAbstract: Request[TestRequest] =
-      Request(method, path, Need(body), params.get, cookies.get, this)
+      Request(method, path, Eval.later(body), params.get, cookies.get, this)
   }
 
   def patchCookies(m: Map[Cookie.Name, String], u: Cookie.Update): Map[Cookie.Name, String] =
@@ -40,7 +40,7 @@ object DispatchLogicTest extends TestSuite {
   final case class TestResponse(cmd         : ResponseCmd,
                                 cookieUpdate: Cookie.Update,
                                 cookies     : Map[Cookie.Name, String]) {
-    def authUser(implicit s: Security.Algebra[Name]) =
+    def authUser(implicit s: Security.Algebra[Eval]) =
       s.sessionRestore(cookies.get).value match {
         case SessionRestoreResult.Success(t) => t.authenticatedUser
         case SessionRestoreResult.Expired(_)
@@ -54,18 +54,16 @@ object DispatchLogicTest extends TestSuite {
     def withConfig(f: ServerLogicConfig => ServerLogicConfig): Tester =
       Tester(mockInterpreters.withConfig(f))
 
-    implicit val traceLogic = TraceAlgebra.off[Name, TestRequest, Response]
+    implicit val traceLogic = TraceAlgebra.off[Eval, TestRequest, Response]
 
-    val dispatcher = new DispatchLogic[Name, TestRequest](
-      _.toAbstract,
-      )
+    val dispatcher = new DispatchLogic[Eval, TestRequest](_.toAbstract)
 
-    def makeRealRes(req: TestRequest, res: Response): Name[TestResponse] =
-      Name(TestResponse(res.cmd, res.cookies, patchCookies(req.cookies, res.cookies)))
+    def makeRealRes(req: TestRequest, res: Response): Eval[TestResponse] =
+      Eval.always(TestResponse(res.cmd, res.cookies, patchCookies(req.cookies, res.cookies)))
 
-    val routeDispatcher: TestRequest => Name[TestResponse] = {
+    val routeDispatcher: TestRequest => Eval[TestResponse] = {
       val d = dispatcher.all(testMode = false)
-      req => Name {
+      req => Eval.always {
         val res = d(req).value
         makeRealRes(req, res).value
       }

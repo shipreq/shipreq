@@ -94,7 +94,7 @@ object Parsers {
 
             val a3 =
               if (i == last && !allowTrailingWS) {
-                val x = a2.modText(TextMod.noWhitespaceRight.run)
+                val x = a2.modText(TextMod.noWhitespaceRight)
                 if (x.value.isEmpty)
                   dropLast = true
                 x

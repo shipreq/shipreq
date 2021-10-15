@@ -1,9 +1,9 @@
 package shipreq.webapp.client.project.widgets
 
+import cats.Eq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
-import scalaz.Equal
 import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.widgets.CheckboxList._
@@ -26,19 +26,19 @@ final case class CheckboxList[A: Reusability](renderFn: RenderFn) {
     def newValue: On =
       !clickedItem.on
 
-    def newSelection(implicit eq: Equal[A]): Vector[A] = {
+    def newSelection(implicit eq: Eq[A]): Vector[A] = {
       val f: Item => Boolean =
         newValue match {
-          case On  => i => i.on.is(On) || eq.equal(i.value, clickedItem.value)
-          case Off => i => i.on.is(On) && !eq.equal(i.value, clickedItem.value)
+          case On  => i => i.on.is(On) || eq.eqv(i.value, clickedItem.value)
+          case Off => i => i.on.is(On) && !eq.eqv(i.value, clickedItem.value)
         }
       items.iterator.filter(f).map(_.value).toVector
     }
 
-    def update(as: Vector[A])(implicit eq: Equal[A]): Vector[A] =
+    def update(as: Vector[A])(implicit eq: Eq[A]): Vector[A] =
       newValue match {
         case On  => as :+ clickedItem.value
-        case Off => as.filter(!eq.equal(_, clickedItem.value))
+        case Off => as.filter(!eq.eqv(_, clickedItem.value))
       }
   }
 

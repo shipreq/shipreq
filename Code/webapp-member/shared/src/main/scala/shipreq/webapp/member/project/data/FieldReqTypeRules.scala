@@ -1,8 +1,8 @@
 package shipreq.webapp.member.project.data
 
+import cats.Applicative
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Traversal
-import scalaz.Applicative
 import shipreq.base.util.{Applicability, Applicable, Impossible, NotApplicable => NA}
 import shipreq.webapp.member.project.data
 import shipreq.webapp.member.project.data.FieldReqTypeRules._
@@ -102,17 +102,17 @@ object FieldReqTypeRules {
 
   def resolutionTraversal[D]: Traversal[FieldReqTypeRules[D], Resolution[D]] =
     new Traversal[FieldReqTypeRules[D], Resolution[D]] {
-      override def modifyF[F[_]](f: Resolution[D] => F[Resolution[D]])(s: FieldReqTypeRules[D])(implicit F: Applicative[F]): F[FieldReqTypeRules[D]] = {
+      override def modifyA[F[_]](f: Resolution[D] => F[Resolution[D]])(s: FieldReqTypeRules[D])(implicit F: Applicative[F]): F[FieldReqTypeRules[D]] = {
         val fMap: F[Map[ReqTypeId, Resolution[D]]] =
           s.perReqType
             .iterator
             .map { case (k, v) => F.map(f(v))((k, _)) }
-            .foldLeft(F.pure(Map.empty[ReqTypeId, Resolution[D]]))(F.apply2(_, _)(_ + _))
+            .foldLeft(F.pure(Map.empty[ReqTypeId, Resolution[D]]))(F.map2(_, _)(_ + _))
 
         val fOtherwise =
           f(s.otherwise)
 
-        F.apply2(fMap, fOtherwise)(FieldReqTypeRules(_, _))
+        F.map2(fMap, fOtherwise)(FieldReqTypeRules(_, _))
       }
     }
 

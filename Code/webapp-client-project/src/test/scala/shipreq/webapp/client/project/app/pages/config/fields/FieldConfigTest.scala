@@ -236,7 +236,7 @@ object FieldConfigTest extends TestSuite {
       clickNew("Implication field")
         +> filterDead.assert(HideDead)
         +> messageHeader.assert.empty
-        +> editorDropdown.assert.contains("")
+        +> editorDropdown.assert.some("")
         +> editorDropdownError.assert(true) // blank
         +> editorDropdownItems.assert("BR: Business Rule", "CO: Constraint", "FR: Functional Requirement", "UC: Use Case")
         +> editorRules.assert(RuleRow.all("Optional"))
@@ -245,7 +245,7 @@ object FieldConfigTest extends TestSuite {
         >> clickFilterDead
         +> filterDead.assert(ShowDead)
         +> messageHeader.assert.empty
-        +> editorDropdown.assert.contains("")
+        +> editorDropdown.assert.some("")
         +> editorDropdownError.assert(true) // blank
         +> editorDropdownItems.assert("BR: Business Rule", "CO: Constraint", "FR: Functional Requirement", "UC: Use Case")
         +> editorRules.assert(RuleRow.all("Optional"))
@@ -253,7 +253,7 @@ object FieldConfigTest extends TestSuite {
 
         >> setEditorDropdown("FR: Functional Requirement")
         +> messageHeader.assert.empty
-        +> editorDropdown.assert.contains("FR: Functional Requirement")
+        +> editorDropdown.assert.some("FR: Functional Requirement")
         +> editorDropdownError.assert(false)
         +> editorDropdownItems.assert("BR: Business Rule", "CO: Constraint", "FR: Functional Requirement", "UC: Use Case")
         +> editorRules.assert(RuleRow.all("Optional"))
@@ -282,14 +282,14 @@ object FieldConfigTest extends TestSuite {
     )(
       clickNew("Implication field")
         +> filterDead.assert(HideDead)
-        +> messageHeader.assert.contains("No req types available")
+        +> messageHeader.assert.some("No req types available")
         +> editorDropdown.assert.empty
         +> editorRules.size.assert(0)
         +> buttonsEnabled.assert(Buttons(cancel = Enabled))
 
         >> clickFilterDead
         +> filterDead.assert(ShowDead)
-        +> messageHeader.assert.contains("No req types available")
+        +> messageHeader.assert.some("No req types available")
         +> editorDropdown.assert.empty
         +> editorRules.size.assert(0)
         +> buttonsEnabled.assert(Buttons(cancel = Enabled))
@@ -365,7 +365,7 @@ object FieldConfigTest extends TestSuite {
 
       clickNew("Tag field")
         +> filterDead.assert(HideDead)
-        +> editorDropdown.assert.contains("")
+        +> editorDropdown.assert.some("")
         +> editorDropdownError.assert(true) // blank
         +> editorDropdownItems.assert("Nada", "Surprise")
         +> editorRules.assert(RuleRow.all("Optional"))
@@ -373,7 +373,7 @@ object FieldConfigTest extends TestSuite {
 
         >> clickFilterDead
         +> filterDead.assert(ShowDead)
-        +> editorDropdown.assert.contains("")
+        +> editorDropdown.assert.some("")
         +> editorDropdownError.assert(true) // blank
         +> editorDropdownItems.assert("Nada", "Surprise")
         +> editorRules.assert(RuleRow.all("Optional"))
@@ -381,7 +381,7 @@ object FieldConfigTest extends TestSuite {
         +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Disabled))
 
         >> setEditorDropdown("Surprise")
-        +> editorDropdown.assert.contains("Surprise")
+        +> editorDropdown.assert.some("Surprise")
         +> editorDropdownError.assert(false)
         +> editorDropdownItems.assert("Nada", "Surprise")
         +> editorRules.assert(RuleRow.all("Optional"))
@@ -423,14 +423,14 @@ object FieldConfigTest extends TestSuite {
     runActions(SampleProject7.project)(
       clickNew("Tag field")
         +> filterDead.assert(HideDead)
-        +> messageHeader.assert.contains("No tag groups available")
+        +> messageHeader.assert.some("No tag groups available")
         +> editorDropdown.assert.empty
         +> editorRules.size.assert(0)
         +> buttonsEnabled.assert(Buttons(cancel = Enabled))
 
         >> clickFilterDead
         +> filterDead.assert(ShowDead)
-        +> messageHeader.assert.contains("No tag groups available")
+        +> messageHeader.assert.some("No tag groups available")
         +> editorDropdown.assert.empty
         +> editorRules.size.assert(0)
         +> buttonsEnabled.assert(Buttons(cancel = Enabled))

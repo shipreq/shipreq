@@ -1,8 +1,8 @@
 package shipreq.taskman.server.business
 
+import cats.~>
 import io.circe._
 import io.circe.syntax._
-import scalaz.~>
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger

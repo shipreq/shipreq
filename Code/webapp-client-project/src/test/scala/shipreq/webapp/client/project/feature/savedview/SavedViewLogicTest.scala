@@ -1,8 +1,8 @@
 package shipreq.webapp.client.project.feature.savedview
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros._
+import cats.Eq
+import japgolly.microlibs.cats_ext.CatsMacros._
 import japgolly.scalajs.react.{CallbackOption, CallbackTo, Reusable}
-import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.member.project.data._
@@ -154,39 +154,39 @@ object SavedViewLogicTest extends TestSuite {
       f
     }
 
-  implicit def equalNameFn[A: Equal]: Equal[String => A] =
-    Equal.equal((f, g) => testNames.forall { nn =>
+  implicit def equalNameFn[A: Eq]: Eq[String => A] =
+    Eq.instance((f, g) => testNames.forall { nn =>
       val n = nn.value
-      val pass = Equal[A].equal(f(n), g(n))
+      val pass = Eq[A].eqv(f(n), g(n))
       if (!pass) {
-        println(s"$n -- ${f(n)} ≠ ${g(n)}")
+        println(s"$n -- ${f(n)} =!= ${g(n)}")
       }
       pass
     })
 
-  implicit def equalReusable[A: Equal]: Equal[Reusable[A]] =
-    Equal.equalBy(_.value) // we're not testing reusability here
+  implicit def equalReusable[A: Eq]: Eq[Reusable[A]] =
+    Eq.by(_.value) // we're not testing reusability here
 
-  implicit def equalCallback[A: Equal]: Equal[CallbackTo[A]] =
-    Equal.equalBy(_.runNow()) // we're not using impure state changes in these tests
+  implicit def equalCallback[A: Eq]: Eq[CallbackTo[A]] =
+    Eq.by(_.runNow()) // we're not using impure state changes in these tests
 
-  implicit def equalCallbackOption[A: Equal]: Equal[CallbackOption[A]] =
-    Equal.equalBy(_.asCallback.runNow()) // we're not using impure state changes in these tests
+  implicit def equalCallbackOption[A: Eq]: Eq[CallbackOption[A]] =
+    Eq.by(_.asCallback.runNow()) // we're not using impure state changes in these tests
 
-  implicit val equalMenuActionReplace    : Equal[MenuAction.Replace    ] = deriveEqual
-  implicit val equalMenuActionDelete     : Equal[MenuAction.Delete     ] = deriveEqual
-  implicit val equalMenuActionMakeDefault: Equal[MenuAction.MakeDefault] = deriveEqual
-  implicit val equalMenuActionSaveAsNew  : Equal[MenuAction.SaveAsNew  ] = deriveEqual
-  implicit val equalMenuActionRename     : Equal[MenuAction.Rename     ] = deriveEqual
-  implicit val equalMenuActionUnsaved    : Equal[MenuAction.Unsaved    ] = deriveEqual
-  implicit val equalMenuItemD            : Equal[MenuItem.Default      ] = deriveEqual
-  implicit val equalMenuItemND           : Equal[MenuItem.NonDefault   ] = deriveEqual
-  implicit val equalMenuItemS            : Equal[MenuItem.Saved        ] = deriveEqual
-  implicit val equalMenuItemU            : Equal[MenuItem.Unsaved      ] = deriveEqual
-  implicit val equalMenuU                : Equal[Menu.NoSaved          ] = deriveEqual
-  implicit val equalMenuSD               : Equal[Menu.SavedDirty       ] = deriveEqual
-  implicit val equalMenuSC               : Equal[Menu.SavedClean       ] = deriveEqual
-  implicit val equalMenu                 : Equal[Menu                  ] = deriveEqual
+  implicit val equalMenuActionReplace    : Eq[MenuAction.Replace    ] = deriveEq
+  implicit val equalMenuActionDelete     : Eq[MenuAction.Delete     ] = deriveEq
+  implicit val equalMenuActionMakeDefault: Eq[MenuAction.MakeDefault] = deriveEq
+  implicit val equalMenuActionSaveAsNew  : Eq[MenuAction.SaveAsNew  ] = deriveEq
+  implicit val equalMenuActionRename     : Eq[MenuAction.Rename     ] = deriveEq
+  implicit val equalMenuActionUnsaved    : Eq[MenuAction.Unsaved    ] = deriveEq
+  implicit val equalMenuItemD            : Eq[MenuItem.Default      ] = deriveEq
+  implicit val equalMenuItemND           : Eq[MenuItem.NonDefault   ] = deriveEq
+  implicit val equalMenuItemS            : Eq[MenuItem.Saved        ] = deriveEq
+  implicit val equalMenuItemU            : Eq[MenuItem.Unsaved      ] = deriveEq
+  implicit val equalMenuU                : Eq[Menu.NoSaved          ] = deriveEq
+  implicit val equalMenuSD               : Eq[Menu.SavedDirty       ] = deriveEq
+  implicit val equalMenuSC               : Eq[Menu.SavedClean       ] = deriveEq
+  implicit val equalMenu                 : Eq[Menu                  ] = deriveEq
 
   override def tests = Tests {
 

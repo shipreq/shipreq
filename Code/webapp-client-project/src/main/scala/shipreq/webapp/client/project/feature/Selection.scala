@@ -68,8 +68,14 @@ object Selection {
   sealed trait UI[A, Get, Checkbox] extends Focus[A, Get] {
     val updateFn: UpdateFn[A]
     def toggleFn: Callback = updateFn(toggle)
-    def checkbox: Checkbox
-    def checkboxAndOnClick: TagMod
+    def checkbox(tagMod: Reusable[TagMod]): Checkbox
+    def checkboxAndOnClick(tagMod: Reusable[TagMod]): TagMod
+
+    final def checkbox: Checkbox =
+      checkbox(Reusable.byRef(EmptyVdom))
+
+    final def checkboxAndOnClick: TagMod =
+      checkboxAndOnClick(Reusable.byRef(EmptyVdom))
 
     final def onClick: TagMod =
       TagMod (^.onClick --> toggleFn, ^.cursor.pointer)
@@ -121,11 +127,11 @@ object Selection {
     override def toggle =
       set(!get)
 
-    override def checkbox: VdomTagOf[html.Input] =
-      Widgets.checkbox(get)(^.onChange --> toggleFn)
+    override def checkbox(tagMod: Reusable[TagMod]): VdomTagOf[html.Input] =
+      Widgets.checkbox(get)(TagMod(tagMod, ^.onChange --> toggleFn))
 
-    override def checkboxAndOnClick: TagMod =
-      TagMod(checkbox, onClick)
+    override def checkboxAndOnClick(tagMod: Reusable[TagMod]): TagMod =
+      TagMod(checkbox(tagMod), onClick)
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -157,11 +163,15 @@ object Selection {
     override def toggle: Selection[A] =
       set(nextState)
 
-    override def checkbox: VdomElement =
-      TriStateCheckbox.Props(get3, updateFn(toggle)).render
+    override def checkbox(tagMod: Reusable[TagMod]): VdomElement =
+      TriStateCheckbox.Props(
+        state        = get3,
+        setNextState = updateFn(toggle),
+        tagMod       = tagMod,
+      ).render
 
-    override def checkboxAndOnClick: TagMod =
-      TagMod(checkbox, onClick)
+    override def checkboxAndOnClick(tagMod: Reusable[TagMod]): TagMod =
+      TagMod(checkbox(tagMod), onClick)
   }
 
   val TS2Iso = Iso[TriStateCheckbox.Determinate, On] {

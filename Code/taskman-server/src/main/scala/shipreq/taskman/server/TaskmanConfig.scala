@@ -1,10 +1,10 @@
 package shipreq.taskman.server
 
+import cats.syntax.apply._
 import japgolly.clearconfig._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Duration
 import javax.mail.Session
-import scalaz.syntax.applicative._
 import shipreq.base.util.log.HasLogger
 import shipreq.base.util.{Retries, RetriesJvm}
 import shipreq.taskman.api.{CfgKeys, EmailAddr}
@@ -24,12 +24,12 @@ final case class TaskmanConfig(mail      : TaskmanConfig.Mail,
 object TaskmanConfig extends HasLogger {
 
   def config: ConfigDef[TaskmanConfig] =
-    logVars *> (mail |@| mailchimp |@| freshdesk |@| prometheus |@| shipreq |@| taskman) (apply)
+    logVars *> (mail, mailchimp, freshdesk, prometheus, shipreq, taskman).mapN(apply)
 
   def mailTokens: ConfigDef[Email.TokenValues] =
-    (ConfigDef.need[String](CfgKeys.Webapp.appName)
-      |@| ConfigDef.need[String](CfgKeys.Webapp.loginUrl)
-      ) (Email.TokenValues)
+    ( ConfigDef.need[String](CfgKeys.Webapp.appName),
+      ConfigDef.need[String](CfgKeys.Webapp.loginUrl)
+    ).mapN(Email.TokenValues)
 
   val logVars =
     ConfigDef.getOrUse[String]("LOG_APPENDER", "JSON") <* ConfigDef.external(
@@ -51,11 +51,11 @@ object TaskmanConfig extends HasLogger {
   }
 
   def mail: ConfigDef[Mail] =
-    ((ConfigDef.need[Email.Addr]("public.from")
-      |@| ConfigDef.getOrUse[List[Email.Addr]]("archive.to", Nil)
-      |@| ConfigDef.need[Int]("concurrency.max").ensure(_ >= 1, "Must be ≥ 1.")
-      ).tupled.withPrefix("mail.")
-      |@| mailMechanism) { case ((a, b, c), m) => Mail(a, b, m, c) }
+    ((ConfigDef.need[Email.Addr]("public.from"),
+      ConfigDef.getOrUse[List[Email.Addr]]("archive.to", Nil),
+      ConfigDef.need[Int]("concurrency.max").ensure(_ >= 1, "Must be ≥ 1."),
+      ).tupled.withPrefix("mail."),
+      mailMechanism).mapN { case ((a, b, c), m) => Mail(a, b, m, c) }
 
   def mailMechanism: ConfigDef[TaskmanConfig.JavaMail \/ MailGun.Props] =
     ConfigDef.need[String]("mail.via").map(_.toLowerCase).chooseAttempt {
@@ -70,31 +70,31 @@ object TaskmanConfig extends HasLogger {
     JavaMailConfig.sessionFn.map(JavaMail.apply)
 
   def mailGun: ConfigDef[MailGun.Props] =
-    (ConfigDef.need[String]("domain")
-      |@| ConfigDef.need[String]("apiKey").secret
-      |@| ConfigDef.need[String]("tags").map(_.split(',').map(_.trim).filter(_.nonEmpty).toSet)
-      ) (MailGun.Props.apply)
+    ( ConfigDef.need[String]("domain"),
+      ConfigDef.need[String]("apiKey").secret,
+      ConfigDef.need[String]("tags").map(_.split(',').map(_.trim).filter(_.nonEmpty).toSet),
+    ).mapN(MailGun.Props.apply)
       .withPrefix("mailgun.")
 
   // ===================================================================================================================
 
   def mailchimp: ConfigDef[MailChimp.Props] =
-    (ConfigDef.need[String]("dc")
-      |@| ConfigDef.need[String]("key").secret.map(MailChimp.ApiKey)
-      |@| ConfigDef.need[String]("audienceId").map(MailingList.ListId)
-      ) (MailChimp.Props)
+    ( ConfigDef.need[String]("dc"),
+      ConfigDef.need[String]("key").secret.map(MailChimp.ApiKey),
+      ConfigDef.need[String]("audienceId").map(MailingList.ListId),
+    ).mapN(MailChimp.Props)
       .withPrefix("mailchimp.")
 
   // ===================================================================================================================
 
   def freshdesk: ConfigDef[FreshDesk.Props] =
-    (ConfigDef.need[String]("domain")
-      |@| ConfigDef.need[String]("key").secret
-      |@| ConfigDef.need[EmailAddr]("taskmanEmail")
-      |@| ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.landingPage")
-      |@| ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.failure")
-      |@| ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.userFeedback")
-      ) {
+    ( ConfigDef.need[String]("domain"),
+      ConfigDef.need[String]("key").secret,
+      ConfigDef.need[EmailAddr]("taskmanEmail"),
+      ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.landingPage"),
+      ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.failure"),
+      ConfigDef.need[FreshDesk.UnverifiedTicketOrg]("org.userFeedback"),
+    ).mapN {
       case (domain, key, taskmanEmail, landingPage, failure, userFeedback) =>
         FreshDesk.Props(
           domain       = domain,
@@ -104,8 +104,7 @@ object TaskmanConfig extends HasLogger {
           failure      = failure,
           userFeedback = userFeedback,
         )
-    }
-      .withPrefix("freshdesk.")
+    }.withPrefix("freshdesk.")
 
   // ===================================================================================================================
 
@@ -118,9 +117,9 @@ object TaskmanConfig extends HasLogger {
   }
 
   def prometheus: ConfigDef[Prometheus] =
-    ( ConfigDef.getOrUse[Boolean]("enabled", Prometheus.default.enabled) |@|
-      ConfigDef.getOrUse[Boolean]("hotspot", Prometheus.default.hotspot)
-    ) (Prometheus.apply)
+    ( ConfigDef.getOrUse[Boolean]("enabled", Prometheus.default.enabled),
+      ConfigDef.getOrUse[Boolean]("hotspot", Prometheus.default.hotspot),
+    ).mapN(Prometheus.apply)
       .withPrefix("prometheus.")
 
   // ===================================================================================================================
@@ -146,17 +145,16 @@ object TaskmanConfig extends HasLogger {
                            healthFile    : Option[String])
 
   def taskman: ConfigDef[Taskman] =
-    (RetriesJvm.config.withPrefix("remoteCfg.retry.")
-      |@| ConfigDef.need[Int]("queueSize").ensure(_ >= 1, "Must be ≥ 1.")
-      |@| ConfigDef.need[Duration]("trustPeriod").ensure(!_.isShorterThan(10 seconds), "Must be at least 10 seconds.")
-      |@| ConfigDef.need[Duration]("poll.every").ensure(!_.isShorterThan(50 millis), "Must be at least 50 ms.")
-      |@| ConfigDef.get[Duration]("poll.gap").ensure(_.fold(true)(!_.isShorterThan(50 millis)), "Must be at least 50 ms.")
-      |@| ConfigDef.get[String]("healthFile")
-      ) { (remoteCfgRetry, qs, tp, pollEvery, pollGapO, healthFile) =>
+    ( RetriesJvm.config.withPrefix("remoteCfg.retry."),
+      ConfigDef.need[Int]("queueSize").ensure(_ >= 1, "Must be ≥ 1."),
+      ConfigDef.need[Duration]("trustPeriod").ensure(!_.isShorterThan(10 seconds), "Must be at least 10 seconds."),
+      ConfigDef.need[Duration]("poll.every").ensure(!_.isShorterThan(50 millis), "Must be at least 50 ms."),
+      ConfigDef.get[Duration]("poll.gap").ensure(_.fold(true)(!_.isShorterThan(50 millis)), "Must be at least 50 ms."),
+      ConfigDef.get[String]("healthFile"),
+    ).mapN { (remoteCfgRetry, qs, tp, pollEvery, pollGapO, healthFile) =>
       val pollGap = pollGapO getOrElse pollEvery
       if (pollGap isLongerThan pollEvery)
         logger.warn(s"The minimum poll gap ($pollGap) is larger than the poll time ($pollEvery). Wasteful.")
       Taskman(remoteCfgRetry, qs, AssignmentTrustPeriod(tp), pollEvery, pollGap, healthFile)
-    }
-      .withPrefix("taskman.")
+    }.withPrefix("taskman.")
 }

@@ -1,16 +1,14 @@
 package shipreq.webapp.member.test.project
 
+import cats.Monad
+import cats.instances.vector._
+import cats.syntax.traverse._
 import japgolly.microlibs.adt_macros.AdtMacros._
 import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
 import nyaya.gen._
 import nyaya.prop.LogicPropExt
-import nyaya.util.Multimap
-import scalaz.BindRec
-import scalaz.std.vector.vectorInstance
-import scalaz.syntax.equal._
-import scalaz.syntax.traverse._
 import shipreq.base.test.BaseUtilGen._
 import shipreq.base.test.IncCounter
 import shipreq.base.util.ScalaExt._
@@ -102,7 +100,7 @@ object RandomEventStream extends RandomEventStreamDsl(ApplicableEventGen(_)) {
 //    }
 //
 //  def eventStreamS[S](gen: StateGen[((S, Project), VerifiedEvents), VerifiedEvent])(implicit ss: SizeSpec): StateGen[((S, Project), VerifiedEvents), Unit] = {
-//    val SSS = scalaz.StateT.stateTMonadState[((S, Project), VerifiedEvents), Gen]
+//    val SSS = cats.StateT.stateTMonadState[((S, Project), VerifiedEvents), Gen]
 //    import SSS.monadSyntax._
 //    // TO DO Speed up replicateM_ (?)
 //    StateGen(spv => ss.gen.flatMap(n => gen.replicateM_(n)(spv)))
@@ -161,7 +159,7 @@ sealed class RandomEventStreamDsl(applicableEventGen: State => ApplicableEventGe
         def steps() = initialEventGens.iterator.map(keepProject) ++ Iterator.fill(size)(keepProject(verifiedEvent))
         steps().toVector.sequence.run(state)
       }
-    }.eval(emptyState)
+    }.runA(emptyState)
   }
 
   lazy val sampleEventStreamWithProjects: Vector[(VerifiedEvent, Project)] =
@@ -1154,14 +1152,14 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
 
   def applicableEventS[S](init: S)(observe: ObserveFn[S]): Gen[((S, Project), Event)] = {
     import Project.Equality.WithHistoryByOrd._
-    BindRec[Gen].tailrecM((s: S) =>
+    Monad[Gen].tailRecM(init)(s =>
       eventGen.map { e =>
         var r = ApplyEvent.untrusted.partialApplyUnverified(e)(p)
         r foreach { p2 => if (p === p2) r = -\/(ErrorMsg("No change")) }
         val s2 = observe(s, e, r)
         r.bimap(_ => s2, p2 => ((s2, p2), e))
       }
-    )(init)
+    )
   }
 
   def verifiedEvent: Gen[(State, VerifiedEvent)] =

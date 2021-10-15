@@ -43,7 +43,7 @@ abstract class ModalForm[A](name             : String,
     clearFormData.when(clear(lastResult)) >> setState(SetState(Enabled, None, inFlight = false))
 
   protected lazy val onHide =
-    Callback {open = false} >> resetForm >> Callback.byName(onCompletion)
+    Callback {open = false} >> resetForm >> Callback.suspend(onCompletion)
 
   private lazy val modalInitProps =
     js.Dynamic.literal(onHidden = onHide.toJsFn)

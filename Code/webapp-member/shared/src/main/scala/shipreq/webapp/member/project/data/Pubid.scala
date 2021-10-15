@@ -3,7 +3,6 @@ package shipreq.webapp.member.project.data
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Prism
-import nyaya.util.Multimap
 import shipreq.base.util.TaggedTypes._
 import shipreq.webapp.member.project.text.Grammar
 

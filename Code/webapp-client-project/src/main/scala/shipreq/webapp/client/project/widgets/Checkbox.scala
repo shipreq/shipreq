@@ -8,7 +8,7 @@ import shipreq.webapp.base.util.On
 object Checkbox {
 
   def apply[A <: IsoBool[A]](bool: IsoBool[A])(set: A => Callback, decor: A => VdomTag => VdomElement) = {
-    implicit val reusability = Reusability.by(bool.from)
+    implicit val reusability = Reusability.by(bool.is)
     val on = On fnToThisWhen bool
 
     ScalaComponent.builder[A]

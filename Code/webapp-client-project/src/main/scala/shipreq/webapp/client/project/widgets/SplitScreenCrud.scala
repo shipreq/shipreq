@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.widgets
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -83,6 +83,7 @@ object SplitScreenCrud {
                                    leftTop           : VdomNode,
                                    rightEmpty        : VdomNode,
                                    editor            : EditorArgs[N, Id, E] => VdomNode,
+                                   dirty             : Dirty,
                                    initEditor        : (Project, N \/ Id) => Option[E],
                                    state             : StateSnapshot[State[N, Id, E]])
 
@@ -155,6 +156,7 @@ final class SplitScreenCrud[
                     leftTop           : VdomNode = EmptyVdom,
                     rightEmpty        : VdomNode,
                     editor            : EditorArgs => VdomNode,
+                    dirty             : Dirty,
                     initEditor        : (Project, NewState \/ Id) => Option[EditorState],
                     state             : StateSnapshot[State]): VdomNode =
     Component(SplitScreenCrud.Props(
@@ -165,6 +167,7 @@ final class SplitScreenCrud[
       leftTop            = leftTop,
       rightEmpty         = rightEmpty,
       editor             = editor,
+      dirty              = dirty,
       initEditor         = initEditor,
       state              = state,
     ))
@@ -179,7 +182,7 @@ final class SplitScreenCrud[
     private def _select(project: Option[Project], id: Id): Callback =
       for {
         p           <- $.props.toCBO
-        editorState <- CallbackOption.liftOption(p.initEditor(project.getOrElse(p.project), \/-(id)))
+        editorState <- CallbackOption.option(p.initEditor(project.getOrElse(p.project), \/-(id)))
         right        = S.Right.Update(id, editorState)
         _           <- p.state.modState(_.copy(right = right))
       } yield ()
@@ -201,7 +204,7 @@ final class SplitScreenCrud[
         ns =>
           for {
             p           <- $.props.toCBO
-            editorState <- CallbackOption.liftOption(p.initEditor(p.project, -\/(ns)))
+            editorState <- CallbackOption.option(p.initEditor(p.project, -\/(ns)))
             right        = S.Right.Create(editorState)
             _           <- p.state.modState(_.copy(right = right))
           } yield ()
@@ -235,18 +238,14 @@ final class SplitScreenCrud[
         }
 
       val newButtonEnabled: Enabled =
-        s.right match {
-          case S.Right.Empty           => Enabled
-          case _: S.Right.Create[_]    => Enabled
-          case _: S.Right.Update[_, _] => Disabled
-        }
+        Disabled.when(p.dirty is Dirty)
 
       val newArgs: NewArgs =
         newButtonEnabled match {
           case Enabled =>
             SplitScreenCrud.NewArgs.Enabled(
               state      = p.state.zoomStateL(newStateLens),
-              openEditor = Callback.byName(openNewEditor(p.state.value.newState)))
+              openEditor = Callback.suspend(openNewEditor(p.state.value.newState)))
 
           case Disabled =>
             SplitScreenCrud.NewArgs.Disabled(p.state.value.newState)

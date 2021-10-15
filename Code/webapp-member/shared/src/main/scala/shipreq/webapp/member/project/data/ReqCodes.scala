@@ -1,11 +1,10 @@
 package shipreq.webapp.member.project.data
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
+import cats.instances.string._
+import cats.{Eq, Order}
+import japgolly.microlibs.cats_ext.CatsMacros
 import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
-import nyaya.util.Multimap
-import scalaz.std.string.stringInstance
-import scalaz.{Equal, Order}
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util._
 import shipreq.webapp.member.project.text.Text
@@ -86,22 +85,21 @@ object ReqCode {
 
   object Node extends NodeUnivEq {
     implicit val order: Order[Node] = {
-      import scalaz.Ordering
       val S = Order[String]
       new Order[Node] {
-        override def equal(a: Node, b: Node): Boolean =
+        override def eqv(a: Node, b: Node): Boolean =
           a eq b
 
-        override def order(a: Node, b: Node): Ordering =
+        override def compare(a: Node, b: Node): Int =
           if (a eq b)
-            Ordering.EQ
+            0
           else
-            S.order(a.value, b.value)
+            S.compare(a.value, b.value)
       }
     }
 
     implicit val ordering: Ordering[Node] =
-      order.toScalaOrdering
+      order.toOrdering
 
     val applyFn: String => Node =
       Memo(new Node(_))
@@ -327,5 +325,5 @@ object ReqCodes {
   val empty: ReqCodes =
     ReqCodes(Map.empty)
 
-  implicit lazy val equality: Equal[ReqCodes] = ScalazMacros.deriveEqual
+  implicit lazy val equality: Eq[ReqCodes] = CatsMacros.deriveEq
 }

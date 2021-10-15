@@ -8,6 +8,7 @@ import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.app.pages.config.Buttons
 import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.test.CommonObs
 
 object TagConfigObs {
 
@@ -29,7 +30,7 @@ object TagConfigObs {
 
     def text: String =
       lis
-        .flatMap(li => li.text :: li.subtree.map(_.text.indent("- ")).toList)
+        .flatMap(li => li.text :: li.subtree.map(_.text.indentLines("- ")).toList)
         .mkString("\n")
   }
 
@@ -130,6 +131,8 @@ final class TagConfigObs($: DomZipperJs) {
   val left  = $.child("section", 1 of 2)
   val right = $.child("section", 2 of 2).child(selRightOn)
 
+  val newButton = new CommonObs.DropdownButton(left(".ui.labeled.button"))
+
   val tagTree = new TagTreeOL(left.child("ol"), 0)
 
   //println("="*40); println(tagTree.text)
@@ -147,6 +150,13 @@ final class TagConfigObs($: DomZipperJs) {
   val isEditorOpen: Boolean =
     !right.exists(selEmptyRight)
 
+  val nameEditor: Option[CommonObs.Input] =
+    Option.when(isEditorOpen)(
+      new CommonObs.Input(
+        right(".ui.form")
+          .collect1n(".field").filter(_.children01("label").innerTexts.contains("Name"))
+          .singleton("input")))
+
   val buttonDoms: Buttons[html.Button] =
     if (isEditorOpen) {
       val $$ = right(selEditorButtons)
@@ -155,7 +165,7 @@ final class TagConfigObs($: DomZipperJs) {
         b.innerText.trim match {
           case "Update" | "Create" => bs = bs.copy(save    = Some(b.domAs[html.Button]))
           case "Cancel"            => bs = bs.copy(cancel  = Some(b.domAs[html.Button]))
-          case "Close"             => bs = bs.copy(close  = Some(b.domAs[html.Button]))
+          case "Close"             => bs = bs.copy(close   = Some(b.domAs[html.Button]))
           case "Delete"            => bs = bs.copy(delete  = Some(b.domAs[html.Button]))
           case "Restore"           => bs = bs.copy(restore = Some(b.domAs[html.Button]))
         }

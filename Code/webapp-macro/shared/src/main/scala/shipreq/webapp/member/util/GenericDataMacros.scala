@@ -1,6 +1,6 @@
 package shipreq.webapp.member.project.util
 
-import japgolly.microlibs.macro_utils._
+import japgolly.microlibs.compiletime._
 
 object GenericDataMacros {
   def gdAllValues(d: GenericData, ctx: String): d.NonEmptyValues = macro GenericDataMacroImpls.quietAllValues
@@ -86,7 +86,7 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
     val attrsAndValues = resolveAttrsAndValues(debug)(D)
     val nameToExpr = localNameToExpr(ctx)
 
-    // val equal = c.typeOf[Equal[_]]
+    // val equal = c.typeOf[Eq[_]]
     val stmts = for ((a,v) <- attrsAndValues) yield {
       val n      = lowerCaseHead(a.name.toString)
       val local  = nameToExpr(n)
@@ -96,7 +96,7 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
       // val dt     = attrDataType(a)
       // val e      = needInferImplicit(appliedType(equal, dt))
       val e = q"$a.dataEquality"
-      q"if (!$e.equal($refVal, $local)) us += $a($local)"
+      q"if (!$e.eqv($refVal, $local)) us += $a($local)"
     }
 
     val impl = q""" {
@@ -120,7 +120,7 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
       val n      = lowerCaseHead(a.name.toString)
       val refVal = q"$ref.${TermName(n)}"
       val e      = q"$a.dataEquality"
-      q"$a.get($vs).foreach(v => if ($e.equal($refVal, v.value)) vs2 -= $a)"
+      q"$a.get($vs).foreach(v => if ($e.eqv($refVal, v.value)) vs2 -= $a)"
     }
 
     val impl = q""" {

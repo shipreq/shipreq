@@ -5,6 +5,7 @@ import japgolly.scalajs.react.extra.router.{BaseUrl, Router}
 import japgolly.scalajs.react.vdom.PackageBase._
 import scala.scalajs.js.annotation.JSExportTopLevel
 import shipreq.webapp.base.feature.ErrorHandlingFeature
+import shipreq.webapp.base.lib.AbstractLocation
 import shipreq.webapp.base.protocol.ajax.{AjaxClient, CommonProtocolsJs}
 import shipreq.webapp.base.protocol.entrypoint.ClientSideProcImpl
 import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
@@ -18,7 +19,7 @@ object Main extends ClientSideProcImpl(PublicSpaEntryPoint.proc) {
     Styles.addToDocument()
 
     val storage  = AbstractWebStorage.localOrEmpty()
-    val spa      = new PublicSpa(i, AjaxClient.Binary, storage)
+    val spa      = new PublicSpa(i, AjaxClient.Binary, storage, AbstractLocation.Real)
     val reactApp = component(i, spa)
     ReactDOM.hydrateOrRender(reactApp, `#root`)
   }

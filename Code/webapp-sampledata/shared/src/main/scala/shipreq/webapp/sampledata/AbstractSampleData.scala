@@ -47,7 +47,7 @@ abstract class AbstractSampleData(meta: SampleDataMeta, events: Vector[Event]) {
     if (a.hashCode == expected)
       Nil
     else
-      s"${meta.filename} $name hashcode mismatch! (a) ${a.hashCode} ≠ $expected (e)" :: Nil
+      s"${meta.filename} $name hashcode mismatch! (a) ${a.hashCode} =!= $expected (e)" :: Nil
 
   def assertValid(): Unit =
     if (errors.nonEmpty)

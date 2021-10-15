@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.app.pages.config.fields
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -13,6 +13,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
+import shipreq.webapp.base.util.Dirty
 import shipreq.webapp.client.project.app.Style.{fieldConfig => *}
 import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.feature.Usage
@@ -350,7 +351,7 @@ object FieldConfig {
       }
     }
 
-    def render(p: Props): VdomNode =
+    def render(p: Props): VdomNode = {
       splitScreenCrud(
         filterDeadOverride = p.filterDeadOverride,
         project            = p.project,
@@ -358,9 +359,11 @@ object FieldConfig {
         list               = renderLeft(p, _),
         rightEmpty         = rightEmpty,
         editor             = renderEditor(p, _),
+        dirty              = Dirty unless p.potentialSaveCmd.isUnchanged,
         initEditor         = (a, b) => Some(initEditor(a, b)),
         state              = p.state,
       )
+    }
   }
 
   val Component = ScalaComponent.builder[Props]

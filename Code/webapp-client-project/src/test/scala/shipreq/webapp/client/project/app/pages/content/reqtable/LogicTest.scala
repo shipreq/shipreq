@@ -1,9 +1,9 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
+import cats.Eq
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.{Lens, Optional}
-import scalaz.Equal
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.util._
@@ -78,7 +78,7 @@ object LogicTest extends TestSuite {
   private      def P4  = SampleProject4.project
   private      def P6  = SampleProject6.project
   private      def P7  = SampleProject7.project
-  private lazy val PA  = TestOptics.customReqTypesLive.set(Live)(P1)
+  private lazy val PA  = TestOptics.customReqTypesLive.replace(Live)(P1)
   private      val sep = "  "
   private      val z   = "∅"
   private      val _z  = (_: Any) => z
@@ -138,18 +138,18 @@ object LogicTest extends TestSuite {
     Lens[Expansions, Expansion[ApplicableTagId]](_.tagsForCF(f))(e => Expansions.cfTags.modify(_.updated(f, e)))
 
   private def cfTags(f: CustomField.Tag.Id): Optional[Row, Vector[ApplicableTagId]] =
-    Row.expansion ^|-> cfTagsLens(f) ^|-> expansionResults
+    Row.expansion andThen cfTagsLens(f) andThen expansionResults
 
   private val otherTags: Optional[Row, Vector[ApplicableTagId]] =
-    Row.expansion ^|-> Expansions.otherTags ^|-> expansionResults
+    Row.expansion andThen Expansions.otherTags andThen expansionResults
 
   private val allTags: Optional[Row, Vector[ApplicableTagId]] =
-    Row.expansion ^|-> Expansions.allTags ^|-> expansionResults
+    Row.expansion andThen Expansions.allTags andThen expansionResults
 
-  private def testUnsorted[A: Equal](p: Project, c: C, f: Filter, fd: FilterDead, extract: Rows => A)(expect: A)(implicit l: Line): Unit =
+  private def testUnsorted[A: Eq](p: Project, c: C, f: Filter, fd: FilterDead, extract: Rows => A)(expect: A)(implicit l: Line): Unit =
     testUnsorted2(p, NonEmptyVector one c, f, fd, extract)(expect)
 
-  private def testUnsorted2[A: Equal](p: Project, cs: NonEmptyVector[C], f: Filter, fd: FilterDead, extract: Rows => A)(expect: A)(implicit l: Line): Unit = {
+  private def testUnsorted2[A: Eq](p: Project, cs: NonEmptyVector[C], f: Filter, fd: FilterDead, extract: Rows => A)(expect: A)(implicit l: Line): Unit = {
     val v = View(columnState(cs), defaultOrder.copy(init = Vector.empty), fd, f, None)
     val pc = pcache(p)
     import pc.{pt, ts}
@@ -161,7 +161,7 @@ object LogicTest extends TestSuite {
   private def viewSortedByCB(c: C.SortInconclusiveHasBlanks, sm: ConsiderBlanks, fd: FilterDead, f: Filter): View =
     View(columnState(c), defaultOrder.copy(init = Vector(SC.InconclusiveCB(c, sm))), fd, f, None)
 
-  private def testCB[A: Equal](p: Project, c: C.SortInconclusiveHasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)
+  private def testCB[A: Eq](p: Project, c: C.SortInconclusiveHasBlanks, f: Filter, fd: FilterDead, extract: Rows => A)
                               (tests: Seq[(ConsiderBlanks, A)])(implicit l: Line) = {
     val pc = pcache(p)
     import pc.{pt, ts}
@@ -193,7 +193,7 @@ object LogicTest extends TestSuite {
   private def viewSortedByIB(c: C.SortInconclusiveNoBlanks, sm: IgnoreBlanks, fd: FilterDead, f: Filter): View =
     View(columnState(c), defaultOrder.copy(init = Vector(SC.InconclusiveIB(c, sm))), fd, f, None)
 
-  private def testIB[A: Equal](p: Project, c: C.SortInconclusiveNoBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) = {
+  private def testIB[A: Eq](p: Project, c: C.SortInconclusiveNoBlanks, f: Filter, fd: FilterDead, extract: Rows => A)(tests: Seq[(IgnoreBlanks, A)]) = {
     val pc = pcache(p)
     import pc.{pt, ts}
     for ((sm, expect) <- tests) {

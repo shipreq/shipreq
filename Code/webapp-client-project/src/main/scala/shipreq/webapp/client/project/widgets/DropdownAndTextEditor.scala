@@ -69,7 +69,7 @@ object DropdownAndTextEditor {
   final case class State[A](selected: A, text: String)
 
   implicit def reusabilityState[A: Reusability]: Reusability[State[A]] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 
   final class Backend($: BackendScope[Props, Unit]) {
 

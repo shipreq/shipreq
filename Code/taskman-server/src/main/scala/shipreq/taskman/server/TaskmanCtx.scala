@@ -66,8 +66,8 @@ final class TaskmanCtx(val db          : DbAccessor,
   private val clockClock = Clock.systemUTC()
 
   implicit def trustPeriod   = config.taskman.trustPeriod
-  implicit val taskmanApi    = TaskmanApi.addLogging(TaskmanApiImpl(None).trans(xa.transZ))
-  implicit val businessOpFx  = new BusinessOpFx(sendMail, mailchimp, freshdesk, xa.transZ, config.shipreq.schema)
+  implicit val taskmanApi    = TaskmanApi.addLogging(TaskmanApiImpl(None).trans(xa.trans))
+  implicit val businessOpFx  = new BusinessOpFx(sendMail, mailchimp, freshdesk, xa.trans, config.shipreq.schema)
   implicit val serverOpFx    = new ServerOpFx(xa, new Worker.FailureHandler(emails)(businessOpFx))
   implicit val businessLogic = new BusinessLogic(emails, async.emailScheduler, mailingListId)(businessOpFx)
   implicit val failurePolicy = Failure.failurePolicy

@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -228,8 +228,8 @@ object ReqDetail {
         key       = FieldKey.UseCaseStep(id)
         editor    = props.editorUCS(key, data.pxProjectWidgets, data.filterDead)
         ref       <- CallbackTo(useCaseStepRefs.get(id)).asCBO
-        component <- ref.get
-        _         <- CallbackOption.liftOptionCallback(component.backend.startEdit(editor))
+        component <- ref.get.asCBO
+        _         <- CallbackOption.optionCallback(component.backend.startEdit(editor))
       } yield ()
 
     private def setModal(modal: Modal.State): Callback =
@@ -269,7 +269,7 @@ object ReqDetail {
 
     val onMount: Callback =
       for {
-        table <- tableRef.get
+        table <- tableRef.get.asCBO
         _     <- TableNavigationFeature.SpecialCases(table)(tableNavExceptions)
       } yield ()
 
@@ -278,7 +278,7 @@ object ReqDetail {
         def cell(row: Int) = ctx.bodyRow(row).children(1)
         def isFirstRow     = ctx.target == cell(0)
         def isLastRow      = ctx.target == cell(-1)
-        def focusTitle     = titleCellRef.get.map(_.focus()).toCallback
+        def focusTitle     = titleCellRef.get.asCBO.map(_.focus()).toCallback
         CallbackOption.keyCodeSwitch(ctx.event) {
           case KeyCode.Up   if isFirstRow => focusTitle
           case KeyCode.Down if isLastRow  => focusTitle
@@ -307,8 +307,8 @@ object ReqDetail {
             for {
               _      <- CallbackOption.unless(editor.read.isOpen)
               step    = input.useCases.focusStep(id)
-              addCmd <- CallbackOption.liftOption(UpdateContentCmd.addUseCaseStepAfter(step))
-              _      <- CallbackOption.liftOptionCallback(input.addCmdRunner(Cell.AddUseCaseStep(id)).runOption(addCmd))
+              addCmd <- CallbackOption.option(UpdateContentCmd.addUseCaseStepAfter(step))
+              _      <- CallbackOption.optionCallback(input.addCmdRunner(Cell.AddUseCaseStep(id)).runOption(addCmd))
             } yield ()
 
           def onKeyDown(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] =

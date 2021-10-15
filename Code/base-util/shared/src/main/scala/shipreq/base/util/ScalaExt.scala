@@ -1,8 +1,8 @@
 package shipreq.base.util
 
+import cats.Semigroup
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.collection.Iterable
-import scalaz.Semigroup
 
 object ScalaExt {
 
@@ -68,7 +68,7 @@ object ScalaExt {
     def ++(n: Option[A])(implicit s: Semigroup[A]): Option[A] =
       o.fold(n)(a =>
         n.fold(o)(b =>
-          Some(s.append(a, b))))
+          Some(s.combine(a, b))))
   }
 
   implicit class IteratorExtO2[A, B](private val as: Iterator[(A, Option[B])]) extends AnyVal {

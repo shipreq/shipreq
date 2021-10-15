@@ -3,7 +3,6 @@ package shipreq.webapp.member.project.data
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.macros.Lenses
 import monocle.{Iso, Lens}
-import nyaya.util.Multimap
 import shipreq.base.util.Optics
 import shipreq.webapp.member.project.text.Text.Equality._
 import shipreq.webapp.member.project.text.{Text => T}
@@ -55,13 +54,13 @@ object ReqData {
       Optics.nonEmptyMapIso[ReqId, T.CustomTextField.NonEmptyText]
 
     private def outer(id: CustomField.Text.Id): Lens[Text, Map[ReqId, T.CustomTextField.NonEmptyText]] =
-      data ^|-> Optics.nonEmptyMapValueLens(id, outerIso)
+      data andThen Optics.nonEmptyMapValueLens(id, outerIso)
 
     private def inner(id: ReqId): Lens[Map[ReqId, T.CustomTextField.NonEmptyText], T.CustomTextField.OptionalText] =
       Optics.nonEmptyMapValueLens(id, T.CustomTextField.NonEmptyIso)
 
     def at(o: CustomField.Text.Id, i: ReqId): Lens[Text, T.CustomTextField.OptionalText] =
-      outer(o) ^|-> inner(i)
+      outer(o) andThen inner(i)
   }
 
   // -------------------------------------------------------------------------------------------------------------------

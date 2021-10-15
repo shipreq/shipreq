@@ -50,31 +50,40 @@ object DockerEnv {
       .drop(k.length)
   }
 
-  final case class Options(value: List[String]) {
-    def add(k: String, v: String): Options =
-      Options(s"-D$k=$v" :: value.filterNot(_ startsWith s"-D$k="))
+  final case class JavaOptions(asList: List[String]) extends AnyVal {
+    def add(k: String, v: String): JavaOptions =
+      JavaOptions(s"-D$k=$v" :: asList.filterNot(_ startsWith s"-D$k="))
   }
 
-  final class ServiceRef(startFn: () => Unit, stopFn: () => Unit) {
+  object JavaOptions {
+    def fromDockerComposeEnv(serviceName: String, envRoot: File, filename: String = "docker-compose.yml") =
+      apply(DockerEnv.javaOptionsFromDockerComposeEnv(serviceName, envRoot, filename))
+  }
+
+  final class Services(startFn: () => Unit, stopFn: () => Unit) {
     private var up = false
 
-    val start: () => Unit = () =>
-      if (!up) {
-        startFn()
-        up = true
-      }
+    val start: () => Unit =
+      () =>
+        if (!up) {
+          startFn()
+          up = true
+        }
 
-    val stop: () => Unit = () => {
-      up = false
-      stopFn()
-    }
+    val stop: () => Unit =
+      () => {
+        up = false
+        stopFn()
+      }
   }
 
-  def envRef(env: String)(services: String*) = {
-    val ss = services.mkString(" ")
-    new ServiceRef(
-      () => s"bin/env $env up -d $ss".!!,
-      () => s"bin/env $env stop $ss".!!)
+  object Services {
+    def fromDockerCompose(env: String, only: Iterable[String] = Nil): Services = {
+      val names = only.mkString(" ")
+      new Services(
+        () => s"bin/env $env up -d $names".!,
+        () => s"bin/env $env stop $names".!)
+    }
   }
 
   // ===================================================================================================================
@@ -84,12 +93,12 @@ object DockerEnv {
     val devEnvStart = taskKey[Unit]("Starts up the dev environment.")
     val devEnvStop = taskKey[Unit]("Stops the dev environment.")
 
-    private val env = envRef("dev")("postgres", "redis")
+    private val services = Services.fromDockerCompose(env = "dev", only = Seq("postgres", "redis"))
 
     val commands: Project => Project =
       _.settings(
-        devEnvStart in ThisBuild := env.start(),
-        devEnvStop in ThisBuild := env.stop())
+        ThisBuild / devEnvStart := services.start(),
+        ThisBuild / devEnvStop := services.stop())
 
     def envRoot(baseDirectory: File): File =
       DockerEnv.dockerEnvsRoot(baseDirectory) / "dev"
@@ -102,7 +111,7 @@ object DockerEnv {
       val postgresPort = envFileValue(envRoot, "PORT_POSTGRES")
       val jaegerPort   = envFileValue(envRoot, "PORT_JAEGER_COLLECTOR")
       val redisPort    = envFileValue(envRoot, "PORT_REDIS")
-      Options(DockerEnv.javaOptionsFromDockerComposeEnv(serviceName, envRoot))
+      JavaOptions.fromDockerComposeEnv(serviceName, envRoot)
         .add("JAEGER_ENDPOINT", s"http://localhost:$jaegerPort/api/traces")
         .add("LOG_APPENDER"   , "STDOUT")
         .add("db.host"        , "localhost")
@@ -110,7 +119,7 @@ object DockerEnv {
         .add("redis.url"      , s"redis://localhost:$redisPort")
         .add("run.mode"       , runMode)
         .add("shipreq.url"    , "http://localhost:8080")
-        .value
+        .asList
     }
 
     def resDir(serviceName: String, baseDirectory: File): File =
@@ -119,15 +128,15 @@ object DockerEnv {
 
   // ===================================================================================================================
 
-  object test {
+  object test extends (Project => Project) {
 
     val testEnvStart = taskKey[Unit]("Starts up a test environment.")
 
-    private val env = envRef("test")()
+    private val services = Services.fromDockerCompose(env = "test")
 
-    val required: Project => Project =
-      _.settings(
-        testEnvStart in ThisBuild := env.start(),
-        testOptions in Test += Tests.Setup(env.start))
+    override def apply(p: Project): Project =
+      p.settings(
+        ThisBuild / testEnvStart := services.start(),
+        Test / testOptions += Tests.Setup(services.start))
   }
 }

@@ -1,7 +1,7 @@
 package shipreq.base.util
 
+import cats.Eq
 import japgolly.microlibs.nonempty.NonEmpty
-import scalaz.Equal
 import shipreq.base.util.PotentialChange._
 
 sealed abstract class PotentialChange[+E, +A] {
@@ -62,6 +62,12 @@ sealed abstract class PotentialChange[+E, +A] {
       case Failure(_)             => true
     }
 
+  final def isSuccess: Boolean =
+    this match {
+      case Success(_)             => true
+      case Failure(_) | Unchanged => false
+    }
+
   final def isUnchanged: Boolean =
     this match {
       case Success(_) | Failure(_) => false
@@ -87,11 +93,11 @@ sealed abstract class PotentialChange[+E, +A] {
   final def ignore(f: A => Boolean): PotentialChange[E, A] =
     compare(Deny.fnToThisWhen(f))
 
-  final def ignoreValue[AA >: A](a: => AA)(implicit e: Equal[AA]): PotentialChange[E, A] =
-    ignore(e.equal(a, _))
+  final def ignoreValue[AA >: A](a: => AA)(implicit e: Eq[AA]): PotentialChange[E, A] =
+    ignore(e.eqv(a, _))
 
-  final def ignoreOption[AA >: A](o: => Option[AA])(implicit e: Equal[AA]): PotentialChange[E, A] =
-    ignore(a => o.fold(false)(e.equal(a, _)))
+  final def ignoreOption[AA >: A](o: => Option[AA])(implicit e: Eq[AA]): PotentialChange[E, A] =
+    ignore(a => o.fold(false)(e.eqv(a, _)))
 
   final def ignoreEmpty[AA >: A, B](implicit p: NonEmpty.Proof[AA, B]): PotentialChange[E, B] =
     flatMap(PotentialChange.nonEmpty[AA, B](_)(p))

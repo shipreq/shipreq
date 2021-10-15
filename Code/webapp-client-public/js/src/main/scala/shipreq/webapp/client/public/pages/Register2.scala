@@ -1,6 +1,6 @@
 package shipreq.webapp.client.public.pages
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -59,7 +59,7 @@ object Register2 {
         response       = None)
 
     val tosB: Lens[State, Boolean] =
-      tos ^<-> Agree.isoWhen(true)
+      tos andThen Agree.isoWhen(true)
   }
 
   final class Backend($: BackendScope[Props, State]) {
@@ -70,7 +70,7 @@ object Register2 {
       AsyncFeature.Write.D0.init($ zoomStateL State.async)
 
     private def showValidationFailures =
-      State.vux set ValidationUX.Full
+      State.vux replace ValidationUX.Full
 
     private def onResult(req: Request): Result => Callback = {
       case r: Result.Terminal   => $.modState(_.copy(response = Some(r)))

@@ -1,5 +1,7 @@
 package shipreq.webapp.server.interpreter
 
+import cats.Monad
+import cats.syntax.all._
 import com.typesafe.scalalogging.StrictLogging
 import io.jsonwebtoken.security.{Keys, SignatureException}
 import io.jsonwebtoken.{Claims, ExpiredJwtException, JwtParser, Jwts}
@@ -11,10 +13,10 @@ import org.apache.commons.text.StringEscapeUtils
 import scala.Predef.classOf
 import scala.concurrent.blocking
 import scala.util.{Failure, Success, Try}
-import scalaz.Monad
-import scalaz.syntax.monad._
 import shipreq.base.ops.Trace
+import shipreq.base.util.CatsExtra.ApplicativeDelay
 import shipreq.base.util.log.WebappLogFields
+import shipreq.base.util.{Allow, Permission}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.Obfuscated
 import shipreq.webapp.server.logic.algebra.Security.{SessionId, SessionRestoreResult, SessionToken}
@@ -37,7 +39,6 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
   override val F = _F
   override val db = secDb
 
-  private[this] val fUnit                    = F.point(())
   private[this] val fNoToken                 = F.pure[SessionRestoreResult[Instant]](SessionRestoreResult.None)
   private[this] val passwordSecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
   private[this] val jwtMainKey               = Keys.hmacShaKeyFor(config.jwtSecret.bytes)
@@ -45,16 +46,16 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
 
   private[this] val delay: F[Unit] =
     config.attackFrustrationDelayMs match {
-      case 0  => fUnit
+      case 0  => F.unit
       case ms =>
-        val f = F.point(blocking(Thread.sleep(ms)))
+        val f = F.delay(blocking(Thread.sleep(ms)))
         trace.newSpan("Security delay")(_ => f)
     }
 
   override def protect[A](vulnerable: F[A]): F[A] =
     delay >> vulnerable
 
-  override def hashPassword(p: PlainTextPassword): F[PasswordAndSalt] = F point {
+  override def hashPassword(p: PlainTextPassword): F[PasswordAndSalt] = F delay {
     val saltBytes = new Array[Byte](config.passwordSaltLength)
     new SecureRandom().nextBytes(saltBytes)
     val salt = Salt.fromBytes(saltBytes)
@@ -77,7 +78,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
   private[this] final val claimSessionId = "sid"
   private[this] final val claimUserId    = "uid"
 
-  override def sessionPersist(token: SessionToken[Any]): F[Cookie.Update] = F.point {
+  override def sessionPersist(token: SessionToken[Any]): F[Cookie.Update] = F.delay {
     val jws: String = {
       val b = Jwts.builder()
 
@@ -167,7 +168,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
     cookies(cookieName) match {
 
       case Some(jws) =>
-        F.point {
+        F.delay {
           parseAndVerifyJws(jws) match {
             case Success(r) => r
             case Failure(t) =>
@@ -179,4 +180,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
       case None =>
         fNoToken
     }
+
+  override def allowProjectAccess(requester: User, projectId: ProjectId, projectOwner: UserId): Permission =
+    Allow.when(requester.id ==* projectOwner) | config.projectAccessHacks(requester, projectId)
 }

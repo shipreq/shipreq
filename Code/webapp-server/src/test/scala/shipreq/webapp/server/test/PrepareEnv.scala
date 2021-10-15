@@ -18,8 +18,8 @@ object PrepareEnv {
   private val cfg = {
     var (appConfig, runMode, _) = boot.readConfig()
     runMode foreach boot.setRunMode
-    val attackDelayL = ServerConfig.server ^|-> ServerLogicConfig.security ^|-> ServerLogicConfig.Security.attackFrustrationDelay
-    appConfig = attackDelayL.set(Duration.ZERO)(appConfig)
+    val attackDelayL = ServerConfig.server andThen ServerLogicConfig.security andThen ServerLogicConfig.Security.attackFrustrationDelay
+    appConfig = attackDelayL.replace(Duration.ZERO)(appConfig)
     // println("webapp-server test config:\n" + configReport.reportUsed)
     appConfig
   }

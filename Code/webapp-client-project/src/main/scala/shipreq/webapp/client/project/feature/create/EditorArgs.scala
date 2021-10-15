@@ -209,10 +209,10 @@ object EditorArgs {
         commit         = None)
   }
 
-  private  val reusabilityForReqCodeEditor_   : Reusability[ForReqCodeEditor[Nothing]] = Reusability.byRef || Reusability.derive
+  private  val reusabilityForReqCodeEditor_   : Reusability[ForReqCodeEditor[Nothing]] = Reusability.derive
   implicit def reusabilityForReqCodeEditor[V] : Reusability[ForReqCodeEditor[V]      ] = reusabilityForReqCodeEditor_.narrow
-  implicit val reusabilityForImplicationEditor: Reusability[ForImplicationEditor     ] = Reusability.byRef || Reusability.derive
-  implicit val reusabilityForTagEditor        : Reusability[ForTagEditor             ] = Reusability.byRef || Reusability.derive
-  private  val reusabilityForTextEditor_      : Reusability[ForTextEditor[Nothing]   ] = Reusability.byRef || Reusability.derive
+  implicit val reusabilityForImplicationEditor: Reusability[ForImplicationEditor     ] = Reusability.derive
+  implicit val reusabilityForTagEditor        : Reusability[ForTagEditor             ] = Reusability.derive
+  private  val reusabilityForTextEditor_      : Reusability[ForTextEditor[Nothing]   ] = Reusability.derive
   implicit def reusabilityForTextEditor[V]    : Reusability[ForTextEditor[V]         ] = reusabilityForTextEditor_.narrow
 }

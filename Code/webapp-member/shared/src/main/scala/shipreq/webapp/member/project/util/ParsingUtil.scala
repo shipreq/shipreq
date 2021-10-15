@@ -85,7 +85,7 @@ abstract class ParsingUtil extends Parser {
     rule(run((o: Option[A]) => test(o.isDefined) ~ push(o.get)))
 
   def pop_\/-[A]: RuleAB[Any \/ A, A] =
-    rule(run((d: Any \/ A) => test(d.isRight) ~ push(d.asInstanceOf[\/-[A]].b)))
+    rule(run((d: Any \/ A) => test(d.isRight) ~ push(d.castRight().value)))
 
   def popPF[A, B](pf: PartialFunction[A, B]): RuleAB[A, B] =
     rule(run((a: A) => test(pf isDefinedAt a) ~ push(pf(a))))

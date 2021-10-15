@@ -1,16 +1,13 @@
 package shipreq.benchmark
 
-import cats.effect.IO
+import cats.effect.{ExitCase, IO, Sync}
+import cats.free.Trampoline
+import cats.implicits._
+import cats.{Eval, Monad}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{Await, Future}
-import scalaz.Free.Trampoline
-import scalaz.std.function.function0Instance
-import scalaz.syntax.monad._
-import scalaz.{Monad, Name, Need}
 import shipreq.base.util._
 import shipreq.taskman.api.TaskId
 import shipreq.webapp.base.config.{AssetManifest, Urls}
@@ -131,9 +128,7 @@ class DispatchBM {
     testF(i)(_.dispatcher)
 
   @Benchmark def catsIO     = test(DispatchBM.catsIO)
-  @Benchmark def fn0        = test(DispatchBM.fn0)
-//@Benchmark def future     = test(DispatchBM.future)
-  @Benchmark def name       = test(DispatchBM.name)
+  @Benchmark def eval       = test(DispatchBM.eval)
   @Benchmark def trampoline = test(DispatchBM.trampoline)
   @Benchmark def zio        = test(DispatchBM.zio)
 }
@@ -163,11 +158,12 @@ object DispatchBM {
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
+      projectAccessHacks         = ProjectAccessHacks.empty,
       verificationTokenLength    = 8,
       registrationTokenLifespan  = 7 days,
       passwordResetTokenLifespan = 4 days))
 
-  val noBody: Need[Option[BinaryData]] = scalaz.Value(None)
+  val noBody: Eval[Option[BinaryData]] = Eval.now(None)
 
   val user = User(UserId(1), Username("asds"))
   val ps = PasswordAndSalt(PasswordHash("wdsef34r"), Salt("32165498bdef"))
@@ -213,6 +209,9 @@ object DispatchBM {
         val cookie = Cookie(cookieName, value, None, None, None)
         Cookie.Update.add(cookie)
       }
+
+      override def allowProjectAccess(requester: User, projectId: ProjectId, projectOwner: UserId) =
+        Allow.when(requester.id ==* projectOwner)
     }
 
     implicit val svrSession: Server.Session[F] = new Server.Session[F] {
@@ -272,8 +271,33 @@ object DispatchBM {
       override def createProject(a: Username \/ EmailAddr, b: String) = F.pure(null)
     }
 
-    val dispatchLogic = new DispatchLogic[F, Request[Unit]](
-      r => Request(r.method, r.path, noBody, r.param, r.cookie, r))
+    val sync = new Sync[F] {
+      override def pure[A](x: A): F[A] =
+        F.pure(x)
+
+      override def raiseError[A](e: Throwable): F[A] =
+        F.unit.map(_ => throw e)
+
+      override def handleErrorWith[A](fa: F[A])(f: Throwable => F[A]): F[A] =
+        ???
+
+      override def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B] =
+        fa.flatMap(f)
+
+      override def tailRecM[A, B](a: A)(f: A => F[Either[A,B]]): F[B] =
+        ???
+
+      override def bracketCase[A, B](acquire: F[A])(use: A => F[B])(release: (A, ExitCase[Throwable]) => F[Unit]): F[B] =
+        ???
+
+      override def suspend[A](thunk: => F[A]): F[A] =
+        F.unit.flatMap(_ => thunk)
+    }
+
+    val dispatchLogic = {
+      implicit val s = sync
+      new DispatchLogic[F, Request[Unit]](r => Request(r.method, r.path, noBody, r.param, r.cookie, r))
+    }
 
     val dispatcher = dispatchLogic.allLogic(testMode = false)
   }
@@ -295,31 +319,17 @@ object DispatchBM {
     List.fill(10)(rs).flatten
   }
 
-  implicit val monadCatsIO: Monad[IO] = new Monad[IO] {
-    override def point[A](a: => A): IO[A] = IO(a)
-    override def bind[A, B](fa: IO[A])(f: A => IO[B]): IO[B] = fa flatMap f
-    override def map[A, B](fa: IO[A])(f: A => B): IO[B] = fa map f
-  }
-
-  implicit val monadFuture: Monad[Future] = new Monad[Future] {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    override def point[A](a: => A): Future[A] = Future(a)
-    override def bind[A, B](fa: Future[A])(f: A => Future[B]): Future[B] = fa flatMap f
-    override def map[A, B](fa: Future[A])(f: A => B): Future[B] = fa map f
-  }
-
   implicit val monadZIO: Monad[UIO] = new Monad[UIO] {
-    override def point[A](a: => A): UIO[A] = UIO(a)
-    override def bind[A, B](fa: UIO[A])(f: A => UIO[B]): UIO[B] = fa flatMap f
+    override def pure[A](a: A): UIO[A] = UIO(a)
+    override def flatMap[A, B](fa: UIO[A])(f: A => UIO[B]): UIO[B] = fa flatMap f
     override def map[A, B](fa: UIO[A])(f: A => B): UIO[B] = fa map f
+    override def tailRecM[A, B](a: A)(f: A => UIO[Either[A,B]]): UIO[B] = ???
   }
 
   val zioRuntime = _root_.zio.Runtime.default
 
   val catsIO     = new Interpreters[IO        ](_.unsafeRunSync())
-  val fn0        = new Interpreters[Function0 ](_.apply())
-  val future     = new Interpreters[Future    ](Await.result(_, FiniteDuration(5, "min")))
-  val name       = new Interpreters[Name      ](_.value)
+  val eval       = new Interpreters[Eval      ](_.value)
   val trampoline = new Interpreters[Trampoline](_.run)
   val zio        = new Interpreters[UIO       ](zioRuntime.unsafeRun(_))
 }

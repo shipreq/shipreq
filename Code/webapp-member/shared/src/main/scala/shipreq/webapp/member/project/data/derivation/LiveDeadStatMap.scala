@@ -1,10 +1,10 @@
 package shipreq.webapp.member.project.data.derivation
 
+import cats.Monoid
 import scala.collection.mutable
 import scala.collection.mutable.Builder
 import shipreq.base.util.LazyVal
-import shipreq.base.util.fp.Monoid
-import shipreq.base.util.fp.Monoid.Implicits._
+
 /**
  * A collection of stats mapped by a key.
  */

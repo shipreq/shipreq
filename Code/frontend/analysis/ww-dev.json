@@ -5,8 +5,8 @@
   ],
   "version": "4.44.2",
   "hash": "628a093256cc76e090a3",
-  "time": 776,
-  "builtAt": 1606203947985,
+  "time": 667,
+  "builtAt": 1634208139018,
   "publicPath": "",
   "outputPath": "/tmp/shipreq.webpack.dev.ww",
   "assetsByChunkName": {

@@ -1,9 +1,9 @@
 package shipreq.taskman.server.logic
 
+import cats.{Endo, Eval}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Clock, Duration, Instant}
 import scala.reflect.ClassTag
-import scalaz.{Endo, Need}
 import shipreq.base.util.FxModule._
 import shipreq.taskman.server.logic.ServerOp._
 import shipreq.taskman.server.logic.TestHelpers._
@@ -15,7 +15,7 @@ import utest._
 
 object WorkerTest extends TestSuite {
 
-  type R = WorkResult[Need]
+  type R = WorkResult[Eval]
 
   val nid = NodeId(4.toShort)
   val wid = WorkerId(7)
@@ -30,11 +30,11 @@ object WorkerTest extends TestSuite {
     }
   }
 
-  def assertResultS[W <: WorkResult[Need]](r: R)(implicit W: ClassTag[W]): Unit =
+  def assertResultS[W <: WorkResult[Eval]](r: R)(implicit W: ClassTag[W]): Unit =
     assert(W.runtimeClass.isAssignableFrom(r.getClass))
 
   def assertResultA(r: R) =
-    assertResultS[Scheduled[Need]](r)
+    assertResultS[Scheduled[Eval]](r)
 
   // -------------------------------------------------------------------------------------------------------------------
 
@@ -42,10 +42,11 @@ object WorkerTest extends TestSuite {
 
     "Worker processing tasks synchronously" - {
 
-      def test(sopEndo: Endo[MockSops], fp: FailurePolicy, mp: Processor[Need]) = {
+      def test(sopEndo: Endo[MockSops], fp: FailurePolicy, mp: Processor[Eval]) = {
         val mockSop = sopEndo(new MockSops)
         val w = new Worker(mp)(nid, wid, mockSop, tp, clockReal, fp)
-        val r: R = w.process(th_1).unsafeRun()
+        val fx = w.process(th_1)
+        val r: R = fx.unsafeRun()
         (r, mockSop)
       }
 
@@ -93,17 +94,17 @@ object WorkerTest extends TestSuite {
       def blah(fx     : Fx[Unit],
                clock  : Fx[Instant] = clockReal,
                sopEndo: Endo[MockSops] = assignWorkerAllow) = {
-        val scheduler = new AsyncScheduler[Need] { def apply[A](io: Fx[A]) = Fx(Need(io.unsafeRun())) }
-        val prComplete: ProcessorResult[Need] = ProcessorResult.Complete
+        val scheduler = new AsyncScheduler[Eval] { def apply[A](io: Fx[A]) = Fx(Eval.later(io.unsafeRun())) }
+        val prComplete: ProcessorResult[Eval] = ProcessorResult.Complete
         val schedule = ProcessorResult.Schedule(scheduler, fx.map(_ => prComplete))
-        val mp: Processor[Need] = _ => Fx(schedule)
+        val mp: Processor[Eval] = _ => Fx(schedule)
         def run = {
           val mockSop = sopEndo(new MockSops)
           val w = new Worker(mp)(nid, wid, mockSop, tp, clock, fpRetry)
           val r: R = w.process(th_1).unsafeRun()
           (r, mockSop)
         }
-        def runFuture(r1: R) = r1.asInstanceOf[Scheduled[Need]].fResult.value
+        def runFuture(r1: R) = r1.asInstanceOf[Scheduled[Eval]].fResult.value
         (run, run map1 runFuture)
       }
 

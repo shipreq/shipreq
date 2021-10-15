@@ -37,6 +37,10 @@ resource "aws_launch_template" "ops" {
   key_name               = aws_key_pair.ops.key_name
   tags                   = local.ops_tags
 
+  credit_specification {
+    cpu_credits = "standard"
+  }
+
   iam_instance_profile {
     arn = aws_iam_instance_profile.ops-ecs.arn
   }

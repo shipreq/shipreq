@@ -61,6 +61,8 @@ EOB
   es_root_url           = "https://${local.es_domain}"
   es_root_url_with_port = "${local.es_root_url}:443"
 
+  filebeat_enabled = var.elasticsearch_enable
+
   redis_domain  = "redis.${local.internal_domain}"
   redis_version = "5.0.5"
 

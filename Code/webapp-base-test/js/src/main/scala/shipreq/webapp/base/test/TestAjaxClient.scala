@@ -135,7 +135,7 @@ class TestAjaxClient(autoRespondArg: Boolean) extends AjaxClient.Binary {
 //    (a, b)
 //  }
 //
-//  def assertLastTwoRequestsEqual[I, O](p: ServerSideProc[I, O])(implicit e: Equal[I]): Unit = {
+//  def assertLastTwoRequestsEqual[I, O](p: ServerSideProc[I, O])(implicit e: Eq[I]): Unit = {
 //    val (a, b) = lastTwo(p)
 //    assertEq("Last two requests", a.input, b.input)
 //  }

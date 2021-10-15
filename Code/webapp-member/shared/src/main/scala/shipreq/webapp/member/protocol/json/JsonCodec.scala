@@ -1,11 +1,11 @@
 package shipreq.webapp.member.protocol.json
 
+import cats.Traverse
+import cats.instances.either._
 import io.circe._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.recursion._
 import scala.reflect.ClassTag
-import scalaz.Traverse
-import scalaz.std.either._
 
 final case class JsonCodec[A](encoder: Encoder[A], decoder: Decoder[A]) {
 

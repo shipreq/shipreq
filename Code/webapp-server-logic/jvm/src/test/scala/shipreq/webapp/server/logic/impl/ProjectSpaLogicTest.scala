@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic.impl
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
-import scalaz.{Equal, Name}
+import cats.{Eq, Eval}
+import japgolly.microlibs.cats_ext.CatsMacros
 import shipreq.base.util.{BinaryData, Direction}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.protocol._
@@ -44,13 +44,13 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
   private implicit def univEqMsgError: UnivEq[MsgError] = UnivEq.force
   private implicit def univEqStatic: UnivEq[WebSocketStatic] = UnivEq.force
 
-  private type WebSocketState = ProjectSpaLogic.WebSocketState[Name]
-  private val emptyState      = ProjectSpaLogic.WebSocketState.empty[Name]
-  private val subscribedState = ProjectSpaLogic.WebSocketState[Name](Some(null))
+  private type WebSocketState = ProjectSpaLogic.WebSocketState[Eval]
+  private val emptyState      = ProjectSpaLogic.WebSocketState.empty[Eval]
+  private val subscribedState = ProjectSpaLogic.WebSocketState[Eval](Some(null))
 
-  protected implicit val equalSub: Equal[Redis.Subscription[Name]] = Equal.equal((_, _) => true)
-  private implicit val equalState = ScalazMacros.deriveEqual[WebSocketState]
-  private implicit val eqInitAppData = ScalazMacros.deriveEqual[InitAppData]
+  protected implicit val equalSub: Eq[Redis.Subscription[Eval]] = Eq.instance((_, _) => true)
+  private implicit val equalState = CatsMacros.deriveEq[WebSocketState]
+  private implicit val eqInitAppData = CatsMacros.deriveEq[InitAppData]
 
   private val initAppMsg_0 = WsReqRes.InitApp.AndReq(None)
   private val cmdNewUC = CreateContentCmd.CreateUseCase(Set.empty, Map.empty, Direction.Values.both(Set.empty), Set.empty, Text.empty)
@@ -136,10 +136,10 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       static          = static,
       state           = state,
       msg             = msgBin,
-      respond         = a => Name{resp = \/-(a); \/-(())},
-      push            = e => Name(???),
-      onListenerError = e => Name(???),
-      onError         = a => Name{resp = -\/(a)}
+      respond         = a => Eval.always{resp = \/-(a); \/-(())},
+      push            = e => Eval.always(???),
+      onListenerError = e => Eval.always(???),
+      onError         = a => Eval.always{resp = -\/(a)}
     )
     val newState = proc.value
     val result: MsgError \/ msg.reqRes.ResponseType =
@@ -169,12 +169,12 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
   private def keepAlive(static: WebSocketStatic)(implicit t: Tester): Option[MsgError] = {
     import t._
     var result = Option.empty[MsgError]
-    projectSpa.onKeepAlive(static, msg => Name {result = Some(msg)}).value
+    projectSpa.onKeepAlive(static, msg => Eval.always {result = Some(msg)}).value
     result
   }
 
-  private def onPush(f: VerifiedEvent.NonEmptySeq => Unit): BinaryData => Name[Unit] =
-    bin => Name {
+  private def onPush(f: VerifiedEvent.NonEmptySeq => Unit): BinaryData => Eval[Unit] =
+    bin => Eval.always {
       val value = pushProtocol.codec.decode(bin).getOrThrow()
       val push = value.swap.getOrThrow()
       f(push)

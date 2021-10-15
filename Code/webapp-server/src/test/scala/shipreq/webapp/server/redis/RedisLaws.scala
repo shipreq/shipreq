@@ -1,11 +1,11 @@
 package shipreq.webapp.server.redis
 
+import cats.Semigroup
+import cats.syntax.all._
 import io.circe._
 import japgolly.microlibs.utils.ConciseIntSetFormat
 import java.time.Instant
 import nyaya.gen.Gen
-import scalaz.Semigroup
-import scalaz.syntax.monad._
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.EventOrd.Implicits._
 import shipreq.webapp.member.project.event._
@@ -103,9 +103,7 @@ object RedisLaws {
   private def ∅ : E = VerifiedEvent.Seq.empty
 
   private implicit val eventSeqInstance: Semigroup[VerifiedEvent.Seq] =
-    new Semigroup[VerifiedEvent.Seq] {
-      override def append(f1: VerifiedEvent.Seq, f2: => VerifiedEvent.Seq) = f1 ++ f2
-    }
+    _ ++ _
 
   private def publishEvents(e: E): Logic[Unit] =
     Logic[Unit](_.publishEvents(_, e))

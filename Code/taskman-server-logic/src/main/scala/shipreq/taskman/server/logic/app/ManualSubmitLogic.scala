@@ -1,10 +1,10 @@
 package shipreq.taskman.server.logic.app
 
 import cats.effect.{ExitCode, IO, IOApp}
+import cats.instances.list._
 import io.circe.parser._
 import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import scalaz.std.list._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.JsonUtil
 import shipreq.base.util.log.HasLogger

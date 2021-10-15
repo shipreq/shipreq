@@ -1,10 +1,10 @@
 package shipreq.webapp.member.project.text
 
+import cats.Applicative
 import japgolly.microlibs.adt_macros.AdtMacros
 import monocle.Iso
 import scala.collection.immutable.TreeSet
 import scala.reflect.ClassTag
-import scalaz.Applicative
 import shipreq.base.util.NonEmptyArraySeq
 import shipreq.base.util.Util.ShipReqOpsForArraySeq
 import shipreq.webapp.member.project.data._

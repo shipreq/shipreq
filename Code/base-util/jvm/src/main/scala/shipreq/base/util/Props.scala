@@ -11,7 +11,7 @@ object Props {
     ConfigSource.propFileOnClasspath[Fx]("secret.properties", optional = true)
 
   def sources: ConfigSources[Fx] =
-    ConfigSource.expandInlineProperties(ConfigSource.environment[Fx], "SHIPREQ_INLINE_PROPERTIES").mapKeyQueries(acceptExternalKeyFormat) >
+    ConfigSource.environment[Fx].expandInlineProperties("SHIPREQ_INLINE_PROPERTIES").mapKeyQueries(acceptExternalKeyFormat) >
     fileSources >
     ConfigSource.system[Fx].mapKeyQueries(acceptExternalKeyFormat)
 

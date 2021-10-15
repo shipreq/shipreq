@@ -1,5 +1,6 @@
 package shipreq.base.ops
 
+import cats.Semigroup
 import java.io.{Closeable, InputStream, PrintWriter, Reader}
 import java.net.URL
 import java.sql.{Blob, CallableStatement, Clob, Connection, DatabaseMetaData, Date, NClob, ParameterMetaData, PreparedStatement, Ref, ResultSet, ResultSetMetaData, RowId, SQLWarning, SQLXML, Savepoint, Statement, Struct, Time, Timestamp}
@@ -9,7 +10,6 @@ import java.util.{Calendar, Properties}
 import java.{sql, util}
 import javax.sql.DataSource
 import scala.util.control.NonFatal
-import scalaz.Semigroup
 
 trait SqlTracer { outer =>
   final def inject(ds: DataSource): DataSource =

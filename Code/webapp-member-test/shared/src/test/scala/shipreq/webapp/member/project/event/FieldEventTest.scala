@@ -303,7 +303,7 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
 
       "defaults" - {
         import SampleProject.Values._
-        val p0 = Project.fields.set(FieldSet.empty)(SampleProject.project)
+        val p0 = Project.fields.replace(FieldSet.empty)(SampleProject.project)
 
         def assertBad(parent: TagGroupId, id: ApplicableTagId) = {
           val c = FieldCustomTagCreate(1, parent, nev(FieldReqTypeRules(FRTR.defaultTo(id))))
@@ -331,7 +331,7 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
           val r  = FRTR.defaultTo(priHigh)
           val d  = data.DerivativeTags(Enabled, Map(TagPair(v10, v11) -> v12))
           val c  = FieldCustomTagCreate(1, priTG, nev(FieldReqTypeRules(r), DerivativeTags(d)))
-          val p0 = Project.fields.set(FieldSet.empty)(SampleProject.project)
+          val p0 = Project.fields.replace(FieldSet.empty)(SampleProject.project)
           val p  = applyEventSuccessfully(p0, c)
           val f  = p.config.fields.customFields.need(c.id)
           assertEq(f, CustomField.Tag(c.id, priTG, r, d, Live))
@@ -362,7 +362,7 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
         import SampleProject.Values._
         val id = 1
         val p0 = applyEventsSuccessfully(
-                   Project.fields.set(FieldSet.empty)(SampleProject.project),
+                   Project.fields.replace(FieldSet.empty)(SampleProject.project),
                    FieldCustomTagCreate(id, statusTG, nev(FieldReqTypeRules(FRTR.optional))))
 
         def assertBad(default: ApplicableTagId) = {
@@ -390,7 +390,7 @@ object CustomTagFieldEventTest extends TestSuite with CustomTagFieldEvents {
           import SampleProject.Values._
           val d  = data.DerivativeTags(Enabled, Map(TagPair(v10, v11) -> v12))
           val u  = FieldCustomTagUpdate(1, nev(DerivativeTags(d)))
-          val p0 = Project.fields.set(FieldSet.empty)(SampleProject.project)
+          val p0 = Project.fields.replace(FieldSet.empty)(SampleProject.project)
           val p  = applyEventsSuccessfully(p0, c1, u)
           val f  = p.config.fields.customFields.need(u.id)
           assertEq(f, CustomField.Tag(u.id, priTG, FRTR.mandatory, d, Live))

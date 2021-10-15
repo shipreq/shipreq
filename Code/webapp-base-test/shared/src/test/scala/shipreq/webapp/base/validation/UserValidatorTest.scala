@@ -1,6 +1,6 @@
 package shipreq.webapp.base.validation
 
-import scalaz.Equal
+import cats.Eq
 import shipreq.base.test.BaseTestUtil.{assertContainsCI, assertEq}
 import shipreq.base.util.{Invalid, Valid}
 import shipreq.webapp.base.config.WebappConfig
@@ -10,7 +10,7 @@ import utest._
 
 object UserValidatorTest extends TestSuite {
 
-  private case class Tester[I, C: Equal, V: Equal](v: Validator[I, C, V]) {
+  private case class Tester[I, C: Eq, V: Eq](v: Validator[I, C, V]) {
 
     def each(correct1: C, correctN: C*)(expectResult: C => String \/ V): Unit =
       for (c <- correct1 +: correctN)
@@ -29,8 +29,8 @@ object UserValidatorTest extends TestSuite {
       // Test validation
       val result = v(uncorrected)
       expectResult(correct) match {
-        case r@ \/-(_) =>
-          assertEq(s"Result of '$uncorrected'", result, r)
+        case \/-(r) =>
+          assertEq(s"Result of '$uncorrected'", result, \/-(r))
         case -\/(expect) =>
           result match {
             case -\/(NonEmptySet.Sole(e)) => assertContainsCI(e, expect)

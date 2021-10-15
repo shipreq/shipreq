@@ -159,24 +159,28 @@ object Row {
       vs => m => m.updated(k, m.get(k).fold(Expansion(vs, vs))(_.copy(values = vs))))
 
   val implications: Direction => Optional[Row, Vector[Pubid]] =
-    Direction.memo(Row.expansion ^|-> Expansions.implications ^|-> Direction.Values.lens(_) ^|-> Expansion.values)
+    Direction.memo(d =>
+      Row.expansion andThen
+      Expansions.implications andThen
+      Direction.Values.lens[Expansion[Pubid]](d) andThen
+      Expansion.values)
 
   val otherTags: Optional[Row, Vector[ApplicableTagId]] =
-    Row.expansion ^|-> Expansions.otherTags ^|-> Expansion.values
+    Row.expansion andThen Expansions.otherTags andThen Expansion.values
 
   val allTags: Optional[Row, Vector[ApplicableTagId]] =
-    Row.expansion ^|-> Expansions.allTags ^|-> Expansion.values
+    Row.expansion andThen Expansions.allTags andThen Expansion.values
 
   val cfImps: Optional[Row, Map[CustomField.Implication.Id, Expansion[Pubid]]] =
-    Row.expansion ^|-> Expansions.cfImps
+    Row.expansion andThen Expansions.cfImps
 
   val cfTags: Optional[Row, Map[CustomField.Tag.Id, Expansion[ApplicableTagId]]] =
-    Row.expansion ^|-> Expansions.cfTags
+    Row.expansion andThen Expansions.cfTags
 
   def cfImp(id: CustomField.Implication.Id): Optional[Row, Vector[Pubid]] =
-    cfImps ^|-> mapExpansionValues(id)
+    cfImps andThen mapExpansionValues(id)
 
   def cfTag(id: CustomField.Tag.Id): Optional[Row, Vector[ApplicableTagId]] =
-    cfTags ^|-> mapExpansionValues(id)
+    cfTags andThen mapExpansionValues(id)
 
 }

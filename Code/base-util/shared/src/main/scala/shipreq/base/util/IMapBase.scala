@@ -1,15 +1,14 @@
 package shipreq.base.util
 
+import cats.instances.map._
+import cats.syntax.foldable._
+import cats.{Eq, Foldable, Order}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.collection.IterableOnce
-import scalaz.std.iterable._
-import scalaz.std.map._
-import scalaz.syntax.foldable._
-import scalaz.{Equal, Foldable, Order}
 
 object IMapBaseV {
-  def equality[K: Order, V: Equal, M <: IMapBaseV[K, _, V, M]]: Equal[M] =
-    Equal.equalBy(_.underlyingMap)
+  def equality[K: Order, V: Eq, M <: IMapBaseV[K, _, V, M]]: Eq[M] =
+    Eq.by(_.underlyingMap)
 
   def univEq[K, VI, VO, I <: IMapBaseV[K, VI, VO, I]](implicit @nowarn("cat=unused") u: UnivEq[Map[K, VO]]): UnivEq[I] =
     UnivEq.force

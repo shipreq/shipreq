@@ -1,7 +1,6 @@
 package shipreq.webapp.member.project.data.derivation
 
 import shipreq.base.test.BaseTestUtil._
-import shipreq.base.util.fp.Monoid.Implicits._
 import shipreq.webapp.member.project.data._
 import utest._
 

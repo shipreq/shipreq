@@ -1,11 +1,10 @@
 package shipreq.base.util
 
+import cats.{Applicative, Eq}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle._
 import nyaya.prop.Prop
 import scala.collection.AbstractIterator
-import scalaz.syntax.equal._
-import scalaz.{Applicative, Equal}
 import shipreq.base.util.VectorTree._
 
 /**
@@ -318,17 +317,17 @@ final case class VectorTree[+A](children: Children[A]) extends Parent[A] {
 // =====================================================================================================================
 
 trait VectorTreeLowPri {
-  private def equalityForChildren[A](n: Equal[Node[A]]): Equal[Children[A]] =
-    Equal.equal((a, b) => a.corresponds(b)(n.equal))
+  private def equalityForChildren[A](n: Eq[Node[A]]): Eq[Children[A]] =
+    Eq.instance((a, b) => a.corresponds(b)(n.eqv))
 
-  implicit def equalityForNode[A: Equal]: Equal[Node[A]] = {
-    lazy val node: Equal[Node[A]] = Equal.equal((a, b) => (a.value ≟ b.value) && kids.equal(a.children, b.children))
-    lazy val kids: Equal[Children[A]] = equalityForChildren(node)
+  implicit def equalityForNode[A: Eq]: Eq[Node[A]] = {
+    lazy val node: Eq[Node[A]] = Eq.instance((a, b) => (a.value === b.value) && kids.eqv(a.children, b.children))
+    lazy val kids: Eq[Children[A]] = equalityForChildren(node)
     node
   }
 
-  implicit def equalityForRoot[A: Equal]: Equal[VectorTree[A]] =
-    equalityForChildren(equalityForNode[A]).contramap(_.children)
+  implicit def equalityForRoot[A: Eq]: Eq[VectorTree[A]] =
+    Eq.by((_: VectorTree[A]).children)(equalityForChildren(equalityForNode[A]))
 }
 
 object VectorTree extends VectorTreeLowPri {
@@ -738,9 +737,9 @@ object VectorTree extends VectorTreeLowPri {
 
   def ptraversal[A, B]: PTraversal[VectorTree[A], VectorTree[B], A, B] =
     new PTraversal[VectorTree[A], VectorTree[B], A, B] {
-      val ch = Optics.vectorPTraversal[Node[A], Node[B]] ^|->> nodePTraversal
-      override def modifyF[F[_]](f: A => F[B])(va: VectorTree[A])(implicit F: Applicative[F]): F[VectorTree[B]] = {
-        val fcb = ch.modifyF(f)(va.children)
+      val ch = Optics.vectorPTraversal[Node[A], Node[B]] andThen nodePTraversal[A, B]
+      override def modifyA[F[_]](f: A => F[B])(va: VectorTree[A])(implicit F: Applicative[F]): F[VectorTree[B]] = {
+        val fcb = ch.modifyA(f)(va.children)
         F.map(fcb)(VectorTree.apply)
       }
     }
@@ -750,11 +749,11 @@ object VectorTree extends VectorTreeLowPri {
 
   def nodePTraversal[A, B]: PTraversal[Node[A], Node[B], A, B] =
     new PTraversal[Node[A], Node[B], A, B] {
-      val ch = Optics.vectorPTraversal[Node[A], Node[B]] ^|->> this
-      override def modifyF[F[_]](f: A => F[B])(na: Node[A])(implicit F: Applicative[F]): F[Node[B]] = {
+      val ch = Optics.vectorPTraversal[Node[A], Node[B]] andThen this
+      override def modifyA[F[_]](f: A => F[B])(na: Node[A])(implicit F: Applicative[F]): F[Node[B]] = {
         val fb = f(na.value)
-        val fcb = ch.modifyF(f)(na.children)
-        F.apply2(fb, fcb)(Node.apply)
+        val fcb = ch.modifyA(f)(na.children)
+        F.map2(fb, fcb)(Node.apply)
       }
     }
 

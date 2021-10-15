@@ -23,7 +23,7 @@ final case class IdCeilings(customIssueType : Int,
   def update(lens: Lens[IdCeilings, Int], n: Int): IdCeilings = {
     val i = lens.get(this)
     if (n > i)
-      lens.set(n)(this)
+      lens.replace(n)(this)
     else
       this
   }

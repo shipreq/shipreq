@@ -1,7 +1,7 @@
 package shipreq.webapp.member.test.project
 
 import shipreq.base.test._
-import shipreq.base.util.ScalazExtra.applicativeView
+import shipreq.base.util.CatsExtra.applicativeView
 import shipreq.base.util.{NonEmptyArraySeq, Validity}
 import shipreq.webapp.member.project.text.Atom
 import shipreq.webapp.member.project.text.Atom.AnyAtom

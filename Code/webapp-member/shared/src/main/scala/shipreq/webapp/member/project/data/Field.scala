@@ -5,7 +5,6 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.macros.{GenLens, Lenses}
 import monocle.{Lens, Traversal}
 import scala.collection.immutable.ListSet
-import scalaz.std.option.toRight
 import shipreq.base.util.IndexLabel._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
@@ -254,7 +253,7 @@ object StaticField {
       "Normal and Alternate Courses", T.UseCaseSteps, useCaseOptionalOnly) {
 
     override val useCaseSteps = GenLens[UseCase](_.stepsNA)
-    override val useCaseStepTree = useCaseSteps ^|-> UseCaseSteps.tree
+    override val useCaseStepTree = useCaseSteps andThen UseCaseSteps.tree
 
     // UC-8.0.1.a.i.1
     // ____|_________
@@ -281,7 +280,7 @@ object StaticField {
       "Exception Courses", T.UseCaseSteps, useCaseOptionalOnly) {
 
     override val useCaseSteps = GenLens[UseCase](_.stepsE)
-    override val useCaseStepTree = useCaseSteps ^|-> UseCaseSteps.tree
+    override val useCaseStepTree = useCaseSteps andThen UseCaseSteps.tree
 
     // UC-8.E.1.a.i.1
     // ____|↑|_______
@@ -387,7 +386,7 @@ sealed abstract class CustomField(override final val fieldType: CustomFieldType)
    * If [[liveExplicitly]] was [[Live]], would the final live value be [[Live]] too.
    */
   final def recoverable(cfg: ProjectConfig): Boolean =
-    CustomField.liveExplicitly.set(Live)(this).live(cfg) is Live
+    CustomField.liveExplicitly.replace(Live)(this).live(cfg) is Live
 
   override final def fold[A](s: StaticField => A, c: CustomField => A): A = c(this)
 }
@@ -671,7 +670,7 @@ final case class FieldSet(customFields: FieldSet.CustomFields,
   def customAttempt[I <: CustomFieldId, D <: CustomField](id: I)(implicit d: DataIdAux[D, I]): ErrorMsg \/ D =
     customFields.get(id) match {
       case Some(f) =>
-        toRight(d unapplyData f)(ErrorMsg(s"$id associated with wrong type: $f"))
+        d.unapplyData(f).toRight(ErrorMsg(s"$id associated with wrong type: $f"))
       case None =>
         -\/(ErrorMsg(s"$id not found."))
     }

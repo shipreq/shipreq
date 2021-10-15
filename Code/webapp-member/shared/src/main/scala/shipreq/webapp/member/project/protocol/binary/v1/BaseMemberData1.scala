@@ -1,7 +1,6 @@
 package shipreq.webapp.member.project.protocol.binary.v1
 
 import boopickle.DefaultBasic._
-import nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data._

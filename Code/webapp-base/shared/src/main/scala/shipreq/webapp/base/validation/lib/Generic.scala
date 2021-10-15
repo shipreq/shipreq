@@ -1,9 +1,8 @@
 package shipreq.webapp.base.validation.lib
 
+import cats.instances.vector._
+import cats.{Applicative, Semigroup, Traverse}
 import monocle.Iso
-import scalaz.Isomorphism.<=>
-import scalaz.std.vector.vectorInstance
-import scalaz.{Applicative, Semigroup, Traverse}
 import shipreq.base.util.{GenTuple, Identity, Valid, Validity}
 
 object Generic {
@@ -43,9 +42,6 @@ object Generic {
       EndoCorrector(
         g compose live compose f,
         g compose full compose f)
-
-    def imapZ[B](iso: B <=> A): EndoCorrector[B] =
-      xmap(iso.from)(iso.to)
 
     def imap[B](iso: Iso[B, A]): EndoCorrector[B] =
       xmap(iso.reverseGet)(iso.get)
@@ -114,9 +110,6 @@ object Generic {
         full compose f,
         g compose uncorrect)
 
-    def imapInputZ[A](iso: A <=> I): Corrector[A, C] =
-      xmapInput(iso.from)(iso.to)
-
     def imapInput[A](iso: Iso[A, I]): Corrector[A, C] =
       xmapInput(iso.reverseGet)(iso.get)
 
@@ -125,9 +118,6 @@ object Generic {
         live,
         f compose full,
         uncorrect compose g)
-
-    def imapCorrectedZ[A](iso: C <=> A): Corrector[I, A] =
-      xmapCorrected(iso.to)(iso.from)
 
     def imapCorrected[A](iso: Iso[C, A]): Corrector[I, A] =
       xmapCorrected(iso.get)(iso.reverseGet)
@@ -178,7 +168,7 @@ object Generic {
 
     def audit[AA <: A with AnyRef](a: AA): E \/ a.type =
       invalidate(a) match {
-        case None => \/-[a.type](a)
+        case None    => \/.right[a.type](a)
         case Some(e) => -\/(e)
       }
 
@@ -194,7 +184,7 @@ object Generic {
           case (None      , None      ) => None
           case (e@ Some(_), None      ) => e
           case (None      , e@ Some(_)) => e
-          case (Some(e1)  , Some(e2)  ) => Some(E.append(e1, e2))
+          case (Some(e1)  , Some(e2)  ) => Some(E.combine(e1, e2))
         }
       )
 
@@ -343,13 +333,13 @@ object Generic {
         case (\/-(a), \/-(b)) => \/-(f(a, b))
         case (\/-(_), e@ -\/(_)) => e
         case (e@ -\/(_), \/-(_)) => e
-        case (-\/(e1), -\/(e2)) => -\/(E.append(e1, e2))
+        case (-\/(e1), -\/(e2)) => -\/(E.combine(e1, e2))
       }
 
     def applicativeInstance[E](implicit E: Semigroup[E]): Applicative[E \/ *] =
       new Applicative[E \/ *] {
-        override def point[A](a: => A) = \/-(a)
-        override def ap[A, B](fa: => E \/ A)(fab: => E \/ (A => B)) = AccumuateErrors(fa, fab)((a, f) => f(a))(E)
+        override def pure[A](a: A) = \/-(a)
+        override def ap[A, B](fab: E \/ (A => B))(fa: E \/ A) = AccumuateErrors(fa, fab)((a, f) => f(a))(E)
       }
   }
 
@@ -363,8 +353,8 @@ object Generic {
     def xmapInput[B](g: A => B)(f: B => A): EndoValidator[E, B] =
       EndoValidator(corrector.xmap(g)(f), invalidator.contramap(f))
 
-    def imapInput[B](iso: B <=> A): EndoValidator[E, B] =
-      xmapInput(iso.from)(iso.to)
+    def imapInput[B](iso: Iso[B, A]): EndoValidator[E, B] =
+      xmapInput(iso.reverseGet)(iso.get)
 
     def append[EE >: E](that: EndoValidator[EE, A])(implicit E: Semigroup[EE]): EndoValidator[EE, A] =
       EndoValidator(
@@ -424,17 +414,11 @@ object Generic {
     def xmapInput[B](g: I => B)(f: B => I): Validator[E, B, C, V] =
       mapCorrector(_.xmapInput(g)(f))
 
-    def imapInputZ[B](iso: B <=> I): Validator[E, B, C, V] =
-      xmapInput(iso.from)(iso.to)
-
     def imapInput[B](iso: Iso[B, I]): Validator[E, B, C, V] =
       xmapInput(iso.reverseGet)(iso.get)
 
     def xmapCorrected[B](g: C => B)(f: B => C): Validator[E, I, B, V] =
       Validator(corrector.xmapCorrected(g)(f), auditor.contramap(f))
-
-    def imapCorrectedZ[B](iso: B <=> C): Validator[E, I, B, V] =
-      xmapCorrected(iso.from)(iso.to)
 
     def imapCorrected[B](iso: Iso[B, C]): Validator[E, I, B, V] =
       xmapCorrected(iso.reverseGet)(iso.get)

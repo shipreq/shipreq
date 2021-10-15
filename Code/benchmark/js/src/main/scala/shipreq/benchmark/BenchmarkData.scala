@@ -12,7 +12,7 @@ import shipreq.webapp.sampledata.SampleData
 final case class BenchmarkData(data: Vector[SampleData]) {
 
   val guiParam: GuiParam[SampleData, BitSet] =
-    GuiParam.`enum`[SampleData](
+    GuiParam.enumOf[SampleData](
       header        = "Sample data",
       values        = data: _*)(
       resultTxt     = _.name)

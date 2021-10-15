@@ -1,5 +1,6 @@
 package shipreq.webapp.member.project.text
 
+import cats.Eq
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.util.concurrent.atomic.AtomicInteger
 import nyaya.gen._
@@ -10,7 +11,6 @@ import org.parboiled2._
 import scala.collection.immutable.TreeSet
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
-import scalaz.Equal
 import shipreq.base.util.{NonEmptyArraySeq, Valid}
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{ApplicableTagGD, Event}
@@ -190,14 +190,14 @@ object ParsersTest extends TestSuite {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  private def parserProp[A, P <: Parser](name: => String, txt: A => String, parser: ParserInput => P)(run: P => Try[A])(implicit eq: Equal[A]) =
+  private def parserProp[A, P <: Parser](name: => String, txt: A => String, parser: ParserInput => P)(run: P => Try[A])(implicit eq: Eq[A]) =
     Prop.atom[A](name,
       a => {
         val p = parser(txt(a))
         val r = run(p)
         r match {
           case Success(b) =>
-            if (eq.equal(a, b)) None else Some(s"Expected $a, got $b")
+            if (eq.eqv(a, b)) None else Some(s"Expected $a, got $b")
           case Failure(e: ParseError) =>
             Some(p.formatError(e, new ErrorFormatter(showTraces = true)))
           case Failure(e) =>

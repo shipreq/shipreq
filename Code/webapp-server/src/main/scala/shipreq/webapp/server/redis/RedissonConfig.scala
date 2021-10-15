@@ -1,9 +1,9 @@
 package shipreq.webapp.server.redis
 
+import cats.syntax.apply._
 import japgolly.clearconfig._
 import java.time.Duration
 import org.redisson.config.{Config, SingleServerConfig}
-import scalaz.syntax.applicative._
 
 final case class RedissonConfig(url: String,
                                 extra: SingleServerConfig => Unit) {
@@ -42,7 +42,7 @@ object RedissonConfig {
   }
 
   def config: ConfigDef[RedissonConfig] =
-    ( ConfigDef.need[String]("url") |@|
-      extraDef
-    )(apply)
+    ( ConfigDef.need[String]("url"),
+      extraDef,
+    ).mapN(apply)
 }

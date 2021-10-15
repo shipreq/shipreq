@@ -1,4 +1,5 @@
-FROM alpine:3.12.0
+# FROM alpine:3.12.4
+FROM public.ecr.aws/micahhausler/alpine:3.14.0
 
 RUN apk --update --no-cache add \
       bash \

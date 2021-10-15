@@ -1,9 +1,8 @@
 package shipreq.webapp.member.project.data.derivation
 
+import cats.{Monoid, Semigroup}
 import scala.collection.mutable.Builder
 import shipreq.base.util.LazyVal
-import shipreq.base.util.fp.Semigroup.Syntax._
-import shipreq.base.util.fp.{Monoid, Semigroup}
 import shipreq.webapp.member.project.data._
 
 /**
@@ -21,8 +20,8 @@ final case class LiveDeadStat[@specialized(Int) A] private[data](live: A,
 
   def +(c: LiveDeadStat[A])(implicit a: Semigroup[A]): LiveDeadStat[A] =
     LiveDeadStat(
-      a.append(live, c.live),
-      a.append(dead, c.dead))
+      a.combine(live, c.live),
+      a.combine(dead, c.dead))
 
   def apply(fd: FilterDead): A =
     fd match {
@@ -34,18 +33,18 @@ final case class LiveDeadStat[@specialized(Int) A] private[data](live: A,
     LiveDeadStat(f(live), f(dead), allLazy.map(f))
 
   def clearDead(implicit a: Monoid[A]): LiveDeadStat[A] =
-    new LiveDeadStat(live, a.zero, LazyVal.pure(live))
+    new LiveDeadStat(live, a.empty, LazyVal.pure(live))
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
 object LiveDeadStat {
 
-  def apply[@specialized(Int) A: Semigroup](live: A, dead: A): LiveDeadStat[A] =
-    new LiveDeadStat(live, dead, LazyVal(live |+| dead))
+  def apply[@specialized(Int) A](live: A, dead: A)(implicit A: Semigroup[A]): LiveDeadStat[A] =
+    new LiveDeadStat(live, dead, LazyVal(A.combine(live, dead)))
 
   def empty[@specialized(Int) A](implicit m: Monoid[A]): LiveDeadStat[A] = {
-    val z = m.zero
+    val z = m.empty
     LiveDeadStat(z, z, LazyVal.pure(z))
   }
 
@@ -104,7 +103,7 @@ object LiveDeadStat {
       def result()(implicit B: Semigroup[B]): LiveDeadStat[B] = {
         val l = live.result()
         val d = dead.result()
-        val a = LazyVal(B.append(l, d))
+        val a = LazyVal(B.combine(l, d))
         new LiveDeadStat(l, d, a)
       }
     }

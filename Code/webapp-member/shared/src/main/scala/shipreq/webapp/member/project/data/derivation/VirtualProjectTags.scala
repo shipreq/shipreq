@@ -2,7 +2,6 @@ package shipreq.webapp.member.project.data.derivation
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
-import nyaya.util.Multimap
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 import shipreq.base.util._

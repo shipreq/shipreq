@@ -42,7 +42,7 @@ object TableRow {
   private val na = TagMod(*.na, "–")
 
   private def cellBase(col: Column, addNav: Boolean = true, allowCopy: Boolean = true) = {
-    def keys(e: ReactKeyboardEventFromHtml): CallbackOption[Unit] =
+    def keys(e: ReactKeyboardEventFromHtml): Callback =
       tableNavigationFeature.Keys.handlerFn(e).when(addNav) | ClipboardKeys.copy.generic(e).when(allowCopy)
 
     td(

@@ -1,13 +1,13 @@
 package shipreq.webapp.client.project.widgets.editors_with_controls
 
+import cats.instances.option._
+import cats.instances.string._
+import cats.instances.vector._
+import cats.syntax.traverse._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.ext.KeyCode
-import scalaz.std.option.optionInstance
-import scalaz.std.string.stringInstance
-import scalaz.std.vector._
-import scalaz.syntax.traverse._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}

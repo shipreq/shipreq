@@ -119,9 +119,9 @@ object ReqDetailTest extends TestSuite {
           val block =
             s"""// $reason
                |'bugX - test("UC-1", SampleProject6.project)(Plan.action(
-               |${code.indent(2)}
+               |${code.indentLines(2)}
                |))
-               |""".stripMargin.trim.indent("      ")
+               |""".stripMargin.trim.indentLines("      ")
 
           failures :+= block
 
@@ -199,7 +199,7 @@ object ReqDetailTest extends TestSuite {
       ))
 
       "dead" - test("UC-1")(Plan.action(
-        clickDeleteOrRestore.updateState(stateMode set Mode.Delete) >> deleteScreenDelete
+        clickDeleteOrRestore.updateState(stateMode replace Mode.Delete) >> deleteScreenDelete
           +> life.assert(Dead)
           +> tailStepAC.test("doesn't exist")(_.isEmpty)
           +> tailStepEC.test("doesn't exist")(_.isEmpty)
@@ -330,13 +330,13 @@ object ReqDetailTest extends TestSuite {
         +> editorCount.assert.noChange
         +> unsavedChanges.assert.increaseBy(1)
 
-        >> clickDeleteOrRestore.updateState(stateMode set Mode.Delete)
+        >> clickDeleteOrRestore.updateState(stateMode replace Mode.Delete)
         >> deleteScreenDelete
         +> life.assert(Dead)
         +> editorCount.assert(0)
         +> unsavedChanges.assert(0)
 
-        >> clickDeleteOrRestore.updateState(stateMode set Mode.Restore)
+        >> clickDeleteOrRestore.updateState(stateMode replace Mode.Restore)
         >> restoreScreenRestore
         +> life.assert(Live)
         +> editorCount.assert(2)
@@ -761,7 +761,7 @@ object ReqDetailTest extends TestSuite {
       title.set("[mf2] [mf2:]")
       +> title.text.assert("[MF-2] [MF-2: Anonymous Share]")
       >> title.doubleClick
-      +> title.editorValue.assert.contains("[MF-2] [MF-2:]")
+      +> title.editorValue.assert.some("[MF-2] [MF-2:]")
     ))
 
     "derivativeTags" - {

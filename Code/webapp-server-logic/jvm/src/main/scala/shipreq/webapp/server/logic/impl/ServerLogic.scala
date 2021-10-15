@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic.impl
 
-import scalaz.{BindRec, Catchable, Monad, ~>}
+import cats.effect.Sync
+import cats.{Monad, ~>}
 import shipreq.base.ops.Trace
 import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.server.logic.algebra._
@@ -20,11 +21,11 @@ object ServerLogic {
   def create[D[_] : Monad
                   : DB.Algebra,
              F[_] : ApplyEventAlgebra
-                  : Catchable
                   : MetricsAlgebra
                   : Redis.ProjectAlgebra
                   : Security.Algebra
                   : Server.Algebra
+                  : Sync
                   : TaskmanApi
                   : Trace.Algebra]
             (implicit F: Monad[F] with BindRec[F],
@@ -36,6 +37,7 @@ object ServerLogic {
     implicit val common = CommonProtocolLogic[F]
     implicit val assetManifest = config.assetManifest
     implicit val scalaJsManifest = config.scalaJsManifest
+    implicit val projectAccessHacks = config.security.projectAccessHacks
 
     ServerLogic(
       common,

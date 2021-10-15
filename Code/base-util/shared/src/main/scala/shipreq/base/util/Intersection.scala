@@ -1,8 +1,8 @@
 package shipreq.base.util
 
+import cats.evidence.Is
 import japgolly.microlibs.utils.BiMap
 import monocle._
-import scalaz.Leibniz.===
 /**
   * +--------+     +--------+     +--------+
   * |        |     |        |     |        |
@@ -32,7 +32,7 @@ abstract class Intersection[A, B] {
 
   def reverse: Intersection[B, A]
 
-  def id: Option[B === A]
+  def id: Option[B Is A]
 
   val getOption: A => Option[B]
 
@@ -119,13 +119,13 @@ abstract class Intersection[A, B] {
     ev(this).flattenL[L].flattenR[R]
 
   final def getThenFlatMap[C](f: B => Option[C]): A => Option[C] =
-    id.fold[A => Option[C]](getOption(_).flatMap(f))(_.subst[* => Option[C]](f))
+    id.fold[A => Option[C]](getOption(_).flatMap(f))(_.substitute[* => Option[C]](f))
 }
 
 object Intersection {
 
   private final class Id[A] extends Intersection[A, A] {
-    override lazy val id                                         = Some(implicitly[A === A])
+    override lazy val id                                         = Some(implicitly[A Is A])
     override val getOption                                       = Some(_: A)
     override def reverse                                         = this
     override def get         (a: A, default: => A)               = a

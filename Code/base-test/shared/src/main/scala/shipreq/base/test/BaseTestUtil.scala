@@ -1,27 +1,26 @@
 package shipreq.base.test
 
+import cats.{Eq, Order}
 import java.time.{Duration, Instant}
 import pprint.PPrinter
-import scalaz.std.string.stringInstance
-import scalaz.{Equal, Order}
 import shipreq.base.util.{Debug, NonEmptyArraySeq}
 
 object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
 
   final class BaseTestUtilOpsAny[A](private val a: A) extends AnyVal {
-    def assertEq(expect: A)(implicit e: Equal[A]): Unit =
+    def assertEq(expect: A)(implicit e: Eq[A]): Unit =
       BaseTestUtil.assertEq(a, expect)
 
-    def assertEqN(name: => String, expect: A)(implicit e: Equal[A]): Unit =
+    def assertEqN(name: => String, expect: A)(implicit e: Eq[A]): Unit =
       BaseTestUtil.assertEq(name, a, expect)
   }
 
   final class FieldAssert[A](actual: A, expect: A) {
-    def assertEq[B: Equal](f: A => B) = {
+    def assertEq[B: Eq](f: A => B) = {
       BaseTestUtil.assertEq(f(actual), f(expect))
       this
     }
-    def assertEq[B: Equal](name: => String, f: A => B) = {
+    def assertEq[B: Eq](name: => String, f: A => B) = {
       BaseTestUtil.assertEq(name, f(actual), f(expect))
       this
     }
@@ -59,8 +58,7 @@ object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
 
 trait BaseTestUtil
   extends japgolly.microlibs.testutil.TestUtilWithoutUnivEq
-  with Debug.Implicits
-  with scalaz.syntax.ToEqualOps {
+  with Debug.Implicits {
 
   implicit def BaseTestUtilOpsAny[A](a: A) =
     new BaseTestUtil.BaseTestUtilOpsAny(a)
@@ -75,10 +73,9 @@ trait BaseTestUtil
     BaseTestUtil.PrettyPrinter
 
   def forceUnivEqOrderByToString[A]: Order[A] with UnivEq[A] = {
-    val o = Order.orderBy((_: A).toString)
+    val o = Order.by((_: A).toString)
     new Order[A] with UnivEq[A] {
-      override def order(a: A, b: A) = o.order(a, b)
-      override def equal(a: A, b: A) = a == b
+      override def compare(a: A, b: A) = o.compare(a, b)
     }
   }
 

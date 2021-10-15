@@ -1,7 +1,7 @@
 package shipreq.webapp.member.project.text
 
+import cats.{Applicative, Functor, Monoid}
 import org.parboiled2._
-import scalaz.{Applicative, Functor, Monoid}
 import shipreq.base.util.{Backwards, Direction, Forwards}
 import shipreq.webapp.member.project.data.derivation.UseCaseStepLabelLookup
 import shipreq.webapp.member.project.data.{ReqTypePos, UseCaseStepId}
@@ -19,14 +19,14 @@ object UseCaseStepFlowText {
       this match {
         case Elem.Text(text) => F.map(f(text))(Elem.Text(_))
         case Elem.Step(step) => F.map(g(step))(Elem.Step(_))
-        case a: Elem.Arrow   => F.point(a)
+        case a: Elem.Arrow   => F.pure(a)
       }
 
     final def mapT[F[_], TT, SS >: S](f: T => F[TT])(implicit F: Applicative[F]): F[Elem[TT, SS]] =
-      bimap[F, TT, SS](f, F.point(_))
+      bimap[F, TT, SS](f, F.pure(_))
 
     final def mapS[F[_], TT >: T, SS](f: S => F[SS])(implicit F: Applicative[F]): F[Elem[TT, SS]] =
-      bimap[F, TT, SS](F.point(_), f)
+      bimap[F, TT, SS](F.pure(_), f)
   }
 
   object Elem {
@@ -168,12 +168,12 @@ object UseCaseStepFlowText {
   }
 
   def separateTextAndFlow[T, S](es: IterableOnce[Elem[T, S]])(implicit M: Monoid[T]): TextAndFlow[T, Vector[S]] = {
-    var t = M.zero
+    var t = M.empty
     var fwd = Vector.empty[S]
     var bck = Vector.empty[S]
     var dir: Direction = null
     es.iterator foreach {
-      case Elem.Text(text) => t = M.append(t, text); dir = null
+      case Elem.Text(text) => t = M.combine(t, text); dir = null
       case Elem.Arrow(d)   => dir = d
       case Elem.Step(step) => dir match {
         case Forwards  => fwd :+= step

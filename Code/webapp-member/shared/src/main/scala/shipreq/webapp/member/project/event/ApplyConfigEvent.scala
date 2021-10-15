@@ -56,7 +56,7 @@ trait ApplyConfigEvent {
   object CustomReqTypeEventsV1 {
     private val ^    = CustomReqTypeGDv1
     private val GD   = GenericDataApp[CustomReqType](^)
-            val imap = IMapStoreL(Project.reqTypes ^|-> ReqTypes.custom)(CustomReqType.live)
+            val imap = IMapStoreL(Project.reqTypes andThen ReqTypes.custom)(CustomReqType.live)
 
     private val validateName     = validateA(V.reqType.name.stateless)
     private val validateMnemonic = validateI(V.reqType.mnemonic.stateless)(_.value)
@@ -137,7 +137,7 @@ trait ApplyConfigEvent {
   object CustomReqTypeEvents {
     private val ^    = CustomReqTypeGD
     private val GD   = GenericDataApp[CustomReqType](^)
-            val imap = IMapStoreL(Project.reqTypes ^|-> ReqTypes.custom)(CustomReqType.live)
+            val imap = IMapStoreL(Project.reqTypes andThen ReqTypes.custom)(CustomReqType.live)
 
     private val validateName     = validateA(V.reqType.name.stateless)
     private val validateMnemonic = validateI(V.reqType.mnemonic.stateless)(_.value)
@@ -196,10 +196,10 @@ trait ApplyConfigEvent {
       deleteOrRestore(id, Dead, ReqCodeLogic.inactivateBelongingToReqs)
 
     private val fieldReqTypeRules1: Traversal[Project, FieldReqTypeRules[Any]] =
-      Project.customFields ^|->> FieldSet.customFieldsTraversal ^|-> CustomField.fieldReqTypeRulesHack
+      Project.customFields andThen FieldSet.customFieldsTraversal andThen CustomField.fieldReqTypeRulesHack
 
     private val reqTypeApplicability1: Traversal[Project, ApplicableReqTypes] =
-      Project.applicableTags ^|-> ApplicableTag.applicableReqTypes
+      Project.applicableTags andThen ApplicableTag.applicableReqTypes
 
     def hardDelete(id: CustomReqTypeId): Eval[Unit] = {
 
@@ -282,7 +282,7 @@ trait ApplyConfigEvent {
 
     private def setLife(rootId: TagId, newLife: Live): Eval[Unit] = {
       def modifySubject(id: TagId, tt: TagTree): TagTree =
-        tt.mod(id, TagInTree.live set newLife)
+        tt.mod(id, TagInTree.live replace newLife)
 
       def childNeedsModification(child: TagInTree, parentId: TagId, parentLive: Live, tt: TagTree): Boolean =
         (child.tag.live ==* parentLive) && {
@@ -459,7 +459,7 @@ trait ApplyConfigEvent {
 
   // ===================================================================================================================
   object FieldEvents {
-    private val fieldOrderL = Project.fields ^|-> FieldSet.order
+    private val fieldOrderL = Project.fields andThen FieldSet.order
 
     val updateIdCeiling = updateIdCeilingFn(IdCeilings.customField)
 
@@ -470,7 +470,7 @@ trait ApplyConfigEvent {
         fs  <- Eval.gets(Project.fields.get)
         cfs <- imapCreate(fs.customFields)(cf)
         fs2 = FieldSet(cfs, fs.order :+ cf.id)
-        _   <- Project.fields set fs2
+        _   <- Project.fields replace fs2
         _   <- updateIdCeiling(cf.id)
       } yield ()
 
@@ -482,7 +482,7 @@ trait ApplyConfigEvent {
         f2 <- narrowCC[CustomField, CF](f1)
         _  <- ensureLive(f2 live p.config)(show(id))
         f3 <- mod(f2)
-        _  <- Project.customFields set (m + f3)
+        _  <- Project.customFields replace (m + f3)
       } yield ()
 
     private val repositionField = repositionFn[FieldId]
@@ -511,8 +511,8 @@ trait ApplyConfigEvent {
         p  <- Eval.get
         m  = Project.customFields get p
         f1 <- imapNeed(m)(id)
-        f2 <- toggleLiveCheckBeforeAfter(f1, targetState)(_ live p.config, CustomField.liveExplicitly.set, show(f1))
-        _  <- Project.customFields set (m + f2)
+        f2 <- toggleLiveCheckBeforeAfter(f1, targetState)(_ live p.config, CustomField.liveExplicitly.replace, show(f1))
+        _  <- Project.customFields replace (m + f2)
       } yield ()
 
     def hardDelete(id: CustomFieldId): Eval[Unit] =

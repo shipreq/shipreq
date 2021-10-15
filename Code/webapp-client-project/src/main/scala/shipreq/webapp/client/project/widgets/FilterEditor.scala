@@ -241,7 +241,7 @@ object FilterEditor {
     val inputNode = Ref[html.Input]
 
     override val autoCompleteCtx =
-      inputNode.get.map(AutoCompleteCtx(pxAutoComplete.value(), _))
+      inputNode.get.asCBO.map(AutoCompleteCtx(pxAutoComplete.value(), _))
 
     private lazy val inputTagMod = TagMod(
       ^.onBlur     --> autoCompleteOnBlur,

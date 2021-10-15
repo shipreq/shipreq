@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.feature.editor
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react.Reusability.MapImplicits._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
@@ -394,12 +394,12 @@ object Feature {
 
           case SetValueDecision.OpenAndReplace =>
             Some(p =>
-              CallbackOption.liftOptionCallback(withPotentialValue(p).startEdit))
+              CallbackOption.optionCallback(withPotentialValue(p).startEdit))
 
           case SetValueDecision.Replace =>
             Some(p =>
               for {
-                e <- CallbackOption.liftOption(read.editor)
+                e <- CallbackOption.option(read.editor)
                 _ <- e.setPotentialValue(p)
               } yield ()
             )

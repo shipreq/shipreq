@@ -1,5 +1,6 @@
 package shipreq.webapp.server.http
 
+import cats.Eval
 import com.typesafe.scalalogging.StrictLogging
 import java.nio.charset.Charset
 import net.liftweb.common.{Box, Empty, Failure => BoxFailure, Full}
@@ -8,7 +9,6 @@ import net.liftweb.util.Props
 import org.eclipse.jetty.http.HttpCookie
 import scala.util.control.NonFatal
 import scala.xml.NodeSeq
-import scalaz.Need
 import shipreq.base.util.FxModule._
 import shipreq.base.util.{BinaryData, Url}
 import shipreq.webapp.base.config.{Urls, WebappConfig}
@@ -103,7 +103,7 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
 
     val url = liftReqUrl(r)
 
-    val body = Need {
+    val body = Eval.later {
       S.request.flatMap(_.body) match {
         case Full(b)       => Some(BinaryData.unsafeFromArray(b))
         case Empty         => None

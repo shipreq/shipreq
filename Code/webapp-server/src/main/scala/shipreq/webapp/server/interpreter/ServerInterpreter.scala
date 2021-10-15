@@ -1,12 +1,12 @@
 package shipreq.webapp.server.interpreter
 
+import cats.syntax.all._
 import java.time.{Duration, Instant}
 import net.liftweb.actor.LAScheduler
 import net.liftweb.common.{MDC => _, _}
 import net.liftweb.http.provider.HTTPRequest
 import net.liftweb.http.{Req, S}
 import scala.concurrent.blocking
-import scalaz.syntax.monad._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.{HasLogger, MdcUtil}
 import shipreq.webapp.base.data.IP

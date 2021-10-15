@@ -3,7 +3,6 @@ package shipreq.webapp.member.test
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
-import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Invalid, Valid}
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.ui.semantic.JQuery
@@ -113,14 +112,18 @@ object CommonObs {
   final class DropdownButton($: DomZipperJs) {
     val dropdown      = new Dropdown($(".ui.dropdown"))
     val buttonDom     = $(".ui.button").domAsHtml
+    val disabled      = $.classes.contains("disabled")
     def click(): Unit = Simulate click buttonDom
   }
 
   object DropdownButton {
     final class TestDsl[R, O, S](val * : Dsl[Id, R, O, S, String], name: String)(getObs: O => DropdownButton) {
       protected implicit def autoObs(o: O): DropdownButton = getObs(o)
+
+      val disabled = *.focus(s"$name button is disabled").value(_.obs.disabled)
+      val enabled  = *.focus(s"$name button is enabled").value(!_.obs.disabled)
       val dropdown = new Dropdown.TestDsl(*, s"$name dropdown")(_.dropdown)
-      val click = *.action(s"Click $name button")(_.obs.click())
+      val click    = *.action(s"Click $name button")(_.obs.click())
     }
   }
 
@@ -251,7 +254,7 @@ object CommonObs {
 
       final def change(fromTo: (String, String)): *.Actions =
         (doubleClick
-          +> editorValue.assert.contains(fromTo._1)
+          +> editorValue.assert.some(fromTo._1)
           >> setEditorValue(fromTo._2)
           >> commit
           ).group(s"Change $field field from '${fromTo._1}' to '${fromTo._2}'")
@@ -259,7 +262,7 @@ object CommonObs {
       final def change(editorFromTo: (String, String), textFromTo: (String, String)): *.Actions =
         (text.assert(textFromTo._1)
           +> doubleClick
-          +> editorValue.assert.contains(editorFromTo._1)
+          +> editorValue.assert.some(editorFromTo._1)
           >> setEditorValue(editorFromTo._2)
           >> commit
           +> text.assert(textFromTo._2)

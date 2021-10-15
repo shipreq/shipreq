@@ -20,7 +20,7 @@ object ReactVirtualized {
       val height: Double = js.native
     }
 
-    type Children = js.Function1[Dimensions, raw.React.Node]
+    type Children = js.Function1[Dimensions, facade.React.Node]
 
     @js.native
     @nowarn

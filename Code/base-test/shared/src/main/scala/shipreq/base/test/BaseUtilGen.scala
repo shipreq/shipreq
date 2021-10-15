@@ -4,7 +4,6 @@ import japgolly.microlibs.nonempty.NonEmpty
 import java.util.concurrent.atomic.AtomicInteger
 import nyaya.gen._
 import nyaya.prop.CycleDetector
-import nyaya.util.Multimap
 import scala.collection.AbstractIterator
 import scala.reflect.ClassTag
 import shipreq.base.util._

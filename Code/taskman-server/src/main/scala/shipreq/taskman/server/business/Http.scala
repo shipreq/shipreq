@@ -1,5 +1,6 @@
 package shipreq.taskman.server.business
 
+import cats.syntax.all._
 import com.typesafe.scalalogging.Logger
 import io.circe._
 import io.circe.parser._
@@ -10,7 +11,6 @@ import java.time.Duration
 import okhttp3._
 import okio.Buffer
 import scala.util.control.NonFatal
-import scalaz.syntax.bind._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.TaskmanLogFields
 import shipreq.base.util.{ArticulateError, Identity}

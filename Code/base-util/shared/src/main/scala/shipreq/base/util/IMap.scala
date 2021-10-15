@@ -1,13 +1,12 @@
 package shipreq.base.util
 
+import cats.{Applicative, Eq, Order}
 import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.microlibs.stdlib_ext.MutableArray
 import monocle._
-import scalaz.std.option.toRight
-import scalaz.{Applicative, Equal, Order}
 
 object IMap {
-  implicit def equality[K: Order, V: Equal]: Equal[IMap[K, V]] =
+  implicit def equality[K: Order, V: Eq]: Eq[IMap[K, V]] =
     IMapBaseV.equality[K, V, IMap[K, V]]
 
   implicit def univEq[K, V](implicit u: UnivEq[Map[K, V]]): UnivEq[IMap[K, V]] =
@@ -23,10 +22,10 @@ object IMap {
     type I = IMap[K, V]
     val it = Optics.iterableTraversal[V]
     new PTraversal[I, I, V, V] {
-      override def modifyF[F[_] : Applicative](f: V => F[V])(i: I): F[I] = {
+      override def modifyA[F[_] : Applicative](f: V => F[V])(i: I): F[I] = {
         val c = i.clear
         val iso = Iso[I, Iterable[V]](_.values)(c ++ _)
-        (iso ^|->> it).modifyF(f)(i)
+        (iso andThen it).modifyA(f)(i)
       }
     }
   }
@@ -51,7 +50,7 @@ final class IMap[K: UnivEq, V] private (key: V => K, m: Map[K, V]) extends IMapB
     get(k) getOrElse badKeyMsg(k).throwException()
 
   def attempt(k: K): ErrorMsg \/ V =
-    toRight(get(k))(badKeyMsg(k))
+    get(k).toRight(badKeyMsg(k))
 
   private def badKeyMsg(k: K): ErrorMsg = {
     val keyArray = MutableArray(keysIterator.map(_.toString)).sort

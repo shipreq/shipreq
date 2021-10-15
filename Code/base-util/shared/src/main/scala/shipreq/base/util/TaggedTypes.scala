@@ -1,8 +1,10 @@
 package shipreq.base.util
 
-import scalaz.Order
-import scalaz.std.anyVal.{intInstance, longInstance, shortInstance}
-import scalaz.std.string.stringInstance
+import cats.Order
+import cats.instances.int._
+import cats.instances.long._
+import cats.instances.short._
+import cats.instances.string._
 
 object TaggedTypes {
 
@@ -47,10 +49,8 @@ object TaggedTypes {
     object ScalaTC extends scala.Ordering[T] {
       override def compare(x: T, y: T) = SO.compare(x.value, y.value)
     }
-    object ScalazTC extends Order[T] with UnivEq[T] {
-      override def equal(a1: T, a2: T) = a1 == a2
-      override def equalIsNatural      = true
-      override def order(x: T, y: T)   = O.order(x.value, y.value)
+    object CatsTC extends Order[T] with UnivEq[T] {
+      override def compare(x: T, y: T) = O.compare(x.value, y.value)
     }
   }
 
@@ -64,10 +64,10 @@ object TaggedTypes {
   implicit def taggedScalaTC_int   [T <: TaggedType {type U = Int   }] = taggedTC_int   .subst[T].ScalaTC
   implicit def taggedScalaTC_short [T <: TaggedType {type U = Short }] = taggedTC_short .subst[T].ScalaTC
 
-  implicit def taggedScalazTC_string[T <: TaggedType {type U = String}] = taggedTC_string.subst[T].ScalazTC
-  implicit def taggedScalazTC_long  [T <: TaggedType {type U = Long  }] = taggedTC_long  .subst[T].ScalazTC
-  implicit def taggedScalazTC_int   [T <: TaggedType {type U = Int   }] = taggedTC_int   .subst[T].ScalazTC
-  implicit def taggedScalazTC_short [T <: TaggedType {type U = Short }] = taggedTC_short .subst[T].ScalazTC
+  implicit def taggedCatsTC_string[T <: TaggedType {type U = String}] = taggedTC_string.subst[T].CatsTC
+  implicit def taggedCatsTC_long  [T <: TaggedType {type U = Long  }] = taggedTC_long  .subst[T].CatsTC
+  implicit def taggedCatsTC_int   [T <: TaggedType {type U = Int   }] = taggedTC_int   .subst[T].CatsTC
+  implicit def taggedCatsTC_short [T <: TaggedType {type U = Short }] = taggedTC_short .subst[T].CatsTC
 
   implicit def autoUnboxTaggedString[T <: TaggedType {type U = String}](t: T): String = t.value
   implicit def autoUnboxTaggedLong  [T <: TaggedType {type U = Long}]  (t: T): Long   = t.value

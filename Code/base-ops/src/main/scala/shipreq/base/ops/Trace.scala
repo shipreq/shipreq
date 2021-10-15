@@ -1,10 +1,10 @@
 package shipreq.base.ops
 
+import cats.Monad
+import cats.effect.Sync
+import cats.instances.option._
+import cats.syntax.all._
 import japgolly.microlibs.adt_macros.AdtMacros
-import scalaz.Monad
-import scalaz.std.option.optionMonoid
-import scalaz.syntax.monad._
-import scalaz.syntax.semigroup._
 import shipreq.base.util.Identity
 
 object Trace {
@@ -71,7 +71,7 @@ object Trace {
 
     def off[F[_]](implicit F: Monad[F]): Algebra[F] { type Span = Unit } =
       new Algebra[F] {
-        val fUnit = F.point(())
+        val fUnit = F.unit
         override type Span                                              = Unit
         override def newSpan[A](n: String)(f: Span => F[A])             = f(())
         override def newSpanImpure[A](n: String)(f: Span => A)          = f(())
@@ -79,27 +79,27 @@ object Trace {
         override def addAttrs(a: List[Trace.Attr])(implicit span: Span) = fUnit
         override def rename(newName: String)(implicit span: Span)       = fUnit
         override def compose(a: Algebra[F])(implicit F: Monad[F])       = a
-        override def _propagateCtx[A]                                   = F point Identity.apply
+        override def _propagateCtx[A]                                   = F pure Identity.apply
         override def sqlTracer(spanName: String)                        = None
       }
 
-    def logToStdout[F[_]](implicit F: Monad[F]): Algebra[F] =
+    def logToStdout[F[_]](implicit F: Sync[F]): Algebra[F] =
       new Algebra[F] {
-        val fUnit = F.point(())
+        val fUnit = F.unit
         override type Span                                              = Unit
         override def newSubSpan[A](n: String, p: Span)(f: Span => F[A]) = newSpan(n)(f)
         override def addAttrs(a: List[Trace.Attr])(implicit span: Span) = fUnit
         override def rename(newName: String)(implicit span: Span)       = fUnit
-        override def _propagateCtx[A]                                   = F point Identity.apply
+        override def _propagateCtx[A]                                   = F pure Identity.apply
         override def sqlTracer(spanName: String)                        = None
 
         override def newSpan[A](name: String)(f: Span => F[A]) =
           for {
-            start <- F point System.nanoTime()
-            _     <- F point println(s"Starting $name …")
+            start <- F delay System.nanoTime()
+            _     <- F delay println(s"Starting $name …")
             a     <- f(())
-            end   <- F point System.nanoTime()
-            _     <- F point printf("Finished %s in %,3d ns\n", name, end - start)
+            end   <- F delay System.nanoTime()
+            _     <- F delay printf("Finished %s in %,3d ns\n", name, end - start)
           } yield a
 
         override def newSpanImpure[A](name: String)(f: Span => A) = {

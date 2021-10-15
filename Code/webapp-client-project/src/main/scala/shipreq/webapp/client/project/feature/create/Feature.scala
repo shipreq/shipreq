@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.feature.create
 
 import japgolly.microlibs.utils.Memo
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Iso
@@ -111,13 +111,13 @@ object Feature {
       Reusability.byRef
 
     private val _reusabilityF: Reusability[ForFields[Nothing]] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
 
     implicit def reusabilityF[FK <: FieldKey]: Reusability[ForFields[FK]] =
       _reusabilityF.narrow
 
     implicit val reusabilityP: Reusability[ForProject] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
   }
 
   // ███████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -155,13 +155,13 @@ object Feature {
       UnivEq.derive
 
     private val _reusabilityF: Reusability[ForFields[Nothing]] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
 
     implicit def reusabilityF[FK <: FieldKey]: Reusability[ForFields[FK]] =
       _reusabilityF.narrow
 
     implicit val reusabilityP: Reusability[ForProject] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -174,7 +174,7 @@ object Feature {
 
       private def _startEditor(field: FK): Editor[field.Args, field.Value] = {
         val stateAccess: StateAccessPure[State.ForEditor[Nothing, Any]] =
-          rowAccess.value.zoomStateL(State.ForFields.untyped ^|-> Optics.mapValue(field))
+          rowAccess.value.zoomStateL(State.ForFields.untyped andThen Optics.mapValue[FieldKey, Editor[Nothing, Any]](field))
 
         val ctx = NewEditor.Ctx[field.Args, field.Value](field.cast2(stateAccess))
         rowEditors(field)(ctx)
@@ -217,7 +217,7 @@ object Feature {
 
         val stateAccess2 =
           Reusable.ap(stateAccess, rrow)((stateAccess, row) =>
-            stateAccess.zoomStateL(State.ForProject.untyped ^|-> Optics.mapValueEmpty(row, State.ForFields.empty)(_.isEmpty)))
+            stateAccess.zoomStateL(State.ForProject.untyped andThen Optics.mapValueEmpty(row, State.ForFields.empty)(_.isEmpty)))
 
         ForRow[row.FieldKey, row.Cmd](
           stateAccess2,
@@ -238,13 +238,13 @@ object Feature {
     }
 
     private val _reusabilityR: Reusability[ForRow[Nothing, Nothing]] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
 
     implicit def reusabilityR[FK <: FieldKey, Cmd]: Reusability[ForRow[FK, Cmd]] =
       _reusabilityR.narrow
 
     implicit val reusabilityP: Reusability[ForProject] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -322,12 +322,12 @@ object Feature {
     }
 
     private val _reusabilityR: Reusability[ForRow[Nothing, Nothing]] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
 
     implicit def reusabilityR[FK <: FieldKey, Cmd]: Reusability[ForRow[FK, Cmd]] =
       _reusabilityR.narrow
 
     implicit val reusabilityP: Reusability[ForProject] =
-      Reusability.byRef || Reusability.derive
+      Reusability.derive
   }
 }

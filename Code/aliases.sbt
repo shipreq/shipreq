@@ -7,7 +7,7 @@ addCommandAlias("BO"  , "project baseOps")
 addCommandAlias("BD"  , "project baseDb")
 addCommandAlias("BT"  , "project baseTestJVM")
 addCommandAlias("BTJ" , "project baseTestJS")
-addCommandAlias("T"   , "project taskman")
+addCommandAlias("TT"  , "project taskman")
 addCommandAlias("TAL" , "project taskmanApiLogic")
 addCommandAlias("TA"  , "project taskmanApi")
 addCommandAlias("TSL" , "project taskmanServerLogic")
@@ -50,10 +50,10 @@ addCommandAlias("js",
   "webappServer/webappPrepare")
 
 addCommandAlias("up",
-  ";webappServer/jetty:stop ;webappServer/jetty:start")
+  ";webappServer/Jetty/stop ;webappServer/Jetty/start")
 
 addCommandAlias("d",
-  "webappServer/jetty:stop")
+  "webappServer/Jetty/stop")
 
 addCommandAlias("jsSizes",
   ";jsSizesFast ;jsSizesFull")

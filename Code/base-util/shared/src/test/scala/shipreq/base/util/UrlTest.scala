@@ -1,6 +1,7 @@
 package shipreq.base.util
 
 import japgolly.microlibs.testutil.TestUtil._
+import sourcecode.Line
 import utest._
 
 object UrlTest extends TestSuite {
@@ -102,11 +103,24 @@ object UrlTest extends TestSuite {
         "/x" - test(Relative("/x"), "/x/")
       }
       "relative" - {
-        "1" - assertEq(Url.Absolute("http://qwe.asd/qwe").relativeUrl.relativeUrl, "/qwe")
-        "2" - assertEq(Url.Absolute("http://qwe.asd:123/qwe").relativeUrl.relativeUrl, "/qwe")
-        "3" - assertEq(Url.Absolute("http://qwe.asd/qwe/zxc").relativeUrl.relativeUrl, "/qwe/zxc")
-        "4" - assertEq(Url.Absolute("http://qwe.asd/").relativeUrl.relativeUrl, "/")
-        "5" - assertEq(Url.Absolute("http://qwe.asd").relativeUrl.relativeUrl, "/")
+        "1" - assertEq(Absolute("http://qwe.asd/qwe").relativeUrl.relativeUrl, "/qwe")
+        "2" - assertEq(Absolute("http://qwe.asd:123/qwe").relativeUrl.relativeUrl, "/qwe")
+        "3" - assertEq(Absolute("http://qwe.asd/qwe/zxc").relativeUrl.relativeUrl, "/qwe/zxc")
+        "4" - assertEq(Absolute("http://qwe.asd/").relativeUrl.relativeUrl, "/")
+        "5" - assertEq(Absolute("http://qwe.asd").relativeUrl.relativeUrl, "/")
+      }
+      "/" - {
+        def test(abs: String, rel: String)(expect: String)(implicit l: Line): Unit =
+          assertEq(Absolute(abs)./(Relative(rel)).absoluteUrl, expect)
+        val abs = List("http://localhost", "https://localhost:1234")
+        val rels = List("", "/x", "/q/w")
+        for {
+          a <- abs
+          x <- rels
+          y <- rels
+        } {
+          test(a + x, y)(a + y)
+        }
       }
     }
 

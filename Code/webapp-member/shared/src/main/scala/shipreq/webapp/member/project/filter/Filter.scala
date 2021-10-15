@@ -1,7 +1,7 @@
 package shipreq.webapp.member.project.filter
 
+import cats.Traverse
 import japgolly.microlibs.recursion._
-import scalaz.Traverse
 import shipreq.base.util.{ErrorMsg, Identity}
 import shipreq.webapp.member.project.data
 import shipreq.webapp.member.project.data.{FilterDead, HideDead, Req}

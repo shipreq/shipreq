@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.widgets.editors_with_controls
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._

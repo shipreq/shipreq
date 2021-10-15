@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic.config
 
+import cats.syntax.apply._
 import japgolly.clearconfig._
-import scalaz.syntax.applicative._
 
 final case class ScalaJsManifest[+A](public   : A,
                                      home     : A,
@@ -20,9 +20,9 @@ final case class ScalaJsManifest[+A](public   : A,
 object ScalaJsManifest {
 
   def config[A: ConfigValueParser]: ConfigDef[ScalaJsManifest[A]] =
-    ( ConfigDef.need[A]("public") |@|
-      ConfigDef.need[A]("home") |@|
-      ConfigDef.need[A]("project") |@|
-      ConfigDef.need[A]("webWorker")
-    )(apply)
+    ( ConfigDef.need[A]("public"),
+      ConfigDef.need[A]("home"),
+      ConfigDef.need[A]("project"),
+      ConfigDef.need[A]("webWorker"),
+    ).mapN(apply)
 }

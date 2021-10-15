@@ -1,11 +1,11 @@
 package shipreq.webapp.member.project.text
 
+import cats.instances.list._
 import japgolly.microlibs.utils.Utils
 import java.util.regex.Pattern
 import org.parboiled2.CharPredicate
 import scala.collection.immutable.NumericRange
 import scala.runtime.AbstractFunction1
-import scalaz.std.list.listInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.validation.lib.CommonValidation
 import shipreq.webapp.base.validation.lib.Simple._

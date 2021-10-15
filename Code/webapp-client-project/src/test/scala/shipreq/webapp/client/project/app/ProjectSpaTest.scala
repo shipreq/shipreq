@@ -117,7 +117,7 @@ object ProjectSpaTest extends TestSuite {
         +> reauth.requestCount.assert(0)
         +> reauth.isVisible.assert(false)
         +> RD.title.isSpinning.assert(false).lift
-        +> RD.title.editorValue.assert.contains("alright!").lift
+        +> RD.title.editorValue.assert.some("alright!").lift
         +> unsavedChanges.assert(1)
         +> global.requestCount.assert(0)
         )

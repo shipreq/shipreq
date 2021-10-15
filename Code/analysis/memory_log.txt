@@ -1,0 +1,1071 @@
+==================================================================================================== 20210820-143105
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 2.061 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+
+==================================================================================================== 20210820-143109
+ 3.636 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.061 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.109 GB  (275679)  node  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275687)  node  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.067 GB  (275794)  node  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.065 GB  (275803)  node  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.348 GB TOTAL
+
+==================================================================================================== 20210820-143114
+ 4.784 GB  (274875)  SBT           /home/golly/BeardedLogic/projects/shipreq/Code                -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop         /home/golly/BeardedLogic/projects/shipreq/Code                -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.061 GB  (145858)  Metals        /home/golly/BeardedLogic/projects/shipreq/Code                -Xms100m -Xss4m
+ 0.372 GB  (276857)  sbt.ForkMain  /home/golly/BeardedLogic/projects/shipreq/Code/webapp-server
+
+ 0.109 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.123 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.175 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.112 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.115 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.117 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.114 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.589 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.112 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.132 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.152 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.188 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.101 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.086 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.098 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.125 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.132 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.165 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.193 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.201 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 4.714 GB TOTAL
+
+==================================================================================================== 20210820-143119
+ 5.580 GB  (274875)  SBT           /home/golly/BeardedLogic/projects/shipreq/Code                -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop         /home/golly/BeardedLogic/projects/shipreq/Code                -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.061 GB  (145858)  Metals        /home/golly/BeardedLogic/projects/shipreq/Code                -Xms100m -Xss4m
+ 0.649 GB  (276857)  sbt.ForkMain  /home/golly/BeardedLogic/projects/shipreq/Code/webapp-server
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.123 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.175 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.112 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.115 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.117 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.114 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.112 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.132 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.152 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.188 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.177 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.181 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.182 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.181 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.175 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.190 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.162 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.178 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.185 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.086 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.099 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.144 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.173 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.431 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 6.127 GB TOTAL
+
+==================================================================================================== 20210820-143124
+ 5.737 GB  (274875)  SBT           /home/golly/BeardedLogic/projects/shipreq/Code                -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop         /home/golly/BeardedLogic/projects/shipreq/Code                -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.061 GB  (145858)  Metals        /home/golly/BeardedLogic/projects/shipreq/Code                -Xms100m -Xss4m
+ 1.410 GB  (276857)  sbt.ForkMain  /home/golly/BeardedLogic/projects/shipreq/Code/webapp-server
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.132 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.188 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.177 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.181 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.182 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.181 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.175 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.190 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.162 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.178 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.185 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.559 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 6.174 GB TOTAL
+
+==================================================================================================== 20210820-143128
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.132 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.188 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.177 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.181 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.182 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.181 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.175 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.190 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.162 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.178 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.185 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.690 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 6.462 GB TOTAL
+
+==================================================================================================== 20210820-143133
+ 5.837 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.132 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.188 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.177 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.181 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.182 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.181 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.175 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.178 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.746 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 6.495 GB TOTAL
+
+==================================================================================================== 20210820-143138
+ 5.845 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.132 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.188 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.177 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.181 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.182 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.181 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.175 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.178 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.954 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 6.702 GB TOTAL
+
+==================================================================================================== 20210820-143143
+ 6.135 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.132 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.177 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.168 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.157 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.170 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.814 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.438 GB  (280389)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.707 GB  (280423)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.423 GB  (280461)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 8.062 GB TOTAL
+
+==================================================================================================== 20210820-143147
+ 6.136 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.128 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.177 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.168 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.157 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.170 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.775 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.327 GB  (280389)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.759 GB  (280423)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.033 GB  (280461)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 8.564 GB TOTAL
+
+==================================================================================================== 20210820-143152
+ 6.136 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.126 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.128 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.177 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.168 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.157 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.170 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.774 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.698 GB  (280389)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.761 GB  (280423)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.502 GB  (280461)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 9.401 GB TOTAL
+
+==================================================================================================== 20210820-143157
+ 6.136 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.128 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.177 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.168 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.157 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.170 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.774 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.097 GB  (280389)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.614 GB  (280423)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.896 GB  (280461)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+10.044 GB TOTAL
+
+==================================================================================================== 20210820-143201
+ 6.136 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.128 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.177 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.168 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.157 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.170 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.774 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.486 GB  (280389)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.611 GB  (280423)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.296 GB  (280461)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+10.830 GB TOTAL
+
+==================================================================================================== 20210820-143206
+ 6.136 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.128 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.176 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.168 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.157 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.170 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.774 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.662 GB  (280389)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.787 GB  (280423)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.405 GB  (280461)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+11.291 GB TOTAL
+
+==================================================================================================== 20210820-143211
+ 6.136 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.128 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.176 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.168 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.157 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.170 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.774 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.584 GB  (280389)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.288 GB  (280423)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 3.092 GB  (280461)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+12.401 GB TOTAL
+
+==================================================================================================== 20210820-143216
+ 6.135 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.128 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.191 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.176 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.168 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.157 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.170 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.774 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.767 GB  (280389)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.526 GB  (280423)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 3.349 GB  (280461)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+13.079 GB TOTAL
+
+==================================================================================================== 20210820-143220
+ 6.135 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+
+==================================================================================================== 20210820-143225
+ 6.123 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.063 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.106 GB  (275679)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (275687)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (275794)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.122 GB  (275803)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.163 GB  (275946)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276304)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.106 GB  (276318)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.111 GB  (276350)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276364)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.130 GB  (276418)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.110 GB  (276462)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.124 GB  (276528)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.109 GB  (276546)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.131 GB  (276560)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.595 GB  (276583)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276601)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.128 GB  (276619)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.105 GB  (276633)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.107 GB  (276642)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.142 GB  (276661)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.178 GB  (276692)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.154 GB  (276888)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277008)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.176 GB  (277013)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277022)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.168 GB  (277036)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.167 GB  (277067)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.157 GB  (277429)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.187 GB  (277466)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.155 GB  (277476)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.170 GB  (277499)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (277555)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.164 GB  (278795)  node       /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.084 GB  (276538)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.102 GB  (276721)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.095 GB  (276724)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.143 GB  (276781)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.171 GB  (276808)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.774 GB  (276965)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.690 GB  (280389)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.959 GB  (280423)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+10.073 GB TOTAL
+
+==================================================================================================== 20210820-143230
+ 6.118 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+
+==================================================================================================== 20210820-143234
+ 6.140 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.629 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.126 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+
+==================================================================================================== 20210820-143239
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 0.591 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.462 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.509 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.562 GB TOTAL
+
+==================================================================================================== 20210820-143243
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.005 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.422 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.968 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.396 GB TOTAL
+
+==================================================================================================== 20210820-143248
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.080 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.931 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.235 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 3.247 GB TOTAL
+
+==================================================================================================== 20210820-143252
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.224 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.301 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.148 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 3.673 GB TOTAL
+
+==================================================================================================== 20210820-143257
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.126 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.570 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.534 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 4.230 GB TOTAL
+
+==================================================================================================== 20210820-143301
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.111 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.740 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.692 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 4.543 GB TOTAL
+
+==================================================================================================== 20210820-143306
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.255 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.900 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.720 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 4.875 GB TOTAL
+
+==================================================================================================== 20210820-143310
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.187 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.667 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.057 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 4.911 GB TOTAL
+
+==================================================================================================== 20210820-143315
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.182 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.644 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.225 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 5.051 GB TOTAL
+
+==================================================================================================== 20210820-143319
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.182 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.642 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.459 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 5.282 GB TOTAL
+
+==================================================================================================== 20210820-143324
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.182 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.642 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.783 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 5.607 GB TOTAL
+
+==================================================================================================== 20210820-143328
+ 6.146 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.182 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.642 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.880 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 5.704 GB TOTAL
+
+==================================================================================================== 20210820-143333
+ 6.146 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.182 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.642 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.951 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 5.774 GB TOTAL
+
+==================================================================================================== 20210820-143337
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.181 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.642 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 3.209 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 6.031 GB TOTAL
+
+==================================================================================================== 20210820-143342
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.181 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.642 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 3.431 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 6.253 GB TOTAL
+
+==================================================================================================== 20210820-143346
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.181 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.642 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 3.451 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 6.274 GB TOTAL
+
+==================================================================================================== 20210820-143351
+ 6.145 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+ 1.181 GB  (285764)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.642 GB  (285892)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 3.782 GB  (285918)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 6.605 GB TOTAL
+
+==================================================================================================== 20210820-143355
+ 6.160 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m
+
+
+==================================================================================================== 20210820-143400
+ 6.160 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 3.628 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.062 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+
+==================================================================================================== 20210820-143821
+ 6.414 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.258 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 0.666 GB  (290486)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.564 GB  (290524)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.442 GB  (290562)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.564 GB  (290590)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.407 GB  (290654)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.362 GB  (289850)  node       /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+ 3.005 GB TOTAL
+
+==================================================================================================== 20210820-143825
+ 6.414 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.258 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 1.027 GB  (290486)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.567 GB  (290524)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.953 GB  (290562)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.795 GB  (290590)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.723 GB  (290654)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.362 GB  (289850)  node       /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+ 4.426 GB TOTAL
+
+==================================================================================================== 20210820-143830
+ 6.414 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.258 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 1.319 GB  (290486)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.570 GB  (290524)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.317 GB  (290562)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.118 GB  (290590)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.742 GB  (290654)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.362 GB  (289850)  node       /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+ 5.430 GB TOTAL
+
+==================================================================================================== 20210820-143834
+ 6.414 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.258 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 1.509 GB  (290486)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.002 GB  (290524)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.728 GB  (290562)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.255 GB  (290590)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.921 GB  (290654)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.362 GB  (289850)  node       /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+ 6.776 GB TOTAL
+
+==================================================================================================== 20210820-143839
+ 6.414 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.258 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 1.659 GB  (290486)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.117 GB  (290524)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.011 GB  (290562)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.223 GB  (290590)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.311 GB  (290654)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.362 GB  (289850)  node       /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+ 7.682 GB TOTAL
+
+==================================================================================================== 20210820-143843
+ 6.414 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.258 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 1.509 GB  (290486)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.059 GB  (290524)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.277 GB  (290562)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.179 GB  (290590)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.229 GB  (290654)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.362 GB  (289850)  node       /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+ 7.616 GB TOTAL
+
+==================================================================================================== 20210820-143848
+ 6.414 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.258 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 1.424 GB  (290486)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.059 GB  (290524)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 2.609 GB  (290562)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.176 GB  (290590)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.208 GB  (290654)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.362 GB  (289850)  node       /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+ 7.838 GB TOTAL
+
+==================================================================================================== 20210820-143852
+ 6.414 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.257 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 1.421 GB  (290486)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.059 GB  (290524)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 3.084 GB  (290562)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.176 GB  (290590)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.204 GB  (290654)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.362 GB  (289850)  node       /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+ 8.305 GB TOTAL
+
+==================================================================================================== 20210820-143857
+ 6.414 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.257 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 1.421 GB  (290486)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.059 GB  (290524)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 3.353 GB  (290562)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.176 GB  (290590)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 1.204 GB  (290654)  phantomjs  /home/golly/BeardedLogic/projects/shipreq/Code
+ 0.362 GB  (289850)  node       /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+ 8.574 GB TOTAL
+
+==================================================================================================== 20210820-143901
+ 6.418 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.257 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 0.362 GB  (289850)  node  /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+
+==================================================================================================== 20210820-143906
+ 6.418 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.257 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 0.362 GB  (289850)  node  /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+
+==================================================================================================== 20210820-143910
+ 6.418 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.257 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 0.362 GB  (289850)  node  /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+
+==================================================================================================== 20210820-143915
+ 6.418 GB  (274875)  SBT     /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx8g -Xss2m -XX:MaxMetaspaceSize=1g
+ 4.257 GB  (146018)  Bloop   /home/golly/BeardedLogic/projects/shipreq/Code  -Xmx3g -Xss4m -XX:MaxInlineLevel=20 
+ 2.158 GB  (145858)  Metals  /home/golly/BeardedLogic/projects/shipreq/Code  -Xms100m -Xss4m 
+
+ 0.362 GB  (289850)  node  /home/golly/BeardedLogic/projects/shipreq/Code/webapp-client-project
+

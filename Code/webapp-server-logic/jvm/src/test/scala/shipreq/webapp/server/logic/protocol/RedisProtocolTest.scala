@@ -1,9 +1,9 @@
 package shipreq.webapp.server.logic.protocol
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
+import cats.Eq
+import japgolly.microlibs.cats_ext.CatsMacros
 import java.time.Instant
 import nyaya.gen.Gen
-import scalaz.Equal
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.member.project.data.Project
@@ -17,8 +17,8 @@ import utest._
 
 object RedisProtocolTest extends TestSuite {
 
-  private implicit val equalProjectSnapshot: Equal[Redis.ProjectSnapshot] =
-    ScalazMacros.deriveEqual
+  private implicit val equalProjectSnapshot: Eq[Redis.ProjectSnapshot] =
+    CatsMacros.deriveEq
 
   override def tests = Tests {
 

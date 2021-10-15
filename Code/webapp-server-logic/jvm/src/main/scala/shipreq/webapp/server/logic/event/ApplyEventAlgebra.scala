@@ -1,9 +1,9 @@
 package shipreq.webapp.server.logic.event
 
+import cats.syntax.all._
+import cats.{Applicative, Monad}
 import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import scalaz.syntax.monad._
-import scalaz.{Applicative, Monad}
 import shipreq.base.ops.Trace
 import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data.ProjectId
@@ -46,7 +46,7 @@ object ApplyEventAlgebra extends StrictLogging {
     }
 
   def trusted[F[_]](implicit _F: Applicative[F]): ApplyEventAlgebra[F] =
-    apply(Trusted)((pid, p, events) => _F.point {
+    apply(Trusted)((pid, p, events) => _F.unit.map { _ =>
       ApplyEvent.trusted(events)(p).leftMap { e =>
         logger.error(s"Failed to apply events [${events.head.ord},${events.last.ord}] on project #${pid.value}: $e")
         ErrorMsg(s"${Server.ErrorMsgs.ShouldNeverHappen.value}: Event application failure.")

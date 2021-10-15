@@ -1,8 +1,8 @@
 package shipreq.taskman.server.business
 
+import cats.syntax.all._
 import io.circe.Json
 import scala.runtime.AbstractFunction1
-import scalaz.syntax.bind._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.taskman.server.business.Http._

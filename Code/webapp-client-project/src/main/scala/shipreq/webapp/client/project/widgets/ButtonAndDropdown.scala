@@ -3,6 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import shipreq.base.util.Disabled
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 
@@ -58,6 +59,7 @@ object ButtonAndDropdown {
         selected       = selected,
         outerTagMod    = outerTagMod,
         dropdownTagMod = *.dropdownButtonGreenDropdown(basic),
+        enabled        = Disabled.when(create.isEmpty && selectItem.isEmpty),
         basic          = basic,
       )
     }

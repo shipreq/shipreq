@@ -339,8 +339,8 @@ object ViewLogic {
   implicit val reusabilityMenuItemSaved        : Reusability[MenuItem.Saved        ] = Reusability.derive
   implicit val reusabilityMenuItem             : Reusability[MenuItem              ] = Reusability.derive
   implicit val reusabilityMenuNoSaved          : Reusability[Menu.NoSaved          ] = Reusability.derive
-  implicit val reusabilityMenuSavedClean       : Reusability[Menu.SavedClean       ] = Reusability.byRef || Reusability.derive
-  implicit val reusabilityMenuSavedDirty       : Reusability[Menu.SavedDirty       ] = Reusability.byRef || Reusability.derive
-  implicit val reusabilityMenu                 : Reusability[Menu                  ] = Reusability.byRef || Reusability.derive
+  implicit val reusabilityMenuSavedClean       : Reusability[Menu.SavedClean       ] = Reusability.derive
+  implicit val reusabilityMenuSavedDirty       : Reusability[Menu.SavedDirty       ] = Reusability.derive
+  implicit val reusabilityMenu                 : Reusability[Menu                  ] = Reusability.derive
 
 }

@@ -26,7 +26,7 @@ object InputComponent {
     override val autoCompleteCtx: CallbackOption[AutoCompleteCtx] =
       for {
         d <- $.getDOMNode.toCBO
-        h <- CallbackOption.liftOption(d.toHtml)
+        h <- CallbackOption.option(d.toHtml)
         p <- $.props.toCBO
         a <- p.autoComplete.toCBO
       } yield {

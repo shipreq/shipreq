@@ -1,8 +1,8 @@
 package shipreq.webapp.member.project.util
 
+import cats.{Eq, Order}
 import japgolly.microlibs.nonempty.NonEmpty
 import scala.collection.IterableOnce
-import scalaz.{Equal, Order}
 import shipreq.base.util.IMap
 
 abstract class GenericData { self =>
@@ -19,7 +19,7 @@ abstract class GenericData { self =>
 
     def apply(d: Data): ValueFor[this.type]
 
-    val dataEquality: Equal[Data]
+    val dataEquality: Eq[Data]
 
     final def get(vs: Values): Option[ValueFor[this.type]] =
       vs.get(this).asInstanceOf[Option[ValueFor[this.type]]]
@@ -54,10 +54,10 @@ abstract class GenericData { self =>
 
   implicit def equalityValue: UnivEq[Value]
 
-  implicit lazy val equalityValues: Equal[Values] =
+  implicit lazy val equalityValues: Eq[Values] =
     IMap.equality
 
-  implicit def equalityNonEmptyValues: Equal[NonEmptyValues] =
+  implicit def equalityNonEmptyValues: Eq[NonEmptyValues] =
     NonEmpty.nonEmptyEqual
 
   def emptyValues: Values =
@@ -117,12 +117,12 @@ object GenericData {
     def addValues(vs: IterableOnce[gd.Value]): Unit =
       _values ++= vs
 
-    def addIfChanged(a: gd.Attr)(oldValue: a.Data, newValue: a.Data)(implicit e: Equal[a.Data]): Unit =
-      if (!e.equal(oldValue, newValue))
+    def addIfChanged(a: gd.Attr)(oldValue: a.Data, newValue: a.Data)(implicit e: Eq[a.Data]): Unit =
+      if (!e.eqv(oldValue, newValue))
         _values += a(newValue)
 
-    def addIfChangedOption(a: gd.Attr)(oldValue: Option[a.Data], newValue: a.Data)(implicit e: Equal[a.Data]): Unit =
-      if (oldValue.forall(!e.equal(_, newValue)))
+    def addIfChangedOption(a: gd.Attr)(oldValue: Option[a.Data], newValue: a.Data)(implicit e: Eq[a.Data]): Unit =
+      if (oldValue.forall(!e.eqv(_, newValue)))
         _values += a(newValue)
   }
 

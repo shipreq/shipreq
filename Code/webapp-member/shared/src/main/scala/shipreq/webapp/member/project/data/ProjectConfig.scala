@@ -1,18 +1,17 @@
 package shipreq.webapp.member.project.data
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
+import cats.Eq
+import japgolly.microlibs.cats_ext.CatsMacros
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
-import nyaya.util.Multimap
-import scalaz.Equal
 import shipreq.base.util.{Applicable, NotApplicable}
 import shipreq.webapp.member.project.data.DataImplicits._
 import shipreq.webapp.member.project.data.derivation._
 
 object ProjectConfig {
-  implicit lazy val equality: Equal[ProjectConfig] =
-    ScalazMacros.deriveEqual
+  implicit lazy val equality: Eq[ProjectConfig] =
+    CatsMacros.deriveEq
 
   val empty: ProjectConfig = {
     val cit = emptyDataMap(CustomIssueType)

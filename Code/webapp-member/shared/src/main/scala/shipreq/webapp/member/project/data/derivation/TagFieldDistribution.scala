@@ -2,7 +2,6 @@ package shipreq.webapp.member.project.data.derivation
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
-import nyaya.util.Multimap
 import shipreq.webapp.member.project.data.DataImplicits._
 import shipreq.webapp.member.project.data._
 

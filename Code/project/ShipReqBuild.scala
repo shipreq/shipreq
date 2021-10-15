@@ -33,7 +33,7 @@ object ShipReqBuild {
       .in(file("base-predef"))
       .configureJvm(Common.jvmSettings)
       .configureJs(Common.jsSettings(NoTests))
-      .depsForBoth(UnivEq.scalaz ++ scalaz ++ Nyaya.prop ++ Microlibs.nonempty)
+      .depsForBoth(Cats.core ++ Microlibs.catsExt ++ Microlibs.disjunction ++ Microlibs.multimap ++ Microlibs.nonempty ++ UnivEq.cats)
       .depsForJvm(Circe.main.widen) // We don't want circe on the frontend
       .depsForJs(scalajsDom)
       .depsForJs(scalajsJavaTime)
@@ -51,13 +51,13 @@ object ShipReqBuild {
       .configureJs(Common.jsSettings(UseNode))
       .dependsOn(basePredef)
       .depsForBoth(
-        UnivEq.scalaz ++ scalaz ++ Nyaya.prop ++ Monocle.core ++
+        UnivEq.cats ++ Cats.free ++ Nyaya.prop ++ Monocle.core ++
         Microlibs.adtMacros ++ Microlibs.nonempty ++ Microlibs.recursion ++
-        Microlibs.scalazExt ++ Microlibs.stdlibExt ++ Microlibs.utils ++
+        Microlibs.catsExt ++ Microlibs.stdlibExt ++ Microlibs.utils ++
         (Circe.main % Provided) ++
-        testScope(μTest ++ Nyaya.test ++ Microlibs.testUtil))
+        testScope(utest ++ Nyaya.test ++ Microlibs.testUtil))
       .depsForJvm(
-        SLF4J.api ++ Logback.withPlugins ++ scalaLogging ++ clearConfig ++ catsEffect)
+        SLF4J.api ++ Logback.withPlugins ++ scalaLogging ++ clearConfig ++ CatsEffect.core)
 
   lazy val baseOps =
     project
@@ -87,8 +87,8 @@ object ShipReqBuild {
       .configureJvm(_.dependsOn(baseDb % Provided))
       .depsForBoth(
         Microlibs.testUtil ++ pprint ++
-        providedScope(μTest ++ Nyaya.gen ++ Circe.main) ++
-        testScope(μTest ++ Nyaya.test ++ Circe.main))
+        providedScope(utest ++ Nyaya.gen ++ Circe.main) ++
+        testScope(utest ++ Nyaya.test ++ Circe.main))
       .depsForJvm(providedScope(scalaCheck))
       .depsForJs(providedScope(React.core))
 
@@ -101,10 +101,10 @@ object ShipReqBuild {
       .deps(commonsText ++ Nyaya.test)
       .dependsOn(webappMemberTestJVM)
       .settings(
-        connectInput in run  := true,
-        fork         in run  := true,
-      //javaOptions  in run  += jprofilerAgent(wait = false),
-        javaOptions  in run ++= Seq("-Xmx8g", "-Xss8m"))
+        run / connectInput  := true,
+        run / fork          := true,
+      //run / javaOptions   += jprofilerAgent(wait = false),
+        run / javaOptions  ++= Seq("-Xmx8g", "-Xss8m"))
 
   object Benchmark {
     def commonSettings: Project => Project =
@@ -116,7 +116,7 @@ object ShipReqBuild {
         .dependsOn(webappServer)
         .configure(Common.jvmSettings)
         .settings(libraryDependencies ++= Seq(
-          "dev.zio" %% "zio" % "1.0.0"))
+          "dev.zio" %% "zio" % "1.0.12"))
         .deps(JJWT.all)
     }
 
@@ -130,7 +130,7 @@ object ShipReqBuild {
           Common.jsSettings(NoTests))
         .settings(
           scalaJSLinkerConfig ~= { _.withSourceMap(true) },
-          skip in packageJSDependencies := false)
+          packageJSDependencies / skip := false)
     }
   }
 

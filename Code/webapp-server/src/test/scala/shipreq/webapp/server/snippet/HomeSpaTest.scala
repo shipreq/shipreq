@@ -5,6 +5,9 @@ import shipreq.base.db.scalazDoobieConnectionIO
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.Event.FieldStaticRemove
 import shipreq.webapp.server.logic.algebra.Crypto
+import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.event.Event.FieldStaticRemove
+import shipreq.webapp.server.logic.config.ProjectAccessHacks
 import shipreq.webapp.server.logic.impl.HomeSpaLogic
 import shipreq.webapp.server.logic.util.Obfuscators
 import shipreq.webapp.server.test.WebappServerTestUtil._
@@ -22,15 +25,16 @@ object HomeSpaTest extends TestSuite {
           val uid = uf.user1.id
           implicit val db = uf.dbUtil.dbAlgebra
           implicit val crypto = Crypto.default[ConnectionIO]
+          val hacks = ProjectAccessHacks.empty
 
           // Confirm starting empty
-          assertEq(xa ! db.getAllProjectMetaDataForUser(uid), Nil)
+          assertEq(xa ! db.getAllProjectMetaDataForUser(uid, hacks), Nil)
 
           // Create
           val pi = xa ! HomeSpaLogic.createProject[ConnectionIO](uid, name)
           val initEvents = 2
 
-          val pid = Obfuscators.projectId.deobfuscate(pi.id).toOption.get
+          val pid = Obfuscators.projectId.deobfuscate(pi.id).getOrThrow()
           def events() = (xa ! db.getAllProjectEvents(pid)).getOrThrow().toVector
           def loadProject() = applyVerifiedEventSuccessfully(Project.empty, events(): _*)
 
@@ -43,7 +47,7 @@ object HomeSpaTest extends TestSuite {
           assertEq("Immediate reqsTotal", pi.reqsTotal, 0)
 
           // Reloaded result
-          val pc = xa ! db.getAllProjectMetaDataForUser(uid)
+          val pc = xa ! db.getAllProjectMetaDataForUser(uid, hacks)
           assertEq(pc.length, 1)
           val a = pc.head
           assertFields(pi, a)
@@ -61,7 +65,7 @@ object HomeSpaTest extends TestSuite {
           val ve = verifyEvent(p, e)
           val p2 = applyVerifiedEventSuccessfully(p, ve)
           xa ! db.saveProjectEvent(pid, nextOrd, e, p2, uid)
-          val a2 = (xa ! db.getAllProjectMetaDataForUser(uid)).head
+          val a2 = (xa ! db.getAllProjectMetaDataForUser(uid, hacks)).head
           assertEq("Next.nonInitEventCount", a2.eventsPostInit, a.eventsPostInit + 1)
           loadProject()
         }

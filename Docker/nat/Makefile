@@ -15,6 +15,8 @@ DOCKER_ARGS += --net=host
 
 EXPORT = squid.tar.gz
 
+ECR := 930801536115.dkr.ecr.ap-southeast-2.amazonaws.com
+
 default: extract
 
 $(SSL)/squid.key:
@@ -55,7 +57,7 @@ down:
 
 extract: | up .extract down
 .extract:
-	docker cp $(CONTAINER):/etc/squid/squid.conf.orig squid-defaults.conf
+	docker cp $(CONTAINER):/etc/squid/squid.conf.default squid-defaults.conf
 
 test: | up .test down
 .test:
@@ -67,16 +69,25 @@ test: | up .test down
 extract_and_test: | up .extract .test down
 
 watch:
-	ls -1 Makefile $(INPUTS) ./test | entr -rc make extract_and_test
+	ls -1 Makefile $(INPUTS) ./test-proxy | entr -rc make extract_and_test
+
+version: build
+	docker run $(DOCKER_ARGS) $(IMAGE) /usr/sbin/squid -v
+
+REMOTE_VER = $(shell fgrep ' nat ' ../../Terraform/prod/versions.tf | tail -1 | sed 's/.*"\(.*\)"/\1/')
+remote-version:
+	$$(../aws ecr get-login --no-include-email)
+	docker pull $(ECR)/$(IMAGE):$(REMOTE_VER)
+	docker run $(DOCKER_ARGS) $(ECR)/$(IMAGE):$(REMOTE_VER) /usr/sbin/squid -v
 
 export:
 	-rm -f /tmp/$(EXPORT)
 	tar cvzf /tmp/$(EXPORT) .
-	aws s3 cp /tmp/$(EXPORT) s3://shipreq-tmp/
+	../aws s3 cp /tmp/$(EXPORT) s3://shipreq-tmp/
 
 import:
 	-rm -f /tmp/$(EXPORT)
-	aws s3 cp s3://shipreq-tmp/$(EXPORT) /tmp/
+	../aws s3 cp s3://shipreq-tmp/$(EXPORT) /tmp/
 	@echo
 	@echo "Extract /tmp/$(EXPORT) yourself"
 	@echo

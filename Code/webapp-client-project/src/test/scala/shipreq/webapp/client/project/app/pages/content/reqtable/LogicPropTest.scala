@@ -1,11 +1,9 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
+import cats.Eq
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen.Gen
 import nyaya.prop.{Logic => _, _}
-import nyaya.util.Multimap
-import scalaz.Equal
-import scalaz.std.AllInstances._
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.client.project.app.pages.content.reqtable.LogicTestUtil._
 import shipreq.webapp.client.project.test.ClientTestSettings._
@@ -188,7 +186,7 @@ object LogicPropTest extends TestSuite {
     def E_sorted[A <: AnyRef](name: String, as: IterableOnce[A], dirChange: Dir)(implicit ord: Ordering[A]): EvalL = {
       val actual = as.iterator.toVector
       val expect = dirChange(actual.sorted)(_.reverse)
-      implicit val eq = Equal.equal[A]((a, b) => (a eq b) || (a == b) || ord.equiv(a, b)) // use of ord is slow - avoid
+      implicit val eq = Eq.instance[A]((a, b) => (a eq b) || (a == b) || ord.equiv(a, b)) // use of ord is slow - avoid
       E.equal(name + " are sorted", actual, expect)
     }
 

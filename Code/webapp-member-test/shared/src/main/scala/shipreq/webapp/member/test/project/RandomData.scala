@@ -1,24 +1,22 @@
 package shipreq.webapp.member.test.project
 
+import cats.Eval
+import cats.instances.list._
+import cats.instances.option._
+import cats.instances.vector._
 import japgolly.microlibs.adt_macros.AdtMacros._
 import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import java.util.regex.Pattern
-import monocle.function.Field1.first
-import monocle.function.Field2.second
 import monocle.{Optional => _, _}
 import nyaya.gen._
 import nyaya.util._
 import org.parboiled2.CharPredicate
 import scala.collection.immutable.TreeSet
-import scalaz.Need
-import scalaz.std.list._
-import scalaz.std.option.{none => _, _}
-import scalaz.std.set._
-import scalaz.std.vector._
 import shipreq.base.test.BaseUtilGen._
+import shipreq.base.util.CatsExtra._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
@@ -489,7 +487,6 @@ object RandomData {
   // Text
 
   object TextGen {
-    import scalaz.Name
     import shipreq.webapp.member.project.text.{MultiLine => _, SingleLine => _, _}
     import Atom._
     import Text.{ReqTitle => _, _}
@@ -524,7 +521,7 @@ object RandomData {
         case s => s
       }
 
-      val genTail = (potentiallyEmptyLines *** nonEmptyLine).option
+      val genTail = (potentiallyEmptyLines & nonEmptyLine).option
 
       val badLine = "^ *``` *$".r.pattern
 
@@ -563,16 +560,16 @@ object RandomData {
     def blankLine(implicit t: NewLine): Gen[t.BlankLine] =
       Gen.pure(t.blankLine)
 
-    def listItem(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.ListItem] =
+    def listItem(t: ListMarkup)(g: Eval[Gen[t.Atom]]): Gen[t.ListItem] =
       Gen.pure(g).flatMap(_.value).arraySeq(MaxTextAtoms)
 
-    def listItems(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[NonEmptyArraySeq[t.ListItem]] =
+    def listItems(t: ListMarkup)(g: Eval[Gen[t.Atom]]): Gen[NonEmptyArraySeq[t.ListItem]] =
       listItem(t)(g).nea(0 to 8)
 
-    def orderedList(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.OrderedList] =
+    def orderedList(t: ListMarkup)(g: Eval[Gen[t.Atom]]): Gen[t.OrderedList] =
       listItems(t)(g) map t.OrderedList
 
-    def unorderedList(t: ListMarkup)(g: Name[Gen[t.Atom]]): Gen[t.UnorderedList] =
+    def unorderedList(t: ListMarkup)(g: Eval[Gen[t.Atom]]): Gen[t.UnorderedList] =
       listItems(t)(g) map t.UnorderedList
 
     def webAddress(implicit t: PlainTextMarkup): Gen[t.WebAddress] =
@@ -618,7 +615,7 @@ object RandomData {
     /** Probability [0,9] of an increase in recursive depth. */
     val DepthIncrease: Array[Int] = Array(5, 1, 1, 1) `JVM|JS` Array(3, 1)
 
-    private[this] def multiLine(t: MultiLine, depth: Int)(g: Name[Gen[t.Atom]], gsa: Gen[t.styled.Atom]): NonEmptyArraySeq[Gen.Freq[t.Atom]] = {
+    private[this] def multiLine(t: MultiLine, depth: Int)(g: Eval[Gen[t.Atom]], gsa: Gen[t.styled.Atom]): NonEmptyArraySeq[Gen.Freq[t.Atom]] = {
       var gs = singleLineGens(t)(Some(gsa)).map(g => (9, g))
       gs :+= ((9, blankLine(t)))
       gs :+= ((4, codeBlock(t)))
@@ -633,11 +630,11 @@ object RandomData {
     private[this] def multiLinePlusI(t: MultiLine)(gsa: Gen[t.styled.Atom])(plus: Gen.Freq[t.Atom]*): Gen[t.Atom] = {
       type G  = Gen[t.Atom]
 
-      lazy val lvls: Vector[Need[G]] =
+      lazy val lvls: Vector[Eval[G]] =
         (0 to DepthIncrease.length)
           .toVector
-          .map(i => Need[G](Gen.frequencyNE(
-            multiLine(t, i)(Name(lvls(i + 1).value), gsa) ++ plus
+          .map(i => Eval.always[G](Gen.frequencyNE(
+            multiLine(t, i)(Eval.always(lvls(i + 1).value), gsa) ++ plus
         )))
 
       lvls.head.value
@@ -1263,7 +1260,7 @@ object RandomData {
             if (t.isEmpty)
               t = VectorTree.single(g run ctx)
             if (t.children.head.value.liveExplicitly is Dead)
-              t.modifyValueAt(VectorTree.root)(UseCaseStep.liveExplicitly set Live) foreach (t = _)
+              t.modifyValueAt(VectorTree.root)(UseCaseStep.liveExplicitly replace Live) foreach (t = _)
             t
           }
         case _ => gt
@@ -1416,7 +1413,7 @@ object RandomData {
       TestOptics.genericReqTitlesInReqs.setF(grG)
 
     val updateUCs: Requirements => Gen[Requirements] =
-      TestOptics.useCasesInReqs.modifyF(
+      TestOptics.useCasesInReqs.modifyA(
         useCaseStepTextsInUseCase.setF(usG)(_) flatMap UseCase.title.setF(ucG))
 
     updateGRs(reqs) flatMap updateUCs
@@ -1522,13 +1519,13 @@ object RandomData {
         case _: Inactive    => None
       })(n => {
         case d: ActiveReq   => d.copy(id = n)
-        case d: ActiveGroup => reqCodeActiveGroupId.set(ReqCodeGroupId(n.value))(d)
+        case d: ActiveGroup => reqCodeActiveGroupId.replace(ReqCodeGroupId(n.value))(d)
         case d: Inactive    => d
       })
 
 
       val ids1      = distinctIds at reqCodeDataActiveId
-      val ids2      = distinctIds at reqCodeDataDeadGroupId.composeIso(reqIdIso)
+      val ids2      = distinctIds at reqCodeDataDeadGroupId.andThen(reqIdIso)
       val ids3      = distinctIds.lift[Set].liftMultimapValues[ReqId, Set, ApReqCodeId, ApReqCodeId] at reqCodeDataReqInactive
       val id        = ids1 + ids2 + ids3
       val idsInTrie = id traversal reqCodeTrieValueTraversal
@@ -1598,7 +1595,7 @@ object RandomData {
 
       val vecOfGens = src.cataV(Vector.empty[G])((q, code, data) =>
         reqCodeDataGroupTitle.getOption(data) match {
-          case Some(_) => q :+ gt.map[F](txt => _.put(code, reqCodeDataGroupTitle.set(txt)(data)))
+          case Some(_) => q :+ gt.map[F](txt => _.put(code, reqCodeDataGroupTitle.replace(txt)(data)))
           case None    => q
         }
       )
@@ -1625,11 +1622,11 @@ object RandomData {
     val keyDist = hashRefFixer.distinct
     val issues = keyDist
       .at(CustomIssueType.key).liftMapValues[CustomIssueTypeId]
-      .at(first[T, A] ^|-> imapToMapLens)
+      .at(Focus[T](_._1) andThen imapToMapLens[CustomIssueTypeId, CustomIssueType])
     val tags = keyDist
       .lift[Option].contramap[Tag](_.keyO, setTagKey)
       .at(TagInTree.tag).liftMapValues[TagId]
-      .at(second[T, B] ^|-> imapToMapLens)
+      .at(Focus[T](_._2) andThen imapToMapLens[TagId, TagInTree])
     issues + tags
   }
 
@@ -1881,8 +1878,10 @@ object RandomData {
         b <- Gen.ascii.vector(SavedView.Name.lengthRange.map(_ - 1))
         c <- Gen.shuffle(b :+ a)
         d  = String.valueOf(c.toArray)
-      } yield SavedView.Name.validator.stateless.unnamed(d)
-        .valueOr(e => sys error s"$e: '${SavedView.Name.validator.stateless.corrector.full(d)}' ← '$d'")
+      } yield SavedView.Name.validator.stateless.unnamed(d) match {
+        case Right(r) => r
+        case Left(e) => sys error s"$e: '${SavedView.Name.validator.stateless.corrector.full(d)}' ← '$d'"
+      }
 
     val impGraphConfigGraphDir: Gen[ImpGraphConfig.GraphDir] =
       Gen.chooseNE(ImpGraphConfig.GraphDir.values)
@@ -1989,7 +1988,7 @@ object RandomData {
 ////      tagAndRels.flatMap(t => {
 ////        val a = Gen pure tagProtocolValues(t._1)
 ////        val b = Gen pure t._2
-////        a \&/ b
+////        a Ior b
 ////      })
 //  }
 

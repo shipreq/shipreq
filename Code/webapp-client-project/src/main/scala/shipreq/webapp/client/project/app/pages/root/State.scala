@@ -170,5 +170,5 @@ object State {
     Reusability.byRef
 
   val savedViewAsync =
-    savedViews ^|-> SavedViewFeature.State.async
+    savedViews andThen SavedViewFeature.State.async
 }

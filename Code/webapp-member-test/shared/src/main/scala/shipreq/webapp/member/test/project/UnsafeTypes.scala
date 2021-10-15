@@ -2,7 +2,6 @@ package shipreq.webapp.member.test.project
 
 import japgolly.microlibs.nonempty.NonEmpty
 import java.time._
-import nyaya.util.Multimap
 import scala.reflect.ClassTag
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.VectorTree.{Location, ParentLocation, PartialLocation}

@@ -1,11 +1,11 @@
 package shipreq.webapp.member.test
 
+import cats.Eq
 import io.circe.parser._
-import japgolly.microlibs.scalaz_ext.ScalazMacros
+import japgolly.microlibs.cats_ext.CatsMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import java.time.Instant
 import java.time.temporal.ChronoUnit._
-import scalaz.Equal
 import shipreq.base.test._
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data._

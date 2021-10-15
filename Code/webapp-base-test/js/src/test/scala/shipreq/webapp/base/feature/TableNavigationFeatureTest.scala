@@ -1,10 +1,11 @@
 package shipreq.webapp.base.feature
 
+import cats.syntax.functor._
+import cats.syntax.traverse._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test.ReactTestUtils
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
-import scalaz.syntax.traverse._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.{Backwards, Direction, Forwards}
 import shipreq.webapp.base.feature.tablenav._

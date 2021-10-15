@@ -1,20 +1,19 @@
 package shipreq.webapp.client.project.widgets
 
+import cats.instances.list._
+import cats.instances.option._
+import cats.syntax.traverse._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import monocle.macros.Lenses
-import nyaya.util.Multimap
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import scalaz.std.list._
-import scalaz.std.option._
-import scalaz.syntax.traverse._
 import shipreq.base.util._
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Dropdown => _, _}
@@ -66,7 +65,7 @@ object ReqTypeRulesEditor {
               \/-(ids.toSet)
             else
               -\/(Invalidity(s"Defined elsewhere: ${reqTypes.mkStringByIds(localDups, ", ")}"))
-          case e@ -\/(_) => e
+          case -\/(e) => -\/(e)
         }
       }.toVector
 
@@ -243,7 +242,7 @@ object ReqTypeRulesEditor {
     implicit def reusabilityS[D: UnivEq]: Reusability[State     [D]] = Reusability.byRefOrUnivEq
 
     def perReqTypeRow[D](idx: Int): Lens[State[D], PerReqType[D]] =
-      perReqType[D] ^|-> Optics.vectorElementUnsafe[PerReqType[D]](idx)
+      perReqType[D] andThen Optics.vectorElementUnsafe[PerReqType[D]](idx)
   }
 
   // -------------------------------------------------------------------------------------------------------------------

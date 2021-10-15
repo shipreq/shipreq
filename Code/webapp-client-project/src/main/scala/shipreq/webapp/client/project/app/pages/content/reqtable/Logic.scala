@@ -1,13 +1,12 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
+import cats.syntax.semigroup._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.collection.{Factory, Iterable, mutable}
 import scala.reflect.ClassTag
-import scalaz.syntax.semigroup._
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
-import shipreq.base.util.fp.Monoid.Implicits._
 import shipreq.webapp.member.project.data.DataImplicits._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.derivation.VirtualProjectTags.DerivativeTagFactor
@@ -594,7 +593,7 @@ private[reqtable] object Logic {
     mkReqCodeTree[Row, Vector, Vector, Row](
       rows,
       Row.reqCodes.get,
-      (row, items) => Row.reqCodeTree.set(items)(row))
+      (row, items) => Row.reqCodeTree.replace(items)(row))
 
 
   def stats(p: Project, rows: IterableOnce[Row]): TableContentStats = {

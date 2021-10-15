@@ -1,0 +1,2 @@
+#!/bin/bash
+exec aws --profile=shipreq --region=ap-southeast-2 "$@"

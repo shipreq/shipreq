@@ -19,25 +19,25 @@ object TaskmanBuild {
     project
       .in(file("taskman-api-logic"))
       .configure(Common.jvmSettings)
-      .deps(Circe.main ++ testScope(μTest ++ scalaCheck ++ Scala.reflect ++ Microlibs.testUtil))
+      .deps(Circe.main ++ testScope(utest ++ scalaCheck ++ Scala.reflect ++ Microlibs.testUtil))
       .dependsOn(baseUtilJvm)
       .dependsOn(baseTestJvm % Test)
 
   lazy val taskmanApi =
     project
       .in(file("taskman-api"))
-      .configure(Common.jvmSettings, DockerEnv.test.required)
-      .deps(testScope(μTest ++ scalaCheck ++ Scala.reflect))
+      .configure(Common.jvmSettings, DockerEnv.test)
+      .deps(testScope(utest ++ scalaCheck ++ Scala.reflect))
       .dependsOn(taskmanApiLogic, baseDb)
       .dependsOn(taskmanServerSchema % Test)
       .dependsOn(baseTestJvm % Test)
-      .settings(parallelExecution in Test := false)
+      .settings(Test / parallelExecution := false)
 
   lazy val taskmanServerLogic =
     project
       .in(file("taskman-server-logic"))
       .configure(Common.jvmSettings)
-      .deps(Logback.withPlugins ++ testScope(μTest ++ scalaCheck))
+      .deps(Logback.withPlugins ++ scalaz ++ testScope(utest ++ scalaCheck))
       .dependsOn(taskmanApiLogic)
       .dependsOn(baseTestJvm % Test)
 
@@ -63,18 +63,19 @@ object TaskmanBuild {
     def runWithDockerDev: Project => Project =
       _.configure(DockerEnv.dev.commands)
       .settings(
-        fork                in (Compile, run)  := true,
-        fullClasspathAsJars in Runtime         += DockerEnv.dev.resDir("taskman", baseDirectory.value),
-        javaOptions         in (Compile, run) ++= DockerEnv.dev.javaOptions("taskman", baseDirectory.value),
-        runner              in (Compile, run)  := (runner in (Compile, run)).dependsOn(DockerEnv.dev.devEnvStart).value)
+        Compile / run / fork           := true,
+        Compile / run / javaOptions   ++= DockerEnv.dev.javaOptions("taskman", baseDirectory.value),
+        Compile / run / runner         := (Compile / run / runner).dependsOn(DockerEnv.dev.devEnvStart).value,
+        Runtime / fullClasspathAsJars  += DockerEnv.dev.resDir("taskman", baseDirectory.value),
+      )
 
     Project("taskmanServer", file("taskman-server"))
       .enablePlugins(JavaAppPackaging, DockerPlugin)
-      .configure(Common.jvmSettings, DockerEnv.test.required)
+      .configure(Common.jvmSettings, DockerEnv.test)
       .deps(
         Akka.actor ++ javaMail ++ OkHttp.core ++ httpCore ++ commonsIo ++ Logback.withPlugins ++
         Prometheus.client ++ Prometheus.hotspot ++ Prometheus.httpserver ++ Prometheus.logback ++
-        testScope(Akka.testkit ++ μTest))
+        testScope(Akka.testkit ++ utest))
       .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
       .dependsOn(baseTestJvm % Test)
       .configure(Docker.settingsFor("taskman"))
@@ -82,16 +83,16 @@ object TaskmanBuild {
       .settings(
         dependencyOverrides ++= OkHttp.core(LibDependency.JVM), // because jaegerClient wants okhttp 4
 
-        mainClass in Compile := Some(serverClass),
-        javaOptions in(Compile, run) += "-XX:+UseG1GC",
+        Compile / mainClass := Some(serverClass),
+        Compile / run / javaOptions += "-XX:+UseG1GC",
 
         // Remove versions from package filenames for Docker layer reuse.
-        mappings in Universal :=
-          (mappings in Universal).value.map {
+        Universal / mappings :=
+          (Universal / mappings).value.map {
             case (f, n) => (f, fixJarFilename.value(n))
           },
 
-        parallelExecution in Test := false)
+        Test / parallelExecution := false)
       .configure(dontInline) // because Akka docs
   }
 

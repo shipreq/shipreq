@@ -2,16 +2,15 @@ package shipreq.webapp.base.protocol.binary.v1
 
 import boopickle.Decoder
 import boopickle.DefaultBasic._
+import cats.Functor
+import cats.data.Ior
 import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.microlibs.recursion.Fix
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.nio.ByteBuffer
 import java.time.Instant
 import monocle.Iso
-import nyaya.util.{MultiValues, Multimap}
 import scala.reflect.ClassTag
-import scalaz.Isomorphism.<=>
-import scalaz.{Functor, \&/}
 import shipreq.base.util._
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
@@ -136,8 +135,8 @@ object BaseData {
   def pickleNothing[A <: AnyRef]: Pickler[A] =
     _pickleNothing.asInstanceOf[Pickler[A]]
 
-  def pickleBool[A](iso: Boolean <=> A): Pickler[A] =
-    transformPickler(iso.to)(iso.from)
+  def pickleBool[A](iso: Iso[Boolean, A]): Pickler[A] =
+    transformPickler(iso.get)(iso.reverseGet)
 
   def pickleDigraphBiDir[A: Pickler: UnivEq]: Pickler[Digraph.BiDir[A]] =
     transformPickler(Digraph.BiDir.apply[A])(_.forwards)(pickleDigraphUniDir)
@@ -207,22 +206,22 @@ object BaseData {
   def pickleIMap[K: UnivEq, V: Pickler](empty: IMap[K, V]): Pickler[IMap[K, V]] =
     transformPickler(empty ++ (_: Iterable[V]))(_.values)
 
-  def pickleIor[A: Pickler, B: Pickler]: Pickler[A \&/ B] =
-    new Pickler[A \&/ B] {
-      import \&/._
-      private[this] final val KeyThis = 0
-      private[this] final val KeyThat = 1
+  def pickleIor[A: Pickler, B: Pickler]: Pickler[A Ior B] =
+    new Pickler[A Ior B] {
+      import Ior._
+      private[this] final val KeyLeft = 0
+      private[this] final val KeyRight = 1
       private[this] final val KeyBoth = 2
-      override def pickle(i: A \&/ B)(implicit state: PickleState): Unit =
+      override def pickle(i: A Ior B)(implicit state: PickleState): Unit =
         i match {
-          case This(a)    => state.enc.writeByte(KeyThis); state.pickle(a)
-          case That(b)    => state.enc.writeByte(KeyThat); state.pickle(b)
+          case Left(a)    => state.enc.writeByte(KeyLeft); state.pickle(a)
+          case Right(b)   => state.enc.writeByte(KeyRight); state.pickle(b)
           case Both(a, b) => state.enc.writeByte(KeyBoth); state.pickle(a); state.pickle(b)
         }
-      override def unpickle(implicit state: UnpickleState): A \&/ B =
+      override def unpickle(implicit state: UnpickleState): A Ior B =
         state.dec.readByte match {
-          case KeyThis => This(state.unpickle[A])
-          case KeyThat => That(state.unpickle[B])
+          case KeyLeft => Left(state.unpickle[A])
+          case KeyRight => Right(state.unpickle[B])
           case KeyBoth =>
             val a = state.unpickle[A]
             val b = state.unpickle[B]

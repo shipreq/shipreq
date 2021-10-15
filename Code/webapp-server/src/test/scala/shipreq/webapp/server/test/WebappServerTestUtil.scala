@@ -1,8 +1,8 @@
 package shipreq.webapp.server.test
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
+import cats.Eq
+import japgolly.microlibs.cats_ext.CatsMacros
 import java.time._
-import scalaz.Equal
 import shipreq.webapp.member.test.{WebappTestEquality, WebappTestUtil}
 import shipreq.webapp.server.logic.algebra.Redis
 
@@ -10,16 +10,15 @@ trait WebappServerTestEquality extends WebappTestEquality {
 
   object ImplicitRedisEqualityDeep {
     import WebappTestUtil.ImplicitProjectEqualityDeep._
-    implicit lazy val equalRedisProjectCache   : Equal[Redis.ProjectCache   ] = ScalazMacros.deriveEqual
-    implicit lazy val equalRedisProjectSnapshot: Equal[Redis.ProjectSnapshot] = ScalazMacros.deriveEqual
+    implicit lazy val equalRedisProjectCache   : Eq[Redis.ProjectCache   ] = CatsMacros.deriveEq
+    implicit lazy val equalRedisProjectSnapshot: Eq[Redis.ProjectSnapshot] = CatsMacros.deriveEq
   }
 
   object ImplicitRedisEqualityDeepExceptEventTime {
     import WebappTestUtil.ImplicitProjectEqualityDeepExceptEventTime._
-    implicit lazy val equalRedisProjectCache   : Equal[Redis.ProjectCache   ] = ScalazMacros.deriveEqual
-    implicit lazy val equalRedisProjectSnapshot: Equal[Redis.ProjectSnapshot] = ScalazMacros.deriveEqual
+    implicit lazy val equalRedisProjectCache   : Eq[Redis.ProjectCache   ] = CatsMacros.deriveEq
+    implicit lazy val equalRedisProjectSnapshot: Eq[Redis.ProjectSnapshot] = CatsMacros.deriveEq
   }
-
 }
 
 // =====================================================================================================================

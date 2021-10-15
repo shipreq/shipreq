@@ -1,8 +1,9 @@
 package shipreq.base.db
 
+import cats.Monad
 import javax.sql.DataSource
 import org.flywaydb.core.Flyway
-import scalaz.Monad
+import shipreq.base.util.CatsExtra.ApplicativeDelay
 
 object SchemaMigrator {
 
@@ -24,9 +25,9 @@ object SchemaMigrator {
 final class SchemaMigrator(private val flyway: Flyway) extends AnyVal {
 
   def migrate[M[_]](implicit M: Monad[M]): M[Unit] =
-    M point flyway.migrate()
+    M delay flyway.migrate()
 
   /** Drops all objects (tables, views, procedures, triggers, ...) in the configured schemas. */
   def drop[M[_]](implicit M: Monad[M]): M[Unit] =
-    M point flyway.clean()
+    M delay flyway.clean()
 }

@@ -18,7 +18,7 @@ object RenderTestUtil {
         val closer = s.startsWith("</")
         if (closer && indent > 0)
           indent -= 1
-        val s2 = s.indent(indent << 1)
+        val s2 = s.indentLines(indent << 1)
         if (!closer && s.startsWith("<"))
           indent += 1
         s2
@@ -41,8 +41,8 @@ object RenderTestUtil {
     if (LinkingInfo.developmentMode)
       identity
     else {
-      val r = " class=\"[^\"]+\""
-      r.replaceAll(_, "")
+      val r = " class=\"[^\"]+\"".r
+      r.replaceAllIn(_, "")
     }
 
   def assertRender(actual: VdomNode, expect: String)(implicit l: Line, p: TestPath): Unit = {

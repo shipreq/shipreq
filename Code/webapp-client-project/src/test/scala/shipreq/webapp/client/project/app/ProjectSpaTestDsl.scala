@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses
@@ -152,7 +152,7 @@ object ProjectSpaTestDsl {
     PH.*.transformer
       .mapR[Ref](_.global)
       .pmapO[Obs](_.home)
-      .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
+      .mapS(TestState.project.get)((a, b) => TestState.project.replace(b)(a)) // TODO Add Monocle support
 
   implicit lazy val transformCRT =
     ReqTypeConfigTestDsl.*.transformer
@@ -164,7 +164,7 @@ object ProjectSpaTestDsl {
     RT.*.transformer
       .mapR[Ref](r => RT.Ref(r.tester.component zoomStateL State.savedViews, r.global, r.promptJs, r.confirmJs))
       .pmapO[Obs](_.reqTable)
-      .mapS(TestState.project.get)((a, b) => TestState.project.set(b)(a)) // TODO Add Monocle support
+      .mapS(TestState.project.get)((a, b) => TestState.project.replace(b)(a)) // TODO Add Monocle support
 
   implicit lazy val transformRD =
     RD.*.transformer

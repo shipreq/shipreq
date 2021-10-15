@@ -1,12 +1,12 @@
 package shipreq.webapp.member.project.data
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
+import cats.Eq
+import japgolly.microlibs.cats_ext.CatsMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
 import monocle.std.option.pSome
 import monocle.{Lens, Traversal}
-import scalaz.Equal
 import shipreq.base.util._
 import shipreq.webapp.member.project.data.derivation._
 import shipreq.webapp.member.project.event.{ApplyEvent, EventOrd, ProjectEvents, VerifiedEvent}
@@ -16,36 +16,38 @@ import shipreq.webapp.member.project.text.PlainText
 object Project {
   type Name = String
 
-  val customIssueTypes    : Lens[Project, CustomIssueTypeIMap      ] = config  ^|-> ProjectConfig.customIssueTypes
-  val reqTypes            : Lens[Project, ReqTypes                 ] = config  ^|-> ProjectConfig.reqTypes
-  val fields              : Lens[Project, FieldSet                 ] = config  ^|-> ProjectConfig.fields
-  val tagTree             : Lens[Project, TagTree                  ] = config  ^|-> ProjectConfig.tags ^|-> Tags.tree
-  val customFields        : Lens[Project, FieldSet.CustomFields    ] = fields  ^|-> FieldSet.customFields
-  val reqs                : Lens[Project, Requirements             ] = content ^|-> ProjectContent.reqs
-  val reqCodes            : Lens[Project, ReqCodes                 ] = content ^|-> ProjectContent.reqCodes
-  val reqText             : Lens[Project, ReqData.Text             ] = content ^|-> ProjectContent.reqText
-  val reqTags             : Lens[Project, ReqData.Tags             ] = content ^|-> ProjectContent.reqTags
-  val implications        : Lens[Project, Implications.Graph.BiDir ] = content ^|-> ProjectContent.implications ^|-> Implications.graph
-  val deletionReasons     : Lens[Project, DeletionReasons          ] = content ^|-> ProjectContent.deletionReasons
-  val genericReqs         : Lens[Project, GenericReqIMap           ] = content ^|-> ProjectContent.genericReqs
-  val useCases            : Lens[Project, UseCases                 ] = content ^|-> ProjectContent.useCases
-  val pubidRegister       : Lens[Project, PubidRegister            ] = content ^|-> ProjectContent.pubidRegister
-  val reqCodeTrie         : Lens[Project, ReqCode.Trie             ] = content ^|-> ProjectContent.reqCodeTrie
-  val implicationsSrcToTgt: Lens[Project, Implications.Graph.UniDir] = content ^|-> ProjectContent.implicationsSrcToTgt
-  val useCaseIMap         : Lens[Project, UseCaseIMap              ] = content ^|-> ProjectContent.useCaseIMap
-  val useCaseStepIndex    : Lens[Project, UseCases.StepIndex       ] = content ^|-> ProjectContent.useCaseStepIndex
+  val customIssueTypes    : Lens[Project, CustomIssueTypeIMap      ] = config  andThen ProjectConfig.customIssueTypes
+  val reqTypes            : Lens[Project, ReqTypes                 ] = config  andThen ProjectConfig.reqTypes
+  val fields              : Lens[Project, FieldSet                 ] = config  andThen ProjectConfig.fields
+  val tagTree             : Lens[Project, TagTree                  ] = config  andThen ProjectConfig.tags andThen Tags.tree
+  val customFields        : Lens[Project, FieldSet.CustomFields    ] = fields  andThen FieldSet.customFields
+  val reqs                : Lens[Project, Requirements             ] = content andThen ProjectContent.reqs
+  val reqCodes            : Lens[Project, ReqCodes                 ] = content andThen ProjectContent.reqCodes
+  val reqText             : Lens[Project, ReqData.Text             ] = content andThen ProjectContent.reqText
+  val reqTags             : Lens[Project, ReqData.Tags             ] = content andThen ProjectContent.reqTags
+  val implications        : Lens[Project, Implications.Graph.BiDir ] = content andThen ProjectContent.implications andThen Implications.graph
+  val deletionReasons     : Lens[Project, DeletionReasons          ] = content andThen ProjectContent.deletionReasons
+  val genericReqs         : Lens[Project, GenericReqIMap           ] = content andThen ProjectContent.genericReqs
+  val useCases            : Lens[Project, UseCases                 ] = content andThen ProjectContent.useCases
+  val pubidRegister       : Lens[Project, PubidRegister            ] = content andThen ProjectContent.pubidRegister
+  val reqCodeTrie         : Lens[Project, ReqCode.Trie             ] = content andThen ProjectContent.reqCodeTrie
+  val implicationsSrcToTgt: Lens[Project, Implications.Graph.UniDir] = content andThen ProjectContent.implicationsSrcToTgt
+  val useCaseIMap         : Lens[Project, UseCaseIMap              ] = content andThen ProjectContent.useCaseIMap
+  val useCaseStepIndex    : Lens[Project, UseCases.StepIndex       ] = content andThen ProjectContent.useCaseStepIndex
 
   val applicableTags: Traversal[Project, ApplicableTag] =
-    tagTree ^|->> TagTree.traversal ^|-> TagInTree.tag ^|-? Tag.applicableTag
+    tagTree andThen TagTree.traversal andThen TagInTree.tag andThen Tag.applicableTag
 
-  val savedViewsNE: monocle.Optional[Project, savedview.SavedViews.NonEmpty] =
-    savedViews ^<-? pSome
+  val savedViewsNE: monocle.Optional[Project, savedview.SavedViews.NonEmpty] = {
+    import savedview.SavedViews.NonEmpty
+    savedViews andThen pSome[NonEmpty, NonEmpty]
+  }
 
   def savedView(id: savedview.SavedView.Id): monocle.Optional[Project, savedview.SavedView] =
-    savedViewsNE ^|-? savedview.SavedViews.NonEmpty.at(id)
+    savedViewsNE andThen savedview.SavedViews.NonEmpty.at(id)
 
   val savedViewTraversal: Traversal[Project, savedview.View] =
-    savedViewsNE ^|->> savedview.SavedViews.NonEmpty.traversalSavedView ^|-> savedview.SavedView.view
+    savedViewsNE andThen savedview.SavedViews.NonEmpty.traversalSavedView andThen savedview.SavedView.view
 
   // Not allowed by validator.
   // This ensures that initial ProjectNameSet events (generated on project creation) apply instead of being discarded

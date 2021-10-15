@@ -1,7 +1,8 @@
 package shipreq.taskman.server.logic
 
+import cats.data.{State, StateT}
+import cats.~>
 import java.time.{Duration, Instant}
-import scalaz.{State, StateT, ~>}
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.Priority
 import shipreq.taskman.server.logic.Source._
@@ -30,7 +31,7 @@ final class Source(pollGap      : Duration,
     StateT(_ => clock.map(n => (n, ())))
 
   val noResults: STFx[Seq[TaskHeader]] =
-    StateT.stateT(Seq.empty)
+    StateT.pure(Seq.empty)
 
   def runOp[A](op: ServerOp[A]): STFx[A] =
     StateT(s => serverOpFx(op).map((s, _)))

@@ -49,28 +49,28 @@ object FailureTest extends TestSuite {
       val test = retryAndNotify.partial
 
       "on first failure, retry in 30s and notify support" - {
-        implicit val c = lenses.failureCtx.failureCountL.set(ctx_nd, 0)
+        implicit val c = lenses.failureCtx.failureCountL.replace(0)(ctx_nd)
         val result = test(c)
         result.assertRetryIn(30 seconds)
         result.assertNotifySupport()
       }
 
       "on second failure, retry in 90s and notify support" - {
-        implicit val c = lenses.failureCtx.failureCountL.set(ctx_nd, 1)
+        implicit val c = lenses.failureCtx.failureCountL.replace(1)(ctx_nd)
         val result = test(c)
         result.assertRetryIn(90 seconds)
         result.assertNotifySupport()
       }
 
       "on 20th failure before cutoff, retry in 4h and notify support" - {
-        implicit val c = lenses.failureCtx.failureCountL.set(ctx_nd, 19)
+        implicit val c = lenses.failureCtx.failureCountL.replace(19)(ctx_nd)
         val result = test(c)
         result.assertRetryIn(4 hours)
         result.assertNotifySupport()
       }
 
       "on 20th failure after cutoff, pass through" - {
-        implicit val c = lenses.failureCtx.failureCountL.set(ctx_nd, 19).copy(now = timeNow plus 2.days)
+        implicit val c = lenses.failureCtx.failureCountL.replace(19)(ctx_nd).copy(now = timeNow plus 2.days)
         test(c) ==> None
       }
     }

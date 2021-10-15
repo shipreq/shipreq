@@ -50,7 +50,7 @@ object EditorKeys {
 
   private def focusChild(event: ReactEventFromHtml): CallbackOption[Unit] =
     CallbackOption
-      .liftOption(focusableChildren(event.currentTarget.domAsHtml).nextOption())
+      .option(focusableChildren(event.currentTarget.domAsHtml).nextOption())
       .map(_.focus())
 
 }

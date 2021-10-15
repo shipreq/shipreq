@@ -40,7 +40,7 @@ object ScrollSyncFeature {
       Ref[N]
 
     override val dom: CallbackTo[Option[N]] =
-      ref.get.asCallback
+      ref.get
 
     def install(v: VdomTagOf[N]): VdomTagOf[N]
   }
@@ -87,7 +87,7 @@ final class ScrollSyncFeature {
 
   def newPane(): PaneWithManualDom[html.Element] = {
     val ref = Ref.toVdom[html.Element]
-    newPane(ref.get.asCallback, ^.untypedRef := ref)
+    newPane(ref.get, ^.untypedRef := ref)
   }
 
   // -------------------------------------------------------------------------------------------------------------------

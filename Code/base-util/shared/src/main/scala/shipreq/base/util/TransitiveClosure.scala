@@ -1,8 +1,8 @@
 package shipreq.base.util
 
+import cats.Eval
 import scala.collection.immutable.BitSet
 import scala.reflect.ClassTag
-import scalaz.Need
 import shipreq.base.util.TransitiveClosure.Filter
 
 object TransitiveClosure {
@@ -56,12 +56,12 @@ final class TransitiveClosure[A: UnivEq](a2i           : A => Int,
                                          directChildren: A => Iterable[A],
                                          filter        : A => Filter) {
 
-  private val closure: Array[Need[BitSet]] =
+  private val closure: Array[Eval[BitSet]] =
     new Array(size)
 
   // Init
   for (i <- 0 until size) {
-    closure(i) = Need[BitSet] {
+    closure(i) = Eval.later[BitSet] {
       val a = i2a(i)
       val z = BitSet.empty + i
       directChildren(a).foldLeft(z){ (q, c) =>

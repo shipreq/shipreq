@@ -1,6 +1,6 @@
 package shipreq.webapp.client.public.pages
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
@@ -87,7 +87,7 @@ object LandingPage {
       val task: AsyncCallback[ErrorMsg \/ Unit] =
         p.submit(r).flatTapSync {
           case \/-(_) =>
-            val lockForm = p.state.modState(State.submitted.set(true))
+            val lockForm = p.state.modState(State.submitted.replace(true))
             val sayDone  = Callback.alert("Great to hear from you.\n\nWe'll be in touch!")
             lockForm >> sayDone
           case -\/(f) =>
@@ -112,7 +112,7 @@ object LandingPage {
         Common.validationOffUntilFirstSubmit(
           enabled,
           s.vux,
-          p.state.modState(State.vux set ValidationUX.Highlight),
+          p.state.modState(State.vux replace ValidationUX.Highlight),
           s.req.validate.toOption.map(submit(p, _)))
 
       val reqSS = p.state.zoomStateL(State.req)

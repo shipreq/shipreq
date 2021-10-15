@@ -1,6 +1,6 @@
 package shipreq.base.test
 
-import scalaz.Equal
+import cats.Eq
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.IndexLabel._
 import shipreq.base.util.VectorTree.{Children, Node}
@@ -23,14 +23,14 @@ object UseCaseStepUtils {
   case class FakeStep(id: String, value: String)
   implicit def univEqFakeStep: UnivEq[FakeStep] = UnivEq.derive
 
-  def fakeStepEqByValue: Equal[FakeStep] =
-    Equal.equal[FakeStep](_.value ==* _.value)
+  def fakeStepEqByValue: Eq[FakeStep] =
+    Eq.instance[FakeStep](_.value ==* _.value)
 
-  val TreeEqByFakeStepValue: Equal[VectorTree[FakeStep]] =
+  val TreeEqByFakeStepValue: Eq[VectorTree[FakeStep]] =
     VectorTree equalityForRoot fakeStepEqByValue
 
   def assertTreeValues(actual: VectorTree[FakeStep], expect: VectorTree[FakeStep]): Unit =
-    if (!TreeEqByFakeStepValue.equal(actual, expect)) {
+    if (!TreeEqByFakeStepValue.eqv(actual, expect)) {
       def removeIds(t: VectorTree[FakeStep]) = t.map(_.value)
       val a = removeIds(actual)
       val e = removeIds(expect)

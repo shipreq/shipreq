@@ -1,7 +1,7 @@
 package shipreq.webapp.member.protocol.entrypoint
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
-import scalaz.Equal
+import cats.Eq
+import japgolly.microlibs.cats_ext.CatsMacros
 import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.base.protocol.binary.SafePickler.ConstructionHelperImplicits._
 import shipreq.webapp.base.test.BinaryTestUtil._
@@ -10,8 +10,8 @@ import utest._
 
 object ProjectSpaEntryPointTest extends TestSuite {
 
-  private implicit val equalProjectSpaInitPageData: Equal[ProjectSpaEntryPoint.InitData] =
-    ScalazMacros.deriveEqual
+  private implicit val equalProjectSpaInitPageData: Eq[ProjectSpaEntryPoint.InitData] =
+    CatsMacros.deriveEq
 
   override def tests = Tests {
     "roundTrip" - propTestRoundTrip(ProjectSpaEntryPoint.picklerInitData.asV1(0))(RandomData.routines.projectSpaInitPageData)

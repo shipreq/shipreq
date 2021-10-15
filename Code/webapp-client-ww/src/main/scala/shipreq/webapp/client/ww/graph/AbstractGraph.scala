@@ -2,7 +2,6 @@ package shipreq.webapp.client.ww.graph
 
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
-import nyaya.util.Multimap
 import shipreq.base.util.OptionalBoolFn
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.{Colours, LabelFormat}

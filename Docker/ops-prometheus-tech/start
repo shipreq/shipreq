@@ -1,17 +1,24 @@
 #!/bin/sh
 
-[ -z "$CONFIG" ] && echo '$CONFIG is blank!' && exit 1
+[ ! -e /etc/prometheus/prometheus.yml -a -z "$CONFIG" ] \
+  && echo 'Config missing.' \
+  && echo 'Provide either $CONFIG or /etc/prometheus/prometheus.yml' \
+  && exit 1
 
-echo "$CONFIG" > /etc/prometheus/prometheus.yml
-
+[ -n "$CONFIG" ] && echo "$CONFIG" > /etc/prometheus/prometheus.yml
 echo "----------------------------------------------------------------------------"
 cat /etc/prometheus/prometheus.yml
 echo "----------------------------------------------------------------------------"
 
+[ -z "$LISTEN_ADDR" ] && LISTEN_ADDR=0.0.0.0:9090
+[ -z "$EXTERNAL_URL" ] && EXTERNAL_URL=http://prometheus:9090/prometheus/tech/
+
 CMD=/bin/prometheus
 CMD="$CMD --config.file=/etc/prometheus/prometheus.yml"
 CMD="$CMD --storage.tsdb.path=/data/"
-CMD="$CMD --web.external-url=http://prometheus:9090/prometheus/tech/"
+CMD="$CMD --web.external-url=$EXTERNAL_URL"
+CMD="$CMD --web.listen-address=$LISTEN_ADDR"
 
 echo "> $CMD $@"
+echo
 exec $CMD "$@"

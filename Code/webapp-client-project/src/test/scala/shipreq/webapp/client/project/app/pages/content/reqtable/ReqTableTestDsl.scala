@@ -201,7 +201,7 @@ object ReqTableTestDsl {
         *.point("Req breakdown.")(os => {
           os.obs.stats.content.reqBreakdownResult.flatMap { result =>
             val expect = os.obs.stats.content.reqs
-            Option.when(result !=* expect)(s"$result ≠ $expect [${os.obs.stats.contentLine}]")
+            Option.when(result !=* expect)(s"$result =!= $expect [${os.obs.stats.contentLine}]")
           }
         })
 
@@ -209,7 +209,7 @@ object ReqTableTestDsl {
         *.point("Row breakdown.")(os => {
           val result = os.obs.stats.content.rowBreakdownResult
           val expect = os.obs.stats.content.rows
-          Option.when(result !=* expect)(s"$result ≠ $expect [${os.obs.stats.contentLine}]")
+          Option.when(result !=* expect)(s"$result =!= $expect [${os.obs.stats.contentLine}]")
         })
 
       (rowCount & rowBreakdown & reqBreakdown).renameContextFree("Stats")

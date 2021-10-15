@@ -35,7 +35,7 @@ object Implications {
     apply(Graph.emptyBiDir)
 
   val srcToTgt: Lens[Implications, Graph.UniDir] =
-    graph ^<-> Graph.biToUni
+    graph andThen Graph.biToUni
 
   implicit def univEq: UnivEq[Implications] = UnivEq.derive
 }

@@ -1,7 +1,7 @@
 package shipreq.webapp.member.jsfacade
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw.SyntheticEvent
+import japgolly.scalajs.react.facade.SyntheticEvent
 import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.js.annotation._

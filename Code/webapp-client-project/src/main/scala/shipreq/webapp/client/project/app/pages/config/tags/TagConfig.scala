@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.pages.config.tags
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
@@ -11,6 +11,7 @@ import shipreq.base.util.{Disabled, Enabled, ErrorMsg, Optics, PotentialChange}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
+import shipreq.webapp.base.util.Dirty
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.client.project.feature.Usage
 import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, EditorButtons, ProjectWidgets, SplitScreenCrud, ViewTags}
@@ -170,37 +171,32 @@ object TagConfig {
           )
       }
 
-    private def renderLeft(p: Props, args: splitScreenCrud.ListArgs): VdomNode =
+    private def renderLeft(p: Props, colourOverride: Option[Colour], args: splitScreenCrud.ListArgs): VdomNode =
       NonEmptySet.option(p.project.config.tags.topLevelIds) match {
         case Some(ids) =>
 
           TagTreeView.Props(
-            topLevelIds        = ids,
-            tags               = p.project.config.tags,
-            filterDead         = p.effectiveFilterDead,
-            selected           = args.selection,
-            select             = args.enabledSelect,
-            pw                 = p.pw,
-            updateLiveChildren = updateLiveChildren,
-            enabled            = Disabled when p.asyncInProgress,
-            onClickAnywhere    = args.closeEditor.filter(_ => p.potentialSaveCmd.isUnchanged),
-            usage              = p.usage,
+            topLevelIds            = ids,
+            tags                   = p.project.config.tags,
+            filterDead             = p.effectiveFilterDead,
+            selected               = args.selection,
+            selectedColourOverride = colourOverride,
+            select                 = args.enabledSelect,
+            pw                     = p.pw,
+            updateLiveChildren     = updateLiveChildren,
+            enabled                = Disabled when p.asyncInProgress,
+            onClickAnywhere        = args.closeEditor.filter(_ => p.potentialSaveCmd.isUnchanged),
+            usage                  = p.usage,
           ).render
 
         case None =>
           NoTags.render
       }
 
-    private def renderHeader(p: Props, args: splitScreenCrud.EditorArgs): VdomNode = {
-
-      val ateState: Option[ApplicableTagEditor.State] =
-        p.state.value.right.editorOption.flatMap(_.swap.toOption)
-
-      val colourOverride: Option[Colour] =
-        ateState.flatMap(_.colour.validated match {
-          case \/-(c) => c
-          case -\/(_) => None
-        })
+    private def renderEditorHeader(p             : Props,
+                                   ateState      : Option[ApplicableTagEditor.State],
+                                   colourOverride: Option[Colour],
+                                   args          : splitScreenCrud.EditorArgs): VdomNode = {
 
       <.h2(*.editorTitle,
         args.id match {
@@ -228,10 +224,9 @@ object TagConfig {
         })
     }
 
-    private def renderEditor(p: Props, args: splitScreenCrud.EditorArgs): VdomNode = {
-
-      val header: VdomNode =
-        renderHeader(p, args)
+    private def renderEditor(p     : Props,
+                             header: VdomNode,
+                             args  : splitScreenCrud.EditorArgs): VdomNode = {
 
       val editorType: EditorType =
         args.id match {
@@ -297,13 +292,23 @@ object TagConfig {
     def render(p: Props): VdomNode = {
       // println(("="*60) + "\n" + p.project.config.tags.prettyPrint)
 
+      val ateState: Option[ApplicableTagEditor.State] =
+        p.state.value.right.editorOption.flatMap(_.swap.toOption)
+
+      val colourOverride: Option[Colour] =
+        ateState.flatMap(_.colour.validated match {
+          case \/-(c) => c
+          case -\/(_) => None
+        })
+
       splitScreenCrud(
         filterDeadOverride = p.filterDeadOverride,
         project            = p.project,
         newButton          = newButtonProps(p, _).render,
-        list               = renderLeft(p, _),
+        list               = renderLeft(p, colourOverride, _),
         rightEmpty         = rightEmpty,
-        editor             = renderEditor(p, _),
+        editor             = a => renderEditor(p, renderEditorHeader(p, ateState, colourOverride, a), a),
+        dirty              = Dirty unless p.potentialSaveCmd.isUnchanged,
         initEditor         = (a, b) => Some(initEditor(a, b)),
         state              = p.state,
       )

@@ -1,11 +1,11 @@
 package shipreq.webapp.member.project.data
 
+import cats.Order
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.utils.Memo
 import monocle.Lens
 import monocle.macros.{GenLens, Lenses}
-import scalaz.Order
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util._
 import shipreq.webapp.member.project.data.DataImplicits._
@@ -65,7 +65,8 @@ object StaticReqType {
   val requiringImplication: Set[StaticReqType] =
     values.iterator.filter(_.implication is Mandatory).toSet
 
-  implicit val order = Util.univEqAndArbitraryOrder(values.whole)
+  implicit val order =
+    Util.univEqAndArbitraryOrder(values.whole)
 
   lazy val mnemonics =
     values.foldLeft(UnivEq.emptySet[Mnemonic])(_ ++ _.allMnemonics)
@@ -224,11 +225,11 @@ sealed trait ReqTypeEquality {
 object ReqTypeId {
   implicit object IdOrder extends Order[ReqTypeId] with UnivEq[ReqTypeId] {
     UnivEq.derive[ReqTypeId] // prove Id is actually UnivEq
-    override def order(a: ReqTypeId, b: ReqTypeId) = (a, b) match {
-        case (x: CustomReqTypeId, y: CustomReqTypeId) => Order[CustomReqTypeId].order(x, y)
-        case (x: StaticReqType  , y: StaticReqType  ) => StaticReqType.order(x, y)
-        case (_: StaticReqType  , _: CustomReqTypeId) => scalaz.Ordering.LT
-        case (_: CustomReqTypeId, _: StaticReqType  ) => scalaz.Ordering.GT
+    override def compare(a: ReqTypeId, b: ReqTypeId) = (a, b) match {
+        case (x: CustomReqTypeId, y: CustomReqTypeId) => Order[CustomReqTypeId].compare(x, y)
+        case (x: StaticReqType  , y: StaticReqType  ) => StaticReqType.order.compare(x, y)
+        case (_: StaticReqType  , _: CustomReqTypeId) => -1 // <
+        case (_: CustomReqTypeId, _: StaticReqType  ) => 1 // >
       }
   }
 }

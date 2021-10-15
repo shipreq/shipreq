@@ -12,7 +12,7 @@ trait ApplyOtherEvent {
 
     def applyProjectNameSet(e: ProjectNameSet): Eval[Unit] =
       validateProjectName(e.name).flatMap(name =>
-        Eval.mod(Project.name.set(name)))
+        Eval.mod(Project.name.replace(name)))
   }
 
   // ===================================================================================================================
@@ -74,7 +74,7 @@ trait ApplyOtherEvent {
     private val updateImpGraphConfig = fieldUpdateFn(SavedView.impGraphConfig)
 
     private val updateValuesV1 = GDv1.updateEachValue {
-      case v: v1.ValueForName       => sv => validateName(Some(sv.id), v.value).map(SavedView.name.set(_)(sv))
+      case v: v1.ValueForName       => sv => validateName(Some(sv.id), v.value).map(SavedView.name.replace(_)(sv))
       case v: v1.ValueForColumns    => updateColumns   (v.value)
       case v: v1.ValueForFilter     => updateFilter    (v.value)
       case v: v1.ValueForFilterDead => updateFilterDead(v.value)
@@ -82,7 +82,7 @@ trait ApplyOtherEvent {
     }
 
     private val updateValues = GD.updateEachValue {
-      case v: ^.ValueForName           => sv => validateName(Some(sv.id), v.value).map(SavedView.name.set(_)(sv))
+      case v: ^.ValueForName           => sv => validateName(Some(sv.id), v.value).map(SavedView.name.replace(_)(sv))
       case v: ^.ValueForColumns        => updateColumns       (v.value)
       case v: ^.ValueForFilter         => updateFilter        (v.value)
       case v: ^.ValueForFilterDead     => updateFilterDead    (v.value)
@@ -181,7 +181,7 @@ trait ApplyOtherEvent {
         svs    <- Eval.some(p.savedViews, notFound(e.id))
         _      <- whenUntrusted(Eval.some(svs.get(e.id), notFound(e.id)).void)
         result = if (svs.default.id ==* e.id) delDefault(svs) else delNonDefault(svs)
-        _      <- Project.savedViews.set(result)
+        _      <- Project.savedViews.replace(result)
       } yield ()
     }
 

@@ -66,9 +66,9 @@ object AutosizeInput {
 
     lazy val resize: Callback =
       for {
-        s <- spanRef.get
+        s <- spanRef.get.asCBO
         p <- $.props.toCBO
-        i <- p.ref.getOrElse(inputRef).get
+        i <- p.ref.getOrElse(inputRef).get.asCBO
       } yield {
         val width1 = s"${s.offsetWidth}px"
         val width = p.extraWidth.fold(width1)(extra => s"calc($width1 + $extra)")

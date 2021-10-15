@@ -89,7 +89,7 @@ object ProjectItem {
     type State = Option[EditState]
     object State {
       private def setFn[A](l: Lens[EditState, A]): A => State => State =
-        s => _.map(l set s)
+        s => _.map(l replace s)
 
       val setEdit  = setFn(EditState.edit)
       val setAsync = setFn(EditState.async)

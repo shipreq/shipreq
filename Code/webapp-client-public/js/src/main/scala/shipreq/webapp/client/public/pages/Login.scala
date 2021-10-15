@@ -1,15 +1,16 @@
 package shipreq.webapp.client.public.pages
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
-import org.scalajs.dom.{html, window}
+import org.scalajs.dom.html
 import shipreq.base.util._
 import shipreq.webapp.base.config._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.feature.AsyncFeature
+import shipreq.webapp.base.lib.AbstractLocation
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.protocol.ajax.CommonProtocols.Login.Request
 import shipreq.webapp.base.protocol.webstorage._
@@ -27,7 +28,9 @@ object Login {
                          attemptLogin   : ServerSideProcInvoker[Request, ErrorMsg, Permission],
                          resetPassword  : ServerSideProcInvoker[Username \/ EmailAddr, ErrorMsg, Unit],
                          redirectOnLogin: Option[Url.Relative],
-                         localStorage   : AbstractWebStorage) {
+                         localStorage   : AbstractWebStorage,
+                         location       : AbstractLocation,
+                        ) {
 
     val inFlight: Boolean =
       AsyncFeature.isInProgress(state.value.async)
@@ -79,18 +82,18 @@ object Login {
     def apply(localStorage: LocalStorage) = {
       var s = this
       for (rm <- localStorage.rememberMe) {
-        s = State.rememberMe.set(rm)(s)
+        s = State.rememberMe.replace(rm)(s)
         if (rm)
-          localStorage.user.foreach(u => s = State.usernameOrEmail.set(u)(s))
+          localStorage.user.foreach(u => s = State.usernameOrEmail.replace(u)(s))
       }
       s
     }
   }
 
   object State {
-    val usernameOrEmail = req ^|-> Request.Untyped.usernameOrEmail
-    val password        = req ^|-> Request.Untyped.password
-    val rememberMeOn    = rememberMe ^<-> On.isoWhen(true).reverse
+    val usernameOrEmail = req andThen Request.Untyped.usernameOrEmail
+    val password        = req andThen Request.Untyped.password
+    val rememberMeOn    = rememberMe andThen On.isoWhen(true).reverse
 
     def empty: State =
       State(Request.Untyped("", ""), true, None, None, None)
@@ -124,7 +127,7 @@ object Login {
     private def focusForm(retries: Int): Callback =
       $.props.flatMap { p =>
         val ref = if (p.state.value.req.usernameOrEmail.isEmpty) refUser else refPassword
-        ref.get.filterNot(_.disabled).asCallback.flatMap {
+        ref.get.asCBO.filterNot(_.disabled).asCallback.flatMap {
           case Some(i) => Callback(i.focus())
           case None    => focusForm(retries - 1).delayMs(20).toCallback.when_(retries > 1)
         }
@@ -165,9 +168,8 @@ object Login {
         for {
           p <- $.props
           _ <- GlobalSettings.SessionExpired.remove(p.localStorage)
-        } yield {
-          window.location.href = p.redirectOnLogin.getOrElse(Urls.memberHome).relativeUrl
-        }
+          _ <- p.location.setHrefRelative(p.redirectOnLogin.getOrElse(Urls.memberHome))
+        } yield ()
       )
 
     private def onLoginFailure(user: Username \/ EmailAddr): Callback =

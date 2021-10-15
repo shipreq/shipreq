@@ -116,7 +116,7 @@ object ViewManager {
           item(Icon.Plus, "Save as new...",
             promptThenRun(
               prompt    = promptJs("Enter a name for this view"),
-              validate  = cmdFn.value.map(_.andThen(_.map(Some(_)).toEither)),
+              validate  = cmdFn.value.map(_.andThen(_.map(Some(_)))),
               onSuccess = runActionOnSuccess { case e: Event.SavedViewCreate => Action.Select(e.id) }))
 
         case MenuAction.Replace(name, cmdCB) =>
@@ -138,7 +138,7 @@ object ViewManager {
           item(Icon.Write, "Rename...",
             promptThenRun(
               prompt   = promptJs(s"Enter a new name for ${name.value}", name.value),
-              validate = CallbackTo.pure(cmdFn(_).toDisjOption.toEither)))
+              validate = CallbackTo.pure(cmdFn(_).toDisjOption)))
       }
     }
 

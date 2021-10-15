@@ -1,8 +1,7 @@
 package shipreq.taskman.api
 
-import scalaz.syntax.monad.ToBindOps
-import scalaz.syntax.traverse._
-import scalaz.{Applicative, Monad, Traverse, ~>}
+import cats.syntax.all._
+import cats.{Applicative, Monad, Traverse, ~>}
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 
@@ -26,7 +25,7 @@ trait TaskmanApi[F[_]] { self =>
 
   def cfgPutBulk(kvs: (String, String)*)(implicit F: Monad[F]): F[Unit] =
     if (kvs.isEmpty)
-      F.pure(())
+      F.unit
     else
       kvs.iterator.map(kv => cfgPut(kv._1, kv._2)).reduce(_ >> _)
 

@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.pages.config.reqtypes
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
@@ -12,6 +12,7 @@ import shipreq.webapp.base.lib.ConfirmJs
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Message}
+import shipreq.webapp.base.util.Dirty
 import shipreq.webapp.client.project.app.Style.{reqTypeConfig => *}
 import shipreq.webapp.client.project.feature.Usage
 import shipreq.webapp.client.project.widgets.{EditorButtons, ProjectWidgets, SplitScreenCrud}
@@ -265,6 +266,7 @@ object ReqTypeConfig {
         list               = renderLeft(p, _),
         rightEmpty         = rightEmpty,
         editor             = renderEditor(p, _),
+        dirty              = Dirty unless p.potentialSaveCmd.isUnchanged,
         initEditor         = initEditor,
         state              = p.state,
       )

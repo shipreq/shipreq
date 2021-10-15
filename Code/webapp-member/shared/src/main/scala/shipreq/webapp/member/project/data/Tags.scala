@@ -7,7 +7,6 @@ import japgolly.microlibs.utils.Memo
 import monocle.macros.Lenses
 import monocle.{Lens, Traversal}
 import nyaya.prop.CycleDetector
-import nyaya.util.Multimap
 import scala.collection.mutable
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
@@ -238,7 +237,7 @@ object TagInTree {
   val filterLive: TagInTree => Boolean =
     _.tag.live is Live
 
-  val live = tag ^|-> Tag.live
+  val live = tag andThen Tag.live
 
   /** @return Itself and all reachable children. */
   @tailrec def transitiveChildren(queue: Iterator[TagInTree], seen: Set[TagId])(implicit tt: TagTree): Set[TagId] =

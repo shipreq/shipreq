@@ -1,6 +1,5 @@
 package shipreq.webapp.member.project.event
 
-import nyaya.util.Multimap
 import shipreq.base.util._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.ApplyEventTestFns._

@@ -2,7 +2,6 @@ package shipreq.base.util
 
 import monocle.Iso
 import nyaya.prop.{CycleDetector => CycleDetectorN, Prop}
-import nyaya.util.Multimap
 import scala.reflect.ClassTag
 
 /**

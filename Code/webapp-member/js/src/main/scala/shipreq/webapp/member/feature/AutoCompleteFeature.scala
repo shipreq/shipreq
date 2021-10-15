@@ -17,7 +17,7 @@ import shipreq.webapp.member.ui.AutosizeTextarea
   * 3. Add to backend:
   *    ```
   *    override val autoCompleteCtx: CallbackOption[AutoCompleteCtx] =
-  *      inputDomRef.get.map(AutoCompleteCtx(pxAutoComplete.value(), _))
+  *      inputDomRef.get.asCBO.map(AutoCompleteCtx(pxAutoComplete.value(), _))
   *    ```
   *
   * 4. Add a dom ref to the backend: `private val inputDomRef = Ref[html.Input]`
@@ -89,7 +89,7 @@ object AutoCompleteFeature extends autocomplete.Implicits {
 
       final val editorDom: CallbackOption[html.TextArea] =
         for {
-          r <- editorRef.get
+          r <- editorRef.get.asCBO
           n <- r.withEffectsPure.getDOMNode.map(_.toElement).asCBO
         } yield n.domCast[html.TextArea]
 

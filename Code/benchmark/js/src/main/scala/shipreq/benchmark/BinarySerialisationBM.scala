@@ -37,7 +37,7 @@ object BinarySerialisationBM {
     }
 
     val all      = AdtMacros.adtValues[Method]
-    val guiParam = GuiParam.`enum`("Method", all.whole.sortBy(_.name): _*)(_.name)
+    val guiParam = GuiParam.enumOf("Method", all.whole.sortBy(_.name): _*)(_.name)
   }
 }
 

@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.feature.deletion
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen._
 import nyaya.prop._
-import scalaz.std.set.setInstance
+import shipreq.base.util.CatsExtra._
 import shipreq.base.util._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.Event
@@ -245,7 +245,7 @@ object DeletionProps {
         reqCount  <- Gen.chooseInt(40)
         ucCount   <- Gen.chooseSize map (_ >> 1)
         reqs1     <- *.reqsWithoutText(config, reqCount, ucCount)
-        reqs2     = (TestOptics.grsLive.set(mode.fromState) compose TestOptics.ucsLive.set(mode.fromState))(reqs1)
+        reqs2     = (TestOptics.grsLive.replace(mode.fromState) compose TestOptics.ucsLive.replace(mode.fromState))(reqs1)
         imps1     <- *.reqFieldDataImplications(reqs2.idIterator().toSet)
         imps2     = imps1.forwards.m.mapValuesNow(_.take(1))
         imps3     = Implications.Graph.BiDir(Implications.Graph.UniDir(imps2).reverse) // reverse ensures take(1) is on parent side

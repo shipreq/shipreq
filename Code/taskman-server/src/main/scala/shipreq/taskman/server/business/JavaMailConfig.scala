@@ -1,9 +1,9 @@
 package shipreq.taskman.server.business
 
+import cats.syntax.all._
 import japgolly.clearconfig._
 import java.util.Properties
 import javax.mail.{Authenticator, PasswordAuthentication, Session}
-import scalaz.syntax.applicative._
 object JavaMailConfig {
 
   private def get[A](n1: String)(implicit prefix: Prefix, p: ConfigValueParser[A]): ConfigDef[Properties => Unit] = {
@@ -93,7 +93,8 @@ object JavaMailConfig {
     }
 
   def passwordAuthentication: ConfigDef[Option[PasswordAuthentication]] =
-    (ConfigDef.get[String]("mail.user") tuple ConfigDef.get[String]("mail.password"))
+    (ConfigDef.get[String]("mail.user"), ConfigDef.get[String]("mail.password"))
+      .tupled
       .mapAttempt[Option[PasswordAuthentication]] {
         case (Some(u), Some(p)) => \/-(Some(new PasswordAuthentication(u, p)))
         case (None, Some(_)) => -\/("Username not specified.")
@@ -109,6 +110,6 @@ object JavaMailConfig {
     ))
 
   def sessionFn: ConfigDef[() => Session] =
-    (props |@| authenticator) ((p, oa) => () => Session.getInstance(p, oa.orNull))
+    (props, authenticator).mapN ((p, oa) => () => Session.getInstance(p, oa.orNull))
 
 }

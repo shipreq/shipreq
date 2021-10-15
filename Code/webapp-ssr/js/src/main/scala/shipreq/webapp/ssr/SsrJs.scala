@@ -3,6 +3,7 @@ package shipreq.webapp.ssr
 import japgolly.scalagraal.Pickled
 import japgolly.scalajs.react.ReactDOMServer
 import scala.scalajs.js.annotation.JSExportTopLevel
+import shipreq.webapp.base.lib.AbstractLocation
 import shipreq.webapp.base.protocol.ajax.AjaxClient
 import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.client.loaders._
@@ -19,7 +20,7 @@ object SsrJs {
   def publicLoader(i: Pickled[PublicInitData]): String = {
     import shipreq.webapp.client.public.spa.PublicSpa
     import shipreq.webapp.client.public.Main
-    val spa       = new PublicSpa(i.value, ajaxNoop, AbstractWebStorage.AlwaysEmpty)
+    val spa       = new PublicSpa(i.value, ajaxNoop, AbstractWebStorage.AlwaysEmpty, AbstractLocation.Real)
     val component = Main.component(i.value, spa)
     ReactDOMServer.renderToString(component)
   }

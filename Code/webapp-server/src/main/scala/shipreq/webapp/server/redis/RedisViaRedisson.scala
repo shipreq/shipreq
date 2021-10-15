@@ -1,5 +1,7 @@
 package shipreq.webapp.server.redis
 
+import cats.instances.option._
+import cats.syntax.traverse._
 import com.typesafe.scalalogging.StrictLogging
 import java.lang.{Boolean => JBool}
 import java.util.{ArrayList, Collections, List => JList}
@@ -11,8 +13,6 @@ import scala.Predef.classOf
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 import scala.util.control.NonFatal
-import scalaz.std.option._
-import scalaz.syntax.traverse._
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.base.protocol.binary.SafePickler
@@ -76,7 +76,7 @@ final class RedisViaRedisson(client: RedissonClient, schema: RedisSchema) extend
   import Redis._
   import RedisViaRedisson.Internals._
 
-  override protected def F = fxScalazInstance
+  override protected def F = fxCatsSync
 
   private val byteArrayClass = classOf[Array[Byte]]
   private val scriptString   = client.getScript(StringCodec.INSTANCE)

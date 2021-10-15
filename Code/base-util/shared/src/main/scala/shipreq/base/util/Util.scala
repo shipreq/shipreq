@@ -1,5 +1,7 @@
 package shipreq.base.util
 
+import cats.instances.int._
+import cats.{Applicative, Eq, Order}
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
@@ -8,8 +10,6 @@ import scala.collection.immutable.TreeMap
 import scala.collection.{Factory, Iterable}
 import scala.reflect.ClassTag
 import scala.util.Try
-import scalaz.std.anyVal.intInstance
-import scalaz.{Applicative, Equal, Order}
 import shipreq.base.util.ScalaExt.StringBuilderExt
 
 object Util {
@@ -139,8 +139,7 @@ object Util {
     val fixedOrder = values.zipWithIndex.toMap
     new UnivEq[A] with Order[A] {
       @inline private[this] def int(s: A) = fixedOrder(s)
-      override def order(a: A, b: A) = Order[Int].order(int(a), int(b))
-      override def equal(a: A, b: A) = a == b
+      override def compare(a: A, b: A) = Order[Int].compare(int(a), int(b))
     }
   }
 
@@ -165,7 +164,7 @@ object Util {
   }
 
   def partitionBetween[F[x] <: Iterable[x], A](as: F[A])(split: (A, A) => Boolean)
-                                                 (implicit cbf: Factory[A, F[A]]): (F[A], F[A]) =
+                                              (implicit cbf: Factory[A, F[A]]): (F[A], F[A]) =
     if (as.isEmpty)
       (as, as)
     else {
@@ -326,33 +325,33 @@ object Util {
   def separateByWhitespaceOrCommas(input: String): Vector[String \/ String] =
     separate(input, _.takeWhile(c => c == ',' || c.isWhitespace).length)
 
-  def vectorConcatDistinct[A](x: Vector[A], y: Vector[A])(implicit e: Equal[A]): Vector[A] =
+  def vectorConcatDistinct[A](x: Vector[A], y: Vector[A])(implicit e: Eq[A]): Vector[A] =
     if (x eq y)
       x
     else if (x.isEmpty)
       y
     else
       y.foldLeft(x)((q, a) =>
-        if (x.exists(e.equal(_, a))) q else q :+ a)
+        if (x.exists(e.eqv(_, a))) q else q :+ a)
 
-  def arraySeqConcatDistinct[A](x: ArraySeq[A], y: ArraySeq[A])(implicit e: Equal[A]): ArraySeq[A] =
+  def arraySeqConcatDistinct[A](x: ArraySeq[A], y: ArraySeq[A])(implicit e: Eq[A]): ArraySeq[A] =
     if (x eq y)
       x
     else if (x.isEmpty)
       y
     else
       y.foldLeft(x)((q, a) =>
-        if (x.exists(e.equal(_, a))) q else q :+ a)
+        if (x.exists(e.eqv(_, a))) q else q :+ a)
 
   implicit class ShipReqOpsForArraySeq[A](private val self: ArraySeq[A]) extends AnyVal {
 
-    def splitOn(sep: A)(implicit e: Equal[A]): ArraySeq[ArraySeq[A]] = {
+    def splitOn(sep: A)(implicit e: Eq[A]): ArraySeq[ArraySeq[A]] = {
       val b = ArraySeq.newBuilder[ArraySeq[A]]
 
       @tailrec
       def go(rem: ArraySeq[A]): Unit =
         if (rem.nonEmpty)
-          rem.indexWhere(e.equal(sep, _)) match {
+          rem.indexWhere(e.eqv(sep, _)) match {
             case -1 =>
               b += rem
             case n =>
@@ -370,8 +369,8 @@ object Util {
       else {
         val gh = f(self.head)
         val gz = G.map(gh)(_ => ArraySeq.empty[B])
-        val gt = self.tail.foldLeft(gz)((q, a) => G.apply2(q, f(a))(_ :+ _))
-        G.apply2(gh, gt)(_ +: _)
+        val gt = self.tail.foldLeft(gz)((q, a) => G.map2(q, f(a))(_ :+ _))
+        G.map2(gh, gt)(_ +: _)
       }
     }
   }

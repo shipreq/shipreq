@@ -5,8 +5,8 @@ import org.scalajs.dom.html
 import shipreq.base.util._
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
-import shipreq.webapp.base.test.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
+import shipreq.webapp.base.test.{TestAjaxClient, TestLocation}
 import shipreq.webapp.client.public.spa.{Page, PublicSpa}
 import sourcecode.Line
 import teststate.data.Id
@@ -18,12 +18,13 @@ object PublicSpaTestUtil {
   class ForTestState(localStorage: AbstractWebStorage) {
     def this() = this(AbstractWebStorage.inMemory())
 
+    val location   = TestLocation()
     val ajax       = new TestAjaxClient(false)
     val rc         = MockRouterCtl[Page]()
     var initData   = PublicSpaTestUtil.initData
 
     def render[A](initPage: Page)(f: DomZipperJs => A): A = {
-      val spa = new PublicSpa(initData, ajax, localStorage)
+      val spa = new PublicSpa(initData, ajax, localStorage, location)
       ReactTestUtils.withRenderedIntoDocument(spa.Component(PublicSpa.Props(initPage, rc, initData.assetManifest))) { m =>
         f(m.domZipper)
       }

@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.pages.root
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.PackageBase._
@@ -429,7 +429,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
     private val setProjectNameIO: String => Callback = {
       newName => {
-        def close = $.modState(State.projectName set None)
+        def close = $.modState(State.projectName replace None)
         def save = projectNameAF(sspProjectNameSet(newName).rightFlatTap(_ => close.asAsyncCallback))
         pxProject.toCallback >>= (p => if (p.name ==* newName) close else save)
       }

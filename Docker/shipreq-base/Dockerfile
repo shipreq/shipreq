@@ -1,4 +1,4 @@
-FROM amazonlinux:2.0.20201111.0
+FROM amazonlinux:2.0.20210813.1
 
 #========#
 # System #
@@ -31,7 +31,7 @@ RUN yum update -y \
 # Note: when changing this, make sure to also change:
 #   - :/Code/project/Dependencies.scala
 #   - :/Docker/dev-build_env/Dockerfile (the aur/jdk11-graalvm-bin git sha)
-ENV GRAAL_VERSION=20.3.0
+ENV GRAAL_VERSION=21.2.0
 
 RUN cd /opt \
  && f=graalvm-ce-java11-linux-amd64-${GRAAL_VERSION}.tar.gz \

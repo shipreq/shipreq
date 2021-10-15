@@ -1,11 +1,9 @@
 package shipreq.webapp.member.test.project
 
+import cats.data.State
+import cats.implicits._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
-import scalaz.std.AllInstances._
-import scalaz.syntax.bind._
-import scalaz.syntax.semigroup._
-import scalaz.{IMap => _, _}
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
@@ -60,7 +58,7 @@ object ProjectDslInternals {
 
     def done: Project =
       IdCeilings.supply { ids =>
-        var f = Project.idCeilings set ids
+        var f = Project.idCeilings replace ids
         f = f compose Project.reqs        .modify(r => Requirements(GenericReqs(reqs), r.useCases, pubids))
         f = f compose Project.reqCodes    .modify(_ => ReqCodes(reqCodeTrie))
         f = f compose Project.reqText     .modify(_ => text)
@@ -108,7 +106,7 @@ object ProjectDslInternals {
       copy(defaultReqType = Some(rt))
 
     def !(p: Project): Project = {
-      val p2 = state.exec(projectState(p)).done
+      val p2 = state.runS(projectState(p)).value.done
       DataProp.project.allIncludingConfig assert p2
       p2
     }
@@ -205,7 +203,7 @@ object ProjectDsl {
           oldReqId match {
             case None =>
               val id = this.id.fold(p.nextReqCodeGroupId())(_.asInstanceOf[ReqCodeGroupId])
-              TestOptics.reqCodeDataDeadGroup.set(Some(DeadCodeGroup(id, title)))(d)
+              TestOptics.reqCodeDataDeadGroup.replace(Some(DeadCodeGroup(id, title)))(d)
             case Some(r) =>
               val id = this.id.fold(p.nextApReqCodeId())(_.asInstanceOf[ApReqCodeId])
               TestOptics.reqCodeDataReqInactive.modify(_.add(r, id))(d)

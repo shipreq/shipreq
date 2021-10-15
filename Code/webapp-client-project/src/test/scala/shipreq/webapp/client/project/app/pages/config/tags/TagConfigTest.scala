@@ -509,20 +509,20 @@ object TagConfigTest extends TestSuite {
         +> filterDead.assert(ShowDead)
         +> reqTypeApplicability.assert("Whitelist")
         +> reqTypesText.assert("FR MF")
-        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesDead.assert.some("Deleted req types: DD")
         +> reqTypesError.assert.empty
         +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
 
         >> setApplicableReqTypesText("si mf")
         +> reqTypeApplicability.assert("Whitelist")
         +> reqTypesText.assert("SI MF")
-        +> reqTypesDead.assert.contains("Deleted req types: DD")
-        +> reqTypesError.assert.contains("SI has been deleted.")
+        +> reqTypesDead.assert.some("Deleted req types: DD")
+        +> reqTypesError.assert.some("SI has been deleted.")
 
         >> setApplicableReqTypesText("co")
         +> reqTypeApplicability.assert("Whitelist")
         +> reqTypesText.assert("CO")
-        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesDead.assert.some("Deleted req types: DD")
         +> reqTypesError.assert.empty
 
         +> buttonsEnabled.assert(Buttons(delete = Enabled, cancel = Enabled, save = Enabled))
@@ -533,7 +533,7 @@ object TagConfigTest extends TestSuite {
         >> selectTag("pri=high")
         +> reqTypeApplicability.assert("Blacklist")
         +> reqTypesText.assert("MF")
-        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesDead.assert.some("Deleted req types: DD")
         +> reqTypesError.assert.empty
 
         >> setReqTypeApplicability("Whitelist")
@@ -545,7 +545,7 @@ object TagConfigTest extends TestSuite {
         >> setReqTypeApplicability("Blacklist")
         +> reqTypeApplicability.assert("Blacklist")
         +> reqTypesText.assert("MF")
-        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesDead.assert.some("Deleted req types: DD")
         +> reqTypesError.assert.empty
 
         >> clickCloseButton
@@ -553,9 +553,51 @@ object TagConfigTest extends TestSuite {
         >> selectTag("pri=med")
         +> reqTypeApplicability.assert("Whitelist")
         +> reqTypesText.assert("CO")
-        +> reqTypesDead.assert.contains("Deleted req types: DD")
+        +> reqTypesDead.assert.some("Deleted req types: DD")
         +> reqTypesError.assert.empty
         +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
     )
+
+    // =================================================================================================================
+    "newButton" - runActions(SampleProject6.project)(
+
+      *.emptyAction
+        +> newButton.enabled.assert(true)
+        +> isEditorOpen.assert(false)
+
+      >> selectTag("defer")
+        +> newButton.enabled.assert(true)
+        +> isEditorOpen.assert(true)
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+
+      >> setNameEditorValue("qwexxxxxxx")
+        +> newButton.enabled.assert(false)
+        +> isEditorOpen.assert(true)
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, cancel = Enabled, save = Enabled))
+
+      >> setNameEditorValue("defer")
+        +> newButton.enabled.assert(true)
+        +> isEditorOpen.assert(true)
+        +> buttonsEnabled.assert(Buttons(delete = Enabled, close = Enabled, save = Disabled))
+
+      >> newButton.click
+        +> newButton.enabled.assert(false)
+        +> isEditorOpen.assert(true)
+        +> buttonsEnabled.assert(Buttons(cancel = Enabled, save = Disabled))
+        +> nameEditorValue.assert(Some(""))
+
+      >> clickCancelButton
+        +> newButton.enabled.assert(true)
+        +> isEditorOpen.assert(false)
+
+      >> clickFilterDead
+        +> filterDead.assert(ShowDead)
+
+      >> selectTag("uat")
+        +> newButton.enabled.assert(true)
+        +> isEditorOpen.assert(true)
+        +> buttonsEnabled.assert(Buttons(restore = Enabled, close = Enabled))
+    )
+
   }
 }

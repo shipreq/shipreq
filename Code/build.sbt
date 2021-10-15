@@ -1,8 +1,12 @@
-name      := "ShipReq"
-startYear := Some(2013)
+name := "ShipReq"
+
+ThisBuild / organization     := "com.beardedlogic.shipreq"
+ThisBuild / organizationName := "Bearded Logic"
+ThisBuild / shellPrompt      := ((s: State) => Project.extract(s).currentRef.project + "> ")
+ThisBuild / startYear        := Some(2013)
 
 // Allow ctrl-c to kill forked tasks without killing SBT
-cancelable in Global := true
+Global / cancelable := true
 
 val root                  = ShipReqBuild.root
 
@@ -57,3 +61,11 @@ val `scalafix-input`      = ScalafixBuild.`scalafix-input`
 val `scalafix-output`     = ScalafixBuild.`scalafix-output`
 val `scalafix-rules`      = ScalafixBuild.`scalafix-rules`
 val `scalafix-tests`      = ScalafixBuild.`scalafix-tests`
+
+// More than these crashes phantomjs for some reason
+Global / concurrentRestrictions += Tags.limit(CustomTags.WebappClientProjectTest, WebappBuild.WebappClientProject.parallelism)
+
+Global / concurrentRestrictions += Tags.limit(CustomTags.MemoryMB, 1024 * 16)
+// Global / concurrentRestrictions += Tags.limit(CustomTags.Node, 16)
+// Global / concurrentRestrictions += Tags.limit(CustomTags.PhantomJs, 8)
+// Global / concurrentRestrictions += Tags.limit(Tags.Test, 31)

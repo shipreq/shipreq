@@ -1,7 +1,6 @@
 package shipreq.base.util
 
 import japgolly.microlibs.nonempty.NonEmpty
-import nyaya.util.Multimap
 
 /**
  * The difference between two sets.

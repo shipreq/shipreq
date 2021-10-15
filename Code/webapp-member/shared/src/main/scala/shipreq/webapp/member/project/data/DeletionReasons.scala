@@ -1,6 +1,5 @@
 package shipreq.webapp.member.project.data
 
-import nyaya.util.Multimap
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.member.project.data.DeletionReasons.ReqApplication
 import shipreq.webapp.member.project.text.Text

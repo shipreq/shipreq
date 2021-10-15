@@ -1,8 +1,8 @@
 package shipreq.webapp.base.test
 
 import boopickle.Pickler
+import cats.Eq
 import nyaya.gen.Gen
-import scalaz.Equal
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.protocol.binary.SafePickler
@@ -17,8 +17,8 @@ object BinaryTestUtil {
   // SafePickler testing
 
   // Not true but good enough for now
-  implicit def equalSafePicklerDecoderFailure: Equal[SafePickler.DecodingFailure] =
-    Equal.equalA
+  implicit def equalSafePicklerDecoderFailure: Eq[SafePickler.DecodingFailure] =
+    Eq.fromUniversalEquals
 
   def assertEqBinary(actual: BinaryData, expect: BinaryData)(implicit l: Line): Unit =
     binaryDiff(actual, expect).foreach(fail(_))
@@ -86,7 +86,7 @@ object BinaryTestUtil {
       failures.mkString("\n")
     }
 
-  def assertDecodeVia[A, B: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[B])
+  def assertDecodeVia[A, B: Eq](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[B])
                                   (f: A => B, g: B => A)(implicit l: Line): Unit = {
     val actual = p.decode(bin).map(f)
     def info: Option[String] =
@@ -104,21 +104,21 @@ object BinaryTestUtil {
     }
 
     assertEqO(info, actual, expect)
-//    if (!Equal[SafePickler.Result[B]].equal(actual, expect)) {
+//    if (!Eq[SafePickler.Result[B]].eqv(actual, expect)) {
 //      fail(info)
 //    }
   }
 
-  def assertDecode[A: Equal](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[A])(implicit l: Line): Unit =
+  def assertDecode[A: Eq](p: SafePickler[A])(bin: BinaryData, expect: SafePickler.Result[A])(implicit l: Line): Unit =
     assertDecodeVia[A, A](p)(bin, expect)(identity, identity)
 
-  def assertDecodeOk[A: Equal](p: SafePickler[A])(bin: BinaryData, expect: A)(implicit l: Line): Unit =
+  def assertDecodeOk[A: Eq](p: SafePickler[A])(bin: BinaryData, expect: A)(implicit l: Line): Unit =
     assertDecode(p)(bin, \/-(expect))
 
-  def assertRoundTrip[A: Equal](p: SafePickler[A])(a: A)(implicit l: Line): Unit =
+  def assertRoundTrip[A: Eq](p: SafePickler[A])(a: A)(implicit l: Line): Unit =
     assertDecodeOk(p)(p.encode(a), a)
 
-  def propTestRoundTrip[A: Equal](p: SafePickler[A])(g: Gen[A])(implicit l: Line): Unit =
+  def propTestRoundTrip[A: Eq](p: SafePickler[A])(g: Gen[A])(implicit l: Line): Unit =
     g.samples().take(propTestSize).foreach(assertRoundTrip(p)(_))
 
   def generateStabilityTest[A](p: SafePickler[A])(a: A)(implicit l: Line): Nothing = {
@@ -142,17 +142,17 @@ object BinaryTestUtil {
   // ===================================================================================================================
   // Pickler testing
 
-  def assertRoundTripP[A](a: A)(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
+  def assertRoundTripP[A](a: A)(implicit p: Pickler[A], e: Eq[A], l: Line): Unit = {
     val sp = p.asV1(0)
     assertDecodeOk(sp)(sp.encode(a), a)
   }
 
-  def propTestRoundTripP[A](g: Gen[A])(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
+  def propTestRoundTripP[A](g: Gen[A])(implicit p: Pickler[A], e: Eq[A], l: Line): Unit = {
     val sp = p.asV1(0)
     g.samples().take(propTestSize).foreach(assertRoundTrip(sp)(_))
   }
 
-  def assertRoundTripsP[A](as: Iterable[A])(implicit p: Pickler[A], e: Equal[A], l: Line): Unit = {
+  def assertRoundTripsP[A](as: Iterable[A])(implicit p: Pickler[A], e: Eq[A], l: Line): Unit = {
     val sp = p.asV1(0)
     var i = 0
     for (a <- as) {

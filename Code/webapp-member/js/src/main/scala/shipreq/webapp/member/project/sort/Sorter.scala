@@ -1,8 +1,8 @@
 package shipreq.webapp.member.project.sort
 
+import cats.instances.option._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import monocle.Optional
-import scalaz.std.option.optionInstance
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.member.project.data.ReqCode
 import shipreq.webapp.member.project.text.PlainText
@@ -243,7 +243,7 @@ object Sorter {
     SortMethod.resolverCB(f compose BlankPlacement.fromSortMethod)(_.reverse)
 
   private def tryModEndo[A, B](l: Optional[A, B])(mod: B => Option[B]): EndoFn[A] =
-    a => l.modifyF[Option](mod)(a) getOrElse a
+    a => l.modifyA[Option](mod)(a) getOrElse a
 
   def typicalRowModFn[Setup, Row, A, B](l: Optional[Row, Vector[A]], s: SortFn[B])(f: Setup => A => B): RowModFn[Setup, Row] =
     Some((setup, dir) => {

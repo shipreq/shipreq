@@ -15,16 +15,17 @@ import shipreq.webapp.member.project.data._
 
 private[tags] object TagTreeView {
 
-  final case class Props(topLevelIds       : NonEmptySet[TagId],
-                         tags              : Tags,
-                         filterDead        : FilterDead,
-                         selected          : Option[TagId],
-                         select            : Option[TagId ~=> Callback],
-                         pw                : ProjectWidgets.NoCtx,
-                         updateLiveChildren: Reusable[(TagGroupId, Vector[ApplicableTagId]) => Callback],
-                         enabled           : Enabled,
-                         onClickAnywhere   : Option[Reusable[Callback]],
-                         usage             : Usage,
+  final case class Props(topLevelIds           : NonEmptySet[TagId],
+                         tags                  : Tags,
+                         filterDead            : FilterDead,
+                         selected              : Option[TagId],
+                         selectedColourOverride: Option[Colour],
+                         select                : Option[TagId ~=> Callback],
+                         pw                    : ProjectWidgets.NoCtx,
+                         updateLiveChildren    : Reusable[(TagGroupId, Vector[ApplicableTagId]) => Callback],
+                         enabled               : Enabled,
+                         onClickAnywhere       : Option[Reusable[Callback]],
+                         usage                 : Usage,
                         ) {
     @inline def render: VdomElement = Component(this)
   }
@@ -135,13 +136,20 @@ private[tags] object TagTreeView {
           val select: ReactEvent => Option[Callback] =
             e => p.select.filterNot(_ => readOnly).map(_(id).asEventDefault(e).void)
 
+          val isSelected =
+            liState.rowState == *.RowState.Selected
+
+          var ts = ViewTags.TagSettings.default
+          if (isSelected)
+            ts = ts.copy(customColour = p.selectedColourOverride)
+
           lis += <.li(
             *.tagTreeLI((liState, item.status)),
-            selected := (liState.rowState == *.RowState.Selected),
+            selected := isSelected,
             ^.key := id.value,
             ^.onClick ==>? select,
             TagMod.when(canAnyDrag)(Shared.dragHandle(item, modificationEnabled, tag.live)),
-            pw.viewTags.render(id),
+            pw.viewTags.render(id, ts),
             <.div(*.usage, p.usage.tagLink(id, p.filterDead))
           )
 

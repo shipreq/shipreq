@@ -184,7 +184,7 @@ object ReqSearch {
       for {
         p <- $.props
         _ <- p.state.modState(s => s.copy(focus = Some(FocusState.Focused), showResults = s.hasQuery))
-        _ <- inputRef.get.map(_.select()).toCallback
+        _ <- inputRef.get.asCBO.map(_.select()).toCallback
       } yield ()
 
     val onBlur: Callback = {
@@ -196,7 +196,7 @@ object ReqSearch {
           _   <- updateShowResultsNow.delayMs(BlurToleranceMs).toCallback
         } yield ()
 
-      inputRef.get.asCallback.flatMap {
+      inputRef.get.flatMap {
         case Some(inputDom) =>
           CallbackOption.activeHtmlElement.asCallback.flatMap { focus =>
             val rootRom      = inputDom.parentElement
@@ -233,7 +233,7 @@ object ReqSearch {
       def focusResult(first: Boolean): Callback =
         for {
           reqs   <- nonEmptyResults
-          parent <- resultsRef.get
+          parent <- resultsRef.get.asCBO
         } yield {
           val idx = if (first) 0 else reqs.length - 1
           val tgt = parent.children(idx).domAsHtml
@@ -260,10 +260,10 @@ object ReqSearch {
       $.props.flatMap(_.state.modState(_.copy(showResults = false)))
 
     private val focusInput: Callback =
-      inputRef.get.map(_.focus())
+      inputRef.get.asCBO.map(_.focus())
 
     private def focusResult(idx: Int): Callback =
-      resultsRef.get.map(_.children(idx).domAsHtml.focus()).attempt.void
+      resultsRef.get.asCBO.map(_.children(idx).domAsHtml.focus()).attempt.void
 
     private def renderValidResults(pw: ProjectWidgets.NoCtx, reqs: ArraySeq[Req]): VdomTag = {
       val p         = pxProject.value()

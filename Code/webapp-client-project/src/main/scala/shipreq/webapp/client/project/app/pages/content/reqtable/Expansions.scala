@@ -1,9 +1,9 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
+import cats.Monoid
+import cats.instances.map._
+import cats.syntax.semigroup._
 import monocle.macros.Lenses
-import scalaz.Monoid
-import scalaz.std.map._
-import scalaz.syntax.semigroup._
 import shipreq.base.util._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.util.ReqCodeTreeItem
@@ -67,14 +67,14 @@ object Expansions {
 
   implicit val reqCodeTreeM: Monoid[Vector[ReqCodeTreeItem]] =
     new Monoid[Vector[ReqCodeTreeItem]] {
-      override def zero =  Vector.empty
-      override def append(f1: Vector[ReqCodeTreeItem], f2: => Vector[ReqCodeTreeItem]) = f1 ++ f2
+      override def empty = Vector.empty
+      override def combine(f1: Vector[ReqCodeTreeItem], f2: Vector[ReqCodeTreeItem]) = f1 ++ f2
     }
 
   implicit val monoid: Monoid[Expansions] =
     new Monoid[Expansions] {
-      override def zero = empty
-      override def append(a: Expansions, _b: => Expansions) = {
+      override def empty = Expansions.empty
+      override def combine(a: Expansions, _b:Expansions) = {
         val b = _b
         Expansions(
           a.implications |+| b.implications,

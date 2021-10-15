@@ -38,7 +38,7 @@ private[reqdetail] object HeaderRow {
       def focusRow(top: Boolean) =
         for {
           p     <- $.props.toCBO
-          table <- p.tableRef.get
+          table <- p.tableRef.get.asCBO
         } yield {
           val tbody = table.children(0)
           val tr    = tbody.children(if (top) 0 else tbody.children.length - 1)
@@ -60,7 +60,7 @@ private[reqdetail] object HeaderRow {
       <.div(*.headerTitle, ^.tabIndex := -1)
 
     private val focusTitle: Callback =
-      $.props.flatMap(_.titleCellRef.get.map(_.focus()))
+      $.props.flatMap(_.titleCellRef.get.asCBO.map(_.focus()))
 
     def render(p: Props): VdomNode = {
       val hstyle      = headerStyle(p.live)

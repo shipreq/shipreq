@@ -22,7 +22,7 @@ final case class ViewReqDataCache(private[ViewReqDataCache] val project: Project
 
 object ViewReqDataCache {
   implicit val reusability: Reusability[ViewReqDataCache] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 }
 
 // =====================================================================================================================
@@ -49,5 +49,5 @@ object ViewReqCache {
   type ToVdom[Ctx <: ProjectText.Context] = ViewReqCache[Ctx, VdomTag]
 
   implicit def reusability[Ctx <: ProjectText.Context, A]: Reusability[ViewReqCache[Ctx, A]] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 }

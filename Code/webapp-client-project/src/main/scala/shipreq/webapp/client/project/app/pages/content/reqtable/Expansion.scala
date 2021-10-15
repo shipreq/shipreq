@@ -1,8 +1,8 @@
 package shipreq.webapp.client.project.app.pages.content.reqtable
 
+import cats.{Eq, Semigroup}
 import monocle.Lens
 import monocle.macros.GenLens
-import scalaz.{Equal, Semigroup}
 import shipreq.base.util._
 
 final case class Expansion[+A](values: Vector[A], original: Vector[A]) {
@@ -30,9 +30,9 @@ object Expansion {
 
   implicit def univEq[A: UnivEq]: UnivEq[Expansion[A]] = UnivEq.derive
 
-  implicit def semigroup[A: Equal]: Semigroup[Expansion[A]] = {
+  implicit def semigroup[A: Eq]: Semigroup[Expansion[A]] = {
     new Semigroup[Expansion[A]] {
-      override def append(x: Expansion[A], yy: => Expansion[A]) = {
+      override def combine(x: Expansion[A], yy: Expansion[A]) = {
         val y = yy
         Expansion(
           values   = Util.vectorConcatDistinct(x.values, y.values),

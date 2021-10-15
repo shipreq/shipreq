@@ -190,7 +190,7 @@ sealed trait NewForm {
         for {
           p      <- $.props.toCBO
           output <- pxValidOutput.toCallback.asCBO
-          cmd    <- CallbackOption.liftOption(createCmd(p.input, output))
+          cmd    <- CallbackOption.option(createCmd(p.input, output))
           _      <- p.createFeature.create(cmd, notifyUserOfCreation(p, _) >> onSuccess).toCBO
         } yield ()
       }

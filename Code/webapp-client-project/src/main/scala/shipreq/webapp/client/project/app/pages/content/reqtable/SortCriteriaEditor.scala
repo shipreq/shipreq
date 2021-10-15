@@ -32,7 +32,7 @@ final class SortCriteriaEditor(am: AssetManifest) {
   }
 
   implicit val reusability: Reusability[Props] =
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
 
   private val renderSortMethod = Memo[SortMethod, VdomElement] { m =>
     val cr = new ClientResources(am)

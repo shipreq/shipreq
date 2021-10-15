@@ -31,7 +31,7 @@ object CommonProtocolsTest extends TestSuite {
         import ajax.req.codec
 
         "roundTrip" - {
-          val gen = Gen.apply2(Request.apply)(R.username \/ R.emailAddr, R.plainTextPassword)
+          val gen = Gen.apply2(Request.apply)(R.username | R.emailAddr, R.plainTextPassword)
           propTestRoundTrip(codec)(gen)
         }
 

@@ -1,6 +1,6 @@
 package shipreq.webapp.client.public.spa
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -9,6 +9,7 @@ import shipreq.base.util.Url
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.config.Urls.PublicSpaRoute
 import shipreq.webapp.base.feature.{AsyncFeature, ErrorHandlingFeature}
+import shipreq.webapp.base.lib.AbstractLocation
 import shipreq.webapp.base.protocol.ajax._
 import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.client.public.pages._
@@ -38,8 +39,10 @@ object PublicSpa {
 }
 
 final class PublicSpa(val initData: PublicSpaEntryPoint.InitData,
-                      ajax: AjaxClient.Binary,
-                      storage: AbstractWebStorage) {
+                      ajax        : AjaxClient.Binary,
+                      storage     : AbstractWebStorage,
+                      location    : AbstractLocation,
+                     ) {
   import PublicSpa._
 
   val Component = ScalaComponent.builder[Props]
@@ -56,16 +59,16 @@ final class PublicSpa(val initData: PublicSpaEntryPoint.InitData,
     val sspRegister1      = ajax.invoker(PublicSpaProtocols.Register1.ajax).mergeFailure
     val sspRegister2      = ajax.invoker(PublicSpaProtocols.Register2.ajax).mergeFailure
 
-    val awLandingPage = AsyncFeature.Write.D0.init($.zoomStateL(State.landingPage ^|-> LandingPage.State.async))
-    val awLogin       = AsyncFeature.Write.D0.init($.zoomStateL(State.login       ^|-> Login      .State.async))
-    val awRegister1   = AsyncFeature.Write.D0.init($.zoomStateL(State.register1   ^|-> Register1  .State.async))
+    val awLandingPage = AsyncFeature.Write.D0.init($.zoomStateL(State.landingPage andThen LandingPage.State.async))
+    val awLogin       = AsyncFeature.Write.D0.init($.zoomStateL(State.login       andThen Login      .State.async))
+    val awRegister1   = AsyncFeature.Write.D0.init($.zoomStateL(State.register1   andThen Register1  .State.async))
 
     def render(p: Props, s: State): VdomElement = {
       State.recorder.record(s)
 
       def loginPage(redirectOnLogin: Option[Url.Relative]): VdomElement = {
         val ss = StateSnapshot.zoomL(State.login)(s).setStateVia($)
-        Login.Props(ss, awLogin, sspLogin, sspResetPassword1, redirectOnLogin, storage).render
+        Login.Props(ss, awLogin, sspLogin, sspResetPassword1, redirectOnLogin, storage, location).render
       }
 
       val content: VdomElement =

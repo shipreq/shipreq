@@ -1,6 +1,15 @@
-FROM archlinux:base-20201213.0.11146
+# https://hub.docker.com/_/archlinux?tab=tags&page=1&ordering=last_updated
+FROM archlinux:base-20210926.0.35054
 
-RUN pacman -Sy --noconfirm --needed archlinux-keyring
+# https://serverfault.com/questions/1052963/pacman-doesnt-work-in-docker-image
+# https://github.com/sickcodes/Docker-OSX/pull/150/files
+# TEMP-FIX for pacman issue
+RUN patched_glibc=glibc-linux4-2.33-4-x86_64.pkg.tar.zst && \
+      curl -LO "https://repo.archlinuxcn.org/x86_64/$patched_glibc" && \
+      bsdtar -C / -xvf "$patched_glibc"
+# TEMP-FIX for pacman issue
+
+RUN pacman -Syy --noconfirm --needed archlinux-keyring
 
 RUN pacman -Sy --noconfirm reflector rsync \
  && reflector \
@@ -63,7 +72,7 @@ RUN sed -i 's/^COMPRESSXZ/#COMPRESSXZ/' /etc/makepkg.conf \
 #   - :/Code/project/Dependencies.scala
 #   - :/Docker/shipreq-base/Dockerfile
 RUN n=jdk11-graalvm-bin \
- && gitsha=4900009ab7455050557f35b379a7541a5e800356 \
+ && gitsha=e647c333799df416782f9686ca64eb0dbff0f94b \
  && cd /tmp \
  && git clone https://aur.archlinux.org/$n.git \
  && cd $n \
@@ -112,8 +121,8 @@ RUN cd /usr/local/bin \
 RUN mkdir /tmp/scala \
  && cd /tmp/scala \
  && mkdir project \
- && echo 'sbt.version=1.4.6' > project/build.properties \
- && echo 'scalaVersion := "2.13.4"' > build.sbt \
+ && echo 'sbt.version=1.5.5' > project/build.properties \
+ && echo 'scalaVersion := "2.13.6"' > build.sbt \
  && echo 'object Build{}' > project/Build.scala \
  && echo 'object M{}' > M.scala \
  && sbt test \
@@ -130,6 +139,7 @@ RUN pacman -Sy --noconfirm --needed aws-cli
 COPY strip-ansi /bin
 COPY .bashrc /root/.bashrc
 
-RUN chmod -R a=u /root \
- && ln -s /root/.bashrc /.bashrc \
+RUN chmod -R a=u /root || true
+
+RUN ln -s /root/.bashrc /.bashrc \
  && ln -s /root/.npmrc /.npmrc

@@ -1,6 +1,6 @@
 package shipreq.webapp.server.logic.dispatch
 
-import scalaz.Need
+import cats.Eval
 import shipreq.base.util.{BinaryData, Url}
 
 /** A request to the server.
@@ -9,7 +9,7 @@ import shipreq.base.util.{BinaryData, Url}
  */
 final case class Request[+Real](method: Method,
                                 path  : Url.Relative,
-                                body  : Need[Option[BinaryData]],
+                                body  : Eval[Option[BinaryData]],
                                 param : String => Option[String],
                                 cookie: Cookie.LookupFn,
                                 real  : Real)

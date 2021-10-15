@@ -36,7 +36,7 @@ object SavedViewFeature {
     // Static contains Pxs which are NOT reusable (because you can never access the previous value) however here
     // they can be ignored because Project and FilterDead have been added to SavedViewFeature.
     @nowarn("cat=unused") implicit val s: Reusability[Static] = Reusability.byRef
-    Reusability.byRef || Reusability.derive
+    Reusability.derive
   }
 }
 

@@ -1,9 +1,8 @@
 package shipreq.base.util
 
+import cats.{Monoid, Semigroup}
 import monocle.{Iso, Lens}
 import scala.collection.Factory
-import scalaz.Isomorphism.<=>
-import scalaz.{Monoid, Semigroup}
 import shipreq.base.util.IsoBool._
 
 /**
@@ -11,8 +10,8 @@ import shipreq.base.util.IsoBool._
  *
  * Mix into the base type and override [[this.companion]] there.
  */
-trait IsoBool[B <: IsoBool[B]] extends (Boolean <=> B) with Product with Serializable {
-  this: B =>
+trait IsoBool[B <: IsoBool[B]] extends Iso[Boolean, B] with Product with Serializable {
+  self: B =>
 
   def companion: Object[B]
 
@@ -31,23 +30,30 @@ trait IsoBool[B <: IsoBool[B]] extends (Boolean <=> B) with Product with Seriali
   @inline final def unless(cond: Boolean): B =
     if (cond) !this else this
 
-  final override val from = is(_)
-  final override val to   = when(_)
+  final override def get(b: Boolean)  = when(b)
+  final override def reverseGet(b: B) = is(b)
 
-  final def fnToThisWhen[A](f: A => Boolean): A => B =
-    to compose f
-
-  final def fnToThisWhen[A](b: Boolean <=> A): A => B =
-    fnToThisWhen(b.from)
-
-  final def <=>[A <: IsoBool[A]](A: IsoBool[A]): B <=> A =
-    new (B <=> A) {
-      override val from: A => B = IsoBool.this fnToThisWhen A
-      override val to  : B => A = A fnToThisWhen IsoBool.this
+  final override lazy val reverse: Iso[B, Boolean] =
+    new Iso[B, Boolean] {
+      override def reverseGet(b: Boolean) = when(b)
+      override def get(b: B)              = is(b)
+      override def reverse                = self
     }
 
+  final def fnToThisWhen[A](f: A => Boolean): A => B =
+    a => when(f(a))
+
+  final def fnToThisWhen[A](b: Iso[Boolean, A]): A => B =
+    fnToThisWhen(b.reverseGet(_))
+
+  // final def <=>[A <: IsoBool[A]](A: IsoBool[A]): B <=> A =
+  //   new (B <=> A) {
+  //     override val from: A => B = IsoBool.this fnToThisWhen A
+  //     override val to  : B => A = A fnToThisWhen IsoBool.this
+  //   }
+
   final def isoWhen(b: Boolean): Iso[B, Boolean] =
-    if (b) Iso(from)(to) else (!this).isoWhen(true)
+    if (b) Iso(is)(when) else (!this).isoWhen(true)
 
   final def isoWhen[A <: IsoBool[A]](a: A): Iso[A, B] =
     Iso[A, B](
@@ -167,15 +173,15 @@ object IsoBool {
   trait ValuesLowPri {
     implicit def monoid[B <: IsoBool[B], A](implicit A: Monoid[A]): Monoid[Values[B, A]] =
       new Monoid[Values[B, A]] {
-        override def zero = Values(A.zero, A.zero)
-        override def append(x: Values[B, A], y: => Values[B, A]) = x.ap(y)(A.append(_, _))
+        override def empty = Values(A.empty, A.empty)
+        override def combine(x: Values[B, A], y: Values[B, A]) = x.ap(y)(A.combine(_, _))
       }
   }
 
   object Values extends ValuesLowPri {
     implicit def semigroup[B <: IsoBool[B], A](implicit A: Semigroup[A]): Semigroup[Values[B, A]] =
       new Semigroup[Values[B, A]] {
-        override def append(x: Values[B, A], y: => Values[B, A]) = x.ap(y)(A.append(_, _))
+        override def combine(x: Values[B, A], y: Values[B, A]) = x.ap(y)(A.combine(_, _))
       }
 
     implicit def univEq[B <: IsoBool[B], A: UnivEq]: UnivEq[Values[B, A]] =

@@ -37,6 +37,10 @@ resource "aws_launch_template" "app" {
   key_name               = aws_key_pair.app.key_name
   tags                   = local.app_tags
 
+  credit_specification {
+    cpu_credits = "standard"
+  }
+
   iam_instance_profile {
     arn = aws_iam_instance_profile.app-ecs.arn
   }

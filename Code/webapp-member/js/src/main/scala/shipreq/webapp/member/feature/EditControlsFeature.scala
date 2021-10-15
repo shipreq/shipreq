@@ -75,7 +75,7 @@ object EditControlsFeature {
     onTextareaEditorMount(ref).when_(autoFocus)
 
   def onTextareaEditorMount(ref: Ref.ToScalaComponent[_, _, _]): Callback =
-    ref.get.flatMap(m => onTextareaEditorMount(m.getDOMNode).toCBO)
+    ref.get.asCBO.flatMap(m => onTextareaEditorMount(m.getDOMNode).toCBO)
 
   def onTextareaEditorMount(cd: ComponentDom): Callback =
     Callback.traverseOption(cd.toHtml)(h => Callback {

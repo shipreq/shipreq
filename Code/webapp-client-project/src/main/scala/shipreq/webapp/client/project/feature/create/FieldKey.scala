@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.feature.create
 
 import japgolly.scalajs.react.Reusability
 import monocle.{Iso, Prism}
-import scalaz.~~>
+import shipreq.base.util.fp.~~>
 import shipreq.base.util.{Direction, SetDiff}
 import shipreq.webapp.client.project.feature.editor.{FieldKey => E}
 import shipreq.webapp.client.project.util.DataReusability._

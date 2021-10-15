@@ -2,7 +2,6 @@ package shipreq.base.util
 
 import japgolly.microlibs.testutil.TestUtil._
 import java.time._
-import scalaz.std.anyVal._
 import utest._
 
 object MicroCacheTest extends TestSuite {

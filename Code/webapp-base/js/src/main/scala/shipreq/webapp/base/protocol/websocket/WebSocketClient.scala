@@ -436,7 +436,7 @@ object WebSocketClient {
       def rejectImmediately(error: Throwable): R =
         CallbackTo.pure(AsyncCallback.throwException(error))
 
-      CallbackTo.byName {
+      CallbackTo.suspend {
         state.instance.map(_.readyState()) match {
           case Some(ReadyState.Connecting) => addToQueue
           case Some(ReadyState.Open)       => addToQueue <* processQueue

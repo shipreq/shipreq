@@ -1,10 +1,10 @@
 package shipreq.base.util
 
+import cats.{Apply, Semigroup}
 import japgolly.microlibs.nonempty.NonEmpty
 import scala.collection.{AbstractIterator, Factory}
 import scala.math.Ordering
 import scala.reflect.ClassTag
-import scalaz.{Apply, Semigroup}
 
 final class NonEmptyArraySeq[+A] private[NonEmptyArraySeq](val whole: ArraySeq[A]) {
   override def toString = "NonEmpty" + whole.toString
@@ -241,8 +241,8 @@ final class NonEmptyArraySeq[+A] private[NonEmptyArraySeq](val whole: ArraySeq[A
       ap.map(gh)(NonEmptyArraySeq.one)
     else {
       val gz = ap.map(gh)(_ => ArraySeq.empty[B])
-      val gt = tail.foldLeft(gz)((q, a) => ap.apply2(q, f(a))(_ :+ _))
-      ap.apply2(gh, gt)((h, t) => NonEmptyArraySeq.force(h +: t))
+      val gt = tail.foldLeft(gz)((q, a) => ap.map2(q, f(a))(_ :+ _))
+      ap.map2(gh, gt)((h, t) => NonEmptyArraySeq.force(h +: t))
     }
   }
 
@@ -346,11 +346,9 @@ object NonEmptyArraySeq extends NonEmptyArraySeqImplicits0 {
     NonEmpty.Proof(option[A])
 
   implicit def semigroup[A]: Semigroup[NonEmptyArraySeq[A]] =
-    new Semigroup[NonEmptyArraySeq[A]] {
-      override def append(a: NonEmptyArraySeq[A], b: => NonEmptyArraySeq[A]): NonEmptyArraySeq[A] = a ++ b
-    }
+    _ ++ _
 
-//  implicit def traverse1: Traverse1[NonEmptyArraySeq] = new Traverse1[NonEmptyArraySeq] {
+//  implicit def nonEmptyTraverse: NonEmptyTraverse[NonEmptyArraySeq] = new NonEmptyTraverse[NonEmptyArraySeq] {
 //    override def foldLeft[A, B](fa: NonEmptyArraySeq[A], z: B)(f: (B, A) => B): B =
 //      fa.foldLeft(z)(f)
 //
@@ -366,7 +364,7 @@ object NonEmptyArraySeq extends NonEmptyArraySeqImplicits0 {
 //    override def map[A, B](fa: NonEmptyArraySeq[A])(f: A => B): NonEmptyArraySeq[B] =
 //      fa map f
 //
-//    override def traverse1Impl[G[_], A, B](fa: NonEmptyArraySeq[A])(f: A => G[B])(implicit ap: Apply[G]): G[NonEmptyArraySeq[B]] = {
+//    override def nonEmptyTraverseImpl[G[_], A, B](fa: NonEmptyArraySeq[A])(f: A => G[B])(implicit ap: Apply[G]): G[NonEmptyArraySeq[B]] = {
 //      val gh = f(fa.head)
 //      if (fa.tail.isEmpty)
 //        ap.map(gh)(one)
@@ -393,6 +391,6 @@ trait NonEmptyArraySeqImplicits1 {
 }
 
 trait NonEmptyArraySeqImplicits0 extends NonEmptyArraySeqImplicits1 {
-//  implicit def equality[A: Equal]: Equal[NonEmptyArraySeq[A]] =
+//  implicit def equality[A: Eq]: Eq[NonEmptyArraySeq[A]] =
 //    vectorEqual[A].contramap(_.whole)
 }

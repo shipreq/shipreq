@@ -4,6 +4,7 @@ import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.pages.config.Buttons
+import shipreq.webapp.member.test.CommonObs
 
 object TagConfigTestDsl {
   val * = Dsl[Unit, TagConfigObs, Unit]
@@ -21,6 +22,9 @@ object TagConfigTestDsl {
   val reqTypesDead         = *.focus("reqTypesDead"        ).option(_.obs.applicableReqTypes.flatMap(_.dead))
   val reqTypesError        = *.focus("reqTypesError"       ).option(_.obs.applicableReqTypes.flatMap(_.error))
   val reqTypeApplicability = *.focus("reqTypeApplicability").option(_.obs.applicableReqTypes.map(_.selected))
+  val nameEditorValue      = *.focus("Name editor value"   ).option(_.obs.nameEditor.map(_.value))
+
+  val newButton = new CommonObs.DropdownButton.TestDsl(*, "New")(_.newButton)
 
   val clickFilterDead: *.Actions =
     *.action("Click filter dead")(Simulate click _.obs.filterDeadButton)
@@ -69,4 +73,7 @@ object TagConfigTestDsl {
 
   def setApplicableReqTypesText(txt: String): *.Actions =
     *.action("setApplicableReqTypesText: " + txt)(SimEvent.Change(txt) simulate _.obs.applicableReqTypes.get.inputDom)
+
+  def setNameEditorValue(v: String): *.Actions =
+    *.action(s"Set name editor to ${v.quote}")(_.obs.nameEditor.getOrThrow("Name editor unavailable").setValue(v))
 }

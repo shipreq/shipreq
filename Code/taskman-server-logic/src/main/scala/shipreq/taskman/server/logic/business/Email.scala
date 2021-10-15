@@ -97,7 +97,7 @@ object Email {
       def format: String = {
         val (itMulti, itSingle) = data.iterator.partition(_._2.contains('\n'))
         val single = MutableArray(itSingle.map { case (k, v) => s"$k = $v" }).sort.mkString("\n")
-        val multi  = MutableArray(itMulti.map { case (k, v) => s"$k =\n${v.indent("  ")}" }).sort.mkString("\n\n")
+        val multi  = MutableArray(itMulti.map { case (k, v) => s"$k =\n${v.indentLines("  ")}" }).sort.mkString("\n\n")
         List(single, multi).filter(_.nonEmpty).mkString("\n\n")
       }
     }

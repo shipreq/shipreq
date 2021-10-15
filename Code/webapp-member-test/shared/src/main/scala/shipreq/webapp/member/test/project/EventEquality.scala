@@ -1,9 +1,8 @@
 package shipreq.webapp.member.test.project
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
+import cats.Eq
+import japgolly.microlibs.cats_ext.CatsMacros
 import java.time.Instant
-import scalaz.Equal
-import scalaz.std.list.listEqual
 import shipreq.webapp.member.project.event.Event._
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.project.filter.Filter.Implicits._
@@ -11,86 +10,86 @@ import shipreq.webapp.member.project.text.Text.Equality._
 
 object EventEquality extends EventEquality
 trait EventEquality {
-  implicit val equalApplicableTagCreate    : Equal[ApplicableTagCreate    ] = ScalazMacros.deriveEqual
-  implicit val equalApplicableTagCreateV1  : Equal[ApplicableTagCreateV1  ] = ScalazMacros.deriveEqual
-  implicit val equalApplicableTagUpdate    : Equal[ApplicableTagUpdate    ] = ScalazMacros.deriveEqual
-  implicit val equalApplicableTagUpdateV1  : Equal[ApplicableTagUpdateV1  ] = ScalazMacros.deriveEqual
-  implicit val equalContentRestore         : Equal[ContentRestore         ] = ScalazMacros.deriveEqual
-  implicit val equalCustomIssueTypeCreate  : Equal[CustomIssueTypeCreate  ] = ScalazMacros.deriveEqual
-  implicit val equalCustomIssueTypeDelete  : Equal[CustomIssueTypeDelete  ] = ScalazMacros.deriveEqual
-  implicit val equalCustomIssueTypeRestore : Equal[CustomIssueTypeRestore ] = ScalazMacros.deriveEqual
-  implicit val equalCustomIssueTypeUpdate  : Equal[CustomIssueTypeUpdate  ] = ScalazMacros.deriveEqual
-  implicit val equalCustomReqTypeCreate    : Equal[CustomReqTypeCreate    ] = ScalazMacros.deriveEqual
-  implicit val equalCustomReqTypeCreateV1  : Equal[CustomReqTypeCreateV1  ] = ScalazMacros.deriveEqual
-  implicit val equalCustomReqTypeDelete    : Equal[CustomReqTypeDelete    ] = ScalazMacros.deriveEqual
-  implicit val equalCustomReqTypeDeleteHard: Equal[CustomReqTypeDeleteHard] = ScalazMacros.deriveEqual
-  implicit val equalCustomReqTypeDeleteSoft: Equal[CustomReqTypeDeleteSoft] = ScalazMacros.deriveEqual
-  implicit val equalCustomReqTypeRestore   : Equal[CustomReqTypeRestore   ] = ScalazMacros.deriveEqual
-  implicit val equalCustomReqTypeUpdate    : Equal[CustomReqTypeUpdate    ] = ScalazMacros.deriveEqual
-  implicit val equalCustomReqTypeUpdateV1  : Equal[CustomReqTypeUpdateV1  ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomDelete      : Equal[FieldCustomDelete      ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomImpCreateV1 : Equal[FieldCustomImpCreateV1 ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomImpCreate   : Equal[FieldCustomImpCreate   ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomImpUpdateV1 : Equal[FieldCustomImpUpdateV1 ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomImpUpdate   : Equal[FieldCustomImpUpdate   ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomRestore     : Equal[FieldCustomRestore     ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomTagCreateV1 : Equal[FieldCustomTagCreateV1 ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomTagCreate   : Equal[FieldCustomTagCreate   ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomTagUpdateV1 : Equal[FieldCustomTagUpdateV1 ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomTagUpdate   : Equal[FieldCustomTagUpdate   ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomTextCreateV1: Equal[FieldCustomTextCreateV1] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomTextCreate  : Equal[FieldCustomTextCreate  ] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomTextUpdateV1: Equal[FieldCustomTextUpdateV1] = ScalazMacros.deriveEqual
-  implicit val equalFieldCustomTextUpdate  : Equal[FieldCustomTextUpdate  ] = ScalazMacros.deriveEqual
-  implicit val equalFieldReposition        : Equal[FieldReposition        ] = ScalazMacros.deriveEqual
-  implicit val equalFieldStaticAdd         : Equal[FieldStaticAdd         ] = ScalazMacros.deriveEqual
-  implicit val equalFieldStaticRemove      : Equal[FieldStaticRemove      ] = ScalazMacros.deriveEqual
-  implicit val equalGenericReqCreate       : Equal[GenericReqCreate       ] = ScalazMacros.deriveEqual
-  implicit val equalGenericReqTitleSet     : Equal[GenericReqTitleSet     ] = ScalazMacros.deriveEqual
-  implicit val equalGenericReqTypeSet      : Equal[GenericReqTypeSet      ] = ScalazMacros.deriveEqual
-  implicit val equalManualIssueCreate      : Equal[ManualIssueCreate      ] = ScalazMacros.deriveEqual
-  implicit val equalManualIssueDelete      : Equal[ManualIssueDelete      ] = ScalazMacros.deriveEqual
-  implicit val equalManualIssueUpdate      : Equal[ManualIssueUpdate      ] = ScalazMacros.deriveEqual
-  implicit val equalProjectNameSet         : Equal[ProjectNameSet         ] = ScalazMacros.deriveEqual
-  implicit val equalProjectTemplateApply   : Equal[ProjectTemplateApply   ] = ScalazMacros.deriveEqual
-  implicit val equalCodeGroupCreate        : Equal[CodeGroupCreate        ] = ScalazMacros.deriveEqual
-  implicit val equalCodeGroupsDelete       : Equal[CodeGroupsDelete       ] = ScalazMacros.deriveEqual
-  implicit val equalCodeGroupUpdate        : Equal[CodeGroupUpdate        ] = ScalazMacros.deriveEqual
-  implicit val equalReqCodesPatch          : Equal[ReqCodesPatch          ] = ScalazMacros.deriveEqual
-  implicit val equalReqFieldCustomTextSet  : Equal[ReqFieldCustomTextSet  ] = ScalazMacros.deriveEqual
-  implicit val equalReqImplicationsPatch   : Equal[ReqImplicationsPatch   ] = ScalazMacros.deriveEqual
-  implicit val equalReqsDelete             : Equal[ReqsDelete             ] = ScalazMacros.deriveEqual
-  implicit val equalReqTagsPatch           : Equal[ReqTagsPatch           ] = ScalazMacros.deriveEqual
-  implicit val equalSavedViewCreateV1      : Equal[SavedViewCreateV1      ] = ScalazMacros.deriveEqual
-  implicit val equalSavedViewCreate        : Equal[SavedViewCreate        ] = ScalazMacros.deriveEqual
-  implicit val equalSavedViewDefaultSet    : Equal[SavedViewDefaultSet    ] = ScalazMacros.deriveEqual
-  implicit val equalSavedViewDelete        : Equal[SavedViewDelete        ] = ScalazMacros.deriveEqual
-  implicit val equalSavedViewUpdateV1      : Equal[SavedViewUpdateV1      ] = ScalazMacros.deriveEqual
-  implicit val equalSavedViewUpdate        : Equal[SavedViewUpdate        ] = ScalazMacros.deriveEqual
-  implicit val equalTagDelete              : Equal[TagDelete              ] = ScalazMacros.deriveEqual
-  implicit val equalTagGroupCreate         : Equal[TagGroupCreate         ] = ScalazMacros.deriveEqual
-  implicit val equalTagGroupUpdate         : Equal[TagGroupUpdate         ] = ScalazMacros.deriveEqual
-  implicit val equalTagRestore             : Equal[TagRestore             ] = ScalazMacros.deriveEqual
-  implicit val equalUseCaseCreate          : Equal[UseCaseCreate          ] = ScalazMacros.deriveEqual
-  implicit val equalUseCaseStepCreate      : Equal[UseCaseStepCreate      ] = ScalazMacros.deriveEqual
-  implicit val equalUseCaseStepDelete      : Equal[UseCaseStepDelete      ] = ScalazMacros.deriveEqual
-  implicit val equalUseCaseStepRestore     : Equal[UseCaseStepRestore     ] = ScalazMacros.deriveEqual
-  implicit val equalUseCaseStepShiftLeft   : Equal[UseCaseStepShiftLeft   ] = ScalazMacros.deriveEqual
-  implicit val equalUseCaseStepShiftRight  : Equal[UseCaseStepShiftRight  ] = ScalazMacros.deriveEqual
-  implicit val equalUseCaseStepUpdate      : Equal[UseCaseStepUpdate      ] = ScalazMacros.deriveEqual
-  implicit val equalUseCaseTitleSet        : Equal[UseCaseTitleSet        ] = ScalazMacros.deriveEqual
+  implicit val equalApplicableTagCreate    : Eq[ApplicableTagCreate    ] = CatsMacros.deriveEq
+  implicit val equalApplicableTagCreateV1  : Eq[ApplicableTagCreateV1  ] = CatsMacros.deriveEq
+  implicit val equalApplicableTagUpdate    : Eq[ApplicableTagUpdate    ] = CatsMacros.deriveEq
+  implicit val equalApplicableTagUpdateV1  : Eq[ApplicableTagUpdateV1  ] = CatsMacros.deriveEq
+  implicit val equalContentRestore         : Eq[ContentRestore         ] = CatsMacros.deriveEq
+  implicit val equalCustomIssueTypeCreate  : Eq[CustomIssueTypeCreate  ] = CatsMacros.deriveEq
+  implicit val equalCustomIssueTypeDelete  : Eq[CustomIssueTypeDelete  ] = CatsMacros.deriveEq
+  implicit val equalCustomIssueTypeRestore : Eq[CustomIssueTypeRestore ] = CatsMacros.deriveEq
+  implicit val equalCustomIssueTypeUpdate  : Eq[CustomIssueTypeUpdate  ] = CatsMacros.deriveEq
+  implicit val equalCustomReqTypeCreate    : Eq[CustomReqTypeCreate    ] = CatsMacros.deriveEq
+  implicit val equalCustomReqTypeCreateV1  : Eq[CustomReqTypeCreateV1  ] = CatsMacros.deriveEq
+  implicit val equalCustomReqTypeDelete    : Eq[CustomReqTypeDelete    ] = CatsMacros.deriveEq
+  implicit val equalCustomReqTypeDeleteHard: Eq[CustomReqTypeDeleteHard] = CatsMacros.deriveEq
+  implicit val equalCustomReqTypeDeleteSoft: Eq[CustomReqTypeDeleteSoft] = CatsMacros.deriveEq
+  implicit val equalCustomReqTypeRestore   : Eq[CustomReqTypeRestore   ] = CatsMacros.deriveEq
+  implicit val equalCustomReqTypeUpdate    : Eq[CustomReqTypeUpdate    ] = CatsMacros.deriveEq
+  implicit val equalCustomReqTypeUpdateV1  : Eq[CustomReqTypeUpdateV1  ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomDelete      : Eq[FieldCustomDelete      ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomImpCreateV1 : Eq[FieldCustomImpCreateV1 ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomImpCreate   : Eq[FieldCustomImpCreate   ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomImpUpdateV1 : Eq[FieldCustomImpUpdateV1 ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomImpUpdate   : Eq[FieldCustomImpUpdate   ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomRestore     : Eq[FieldCustomRestore     ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomTagCreateV1 : Eq[FieldCustomTagCreateV1 ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomTagCreate   : Eq[FieldCustomTagCreate   ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomTagUpdateV1 : Eq[FieldCustomTagUpdateV1 ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomTagUpdate   : Eq[FieldCustomTagUpdate   ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomTextCreateV1: Eq[FieldCustomTextCreateV1] = CatsMacros.deriveEq
+  implicit val equalFieldCustomTextCreate  : Eq[FieldCustomTextCreate  ] = CatsMacros.deriveEq
+  implicit val equalFieldCustomTextUpdateV1: Eq[FieldCustomTextUpdateV1] = CatsMacros.deriveEq
+  implicit val equalFieldCustomTextUpdate  : Eq[FieldCustomTextUpdate  ] = CatsMacros.deriveEq
+  implicit val equalFieldReposition        : Eq[FieldReposition        ] = CatsMacros.deriveEq
+  implicit val equalFieldStaticAdd         : Eq[FieldStaticAdd         ] = CatsMacros.deriveEq
+  implicit val equalFieldStaticRemove      : Eq[FieldStaticRemove      ] = CatsMacros.deriveEq
+  implicit val equalGenericReqCreate       : Eq[GenericReqCreate       ] = CatsMacros.deriveEq
+  implicit val equalGenericReqTitleSet     : Eq[GenericReqTitleSet     ] = CatsMacros.deriveEq
+  implicit val equalGenericReqTypeSet      : Eq[GenericReqTypeSet      ] = CatsMacros.deriveEq
+  implicit val equalManualIssueCreate      : Eq[ManualIssueCreate      ] = CatsMacros.deriveEq
+  implicit val equalManualIssueDelete      : Eq[ManualIssueDelete      ] = CatsMacros.deriveEq
+  implicit val equalManualIssueUpdate      : Eq[ManualIssueUpdate      ] = CatsMacros.deriveEq
+  implicit val equalProjectNameSet         : Eq[ProjectNameSet         ] = CatsMacros.deriveEq
+  implicit val equalProjectTemplateApply   : Eq[ProjectTemplateApply   ] = CatsMacros.deriveEq
+  implicit val equalCodeGroupCreate        : Eq[CodeGroupCreate        ] = CatsMacros.deriveEq
+  implicit val equalCodeGroupsDelete       : Eq[CodeGroupsDelete       ] = CatsMacros.deriveEq
+  implicit val equalCodeGroupUpdate        : Eq[CodeGroupUpdate        ] = CatsMacros.deriveEq
+  implicit val equalReqCodesPatch          : Eq[ReqCodesPatch          ] = CatsMacros.deriveEq
+  implicit val equalReqFieldCustomTextSet  : Eq[ReqFieldCustomTextSet  ] = CatsMacros.deriveEq
+  implicit val equalReqImplicationsPatch   : Eq[ReqImplicationsPatch   ] = CatsMacros.deriveEq
+  implicit val equalReqsDelete             : Eq[ReqsDelete             ] = CatsMacros.deriveEq
+  implicit val equalReqTagsPatch           : Eq[ReqTagsPatch           ] = CatsMacros.deriveEq
+  implicit val equalSavedViewCreateV1      : Eq[SavedViewCreateV1      ] = CatsMacros.deriveEq
+  implicit val equalSavedViewCreate        : Eq[SavedViewCreate        ] = CatsMacros.deriveEq
+  implicit val equalSavedViewDefaultSet    : Eq[SavedViewDefaultSet    ] = CatsMacros.deriveEq
+  implicit val equalSavedViewDelete        : Eq[SavedViewDelete        ] = CatsMacros.deriveEq
+  implicit val equalSavedViewUpdateV1      : Eq[SavedViewUpdateV1      ] = CatsMacros.deriveEq
+  implicit val equalSavedViewUpdate        : Eq[SavedViewUpdate        ] = CatsMacros.deriveEq
+  implicit val equalTagDelete              : Eq[TagDelete              ] = CatsMacros.deriveEq
+  implicit val equalTagGroupCreate         : Eq[TagGroupCreate         ] = CatsMacros.deriveEq
+  implicit val equalTagGroupUpdate         : Eq[TagGroupUpdate         ] = CatsMacros.deriveEq
+  implicit val equalTagRestore             : Eq[TagRestore             ] = CatsMacros.deriveEq
+  implicit val equalUseCaseCreate          : Eq[UseCaseCreate          ] = CatsMacros.deriveEq
+  implicit val equalUseCaseStepCreate      : Eq[UseCaseStepCreate      ] = CatsMacros.deriveEq
+  implicit val equalUseCaseStepDelete      : Eq[UseCaseStepDelete      ] = CatsMacros.deriveEq
+  implicit val equalUseCaseStepRestore     : Eq[UseCaseStepRestore     ] = CatsMacros.deriveEq
+  implicit val equalUseCaseStepShiftLeft   : Eq[UseCaseStepShiftLeft   ] = CatsMacros.deriveEq
+  implicit val equalUseCaseStepShiftRight  : Eq[UseCaseStepShiftRight  ] = CatsMacros.deriveEq
+  implicit val equalUseCaseStepUpdate      : Eq[UseCaseStepUpdate      ] = CatsMacros.deriveEq
+  implicit val equalUseCaseTitleSet        : Eq[UseCaseTitleSet        ] = CatsMacros.deriveEq
 
-  implicit val equalActiveEvent: Equal[ActiveEvent] = ScalazMacros.deriveEqual
-  implicit val equalEvent      : Equal[Event      ] = ScalazMacros.deriveEqual
+  implicit val equalActiveEvent: Eq[ActiveEvent] = CatsMacros.deriveEq
+  implicit val equalEvent      : Eq[Event      ] = CatsMacros.deriveEq
 
-  implicit val equalVerifiedEvent   : Equal[VerifiedEvent            ] = ScalazMacros.deriveEqual
-  implicit val equalVerifiedEventSeq: Equal[VerifiedEvent.Seq        ] = Equal.equalBy(_.toList)
-  implicit val equalVerifiedEventNES: Equal[VerifiedEvent.NonEmptySeq] = Equal.equalBy(_.values.toList)
+  implicit val equalVerifiedEvent   : Eq[VerifiedEvent            ] = CatsMacros.deriveEq
+  implicit val equalVerifiedEventSeq: Eq[VerifiedEvent.Seq        ] = Eq.by(_.toList)
+  implicit val equalVerifiedEventNES: Eq[VerifiedEvent.NonEmptySeq] = Eq.by(_.values.toList)
 
   object IgnoreEqualityOfVerifiedEventTimestamps {
-    protected implicit val equalInstant: Equal[Instant] = Equal.equal((_, _ ) => true)
-    implicit val equalVerifiedEvent   : Equal[VerifiedEvent            ] = ScalazMacros.deriveEqual
-    implicit val equalVerifiedEventSeq: Equal[VerifiedEvent.Seq        ] = Equal.equalBy(_.toList)
-    implicit val equalVerifiedEventNES: Equal[VerifiedEvent.NonEmptySeq] = Equal.equalBy(_.values.toList)
+    protected implicit val equalInstant: Eq[Instant] = Eq.instance((_, _ ) => true)
+    implicit val equalVerifiedEvent   : Eq[VerifiedEvent            ] = CatsMacros.deriveEq
+    implicit val equalVerifiedEventSeq: Eq[VerifiedEvent.Seq        ] = Eq.by(_.toList)
+    implicit val equalVerifiedEventNES: Eq[VerifiedEvent.NonEmptySeq] = Eq.by(_.values.toList)
   }
 }

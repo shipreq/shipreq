@@ -55,7 +55,7 @@ deploy:
 	$(GATSBY_s3) deploy
 
 invalidate-prod:
-	aws cloudfront create-invalidation --distribution-id $(CLOUDFRONT_ID) --paths "/*"
+	../Docker/aws cloudfront create-invalidation --distribution-id $(CLOUDFRONT_ID) --paths "/*"
 
 ci: terraform-check clean build deploy invalidate-prod
 

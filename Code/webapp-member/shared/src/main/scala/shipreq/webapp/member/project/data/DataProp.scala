@@ -1,12 +1,12 @@
 package shipreq.webapp.member.project.data
 
+import cats.instances.list._
+import cats.instances.option._
 import japgolly.microlibs.recursion._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.prop._
 import scala.collection.{IterableOnce, mutable}
 import scala.reflect.ClassTag
-import scalaz.std.list.listInstance
-import scalaz.std.option.optionInstance
 import shipreq.base.util._
 import shipreq.webapp.base.config.WebappConfig
 import shipreq.webapp.member.project.filter.Filter.Implicits._
@@ -17,7 +17,7 @@ object DataProp {
   import DataImplicits._
   import MTrie.Ops
   import ScalaExt._
-  import ScalazExtra._
+  import CatsExtra._
   import TaggedTypes.TaggedInt
 
   implicit def autoLiftL(e: Eval) = e.liftL

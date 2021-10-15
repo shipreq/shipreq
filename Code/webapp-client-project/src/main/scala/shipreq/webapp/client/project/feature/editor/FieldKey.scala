@@ -2,8 +2,8 @@ package shipreq.webapp.client.project.feature.editor
 
 import japgolly.scalajs.react.Reusability
 import scala.reflect.ClassTag
-import scalaz.~~>
 import shipreq.base.util._
+import shipreq.base.util.fp.~~>
 import shipreq.webapp.client.project.feature.RenderFeature
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.member.project.data._

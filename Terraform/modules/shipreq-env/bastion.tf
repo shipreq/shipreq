@@ -47,6 +47,10 @@ resource "aws_instance" "bastion" {
   tags                   = local.bastion_tags
   volume_tags            = local.bastion_tags
 
+  credit_specification {
+    cpu_credits = "standard"
+  }
+
   user_data = templatefile("${path.module}/bastion-ec2-init.sh", {
     CADVISOR_URL        = local.ops_cadvisor_root_url
     DNS_TTL             = "${local.dns_stable_ttl / 2}s"

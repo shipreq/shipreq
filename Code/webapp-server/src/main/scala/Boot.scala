@@ -1,5 +1,6 @@
 package bootstrap.liftweb
 
+import cats.syntax.apply._
 import com.zaxxer.hikari.metrics.prometheus.PrometheusMetricsTrackerFactory
 import japgolly.clearconfig._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
@@ -10,7 +11,6 @@ import net.liftweb.util.Props.RunModes
 import net.liftweb.util._
 import org.redisson.Redisson
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scalaz.syntax.applicative._
 import shipreq.base.db.DbAccessor
 import shipreq.base.ops.{JdbcLogging, JdbcMetrics, SqlTracer}
 import shipreq.base.util.FxModule._
@@ -99,7 +99,7 @@ class Boot {
         case None    => Some(None)
       }
 
-    (ServerConfig.config |@| cfgRunMode <* logVars)
+    (ServerConfig.config, cfgRunMode <* logVars)
       .tupled
       .withReport
       .map { case ((svr, runMode), report) => (svr, runMode, report) }
@@ -112,7 +112,7 @@ class Boot {
     System.clearProperty("run.mode")
     Props.autoDetectRunModeFn.set(() => runMode)
     if (Props.mode !=* runMode)
-      throw new IllegalStateException(s"Run mode (${Props.mode}) ≠ desired run mode ($runMode)")
+      throw new IllegalStateException(s"Run mode (${Props.mode}) =!= desired run mode ($runMode)")
   }
 
   def configureLift(cfg: ServerConfig): Unit = {

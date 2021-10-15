@@ -1,10 +1,11 @@
 package shipreq.webapp.member.project.filter
 
+import cats.{Applicative, NonEmptyTraverse, Traverse}
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.recursion.Fix
 import japgolly.microlibs.stdlib_ext.ParseInt
 import japgolly.microlibs.utils.StaticLookupFn
-import scalaz.{Applicative, Traverse, Traverse1}
+import shipreq.base.util.TraverseWithDefaults
 import shipreq.webapp.base.util.On
 import shipreq.webapp.member.project.data.ReqTypePos
 import shipreq.webapp.member.project.issue.IssueCategory
@@ -123,7 +124,7 @@ object FilterAst {                                                              
       UnivEq.derive
 
     def traverse[A]: Traverse[FieldCriteria[A, *]] =
-      new Traverse[FieldCriteria[A, *]] {
+      new TraverseWithDefaults[FieldCriteria[A, *]] {
         type F[X] = FieldCriteria[A, X]
 
         override def map[X, Y](fa: F[X])(f: X => Y): F[Y] = fa match {
@@ -132,7 +133,7 @@ object FilterAst {                                                              
           case c: Query[X]      => Query(f(c.value))
         }
 
-        override def traverseImpl[G[_], X, Y](fa: F[X])(f: X => G[Y])(implicit G: Applicative[G]): G[F[Y]] = fa match {
+        override def traverse[G[_], X, Y](fa: F[X])(f: X => G[Y])(implicit G: Applicative[G]): G[F[Y]] = fa match {
           case c: Attr[A]       => G.pure(c)
           case c: ReqTypePosSet => G.pure(c)
           case c: Query[X]      => G.map(f(c.value))(Query(_))
@@ -150,7 +151,7 @@ object FilterAst {                                                              
       UnivEq.derive
 
     def traverse[R]: Traverse[ImpCriteria[R, *]] =
-      new Traverse[ImpCriteria[R, *]] {
+      new TraverseWithDefaults[ImpCriteria[R, *]] {
         type F[X] = ImpCriteria[R, X]
 
         override def map[X, Y](fa: F[X])(f: X => Y): F[Y] = fa match {
@@ -158,7 +159,7 @@ object FilterAst {                                                              
           case c: Query[X] => Query(f(c.value))
         }
 
-        override def traverseImpl[G[_], X, Y](fa: F[X])(f: X => G[Y])(implicit G: Applicative[G]): G[F[Y]] = fa match {
+        override def traverse[G[_], X, Y](fa: F[X])(f: X => G[Y])(implicit G: Applicative[G]): G[F[Y]] = fa match {
           case c: Reqs [R] => G.pure(c)
           case c: Query[X] => G.map(f(c.value))(Query(_))
         }
@@ -201,7 +202,6 @@ object FilterAst {                                                              
   val issueCategoryFromStr: String => String \/ IssueCategory =
     StaticLookupFn.useMapBy(IssueCategory.values.whole)(issueCategoryToStr)
       .toEitherWithHelp(issueCategoryToStr)((k, h) => s"Unknown issue type: '$k'. Known: $h.")
-      .andThen(\/.fromEither)
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -212,7 +212,7 @@ object FilterAst {                                                              
     UnivEq.deriveFix[Fix, λ[X => FilterAst[X, A, B, C, D, E, F, G, H, I, J]]]
 
   def traverse[FieldCriteria[_], ImpCriteria[_], Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope, ApTag](traverseFC: Traverse[FieldCriteria], traverseIC: Traverse[ImpCriteria]): Traverse[FilterAst[*, FieldCriteria, ImpCriteria, Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope, ApTag]] =
-    new Traverse[FilterAst[*, FieldCriteria, ImpCriteria, Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope, ApTag]] {
+    new TraverseWithDefaults[FilterAst[*, FieldCriteria, ImpCriteria, Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope, ApTag]] {
       type F[A] = FilterAst[A, FieldCriteria, ImpCriteria, Attr, Field, IssueCat, HashTag, ReqSet, RT, Scope, ApTag]
 
       override def map[A, B](fa: F[A])(f: A => B): F[B] = fa match {
@@ -234,7 +234,7 @@ object FilterAst {                                                              
         case c: AnyOf         [A]                       => AnyOf(f(c.head), c.tail map f)
       }
 
-      override def traverseImpl[G[_], A, B](fa: F[A])(f: A => G[B])(implicit G: Applicative[G]): G[F[B]] = fa match {
+      override def traverse[G[_], A, B](fa: F[A])(f: A => G[B])(implicit G: Applicative[G]): G[F[B]] = fa match {
         case c: Text                                    => G pure c
         case c: Regex                                   => G pure c
         case c: Presence      [Attr]                    => G pure c
@@ -247,10 +247,10 @@ object FilterAst {                                                              
         case c: ReqType       [RT]                      => G pure c
         case c: FieldProp     [Field, FieldCriteria, A] => G.map(traverseFC.traverse(c.criteria)(f))(x => c.copy(criteria = x))
         case c: Scoped1       [Scope, A]                => G.map(f(c.clause))(x => c.copy(clause = x))
-        case c: Scoped2       [Scope, A]                => G.apply2(f(c.clause), f(c.mainClause))((x, y) => c.copy(clause = x, mainClause = y))
+        case c: Scoped2       [Scope, A]                => G.map2(f(c.clause), f(c.mainClause))((x, y) => c.copy(clause = x, mainClause = y))
         case c: Not           [A]                       => G.map(f(c.clause))(Not(_))
-        case c: AllOf         [A]                       => G.map(Traverse1[NonEmptyVector].traverse1(c.clauses)(f))(AllOf(_))
-        case c: AnyOf         [A]                       => G.apply2(f(c.head), Traverse1[NonEmptyVector].traverse1(c.tail)(f))(AnyOf(_, _))
+        case c: AllOf         [A]                       => G.map(NonEmptyTraverse[NonEmptyVector].nonEmptyTraverse(c.clauses)(f))(AllOf(_))
+        case c: AnyOf         [A]                       => G.map2(f(c.head), NonEmptyTraverse[NonEmptyVector].nonEmptyTraverse(c.tail)(f))(AnyOf(_, _))
       }
     }
 

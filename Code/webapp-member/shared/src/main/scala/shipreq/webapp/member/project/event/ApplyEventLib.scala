@@ -1,9 +1,9 @@
 package shipreq.webapp.member.project.event
 
+import cats.Eq
 import japgolly.microlibs.utils.Utils
 import monocle._
 import scala.reflect.ClassTag
-import scalaz.Equal
 import shipreq.base.util._
 import shipreq.webapp.base.validation.lib.Composite
 import shipreq.webapp.member.project.data._
@@ -59,18 +59,18 @@ private[event] object ApplyEventLib {
       case -\/(f) => Eval.fail(Composite.Invalidity.toText(f))
     }
 
-  def validateA[A](v: => Composite.Stateless[A, A, A])(implicit trust: Trust, eq: Equal[A]): A => Eval[A] =
+  def validateA[A](v: => Composite.Stateless[A, A, A])(implicit trust: Trust, eq: Eq[A]): A => Eval[A] =
     whenUntrusted(_validate(v))
 
-  def validateO[I, O](v: => Composite.Stateless[I, O, O])(implicit trust: Trust, eq: Equal[I]): O => Eval[O] =
+  def validateO[I, O](v: => Composite.Stateless[I, O, O])(implicit trust: Trust, eq: Eq[I]): O => Eval[O] =
     whenUntrusted(o => _validate(v)(v.corrector.uncorrect(o)))
 
-  def validateI[I, O](v: => Composite.Stateless[I, I, O])(f: O => I)(implicit trust: Trust, eq: Equal[I]): O => Eval[O] =
+  def validateI[I, O](v: => Composite.Stateless[I, I, O])(f: O => I)(implicit trust: Trust, eq: Eq[I]): O => Eval[O] =
     whenUntrusted(o => _validate(v)(f(o)))
 
-  private def _validate[I, C, O](v: Composite.Stateless[I, C, O])(i: I)(implicit eq: Equal[I]): Eval[O] = {
+  private def _validate[I, C, O](v: Composite.Stateless[I, C, O])(i: I)(implicit eq: Eq[I]): Eval[O] = {
     val c = v.corrector(i)
-    if (eq.equal(i, v.corrector.uncorrect(c)))
+    if (eq.eqv(i, v.corrector.uncorrect(c)))
       v.named.auditor(c)
     else
       Eval.fail(s"Preprocessing not applied to ${v.name}:\na: [$i]\ne: [$c]")
@@ -158,12 +158,12 @@ private[event] object ApplyEventLib {
     Eval.mod(f)
 
   def lensMod[A](l: Lens[Project, A])(mod: A => Eval[A]): Eval[Unit] =
-    Eval.gets(l.get).flatMap(mod).flatMap(l.set)
+    Eval.gets(l.get).flatMap(mod).flatMap(l.replace)
 
   def fieldUpdateFn[S, T, A, B](l: PLens[S, T, A, B]): B => S => Eval[T] =
     b => {
       // TODO Modify to reject NOP changes?
-      val f = l set b
+      val f = l replace b
       s => Eval.pure(f(s))
     }
 
@@ -179,7 +179,7 @@ private[event] object ApplyEventLib {
       thenUpdate[C, D]((c, b) => g(c)(b))
 
     def >>=@[C, D](l: PLens[C, D, A, B]): A => C => Eval[D] =
-      thenUpdateBC(l.set)
+      thenUpdateBC(l.replace)
   }
 
   def optionalModEval[A](l: monocle.Optional[Project, A], notFound: => String)(mod: A => Eval[A]): Eval[Unit] =
@@ -187,7 +187,7 @@ private[event] object ApplyEventLib {
       p   <- Eval.get
       sv1 <- Eval.some(l.getOption(p), notFound)
       sv2 <- mod(sv1)
-      _   <- l.set(sv2)
+      _   <- l.replace(sv2)
     } yield ()
 
   def foldMapBind[A, B](b: B, as: Iterable[A])(f: A => B => Eval[B]): Eval[B] =
@@ -280,8 +280,8 @@ private[event] object ApplyEventLib {
     val makeDead  : V => Eval[V]
   }
   def LiveAccessor[V](l: Lens[V, Live])(name: V => String)(implicit trust: Trust): LiveAccessor[V] = {
-    val setLive = l set Live
-    val setDead = l set Dead
+    val setLive = l replace Live
+    val setDead = l replace Dead
     trust match {
       case Trusted =>
         new LiveAccessor[V] {
@@ -344,7 +344,7 @@ private[event] object ApplyEventLib {
 
     def setLive(id: Id, newValue: Live): Eval[Unit] =
       update(id, d =>
-        ensureLiveIsNot(liveLens get d)(newValue, id.toString).andReturn(liveLens.set(newValue)(d)))
+        ensureLiveIsNot(liveLens get d)(newValue, id.toString).andReturn(liveLens.replace(newValue)(d)))
   }
 
   // -------------------------------------------------------------------------------------------------------------------

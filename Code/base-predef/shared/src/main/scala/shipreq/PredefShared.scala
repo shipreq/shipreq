@@ -1,15 +1,87 @@
 package shipreq
 
 import java.lang.CharSequence
-import nyaya.util.{MultiValues, Multimap}
 import scala.annotation.elidable.ASSERTION
 import scala.collection.{ArrayOps, StringOps, immutable}
 import scala.reflect.ClassTag
 
+// ===================================================================================================================
+object \/ {
+  def fromTryCatchNonFatal[A](a: => A): Either[Throwable, A] =
+    try Right(a) catch { case scala.util.control.NonFatal(e) => Left(e) }
+
+  def fromTryCatch[A](a: => A): Either[Throwable, A] =
+    try Right(a) catch { case e: Throwable => Left(e) }
+
+  @inline def right[A](a: A): Right[Nothing, A] = Right(a)
+  @inline def left [A](a: A): Left[A, Nothing] = Left(a)
+}
+
+final class EitherOps[E, A](private val e: Either[E, A]) extends AnyVal {
+
+  def leftMap[B](f: E => B): Either[B, A] =
+    e match {
+      case r: Right[E, A] => r.asInstanceOf[Right[B, A]]
+      case Left(e)        => Left(f(e))
+    }
+
+  def toList: List[A] =
+    e match {
+      case Right(a) => a :: Nil
+      case Left(_)  => Nil
+    }
+
+  @inline def castLeft() = e.asInstanceOf[Left[E, Nothing]]
+  @inline def castRight() = e.asInstanceOf[Right[Nothing, A]]
+
+  def bimap[F, B](f: E => F, g: A => B): Either[F, B] =
+    if (e.isRight)
+      Right(g(castRight().value))
+    else
+      Left(f(castLeft().value))
+}
+// ===================================================================================================================
+
+
 abstract class PredefShared
   extends PredefScala
-     with japgolly.univeq.UnivEqScalaz
+    //  with japgolly.microlibs.disjunction.Exports
+     with japgolly.univeq.UnivEqCats
      with japgolly.univeq.UnivEqExports {
+
+
+// ===================================================================================================================
+// TODO: Fix japgolly.microlibs.disjunction.Exports
+  final type -\/[+A] = scala.util.Left[A, Nothing]
+  final type \/-[+A] = scala.util.Right[Nothing, A]
+
+  @scala.annotation.showAsInfix
+  final type \/[+A, +B] = Either[A, B]
+
+  @inline final val \/  = shipreq.\/
+  @inline final val -\/ = Left
+  @inline final val \/- = Right
+  // object \/- {
+  //   @inline def apply[A](a: A): \/-[A] = Right(a)
+  //   def unapply[A, B](e: Right[B, A]): Option[A] = if (e.isRight) Some(e.value) else None
+  //   Right.un
+  // }
+  // object -\/ {
+  //   @inline def apply[A](a: A): -\/[A] = Left(a)
+  //   def unapply[A, B](e: Left[A, B]): Option[A] = if (e.isLeft) Some(e.value) else None
+  // }
+
+  @inline final implicit def implicitIgnoreLeftTypeOnRight[A, B, R](r: Right[A, R]): Right[B, R] =
+    r.asInstanceOf[Right[B, R]]
+
+  @inline final implicit def implicitIgnoreRightTypeOnLeft[A, B, L](r: Left[L, A]): Left[L, B] =
+    r.asInstanceOf[Left[L, B]]
+
+  @inline final implicit def implicitDisjEitherOps[E, A](a: Either[E, A]): shipreq.EitherOps[E, A] =
+    new shipreq.EitherOps(a)
+// ===================================================================================================================
+
+
 
   final type elidable = scala.annotation.elidable
   final val  elidable = scala.annotation.elidable
@@ -19,18 +91,17 @@ abstract class PredefShared
   final type ArraySeq[+A] = scala.collection.immutable.ArraySeq[A]
   final val  ArraySeq     = scala.collection.immutable.ArraySeq
 
-  final type \/ [+A, +B] = scalaz.\/[A, B]
-  final type \/-[+A]     = scalaz.\/-[A]
-  final type -\/[+A]     = scalaz.-\/[A]
-  final val  \/          = scalaz.\/
-  final val  \/-         = scalaz.\/-
-  final val  -\/         = scalaz.-\/
-
   final type NonEmptySet[A] = japgolly.microlibs.nonempty.NonEmptySet[A]
   final val  NonEmptySet    = japgolly.microlibs.nonempty.NonEmptySet
 
   final type NonEmptyVector[+A] = japgolly.microlibs.nonempty.NonEmptyVector[A]
   final val  NonEmptyVector     = japgolly.microlibs.nonempty.NonEmptyVector
+
+  final type Multimap[K, L[_], V] = japgolly.microlibs.multimap.Multimap[K, L, V]
+  final val  Multimap             = japgolly.microlibs.multimap.Multimap
+
+  final type MultiValues[L[_]] = japgolly.microlibs.multimap.MultiValues[L]
+  final val  MultiValues       = japgolly.microlibs.multimap.MultiValues
 
   @inline
   @scala.annotation.nowarn("cat=unused")
@@ -39,19 +110,23 @@ abstract class PredefShared
 
   @inline
   @scala.annotation.nowarn("cat=unused")
-  final implicit def UnivEqObjExt(self: UnivEq.type) =
+  final implicit def UnivEqObjExt(self: UnivEq.type): PredefShared.UnivEqObjExt =
     new PredefShared.UnivEqObjExt(UnivEq)
 
   @inline
-  final implicit def predefExtInt(a: Int) =
+  final implicit def predefExtAny[A](a: A): PredefShared.ExtAny[A] =
+    new PredefShared.ExtAny(a)
+
+  @inline
+  final implicit def predefExtInt(a: Int): PredefShared.ExtInt =
     new PredefShared.ExtInt(a)
 
   @inline
-  final implicit def predefExtLong(a: Long) =
+  final implicit def predefExtLong(a: Long): PredefShared.ExtLong =
     new PredefShared.ExtLong(a)
 
   @inline
-  final implicit def predefExtAnyRef[A <: AnyRef](a: A) =
+  final implicit def predefExtAnyRef[A <: AnyRef](a: A): PredefShared.ExtAnyRef[A] =
     new PredefShared.ExtAnyRef(a)
 
   implicit def predefExtString(a: String): AnyVal with PredefShared.ExtString
@@ -70,6 +145,7 @@ abstract class PredefShared
 }
 
 object PredefShared {
+  import japgolly.microlibs.multimap._
   import japgolly.univeq._
   import java.lang.String
 
@@ -87,6 +163,11 @@ object PredefShared {
     @scala.annotation.nowarn("cat=unused")
     @inline def emptyMultimap[K: UnivEq, L[_] : MultiValues, V](implicit ev: L[V] =:!= immutable.Set[V]) =
       Multimap.empty[K, L, V]
+  }
+
+  final class ExtAny[A](private val a: A) extends AnyVal {
+    @inline def ===(rhs: A)(implicit e: cats.Eq[A]): Boolean = e.eqv(a, rhs)
+    @inline def =!=(rhs: A)(implicit e: cats.Eq[A]): Boolean = e.neqv(a, rhs)
   }
 
   final class ExtInt(private val a: Int) extends AnyVal {

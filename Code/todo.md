@@ -25,6 +25,9 @@
 
 ========================================================================================================================
 ### Problems
+* Use full name in Req Type column - the abbreviation is already in the ID (which is always on the screen)
+* Auto list-item spacing is annoying
+* Bug: Create new project, it appears with "Created 7 months ago". Refreshing page fixes the problem.
 
 
 ### Improvements
@@ -43,6 +46,7 @@
 Backlog (maybe-probably soon)
 ========================================================================================================================
 
+* Need a way to import/export project config
 * Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
 * Bulk tag add/remove
 * Advanced colour picker doesn't work

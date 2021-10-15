@@ -1,7 +1,7 @@
 package shipreq.webapp.member.project.data.savedview
 
+import cats.Eq
 import monocle.macros.Lenses
-import scalaz.Equal
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.webapp.base.validation.lib.Implicits._
 import shipreq.webapp.base.validation.lib.Simple._
@@ -19,11 +19,11 @@ import shipreq.webapp.member.UiText
 final case class SavedView(id: SavedView.Id, name: SavedView.Name, view: View)
 
 object SavedView {
-  val columns        = view ^|-> View.columns
-  val order          = view ^|-> View.order
-  val filterDead     = view ^|-> View.filterDead
-  val filter         = view ^|-> View.filter
-  val impGraphConfig = view ^|-> View.impGraphConfig
+  val columns        = view andThen View.columns
+  val order          = view andThen View.order
+  val filterDead     = view andThen View.filterDead
+  val filter         = view andThen View.filter
+  val impGraphConfig = view andThen View.impGraphConfig
 
   final case class Id(value: Int) extends TaggedInt
 
@@ -53,7 +53,7 @@ object SavedView {
         .stateful(_ appendInvalidator _.invalidator)
 
     final case class State(subject: Option[Id], data: () => IterableOnce[(Option[Id], Name)]) {
-      private implicit def equality = Equal.equal[Name](_.value equalsIgnoreCase _.value)
+      private implicit def equality = Eq.instance[Name](_.value equalsIgnoreCase _.value)
       def invalidator: Invalidator[Name] =
         Uniqueness.optionalKeyWithValue(data)(subject)
     }

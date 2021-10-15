@@ -1,11 +1,10 @@
 package shipreq.webapp.base.feature.tablenav
 
+import cats.instances.option._
+import cats.syntax.traverse._
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import nyaya.util.Multimap
 import org.scalajs.dom.html
-import scalaz.std.option.optionInstance
-import scalaz.syntax.traverse._
 import shipreq.base.util.Deny
 import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.util.DomUtil._

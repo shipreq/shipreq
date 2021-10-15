@@ -52,6 +52,10 @@ object LibDependency {
   }
 
   class Dep[D <: HasDialect] private[Dep](val ids: Map[AnyDialect, Seq[ModuleID]]) extends AnyVal {
+
+    def allModuleIds: Set[ModuleID] =
+      ids.valuesIterator.flatten.toSet
+
     def widen[E >: D <: HasDialect]: Dep[E] =
       new Dep(ids)
 

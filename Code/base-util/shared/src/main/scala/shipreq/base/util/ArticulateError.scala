@@ -1,39 +1,39 @@
 package shipreq.base.util
 
+import cats.data.Ior
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.collection.immutable.SortedSet
 import scala.util.control.NonFatal
-import scalaz.\&/
 
 /** An error intended to be articulate and comprehensible.
   *
   * @param hints Information intended to help humans understand the error and/or its context.
   */
-final class ArticulateError(val cause: String \&/ Throwable,
+final class ArticulateError(val cause: Ior[String, Throwable],
                             val tags : Set[ArticulateError.Tag],
                             val hints: SortedSet[String])
     extends RuntimeException(
       ArticulateError.show(cause, tags, hints),
-      cause.b.orNull) {
+      cause.right.orNull) {
 
-  if (cause.b.isDefined)
+  if (cause.right.isDefined)
     setStackTrace(Array.empty)
 
-  def copy(cause: String \&/ Throwable     = this.cause,
+  def copy(cause: Ior[String, Throwable]     = this.cause,
            tags : Set[ArticulateError.Tag] = this.tags ,
            hints: SortedSet[String]        = this.hints): ArticulateError =
     new ArticulateError(cause, tags, hints)
 
   def setErrorMsg(msg: String): ArticulateError =
     copy(cause = cause match {
-      case \&/.This(_)    => \&/.This(msg)
-      case \&/.That(e)    => \&/.Both(msg, e)
-      case \&/.Both(_, e) => \&/.Both(msg, e)
+      case Ior.Left(_)    => Ior.Left(msg)
+      case Ior.Right(e)   => Ior.Both(msg, e)
+      case Ior.Both(_, e) => Ior.Both(msg, e)
     })
 
   def replaceCause(msg: String): ArticulateError =
-    copy(cause = \&/.This(msg))
+    copy(cause = Ior.Left(msg))
 
   def is(t: ArticulateError.Tag): Boolean =
     tags.contains(t)
@@ -63,12 +63,12 @@ final class ArticulateError(val cause: String \&/ Throwable,
 object ArticulateError {
 
   def apply(msg: String): ArticulateError =
-    new ArticulateError(\&/.This(msg), Set.empty, SortedSet.empty)
+    new ArticulateError(Ior.Left(msg), Set.empty, SortedSet.empty)
 
   def apply(t: Throwable): ArticulateError =
     t match {
       case e: ArticulateError => e
-      case _                  => new ArticulateError(\&/.That(t), Set.empty, SortedSet.empty)
+      case _                  => new ArticulateError(Ior.Right(t), Set.empty, SortedSet.empty)
     }
 
   def attempt[A](a: => A): ArticulateError \/ A =
@@ -82,7 +82,7 @@ object ArticulateError {
     o.fold[ArticulateError \/ A](-\/(apply(errMsg)))(\/-(_))
 
   /** @since 2014 */
-  private[ArticulateError] def getMessage(cause: String \&/ Throwable): String = {
+  private[ArticulateError] def getMessage(cause: Ior[String, Throwable]): String = {
 //    def unnull(s: String): String =
 //      if (s eq null) "" else s
 //
@@ -101,14 +101,14 @@ object ArticulateError {
 //    }
 //
 //    cause match {
-//      case \&/.This(m)    => m
-//      case \&/.That(e)    => e.getMessage
-//      case \&/.Both(m, e) => merge(m, e.getMessage)
+//      case Ior.Left(m)    => m
+//      case Ior.Right(e)    => e.getMessage
+//      case Ior.Both(m, e) => merge(m, e.getMessage)
 //    }
-    cause.a.orElse(cause.b.map(_.getMessage)).orNull
+    cause.left.orElse(cause.right.map(_.getMessage)).orNull
   }
 
-  private[ArticulateError] def show(cause: String \&/ Throwable,
+  private[ArticulateError] def show(cause: Ior[String, Throwable],
                                     tags : Set[ArticulateError.Tag],
                                     hints: SortedSet[String]): String = {
     def showItems(items: IterableOnce[String]): String = {
@@ -121,10 +121,10 @@ object ArticulateError {
     def addSection(title: String, value: String): Unit =
       sections :+= s"$title:\n${value.trim}"
 
-    for (m <- cause.a)
+    for (m <- cause.left)
       addSection("Error", m)
 
-    for (t <- cause.b)
+    for (t <- cause.right)
       addSection("Underlying Exception", t.stackTraceAsString.replace("\t", "  "))
 
     if (hints.nonEmpty)

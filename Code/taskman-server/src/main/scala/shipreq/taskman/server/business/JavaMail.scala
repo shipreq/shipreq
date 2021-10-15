@@ -1,12 +1,11 @@
 package shipreq.taskman.server.business
 
+import cats.Traverse
+import cats.implicits.{catsSyntaxEither => _, _}
 import japgolly.clearconfig._
 import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import scala.runtime.AbstractFunction1
-import scalaz.Traverse
-import scalaz.std.list._
-import scalaz.syntax.bind._
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
@@ -39,12 +38,19 @@ object JavaMail extends HasLogger {
     implicit def parseAddr1: ConfigValueParser[Addr] =
       ConfigValueParser.id.mapAttempt { s =>
         val ea = EmailAddr(s)
-        parse1(ea).bimap(_.getMessage, p => Addr(ea, Some(p)))
+        parse1(ea) match {
+          case Right(p) => Right(Addr(ea, Some(p)))
+          case Left(e) => Left(e.getMessage)
+        }
       }
 
     implicit def parseAddrN: ConfigValueParser[List[Addr]] =
-      ConfigValueParser.id
-        .mapAttempt(parseN(_).bimap(_.getMessage, _.map(a => Addr(EmailAddr(a.toString), Some(a)))))
+      ConfigValueParser.id.mapAttempt(
+        parseN(_) match {
+          case Right(l) => Right(l.map(a => Addr(EmailAddr(a.toString), Some(a))))
+          case Left(e) => Left(e.getMessage)
+        }
+      )
 
     implicit def parseAddrNEL: ConfigValueParser[NonEmptyVector[Addr]] =
       parseAddrN.mapAttempt {
@@ -53,13 +59,13 @@ object JavaMail extends HasLogger {
       }
 
     def configEnvelopeFront: ConfigDef[EnvelopeFront] =
-      ( ConfigDef.need[NonEmptyVector[Addr]]("to") |@|
-        ConfigDef.getOrUse[List[Addr]]("cc", Nil) |@|
+      ( ConfigDef.need[NonEmptyVector[Addr]]("to"),
+        ConfigDef.getOrUse[List[Addr]]("cc", Nil),
         ConfigDef.getOrUse[List[Addr]]("bcc", Nil)
-      )(EnvelopeFront)
+      ).mapN(EnvelopeFront)
 
     def configEnvelope: ConfigDef[Envelope] =
-      (configEnvelopeFront |@| ConfigDef.need[Addr]("from"))(_ from _)
+      (configEnvelopeFront, ConfigDef.need[Addr]("from")).mapN(_ from _)
   }
 
   implicit class EAExt(val ea: Addr) extends AnyVal {
@@ -96,7 +102,7 @@ final class JavaMail(val mailSession: Session) extends AbstractFunction1[Busines
         m
       }.leftMap(_.tagDeterministic)
     }
-    r.join
+    r.flatten
   }
 
   override def apply(op: SendEmail): Fx[Unit] =

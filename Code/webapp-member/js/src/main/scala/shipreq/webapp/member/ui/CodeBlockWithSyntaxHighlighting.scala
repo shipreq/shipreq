@@ -46,7 +46,7 @@ object CodeBlockWithSyntaxHighlighting {
 
     val highlight: Callback =
       for {
-        e <- ref.get
+        e <- ref.get.asCBO
         p <- $.props.toCBO
       } yield {
         init()

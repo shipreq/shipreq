@@ -1,7 +1,7 @@
 package shipreq.taskman.server.app
 
 import cats.effect.IOApp
-import scalaz.syntax.applicative._
+import cats.syntax.apply._
 import shipreq.base.db._
 import shipreq.base.util.FxModule._
 import shipreq.base.util.Props
@@ -31,7 +31,7 @@ private[app] trait TaskmanApp extends IOApp with HasLogger {
   }
 
   protected def withTaskmanCtx[A](f: TaskmanCtx => Fx[A]): Fx[A] = {
-    val readConfig = (DbConfig.config tuple TaskmanConfig.config).withReport.run(Props.sources)
+    val readConfig = (DbConfig.config, TaskmanConfig.config).tupled.withReport.run(Props.sources)
 
     for {
       ((dbCfg, taskmanCfg), report) <- readConfig.map(_.getOrDie())

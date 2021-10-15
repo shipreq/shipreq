@@ -1,12 +1,13 @@
 package shipreq.base.util
 
+import cats.{Applicative, Functor}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.BiMap
 import monocle._
 import scala.collection.Factory
 import scala.collection.mutable.Builder
 import scala.reflect.ClassTag
-import scalaz.{Applicative, Functor}
+import shipreq.base.util.CatsExtra.ApplicativeDelay
 
 object Optics {
 
@@ -18,7 +19,7 @@ object Optics {
 
     implicit class TraversalOps[S, T, A, B](private val t: PTraversal[S, T, A, B]) extends AnyVal {
       def setF[F[_] : Applicative](f: F[B])(s: S): F[T] =
-        t.modifyF(_ => f)(s)
+        t.modifyA(_ => f)(s)
     }
   }
 
@@ -32,12 +33,12 @@ object Optics {
 
   def cbfTraversal[M[x] <: Iterable[x], A, N[_], B](implicit cbf: Factory[B, N[B]]): PTraversal[M[A], N[B], A, B] =
     new PTraversal[M[A], N[B], A, B] {
-      override def modifyF[F[_]](f: A => F[B])(ma: M[A])(implicit F: Applicative[F]): F[N[B]] = {
+      override def modifyA[F[_]](f: A => F[B])(ma: M[A])(implicit F: Applicative[F]): F[N[B]] = {
         type C = Builder[B, N[B]]
         val add: F[B => C => C] = F.pure(b => _ += b)
-        var fc: F[C] = F.point(cbf.newBuilder)
+        var fc: F[C] = F.delay(cbf.newBuilder)
         for (a <- ma)
-          fc = F.ap(fc)(F.ap(f(a))(add))
+          fc = F.ap(F.ap(add)(f(a)))(fc)
         F.map(fc)(_.result())
       }
     }
@@ -89,7 +90,7 @@ object Optics {
     mapValueEmpty[A, Map[B, C]](a, Map.empty)(_.isEmpty)
 
   def innerMapValue[A, B, C](a: A, b: B): Lens[Map[A, Map[B, C]], Option[C]] =
-    innerMap[A, B, C](a) ^|-> mapValue(b)
+    innerMap[A, B, C](a) andThen mapValue(b)
 
   def subtypeLens[C, A <: C: ClassTag](default: => A): Lens[C, A] =
     Lens[C, A]({

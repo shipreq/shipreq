@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.pages.root
 
-import japgolly.scalajs.react.MonocleReact._
+import japgolly.scalajs.react.ReactMonocle._
 import japgolly.scalajs.react.extra.router.{RouterCtl => RouterCtl_, _}
 import japgolly.scalajs.react.{Callback, Reusability}
 import monocle._
@@ -35,7 +35,7 @@ object Routes {
     }
     object ReqDetail {
       val stringPrism: Prism[String, ReqDetail] =
-        ExternalPubid.StringPrism ^<-> GenIso.fields[ReqDetail].reverse
+        ExternalPubid.StringPrism andThen GenIso.fields[ReqDetail].reverse
     }
 
     implicit def equality: UnivEq[Page] = UnivEq.derive

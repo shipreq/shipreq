@@ -39,7 +39,7 @@ object AutoCompleteTestUtil {
       Px.props($).withoutReuse.autoRefresh
 
     override val autoCompleteCtx: CallbackOption[AutoCompleteCtx] =
-      domRef.get.map(AutoCompleteCtx(pxAutoComplete.value(), _))
+      domRef.get.asCBO.map(AutoCompleteCtx(pxAutoComplete.value(), _))
   }
 
   private val TestComponent = ScalaComponent.builder[Strategies]
@@ -50,7 +50,7 @@ object AutoCompleteTestUtil {
 
   final case class AutoCompleteTestCtx(backend: Backend) {
     def setText(txt: String): Unit          = backend.$.setState(txt).runNow()
-    def ta                  : html.TextArea = backend.domRef.get.asCallback.runNow().get
+    def ta                  : html.TextArea = backend.domRef.get.runNow().get
     def tc                  : TextComplete  = backend.getTextComplete()
     def txt                 : String        = ta.value
 

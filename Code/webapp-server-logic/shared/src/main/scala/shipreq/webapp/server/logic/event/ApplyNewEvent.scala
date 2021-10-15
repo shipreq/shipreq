@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic.event
 
-import scalaz.syntax.equal._
 import shipreq.base.util.PotentialChange._
 import shipreq.base.util.{ErrorMsg, PotentialChange}
 import shipreq.webapp.member.project.data.Project

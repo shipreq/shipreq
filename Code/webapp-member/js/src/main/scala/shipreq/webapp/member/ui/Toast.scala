@@ -25,7 +25,7 @@ trait Toast {
 
 object Toast {
 
-  def apply($: StateAccess.Write[CallbackTo, Toast.State]): Toast =
+  def apply($: StateAccess.Write[CallbackTo, AsyncCallback, Toast.State]): Toast =
     new Toast {
       override def addWithCtrls(msgFn: Ctrls => VdomNode, duration: Duration): Callback = {
         val id    = keyGen.next()
@@ -53,7 +53,7 @@ object Toast {
   final case class Ctrls(close: Callback)
 
   object Ctrls {
-    def forId($: StateAccess.Write[CallbackTo, Toast.State], id: Key): Ctrls =
+    def forId($: StateAccess.Write[CallbackTo, AsyncCallback, Toast.State], id: Key): Ctrls =
       Ctrls(
         close = $.modState(_.deleteById(id)),
       )

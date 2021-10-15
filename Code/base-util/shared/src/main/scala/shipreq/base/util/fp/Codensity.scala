@@ -1,6 +1,6 @@
 package shipreq.base.util.fp
 
-import scalaz.{Applicative, Monad}
+import cats.{Applicative, Monad}
 
 abstract class Codensity[F[_], +A] { self =>
 
@@ -49,6 +49,6 @@ object Codensity {
   def lift[F[_], A](fa: F[A])(implicit F: Monad[F]): Codensity[F, A] =
     new Codensity[F, A] {
       override def apply[B](f: A => F[B]): F[B] =
-        F.bind(fa)(f)
+        F.flatMap(fa)(f)
     }
 }

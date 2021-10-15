@@ -1,10 +1,11 @@
 package shipreq.base.db
 
+import cats.syntax.apply._
 import com.zaxxer.hikari.HikariConfig
 import japgolly.clearconfig._
 import javax.sql.DataSource
 import org.postgresql.ds.PGSimpleDataSource
-import scalaz.syntax.apply._
+
 final case class DbConfig(
   pgDataSource: PGSimpleDataSource,
   hikariConfig: HikariConfig,
@@ -25,7 +26,7 @@ object DbConfig {
       ConfigDef.get[String]("schema")
 
     val schemaSearchPathCfg: ConfigDef[(Option[String], Option[String])] =
-      schemaCfg tuple ConfigDef.get[String]("search_path")
+      (schemaCfg, ConfigDef.get[String]("search_path")).tupled
 
     def ifSchemaValid[A](s: String, a: => A): String \/ A =
       if (s contains "-") -\/("PostgreSQL doesn't allow dashes in schema names.") else \/-(a)
@@ -47,9 +48,9 @@ object DbConfig {
 
     val pgdsCfg: ConfigDef[PGSimpleDataSource] =
       (
-        ConfigDef.need[String]("database") |@|
-        ConfigDef.need[String]("username") |@|
-        ConfigDef.need[String]("password") |@|
+        ConfigDef.need[String]("database"),
+        ConfigDef.need[String]("username"),
+        ConfigDef.need[String]("password"),
         ConfigDef.consumerFn[PGSimpleDataSource](
           _ => pgCurrentSchema,
           _.getOrUse("host", x => (s: String) => x.setServerNames(Array(s)))("localhost"),
@@ -69,7 +70,7 @@ object DbConfig {
           _.get("sslfactory"            , _.setSslfactory),
           _.get("tcpKeepAlive"          , _.setTcpKeepAlive),
           _.get("unknownLength"         , _.setUnknownLength))
-        ) { (database, username, password, fn) =>
+        ).mapN { (database, username, password, fn) =>
         val pgds = new PGSimpleDataSource
         pgds.setDatabaseName(database)
         pgds.setUser(username)
@@ -90,6 +91,7 @@ object DbConfig {
         _.get("idleTimeout"              , _.setIdleTimeout),
         _.get("initializationFailTimeout", _.setInitializationFailTimeout),
         _.get("isolateInternalQueries"   , _.setIsolateInternalQueries),
+        // _.get("keepaliveTimeMs"          , _.setKeepaliveTime),
         _.get("leakDetectionThreshold"   , _.setLeakDetectionThreshold),
         _.get("maxLifetime"              , _.setMaxLifetime),
         _.get("maximumPoolSize"          , _.setMaximumPoolSize),
@@ -107,7 +109,7 @@ object DbConfig {
           hcfg
         }
 
-    (pgdsCfg |@| hikariCfg |@| schemaCfg) ((pgds, hcfg, schema) => {
+    (pgdsCfg, hikariCfg, schemaCfg).mapN ((pgds, hcfg, schema) => {
       hcfg.setDataSource(pgds)
       hcfg.setUsername(pgds.getUser)
       hcfg.setPassword(pgds.getPassword)

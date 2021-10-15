@@ -1,7 +1,7 @@
 package shipreq.base.util.log
 
+import cats.effect.Sync
 import org.slf4j.MDC
-import scalaz.{Catchable, Monad}
 import shipreq.base.util.FxModule._
 
 final class MdcValues(private val values: Map[String, String]) extends AnyVal {
@@ -33,13 +33,13 @@ final class MdcValues(private val values: Map[String, String]) extends AnyVal {
       release = Fx(unsafeRemove()),
       use     = body)
 
-  def para[F[_], A](body: F[A])(implicit M: Monad[F], C: Catchable[F]): F[A] = {
-    val add       = M.point(unsafeAdd())
-    val remove    = M.point(unsafeRemove())
-    val addAndRun = M.bind(add)(_ => body)
-    M.bind(C.attempt(addAndRun)) {
-      case \/-(a) => M.map(remove)(_ => a)
-      case -\/(t) => M.bind(remove)(_ => C.fail(t))
+  def para[F[_], A](body: F[A])(implicit F: Sync[F]): F[A] = {
+    val add       = F.delay(unsafeAdd())
+    val remove    = F.delay(unsafeRemove())
+    val addAndRun = F.flatMap(add)(_ => body)
+    F.flatMap(F.attempt(addAndRun)) {
+      case \/-(a) => F.map(remove)(_ => a)
+      case -\/(t) => F.flatMap(remove)(_ => F.raiseError(t))
     }
   }
 }

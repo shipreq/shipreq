@@ -1,6 +1,6 @@
 package shipreq.webapp.member.project.text
 
-import scalaz.Need
+import cats.Eval
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util.algorithm.BoyerMooreHorspool
 import shipreq.base.util.{IMap, OptionalBoolFn}
@@ -52,7 +52,7 @@ object TextSearch {
 
   // ===================================================================================================================
 
-  @inline private implicit def autoNeedValue[A](n: Need[A]): A = n.value
+  @inline private implicit def autoNeedValue[A](n: Eval[A]): A = n.value
 
   final case class IndexEntryFilter(req        : OptionalBoolFn[IndexEntryR],
                                     codeGroup  : OptionalBoolFn[IndexEntryG],
@@ -95,7 +95,7 @@ object TextSearch {
   // Indexes
 
   final case class IndexEntryG(group: CodeGroup, title: Normalised)
-  final case class IndexEntryR(req: Req, title: Normalised, textFields: Need[Normalised])
+  final case class IndexEntryR(req: Req, title: Normalised, textFields: Eval[Normalised])
   final case class IndexEntryM(issue: ManualIssue, title: Normalised)
 
   final class Index private[TextSearch](norm    : Normaliser,
@@ -160,7 +160,7 @@ final class TextSearch(project: Project,  plainText: PlainText.ForProject.NoCtx)
     def indexValuesR: Iterator[IndexEntryR] = {
       def each(r: Req): IndexEntryR = {
         val title      = norm(plainText reqTitle r)
-        val textFields = Need(norm(
+        val textFields = Eval.later(norm(
           project.config.liveCustomTextFields.foldLeft("")((q, f) =>
             plainText.customTextFieldOption(f.id)(r).fold(q)(q + "\n" + _))
         ))

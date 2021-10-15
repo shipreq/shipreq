@@ -1,12 +1,10 @@
 package shipreq.base.util
 
-import cats.CommutativeApplicative
-import cats.effect.IO
-import cats.effect.IO.ioEffect
+import cats._
+import cats.effect.{IO, Sync}
 import java.time.{Duration, Instant}
 import scala.collection.Factory
 import scala.concurrent.blocking
-import scalaz.{BindRec, Catchable, Monad}
 
 /**
   * The chosen target for algebra interpretation.
@@ -17,45 +15,23 @@ object FxModule {
 
   type Fx[A] = IO[A]
 
-  implicit object fxScalazInstance extends Monad[Fx] with BindRec[Fx] with Catchable[Fx] {
-    override def ap[A, B](fa: => Fx[A])(f: => Fx[A => B]): Fx[B] =
-      ioEffect.ap(f)(fa)
+  private[this] val monad = MonadError[IO, Throwable]
 
-    override def point[A](a: => A): Fx[A] =
-      IO(a)
+  implicit val fxCatsInstance: CommutativeApplicative[Fx] =
+    new CommutativeApplicative[Fx] {
 
-    override def bind[A, B](fa: Fx[A])(f: A => Fx[B]): Fx[B] =
-      fa.flatMap(f)
+      override def pure[A](a: A) =
+        IO.pure(a)
 
-    override def map[A, B](fa: Fx[A])(f: A => B): Fx[B] =
-      fa.map(f)
+      override def ap[A, B](ff: Fx[A => B])(fa: Fx[A]) =
+        for {
+          a <- fa
+          f <- ff
+        } yield f(a)
+    }
 
-    override def tailrecM[A, B](f: A => Fx[A \/ B])(a: A): Fx[B] =
-      ioEffect.tailRecM(a)(f(_).map(_.toEither)) // TODO Use either in Fx interface?
-
-    override def attempt[A](f: Fx[A]): Fx[Throwable \/ A] =
-      Fx {
-        try \/-(f.unsafeRun())
-        catch {
-          case t: Throwable => -\/(t)
-        }
-      }
-
-    override def fail[A](err: Throwable): Fx[A] =
-      Fx.fail(err)
-  }
-
-  implicit object fxCatsInstance extends CommutativeApplicative[Fx] {
-
-    override def pure[A](a: A) =
-      IO.pure(a)
-
-    override def ap[A, B](ff: Fx[A => B])(fa: Fx[A]) =
-      for {
-        a <- fa
-        f <- ff
-      } yield f(a)
-  }
+  val fxCatsSync: Sync[Fx] =
+    Sync[IO]
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -167,7 +143,7 @@ object FxModule {
       *                 Result of Some(fx) = continue; run fx between retries
       */
     def retry[E, B](inspect: A => E \/ B)(continue: (Int, E) => Option[Fx[Unit]]): Fx[E \/ B] =
-      ioEffect.tailRecM(0)(n =>
+      monad.tailRecM(0)(n =>
         fx.flatMap[Int Either (E \/ B)](a =>
           inspect(a) match {
             case \/-(b) => Fx.pure(Right(\/-(b)))
@@ -182,7 +158,7 @@ object FxModule {
       )
 
     @inline def attemptFx: Fx[Throwable \/ A] =
-      fxScalazInstance.attempt(fx)
+      monad.attempt(fx)
 
     /**
       * @param continue Int arg            = number of attempts thus far (i.e. ≥ 1)
@@ -190,7 +166,7 @@ object FxModule {
       *                 Result of Some(fx) = continue; run fx between retries
       */
     def retryOnException(continue: (Int, Throwable) => Option[Fx[Unit]]): Fx[A] =
-      fx.attempt.retry(\/.fromEither)(continue).map(_.fold(throw _, identity))
+      fx.attempt.retry(identity)(continue).map(_.fold(throw _, identity))
 
     /** Executes the handler if an exception is raised. */
     def recoverException[AA >: A](handler: Throwable => Fx[AA]): Fx[AA] =

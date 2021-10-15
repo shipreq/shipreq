@@ -1,7 +1,6 @@
 package shipreq.webapp.member.project.issue
 
 import japgolly.microlibs.adt_macros.AdtMacros
-import nyaya.util.Multimap
 import scala.collection.mutable
 import shipreq.base.util._
 import shipreq.webapp.member.project.data._
@@ -399,7 +398,7 @@ object IssueDetectors {
     override val detect = ctx => {
       val cfg = ctx.project.config
       for (f <- cfg.fields.customFields.values) {
-        val isLive      = f.liveExplicitly is Live
+        val isLive      = f.live(cfg) is Live
         def allDeadOrNA = f.fieldReqTypeRules.liveResolutionIterator(cfg.reqTypes).forall(_.isNA)
         if (isLive && allDeadOrNA)
           ctx.add(Issue.NonApplicableField(f))
@@ -414,7 +413,7 @@ object IssueDetectors {
     override val detect = ctx => {
       val cfg = ctx.project.config
       for (f <- cfg.fields.customTagFields) {
-        val isLive        = f.liveExplicitly is Live
+        val isLive        = f.live(cfg) is Live
         def uninhabitable = !inhabitable(f.tagId, cfg)
         if (isLive && uninhabitable)
           ctx.add(Issue.UninhabitableTagField(f))

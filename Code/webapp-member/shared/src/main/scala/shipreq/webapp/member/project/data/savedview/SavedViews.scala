@@ -1,8 +1,8 @@
 package shipreq.webapp.member.project.data.savedview
 
+import cats.Applicative
 import monocle.Traversal
 import monocle.macros.Lenses
-import scalaz.Applicative
 import shipreq.base.util.IMap
 object SavedViews {
 
@@ -55,10 +55,10 @@ object SavedViews {
     val traversalSavedView: Traversal[NonEmpty, SavedView] = {
       val traversalNonDefault = IMap.traversal[SavedView.Id, SavedView]
       new Traversal[NonEmpty, SavedView] {
-        override def modifyF[F[_]](f: SavedView => F[SavedView])(s: NonEmpty)(implicit F: Applicative[F]): F[NonEmpty] = {
+        override def modifyA[F[_]](f: SavedView => F[SavedView])(s: NonEmpty)(implicit F: Applicative[F]): F[NonEmpty] = {
           def fDefault    = f(s.default)
-          def fNonDefault = traversalNonDefault.modifyF(f)(s.nonDefault)
-          F.apply2(fDefault, fNonDefault)(apply)
+          def fNonDefault = traversalNonDefault.modifyA(f)(s.nonDefault)
+          F.map2(fDefault, fNonDefault)(apply)
         }
       }
     }

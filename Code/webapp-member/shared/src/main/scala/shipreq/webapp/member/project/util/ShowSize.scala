@@ -1,9 +1,9 @@
 package shipreq.webapp.member.project.util
 
+import cats.Semigroup
+import cats.instances.option._
+import cats.syntax.semigroup._
 import scala.runtime.AbstractFunction1
-import scalaz.Semigroup
-import scalaz.std.option._
-import scalaz.syntax.semigroup._
 import shipreq.webapp.member.project.util.ShowSize.Node
 
 class ShowSize[A](f: A => Node) extends AbstractFunction1[A, Node] {
@@ -119,7 +119,7 @@ object ShowSize {
     }
 
     implicit val semigroup: Semigroup[Node] =
-      new Semigroup[Node] { override def append(a: Node, b: => Node) = a + b }
+      _ + _
   }
 
   // ===================================================================================================================

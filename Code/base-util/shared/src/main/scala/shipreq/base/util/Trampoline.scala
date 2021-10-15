@@ -3,14 +3,18 @@ package shipreq.base.util
 object Trampoline {
 
   object Default {
-    import scalaz.Free
-    implicit val fn0 = ScalazExtra.applicativeFunction0
-    type Trampoline[A] = Free.Trampoline[A]
+    import cats.free.Free
+    implicit val applicativeFunction0 = CatsExtra.applicativeFunction0
+    type Trampoline[A] = cats.free.Trampoline[A]
+
     object Trampoline {
-      def pure   [A](a: A)               : Trampoline[A] = Free.pure(a)
-      def suspend[A](t: => Trampoline[A]): Trampoline[A] = Free.suspend(t)
-      def delay  [A](a: => A)            : Trampoline[A] = suspend(pure(a))
-      def run    [A](t: Trampoline[A])   : A             = t.run
+      private[this] val monad = cats.Monad[Trampoline]
+
+      def pure    [A]   (a: A)                                  : Trampoline[A] = Free.pure(a)
+      def suspend [A]   (t: => Trampoline[A])                   : Trampoline[A] = Free.defer(t)
+      def delay   [A]   (a: => A)                               : Trampoline[A] = suspend(pure(a))
+      def run     [A]   (t: Trampoline[A])                      : A             = t.run
+      def tailRecM[A, B](a: A)(f: A => Trampoline[Either[A, B]]): Trampoline[B] = monad.tailRecM(a)(f)
     }
   }
 

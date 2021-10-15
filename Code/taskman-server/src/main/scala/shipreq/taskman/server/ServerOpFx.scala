@@ -1,9 +1,9 @@
 package shipreq.taskman.server
 
+import cats.~>
 import doobie._
 import japgolly.clearconfig._
 import java.time.Duration
-import scalaz.~>
 import shipreq.base.db.{DbAccessor, XA}
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api._
@@ -185,9 +185,11 @@ object ServerOpFx {
   def configSource(db: DbAccessor, xa: XA): ConfigSource[Fx] =
     ConfigSource[Fx](
       ConfigSourceName(db.desc),
-      xa(Dao.cfgGetAll)
-        .attemptFx
-        .map(_.bimap(_.toString, kvs => ConfigStore.ofMap[Fx](kvs.toMap))))
+      xa(Dao.cfgGetAll).attemptFx.map {
+        case \/-(kvs) => \/-(ConfigStore.ofMap[Fx](kvs.toMap))
+        case -\/(e)   => -\/(e.toString)
+      }
+    )
 }
 
 // =====================================================================================================================

@@ -3,7 +3,6 @@ package shipreq.webapp.member.project.protocol.json.v1
 import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.adt_macros.AdtMacros
-import nyaya.util.Multimap
 import shipreq.base.util.JsonUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.util._

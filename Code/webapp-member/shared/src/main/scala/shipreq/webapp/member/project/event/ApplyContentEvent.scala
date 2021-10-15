@@ -1,8 +1,8 @@
 package shipreq.webapp.member.project.event
 
+import cats.instances.option._
 import japgolly.microlibs.nonempty.NonEmpty
 import monocle.Lens
-import scalaz.std.option.optionInstance
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util._
 import shipreq.webapp.member.project.data.DataImplicits._
@@ -67,7 +67,7 @@ trait ApplyContentEvent {
         t1 <- ReqCodeLogic.getTrie
         t2 <- ReqCodeLogic.inactivateBelongingToReqsT(t1, reqIds)
         t3 <- ReqCodeLogic.inactivateGroupsByIdT(t2, e.codeGroups, remember = true)
-        _  <- Project.reqCodeTrie set t3
+        _  <- Project.reqCodeTrie replace t3
         _  <- Project.deletionReasons modify (addDeletionReason(_, e.reason, e.reqs))
       } yield ()
     }
@@ -128,13 +128,13 @@ trait ApplyContentEvent {
         t1 <- ReqCodeLogic.getTrie
         t2 <- ReqCodeLogic.restoreBelongingToReqsT(t1, e.reqs)
         t3 <- ReqCodeLogic.restoreGroupsByIdT(t2, e.codeGroups)
-        _  <- Project.reqCodeTrie set t3
+        _  <- Project.reqCodeTrie replace t3
       } yield ()
 
     def setCustomTextValue(id   : ReqId,
                            fid  : CustomField.Text.Id,
                            value: Text.CustomTextField.OptionalText): Eval[Unit] =
-      ensureLiveTextFieldId(fid) >> (Project.reqText ^|-> ReqData.Text.at(fid, id)).set(value)
+      ensureLiveTextFieldId(fid) >> (Project.reqText andThen ReqData.Text.at(fid, id)).replace(value)
 
     def setCustomTextValueMap(id: ReqId,
                               values: NonEmpty[Map[CustomField.Text.Id, Text.CustomTextField.NonEmptyText]]): Eval[Unit] =
@@ -196,7 +196,7 @@ trait ApplyContentEvent {
         pp      = reqData.pubids.allocGR(rt.id)(id)
         req     = GenericReq(id, pp._2, title, Live)
         _       <- grIMap.create(req)
-        _       <- Project.pubidRegister set pp._1
+        _       <- Project.pubidRegister replace pp._1
         _       <- foreachValue(id, e.vs)
         _       <- updateReqIdCeiling(id)
       } yield ()
@@ -228,7 +228,7 @@ trait ApplyContentEvent {
     import VectorTree.Location
 
     val StepFlowUni: Lens[Project, UseCases.StepFlow.UniDir] =
-      Project.useCases ^|-> UseCases.stepFlow ^<-> UseCases.StepFlow.biToUni
+      Project.useCases andThen UseCases.stepFlow andThen UseCases.StepFlow.biToUni
 
     @inline def ensureStepExists(id: UseCaseStepId): Eval[Unit] =
       ensureStepExistence(id, true)
@@ -315,7 +315,7 @@ trait ApplyContentEvent {
       val tree = e.field.useCaseStepTree
 
       def insert(loc: Location, uc: UseCase): Eval[Unit] =
-        tree.modifyF(_.insertAfter(loc, step))(uc) match {
+        tree.modifyA(_.insertAfter(loc, step))(uc) match {
           case Some(uc2) => ucIMap addOrUpdate uc2
           case None =>
             val ploc = VectorTree.PartialLocation(loc, Valid)
@@ -352,7 +352,7 @@ trait ApplyContentEvent {
         ucIMap.update(ucId, uc =>
           ensureLiveReq(uc) >>
             Eval.some(f.useCaseSteps.get(uc).tree.findLocAndValue(_.id ==* id), s"${show(id)} not found.")
-              .flatMap(ls => f.useCaseSteps.modifyF[Eval](t => mod(t, f, ls._1, ls._2).map(UseCaseSteps(_)))(uc)))
+              .flatMap(ls => f.useCaseSteps.modifyA[Eval](t => mod(t, f, ls._1, ls._2).map(UseCaseSteps(_)))(uc)))
       }
 
     private def mapStep(id: UseCaseStepId)(mod: UseCaseStep => UseCaseStep): Eval[Unit] =
@@ -464,7 +464,7 @@ trait ApplyContentEvent {
         ag <- needActiveGroup(d, v)
         t2 = inactivateGroup(t, v, ag, false)
         t3 <- addOneT(t2, AddGroup(newCode, Unvalidated, ag.group))
-        _  <- Project.reqCodeTrie set t3
+        _  <- Project.reqCodeTrie replace t3
       } yield ()
 
     private def modifyGroup(id: ReqCodeId, f: LiveCodeGroup => LiveCodeGroup): Eval[Unit] =
@@ -475,7 +475,7 @@ trait ApplyContentEvent {
         ag <- needActiveGroup(d, v)
         d2 = ReqCode.ActiveGroup.group.modify(f)(ag)
         t2 = t.put(v, d2)
-        _  <- Project.reqCodeTrie set t2
+        _  <- Project.reqCodeTrie replace t2
       } yield ()
 
     def applyUpdate(e: CodeGroupUpdate): Eval[Unit] =
@@ -485,6 +485,6 @@ trait ApplyContentEvent {
       }
 
     def applyDelete(e: CodeGroupsDelete): Eval[Unit] =
-      getTrie.flatMap(inactivateGroupsByIdT(_, e.ids.whole, true)).flatMap(Project.reqCodeTrie.set)
+      getTrie.flatMap(inactivateGroupsByIdT(_, e.ids.whole, true)).flatMap(Project.reqCodeTrie.replace)
   }
 }

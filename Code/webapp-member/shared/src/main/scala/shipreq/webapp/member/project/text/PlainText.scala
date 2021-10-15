@@ -3,7 +3,6 @@ package shipreq.webapp.member.project.text
 import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.{ConciseIntSetFormat, Memo}
-import nyaya.util.Multimap
 import scala.collection.immutable.SortedSet
 import shipreq.base.util.SafeStringOps._
 import shipreq.base.util._
@@ -369,7 +368,7 @@ object PlainText {
 
                 val lastLine = if (includeMarkup) "\n" ~ indent ~ "```" else ""
 
-                head ~ firstLine ~ a.code.indent(indent) ~ lastLine ~ tail
+                head ~ firstLine ~ a.code.indentLines(indent) ~ lastLine ~ tail
               }
 
           }

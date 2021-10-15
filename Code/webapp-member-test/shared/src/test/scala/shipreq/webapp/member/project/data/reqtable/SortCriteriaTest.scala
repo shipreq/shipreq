@@ -44,7 +44,7 @@ object SortCriteriaTest extends TestSuite {
 
     def wantInconclusive = {
       val b = a want i
-      def remove_i(sc: SortCriteria) = sc.filterColumns(_ ≠ i)
+      def remove_i(sc: SortCriteria) = sc.filterColumns(_ =!= i)
       "wantInconclusive" rename_: (
         primaryHasChanged(b) ∧
         E.equal("w is at head", Option(i),   b.init.headOption.map(_.column)) ∧

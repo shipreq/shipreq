@@ -1,9 +1,9 @@
 package shipreq.benchmark
 
+import cats.Functor
 import japgolly.microlibs.recursion._
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import scalaz.Functor
 
 object PickleFixBM {
   import boopickle.DefaultBasic._

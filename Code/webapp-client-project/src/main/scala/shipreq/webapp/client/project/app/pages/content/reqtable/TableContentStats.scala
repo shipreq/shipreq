@@ -2,7 +2,6 @@ package shipreq.webapp.client.project.app.pages.content.reqtable
 
 import japgolly.scalajs.react.Reusability
 import nyaya.prop._
-import shipreq.base.util.fp.Monoid.Implicits._
 import shipreq.webapp.member.project.data.derivation.LiveDeadStat
 import shipreq.webapp.member.project.util.DataReusability._
 

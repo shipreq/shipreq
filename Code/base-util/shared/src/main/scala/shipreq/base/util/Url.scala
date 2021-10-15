@@ -108,8 +108,14 @@ object Url {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   final case class Absolute private[Absolute](absoluteUrl: String) extends AnyVal {
+    def base: Absolute.Base =
+      Absolute.Base(absoluteUrl.dropRight(relativeUrl.relativeUrl.length - 1))
+
     def relativeUrl: Relative =
       Relative(absoluteUrl.replaceFirst("^.*?//.+?(?:/|$)", ""))
+
+    def /(r: Relative): Absolute =
+      base / r
   }
 
   object Absolute {

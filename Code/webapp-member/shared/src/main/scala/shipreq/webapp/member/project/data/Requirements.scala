@@ -1,12 +1,11 @@
 package shipreq.webapp.member.project.data
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
+import cats.Eq
+import japgolly.microlibs.cats_ext.CatsMacros
 import japgolly.microlibs.utils.{BiMap, Memo}
 import monocle.macros.Lenses
 import monocle.{Iso, Traversal}
-import nyaya.util.Multimap
 import scala.collection.View
-import scalaz.Equal
 import shipreq.base.util.TaggedTypes._
 import shipreq.base.util._
 import shipreq.webapp.member.project.data.DataImplicits._
@@ -362,7 +361,7 @@ final case class UseCaseSteps(tree: UseCaseSteps.Tree) {
     l => partialLocs.forward(l).validity
 
   lazy val stepPartialLocs: Iso[UseCaseStepId, PartialLocation] =
-    Optics.biMapIso_!(stepLocs) ^<-> Optics.biMapIso_!(partialLocs)
+    Optics.biMapIso_!(stepLocs) andThen Optics.biMapIso_!(partialLocs)
 
   lazy val partialLocSteps: Intersection[PartialLocation, UseCaseStepId] =
     (Intersection.fromBiMap(stepLocs) <=> Intersection.fromBiMap(partialLocs)).reverse
@@ -476,8 +475,8 @@ object UseCases {
   val StepFlow = new Digraph.Fix[UseCaseStepId]
   type StepFlow = StepFlow.BiDir
 
-  implicit lazy val equality: Equal[UseCases] =
-    ScalazMacros.deriveEqual
+  implicit lazy val equality: Eq[UseCases] =
+    CatsMacros.deriveEq
 
   def empty: UseCases =
     UseCases(emptyDataMap(UseCase), emptyStepIndex, StepFlow.emptyBiDir)
@@ -504,8 +503,8 @@ sealed trait ReqTEquality {
 }
 
 object Requirements {
-  implicit lazy val equality: Equal[Requirements] =
-    ScalazMacros.deriveEqual
+  implicit lazy val equality: Eq[Requirements] =
+    CatsMacros.deriveEq
 
   def empty: Requirements =
     Requirements(GenericReqs.empty, UseCases.empty, PubidRegister.empty)

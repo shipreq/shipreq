@@ -1,9 +1,9 @@
 package shipreq.webapp.base.feature
 
+import cats.Eq
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, CallbackTo}
-import scalaz.Equal
 import shipreq.base.util.RelPos
 
 /** Allows a user to drag items in a sequence to reorder them.
@@ -52,7 +52,7 @@ object DragToReorderFeature {
     Item(a, TagMod.empty, TagMod.empty, Status.Normal)
 
   final case class Update[+A](source: A, originalOrder: Vector[A], newOrder: Vector[A]) {
-    def relPos[AA >: A](implicit e: Equal[AA]): RelPos[AA] =
+    def relPos[AA >: A](implicit e: Eq[AA]): RelPos[AA] =
       RelPos.get[AA](newOrder, source)
   }
 

@@ -3,6 +3,7 @@ package shipreq.webapp.server.db
 import cats.free.Free
 import cats.instances.int._
 import cats.instances.vector._
+import cats.~>
 import doobie._
 import doobie.implicits._
 import doobie.postgres.circe.jsonb.implicits._
@@ -12,7 +13,6 @@ import java.time.Instant
 import nyaya.gen.Gen
 import org.postgresql.util.PSQLException
 import scala.collection.immutable.SortedSet
-import scalaz.~>
 import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
@@ -24,7 +24,7 @@ import shipreq.webapp.member.project.event._
 import shipreq.webapp.server.db.DbInterpreter._
 import shipreq.webapp.server.logic.algebra.DB
 import shipreq.webapp.server.logic.algebra.DB.EventFilter
-import shipreq.webapp.server.logic.config.ServerLogicConfig
+import shipreq.webapp.server.logic.config.{ProjectAccessHacks, ServerLogicConfig}
 import shipreq.webapp.server.logic.data._
 import shipreq.webapp.server.logic.util.Obfuscators
 
@@ -418,8 +418,16 @@ object DbInterpreter {
     private[db] val getAllProjectMetaDataForUserQuery =
       projectMetaDataQuery[UserId]("usr_id=?")
 
-    override def getAllProjectMetaDataForUser(id: UserId): ConnectionIO[List[ProjectMetaData]] =
-      getAllProjectMetaDataForUserQuery.toQuery0(id).to[List]
+    override def getAllProjectMetaDataForUser(id: UserId, hacks: ProjectAccessHacks): ConnectionIO[List[ProjectMetaData]] = {
+      val extraProjectIds = hacks.additionalAccess(id)
+      val query =
+        if (extraProjectIds.isEmpty)
+          getAllProjectMetaDataForUserQuery
+        else
+          projectMetaDataQuery[UserId](
+            extraProjectIds.iterator.map(_.value.toString).mkString("usr_id=? OR id IN (", ",", ")"))
+      query.toQuery0(id).to[List]
+    }
 
     override def createProject(uid: UserId, es: Vector[ActiveEvent], p: Project, k: ProjectEncryptionKey): ConnectionIO[ProjectId] = {
       val events = es.length

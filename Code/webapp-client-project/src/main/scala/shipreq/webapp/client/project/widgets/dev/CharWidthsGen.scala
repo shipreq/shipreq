@@ -15,7 +15,7 @@ object CharWidthsGen {
 
     private val ref = Ref[html.Element]
 
-    private val span = <.span(^.wordBreak.`keep-all`, ^.margin := "0", ^.padding := "0", ^.outline := "0")
+    private val span = <.span(^.wordBreak.keepAll, ^.margin := "0", ^.padding := "0", ^.outline := "0")
 
     private val lenAttrName = "data-len"
     private val lenAttr = VdomAttr(lenAttrName)
@@ -40,7 +40,7 @@ object CharWidthsGen {
     }
 
     def printWidths: Callback =
-      for (root <- ref.get) yield {
+      for (root <- ref.get.asCBO) yield {
 
         def len(e: Element, control: Double): Double = {
           val l = (e.getBoundingClientRect().width - control).max(0)

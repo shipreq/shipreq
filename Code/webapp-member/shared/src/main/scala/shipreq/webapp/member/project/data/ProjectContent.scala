@@ -1,21 +1,21 @@
 package shipreq.webapp.member.project.data
 
-import japgolly.microlibs.scalaz_ext.ScalazMacros
+import cats.Eq
+import japgolly.microlibs.cats_ext.CatsMacros
 import monocle.Lens
 import monocle.macros.Lenses
-import scalaz.Equal
 import shipreq.base.util.Util
 import shipreq.webapp.member.project.text.{Atom, Text}
 import shipreq.webapp.member.project.util.ShowSize
 
 object ProjectContent {
-  val genericReqs         : Lens[ProjectContent, GenericReqIMap           ] = reqs ^|-> Requirements.genericReqs ^|-> GenericReqs.imap
-  val useCases            : Lens[ProjectContent, UseCases                 ] = reqs ^|-> Requirements.useCases
-  val pubidRegister       : Lens[ProjectContent, PubidRegister            ] = reqs ^|-> Requirements.pubids
-  val reqCodeTrie         : Lens[ProjectContent, ReqCode.Trie             ] = reqCodes ^|-> ReqCodes.trie
-  val implicationsSrcToTgt: Lens[ProjectContent, Implications.Graph.UniDir] = implications ^|-> Implications.srcToTgt
-  val useCaseIMap         : Lens[ProjectContent, UseCaseIMap              ] = useCases ^|-> UseCases.imap
-  val useCaseStepIndex    : Lens[ProjectContent, UseCases.StepIndex       ] = useCases ^|-> UseCases.stepIndex // for equality
+  val genericReqs         : Lens[ProjectContent, GenericReqIMap           ] = reqs andThen Requirements.genericReqs andThen GenericReqs.imap
+  val useCases            : Lens[ProjectContent, UseCases                 ] = reqs andThen Requirements.useCases
+  val pubidRegister       : Lens[ProjectContent, PubidRegister            ] = reqs andThen Requirements.pubids
+  val reqCodeTrie         : Lens[ProjectContent, ReqCode.Trie             ] = reqCodes andThen ReqCodes.trie
+  val implicationsSrcToTgt: Lens[ProjectContent, Implications.Graph.UniDir] = implications andThen Implications.srcToTgt
+  val useCaseIMap         : Lens[ProjectContent, UseCaseIMap              ] = useCases andThen UseCases.imap
+  val useCaseStepIndex    : Lens[ProjectContent, UseCases.StepIndex       ] = useCases andThen UseCases.stepIndex // for equality
 
   val empty: ProjectContent =
     ProjectContent(
@@ -27,7 +27,7 @@ object ProjectContent {
       DeletionReasons.empty)
 
   import ReqData._ // for equality
-  implicit lazy val equality: Equal[ProjectContent] = ScalazMacros.deriveEqual
+  implicit lazy val equality: Eq[ProjectContent] = CatsMacros.deriveEq
 }
 
 /** @param reqTags Directly applied tags. This includes all tag columns, but not tags in text.

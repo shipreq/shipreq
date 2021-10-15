@@ -53,13 +53,13 @@ object ReqGraphTest extends TestSuite {
     val allGood =
       ( savedViews.assert("> * yo")
       & filterDead.assert(HideDead)
-      & colours.assert.contains("Tag: Status")
+      & colours.assert.some("Tag: Status")
       & colourOptions.assert("Tag: Priority", "Tag: Status", "Tag: Version", "Type"))
 
     val tagIsDead =
       ( savedViews.assert("> * yo")
       & filterDead.assert(ShowDead)
-      & colours.assert.contains("Tag: Status")
+      & colours.assert.some("Tag: Status")
       & colourOptions.assert("Tag: Priority", "Tag: Released", "Tag: Status", "Tag: Version", "Type"))
 
     runActions(SampleProject8.project)(
@@ -68,7 +68,7 @@ object ReqGraphTest extends TestSuite {
         >> selectColours("Tag: Status")
         +> savedViews.assert("> Unsaved view")
         +> filterDead.assert(HideDead)
-        +> colours.assert.contains("Tag: Status")
+        +> colours.assert.some("Tag: Status")
         +> colourOptions.assert("Tag: Priority", "Tag: Status", "Tag: Version", "Type")
 
         >> saveCurrentView("yo")
@@ -83,7 +83,7 @@ object ReqGraphTest extends TestSuite {
         >> selectColours("Tag: Priority")
         +> savedViews.assert("* yo", "> Unsaved view")
         +> filterDead.assert(HideDead)
-        +> colours.assert.contains("Tag: Priority")
+        +> colours.assert.some("Tag: Priority")
         +> colourOptions.assert("Tag: Priority", "Tag: Version", "Type")
 
         >> filterDeadToggle

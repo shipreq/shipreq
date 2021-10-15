@@ -1,12 +1,9 @@
 package shipreq.taskman.server.logic
 
+import cats.implicits._
+import cats.~>
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
-import scalaz.std.either._
-import scalaz.std.list.listInstance
-import scalaz.syntax.bind._
-import scalaz.syntax.foldable._
-import scalaz.~>
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
@@ -79,13 +76,13 @@ object Worker extends HasLogger {
              |FAILED TO NOTIFY SUPPORT OF FAILED WORKER.
              |
              |Task:
-             |${f.td.toString.indent(indent)}
+             |${f.td.toString.indentLines(indent)}
              |
              |Notification error:
-             |${e.show.indent(indent)}
+             |${e.show.indentLines(indent)}
              |
              |Worker error:
-             |${f.err.show.indent(indent)}
+             |${f.err.show.indentLines(indent)}
            """.stripMargin.trim))
 
       def notifySupport(e: ArticulateError): Fx[Unit] =
@@ -102,13 +99,13 @@ object Worker extends HasLogger {
              |FAILED TO NOTIFY SUPPORT OF TASKMAN FAILURE. FUCK.
              |
              |Task:
-             |${f.td.toString.indent(indent)}
+             |${f.td.toString.indentLines(indent)}
              |
              |Notification error:
-             |${e.show.indent(indent)}
+             |${e.show.indentLines(indent)}
              |
              |Original error:
-             |${f.err.show.indent(indent)}
+             |${f.err.show.indentLines(indent)}
            """.stripMargin.trim))
 
       Fx.safe(raise(emails.taskmanErrorEmail(f.when, f.err, f.td), Support.Priority.Urgent))
@@ -153,8 +150,10 @@ final class Worker[F[_]](processor    : Processor[F])
                          clock        : Fx[Instant],
                          failurePolicy: FailurePolicy) extends HasLogger {
 
-  def process(m: TaskHeader): Fx[WorkResult[F]] =
-    logWorkResult(recoverTaskmanErrorsNoTask(assign(m)))
+  def process(m: TaskHeader): Fx[WorkResult[F]] = {
+    val fx = assign(m)
+    logWorkResult(recoverTaskmanErrorsNoTask(fx))
+  }
 
   private def handleAndRecoverTaskmanErrors[T](m: => Option[TaskDetail], recover: TaskmanFailed => Fx[T]): Fx[T] => Fx[T] =
     _.recoverArticulateError { e =>
@@ -173,7 +172,7 @@ final class Worker[F[_]](processor    : Processor[F])
 
   private def handleTaskFailure(t: TaskDetail, e: ArticulateError, now: Instant): Fx[WorkResult[F]] = {
     val f                = failurePolicy(FailureCtx(node, worker, t, e, now))
-    val addOps: Fx[Unit] = f.additionalOps.traverse_(serverOpFx)
+    val addOps: Fx[Unit] = f.additionalOps.traverse_(serverOpFx(_))
     val log              = Fx(logger.warn(s"Task failure on $t", e))
     log >> serverOpFx(f.reaction) >> addOps >> Fx.pure(WorkerFailed(t, e, f.reaction))
   }

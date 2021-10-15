@@ -14,7 +14,7 @@ object LoadFailedPage {
 
     val msg = NoContentMessage.becauseAnErrorOccurred(
       "Error loading project",
-      TagMod(^.whiteSpace.`pre-wrap`, p.error.value))
+      TagMod(^.whiteSpace.preWrap, p.error.value))
 
     ProjectSpaLoader.layout(p.lp)(
       <.div(^.paddingTop := "4rem", msg))

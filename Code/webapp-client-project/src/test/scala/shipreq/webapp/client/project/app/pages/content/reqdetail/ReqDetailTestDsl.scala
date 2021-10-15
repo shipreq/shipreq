@@ -53,7 +53,7 @@ object ReqDetailTestDsl {
     //lazy val req = ep.map(project.findReq(_).toOption.get)
   }
 
-  val stateMode = TestState.state ^|-> State.mode
+  val stateMode = TestState.state andThen State.mode
 
   val * = Dsl[TestGlobal, ReqDetailObs, TestState]
 
@@ -251,30 +251,30 @@ object ReqDetailTestDsl {
   // Hit delete on the delete screen
   def deleteScreenDelete =
     *.action("Hit Delete")(i => clickEnabled(i.obs.deletionForm.get.deleteButton))
-      .updateState(stateMode set Mode.Details)
+      .updateState(stateMode replace Mode.Details)
 
   // Hit cancel on the delete screen
   def deleteScreenCancel =
     *.action("Hit Cancel")(i => clickEnabled(i.obs.deletionForm.get.cancelButton))
-      .updateState(stateMode set Mode.Details)
+      .updateState(stateMode replace Mode.Details)
 
   // Hit restore on the restore screen
   def restoreScreenRestore =
     *.action("Hit Restore")(i => clickEnabled(i.obs.restorationForm.get.restoreButton))
-      .updateState(stateMode set Mode.Details)
+      .updateState(stateMode replace Mode.Details)
 
   // Hit cancel on the restore screen
   def restoreScreenCancel =
     *.action("Hit Cancel")(i => clickEnabled(i.obs.restorationForm.get.cancelButton))
-      .updateState(stateMode set Mode.Details)
+      .updateState(stateMode replace Mode.Details)
 
   val deleteReq = (
-    clickDeleteOrRestore.updateState(stateMode set Mode.Delete) <+ life.assert(Live) >>
+    clickDeleteOrRestore.updateState(stateMode replace Mode.Delete) <+ life.assert(Live) >>
       deleteScreenDelete +> life.assert(Dead)
     ).group("Delete req")
 
   val restoreReq = (
-    clickDeleteOrRestore.updateState(stateMode set Mode.Restore) <+ life.assert(Dead) >>
+    clickDeleteOrRestore.updateState(stateMode replace Mode.Restore) <+ life.assert(Dead) >>
       restoreScreenRestore +> life.assert(Live)
     ).group("Restore req")
 

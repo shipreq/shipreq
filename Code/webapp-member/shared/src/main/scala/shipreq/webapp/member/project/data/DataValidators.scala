@@ -1,11 +1,11 @@
 package shipreq.webapp.member.project.data
 
+import cats.Eq
+import cats.instances.list._
+import cats.instances.string._
+import cats.instances.vector._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import monocle.Iso
-import scalaz.Equal
-import scalaz.std.list._
-import scalaz.std.string.stringInstance
-import scalaz.std.vector._
 import shipreq.base.util.MTrie.Ops
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
@@ -90,7 +90,7 @@ object DataValidators {
 
     // DD-21: Refkeys must be case-insensitive.
     //        eg. #HELLO should match #Hello
-    private implicit val equality = Equal.equal[HashRefKey](_.value equalsIgnoreCase _.value)
+    private implicit val equality = Eq.instance[HashRefKey](_.value equalsIgnoreCase _.value)
 
     // DD-19: Hashtag-like refkeys (groupings, incmp) must be unique.
     //        e.g. can't have both a grouping and an incompletion with refkey #X.
@@ -102,7 +102,7 @@ object DataValidators {
         tags.invalidator merge customIssues.invalidator
     }
 
-    final case class SubState[Id: Equal](subject: Option[Id], data: () => IterableOnce[(Option[Id], HashRefKey)]) {
+    final case class SubState[Id: Eq](subject: Option[Id], data: () => IterableOnce[(Option[Id], HashRefKey)]) {
       def invalidator: Invalidator[HashRefKey] =
         Uniqueness.optionalKeyWithValue(data)(subject)
     }

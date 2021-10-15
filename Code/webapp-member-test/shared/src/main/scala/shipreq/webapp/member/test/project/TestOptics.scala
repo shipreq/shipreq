@@ -9,11 +9,10 @@ import shipreq.webapp.member.project.text.Text
 object TestOptics {
 
   val customReqTypesLive: Traversal[Project, Live] =
-    Project.reqTypes ^|->
-    ReqTypes.custom  ^|->>
-    IMap.traversal   ^|->
+    Project.reqTypes andThen
+    ReqTypes.custom andThen
+    IMap.traversal[CustomReqTypeId,CustomReqType] andThen
     CustomReqType.live
-
 
   import ReqCode._
 
@@ -23,16 +22,17 @@ object TestOptics {
     case d: ActiveGroup => d
   })
 
-  private val reqCodeDataDeadGroupSome = reqCodeDataDeadGroup ^<-? atSome
+  private val reqCodeDataDeadGroupSome =
+    reqCodeDataDeadGroup andThen atSome[DeadCodeGroup]
 
   val reqCodeDataDeadGroupId: Optional[Data, ReqCodeGroupId] =
-    reqCodeDataDeadGroupSome ^|-> DeadCodeGroup.id
+    reqCodeDataDeadGroupSome andThen DeadCodeGroup.id
 
   val reqCodeActiveGroupId: Lens[ActiveGroup, ReqCodeGroupId] =
-    ActiveGroup.group ^|-> LiveCodeGroup.id
+    ActiveGroup.group andThen LiveCodeGroup.id
 
   private val reqCodeActiveGroupTitle: Lens[ActiveGroup, Text.CodeGroupTitle.OptionalText] =
-    ActiveGroup.group ^|-> LiveCodeGroup.title
+    ActiveGroup.group andThen LiveCodeGroup.title
 
   val reqCodeDataReqInactive = Lens[Data, ReqInactive](_.reqInactive)(n => {
     case d: ActiveReq   => d.copy(reqInactive = n)
@@ -45,9 +45,9 @@ object TestOptics {
     case d: ActiveReq   => d.deadGroup.map(_.title)
     case d: Inactive    => d.deadGroup.map(_.title)
   })(n => {
-    case d: ActiveGroup => reqCodeActiveGroupTitle.set(n)(d)
-    case d: ActiveReq   => d.copy(deadGroup = d.deadGroup.map(DeadCodeGroup.title set n))
-    case d: Inactive    => d.copy(deadGroup = d.deadGroup.map(DeadCodeGroup.title set n))
+    case d: ActiveGroup => reqCodeActiveGroupTitle.replace(n)(d)
+    case d: ActiveReq   => d.copy(deadGroup = d.deadGroup.map(DeadCodeGroup.title replace n))
+    case d: Inactive    => d.copy(deadGroup = d.deadGroup.map(DeadCodeGroup.title replace n))
   })
 
   private val reqCodeTrieFixK = Trie.fixk
@@ -55,17 +55,20 @@ object TestOptics {
     PTraversal.fromTraverse[reqCodeTrieFixK.Trie, Data, Data](reqCodeTrieFixK.traverseTrie)
 
   val genericReqTitlesInReqs: Traversal[Requirements, Text.GenericReqTitle.OptionalText] =
-    Requirements.genericReqs ^|-> GenericReqs.imap ^|->> IMap.traversal[GenericReqId, GenericReq] ^|-> GenericReq.title
+    Requirements.genericReqs andThen GenericReqs.imap andThen IMap.traversal[GenericReqId, GenericReq] andThen GenericReq.title
 
   val useCasesInReqs: Traversal[Requirements, UseCase] =
-    Requirements.useCases ^|-> UseCases.imap ^|->> IMap.traversal[UseCaseId, UseCase]
+    Requirements.useCases andThen UseCases.imap andThen IMap.traversal[UseCaseId, UseCase]
 
   val useCaseStepTextsInUseCase: Traversal[UseCase, Text.UseCaseStep.OptionalText] =
-    UseCase.stepsTraversal ^|-> UseCaseSteps.tree ^|->> VectorTree.traversal ^|-> UseCaseStep.titleExplicitly
+    UseCase.stepsTraversal andThen
+    UseCaseSteps.tree andThen
+    VectorTree.traversal[UseCaseStep] andThen
+    UseCaseStep.titleExplicitly
 
   val grsLive: Traversal[Requirements, Live] =
-    Requirements.genericReqs ^|-> GenericReqs.imap ^|->> IMap.traversal[GenericReqId, GenericReq] ^|-> GenericReq.liveExplicitly
+    Requirements.genericReqs andThen GenericReqs.imap andThen IMap.traversal[GenericReqId, GenericReq] andThen GenericReq.liveExplicitly
 
   val ucsLive: Traversal[Requirements, Live] =
-    useCasesInReqs ^|-> UseCase.liveExplicitly
+    useCasesInReqs andThen UseCase.liveExplicitly
 }

@@ -41,7 +41,7 @@ object PublicSpaProtocolsTest extends TestSuite {
         import ajax.res.codec
 
         "roundTrip" - {
-          val gen = R.errorMsg \/ Gen.unit
+          val gen = R.errorMsg | Gen.unit
           propTestRoundTrip(codec)(gen)
         }
 
@@ -83,7 +83,7 @@ object PublicSpaProtocolsTest extends TestSuite {
         import ajax.res.codec
 
         "roundTrip" - {
-          val gen = R.errorMsg \/ Gen.unit
+          val gen = R.errorMsg | Gen.unit
           propTestRoundTrip(codec)(gen)
         }
 
@@ -152,7 +152,7 @@ object PublicSpaProtocolsTest extends TestSuite {
         import ajax.req.codec
 
         "roundTrip" - {
-          val gen = R.username \/ R.emailAddr
+          val gen = R.username | R.emailAddr
           propTestRoundTrip(codec)(gen)
         }
 

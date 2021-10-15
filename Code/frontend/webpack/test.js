@@ -60,7 +60,8 @@ const config = {
     ],
   },
 
-  mode: 'production',
+  // Because React's act() issues warnings in production mode
+  mode: 'development',
 
   performance: {
     hints: false

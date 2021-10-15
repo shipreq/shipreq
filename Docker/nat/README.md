@@ -10,14 +10,14 @@ I never managed to get iptables routing working locally so I can't test the ssl-
 
 Port 3128 is for use as an explicit proxy (eg. `http_proxy` env var)
 I ended up testing in prod to get ports 3129/3130 working properly and now that I have,
-https whitelisting via the explicit proxy has stopped working.
+https (not http) whitelisting via the explicit proxy has stopped working.
 I'll just live with it for now as it's not used in prod.
 
 
 Testing build & squid config
 ============================
 
-Note: https whitelisting via the explicit proxy has stopped working as mentioned above.
+Note: https (not http) whitelisting via the explicit proxy has stopped working as mentioned above.
 
 1. `make watch` and make edits until happy
 

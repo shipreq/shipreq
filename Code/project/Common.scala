@@ -6,7 +6,7 @@ import java.nio.file.{Files, Path}
 import org.scalajs.jsenv.Input
 import org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv
 import org.scalajs.jsenv.phantomjs.sbtplugin.PhantomJSEnvPlugin.autoImport._
-import org.scalajs.linker.interface.{CheckedBehavior, Semantics}
+import org.scalajs.linker.interface._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import org.scalajs.sbtplugin.Stage
 import sbtcrossproject.CrossPlugin.autoImport._
@@ -19,10 +19,10 @@ import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import LibDependency.{Dep, HasBoth, HasJs, HasJvm, JS, JVM, ModDepScope}
 
 sealed trait JsTestType
-case object NoTests         extends JsTestType
-case object UseNode         extends JsTestType
-case object UseNodeAdvanced extends JsTestType
-case object UsePhantomJs    extends JsTestType
+case object NoTests                       extends JsTestType
+case object UseNode                       extends JsTestType
+case object UseNodeAdvanced               extends JsTestType
+final case class UsePhantomJs(memMB: Int) extends JsTestType
 
 object Common {
 
@@ -118,8 +118,9 @@ object Common {
 
   def optimisationScalacFlags = Seq(
     "-opt:l:method",
-    "-opt:l:inline",
-    "-opt-inline-from:**",
+    // Inlining disabled due to https://github.com/scala/bug/issues/11812
+      // "-opt:l:inline",
+      // "-opt-inline-from:**",
     //"-opt-warnings:at-inline-failed",
   )
 
@@ -169,35 +170,33 @@ object Common {
 
   def packageBinaryOnly = (_: Project)
     .settings(
-      sources in (Compile, doc) := Nil,
-      publishArtifact in (Compile, packageDoc) := false,
-      publishArtifact in (Compile, packageSrc) := false,
-      publishArtifact in packageDoc := false,
-      publishArtifact in packageSrc := false)
+      Compile / doc / sources := Nil,
+      Compile / packageDoc / publishArtifact := false,
+      Compile / packageSrc / publishArtifact := false,
+      packageDoc / publishArtifact := false,
+      packageSrc / publishArtifact := false)
 
   def dockerLayerReuse = (_: Project)
     .settings(
       // Remove versions from filenames
-      artifactName in (Compile, packageBin) := ((_, _, a) => a.name + "." + a.extension),
+      Compile / packageBin / artifactName := ((_, _, a) => a.name + "." + a.extension),
       // Remove versions from manifests
-      packageOptions in (Compile, packageBin) := Nil)
+      Compile / packageBin / packageOptions := Nil)
 
   lazy val settingsMinForScalafix = (p: Project) => p
     .settings(
-      organization                := "com.beardedlogic.shipreq",
-      organizationName            := "Bearded Logic",
-      isSnapshot                  := git.gitUncommittedChanges.value,
-      version                     := versionFn(git.gitHeadCommit.value, isSnapshot.value),
-      shellPrompt in ThisBuild    := ((s: State) => Project.extract(s).currentRef.project + "> "),
-      incOptions                  := incOptions.value.withLogRecompileOnMacro(false),
-      updateOptions               := updateOptions.value.withCachedResolution(true),
-      aggregate in update         := true,
-      scalaVersion                := Dependencies.Scala.version,
-      scalacOptions              ++= scalacFlags,
-    //cancelable in Global        := true, // Allows ctrl-c to kill apps started with run without exiting SBT
+      dependencyOverrides        ++= Dependencies.globalDependencyOverrides.toSeq,
       dependencyUpdatesFilter     -= Dependencies.updateExclusions,
+      incOptions                  := incOptions.value.withLogRecompileOnMacro(false),
+      isSnapshot                  := git.gitUncommittedChanges.value,
       minForcegcInterval          := 3.minutes,
-      target                      := redirectTargetDir(target.value))
+      scalacOptions              ++= scalacFlags,
+      scalaVersion                := Dependencies.Scala.version,
+      target                      := redirectTargetDir(target.value),
+      update / aggregate          := true,
+      updateOptions               := updateOptions.value.withCachedResolution(true),
+      version                     := versionFn(git.gitHeadCommit.value, isSnapshot.value),
+    )
     .configure(
       packageBinaryOnly,
       ciSettings,
@@ -219,13 +218,13 @@ object Common {
     _.configure(settingsMin)
       .settings(
         excludeDependencies += "commons-logging" % "commons-logging", // commons-logging should be replaced by jcl-over-slf4j
-        scalacOptions in Test ++= scalacTestFlags,
-        scalacOptions in Test --= scalacTestNonFlags)
+        Test / scalacOptions ++= scalacTestFlags,
+        Test / scalacOptions --= scalacTestNonFlags)
       .configure(debugOrRelease(debugSettings, optimisationSettings))
 
   lazy val jvmSettings: Project => Project =
     _.configure(settings, InBrowserTesting.jvm)
-      .settings(testOptions in Test += Tests.Cleanup(shutdownTestDb(_)))
+      .settings(Test / testOptions += Tests.Cleanup(shutdownTestDb(_)))
 
   /** This doesn't work when fork := true */
   def shutdownTestDb(loader: ClassLoader): Unit = {
@@ -258,8 +257,12 @@ object Common {
       debugOrRelease(jsDevSettings, jsProdSettings),
       InBrowserTesting.js)
     .settings(
-      parallelExecution in testOnly := false,
-      scalaJSLinkerConfig ~= { _.withSourceMap(emitSourceMapsValue) })
+      testOnly / parallelExecution := false,
+      scalaJSLinkerConfig ~= { _
+        .withSourceMap(emitSourceMapsValue)
+        .withESFeatures(_.withESVersion(ESVersion.ES2017))
+      },
+    )
 
   private def jsDevSettings: Project => Project =
     identity
@@ -307,7 +310,10 @@ object Common {
         _.settings(test := {})
       case UseNode =>
         _.settings(
-          jsEnv in Test := new JSDOMNodeJSEnv(JSDOMNodeJSEnv.Config()))
+          Test / jsEnv := new JSDOMNodeJSEnv(JSDOMNodeJSEnv.Config()),
+          Test / test / tags += CustomTags.Node -> 1,
+          Test / test / tags += CustomTags.MemoryMB -> 150,
+        )
       case UseNodeAdvanced =>
         _.settings(
           jsEnv in Test := new AdvancedNodeJSEnv(
@@ -316,11 +322,14 @@ object Common {
               "CI"       -> (if (inCI) "1" else "0"),
             ))
           ))
-      case UsePhantomJs =>
+      case UsePhantomJs(memMB) =>
         _.settings(
-          Test / scalaJSLinkerConfig ~= { _.withESFeatures(_.withUseECMAScript2015(false)) },
+          Test / scalaJSLinkerConfig ~= { _.withESFeatures(_.withESVersion(ESVersion.ES5_1)) },
           Test / jsEnv := PhantomJSEnv().value,
-          Test / jsEnvInput := Input.Script(((ThisBuild / baseDirectory).value / "project/phantomjs-fix.js").toPath) +: (Test / jsEnvInput).value)
+          Test / jsEnvInput := Input.Script(((ThisBuild / baseDirectory).value / "project/phantomjs-fix.js").toPath) +: (Test / jsEnvInput).value,
+          Test / test / tags += CustomTags.PhantomJs -> 1,
+          Test / test / tags += CustomTags.MemoryMB -> memMB,
+        )
     }
 
   def devMode: Boolean = !releaseMode
@@ -330,11 +339,11 @@ object Common {
 
   def nonTestCompilerFlags(flags: String*): Project => Project =
     _.settings(
-      scalacOptions in Compile ++= flags,
-      scalacOptions in Test --= flags)
+      Compile / scalacOptions ++= flags,
+      Test / scalacOptions --= flags)
 
   def dontOptimise: Project => Project =
-    _.settings(scalacOptions in Compile --= optimisationScalacFlags)
+    _.settings(Compile / scalacOptions --= optimisationScalacFlags)
 
   def dontInline: Project => Project =
     debugOrRelease(identity, _

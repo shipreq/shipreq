@@ -9,6 +9,7 @@ import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon}
+import shipreq.webapp.base.util.Dirty
 import shipreq.webapp.client.project.app.Style.{issueConfig => *}
 import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.feature.Usage
@@ -203,6 +204,7 @@ object IssueConfig {
         leftTop            = leftHeader,
         rightEmpty         = renderRightEmpty(p),
         editor             = renderEditor(p, _),
+        dirty              = Dirty unless p.potentialSaveCmd.isUnchanged,
         initEditor         = initEditor,
         state              = p.state,
       )

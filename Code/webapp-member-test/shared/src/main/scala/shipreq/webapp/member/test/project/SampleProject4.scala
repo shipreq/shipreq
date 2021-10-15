@@ -83,15 +83,15 @@ object SampleProject4 {
     val uc1 = addUseCase(title = "Eat food", ncac = ncac)
     // println(ncac.map(_.title.mkString(",")))
 
-    rt = ReqData.Text.at(descField, uc1).set("This UC is about eating.")(rt)
+    rt = ReqData.Text.at(descField, uc1).replace("This UC is about eating.")(rt)
 
     sf = sf.addPairs(13 -> 11, 15 -> 12)
 
     val p2 =
-      (Project.name.set("Sample Project 4(+)") compose
-        Project.reqs.set(Requirements(p.content.reqs.genericReqs, UseCases.Stateless(ucs, StepFlow BiDir sf).withState, pr)) compose
-        Project.reqText.set(rt) compose
-        Project.idCeilings.set(ic)
+      (Project.name.replace("Sample Project 4(+)") compose
+        Project.reqs.replace(Requirements(p.content.reqs.genericReqs, UseCases.Stateless(ucs, StepFlow BiDir sf).withState, pr)) compose
+        Project.reqText.replace(rt) compose
+        Project.idCeilings.replace(ic)
         ) (p)
     DataProp.project.allIncludingConfig assert p2
     p2

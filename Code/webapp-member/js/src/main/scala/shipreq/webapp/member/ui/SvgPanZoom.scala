@@ -100,7 +100,7 @@ object SvgPanZoom {
   final class Backend($: BackendScope[Props, State]) {
 
     private val ref = Ref.toJsComponent(ReactSvgPanZoom.Component)
-    private val refGetOption = ref.get.asCallback
+    private val refGetOption = ref.get
 
     lazy val fitToViewer: Callback =
       $.state.flatMap { s =>

@@ -1,6 +1,5 @@
 package shipreq.webapp.member.project.event
 
-import nyaya.util.Multimap
 import shipreq.base.util.MTrie.Ops
 import shipreq.webapp.base.validation.lib.Implicits._
 import shipreq.webapp.member.project.data.ReqCode._
@@ -145,10 +144,10 @@ trait ApplyReqCodeLogic {
     private def killGroup  (g: LiveCodeGroup) = DeadCodeGroup(g.id, g.title)
 
     def addOne[A](a: A)(implicit adder: Adder[A]): Eval[Unit] =
-      getTrie.flatMap(addOneT(_, a)).flatMap(Project.reqCodeTrie.set)
+      getTrie.flatMap(addOneT(_, a)).flatMap(Project.reqCodeTrie.replace)
 
     def addAll[A](as: Iterable[A])(implicit adder: Adder[A]): Eval[Unit] =
-      getTrie.flatMap(addAllT(_, as)).flatMap(Project.reqCodeTrie.set)
+      getTrie.flatMap(addAllT(_, as)).flatMap(Project.reqCodeTrie.replace)
 
     def addOneT[A](t: Trie, a: A)(implicit adder: Adder[A]): Eval[Trie] =
       updateIdCeiling(adder.reqCodeId(a).value) >>
@@ -196,7 +195,7 @@ trait ApplyReqCodeLogic {
         inactivateReqsByCodeT(t, vs, remember, validateTarget))
 
     def inactivateBelongingToReqs(reqIds: Set[ReqId]): Eval[Unit] =
-      getTrie.flatMap(inactivateBelongingToReqsT(_, reqIds)).flatMap(Project.reqCodeTrie.set)
+      getTrie.flatMap(inactivateBelongingToReqsT(_, reqIds)).flatMap(Project.reqCodeTrie.replace)
 
     def inactivateBelongingToReqsT(trie: Trie, reqIds: Set[ReqId]): Eval[Trie] =
       Eval.gets(_.content.reqCodes.activeReqCodesByReqId).flatMap(m =>
@@ -317,7 +316,7 @@ trait ApplyReqCodeLogic {
         foldMapBind(trie, reqIds)(reqId => restoreToReqByIdsT(_, reqId, m(reqId))))
 
     def restoreBelongingToReqs(reqIds: Set[ReqId]): Eval[Unit] =
-      getTrie.flatMap(restoreBelongingToReqsT(_, reqIds)).flatMap(Project.reqCodeTrie.set)
+      getTrie.flatMap(restoreBelongingToReqsT(_, reqIds)).flatMap(Project.reqCodeTrie.replace)
 
     def restoreGroupAtCodeT(trie: Trie, code: Value): Eval[Trie] =
       needData(trie, code).flatMap {
@@ -378,7 +377,7 @@ trait ApplyReqCodeLogic {
         t1   <- inactivateReqsByIdT(t0, e.remove, keep.contains, ensureActiveReqIs(e.id))
         t2   <- restoreToReqByIdsT(t1, e.id, e.restore)
         t3   <- addAllT(t2, addCodesToReq(e.id, e.add))
-        _    <- Project.reqCodeTrie set t3
+        _    <- Project.reqCodeTrie replace t3
       } yield ()
   }
 
@@ -406,4 +405,3 @@ object ApplyReqCodeLogic {
                             liveGroup    : LiveCodeGroup)
 
 }
-

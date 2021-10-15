@@ -25,9 +25,34 @@ object AbstractWebStorage {
   // Is that a valid scenario? I don't know but may as well support it if possible.
   def local(): Option[AbstractWebStorage] =
     try {
-      val available = js.Dynamic.global.localStorage.asInstanceOf[js.UndefOr[StorageJs]]
-      val option = available.toOption.flatMap(Option(_))
-      option.map(ls => localStorageInstance.getOrSet(new Real(ls)))
+
+      // Some platforms provide a localStorage instance but attempting to use it results in an exception. Eg:
+      //
+      //   - "SecurityError: The operation is insecure"
+      //      UserAgent: Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.2 Mobile/15E148 Safari/604.1
+      //
+      //   - "SecurityError: Failed to read the 'localStorage' property from 'Window': Access is denied for this document."
+      //      UserAgent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.111 Safari/537.36
+      //
+      // Here we take the same approach as store.js and test usage.
+      // See: https://github.com/marcuswestin/store.js/blob/b8e22fea8738fc19da4d9e7dbf1cda6e5185c481/src/store-engine.js#L108-L117
+      //
+      def test(s: StorageJs): Boolean = {
+        val k = "SHIPREQ_TEST_____"
+        val v = "zzz"
+        try {
+          s.setItem(k, v)
+          s.getItem(k) == v
+        } finally
+          s.removeItem(k)
+      }
+
+      js.Dynamic.global.localStorage.asInstanceOf[js.UndefOr[StorageJs]]
+        .toOption
+        .flatMap(Option(_))
+        .filter(test)
+        .map(ls => localStorageInstance.getOrSet(new Real(ls)))
+
     } catch {
       case _: Throwable => None
     }

@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-import scalaz.Monad
+import cats.Monad
 import shipreq.base.util.MonadEE._
 
 /**
@@ -30,9 +30,9 @@ object MonadEE {
 
   final case class Instance[M[_], E, F, A](underlying: M[(E \/ F) \/ A]) extends AnyVal with Types[M, E, F] {
     def flatMap[B](f: A => Stack[B])(implicit M: Monad[M]): Stack[B] =
-      Instance[M, E, F, B](M.bind(underlying) {
-        case \/-(a)            => f(a).underlying
-        case x: -\/[StackLeft] => M pure x
+      Instance[M, E, F, B](M.flatMap(underlying) {
+        case \/-(a) => f(a).underlying
+        case -\/(e) => M pure -\/(e)
       })
 
     def map[B](f: A => B)(implicit M: Monad[M]): Stack[B] =
@@ -58,6 +58,7 @@ object MonadEE {
   }
 
   final class StackExt_SA[M[_], E, F, A](private val self: M[(E \/ F) \/ A]) extends AnyVal with Types[M, E, F] {
+    @nowarn
     def unstackFailure[B >: A](g: F => E \/ B)(implicit M: Monad[M]): M[E \/ B] =
       M.map(self) {
         case a: \/-[A]      => a

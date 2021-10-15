@@ -1,7 +1,6 @@
 package shipreq.webapp.base.feature.tablenav
 
-import scalaz.Applicative
-import scalaz.Scalaz.Id
+import cats.{Applicative, Id}
 import shipreq.base.util.{Allow, Permission, Util}
 
 sealed trait Axis

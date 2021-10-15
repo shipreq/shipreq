@@ -1,7 +1,6 @@
 package shipreq.webapp.base.validation.lib
 
-import scalaz.Equal
-import scalaz.syntax.equal._
+import cats.Eq
 import shipreq.base.util.OptionalConflict
 import shipreq.webapp.base.validation.lib.Implicits._
 import shipreq.webapp.base.validation.lib.Simple._
@@ -10,10 +9,10 @@ object Uniqueness {
 
   /** Utilities that are useful in preparing data for uniqueness checking */
   object Util {
-    def excludeKey[A, K: Equal](keyToExclude: K, data: IterableOnce[A])(getKey: A => K): Iterator[A] =
-      data.iterator.filter(getKey(_) ≠ keyToExclude)
+    def excludeKey[A, K: Eq](keyToExclude: K, data: IterableOnce[A])(getKey: A => K): Iterator[A] =
+      data.iterator.filter(getKey(_) =!= keyToExclude)
 
-    def excludeOptionalKey[A, K: Equal](keyToExclude: Option[K], data: IterableOnce[A])(getKey: A => K): Iterator[A] =
+    def excludeOptionalKey[A, K: Eq](keyToExclude: Option[K], data: IterableOnce[A])(getKey: A => K): Iterator[A] =
       keyToExclude match {
         case None    => data.iterator
         case Some(k) => excludeKey(k, data)(getKey)
@@ -43,8 +42,8 @@ object Uniqueness {
   }
 
   /** Ensure A doesn't exist in a collection of As */
-  def within[A: Equal](data: => IterableOnce[A]): Invalidator[A] =
-    Invalidator.test[A](a => data.iterator.forall(a ≠ _), notUnique)
+  def within[A: Eq](data: => IterableOnce[A]): Invalidator[A] =
+    Invalidator.test[A](a => data.iterator.forall(a =!= _), notUnique)
 
   /** Ensure A doesn't exist in a set of As */
   def set[A: UnivEq](data: => Set[A]): Invalidator[A] =
@@ -61,15 +60,15 @@ object Uniqueness {
 
   // ===================================================================================================================
 
-  def keyWithValue[K: Equal, V: Equal](data: () => IterableOnce[(K, V)])(key: K): Invalidator[V] =
-    apply[V].tuple(data)(Equal[V].equal, _ ≟ key)
+  def keyWithValue[K: Eq, V: Eq](data: () => IterableOnce[(K, V)])(key: K): Invalidator[V] =
+    apply[V].tuple(data)(Eq[V].eqv, _ === key)
 
-  def optionalKeyWithValue[K: Equal, V: Equal](data: () => IterableOnce[(Option[K], V)])(key: Option[K]): Invalidator[V] =
+  def optionalKeyWithValue[K: Eq, V: Eq](data: () => IterableOnce[(Option[K], V)])(key: Option[K]): Invalidator[V] =
     keyWithValue(data)(key)(OptionalConflict.equalOption, implicitly)
 
-  def keyWithValueSet[K: Equal, V: UnivEq](data: () => IterableOnce[(K, Set[V])])(key: K): Invalidator[V] =
-    apply[V].tuple(data)(_ contains _, _ ≟ key)
+  def keyWithValueSet[K: Eq, V: UnivEq](data: () => IterableOnce[(K, Set[V])])(key: K): Invalidator[V] =
+    apply[V].tuple(data)(_ contains _, _ === key)
 
-  def optionalKeyWithValueSet[K: Equal, V: UnivEq](data: () => IterableOnce[(Option[K], Set[V])])(key: Option[K]): Invalidator[V] =
+  def optionalKeyWithValueSet[K: Eq, V: UnivEq](data: () => IterableOnce[(Option[K], Set[V])])(key: Option[K]): Invalidator[V] =
     keyWithValueSet(data)(key)(OptionalConflict.equalOption, implicitly)
 }

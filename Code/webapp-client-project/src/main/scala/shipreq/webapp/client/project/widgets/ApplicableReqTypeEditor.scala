@@ -135,7 +135,7 @@ object ApplicableReqTypeEditor {
       } yield AutoComplete.Project.reqTypeMnemonics(rt, ex)
 
     override val autoCompleteCtx: CallbackOption[AutoCompleteCtx] =
-      inputDomRef.get.map(AutoCompleteCtx(pxAutoComplete.value(), _))
+      inputDomRef.get.asCBO.map(AutoCompleteCtx(pxAutoComplete.value(), _))
   }
 
   implicit val reusabilityProps: Reusability[Props] = Reusability.derive
