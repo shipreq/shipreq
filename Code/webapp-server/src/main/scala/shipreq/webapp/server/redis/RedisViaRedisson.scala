@@ -258,7 +258,7 @@ final class RedisViaRedisson(client: RedissonClient, schema: RedisSchema) extend
     args += schema.topic(id)
     args ++= events
 
-    evalSha(Mode.READ_WRITE, sha, RScript.ReturnType.STATUS, Keys.none, args)
+    evalSha[Unit](Mode.READ_WRITE, sha, RScript.ReturnType.STATUS, Keys.none, args)
   }
 
   override def publishEvents(id: ProjectId, events: VerifiedEvent.NonEmptySeq) =
