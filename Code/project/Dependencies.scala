@@ -235,7 +235,7 @@ object Dependencies {
   val scalaz       = jvmOnly("org.scalaz"                 %% "scalaz-core"           % "7.3.5") // only used for scalaz.Heap
 
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.10.0-RC2")
-  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "1.1.0")
+  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "1.2.0")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "1.0.0")
 
   // ===================================================================================================================
