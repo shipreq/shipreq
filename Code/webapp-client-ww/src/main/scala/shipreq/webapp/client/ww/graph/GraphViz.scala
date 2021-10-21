@@ -1,7 +1,7 @@
 package shipreq.webapp.client.ww.graph
 
 import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
-import org.scalajs.dom.webworkers.DedicatedWorkerGlobalScope
+import org.scalajs.dom.DedicatedWorkerGlobalScope
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 import shipreq.base.util.{Backwards, Direction, ErrorMsg, Forwards}

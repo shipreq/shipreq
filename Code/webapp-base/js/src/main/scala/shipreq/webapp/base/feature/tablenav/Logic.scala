@@ -2,7 +2,7 @@ package shipreq.webapp.base.feature.tablenav
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.ReactExt_DomNode
-import org.scalajs.dom.{ClientRect, html}
+import org.scalajs.dom.{DOMRect, html}
 import shipreq.base.util.{Deny, Permission}
 import shipreq.webapp.base.util.DomUtil._
 
@@ -142,10 +142,10 @@ private[tablenav] object Logic {
   def hypotenuse(x: Double, y: Double): Double =
     Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
 
-  def centerXY(r: ClientRect): (Double, Double) =
+  def centerXY(r: DOMRect): (Double, Double) =
     (r.left + r.width / 2, r.top + r.height / 2)
 
-  def distanceRect(a: ClientRect): ClientRect => Double = {
+  def distanceRect(a: DOMRect): DOMRect => Double = {
     val aa = centerXY(a)
     b => distanceXY(aa, centerXY(b))
   }
@@ -154,7 +154,7 @@ private[tablenav] object Logic {
     hypotenuse(a._1 - b._1, a._2 - b._2)
   */
 
-  def distanceRectX(a: ClientRect): ClientRect => Double =
+  def distanceRectX(a: DOMRect): DOMRect => Double =
     b => Math.abs((a.left + a.width / 2) - (b.left + b.width / 2))
 
   /** Special-case: When a table cell contains sub-items that are focusable and satisfy allowMove (i.e. can be accessed

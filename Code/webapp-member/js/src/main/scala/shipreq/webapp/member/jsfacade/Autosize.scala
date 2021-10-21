@@ -15,7 +15,7 @@ import scala.scalajs.js.|
 object Autosize extends js.Object {
 
   type Target  = dom.Element
-  type Targets = Target | dom.NodeList
+  type Targets = Target | dom.NodeList[dom.Node]
 
   def apply(targets: Targets): Unit = js.native
 

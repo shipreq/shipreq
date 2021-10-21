@@ -5,7 +5,6 @@ import org.parboiled2.ParseError
 import org.parboiled2.Parser.DeliveryScheme.Throw
 import org.scalajs.dom.html
 import shipreq.webapp.base.test.TestState._
-import shipreq.webapp.base.util.DomUtil._
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.app.Style
 import shipreq.webapp.client.project.feature.savedview.{FilterDeadButtonObs, FilterEditorObs, SavedViewManagerObs}

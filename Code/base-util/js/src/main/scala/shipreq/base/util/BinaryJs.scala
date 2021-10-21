@@ -1,8 +1,7 @@
 package shipreq.base.util
 
 import java.nio.ByteBuffer
-import org.scalajs.dom.raw.{Blob, FileReader}
-import org.scalajs.dom.window
+import org.scalajs.dom.{Blob, FileReader, window}
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.typedarray.TypedArrayBufferOps._

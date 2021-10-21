@@ -1,7 +1,7 @@
 package shipreq.webapp.base.test
 
-import org.scalajs.dom.raw
-import org.scalajs.dom.raw._
+import org.scalajs.dom
+import org.scalajs.dom.{CloseEvent, Event, MessageEvent, MessageEventInit}
 import scala.scalajs.js
 import scala.scalajs.js.typedarray
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
@@ -76,7 +76,7 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
 
   override def send(data: String)      = sendMsg(Message.Text(data))
   override def send(data: ArrayBuffer) = sendMsg(Message.ArrayBuffer(data))
-  override def send(data: Blob)        = sendMsg(Message.Blob(data))
+  override def send(data: dom.Blob)    = sendMsg(Message.Blob(data))
 
   private def sendMsg(m: Message): Unit = {
     val b = m.binaryData
@@ -110,7 +110,7 @@ final class FakeWebSocket(override val url: String, initialState: ReadyState = R
       case BinaryType.Blob        => BinaryJs.arrayBufferToBlob(data)
     })
 
-  def recv(data: Blob): Unit =
+  def recv(data: dom.Blob): Unit =
     recvMsg(binaryType.get() match {
       case BinaryType.ArrayBuffer => BinaryJs.blobToArrayBuffer(data)
       case BinaryType.Blob        => data
@@ -151,7 +151,7 @@ object FakeWebSocket {
       override val binaryData = BinaryData.unsafeFromArray(value.getBytes("UTF-8"))
     }
 
-    final case class Blob(value: raw.Blob) extends Message {
+    final case class Blob(value: dom.Blob) extends Message {
       override def toString = s"Blob(${binaryData.describe()})"
       val arrayBuffer = BinaryJs.blobToArrayBuffer(value)
       val byteBuffer = TypedArrayBuffer.wrap(arrayBuffer)

@@ -2,7 +2,7 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.raw.{Element, SVGGElement, SVGSVGElement}
+import org.scalajs.dom.{Element, SVGGElement, SVGSVGElement}
 import scalacss.ScalaCssReact._
 import shipreq.base.util._
 import shipreq.webapp.base.util.DomUtil._

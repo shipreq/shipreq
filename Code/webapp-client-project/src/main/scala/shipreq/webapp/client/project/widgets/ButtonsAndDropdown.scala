@@ -6,7 +6,6 @@ import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
 import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.ui.semantic._
-import shipreq.webapp.base.util.DomUtil._
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 
 

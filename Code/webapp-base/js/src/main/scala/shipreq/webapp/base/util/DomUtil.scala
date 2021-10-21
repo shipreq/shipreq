@@ -39,63 +39,12 @@ object DomUtil {
       DomUtil.findParent(e, f, self = self)
   }
 
-  @inline implicit class NodeListExt(private val n: NodeList) extends AnyVal {
-    def iterator: Iterator[Node] =
-      (0 until n.length).iterator.map(n.apply)
-
-    def foreach(f: Node => Unit): Unit = {
-      var i = 0
-      while (i < n.length) {
-        f(n(i))
-        i += 1
-      }
-
-    }
-  }
-
-  @inline implicit class DOMStringListExt(private val d: DOMStringList) extends AnyVal {
-    def exists(f: String => Boolean): Boolean = {
-      @tailrec def go(i: Int): Boolean =
-        if (i == -1)
-          false
-        else if (f(d(i)))
-          true
-        else
-          go(i - 1)
-      go(d.length - 1)
-    }
-  }
-
-  @inline implicit class PatchHTMLCollection(private val c: raw.HTMLCollection) extends AnyVal {
-    def nonEmpty: Boolean =
-      c.length > 0
-
-    def isEmpty: Boolean =
-      !nonEmpty
-
-    def headOption: Option[Element] =
-      if (nonEmpty) Some(head) else None
-
-    def lastOption: Option[Element] =
-      if (nonEmpty) Some(last) else None
-
-    def head: Element =
-      c(0)
-
-    def last: Element =
-      c(c.length - 1)
-
-    def indices: scala.Range =
-      0 until c.length
-
-    def iterator: Iterator[Element] =
-      indices.iterator.map(c.apply)
-
+  @inline implicit class PatchHTMLCollection(private val c: HTMLCollection[Element]) extends AnyVal {
     def deepIteratorDepthFirst: Iterator[Element] =
-      iterator.flatMap(e => Iterator.single(e) ++ e.children.deepIteratorDepthFirst)
+      c.iterator.flatMap(e => Iterator.single(e) ++ e.children.deepIteratorDepthFirst)
 
     def deepIteratorBreadthFirst: Iterator[Element] =
-      iterator ++ iterator.flatMap(_.children.deepIteratorBreadthFirst)
+      c.iterator ++ c.iterator.flatMap(_.children.deepIteratorBreadthFirst)
   }
 
   @inline implicit class NodeIteratorExt[N >: html.Element <: Node](private val it: Iterator[N]) extends AnyVal {

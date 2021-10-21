@@ -4,8 +4,7 @@ import japgolly.microlibs.nonempty.NonEmpty
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.VdomElement
-import org.scalajs.dom.document
-import org.scalajs.dom.raw.SVGSVGElement
+import org.scalajs.dom.{SVGSVGElement, document}
 import scala.scalajs.js
 import scala.scalajs.js.timers
 import scala.util.Try

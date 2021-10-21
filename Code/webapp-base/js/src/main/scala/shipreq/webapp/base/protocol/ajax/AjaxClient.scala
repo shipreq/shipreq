@@ -2,7 +2,7 @@ package shipreq.webapp.base.protocol.ajax
 
 import japgolly.scalajs.react.extra.Ajax
 import japgolly.scalajs.react.{AsyncCallback, CallbackTo}
-import org.scalajs.dom.ext.AjaxException
+import org.scalajs.dom.XMLHttpRequest
 import scala.scalajs.js.typedarray.ArrayBuffer
 import shipreq.base.util.JsExt._
 import shipreq.base.util.{BinaryData, ErrorMsg}
@@ -112,4 +112,8 @@ object AjaxClient {
       override def invoker(p: Protocol.Ajax[F]) =
         ServerSideProcInvoker.const(AsyncCallback.never[ErrorMsg \/ p.protocol.ResponseType])
     }
+
+  case class AjaxException(xhr: XMLHttpRequest) extends Exception {
+    def isTimeout = xhr.status == 0 && xhr.readyState == 4
+  }
 }

@@ -1,8 +1,7 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
-import org.scalajs.dom.raw.SVGSVGElement
-import shipreq.webapp.base.util.DomUtil._
+import org.scalajs.dom.SVGSVGElement
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.GraphComponent._

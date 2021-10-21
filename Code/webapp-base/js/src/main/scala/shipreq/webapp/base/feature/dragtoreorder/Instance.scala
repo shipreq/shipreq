@@ -3,7 +3,7 @@ package shipreq.webapp.base.feature.dragtoreorder
 import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.raw.DragEffect
+import org.scalajs.dom.DragEffect
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.feature.DragToReorderFeature.{Item, Update}
 import shipreq.webapp.base.util.{DomUtil, Reorder}

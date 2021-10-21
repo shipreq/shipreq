@@ -32,7 +32,7 @@ object Styles {
 
     def addToDocument(): Unit = {
       import org.scalajs.dom.document
-      import org.scalajs.dom.raw.HTMLStyleElement
+      import org.scalajs.dom.HTMLStyleElement
 
       ensurePreInstall()
       open = false
