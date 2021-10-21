@@ -69,3 +69,6 @@ Global / concurrentRestrictions += Tags.limit(CustomTags.MemoryMB, 1024 * 16)
 // Global / concurrentRestrictions += Tags.limit(CustomTags.Node, 16)
 // Global / concurrentRestrictions += Tags.limit(CustomTags.PhantomJs, 8)
 // Global / concurrentRestrictions += Tags.limit(Tags.Test, 31)
+
+
+ThisBuild / evictionErrorLevel := Level.Info

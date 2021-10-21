@@ -102,7 +102,7 @@ object Dependencies {
   }
 
   object Microlibs {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "3.0.1")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "4.0.0-RC1")
     val adtMacros   = mm("adt-macros")
     val catsExt     = mm("cats-ext") ++ Cats.core
     val compileTime = mm("compile-time")
@@ -147,7 +147,7 @@ object Dependencies {
   }
 
   object React {
-    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "2.0.0-RC3")
+    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "2.0.0-SNAPSHOT")
     val cats    = mm("core-ext-cats")
     val core    = mm("core")
     val extra   = mm("extra")
@@ -168,7 +168,7 @@ object Dependencies {
   }
 
   object ScalaCSS {
-    private val ver      = "0.8.0-RC1"
+    private val ver      = "0.8.0-SNAPSHOT"
     private val jvmAndJs = MultiModule.jvmAndJs("com.github.japgolly.scalacss", ver)
     private val js       = MultiModule.js("com.github.japgolly.scalacss", ver)
     val core             = jvmAndJs("core")
@@ -194,7 +194,7 @@ object Dependencies {
   }
 
   object TestState {
-    val Ver = "2.5.0-RC1"
+    val Ver = "2.5.0-SNAPSHOT"
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", Ver)
     private val js = MultiModule.js("com.github.japgolly.test-state", Ver)
     val core            = mm("core")
@@ -205,7 +205,7 @@ object Dependencies {
   }
 
   object UnivEq {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "1.6.0")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "2.0.0-RC1")
     val univeq = mm("univeq")
     val cats   = mm("univeq-cats") ++ univeq ++ Cats.core
   }
@@ -235,7 +235,7 @@ object Dependencies {
   val scalaz       = jvmOnly("org.scalaz"                 %% "scalaz-core"           % "7.3.5") // only used for scalaz.Heap
 
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.10.0-RC2")
-  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "1.2.0")
+  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "2.0.0-RC1")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "1.0.0")
 
   // ===================================================================================================================
