@@ -2,7 +2,8 @@ package shipreq.webapp.base.protocol.websocket
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.utils.StaticLookupFn
-import org.scalajs.dom.{Blob, CloseEvent, Event, MessageEvent, raw}
+import org.scalajs.dom
+import org.scalajs.dom.{Blob, CloseEvent, Event, MessageEvent}
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 import shipreq.base.util.VarJs
@@ -55,15 +56,15 @@ object WebSocket {
   // ===================================================================================================================
 
   def apply(url: String): WebSocket =
-    apply(new raw.WebSocket(url))
+    apply(new dom.WebSocket(url))
 
   def apply(url: String, protocol: String): WebSocket =
-    apply(new raw.WebSocket(url, protocol))
+    apply(new dom.WebSocket(url, protocol))
 
-  def apply(underlying: raw.WebSocket): WebSocket =
+  def apply(underlying: dom.WebSocket): WebSocket =
     Real(underlying)
 
-  private final case class Real(underlying: raw.WebSocket) extends WebSocket {
+  private final case class Real(underlying: dom.WebSocket) extends WebSocket {
     override val binaryType = VarJs.unsafeField[String](underlying, "binaryType").xmap(BinaryType.byJsValue)(_.jsValue)
     override val onOpen     = VarJs.unsafeField[js.Function1[Event, _]]       (underlying, "onopen")
     override val onMessage  = VarJs.unsafeField[js.Function1[MessageEvent, _]](underlying, "onmessage")

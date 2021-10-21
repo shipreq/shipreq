@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.app
 import boopickle.Pickler
 import japgolly.scalajs.react.AsyncCallback
 import java.time.Duration
-import org.scalajs.dom.webworkers.Worker
+import org.scalajs.dom.Worker
 import scala.scalajs.js.typedarray.ArrayBuffer
 import shipreq.base.util.JsExt._
 import shipreq.base.util._

@@ -17,7 +17,7 @@ trait Client[Cmd[_], R[_], Enc] {
 }
 
 object Client {
-  import org.scalajs.dom.webworkers.Worker
+  import org.scalajs.dom.Worker
   import Protocol._
   import Codec.{default => D}
 

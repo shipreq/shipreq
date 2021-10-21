@@ -1,7 +1,7 @@
 package shipreq.webapp.client.ww
 
 import japgolly.scalajs.react.{AsyncCallback, Callback}
-import org.scalajs.dom.webworkers.DedicatedWorkerGlobalScope
+import org.scalajs.dom.DedicatedWorkerGlobalScope
 import scala.util.{Failure, Success}
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.client.ww.api.Protocol._

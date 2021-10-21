@@ -1,7 +1,7 @@
 package shipreq.webapp.base.feature.tablenav
 
 import japgolly.scalajs.react._
-import org.scalajs.dom.{html, raw}
+import org.scalajs.dom.{Element, html}
 import scala.scalajs.js
 import shipreq.webapp.base.feature.tablenav.Logic.HtmlElementExtX
 
@@ -108,7 +108,7 @@ object VirtualTable {
 
   // -------------------------------------------------------------------------------------------------------------------
 
-  private final case class Section(dom: raw.Element) {
+  private final case class Section(dom: Element) {
 
     private val rows = {
       val array = new js.Array[RealRow]

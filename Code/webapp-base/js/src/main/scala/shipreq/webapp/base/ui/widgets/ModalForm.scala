@@ -2,7 +2,7 @@ package shipreq.webapp.base.ui.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.{Element, raw}
+import org.scalajs.dom.{Element, Node}
 import scala.scalajs.js
 import scala.util.Success
 import shipreq.base.util.{Disabled, Enabled, ErrorMsg}
@@ -30,7 +30,7 @@ abstract class ModalForm[A](name             : String,
 
   protected def isModalOpen() = open
 
-  protected final def getDom[N <: raw.Node](sel: String): CallbackTo[N] =
+  protected final def getDom[N <: Node](sel: String): CallbackTo[N] =
     CallbackTo(rootDom.querySelector(s"#$id $sel").domCast[N])
 
   def setState(s: SetState): Callback
