@@ -102,7 +102,7 @@ object Dependencies {
   }
 
   object Microlibs {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "4.0.0-RC1")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.microlibs", "4.0.0")
     val adtMacros   = mm("adt-macros")
     val catsExt     = mm("cats-ext") ++ Cats.core
     val compileTime = mm("compile-time")
@@ -124,7 +124,7 @@ object Dependencies {
   }
 
   object Nyaya {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "0.11.0")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "1.0.0")
     val gen  = mm("nyaya-gen")  ++ Cats.core
     val prop = mm("nyaya-prop") ++ Cats.core
     val test = mm("nyaya-test")
@@ -147,7 +147,7 @@ object Dependencies {
   }
 
   object React {
-    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "2.0.0-SNAPSHOT")
+    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "2.0.0")
     val cats    = mm("core-ext-cats")
     val core    = mm("core")
     val extra   = mm("extra")
@@ -168,7 +168,7 @@ object Dependencies {
   }
 
   object ScalaCSS {
-    private val ver      = "0.8.0-SNAPSHOT"
+    private val ver      = "1.0.0"
     private val jvmAndJs = MultiModule.jvmAndJs("com.github.japgolly.scalacss", ver)
     private val js       = MultiModule.js("com.github.japgolly.scalacss", ver)
     val core             = jvmAndJs("core")
@@ -176,7 +176,7 @@ object Dependencies {
   }
 
   object ScalaGraal {
-    private val ver   = "1.2.0"
+    private val ver   = "2.0.0"
     private val jvm   = MultiModule.scala("com.github.japgolly.scala-graal", ver)
     private val both  = MultiModule.jvmAndJs("com.github.japgolly.scala-graal", ver)
     val core          = jvm("core") ++ graal
@@ -194,7 +194,7 @@ object Dependencies {
   }
 
   object TestState {
-    val Ver = "2.5.0-SNAPSHOT"
+    val Ver = "3.0.0"
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", Ver)
     private val js = MultiModule.js("com.github.japgolly.test-state", Ver)
     val core            = mm("core")
@@ -205,7 +205,7 @@ object Dependencies {
   }
 
   object UnivEq {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "2.0.0-RC1")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "2.0.0")
     val univeq = mm("univeq")
     val cats   = mm("univeq-cats") ++ univeq ++ Cats.core
   }
@@ -213,7 +213,7 @@ object Dependencies {
   // ===================================================================================================================
 
   val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.4.0")
-  val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "2.0.0")
+  val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "3.0.0")
   val parboiled   = jvmAndJs("org.parboiled",                    "parboiled",   "2.3.0")
   val pprint      = jvmAndJs("com.lihaoyi",                      "pprint",      "0.6.6")
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.7")
@@ -234,8 +234,8 @@ object Dependencies {
   val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.3.0")
   val scalaz       = jvmOnly("org.scalaz"                 %% "scalaz-core"           % "7.3.5") // only used for scalaz.Heap
 
-  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.10.0-RC2")
-  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "2.0.0-RC1")
+  val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.10.0")
+  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "2.0.0")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "1.0.0")
 
   // ===================================================================================================================
