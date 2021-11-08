@@ -441,7 +441,7 @@ object IndexedDb {
       }
 
     def versionChange(db: DatabaseInVersionChange, e: IDBVersionChangeEvent): VersionChange =
-      VersionChange(db, e.oldVersion, e.newVersionOption)
+      VersionChange(db, e.oldVersion.toInt, e.newVersionOption.map(_.toInt))
   }
 
 }
