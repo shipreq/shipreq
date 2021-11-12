@@ -1,8 +1,20 @@
 ========================================================================================================================
 # Phase 3
 
+* Getting back in to it:
+  * Add usernames to teams (`@@xxx`)
+  * Create user_group in DB, plus r/w ability, and verification on writes
+  * Add contacts to DB (for users and user groups)
+  * Create invitations in DB
+  * Ensure that contacts are always kept up-to-date on appropriate events
+  * Create new home page layout/sidebar
+  * Add the teams UI (minus the projects part) including update, and invitation management
+  * Broadcast certain global events so that teams and invitations UIs update in real-time (including contacts updates too)
+  * Test changes from actions -> redis -> client. Make this pretty reusable cos it's gonna get used a lot
+
+
 * Require node > 15 in docker build env
-* Upgrade sbt to 1.4.4 in docker build env
+* Upgrade sbt in docker build env
 * upgrade graal & docker images
 
 * fix duplicated scalacOptions
