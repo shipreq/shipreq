@@ -4,6 +4,11 @@ import shipreq.base.util._
 
 package object data {
 
+  // This was moved out of here
+  type Live = shipreq.webapp.base.data.Live
+  val  Live = shipreq.webapp.base.data.Live
+  val  Dead = shipreq.webapp.base.data.Dead
+
   // ----------------------------------------------------------------------------------------------
   // Data -> ID relationship & access
 
