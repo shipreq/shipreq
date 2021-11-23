@@ -10,7 +10,7 @@ import java.time.Instant
 import nyaya.gen._
 import nyaya.prop.LogicPropExt
 import shipreq.base.test.BaseUtilGen._
-import shipreq.base.test.IncCounter
+import shipreq.base.test.Incrementor
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.test.RandomBaseData
@@ -199,25 +199,25 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
     StaticField.optional.whole.partition(cfg.fields.staticFieldSet.contains)
 
   val nextReqId: Gen[Int] =
-    IncCounter genInt p.idCeilings.req
+    Incrementor.int gen p.idCeilings.req
 
   val nextGenericReqId: Gen[GenericReqId] =
     nextReqId map GenericReqId
 
   val nextReqCodeIdA: Gen[ApReqCodeId] =
-    IncCounter genInt p.idCeilings.reqCode map ApReqCodeId.apply
+    Incrementor.int gen p.idCeilings.reqCode map ApReqCodeId.apply
 
   val nextReqCodeIdG: Gen[ReqCodeGroupId] =
-    IncCounter genInt p.idCeilings.reqCode map ReqCodeGroupId
+    Incrementor.int gen p.idCeilings.reqCode map ReqCodeGroupId
 
   val nextCustomIssueTypeId: Gen[CustomIssueTypeId] =
-    IncCounter genInt p.idCeilings.customIssueType map CustomIssueTypeId
+    Incrementor.int gen p.idCeilings.customIssueType map CustomIssueTypeId
 
   val nextCustomReqTypeId: Gen[CustomReqTypeId] =
-    IncCounter genInt p.idCeilings.customReqType map CustomReqTypeId
+    Incrementor.int gen p.idCeilings.customReqType map CustomReqTypeId
 
   val nextCustomField: Gen[Int] =
-    IncCounter genInt p.idCeilings.customField
+    Incrementor.int gen p.idCeilings.customField
 
   val nextCustomFieldImplicationId: Gen[CustomField.Implication.Id] =
     nextCustomField map CustomField.Implication.Id
@@ -229,7 +229,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
     nextCustomField map CustomField.Text.Id
 
   val nextTagId: Gen[Int] =
-    IncCounter genInt p.idCeilings.tag
+    Incrementor.int gen p.idCeilings.tag
 
   val nextApplicableTagId: Gen[ApplicableTagId] =
     nextTagId map ApplicableTagId
@@ -241,10 +241,10 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
     nextReqId map UseCaseId
 
   val nextUseCaseStepId: Gen[UseCaseStepId] =
-    IncCounter genInt p.idCeilings.useCaseStep map UseCaseStepId
+    Incrementor.int gen p.idCeilings.useCaseStep map UseCaseStepId
 
   val nextSavedViewId: Gen[SavedView.Id] =
-    IncCounter genInt p.idCeilings.savedView map SavedView.Id
+    Incrementor.int gen p.idCeilings.savedView map SavedView.Id
 
   val tagId: Live => Option[Gen[TagId]] =
     tryGenChooseLiveDead(l => p.config.tags.tree.valuesIterator.map(_.tag).filter(_.live is l).map(_.id))
