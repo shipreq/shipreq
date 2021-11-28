@@ -33,6 +33,9 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
   def apply(to: Set[A]): Set[A] =
     (to -- removed) ++ added
 
+  def mapApply[B](f: A => B, to: Set[B]): Set[B] =
+    (to -- removed.iterator.map(f)) ++ added.iterator.map(f)
+
   def applyToMultimapKeys[V](mm: Multimap[A, Set, V])(v: V): Multimap[A, Set, V] = {
     var tmp = mm
     removed.foreach(a => tmp = tmp.del(a, v))

@@ -3,10 +3,12 @@ package shipreq.webapp.server.logic.algebra
 import cats.~>
 import java.sql.Connection
 import java.time.Instant
+import shipreq.base.util.SetDiff
 import shipreq.webapp.base.data._
-import shipreq.webapp.member.global.GlobalEvent
+import shipreq.webapp.member.global._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}
+import shipreq.webapp.member.social._
 import shipreq.webapp.server.logic.data._
 
 /**
@@ -209,6 +211,8 @@ object DB {
          with ForUserRegistration[F]
          with ForPasswordReset[F]
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   trait ForHomeSpa[F[_]]
       extends Base[F]
         with GetProjectMetaData[F] {
@@ -219,7 +223,22 @@ object DB {
                       encKey    : ProjectEncryptionKey): F[ProjectId]
 
     def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
+
+    def getUserGroupUniverseForUser(id: UserId): F[UserGroup.Universe[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]]]
+
+    def createUserGroup(name  : UserGroup.Name,
+                        handle: UserGroup.Handle,
+                        rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
+                       ): F[NonEmptySet[UserGroup.ValidationError[UserGroup.Id]] \/ UserGroup.Id]
+
+    def updateUserGroup(id    : UserGroup.Id,
+                        name  : Option[UserGroup.Name],
+                        handle: Option[UserGroup.Handle],
+                        rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
+                       ): F[Set[UserGroup.ValidationError[UserGroup.Id]]]
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait ForProjectSpa[F[_]]
       extends Base[F]

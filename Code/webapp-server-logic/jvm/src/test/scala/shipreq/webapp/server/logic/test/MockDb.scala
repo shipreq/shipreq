@@ -3,11 +3,13 @@ package shipreq.webapp.server.logic.test
 import cats.syntax.all._
 import cats.{Eval, ~>}
 import java.time.Instant
+import shipreq.base.test.Incrementor
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.global.GlobalEvent
-import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.{Live => _, _}
 import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.social._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.data._
@@ -61,7 +63,12 @@ object MockDb {
     def projectLoad: VerifiedEvent.Seq =
       events
   }
+
+  def withLiveClock(): MockDb =
+    new MockDb(Eval.always(Instant.now()))
 }
+
+// =====================================================================================================================
 
 final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecurity[Eval] with DB.ForOps[Eval] {
 
@@ -130,6 +137,21 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
   }
 
   var users = List.empty[MockDb.UserEntry]
+
+  def newUserId(): UserId = {
+    nextToken()
+    val id = UserId(prevTokenId)
+    val x = "u" + id.value
+    users ::= MockDb.UserEntry(
+      id        = id,
+      username  = Username(x),
+      emailAddr = EmailAddr(x + "@inmem.com"),
+      ps        = PasswordAndSalt(PasswordHash(x), Salt(x)),
+      encKey    = UserEncryptionKey(BinaryData.fromStringBytes(x + "-user-key")),
+      createdAt = now.value,
+    )
+    id
+  }
 
   def getUser(u: Username \/ EmailAddr): Option[MockDb.UserEntry] =
     users.find(e => u.fold(_ ==* e.username, _ ==* e.emailAddr))
@@ -318,4 +340,125 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
 
   override val dbSize =
     Eval.now(0L)
+
+  // ===================================================================================================================
+  // User group stuff
+
+  private val nextUserGroupId = Incrementor.long(0, UserGroup.Id.apply)
+  private var userGroups      = List.empty[UserGroup[UserGroup.Id]]
+  private var userGroupTree   = Set.empty[UserGroup.Rel[UserGroup.Id, UserGroup.Id]]
+  private var userGroupUsers  = Set.empty[UserGroup.Rel[UserGroup.Id, UserId]]
+
+  private def userGroupTreeGraph(userGroupTree: Set[UserGroup.Rel[UserGroup.Id, UserGroup.Id]] = userGroupTree) =
+    Digraph.BiDir(Multimap.empty[UserGroup.Id, Set, UserGroup.Id].addPairs(userGroupTree.iterator.map(_.fromTo).toSeq: _*))
+
+  def getUserGroupUniverseU(id: UserGroup.Id): UserGroup.Universe[UserId, Unit, UserGroup.Id, Unit] =
+    getUserGroupUniverseU(id, userGroups, userGroupTree, userGroupUsers)
+
+  private def getUserGroupUniverseU(id            : UserGroup.Id,
+                                    userGroups    : List[UserGroup[UserGroup.Id]],
+                                    userGroupTree : Set[UserGroup.Rel[UserGroup.Id, UserGroup.Id]],
+                                    userGroupUsers: Set[UserGroup.Rel[UserGroup.Id, UserId]]): UserGroup.Universe[UserId, Unit, UserGroup.Id, Unit] = {
+    val g   = userGroupTreeGraph(userGroupTree)
+    val ids = g.reachableFrom(id, Forwards)
+    mkUniverse(ids, userGroups, userGroupTree, userGroupUsers)(_ => (), _ => ())
+  }
+
+  private def mkUniverse[U, G](graphIds      : Set[UserGroup.Id],
+                               userGroups    : List[UserGroup[UserGroup.Id]] = this.userGroups,
+                               userGroupTree : Set[UserGroup.Rel[UserGroup.Id, UserGroup.Id]] = this.userGroupTree,
+                               userGroupUsers: Set[UserGroup.Rel[UserGroup.Id, UserId]] = this.userGroupUsers)
+                              (g             : UserGroup[UserGroup.Id] => G,
+                               u             : MockDb.UserEntry => U): UserGroup.Universe[UserId, U, UserGroup.Id, G] = {
+    import UserGroup._
+
+    val ugTree2  = userGroupTree.filter(r => graphIds.contains(r.from) && graphIds.contains(r.to))
+    val ugUsers2 = userGroupUsers.filter(r => graphIds.contains(r.from))
+    val userIds  = ugUsers2.iterator.map(_.to).toSet
+
+    def pm[A, B, C](rels: Set[Rel[A, B]])(f: Multimap[A, Set, B] => C): Map[Perm, C] =
+      Perm.values.iterator.flatMap { p =>
+        val pairs = rels.iterator.filter(_.perm ==* p).map(_.fromTo).toSeq
+        Option.when(pairs.nonEmpty) {
+          val mm    = Multimap.empty[A, Set, B].addPairs(pairs: _*)
+          p -> f(mm)
+        }
+      }.toMap
+
+    Universe[UserId, U, Id, G](
+      groupGraphMap    = pm(ugTree2)(Digraph.BiDir(_)),
+      groupsToUsersMap = pm(ugUsers2)(identity),
+      groups           = userGroups.iterator.filter(g => graphIds.contains(g.id)).map(e => e.id -> g(e)).toMap,
+      users            = users.iterator.filter(u => userIds.contains(u.id)).map(e => e.id -> u(e)).toMap,
+    )
+  }
+
+  override def createUserGroup(name  : UserGroup.Name,
+                               handle: UserGroup.Handle,
+                               rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
+                              ) = Eval.always[NonEmptySet[UserGroup.ValidationError[UserGroup.Id]] \/ UserGroup.Id] {
+
+    val id       = nextUserGroupId()
+    val parents  = rels.parents.map(_.reverse(id))
+    val children = rels.children.map(_.from(id))
+    val ugUsers  = rels.users.map(_.from(id))
+    val ugTree2  = userGroupTree ++ parents ++ children
+    val ugUsers2 = userGroupUsers ++ ugUsers
+    val ugs2     = UserGroup(id, name, handle, Live) :: userGroups
+    val universe = getUserGroupUniverseU(id, ugs2, ugTree2, ugUsers2)
+    val errors   = universe.validate(checkForCycles = true)
+
+    NonEmptySet.option(errors).toLeft {
+      userGroups     = ugs2
+      userGroupTree  = ugTree2
+      userGroupUsers = ugUsers2
+      id
+    }
+  }
+
+  override def updateUserGroup(id    : UserGroup.Id,
+                               name  : Option[UserGroup.Name],
+                               handle: Option[UserGroup.Handle],
+                               rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
+                              ) = Eval.always[Set[UserGroup.ValidationError[UserGroup.Id]]] {
+
+    val ug1      = userGroups.find(_.id ==* id).getOrThrow(s"User group #${id.value} not found")
+    var ug2      = ug1
+    var ugTree2  = userGroupTree
+    var ugUsers2 = userGroupUsers
+
+    for (n <- name) ug2 = ug2.copy(name = n)
+    for (h <- handle) ug2 = ug2.copy(handle = h)
+
+    ugTree2  = rels.children.mapApply(_.from(id), ugTree2)
+    ugTree2  = rels.parents.mapApply(_.reverse(id), ugTree2)
+    ugUsers2 = rels.users.mapApply(_.from(id), ugUsers2)
+
+    val ugs2     = if (ug1 eq ug2) userGroups else ug2 :: userGroups.filter(_ ne ug1)
+    val universe = getUserGroupUniverseU(id, ugs2, ugTree2, ugUsers2)
+
+    universe.validate(checkForCycles = true)
+  }
+
+  override def getUserGroupUniverseForUser(id: UserId) = Eval.always[UserGroup.Universe[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]]] {
+    val usersGroupsIds = userGroupUsers.iterator.filter(_.to ==* id).map(_.from).toSet
+    val graph          = userGroupTreeGraph()
+    val graphTC        = graph.transitiveClosure(Forwards, graph.members ++ usersGroupsIds)
+    try {
+      val graphIds = usersGroupsIds.flatMap(graphTC(_))
+      mkUniverse(graphIds)(identity, _.username)
+    } catch {
+      case t: Throwable =>
+        import UserGroup.Perm, Perm._
+        def ugu(p: Perm) = userGroupUsers.iterator.filter(_.perm ==* p).map(r => s"${r.from.value} -> ${r.to.value}").toArray.sortInPlace().mkString("{", ", ", "}")
+        println()
+        println(s"Error in MockDb getUserGroupUniverseForUser(${id.value})")
+        println("  usersGroupsIds       = " + usersGroupsIds.iterator.map(_.value).toArray.sortInPlace().mkString("{", ", ", "}"))
+        println("  userGroupTreeGraph() = " + userGroupTreeGraph().map(_.value))
+        println("  userGroupUsers[a]    = " + ugu(Admin))
+        println("  userGroupUsers[m]    = " + ugu(Member))
+        println()
+        throw t
+    }
+  }
 }
