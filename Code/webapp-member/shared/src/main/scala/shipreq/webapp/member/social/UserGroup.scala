@@ -65,8 +65,11 @@ object UserGroup {
   }
 
   object ARels {
-    def emptySet[G, U]: ARels[Set, G, U] =
+    def emptySet[G: UnivEq, U: UnivEq]: ARels[Set, G, U] =
       new ARels(Set.empty, Set.empty, Set.empty)
+
+    def emptySetDiff[G: UnivEq, U: UnivEq]: ARels[SetDiff, G, U] =
+      new ARels(SetDiff.empty, SetDiff.empty, SetDiff.empty)
   }
 
   @inline implicit def univEq      [A: UnivEq]           : UnivEq[UserGroup[A]] = UnivEq.derive
@@ -98,20 +101,6 @@ object UserGroup {
         groups          : Map[GI, G],
         users           : Map[UI, U],
       ) {
-
-    assert {
-      Perm.values.iterator
-        .flatMap(groupGraph(_).forwards.kvIterator.flatMap(x => x._1 :: x._2 :: Nil))
-        .find(!groups.contains(_))
-        .map(i => s"Group #$i found in graph but not groups map.")
-    }
-
-    assert {
-      Perm.values.iterator
-        .flatMap(groupsToUsers(_).keyIterator)
-        .find(!groups.contains(_))
-        .map(i => s"Group #$i found in groupsToUsers but not groups map.")
-    }
 
     assert {
       Perm.values.iterator
@@ -165,9 +154,25 @@ object UserGroup {
       if (acyclic) {
         val adminGroups = groupGraph(Perm.Admin).transitiveClosure(Backwards, groups.keysIterator)
         val adminUsers  = groupsToUsers(Perm.Admin)
-        for (gi <- groups.keys)
-          if (adminGroups(gi).forall(adminUsers(_).isEmpty))
-            result += ValidationError.NoAdminUsers(gi)
+        for (id <- groups.keys)
+          if (adminGroups(id).forall(adminUsers(_).isEmpty))
+            result += ValidationError.NoAdminUsers(id)
+      }
+
+      // ensure all group ids have a corresponding group
+      {
+        val validateGroupId: GI => Unit = id =>
+          if (!groups.contains(id))
+            result += ValidationError.GroupNotFound(id)
+
+        for (p <- Perm.values) {
+          for (e <- groupGraph(p).forwards.m) {
+            validateGroupId(e._1)
+            e._2.foreach(validateGroupId)
+          }
+
+          groupsToUsers(p).keys.foreach(validateGroupId)
+        }
       }
 
       result
@@ -194,8 +199,9 @@ object UserGroup {
 
   sealed trait ValidationError[+GI]
   object ValidationError {
-    final case class GraphCycle  [+GI](from: GI, to: GI, perm: Perm) extends ValidationError[GI]
-    final case class NoAdminUsers[+GI](group: GI)                    extends ValidationError[GI]
+    final case class GraphCycle   [+GI](from: GI, to: GI, perm: Perm) extends ValidationError[GI]
+    final case class NoAdminUsers [+GI](group: GI)                    extends ValidationError[GI]
+    final case class GroupNotFound[+GI](group: GI)                    extends ValidationError[GI]
 
     implicit def univEq[A: UnivEq]: UnivEq[ValidationError[A]] = UnivEq.derive
   }

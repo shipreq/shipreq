@@ -2,10 +2,11 @@ package shipreq.webapp.server.logic.laws
 
 import cats.implicits._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
-import shipreq.base.util.Digraph
+import scala.util.Try
+import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.social.UserGroup.Perm._
-import shipreq.webapp.member.social.UserGroup.{ARel, Handle, Id, Name, Perm, Universe}
+import shipreq.webapp.member.social.UserGroup.{Handle, Id, Name, Perm, Universe}
 import shipreq.webapp.member.social._
 import shipreq.webapp.member.test.project.UnsafeTypes._
 import shipreq.webapp.server.logic.test.WebappServerLogicTestUtil._
@@ -96,18 +97,34 @@ object DbUserGroupLaws {
   type UniverseU = Universe[UserId, Unit, Id, Unit]
 
   type ARels = UserGroup.ARels[Set, Id, UserId]
+  type ARelDiffs = UserGroup.ARels[SetDiff, Id, UserId]
 
   trait ARelsDsl[+A] {
     protected def mod(f: ARels => ARels): A
+    def admins        (ids: UserId*): A = mod(_.modUsers(_ ++ ids.map(ARel(_, Admin))))
+    def members       (ids: UserId*): A = mod(_.modUsers(_ ++ ids.map(ARel(_, Member))))
+    def adminChildren (ids: Id*)    : A = mod(_.modChildren(_ ++ ids.map(ARel(_, Admin))))
+    def memberChildren(ids: Id*)    : A = mod(_.modChildren(_ ++ ids.map(ARel(_, Member))))
+    def adminParents  (ids: Id*)    : A = mod(_.modParents(_ ++ ids.map(ARel(_, Admin))))
+    def memberParents (ids: Id*)    : A = mod(_.modParents(_ ++ ids.map(ARel(_, Member))))
+  }
 
-    def admins (ids: UserId*): A = mod(_.modUsers(_ ++ ids.map(ARel(_, Admin))))
-    def members(ids: UserId*): A = mod(_.modUsers(_ ++ ids.map(ARel(_, Member))))
+  trait ARelDiffsDsl[+A] {
+    protected def mod(f: ARelDiffs => ARelDiffs): A
 
-    def adminChildren (ids: Id*): A = mod(_.modChildren(_ ++ ids.map(ARel(_, Admin))))
-    def memberChildren(ids: Id*): A = mod(_.modChildren(_ ++ ids.map(ARel(_, Member))))
+    def addAdmins        (ids: UserId*): A = mod(_.modUsers(_ ++ ids.map(ARel(_, Admin))))
+    def addMembers       (ids: UserId*): A = mod(_.modUsers(_ ++ ids.map(ARel(_, Member))))
+    def addAdminChildren (ids: Id*)    : A = mod(_.modChildren(_ ++ ids.map(ARel(_, Admin))))
+    def addMemberChildren(ids: Id*)    : A = mod(_.modChildren(_ ++ ids.map(ARel(_, Member))))
+    def addAdminParents  (ids: Id*)    : A = mod(_.modParents(_ ++ ids.map(ARel(_, Admin))))
+    def addMemberParents (ids: Id*)    : A = mod(_.modParents(_ ++ ids.map(ARel(_, Member))))
 
-    def adminParents (ids: Id*): A = mod(_.modParents(_ ++ ids.map(ARel(_, Admin))))
-    def memberParents(ids: Id*): A = mod(_.modParents(_ ++ ids.map(ARel(_, Member))))
+    def delAdmins        (ids: UserId*): A = mod(_.modUsers(_ -- ids.map(ARel(_, Admin))))
+    def delMembers       (ids: UserId*): A = mod(_.modUsers(_ -- ids.map(ARel(_, Member))))
+    def delAdminChildren (ids: Id*)    : A = mod(_.modChildren(_ -- ids.map(ARel(_, Admin))))
+    def delMemberChildren(ids: Id*)    : A = mod(_.modChildren(_ -- ids.map(ARel(_, Member))))
+    def delAdminParents  (ids: Id*)    : A = mod(_.modParents(_ -- ids.map(ARel(_, Admin))))
+    def delMemberParents (ids: Id*)    : A = mod(_.modParents(_ -- ids.map(ARel(_, Member))))
   }
 
 }
@@ -127,6 +144,7 @@ abstract class DbUserGroupLaws extends TestSuite {
   protected trait DbApi {
     def createUser(): UserId
     def createUserGroup: (Name, Handle, ARels) => NonEmptySet[ValidationError] \/ Id
+    def updateUserGroup: (Id, Option[Name], Option[Handle], ARelDiffs) => Set[ValidationError]
     def getUserGroupUniverseU: Id => UniverseU
     def getUserGroupUniverseForUser: UserId => Universe[UserId, Username, Id, UserGroup[Id]]
   }
@@ -143,18 +161,31 @@ abstract class DbUserGroupLaws extends TestSuite {
       val id = uuid("ug")
       db.createUserGroup(id, id, rels)
     }
+  }
 
-    // def createR() =
-    //   (create(), rels)
+  private class UpdateUserGroupDsl(id: Id, rels: ARelDiffs)(implicit db: DbApi) extends ARelDiffsDsl[UpdateUserGroupDsl] {
+    override protected def mod(f: ARelDiffs => ARelDiffs) = new UpdateUserGroupDsl(id, f(rels))
+
+    def update(name: Name = null, handle: Handle = null) =
+      db.updateUserGroup(id, Option(name), Option(handle), rels)
   }
 
   private final class Tester()(implicit val db: DbApi) {
     def createUser() = db.createUser()
     def createUserGroup = new CreateUserGroupDsl(UserGroup.ARels.emptySet)
+    def updateUserGroup(id: Id) = new UpdateUserGroupDsl(id, UserGroup.ARels.emptySetDiff)
 
     def assertUniverse(g: Id, expect: UniverseU)(implicit q: Line): Unit = {
       val actual = db.getUserGroupUniverseU(g)
-      assertEq(actual, expect)
+      if (actual !=* expect) {
+        for (p <- Perm.values) {
+          Try(assertMap(s"groupGraph($p)", actual.groupGraph(p).forwards.m, expect.groupGraph(p).forwards.m))
+          Try(assertMap(s"groupsToUsers($p)", actual.groupsToUsers(p).m, expect.groupsToUsers(p).m))
+        }
+        Try(assertMap("groups", actual.groups, expect.groups))
+        Try(assertMap("users", actual.users, expect.users))
+        assertEq(actual, expect)
+      }
 
       for {
         p <- Perm.values
@@ -288,7 +319,120 @@ abstract class DbUserGroupLaws extends TestSuite {
     assertMatch(r.head) { case UserGroup.ValidationError.GraphCycle(_, _, _) => }
   }
 
+  private def createBad() = test { (t, u) =>
+    val g1 = t.createUserGroup.admins(u).create().getOrThrow()
+    val g2 = Id(g1.value + 9999)
+    val r  = t.createUserGroup.admins(u).adminChildren(g1, g2).create().getLeftOrThrow()
+    assertSeq(r, Set[ValidationError](UserGroup.ValidationError.GroupNotFound(g2)))
+  }
+
+  private def updateOk() = test { (t, u) =>
+    val g    = t.createUserGroup.admins(u).create().getOrThrow()
+    val guca = t.createUserGroup.admins(u).adminParents(g).create().getOrThrow()
+    val gupa = t.createUserGroup.admins(u).adminChildren(g).create().getOrThrow()
+    val gucm = t.createUserGroup.admins(u).memberParents(g).create().getOrThrow()
+    val gupm = t.createUserGroup.admins(u).memberChildren(g).create().getOrThrow()
+    val gxca = t.createUserGroup.admins(u).adminParents(g).create().getOrThrow()
+    val gxpa = t.createUserGroup.admins(u).adminChildren(g).create().getOrThrow()
+    val gxcm = t.createUserGroup.admins(u).memberParents(g).create().getOrThrow()
+    val gxpm = t.createUserGroup.admins(u).memberChildren(g).create().getOrThrow()
+    val gtop = t.createUserGroup.admins(u).memberChildren(gupa, gupm, gxpa, gxpm, guca, gucm, g).create().getOrThrow()
+
+    try {
+
+      t.assertUniverse(gtop, newUniverse
+        .admins(g)(u)
+        .admins(guca)(u)
+        .admins(gupa)(u)
+        .admins(gucm)(u)
+        .admins(gupm)(u)
+        .admins(gxca)(u)
+        .admins(gxpa)(u)
+        .admins(gxcm)(u)
+        .admins(gxpm)(u)
+        .admins(gtop)(u)
+        .adminParents(g)(gxpa, gupa)
+        .adminChildren(g)(gxca, guca)
+        .memberParents(g)(gxpm, gupm)
+        .memberChildren(g)(gxcm, gucm)
+        .memberChildren(gtop)(gupa, gupm, gxpa, gxpm, guca, gucm, g)
+        .result
+      )
+
+      val g2 = t.createUserGroup.admins(u).create().getOrThrow()
+
+      val errors =
+        t.updateUserGroup(g)
+          .delAdminParents(gupa)
+          .delAdminChildren(guca)
+          .delMemberParents(gupm)
+          .delMemberChildren(gucm)
+          .addAdminParents(gucm)
+          .addAdminChildren(gupm)
+          .addMemberParents(guca)
+          .addMemberChildren(gupa, g2)
+          .update("name!", "handle")
+
+      assertEq(errors, Set.empty[ValidationError])
+
+      t.assertUniverse(gtop, newUniverse
+        .admins(g)(u)
+        .admins(guca)(u)
+        .admins(gupa)(u)
+        .admins(gucm)(u)
+        .admins(gupm)(u)
+        .admins(gxca)(u)
+        .admins(gxpa)(u)
+        .admins(gxcm)(u)
+        .admins(gxpm)(u)
+        .admins(gtop)(u)
+        .admins(g2)(u)
+        .adminParents(g)(gxpa, gucm)
+        .adminChildren(g)(gxca, gupm)
+        .memberParents(g)(gxpm, guca)
+        .memberChildren(g)(gxcm, gupa, g2)
+        .memberChildren(gtop)(gupa, gupm, gxpa, gxpm, guca, gucm, g)
+        .result
+      )
+
+      val ug = t.db.getUserGroupUniverseForUser(u).groups(g)
+      assertEq("new name", ug.name, Name("name!"))
+      assertEq("new handle", ug.handle, Handle("handle"))
+
+    } catch {
+      case t: Throwable =>
+        println(s"g=${g.value}, guca=${guca.value}, gupa=${gupa.value}, gucm=${gucm.value}, gupm=${gupm.value}, gxca=${gxca.value}, gxpa=${gxpa.value}, gxcm=${gxcm.value}, gxpm=${gxpm.value}, gtop=${gtop.value}")
+        println()
+        throw t
+    }
+  }
+
+  private def updateCycle() = test { (t, u) =>
+    val g1 = t.createUserGroup.admins(u).create().getOrThrow()
+    val g2 = t.createUserGroup.admins(u).adminParents(g1).create().getOrThrow()
+    val g3 = t.createUserGroup.admins(u).adminParents(g2).create().getOrThrow()
+    val es = t.updateUserGroup(g3).addAdminChildren(g1).update()
+    assertEq(1, es.size)
+    assertMatch(es.head) { case UserGroup.ValidationError.GraphCycle(_, _, _) => }
+  }
+
+  private def updateBadDel() = test { (t, u) =>
+    val g  = t.createUserGroup.admins(u).create().getOrThrow()
+    val g2 = Id(g.value + 9999)
+    val es = t.updateUserGroup(g).delAdminChildren(g2).update()
+    assertSeq(es, Set[ValidationError](UserGroup.ValidationError.GroupNotFound(g2)))
+  }
+
+  private def updateBadAdd() = test { (t, u) =>
+    val g  = t.createUserGroup.admins(u).create().getOrThrow()
+    val g2 = Id(g.value + 9999)
+    val es = t.updateUserGroup(g).addAdminChildren(g2).update()
+    assertSeq(es, Set[ValidationError](UserGroup.ValidationError.GroupNotFound(g2)))
+  }
+
   // ===================================================================================================================
+
+  // TODO: graph cycles with admin & member combinations
 
   override def tests = Tests {
     beforeTest()
@@ -296,6 +440,7 @@ abstract class DbUserGroupLaws extends TestSuite {
     "create" - {
       "sole" - createSole()
       "cycle" - createCycle()
+      "bad" - createBad()
       "tree" - {
         "a" - createTree('a')
         "b" - createTree('b')
@@ -305,6 +450,13 @@ abstract class DbUserGroupLaws extends TestSuite {
         "f" - createTree('f')
         "g" - createTree('g')
       }
+    }
+
+    "update" - {
+      "ok" - updateOk()
+      "cycle" - updateCycle()
+      "badDel" - updateBadDel()
+      "badAdd" - updateBadAdd()
     }
   }
 }

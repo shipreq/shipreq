@@ -24,6 +24,12 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
 
   def nonEmpty = !isEmpty
 
+  def ++(as: IterableOnce[A]): SetDiff[A] =
+    new SetDiff(removed, added ++ as)
+
+  def --(as: IterableOnce[A]): SetDiff[A] =
+    new SetDiff(removed ++ as, added)
+
   def inverse: SetDiff[A] =
     new SetDiff(added, removed)
 

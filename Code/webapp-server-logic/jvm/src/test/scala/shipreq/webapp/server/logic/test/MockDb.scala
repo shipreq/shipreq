@@ -409,9 +409,9 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     val errors   = universe.validate(checkForCycles = true)
 
     NonEmptySet.option(errors).toLeft {
-      userGroups     = ugs2
-      userGroupTree  = ugTree2
-      userGroupUsers = ugUsers2
+      this.userGroups     = ugs2
+      this.userGroupTree  = ugTree2
+      this.userGroupUsers = ugUsers2
       id
     }
   }
@@ -421,6 +421,7 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
                                handle: Option[UserGroup.Handle],
                                rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
                               ) = Eval.always[Set[UserGroup.ValidationError[UserGroup.Id]]] {
+    import UserGroup._
 
     val ug1      = userGroups.find(_.id ==* id).getOrThrow(s"User group #${id.value} not found")
     var ug2      = ug1
@@ -430,14 +431,50 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     for (n <- name) ug2 = ug2.copy(name = n)
     for (h <- handle) ug2 = ug2.copy(handle = h)
 
-    ugTree2  = rels.children.mapApply(_.from(id), ugTree2)
-    ugTree2  = rels.parents.mapApply(_.reverse(id), ugTree2)
-    ugUsers2 = rels.users.mapApply(_.from(id), ugUsers2)
+    var errors = Set.empty[ValidationError[Id]]
 
-    val ugs2     = if (ug1 eq ug2) userGroups else ug2 :: userGroups.filter(_ ne ug1)
-    val universe = getUserGroupUniverseU(id, ugs2, ugTree2, ugUsers2)
+    def applySetDiff[A, B](d: SetDiff[A])(f: A => B, to: Set[B])(v: B => Option[ValidationError[Id]]): Set[B] = {
+      var results = to
 
-    universe.validate(checkForCycles = true)
+      for (a <- d.removed) {
+        val b = f(a)
+        v(b) match {
+          case None    => results -= b
+          case Some(e) => errors += e
+        }
+      }
+
+      for (a <- d.added) {
+        val b = f(a)
+        results += b
+      }
+
+      results
+    }
+
+    def validateUG(id: Id): Option[ValidationError[Id]] =
+      Option.when(userGroups.forall(id !=* _.id))(ValidationError.GroupNotFound(id))
+
+    val validateUGUG: Rel[Id, Id] => Option[ValidationError[Id]] =
+      r => validateUG(r.from) orElse validateUG(r.to)
+
+    ugTree2  = applySetDiff(rels.children)(_.from(id)   , ugTree2 )(validateUGUG)
+    ugTree2  = applySetDiff(rels.parents )(_.reverse(id), ugTree2 )(validateUGUG)
+    ugUsers2 = applySetDiff(rels.users   )(_.from(id)   , ugUsers2)(r => validateUG(r.from))
+
+    if (errors.isEmpty) {
+      val ugs2     = if (ug1 eq ug2) userGroups else ug2 :: userGroups.filter(_ ne ug1)
+      val universe = getUserGroupUniverseU(id, ugs2, ugTree2, ugUsers2)
+      errors       = universe.validate(checkForCycles = true)
+
+      if (errors.isEmpty) {
+        this.userGroups     = ugs2
+        this.userGroupTree  = ugTree2
+        this.userGroupUsers = ugUsers2
+      }
+    }
+
+    errors
   }
 
   override def getUserGroupUniverseForUser(id: UserId) = Eval.always[UserGroup.Universe[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]]] {

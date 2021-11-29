@@ -126,19 +126,33 @@ object Social {
       }
     }
 
+  private implicit val picklerUserGroupValidationErrorGroupNotFound: Pickler[UserGroup.ValidationError.GroupNotFound[UserGroup.Id.Public]] =
+    new Pickler[UserGroup.ValidationError.GroupNotFound[UserGroup.Id.Public]] {
+      override def pickle(a: UserGroup.ValidationError.GroupNotFound[UserGroup.Id.Public])(implicit state: PickleState): Unit = {
+        state.pickle(a.group)
+      }
+      override def unpickle(implicit state: UnpickleState): UserGroup.ValidationError.GroupNotFound[UserGroup.Id.Public] = {
+        val group = state.unpickle[UserGroup.Id.Public]
+        UserGroup.ValidationError.GroupNotFound(group)
+      }
+    }
+
   implicit val picklerUserGroupValidationError: Pickler[UserGroup.ValidationError[UserGroup.Id.Public]] =
     new Pickler[UserGroup.ValidationError[UserGroup.Id.Public]] {
-      private[this] final val KeyGraphCycle   = 0
-      private[this] final val KeyNoAdminUsers = 1
+      private[this] final val KeyGraphCycle    = 0
+      private[this] final val KeyNoAdminUsers  = 1
+      private[this] final val KeyGroupNotFound = 2
       override def pickle(a: UserGroup.ValidationError[UserGroup.Id.Public])(implicit state: PickleState): Unit =
         a match {
-          case b: UserGroup.ValidationError.GraphCycle[UserGroup.Id.Public]   => state.enc.writeByte(KeyGraphCycle  ); state.pickle(b)
-          case b: UserGroup.ValidationError.NoAdminUsers[UserGroup.Id.Public] => state.enc.writeByte(KeyNoAdminUsers); state.pickle(b)
+          case b: UserGroup.ValidationError.GraphCycle   [UserGroup.Id.Public] => state.enc.writeByte(KeyGraphCycle   ); state.pickle(b)
+          case b: UserGroup.ValidationError.NoAdminUsers [UserGroup.Id.Public] => state.enc.writeByte(KeyNoAdminUsers ); state.pickle(b)
+          case b: UserGroup.ValidationError.GroupNotFound[UserGroup.Id.Public] => state.enc.writeByte(KeyGroupNotFound); state.pickle(b)
         }
       override def unpickle(implicit state: UnpickleState): UserGroup.ValidationError[UserGroup.Id.Public] =
         state.dec.readByte match {
-          case KeyGraphCycle   => state.unpickle[UserGroup.ValidationError.GraphCycle[UserGroup.Id.Public]]
-          case KeyNoAdminUsers => state.unpickle[UserGroup.ValidationError.NoAdminUsers[UserGroup.Id.Public]]
+          case KeyGraphCycle    => state.unpickle[UserGroup.ValidationError.GraphCycle   [UserGroup.Id.Public]]
+          case KeyNoAdminUsers  => state.unpickle[UserGroup.ValidationError.NoAdminUsers [UserGroup.Id.Public]]
+          case KeyGroupNotFound => state.unpickle[UserGroup.ValidationError.GroupNotFound[UserGroup.Id.Public]]
         }
     }
 
