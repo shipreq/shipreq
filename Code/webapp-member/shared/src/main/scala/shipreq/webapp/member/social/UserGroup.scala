@@ -143,10 +143,9 @@ object UserGroup {
       // no group cycles
       if (checkForCycles) {
         val cycleDetector = Digraph.cycleDetector[GI]
-        for {
-          p <- Perm.values
-          c <- cycleDetector.findCycle(groupGraph(p).forwards.m)
-        } result += ValidationError.GraphCycle(c._1, c._2, p)
+        val graph = Perm.values.iterator.map(groupGraph(_).forwards).reduce(_ ++ _.m)
+        for (c <- cycleDetector.findCycle(graph.m))
+          result += ValidationError.GraphCycle(c._1, c._2)
       }
       val acyclic = result.isEmpty
 
@@ -199,9 +198,9 @@ object UserGroup {
 
   sealed trait ValidationError[+GI]
   object ValidationError {
-    final case class GraphCycle   [+GI](from: GI, to: GI, perm: Perm) extends ValidationError[GI]
-    final case class NoAdminUsers [+GI](group: GI)                    extends ValidationError[GI]
-    final case class GroupNotFound[+GI](group: GI)                    extends ValidationError[GI]
+    final case class GraphCycle   [+GI](from: GI, to: GI) extends ValidationError[GI]
+    final case class NoAdminUsers [+GI](group: GI)        extends ValidationError[GI]
+    final case class GroupNotFound[+GI](group: GI)        extends ValidationError[GI]
 
     implicit def univEq[A: UnivEq]: UnivEq[ValidationError[A]] = UnivEq.derive
   }

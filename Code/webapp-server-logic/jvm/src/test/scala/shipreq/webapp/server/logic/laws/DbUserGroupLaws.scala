@@ -313,10 +313,10 @@ abstract class DbUserGroupLaws extends TestSuite {
 
   private def createCycle() = test { (t, u) =>
     val g1 = t.createUserGroup.admins(u).create().getOrThrow()
-    val g2 = t.createUserGroup.admins(u).adminParents(g1).create().getOrThrow()
+    val g2 = t.createUserGroup.admins(u).memberParents(g1).create().getOrThrow()
     val r = t.createUserGroup.admins(u).adminParents(g2).adminChildren(g1).create().getLeftOrThrow()
     assertEq(1, r.size)
-    assertMatch(r.head) { case UserGroup.ValidationError.GraphCycle(_, _, _) => }
+    assertMatch(r.head) { case UserGroup.ValidationError.GraphCycle(_, _) => }
   }
 
   private def createBad() = test { (t, u) =>
@@ -409,11 +409,11 @@ abstract class DbUserGroupLaws extends TestSuite {
 
   private def updateCycle() = test { (t, u) =>
     val g1 = t.createUserGroup.admins(u).create().getOrThrow()
-    val g2 = t.createUserGroup.admins(u).adminParents(g1).create().getOrThrow()
+    val g2 = t.createUserGroup.admins(u).memberParents(g1).create().getOrThrow()
     val g3 = t.createUserGroup.admins(u).adminParents(g2).create().getOrThrow()
     val es = t.updateUserGroup(g3).addAdminChildren(g1).update()
     assertEq(1, es.size)
-    assertMatch(es.head) { case UserGroup.ValidationError.GraphCycle(_, _, _) => }
+    assertMatch(es.head) { case UserGroup.ValidationError.GraphCycle(_, _) => }
   }
 
   private def updateBadDel() = test { (t, u) =>
@@ -431,8 +431,6 @@ abstract class DbUserGroupLaws extends TestSuite {
   }
 
   // ===================================================================================================================
-
-  // TODO: graph cycles with admin & member combinations
 
   override def tests = Tests {
     beforeTest()

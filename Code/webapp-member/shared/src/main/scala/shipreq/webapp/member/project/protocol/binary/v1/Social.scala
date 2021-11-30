@@ -105,13 +105,11 @@ object Social {
       override def pickle(a: UserGroup.ValidationError.GraphCycle[UserGroup.Id.Public])(implicit state: PickleState): Unit = {
         state.pickle(a.from)
         state.pickle(a.to)
-        state.pickle(a.perm)
       }
       override def unpickle(implicit state: UnpickleState): UserGroup.ValidationError.GraphCycle[UserGroup.Id.Public] = {
         val from = state.unpickle[UserGroup.Id.Public]
         val to   = state.unpickle[UserGroup.Id.Public]
-        val perm = state.unpickle[UserGroup.Perm]
-        UserGroup.ValidationError.GraphCycle(from, to, perm)
+        UserGroup.ValidationError.GraphCycle(from, to)
       }
     }
 
