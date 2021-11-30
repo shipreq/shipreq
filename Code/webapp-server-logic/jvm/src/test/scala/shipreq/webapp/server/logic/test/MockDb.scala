@@ -355,13 +355,40 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
   def getUserGroupUniverseU(id: UserGroup.Id): UserGroup.Universe[UserId, Unit, UserGroup.Id, Unit] =
     getUserGroupUniverseU(id, userGroups, userGroupTree, userGroupUsers)
 
+  private def universeScope(graph: Digraph.BiDir[UserGroup.Id], usersGroupsIds: List[UserGroup.Id]): Set[UserGroup.Id] = {
+    val roots = graph.terminals(Backwards, usersGroupsIds.toList)
+    val tc    = graph.transitiveClosure(Forwards, graph.members ++ usersGroupsIds)
+    (roots ++ usersGroupsIds).flatMap(tc(_))
+  }
+
   private def getUserGroupUniverseU(id            : UserGroup.Id,
                                     userGroups    : List[UserGroup[UserGroup.Id]],
                                     userGroupTree : Set[UserGroup.Rel[UserGroup.Id, UserGroup.Id]],
                                     userGroupUsers: Set[UserGroup.Rel[UserGroup.Id, UserId]]): UserGroup.Universe[UserId, Unit, UserGroup.Id, Unit] = {
-    val g   = userGroupTreeGraph(userGroupTree)
-    val ids = g.reachableFrom(id, Forwards)
+    val graph = userGroupTreeGraph(userGroupTree)
+    val ids   = universeScope(graph, id :: Nil)
     mkUniverse(ids, userGroups, userGroupTree, userGroupUsers)(_ => (), _ => ())
+  }
+
+  override def getUserGroupUniverseForUser(id: UserId) = Eval.always[UserGroup.Universe[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]]] {
+    val usersGroupsIds = userGroupUsers.iterator.filter(_.to ==* id).map(_.from).toSet
+    val graph          = userGroupTreeGraph()
+    try {
+      val ids = universeScope(graph, usersGroupsIds.toList)
+      mkUniverse(ids)(identity, _.username)
+    } catch {
+      case t: Throwable =>
+        import UserGroup.Perm, Perm._
+        def ugu(p: Perm) = userGroupUsers.iterator.filter(_.perm ==* p).map(r => s"${r.from.value} -> ${r.to.value}").toArray.sortInPlace().mkString("{", ", ", "}")
+        println()
+        println(s"Error in MockDb getUserGroupUniverseForUser(${id.value})")
+        println("  usersGroupsIds       = " + usersGroupsIds.iterator.map(_.value).toArray.sortInPlace().mkString("{", ", ", "}"))
+        println("  userGroupTreeGraph() = " + userGroupTreeGraph().map(_.value))
+        println("  userGroupUsers[a]    = " + ugu(Admin))
+        println("  userGroupUsers[m]    = " + ugu(Member))
+        println()
+        throw t
+    }
   }
 
   private def mkUniverse[U, G](graphIds      : Set[UserGroup.Id],
@@ -475,27 +502,5 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     }
 
     errors
-  }
-
-  override def getUserGroupUniverseForUser(id: UserId) = Eval.always[UserGroup.Universe[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]]] {
-    val usersGroupsIds = userGroupUsers.iterator.filter(_.to ==* id).map(_.from).toSet
-    val graph          = userGroupTreeGraph()
-    val graphTC        = graph.transitiveClosure(Forwards, graph.members ++ usersGroupsIds)
-    try {
-      val graphIds = usersGroupsIds.flatMap(graphTC(_))
-      mkUniverse(graphIds)(identity, _.username)
-    } catch {
-      case t: Throwable =>
-        import UserGroup.Perm, Perm._
-        def ugu(p: Perm) = userGroupUsers.iterator.filter(_.perm ==* p).map(r => s"${r.from.value} -> ${r.to.value}").toArray.sortInPlace().mkString("{", ", ", "}")
-        println()
-        println(s"Error in MockDb getUserGroupUniverseForUser(${id.value})")
-        println("  usersGroupsIds       = " + usersGroupsIds.iterator.map(_.value).toArray.sortInPlace().mkString("{", ", ", "}"))
-        println("  userGroupTreeGraph() = " + userGroupTreeGraph().map(_.value))
-        println("  userGroupUsers[a]    = " + ugu(Admin))
-        println("  userGroupUsers[m]    = " + ugu(Member))
-        println()
-        throw t
-    }
   }
 }

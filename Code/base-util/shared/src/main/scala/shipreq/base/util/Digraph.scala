@@ -75,6 +75,57 @@ object Digraph {
 
     def asSubsetOf(f: BiDir[A]): BiDir[A] =
       BiDir(forwards.asSubsetOf(f.forwards))
+
+    /** reflective */
+    def deepTree(dir: Direction, from: A): Set[A] =
+      deepTree(dir, from :: Nil)
+
+    /** reflective */
+    def deepTree(dir: Direction, from: List[A]): Set[A] = {
+      val graph = this(dir)
+      @tailrec
+      def go(queue: List[A], results: Set[A]): Set[A] =
+        queue match {
+          case a :: queue2 =>
+            if (results.contains(a))
+              go(queue2, results)
+            else {
+              val queue3 = graph(a).foldLeft(queue2)(_.::(_))
+              go(queue3, results + a)
+            }
+          case Nil =>
+            results
+        }
+      go(from, Set.empty)
+    }
+
+    /** reflective */
+    def terminals(dir: Direction, from: A): Set[A] =
+      terminals(dir, from :: Nil)
+
+    /** reflective */
+    def terminals(dir: Direction, from: List[A]): Set[A] = {
+      val graph = this(dir)
+      @tailrec
+      def go(queue: List[A], seen: Set[A], results: Set[A]): Set[A] =
+        queue match {
+          case a :: queue2 =>
+            if (seen.contains(a))
+              go(queue2, seen, results)
+            else {
+              val children = graph(a)
+              if (children.isEmpty)
+                go(queue2, seen + a, results + a)
+              else {
+                val queue3 = children.foldLeft(queue2)(_.::(_))
+                go(queue3, seen + a, results)
+              }
+            }
+          case Nil =>
+            results
+        }
+      go(from, Set.empty, Set.empty)
+    }
   }
 
   // ===================================================================================================================

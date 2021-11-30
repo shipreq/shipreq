@@ -263,30 +263,21 @@ abstract class DbUserGroupLaws extends TestSuite {
     val gf = t.createUserGroup.admins(uaf).members(umf).adminParents (gc).create().getOrThrow()
     val gg = t.createUserGroup.admins(uag).members(umg).memberParents(gc).create().getOrThrow()
 
-    def expect(g: Id): UniverseU = {
+    val e: UniverseU = {
       var u = newUniverse
 
-      def addd() = {u = u(gd)(_.admins(uad).members(umd))}
-      def adde() = {u = u(ge)(_.admins(uae).members(ume))}
-      def addf() = {u = u(gf)(_.admins(uaf).members(umf))}
-      def addg() = {u = u(gg)(_.admins(uag).members(umg))}
-      def addb() = {u = u(gb)(_.admins(uab).members(umb).adminChildren(gd).memberChildren(ge)); addd(); adde()}
-      def addc() = {u = u(gc)(_.admins(uac).members(umc).adminChildren(gf).memberChildren(gg)); addf(); addg()}
-      def adda() = {u = u(ga)(_.admins(uaa).members(uma).adminChildren(gb).memberChildren(gc)); addb(); addc()}
-
-      if (g == ga) adda()
-      if (g == gb) addb()
-      if (g == gc) addc()
-      if (g == gd) addd()
-      if (g == ge) adde()
-      if (g == gf) addf()
-      if (g == gg) addg()
+      u = u(ga)(_.admins(uaa).members(uma).adminChildren(gb).memberChildren(gc))
+      u = u(gb)(_.admins(uab).members(umb).adminChildren(gd).memberChildren(ge))
+      u = u(gc)(_.admins(uac).members(umc).adminChildren(gf).memberChildren(gg))
+      u = u(gd)(_.admins(uad).members(umd))
+      u = u(ge)(_.admins(uae).members(ume))
+      u = u(gf)(_.admins(uaf).members(umf))
+      u = u(gg)(_.admins(uag).members(umg))
 
       u.result
     }
 
-    def test(g: Id)(admins: UserId*)(members: UserId*)(implicit l: Line) = {
-      val e = expect(g)
+    def test(g: Id)(admins: UserId*)(members: UserId*)(implicit l: Line) =
       try {
         t.assertUniverse(g, e)
         assertEq(s"Admin users of group $g", e.allUsersInGroup(g, Admin), admins.toSet)
@@ -298,7 +289,6 @@ abstract class DbUserGroupLaws extends TestSuite {
           println(s"Expecting $e")
           throw t
       }
-    }
 
     testSubject match {
       case 'a' => test(ga)(uaa, uab, uad)(uma, umc, umg)
@@ -314,16 +304,35 @@ abstract class DbUserGroupLaws extends TestSuite {
   private def createCycle() = test { (t, u) =>
     val g1 = t.createUserGroup.admins(u).create().getOrThrow()
     val g2 = t.createUserGroup.admins(u).memberParents(g1).create().getOrThrow()
-    val r = t.createUserGroup.admins(u).adminParents(g2).adminChildren(g1).create().getLeftOrThrow()
+    val r  = t.createUserGroup.admins(u).adminParents(g2).adminChildren(g1).create().getLeftOrThrow()
     assertEq(1, r.size)
     assertMatch(r.head) { case UserGroup.ValidationError.GraphCycle(_, _) => }
   }
 
-  private def createBad() = test { (t, u) =>
+  private def createBadGroup() = test { (t, u) =>
     val g1 = t.createUserGroup.admins(u).create().getOrThrow()
     val g2 = Id(g1.value + 9999)
     val r  = t.createUserGroup.admins(u).adminChildren(g1, g2).create().getLeftOrThrow()
     assertSeq(r, Set[ValidationError](UserGroup.ValidationError.GroupNotFound(g2)))
+  }
+
+  private def createNoAdmin() = test { (t, u) =>
+    val r = t.createUserGroup.members(u).create().getLeftOrThrow()
+    assertEq(1, r.size)
+    assertMatch(r.head) { case UserGroup.ValidationError.NoAdminUsers(_) => }
+  }
+
+  private def createParentAdmin() = test { (t, u) =>
+    val g = t.createUserGroup.admins(u).create().getOrThrow()
+    t.createUserGroup.adminParents(g).create().getOrThrow()
+    ()
+  }
+
+  private def createChildAdmin() = test { (t, u) =>
+    val g = t.createUserGroup.admins(u).create().getOrThrow()
+    val r = t.createUserGroup.adminChildren(g).create().getLeftOrThrow()
+    assertEq(1, r.size)
+    assertMatch(r.head) { case UserGroup.ValidationError.NoAdminUsers(_) => }
   }
 
   private def updateOk() = test { (t, u) =>
@@ -336,11 +345,10 @@ abstract class DbUserGroupLaws extends TestSuite {
     val gxpa = t.createUserGroup.admins(u).adminChildren(g).create().getOrThrow()
     val gxcm = t.createUserGroup.admins(u).memberParents(g).create().getOrThrow()
     val gxpm = t.createUserGroup.admins(u).memberChildren(g).create().getOrThrow()
-    val gtop = t.createUserGroup.admins(u).memberChildren(gupa, gupm, gxpa, gxpm, guca, gucm, g).create().getOrThrow()
 
     try {
 
-      t.assertUniverse(gtop, newUniverse
+      t.assertUniverse(g, newUniverse
         .admins(g)(u)
         .admins(guca)(u)
         .admins(gupa)(u)
@@ -350,12 +358,10 @@ abstract class DbUserGroupLaws extends TestSuite {
         .admins(gxpa)(u)
         .admins(gxcm)(u)
         .admins(gxpm)(u)
-        .admins(gtop)(u)
         .adminParents(g)(gxpa, gupa)
         .adminChildren(g)(gxca, guca)
         .memberParents(g)(gxpm, gupm)
         .memberChildren(g)(gxcm, gucm)
-        .memberChildren(gtop)(gupa, gupm, gxpa, gxpm, guca, gucm, g)
         .result
       )
 
@@ -375,7 +381,7 @@ abstract class DbUserGroupLaws extends TestSuite {
 
       assertEq(errors, Set.empty[ValidationError])
 
-      t.assertUniverse(gtop, newUniverse
+      t.assertUniverse(g, newUniverse
         .admins(g)(u)
         .admins(guca)(u)
         .admins(gupa)(u)
@@ -385,13 +391,11 @@ abstract class DbUserGroupLaws extends TestSuite {
         .admins(gxpa)(u)
         .admins(gxcm)(u)
         .admins(gxpm)(u)
-        .admins(gtop)(u)
         .admins(g2)(u)
         .adminParents(g)(gxpa, gucm)
         .adminChildren(g)(gxca, gupm)
         .memberParents(g)(gxpm, guca)
         .memberChildren(g)(gxcm, gupa, g2)
-        .memberChildren(gtop)(gupa, gupm, gxpa, gxpm, guca, gucm, g)
         .result
       )
 
@@ -401,7 +405,7 @@ abstract class DbUserGroupLaws extends TestSuite {
 
     } catch {
       case t: Throwable =>
-        println(s"g=${g.value}, guca=${guca.value}, gupa=${gupa.value}, gucm=${gucm.value}, gupm=${gupm.value}, gxca=${gxca.value}, gxpa=${gxpa.value}, gxcm=${gxcm.value}, gxpm=${gxpm.value}, gtop=${gtop.value}")
+        println(s"g=${g.value}, guca=${guca.value}, gupa=${gupa.value}, gucm=${gucm.value}, gupm=${gupm.value}, gxca=${gxca.value}, gxpa=${gxpa.value}, gxcm=${gxcm.value}, gxpm=${gxpm.value}")
         println()
         throw t
     }
@@ -416,18 +420,24 @@ abstract class DbUserGroupLaws extends TestSuite {
     assertMatch(es.head) { case UserGroup.ValidationError.GraphCycle(_, _) => }
   }
 
-  private def updateBadDel() = test { (t, u) =>
+  private def updateBadGroupDel() = test { (t, u) =>
     val g  = t.createUserGroup.admins(u).create().getOrThrow()
     val g2 = Id(g.value + 9999)
     val es = t.updateUserGroup(g).delAdminChildren(g2).update()
     assertSeq(es, Set[ValidationError](UserGroup.ValidationError.GroupNotFound(g2)))
   }
 
-  private def updateBadAdd() = test { (t, u) =>
+  private def updateBadGroupAdd() = test { (t, u) =>
     val g  = t.createUserGroup.admins(u).create().getOrThrow()
     val g2 = Id(g.value + 9999)
     val es = t.updateUserGroup(g).addAdminChildren(g2).update()
     assertSeq(es, Set[ValidationError](UserGroup.ValidationError.GroupNotFound(g2)))
+  }
+
+  private def updateNoAdmin() = test { (t, u) =>
+    val g  = t.createUserGroup.admins(u).create().getOrThrow()
+    val es = t.updateUserGroup(g).delAdmins(u).addMembers(u).update()
+    assertSeq(es, Set[ValidationError](UserGroup.ValidationError.NoAdminUsers(g)))
   }
 
   // ===================================================================================================================
@@ -438,7 +448,10 @@ abstract class DbUserGroupLaws extends TestSuite {
     "create" - {
       "sole" - createSole()
       "cycle" - createCycle()
-      "bad" - createBad()
+      "badGroup" - createBadGroup()
+      "noAdmin" - createNoAdmin()
+      "parentAdmin" - createParentAdmin()
+      "childAdmin" - createChildAdmin()
       "tree" - {
         "a" - createTree('a')
         "b" - createTree('b')
@@ -453,8 +466,9 @@ abstract class DbUserGroupLaws extends TestSuite {
     "update" - {
       "ok" - updateOk()
       "cycle" - updateCycle()
-      "badDel" - updateBadDel()
-      "badAdd" - updateBadAdd()
+      "badGroupDel" - updateBadGroupDel()
+      "badGroupAdd" - updateBadGroupAdd()
+      "noAdmin" - updateNoAdmin()
     }
   }
 }

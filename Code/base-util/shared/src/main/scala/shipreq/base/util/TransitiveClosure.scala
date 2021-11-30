@@ -56,6 +56,9 @@ final class TransitiveClosure[A: UnivEq](a2i           : A => Int,
                                          directChildren: A => Iterable[A],
                                          filter        : A => Filter) {
 
+  private var traversing: BitSet =
+    BitSet.empty
+
   private val closure: Array[Eval[BitSet]] =
     new Array(size)
 
@@ -64,13 +67,22 @@ final class TransitiveClosure[A: UnivEq](a2i           : A => Int,
     closure(i) = Eval.later[BitSet] {
       val a = i2a(i)
       val z = BitSet.empty + i
-      directChildren(a).foldLeft(z){ (q, c) =>
-        filter(c) match {
-          case Filter.Follow   => q ++ tc(a2i(c))
-          case Filter.Terminal => q + a2i(c)
-          case Filter.Exclude  => q
+      traversing += i
+      try
+        directChildren(a).foldLeft(z) { (q, c) =>
+          filter(c) match {
+            case Filter.Follow =>
+              val ci = a2i(c)
+              if (traversing(ci))
+                q // cycle found
+              else
+                q ++ tc(ci)
+            case Filter.Terminal => q + a2i(c)
+            case Filter.Exclude  => q
+          }
         }
-      }
+      finally
+        traversing -= i
     }
   }
 
