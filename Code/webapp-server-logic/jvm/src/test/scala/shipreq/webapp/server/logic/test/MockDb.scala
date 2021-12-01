@@ -431,7 +431,7 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     val ugUsers  = rels.users.map(_.from(id))
     val ugTree2  = userGroupTree ++ parents ++ children
     val ugUsers2 = userGroupUsers ++ ugUsers
-    val ugs2     = UserGroup(id, name, handle, Live) :: userGroups
+    val ugs2     = UserGroup(id, name, handle) :: userGroups
     val universe = getUserGroupUniverseU(id, ugs2, ugTree2, ugUsers2)
     val errors   = universe.validate(checkForCycles = true)
 

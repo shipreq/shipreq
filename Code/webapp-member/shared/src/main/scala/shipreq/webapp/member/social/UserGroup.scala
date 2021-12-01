@@ -9,8 +9,7 @@ import shipreq.webapp.base.util.Obfuscated
 
 final case class UserGroup[+Id](id    : Id,
                                 name  : UserGroup.Name,
-                                handle: UserGroup.Handle,
-                                live  : Live)
+                                handle: UserGroup.Handle)
 
 object UserGroup {
 
