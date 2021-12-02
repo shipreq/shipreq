@@ -14,6 +14,7 @@ import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 import scala.concurrent.ExecutionContext
 import scala.reflect.runtime.universe.TypeTag
 import shipreq.base.db._
+import shipreq.base.ops.{JdbcLogging, SqlTracer}
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.base.util.{LockUtils, Props, ThreadUtils}
@@ -29,8 +30,15 @@ object TestDb extends TestDbHelpers with HasLogger {
       println(s"$BOLD$YELLOW[TestDb] $msg$RESET")
     }
 
-  lazy val (cfg, cfgReport) = DbConfig.config.withReport.run(Props.sources).unsafeRun().getOrDie()
-  debugLog(cfgReport.used)
+  private def sqlTracer: SqlTracer =
+    JdbcLogging
+
+  lazy val (cfg, cfgReport) = {
+    val (cfg, cfgReport) = DbConfig.config.withReport.run(Props.sources).unsafeRun().getOrDie()
+    cfg.modifyHikariDataSource(sqlTracer.inject)
+    debugLog(cfgReport.used)
+    (cfg, cfgReport)
+  }
 
   lazy val db: DbAccessor = {
     debugLog("Creating DbAccessor...")
@@ -38,7 +46,7 @@ object TestDb extends TestDbHelpers with HasLogger {
     val poolSize = if (cfg.poolSize == -1) 4 else cfg.poolSize
     assert(poolSize >= 1, s"DB pool size = $poolSize ?!")
 
-    val ds = cfg.pgDataSource
+    val ds = sqlTracer.inject(cfg.pgDataSource)
 
     /** Rollback everything */
     val txnStrategy = Strategy(C.setAutoCommit(false), C.rollback, C.rollback, C.unit)
