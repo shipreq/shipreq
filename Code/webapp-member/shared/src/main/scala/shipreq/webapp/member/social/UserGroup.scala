@@ -4,7 +4,6 @@ import cats.Functor
 import japgolly.microlibs.adt_macros.AdtMacros
 import scala.reflect.ClassTag
 import shipreq.base.util._
-import shipreq.webapp.base.data.Live
 import shipreq.webapp.base.util.Obfuscated
 
 final case class UserGroup[+Id](id    : Id,
@@ -20,16 +19,15 @@ object UserGroup {
     type Public = Obfuscated[Id]
   }
 
-
   final case class Name(value: String)
 
   /** Like a Username for the [[UserGroup]]. Eg `@@blah` */
   final case class Handle(value: String)
 
-  sealed trait Perm
+  sealed abstract class Perm(final val ord: Int)
   object Perm {
-    case object Admin  extends Perm
-    case object Member extends Perm
+    case object Admin  extends Perm(0)
+    case object Member extends Perm(1)
 
     val values = AdtMacros.adtValues[Perm]
   }
@@ -61,6 +59,16 @@ object UserGroup {
     def modParents (f: F[ARel[G]] => F[ARel[G]]): ARels[F, G, U] = copy(parents  = f(parents ))
     def modChildren(f: F[ARel[G]] => F[ARel[G]]): ARels[F, G, U] = copy(children = f(children))
     def modUsers   (f: F[ARel[U]] => F[ARel[U]]): ARels[F, G, U] = copy(users    = f(users   ))
+
+    def fullParents (g: G)(implicit F: Functor[F]): F[Rel[G, G]] = F.map(parents )(_.reverse(g))
+    def fullChildren(g: G)(implicit F: Functor[F]): F[Rel[G, G]] = F.map(children)(_.from(g))
+    def fullUsers   (g: G)(implicit F: Functor[F]): F[Rel[G, U]] = F.map(users   )(_.from(g))
+
+    def fullTreeRelsIterator(g: G)(f: F[ARel[G]] => Iterator[ARel[G]]): Iterator[Rel[G, G]] =
+      f(parents).map(_.reverse(g)) ++ f(children).map(_.from(g))
+
+    def fullUserRelsIterator(g: G)(f: F[ARel[U]] => Iterator[ARel[U]]): Iterator[Rel[G, U]] =
+      f(users).map(_.from(g))
   }
 
   object ARels {
@@ -107,6 +115,9 @@ object UserGroup {
         .find(!users.contains(_))
         .map(i => s"User #$i found in groupsToUsers but not users map.")
     }
+
+    def isEmpty =
+      groups.isEmpty && users.isEmpty
 
     @elidable(elidable.ASSERTION)
     override def toString = {
@@ -193,6 +204,49 @@ object UserGroup {
 
   object Universe {
     implicit def univEq[UI: UnivEq, U: UnivEq, GI: UnivEq, G: UnivEq]: UnivEq[Universe[UI, U, GI, G]] = UnivEq.derive
+
+    def empty[UI: UnivEq, U, GI: ClassTag: UnivEq, G]: Universe[UI, U, GI, G] =
+      apply(Map.empty, Map.empty, Map.empty, Map.empty)
+
+    def fromRels[UI: UnivEq, GI: ClassTag: UnivEq](groupRels : Iterable[Rel[GI, GI]],
+                                                   groupUsers: Iterable[Rel[GI, UI]]): Universe[UI, Unit, GI, Unit] = {
+
+      val groups = Map.newBuilder[GI, Unit]
+      val users = Map.newBuilder[UI, Unit]
+      for (r <- groupRels)
+        groups += ((r.from, ())) += ((r.to, ()))
+      for (r <- groupUsers) {
+        groups += ((r.from, ()))
+        users += ((r.to, ()))
+      }
+      fromRels(groupRels, groupUsers, groups.result(), users.result())
+    }
+
+    def fromRels[UI: UnivEq, U, GI: ClassTag: UnivEq, G](groupRels : Iterable[Rel[GI, GI]],
+                                                         groupUsers: Iterable[Rel[GI, UI]],
+                                                         groups    : Map[GI, G],
+                                                         users     : Map[UI, U]): Universe[UI, U, GI, G] = {
+
+      def permMap[A, B](rels: Iterable[Rel[GI, A]])(f: Multimap[GI, Set, A] => B): Map[Perm, B] = {
+        val empty = Multimap.empty[GI, Set, A]
+        val as = Array.fill(Perm.values.length)(empty)
+        for (r <- rels) {
+          val i = r.perm.ord
+          as(i) = as(i).add(r.from, r.to)
+        }
+        Perm.values.iterator
+          .filter(p => as(p.ord) ne empty)
+          .map(p => (p, f(as(p.ord))))
+          .toMap
+      }
+
+      apply[UI, U, GI, G](
+        permMap(groupRels)(Digraph.BiDir(_)),
+        permMap(groupUsers)(identity),
+        groups,
+        users
+      )
+    }
   }
 
   sealed trait ValidationError[+GI]

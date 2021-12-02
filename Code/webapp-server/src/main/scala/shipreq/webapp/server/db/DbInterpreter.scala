@@ -3,6 +3,7 @@ package shipreq.webapp.server.db
 import cats.free.Free
 import cats.instances.int._
 import cats.instances.vector._
+import cats.syntax.all._
 import cats.~>
 import doobie._
 import doobie.implicits._
@@ -16,11 +17,12 @@ import scala.collection.immutable.SortedSet
 import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
-import shipreq.base.util.ErrorMsg
+import shipreq.base.util.{ErrorMsg, SetDiff}
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.project.data.{Live => _, _}
 import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.social._
 import shipreq.webapp.server.db.DbInterpreter._
 import shipreq.webapp.server.logic.algebra.DB
 import shipreq.webapp.server.logic.algebra.DB.EventFilter
@@ -430,6 +432,163 @@ object DbInterpreter {
         adds = es.iterator.zipWithIndex.map(x => SaveProjectEventLogic.unsafeInsertEvent(pid, EventOrd.fromIndex(x._2), x._1, uid))
         done <- sequentially(adds, pid)
       } yield done
+    }
+
+    private val userGroupUniverseQueryTree = Query[List[UserGroup.Id], UserGroup.Rel[UserGroup.Id, UserGroup.Id]](
+      "SELECT * FROM usr_group_tree_universe(?::BIGINT[])")
+
+    private val getUserGroupUsrRelsByGroup = Query[List[UserGroup.Id], UserGroup.Rel[UserGroup.Id, UserId]](
+      "SELECT * FROM usr_group_usr WHERE grp_id = ANY(?::BIGINT[])")
+
+    private val getUserGroupsByUsr = Query[UserId, UserGroup.Id](
+      "SELECT grp_id FROM usr_group_usr WHERE usr_id = ?")
+
+    private val getUserGroups = Query[List[UserGroup.Id], UserGroup[UserGroup.Id]](
+      "SELECT * FROM usr_group WHERE id = ANY(?::BIGINT[])")
+
+    private val getUsers = Query[List[UserId], User](
+      "SELECT id,username FROM usr WHERE id = ANY(?::BIGINT[])")
+
+    private def _getUserGroupUniverse(ids: List[UserGroup.Id]): ConnectionIO[UserGroup.Universe[UserId, Unit, UserGroup.Id, Unit]] =
+      for {
+        groupRels <- userGroupUniverseQueryTree.toQuery0(ids).to[List]
+        groups     = groupRels.iterator.flatMap(r => r.from :: r.to :: Nil).toSet ++ ids
+        userRels  <- getUserGroupUsrRelsByGroup.toQuery0(groups.toList).to[List]
+      } yield UserGroup.Universe.fromRels(groupRels, userRels)
+
+    protected def getUserGroupUniverseU(id: UserGroup.Id): ConnectionIO[UserGroup.Universe[UserId, Unit, UserGroup.Id, Unit]] =
+      _getUserGroupUniverse(id :: Nil)
+
+    private val emptyUniverse =
+      UserGroup.Universe.empty[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]].pure[ConnectionIO]
+
+    override def getUserGroupUniverseForUser(id: UserId): ConnectionIO[UserGroup.Universe[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]]] =
+      assertTransactionLevelSerializable *>
+      getUserGroupsByUsr.toQuery0(id).to[List].flatMap { directGroups =>
+        if (directGroups.isEmpty)
+          emptyUniverse
+        else
+          for {
+            universe <- _getUserGroupUniverse(directGroups)
+            groups   <- getUserGroups.toQuery0(universe.groups.keys.toList).to[List]
+            users    <- getUsers.toQuery0(universe.users.keys.toList).to[List]
+          } yield {
+            val groupMap = groups.iterator.map(g => (g.id, g)).toMap
+            val userMap  = users.iterator.map(u => (u.id, u.username)).toMap
+            universe.copy(groups = groupMap, users = userMap)
+          }
+      }
+
+    private val createUserGroupQuery = Query[(UserGroup.Name, UserGroup.Handle), UserGroup.Id](
+      "INSERT INTO usr_group(name, handle) VALUES(?,?) RETURNING id")
+
+    private val createUserGroupTreeQuery = Update[UserGroup.Rel[UserGroup.Id, UserGroup.Id]](
+      "INSERT INTO usr_group_tree VALUES(?,?,?)")
+
+    private val createUserGroupUsrQuery = Update[UserGroup.Rel[UserGroup.Id, UserId]](
+      "INSERT INTO usr_group_usr VALUES(?,?,?)")
+
+    private object UserGroupCycleError {
+      private val regex = """.* VALUES\((\d+?),(\d+?),.*Cycle detected.*\n.*""".r
+
+      def unapply(errorMsg: String): Option[UserGroup.ValidationError.GraphCycle[UserGroup.Id]] =
+        errorMsg match {
+          case regex(a, b) =>
+            val x = UserGroup.Id(a.toLong)
+            val y = UserGroup.Id(b.toLong)
+            Some(UserGroup.ValidationError.GraphCycle(x, y))
+          case _ =>
+            None
+        }
+    }
+
+    override def createUserGroup(name  : UserGroup.Name,
+                                 handle: UserGroup.Handle,
+                                 rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
+                                ): ConnectionIO[NonEmptySet[UserGroup.ValidationError[UserGroup.Id]] \/ UserGroup.Id] = {
+
+      import UserGroup._
+
+      type VE = ValidationError[Id]
+      type Result = NonEmptySet[VE] \/ Id
+
+      val create: ConnectionIO[Id] =
+        for {
+          _  <- assertTransactionLevelSerializable
+          id <- createUserGroupQuery.toQuery0((name, handle)).unique
+          _  <- createUserGroupTreeQuery.updateMany(rels.fullTreeRelsIterator(id)(_.iterator).toList)
+          _  <- createUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.iterator).toList)
+        } yield id
+
+      create.inSafeTransactionRollbackOnLeft {
+
+        case \/-(id) =>
+          getUserGroupUniverseU(id).map { u =>
+            val errors = u.validate(checkForCycles = false)
+            NonEmptySet.option(errors).toLeft(id)
+          }
+
+        case -\/(e) =>
+          e.getMessage match {
+            case UserGroupCycleError(e) =>
+              val r = -\/(NonEmptySet[VE](e))
+              (r: Result).pure[ConnectionIO]
+            case _ =>
+              throw e
+          }
+      }
+    }
+
+    private val deleteUserGroupTreeQuery = Update[UserGroup.Rel[UserGroup.Id, UserGroup.Id]](
+      "DELETE FROM usr_group_tree WHERE from_id=? AND to_id=? AND perm=?")
+
+    private val deleteUserGroupUsrQuery = Update[UserGroup.Rel[UserGroup.Id, UserId]](
+      "DELETE FROM usr_group_usr WHERE grp_id=? AND usr_id=? AND perm=?")
+
+    override def updateUserGroup(id    : UserGroup.Id,
+                                 name  : Option[UserGroup.Name],
+                                 handle: Option[UserGroup.Handle],
+                                 rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
+                                ): ConnectionIO[Set[UserGroup.ValidationError[UserGroup.Id]]] = {
+
+      import UserGroup._
+
+      type VE = ValidationError[Id]
+      type Result = Set[VE]
+
+      val updateGroup: ConnectionIO[Unit] =
+        (name, handle) match {
+          case (Some(n), Some(h)) => sql"UPDATE usr_group SET name=$n, handle=$h, updated_at=now() WHERE id=$id".update.run.void
+          case (Some(n), None   ) => sql"UPDATE usr_group SET name=$n, updated_at=now() WHERE id=$id".update.run.void
+          case (None   , Some(h)) => sql"UPDATE usr_group SET handle=$h, updated_at=now() WHERE id=$id".update.run.void
+          case (None   , None   ) => ConnectionIoUnit
+        }
+
+      val update: ConnectionIO[Unit] =
+        for {
+          _ <- assertTransactionLevelSerializable
+          _ <- updateGroup
+          _ <- deleteUserGroupTreeQuery.updateMany(rels.fullTreeRelsIterator(id)(_.removed.iterator).toList)
+          _ <- deleteUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.removed.iterator).toList)
+          _ <- createUserGroupTreeQuery.updateMany(rels.fullTreeRelsIterator(id)(_.added.iterator).toList)
+          _ <- createUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.added.iterator).toList)
+        } yield ()
+
+      update.inSafeTransactionFlatMap[Result]({
+
+        case \/-(_) =>
+          getUserGroupUniverseU(id).map { u =>
+            u.validate(checkForCycles = false)
+          }
+
+        case -\/(e) =>
+          e.getMessage match {
+            case UserGroupCycleError(e) =>
+              Set1[VE](e).pure[ConnectionIO]
+            case _ =>
+              throw e
+          }
+      })(_.nonEmpty)
     }
   }
 

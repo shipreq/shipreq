@@ -3,11 +3,11 @@ package shipreq.webapp.server.db
 import doobie._
 import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
-import japgolly.microlibs.adt_macros.AdtMacros
 import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data._
+import shipreq.webapp.member.social._
 import shipreq.webapp.server.logic.data._
 
 object WebappDoobieCodecs {
@@ -68,40 +68,41 @@ object WebappDoobieCodecs {
 
   implicit val doobieMetaUserEncryptionKey: Meta[UserEncryptionKey] =
     Meta[BinaryData].timap(UserEncryptionKey.apply)(_.value)
-}
 
-/** @since DB migration v4.4 */
-sealed abstract class ResponseType(final val dbValue: String, final val idx: Int)
-object ResponseType {
-  case object `1xx` extends ResponseType("1xx", 0)
-  case object `2xx` extends ResponseType("2xx", 1)
-  case object `3xx` extends ResponseType("3xx", 2)
-  case object `4xx` extends ResponseType("4xx", 3)
-  case object `5xx` extends ResponseType("5xx", 4)
-  case object Other extends ResponseType("other", 5)
+  implicit val doobieMetaUserGroupId: Meta[UserGroup.Id] =
+    Meta[Long].timap(UserGroup.Id.apply)(_.value)
 
-  def apply(code: Int): ResponseType =
-    if (code >= 200) {
-      if (code < 300)
-        `2xx`
-      else if (code < 400)
-        `3xx`
-      else if (code < 500)
-        `4xx`
-      else if (code < 600)
-        `5xx`
-      else
-        Other
-    } else {
-      if (code >= 100)
-        `1xx`
-      else
-        Other
-    }
+  implicit val doobieMetaUserGroupName: Meta[UserGroup.Name] =
+    Meta[String].timap(UserGroup.Name.apply)(_.value)
 
-  implicit def univEq: UnivEq[ResponseType] = UnivEq.derive
+  implicit val doobieMetaUserGroupHandle: Meta[UserGroup.Handle] =
+    Meta[String].timap(UserGroup.Handle.apply)(_.value)
 
-  val values = AdtMacros.adtValues[ResponseType]
+  implicit val doobieMetaUserGroupPerm: Meta[UserGroup.Perm] =
+    pgEnumString[UserGroup.Perm]("usr_group_perm", {
+      case "admin"  => UserGroup.Perm.Admin
+      case "member" => UserGroup.Perm.Member
+    }, {
+      case UserGroup.Perm.Admin  => "admin"
+      case UserGroup.Perm.Member => "member"
+    })
 
-  assert(values.whole.indices.toSet == values.whole.map(_.idx).toSet)
+  private def doobieReadUserGroupRel[A: Read, B: Read]: Read[UserGroup.Rel[A, B]] =
+    Read.apply3(UserGroup.Rel.apply[A, B])
+
+  private def doobieWriteUserGroupRel[A: Write, B: Write]: Write[UserGroup.Rel[A, B]] =
+    Write.apply3(a => (a.from, a.to, a.perm))
+
+  implicit val doobieReadUserGroupUserRelUserId: Read[UserGroup.Rel[UserGroup.Id, UserId]] = doobieReadUserGroupRel
+  implicit val doobieWriteUserGroupUserRelUserId: Write[UserGroup.Rel[UserGroup.Id, UserId]] = doobieWriteUserGroupRel
+
+  implicit val doobieReadUserGroupUserRelUserGroupId: Read[UserGroup.Rel[UserGroup.Id, UserGroup.Id]] = doobieReadUserGroupRel
+  implicit val doobieWriteUserGroupUserRelUserGroupId: Write[UserGroup.Rel[UserGroup.Id, UserGroup.Id]] = doobieWriteUserGroupRel
+
+  implicit val doobieWriteArrayUserGroupId: Write[List[UserGroup.Id]] =
+    Write[List[Long]].contramap(_.map(_.value))
+
+  implicit val doobieWriteArrayUsersId: Write[List[UserId]] =
+    Write[List[Long]].contramap(_.map(_.value))
+
 }
