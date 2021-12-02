@@ -423,23 +423,27 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
   override def createUserGroup(name  : UserGroup.Name,
                                handle: UserGroup.Handle,
                                rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
-                              ) = Eval.always[NonEmptySet[UserGroup.ValidationError[UserGroup.Id]] \/ UserGroup.Id] {
+                              ) = Eval.always[UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id] {
 
-    val id       = nextUserGroupId()
-    val parents  = rels.parents.map(_.reverse(id))
-    val children = rels.children.map(_.from(id))
-    val ugUsers  = rels.users.map(_.from(id))
-    val ugTree2  = userGroupTree ++ parents ++ children
-    val ugUsers2 = userGroupUsers ++ ugUsers
-    val ugs2     = UserGroup(id, name, handle) :: userGroups
-    val universe = getUserGroupUniverseU(id, ugs2, ugTree2, ugUsers2)
-    val errors   = universe.validate(checkForCycles = true)
+    if (userGroups.exists(_.handle ==* handle))
+      -\/(UserGroup.SaveError.HandleAlreadyTaken)
+    else {
+      val id       = nextUserGroupId()
+      val parents  = rels.parents.map(_.reverse(id))
+      val children = rels.children.map(_.from(id))
+      val ugUsers  = rels.users.map(_.from(id))
+      val ugTree2  = userGroupTree ++ parents ++ children
+      val ugUsers2 = userGroupUsers ++ ugUsers
+      val ugs2     = UserGroup(id, name, handle) :: userGroups
+      val universe = getUserGroupUniverseU(id, ugs2, ugTree2, ugUsers2)
+      val errors   = universe.validate(checkForCycles = true)
 
-    NonEmptySet.option(errors).toLeft {
-      this.userGroups     = ugs2
-      this.userGroupTree  = ugTree2
-      this.userGroupUsers = ugUsers2
-      id
+      NonEmptySet.option(errors).map(UserGroup.SaveError.Invalid(_)).toLeft {
+        this.userGroups     = ugs2
+        this.userGroupTree  = ugTree2
+        this.userGroupUsers = ugUsers2
+        id
+      }
     }
   }
 
@@ -447,60 +451,65 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
                                name  : Option[UserGroup.Name],
                                handle: Option[UserGroup.Handle],
                                rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
-                              ) = Eval.always[Set[UserGroup.ValidationError[UserGroup.Id]]] {
+                              ) = Eval.always[UserGroup.SaveError[UserGroup.Id] \/ Unit] {
     import UserGroup._
 
-    val ug1      = userGroups.find(_.id ==* id).getOrThrow(s"User group #${id.value} not found")
-    var ug2      = ug1
-    var ugTree2  = userGroupTree
-    var ugUsers2 = userGroupUsers
+    if (handle.exists(h => userGroups.exists(g => g.handle ==* h && g.id !=* id)))
+      -\/(SaveError.HandleAlreadyTaken)
+    else {
 
-    for (n <- name) ug2 = ug2.copy(name = n)
-    for (h <- handle) ug2 = ug2.copy(handle = h)
+      val ug1      = userGroups.find(_.id ==* id).getOrThrow(s"User group #${id.value} not found")
+      var ug2      = ug1
+      var ugTree2  = userGroupTree
+      var ugUsers2 = userGroupUsers
 
-    var errors = Set.empty[ValidationError[Id]]
+      for (n <- name) ug2 = ug2.copy(name = n)
+      for (h <- handle) ug2 = ug2.copy(handle = h)
 
-    def applySetDiff[A, B](d: SetDiff[A])(f: A => B, to: Set[B])(v: B => Option[ValidationError[Id]]): Set[B] = {
-      var results = to
+      var errors = Set.empty[ValidationError[Id]]
 
-      for (a <- d.removed) {
-        val b = f(a)
-        v(b) match {
-          case None    => results -= b
-          case Some(e) => errors += e
+      def applySetDiff[A, B](d: SetDiff[A])(f: A => B, to: Set[B])(v: B => Option[ValidationError[Id]]): Set[B] = {
+        var results = to
+
+        for (a <- d.removed) {
+          val b = f(a)
+          v(b) match {
+            case None    => results -= b
+            case Some(e) => errors += e
+          }
+        }
+
+        for (a <- d.added) {
+          val b = f(a)
+          results += b
+        }
+
+        results
+      }
+
+      def validateUG(id: Id): Option[ValidationError[Id]] =
+        Option.when(userGroups.forall(id !=* _.id))(ValidationError.GroupNotFound(id))
+
+      val validateUGUG: Rel[Id, Id] => Option[ValidationError[Id]] =
+        r => validateUG(r.from) orElse validateUG(r.to)
+
+      ugTree2  = applySetDiff(rels.children)(_.from(id)   , ugTree2 )(validateUGUG)
+      ugTree2  = applySetDiff(rels.parents )(_.reverse(id), ugTree2 )(validateUGUG)
+      ugUsers2 = applySetDiff(rels.users   )(_.from(id)   , ugUsers2)(r => validateUG(r.from))
+
+      if (errors.isEmpty) {
+        val ugs2     = if (ug1 eq ug2) userGroups else ug2 :: userGroups.filter(_ ne ug1)
+        val universe = getUserGroupUniverseU(id, ugs2, ugTree2, ugUsers2)
+        errors       = universe.validate(checkForCycles = true)
+
+        if (errors.isEmpty) {
+          this.userGroups     = ugs2
+          this.userGroupTree  = ugTree2
+          this.userGroupUsers = ugUsers2
         }
       }
 
-      for (a <- d.added) {
-        val b = f(a)
-        results += b
-      }
-
-      results
+      NonEmptySet.option(errors).map(UserGroup.SaveError.Invalid(_)).toLeft(())
     }
-
-    def validateUG(id: Id): Option[ValidationError[Id]] =
-      Option.when(userGroups.forall(id !=* _.id))(ValidationError.GroupNotFound(id))
-
-    val validateUGUG: Rel[Id, Id] => Option[ValidationError[Id]] =
-      r => validateUG(r.from) orElse validateUG(r.to)
-
-    ugTree2  = applySetDiff(rels.children)(_.from(id)   , ugTree2 )(validateUGUG)
-    ugTree2  = applySetDiff(rels.parents )(_.reverse(id), ugTree2 )(validateUGUG)
-    ugUsers2 = applySetDiff(rels.users   )(_.from(id)   , ugUsers2)(r => validateUG(r.from))
-
-    if (errors.isEmpty) {
-      val ugs2     = if (ug1 eq ug2) userGroups else ug2 :: userGroups.filter(_ ne ug1)
-      val universe = getUserGroupUniverseU(id, ugs2, ugTree2, ugUsers2)
-      errors       = universe.validate(checkForCycles = true)
-
-      if (errors.isEmpty) {
-        this.userGroups     = ugs2
-        this.userGroupTree  = ugTree2
-        this.userGroupUsers = ugUsers2
-      }
-    }
-
-    errors
   }
 }

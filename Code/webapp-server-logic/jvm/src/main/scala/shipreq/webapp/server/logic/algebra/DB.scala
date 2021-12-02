@@ -229,13 +229,13 @@ object DB {
     def createUserGroup(name  : UserGroup.Name,
                         handle: UserGroup.Handle,
                         rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
-                       ): F[NonEmptySet[UserGroup.ValidationError[UserGroup.Id]] \/ UserGroup.Id]
+                       ): F[UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id]
 
     def updateUserGroup(id    : UserGroup.Id,
                         name  : Option[UserGroup.Name],
                         handle: Option[UserGroup.Handle],
                         rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
-                       ): F[Set[UserGroup.ValidationError[UserGroup.Id]]]
+                       ): F[UserGroup.SaveError[UserGroup.Id] \/ Unit]
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

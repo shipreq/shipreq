@@ -249,12 +249,39 @@ object UserGroup {
     }
   }
 
-  sealed trait ValidationError[+GI]
+  sealed trait ValidationError[+GI] {
+    def map[A](f: GI => A): ValidationError[A]
+  }
+
   object ValidationError {
-    final case class GraphCycle   [+GI](from: GI, to: GI) extends ValidationError[GI]
-    final case class NoAdminUsers [+GI](group: GI)        extends ValidationError[GI]
-    final case class GroupNotFound[+GI](group: GI)        extends ValidationError[GI]
+    final case class GraphCycle[+GI](from: GI, to: GI) extends ValidationError[GI] {
+      override def map[A](f: GI => A): GraphCycle[A] = GraphCycle(f(from), f(to))
+    }
+
+    final case class NoAdminUsers[+GI](group: GI) extends ValidationError[GI] {
+      override def map[A](f: GI => A): NoAdminUsers[A] = NoAdminUsers(f(group))
+    }
+
+    final case class GroupNotFound[+GI](group: GI) extends ValidationError[GI] {
+      override def map[A](f: GI => A): GroupNotFound[A] = GroupNotFound(f(group))
+    }
 
     implicit def univEq[A: UnivEq]: UnivEq[ValidationError[A]] = UnivEq.derive
+  }
+
+  sealed trait SaveError[+GI] {
+    def map[A: UnivEq](f: GI => A): SaveError[A]
+  }
+
+  object SaveError {
+    case object HandleAlreadyTaken extends SaveError[Nothing] {
+      override def map[A: UnivEq](f: Nothing => A) = this
+    }
+
+    final case class Invalid[GI](errors: NonEmptySet[UserGroup.ValidationError[GI]]) extends SaveError[GI] {
+      override def map[A: UnivEq](f: GI => A): Invalid[A] = Invalid(errors.map(_.map(f)))
+    }
+
+    implicit def univEq[A: UnivEq]: UnivEq[SaveError[A]] = UnivEq.derive
   }
 }

@@ -488,31 +488,57 @@ object DbInterpreter {
     private val createUserGroupUsrQuery = Update[UserGroup.Rel[UserGroup.Id, UserId]](
       "INSERT INTO usr_group_usr VALUES(?,?,?)")
 
-    private object UserGroupCycleError {
-      private val regex = """.* VALUES\((\d+?),(\d+?),.*Cycle detected.*\n.*""".r
+    private object SaveErrorFromSql {
+      import UserGroup._
 
-      def unapply(errorMsg: String): Option[UserGroup.ValidationError.GraphCycle[UserGroup.Id]] =
+      private type VE = ValidationError[Id]
+
+      private[this] val cycleRegex = """.* VALUES\((\d+?),(\d+?),.*Cycle detected.*\n.*""".r
+      private[this] val handleRegex = """.*violates unique constraint "usr_group_handle_key.*\n.*""".r
+
+      def unapply(errorMsg: String): Option[SaveError[Id]] =
         errorMsg match {
-          case regex(a, b) =>
-            val x = UserGroup.Id(a.toLong)
-            val y = UserGroup.Id(b.toLong)
-            Some(UserGroup.ValidationError.GraphCycle(x, y))
+
+          case cycleRegex(a, b) =>
+            val x = Id(a.toLong)
+            val y = Id(b.toLong)
+            val e = ValidationError.GraphCycle(x, y)
+            Some(SaveError.Invalid(NonEmptySet.one[VE](e)))
+
+          case handleRegex() =>
+            Some(SaveError.HandleAlreadyTaken)
+
           case _ =>
             None
         }
     }
 
+    private def userGroupSave[A](c: ConnectionIO[A])(id: A => UserGroup.Id): ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ A] =
+      c.inSafeTransactionRollbackOnLeft {
+
+        case \/-(a) =>
+          getUserGroupUniverseU(id(a)).map { u =>
+            val errors = u.validate(checkForCycles = false)
+            if (errors.isEmpty)
+              \/-(a)
+            else
+              -\/(UserGroup.SaveError.Invalid(NonEmptySet force errors))
+          }
+
+        case -\/(e) =>
+          type Result = UserGroup.SaveError[UserGroup.Id] \/ A
+          e.getMessage match {
+            case SaveErrorFromSql(e) => (-\/(e): Result).pure[ConnectionIO]
+            case _                   => throw e
+          }
+      }
+
     override def createUserGroup(name  : UserGroup.Name,
                                  handle: UserGroup.Handle,
                                  rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
-                                ): ConnectionIO[NonEmptySet[UserGroup.ValidationError[UserGroup.Id]] \/ UserGroup.Id] = {
+                                ): ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id] = {
 
-      import UserGroup._
-
-      type VE = ValidationError[Id]
-      type Result = NonEmptySet[VE] \/ Id
-
-      val create: ConnectionIO[Id] =
+      val create: ConnectionIO[UserGroup.Id] =
         for {
           _  <- assertTransactionLevelSerializable
           id <- createUserGroupQuery.toQuery0((name, handle)).unique
@@ -520,23 +546,7 @@ object DbInterpreter {
           _  <- createUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.iterator).toList)
         } yield id
 
-      create.inSafeTransactionRollbackOnLeft {
-
-        case \/-(id) =>
-          getUserGroupUniverseU(id).map { u =>
-            val errors = u.validate(checkForCycles = false)
-            NonEmptySet.option(errors).toLeft(id)
-          }
-
-        case -\/(e) =>
-          e.getMessage match {
-            case UserGroupCycleError(e) =>
-              val r = -\/(NonEmptySet[VE](e))
-              (r: Result).pure[ConnectionIO]
-            case _ =>
-              throw e
-          }
-      }
+      userGroupSave(create)(identity)
     }
 
     private val deleteUserGroupTreeQuery = Update[UserGroup.Rel[UserGroup.Id, UserGroup.Id]](
@@ -549,12 +559,7 @@ object DbInterpreter {
                                  name  : Option[UserGroup.Name],
                                  handle: Option[UserGroup.Handle],
                                  rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
-                                ): ConnectionIO[Set[UserGroup.ValidationError[UserGroup.Id]]] = {
-
-      import UserGroup._
-
-      type VE = ValidationError[Id]
-      type Result = Set[VE]
+                                ): ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ Unit] = {
 
       val updateGroup: ConnectionIO[Unit] =
         (name, handle) match {
@@ -574,21 +579,7 @@ object DbInterpreter {
           _ <- createUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.added.iterator).toList)
         } yield ()
 
-      update.inSafeTransactionFlatMap[Result]({
-
-        case \/-(_) =>
-          getUserGroupUniverseU(id).map { u =>
-            u.validate(checkForCycles = false)
-          }
-
-        case -\/(e) =>
-          e.getMessage match {
-            case UserGroupCycleError(e) =>
-              Set1[VE](e).pure[ConnectionIO]
-            case _ =>
-              throw e
-          }
-      })(_.nonEmpty)
+      userGroupSave(update)(_ => id)
     }
   }
 

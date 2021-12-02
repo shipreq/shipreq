@@ -156,4 +156,37 @@ object Social {
 
   implicit val picklerNonEmptySetUserGroupValidationError: Pickler[NonEmptySet[UserGroup.ValidationError[UserGroup.Id.Public]]] =
     pickleNES
+
+  private def picklerUserGroupSaveErrorInvalid[GI](implicit p: Pickler[NonEmptySet[UserGroup.ValidationError[GI]]]): Pickler[UserGroup.SaveError.Invalid[GI]] =
+    new Pickler[UserGroup.SaveError.Invalid[GI]] {
+      override def pickle(a: UserGroup.SaveError.Invalid[GI])(implicit state: PickleState): Unit = {
+        state.pickle(a.errors)
+      }
+      override def unpickle(implicit state: UnpickleState): UserGroup.SaveError.Invalid[GI] = {
+        val errors = state.unpickle[NonEmptySet[UserGroup.ValidationError[GI]]]
+        UserGroup.SaveError.Invalid(errors)
+      }
+    }
+
+  private def picklerUserGroupSaveError[GI](implicit p1: Pickler[UserGroup.SaveError.Invalid[GI]]): Pickler[UserGroup.SaveError[GI]] =
+    new Pickler[UserGroup.SaveError[GI]] {
+      private[this] final val KeyHandleAlreadyTaken = 1
+      private[this] final val KeyInvalid            = 0
+      override def pickle(a: UserGroup.SaveError[GI])(implicit state: PickleState): Unit =
+        a match {
+          case UserGroup.SaveError.HandleAlreadyTaken    => state.enc.writeByte(KeyHandleAlreadyTaken)
+          case b: UserGroup.SaveError.Invalid[GI]        => state.enc.writeByte(KeyInvalid           ); state.pickle(b)
+        }
+      override def unpickle(implicit state: UnpickleState): UserGroup.SaveError[GI] =
+        state.dec.readByte match {
+          case KeyHandleAlreadyTaken => UserGroup.SaveError.HandleAlreadyTaken
+          case KeyInvalid            => state.unpickle[UserGroup.SaveError.Invalid[GI]]
+        }
+    }
+
+  implicit val picklerUserGroupSaveErrorId: Pickler[UserGroup.SaveError[UserGroup.Id.Public]] = {
+    implicit val a = picklerUserGroupSaveErrorInvalid[UserGroup.Id.Public]
+    picklerUserGroupSaveError
+  }
+
 }
