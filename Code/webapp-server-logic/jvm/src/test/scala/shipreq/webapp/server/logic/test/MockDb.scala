@@ -324,6 +324,11 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     globalEvents :+= e
   }
 
+  override def logGlobalEventIf(cond: Boolean)(e: => GlobalEvent) = Eval.always[Unit] {
+    if (cond)
+      globalEvents :+= e
+  }
+
   def assertNoDbChange[A](a: => A): A =
     assertNoChange("assertNoChange:userPlaceholders", userPlaceholders.iterator.map(_.toString).mkString("\n"))(
       assertNoChange("assertNoChange:users", users.mkString("\n"))(

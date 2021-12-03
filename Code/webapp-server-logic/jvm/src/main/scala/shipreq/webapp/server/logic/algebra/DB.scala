@@ -80,6 +80,11 @@ object DB {
       withTransactionLevel(runDB, Connection.TRANSACTION_SERIALIZABLE)(f)
 
     def logGlobalEvent(e: GlobalEvent): F[Unit]
+
+    def logGlobalEventIf(cond: Boolean)(e: => GlobalEvent): F[Unit]
+
+    final def logGlobalEventOnRight[A](e: Any \/ A)(f: A => GlobalEvent): F[Unit] =
+      logGlobalEventIf(e.isRight)(f(e.asInstanceOf[\/-[A]].value))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

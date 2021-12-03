@@ -2,8 +2,10 @@ package shipreq.webapp.server.logic.logic
 
 import cats.syntax.all._
 import cats.{Monad, ~>}
+import shipreq.base.util.CatsExtra._
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
+import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.protocol.ajax.HomeSpaProtocols
@@ -11,6 +13,7 @@ import shipreq.webapp.member.protocol.entrypoint.HomeSpaEntryPoint
 import shipreq.webapp.server.logic.algebra.{Crypto, DB}
 import shipreq.webapp.server.logic.data.ProjectEncryptionKey
 import shipreq.webapp.server.logic.event.ApplyNewEvent
+import shipreq.webapp.server.logic.util.Obfuscators
 
 trait HomeSpaLogic[F[_]] extends HomeSpaLogic.Ajax[F] {
   def initData(user: User): F[HomeSpaEntryPoint.InitData]
@@ -20,7 +23,9 @@ object HomeSpaLogic {
   import Event._
 
   trait Ajax[F[_]] {
-    val ajaxCreateProject: HomeSpaProtocols.CreateProject.ajax.ServerSideFnI[F, User]
+    val ajaxCreateProject  : HomeSpaProtocols.CreateProject  .ajax.ServerSideFnI[F, User]
+    val ajaxCreateUserGroup: HomeSpaProtocols.CreateUserGroup.ajax.ServerSideFnI[F, User]
+    val ajaxUpdateUserGroup: HomeSpaProtocols.UpdateUserGroup.ajax.ServerSideFnI[F, User]
   }
 
   val InitProjectEvent  = ProjectTemplateApply(ProjectTemplate.default)
@@ -50,20 +55,57 @@ object HomeSpaLogic {
     } yield pmd.get
   }
 
+  // ===================================================================================================================
+
   def apply[D[_], F[_]](implicit db: DB.ForHomeSpa[D],
                         am: AssetManifest,
                         crypto: Crypto[D],
                         runDB: D ~> F,
                         D: Monad[D],
-                        F: Monad[F]): HomeSpaLogic[F] =
-    new HomeSpaLogic[F] {
+                        F: Monad[F]): HomeSpaLogic[F] = new HomeSpaLogic[F] {
 
-      override def initData(user: User): F[HomeSpaEntryPoint.InitData] =
-        for {
-          p <- runDB(db.getAllProjectMetaDataForUser(user.id))
-        } yield HomeSpaEntryPoint.InitData(user.username, p, am)
+    import HomeSpaProtocols._
 
-      override val ajaxCreateProject =
-        (user, name) => runDB(createProject[D](user.id, name))
-    }
+    override def initData(user: User): F[HomeSpaEntryPoint.InitData] =
+      for {
+        p <- runDB(db.getAllProjectMetaDataForUser(user.id))
+      } yield HomeSpaEntryPoint.InitData(user.username, p, am)
+
+    override val ajaxCreateProject =
+      (user, name) => runDB(createProject[D](user.id, name))
+
+    override val ajaxCreateUserGroup =
+      (user, req) => {
+
+        val rels = req.rels.xmap(
+          Obfuscators.userGroupId.deobfuscateOrThrow(_),
+          Obfuscators.userId.deobfuscateOrThrow(_))
+
+        val create: D[CreateUserGroup.Response] =
+          for {
+            res <- db.createUserGroup(req.name, req.handle, rels)
+            _   <- db.logGlobalEventOnRight(res)(GlobalEvent.UserGroupCreate(user.id, _, req.name, req.handle, rels))
+          } yield res.bimap(_.map(Obfuscators.userGroupId.obfuscate), Obfuscators.userGroupId.obfuscate)
+
+        db.inStrictTxn(runDB)(create)
+      }
+
+    override val ajaxUpdateUserGroup =
+      (user, req) => {
+
+        val id = Obfuscators.userGroupId.deobfuscateOrThrow(req.id)
+
+        val rels = req.rels.xmap(
+          Obfuscators.userGroupId.deobfuscateOrThrow(_),
+          Obfuscators.userId.deobfuscateOrThrow(_))
+
+        val update: D[UpdateUserGroup.Response] =
+          for {
+            res <- db.updateUserGroup(id, req.name, req.handle, rels)
+            _   <- db.logGlobalEventOnRight(res)(_ => GlobalEvent.UserGroupUpdate(user.id, id, req.name, req.handle, rels))
+          } yield res.leftMap(_.map(Obfuscators.userGroupId.obfuscate))
+
+        db.inStrictTxn(runDB)(update)
+      }
+  }
 }

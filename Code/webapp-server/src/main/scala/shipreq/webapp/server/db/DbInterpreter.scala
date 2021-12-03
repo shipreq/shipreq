@@ -72,6 +72,9 @@ object DbInterpreter {
 
     override def logGlobalEvent(e: GlobalEvent): ConnectionIO[Unit] =
       logGlobalEventSql.toUpdate0(GlobalEventSerialisation.encode(e)).execute
+
+    override def logGlobalEventIf(cond: Boolean)(e: => GlobalEvent): ConnectionIO[Unit] =
+      if (cond) logGlobalEvent(e) else ConnectionIoUnit
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import cats.Functor
 import japgolly.microlibs.nonempty.NonEmpty
 
 /**
@@ -51,6 +52,9 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
 
   def applyToMultimapValues[K](mm: Multimap[K, Set, A])(k: K): Multimap[K, Set, A] =
     mm.mod(k, apply)
+
+  def map[B: UnivEq](f: A => B): SetDiff[B] =
+    SetDiff(removed = removed.map(f), added = added.map(f))
 }
 
 object SetDiff {
@@ -86,4 +90,9 @@ object SetDiff {
     val (del, add) = xor.partition(current.contains)
     SetDiff(del, add)
   }
+
+  implicit def functor: Functor[SetDiff] =
+    new Functor[SetDiff] {
+      override def map[A, B](fa: SetDiff[A])(f: A => B) = fa.map(f)(UnivEq.force)
+    }
 }

@@ -259,6 +259,8 @@ object DispatchBM {
 
     implicit object homeSpa extends HomeSpaLogic.Ajax[F] {
       override val ajaxCreateProject = (_, _) => ???
+      override val ajaxCreateUserGroup = (_, _) => ???
+      override val ajaxUpdateUserGroup = (_, _) => ???
     }
 
     implicit object ops extends OpsEndpointLogic[F] {

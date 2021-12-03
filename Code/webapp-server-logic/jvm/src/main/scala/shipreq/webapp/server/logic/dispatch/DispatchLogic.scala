@@ -462,6 +462,8 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
       anon (PublicSpaProtocols.ResetPassword1   .ajax)("resetPassword1"   , true , publicSpa.ajaxResetPassword1   )
       anon (PublicSpaProtocols.ResetPassword2   .ajax)("resetPassword2"   , true , publicSpa.ajaxResetPassword2   )
       auth (HomeSpaProtocols  .CreateProject    .ajax)("createProject"    , true , homeSpa  .ajaxCreateProject    )
+      auth (HomeSpaProtocols  .CreateUserGroup  .ajax)("createUserGroup"  , true , homeSpa  .ajaxCreateUserGroup  )
+      auth (HomeSpaProtocols  .UpdateUserGroup  .ajax)("updateUserGroup"  , true , homeSpa  .ajaxUpdateUserGroup  )
 
       mutableRouteMap.toMapNoHeadSlash
     }

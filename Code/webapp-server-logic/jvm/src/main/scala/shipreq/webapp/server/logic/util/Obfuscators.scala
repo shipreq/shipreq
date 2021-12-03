@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic.util
 
 import shipreq.webapp.base.data.{ProjectId, UserId}
+import shipreq.webapp.member.social.UserGroup
 
 object Obfuscators {
 
@@ -11,5 +12,9 @@ object Obfuscators {
   val userId: Obfuscator[UserId] =
     Obfuscator.long("RmlNfjvVuwxkePSYq3Acdib6yor0zIg948MOFTLG2B7tHnsKap5XCJ1DEZhUQW")
       .xmap(UserId.apply)(_.value)
+
+  val userGroupId: Obfuscator[UserGroup.Id] =
+    Obfuscator.long("YmU6duqGCLcykQrNxi57sKtZvw12zfV94REIF8baAhDOoBl3X0JgTPeMjnpSHW")
+      .xmap(UserGroup.Id.apply)(_.value)
 
 }
