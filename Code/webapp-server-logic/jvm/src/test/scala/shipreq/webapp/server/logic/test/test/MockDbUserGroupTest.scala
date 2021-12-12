@@ -12,8 +12,8 @@ object MockDbUserGroupTest extends DbUserGroupLaws {
     private val db = MockDb.withLiveClock()
 
     override def createUser()                = db.newUserId()
-    override val createUserGroup             = db.createUserGroup(_, _, _, _, _).value
-    override val updateUserGroup             = db.updateUserGroup(_, _, _, _, _, _, _).value
+    override val createUserGroup             = db.createUserGroup(_, _, _).value
+    override val updateUserGroup             = db.updateUserGroup(_, _, _, _).value
     override val getUserGroupUniverseU       = db.getUserGroupUniverseU(_)
     override val getUserGroupUniverseForUser = db.getUserGroupUniverseForUser(_).value
  }

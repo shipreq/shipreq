@@ -231,25 +231,15 @@ object DB {
 
     def getUserGroupUniverseForUser(id: UserId): F[UserGroup.Universe[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]]]
 
-    // TODO: createUserGroup/updateUserGroup should return new invs
-
-    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
-    def getUserIdsByUsername(usernames: Set[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]]
-
-    def createUserGroup(userId: UserId,
-                        name  : UserGroup.Name,
+    def createUserGroup(name  : UserGroup.Name,
                         handle: UserGroup.Handle,
                         rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
-                        invs  : Set[UserGroupInv.Target[UserId]],
                        ): F[UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id]
 
-    def updateUserGroup(userId: UserId,
-                        id        : UserGroup.Id,
-                        name      : Option[UserGroup.Name],
-                        handle    : Option[UserGroup.Handle],
-                        rels      : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
-                        newInvs   : Set[UserGroupInv.Target[UserId]],
-                        revokeInvs: Set[UserGroupInv.Id],
+    def updateUserGroup(id    : UserGroup.Id,
+                        name  : Option[UserGroup.Name],
+                        handle: Option[UserGroup.Handle],
+                        rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
                        ): F[UserGroup.SaveError[UserGroup.Id] \/ Unit]
   }
 

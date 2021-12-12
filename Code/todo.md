@@ -3,7 +3,6 @@
 
 * Getting back in to it:
   * Add usernames to teams (`@@xxx`)
-  * admin should not be considered a member - need to support "admin & member"
   * Create user_group in DB, plus r/w ability, and verification on writes
   * Add contacts to DB (for users and user groups)
   * Create invitations in DB

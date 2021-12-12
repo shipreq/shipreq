@@ -2,16 +2,15 @@ package shipreq.webapp.member.project.protocol.binary.v1
 
 import boopickle.DefaultBasic._
 import shipreq.base.util.SetDiff
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.UserId
 import shipreq.webapp.member.social._
 
 object Social {
   import shipreq.webapp.base.protocol.binary.v1.BaseData.{
-    pickleNES,
     pickleObfuscated,
-    picklerUserIdPublic,
-    picklerUsername,
-    pickleSetDiff
+    pickleNES,
+    pickleSetDiff,
+    picklerUserIdPublic
   }
 
   implicit val picklerUserGroupId: Pickler[UserGroup.Id.Public] =
@@ -190,25 +189,4 @@ object Social {
     picklerUserGroupSaveError
   }
 
-  implicit val picklerUserGroupInvId: Pickler[UserGroupInv.Id.Public] =
-    pickleObfuscated
-
-  private def picklerUserGroupInvTarget[U: Pickler]: Pickler[UserGroupInv.Target[U]] =
-    new Pickler[UserGroupInv.Target[U]] {
-      override def pickle(a: UserGroupInv.Target[U])(implicit state: PickleState): Unit = {
-        state.pickle(a.invitee)
-        state.pickle(a.perm)
-      }
-      override def unpickle(implicit state: UnpickleState): UserGroupInv.Target[U] = {
-        val invitee = state.unpickle[U]
-        val perm    = state.unpickle[UserGroup.Perm]
-        UserGroupInv.Target(invitee, perm)
-      }
-    }
-
-  implicit val picklerUserGroupInvTargetUsername: Pickler[UserGroupInv.Target[Username]] =
-    picklerUserGroupInvTarget
-
-  implicit val picklerNonEmptySetUsername: Pickler[NonEmptySet[Username]] =
-    pickleNES
 }

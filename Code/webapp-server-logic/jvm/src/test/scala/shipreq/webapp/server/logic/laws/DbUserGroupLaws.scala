@@ -99,8 +99,6 @@ object DbUserGroupLaws {
   type ARels = UserGroup.ARels[Set, Id, UserId]
   type ARelDiffs = UserGroup.ARels[SetDiff, Id, UserId]
 
-  type NewInvs = Set[UserGroupInv.Target[UserId]]
-
   trait ARelsDsl[+A] {
     protected def mod(f: ARels => ARels): A
     def admins        (ids: UserId*): A = mod(_.modUsers(_ ++ ids.map(ARel(_, Admin))))
@@ -145,35 +143,35 @@ abstract class DbUserGroupLaws extends TestSuite {
 
   protected trait DbApi {
     def createUser(): UserId
-    def createUserGroup: (UserId, Name, Handle, ARels, NewInvs) => SaveError \/ Id
-    def updateUserGroup: (UserId, Id, Option[Name], Option[Handle], ARelDiffs, NewInvs, Set[UserGroupInv.Id]) => SaveError \/ Unit
+    def createUserGroup: (Name, Handle, ARels) => SaveError \/ Id
+    def updateUserGroup: (Id, Option[Name], Option[Handle], ARelDiffs) => SaveError \/ Unit
     def getUserGroupUniverseU: Id => UniverseU
     def getUserGroupUniverseForUser: UserId => Universe[UserId, Username, Id, UserGroup[Id]]
   }
 
   // ===================================================================================================================
 
-  private class CreateUserGroupDsl(userId: UserId, rels: ARels)(implicit db: DbApi) extends ARelsDsl[CreateUserGroupDsl] {
-    override protected def mod(f: ARels => ARels) = new CreateUserGroupDsl(userId, f(rels))
+  private class CreateUserGroupDsl(rels: ARels)(implicit db: DbApi) extends ARelsDsl[CreateUserGroupDsl] {
+    override protected def mod(f: ARels => ARels) = new CreateUserGroupDsl(f(rels))
 
     def create(handle: String = null) = {
       val id = uuid("ug")
       val h = Option(handle).getOrElse(id)
-      db.createUserGroup(userId, id, h, rels)
+      db.createUserGroup(id, h, rels)
     }
   }
 
-  private class UpdateUserGroupDsl(userId: UserId, id: Id, rels: ARelDiffs)(implicit db: DbApi) extends ARelDiffsDsl[UpdateUserGroupDsl] {
-    override protected def mod(f: ARelDiffs => ARelDiffs) = new UpdateUserGroupDsl(userId, id, f(rels))
+  private class UpdateUserGroupDsl(id: Id, rels: ARelDiffs)(implicit db: DbApi) extends ARelDiffsDsl[UpdateUserGroupDsl] {
+    override protected def mod(f: ARelDiffs => ARelDiffs) = new UpdateUserGroupDsl(id, f(rels))
 
     def update(name: Name = null, handle: Handle = null) =
-      db.updateUserGroup(userId, id, Option(name), Option(handle), rels)
+      db.updateUserGroup(id, Option(name), Option(handle), rels)
   }
 
   private final class Tester()(implicit val db: DbApi) {
     def createUser() = db.createUser()
-    def createUserGroup(userId: UserId) = new CreateUserGroupDsl(userId, UserGroup.ARels.emptySet)
-    def updateUserGroup(userId: UserId, id: Id) = new UpdateUserGroupDsl(userId, id, UserGroup.ARels.emptySetDiff)
+    def createUserGroup = new CreateUserGroupDsl(UserGroup.ARels.emptySet)
+    def updateUserGroup(id: Id) = new UpdateUserGroupDsl(id, UserGroup.ARels.emptySetDiff)
 
     def assertUniverse(g: Id, expect: UniverseU)(implicit q: Line): Unit = {
       val actual = db.getUserGroupUniverseU(g)
@@ -220,7 +218,7 @@ abstract class DbUserGroupLaws extends TestSuite {
 
       // Create some irrelevant noise
       val u = db.createUser()
-      t.createUserGroup(u).admins(u).create()
+      t.createUserGroup.admins(u).create()
 
       f(t, db.createUser())
     }
@@ -229,7 +227,7 @@ abstract class DbUserGroupLaws extends TestSuite {
 
   /** group with a single admin user */
   private def createSole() = test { (t, u) =>
-    val g      = t.createUserGroup(u).admins(u).create().getOrThrow()
+    val g      = t.createUserGroup.admins(u).create().getOrThrow()
     val expect = newUniverse.admins(g)(u).result
     t.assertUniverse(g, expect)
   }
@@ -261,15 +259,13 @@ abstract class DbUserGroupLaws extends TestSuite {
     val umf = t.createUser()
     val umg = t.createUser()
 
-    val u = uab
-
-    val ga = t.createUserGroup(u).admins(uaa).members(uma)                  .create().getOrThrow()
-    val gb = t.createUserGroup(u).admins(uab).members(umb).adminParents (ga).create().getOrThrow()
-    val gc = t.createUserGroup(u).admins(uac).members(umc).memberParents(ga).create().getOrThrow()
-    val gd = t.createUserGroup(u).admins(uad).members(umd).adminParents (gb).create().getOrThrow()
-    val ge = t.createUserGroup(u).admins(uae).members(ume).memberParents(gb).create().getOrThrow()
-    val gf = t.createUserGroup(u).admins(uaf).members(umf).adminParents (gc).create().getOrThrow()
-    val gg = t.createUserGroup(u).admins(uag).members(umg).memberParents(gc).create().getOrThrow()
+    val ga = t.createUserGroup.admins(uaa).members(uma)                  .create().getOrThrow()
+    val gb = t.createUserGroup.admins(uab).members(umb).adminParents (ga).create().getOrThrow()
+    val gc = t.createUserGroup.admins(uac).members(umc).memberParents(ga).create().getOrThrow()
+    val gd = t.createUserGroup.admins(uad).members(umd).adminParents (gb).create().getOrThrow()
+    val ge = t.createUserGroup.admins(uae).members(ume).memberParents(gb).create().getOrThrow()
+    val gf = t.createUserGroup.admins(uaf).members(umf).adminParents (gc).create().getOrThrow()
+    val gg = t.createUserGroup.admins(uag).members(umg).memberParents(gc).create().getOrThrow()
 
     val e: UniverseU = {
       var u = newUniverse
@@ -310,49 +306,49 @@ abstract class DbUserGroupLaws extends TestSuite {
   }
 
   private def createCycle() = test { (t, u) =>
-    val g1 = t.createUserGroup(u).admins(u).create().getOrThrow()
-    val g2 = t.createUserGroup(u).admins(u).memberParents(g1).create().getOrThrow()
-    val es = t.createUserGroup(u).admins(u).adminParents(g2).adminChildren(g1).create().getLeftOrThrow()
+    val g1 = t.createUserGroup.admins(u).create().getOrThrow()
+    val g2 = t.createUserGroup.admins(u).memberParents(g1).create().getOrThrow()
+    val es = t.createUserGroup.admins(u).adminParents(g2).adminChildren(g1).create().getLeftOrThrow()
     t.assertErrors(es)(ValidationError.GraphCycle((), ()))
     t.assertUniverse(Id(g2.value + 1), Universe.empty)
   }
 
   // No point testing IDs that don't exist; we know we don't create them, we know they'll fail
   // private def createBadGroup() = test { (t, u) =>
-  //   val g1 = t.createUserGroup(u).admins(u).create().getOrThrow()
+  //   val g1 = t.createUserGroup.admins(u).create().getOrThrow()
   //   val g2 = Id(g1.value + 9999)
-  //   val r  = t.createUserGroup(u).admins(u).adminChildren(g1, g2).create().getLeftOrThrow()
+  //   val r  = t.createUserGroup.admins(u).adminChildren(g1, g2).create().getLeftOrThrow()
   //   assertSeq(r, Set[ValidationError](UserGroup.ValidationError.GroupNotFound(g2)))
   // }
 
   private def createNoAdmin() = test { (t, u) =>
-    val es = t.createUserGroup(u).members(u).create().getLeftOrThrow()
+    val es = t.createUserGroup.members(u).create().getLeftOrThrow()
     t.assertErrors(es)(ValidationError.NoAdminUsers(()))
   }
 
   private def createParentAdmin() = test { (t, u) =>
-    val g = t.createUserGroup(u).admins(u).create().getOrThrow()
-    t.createUserGroup(u).adminParents(g).create().getOrThrow()
+    val g = t.createUserGroup.admins(u).create().getOrThrow()
+    t.createUserGroup.adminParents(g).create().getOrThrow()
     ()
   }
 
   private def createChildAdmin() = test { (t, u) =>
-    val g  = t.createUserGroup(u).admins(u).create().getOrThrow()
-    val es = t.createUserGroup(u).adminChildren(g).create().getLeftOrThrow()
+    val g  = t.createUserGroup.admins(u).create().getOrThrow()
+    val es = t.createUserGroup.adminChildren(g).create().getLeftOrThrow()
     t.assertErrors(es)(ValidationError.NoAdminUsers(()))
     t.assertUniverse(Id(g.value + 1), Universe.empty)
   }
 
   private def updateOk() = test { (t, u) =>
-    val g    = t.createUserGroup(u).admins(u).create().getOrThrow()
-    val guca = t.createUserGroup(u).admins(u).adminParents(g).create().getOrThrow()
-    val gupa = t.createUserGroup(u).admins(u).adminChildren(g).create().getOrThrow()
-    val gucm = t.createUserGroup(u).admins(u).memberParents(g).create().getOrThrow()
-    val gupm = t.createUserGroup(u).admins(u).memberChildren(g).create().getOrThrow()
-    val gxca = t.createUserGroup(u).admins(u).adminParents(g).create().getOrThrow()
-    val gxpa = t.createUserGroup(u).admins(u).adminChildren(g).create().getOrThrow()
-    val gxcm = t.createUserGroup(u).admins(u).memberParents(g).create().getOrThrow()
-    val gxpm = t.createUserGroup(u).admins(u).memberChildren(g).create().getOrThrow()
+    val g    = t.createUserGroup.admins(u).create().getOrThrow()
+    val guca = t.createUserGroup.admins(u).adminParents(g).create().getOrThrow()
+    val gupa = t.createUserGroup.admins(u).adminChildren(g).create().getOrThrow()
+    val gucm = t.createUserGroup.admins(u).memberParents(g).create().getOrThrow()
+    val gupm = t.createUserGroup.admins(u).memberChildren(g).create().getOrThrow()
+    val gxca = t.createUserGroup.admins(u).adminParents(g).create().getOrThrow()
+    val gxpa = t.createUserGroup.admins(u).adminChildren(g).create().getOrThrow()
+    val gxcm = t.createUserGroup.admins(u).memberParents(g).create().getOrThrow()
+    val gxpm = t.createUserGroup.admins(u).memberChildren(g).create().getOrThrow()
 
     try {
 
@@ -373,9 +369,9 @@ abstract class DbUserGroupLaws extends TestSuite {
         .result
       )
 
-      val g2 = t.createUserGroup(u).admins(u).create().getOrThrow()
+      val g2 = t.createUserGroup.admins(u).create().getOrThrow()
 
-      t.updateUserGroup(u, g)
+      t.updateUserGroup(g)
         .delAdminParents(gupa)
         .delAdminChildren(guca)
         .delMemberParents(gupm)
@@ -418,53 +414,53 @@ abstract class DbUserGroupLaws extends TestSuite {
   }
 
   private def updateCycle() = test { (t, u) =>
-    val g1 = t.createUserGroup(u).admins(u).create().getOrThrow()
-    val g2 = t.createUserGroup(u).admins(u).memberParents(g1).create().getOrThrow()
-    val g3 = t.createUserGroup(u).admins(u).adminParents(g2).create().getOrThrow()
+    val g1 = t.createUserGroup.admins(u).create().getOrThrow()
+    val g2 = t.createUserGroup.admins(u).memberParents(g1).create().getOrThrow()
+    val g3 = t.createUserGroup.admins(u).adminParents(g2).create().getOrThrow()
     val un = t.db.getUserGroupUniverseU(g1)
-    val es = t.updateUserGroup(u, g3).addAdminChildren(g1).update().getLeftOrThrow()
+    val es = t.updateUserGroup(g3).addAdminChildren(g1).update().getLeftOrThrow()
     t.assertErrors(es)(ValidationError.GraphCycle((), ()))
     t.assertUniverse(g1, un)
   }
 
   // No point testing IDs that don't exist; we know we don't create them, we know they'll fail
   // private def updateBadGroupDel() = test { (t, u) =>
-  //   val g  = t.createUserGroup(u).admins(u).create().getOrThrow()
+  //   val g  = t.createUserGroup.admins(u).create().getOrThrow()
   //   val g2 = Id(g.value + 9999)
-  //   val es = t.updateUserGroup(u, g).delAdminChildren(g2).update()
+  //   val es = t.updateUserGroup(g).delAdminChildren(g2).update()
   //   assertSeq(es, Set[ValidationError](UserGroup.ValidationError.GroupNotFound(g2)))
   // }
 
   // No point testing IDs that don't exist; we know we don't create them, we know they'll fail
   // private def updateBadGroupAdd() = test { (t, u) =>
-  //   val g  = t.createUserGroup(u).admins(u).create().getOrThrow()
+  //   val g  = t.createUserGroup.admins(u).create().getOrThrow()
   //   val g2 = Id(g.value + 9999)
-  //   val es = t.updateUserGroup(u, g).addAdminChildren(g2).update()
+  //   val es = t.updateUserGroup(g).addAdminChildren(g2).update()
   //   assertSeq(es, Set[ValidationError](UserGroup.ValidationError.GroupNotFound(g2)))
   // }
 
   private def updateNoAdmin() = test { (t, u) =>
-    val g  = t.createUserGroup(u).admins(u).create().getOrThrow()
+    val g  = t.createUserGroup.admins(u).create().getOrThrow()
     val un = t.db.getUserGroupUniverseU(g)
-    val es = t.updateUserGroup(u, g).delAdmins(u).addMembers(u).update().getLeftOrThrow()
+    val es = t.updateUserGroup(g).delAdmins(u).addMembers(u).update().getLeftOrThrow()
     t.assertErrors(es)(ValidationError.NoAdminUsers(()))
     t.assertUniverse(g, un)
   }
 
   private def createDupHandle() = test { (t, u) =>
     val h  = "createDupHandle"
-    val g  = t.createUserGroup(u).admins(u).create(h).getOrThrow()
+    val g  = t.createUserGroup.admins(u).create(h).getOrThrow()
     val un = t.db.getUserGroupUniverseU(g)
-    val es = t.createUserGroup(u).admins(u).create(h).getLeftOrThrow()
+    val es = t.createUserGroup.admins(u).create(h).getLeftOrThrow()
     assertEq(es, SaveError.HandleAlreadyTaken)
     t.assertUniverse(g, un)
   }
 
   private def updateDupHandle() = test { (t, u) =>
     val h  = "updateDupHandle"
-    val _  = t.createUserGroup(u).admins(u).create(h).getOrThrow()
-    val g  = t.createUserGroup(u).admins(u).create().getOrThrow()
-    val es = t.updateUserGroup(u, g).update(handle = h).getLeftOrThrow()
+    val _  = t.createUserGroup.admins(u).create(h).getOrThrow()
+    val g  = t.createUserGroup.admins(u).create().getOrThrow()
+    val es = t.updateUserGroup(g).update(handle = h).getLeftOrThrow()
     assertEq(es, SaveError.HandleAlreadyTaken)
   }
 

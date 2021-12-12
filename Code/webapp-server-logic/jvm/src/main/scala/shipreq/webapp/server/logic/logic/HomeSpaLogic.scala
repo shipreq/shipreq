@@ -14,7 +14,6 @@ import shipreq.webapp.server.logic.algebra.{Crypto, DB}
 import shipreq.webapp.server.logic.data.ProjectEncryptionKey
 import shipreq.webapp.server.logic.event.ApplyNewEvent
 import shipreq.webapp.server.logic.util.Obfuscators
-import shipreq.webapp.member.social.UserGroupInv
 
 trait HomeSpaLogic[F[_]] extends HomeSpaLogic.Ajax[F] {
   def initData(user: User): F[HomeSpaEntryPoint.InitData]
@@ -72,9 +71,6 @@ object HomeSpaLogic {
         p <- runDB(db.getAllProjectMetaDataForUser(user.id))
       } yield HomeSpaEntryPoint.InitData(user.username, p, am)
 
-    private def resolveInvTargetUsernames(s: Set[UserGroupInv.Target[Username]]): D[NonEmptySet[Username] \/ Set[UserGroupInv.Target[UserId]]] =
-      db.getUserIdsByUsername(s.map(_.invitee)).map(_.map(f => s.map(_.map(f.apply))))
-
     override val ajaxCreateProject =
       (user, name) => runDB(createProject[D](user.id, name))
 
@@ -85,22 +81,11 @@ object HomeSpaLogic {
           Obfuscators.userGroupId.deobfuscateOrThrow(_),
           Obfuscators.userId.deobfuscateOrThrow(_))
 
-        def createWith(invs: Set[UserGroupInv.Target[UserId]]): D[CreateUserGroup.Response] = {
-          @inline def event = GlobalEvent.UserGroupCreate(user.id, _, req.name, req.handle, rels, invs)
-          for {
-            res <- db.createUserGroup(user.id, req.name, req.handle, rels, invs)
-            _   <- db.logGlobalEventOnRight(res)(event)
-          } yield res match {
-            case \/-(id)  => CreateUserGroup.Response.Success(Obfuscators.userGroupId.obfuscate(id))
-            case -\/(err) => CreateUserGroup.Response.SaveError(err.map(Obfuscators.userGroupId.obfuscate))
-          }
-        }
-
         val create: D[CreateUserGroup.Response] =
-          resolveInvTargetUsernames(req.invs).flatMap {
-            case \/-(invs) => createWith(invs)
-            case -\/(errs) => D pure CreateUserGroup.Response.InvalidUsernames(errs)
-          }
+          for {
+            res <- db.createUserGroup(req.name, req.handle, rels)
+            _   <- db.logGlobalEventOnRight(res)(GlobalEvent.UserGroupCreate(user.id, _, req.name, req.handle, rels))
+          } yield res.bimap(_.map(Obfuscators.userGroupId.obfuscate), Obfuscators.userGroupId.obfuscate)
 
         db.inStrictTxn(runDB)(create)
       }
@@ -114,24 +99,11 @@ object HomeSpaLogic {
           Obfuscators.userGroupId.deobfuscateOrThrow(_),
           Obfuscators.userId.deobfuscateOrThrow(_))
 
-        val revokeInvs = req.revokeInvs.map(Obfuscators.userGroupInvId.deobfuscateOrThrow(_))
-
-        def updateWith(newInvs: Set[UserGroupInv.Target[UserId]]): D[UpdateUserGroup.Response] = {
-          @inline def event = GlobalEvent.UserGroupUpdate(user.id, id, req.name, req.handle, rels, newInvs, revokeInvs)
-          for {
-            res <- db.updateUserGroup(user.id, id, req.name, req.handle, rels, newInvs, revokeInvs)
-            _   <- db.logGlobalEventOnRight(res)(_ => event)
-          } yield res match {
-            case \/-(_)   => UpdateUserGroup.Response.Success
-            case -\/(err) => UpdateUserGroup.Response.SaveError(err.map(Obfuscators.userGroupId.obfuscate))
-          }
-        }
-
         val update: D[UpdateUserGroup.Response] =
-          resolveInvTargetUsernames(req.newInvs).flatMap {
-            case \/-(newInvs) => updateWith(newInvs)
-            case -\/(errs)    => D pure UpdateUserGroup.Response.InvalidUsernames(errs)
-          }
+          for {
+            res <- db.updateUserGroup(id, req.name, req.handle, rels)
+            _   <- db.logGlobalEventOnRight(res)(_ => GlobalEvent.UserGroupUpdate(user.id, id, req.name, req.handle, rels))
+          } yield res.leftMap(_.map(Obfuscators.userGroupId.obfuscate))
 
         db.inStrictTxn(runDB)(update)
       }

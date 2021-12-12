@@ -138,13 +138,6 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
 
   var users = List.empty[MockDb.UserEntry]
 
-  private def validateUserId(id: UserId): Unit =
-    if (users.forall(_.id !=* id))
-      throw new RuntimeException(s"User #${id.value} not found")
-
-  private def validateUserIds(ids: IterableOnce[UserId]): Unit =
-    ids.iterator.foreach(validateUserId)
-
   def newUserId(): UserId = {
     nextToken()
     val id = UserId(prevTokenId)
@@ -165,17 +158,6 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
 
   def getUserOrPlaceholder(u: Username \/ EmailAddr): Option[(EmailAddr, DB.UserRegistration.Pending) \/ MockDb.UserEntry] =
     getUser(u).map(\/-(_)) orElse u.fold(_ => None, e => userPlaceholders.get(e).map(r => -\/((e, r))))
-
-  override def getUserIdsByUsername(usernames: Set[Username]) = Eval.always[NonEmptySet[Username] \/ Map[Username, UserId]] {
-    var ko = Set.empty[Username]
-    var ok = Map.empty[Username, UserId]
-    for (u <- usernames)
-      this.users.find(_.username ==* u) match {
-        case Some(e) => ok += ((u, e.id))
-        case None    => ko += u
-      }
-    NonEmptySet.option(ko).toLeft(ok)
-  }
 
   def updateUser(w: MockDb.UserEntry => Boolean, f: MockDb.UserEntry => MockDb.UserEntry): Unit =
     users = users.map(u => if (w(u)) f(u) else u)
@@ -372,9 +354,6 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
   private var userGroupTree   = Set.empty[UserGroup.Rel[UserGroup.Id, UserGroup.Id]]
   private var userGroupUsers  = Set.empty[UserGroup.Rel[UserGroup.Id, UserId]]
 
-  private val nextUserGroupInvId = Incrementor.long(0, UserGroupInv.Id.apply)
-  private var userGroupInvs      = List.empty[UserGroupInv[UserGroupInv.Id, UserId, UserGroup.Id]]
-
   private def userGroupTreeGraph(userGroupTree: Set[UserGroup.Rel[UserGroup.Id, UserGroup.Id]] = userGroupTree) =
     Digraph.BiDir(Multimap.empty[UserGroup.Id, Set, UserGroup.Id].addPairs(userGroupTree.iterator.map(_.fromTo).toSeq: _*))
 
@@ -446,18 +425,14 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     )
   }
 
-  override def createUserGroup(userId: UserId,
-                               name  : UserGroup.Name,
+  override def createUserGroup(name  : UserGroup.Name,
                                handle: UserGroup.Handle,
                                rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
-                               invs  : Set[UserGroupInv.Target[UserId]],
                               ) = Eval.always[UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id] {
 
     if (userGroups.exists(_.handle ==* handle))
       -\/(UserGroup.SaveError.HandleAlreadyTaken)
     else {
-      validateUserIds(invs.iterator.map(_.invitee))
-
       val id       = nextUserGroupId()
       val parents  = rels.parents.map(_.reverse(id))
       val children = rels.children.map(_.from(id))
@@ -472,26 +447,21 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
         this.userGroups     = ugs2
         this.userGroupTree  = ugTree2
         this.userGroupUsers = ugUsers2
-        addUserGroupInvs(userId, id, invs)
         id
       }
     }
   }
 
-  override def updateUserGroup(userId    : UserId,
-                               id        : UserGroup.Id,
-                               name      : Option[UserGroup.Name],
-                               handle    : Option[UserGroup.Handle],
-                               rels      : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
-                               newInvs   : Set[UserGroupInv.Target[UserId]],
-                               revokeInvs: Set[UserGroupInv.Id],
+  override def updateUserGroup(id    : UserGroup.Id,
+                               name  : Option[UserGroup.Name],
+                               handle: Option[UserGroup.Handle],
+                               rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
                               ) = Eval.always[UserGroup.SaveError[UserGroup.Id] \/ Unit] {
     import UserGroup._
 
     if (handle.exists(h => userGroups.exists(g => g.handle ==* h && g.id !=* id)))
       -\/(SaveError.HandleAlreadyTaken)
     else {
-      validateUserIds(newInvs.iterator.map(_.invitee))
 
       val ug1      = userGroups.find(_.id ==* id).getOrThrow(s"User group #${id.value} not found")
       var ug2      = ug1
@@ -541,27 +511,10 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
           this.userGroups     = ugs2
           this.userGroupTree  = ugTree2
           this.userGroupUsers = ugUsers2
-          this.userGroupInvs  = this.userGroupInvs.filter(i => !revokeInvs.contains(i.id))
-          addUserGroupInvs(userId, id, newInvs)
         }
       }
 
       NonEmptySet.option(errors).map(UserGroup.SaveError.Invalid(_)).toLeft(())
     }
   }
-
-  private def addUserGroupInvs(userId: UserId, id: UserGroup.Id, invs: Set[UserGroupInv.Target[UserId]]): Unit = {
-    val now = this.now.value
-    for (t <- invs)
-      this.userGroupInvs ::= UserGroupInv(
-        id         = nextUserGroupInvId(),
-        inviter    = userId,
-        invitee    = t.invitee,
-        userGroup  = id,
-        perm       = t.perm,
-        createdAt  = now,
-        conclusion = None,
-      )
-  }
-
 }

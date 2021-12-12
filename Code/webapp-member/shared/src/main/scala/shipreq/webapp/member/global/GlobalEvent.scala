@@ -25,18 +25,13 @@ object GlobalEvent {
                                    id    : UserGroup.Id,
                                    name  : UserGroup.Name,
                                    handle: UserGroup.Handle,
-                                   rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
-                                   invs  : Set[UserGroupInv.Target[UserId]],
-                                  ) extends GlobalEvent
+                                   rels  : UserGroup.ARels[Set, UserGroup.Id, UserId]) extends GlobalEvent
 
-  final case class UserGroupUpdate(userId    : UserId,
-                                   id        : UserGroup.Id,
-                                   name      : Option[UserGroup.Name],
-                                   handle    : Option[UserGroup.Handle],
-                                   rels      : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
-                                   newInvs   : Set[UserGroupInv.Target[UserId]],
-                                   revokeInvs: Set[UserGroupInv.Id],
-                                  ) extends GlobalEvent
+  final case class UserGroupUpdate(userId: UserId,
+                                   id    : UserGroup.Id,
+                                   name  : Option[UserGroup.Name],
+                                   handle: Option[UserGroup.Handle],
+                                   rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId]) extends GlobalEvent
 
   implicit def univEq: UnivEq[GlobalEvent] = UnivEq.derive
 }
