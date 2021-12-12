@@ -2,20 +2,20 @@
   "results": [
     {
       "bundleName": "/tmp/shipreq-release.sbt/webapp-client-project/target/scala-2.13/webappclientproject-opt.js",
-      "totalBytes": 3785808,
-      "mappedBytes": 3756972,
-      "unmappedBytes": 19816,
-      "eolBytes": 9020,
+      "totalBytes": 3788279,
+      "mappedBytes": 3759456,
+      "unmappedBytes": 19795,
+      "eolBytes": 9028,
       "sourceMapCommentBytes": 51,
       "files": {
         "[EOLs]": {
-          "size": 9020
+          "size": 9028
         },
         "[no source]": {
-          "size": 10795
+          "size": 10765
         },
         "[unmapped]": {
-          "size": 19816
+          "size": 19795
         },
         "file://Users/mathias/Documents/projects/parboiled2/parboiled-core/org/parboiled2/CharPredicate.scala": {
           "size": 7163
@@ -36,403 +36,13 @@
           "size": 392
         },
         "file://Users/mathias/Documents/projects/parboiled2/parboiled-core/org/parboiled2/ValueStack.scala": {
-          "size": 1632
+          "size": 1630
         },
         "file://Users/mathias/Documents/projects/parboiled2/parboiled-core/org/parboiled2/package.scala": {
           "size": 502
         },
         "file://Users/mathias/Documents/projects/parboiled2/parboiled-core/org/parboiled2/support/Unpack.scala": {
           "size": 155
-        },
-        "file://home/golly/projects/public/microlibs/multimap/japgolly/microlibs/multimap/MultiValues.scala": {
-          "size": 904
-        },
-        "file://home/golly/projects/public/microlibs/multimap/japgolly/microlibs/multimap/Multimap.scala": {
-          "size": 2844
-        },
-        "file://home/golly/projects/public/microlibs/nonempty/japgolly/microlibs/nonempty/NonEmpty.scala": {
-          "size": 1667
-        },
-        "file://home/golly/projects/public/microlibs/nonempty/japgolly/microlibs/nonempty/NonEmptySet.scala": {
-          "size": 1923
-        },
-        "file://home/golly/projects/public/microlibs/nonempty/japgolly/microlibs/nonempty/NonEmptyVector.scala": {
-          "size": 5482
-        },
-        "file://home/golly/projects/public/microlibs/recursion/japgolly/microlibs/recursion/AtomOrComposite.scala": {
-          "size": 1502
-        },
-        "file://home/golly/projects/public/microlibs/recursion/japgolly/microlibs/recursion/Fix.scala": {
-          "size": 395
-        },
-        "file://home/golly/projects/public/microlibs/recursion/japgolly/microlibs/recursion/Recursion.scala": {
-          "size": 184
-        },
-        "file://home/golly/projects/public/microlibs/recursion/japgolly/microlibs/recursion/RecursionFn.scala": {
-          "size": 323
-        },
-        "file://home/golly/projects/public/microlibs/recursion/japgolly/microlibs/recursion/package.scala": {
-          "size": 164
-        },
-        "file://home/golly/projects/public/microlibs/stdlib-ext/japgolly/microlibs/stdlib_ext/Extractors.scala": {
-          "size": 211
-        },
-        "file://home/golly/projects/public/microlibs/stdlib-ext/japgolly/microlibs/stdlib_ext/PlatformSpecificStdlibExt.scala": {
-          "size": 165
-        },
-        "file://home/golly/projects/public/microlibs/stdlib-ext/japgolly/microlibs/stdlib_ext/StdlibExt.scala": {
-          "size": 3546
-        },
-        "file://home/golly/projects/public/microlibs/stdlib-ext/shared/src/main/scala-2.13/japgolly/microlibs/stdlib_ext/MutableArray.scala": {
-          "size": 1276
-        },
-        "file://home/golly/projects/public/microlibs/utils/japgolly/microlibs/utils/BiMap.scala": {
-          "size": 824
-        },
-        "file://home/golly/projects/public/microlibs/utils/japgolly/microlibs/utils/ConciseIntSetFormat.scala": {
-          "size": 1290
-        },
-        "file://home/golly/projects/public/microlibs/utils/japgolly/microlibs/utils/Memo.scala": {
-          "size": 1615
-        },
-        "file://home/golly/projects/public/microlibs/utils/japgolly/microlibs/utils/PlatformJS.scala": {
-          "size": 346
-        },
-        "file://home/golly/projects/public/microlibs/utils/japgolly/microlibs/utils/Ref.scala": {
-          "size": 197
-        },
-        "file://home/golly/projects/public/microlibs/utils/japgolly/microlibs/utils/StaticLookupFn.scala": {
-          "size": 4288
-        },
-        "file://home/golly/projects/public/microlibs/utils/japgolly/microlibs/utils/Utils.scala": {
-          "size": 556
-        },
-        "file://home/golly/projects/public/microlibs/utils/japgolly/microlibs/utils/package.scala": {
-          "size": 378
-        },
-        "file://home/golly/projects/public/scalajs-react/callback/callback/Exports.scala": {
-          "size": 20
-        },
-        "file://home/golly/projects/public/scalajs-react/callback/callback/RateLimit.scala": {
-          "size": 520
-        },
-        "file://home/golly/projects/public/scalajs-react/callback/callback/SyncPromise.scala": {
-          "size": 641
-        },
-        "file://home/golly/projects/public/scalajs-react/callback/callback/Timer.scala": {
-          "size": 273
-        },
-        "file://home/golly/projects/public/scalajs-react/callback/callback/Trampoline.scala": {
-          "size": 5553
-        },
-        "file://home/golly/projects/public/scalajs-react/callback/src/main/scala-2/callback/AsyncCallback.scala": {
-          "size": 6492
-        },
-        "file://home/golly/projects/public/scalajs-react/callback/src/main/scala-2/callback/Callback.scala": {
-          "size": 4583
-        },
-        "file://home/golly/projects/public/scalajs-react/callback/src/main/scala-2/callback/CallbackOption.scala": {
-          "size": 1967
-        },
-        "file://home/golly/projects/public/scalajs-react/callback/src/main/scala-2/callback/CallbackTo.scala": {
-          "size": 6823
-        },
-        "file://home/golly/projects/public/scalajs-react/callback/util/EffectCallback.scala": {
-          "size": 4322
-        },
-        "file://home/golly/projects/public/scalajs-react/coreBundleCallback/internal/ReactCallbackExtensions.scala": {
-          "size": 1754
-        },
-        "file://home/golly/projects/public/scalajs-react/coreBundleCallback/package.scala": {
-          "size": 904
-        },
-        "file://home/golly/projects/public/scalajs-react/coreBundleCallback/util/DefaultEffectsCallback.scala": {
-          "size": 1649
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/ComponentDom.scala": {
-          "size": 1553
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/CtorType.scala": {
-          "size": 6558
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/React.scala": {
-          "size": 195
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/ReactCaughtError.scala": {
-          "size": 817
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/ReactDOMServer.scala": {
-          "size": 141
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/ReactExtensions.scala": {
-          "size": 379
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/Ref.scala": {
-          "size": 2460
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/Reusability.scala": {
-          "size": 9002
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/Reusable.scala": {
-          "size": 5495
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/SetStateFns.scala": {
-          "size": 685
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/StateAccess.scala": {
-          "size": 3090
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/StateAccessor.scala": {
-          "size": 734
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/Generic.scala": {
-          "size": 1271
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/Js.scala": {
-          "size": 3386
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/JsBaseComponentTemplate.scala": {
-          "size": 1124
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/JsFn.scala": {
-          "size": 749
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/JsForwardRef.scala": {
-          "size": 130
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/Scala.scala": {
-          "size": 1192
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/ScalaFn.scala": {
-          "size": 335
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/ScalaForwardRef.scala": {
-          "size": 99
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/Template.scala": {
-          "size": 1408
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/builder/InitState.scala": {
-          "size": 1198
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/builder/LifecycleF.scala": {
-          "size": 7642
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/component/builder/ViaReactComponent.scala": {
-          "size": 2944
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/events.scala": {
-          "size": 711
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/feature/Context.scala": {
-          "size": 98
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/feature/Profiler.scala": {
-          "size": 99
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/feature/ReactFragment.scala": {
-          "size": 244
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/hooks/Api.scala": {
-          "size": 99
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/hooks/CustomHook.scala": {
-          "size": 121
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/hooks/Hooks.scala": {
-          "size": 121
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/internal/Box.scala": {
-          "size": 465
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/internal/CoreGeneral.scala": {
-          "size": 869
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/internal/EffectUtil.scala": {
-          "size": 396
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/internal/Optics.scala": {
-          "size": 898
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/internal/Profunctor.scala": {
-          "size": 31
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/src/main/scala-2/ScalaJsReactConfig.scala": {
-          "size": 1340
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/src/main/scala-2/ScalaVersionSpecificReusability.scala": {
-          "size": 690
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/src/main/scala-2/component/builder/ComponentBuilder.scala": {
-          "size": 4609
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/src/main/scala-2/internal/Singleton.scala": {
-          "size": 355
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/src/main/scala-2/vdom/Attr.scala": {
-          "size": 5123
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/src/main/scala-2/vdom/TagLite.scala": {
-          "size": 1418
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/src/main/scala-2/vdom/TagMod.scala": {
-          "size": 2782
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/src/main/scala-2/vdom/VdomElement.scala": {
-          "size": 2603
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/src/main/scala-2/vdom/VdomNode.scala": {
-          "size": 8839
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/Exports.scala": {
-          "size": 1008
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/HtmlAttrs.scala": {
-          "size": 3099
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/HtmlStyles.scala": {
-          "size": 3425
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/HtmlTags.scala": {
-          "size": 8371
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/Implicits.scala": {
-          "size": 5183
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/PackageBase.scala": {
-          "size": 1527
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/Packages.scala": {
-          "size": 2670
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/ReactPortal.scala": {
-          "size": 101
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/Style.scala": {
-          "size": 554
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/TagOf.scala": {
-          "size": 873
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/VdomArray.scala": {
-          "size": 801
-        },
-        "file://home/golly/projects/public/scalajs-react/coreGeneric/vdom/VdomBuilder.scala": {
-          "size": 1086
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/Broadcaster.scala": {
-          "size": 348
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/EventListenerF.scala": {
-          "size": 842
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/Listenable.scala": {
-          "size": 613
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/OnUnmount.scala": {
-          "size": 775
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/Px.scala": {
-          "size": 5231
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/StateSnapshot.scala": {
-          "size": 2190
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/StateSnapshotF.scala": {
-          "size": 1851
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/TimerSupport.scala": {
-          "size": 256
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/components/package.scala": {
-          "size": 176
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/internal/AjaxF.scala": {
-          "size": 2400
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/internal/LazyVar.scala": {
-          "size": 243
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/internal/TriStateCheckboxF.scala": {
-          "size": 3492
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/package.scala": {
-          "size": 367
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/ActionF.scala": {
-          "size": 1318
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/Dsl.scala": {
-          "size": 3623
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/RouteCmd.scala": {
-          "size": 2552
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/Router.scala": {
-          "size": 3919
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/RouterConfig.scala": {
-          "size": 406
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/RouterCtlF.scala": {
-          "size": 2906
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/RouterWithPropsConfigF.scala": {
-          "size": 1159
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/RoutingRule.scala": {
-          "size": 2507
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/RoutingRulesF.scala": {
-          "size": 3358
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/SetRouteVia.scala": {
-          "size": 673
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/StaticOrDynamic.scala": {
-          "size": 601
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/Urls.scala": {
-          "size": 1328
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/router/package.scala": {
-          "size": 279
-        },
-        "file://home/golly/projects/public/scalajs-react/extra/src/main/scala-2/router/ResolutionWithProps.scala": {
-          "size": 415
-        },
-        "file://home/golly/projects/public/scalajs-react/extraExtMonocle3/ReactMonocle.scala": {
-          "size": 206
-        },
-        "file://home/golly/projects/public/scalajs-react/extraExtMonocle3/internal/monocle/MonocleExtComponent.scala": {
-          "size": 236
-        },
-        "file://home/golly/projects/public/scalajs-react/extraExtMonocle3/internal/monocle/MonocleExtStateSnapshot.scala": {
-          "size": 664
-        },
-        "file://home/golly/projects/public/scalajs-react/util/util/DomUtil.scala": {
-          "size": 184
-        },
-        "file://home/golly/projects/public/scalajs-react/util/util/Effect.scala": {
-          "size": 1777
-        },
-        "file://home/golly/projects/public/scalajs-react/util/util/JsUtil.scala": {
-          "size": 1334
-        },
-        "file://home/golly/projects/public/scalajs-react/util/util/Monad.scala": {
-          "size": 115
-        },
-        "file://home/golly/projects/public/scalajs-react/util/util/OptionLike.scala": {
-          "size": 618
-        },
-        "file://home/golly/projects/public/scalajs-react/util/util/Util.scala": {
-          "size": 673
-        },
-        "file://home/golly/projects/public/scalajs-react/utilFallbacks/userdefined/Effects.scala": {
-          "size": 21
-        },
-        "file://home/golly/projects/public/scalajs-react/utilFallbacks/util/EffectFallbacks.scala": {
-          "size": 93
         },
         "file://home/runner/work/shapeless/shapeless/core/shapeless/hlists.scala": {
           "size": 723
@@ -453,10 +63,10 @@
           "size": 2904
         },
         "file://localhome/doeraene/projects/scalajs-java-time/java/time/Instant.scala": {
-          "size": 2911
+          "size": 2937
         },
         "file://localhome/doeraene/projects/scalajs-java-time/java/time/LocalDate.scala": {
-          "size": 3430
+          "size": 3404
         },
         "file://localhome/doeraene/projects/scalajs-java-time/java/time/LocalTime.scala": {
           "size": 2048
@@ -480,13 +90,13 @@
           "size": 37
         },
         "file://localhome/doeraene/projects/scalajs-java-time/java/time/chrono/IsoChronology.scala": {
-          "size": 399
+          "size": 391
         },
         "file://localhome/doeraene/projects/scalajs-java-time/java/time/temporal/ChronoField.scala": {
-          "size": 3867
+          "size": 3872
         },
         "file://localhome/doeraene/projects/scalajs-java-time/java/time/temporal/ChronoUnit.scala": {
-          "size": 1603
+          "size": 1598
         },
         "file://localhome/doeraene/projects/scalajs-java-time/java/time/temporal/TemporalAccessor.scala": {
           "size": 355
@@ -498,7 +108,7 @@
           "size": 1388
         },
         "file:/shipreq/base-predef/shipreq/Predef.scala": {
-          "size": 712
+          "size": 713
         },
         "file:/shipreq/base-predef/shipreq/PredefShared.scala": {
           "size": 4945
@@ -513,7 +123,7 @@
           "size": 1152
         },
         "file:/shipreq/base-util/shipreq/base/util/BinaryJs.scala": {
-          "size": 485
+          "size": 483
         },
         "file:/shipreq/base-util/shipreq/base/util/CatsExtra.scala": {
           "size": 1373
@@ -705,7 +315,7 @@
           "size": 2775
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/feature/ErrorHandlingFeature.scala": {
-          "size": 2726
+          "size": 2724
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/feature/ScrollSyncFeature.scala": {
           "size": 1080
@@ -720,10 +330,10 @@
           "size": 600
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/feature/clipboard/ClipboardJs.scala": {
-          "size": 184
+          "size": 182
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/feature/clipboard/ClipboardKeys.scala": {
-          "size": 1972
+          "size": 1970
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/feature/dragtoreorder/DragLoc.scala": {
           "size": 762
@@ -738,13 +348,13 @@
           "size": 910
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/feature/tablenav/Logic.scala": {
-          "size": 2853
+          "size": 2840
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/feature/tablenav/Movement.scala": {
           "size": 2263
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/feature/tablenav/SpecialCases.scala": {
-          "size": 932
+          "size": 919
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/feature/tablenav/TableCellZipper.scala": {
           "size": 3648
@@ -759,7 +369,7 @@
           "size": 460
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/feature/tablenav/VirtualTable.scala": {
-          "size": 4195
+          "size": 4156
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/lib/ConfirmJs.scala": {
           "size": 383
@@ -774,19 +384,19 @@
           "size": 1180
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/protocol/ServerSideProcInvoker.scala": {
-          "size": 1827
+          "size": 1520
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/protocol/Version.scala": {
           "size": 1615
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/protocol/ajax/AjaxClient.scala": {
-          "size": 2462
+          "size": 2742
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/protocol/ajax/CommonProtocols.scala": {
           "size": 6655
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/protocol/ajax/CommonProtocolsJs.scala": {
-          "size": 354
+          "size": 350
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/protocol/binary/SafePickler.scala": {
           "size": 6070
@@ -801,13 +411,13 @@
           "size": 288
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/protocol/entrypoint/ClientSideProcImpl.scala": {
-          "size": 157
+          "size": 161
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/protocol/websocket/WebSocket.scala": {
           "size": 3039
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/protocol/websocket/WebSocketClient.scala": {
-          "size": 10631
+          "size": 10629
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/protocol/websocket/WebSocketShared.scala": {
           "size": 3294
@@ -888,7 +498,7 @@
           "size": 3036
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/ui/widgets/FeedbackModal.scala": {
-          "size": 2937
+          "size": 2941
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/ui/widgets/Form.scala": {
           "size": 8242
@@ -906,7 +516,7 @@
           "size": 1109
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/util/Browser.scala": {
-          "size": 313
+          "size": 309
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/util/CallbackHelpers.scala": {
           "size": 980
@@ -921,10 +531,10 @@
           "size": 755
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/util/DomUtil.scala": {
-          "size": 2703
+          "size": 2168
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/util/GoogleAnalytics.scala": {
-          "size": 425
+          "size": 433
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/util/KeyHandler.scala": {
           "size": 4993
@@ -933,7 +543,7 @@
           "size": 540
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/util/LruMemo.scala": {
-          "size": 814
+          "size": 819
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/util/Obfuscated.scala": {
           "size": 568
@@ -945,7 +555,7 @@
           "size": 773
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/util/PreProcessing.scala": {
-          "size": 1600
+          "size": 1611
         },
         "file:/shipreq/webapp-base/shipreq/webapp/base/util/ReactKeyGen.scala": {
           "size": 353
@@ -990,10 +600,10 @@
           "size": 849
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/Main.scala": {
-          "size": 1208
+          "size": 1203
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/Style.scala": {
-          "size": 89834
+          "size": 89840
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/TestMarker.scala": {
           "size": 585
@@ -1104,13 +714,13 @@
           "size": 9698
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/pages/content/issues/Sorter.scala": {
-          "size": 1568
+          "size": 1567
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/pages/content/issues/Summary.scala": {
           "size": 1306
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/pages/content/issues/Table.scala": {
-          "size": 4857
+          "size": 4852
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/pages/content/issues/TableHeader.scala": {
           "size": 1345
@@ -1197,7 +807,7 @@
           "size": 6176
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/pages/content/reqtable/SelectionCtrls.scala": {
-          "size": 9607
+          "size": 9605
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/pages/content/reqtable/SortCriteriaEditor.scala": {
           "size": 2562
@@ -1206,7 +816,7 @@
           "size": 3036
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/pages/content/reqtable/Table.scala": {
-          "size": 17008
+          "size": 17030
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/pages/content/reqtable/TableContentStats.scala": {
           "size": 895
@@ -1221,7 +831,7 @@
           "size": 761
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/pages/root/LoadedRoot.scala": {
-          "size": 12406
+          "size": 12404
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/pages/root/ProjectHome.scala": {
           "size": 798
@@ -1242,7 +852,7 @@
           "size": 7454
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/state/Global.scala": {
-          "size": 6513
+          "size": 6511
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/app/state/NewEvents.scala": {
           "size": 532
@@ -1269,7 +879,7 @@
           "size": 2127
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/Selection.scala": {
-          "size": 3392
+          "size": 3580
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/Usage.scala": {
           "size": 1577
@@ -1287,7 +897,7 @@
           "size": 10715
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/create/NewEditor.scala": {
-          "size": 10561
+          "size": 10021
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/create/RowKey.scala": {
           "size": 3582
@@ -1296,16 +906,16 @@
           "size": 1052
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/deletion/DeletionForm.scala": {
-          "size": 4333
+          "size": 4335
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/deletion/DeletionRestorationLogic.scala": {
           "size": 2843
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/deletion/RestorationForm.scala": {
-          "size": 2488
+          "size": 2490
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/deletion/SharedUI.scala": {
-          "size": 2452
+          "size": 2472
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/editor/Editability.scala": {
           "size": 6827
@@ -1314,7 +924,7 @@
           "size": 9653
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/editor/EditorKeys.scala": {
-          "size": 1350
+          "size": 1349
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/editor/Feature.scala": {
           "size": 18990
@@ -1323,7 +933,7 @@
           "size": 12466
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/editor/NewEditor.scala": {
-          "size": 27963
+          "size": 28503
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/feature/editor/PotentialValue.scala": {
           "size": 2994
@@ -1377,7 +987,7 @@
           "size": 927
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/ButtonsAndDropdown.scala": {
-          "size": 5673
+          "size": 5635
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/CheckboxList.scala": {
           "size": 3595
@@ -1407,13 +1017,13 @@
           "size": 12148
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/GraphComponent.scala": {
-          "size": 3330
+          "size": 3312
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/HelpModal.scala": {
-          "size": 1846
+          "size": 1854
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/ImplicationGraph.scala": {
-          "size": 15318
+          "size": 15334
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/ImplyNewReqButton.scala": {
           "size": 2071
@@ -1452,10 +1062,10 @@
           "size": 1815
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/UseCaseStepFlowGraph.scala": {
-          "size": 1909
+          "size": 1899
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/UserDefinedGraph.scala": {
-          "size": 11956
+          "size": 11961
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/ViewReq.scala": {
           "size": 4126
@@ -1482,7 +1092,7 @@
           "size": 13946
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/editors_with_controls/TagEditor.scala": {
-          "size": 6062
+          "size": 6053
         },
         "file:/shipreq/webapp-client-project/shipreq/webapp/client/project/widgets/editors_with_controls/UseCaseStepEditor.scala": {
           "size": 5501
@@ -1491,7 +1101,7 @@
           "size": 2095
         },
         "file:/shipreq/webapp-client-ww-api/shipreq/webapp/client/ww/api/Protocol.scala": {
-          "size": 1223
+          "size": 1222
         },
         "file:/shipreq/webapp-client-ww-api/shipreq/webapp/client/ww/api/WebWorkerCmd.scala": {
           "size": 5064
@@ -1623,7 +1233,7 @@
           "size": 1945
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/data/Field.scala": {
-          "size": 24833
+          "size": 24830
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/data/FieldReqTypeRules.scala": {
           "size": 4957
@@ -1644,7 +1254,7 @@
           "size": 1285
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/data/ManualIssue.scala": {
-          "size": 2082
+          "size": 2107
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/data/Project.scala": {
           "size": 8181
@@ -1668,10 +1278,10 @@
           "size": 1707
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/data/ReqTypes.scala": {
-          "size": 10155
+          "size": 10151
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/data/Requirements.scala": {
-          "size": 20073
+          "size": 20048
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/data/SpecialBuiltInField.scala": {
           "size": 3210
@@ -1719,7 +1329,7 @@
           "size": 20505
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/data/misc.scala": {
-          "size": 2611
+          "size": 2615
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/data/package.scala": {
           "size": 972
@@ -1815,7 +1425,7 @@
           "size": 856
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/issue/IssueDetectors.scala": {
-          "size": 10881
+          "size": 10887
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/project/issue/IssueStats.scala": {
           "size": 1925
@@ -1956,7 +1566,7 @@
           "size": 3573
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/ui/OptionalFullscreen.scala": {
-          "size": 2591
+          "size": 2603
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/ui/PlainTextEditor.scala": {
           "size": 2205
@@ -1965,10 +1575,10 @@
           "size": 3676
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/ui/ReauthenticationModal.scala": {
-          "size": 3296
+          "size": 3300
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/ui/SvgPanZoom.scala": {
-          "size": 4050
+          "size": 4046
         },
         "file:/shipreq/webapp-member/shipreq/webapp/member/ui/TimeAgo.scala": {
           "size": 1130
@@ -1976,500 +1586,887 @@
         "file:/shipreq/webapp-member/shipreq/webapp/member/ui/Toast.scala": {
           "size": 5099
         },
-        "https:/raw.githubusercontent.com/japgolly/nyaya/v0.11.0/nyaya/prop/CycleDetector.scala": {
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/multimap/MultiValues.scala": {
+          "size": 904
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/multimap/Multimap.scala": {
+          "size": 2844
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/nonempty/NonEmpty.scala": {
+          "size": 1667
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/nonempty/NonEmptySet.scala": {
+          "size": 1923
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/nonempty/NonEmptyVector.scala": {
+          "size": 5482
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/recursion/AtomOrComposite.scala": {
+          "size": 1502
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/recursion/Fix.scala": {
+          "size": 395
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/recursion/Recursion.scala": {
+          "size": 184
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/recursion/RecursionFn.scala": {
+          "size": 323
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/recursion/package.scala": {
+          "size": 164
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/stdlib_ext/Extractors.scala": {
+          "size": 211
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/stdlib_ext/PlatformSpecificStdlibExt.scala": {
+          "size": 165
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/stdlib_ext/StdlibExt.scala": {
+          "size": 3546
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/utils/BiMap.scala": {
+          "size": 824
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/utils/ConciseIntSetFormat.scala": {
+          "size": 1290
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/utils/Memo.scala": {
+          "size": 1615
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/utils/PlatformJS.scala": {
+          "size": 346
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/utils/Ref.scala": {
+          "size": 197
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/utils/StaticLookupFn.scala": {
+          "size": 4288
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/utils/Utils.scala": {
+          "size": 556
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/japgolly/microlibs/utils/package.scala": {
+          "size": 378
+        },
+        "https:/raw.githubusercontent.com/japgolly/microlibs-scala/v4.0.0/shared/src/main/scala-2.13/japgolly/microlibs/stdlib_ext/MutableArray.scala": {
+          "size": 1276
+        },
+        "https:/raw.githubusercontent.com/japgolly/nyaya/v1.0.0/nyaya/prop/CycleDetector.scala": {
           "size": 1957
         },
-        "https:/raw.githubusercontent.com/japgolly/nyaya/v0.11.0/nyaya/prop/Eval.scala": {
+        "https:/raw.githubusercontent.com/japgolly/nyaya/v1.0.0/nyaya/prop/Eval.scala": {
           "size": 5739
         },
-        "https:/raw.githubusercontent.com/japgolly/nyaya/v0.11.0/nyaya/prop/Logic.scala": {
+        "https:/raw.githubusercontent.com/japgolly/nyaya/v1.0.0/nyaya/prop/Logic.scala": {
           "size": 5510
         },
-        "https:/raw.githubusercontent.com/japgolly/nyaya/v0.11.0/nyaya/prop/Prop.scala": {
+        "https:/raw.githubusercontent.com/japgolly/nyaya/v1.0.0/nyaya/prop/Prop.scala": {
           "size": 3055
         },
-        "https:/raw.githubusercontent.com/japgolly/nyaya/v0.11.0/nyaya/prop/package.scala": {
+        "https:/raw.githubusercontent.com/japgolly/nyaya/v1.0.0/nyaya/prop/package.scala": {
           "size": 1487
         },
-        "https:/raw.githubusercontent.com/japgolly/nyaya/v0.11.0/nyaya/util/Util.scala": {
+        "https:/raw.githubusercontent.com/japgolly/nyaya/v1.0.0/nyaya/util/Util.scala": {
           "size": 755
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/ext-react/scalacss/React.scala": {
-          "size": 3006
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/ext-react/scalacss/React.scala": {
+          "size": 3021
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/defaults/DefaultSettings.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/defaults/DefaultSettings.scala": {
           "size": 69
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/defaults/Exports.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/defaults/Exports.scala": {
           "size": 30
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/defaults/PlatformExports.scala": {
-          "size": 541
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/defaults/PlatformExports.scala": {
+          "size": 553
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/AVs.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/AVs.scala": {
           "size": 1617
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Attr.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Attr.scala": {
           "size": 4301
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Attrs.scala": {
-          "size": 29018
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Attrs.scala": {
+          "size": 29010
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/CanIUse.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/CanIUse.scala": {
           "size": 29438
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/CanIUse2.scala": {
-          "size": 2566
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/CanIUse2.scala": {
+          "size": 2598
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Compose.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Compose.scala": {
           "size": 2217
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Cond.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Cond.scala": {
           "size": 2011
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Css.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Css.scala": {
           "size": 1294
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/CssEntry.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/CssEntry.scala": {
           "size": 1721
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Data.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Data.scala": {
           "size": 4253
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Domain.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Domain.scala": {
           "size": 1557
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Dsl.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Dsl.scala": {
           "size": 14315
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Env.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Env.scala": {
           "size": 2584
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Media.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Media.scala": {
           "size": 379
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/NaturalOrdering.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/NaturalOrdering.scala": {
           "size": 909
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Need.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Need.scala": {
           "size": 241
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/NonEmptyVector.scala": {
-          "size": 1487
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/NonEmptyVector.scala": {
+          "size": 1523
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Platform.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Platform.scala": {
           "size": 5
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Pseudo.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Pseudo.scala": {
           "size": 6243
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Renderer.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Renderer.scala": {
           "size": 4513
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Style.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Style.scala": {
           "size": 2595
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/StyleA.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/StyleA.scala": {
           "size": 900
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/StyleLookup.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/StyleLookup.scala": {
           "size": 1236
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/ValueT.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/ValueT.scala": {
           "size": 55315
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/Values.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/Values.scala": {
           "size": 5832
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/generated.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/generated.scala": {
           "size": 7319
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/mutable/Mutex.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/mutable/Mutex.scala": {
           "size": 155
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/mutable/Register.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/mutable/Register.scala": {
           "size": 3039
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/mutable/Settings.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/mutable/Settings.scala": {
           "size": 7
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/mutable/StyleSheet.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/mutable/StyleSheet.scala": {
           "size": 8890
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/internal/package.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/internal/package.scala": {
           "size": 945
         },
-        "https:/raw.githubusercontent.com/japgolly/scalacss/v0.8.0-RC1/scalacss/package.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalacss/v1.0.0/scalacss/package.scala": {
           "size": 183
         },
-        "https:/raw.githubusercontent.com/japgolly/univeq/v1.6.0/shared/src/main/scala-2.13/japgolly/univeq/ScalaUnivEq.scala": {
-          "size": 207
-        },
-        "https:/raw.githubusercontent.com/japgolly/univeq/v1.6.0/shared/src/main/scala-2/japgolly/univeq/UnivEq.scala": {
-          "size": 468
-        },
-        "https:/raw.githubusercontent.com/japgolly/univeq/v1.6.0/shared/src/main/scala-2/japgolly/univeq/UnivEqExports.scala": {
-          "size": 5
-        },
-        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.0.0/core/monocle/Iso.scala": {
-          "size": 6647
-        },
-        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.0.0/core/monocle/Lens.scala": {
-          "size": 9094
-        },
-        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.0.0/core/monocle/Optional.scala": {
-          "size": 1014
-        },
-        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.0.0/core/monocle/Prism.scala": {
-          "size": 1529
-        },
-        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.0.0/core/monocle/Traversal.scala": {
-          "size": 751
-        },
-        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.0.0/core/monocle/std/Option.scala": {
-          "size": 222
-        },
-        "https:/raw.githubusercontent.com/scala-js/scala-js-dom/v1.1.0/org/scalajs/dom/ext/Extensions.scala": {
-          "size": 329
-        },
-        "https:/raw.githubusercontent.com/scala-js/scala-js-dom/v1.1.0/org/scalajs/dom/package.scala": {
-          "size": 603
-        },
-        "https:/raw.githubusercontent.com/scala-js/scala-js-dom/v1.1.0/org/scalajs/dom/raw/Html.scala": {
-          "size": 109
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Appendable.scala": {
-          "size": 2
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Boolean.scala": {
-          "size": 173
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Byte.scala": {
-          "size": 129
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Character.scala": {
-          "size": 18983
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Class.scala": {
-          "size": 885
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Comparable.scala": {
-          "size": 1
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Double.scala": {
-          "size": 1526
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Enum.scala": {
-          "size": 187
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Float.scala": {
-          "size": 1532
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/FloatingPointBits.scala": {
-          "size": 727
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Integer.scala": {
-          "size": 3631
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Long.scala": {
-          "size": 1458
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Math.scala": {
-          "size": 3237
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Number.scala": {
-          "size": 82
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Short.scala": {
-          "size": 114
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/StackTrace.scala": {
-          "size": 4868
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/StackTraceElement.scala": {
-          "size": 530
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/StringBuffer.scala": {
-          "size": 354
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/StringBuilder.scala": {
-          "size": 1654
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/System.scala": {
-          "size": 2929
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Throwables.scala": {
-          "size": 4716
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Utils.scala": {
-          "size": 795
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/Void.scala": {
-          "size": 157
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/_String.scala": {
-          "size": 12148
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalanglib/java/lang/reflect/Array.scala": {
-          "size": 1102
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/io/FilterOutputStream.scala": {
-          "size": 46
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/io/OutputStream.scala": {
-          "size": 21
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/io/PrintStream.scala": {
-          "size": 80
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/io/Throwables.scala": {
-          "size": 32
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/math/BigInteger.scala": {
-          "size": 4699
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/math/BitLevel.scala": {
-          "size": 1091
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/math/Conversion.scala": {
-          "size": 1737
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/math/Division.scala": {
-          "size": 859
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/math/Elementary.scala": {
-          "size": 1534
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/math/Multiplication.scala": {
-          "size": 1551
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/Buffer.scala": {
-          "size": 1866
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/BufferOverflowException.scala": {
-          "size": 112
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/BufferUnderflowException.scala": {
-          "size": 112
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/ByteArrayBits.scala": {
-          "size": 808
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/ByteBuffer.scala": {
-          "size": 1200
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/ByteOrder.scala": {
-          "size": 566
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/GenBuffer.scala": {
-          "size": 937
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/GenHeapBuffer.scala": {
-          "size": 163
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/GenTypedArrayBuffer.scala": {
-          "size": 31
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/HeapByteBuffer.scala": {
-          "size": 578
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/ReadOnlyBufferException.scala": {
-          "size": 119
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/TypedArrayByteBuffer.scala": {
-          "size": 1074
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/CharacterCodingException.scala": {
-          "size": 101
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/Charset.scala": {
-          "size": 529
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/ISO_8859_1.scala": {
-          "size": 319
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/ISO_8859_1_And_US_ASCII_Common.scala": {
-          "size": 38
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/StandardCharsets.scala": {
-          "size": 5
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/US_ASCII.scala": {
-          "size": 326
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/UTF_16.scala": {
-          "size": 219
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/UTF_16BE.scala": {
-          "size": 251
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/UTF_16LE.scala": {
-          "size": 236
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/UTF_16_Common.scala": {
-          "size": 44
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/UTF_8.scala": {
-          "size": 575
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/nio/charset/UnsupportedCharsetException.scala": {
-          "size": 120
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/Arrays.scala": {
-          "size": 8443
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/Formattable.scala": {
-          "size": 29
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/Formatter.scala": {
-          "size": 7618
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/ScalaOps.scala": {
-          "size": 527
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/Throwables.scala": {
-          "size": 2306
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/concurrent/TimeUnit.scala": {
-          "size": 3404
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/concurrent/atomic/AtomicInteger.scala": {
-          "size": 204
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/regex/IndicesBuilder.scala": {
-          "size": 4530
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/regex/Matcher.scala": {
-          "size": 1378
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/regex/Pattern.scala": {
-          "size": 1750
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/regex/PatternCompiler.scala": {
-          "size": 12409
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/java/util/regex/PatternSyntaxException.scala": {
-          "size": 286
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/javalib/scala/scalajs/js/typedarray/TypedArrayBufferBridge.scala": {
-          "size": 30
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library-aux/scala/runtime/RefTypes.scala": {
-          "size": 4688
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library-aux/scala/runtime/Statics.scala": {
-          "size": 41101
-        },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/Dictionary.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/callback/callback/Exports.scala": {
           "size": 20
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/Dynamic.scala": {
-          "size": 413
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/callback/callback/RateLimit.scala": {
+          "size": 520
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/JSStringOps.scala": {
-          "size": 1
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/callback/callback/SyncPromise.scala": {
+          "size": 641
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/JavaScriptException.scala": {
-          "size": 345
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/callback/callback/Timer.scala": {
+          "size": 273
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/ThisFunction.scala": {
-          "size": 393
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/callback/callback/Trampoline.scala": {
+          "size": 5553
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/Tuple.scala": {
-          "size": 10
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/callback/src/main/scala-2/callback/AsyncCallback.scala": {
+          "size": 6492
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/UndefOrOps.scala": {
-          "size": 919
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/callback/src/main/scala-2/callback/Callback.scala": {
+          "size": 4578
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/Union.scala": {
-          "size": 239
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/callback/src/main/scala-2/callback/CallbackOption.scala": {
+          "size": 2063
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/package.scala": {
-          "size": 475
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/callback/src/main/scala-2/callback/CallbackTo.scala": {
+          "size": 6805
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/special/package.scala": {
-          "size": 206
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/callback/util/EffectCallback.scala": {
+          "size": 4341
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/timers/package.scala": {
-          "size": 190
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreBundleCallback/internal/ReactCallbackExtensions.scala": {
+          "size": 1754
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/js/typedarray/DataViewExt.scala": {
-          "size": 114
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreBundleCallback/package.scala": {
+          "size": 904
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/runtime/AnonFunctions.scala": {
-          "size": 4347
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreBundleCallback/util/DefaultEffectsCallback.scala": {
+          "size": 1649
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/runtime/PrivateFieldsSymbolHolder.scala": {
-          "size": 215
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/ComponentDom.scala": {
+          "size": 1553
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/scala/scalajs/runtime/package.scala": {
-          "size": 307
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/CtorType.scala": {
+          "size": 6558
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/src/main/scala-new-collections/scala/scalajs/js/Any.scala": {
-          "size": 485
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/React.scala": {
+          "size": 195
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/src/main/scala-new-collections/scala/scalajs/js/ArrayOps.scala": {
-          "size": 798
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/ReactCaughtError.scala": {
+          "size": 817
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/src/main/scala-new-collections/scala/scalajs/js/JSConverters.scala": {
-          "size": 183
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/ReactDOMServer.scala": {
+          "size": 141
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/src/main/scala-new-collections/scala/scalajs/js/WrappedArray.scala": {
-          "size": 1309
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/ReactExtensions.scala": {
+          "size": 379
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/src/main/scala-new-collections/scala/scalajs/js/WrappedDictionary.scala": {
-          "size": 683
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/Ref.scala": {
+          "size": 2460
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/src/main/scala-new-collections/scala/scalajs/runtime/Compat.scala": {
-          "size": 220
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/Reusability.scala": {
+          "size": 9002
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/library/src/main/scala-new-collections/scala/scalajs/runtime/WrappedVarArgs.scala": {
-          "size": 30267
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/Reusable.scala": {
+          "size": 5397
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/linker-private-library/org/scalajs/linker/runtime/RuntimeLong.scala": {
-          "size": 30882
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/SetStateFns.scala": {
+          "size": 685
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides-2.13/scala/Array.scala": {
-          "size": 3104
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/StateAccess.scala": {
+          "size": 3090
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides-2.13/scala/collection/immutable/NumericRange.scala": {
-          "size": 5202
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/StateAccessor.scala": {
+          "size": 734
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides-2.13/scala/collection/immutable/Range.scala": {
-          "size": 10845
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/Generic.scala": {
+          "size": 1271
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides-2.13/scala/collection/mutable/ArrayBuilder.scala": {
-          "size": 4067
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/Js.scala": {
+          "size": 3386
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides-2.13/scala/collection/mutable/Buffer.scala": {
-          "size": 200
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/JsBaseComponentTemplate.scala": {
+          "size": 1124
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides-2.13/scala/package.scala": {
-          "size": 1726
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/JsFn.scala": {
+          "size": 749
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides-2.13/scala/reflect/ClassTag.scala": {
-          "size": 2138
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/JsForwardRef.scala": {
+          "size": 130
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides-2.13/scala/reflect/Manifest.scala": {
-          "size": 5857
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/Scala.scala": {
+          "size": 1192
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides-2.13/scala/runtime/ScalaRunTime.scala": {
-          "size": 38580
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/ScalaFn.scala": {
+          "size": 335
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides/scala/math/ScalaNumber.scala": {
-          "size": 24
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/ScalaForwardRef.scala": {
+          "size": 99
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides/scala/runtime/BoxesRunTime.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/Template.scala": {
+          "size": 1408
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/builder/InitState.scala": {
+          "size": 1198
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/builder/LifecycleF.scala": {
+          "size": 7642
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/component/builder/ViaReactComponent.scala": {
+          "size": 2944
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/events.scala": {
+          "size": 711
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/feature/Context.scala": {
+          "size": 98
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/feature/Profiler.scala": {
+          "size": 99
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/feature/ReactFragment.scala": {
+          "size": 244
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/hooks/Api.scala": {
+          "size": 99
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/hooks/CustomHook.scala": {
+          "size": 121
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/hooks/Hooks.scala": {
+          "size": 121
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/internal/Box.scala": {
+          "size": 465
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/internal/CoreGeneral.scala": {
+          "size": 874
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/internal/EffectUtil.scala": {
+          "size": 396
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/internal/Optics.scala": {
+          "size": 898
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/internal/Profunctor.scala": {
+          "size": 31
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/src/main/scala-2/ScalaJsReactConfig.scala": {
+          "size": 1340
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/src/main/scala-2/ScalaVersionSpecificReusability.scala": {
+          "size": 690
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/src/main/scala-2/component/builder/ComponentBuilder.scala": {
+          "size": 4609
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/src/main/scala-2/internal/Singleton.scala": {
+          "size": 355
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/src/main/scala-2/vdom/Attr.scala": {
+          "size": 5127
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/src/main/scala-2/vdom/TagLite.scala": {
+          "size": 1418
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/src/main/scala-2/vdom/TagMod.scala": {
+          "size": 2786
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/src/main/scala-2/vdom/VdomElement.scala": {
+          "size": 2611
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/src/main/scala-2/vdom/VdomNode.scala": {
+          "size": 8839
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/Exports.scala": {
+          "size": 1017
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/HtmlAttrs.scala": {
+          "size": 3099
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/HtmlStyles.scala": {
+          "size": 3435
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/HtmlTags.scala": {
+          "size": 8371
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/Implicits.scala": {
+          "size": 5171
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/PackageBase.scala": {
+          "size": 1527
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/Packages.scala": {
+          "size": 2670
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/ReactPortal.scala": {
+          "size": 101
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/Style.scala": {
+          "size": 554
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/TagOf.scala": {
+          "size": 873
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/VdomArray.scala": {
+          "size": 802
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/coreGeneric/vdom/VdomBuilder.scala": {
+          "size": 1086
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/Broadcaster.scala": {
+          "size": 348
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/EventListenerF.scala": {
+          "size": 842
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/Listenable.scala": {
+          "size": 613
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/OnUnmount.scala": {
+          "size": 775
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/Px.scala": {
+          "size": 5231
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/StateSnapshot.scala": {
+          "size": 2190
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/StateSnapshotF.scala": {
+          "size": 1851
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/TimerSupport.scala": {
+          "size": 256
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/components/package.scala": {
+          "size": 176
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/internal/AjaxF.scala": {
+          "size": 2679
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/internal/LazyVar.scala": {
+          "size": 243
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/internal/TriStateCheckboxF.scala": {
+          "size": 3461
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/package.scala": {
+          "size": 367
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/ActionF.scala": {
+          "size": 1323
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/Dsl.scala": {
           "size": 3623
         },
-        "https:/raw.githubusercontent.com/scala-js/v1.7.0/scalalib/overrides/scala/util/control/NoStackTrace.scala": {
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/RouteCmd.scala": {
+          "size": 2552
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/Router.scala": {
+          "size": 3907
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/RouterConfig.scala": {
+          "size": 404
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/RouterCtlF.scala": {
+          "size": 2906
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/RouterWithPropsConfigF.scala": {
+          "size": 1163
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/RoutingRule.scala": {
+          "size": 2507
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/RoutingRulesF.scala": {
+          "size": 3358
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/SetRouteVia.scala": {
+          "size": 673
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/StaticOrDynamic.scala": {
+          "size": 601
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/Urls.scala": {
+          "size": 1326
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/router/package.scala": {
+          "size": 279
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extra/src/main/scala-2/router/ResolutionWithProps.scala": {
+          "size": 415
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extraExtMonocle3/ReactMonocle.scala": {
+          "size": 206
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extraExtMonocle3/internal/monocle/MonocleExtComponent.scala": {
+          "size": 236
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/extraExtMonocle3/internal/monocle/MonocleExtStateSnapshot.scala": {
+          "size": 664
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/util/util/DomUtil.scala": {
+          "size": 184
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/util/util/Effect.scala": {
+          "size": 1786
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/util/util/JsUtil.scala": {
+          "size": 1334
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/util/util/Monad.scala": {
+          "size": 115
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/util/util/OptionLike.scala": {
+          "size": 618
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/util/util/Util.scala": {
+          "size": 673
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/utilFallbacks/userdefined/Effects.scala": {
+          "size": 21
+        },
+        "https:/raw.githubusercontent.com/japgolly/scalajs-react/v2.0.0/utilFallbacks/util/EffectFallbacks.scala": {
+          "size": 93
+        },
+        "https:/raw.githubusercontent.com/japgolly/univeq/v2.0.0/shared/src/main/scala-2.13/japgolly/univeq/ScalaUnivEq.scala": {
+          "size": 207
+        },
+        "https:/raw.githubusercontent.com/japgolly/univeq/v2.0.0/shared/src/main/scala-2/japgolly/univeq/UnivEq.scala": {
+          "size": 468
+        },
+        "https:/raw.githubusercontent.com/japgolly/univeq/v2.0.0/shared/src/main/scala-2/japgolly/univeq/UnivEqExports.scala": {
+          "size": 5
+        },
+        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.1.0/core/monocle/Iso.scala": {
+          "size": 6646
+        },
+        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.1.0/core/monocle/Lens.scala": {
+          "size": 9094
+        },
+        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.1.0/core/monocle/Optional.scala": {
+          "size": 1014
+        },
+        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.1.0/core/monocle/Prism.scala": {
+          "size": 1529
+        },
+        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.1.0/core/monocle/Traversal.scala": {
+          "size": 759
+        },
+        "https:/raw.githubusercontent.com/optics-dev/Monocle/3.1.0/core/monocle/std/Option.scala": {
+          "size": 222
+        },
+        "https:/raw.githubusercontent.com/scala-js/scala-js-dom/v2.0.0/dom/org/scalajs/dom/DOMList.scala": {
+          "size": 2055
+        },
+        "https:/raw.githubusercontent.com/scala-js/scala-js-dom/v2.0.0/dom/org/scalajs/dom/HTMLElement.scala": {
+          "size": 109
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.0/linker-private-library/org/scalajs/linker/runtime/RuntimeLong.scala": {
+          "size": 30877
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Appendable.scala": {
+          "size": 2
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Boolean.scala": {
+          "size": 182
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Byte.scala": {
+          "size": 134
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Character.scala": {
+          "size": 18987
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Class.scala": {
+          "size": 885
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Comparable.scala": {
+          "size": 1
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Double.scala": {
+          "size": 1526
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Enum.scala": {
+          "size": 187
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Float.scala": {
+          "size": 1544
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/FloatingPointBits.scala": {
+          "size": 727
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Integer.scala": {
+          "size": 3642
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Long.scala": {
+          "size": 1465
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Math.scala": {
+          "size": 3237
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Number.scala": {
+          "size": 82
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Short.scala": {
+          "size": 119
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/StackTrace.scala": {
+          "size": 4868
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/StackTraceElement.scala": {
+          "size": 530
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/StringBuffer.scala": {
+          "size": 354
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/StringBuilder.scala": {
+          "size": 1646
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/System.scala": {
+          "size": 2936
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Throwables.scala": {
+          "size": 4772
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Utils.scala": {
+          "size": 795
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/Void.scala": {
+          "size": 157
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/_String.scala": {
+          "size": 12159
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalanglib/java/lang/reflect/Array.scala": {
+          "size": 1102
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/io/FilterOutputStream.scala": {
+          "size": 46
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/io/OutputStream.scala": {
+          "size": 21
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/io/PrintStream.scala": {
+          "size": 80
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/io/Throwables.scala": {
+          "size": 31
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/math/BigInteger.scala": {
+          "size": 4699
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/math/BitLevel.scala": {
+          "size": 1091
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/math/Conversion.scala": {
+          "size": 1735
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/math/Division.scala": {
+          "size": 859
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/math/Elementary.scala": {
+          "size": 1534
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/math/Multiplication.scala": {
+          "size": 1551
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/Buffer.scala": {
+          "size": 1866
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/BufferOverflowException.scala": {
+          "size": 112
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/BufferUnderflowException.scala": {
+          "size": 112
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/ByteArrayBits.scala": {
+          "size": 808
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/ByteBuffer.scala": {
+          "size": 1208
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/ByteOrder.scala": {
+          "size": 566
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/GenBuffer.scala": {
+          "size": 937
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/GenHeapBuffer.scala": {
+          "size": 163
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/GenTypedArrayBuffer.scala": {
+          "size": 31
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/HeapByteBuffer.scala": {
+          "size": 578
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/ReadOnlyBufferException.scala": {
+          "size": 119
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/TypedArrayByteBuffer.scala": {
+          "size": 1074
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/CharacterCodingException.scala": {
+          "size": 96
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/Charset.scala": {
+          "size": 529
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/ISO_8859_1.scala": {
+          "size": 319
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/ISO_8859_1_And_US_ASCII_Common.scala": {
+          "size": 38
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/StandardCharsets.scala": {
+          "size": 5
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/US_ASCII.scala": {
+          "size": 326
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/UTF_16.scala": {
+          "size": 219
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/UTF_16BE.scala": {
+          "size": 251
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/UTF_16LE.scala": {
+          "size": 236
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/UTF_16_Common.scala": {
+          "size": 44
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/UTF_8.scala": {
+          "size": 575
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/nio/charset/UnsupportedCharsetException.scala": {
+          "size": 120
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/Arrays.scala": {
+          "size": 8443
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/Formattable.scala": {
+          "size": 29
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/Formatter.scala": {
+          "size": 7788
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/ScalaOps.scala": {
+          "size": 527
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/Throwables.scala": {
+          "size": 2463
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/concurrent/TimeUnit.scala": {
+          "size": 3404
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/concurrent/atomic/AtomicInteger.scala": {
+          "size": 204
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/regex/IndicesBuilder.scala": {
+          "size": 4530
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/regex/Matcher.scala": {
+          "size": 1378
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/regex/Pattern.scala": {
+          "size": 1750
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/regex/PatternCompiler.scala": {
+          "size": 12409
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/java/util/regex/PatternSyntaxException.scala": {
+          "size": 286
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/javalib/scala/scalajs/js/typedarray/TypedArrayBufferBridge.scala": {
+          "size": 30
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library-aux/scala/runtime/RefTypes.scala": {
+          "size": 4688
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library-aux/scala/runtime/Statics.scala": {
+          "size": 41109
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/Dictionary.scala": {
+          "size": 20
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/Dynamic.scala": {
+          "size": 413
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/JSStringOps.scala": {
+          "size": 1
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/JavaScriptException.scala": {
+          "size": 345
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/ThisFunction.scala": {
+          "size": 393
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/Tuple.scala": {
+          "size": 10
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/UndefOrOps.scala": {
+          "size": 919
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/Union.scala": {
+          "size": 239
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/package.scala": {
+          "size": 475
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/special/package.scala": {
+          "size": 206
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/timers/package.scala": {
+          "size": 190
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/js/typedarray/DataViewExt.scala": {
+          "size": 114
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/runtime/AnonFunctions.scala": {
+          "size": 4347
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/runtime/PrivateFieldsSymbolHolder.scala": {
+          "size": 215
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/scala/scalajs/runtime/package.scala": {
+          "size": 307
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/src/main/scala-new-collections/scala/scalajs/js/Any.scala": {
+          "size": 485
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/src/main/scala-new-collections/scala/scalajs/js/ArrayOps.scala": {
+          "size": 798
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/src/main/scala-new-collections/scala/scalajs/js/JSConverters.scala": {
+          "size": 183
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/src/main/scala-new-collections/scala/scalajs/js/WrappedArray.scala": {
+          "size": 1310
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/src/main/scala-new-collections/scala/scalajs/js/WrappedDictionary.scala": {
+          "size": 430
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/src/main/scala-new-collections/scala/scalajs/runtime/Compat.scala": {
+          "size": 220
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/library/src/main/scala-new-collections/scala/scalajs/runtime/WrappedVarArgs.scala": {
+          "size": 30267
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides-2.13/scala/Array.scala": {
+          "size": 3104
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides-2.13/scala/collection/immutable/NumericRange.scala": {
+          "size": 5195
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides-2.13/scala/collection/immutable/Range.scala": {
+          "size": 10786
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides-2.13/scala/collection/mutable/ArrayBuilder.scala": {
+          "size": 4066
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides-2.13/scala/collection/mutable/Buffer.scala": {
+          "size": 200
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides-2.13/scala/package.scala": {
+          "size": 1726
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides-2.13/scala/reflect/ClassTag.scala": {
+          "size": 2138
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides-2.13/scala/reflect/Manifest.scala": {
+          "size": 5857
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides-2.13/scala/runtime/ScalaRunTime.scala": {
+          "size": 38603
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides/scala/math/ScalaNumber.scala": {
+          "size": 24
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides/scala/runtime/BoxesRunTime.scala": {
+          "size": 3643
+        },
+        "https:/raw.githubusercontent.com/scala-js/v1.7.1/scalalib/overrides/scala/util/control/NoStackTrace.scala": {
           "size": 172
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/Function.scala": {
           "size": 3
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/Function0.scala": {
-          "size": 181
+          "size": 186
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/Function1.scala": {
           "size": 762
@@ -2493,10 +2490,10 @@
           "size": 140
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/Option.scala": {
-          "size": 21256
+          "size": 21289
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/PartialFunction.scala": {
-          "size": 1900
+          "size": 1939
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/Predef.scala": {
           "size": 13050
@@ -2541,7 +2538,7 @@
           "size": 279
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/Factory.scala": {
-          "size": 3554
+          "size": 3570
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/Hashing.scala": {
           "size": 201
@@ -2553,16 +2550,16 @@
           "size": 6895
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/Iterable.scala": {
-          "size": 4572
+          "size": 4647
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/IterableOnce.scala": {
-          "size": 18748
+          "size": 19015
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/Iterator.scala": {
-          "size": 17487
+          "size": 17693
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/LinearSeq.scala": {
-          "size": 2204
+          "size": 2199
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/Map.scala": {
           "size": 3698
@@ -2571,16 +2568,16 @@
           "size": 2208
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/Seq.scala": {
-          "size": 4319
+          "size": 4700
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/SeqMap.scala": {
           "size": 32
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/SeqView.scala": {
-          "size": 9742
+          "size": 9843
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/Set.scala": {
-          "size": 1242
+          "size": 1257
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/SortedMap.scala": {
           "size": 404
@@ -2604,7 +2601,7 @@
           "size": 3564
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/View.scala": {
-          "size": 5550
+          "size": 5678
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/WithFilter.scala": {
           "size": 22
@@ -2622,10 +2619,10 @@
           "size": 2155
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/immutable/HashMap.scala": {
-          "size": 21292
+          "size": 21390
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/immutable/HashSet.scala": {
-          "size": 18057
+          "size": 17936
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/immutable/IntMap.scala": {
           "size": 5552
@@ -2637,7 +2634,7 @@
           "size": 8196
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/immutable/List.scala": {
-          "size": 24573
+          "size": 24615
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/immutable/ListMap.scala": {
           "size": 4000
@@ -2679,7 +2676,7 @@
           "size": 4543
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/immutable/Vector.scala": {
-          "size": 52878
+          "size": 52867
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/immutable/WrappedString.scala": {
           "size": 1342
@@ -2688,7 +2685,7 @@
           "size": 6484
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/mutable/ArrayBuffer.scala": {
-          "size": 3087
+          "size": 3102
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/collection/mutable/ArrayDeque.scala": {
           "size": 3869
@@ -2859,7 +2856,7 @@
           "size": 196
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/util/hashing/MurmurHash3.scala": {
-          "size": 21470
+          "size": 21486
         },
         "https:/raw.githubusercontent.com/scala/v2.13.6/util/hashing/package.scala": {
           "size": 25
@@ -2892,7 +2889,7 @@
           "size": 265
         },
         "https:/raw.githubusercontent.com/suzaku-io/boopickle/v1.4.0/boopickle/Pickler.scala": {
-          "size": 14314
+          "size": 14313
         },
         "https:/raw.githubusercontent.com/suzaku-io/boopickle/v1.4.0/boopickle/StringCodec.scala": {
           "size": 921
@@ -2922,7 +2919,7 @@
           "size": 512
         },
         "https:/raw.githubusercontent.com/typelevel/cats/v2.6.1/core/cats/Foldable.scala": {
-          "size": 337
+          "size": 327
         },
         "https:/raw.githubusercontent.com/typelevel/cats/v2.6.1/core/cats/Functor.scala": {
           "size": 298
@@ -2940,7 +2937,7 @@
           "size": 320
         },
         "https:/raw.githubusercontent.com/typelevel/cats/v2.6.1/core/cats/Traverse.scala": {
-          "size": 337
+          "size": 313
         },
         "https:/raw.githubusercontent.com/typelevel/cats/v2.6.1/core/cats/data/Chain.scala": {
           "size": 4366
@@ -2958,7 +2955,7 @@
           "size": 15
         },
         "https:/raw.githubusercontent.com/typelevel/cats/v2.6.1/core/cats/instances/either.scala": {
-          "size": 1000
+          "size": 1010
         },
         "https:/raw.githubusercontent.com/typelevel/cats/v2.6.1/core/cats/instances/function.scala": {
           "size": 981
@@ -2976,7 +2973,7 @@
           "size": 5
         },
         "https:/raw.githubusercontent.com/typelevel/cats/v2.6.1/core/cats/instances/vector.scala": {
-          "size": 1083
+          "size": 1107
         },
         "https:/raw.githubusercontent.com/typelevel/cats/v2.6.1/core/cats/package.scala": {
           "size": 803
@@ -3042,7 +3039,7 @@
           "size": 233
         },
         "https:/raw.githubusercontent.com/typelevel/cats/v2.6.1/kernel/cats/kernel/instances/StaticMethods.scala": {
-          "size": 1493
+          "size": 1477
         },
         "https:/raw.githubusercontent.com/typelevel/cats/v2.6.1/kernel/cats/kernel/instances/StringInstances.scala": {
           "size": 438
