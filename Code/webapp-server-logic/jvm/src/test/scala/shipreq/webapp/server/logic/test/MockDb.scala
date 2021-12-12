@@ -476,14 +476,17 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     }
   }
 
-  override def updateUserGroup(id    : UserGroup.Id,
+  override def updateUserGroup(userId: UserId,
+                               id    : UserGroup.Id,
                                name  : Option[UserGroup.Name],
                                handle: Option[UserGroup.Handle],
                                rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
                               ) = Eval.always[UserGroup.SaveError[UserGroup.Id] \/ Unit] {
     import UserGroup._
 
-    if (handle.exists(h => userGroups.exists(g => g.handle ==* h && g.id !=* id)))
+    if (!getUserGroupUniverseU(id).allUsersInParentGroups(id, Perm.Admin).contains(userId))
+      -\/(SaveError.AccessDenied)
+    else if (handle.exists(h => userGroups.exists(g => g.handle ==* h && g.id !=* id)))
       -\/(SaveError.HandleAlreadyTaken)
     else {
 

@@ -112,7 +112,7 @@ object HomeSpaLogic {
         def updateWith(getUserId: Username => UserId): D[UpdateUserGroup.Response] = {
           val rels  = req.rels.xmap(Obfuscators.userGroupId.deobfuscateOrThrow(_), getUserId)
           for {
-            res <- db.updateUserGroup(id, req.name, req.handle, rels)
+            res <- db.updateUserGroup(user.id, id, req.name, req.handle, rels)
             _   <- db.logGlobalEventOnRight(res)(_ => GlobalEvent.UserGroupUpdate(user.id, id, req.name, req.handle, rels))
           } yield res match {
             case \/-(_)   => UpdateUserGroup.Response.Success

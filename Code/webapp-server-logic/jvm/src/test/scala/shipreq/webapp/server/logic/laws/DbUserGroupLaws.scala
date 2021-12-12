@@ -145,7 +145,7 @@ abstract class DbUserGroupLaws extends TestSuite {
   protected trait DbApi {
     def createUser(): User
     def createUserGroup: (Name, Handle, ARels) => SaveError \/ Id
-    def updateUserGroup: (Id, Option[Name], Option[Handle], ARelDiffs) => SaveError \/ Unit
+    def updateUserGroup: (UserId, Id, Option[Name], Option[Handle], ARelDiffs) => SaveError \/ Unit
     def getUserGroupUniverseU: Id => UniverseU
     def getUserGroupUniverseForUser: UserId => Universe[UserId, Username, Id, UserGroup[Id]]
     def getUserIdsByUsername: Set[Username] => NonEmptySet[Username] \/ Map[Username, UserId]
@@ -163,17 +163,17 @@ abstract class DbUserGroupLaws extends TestSuite {
     }
   }
 
-  private class UpdateUserGroupDsl(id: Id, rels: ARelDiffs)(implicit db: DbApi) extends ARelDiffsDsl[UpdateUserGroupDsl] {
-    override protected def mod(f: ARelDiffs => ARelDiffs) = new UpdateUserGroupDsl(id, f(rels))
+  private class UpdateUserGroupDsl(userId: UserId, id: Id, rels: ARelDiffs)(implicit db: DbApi) extends ARelDiffsDsl[UpdateUserGroupDsl] {
+    override protected def mod(f: ARelDiffs => ARelDiffs) = new UpdateUserGroupDsl(userId, id, f(rels))
 
     def update(name: Name = null, handle: Handle = null) =
-      db.updateUserGroup(id, Option(name), Option(handle), rels)
+      db.updateUserGroup(userId, id, Option(name), Option(handle), rels)
   }
 
   private final class Tester()(implicit val db: DbApi) {
     def createUser() = db.createUser()
     def createUserGroup = new CreateUserGroupDsl(UserGroup.ARels.emptySet)
-    def updateUserGroup(id: Id) = new UpdateUserGroupDsl(id, UserGroup.ARels.emptySetDiff)
+    def updateUserGroup(userId: UserId, id: Id) = new UpdateUserGroupDsl(userId, id, UserGroup.ARels.emptySetDiff)
 
     def assertUniverse(g: Id, expect: UniverseU)(implicit q: Line): Unit = {
       val actual = db.getUserGroupUniverseU(g)
@@ -375,7 +375,7 @@ abstract class DbUserGroupLaws extends TestSuite {
 
       val g2 = t.createUserGroup.admins(u).create().getOrThrow()
 
-      t.updateUserGroup(g)
+      t.updateUserGroup(u, g)
         .delAdminParents(gupa)
         .delAdminChildren(guca)
         .delMemberParents(gupm)
@@ -422,7 +422,7 @@ abstract class DbUserGroupLaws extends TestSuite {
     val g2 = t.createUserGroup.admins(u).memberParents(g1).create().getOrThrow()
     val g3 = t.createUserGroup.admins(u).adminParents(g2).create().getOrThrow()
     val un = t.db.getUserGroupUniverseU(g1)
-    val es = t.updateUserGroup(g3).addAdminChildren(g1).update().getLeftOrThrow()
+    val es = t.updateUserGroup(u, g3).addAdminChildren(g1).update().getLeftOrThrow()
     t.assertErrors(es)(ValidationError.GraphCycle((), ()))
     t.assertUniverse(g1, un)
   }
@@ -445,7 +445,7 @@ abstract class DbUserGroupLaws extends TestSuite {
   private def updateNoAdmin() = test { (t, u) =>
     val g  = t.createUserGroup.admins(u).create().getOrThrow()
     val un = t.db.getUserGroupUniverseU(g)
-    val es = t.updateUserGroup(g).delAdmins(u).addMembers(u).update().getLeftOrThrow()
+    val es = t.updateUserGroup(u, g).delAdmins(u).addMembers(u).update().getLeftOrThrow()
     t.assertErrors(es)(ValidationError.NoAdminUsers(()))
     t.assertUniverse(g, un)
   }
@@ -459,11 +459,44 @@ abstract class DbUserGroupLaws extends TestSuite {
     t.assertUniverse(g, un)
   }
 
+  private def updateAccessDenied(t: Tester, g: Id, u: UserId): Unit = {
+    val un = t.db.getUserGroupUniverseU(g)
+    val es = t.updateUserGroup(u, g).update(name = uuid("h")).getLeftOrThrow()
+    assertEq(es, SaveError.AccessDenied)
+    t.assertUniverse(g, un)
+  }
+
+  private def updateAccessDeniedToAnon() = test { (t, u) =>
+    val u2 = t.createUser()
+    val g  = t.createUserGroup.admins(u).create().getOrThrow()
+    updateAccessDenied(t, g, u2)
+  }
+
+  private def updateAccessDeniedToMember() = test { (t, u) =>
+    val u2 = t.createUser()
+    val g  = t.createUserGroup.admins(u).members(u2).create().getOrThrow()
+    updateAccessDenied(t, g, u2)
+  }
+
+  private def updateAccessDeniedToParentMember() = test { (t, u) =>
+    val u2 = t.createUser()
+    val g1 = t.createUserGroup.admins(u).members(u2).create().getOrThrow()
+    val g2 = t.createUserGroup.adminParents(g1).create().getOrThrow()
+    updateAccessDenied(t, g2, u2)
+  }
+
+  private def updateAccessGrantedToParentAdmin() = test { (t, u) =>
+    val g1 = t.createUserGroup.admins(u).create().getOrThrow()
+    val g2 = t.createUserGroup.adminParents(g1).create().getOrThrow()
+    val r  = t.updateUserGroup(u, g2).update(name = uuid("h"))
+    assertEq(r, \/-(()))
+  }
+
   private def updateDupHandle() = test { (t, u) =>
     val h  = "updateDupHandle"
     val _  = t.createUserGroup.admins(u).create(h).getOrThrow()
     val g  = t.createUserGroup.admins(u).create().getOrThrow()
-    val es = t.updateUserGroup(g).update(handle = h).getLeftOrThrow()
+    val es = t.updateUserGroup(u, g).update(handle = h).getLeftOrThrow()
     assertEq(es, SaveError.HandleAlreadyTaken)
   }
 
@@ -523,6 +556,12 @@ abstract class DbUserGroupLaws extends TestSuite {
       // "badGroupAdd" - updateBadGroupAdd() // No point testing IDs that don't exist; we know we don't create them, we know they'll fail
       "noAdmin" - updateNoAdmin()
       "dupHandle" - updateDupHandle()
+      "accessDenied" - {
+        "anon" - updateAccessDeniedToAnon()
+        "member" - updateAccessDeniedToMember()
+        "parent_member" - updateAccessDeniedToParentMember()
+        "parent_admin" - updateAccessGrantedToParentAdmin()
+      }
     }
   }
 }

@@ -192,14 +192,20 @@ object UserGroup {
       result
     }
 
-    def allUsersInGroup(groupdId: GI, perm: Perm): Set[UI] = {
+    def allUsersInGroup(groupdId: GI, perm: Perm): Set[UI] =
+      allTransitiveUsers(groupdId, perm, Forwards)
+
+    def allUsersInParentGroups(groupdId: GI, perm: Perm): Set[UI] =
+      allTransitiveUsers(groupdId, perm, Backwards)
+
+    private def allTransitiveUsers(groupdId: GI, perm: Perm, dir: Direction): Set[UI] = {
       @tailrec
       def go(id: GI, q: Set[GI], seen: Set[GI], r: Set[UI]): Set[UI] = {
         if (seen.contains(id)) {
           if (q.isEmpty) r else go(q.head, q.tail, seen, r)
         } else {
           val r2 = Util.mergeSets(r, groupsToUsers(perm)(id))
-          val q2 = Util.mergeSets(q, groupGraph(perm).forwards(id))
+          val q2 = Util.mergeSets(q, groupGraph(perm)(dir)(id))
           if (q2.isEmpty) r2 else go(q2.head, q2.tail, seen + id, r2)
         }
       }
@@ -293,6 +299,10 @@ object UserGroup {
   }
 
   object SaveError {
+    case object AccessDenied extends SaveError[Nothing] {
+      override def map[A: UnivEq](f: Nothing => A) = this
+    }
+
     case object HandleAlreadyTaken extends SaveError[Nothing] {
       override def map[A: UnivEq](f: Nothing => A) = this
     }

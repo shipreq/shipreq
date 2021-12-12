@@ -530,10 +530,11 @@ object DbInterpreter {
         }
     }
 
-    private def userGroupSave[A](c: ConnectionIO[A])(id: A => UserGroup.Id): ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ A] =
+    private def userGroupSave[A, B](c: ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ A])(id: A => UserGroup.Id): ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ A] = {
+      type Result = UserGroup.SaveError[UserGroup.Id] \/ A
       c.inSafeTransactionRollbackOnLeft {
 
-        case \/-(a) =>
+        case \/-(\/-(a)) =>
           getUserGroupUniverseU(id(a)).map { u =>
             val errors = u.validate(checkForCycles = false)
             if (errors.isEmpty)
@@ -542,26 +543,31 @@ object DbInterpreter {
               -\/(UserGroup.SaveError.Invalid(NonEmptySet force errors))
           }
 
+        case \/-(-\/(e)) =>
+          (-\/(e): Result).pure[ConnectionIO]
+
         case -\/(e) =>
-          type Result = UserGroup.SaveError[UserGroup.Id] \/ A
           e.getMessage match {
             case SaveErrorFromSql(e) => (-\/(e): Result).pure[ConnectionIO]
             case _                   => throw e
           }
       }
+    }
 
     override def createUserGroup(name  : UserGroup.Name,
                                  handle: UserGroup.Handle,
                                  rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
                                 ): ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id] = {
 
-      val create: ConnectionIO[UserGroup.Id] =
+      type Result = UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id
+
+      val create: ConnectionIO[Result] =
         for {
           _  <- assertTransactionLevelSerializable
-          id <- createUserGroupQuery.toQuery0((name, handle)).unique
+          id <- createUserGroupQuery.unique((name, handle))
           _  <- createUserGroupTreeQuery.updateMany(rels.fullTreeRelsIterator(id)(_.iterator).toList)
           _  <- createUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.iterator).toList)
-        } yield id
+        } yield \/-(id)
 
       userGroupSave(create)(identity)
     }
@@ -572,11 +578,17 @@ object DbInterpreter {
     private val deleteUserGroupUsrQuery = Update[UserGroup.Rel[UserGroup.Id, UserId]](
       "DELETE FROM usr_group_usr WHERE grp_id=? AND usr_id=? AND perm=?")
 
-    override def updateUserGroup(id    : UserGroup.Id,
+    private val isUserGroupAdmin: Query[(UserGroup.Id, UserId), Boolean] =
+      Query("SELECT EXISTS(SELECT 1 FROM usr_group_admin(?) WHERE usr_id = ? LIMIT 1)")
+
+    override def updateUserGroup(userId: UserId,
+                                 id    : UserGroup.Id,
                                  name  : Option[UserGroup.Name],
                                  handle: Option[UserGroup.Handle],
                                  rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
                                 ): ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ Unit] = {
+
+      type Result = UserGroup.SaveError[UserGroup.Id] \/ Unit
 
       val updateGroup: ConnectionIO[Unit] =
         (name, handle) match {
@@ -586,15 +598,22 @@ object DbInterpreter {
           case (None   , None   ) => ConnectionIoUnit
         }
 
-      val update: ConnectionIO[Unit] =
+      val updateUnsafe: ConnectionIO[Result] =
         for {
-          _ <- assertTransactionLevelSerializable
           _ <- updateGroup
           _ <- deleteUserGroupTreeQuery.updateMany(rels.fullTreeRelsIterator(id)(_.removed.iterator).toList)
           _ <- deleteUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.removed.iterator).toList)
           _ <- createUserGroupTreeQuery.updateMany(rels.fullTreeRelsIterator(id)(_.added.iterator).toList)
           _ <- createUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.added.iterator).toList)
-        } yield ()
+        } yield \/-(())
+
+      val update: ConnectionIO[Result] =
+        (assertTransactionLevelSerializable *> isUserGroupAdmin.unique((id, userId))).flatMap { hasAccess =>
+          if (hasAccess)
+            updateUnsafe
+          else
+            (-\/(UserGroup.SaveError.AccessDenied): Result).pure[ConnectionIO]
+        }
 
       userGroupSave(update)(_ => id)
     }

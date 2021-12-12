@@ -118,3 +118,21 @@ AS $$
     SELECT ARRAY_AGG(id) FROM usr_group_tree_parent_roots($1)
   ))
 $$;
+
+CREATE FUNCTION usr_group_admin(BIGINT)
+RETURNS TABLE(usr_id usr.id%TYPE)
+LANGUAGE SQL
+STABLE -- function cannot modify the database, and that within a single table scan it will consistently return the same result for the same argument values
+PARALLEL SAFE
+AS $$
+  WITH RECURSIVE x AS (
+    SELECT id, ARRAY[]::BIGINT[] AS children FROM usr_group WHERE id = $1
+    UNION ALL
+    SELECT t.from_id, x.children || t.to_id
+      FROM x, usr_group_tree t
+     WHERE t.to_id = x.id
+  )
+  SELECT usr_id FROM usr_group_usr
+   WHERE grp_id IN (SELECT DISTINCT id FROM x)
+     AND perm = 'admin'
+$$;

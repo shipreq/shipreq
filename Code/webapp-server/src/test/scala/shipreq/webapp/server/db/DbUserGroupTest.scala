@@ -27,7 +27,7 @@ object DbUserGroupTest extends DbUserGroupLaws {
 
     override def createUser()                = dbu.newUser()
     override val createUserGroup             = xa ! DB.createUserGroup(_, _, _)
-    override val updateUserGroup             = xa ! DB.updateUserGroup(_, _, _, _)
+    override val updateUserGroup             = xa ! DB.updateUserGroup(_, _, _, _, _)
     override val getUserGroupUniverseU       = xa ! DB.getUserGroupUniverseU(_)
     override val getUserGroupUniverseForUser = xa ! DB.getUserGroupUniverseForUser(_)
     override val getUserIdsByUsername        = xa ! DB.getUserIdsByUsername(_)

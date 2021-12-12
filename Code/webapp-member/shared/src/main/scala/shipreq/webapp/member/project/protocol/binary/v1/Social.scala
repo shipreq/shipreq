@@ -173,15 +173,18 @@ object Social {
 
   private def pickleUserGroupSaveError[GI](implicit p1: Pickler[UserGroup.SaveError.Invalid[GI]]): Pickler[UserGroup.SaveError[GI]] =
     new Pickler[UserGroup.SaveError[GI]] {
+      private[this] final val KeyAccessDenied       = 2
       private[this] final val KeyHandleAlreadyTaken = 1
       private[this] final val KeyInvalid            = 0
       override def pickle(a: UserGroup.SaveError[GI])(implicit state: PickleState): Unit =
         a match {
-          case UserGroup.SaveError.HandleAlreadyTaken    => state.enc.writeByte(KeyHandleAlreadyTaken)
-          case b: UserGroup.SaveError.Invalid[GI]        => state.enc.writeByte(KeyInvalid           ); state.pickle(b)
+          case UserGroup.SaveError.AccessDenied       => state.enc.writeByte(KeyAccessDenied      )
+          case UserGroup.SaveError.HandleAlreadyTaken => state.enc.writeByte(KeyHandleAlreadyTaken)
+          case b: UserGroup.SaveError.Invalid[GI]     => state.enc.writeByte(KeyInvalid           ); state.pickle(b)
         }
       override def unpickle(implicit state: UnpickleState): UserGroup.SaveError[GI] =
         state.dec.readByte match {
+          case KeyAccessDenied       => UserGroup.SaveError.AccessDenied
           case KeyHandleAlreadyTaken => UserGroup.SaveError.HandleAlreadyTaken
           case KeyInvalid            => state.unpickle[UserGroup.SaveError.Invalid[GI]]
         }

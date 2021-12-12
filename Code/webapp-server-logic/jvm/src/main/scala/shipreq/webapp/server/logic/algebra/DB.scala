@@ -248,7 +248,8 @@ object DB {
                         rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
                        ): F[UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id]
 
-    def updateUserGroup(id    : UserGroup.Id,
+    def updateUserGroup(userId: UserId,
+                        id    : UserGroup.Id,
                         name  : Option[UserGroup.Name],
                         handle: Option[UserGroup.Handle],
                         rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
