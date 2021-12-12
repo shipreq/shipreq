@@ -25,10 +25,11 @@ object DbUserGroupTest extends DbUserGroupLaws {
   private final class DbInstance(implicit val xa: ImperativeXA) extends DbApi {
     private val dbu = DbUtil(xa)
 
-    override def createUser()                = dbu.newUserId()
+    override def createUser()                = dbu.newUser()
     override val createUserGroup             = xa ! DB.createUserGroup(_, _, _)
     override val updateUserGroup             = xa ! DB.updateUserGroup(_, _, _, _)
     override val getUserGroupUniverseU       = xa ! DB.getUserGroupUniverseU(_)
     override val getUserGroupUniverseForUser = xa ! DB.getUserGroupUniverseForUser(_)
+    override val getUserIdsByUsername        = xa ! DB.getUserIdsByUsername(_)
  }
 }

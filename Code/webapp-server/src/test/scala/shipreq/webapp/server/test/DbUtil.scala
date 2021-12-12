@@ -6,7 +6,7 @@ import scala.util.Random
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.test.db._
 import shipreq.base.util.FxModule._
-import shipreq.webapp.base.data.{ProjectId, UserId, Username}
+import shipreq.webapp.base.data.{ProjectId, User, UserId, Username}
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.ActiveEvent
 import shipreq.webapp.server.db.DbInterpreter
@@ -39,7 +39,7 @@ final case class DbUtil(xa: ImperativeXA) {
     new DbInterpreter()
   }
 
-  private def randomStr: String =
+  private def randomStr(): String =
     DbUtil.Random.nextString(32)
 
   def newProjectId(userId    : UserId              = getOrCreateUserId(),
@@ -53,10 +53,17 @@ final case class DbUtil(xa: ImperativeXA) {
   def getOrCreateUserId(): UserId =
     (xa ! Query0[UserId]("select id from usr where username is not null limit 1").option) getOrElse newUserId()
 
-  def newUserId(): UserId =
-    xa ! Query[(String, String), UserId](
+  def newUser(): User = {
+    val username = Username(randomStr())
+    val email = randomStr()
+    val id = xa ! Query[(String, String), UserId](
       "INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES(?,?,0,0,NOW(),NOW(),NOW()) RETURNING id"
-    ).toQuery0((randomStr, randomStr)).unique
+    ).toQuery0((username.value, email)).unique
+    User(id, username)
+  }
+
+  def newUserId(): UserId =
+    newUser().id
 
   def getUsername(id: UserId): Username =
     xa ! Query[UserId, Username]("SELECT username FROM usr WHERE id=?").toQuery0(id).unique

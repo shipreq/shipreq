@@ -1,6 +1,6 @@
 package shipreq.webapp.server.logic.algebra
 
-import cats.~>
+import cats.{Monad, ~>}
 import java.sql.Connection
 import java.time.Instant
 import shipreq.base.util.SetDiff
@@ -67,6 +67,8 @@ object DB {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait Base[F[_]] {
+
+    protected def F: Monad[F]
 
     /** Note: This is translated immediately out of F to explicitly clarify the fact that it cannot be composed with
       * other Fs to form a transaction. This is its own isolated transaction; to attempt otherwise would result in a
@@ -230,6 +232,16 @@ object DB {
     def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
 
     def getUserGroupUniverseForUser(id: UserId): F[UserGroup.Universe[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]]]
+
+    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
+    final def getUserIdsByUsername(usernames: Set[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]] =
+      if (usernames.isEmpty)
+        F.pure(\/-(Map.empty))
+      else
+        getUserIdsByUsernameNE(NonEmptySet force usernames)
+
+    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
+    def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]]
 
     def createUserGroup(name  : UserGroup.Name,
                         handle: UserGroup.Handle,

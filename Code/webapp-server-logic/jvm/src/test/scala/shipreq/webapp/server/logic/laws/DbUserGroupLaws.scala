@@ -2,6 +2,7 @@ package shipreq.webapp.server.logic.laws
 
 import cats.implicits._
 import japgolly.microlibs.stdlib_ext.StdlibExt._
+import java.util.UUID
 import scala.util.Try
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -142,11 +143,12 @@ abstract class DbUserGroupLaws extends TestSuite {
   protected def newDbApi[A](f: DbApi => A): A
 
   protected trait DbApi {
-    def createUser(): UserId
+    def createUser(): User
     def createUserGroup: (Name, Handle, ARels) => SaveError \/ Id
     def updateUserGroup: (Id, Option[Name], Option[Handle], ARelDiffs) => SaveError \/ Unit
     def getUserGroupUniverseU: Id => UniverseU
     def getUserGroupUniverseForUser: UserId => Universe[UserId, Username, Id, UserGroup[Id]]
+    def getUserIdsByUsername: Set[Username] => NonEmptySet[Username] \/ Map[Username, UserId]
   }
 
   // ===================================================================================================================
@@ -212,7 +214,9 @@ abstract class DbUserGroupLaws extends TestSuite {
     }
   }
 
-  protected def test[A](f: (Tester, UserId) => A): A =
+  private implicit def autoUserId(u: User): UserId = u.id
+
+  protected def test[A](f: (Tester, User) => A): A =
     newDbApi { implicit db =>
       val t = new Tester
 
@@ -422,7 +426,6 @@ abstract class DbUserGroupLaws extends TestSuite {
     t.assertErrors(es)(ValidationError.GraphCycle((), ()))
     t.assertUniverse(g1, un)
   }
-
   // No point testing IDs that don't exist; we know we don't create them, we know they'll fail
   // private def updateBadGroupDel() = test { (t, u) =>
   //   val g  = t.createUserGroup.admins(u).create().getOrThrow()
@@ -464,10 +467,35 @@ abstract class DbUserGroupLaws extends TestSuite {
     assertEq(es, SaveError.HandleAlreadyTaken)
   }
 
+  private def testUsernamesEmpty() = test { (t, _) =>
+    val m = t.db.getUserIdsByUsername(Set.empty).getOrThrow()
+    assertEq(m, Map.empty[Username, UserId])
+  }
+
+  private def testUsernamesAll() = test { (t, u) =>
+    val u2 = t.createUser()
+    val m = t.db.getUserIdsByUsername(Set(u.username, u2.username)).getOrThrow()
+    assertEq(m, Map(u.username -> u.id, u2.username -> u2.id))
+  }
+
+  private def testUsernamesMissing() = test { (t, u) =>
+    def newBadUsername() = Username("x" + UUID.randomUUID().toString().replace("-", " "))
+    val u2 = newBadUsername()
+    val u3 = newBadUsername()
+    val e = t.db.getUserIdsByUsername(Set(u.username, u2, u3)).getLeftOrThrow()
+    assertEq(e, NonEmptySet(u2, u3))
+  }
+
   // ===================================================================================================================
 
   override def tests = Tests {
     beforeTest()
+
+    "getUserIdsByUsername" - {
+      "empty" - testUsernamesEmpty()
+      "all" - testUsernamesAll()
+      "missing" - testUsernamesMissing()
+    }
 
     "create" - {
       "sole" - createSole()

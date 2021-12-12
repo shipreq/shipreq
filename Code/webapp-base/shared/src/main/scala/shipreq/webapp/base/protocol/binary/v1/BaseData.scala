@@ -442,6 +442,9 @@ object BaseData {
   implicit lazy val picklerUsername: Pickler[Username] =
     transformPickler(Username.apply)(_.value)
 
+  implicit lazy val picklerUsernameNES: Pickler[NonEmptySet[Username]] =
+    pickleNES
+
   implicit lazy val picklerUsernameOrEmailAddr: Pickler[Username \/ EmailAddr] =
     pickleDisj
 

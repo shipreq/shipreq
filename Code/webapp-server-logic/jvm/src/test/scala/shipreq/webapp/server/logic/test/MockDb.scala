@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic.test
 
 import cats.syntax.all._
-import cats.{Eval, ~>}
+import cats.{Eval, Monad, ~>}
 import java.time.Instant
 import shipreq.base.test.Incrementor
 import shipreq.base.util._
@@ -72,6 +72,8 @@ object MockDb {
 
 final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecurity[Eval] with DB.ForOps[Eval] {
 
+  override protected val F = Monad[Eval]
+
   override val now: Eval[Instant] =
     _now
 
@@ -138,11 +140,18 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
 
   var users = List.empty[MockDb.UserEntry]
 
-  def newUserId(): UserId = {
+  // private def validateUserId(id: UserId): Unit =
+  //   if (users.forall(_.id !=* id))
+  //     throw new RuntimeException(s"User #${id.value} not found")
+
+  // private def validateUserIds(ids: IterableOnce[UserId]): Unit =
+  //   ids.iterator.foreach(validateUserId)
+
+  def newUser(): User = {
     nextToken()
     val id = UserId(prevTokenId)
     val x = "u" + id.value
-    users ::= MockDb.UserEntry(
+    val e = MockDb.UserEntry(
       id        = id,
       username  = Username(x),
       emailAddr = EmailAddr(x + "@inmem.com"),
@@ -150,14 +159,29 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
       encKey    = UserEncryptionKey(BinaryData.fromStringBytes(x + "-user-key")),
       createdAt = now.value,
     )
-    id
+    users ::= e
+    User(id, e.username)
   }
+
+  def newUserId(): UserId =
+    newUser().id
 
   def getUser(u: Username \/ EmailAddr): Option[MockDb.UserEntry] =
     users.find(e => u.fold(_ ==* e.username, _ ==* e.emailAddr))
 
   def getUserOrPlaceholder(u: Username \/ EmailAddr): Option[(EmailAddr, DB.UserRegistration.Pending) \/ MockDb.UserEntry] =
     getUser(u).map(\/-(_)) orElse u.fold(_ => None, e => userPlaceholders.get(e).map(r => -\/((e, r))))
+
+  override def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]) = Eval.always[NonEmptySet[Username] \/ Map[Username, UserId]] {
+    var ko = Set.empty[Username]
+    var ok = Map.empty[Username, UserId]
+    for (u <- usernames)
+      this.users.find(_.username ==* u) match {
+        case Some(e) => ok += ((u, e.id))
+        case None    => ko += u
+      }
+    NonEmptySet.option(ko).toLeft(ok)
+  }
 
   def updateUser(w: MockDb.UserEntry => Boolean, f: MockDb.UserEntry => MockDb.UserEntry): Unit =
     users = users.map(u => if (w(u)) f(u) else u)
@@ -517,4 +541,5 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
       NonEmptySet.option(errors).map(UserGroup.SaveError.Invalid(_)).toLeft(())
     }
   }
+
 }

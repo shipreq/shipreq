@@ -2,7 +2,7 @@ package shipreq.webapp.member.project.protocol.binary.v1
 
 import boopickle.DefaultBasic._
 import shipreq.base.util.SetDiff
-import shipreq.webapp.base.data.UserId
+import shipreq.webapp.base.data.Username
 import shipreq.webapp.member.social._
 
 object Social {
@@ -10,7 +10,7 @@ object Social {
     pickleObfuscated,
     pickleNES,
     pickleSetDiff,
-    picklerUserIdPublic
+    picklerUsername
   }
 
   implicit val picklerUserGroupId: Pickler[UserGroup.Id.Public] =
@@ -70,13 +70,13 @@ object Social {
   implicit val picklerUserGroupARelUserGroupIdPublic: Pickler[UserGroup.ARel[UserGroup.Id.Public]] =
     picklerUserGroupARel
 
-  implicit val picklerUserGroupARelUserIdPublic: Pickler[UserGroup.ARel[UserId.Public]] =
+  implicit val picklerUserGroupARelUsername: Pickler[UserGroup.ARel[Username]] =
     picklerUserGroupARel
 
   implicit val picklerSetDiffUserGroupARelUserGroupIdPublic: Pickler[SetDiff[UserGroup.ARel[UserGroup.Id.Public]]] =
     pickleSetDiff
 
-  implicit val picklerSetDiffUserGroupARelUserIdPublic: Pickler[SetDiff[UserGroup.ARel[UserId.Public]]] =
+  implicit val picklerSetDiffUserGroupARelUsername: Pickler[SetDiff[UserGroup.ARel[Username]]] =
     pickleSetDiff
 
   private def picklerUserGroupARels[F[_], G, U](implicit g: Pickler[F[UserGroup.ARel[G]]], u: Pickler[F[UserGroup.ARel[U]]]): Pickler[UserGroup.ARels[F, G, U]] =
@@ -94,10 +94,10 @@ object Social {
       }
     }
 
-  implicit val picklerUserGroupARelsSet: Pickler[UserGroup.ARels[Set, UserGroup.Id.Public, UserId.Public]] =
+  implicit val picklerUserGroupARelsSet: Pickler[UserGroup.ARels[Set, UserGroup.Id.Public, Username]] =
     picklerUserGroupARels
 
-  implicit val picklerUserGroupARelsSetDiff: Pickler[UserGroup.ARels[SetDiff, UserGroup.Id.Public, UserId.Public]] =
+  implicit val picklerUserGroupARelsSetDiff: Pickler[UserGroup.ARels[SetDiff, UserGroup.Id.Public, Username]] =
     picklerUserGroupARels
 
   private implicit val picklerUserGroupValidationErrorGraphCycle: Pickler[UserGroup.ValidationError.GraphCycle[UserGroup.Id.Public]] =

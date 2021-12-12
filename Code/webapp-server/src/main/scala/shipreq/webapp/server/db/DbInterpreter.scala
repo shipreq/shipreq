@@ -4,7 +4,7 @@ import cats.free.Free
 import cats.instances.int._
 import cats.instances.vector._
 import cats.syntax.all._
-import cats.~>
+import cats.{Monad, ~>}
 import doobie._
 import doobie.implicits._
 import doobie.postgres.circe.jsonb.implicits._
@@ -63,6 +63,8 @@ object DbInterpreter {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait Base extends DB.Base[ConnectionIO] {
+
+    override protected val F = Monad[ConnectionIO]
 
     override final def withTransactionLevel[F[_], A](runDB: ConnectionIO ~> F, level: Int)(f: ConnectionIO[A]): F[A] =
       runDB(f.withTransactionLevel(level))
@@ -435,6 +437,18 @@ object DbInterpreter {
         adds = es.iterator.zipWithIndex.map(x => SaveProjectEventLogic.unsafeInsertEvent(pid, EventOrd.fromIndex(x._2), x._1, uid))
         done <- sequentially(adds, pid)
       } yield done
+    }
+
+    private val getUserIdsByUsernameQuery = Query[Set[Username], (Username, UserId)](
+      "SELECT username,id FROM usr WHERE username = ANY(?::VARCHAR[])")
+
+    override def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]): ConnectionIO[NonEmptySet[Username] \/ Map[Username, UserId]] = {
+      val all = usernames.whole
+      getUserIdsByUsernameQuery.toQuery0(all).to[List].map { tuples =>
+        var notFound = all
+        tuples.foreach(notFound -= _._1)
+        NonEmptySet.option(notFound).toLeft(tuples.toMap)
+      }
     }
 
     private val userGroupUniverseQueryTree = Query[List[UserGroup.Id], UserGroup.Rel[UserGroup.Id, UserGroup.Id]](

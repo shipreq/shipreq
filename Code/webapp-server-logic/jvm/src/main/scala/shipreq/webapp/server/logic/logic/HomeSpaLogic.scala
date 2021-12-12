@@ -77,15 +77,22 @@ object HomeSpaLogic {
     override val ajaxCreateUserGroup =
       (user, req) => {
 
-        val rels = req.rels.xmap(
-          Obfuscators.userGroupId.deobfuscateOrThrow(_),
-          Obfuscators.userId.deobfuscateOrThrow(_))
-
-        val create: D[CreateUserGroup.Response] =
+        def createWith(getUserId: Username => UserId): D[CreateUserGroup.Response] = {
+          val rels = req.rels.xmap(Obfuscators.userGroupId.deobfuscateOrThrow(_), getUserId)
           for {
             res <- db.createUserGroup(req.name, req.handle, rels)
             _   <- db.logGlobalEventOnRight(res)(GlobalEvent.UserGroupCreate(user.id, _, req.name, req.handle, rels))
-          } yield res.bimap(_.map(Obfuscators.userGroupId.obfuscate), Obfuscators.userGroupId.obfuscate)
+          } yield res match {
+            case \/-(id)  => CreateUserGroup.Response.Success(Obfuscators.userGroupId.obfuscate(id))
+            case -\/(err) => CreateUserGroup.Response.SaveError(err.map(Obfuscators.userGroupId.obfuscate))
+          }
+        }
+
+        val create: D[CreateUserGroup.Response] =
+          db.getUserIdsByUsername(req.usernames).flatMap {
+            case \/-(m)    => createWith(m.apply)
+            case -\/(errs) => D pure CreateUserGroup.Response.InvalidUsernames(errs)
+          }
 
         db.inStrictTxn(runDB)(create)
       }
@@ -95,15 +102,22 @@ object HomeSpaLogic {
 
         val id = Obfuscators.userGroupId.deobfuscateOrThrow(req.id)
 
-        val rels = req.rels.xmap(
-          Obfuscators.userGroupId.deobfuscateOrThrow(_),
-          Obfuscators.userId.deobfuscateOrThrow(_))
-
-        val update: D[UpdateUserGroup.Response] =
+        def updateWith(getUserId: Username => UserId): D[UpdateUserGroup.Response] = {
+          val rels  = req.rels.xmap(Obfuscators.userGroupId.deobfuscateOrThrow(_), getUserId)
           for {
             res <- db.updateUserGroup(id, req.name, req.handle, rels)
             _   <- db.logGlobalEventOnRight(res)(_ => GlobalEvent.UserGroupUpdate(user.id, id, req.name, req.handle, rels))
-          } yield res.leftMap(_.map(Obfuscators.userGroupId.obfuscate))
+          } yield res match {
+            case \/-(_)   => UpdateUserGroup.Response.Success
+            case -\/(err) => UpdateUserGroup.Response.SaveError(err.map(Obfuscators.userGroupId.obfuscate))
+          }
+        }
+
+        val update: D[UpdateUserGroup.Response] =
+          db.getUserIdsByUsername(req.usernames).flatMap {
+            case \/-(m)    => updateWith(m.apply)
+            case -\/(errs) => D pure UpdateUserGroup.Response.InvalidUsernames(errs)
+          }
 
         db.inStrictTxn(runDB)(update)
       }
