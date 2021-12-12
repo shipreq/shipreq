@@ -2,13 +2,18 @@ package shipreq.webapp.member.social
 
 import cats.Functor
 import japgolly.microlibs.adt_macros.AdtMacros
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import scala.reflect.ClassTag
 import shipreq.base.util._
 import shipreq.webapp.base.util.Obfuscated
 
 final case class UserGroup[+Id](id    : Id,
                                 name  : UserGroup.Name,
-                                handle: UserGroup.Handle)
+                                handle: UserGroup.Handle) {
+
+  def mapId[A](f: Id => A): UserGroup[A] =
+    copy(id = f(id))
+}
 
 object UserGroup {
 
@@ -200,6 +205,20 @@ object UserGroup {
       }
       go(groupdId, Set.empty, Set.empty, Set.empty)
     }
+
+    def xmapU[I: UnivEq, A](f: UI => I, g: U => A): Universe[I, A, GI, G] =
+      copy(
+        groupsToUsersMap = groupsToUsersMap.mapValuesNow(mm => Multimap(mm.m.mapValuesNow(_.map(f)))),
+        users = users.iterator.map(kv => (f(kv._1), g(kv._2))).toMap,
+      )
+
+    def xmap[UI2: UnivEq, U2, GI2: ClassTag: UnivEq, G2](f: UI => UI2, g: U => U2, h: GI => GI2, i: G => G2): Universe[UI2, U2, GI2, G2] =
+      Universe(
+        groupGraphMap    = groupGraphMap.mapValuesNow(_.map(h)),
+        groupsToUsersMap = groupsToUsersMap.mapValuesNow(mm => Multimap(mm.m.mapEntriesNow((gi, uis) => (h(gi), uis.map(f))))),
+        groups           = groups.mapEntriesNow((k, v) => (h(k), i(v))),
+        users            = users.mapEntriesNow((k, v) => (f(k), g(v))),
+      )
   }
 
   object Universe {

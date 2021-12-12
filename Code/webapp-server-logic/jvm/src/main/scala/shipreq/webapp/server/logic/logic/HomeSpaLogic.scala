@@ -61,15 +61,22 @@ object HomeSpaLogic {
                         am: AssetManifest,
                         crypto: Crypto[D],
                         runDB: D ~> F,
-                        D: Monad[D],
-                        F: Monad[F]): HomeSpaLogic[F] = new HomeSpaLogic[F] {
+                        D: Monad[D]): HomeSpaLogic[F] = new HomeSpaLogic[F] {
 
     import HomeSpaProtocols._
 
-    override def initData(user: User): F[HomeSpaEntryPoint.InitData] =
-      for {
-        p <- runDB(db.getAllProjectMetaDataForUser(user.id))
-      } yield HomeSpaEntryPoint.InitData(user.username, p, am)
+    override def initData(user: User): F[HomeSpaEntryPoint.InitData] = {
+      val load: D[HomeSpaEntryPoint.InitData] =
+        for {
+          projects   <- db.getAllProjectMetaDataForUser(user.id)
+          userGroups <- db.getUserGroupUniverseForUser(user.id)
+        } yield {
+          val obfuscateId = Obfuscators.userGroupId.obfuscate
+          val userGroups2 = userGroups.xmap(userGroups.users.apply, _ => (), obfuscateId, _ mapId obfuscateId)
+          HomeSpaEntryPoint.InitData(user.username, projects, userGroups2, am)
+        }
+      db.inStrictTxn(runDB)(load)
+    }
 
     override val ajaxCreateProject =
       (user, name) => runDB(createProject[D](user.id, name))

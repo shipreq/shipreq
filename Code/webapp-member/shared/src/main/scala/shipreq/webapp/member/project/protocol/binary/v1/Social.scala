@@ -1,16 +1,19 @@
 package shipreq.webapp.member.project.protocol.binary.v1
 
 import boopickle.DefaultBasic._
-import shipreq.base.util.SetDiff
+import scala.reflect.ClassTag
+import shipreq.base.util.{Digraph, SetDiff}
 import shipreq.webapp.base.data.Username
 import shipreq.webapp.member.social._
 
 object Social {
   import shipreq.webapp.base.protocol.binary.v1.BaseData.{
-    pickleObfuscated,
+    pickleDigraphBiDir,
+    pickleMultimap,
     pickleNES,
+    pickleObfuscated,
+    picklerUsername,
     pickleSetDiff,
-    picklerUsername
   }
 
   implicit val picklerUserGroupId: Pickler[UserGroup.Id.Public] =
@@ -54,7 +57,7 @@ object Social {
         }
     }
 
-  private def picklerUserGroupARel[A: Pickler]: Pickler[UserGroup.ARel[A]] =
+  private def pickleUserGroupARel[A: Pickler]: Pickler[UserGroup.ARel[A]] =
     new Pickler[UserGroup.ARel[A]] {
       override def pickle(a: UserGroup.ARel[A])(implicit state: PickleState): Unit = {
         state.pickle(a.to)
@@ -68,10 +71,10 @@ object Social {
     }
 
   implicit val picklerUserGroupARelUserGroupIdPublic: Pickler[UserGroup.ARel[UserGroup.Id.Public]] =
-    picklerUserGroupARel
+    pickleUserGroupARel
 
   implicit val picklerUserGroupARelUsername: Pickler[UserGroup.ARel[Username]] =
-    picklerUserGroupARel
+    pickleUserGroupARel
 
   implicit val picklerSetDiffUserGroupARelUserGroupIdPublic: Pickler[SetDiff[UserGroup.ARel[UserGroup.Id.Public]]] =
     pickleSetDiff
@@ -79,7 +82,7 @@ object Social {
   implicit val picklerSetDiffUserGroupARelUsername: Pickler[SetDiff[UserGroup.ARel[Username]]] =
     pickleSetDiff
 
-  private def picklerUserGroupARels[F[_], G, U](implicit g: Pickler[F[UserGroup.ARel[G]]], u: Pickler[F[UserGroup.ARel[U]]]): Pickler[UserGroup.ARels[F, G, U]] =
+  private def pickleUserGroupARels[F[_], G, U](implicit g: Pickler[F[UserGroup.ARel[G]]], u: Pickler[F[UserGroup.ARel[U]]]): Pickler[UserGroup.ARels[F, G, U]] =
     new Pickler[UserGroup.ARels[F, G, U]] {
       override def pickle(a: UserGroup.ARels[F, G, U])(implicit state: PickleState): Unit = {
         state.pickle(a.parents)
@@ -95,10 +98,10 @@ object Social {
     }
 
   implicit val picklerUserGroupARelsSet: Pickler[UserGroup.ARels[Set, UserGroup.Id.Public, Username]] =
-    picklerUserGroupARels
+    pickleUserGroupARels
 
   implicit val picklerUserGroupARelsSetDiff: Pickler[UserGroup.ARels[SetDiff, UserGroup.Id.Public, Username]] =
-    picklerUserGroupARels
+    pickleUserGroupARels
 
   private implicit val picklerUserGroupValidationErrorGraphCycle: Pickler[UserGroup.ValidationError.GraphCycle[UserGroup.Id.Public]] =
     new Pickler[UserGroup.ValidationError.GraphCycle[UserGroup.Id.Public]] {
@@ -157,7 +160,7 @@ object Social {
   implicit val picklerNonEmptySetUserGroupValidationError: Pickler[NonEmptySet[UserGroup.ValidationError[UserGroup.Id.Public]]] =
     pickleNES
 
-  private def picklerUserGroupSaveErrorInvalid[GI](implicit p: Pickler[NonEmptySet[UserGroup.ValidationError[GI]]]): Pickler[UserGroup.SaveError.Invalid[GI]] =
+  private def pickleUserGroupSaveErrorInvalid[GI](implicit p: Pickler[NonEmptySet[UserGroup.ValidationError[GI]]]): Pickler[UserGroup.SaveError.Invalid[GI]] =
     new Pickler[UserGroup.SaveError.Invalid[GI]] {
       override def pickle(a: UserGroup.SaveError.Invalid[GI])(implicit state: PickleState): Unit = {
         state.pickle(a.errors)
@@ -168,7 +171,7 @@ object Social {
       }
     }
 
-  private def picklerUserGroupSaveError[GI](implicit p1: Pickler[UserGroup.SaveError.Invalid[GI]]): Pickler[UserGroup.SaveError[GI]] =
+  private def pickleUserGroupSaveError[GI](implicit p1: Pickler[UserGroup.SaveError.Invalid[GI]]): Pickler[UserGroup.SaveError[GI]] =
     new Pickler[UserGroup.SaveError[GI]] {
       private[this] final val KeyHandleAlreadyTaken = 1
       private[this] final val KeyInvalid            = 0
@@ -185,8 +188,43 @@ object Social {
     }
 
   implicit val picklerUserGroupSaveErrorId: Pickler[UserGroup.SaveError[UserGroup.Id.Public]] = {
-    implicit val a = picklerUserGroupSaveErrorInvalid[UserGroup.Id.Public]
-    picklerUserGroupSaveError
+    implicit val a = pickleUserGroupSaveErrorInvalid[UserGroup.Id.Public]
+    pickleUserGroupSaveError
+  }
+
+  def pickleUserGroupUniverse[UI: UnivEq: Pickler, U: Pickler, GI: ClassTag: UnivEq: Pickler, G: Pickler]: Pickler[UserGroup.Universe[UI, U, GI, G]] = {
+    implicit val giGraph = pickleDigraphBiDir[GI]
+    implicit val giToUis = pickleMultimap[GI, Set, UI]
+    new Pickler[UserGroup.Universe[UI, U, GI, G]] {
+      override def pickle(a: UserGroup.Universe[UI, U, GI, G])(implicit state: PickleState): Unit = {
+        state.pickle(a.groupGraphMap)
+        state.pickle(a.groupsToUsersMap)
+        state.pickle(a.groups)
+        state.pickle(a.users)
+      }
+      override def unpickle(implicit state: UnpickleState): UserGroup.Universe[UI, U, GI, G] = {
+        val groupGraphMap    = state.unpickle[Map[UserGroup.Perm, Digraph.BiDir[GI]]]
+        val groupsToUsersMap = state.unpickle[Map[UserGroup.Perm, Multimap[GI, Set, UI]]]
+        val groups           = state.unpickle[Map[GI, G]]
+        val users            = state.unpickle[Map[UI, U]]
+        UserGroup.Universe(groupGraphMap, groupsToUsersMap, groups, users)
+      }
+    }
+  }
+
+def pickleUserGroup[Id: Pickler]: Pickler[UserGroup[Id]] =
+  new Pickler[UserGroup[Id]] {
+    override def pickle(a: UserGroup[Id])(implicit state: PickleState): Unit = {
+      state.pickle(a.id)
+      state.pickle(a.name)
+      state.pickle(a.handle)
+    }
+    override def unpickle(implicit state: UnpickleState): UserGroup[Id] = {
+      val id     = state.unpickle[Id]
+      val name   = state.unpickle[UserGroup.Name]
+      val handle = state.unpickle[UserGroup.Handle]
+      UserGroup(id, name, handle)
+    }
   }
 
 }
