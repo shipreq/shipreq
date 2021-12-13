@@ -24,6 +24,8 @@ object TestDb extends TestDbHelpers with HasLogger {
 
   var debug = false
 
+  var rollback = true
+
   private def debugLog(msg: => String): Unit =
     if (debug) {
       import Console._
@@ -263,7 +265,10 @@ object TestDb extends TestDbHelpers with HasLogger {
         try
           f(i)
         finally
-          i ! C.rollback(s)
+          if (rollback)
+            i ! C.rollback(s)
+          else
+            i ! C.commit
       }
     }.unsafeRun()
   }
