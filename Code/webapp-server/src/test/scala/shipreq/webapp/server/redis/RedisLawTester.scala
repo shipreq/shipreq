@@ -1,4 +1,4 @@
-package shipreq.webapp.server.logic.laws
+package shipreq.webapp.server.redis
 
 import cats.Eq
 import io.circe._
@@ -17,11 +17,11 @@ import shipreq.base.util._
 import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.server.logic.algebra.Redis._
-import shipreq.webapp.server.logic.laws.RedisLaw.Test
-import shipreq.webapp.server.logic.laws.RedisLawTester._
-import shipreq.webapp.server.logic.laws.RedisLaws.DataGenerators
-import shipreq.webapp.server.logic.test.WebappServerLogicTestUtil.ImplicitRedisEqualityDeepExceptEventTime._
-import shipreq.webapp.server.logic.test.WebappServerLogicTestUtil._
+import shipreq.webapp.server.redis.RedisLaw.Test
+import shipreq.webapp.server.redis.RedisLawTester._
+import shipreq.webapp.server.redis.RedisLaws.DataGenerators
+import shipreq.webapp.server.test.WebappServerTestUtil.ImplicitRedisEqualityDeepExceptEventTime._
+import shipreq.webapp.server.test.WebappServerTestUtil._
 import sourcecode.Line
 
 object RedisLawTester {

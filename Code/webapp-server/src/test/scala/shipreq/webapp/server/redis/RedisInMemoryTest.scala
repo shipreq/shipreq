@@ -1,17 +1,17 @@
-package shipreq.webapp.server.logic.inmem
+package shipreq.webapp.server.redis
 
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.server.logic.laws._
+import shipreq.webapp.server.logic.algebra.Redis
 import utest._
 
-object InMemoryRedisTest extends TestSuite {
+object RedisInMemoryTest extends TestSuite {
 
   private def tester() = {
     val id1 = ProjectId(3)
     val id2 = ProjectId(7)
     val stateFx = Fx {
-      val redis = new InMemoryRedis[Fx]
+      val redis = new Redis.InMemory[Fx]
       RedisLawTester.State(
         id1           = id1,
         id2           = id2,

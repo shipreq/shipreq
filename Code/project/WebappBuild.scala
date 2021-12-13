@@ -360,7 +360,6 @@ object WebappBuild {
       .enablePlugins(JettyPlugin, WarPlugin, DockerPlugin)
       .dependsOn(baseDb, baseOps, taskmanApi, webappServerLogicJVM)
       .dependsOn(webappMemberTestJVM % Test)
-      .dependsOn(webappServerLogicJVM % "test->test")
       .deps(
         Lift.webkit ++  scalaXml ++ SLF4J.jcl ++ commonsText ++ Nyaya.gen ++ Logback.withPlugins ++ JJWT.all ++
         Prometheus.client ++ Prometheus.hotspot ++ Prometheus.servlet ++ Prometheus.logback ++ redisson ++

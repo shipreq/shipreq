@@ -13,8 +13,7 @@ import shipreq.webapp.server.db.{DbInterpreter, StatRecorder}
 import shipreq.webapp.server.interpreter._
 import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.event.ApplyEventAlgebra
-import shipreq.webapp.server.logic.inmem.InMemoryRedis
-import shipreq.webapp.server.logic.logic.ServerLogic
+import shipreq.webapp.server.logic.impl.ServerLogic
 import shipreq.webapp.server.redis.{RedisSchema, RedisViaRedisson}
 import shipreq.webapp.server.util.AnalyticsProxy
 import shipreq.webapp.ssr.SsrAlgebra
@@ -181,13 +180,13 @@ object Global {
     }
 
   private def useInMemoryRedis() = {
-    val redis          = new InMemoryRedis[Fx]
-    val threadGroup    = new ThreadGroup("InMemoryRedis")
-    val timer          = Executors.newSingleThreadScheduledExecutor(new Thread(threadGroup, _, "InMemoryRedis"))
+    val redis          = new Redis.InMemory[Fx]
+    val threadGroup    = new ThreadGroup("RedisInMemory")
+    val timer          = Executors.newSingleThreadScheduledExecutor(new Thread(threadGroup, _, "RedisInMemory"))
     val task: Runnable = () => redis.publishAll.unsafeRun()
     val everyMs        = 1000
     timer.scheduleAtFixedRate(task, everyMs, everyMs, TimeUnit.MILLISECONDS)
-    Runtime.getRuntime.addShutdownHook(new Thread(threadGroup, task, "InMemoryRedis-shutdown"))
+    Runtime.getRuntime.addShutdownHook(new Thread(threadGroup, task, "RedisInMemory-shutdown"))
     redis
   }
 }

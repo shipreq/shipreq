@@ -52,17 +52,11 @@ trait TestDbHelpers {
   // ===================================================================================================================
   // Generic usage
 
-  def update(sql: String): Int =
-    this ! Update0(sql, None).run
-
   def select[A: Read](sql: String): A =
     this ! Query0[A](sql).unique
 
   def selectOption[A: Read](sql: String): Option[A] =
     this ! Query0[A](sql).option
-
-  def selectAll[A: Read](sql: String): Vector[A] =
-    this ! Query0[A](sql).to[Vector]
 
   def printTableCounts(): Unit =
     System.err.println(countRowsInAllTables().toTable)

@@ -21,7 +21,7 @@ import shipreq.webapp.server.logic._
 import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.dispatch.{Request => _}
-import shipreq.webapp.server.logic.logic._
+import shipreq.webapp.server.logic.impl._
 import shipreq.webapp.server.logic.util._
 
 /** Usage:
@@ -274,9 +274,20 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
           case \/-(projectId) =>
             tracer.alg.addAttrs(Trace.Attr.ShipReqProjectId(projectId) :: Nil) >>
             needAuth(user =>
-              security.db.getProjectAccess(user.id, projectId).map {
-                case Some(_) => ResponseCmd.ProjectSpa.Serve(user, projectId)
-                case None    => ResponseCmd.ProjectSpa.NotOwner
+              security.db.getProjectOwner(projectId).map {
+
+                case Some(owner) =>
+                  security.allowProjectAccess(
+                    requester    = user,
+                    projectId    = projectId,
+                    projectOwner = owner,
+                  ) match {
+                    case Allow => ResponseCmd.ProjectSpa.Serve(user, projectId)
+                    case Deny  => ResponseCmd.ProjectSpa.NotOwner
+                  }
+
+                case None =>
+                  ResponseCmd.ProjectSpa.InvalidId
               }
             )
           case -\/(_) => F pure Response(ResponseCmd.ProjectSpa.InvalidId, Cookie.Update.empty)
@@ -451,8 +462,6 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
       anon (PublicSpaProtocols.ResetPassword1   .ajax)("resetPassword1"   , true , publicSpa.ajaxResetPassword1   )
       anon (PublicSpaProtocols.ResetPassword2   .ajax)("resetPassword2"   , true , publicSpa.ajaxResetPassword2   )
       auth (HomeSpaProtocols  .CreateProject    .ajax)("createProject"    , true , homeSpa  .ajaxCreateProject    )
-      auth (HomeSpaProtocols  .CreateUserGroup  .ajax)("createUserGroup"  , true , homeSpa  .ajaxCreateUserGroup  )
-      auth (HomeSpaProtocols  .UpdateUserGroup  .ajax)("updateUserGroup"  , true , homeSpa  .ajaxUpdateUserGroup  )
 
       mutableRouteMap.toMapNoHeadSlash
     }

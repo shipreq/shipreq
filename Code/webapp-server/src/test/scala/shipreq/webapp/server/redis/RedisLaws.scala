@@ -1,4 +1,4 @@
-package shipreq.webapp.server.logic.laws
+package shipreq.webapp.server.redis
 
 import cats.Semigroup
 import cats.syntax.all._
@@ -12,7 +12,7 @@ import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.project.protocol.json.Latest._
 import shipreq.webapp.member.project.protocol.json.v1.PostEvents._
 import shipreq.webapp.server.logic.algebra.Redis._
-import shipreq.webapp.server.logic.test.WebappServerLogicTestUtil._
+import shipreq.webapp.server.test.WebappServerTestUtil._
 
 object RedisLaws {
   import RedisLaw.{Logic, Test}

@@ -66,7 +66,6 @@ object SqlTest extends TestSuite {
 
     "homeSpa" - {
       "createProject"                - TestDb.check(DbInterpreter.ForHomeSpa.createProjectQuery)
-      "createProjectUsrEntry"        - TestDb.check(DbInterpreter.ForHomeSpa.createProjectUsrEntry)
       "getAllProjectMetaDataForUser" - TestDb.check(db.getAllProjectMetaDataForUserQuery)
     }
 

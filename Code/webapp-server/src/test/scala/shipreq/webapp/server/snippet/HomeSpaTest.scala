@@ -4,7 +4,7 @@ import doobie.ConnectionIO
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.Event.FieldStaticRemove
 import shipreq.webapp.server.logic.algebra.Crypto
-import shipreq.webapp.server.logic.logic.HomeSpaLogic
+import shipreq.webapp.server.logic.impl.HomeSpaLogic
 import shipreq.webapp.server.logic.util.Obfuscators
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._

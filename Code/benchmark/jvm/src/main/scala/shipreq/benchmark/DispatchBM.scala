@@ -16,7 +16,7 @@ import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config._
 import shipreq.webapp.server.logic.data._
 import shipreq.webapp.server.logic.dispatch._
-import shipreq.webapp.server.logic.logic._
+import shipreq.webapp.server.logic.impl._
 import zio.UIO
 
 /**
@@ -259,8 +259,6 @@ object DispatchBM {
 
     implicit object homeSpa extends HomeSpaLogic.Ajax[F] {
       override val ajaxCreateProject = (_, _) => ???
-      override val ajaxCreateUserGroup = (_, _) => ???
-      override val ajaxUpdateUserGroup = (_, _) => ???
     }
 
     implicit object ops extends OpsEndpointLogic[F] {

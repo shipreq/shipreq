@@ -15,7 +15,7 @@ import shipreq.webapp.member.test.project.RandomEventStream
 import shipreq.webapp.server.config.Global
 import shipreq.webapp.server.interpreter.ServerInterpreter
 import shipreq.webapp.server.logic.data.ProjectEncryptionKey
-import shipreq.webapp.server.logic.logic.PublicSpaLogic
+import shipreq.webapp.server.logic.impl.PublicSpaLogic
 import shipreq.webapp.server.test.WebappServerTestUtil._
 import shipreq.webapp.server.test._
 import sourcecode.Line

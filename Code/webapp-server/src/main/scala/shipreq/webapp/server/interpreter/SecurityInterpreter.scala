@@ -180,4 +180,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
       case None =>
         fNoToken
     }
+
+  override def allowProjectAccess(requester: User, projectId: ProjectId, projectOwner: UserId): Permission =
+    Allow.when(requester.id ==* projectOwner)
 }

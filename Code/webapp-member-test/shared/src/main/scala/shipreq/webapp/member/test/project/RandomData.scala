@@ -21,7 +21,6 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
 import shipreq.webapp.base.config._
-import shipreq.webapp.base.data.UserId
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data._
@@ -113,10 +112,8 @@ object RandomData {
     Distinct.Fixer.lift(fix).xmap(_.str)(CaseInsensitive)
   }
 
-  val id  = Gen.chooseInt(1, 1024 * 64)
-  val idL = Gen.chooseLong(1, Long.MaxValue)
-
-  lazy val userId = idL.map(UserId.apply)
+  val id =
+    Gen.chooseInt(1, 1024 * 64)
 
   def revAndIMap[D, I <: TaggedInt](r: Gen[List[D]])
                                     (implicit i: DataIdAux[D, I], j: TestDataIdAux[D, I]): Gen[IMap[I, D]] = {
@@ -2961,43 +2958,5 @@ object RandomData {
         }
         events
       }
-  }
-
-  // ===================================================================================================================
-  object userGroups {
-    import shipreq.webapp.member.social.UserGroup
-    import shipreq.webapp.member.social.UserGroup._
-
-    val id     = RandomData.idL.map(Id.apply)
-    val name   = Gen.string1.map(Name.apply)
-    val handle = Gen.string1.map(Handle.apply)
-    val perm   = Gen.choose_!(Perm.values.whole)
-
-    def userGroup[A](genId: Gen[A]): Gen[UserGroup[A]] =
-      Gen.lift3(genId, name, handle)(UserGroup(_, _, _))
-
-    val userGroupId = userGroup(id)
-
-    def rel[A, B](a: Gen[A], b: Gen[B]): Gen[Rel[A, B]] =
-      Gen.lift3(a, b, perm)(Rel(_, _, _))
-
-    def arel[A](a: Gen[A]): Gen[ARel[A]] =
-      Gen.lift2(a, perm)(ARel(_, _))
-
-    def arelSet[G, U](g: Gen[G], u: Gen[U])(implicit ss: SizeSpec): Gen[ARels[Set, G, U]] = {
-      val gg = arel(g).set
-      val gu = arel(u).set
-      Gen.lift3(gg, gg, gu)(ARels(_, _, _))
-    }
-
-    lazy val arelSetWithIds = arelSet(id, userId)
-
-    def arelSetDiff[G: UnivEq, U: UnivEq](g: Gen[G], u: Gen[U])(implicit ss: SizeSpec): Gen[ARels[SetDiff, G, U]] = {
-      val gg = genSetDiff(arel(g))
-      val gu = genSetDiff(arel(u))
-      Gen.lift3(gg, gg, gu)(ARels(_, _, _))
-    }
-
-    lazy val arelSetDiffWithIds = arelSetDiff(id, userId)
   }
 }

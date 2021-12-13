@@ -3,8 +3,7 @@ package shipreq.webapp.server.db
 import cats.free.Free
 import cats.instances.int._
 import cats.instances.vector._
-import cats.syntax.all._
-import cats.{Monad, ~>}
+import cats.~>
 import doobie._
 import doobie.implicits._
 import doobie.postgres.circe.jsonb.implicits._
@@ -17,12 +16,11 @@ import scala.collection.immutable.SortedSet
 import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
 import shipreq.base.db.SqlHelpers._
-import shipreq.base.util.{ErrorMsg, SetDiff}
+import shipreq.base.util.ErrorMsg
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.project.data.{Live => _, _}
 import shipreq.webapp.member.project.event._
-import shipreq.webapp.member.social._
 import shipreq.webapp.server.db.DbInterpreter._
 import shipreq.webapp.server.logic.algebra.DB
 import shipreq.webapp.server.logic.algebra.DB.EventFilter
@@ -64,8 +62,6 @@ object DbInterpreter {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait Base extends DB.Base[ConnectionIO] {
 
-    override protected val F = Monad[ConnectionIO]
-
     override final def withTransactionLevel[F[_], A](runDB: ConnectionIO ~> F, level: Int)(f: ConnectionIO[A]): F[A] =
       runDB(f.withTransactionLevel(level))
 
@@ -74,9 +70,6 @@ object DbInterpreter {
 
     override def logGlobalEvent(e: GlobalEvent): ConnectionIO[Unit] =
       logGlobalEventSql.toUpdate0(GlobalEventSerialisation.encode(e)).execute
-
-    override def logGlobalEventIf(cond: Boolean)(e: => GlobalEvent): ConnectionIO[Unit] =
-      if (cond) logGlobalEvent(e) else ConnectionIoUnit
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -110,11 +103,11 @@ object DbInterpreter {
     override final def logLoginSuccess(id: UserId, ip: Option[IP]): ConnectionIO[Unit] =
       logLoginSuccessSql.toUpdate0((id, ip)).execute
 
-    // private[db] final val getProjectOwnerSql =
-    //   Query[ProjectId, UserId]("SELECT usr_id FROM project WHERE id=?")
+    private[db] final val getProjectOwnerSql =
+      Query[ProjectId, UserId]("SELECT usr_id FROM project WHERE id=?")
 
-    // override final def getProjectOwner(id: ProjectId): ConnectionIO[Option[UserId]] =
-    //   getProjectOwnerSql.toQuery0(id).option
+    override final def getProjectOwner(id: ProjectId): ConnectionIO[Option[UserId]] =
+      getProjectOwnerSql.toQuery0(id).option
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -431,207 +424,24 @@ object DbInterpreter {
     override def createProject(uid: UserId, es: Vector[ActiveEvent], p: Project, k: ProjectEncryptionKey): ConnectionIO[ProjectId] = {
       val events = es.length
       val name   = es.reverseIterator.collectFirst { case e: Event.ProjectNameSet => e.name }.getOrElse("")
-      val data   = (events, events, p.liveReqCount, p.content.reqs.size, name, k)
+      val data   = (uid, events, events, p.liveReqCount, p.content.reqs.size, name, k)
       for {
-        pid  <- ForHomeSpa.createProjectQuery.unique(data)
-        _    <- ForHomeSpa.createProjectUsrEntry.run((pid, uid, ProjectPerm.Admin))
-        adds  = es.iterator.zipWithIndex.map(x => SaveProjectEventLogic.unsafeInsertEvent(pid, EventOrd.fromIndex(x._2), x._1, uid))
+        pid  <- ForHomeSpa.createProjectQuery.toQuery0(data).unique
+        adds = es.iterator.zipWithIndex.map(x => SaveProjectEventLogic.unsafeInsertEvent(pid, EventOrd.fromIndex(x._2), x._1, uid))
         done <- sequentially(adds, pid)
       } yield done
-    }
-
-    private val getUserIdsByUsernameQuery = Query[Set[Username], (Username, UserId)](
-      "SELECT username,id FROM usr WHERE username = ANY(?::VARCHAR[])")
-
-    override def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]): ConnectionIO[NonEmptySet[Username] \/ Map[Username, UserId]] = {
-      val all = usernames.whole
-      getUserIdsByUsernameQuery.toQuery0(all).to[List].map { tuples =>
-        var notFound = all
-        tuples.foreach(notFound -= _._1)
-        NonEmptySet.option(notFound).toLeft(tuples.toMap)
-      }
-    }
-
-    private val userGroupUniverseQueryTree = Query[List[UserGroup.Id], UserGroup.Rel[UserGroup.Id, UserGroup.Id]](
-      "SELECT * FROM usr_group_tree_universe(?::BIGINT[])")
-
-    private val getUserGroupUsrRelsByGroup = Query[List[UserGroup.Id], UserGroup.Rel[UserGroup.Id, UserId]](
-      "SELECT * FROM usr_group_usr WHERE grp_id = ANY(?::BIGINT[])")
-
-    private val getUserGroupsByUsr = Query[UserId, UserGroup.Id](
-      "SELECT grp_id FROM usr_group_usr WHERE usr_id = ?")
-
-    private val getUserGroups = Query[List[UserGroup.Id], UserGroup[UserGroup.Id]](
-      "SELECT * FROM usr_group WHERE id = ANY(?::BIGINT[])")
-
-    private val getUsers = Query[List[UserId], User](
-      "SELECT id,username FROM usr WHERE id = ANY(?::BIGINT[])")
-
-    private def _getUserGroupUniverse(ids: List[UserGroup.Id]): ConnectionIO[UserGroup.Universe[UserId, Unit, UserGroup.Id, Unit]] =
-      for {
-        groupRels <- userGroupUniverseQueryTree.toQuery0(ids).to[List]
-        groups     = groupRels.iterator.flatMap(r => r.from :: r.to :: Nil).toSet ++ ids
-        userRels  <- getUserGroupUsrRelsByGroup.toQuery0(groups.toList).to[List]
-      } yield UserGroup.Universe.fromRels(groupRels, userRels)
-
-    protected def getUserGroupUniverseU(id: UserGroup.Id): ConnectionIO[UserGroup.Universe[UserId, Unit, UserGroup.Id, Unit]] =
-      _getUserGroupUniverse(id :: Nil)
-
-    private val emptyUniverse =
-      UserGroup.Universe.empty[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]].pure[ConnectionIO]
-
-    override def getUserGroupUniverseForUser(id: UserId): ConnectionIO[UserGroup.Universe[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]]] =
-      assertTransactionLevelSerializable *>
-      getUserGroupsByUsr.toQuery0(id).to[List].flatMap { directGroups =>
-        if (directGroups.isEmpty)
-          emptyUniverse
-        else
-          for {
-            universe <- _getUserGroupUniverse(directGroups)
-            groups   <- getUserGroups.toQuery0(universe.groups.keys.toList).to[List]
-            users    <- getUsers.toQuery0(universe.users.keys.toList).to[List]
-          } yield {
-            val groupMap = groups.iterator.map(g => (g.id, g)).toMap
-            val userMap  = users.iterator.map(u => (u.id, u.username)).toMap
-            universe.copy(groups = groupMap, users = userMap)
-          }
-      }
-
-    private val createUserGroupQuery = Query[(UserGroup.Name, UserGroup.Handle), UserGroup.Id](
-      "INSERT INTO usr_group(name, handle) VALUES(?,?) RETURNING id")
-
-    private val createUserGroupTreeQuery = Update[UserGroup.Rel[UserGroup.Id, UserGroup.Id]](
-      "INSERT INTO usr_group_tree VALUES(?,?,?)")
-
-    private val createUserGroupUsrQuery = Update[UserGroup.Rel[UserGroup.Id, UserId]](
-      "INSERT INTO usr_group_usr VALUES(?,?,?)")
-
-    private object SaveErrorFromSql {
-      import UserGroup._
-
-      private type VE = ValidationError[Id]
-
-      private[this] val cycleRegex = """.* VALUES\((\d+?),(\d+?),.*Cycle detected.*\n.*""".r
-      private[this] val handleRegex = """.*violates unique constraint "usr_group_handle_key.*\n.*""".r
-
-      def unapply(errorMsg: String): Option[SaveError[Id]] =
-        errorMsg match {
-
-          case cycleRegex(a, b) =>
-            val x = Id(a.toLong)
-            val y = Id(b.toLong)
-            val e = ValidationError.GraphCycle(x, y)
-            Some(SaveError.Invalid(NonEmptySet.one[VE](e)))
-
-          case handleRegex() =>
-            Some(SaveError.HandleAlreadyTaken)
-
-          case _ =>
-            None
-        }
-    }
-
-    private def userGroupSave[A, B](c: ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ A])(id: A => UserGroup.Id): ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ A] = {
-      type Result = UserGroup.SaveError[UserGroup.Id] \/ A
-      c.inSafeTransactionRollbackOnLeft {
-
-        case \/-(\/-(a)) =>
-          getUserGroupUniverseU(id(a)).map { u =>
-            val errors = u.validate(checkForCycles = false)
-            if (errors.isEmpty)
-              \/-(a)
-            else
-              -\/(UserGroup.SaveError.Invalid(NonEmptySet force errors))
-          }
-
-        case \/-(-\/(e)) =>
-          (-\/(e): Result).pure[ConnectionIO]
-
-        case -\/(e) =>
-          e.getMessage match {
-            case SaveErrorFromSql(e) => (-\/(e): Result).pure[ConnectionIO]
-            case _                   => throw e
-          }
-      }
-    }
-
-    override def createUserGroup(name  : UserGroup.Name,
-                                 handle: UserGroup.Handle,
-                                 rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
-                                ): ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id] = {
-
-      type Result = UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id
-
-      val create: ConnectionIO[Result] =
-        for {
-          _  <- assertTransactionLevelSerializable
-          id <- createUserGroupQuery.unique((name, handle))
-          _  <- createUserGroupTreeQuery.updateMany(rels.fullTreeRelsIterator(id)(_.iterator).toList)
-          _  <- createUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.iterator).toList)
-        } yield \/-(id)
-
-      userGroupSave(create)(identity)
-    }
-
-    private val deleteUserGroupTreeQuery = Update[UserGroup.Rel[UserGroup.Id, UserGroup.Id]](
-      "DELETE FROM usr_group_tree WHERE from_id=? AND to_id=? AND perm=?")
-
-    private val deleteUserGroupUsrQuery = Update[UserGroup.Rel[UserGroup.Id, UserId]](
-      "DELETE FROM usr_group_usr WHERE grp_id=? AND usr_id=? AND perm=?")
-
-    private val isUserGroupAdmin: Query[(UserGroup.Id, UserId), Boolean] =
-      Query("SELECT EXISTS(SELECT 1 FROM usr_group_admin(?) WHERE usr_id = ? LIMIT 1)")
-
-    override def updateUserGroup(userId: UserId,
-                                 id    : UserGroup.Id,
-                                 name  : Option[UserGroup.Name],
-                                 handle: Option[UserGroup.Handle],
-                                 rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
-                                ): ConnectionIO[UserGroup.SaveError[UserGroup.Id] \/ Unit] = {
-
-      type Result = UserGroup.SaveError[UserGroup.Id] \/ Unit
-
-      val updateGroup: ConnectionIO[Unit] =
-        (name, handle) match {
-          case (Some(n), Some(h)) => sql"UPDATE usr_group SET name=$n, handle=$h, updated_at=now() WHERE id=$id".update.run.void
-          case (Some(n), None   ) => sql"UPDATE usr_group SET name=$n, updated_at=now() WHERE id=$id".update.run.void
-          case (None   , Some(h)) => sql"UPDATE usr_group SET handle=$h, updated_at=now() WHERE id=$id".update.run.void
-          case (None   , None   ) => ConnectionIoUnit
-        }
-
-      val updateUnsafe: ConnectionIO[Result] =
-        for {
-          _ <- updateGroup
-          _ <- deleteUserGroupTreeQuery.updateMany(rels.fullTreeRelsIterator(id)(_.removed.iterator).toList)
-          _ <- deleteUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.removed.iterator).toList)
-          _ <- createUserGroupTreeQuery.updateMany(rels.fullTreeRelsIterator(id)(_.added.iterator).toList)
-          _ <- createUserGroupUsrQuery .updateMany(rels.fullUserRelsIterator(id)(_.added.iterator).toList)
-        } yield \/-(())
-
-      val update: ConnectionIO[Result] =
-        (assertTransactionLevelSerializable *> isUserGroupAdmin.unique((id, userId))).flatMap { hasAccess =>
-          if (hasAccess)
-            updateUnsafe
-          else
-            (-\/(UserGroup.SaveError.AccessDenied): Result).pure[ConnectionIO]
-        }
-
-      userGroupSave(update)(_ => id)
     }
   }
 
   object ForHomeSpa {
 
-    private[db] val createProjectQuery: Query[(Int, Int, Int, Int, String, ProjectEncryptionKey), ProjectId] =
+    private[db] val createProjectQuery: Query[(UserId, Int, Int, Int, Int, String, ProjectEncryptionKey), ProjectId] =
       Query(
         """
-          |INSERT INTO project(events_init, events_total, reqs_live, reqs_total, name, encryption_key)
-          |VALUES(?,?,?,?,?,?)
+          |INSERT INTO project(usr_id, events_init, events_total, reqs_live, reqs_total, name, encryption_key)
+          |VALUES(?,?,?,?,?,?,?)
           |RETURNING id
         """.stripMargin.sql)
-
-    private[db] val createProjectUsrEntry: Update[(ProjectId, UserId, ProjectPerm)] =
-      Update("INSERT INTO project_usr VALUES(?,?,?)")
   }
 
   trait ForProjectSpa
@@ -734,11 +544,10 @@ object DbInterpreter {
       val reqs_live    = project.content.reqs.reqIterator().count(_.live(project.config.reqTypes) is Live)
       val reqs_total   = project.content.reqs.size
       val name         = project.name
-      val creationArgs = (events_init, events_total, reqs_live, reqs_total, name, encKey)
+      val creationArgs = (userId, events_init, events_total, reqs_live, reqs_total, name, encKey)
       val eventArgs    = (pid: ProjectId) => events.iterator.map((pid, _, userId)).toVector
       for {
-        pid <- ForHomeSpa.createProjectQuery.unique(creationArgs)
-        _   <- ForHomeSpa.createProjectUsrEntry.run((pid, userId, ProjectPerm.Admin))
+        pid <- ForHomeSpa.createProjectQuery.toQuery0(creationArgs).unique
         _   <- insertVerifiedEventSql.updateMany(eventArgs(pid))
       } yield pid
     }

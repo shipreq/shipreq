@@ -1,4 +1,4 @@
-package shipreq.webapp.server.logic.logic
+package shipreq.webapp.server.logic.impl
 
 import cats.Monad
 import cats.syntax.all._

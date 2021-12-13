@@ -13,7 +13,6 @@ import shipreq.webapp.client.home.test.PrepareEnv
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.protocol.ajax.HomeSpaProtocols
 import shipreq.webapp.member.protocol.entrypoint.HomeSpaEntryPoint
-import shipreq.webapp.member.social.UserGroup
 import shipreq.webapp.member.ui.BaseStyles
 import utest._
 
@@ -104,9 +103,9 @@ object HomeTest extends TestSuite {
 
   PrepareEnv()
 
-  def run(ps: List[ProjectMetaData], ugs: HomeSpaEntryPoint.UserGroupUniverse = UserGroup.Universe.empty)(plan: *.Plan): Report[String] = {
+  def run(ps: List[ProjectMetaData])(plan: *.Plan): Report[String] = {
     val cp = new TestAjaxClient(false)
-    val init = HomeSpaEntryPoint.InitData(Username("thatguy"), ps, ugs, AssetManifest(None))
+    val init = HomeSpaEntryPoint.InitData(Username("thatguy"), ps, AssetManifest(None))
     val props = Home.Props(init, cp)
     ReactTestUtils.withRenderedIntoDocument(props.render)(c =>
       plan

@@ -4,7 +4,7 @@ import nyaya.gen.Gen
 import shipreq.base.util.FxModule._
 import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.server.logic.algebra.{Crypto, DB, Server}
-import shipreq.webapp.server.logic.logic.OpsEndpointLogic
+import shipreq.webapp.server.logic.impl.OpsEndpointLogic
 
 final class OpsEndpointInterpreter(implicit
                                    crypto: Crypto[Fx],

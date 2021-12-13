@@ -1,4 +1,4 @@
-package shipreq.webapp.server.logic.logic
+package shipreq.webapp.server.logic.impl
 
 import shipreq.base.util._
 import shipreq.webapp.base.data._

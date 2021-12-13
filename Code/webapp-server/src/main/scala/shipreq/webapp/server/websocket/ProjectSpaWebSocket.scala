@@ -12,7 +12,7 @@ import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseReason
 import shipreq.webapp.server.config.Global
-import shipreq.webapp.server.logic.logic.ProjectSpaLogic._
+import shipreq.webapp.server.logic.impl.ProjectSpaLogic._
 import shipreq.webapp.server.protocol.websocket.WebSocketUtil
 import shipreq.webapp.server.protocol.websocket.WebSocketUtil.Implicits._
 import shipreq.webapp.server.protocol.websocket.WebSocketUtil.{CloseReasons, UserPropsLens}
@@ -120,7 +120,7 @@ final class ProjectSpaWebSocket extends StrictLogging {
       case Some(NoSession | ExpiredSession) =>
         fxClose(s, CloseReasons.unauthorised).unsafeRun()
 
-      case Some(r@ (AnonymousSession | AccessDenied | InvalidProjectId)) =>
+      case Some(r@ (AnonymousSession | AccessDenied | InvalidProjectId | ProjectNotFound)) =>
         logger.warn(s"Rejecting WebSocket connection: $r")
         // For security reasons, don't vary the response in a way that would allow attackers to know when they've
         // discovered a valid project ID, or an existing project.

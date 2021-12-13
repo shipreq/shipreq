@@ -4,6 +4,7 @@ import cats.Monad
 import com.typesafe.scalalogging.StrictLogging
 import java.time.Instant
 import java.util.UUID
+import shipreq.base.util.Permission
 import shipreq.webapp.base.data._
 import shipreq.webapp.server.logic.data.PasswordAndSalt
 import shipreq.webapp.server.logic.dispatch.Cookie
@@ -49,6 +50,9 @@ object Security {
         F.pure(Cookie.Update.empty)
       else
         sessionPersist(token)
+
+    // Temporary measure until phase 3 is complete
+    def allowProjectAccess(requester: User, projectId: ProjectId, projectOwner: UserId): Permission
   }
 
   // ===================================================================================================================

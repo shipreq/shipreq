@@ -32,11 +32,6 @@ object CatsExtra {
       override def forall[A](fa: Set[A])(p: A => Boolean)                              = fa.forall(p)
     }
 
-  implicit lazy val setFunctor: Functor[Set] =
-    new Functor[Set] {
-      override def map[A, B](fa: Set[A])(f: A => B): Set[B] = fa.map(f)
-    }
-
   implicit lazy val foldableArraySeq: Foldable[ArraySeq] =
     new Foldable[ArraySeq] {
       override def foldMap[A, B](fa: ArraySeq[A])(f: A => B)(implicit F: Monoid[B]): B = {

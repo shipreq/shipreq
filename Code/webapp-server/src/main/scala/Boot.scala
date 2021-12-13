@@ -21,7 +21,7 @@ import shipreq.webapp.server.http.{HttpStatusHandler, LiftDispatcher}
 import shipreq.webapp.server.interpreter._
 import shipreq.webapp.server.logic.algebra.TraceAlgebra
 import shipreq.webapp.server.logic.config.ServerLogicConfig
-import shipreq.webapp.server.logic.logic.MinimalSsrLogic
+import shipreq.webapp.server.logic.impl.MinimalSsrLogic
 import shipreq.webapp.server.taskman.Taskman
 import shipreq.webapp.ssr.SsrOff
 

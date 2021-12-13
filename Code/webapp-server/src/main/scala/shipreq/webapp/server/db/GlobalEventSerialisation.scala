@@ -1,13 +1,9 @@
 package shipreq.webapp.server.db
 
 import io.circe._
-import io.circe.syntax._
-import shipreq.base.util.JsonUtil._
-import shipreq.base.util.SetDiff
-import shipreq.webapp.base.data._
+import shipreq.webapp.base.data.{IP, UserId}
+import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.global.GlobalEvent._
-import shipreq.webapp.member.global._
-import shipreq.webapp.member.social._
 
 object GlobalEventSerialisation {
   import GlobalEventTypes._
@@ -92,175 +88,7 @@ object GlobalEventSerialisation {
           userId <- r.needUserId
         } yield UserPasswordReset(r.ip, userId)
       )(e => RowData.noJson(e.ip, Some(e.userId)))
-
-    private object UserGroupCodecs {
-
-      implicit val decoderUserId: Decoder[UserId] =
-        Decoder[Long].map(UserId.apply)
-
-      implicit val encoderUserId: Encoder[UserId] =
-        Encoder[Long].contramap(_.value)
-
-      implicit val decoderUserGroupId: Decoder[UserGroup.Id] =
-        Decoder[Long].map(UserGroup.Id.apply)
-
-      implicit val encoderUserGroupId: Encoder[UserGroup.Id] =
-        Encoder[Long].contramap(_.value)
-
-      implicit val decoderUserGroupName: Decoder[UserGroup.Name] =
-        Decoder[String].map(UserGroup.Name.apply)
-
-      implicit val encoderUserGroupName: Encoder[UserGroup.Name] =
-        Encoder[String].contramap(_.value)
-
-      implicit val decoderUserGroupHandle: Decoder[UserGroup.Handle] =
-        Decoder[String].map(UserGroup.Handle.apply)
-
-      implicit val encoderUserGroupHandle: Encoder[UserGroup.Handle] =
-        Encoder[String].contramap(_.value)
-
-      implicit val decoderUserGroupPerm: Decoder[UserGroup.Perm] = decodeSumBySoleKey {
-        case ("admin" , _) => Right(UserGroup.Perm.Admin)
-        case ("member", _) => Right(UserGroup.Perm.Member)
-      }
-
-      implicit val encoderUserGroupPerm: Encoder[UserGroup.Perm] = Encoder.instance {
-        case UserGroup.Perm.Admin  => Json.obj("admin"  -> ().asJson)
-        case UserGroup.Perm.Member => Json.obj("member" -> ().asJson)
-      }
-
-      private def decoderARel[A: Decoder]: Decoder[UserGroup.ARel[A]] =
-        Decoder.forProduct2("to", "perm")(UserGroup.ARel.apply[A])
-
-      private def encoderARel[A: Encoder]: Encoder[UserGroup.ARel[A]] =
-        Encoder.forProduct2("to", "perm")(a => (a.to, a.perm))
-
-      implicit val decoderARelUserId: Decoder[UserGroup.ARel[UserId]] = decoderARel
-      implicit val encoderARelUserId: Encoder[UserGroup.ARel[UserId]] = encoderARel
-
-      implicit val decoderARelUserGroupId: Decoder[UserGroup.ARel[UserGroup.Id]] = decoderARel
-      implicit val encoderARelUserGroupId: Encoder[UserGroup.ARel[UserGroup.Id]] = encoderARel
-
-      implicit def encoderSetDiff[A: Encoder]: Encoder[SetDiff[A]] =
-        Encoder.forProduct2("-", "+")(a => (a.removed, a.added))
-
-      implicit def decoderSetDiff[A: Decoder : UnivEq]: Decoder[SetDiff[A]] =
-        Decoder.forProduct2("-", "+")(SetDiff.apply[A])
-    }
-
-    implicit val codecUserGroupCreate: Codec[UserGroupCreate] = {
-      import UserGroupCodecs._
-      final case class Data(id      : UserGroup.Id,
-                            name    : UserGroup.Name,
-                            handle  : UserGroup.Handle,
-                            parents : Set[UserGroup.ARel[UserGroup.Id]],
-                            children: Set[UserGroup.ARel[UserGroup.Id]],
-                            users   : Set[UserGroup.ARel[UserId]]) {
-        def toEvent(userId: UserId) =
-          UserGroupCreate(
-            userId = userId,
-            id     = id,
-            name   = name,
-            handle = handle,
-            rels   = UserGroup.ARels(
-                       parents  = parents,
-                       children = children,
-                       users    = users,
-                     )
-          )
-      }
-      implicit val decoder: Decoder[Data] =
-        Decoder.instance { c =>
-          for {
-            id       <- c.get[UserGroup.Id]("id")
-            name     <- c.get[UserGroup.Name]("name")
-            handle   <- c.get[UserGroup.Handle]("handle")
-            parents  <- c.get[Set[UserGroup.ARel[UserGroup.Id]]]("parents")
-            children <- c.get[Set[UserGroup.ARel[UserGroup.Id]]]("children")
-            users    <- c.get[Set[UserGroup.ARel[UserId]]]("users")
-          } yield Data(id, name, handle, parents, children, users)
-        }
-      implicit val encoder: Encoder[Data] =
-        Encoder.instance(value => Json.obj(
-          "id"       -> value.id.asJson,
-          "name"     -> value.name.asJson,
-          "handle"   -> value.handle.asJson,
-          "parents"  -> value.parents.asJson,
-          "children" -> value.children.asJson,
-          "users"    -> value.users.asJson,
-        ))
-      Codec.withJson[UserGroupCreate, Data](e =>
-        Data(
-          id       = e.id,
-          name     = e.name,
-          handle   = e.handle,
-          parents  = e.rels.parents,
-          children = e.rels.children,
-          users    = e.rels.users,
-        )
-      )(
-        (r, d) => \/-(d.toEvent(r.userId.get)),
-        (e, d) => RowData(d, None, Some(e.userId))
-      )
-    }
-
-    implicit val codecUserGroupUpdate: Codec[UserGroupUpdate] = {
-      import UserGroupCodecs._
-      final case class Data(id      : UserGroup.Id,
-                            name    : Option[UserGroup.Name],
-                            handle  : Option[UserGroup.Handle],
-                            parents : SetDiff[UserGroup.ARel[UserGroup.Id]],
-                            children: SetDiff[UserGroup.ARel[UserGroup.Id]],
-                            users   : SetDiff[UserGroup.ARel[UserId]]) {
-        def toEvent(userId: UserId) =
-          UserGroupUpdate(
-            userId = userId,
-            id     = id,
-            name   = name,
-            handle = handle,
-            rels   = UserGroup.ARels(
-                       parents  = parents,
-                       children = children,
-                       users    = users,
-                     )
-          )
-      }
-      implicit val decoder: Decoder[Data] =
-        Decoder.instance { c =>
-          for {
-            id        <- c.get[UserGroup.Id]("id")
-            newName   <- c.get[Option[UserGroup.Name]]("name")
-            newHandle <- c.get[Option[UserGroup.Handle]]("handle")
-            parents   <- c.get[SetDiff[UserGroup.ARel[UserGroup.Id]]]("parents")
-            children  <- c.get[SetDiff[UserGroup.ARel[UserGroup.Id]]]("children")
-            users     <- c.get[SetDiff[UserGroup.ARel[UserId]]]("users")
-          } yield Data(id, newName, newHandle, parents, children, users)
-        }
-      implicit val encoder: Encoder[Data] =
-        Encoder.instance(value => Json.obj(
-          "id"       -> value.id.asJson,
-          "name"     -> value.name.asJson,
-          "handle"   -> value.handle.asJson,
-          "parents"  -> value.parents.asJson,
-          "children" -> value.children.asJson,
-          "users"    -> value.users.asJson,
-        ))
-      Codec.withJson[UserGroupUpdate, Data](e =>
-        Data(
-          id       = e.id,
-          name     = e.name,
-          handle   = e.handle,
-          parents  = e.rels.parents,
-          children = e.rels.children,
-          users    = e.rels.users,
-        )
-      )(
-        (r, d) => \/-(d.toEvent(r.userId.get)),
-        (e, d) => RowData(d, None, Some(e.userId))
-      )
-    }
-
-  } // Codecs
+  }
 
   // ===================================================================================================================
 
@@ -272,8 +100,6 @@ object GlobalEventSerialisation {
         case e: UserRegister2            => Row(TypeUserRegister2           , codecUserRegister2           .write(e))
         case e: UserPasswordResetRequest => Row(TypeUserPasswordResetRequest, codecUserPasswordResetRequest.write(e))
         case e: UserPasswordReset        => Row(TypeUserPasswordReset       , codecUserPasswordReset       .write(e))
-        case e: UserGroupCreate          => Row(TypeUserGroupCreate         , codecUserGroupCreate         .write(e))
-        case e: UserGroupUpdate          => Row(TypeUserGroupUpdate         , codecUserGroupUpdate         .write(e))
       }
     }
 
@@ -286,8 +112,6 @@ object GlobalEventSerialisation {
           case TypeUserRegister2            => codecUserRegister2
           case TypeUserPasswordResetRequest => codecUserPasswordResetRequest
           case TypeUserPasswordReset        => codecUserPasswordReset
-          case TypeUserGroupCreate          => codecUserGroupCreate
-          case TypeUserGroupUpdate          => codecUserGroupUpdate
         }
       codec.read(row.data)
     }

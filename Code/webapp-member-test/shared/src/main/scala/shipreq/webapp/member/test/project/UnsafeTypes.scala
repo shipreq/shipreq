@@ -10,7 +10,6 @@ import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.project.text.{Grammar, Text}
-import shipreq.webapp.member.social.UserGroup
 
 final case class MakeEmpty[+A](empty: A) extends AnyVal
 
@@ -56,9 +55,6 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
   implicit def autoReqCodeNode(s: String) = ReqCode.Node(s)
   implicit def autoColour     (s: String) = Colour(s).get
 
-  implicit def autoUserGroupName(s: String) = UserGroup.Name(s)
-  implicit def autoUserGroupHandle(s: String) = UserGroup.Handle(s)
-
   implicit def autoReqCode(s: String): ReqCode.Value = {
     val v = Grammar.reqCode.nodeSeqFormat.split(s).map(ReqCode.Node.applyFn).toVector
     NonEmptyVector(v.head, v.tail)
@@ -91,7 +87,6 @@ trait UnsafeTypesMedPriority extends UnsafeTypesLowPriority {
   implicit def autoApplicableTagId  (i: Int) = ApplicableTagId(i)
   implicit def autoDeletionReasonId (i: Int) = DeletionReasonId(i)
   implicit def autoManualIssueId    (i: Int) = ManualIssueId(i)
-  implicit def autoUserGroupId      (i: Int) = UserGroup.Id(i)
 
   implicit def autoReqCodeGroupIdO   (i: Int): Option[ReqCodeGroupId]             = Some(i)
   implicit def autoApReqCodeIdO      (i: Int): Option[ApReqCodeId]                = Some(i)

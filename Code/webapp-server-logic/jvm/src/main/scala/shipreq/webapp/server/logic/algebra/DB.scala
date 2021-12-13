@@ -1,14 +1,12 @@
 package shipreq.webapp.server.logic.algebra
 
-import cats.{Monad, ~>}
+import cats.~>
 import java.sql.Connection
 import java.time.Instant
-import shipreq.base.util.SetDiff
 import shipreq.webapp.base.data._
-import shipreq.webapp.member.global._
+import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}
-import shipreq.webapp.member.social._
 import shipreq.webapp.server.logic.data._
 
 /**
@@ -68,8 +66,6 @@ object DB {
 
   trait Base[F[_]] {
 
-    protected def F: Monad[F]
-
     /** Note: This is translated immediately out of F to explicitly clarify the fact that it cannot be composed with
       * other Fs to form a transaction. This is its own isolated transaction; to attempt otherwise would result in a
       * "Cannot change transaction isolation level in the middle of a transaction" error from PostgreSQL.
@@ -82,11 +78,6 @@ object DB {
       withTransactionLevel(runDB, Connection.TRANSACTION_SERIALIZABLE)(f)
 
     def logGlobalEvent(e: GlobalEvent): F[Unit]
-
-    def logGlobalEventIf(cond: Boolean)(e: => GlobalEvent): F[Unit]
-
-    final def logGlobalEventOnRight[A](e: Any \/ A)(f: A => GlobalEvent): F[Unit] =
-      logGlobalEventIf(e.isRight)(f(e.asInstanceOf[\/-[A]].value))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -95,7 +86,7 @@ object DB {
     def getUserAndPasswordByEmail(email: EmailAddr): F[Option[(User, PasswordAndSalt)]]
     def getUserAndPasswordByUsername(username: Username): F[Option[(User, PasswordAndSalt)]]
     def logLoginSuccess(id: UserId, ip: Option[IP]): F[Unit]
-    def getProjectAccess(uid: UserId, pid: ProjectId): F[Option[ProjectPerm]]
+    def getProjectOwner(id: ProjectId): F[Option[UserId]]
 
     final def getUserAndPassword(usernameOrEmail: String): F[Option[(User, PasswordAndSalt)]] =
       if (EmailAddr.isEmailAddr(usernameOrEmail))
@@ -113,7 +104,7 @@ object DB {
         override def getUserAndPasswordByEmail(e: EmailAddr)     = t(f.getUserAndPasswordByEmail(e))
         override def getUserAndPasswordByUsername(u: Username)   = t(f.getUserAndPasswordByUsername(u))
         override def logLoginSuccess(id: UserId, ip: Option[IP]) = t(f.logLoginSuccess(id, ip))
-        override def getProjectAccess(a: UserId, b: ProjectId)   = t(f.getProjectAccess(a, b))
+        override def getProjectOwner(id: ProjectId)              = t(f.getProjectOwner(id))
       }
   }
 
@@ -218,8 +209,6 @@ object DB {
          with ForUserRegistration[F]
          with ForPasswordReset[F]
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
   trait ForHomeSpa[F[_]]
       extends Base[F]
         with GetProjectMetaData[F] {
@@ -230,33 +219,7 @@ object DB {
                       encKey    : ProjectEncryptionKey): F[ProjectId]
 
     def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
-
-    def getUserGroupUniverseForUser(id: UserId): F[UserGroup.Universe[UserId, Username, UserGroup.Id, UserGroup[UserGroup.Id]]]
-
-    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
-    final def getUserIdsByUsername(usernames: Set[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]] =
-      if (usernames.isEmpty)
-        F.pure(\/-(Map.empty))
-      else
-        getUserIdsByUsernameNE(NonEmptySet force usernames)
-
-    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
-    def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]]
-
-    def createUserGroup(name  : UserGroup.Name,
-                        handle: UserGroup.Handle,
-                        rels  : UserGroup.ARels[Set, UserGroup.Id, UserId],
-                       ): F[UserGroup.SaveError[UserGroup.Id] \/ UserGroup.Id]
-
-    def updateUserGroup(userId: UserId,
-                        id    : UserGroup.Id,
-                        name  : Option[UserGroup.Name],
-                        handle: Option[UserGroup.Handle],
-                        rels  : UserGroup.ARels[SetDiff, UserGroup.Id, UserId],
-                       ): F[UserGroup.SaveError[UserGroup.Id] \/ Unit]
   }
-
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait ForProjectSpa[F[_]]
       extends Base[F]

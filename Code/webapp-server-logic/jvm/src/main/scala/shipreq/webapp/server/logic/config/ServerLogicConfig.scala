@@ -11,7 +11,7 @@ import shipreq.base.util.FxModule._
 import shipreq.base.util._
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.server.logic.dispatch.DispatchLogic
-import shipreq.webapp.server.logic.logic.ProjectSpaLogic
+import shipreq.webapp.server.logic.impl.ProjectSpaLogic
 
 @Lenses
 final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,

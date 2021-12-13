@@ -1,4 +1,4 @@
-package shipreq.webapp.server.logic.laws
+package shipreq.webapp.server.redis
 
 import cats.{Eq, Monad, Semigroup}
 import io.circe._

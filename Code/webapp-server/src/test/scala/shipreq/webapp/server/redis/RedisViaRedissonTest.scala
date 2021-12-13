@@ -3,8 +3,7 @@ package shipreq.webapp.server.redis
 import java.time._
 import shipreq.base.util.FxModule._
 import shipreq.webapp.base.data.ProjectId
-import shipreq.webapp.server.logic.inmem.InMemoryRedis
-import shipreq.webapp.server.logic.laws.RedisLawTester
+import shipreq.webapp.server.logic.algebra.Redis
 import shipreq.webapp.server.test.PrepareEnv
 import utest._
 
@@ -23,7 +22,7 @@ object RedisViaRedissonTest extends TestSuite {
       val client = PrepareEnv.redissonClient
       val schema = RedisSchema(s"test:${Instant.now()}:")
       val redis  = new RedisViaRedisson(client, schema)
-      val inmem  = new InMemoryRedis[Fx]
+      val inmem  = new Redis.InMemory[Fx]
 
       val evictSS = Fx {
         inmem.unsafeEvictSnapshot(id)

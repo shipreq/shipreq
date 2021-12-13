@@ -1,4 +1,4 @@
-package shipreq.webapp.server.logic.logic
+package shipreq.webapp.server.logic.impl
 
 import cats.{Eq, Eval}
 import japgolly.microlibs.cats_ext.CatsMacros
@@ -20,7 +20,7 @@ import shipreq.webapp.server.logic.algebra.Redis
 import shipreq.webapp.server.logic.algebra.Redis.ProjectSnapshot
 import shipreq.webapp.server.logic.algebra.Security.{SessionId, SessionToken}
 import shipreq.webapp.server.logic.dispatch.Cookie
-import shipreq.webapp.server.logic.logic.ProjectSpaLogic.{WebSocketState => _, _}
+import shipreq.webapp.server.logic.impl.ProjectSpaLogic.{WebSocketState => _, _}
 import shipreq.webapp.server.logic.test.MockInterpreters
 import shipreq.webapp.server.logic.util.Obfuscators
 import utest._
@@ -250,7 +250,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       "noSession"        - test(None, p1.id)(-\/(NoSession))
       "anonymousSession" - test(SessionToken.anonymous(), p1.id)(-\/(AnonymousSession))
       "invalidProjectId" - test(user2.token, Obfuscated("!"))(-\/(InvalidProjectId))
-      "projectNotFound"  - test(user2.token, ProjectId(23432))(-\/(AccessDenied))
+      "projectNotFound"  - test(user2.token, ProjectId(23432))(-\/(ProjectNotFound))
       "accessDenied"     - test(user3.token, p1.id)(-\/(AccessDenied))
       "ok"               - test(user2.token, p1.id)(\/-((p1.static.copy(sessionId = user2.token.sessionId, expiresAt = security.expiry()), emptyState)))
     }
