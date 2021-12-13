@@ -109,20 +109,21 @@ object BaseUtilGen {
     level(maxDepth)
   }
 
-  def genNonEmptySetDiff[A: UnivEq](g: Gen[A])(implicit ss: SizeSpec): Gen[SetDiff.NE[A]] = {
+  def genSetDiff[A: UnivEq](g: Gen[A])(implicit ss: SizeSpec): Gen[SetDiff[A]] = {
     val set = g.set(ss)
-    val attempt =
-      for {
-        a <- set
-        b <- set
-      } yield SetDiff(a, b &~ a)
-    attempt.flatMap(d =>
+    for {
+      a <- set
+      b <- set
+    } yield SetDiff(a, b &~ a)
+  }
+
+  def genNonEmptySetDiff[A: UnivEq](g: Gen[A])(implicit ss: SizeSpec): Gen[SetDiff.NE[A]] =
+    genSetDiff(g).flatMap(d =>
       NonEmpty(d) match {
         case Some(ne) => Gen pure ne
         case None     => g.map(a => NonEmpty.force(SetDiff(Set.empty[A], Set(a))))
       }
     )
-  }
 
   private def genDigraphUniMap[A](ga: Gen[A])(implicit ss: SizeSpec) =
     ga.set1(ss).mapBy(ga)(ss)

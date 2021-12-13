@@ -6,7 +6,7 @@ import cats.implicits._
 import doobie._
 import doobie.free.{connection => C}
 import doobie.implicits._
-import java.sql.SQLException
+import java.sql.{Connection, SQLException}
 import java.time.{Duration, Instant}
 
 object DoobieHelpers {
@@ -14,8 +14,28 @@ object DoobieHelpers {
   val ConnectionIoUnit: ConnectionIO[Unit] =
     ().pure[ConnectionIO]
 
+  def connectectIoDelay[A](a: => A): ConnectionIO[A] =
+    Free.defer(Free.pure(a))
+
   private val now: ConnectionIO[Instant] =
-    Free.defer(Free.pure(Instant.now()))
+    connectectIoDelay(Instant.now())
+
+  private[this] val assertionsEnabled = {
+    var a = false
+    assert({ a = true; true })
+    a
+  }
+
+  def assertTransactionLevel(expect: Int): ConnectionIO[Unit] =
+    if (assertionsEnabled)
+      C.getTransactionIsolation.map { actual =>
+        assert(actual ==* expect, s"Expected transation isolation level of $expect, but found $actual")
+      }
+    else
+      ConnectionIoUnit
+
+  val assertTransactionLevelSerializable: ConnectionIO[Unit] =
+    assertTransactionLevel(Connection.TRANSACTION_SERIALIZABLE)
 
   implicit class ConnectionIOExt[A](private val self: ConnectionIO[A]) extends AnyVal {
 
@@ -53,6 +73,20 @@ object DoobieHelpers {
         } yield result
       inner.inTransaction(true)
     }
+
+    def inSafeTransactionFlatMap[B](f: SQLException \/ A => ConnectionIO[B])(rollback: B => Boolean): ConnectionIO[B] = {
+      val inner: ConnectionIO[B] =
+        for {
+          sp     <- C.setSavepoint
+          result <- self.attemptSql
+          b      <- f(result)
+          _      <- C.rollback(sp).whenA(rollback(b))
+        } yield b
+      inner.inTransaction(true)
+    }
+
+    def inSafeTransactionRollbackOnLeft[B, C](f: SQLException \/ A => ConnectionIO[B \/ C]): ConnectionIO[B \/ C] =
+      inSafeTransactionFlatMap(f)(_.isLeft)
 
     /** @param level See java.sql.Connection */
     def withTransactionLevel(level: Int): ConnectionIO[A] =

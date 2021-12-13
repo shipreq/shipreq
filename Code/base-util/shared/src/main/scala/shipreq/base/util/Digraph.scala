@@ -21,6 +21,18 @@ object Digraph {
     */
   final case class BiDir[A: UnivEq](forwards: UniDir[A]) {
 
+    override def toString =
+      forwards.iterator
+        .map { case (k, vs) => s"$k -> {${vs.iterator.map(_.toString).toArray.sortInPlace().mkString(", ")}}" }
+        .toArray.sortInPlace()
+        .mkString("[", ", ", "]")
+
+    def map[B: UnivEq](f: A => B): BiDir[B] =
+      BiDir(new Multimap(forwards.iterator.map { case (k, vs) => (f(k), vs.map(f)) }.toMap ))
+
+    lazy val members: Set[A] =
+      forwards.iterator.flatMap { case (a, as) => (as + a).iterator }.toSet
+
     lazy val backwards: UniDir[A] =
       forwards.reverse
 
@@ -31,16 +43,89 @@ object Digraph {
       }
 
     def transitiveClosure(dir   : Direction,
-                          keys  : IterableOnce[A],
+                          keys  : IterableOnce[A] = members,
                           filter: A => TransitiveClosure.Filter = TransitiveClosure.Filter.followAll)
                          (implicit ct: ClassTag[A]): TransitiveClosure[A] =
       TransitiveClosure.auto(keys)(apply(dir).apply, filter)
+
+    /** Reflexive. Tolerates cycles. */
+    def reachableFrom(a: A): Set[A] =
+      Util.mergeSets(reachableFrom(a, Forwards), reachableFrom(a, Backwards))
+
+    /** Reflexive. Tolerates cycles. */
+    def reachableFrom(a: A, dir: Direction): Set[A] = {
+      // can't use transitiveClosure in case of cycles
+      val graph = apply(dir)
+      var results = Set.empty[A]
+      def go(a: A): Unit = {
+        results += a
+        for (x <- graph(a))
+          if (!results.contains(x))
+            go(x)
+      }
+      go(a)
+      results
+    }
 
     lazy val stronglyConnectedComponents: Set[NonEmptySet[A]] =
       Digraph.stronglyConnectedComponents(this)
 
     def modify[B: UnivEq](f: UniDir[A] => UniDir[B]): BiDir[B] =
       BiDir(f(forwards))
+
+    def asSubsetOf(f: BiDir[A]): BiDir[A] =
+      BiDir(forwards.asSubsetOf(f.forwards))
+
+    /** reflective */
+    def deepTree(dir: Direction, from: A): Set[A] =
+      deepTree(dir, from :: Nil)
+
+    /** reflective */
+    def deepTree(dir: Direction, from: List[A]): Set[A] = {
+      val graph = this(dir)
+      @tailrec
+      def go(queue: List[A], results: Set[A]): Set[A] =
+        queue match {
+          case a :: queue2 =>
+            if (results.contains(a))
+              go(queue2, results)
+            else {
+              val queue3 = graph(a).foldLeft(queue2)(_.::(_))
+              go(queue3, results + a)
+            }
+          case Nil =>
+            results
+        }
+      go(from, Set.empty)
+    }
+
+    /** reflective */
+    def terminals(dir: Direction, from: A): Set[A] =
+      terminals(dir, from :: Nil)
+
+    /** reflective */
+    def terminals(dir: Direction, from: List[A]): Set[A] = {
+      val graph = this(dir)
+      @tailrec
+      def go(queue: List[A], seen: Set[A], results: Set[A]): Set[A] =
+        queue match {
+          case a :: queue2 =>
+            if (seen.contains(a))
+              go(queue2, seen, results)
+            else {
+              val children = graph(a)
+              if (children.isEmpty)
+                go(queue2, seen + a, results + a)
+              else {
+                val queue3 = children.foldLeft(queue2)(_.::(_))
+                go(queue3, seen + a, results)
+              }
+            }
+          case Nil =>
+            results
+        }
+      go(from, Set.empty, Set.empty)
+    }
   }
 
   // ===================================================================================================================
@@ -222,6 +307,9 @@ object Digraph {
   // Acyclicicity
 
   type CycleDetector[A] = CycleDetectorN[Map[A, Set[A]], A]
+
+  def cycleDetector[A: UnivEq]: CycleDetector[A] =
+    cycleDetector[A, A](identity)
 
   def cycleDetector[A: UnivEq, I: UnivEq](id: A => I): CycleDetector[A] =
     CycleDetectorN.Directed.multimap[Set, A, I](id, UnivEq.emptySet)

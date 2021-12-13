@@ -3,7 +3,7 @@ package shipreq.webapp.server.db
 import cats.free.Free
 import cats.instances.int._
 import cats.instances.vector._
-import cats.~>
+import cats.{Monad, ~>}
 import doobie._
 import doobie.implicits._
 import doobie.postgres.circe.jsonb.implicits._
@@ -62,6 +62,8 @@ object DbInterpreter {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait Base extends DB.Base[ConnectionIO] {
 
+    override protected val F = Monad[ConnectionIO]
+
     override final def withTransactionLevel[F[_], A](runDB: ConnectionIO ~> F, level: Int)(f: ConnectionIO[A]): F[A] =
       runDB(f.withTransactionLevel(level))
 
@@ -70,6 +72,9 @@ object DbInterpreter {
 
     override def logGlobalEvent(e: GlobalEvent): ConnectionIO[Unit] =
       logGlobalEventSql.toUpdate0(GlobalEventSerialisation.encode(e)).execute
+
+    override def logGlobalEventIf(cond: Boolean)(e: => GlobalEvent): ConnectionIO[Unit] =
+      if (cond) logGlobalEvent(e) else ConnectionIoUnit
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

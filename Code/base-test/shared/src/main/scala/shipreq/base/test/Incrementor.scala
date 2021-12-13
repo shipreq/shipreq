@@ -7,8 +7,13 @@ object Incrementor {
 
   object int {
     def apply(prev: Int): () => Int = {
-      var i = new AtomicInteger(prev)
+      val i = new AtomicInteger(prev)
       () => i.incrementAndGet()
+    }
+
+    def apply[A](prev: Int, f: Int => A): () => A = {
+      val i = new AtomicInteger(prev)
+      () => f(i.incrementAndGet())
     }
 
     def gen(prev: Int): Gen[Int] = {
@@ -19,8 +24,13 @@ object Incrementor {
 
   object long {
     def apply(prev: Long): () => Long = {
-      var i = new AtomicLong(prev)
+      val i = new AtomicLong(prev)
       () => i.incrementAndGet()
+    }
+
+    def apply[A](prev: Long, f: Long => A): () => A = {
+      val i = new AtomicLong(prev)
+      () => f(i.incrementAndGet())
     }
 
     def gen(prev: Long): Gen[Long] = {

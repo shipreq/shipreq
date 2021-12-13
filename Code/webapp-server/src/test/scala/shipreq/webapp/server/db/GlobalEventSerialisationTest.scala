@@ -1,7 +1,9 @@
 package shipreq.webapp.server.db
 
-import io.circe.Json
+import io.circe._
+import nyaya.gen._
 import shipreq.base.test.BaseTestUtil._
+import shipreq.base.test.JsonTestUtil
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.global.GlobalEvent
 import sourcecode.Line
@@ -17,10 +19,43 @@ object GlobalEventSerialisationTest extends TestSuite {
   protected implicit def univEqRow      : UnivEq[Row      ] = UnivEq.derive
   protected implicit def univEqReadError: UnivEq[ReadError] = UnivEq.force
 
+  private implicit val decoderUserId: Decoder[UserId] =
+    Decoder[Long].map(UserId.apply)
+
+  private implicit val encoderUserId: Encoder[UserId] =
+    Encoder[Long].contramap(_.value)
+
+  private implicit val decoderIP: Decoder[IP] =
+    Decoder[String].map(IP.apply)
+
+  private implicit val encoderIP: Encoder[IP] =
+    Encoder[String].contramap(_.value)
+
+  private implicit val decoderRowData: Decoder[RowData] =
+    Decoder.forProduct3("data", "ip", "userId")(RowData.apply)
+
+  private implicit val encoderRowData: Encoder[RowData] =
+    Encoder.forProduct3("data", "ip", "userId")(a => (a.data, a.ip, a.userId))
+
+  private implicit val decoderRow: Decoder[Row] =
+    Decoder.forProduct2("type", "data")(Row.apply)
+
+  private implicit val encoderRow: Encoder[Row] =
+    Encoder.forProduct2("type", "data")(a => (a.`type`, a.data))
+
+  private implicit val decoderGlobalEvent: Decoder[GlobalEvent] =
+    decoderRow.map(GlobalEventSerialisation.decode(_).getOrThrow())
+
+  private implicit val encoderGlobalEvent: Encoder[GlobalEvent] =
+    encoderRow.contramap(GlobalEventSerialisation.encode)
+
   private def assertCodec(event: GlobalEvent, row: Row)(implicit l: Line): Unit = {
     assertEq(GlobalEventSerialisation.encode(event), row)
     assertEq(GlobalEventSerialisation.decode(row), \/-(event))
   }
+
+  protected def propTestRoundTrip(gen: Gen[GlobalEvent])(implicit l: Line): Unit =
+    JsonTestUtil.propTestRoundTrip(gen)
 
 //  private implicit def autoSome[A](a: A): Option[A] =
 //    Some(a)

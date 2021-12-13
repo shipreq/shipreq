@@ -1,10 +1,10 @@
 package shipreq.webapp.server.logic.algebra
 
-import cats.~>
+import cats.{Monad, ~>}
 import java.sql.Connection
 import java.time.Instant
 import shipreq.webapp.base.data._
-import shipreq.webapp.member.global.GlobalEvent
+import shipreq.webapp.member.global._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.server.logic.data._
@@ -66,6 +66,8 @@ object DB {
 
   trait Base[F[_]] {
 
+    protected def F: Monad[F]
+
     /** Note: This is translated immediately out of F to explicitly clarify the fact that it cannot be composed with
       * other Fs to form a transaction. This is its own isolated transaction; to attempt otherwise would result in a
       * "Cannot change transaction isolation level in the middle of a transaction" error from PostgreSQL.
@@ -78,6 +80,11 @@ object DB {
       withTransactionLevel(runDB, Connection.TRANSACTION_SERIALIZABLE)(f)
 
     def logGlobalEvent(e: GlobalEvent): F[Unit]
+
+    def logGlobalEventIf(cond: Boolean)(e: => GlobalEvent): F[Unit]
+
+    final def logGlobalEventOnRight[A](e: Any \/ A)(f: A => GlobalEvent): F[Unit] =
+      logGlobalEventIf(e.isRight)(f(e.asInstanceOf[\/-[A]].value))
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -209,6 +216,8 @@ object DB {
          with ForUserRegistration[F]
          with ForPasswordReset[F]
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   trait ForHomeSpa[F[_]]
       extends Base[F]
         with GetProjectMetaData[F] {
@@ -220,6 +229,8 @@ object DB {
 
     def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
   }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   trait ForProjectSpa[F[_]]
       extends Base[F]

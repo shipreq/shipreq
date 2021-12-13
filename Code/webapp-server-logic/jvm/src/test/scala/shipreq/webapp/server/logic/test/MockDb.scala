@@ -1,12 +1,12 @@
 package shipreq.webapp.server.logic.test
 
 import cats.syntax.all._
-import cats.{Eval, ~>}
+import cats.{Eval, Monad, ~>}
 import java.time.Instant
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.global.GlobalEvent
-import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.data.{Live => _, _}
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.server.logic.algebra._
@@ -61,9 +61,16 @@ object MockDb {
     def projectLoad: VerifiedEvent.Seq =
       events
   }
+
+  def withLiveClock(): MockDb =
+    new MockDb(Eval.always(Instant.now()))
 }
 
+// =====================================================================================================================
+
 final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecurity[Eval] with DB.ForOps[Eval] {
+
+  override protected val F = Monad[Eval]
 
   override val now: Eval[Instant] =
     _now
@@ -130,6 +137,25 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
   }
 
   var users = List.empty[MockDb.UserEntry]
+
+  def newUser(): User = {
+    nextToken()
+    val id = UserId(prevTokenId)
+    val x = "u" + id.value
+    val e = MockDb.UserEntry(
+      id        = id,
+      username  = Username(x),
+      emailAddr = EmailAddr(x + "@inmem.com"),
+      ps        = PasswordAndSalt(PasswordHash(x), Salt(x)),
+      encKey    = UserEncryptionKey(BinaryData.fromStringBytes(x + "-user-key")),
+      createdAt = now.value,
+    )
+    users ::= e
+    User(id, e.username)
+  }
+
+  def newUserId(): UserId =
+    newUser().id
 
   def getUser(u: Username \/ EmailAddr): Option[MockDb.UserEntry] =
     users.find(e => u.fold(_ ==* e.username, _ ==* e.emailAddr))
@@ -300,6 +326,11 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
   var globalEvents = Vector.empty[GlobalEvent]
   override def logGlobalEvent(e: GlobalEvent) = Eval.always[Unit] {
     globalEvents :+= e
+  }
+
+  override def logGlobalEventIf(cond: Boolean)(e: => GlobalEvent) = Eval.always[Unit] {
+    if (cond)
+      globalEvents :+= e
   }
 
   def assertNoDbChange[A](a: => A): A =

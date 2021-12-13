@@ -259,6 +259,7 @@ object TestDb extends TestDbHelpers with HasLogger {
     singleConnXA.use { xa =>
       Fx {
         val i = new ImperativeXA(xa, db, () => tables)
+        i ! C.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
         i ! C.setAutoCommit(false)
         val s = i ! C.setSavepoint
         try
