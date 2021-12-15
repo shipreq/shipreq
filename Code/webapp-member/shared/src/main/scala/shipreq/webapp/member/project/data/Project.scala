@@ -62,6 +62,7 @@ object Project {
       content      = ProjectContent.empty,
       manualIssues = ManualIssues.empty,
       savedViews   = savedview.SavedViews.empty,
+      access       = ProjectAccess.empty,
       history      = ProjectEvents.empty,
       idCeilings   = IdCeilings.zero,
     )
@@ -107,6 +108,7 @@ final case class Project(name        : Project.Name,
                          content     : ProjectContent,
                          manualIssues: ManualIssues,
                          savedViews  : savedview.SavedViews.Optional,
+                         access      : ProjectAccess,
                          history     : ProjectEvents,
                          idCeilings  : IdCeilings) extends EventOrd.CmpOps {
 

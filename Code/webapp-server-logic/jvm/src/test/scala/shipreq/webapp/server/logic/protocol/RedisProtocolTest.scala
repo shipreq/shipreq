@@ -14,6 +14,7 @@ import shipreq.webapp.member.test.project.UnsafeTypes._
 import shipreq.webapp.member.test.project.{RandomData => R}
 import shipreq.webapp.server.logic.algebra.Redis
 import utest._
+import sourcecode.Line
 
 object RedisProtocolTest extends TestSuite {
 
@@ -29,7 +30,7 @@ object RedisProtocolTest extends TestSuite {
 //    }
 
     "saved" - {
-      def run(ver: Int, assertSnapshot: Boolean = true) = {
+      def run(ver: Int, assertSnapshot: Boolean = true)(implicit l: Line) = {
         val rows = RedisProtocolTestData.load(ver)
 
         var prev: Option[Redis.ProjectSnapshot] = None
@@ -86,7 +87,7 @@ object RedisProtocolTest extends TestSuite {
 
       "v2.0" - {
         "empty" - {
-          val bin    = BinaryData.fromHex("5C303D710200000000000523494E4547000000000000000000000000010100000000000000000000DEC22AB7")
+          val bin    = BinaryData.fromHex("5C303D710200000000000523494E454700000000000000000000000001010000000000000000000000DEC22AB7")
           val expect = ProjectSnapshot(Project.empty, 0)
           assertDecodeOk(codec)(bin, expect)
         }

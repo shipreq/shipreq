@@ -1674,6 +1674,9 @@ object RandomData {
       fields         <- fieldSet(reqTypeIdSet, tags.keySet)
     } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
 
+  lazy val projectAccess: Gen[ProjectAccess] =
+    username.mapTo(projectPerm)(0 to 4).map(ProjectAccess.apply)
+
   def genProjectNoHistory(cfg            : ProjectConfig,
                           reqsWithoutText: Requirements,
                           reqCodes1      : ReqCodes,
@@ -1700,6 +1703,7 @@ object RandomData {
       reqCodes2  <- reqCode.updateGroupText(rcgTitleText)(reqCodes1.trie)
       dr         <- deletionReasons(reqIdG, delReasonText)
       mis        <- genManualIssues(manualIssueText)
+      access     <- projectAccess
       p1         = Project(
                      name,
                      cfg,
@@ -1712,6 +1716,7 @@ object RandomData {
                        dr),
                      mis,
                      savedview.SavedViews.empty,
+                     access,
                      ProjectEvents.empty,
                      IdCeilings.zero)
       savedViews <- savedViews.savedViewsForProject(p1)
