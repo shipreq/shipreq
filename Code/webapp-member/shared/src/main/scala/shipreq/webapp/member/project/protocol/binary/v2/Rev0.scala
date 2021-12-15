@@ -1,7 +1,7 @@
 package shipreq.webapp.member.project.protocol.binary.v2
 
 import java.time.Instant
-import shipreq.webapp.base.data.{ProjectId, ProjectPerm, Username}
+import shipreq.webapp.base.data._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
 
@@ -15,7 +15,7 @@ object Rev0 {
   import shipreq.webapp.member.project.protocol.binary.v1.Rev7.SavedViewPicklers._
 
   implicit lazy val picklerProjectAccess: Pickler[ProjectAccess] =
-    pickleMap[Username, ProjectPerm].xmap(ProjectAccess.apply)(_.value)
+    pickleMap[UserId.Public, ProjectPerm].xmap(ProjectAccess.apply)(_.value)
 
   implicit lazy val picklerProjectEvents: Pickler[ProjectEvents] =
     transformPickler(ProjectEvents.apply)(_.events)

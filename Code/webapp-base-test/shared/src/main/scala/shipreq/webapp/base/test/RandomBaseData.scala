@@ -127,7 +127,7 @@ object RandomBaseData {
   def projectIdPublic: Gen[ProjectId.Public] =
     obfuscated
 
-  def userIdPublic: Gen[UserId.Public] =
+  lazy val userIdPublic: Gen[UserId.Public] =
     obfuscated
 
 }

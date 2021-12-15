@@ -11,6 +11,7 @@ import shipreq.webapp.member.test.project.RandomData
 import shipreq.webapp.server.logic.algebra.DB.{ProjectSpaInitPage, UpdateProjectAccessError}
 import shipreq.webapp.server.logic.data.ProjectEncryptionKey
 import shipreq.webapp.server.logic.test.WebappServerLogicTestUtil._
+import shipreq.webapp.server.logic.util.Obfuscators
 import sourcecode.Line
 import utest._
 
@@ -56,7 +57,7 @@ abstract class DbLaws extends TestSuite {
       db.getUserIdsByUsername(Set(u)).getOrThrow()(u)
 
     def getProjectAccessByIds(pid: ProjectId): Map[UserId, ProjectPerm] =
-      db.getProjectAccess(pid).value.mapKeysNow(needUserId)
+      db.getProjectAccess(pid).value.mapKeysNow(Obfuscators.userId.deobfuscateOrThrow)
   }
 
   private implicit def autoUserId(u: User): UserId = u.id

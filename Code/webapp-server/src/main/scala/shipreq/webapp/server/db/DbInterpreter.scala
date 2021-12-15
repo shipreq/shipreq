@@ -9,6 +9,7 @@ import doobie.implicits._
 import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
 import io.circe.Json
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
 import nyaya.gen.Gen
 import org.postgresql.util.PSQLException
@@ -64,13 +65,8 @@ object DbInterpreter {
     Update[(UserId, PersonName, Boolean, UserEncryptionKey)]("INSERT INTO usrd VALUES(?,?,?,?)")
 
   // Exposed for tests
-  val getProjectAccessQuery = Query[ProjectId, (Username, ProjectPerm)](
-      """
-        |SELECT username, perm
-        |  FROM project_access a, usr u
-        | WHERE a.usr_id=u.id
-        |   AND a.project_id=?
-      """.stripMargin.sql)
+  val getProjectAccessQuery = Query[ProjectId, (UserId, ProjectPerm)](
+    "SELECT usr_id, perm FROM project_access WHERE project_id=?")
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait Base extends DB.Base[ConnectionIO] {
@@ -521,7 +517,7 @@ object DbInterpreter {
           access <- getProjectAccessQuery.toMap(id)
         } yield
           if (access.values.exists(_ ==* ProjectPerm.Admin))
-            \/-(ProjectAccess(access))
+            \/-(ProjectAccess(access.mapKeysNow(Obfuscators.userId.obfuscate)))
           else
             -\/(DB.UpdateProjectAccessError.CantRemoveLastAdmin)
 

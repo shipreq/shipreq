@@ -1675,7 +1675,7 @@ object RandomData {
     } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
 
   lazy val projectAccess: Gen[ProjectAccess] =
-    username.mapTo(projectPerm)(0 to 4).map(ProjectAccess.apply)
+    userIdPublic.mapTo(projectPerm)(0 to 4).map(ProjectAccess.apply)
 
   def genProjectNoHistory(cfg            : ProjectConfig,
                           reqsWithoutText: Requirements,

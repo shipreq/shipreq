@@ -13,8 +13,8 @@ import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project.UnsafeTypes._
 import shipreq.webapp.member.test.project.{RandomData => R}
 import shipreq.webapp.server.logic.algebra.Redis
-import utest._
 import sourcecode.Line
+import utest._
 
 object RedisProtocolTest extends TestSuite {
 

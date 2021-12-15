@@ -64,3 +64,6 @@ addCommandAlias("dockers",
 // See https://github.com/rtimush/sbt-updates#usage-as-project-plugin
 addCommandAlias("deps",
   ";dependencyUpdates; reload plugins; dependencyUpdates; reload return")
+
+addCommandAlias("wtt",
+  ";webappServerLogicJVM/test ;webappServer/test")

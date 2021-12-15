@@ -415,7 +415,7 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     ProjectAccess(
       projectAccess.iterator
         .filter(_.pid ==* id)
-        .map(e => (needUser(e.uid).username, e.perm))
+        .map(e => (Obfuscators.userId.obfuscate(e.uid), e.perm))
         .toMap
     )
   }
