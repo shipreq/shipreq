@@ -237,7 +237,18 @@ object DB {
          with GetProjectMetaData[F]
          with GetProjectEvents[F]
          with SaveProjectEvent[F] {
+
     def projectSpaInitPage(id: ProjectId, uid: UserId): F[Option[ProjectSpaInitPage]]
+
+    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
+    final def getUserIdsByUsername(usernames: Set[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]] =
+      if (usernames.isEmpty)
+        F.pure(\/-(Map.empty))
+      else
+        getUserIdsByUsernameNE(NonEmptySet force usernames)
+
+    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
+    def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]]
   }
 
   final case class ProjectSpaInitPage(name      : Project.Name,

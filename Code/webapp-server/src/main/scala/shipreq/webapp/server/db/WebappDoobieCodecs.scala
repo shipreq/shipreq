@@ -77,4 +77,7 @@ object WebappDoobieCodecs {
       case ProjectPerm.Collaborator => "collaborator"
     })
 
+  implicit val doobieWriteArrayUsername: Write[Set[Username]] =
+    Write[List[String]].contramap(_.iterator.map(_.value).toList)
+
 }

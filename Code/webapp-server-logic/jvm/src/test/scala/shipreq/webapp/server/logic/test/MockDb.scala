@@ -178,6 +178,17 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     r
   }
 
+  override def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]) = Eval.always[NonEmptySet[Username] \/ Map[Username, UserId]] {
+    var ko = Set.empty[Username]
+    var ok = Map.empty[Username, UserId]
+    for (u <- usernames)
+      this.users.find(_.username ==* u) match {
+        case Some(e) => ok += ((u, e.id))
+        case None    => ko += u
+      }
+    NonEmptySet.option(ko).toLeft(ok)
+  }
+
   override def completeUserRegistration(token     : VerificationToken,
                                         name      : PersonName,
                                         username  : Username,
@@ -366,4 +377,5 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
 
   override val dbSize =
     Eval.now(0L)
+
 }

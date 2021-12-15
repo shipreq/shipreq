@@ -473,6 +473,18 @@ object DbInterpreter {
         o <- projectSpaInitPageQuery.option((pid, uid))
       } yield o.map { case (name, pk, uk) => DB.ProjectSpaInitPage(name, uk, pk) }
 
+    private[db] val getUserIdsByUsernameQuery = Query[Set[Username], (Username, UserId)](
+      "SELECT username,id FROM usr WHERE username = ANY(?::VARCHAR[])")
+
+    override def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]): ConnectionIO[NonEmptySet[Username] \/ Map[Username, UserId]] = {
+      val all = usernames.whole
+      getUserIdsByUsernameQuery.toQuery0(all).to[List].map { tuples =>
+        var notFound = all
+        tuples.foreach(notFound -= _._1)
+        NonEmptySet.option(notFound).toLeft(tuples.toMap)
+      }
+    }
+
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
