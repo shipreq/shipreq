@@ -15,6 +15,7 @@ object SqlTest extends TestSuite {
 
     "base" - {
       "logGlobalEventSql" - TestDb.check(db.logGlobalEventSql)
+      "sqlInsertUsrd"     - TestDb.check(DbInterpreter.sqlInsertUsrd)
     }
 
     "security" - {
@@ -38,7 +39,6 @@ object SqlTest extends TestSuite {
       "createUserPlaceholderSql"             - TestDb.check(db.createUserPlaceholderSql)
       "updateUserRegistrationTokenSql"       - TestDb.check(db.updateUserRegistrationTokenSql)
       "sqlRegisterUser"                      - TestDb.check(db.sqlRegisterUser)
-      "sqlInsertUsrd"                        - TestDb.check(db.sqlInsertUsrd)
       "getPasswordResetStateByEmailSql"      - TestDb.check(db.getPasswordResetStateByEmailSql)
       "getPasswordResetStateByUsernameSql"   - TestDb.check(db.getPasswordResetStateByUsernameSql)
       "createResetPasswordTokenSql"          - TestDb.check(db.createResetPasswordTokenSql)

@@ -15,6 +15,8 @@ import shipreq.webapp.server.interpreter.SecurityInterpreter
 import shipreq.webapp.server.logic.algebra.{Crypto, DB}
 import shipreq.webapp.server.logic.data._
 import shipreq.webapp.server.test.WebappServerTestUtil._
+import shipreq.webapp.base.data.PersonName
+import shipreq.base.util.BinaryData
 
 object DbUtil {
 
@@ -55,10 +57,16 @@ final case class DbUtil(xa: ImperativeXA) {
 
   def newUser(): User = {
     val username = Username(randomStr())
-    val email = randomStr()
+    val email    = randomStr()
+    val name     = PersonName(randomStr())
+    val encKey   = UserEncryptionKey(BinaryData.fromStringBytes(randomStr()))
+
     val id = xa ! Query[(String, String), UserId](
       "INSERT INTO usr(username, email, password, password_salt, password_changed_at, confirmation_sent_at, confirmed_at) VALUES(?,?,0,0,NOW(),NOW(),NOW()) RETURNING id"
-    ).toQuery0((username.value, email)).unique
+    ).unique((username.value, email))
+
+    xa ! DbInterpreter.sqlInsertUsrd.run((id, name, true, encKey))
+
     User(id, username)
   }
 
@@ -66,7 +74,7 @@ final case class DbUtil(xa: ImperativeXA) {
     newUser().id
 
   def getUsername(id: UserId): Username =
-    xa ! Query[UserId, Username]("SELECT username FROM usr WHERE id=?").toQuery0(id).unique
+    xa ! Query[UserId, Username]("SELECT username FROM usr WHERE id=?").unique(id)
 
   def deleteUser(id: Long): Unit = {
     xa ! sql"DELETE FROM global_event WHERE usr_id = $id".update.run

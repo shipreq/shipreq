@@ -59,6 +59,10 @@ object DbInterpreter {
   def logVisitorStats(responseType: ResponseType, uniqueIps: Set[String], requests: Int): ConnectionIO[Unit] =
     logVisitorStatsSql.unique((responseType, uniqueIps.toArray, requests))
 
+  // Exposed for tests
+  val sqlInsertUsrd =
+    Update[(UserId, PersonName, Boolean, UserEncryptionKey)]("INSERT INTO usrd VALUES(?,?,?,?)")
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   trait Base extends DB.Base[ConnectionIO] {
 
@@ -196,9 +200,6 @@ object DbInterpreter {
           WHERE confirmation_token = ?
           RETURNING id""".sql)
 
-    private[db] final val sqlInsertUsrd =
-      Update[(UserId, PersonName, Boolean, UserEncryptionKey)]("INSERT INTO usrd VALUES(?,?,?,?)")
-
     override final def completeUserRegistration(token     : VerificationToken,
                                                 name      : PersonName,
                                                 username  : Username,
@@ -208,7 +209,7 @@ object DbInterpreter {
       import UserRegistrationResult._
       sqlRegisterUser.option((username, ps, token)).attemptSql.flatMap {
         case Right(Some(id)) =>
-          sqlInsertUsrd.toUpdate0((id, name, newsletter, encKey)).run.map(_ => Success(id))
+          sqlInsertUsrd.run((id, name, newsletter, encKey)).map(_ => Success(id))
 
         case Right(None) =>
           Free pure TokenNotFound
@@ -465,13 +466,22 @@ object DbInterpreter {
 
     private[db] val projectSpaInitPageQuery =
       Query[(ProjectId, UserId), (Project.Name, ProjectEncryptionKey, UserEncryptionKey)](
-        "SELECT p.name, p.encryption_key pk, u.encryption_key uk FROM usrd u, project p WHERE p.id=? AND u.usr_id=?")
+        """
+          |SELECT p.name, p.encryption_key pk, u.encryption_key uk
+          |  FROM project_access a, project p, usrd u
+          | WHERE a.project_id=p.id AND a.usr_id=u.usr_id
+          |   AND a.project_id=? AND a.usr_id=?
+        """.stripMargin.sql)
+
+    private[this] val projectSpaInitPageProjectAccessQuery =
+      Query[ProjectId, (Username, ProjectPerm)]("SELECT username, perm from project_access, usr WHERE project_id=? AND usr.id=usr_id")
 
     override def projectSpaInitPage(pid: ProjectId, uid: UserId): ConnectionIO[Option[DB.ProjectSpaInitPage]] =
       for {
-        _ <- logProjectRead.toUpdate0(pid).run
-        o <- projectSpaInitPageQuery.option((pid, uid))
-      } yield o.map { case (name, pk, uk) => DB.ProjectSpaInitPage(name, uk, pk) }
+        _      <- logProjectRead.run(pid)
+        o      <- projectSpaInitPageQuery.option((pid, uid))
+        access <- projectSpaInitPageProjectAccessQuery.toMap(pid)
+      } yield o.map { case (name, pk, uk) => DB.ProjectSpaInitPage(name, access, uk, pk) }
 
     private[db] val getUserIdsByUsernameQuery = Query[Set[Username], (Username, UserId)](
       "SELECT username,id FROM usr WHERE username = ANY(?::VARCHAR[])")

@@ -7,8 +7,9 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.ActiveEvent
 import shipreq.webapp.member.test.project.RandomData
-import shipreq.webapp.server.logic.algebra.DB.UpdateProjectAccessError
+import shipreq.webapp.server.logic.algebra.DB.{ProjectSpaInitPage, UpdateProjectAccessError}
 import shipreq.webapp.server.logic.data.ProjectEncryptionKey
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.webapp.server.logic.test.WebappServerLogicTestUtil._
 import sourcecode.Line
 import utest._
@@ -32,6 +33,7 @@ abstract class DbLaws extends TestSuite {
     def getUserIdsByUsername: Set[Username] => NonEmptySet[Username] \/ Map[Username, UserId]
     def updateProjectAccess: (ProjectId, Set[UserId], Map[UserId, ProjectPerm]) => UpdateProjectAccessError \/ Unit
     def getProjectAccess: ProjectId => Map[UserId, ProjectPerm]
+    def projectSpaInitPage: (ProjectId, UserId) => Option[ProjectSpaInitPage]
   }
 
   // ===================================================================================================================
@@ -49,6 +51,9 @@ abstract class DbLaws extends TestSuite {
       val actual = db.getProjectAccess(pid)
       assertMap(actual, expect)
     }
+
+    def needUserId(u: Username): UserId =
+      db.getUserIdsByUsername(Set(u)).getOrThrow()(u)
   }
 
   private implicit def autoUserId(u: User): UserId = u.id
@@ -90,10 +95,19 @@ abstract class DbLaws extends TestSuite {
     val before = t.db.getProjectAccess(pid)
     val actual = t.db.updateProjectAccess(pid, remove.toSet, add.toMap)
     assertEq(actual, expect)
-    if (expect.isLeft)
-      assertMap(before, t.db.getProjectAccess(pid))
-    else
-      t.assertProjectAccess(pid)(expectedDbState: _*)
+
+    val expectAfter: Map[UserId, ProjectPerm] =
+      if (expect.isLeft) before else expectedDbState.toMap
+
+    assertMap("getProjectAccess", expectAfter, t.db.getProjectAccess(pid))
+
+    for (u <- expectAfter.keys) {
+      val access = t.db
+        .projectSpaInitPage(pid, u)
+        .getOrThrow("projectSpaInitPage is empty").access
+        .mapKeysNow(t.needUserId)
+      assertMap("projectSpaInitPage", access, expectAfter)
+    }
   }
 
   private def addProjectMember(t: Tester, pid: ProjectId, perm: ProjectPerm): UserId = {

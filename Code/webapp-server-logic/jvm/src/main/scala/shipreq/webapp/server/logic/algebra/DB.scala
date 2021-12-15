@@ -258,6 +258,7 @@ object DB {
   }
 
   final case class ProjectSpaInitPage(name      : Project.Name,
+                                      access    : Map[Username, ProjectPerm],
                                       userKey   : UserEncryptionKey,
                                       projectKey: ProjectEncryptionKey)
 

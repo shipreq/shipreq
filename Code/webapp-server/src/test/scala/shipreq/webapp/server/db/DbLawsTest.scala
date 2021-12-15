@@ -28,5 +28,6 @@ object DbLawsTest extends DbLaws {
     override val createProject        = xa ! DB.createProject(_, _, _, _)
     override val updateProjectAccess  = xa ! DB.updateProjectAccess(_, _, _)
     override val getProjectAccess     = xa ! DB.getProjectAccess(_)
+    override val projectSpaInitPage   = xa ! DB.projectSpaInitPage(_, _)
   }
 }
