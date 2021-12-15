@@ -21,7 +21,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
 import shipreq.webapp.base.config._
-import shipreq.webapp.base.data.{ProjectPerm, UserId}
+import shipreq.webapp.base.data.{ProjectId, ProjectPerm, UserId}
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data._
@@ -116,6 +116,7 @@ object RandomData {
   val id  = Gen.chooseInt(1, 1024 * 64)
   val idL = Gen.chooseLong(1, Long.MaxValue)
 
+  lazy val projectId = idL.map(ProjectId.apply)
   lazy val userId = idL.map(UserId.apply)
 
   def revAndIMap[D, I <: TaggedInt](r: Gen[List[D]])

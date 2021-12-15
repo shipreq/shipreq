@@ -6,6 +6,7 @@ import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.JsonTestUtil
 import shipreq.webapp.base.data._
 import shipreq.webapp.member.global.GlobalEvent
+import shipreq.webapp.member.test.project.RandomData
 import sourcecode.Line
 import utest._
 
@@ -18,6 +19,12 @@ object GlobalEventSerialisationTest extends TestSuite {
   protected implicit def univEqRowData  : UnivEq[RowData  ] = UnivEq.derive
   protected implicit def univEqRow      : UnivEq[Row      ] = UnivEq.derive
   protected implicit def univEqReadError: UnivEq[ReadError] = UnivEq.force
+
+  private implicit val decoderProjectId: Decoder[ProjectId] =
+    Decoder[Long].map(ProjectId.apply)
+
+  private implicit val encoderProjectId: Encoder[ProjectId] =
+    Encoder[Long].contramap(_.value)
 
   private implicit val decoderUserId: Decoder[UserId] =
     Decoder[Long].map(UserId.apply)
@@ -32,10 +39,10 @@ object GlobalEventSerialisationTest extends TestSuite {
     Encoder[String].contramap(_.value)
 
   private implicit val decoderRowData: Decoder[RowData] =
-    Decoder.forProduct3("data", "ip", "userId")(RowData.apply)
+    Decoder.forProduct4("data", "ip", "userId", "projectId")(RowData.apply)
 
   private implicit val encoderRowData: Encoder[RowData] =
-    Encoder.forProduct3("data", "ip", "userId")(a => (a.data, a.ip, a.userId))
+    Encoder.forProduct4("data", "ip", "userId", "projectId")(a => (a.data, a.ip, a.userId, a.projectId))
 
   private implicit val decoderRow: Decoder[Row] =
     Decoder.forProduct2("type", "data")(Row.apply)
@@ -87,12 +94,16 @@ object GlobalEventSerialisationTest extends TestSuite {
     } assertCodec(event(i, u), row(i, Some(u)))
 
   override def tests = Tests {
-    "UserRegister1"     - assertCodec_Iu(UserRegister1    , TypeUserRegister1     -> RowData(∅, _, _))
-    "UserRegister2"     - assertCodec_Iu(UserRegister2    , TypeUserRegister2     -> RowData(∅, _, _))
-    "UserPasswordReset" - assertCodec_Iu(UserPasswordReset, TypeUserPasswordReset -> RowData(∅, _, _))
+    "UserRegister1"     - assertCodec_Iu(UserRegister1    , TypeUserRegister1     -> RowData(∅, _, _, None))
+    "UserRegister2"     - assertCodec_Iu(UserRegister2    , TypeUserRegister2     -> RowData(∅, _, _, None))
+    "UserPasswordReset" - assertCodec_Iu(UserPasswordReset, TypeUserPasswordReset -> RowData(∅, _, _, None))
 
     "UserPasswordResetRequest" - assertCodec_IU(
       UserPasswordResetRequest(_, "x", _),
-      TypeUserPasswordResetRequest -> RowData(Json.obj("query" -> Json.fromString("x")), _, _))
+      TypeUserPasswordResetRequest -> RowData(Json.obj("query" -> Json.fromString("x")), _, _, None))
+
+    "ProjectCreate" - propTestRoundTrip(
+      Gen.lift2(RandomData.userId, RandomData.projectId)(ProjectCreate.apply)
+    )
   }
 }
