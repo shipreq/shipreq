@@ -51,10 +51,10 @@ object WebappDoobieCodecs {
     Read.apply2(User.apply)
 
   implicit val doobieReadGlobalEventSerialisationRowData: Read[GlobalEventSerialisation.RowData] =
-    Read.apply4(GlobalEventSerialisation.RowData.apply)
+    Read.apply3(GlobalEventSerialisation.RowData.apply)
 
   implicit val doobieWriteGlobalEventSerialisationRowData: Write[GlobalEventSerialisation.RowData] =
-    Write.apply4(a => (a.data, a.ip, a.userId, a.projectId))
+    Write.apply3(a => (a.data, a.ip, a.userId))
 
   implicit val doobieReadGlobalEventSerialisationRow: Read[GlobalEventSerialisation.Row] =
     Read.apply2(GlobalEventSerialisation.Row)

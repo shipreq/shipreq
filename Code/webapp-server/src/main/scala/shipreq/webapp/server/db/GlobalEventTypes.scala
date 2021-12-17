@@ -11,7 +11,6 @@ object GlobalEventTypes {
   final val TypeUserRegister2            = 1002
   final val TypeUserPasswordResetRequest = 1003
   final val TypeUserPasswordReset        = 1004
-  final val TypeProjectCreate            = 1100
 
   // ===================================================================================================================
 
@@ -20,7 +19,6 @@ object GlobalEventTypes {
     case _: UserRegister2            => TypeUserRegister2
     case _: UserPasswordResetRequest => TypeUserPasswordResetRequest
     case _: UserPasswordReset        => TypeUserPasswordReset
-    case _: ProjectCreate            => TypeProjectCreate
   }
 
   private def dups = Utils.dups(allTypes.iterator).toSet

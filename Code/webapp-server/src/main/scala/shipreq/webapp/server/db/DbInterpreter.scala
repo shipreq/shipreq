@@ -76,7 +76,7 @@ object DbInterpreter {
       runDB(f.withTransactionLevel(level))
 
     private[db] final val logGlobalEventSql =
-      Update[GlobalEventSerialisation.Row]("INSERT INTO global_event(type,data,ip,usr_id,project_id) VALUES(?,?,?,?,?)")
+      Update[GlobalEventSerialisation.Row]("INSERT INTO global_event(type,data,ip,usr_id) VALUES(?,?,?,?)")
 
     override def logGlobalEvent(e: GlobalEvent): ConnectionIO[Unit] =
       logGlobalEventSql.toUpdate0(GlobalEventSerialisation.encode(e)).execute

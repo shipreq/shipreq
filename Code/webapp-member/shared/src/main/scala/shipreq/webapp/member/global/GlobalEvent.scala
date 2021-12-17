@@ -19,8 +19,5 @@ object GlobalEvent {
   final case class UserPasswordReset(ip    : Option[IP],
                                      userId: UserId) extends GlobalEvent
 
-  final case class ProjectCreate(userId   : UserId,
-                                 projectId: ProjectId) extends GlobalEvent
-
   implicit def univEq: UnivEq[GlobalEvent] = UnivEq.derive
 }

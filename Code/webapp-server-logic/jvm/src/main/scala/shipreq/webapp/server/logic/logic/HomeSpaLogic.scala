@@ -4,7 +4,6 @@ import cats.syntax.all._
 import cats.{Monad, ~>}
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.data._
-import shipreq.webapp.member.global.GlobalEvent
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.protocol.ajax.HomeSpaProtocols
@@ -48,7 +47,6 @@ object HomeSpaLogic {
       key <- crypto.generateKey256
       pid <- db.createProject(userId, events, p2, ProjectEncryptionKey(key))
       pmd <- db.getProjectMetaData(pid, userId)
-      _   <- db.logGlobalEvent(GlobalEvent.ProjectCreate(userId, pid))
     } yield pmd.get
   }
 
