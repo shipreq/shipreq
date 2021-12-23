@@ -1,6 +1,6 @@
 package shipreq.webapp.server.logic.algebra
 
-import cats.{Monad, ~>}
+import cats.{Applicative, Monad, ~>}
 import java.sql.Connection
 import java.time.Instant
 import shipreq.webapp.base.data._
@@ -65,7 +65,13 @@ object DB {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  trait Base[F[_]] {
+  type EffectTC[F[_]] = Applicative[F] with Monad[F]
+
+  trait Effect[F[_]] {
+    implicit protected def F: EffectTC[F]
+  }
+
+  trait Base[F[_]] extends Effect[F] {
 
     protected def F: Monad[F]
 
@@ -194,7 +200,7 @@ object DB {
     final case class DecodeFailure(ord: EventOrd, logMsg: String) extends ReadProjectEventError
   }
 
-  trait SaveProjectEvent[F[_]] extends Base[F] {
+  trait SaveProjectEvent[F[_]] extends Effect[F] {
 
     protected def updateProjectAccess(id    : ProjectId,
                                       remove: Set[UserId],
