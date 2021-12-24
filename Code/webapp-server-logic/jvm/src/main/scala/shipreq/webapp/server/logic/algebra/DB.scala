@@ -1,5 +1,6 @@
 package shipreq.webapp.server.logic.algebra
 
+import cats.syntax.all._
 import cats.{Applicative, Monad, ~>}
 import java.sql.Connection
 import java.time.Instant
@@ -69,11 +70,44 @@ object DB {
 
   trait Effect[F[_]] {
     implicit protected def F: EffectTC[F]
+
+    final protected def flatMapRight[E, D >: E, A, B](f: F[E \/ A])(g: A => F[D \/ B]): F[D \/ B] =
+      F.flatMap(f) {
+        case \/-(a) => g(a)
+        case -\/(e) => F.pure(-\/(e))
+      }
+
+    final protected def reduceRight[E, D >: E, A](f: F[E \/ Unit], g: F[D \/ A]): F[D \/ A] =
+      F.flatMap(f) { e => if (e.isLeft) F.pure(e.castLeft()) else g }
+
+    final protected def reduceRight[E, D >: E, A](o: Option[F[E \/ Unit]], g: F[D \/ A]): F[D \/ A] =
+      if (o.isEmpty) g else reduceRight(o.get, g)
+
+    final protected def append[E, D <: E, A](f: F[E \/ A], g: F[D \/ Unit]): F[E \/ A] =
+      F.flatMap(f) { ea =>
+        if (ea.isLeft)
+          F.pure(ea.castLeft())
+        else
+          F.map(g) { du => if (du.isLeft) du.castLeft() else ea }
+      }
+
+    final protected def append[E, D <: E, A](f: F[E \/ A], o: Option[F[D \/ Unit]]): F[E \/ A] =
+      if (o.isEmpty) f else append(f, o.get)
+
+    final protected def throwOnLeft[E, A](f: F[E \/ A]): F[A] =
+      F.map(f) {
+        case \/-(a) => a
+        case -\/(e) => throw new RuntimeException("DB.throwOnLeft: " + e)
+      }
+
+    final protected def throwOnLeft_[E](o: Option[F[E \/ Unit]]): F[Unit] =
+      o match {
+        case None    => F.unit
+        case Some(f) => throwOnLeft(f)
+      }
   }
 
   trait Base[F[_]] extends Effect[F] {
-
-    protected def F: Monad[F]
 
     /** Note: This is translated immediately out of F to explicitly clarify the fact that it cannot be composed with
       * other Fs to form a transaction. This is its own isolated transaction; to attempt otherwise would result in a
@@ -200,28 +234,21 @@ object DB {
     final case class DecodeFailure(ord: EventOrd, logMsg: String) extends ReadProjectEventError
   }
 
-  trait SaveProjectEvent[F[_]] extends Effect[F] {
-
+  trait OnSaveProjectEvent[F[_]] extends Effect[F] {
     protected def updateProjectAccess(id    : ProjectId,
                                       remove: Set[UserId],
                                       add   : Map[UserId, ProjectPerm]): F[SaveProjectEventError.OnAccess \/ Unit]
 
-    protected def _saveProjectEvent(id     : ProjectId,
-                                    ord    : EventOrd,
-                                    event  : ActiveEvent,
-                                    project: Project,
-                                    userId : UserId): F[SaveProjectEventError \/ VerifiedEvent]
+    protected def updateProjectName(id: ProjectId, name: Project.Name): F[Unit]
 
+    final protected def onSaveProjectEvent(pid: ProjectId, event: Event): Option[F[SaveProjectEventError \/ Unit]] = {
+      type Out = SaveProjectEventError \/ Unit
 
-    final def saveProjectEvent(id     : ProjectId,
-                               ord    : EventOrd,
-                               event  : ActiveEvent,
-                               project: Project,
-                               userId : UserId): F[SaveProjectEventError \/ VerifiedEvent] = {
+      @inline implicit def cast(f: F[SaveProjectEventError.OnAccess \/ Unit]): F[Out] =
+        f.asInstanceOf[F[Out]]
 
-      type Out = SaveProjectEventError \/ VerifiedEvent
-
-      val saveEvent = _saveProjectEvent(id, ord, event, project, userId)
+      @inline implicit def Unit(f: F[Unit]): F[Out] =
+        F.map(f)(_ => \/-(()))
 
       event match {
 
@@ -231,19 +258,38 @@ object DB {
               case (u, Some(p)) => (Obfuscators.userId.deobfuscateOrThrow(u), p) :: Nil
               case _            => Nil
             }.toMap
-          F.flatMap(updateProjectAccess(id, remove, add)) {
-            case \/-(_) => saveEvent
-            case -\/(e) => F.pure[Out](-\/(e))
-          }
+          Some(updateProjectAccess(pid, remove, add))
 
-        // This case is handled in _saveProjectEvent for legacy and effeciciency reasons
-        // case e: Event.ProjectNameSet =>
-        //   updateProjectName(e.name) *> saveEvent
+        case e: Event.ProjectNameSet =>
+          Some(updateProjectName(pid, e.name))
 
         case _ =>
-          saveEvent
+          None
       }
     }
+
+    final protected def onSaveProjectEvents(pid: ProjectId, events: IterableOnce[Event]): Option[F[SaveProjectEventError \/ Unit]] = {
+      val it = events.iterator.flatMap(onSaveProjectEvent(pid, _))
+      Option.when(it.hasNext)(it.reduce(reduceRight(_, _)))
+    }
+  }
+
+  trait SaveProjectEvent[F[_]] extends OnSaveProjectEvent[F] {
+
+    protected def _saveProjectEvent(id     : ProjectId,
+                                    ord    : EventOrd,
+                                    event  : ActiveEvent,
+                                    project: Project,
+                                    userId : UserId): F[SaveProjectEventError \/ VerifiedEvent]
+
+    final def saveProjectEvent(id     : ProjectId,
+                               ord    : EventOrd,
+                               event  : ActiveEvent,
+                               project: Project,
+                               userId : UserId): F[SaveProjectEventError \/ VerifiedEvent] =
+      reduceRight(
+        onSaveProjectEvent(id, event),
+        _saveProjectEvent(id, ord, event, project, userId))
   }
 
   sealed trait SaveProjectEventError
@@ -270,12 +316,22 @@ object DB {
 
   trait ForHomeSpa[F[_]]
       extends Base[F]
-        with GetProjectMetaData[F] {
+        with GetProjectMetaData[F]
+        with OnSaveProjectEvent[F] {
 
-    def createProject(userId    : UserId,
-                      initEvents: Vector[ActiveEvent],
-                      project   : Project,
-                      encKey    : ProjectEncryptionKey): F[ProjectId]
+    protected def _createProject(userId    : UserId,
+                                 initEvents: Vector[ActiveEvent],
+                                 project   : Project,
+                                 encKey    : ProjectEncryptionKey): F[ProjectId]
+
+    final def createProject(userId    : UserId,
+                            initEvents: Vector[ActiveEvent],
+                            project   : Project,
+                            encKey    : ProjectEncryptionKey): F[ProjectId] =
+      for {
+        pid <- _createProject(userId, initEvents, project, encKey)
+        _   <- throwOnLeft_(onSaveProjectEvents(pid, initEvents))
+      } yield pid
 
     def getAllProjectMetaDataForUser(id: UserId): F[List[ProjectMetaData]]
   }
@@ -330,7 +386,7 @@ object DB {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  trait ForOps[F[_]] extends GetProjectEvents[F] {
+  trait ForOps[F[_]] extends GetProjectEvents[F] with OnSaveProjectEvent[F] { self =>
     val now       : F[Instant]
     val userStats : F[ForOps.UserStats]
     val tableStats: F[List[ForOps.TableStat]]
@@ -338,14 +394,36 @@ object DB {
 
     def getUserId(user: Username \/ EmailAddr): F[Option[UserId]]
 
-    def importProject(userId : UserId,
-                      events : VerifiedEvent.Seq,
-                      project: Project,
-                      encKey : ProjectEncryptionKey): F[ProjectId]
+    protected def _importProject(userId : UserId,
+                                 events : VerifiedEvent.Seq,
+                                 project: Project,
+                                 encKey : ProjectEncryptionKey): F[ProjectId]
+
+    final def importProject(userId : UserId,
+                            events : VerifiedEvent.Seq,
+                            project: Project,
+                            encKey : ProjectEncryptionKey): F[ProjectId] =
+      for {
+        pid <- _importProject(userId, events, project, encKey)
+        _   <- throwOnLeft_(onSaveProjectEvents(pid, events.iterator.map(_.event)))
+      } yield pid
+
+    def trans[G[_]](t: F ~> G)(implicit G: EffectTC[G]): ForOps[G] =
+      new ForOps[G] {
+        override val F = G
+        override val now = t(self.now)
+        override val userStats = t(self.userStats)
+        override val tableStats = t(self.tableStats)
+        override val dbSize = t(self.dbSize)
+        override def getProjectEvents(a: ProjectId, b: EventFilter) = t(self.getProjectEvents(a, b))
+        override def getUserId(a: Username \/ EmailAddr) = t(self.getUserId(a))
+        override def _importProject(a: UserId, b: VerifiedEvent.Seq, c: Project, d: ProjectEncryptionKey) = t(self._importProject(a, b, c, d))
+        override def updateProjectAccess(a: ProjectId, b: Set[UserId], c: Map[UserId,ProjectPerm]) = t(self.updateProjectAccess(a, b, c))
+        override def updateProjectName(a: ProjectId, b: Project.Name): G[Unit] = t(self.updateProjectName(a, b))
+      }
   }
 
   object ForOps {
-
     final case class UserStats(registered: Long, total: Long) {
       def pendingRegistration: Long =
         total - registered
@@ -355,20 +433,6 @@ object DB {
       def totalSize: Long =
         tableSize + indexesSize
     }
-
-    def trans[F[_], G[_]](f: ForOps[F])(t: F ~> G): ForOps[G] =
-      new ForOps[G] {
-        override val now                                            = t(f.now)
-        override val userStats                                      = t(f.userStats)
-        override val tableStats                                     = t(f.tableStats)
-        override val dbSize                                         = t(f.dbSize)
-        override def getProjectEvents(a: ProjectId, b: EventFilter) = t(f.getProjectEvents(a, b))
-        override def getUserId(a: Username \/ EmailAddr)            = t(f.getUserId(a))
-        override def importProject(a: UserId,
-                                   b: VerifiedEvent.Seq,
-                                   c: Project,
-                                   d: ProjectEncryptionKey)         = t(f.importProject(a, b, c, d))
-      }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

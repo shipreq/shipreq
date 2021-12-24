@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic.test
 
 import cats.syntax.all._
-import cats.{Eval, Monad, ~>}
+import cats.{Eval, ~>}
 import java.time.Instant
 import shipreq.base.util._
 import shipreq.webapp.base.data._
@@ -71,13 +71,15 @@ object MockDb {
 
   def withLiveClock(): MockDb =
     new MockDb(Eval.always(Instant.now()))
+
+  private[MockDb] def implicitInstance = implicitly[DB.EffectTC[Eval]]
 }
 
 // =====================================================================================================================
 
 final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecurity[Eval] with DB.ForOps[Eval] {
 
-  override protected val F = Monad[Eval]
+  override implicit protected val F = MockDb.implicitInstance
 
   override val now: Eval[Instant] =
     _now
@@ -297,7 +299,7 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
   private def nextProjectId(): ProjectId =
     ProjectId(1 + projects.underlyingMap.keysIterator.map(_.value).foldLeft(0L)(_ max _))
 
-  override def createProject(id: UserId, initEvents: Vector[ActiveEvent], p: Project, k: ProjectEncryptionKey) = Eval.always[ProjectId] {
+  override protected def _createProject(id: UserId, initEvents: Vector[ActiveEvent], p: Project, k: ProjectEncryptionKey) = Eval.always[ProjectId] {
     val pid = nextProjectId()
     addProject(pid, id, k)(initEvents: _*)
     pid
@@ -361,7 +363,7 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
       -\/(DB.SaveProjectEventError.OrdInUse)
   }
 
-  override def importProject(uid: UserId, events: VerifiedEvent.Seq, project: Project, key: ProjectEncryptionKey) = Eval.always[ProjectId] {
+  override protected def _importProject(uid: UserId, events: VerifiedEvent.Seq, project: Project, key: ProjectEncryptionKey) = Eval.always[ProjectId] {
     val pid = nextProjectId()
     addProject(pid, uid, key)()
     val entry = projects.need(pid)
@@ -437,5 +439,9 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
 
   def needProjectCreator(id: ProjectId): UserId =
     projects.need(id).creatorId
+
+  override protected def updateProjectName(id: ProjectId, name: Project.Name) = Eval.always[Unit] {
+    // Hmm, we don't store the project name in ProjectEntry
+  }
 
 }

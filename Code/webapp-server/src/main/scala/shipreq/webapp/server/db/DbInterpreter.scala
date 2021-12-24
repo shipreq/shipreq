@@ -3,7 +3,7 @@ package shipreq.webapp.server.db
 import cats.free.Free
 import cats.instances.int._
 import cats.instances.vector._
-import cats.{Monad, ~>}
+import cats.~>
 import doobie._
 import doobie.implicits._
 import doobie.postgres.circe.jsonb.implicits._
@@ -68,9 +68,13 @@ object DbInterpreter {
     "SELECT usr_id, perm FROM project_access WHERE project_id=?")
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  trait Base extends DB.Base[ConnectionIO] {
+  private def implicitInstance = implicitly[DB.EffectTC[ConnectionIO]]
 
-    override protected val F = Monad[ConnectionIO]
+  trait Effect extends DB.Effect[ConnectionIO] {
+    override implicit protected val F = implicitInstance
+  }
+
+  trait Base extends DB.Base[ConnectionIO] with Effect {
 
     override final def withTransactionLevel[F[_], A](runDB: ConnectionIO ~> F, level: Int)(f: ConnectionIO[A]): F[A] =
       runDB(f.withTransactionLevel(level))
@@ -383,43 +387,16 @@ object DbInterpreter {
       insertEventQuery.unique((pid, ord, enc._1, enc._2, userId))
     }
 
-    private def updateProjectSql(moreSets: String) =
-      s"UPDATE project SET events_total = events_total + 1, ${moreSets}, accessed_at = now(), updated_at = now() WHERE id=?"
+    val updateProjectName: Update[(String, ProjectId)] =
+      // Note: We don't update accessed_at or updated_at because this is only called from onSaveEvent after the project
+      // has already been modified.
+      Update("UPDATE project SET name=? WHERE id=?")
 
-    val updateProjectN: Update[(String, ProjectId)] =
-      Update(updateProjectSql("name=?"))
-
-    val updateProjectR: Update[(Int, Int, ProjectId)] =
-      Update(updateProjectSql("reqs_live=?, reqs_total=?"))
+    val updateProjectStats: Update[(Int, Int, ProjectId)] =
+      Update("UPDATE project SET events_total = events_total + 1, reqs_live=?, reqs_total=?, accessed_at = now(), updated_at = now() WHERE id=?")
   }
 
-  trait SaveProjectEvent extends DB.SaveProjectEvent[ConnectionIO] {
-    import SaveProjectEventLogic._
-
-    override protected def _saveProjectEvent(pid: ProjectId,
-                                             ord: EventOrd,
-                                             e  : ActiveEvent,
-                                             p  : Project,
-                                             uid: UserId): ConnectionIO[DB.SaveProjectEventError \/ VerifiedEvent] = {
-      type Result = DB.SaveProjectEventError \/ VerifiedEvent
-      unsafeInsertEvent(pid, ord, e, uid).attemptSql.flatMap {
-        case Right(now) =>
-          val result: Result = \/-(VerifiedEvent(ord, e, now))
-          val update: Update0 =
-            e match {
-              case _: Event.ProjectNameSet => updateProjectN.toUpdate0((p.name, pid))
-              case _                       => updateProjectR.toUpdate0((p.liveReqCount, p.content.reqs.size, pid))
-            }
-          update.run.map(_ => result)
-
-        case Left(e: PSQLException) if e.getMessage.contains("ord_key") =>
-          val err: Result = -\/(DB.SaveProjectEventError.OrdInUse)
-          Free.pure(err)
-
-        case Left(e) =>
-          throw e
-      }
-    }
+  trait OnSaveProjectEvent extends DB.OnSaveProjectEvent[ConnectionIO] {
 
     private[this] val projectAccessDelete = Update[(ProjectId, UserId)](
       "DELETE FROM project_access WHERE project_id=? AND usr_id=?")
@@ -451,6 +428,34 @@ object DbInterpreter {
 
       apply.rollbackWhen(_.isLeft)
     }
+
+    override protected def updateProjectName(id: ProjectId, name: Project.Name): ConnectionIO[Unit] =
+      SaveProjectEventLogic.updateProjectName.run((name, id)).void
+  }
+
+  trait SaveProjectEvent extends DB.SaveProjectEvent[ConnectionIO] with OnSaveProjectEvent {
+    import SaveProjectEventLogic._
+
+    override protected def _saveProjectEvent(pid: ProjectId,
+                                             ord: EventOrd,
+                                             e  : ActiveEvent,
+                                             p  : Project,
+                                             uid: UserId): ConnectionIO[DB.SaveProjectEventError \/ VerifiedEvent] = {
+      type Result = DB.SaveProjectEventError \/ VerifiedEvent
+
+      unsafeInsertEvent(pid, ord, e, uid).attemptSql.flatMap {
+        case Right(now) =>
+          val result: Result = \/-(VerifiedEvent(ord, e, now))
+          updateProjectStats.run((p.liveReqCount, p.content.reqs.size, pid)).map(_ => result)
+
+        case Left(e: PSQLException) if e.getMessage.contains("ord_key") =>
+          val err: Result = -\/(DB.SaveProjectEventError.OrdInUse)
+          Free.pure(err)
+
+        case Left(e) =>
+          throw e
+      }
+    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -463,9 +468,9 @@ object DbInterpreter {
     override def getAllProjectMetaDataForUser(id: UserId): ConnectionIO[List[ProjectMetaData]] =
       getAllProjectMetaDataForUserQuery.to[List](id)
 
-    override def createProject(uid: UserId, es: Vector[ActiveEvent], p: Project, k: ProjectEncryptionKey): ConnectionIO[ProjectId] = {
+    override protected def _createProject(uid: UserId, es: Vector[ActiveEvent], p: Project, k: ProjectEncryptionKey): ConnectionIO[ProjectId] = {
       val events = es.length
-      val name   = es.reverseIterator.collectFirst { case e: Event.ProjectNameSet => e.name }.getOrElse("")
+      val name   = "" // don't set the name because it will be taken care of in onSaveEvent
       val data   = (uid, events, events, p.liveReqCount, p.content.reqs.size, name, k)
       for {
         pid  <- ForHomeSpa.createProjectQuery.unique(data)
@@ -537,7 +542,7 @@ object DbInterpreter {
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  class ForOps(dbName: String) extends DB.ForOps[ConnectionIO] with GetProjectEvents {
+  class ForOps(dbName: String) extends DB.ForOps[ConnectionIO] with GetProjectEvents with OnSaveProjectEvent with Effect {
     import shipreq.webapp.server.logic.algebra.DB.ForOps._
 
     private[db] final val nowSql =
@@ -603,10 +608,10 @@ object DbInterpreter {
           (pid, ve.ord, typeId, data, uid, ve.createdAt)
         }
 
-    override def importProject(userId : UserId,
-                               events : VerifiedEvent.Seq,
-                               project: Project,
-                               encKey : ProjectEncryptionKey): ConnectionIO[ProjectId] = {
+    override protected def _importProject(userId : UserId,
+                                          events : VerifiedEvent.Seq,
+                                          project: Project,
+                                          encKey : ProjectEncryptionKey): ConnectionIO[ProjectId] = {
       val events_init  = 0
       val events_total = events.size
       val reqs_live    = project.content.reqs.reqIterator().count(_.live(project.config.reqTypes) is Live)

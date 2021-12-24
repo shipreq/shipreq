@@ -126,7 +126,7 @@ object Global {
       }
 
       implicit val dbForOps = t("dbForOps") {
-        DB.ForOps.trans(new DbInterpreter.ForOps(db.databaseName))(runDB)
+        (new DbInterpreter.ForOps(db.databaseName)).trans(runDB)
       }
 
       implicit val server = t("server") {

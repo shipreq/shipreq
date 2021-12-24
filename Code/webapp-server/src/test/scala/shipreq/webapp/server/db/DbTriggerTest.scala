@@ -4,6 +4,8 @@ import doobie._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db._
 import shipreq.webapp.base.data._
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.{Event, EventOrd}
 import shipreq.webapp.server.test._
 import sourcecode.Line
 import utest._
@@ -66,8 +68,11 @@ object DbTriggerTest extends TestSuite {
         def read(p: ProjectId)(implicit u: UserId): Unit =
           xa ! db.projectSpaInitPage(p, u)
 
-        def writeTo(p: ProjectId): Unit =
-          assertEq(xa ! DbInterpreter.SaveProjectEventLogic.updateProjectN.toUpdate0(("A", p)).run, 1)
+        def writeTo(p: ProjectId, ordIdx: Int)(implicit u: UserId): Unit = {
+          val ord = EventOrd.fromIndex(ordIdx)
+          val e = Event.ProjectNameSet("A")
+          xa ! db.saveProjectEvent(p, ord, e, Project.empty, u)
+        }
 
         def stats = (
           xa ! DbTables.ProjectAccessPerHour.count,
@@ -78,7 +83,10 @@ object DbTriggerTest extends TestSuite {
         )
 
         def assertState(rows: Int)(totalReads: Int, uniqueReads: Int)(totalWrites: Int, uniqueWrites: Int)(implicit l: Line) =
-          assertEq(stats, (rows, totalReads, uniqueReads, totalWrites, uniqueWrites))
+          assertEq(
+            "(rows, totalReads, uniqueReads, totalWrites, uniqueWrites)",
+            stats,
+            (rows, totalReads, uniqueReads, totalWrites, uniqueWrites))
 
         considerHourBoundary {
           xa ! DbTables.ProjectAccessPerHour.truncate
@@ -88,11 +96,11 @@ object DbTriggerTest extends TestSuite {
           assertState(1)(0, 0)(1, 1)
           val b = DbUtil(xa).newProjectId(u)
           assertState(1)(0, 0)(2, 2)
-          writeTo(a); assertState(1)(0, 0)(3, 2)
-          read(b)   ; assertState(2)(1, 1)(3, 2)
-          read(b)   ; assertState(2)(2, 1)(3, 2)
-          writeTo(b); assertState(2)(2, 1)(4, 2)
-          read(a)   ; assertState(2)(3, 2)(4, 2)
+          writeTo(a, 0); assertState(1)(0, 0)(3, 2)
+          read(b)      ; assertState(2)(1, 1)(3, 2)
+          read(b)      ; assertState(2)(2, 1)(3, 2)
+          writeTo(b, 0); assertState(2)(2, 1)(4, 2)
+          read(a)      ; assertState(2)(3, 2)(4, 2)
         }
       }
     }

@@ -59,9 +59,9 @@ object SqlTest extends TestSuite {
     }
 
     "saveProjectEvent" - {
-      "insertEventQuery" - TestDb.check(SaveProjectEventLogic.insertEventQuery)
-      "updateProjectN"   - TestDb.check(SaveProjectEventLogic.updateProjectN)
-      "updateProjectR"   - TestDb.check(SaveProjectEventLogic.updateProjectR)
+      "insertEventQuery"   - TestDb.check(SaveProjectEventLogic.insertEventQuery)
+      "updateProjectName"  - TestDb.check(SaveProjectEventLogic.updateProjectName)
+      "updateProjectStats" - TestDb.check(SaveProjectEventLogic.updateProjectStats)
     }
 
     "homeSpa" - {
