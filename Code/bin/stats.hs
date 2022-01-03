@@ -210,7 +210,7 @@ groupStats (GroupD _ ms) = mconcat $ map snd ms
 
 singleModuleGroup name stats = GroupD name [(name,stats)]
 
-consolidateGroup gd @ (GroupD g _) = singleModuleGroup g $ groupStats gd
+consolidateGroup gd@(GroupD g _) = singleModuleGroup g $ groupStats gd
 
 totalStatsForGroups gs = mconcat (map groupStats gs)
 consolidateGroups = singleModuleGroup "∑" . totalStatsForGroups
@@ -253,8 +253,8 @@ topLevelModuleStatReport gs =
 customiseDetailedView :: [GroupD] -> [GroupD]
 customiseDetailedView gs =
   let w1                           = customiseDetailedView' "webapp" "webapp-base"
-      f g@ GroupD {gname="webapp"} = w1 g
-      f g@ GroupD {}               = g
+      f g@GroupD {gname="webapp"} = w1 g
+      f g@GroupD {}               = g
   in map f gs
 
 customiseDetailedView' :: String -> String -> GroupD -> GroupD
