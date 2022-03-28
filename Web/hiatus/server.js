@@ -5,6 +5,9 @@ const errorhandler = require('errorhandler')
 const app = express()
 const port = 3000
 
+const dev = process.env.NODE_ENV == 'development'
+const prod = !dev
+
 // This shit is mostly copied from https://github.com/dai-shi/easy-livereload
 function liveReload() {
   const livereload = require('easy-livereload')
@@ -54,14 +57,14 @@ const serveViews = function (req, res, next) {
 }
 
 // Generate minified output
-app.locals.pretty = true
+app.locals.pretty = dev
 
 app.set('view engine', 'pug')
 app.set('views', path.join(__dirname, 'src'))
 
 app.use(express.static('static'))
 app.use('/node_modules', express.static('node_modules'))
-app.use(liveReload())
+if (dev) app.use(liveReload());
 app.use(serveViews)
 app.use(errorhandler())
 
