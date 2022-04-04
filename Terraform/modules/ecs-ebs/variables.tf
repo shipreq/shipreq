@@ -20,14 +20,15 @@ variable "manifest" {
   }))
 }
 
-variable "ec2_role" {
-  description = "The IAM role of the EC2s that form the ECS cluster."
-  type        = object({ name = string })
-}
-
 ############
 # Optional #
 ############
+
+variable "ec2_role" {
+  description = "The IAM role of the EC2s that form the ECS cluster."
+  type        = object({ name = string })
+  default     = null
+}
 
 variable "type" {
   description = "Volumes type of each drive."

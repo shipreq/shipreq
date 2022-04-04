@@ -77,11 +77,6 @@ variable "ops_cluster_ebs_volume_type" {
   default     = "gp3"
 }
 
-variable "elasticsearch_enable" {
-  type    = bool
-  default = true
-}
-
 variable "elasticsearch_instance_type" {
   type = string
 }
@@ -271,11 +266,6 @@ variable "postgres_exporter_db_password" {
   type = string
 }
 
-variable "enable_db_dependant_services" {
-  type    = bool
-  default = true
-}
-
 variable "kibana_default_path" {
   type    = string
   default = ""
@@ -296,4 +286,67 @@ variable "shipreq_webapp_use_cdn" {
 variable "shipreq_cdn_price_class" {
   type    = string
   default = "PriceClass_All"
+}
+
+// =====================================================================================================================
+
+variable "enable_app" {
+  type    = bool
+  default = true
+}
+
+variable "enable_bastion" {
+  type    = bool
+  default = true
+}
+
+variable "enable_cadvisor" {
+  type    = bool
+  default = true
+}
+
+variable "enable_db_dependant_services" {
+  description = "Enables: Webapp, Taskman, Grafana, Postgres Exporter"
+  type        = bool
+  default     = true
+}
+
+variable "enable_ecs_exporter" {
+  type    = bool
+  default = true
+}
+
+variable "enable_elasticsearch" {
+  type    = bool
+  default = true
+}
+
+variable "enable_filebeat" {
+  type    = bool
+  default = true
+}
+
+variable "enable_metrics_collection" {
+  type    = bool
+  default = true
+}
+
+variable "enable_metrics_services" {
+  type    = bool
+  default = true
+}
+
+variable "enable_node_exporter" {
+  type    = bool
+  default = true
+}
+
+variable "enable_ops" {
+  type    = bool
+  default = true
+}
+
+variable "enable_redis" {
+  type    = bool
+  default = true
 }

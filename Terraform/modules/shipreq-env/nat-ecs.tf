@@ -3,25 +3,28 @@ locals {
 }
 
 resource "aws_key_pair" "nat" {
+  count      = local.enable_nat ? 1 : 0
   key_name   = "${var.env}-nat"
   public_key = var.nat_public_key
 }
 
 resource "aws_ecs_cluster" "nat" {
-  name = "${var.env}-nat"
-  tags = local.nat_tags
+  count = local.enable_nat ? 1 : 0
+  name  = "${var.env}-nat"
+  tags  = local.nat_tags
 }
 
 resource "aws_instance" "nat" {
+  count                       = local.enable_nat ? 1 : 0
   ami                         = var.nat_ami != null ? var.nat_ami : data.aws_ssm_parameter.ami-ecs.value
   availability_zone           = var.availability_zone
   instance_type               = "t3a.nano"
   subnet_id                   = aws_subnet.public.id
-  vpc_security_group_ids      = [aws_security_group.nat.id]
-  iam_instance_profile        = aws_iam_instance_profile.nat-ecs.id
+  vpc_security_group_ids      = [aws_security_group.nat[0].id]
+  iam_instance_profile        = aws_iam_instance_profile.nat-ecs[0].id
   associate_public_ip_address = true
   source_dest_check           = false
-  key_name                    = aws_key_pair.nat.key_name
+  key_name                    = aws_key_pair.nat[0].key_name
   tags                        = local.nat_tags
   volume_tags                 = local.nat_tags
 
@@ -30,7 +33,7 @@ resource "aws_instance" "nat" {
   }
 
   user_data = trimspace(templatefile("${path.module}/nat-ec2-init.sh", {
-    cluster = aws_ecs_cluster.nat.name
+    cluster = aws_ecs_cluster.nat[count.index].name
   }))
 
   root_block_device {
@@ -38,12 +41,13 @@ resource "aws_instance" "nat" {
     volume_type = "standard"
   }
 
-  depends_on = [aws_ecs_cluster.nat]
+  depends_on = [aws_ecs_cluster.nat[0]]
 
   lifecycle { create_before_destroy = true }
 }
 
 resource "aws_cloudwatch_metric_alarm" "nat-recovery" {
+  count               = local.enable_nat ? 1 : 0
   alarm_name          = "${var.env}-nat-recovery"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
@@ -53,19 +57,21 @@ resource "aws_cloudwatch_metric_alarm" "nat-recovery" {
   statistic           = "Minimum"
   threshold           = 0
   alarm_actions       = ["arn:aws:automate:${local.region}:ec2:recover"]
-  dimensions          = { InstanceId = aws_instance.nat.id }
+  dimensions          = { InstanceId = aws_instance.nat[0].id }
   tags                = local.nat_tags
 }
 
 
 resource "aws_iam_instance_profile" "nat-ecs" {
-  name = "${var.env}_nat_instance_profile"
-  role = aws_iam_role.nat-ecs.name
+  count = length(aws_iam_role.nat-ecs)
+  name  = "${var.env}_nat_instance_profile"
+  role  = aws_iam_role.nat-ecs[count.index].name
 }
 
 resource "aws_iam_role" "nat-ecs" {
-  name = "${var.env}_nat_ecs_instance_role"
-  tags = local.nat_tags
+  count = local.enable_nat ? 1 : 0
+  name  = "${var.env}_nat_ecs_instance_role"
+  tags  = local.nat_tags
 
   assume_role_policy = <<EOB
 {
@@ -84,17 +90,20 @@ EOB
 }
 
 resource "aws_iam_role_policy_attachment" "nat-ecs-ec2-s3tmp" {
-  role       = aws_iam_role.nat-ecs.name
+  count      = length(aws_iam_role.nat-ecs)
+  role       = aws_iam_role.nat-ecs[count.index].name
   policy_arn = data.aws_iam_policy.s3_tmp_rw.arn
 }
 
 resource "aws_iam_role_policy_attachment" "nat-ecs" {
-  role       = aws_iam_role.nat-ecs.name
-  policy_arn = aws_iam_policy.nat-ecs.arn
+  count      = local.enable_nat ? 1 : 0
+  role       = aws_iam_role.nat-ecs[0].name
+  policy_arn = aws_iam_policy.nat-ecs[0].arn
 }
 
 resource "aws_iam_policy" "nat-ecs" {
-  name = "${var.env}_nat_ecs_policy"
+  count = local.enable_nat ? 1 : 0
+  name  = "${var.env}_nat_ecs_policy"
 
   policy = <<EOB
 {
@@ -139,16 +148,20 @@ EOB
 }
 
 resource "aws_security_group" "nat" {
+  count  = local.enable_nat ? 1 : 0
   name   = "sg_${var.env}_nat"
   vpc_id = aws_vpc.main.id
   tags   = local.nat_tags
 
-  ingress {
-    protocol        = "tcp"
-    from_port       = 22
-    to_port         = 22
-    security_groups = [aws_security_group.bastion.id]
-    description     = "Bastion can SSH in"
+  dynamic "ingress" {
+    for_each = aws_security_group.bastion
+    content {
+      protocol        = "tcp"
+      from_port       = 22
+      to_port         = 22
+      security_groups = [ingress.value.id]
+      description     = "Bastion can SSH in"
+    }
   }
 
   ingress {
@@ -177,9 +190,10 @@ resource "aws_security_group" "nat" {
 }
 
 resource "aws_route53_record" "nat" {
+  count   = min(1, length(aws_instance.nat))
   zone_id = aws_route53_zone.internal.zone_id
   name    = local.nat_domain
   type    = "A"
   ttl     = local.dns_stable_ttl
-  records = [aws_instance.nat.private_ip]
+  records = aws_instance.nat[*].private_ip
 }

@@ -17,8 +17,9 @@ locals {
 ####################################################################################################
 
 resource "aws_backup_plan" "db" {
-  name = "${var.env}-db"
-  tags = local.default_tags
+  count = local.enable_app_backup_db ? 1 : 0
+  name  = "${var.env}-db"
+  tags  = local.default_tags
   rule {
     rule_name           = "${var.env}-db"
     target_vault_name   = aws_backup_vault.sole.name
@@ -31,8 +32,9 @@ resource "aws_backup_plan" "db" {
 }
 
 resource "aws_backup_selection" "db" {
+  count        = length(aws_backup_plan.db)
   name         = "${var.env}-db"
-  plan_id      = aws_backup_plan.db.id
+  plan_id      = aws_backup_plan.db[count.index].id
   iam_role_arn = aws_iam_role.backup.arn
   resources    = [aws_db_instance.postgres.arn]
 }
@@ -40,8 +42,9 @@ resource "aws_backup_selection" "db" {
 ####################################################################################################
 
 resource "aws_backup_plan" "prometheus-tech" {
-  name = "${var.env}-prometheus-tech"
-  tags = local.default_tags
+  count = local.enable_ops_backup_metrics ? 1 : 0
+  name  = "${var.env}-prometheus-tech"
+  tags  = local.default_tags
   rule {
     rule_name           = "${var.env}-prometheus-tech"
     target_vault_name   = aws_backup_vault.sole.name
@@ -54,8 +57,9 @@ resource "aws_backup_plan" "prometheus-tech" {
 }
 
 resource "aws_backup_selection" "prometheus-tech" {
+  count        = length(aws_backup_plan.prometheus-tech)
   name         = "${var.env}-prometheus-tech"
-  plan_id      = aws_backup_plan.prometheus-tech.id
+  plan_id      = aws_backup_plan.prometheus-tech[count.index].id
   iam_role_arn = aws_iam_role.backup.arn
   selection_tag {
     type  = "STRINGEQUALS"
@@ -67,8 +71,9 @@ resource "aws_backup_selection" "prometheus-tech" {
 ####################################################################################################
 
 resource "aws_backup_plan" "prometheus-biz" {
-  name = "${var.env}-prometheus-biz"
-  tags = local.default_tags
+  count = local.enable_ops_backup_metrics ? 1 : 0
+  name  = "${var.env}-prometheus-biz"
+  tags  = local.default_tags
   rule {
     rule_name           = "${var.env}-prometheus-biz"
     target_vault_name   = aws_backup_vault.sole.name
@@ -81,8 +86,9 @@ resource "aws_backup_plan" "prometheus-biz" {
 }
 
 resource "aws_backup_selection" "prometheus-biz" {
+  count        = length(aws_backup_plan.prometheus-biz)
   name         = "${var.env}-prometheus-biz"
-  plan_id      = aws_backup_plan.prometheus-biz.id
+  plan_id      = aws_backup_plan.prometheus-biz[count.index].id
   iam_role_arn = aws_iam_role.backup.arn
   selection_tag {
     type  = "STRINGEQUALS"

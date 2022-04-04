@@ -10,10 +10,11 @@ locals {
 }
 
 resource "aws_service_discovery_service" "webapp" {
-  name = local.shipreq_webapp_sd_subdomain
+  count = length(aws_service_discovery_private_dns_namespace.internal)
+  name  = local.shipreq_webapp_sd_subdomain
 
   dns_config {
-    namespace_id   = aws_service_discovery_private_dns_namespace.internal.id
+    namespace_id   = aws_service_discovery_private_dns_namespace.internal[count.index].id
     routing_policy = "MULTIVALUE"
 
     dns_records {
@@ -34,9 +35,9 @@ resource "aws_service_discovery_service" "webapp" {
 }
 
 resource "aws_ecs_service" "shipreq_webapp" {
-  count                              = var.enable_db_dependant_services ? 1 : 0
+  count                              = local.enable_app_webapp ? 1 : 0
   name                               = "${var.env}-shipreq-webapp"
-  cluster                            = aws_ecs_cluster.app.id
+  cluster                            = aws_ecs_cluster.app[0].id
   task_definition                    = aws_ecs_task_definition.shipreq_webapp.arn
   scheduling_strategy                = "DAEMON"
   propagate_tags                     = "SERVICE"
@@ -45,13 +46,13 @@ resource "aws_ecs_service" "shipreq_webapp" {
   tags                               = local.shipreq_webapp_tags
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.webapp.arn
+    target_group_arn = aws_lb_target_group.webapp[0].arn
     container_name   = local.shipreq_webapp_container_name
     container_port   = 8080
   }
 
   service_registries {
-    registry_arn   = aws_service_discovery_service.webapp.arn
+    registry_arn   = aws_service_discovery_service.webapp[0].arn
     container_name = local.shipreq_webapp_container_name
     container_port = 8080
   }
@@ -68,10 +69,24 @@ resource "aws_ecs_task_definition" "shipreq_webapp" {
     "name": "${local.shipreq_webapp_container_name}",
     "image": "${data.aws_ecr_repository.webapp.repository_url}:${var.app_shipreq_images_tag}",
     "environment": [
-      ${! local.shipreq_webapp_use_static_asset_cdn ? "" : <<EOE
+      ${!local.shipreq_webapp_use_static_asset_cdn ? "" : <<EOE
           {
             "name": "shipreq.staticAssetCdn",
             "value": "${local.shipreq_cdn_url}"
+          },
+        EOE
+  }
+      ${!local.enable_analytics_proxy ? "" : <<EOE
+          {
+            "name": "shipreq.analytics_proxy.url",
+            "value": "${local.analytics_proxy_url}"
+          },
+        EOE
+  }
+      ${!local.enable_app_redis ? "" : <<EOE
+          {
+            "name": "redis.url",
+            "value": "redis://${local.redis_domain}:6379"
           },
         EOE
 }
@@ -102,14 +117,6 @@ resource "aws_ecs_task_definition" "shipreq_webapp" {
       {
         "name": "db.password",
         "value": "${var.shipreq_db_password}"
-      },
-      {
-        "name": "redis.url",
-        "value": "redis://${local.redis_domain}:6379"
-      },
-      {
-        "name": "shipreq.analytics_proxy.url",
-        "value": "${local.analytics_proxy_url}"
       },
       {
         "name": "shipreq.googleAnalytics.trackingId",

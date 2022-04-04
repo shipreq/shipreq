@@ -4,8 +4,9 @@ locals {
 }
 
 resource "aws_ecs_service" "analytics_proxy" {
+  count                              = local.enable_analytics_proxy ? 1 : 0
   name                               = "${var.env}-analytics_proxy"
-  cluster                            = aws_ecs_cluster.app.id
+  cluster                            = aws_ecs_cluster.app[0].id
   task_definition                    = aws_ecs_task_definition.analytics_proxy.arn
   scheduling_strategy                = "DAEMON"
   propagate_tags                     = "SERVICE"
@@ -14,7 +15,7 @@ resource "aws_ecs_service" "analytics_proxy" {
   tags                               = local.analytics_proxy_tags
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.analytics_proxy.arn
+    target_group_arn = aws_lb_target_group.analytics_proxy[0].arn
     container_name   = local.analytics_proxy_container_name
     container_port   = 80
   }

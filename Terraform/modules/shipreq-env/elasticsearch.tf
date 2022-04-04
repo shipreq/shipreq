@@ -1,10 +1,9 @@
 locals {
-  es_tags  = merge(local.default_tags, { Name = "${var.env}-elasticsearch" })
-  es_count = var.elasticsearch_enable ? 1 : 0
+  es_tags = merge(local.default_tags, { Name = "${var.env}-elasticsearch" })
 }
 
 resource "aws_elasticsearch_domain" "es" {
-  count                 = local.es_count
+  count                 = local.enable_elasticsearch ? 1 : 0
   domain_name           = var.env
   elasticsearch_version = "7.7"
   tags                  = local.es_tags
@@ -37,7 +36,7 @@ resource "aws_elasticsearch_domain" "es" {
 }
 
 resource "aws_elasticsearch_domain_policy" "es" {
-  count           = local.es_count
+  count           = length(aws_elasticsearch_domain.es)
   domain_name     = aws_elasticsearch_domain.es[count.index].domain_name
   access_policies = <<EOB
   {
@@ -59,20 +58,26 @@ resource "aws_security_group" "es" {
   vpc_id = aws_vpc.main.id
   tags   = local.es_tags
 
-  ingress {
-    protocol        = "tcp"
-    from_port       = 443
-    to_port         = 443
-    security_groups = [aws_security_group.bastion.id]
-    description     = "Bastion access"
+  dynamic "ingress" {
+    for_each = aws_security_group.bastion
+    content {
+      protocol        = "tcp"
+      from_port       = 443
+      to_port         = 443
+      security_groups = [ingress.value.id]
+      description     = "Bastion access"
+    }
   }
 
-  ingress {
-    protocol        = "tcp"
-    from_port       = 443
-    to_port         = 443
-    security_groups = [aws_security_group.nat.id]
-    description     = "NAT access"
+  dynamic "ingress" {
+    for_each = aws_security_group.nat
+    content {
+      protocol        = "tcp"
+      from_port       = 443
+      to_port         = 443
+      security_groups = [ingress.value.id]
+      description     = "NAT access"
+    }
   }
 
   ingress {
@@ -85,10 +90,10 @@ resource "aws_security_group" "es" {
 }
 
 resource "aws_route53_record" "es" {
-  count   = local.es_count
+  count   = min(1, length(aws_elasticsearch_domain.es))
   zone_id = aws_route53_zone.internal.zone_id
   name    = local.es_domain
   type    = "CNAME"
   ttl     = local.dns_stable_ttl
-  records = [aws_elasticsearch_domain.es[count.index].endpoint]
+  records = aws_elasticsearch_domain.es[*].endpoint
 }

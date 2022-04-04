@@ -26,6 +26,7 @@ resource "aws_iam_policy" "mount" {
 }
 
 resource "aws_iam_role_policy_attachment" "mount" {
+  count      = var.ec2_role == null ? 0 : 1
   role       = var.ec2_role.name
   policy_arn = aws_iam_policy.mount.arn
 }

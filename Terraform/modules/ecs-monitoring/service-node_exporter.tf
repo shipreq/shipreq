@@ -9,6 +9,7 @@ locals {
 }
 
 resource "aws_ecs_service" "node_exporter" {
+  count               = local.node_exporter_enabled ? 1 : 0
   name                = "${var.name_prefix}-node_exporter"
   cluster             = var.cluster_id
   task_definition     = aws_ecs_task_definition.node_exporter.arn

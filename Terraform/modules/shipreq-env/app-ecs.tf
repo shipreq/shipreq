@@ -3,25 +3,28 @@ locals {
 }
 
 resource "aws_key_pair" "app" {
+  count      = local.enable_app_ec2 ? 1 : 0
   key_name   = "${var.env}-app"
   public_key = var.app_public_key
 }
 
 resource "aws_ecs_cluster" "app" {
-  name = "${var.env}-app"
-  tags = local.app_tags
+  count = local.enable_app_ec2 ? 1 : 0
+  name  = "${var.env}-app"
+  tags  = local.app_tags
 }
 
 resource "aws_autoscaling_group" "app" {
+  count               = local.enable_app_ec2 ? 1 : 0
   name                = "${var.env}-app-cluster"
-  min_size            = var.app_cluster_size
-  max_size            = var.app_cluster_size
-  desired_capacity    = var.app_cluster_size
+  min_size            = local.app_cluster_size
+  max_size            = local.app_cluster_size
+  desired_capacity    = local.app_cluster_size
   vpc_zone_identifier = [aws_subnet.private.id]
   tags                = [for k, v in local.app_tags : { key = k, value = v, propagate_at_launch = true }]
 
   launch_template {
-    id      = aws_launch_template.app.id
+    id      = aws_launch_template.app[0].id
     version = "$Latest"
   }
 
@@ -30,11 +33,12 @@ resource "aws_autoscaling_group" "app" {
 }
 
 resource "aws_launch_template" "app" {
+  count                  = local.enable_app_ec2 ? 1 : 0
   name                   = "${var.env}-app-ecs"
   image_id               = data.aws_ssm_parameter.ami-ecs.value
   instance_type          = var.app_instance_type
-  vpc_security_group_ids = [aws_security_group.app.id]
-  key_name               = aws_key_pair.app.key_name
+  vpc_security_group_ids = aws_security_group.app[*].id
+  key_name               = aws_key_pair.app[0].key_name
   tags                   = local.app_tags
 
   credit_specification {
@@ -42,7 +46,7 @@ resource "aws_launch_template" "app" {
   }
 
   iam_instance_profile {
-    arn = aws_iam_instance_profile.app-ecs.arn
+    arn = aws_iam_instance_profile.app-ecs[0].arn
   }
 
   block_device_mappings {
@@ -54,8 +58,8 @@ resource "aws_launch_template" "app" {
   }
 
   user_data = base64encode(trimspace(templatefile("${path.module}/app-ec2-init.sh", {
-    cluster               = aws_ecs_cluster.app.name
-    ec2_service_discovery = module.app_ec2_sd.user_data
+    cluster               = aws_ecs_cluster.app[0].name
+    ec2_service_discovery = module.app_ec2_sd[0].user_data
     install_nat_cert      = local.install_nat_cert
     wait_for_nat          = local.wait_for_nat
   })))
@@ -71,16 +75,20 @@ resource "aws_launch_template" "app" {
 }
 
 resource "aws_security_group" "app" {
+  count  = local.enable_app_ec2 ? 1 : 0
   name   = "sg_${var.env}_app"
   vpc_id = aws_vpc.main.id
   tags   = local.app_tags
 
-  ingress {
-    protocol        = "tcp"
-    from_port       = 22
-    to_port         = 22
-    security_groups = [aws_security_group.bastion.id]
-    description     = "Bastion can SSH in"
+  dynamic "ingress" {
+    for_each = aws_security_group.bastion
+    content {
+      protocol        = "tcp"
+      from_port       = 22
+      to_port         = 22
+      security_groups = [ingress.value.id]
+      description     = "Bastion can SSH in"
+    }
   }
 
   ingress {
@@ -149,8 +157,9 @@ resource "aws_security_group" "app" {
 }
 
 resource "aws_iam_role" "app-ecs" {
-  name = "${var.env}_app_ecs_instance_role"
-  tags = local.app_tags
+  count = local.enable_app_ec2 ? 1 : 0
+  name  = "${var.env}_app_ecs_instance_role"
+  tags  = local.app_tags
 
   assume_role_policy = <<EOB
 {
@@ -169,29 +178,33 @@ EOB
 }
 
 resource "aws_iam_instance_profile" "app-ecs" {
-  name = "${var.env}_app_ecs_instance_profile"
-  role = aws_iam_role.app-ecs.name
-  path = aws_iam_role.app-ecs.path
+  count = length(aws_iam_role.app-ecs)
+  name  = "${var.env}_app_ecs_instance_profile"
+  role  = aws_iam_role.app-ecs[count.index].name
+  path  = aws_iam_role.app-ecs[count.index].path
 }
 
 resource "aws_iam_role_policy_attachment" "app-ecs-ec2" {
-  role       = aws_iam_role.app-ecs.id
+  count      = length(aws_iam_role.app-ecs)
+  role       = aws_iam_role.app-ecs[count.index].id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
 resource "aws_iam_role_policy_attachment" "app-ecs-ec2-s3tmp" {
-  role       = aws_iam_role.app-ecs.id
+  count      = length(aws_iam_role.app-ecs)
+  role       = aws_iam_role.app-ecs[count.index].id
   policy_arn = data.aws_iam_policy.s3_tmp_rw.arn
 }
 
 # Service discovery requires an ENI per service but there's a small ENI/instanceType limit that we exceed.
 # Therefore, we use EC2 service discovery.
 module "app_ec2_sd" {
+  count  = local.enable_app_ec2 ? 1 : 0
   source = "../ec2-sd"
 
   ec2_name_tag    = local.app_tags.Name
-  ec2_role_name   = aws_iam_role.app-ecs.name
+  ec2_role_name   = aws_iam_role.app-ecs[0].name
   name            = "${var.env}-app"
   sd_name         = local.app_subdomain
-  sd_namespace_id = aws_service_discovery_private_dns_namespace.internal.id
+  sd_namespace_id = aws_service_discovery_private_dns_namespace.internal[0].id
 }

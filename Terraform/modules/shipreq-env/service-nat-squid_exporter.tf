@@ -3,8 +3,9 @@ locals {
 }
 
 resource "aws_ecs_service" "squid_exporter" {
+  count               = local.enable_nat_metrics ? 1 : 0
   name                = "${var.env}-nat-squid_exporter"
-  cluster             = aws_ecs_cluster.nat.id
+  cluster             = aws_ecs_cluster.nat[0].id
   task_definition     = aws_ecs_task_definition.squid_exporter.arn
   scheduling_strategy = "DAEMON"
   propagate_tags      = "SERVICE"

@@ -29,6 +29,10 @@ resource "aws_db_instance" "postgres" {
   final_snapshot_identifier   = (var.postgres_final_snapshot == "") ? null : var.postgres_final_snapshot
   copy_tags_to_snapshot       = false
   tags                        = local.postgres_tags
+
+  lifecycle {
+    ignore_changes = [engine_version]
+  }
 }
 
 resource "aws_db_subnet_group" "postgres" {
@@ -42,12 +46,15 @@ resource "aws_security_group" "postgres" {
   vpc_id = aws_vpc.main.id
   tags   = local.postgres_tags
 
-  ingress {
-    protocol        = "tcp"
-    from_port       = 5432
-    to_port         = 5432
-    security_groups = [aws_security_group.bastion.id]
-    description     = "Bastion access"
+  dynamic "ingress" {
+    for_each = aws_security_group.bastion
+    content {
+      protocol        = "tcp"
+      from_port       = 5432
+      to_port         = 5432
+      security_groups = [ingress.value.id]
+      description     = "Bastion access"
+    }
   }
 
   ingress {

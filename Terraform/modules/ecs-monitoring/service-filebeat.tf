@@ -3,13 +3,13 @@ locals {
 }
 
 resource "aws_ecs_service" "filebeat" {
+  count               = local.filebeat_enabled ? 1 : 0
   name                = "${var.name_prefix}-filebeat"
   cluster             = var.cluster_id
   task_definition     = aws_ecs_task_definition.filebeat.arn
   scheduling_strategy = "DAEMON"
   propagate_tags      = "SERVICE"
   tags                = local.filebeat_tags
-  count               = var.filebeat_enabled ? 1 : 0
 }
 
 resource "aws_ecs_task_definition" "filebeat" {

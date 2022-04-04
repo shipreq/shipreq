@@ -3,18 +3,21 @@ locals {
 }
 
 resource "aws_key_pair" "bastion" {
+  count      = local.enable_bastion ? 1 : 0
   key_name   = "${var.env}-bastion"
   public_key = var.bastion_public_key
 }
 
 resource "aws_eip" "bastion" {
+  count      = local.enable_bastion ? 1 : 0
   vpc        = true
-  instance   = aws_instance.bastion.id
+  instance   = aws_instance.bastion[0].id
   depends_on = [aws_internet_gateway.public]
   tags       = local.bastion_tags
 }
 
 resource "aws_security_group" "bastion" {
+  count  = local.enable_bastion ? 1 : 0
   name   = "sg_${var.env}_bastion"
   vpc_id = aws_vpc.main.id
   tags   = local.bastion_tags
@@ -37,13 +40,14 @@ resource "aws_security_group" "bastion" {
 }
 
 resource "aws_instance" "bastion" {
+  count                  = local.enable_bastion ? 1 : 0
   ami                    = data.aws_ssm_parameter.ami-ec2.value
   availability_zone      = var.availability_zone
   instance_type          = "t3a.nano"
   subnet_id              = aws_subnet.public.id
-  vpc_security_group_ids = [aws_security_group.bastion.id]
-  iam_instance_profile   = aws_iam_instance_profile.bastion.id
-  key_name               = aws_key_pair.bastion.key_name
+  vpc_security_group_ids = [aws_security_group.bastion[0].id]
+  iam_instance_profile   = aws_iam_instance_profile.bastion[0].id
+  key_name               = aws_key_pair.bastion[0].key_name
   tags                   = local.bastion_tags
   volume_tags            = local.bastion_tags
 
@@ -80,6 +84,7 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "bastion-recovery" {
+  count               = local.enable_bastion ? 1 : 0
   alarm_name          = "${var.env}-bastion-recovery"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
@@ -89,18 +94,20 @@ resource "aws_cloudwatch_metric_alarm" "bastion-recovery" {
   statistic           = "Minimum"
   threshold           = 0
   alarm_actions       = ["arn:aws:automate:${local.region}:ec2:recover"]
-  dimensions          = { InstanceId = aws_instance.bastion.id }
+  dimensions          = { InstanceId = aws_instance.bastion[0].id }
   tags                = local.bastion_tags
 }
 
 resource "aws_iam_instance_profile" "bastion" {
-  name = "${var.env}_bastion_instance_profile"
-  role = aws_iam_role.bastion.name
+  count = local.enable_bastion ? 1 : 0
+  name  = "${var.env}_bastion_instance_profile"
+  role  = aws_iam_role.bastion[0].name
 }
 
 resource "aws_iam_role" "bastion" {
-  name = "${var.env}_bastion_instance_role"
-  tags = local.bastion_tags
+  count = local.enable_bastion ? 1 : 0
+  name  = "${var.env}_bastion_instance_role"
+  tags  = local.bastion_tags
 
   assume_role_policy = <<EOB
 {
@@ -119,7 +126,8 @@ EOB
 }
 
 resource "aws_iam_policy" "bastion" {
-  name = "${var.env}_bastion_policy"
+  count = local.enable_bastion ? 1 : 0
+  name  = "${var.env}_bastion_policy"
 
   policy = <<EOB
 {
@@ -150,12 +158,14 @@ EOB
 }
 
 resource "aws_iam_role_policy_attachment" "bastion" {
-  role       = aws_iam_role.bastion.name
-  policy_arn = aws_iam_policy.bastion.arn
+  count      = min(length(aws_iam_role.bastion), length(aws_iam_policy.bastion))
+  role       = aws_iam_role.bastion[count.index].name
+  policy_arn = aws_iam_policy.bastion[count.index].arn
 }
 
 resource "aws_iam_role_policy_attachment" "bastion-s3-tmp" {
-  role       = aws_iam_role.bastion.name
+  count      = length(aws_iam_role.bastion)
+  role       = aws_iam_role.bastion[count.index].name
   policy_arn = data.aws_iam_policy.s3_tmp_rw.arn
 }
 
@@ -165,5 +175,5 @@ resource "aws_route53_record" "bastion" {
   name    = local.bastion_domain
   type    = "A"
   ttl     = 20
-  records = [aws_eip.bastion.public_ip]
+  records = [aws_eip.bastion[0].public_ip]
 }
