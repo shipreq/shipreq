@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.31"
+      version = ">= 4, < 5"
       configuration_aliases = [
         aws.us_east_1, // Needed for CloudFront SSL
       ]

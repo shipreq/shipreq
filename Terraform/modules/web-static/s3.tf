@@ -7,15 +7,18 @@
 // we have to serve from S3 for Gatsby to work.
 
 resource "aws_s3_bucket" "web" {
-  acl           = "public-read"
   bucket        = var.s3_bucket_name
   force_destroy = true
   tags          = local.default_tags
+}
 
-  website {
-    index_document = "index.html"
-    error_document = "404.html"
-  }
+resource "aws_s3_bucket_acl" "web" {
+  acl    = "public-read"
+  bucket = aws_s3_bucket.web.id
+}
+
+resource "aws_s3_bucket_policy" "web" {
+  bucket = aws_s3_bucket.web.id
 
   policy = <<EOF
 {
@@ -39,4 +42,16 @@ resource "aws_s3_bucket" "web" {
 
 resource "aws_s3_bucket_public_access_block" "web" {
   bucket = aws_s3_bucket.web.id
+}
+
+resource "aws_s3_bucket_website_configuration" "web" {
+  bucket = aws_s3_bucket.web.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "404.html"
+  }
 }
