@@ -120,6 +120,14 @@ module "shipreq" {
   ops_prometheus_tech_image_tag   = "latest"
 }
 
+output "altsite_cloudfront_id" {
+  value = module.shipreq.altsite_cloudfront_id
+}
+
+output "altsite_s3_bucket" {
+  value = module.shipreq.altsite_s3_bucket
+}
+
 output "bastion_host" {
   value = module.shipreq.bastion_host
 }

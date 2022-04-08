@@ -6,7 +6,7 @@ locals {
 resource "aws_cloudfront_distribution" "static" {
   count           = local.enable_app_cdn ? 1 : 0
   aliases         = [local.shipreq_cdn_domain]
-  depends_on      = [aws_acm_certificate.shipreq]
+  depends_on      = [module.cert]
   enabled         = true
   is_ipv6_enabled = true
   price_class     = var.shipreq_cdn_price_class

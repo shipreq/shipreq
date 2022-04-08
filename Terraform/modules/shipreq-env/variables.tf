@@ -290,6 +290,11 @@ variable "shipreq_cdn_price_class" {
 
 // =====================================================================================================================
 
+variable "enable_altsite_infra" {
+  type    = bool
+  default = true
+}
+
 variable "enable_app" {
   type    = bool
   default = true
@@ -354,4 +359,10 @@ variable "enable_postgres" {
 variable "enable_redis" {
   type    = bool
   default = true
+}
+
+variable "use_altsite" {
+  description = "Whether to serve a S3-based static website, instead of servicing requests with the real backend."
+  type        = bool
+  default     = false
 }

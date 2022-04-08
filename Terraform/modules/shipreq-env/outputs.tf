@@ -1,3 +1,11 @@
+output "altsite_cloudfront_id" {
+  value = length(module.altsite) == 0 ? null : module.altsite[0].cloudfront_id
+}
+
+output "altsite_s3_bucket" {
+  value = length(module.altsite) == 0 ? null : module.altsite[0].s3_bucket_name
+}
+
 output "bastion_host" {
   description = "The public hostname or IP of the bastion instance."
   value = (

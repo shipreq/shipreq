@@ -87,6 +87,7 @@ module "shipreq" {
   shipreq_webapp_use_cdn                = true
 
   # Features
+  enable_altsite_infra      = true
   enable_app                = false
   enable_bastion            = false
   enable_elasticsearch      = false
@@ -95,6 +96,7 @@ module "shipreq" {
   enable_ops                = false
   enable_postgres           = false
   enable_redis              = false
+  use_altsite               = true
 
   # Versions
   app_analytics_proxy_image_tag   = local.versions.app.analytics_proxy
@@ -117,6 +119,14 @@ module "shipreq" {
   ops_postgres_exporter_image_tag = local.versions.ops.postgres_exporter
   ops_prometheus_biz_image_tag    = local.versions.ops.prometheus_biz
   ops_prometheus_tech_image_tag   = local.versions.ops.prometheus_tech
+}
+
+output "altsite_cloudfront_id" {
+  value = module.shipreq.altsite_cloudfront_id
+}
+
+output "altsite_s3_bucket" {
+  value = module.shipreq.altsite_s3_bucket
 }
 
 output "bastion_host" {

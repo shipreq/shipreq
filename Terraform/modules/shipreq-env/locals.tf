@@ -13,6 +13,7 @@ locals {
     Name      = var.name
   }
 
+  enable_altsite_infra         = var.enable_altsite_infra || var.use_altsite
   enable_analytics_proxy       = var.enable_app
   enable_app_alb               = var.enable_app
   enable_app_cdn               = local.enable_app_ec2 && var.shipreq_cdn_subdomain != null
@@ -38,6 +39,7 @@ locals {
   enable_postgres              = var.enable_postgres
   enable_postgres_backup       = local.enable_postgres && local.enable_app_webapp
   enable_service_discovery     = local.enable_app_ec2 || local.enable_ops_ec2
+  use_altsite                  = var.use_altsite
 
   is_prod = var.env == "prod"
 

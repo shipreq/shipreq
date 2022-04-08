@@ -1,5 +1,6 @@
+# shipreq.com -> LB
 resource "aws_route53_record" "shipreq" {
-  count   = length(aws_lb.webapp)
+  count   = (length(aws_lb.webapp) > 0 && !local.use_altsite) ? 1 : 0
   zone_id = local.shipreq_zone_id
   name    = local.shipreq_domain
   type    = "A"
@@ -8,6 +9,15 @@ resource "aws_route53_record" "shipreq" {
     zone_id                = aws_lb.webapp[count.index].zone_id
     evaluate_target_health = false
   }
+}
+
+# www.shipreq.com -> shipreq.com
+resource "aws_route53_record" "www" {
+  zone_id = local.shipreq_zone_id
+  name    = "www.${local.shipreq_domain}."
+  type    = "CNAME"
+  ttl     = "21600"
+  records = ["${local.shipreq_domain}."]
 }
 
 resource "aws_lb_target_group" "webapp" {
@@ -33,6 +43,7 @@ resource "aws_lb_target_group" "webapp" {
   depends_on = [aws_lb.webapp[0]]
 }
 
+# HTTP
 resource "aws_lb_listener" "webapp-http" {
   count             = length(aws_lb.webapp)
   load_balancer_arn = aws_lb.webapp[count.index].arn
@@ -48,16 +59,17 @@ resource "aws_lb_listener" "webapp-http" {
   }
 }
 
+# HTTPS
 resource "aws_lb_listener" "webapp-https" {
-  count             = length(aws_lb.webapp)
-  load_balancer_arn = aws_lb.webapp[count.index].arn
+  count             = min(length(aws_lb.webapp), length(module.cert))
+  load_balancer_arn = aws_lb.webapp[0].arn
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS-1-2-Ext-2018-06"
-  certificate_arn   = aws_acm_certificate.shipreq.arn
+  certificate_arn   = module.cert[0].arn
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.webapp[count.index].arn
+    target_group_arn = aws_lb_target_group.webapp[0].arn
   }
 }
 
@@ -106,7 +118,8 @@ resource "aws_lb_listener_rule" "webapp-https-ops" {
     && !var.shipreq_webapp_allow_ops_routes_publically # We want ops routes hidden
   ) ? 1 : 0
 
-  listener_arn = aws_lb_listener.webapp-https[count.index].arn
+  listener_arn = aws_lb_listener.webapp-https[0].arn
+
   condition {
     path_pattern {
       values = ["/ops/*"]
@@ -119,4 +132,20 @@ resource "aws_lb_listener_rule" "webapp-https-ops" {
       status_code  = 404
     }
   }
+}
+
+# TLS certificate
+module "cert" {
+  # count  = var.use_altsite ? 0 : 1
+  source = "../acm-cert"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  domain_name               = local.shipreq_domain
+  subject_alternative_names = ["www.${local.shipreq_domain}", local.analytics_proxy_domain]
+  tags                      = local.default_tags
+  zone_id                   = local.shipreq_zone_id
 }
