@@ -1,17 +1,16 @@
 locals {
-  es_tags  = merge(local.default_tags, { Name = "${var.env}-elasticsearch" })
-  es_count = var.elasticsearch_enable ? 1 : 0
+  es_tags = merge(local.default_tags, { Name = "${var.env}-elasticsearch" })
 }
 
 resource "aws_elasticsearch_domain" "es" {
-  count                 = local.es_count
+  count                 = local.enable_elasticsearch ? 1 : 0
   domain_name           = var.env
   elasticsearch_version = "7.7"
   tags                  = local.es_tags
 
   vpc_options {
     subnet_ids         = [aws_subnet.private.id]
-    security_group_ids = [aws_security_group.es.id]
+    security_group_ids = [aws_security_group.es[0].id]
   }
 
   cluster_config {
@@ -37,8 +36,8 @@ resource "aws_elasticsearch_domain" "es" {
 }
 
 resource "aws_elasticsearch_domain_policy" "es" {
-  count           = local.es_count
-  domain_name     = aws_elasticsearch_domain.es[count.index].domain_name
+  count           = local.enable_elasticsearch ? 1 : 0
+  domain_name     = aws_elasticsearch_domain.es[0].domain_name
   access_policies = <<EOB
   {
     "Version": "2012-10-17",
@@ -47,7 +46,7 @@ resource "aws_elasticsearch_domain_policy" "es" {
         "Effect": "Allow",
         "Action": "es:*",
         "Principal": { "AWS": [ "*" ] },
-        "Resource": "${aws_elasticsearch_domain.es[count.index].arn}/*"
+        "Resource": "${aws_elasticsearch_domain.es[0].arn}/*"
       }
     ]
   }
@@ -55,24 +54,31 @@ EOB
 }
 
 resource "aws_security_group" "es" {
+  count  = local.enable_elasticsearch ? 1 : 0
   name   = "sg_${var.env}_elasticsearch"
   vpc_id = aws_vpc.main.id
   tags   = local.es_tags
 
-  ingress {
-    protocol        = "tcp"
-    from_port       = 443
-    to_port         = 443
-    security_groups = [aws_security_group.bastion.id]
-    description     = "Bastion access"
+  dynamic "ingress" {
+    for_each = aws_security_group.bastion
+    content {
+      protocol        = "tcp"
+      from_port       = 443
+      to_port         = 443
+      security_groups = [ingress.value.id]
+      description     = "Bastion access"
+    }
   }
 
-  ingress {
-    protocol        = "tcp"
-    from_port       = 443
-    to_port         = 443
-    security_groups = [aws_security_group.nat.id]
-    description     = "NAT access"
+  dynamic "ingress" {
+    for_each = aws_security_group.nat
+    content {
+      protocol        = "tcp"
+      from_port       = 443
+      to_port         = 443
+      security_groups = [ingress.value.id]
+      description     = "NAT access"
+    }
   }
 
   ingress {
@@ -85,10 +91,10 @@ resource "aws_security_group" "es" {
 }
 
 resource "aws_route53_record" "es" {
-  count   = local.es_count
+  count   = local.enable_elasticsearch ? 1 : 0
   zone_id = aws_route53_zone.internal.zone_id
   name    = local.es_domain
   type    = "CNAME"
   ttl     = local.dns_stable_ttl
-  records = [aws_elasticsearch_domain.es[count.index].endpoint]
+  records = [aws_elasticsearch_domain.es[0].endpoint]
 }

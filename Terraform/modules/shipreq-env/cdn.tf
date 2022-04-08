@@ -4,10 +4,9 @@ locals {
 }
 
 resource "aws_cloudfront_distribution" "static" {
-  count = var.shipreq_cdn_subdomain == null ? 0 : 1
-
+  count           = local.enable_app_cdn ? 1 : 0
   aliases         = [local.shipreq_cdn_domain]
-  depends_on      = [aws_acm_certificate.shipreq]
+  depends_on      = [module.cert]
   enabled         = true
   is_ipv6_enabled = true
   price_class     = var.shipreq_cdn_price_class
@@ -62,7 +61,7 @@ resource "aws_cloudfront_distribution" "static" {
 }
 
 resource "aws_acm_certificate" "cdn" {
-  count             = var.shipreq_cdn_subdomain == null ? 0 : 1
+  count             = local.enable_app_cdn ? 1 : 0
   provider          = aws.us_east_1 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#acm_certificate_arn
   domain_name       = local.shipreq_cdn_domain
   validation_method = "DNS"
@@ -89,14 +88,14 @@ resource "aws_route53_record" "cdn_cert_validation" {
 }
 
 resource "aws_acm_certificate_validation" "cdn" {
-  count                   = var.shipreq_cdn_subdomain == null ? 0 : 1
+  count                   = local.enable_app_cdn ? 1 : 0
   provider                = aws.us_east_1 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution#acm_certificate_arn
   certificate_arn         = aws_acm_certificate.cdn[0].arn
   validation_record_fqdns = [for r in aws_route53_record.cdn_cert_validation : r.fqdn]
 }
 
 resource "aws_route53_record" "static" {
-  count   = var.shipreq_cdn_subdomain == null ? 0 : 1
+  count   = local.enable_app_cdn ? 1 : 0
   zone_id = local.shipreq_zone_id
   name    = "${local.shipreq_cdn_domain}."
   type    = "A"

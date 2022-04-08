@@ -13,6 +13,36 @@ locals {
     Name      = var.name
   }
 
+  enable_altsite_infra         = var.enable_altsite_infra || var.use_altsite
+  enable_analytics_proxy       = var.enable_app
+  enable_app_alb               = var.enable_app
+  enable_app_cdn               = local.enable_app_ec2 && var.shipreq_cdn_subdomain != null
+  enable_app_ec2               = var.enable_app
+  enable_app_redis             = var.enable_app && var.enable_redis
+  enable_app_taskman           = var.enable_app && var.enable_db_dependant_services
+  enable_app_webapp            = var.enable_app && var.enable_db_dependant_services
+  enable_bastion               = var.enable_bastion
+  enable_cadvisor              = local.enable_metrics_collection && var.enable_cadvisor
+  enable_elasticsearch         = var.enable_elasticsearch
+  enable_filebeat              = local.enable_elasticsearch && var.enable_filebeat
+  enable_metrics_collection    = var.enable_metrics_collection && local.enable_ops_prometheus
+  enable_metrics_services      = var.enable_metrics_services && local.enable_ops_ec2
+  enable_nat                   = local.enable_app_ec2 || local.enable_ops_ec2
+  enable_nat_metrics           = local.enable_nat && local.enable_metrics_collection
+  enable_node_exporter         = local.enable_metrics_collection && var.enable_node_exporter
+  enable_ops_backup_metrics    = local.enable_ops_prometheus
+  enable_ops_ec2               = var.enable_ops
+  enable_ops_ecs_exporter      = local.enable_metrics_collection && var.enable_ecs_exporter
+  enable_ops_grafana           = local.enable_metrics_services && var.enable_db_dependant_services
+  enable_ops_postgres_exporter = local.enable_metrics_collection && var.enable_db_dependant_services
+  enable_ops_prometheus        = local.enable_metrics_services
+  enable_postgres              = var.enable_postgres
+  enable_postgres_backup       = local.enable_postgres && local.enable_app_webapp
+  enable_service_discovery     = local.enable_app_ec2 || local.enable_ops_ec2
+  use_altsite                  = var.use_altsite
+
+  is_prod = var.env == "prod"
+
   seconds_in_a_year = 31556952
 
   nat_cert = file("${path.module}/../../../Docker/nat/ssl/squid.crt")
@@ -35,8 +65,8 @@ EOB
 
   region = regex("^[a-z]+-[a-z]+-\\d+", var.availability_zone)
 
-  shipreq_zone_id = var.env == "prod" ? data.aws_route53_zone.shipreq.zone_id : data.aws_route53_zone.shipwreck.zone_id
-  shipreq_domain  = var.env == "prod" ? "shipreq.com" : "${var.env}.shipwreck.space"
+  shipreq_zone_id = local.is_prod ? data.aws_route53_zone.shipreq.zone_id : data.aws_route53_zone.shipwreck.zone_id
+  shipreq_domain  = local.is_prod ? "shipreq.com" : "${var.env}.shipwreck.space"
   shipreq_url     = "https://${local.shipreq_domain}"
 
   analytics_proxy_subdomain = "ap"
@@ -54,14 +84,12 @@ EOB
 
   nat_domain = "nat.${local.internal_domain}"
 
-  bastion_zone_id = var.env == "prod" ? null : data.aws_route53_zone.shipwreck.zone_id
-  bastion_domain  = var.env == "prod" ? null : "b.${var.env}.shipwreck.space"
+  bastion_zone_id = (!local.enable_bastion || local.is_prod) ? null : data.aws_route53_zone.shipwreck.zone_id
+  bastion_domain  = (!local.enable_bastion || local.is_prod) ? null : "b.${var.env}.shipwreck.space"
 
   es_domain             = "es.${local.internal_domain}"
   es_root_url           = "https://${local.es_domain}"
   es_root_url_with_port = "${local.es_root_url}:443"
-
-  filebeat_enabled = var.elasticsearch_enable
 
   redis_domain  = "redis.${local.internal_domain}"
   redis_version = "5.0.5"
@@ -131,7 +159,9 @@ EOB
     shipreq_webapp  = 800
   }
 
-  app_min_healthy_percent = var.app_cluster_size > 1 ? 50 : 0
+  app_cluster_size = !var.enable_app ? 0 : var.app_cluster_size
+
+  app_min_healthy_percent = local.app_cluster_size > 1 ? 50 : 0
 
   app_subdomain = "app"
   app_host      = "${local.app_subdomain}.${local.internal_sd_domain}"

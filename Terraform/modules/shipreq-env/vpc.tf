@@ -14,8 +14,9 @@ resource "aws_route53_zone" "internal" {
 }
 
 resource "aws_service_discovery_private_dns_namespace" "internal" {
-  name = local.internal_sd_domain
-  vpc  = aws_vpc.main.id
+  count = local.enable_service_discovery ? 1 : 0
+  name  = local.internal_sd_domain
+  vpc   = aws_vpc.main.id
 }
 
 // ================================================================================================
@@ -78,21 +79,24 @@ resource "aws_subnet" "private_2" {
 }
 
 resource "aws_route_table" "private" {
+  count  = length(aws_instance.nat)
   vpc_id = aws_vpc.main.id
   tags   = merge(local.default_tags, { Name = "${var.env}-private" })
 
   route {
-    cidr_block  = "0.0.0.0/0"
-    instance_id = aws_instance.nat.id
+    cidr_block           = "0.0.0.0/0"
+    network_interface_id = aws_instance.nat[count.index].primary_network_interface_id
   }
 }
 
 resource "aws_route_table_association" "private" {
+  count          = length(aws_route_table.private)
   subnet_id      = aws_subnet.private.id
-  route_table_id = aws_route_table.private.id
+  route_table_id = aws_route_table.private[count.index].id
 }
 
 resource "aws_route_table_association" "private_2" {
+  count          = length(aws_route_table.private)
   subnet_id      = aws_subnet.private_2.id
-  route_table_id = aws_route_table.private.id
+  route_table_id = aws_route_table.private[count.index].id
 }

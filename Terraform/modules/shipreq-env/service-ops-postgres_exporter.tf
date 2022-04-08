@@ -3,9 +3,9 @@ locals {
 }
 
 resource "aws_ecs_service" "postgres_exporter" {
-  count                              = var.enable_db_dependant_services ? 1 : 0
+  count                              = local.enable_ops_postgres_exporter ? 1 : 0
   name                               = "${var.env}-ops-postgres_exporter"
-  cluster                            = aws_ecs_cluster.ops.id
+  cluster                            = aws_ecs_cluster.ops[0].id
   task_definition                    = aws_ecs_task_definition.postgres_exporter.arn
   desired_count                      = 1
   propagate_tags                     = "SERVICE"

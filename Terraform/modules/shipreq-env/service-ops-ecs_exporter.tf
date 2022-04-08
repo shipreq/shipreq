@@ -3,8 +3,9 @@ locals {
 }
 
 resource "aws_ecs_service" "ecs_exporter" {
+  count               = local.enable_ops_ecs_exporter ? 1 : 0
   name                = "${var.env}-ops-ecs_exporter"
-  cluster             = aws_ecs_cluster.ops.id
+  cluster             = aws_ecs_cluster.ops[0].id
   task_definition     = aws_ecs_task_definition.ecs_exporter.arn
   scheduling_strategy = "DAEMON"
   propagate_tags      = "SERVICE"
@@ -40,7 +41,8 @@ EOB
 }
 
 resource "aws_iam_policy" "ecs_exporter" {
-  name = "${var.env}_ops_ecs_exporter_policy"
+  count = length(aws_ecs_service.ecs_exporter)
+  name  = "${var.env}_ops_ecs_exporter_policy"
 
   policy = <<EOB
 {
@@ -64,6 +66,7 @@ EOB
 }
 
 resource "aws_iam_role_policy_attachment" "ops-ecs-monitoring" {
-  role       = aws_iam_role.ops-ecs.id
-  policy_arn = aws_iam_policy.ecs_exporter.arn
+  count      = min(length(aws_iam_role.ops-ecs), length(aws_iam_policy.ecs_exporter))
+  role       = aws_iam_role.ops-ecs[count.index].id
+  policy_arn = aws_iam_policy.ecs_exporter[count.index].arn
 }

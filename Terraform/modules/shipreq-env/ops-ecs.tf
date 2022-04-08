@@ -3,25 +3,36 @@ locals {
 }
 
 resource "aws_key_pair" "ops" {
+  count      = local.enable_ops_ec2 ? 1 : 0
   key_name   = "${var.env}-ops"
   public_key = var.ops_public_key
 }
 
 resource "aws_ecs_cluster" "ops" {
-  name = "${var.env}-ops"
-  tags = local.ops_tags
+  count = local.enable_ops_ec2 ? 1 : 0
+  name  = "${var.env}-ops"
+  tags  = local.ops_tags
 }
 
 resource "aws_autoscaling_group" "ops" {
+  count               = length(aws_launch_template.ops)
   name                = "${var.env}-ops-cluster"
   min_size            = 1
   max_size            = 1
   desired_capacity    = 1
   vpc_zone_identifier = [aws_subnet.private.id]
-  tags                = [for k, v in local.ops_tags : { key = k, value = v, propagate_at_launch = true }]
+
+  dynamic "tag" {
+    for_each = local.ops_tags
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
+  }
 
   launch_template {
-    id      = aws_launch_template.ops.id
+    id      = aws_launch_template.ops[count.index].id
     version = "$Latest"
   }
 
@@ -30,11 +41,12 @@ resource "aws_autoscaling_group" "ops" {
 }
 
 resource "aws_launch_template" "ops" {
+  count                  = local.enable_ops_ec2 ? 1 : 0
   name                   = "${var.env}-ops-ecs"
   image_id               = data.aws_ssm_parameter.ami-ecs.value
   instance_type          = var.ops_instance_type
-  vpc_security_group_ids = [aws_security_group.ops.id]
-  key_name               = aws_key_pair.ops.key_name
+  vpc_security_group_ids = aws_security_group.ops[*].id
+  key_name               = aws_key_pair.ops[0].key_name
   tags                   = local.ops_tags
 
   credit_specification {
@@ -42,7 +54,7 @@ resource "aws_launch_template" "ops" {
   }
 
   iam_instance_profile {
-    arn = aws_iam_instance_profile.ops-ecs.arn
+    arn = aws_iam_instance_profile.ops-ecs[0].arn
   }
 
   block_device_mappings {
@@ -54,8 +66,8 @@ resource "aws_launch_template" "ops" {
   }
 
   user_data = base64encode(trimspace(templatefile("${path.module}/ops-ec2-init.sh", {
-    cluster                           = aws_ecs_cluster.ops.name
-    ec2_service_discovery             = module.ops_ec2_sd.user_data
+    cluster                           = aws_ecs_cluster.ops[0].name
+    ec2_service_discovery             = module.ops_ec2_sd[0].user_data
     install_elasticsearch_maintenance = local.install_elasticsearch_maintenance
     install_nat_cert                  = local.install_nat_cert
     install_prometheus_biz_ebs        = module.ecs_ebs_prometheus_biz.user_data
@@ -74,16 +86,20 @@ resource "aws_launch_template" "ops" {
 }
 
 resource "aws_security_group" "ops" {
+  count  = local.enable_ops_ec2 ? 1 : 0
   name   = "sg_${var.env}_ops"
   vpc_id = aws_vpc.main.id
   tags   = local.ops_tags
 
-  ingress {
-    protocol        = "tcp"
-    from_port       = 0
-    to_port         = 65535
-    security_groups = [aws_security_group.bastion.id]
-    description     = "Bastion can access everything"
+  dynamic "ingress" {
+    for_each = aws_security_group.bastion
+    content {
+      protocol        = "tcp"
+      from_port       = 0
+      to_port         = 65535
+      security_groups = [ingress.value.id]
+      description     = "Bastion can access everything"
+    }
   }
 
   egress {
@@ -118,12 +134,15 @@ resource "aws_security_group" "ops" {
     description = "Metrics: node_exporter"
   }
 
-  egress {
-    protocol        = "tcp"
-    from_port       = local.ports.nat.squid_exporter
-    to_port         = local.ports.nat.squid_exporter
-    security_groups = [aws_security_group.nat.id]
-    description     = "Metrics: squid_exporter"
+  dynamic "egress" {
+    for_each = aws_security_group.nat
+    content {
+      protocol        = "tcp"
+      from_port       = local.ports.nat.squid_exporter
+      to_port         = local.ports.nat.squid_exporter
+      security_groups = [egress.value.id]
+      description     = "Metrics: squid_exporter"
+    }
   }
 
   egress {
@@ -142,18 +161,22 @@ resource "aws_security_group" "ops" {
     description = "Containers with dynamic ports"
   }
 
-  egress {
-    protocol        = "tcp"
-    from_port       = 5432
-    to_port         = 5432
-    security_groups = [aws_security_group.postgres.id]
-    description     = "Postgres"
+  dynamic "egress" {
+    for_each = aws_security_group.postgres
+    content {
+      protocol        = "tcp"
+      from_port       = 5432
+      to_port         = 5432
+      security_groups = [egress.value.id]
+      description     = "Postgres"
+    }
   }
 }
 
 resource "aws_iam_role" "ops-ecs" {
-  name = "${var.env}_ops_ecs_instance_role"
-  tags = local.ops_tags
+  count = local.enable_ops_ec2 ? 1 : 0
+  name  = "${var.env}_ops_ecs_instance_role"
+  tags  = local.ops_tags
 
   assume_role_policy = <<EOB
 {
@@ -172,34 +195,39 @@ EOB
 }
 
 resource "aws_iam_instance_profile" "ops-ecs" {
-  name = "${var.env}_ops_ecs_instance_profile"
-  role = aws_iam_role.ops-ecs.name
-  path = aws_iam_role.ops-ecs.path
+  count = length(aws_iam_role.ops-ecs)
+  name  = "${var.env}_ops_ecs_instance_profile"
+  role  = aws_iam_role.ops-ecs[count.index].name
+  path  = aws_iam_role.ops-ecs[count.index].path
 }
 
 resource "aws_iam_role_policy_attachment" "ops-ecs-ec2" {
-  role       = aws_iam_role.ops-ecs.id
+  count      = length(aws_iam_role.ops-ecs)
+  role       = aws_iam_role.ops-ecs[count.index].id
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
 resource "aws_iam_role_policy_attachment" "ops-ecs-ec2-s3tmp" {
-  role       = aws_iam_role.ops-ecs.id
+  count      = length(aws_iam_role.ops-ecs)
+  role       = aws_iam_role.ops-ecs[count.index].id
   policy_arn = data.aws_iam_policy.s3_tmp_rw.arn
 }
 
 resource "aws_iam_role_policy_attachment" "ops-ecs-ec2-read_elasticsearch_maintenance_params" {
-  role       = aws_iam_role.ops-ecs.id
+  count      = length(aws_iam_role.ops-ecs)
+  role       = aws_iam_role.ops-ecs[count.index].id
   policy_arn = aws_iam_policy.read_elasticsearch_maintenance_params.arn
 }
 
 # Service discovery requires an ENI per service but there's a small ENI/instanceType limit that we exceed.
 # Therefore, we use EC2 service discovery.
 module "ops_ec2_sd" {
+  count  = local.enable_ops_ec2 ? 1 : 0
   source = "../ec2-sd"
 
   ec2_name_tag    = local.ops_tags.Name
-  ec2_role_name   = aws_iam_role.ops-ecs.name
+  ec2_role_name   = aws_iam_role.ops-ecs[0].name
   name            = "${var.env}-ops"
   sd_name         = local.ops_subdomain
-  sd_namespace_id = aws_service_discovery_private_dns_namespace.internal.id
+  sd_namespace_id = aws_service_discovery_private_dns_namespace.internal[0].id
 }

@@ -1,9 +1,11 @@
 data "aws_region" "s3" {}
 
 resource "aws_cloudfront_distribution" "web" {
+  count = var.cdn_enable ? 1 : 0
+
   aliases             = [var.dns_domain]
   default_root_object = "index.html"
-  depends_on          = [aws_acm_certificate.web, aws_s3_bucket.web]
+  depends_on          = [module.cert, aws_s3_bucket.web]
   enabled             = true
   is_ipv6_enabled     = true
   price_class         = var.cdn_price_class
@@ -52,7 +54,7 @@ resource "aws_cloudfront_distribution" "web" {
   }
 
   viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.web.arn
+    acm_certificate_arn      = var.cert_arn != null ? var.cert_arn : var.cert_create ? module.cert[0].arn : null
     minimum_protocol_version = "TLSv1.2_2019"
     ssl_support_method       = "sni-only"
   }

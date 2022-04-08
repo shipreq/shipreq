@@ -3,6 +3,7 @@ locals {
 }
 
 resource "aws_ecs_service" "cadvisor" {
+  count               = local.cadvisor_enabled ? 1 : 0
   name                = "${var.name_prefix}-cadvisor"
   cluster             = var.cluster_id
   task_definition     = aws_ecs_task_definition.cadvisor.arn

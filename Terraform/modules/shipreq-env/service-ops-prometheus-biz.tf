@@ -9,8 +9,9 @@ locals {
 }
 
 resource "aws_ecs_service" "prometheus_biz" {
+  count                              = local.enable_ops_prometheus ? 1 : 0
   name                               = "${var.env}-ops-prometheus-biz"
-  cluster                            = aws_ecs_cluster.ops.id
+  cluster                            = aws_ecs_cluster.ops[0].id
   task_definition                    = aws_ecs_task_definition.prometheus_biz.arn
   desired_count                      = 1
   propagate_tags                     = "SERVICE"
@@ -79,7 +80,7 @@ module "ecs_ebs_prometheus_biz" {
   source      = "../ecs-ebs"
   name        = "${var.env}-ops-prometheus-biz"
   size        = var.prometheus_biz_ebs_size
-  ec2_role    = aws_iam_role.ops-ecs
+  ec2_role    = length(aws_iam_role.ops-ecs) > 0 ? aws_iam_role.ops-ecs[0] : null
   device_path = local.ops_device.prometheus_biz
   tags        = local.prometheus_biz_tags
 

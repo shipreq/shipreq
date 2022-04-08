@@ -1,0 +1,16 @@
+{
+  "name": "shipreq-hiatus",
+  "version": "1.0.0",
+  "main": "server.js",
+  "private": true,
+  "devDependencies": {
+    "easy-livereload": "^1.4.3",
+    "errorhandler": "^1.5.1",
+    "express": "^4.17.1",
+    "node-dev": "^7.1.0",
+    "pug": "^3.0.2"
+  },
+  "scripts": {
+    "start": "NODE_ENV=development ./node_modules/.bin/node-dev server.js"
+  }
+}

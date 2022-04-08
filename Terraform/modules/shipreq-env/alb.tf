@@ -8,14 +8,14 @@ locals {
 data "aws_elb_service_account" "main" {}
 
 resource "aws_lb" "webapp" {
-  name                       = "${var.env}-shipreq-webapp"
-  internal                   = false
-  load_balancer_type         = "application"
-  subnets                    = [aws_subnet.public.id, aws_subnet.public_2.id]
-  security_groups            = [aws_security_group.webapp-alb.id]
-  enable_http2               = true
-  enable_deletion_protection = var.deletion_protection
-  tags                       = local.default_tags
+  count              = local.enable_app_alb ? 1 : 0
+  name               = "${var.env}-shipreq-webapp"
+  internal           = false
+  load_balancer_type = "application"
+  subnets            = [aws_subnet.public.id, aws_subnet.public_2.id]
+  security_groups    = [aws_security_group.webapp-alb[0].id]
+  enable_http2       = true
+  tags               = local.default_tags
 
   access_logs {
     bucket  = aws_s3_bucket.logs.bucket
@@ -25,6 +25,7 @@ resource "aws_lb" "webapp" {
 }
 
 resource "aws_security_group" "webapp-alb" {
+  count  = local.enable_app_alb ? 1 : 0
   name   = "sg_${var.env}_alb_webapp"
   vpc_id = aws_vpc.main.id
   tags   = merge(local.app_tags, { Name = "${var.env}-alb-webapp" })
@@ -53,12 +54,15 @@ resource "aws_security_group" "webapp-alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  egress {
-    protocol        = "tcp"
-    from_port       = 32768
-    to_port         = 65535
-    security_groups = [aws_security_group.app.id]
-    description     = "Containers with dynamic ports"
+  dynamic "egress" {
+    for_each = aws_security_group.app
+    content {
+      protocol        = "tcp"
+      from_port       = 32768
+      to_port         = 65535
+      security_groups = [egress.value.id]
+      description     = "Containers with dynamic ports"
+    }
   }
 
   lifecycle { create_before_destroy = true }
@@ -66,8 +70,12 @@ resource "aws_security_group" "webapp-alb" {
 
 resource "aws_s3_bucket" "logs" {
   bucket        = local.s3_logs_bucket
-  force_destroy = ! var.deletion_protection
-  policy        = <<EOB
+  force_destroy = !var.deletion_protection
+}
+
+resource "aws_s3_bucket_policy" "logs" {
+  bucket = aws_s3_bucket.logs.id
+  policy = <<EOB
 {
   "Id": "Policy",
   "Version": "2012-10-17",

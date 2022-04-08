@@ -3,8 +3,9 @@ locals {
 }
 
 resource "aws_ecs_service" "nat" {
+  count               = length(aws_ecs_cluster.nat)
   name                = "${var.env}-nat"
-  cluster             = aws_ecs_cluster.nat.id
+  cluster             = aws_ecs_cluster.nat[count.index].id
   task_definition     = aws_ecs_task_definition.nat.arn
   scheduling_strategy = "DAEMON"
   propagate_tags      = "SERVICE"
