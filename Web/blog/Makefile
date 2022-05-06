@@ -1,7 +1,8 @@
 .PHONY: build c cd ci clean cp d deploy dev invalidate-prod p prod terraform-check terraform-sync watch-prod
 
+AWS           := ../../Docker/aws
 GATSBY        := ./node_modules/gatsby-cli/cli.js
-GATSBY_s3     := ./node_modules/gatsby-plugin-s3/bin.js
+GATSBY_s3     := AWS_PROFILE=shipreq ./node_modules/gatsby-plugin-s3/bin.js
 TF_DIR        := ../../Terraform/blog
 TF_OUT        := ./src/config/terraform.ts
 TF_CHECK      := /tmp/shipreq-blog-terraform-check.js
@@ -55,7 +56,7 @@ deploy:
 	$(GATSBY_s3) deploy
 
 invalidate-prod:
-	../Docker/aws cloudfront create-invalidation --distribution-id $(CLOUDFRONT_ID) --paths "/*"
+	$(AWS) cloudfront create-invalidation --distribution-id $(CLOUDFRONT_ID) --paths "/*"
 
 ci: terraform-check clean build deploy invalidate-prod
 
