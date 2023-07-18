@@ -1,8 +1,10 @@
 .PHONY: build c cd ci clean cp d deploy dev invalidate-prod p prod terraform-check terraform-sync watch-prod
 
+NVM_INIT      := . ${NVM_DIR}/nvm.sh
+
 AWS           := ../../Docker/aws
-GATSBY        := ./node_modules/gatsby-cli/cli.js
-GATSBY_s3     := AWS_PROFILE=shipreq ./node_modules/gatsby-plugin-s3/bin.js
+GATSBY        := $(NVM_INIT) && nvm run ./node_modules/gatsby-cli/cli.js
+GATSBY_s3     := $(NVM_INIT) && AWS_PROFILE=shipreq nvm run ./node_modules/gatsby-plugin-s3/bin.js
 TF_DIR        := ../../Terraform/blog
 TF_OUT        := ./src/config/terraform.ts
 TF_CHECK      := /tmp/shipreq-blog-terraform-check.js
