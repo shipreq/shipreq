@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd "$(dirname "$(readlink -e "$0")")" || exit 1
+cd "$(dirname "$0")" || exit 1
 
 # Run via docker if not already
 if [ -z "$SHIPREQ_DEV_NODE" ]; then

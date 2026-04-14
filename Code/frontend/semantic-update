@@ -2,7 +2,7 @@
 
 set -eo pipefail
 
-cd "$(dirname "$(readlink -e "$0")")"
+cd "$(dirname "$0")"
 
 # Run via docker if not already
 if [ -z "$SHIPREQ_DEV_NODE" ]; then

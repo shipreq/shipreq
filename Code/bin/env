@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd "$(dirname "$(readlink -e "$0")")/../envs" || exit 1
+cd "$(dirname "$0")/../envs" || exit 1
 
 if [ $# -eq 0 ]; then
   self="$0"
