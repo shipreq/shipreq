@@ -14,13 +14,25 @@ gu install js
 # Running locally for the first time
 
 ```sh
-# Build local docker containers
 cd ../Docker/dev-postgres
 ./build
-# cd ../shipreq-base
-# ./build
+```
 
-# cd ../../Code
-# sbt taskmanServer/docker
-# bin/dev up -d postgres redis taskman
+### Without Docker
+
+Start sbt and run:
+```
+up
+taskmanServer/run
+```
+
+### With Docker
+
+```sh
+cd ../Docker/shipreq-base
+./build
+
+cd ../../Code
+sbt dockers
+bin/dev up -d postgres redis taskman webapp
 ```
