@@ -14,17 +14,6 @@ package object test {
 
     // React 17 + JSDOM + execCommand("insertText") doesn't work
     TextFieldEdit.instance = testTextFieldEdit
-
-    // JSDOM doesn't support innerText
-    js.eval(
-      """if (typeof HTMLElement !== 'undefined' && !Object.prototype.hasOwnProperty.call(HTMLElement.prototype, 'innerText')) {
-        |  Object.defineProperty(HTMLElement.prototype, 'innerText', {
-        |    get: function() { return this.textContent; },
-        |    set: function(v) { this.textContent = v; },
-        |    configurable: true
-        |  });
-        |}
-        |""".stripMargin)
   }
 
   private def testTextFieldEdit: TextFieldEdit = new TextFieldEdit {
