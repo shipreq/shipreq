@@ -93,13 +93,13 @@ object ProjectSpaTestDsl {
 
     val dropdownCrumbName: Option[String] =
       nav.collect01(".ui.dropdown.inline").zippers.flatMap { z =>
-        z.collect0n(">span,>.text,.header").zippers.iterator.map(_.innerText.trim).find(_.nonEmpty)
+        z.collect0n(">span,>.text,.header").zippers.iterator.map(_.domAsHtml.textContent.trim).find(_.nonEmpty)
       }
 
     val page: Page =
       dropdownCrumbName match {
         case Some("Req Table") => Page.ReqTable
-        case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.innerText.trim).get)
+        case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.domAsHtml.textContent.trim).get)
         case Some("Req Graph") => Page.ReqGraph
         case Some("Fields")    => Page.CfgFields
         case Some("Req Types") => Page.CfgReqTypes
@@ -110,7 +110,7 @@ object ProjectSpaTestDsl {
       }
 
     val unsavedChanges: Int =
-      nav.collect01(".icon.edit").zippers.fold(0)(_.parent("span").innerText.toInt)
+      nav.collect01(".icon.edit").zippers.fold(0)(_.parent("span").domAsHtml.textContent.trim.toInt)
   }
 
   final case class Obs($          : DomZipperJs,
