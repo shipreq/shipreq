@@ -24,7 +24,7 @@ webappMacroJS         - n/a
 webappBaseJVM         - n/a
 webappBaseJS          - n/a
 webappBaseTestJVM     - pass
-webappBaseTestJS      - fixed --- FAIL: failed to start phantomjs;
+webappBaseTestJS      - pass
 webappMemberJVM       - n/a
 webappMemberJS        - n/a
 webappMemberTestJVM   - pass
@@ -37,36 +37,9 @@ webappClientLoaders   - n/a
 webappClientHome      - pass
 webappClientWwApi     - n/a
 webappClientWw        - pass
-webappClientProject   - FAIL: failed to start phantomjs;
+webappClientProject   - pass
 webappSsrJVM          - n/a
 webappSsrJS           - n/a
-webappServerLogicJVM  - FAIL: Could not initialize class japgolly.scalagraal.js.LanguageJs$.
-webappServerLogicJS   - fixed --- FAIL: failed to start phantomjs;
+webappServerLogicJVM  - pass
+webappServerLogicJS   - pass
 webappServer          - pass
-
-par=2
-[info] Tests: 339, Passed: 288, Failed: 51
-[error] Failed tests:
-[error]         shipreq.webapp.client.project.app.pages.config.fields.FieldConfigTest
-[error]         shipreq.webapp.client.project.app.pages.content.reqgraph.ReqGraphTest
-[error]         shipreq.webapp.client.project.app.pages.config.reqtypes.ReqTypeConfigTest
-[error]         shipreq.webapp.client.project.app.pages.content.reqtable.ReqTableTest
-[error]         shipreq.webapp.client.project.app.ProjectSpaTest
-[error]         shipreq.webapp.client.project.app.pages.content.reqtable.ReqTableTest2
-[error]         shipreq.webapp.client.project.app.pages.content.issues.IssuesPageTest
-[error]         shipreq.webapp.client.project.app.pages.config.tags.TagConfigTest
-[error] (Test / test) sbt.TestsFailedException: Tests unsuccessful
-[error] Total time: 885 s (0:14:45.0), completed 16 Apr 2026, 3:24:20 pm
-
-par=4
-[info] Tests: 339, Passed: 320, Failed: 19
-[error] Failed tests:
-[error]         shipreq.webapp.client.project.app.pages.content.reqgraph.ReqGraphTest
-[error]         shipreq.webapp.client.project.app.pages.content.reqtable.ReqTableTest2
-[error]         shipreq.webapp.client.project.app.pages.config.tags.TagConfigTest
-[error] (Test / test) sbt.TestsFailedException: Tests unsuccessful
-[error] Total time: 693 s (0:11:33.0), completed 16 Apr 2026, 3:49:52 pm
-
-testOnly -- shipreq.webapp.client.project.app.pages.content.reqdetail.ReqDetailTest.fieldRules.si1
-  - 11138ms when run via `test`
-  - 432ms when run via `testOnly`
