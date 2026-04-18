@@ -40,6 +40,7 @@ RUN cd /opt \
  && rm $f \
  && ln -s graalvm-*${GRAAL_VERSION}* graal \
  && cd graal \
+ && bin/gu install js \
  && rm -rf \
            {bin,languages/js/bin}/{js,node,npm} \
            bin/{gu,polyglot} \

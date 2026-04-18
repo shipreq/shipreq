@@ -9,6 +9,9 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/graalvm-community-openjdk-17/
 export PATH="$JAVA_HOME/bin:$PATH"
 
 gu install js
+
+# For building webapp docker
+brew install parallel pigz
 ```
 
 # Running locally for the first time
@@ -31,6 +34,9 @@ taskmanServer/run
 ```sh
 cd ../Docker/shipreq-base
 ./build
+
+cd ../dev-fake_cdn
+make build
 
 cd ../../Code
 sbt dockers
