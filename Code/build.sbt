@@ -57,11 +57,6 @@ val benchmarkJvm          = ShipReqBuild.benchmarkJvm
 val benchmarkJs           = ShipReqBuild.benchmarkJs
 val utils                 = ShipReqBuild.utils
 
-val `scalafix-input`      = ScalafixBuild.`scalafix-input`
-val `scalafix-output`     = ScalafixBuild.`scalafix-output`
-val `scalafix-rules`      = ScalafixBuild.`scalafix-rules`
-val `scalafix-tests`      = ScalafixBuild.`scalafix-tests`
-
 // More than these crashes phantomjs for some reason
 Global / concurrentRestrictions += Tags.limit(CustomTags.WebappClientProjectTest, WebappBuild.WebappClientProject.parallelism)
 

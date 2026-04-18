@@ -16,7 +16,6 @@ object ShipReqBuild {
     Project("root", file("."))
       .configure(Common.jvmSettings)
       .aggregate(base, taskman, webapp, utils, benchmarkJvm, benchmarkJs)
-      .aggregate(ScalafixBuild.projects: _*)
 
   // ===================================================================================================================
   // base-* : General utils for taskman, webapp, benchmarking, etc.

@@ -137,7 +137,7 @@ object Common {
 
   val scalafixSettings: Project => Project =
     if (scalafixEnabled)
-      _.enablePlugins(ScalafixPlugin).dependsOn(ScalafixBuild.`scalafix-rules` % ScalafixConfig)
+      _.enablePlugins(ScalafixPlugin)
     else
       _.disablePlugins(ScalafixPlugin)
 
