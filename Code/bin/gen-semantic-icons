@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-cd "$(dirname "$(readlink -e "$0")")/.."
+cd "$(dirname "$0")/.."
 
 # To camel-case
 x='s/^([^!]*)[ _-]([a-z])/$1\u$2/g;'
@@ -40,4 +40,3 @@ echo "Updated: $t"
 
 echo
 git diff -- $t
-

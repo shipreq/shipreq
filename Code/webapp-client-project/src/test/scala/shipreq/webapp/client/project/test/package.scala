@@ -12,11 +12,7 @@ package object test {
     // Initialise styles
     shipreq.webapp.client.project.app.Style
 
-    // console.error is undefined by Scala.JS due to PhantomJS being a piece of shit
-    def console = scalajs.js.Dynamic.global.console
-    console.error = console.info
-
-    // React 17 + (JSDOM | PhantomJS) + execCommand("insertText") doesn't work
+    // React 17 + JSDOM + execCommand("insertText") doesn't work
     TextFieldEdit.instance = testTextFieldEdit
   }
 

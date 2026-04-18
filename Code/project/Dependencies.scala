@@ -45,13 +45,17 @@ object Dependencies {
 
   object Graal {
     // Note: when changing this, make sure to also change:
-    //   - :/Docker/dev-build_env/Dockerfile (the aur/jdk11-graalvm-bin git sha)
+    //   - :/Docker/dev-build_env/Dockerfile (the aur git sha)
     //   - :/Docker/shipreq-base/Dockerfile
-    val ver = "21.2.0"
+    val ver = "23.1.10"
+
+    lazy val js =
+      jvmOnly("org.graalvm.polyglot" %"polyglot" % ver) ++
+      jvmOnly("org.graalvm.polyglot" %"js" % ver)
   }
 
   object Java {
-    val major = 11
+    val major = 17
   }
 
   object Jetty {
@@ -179,12 +183,10 @@ object Dependencies {
     private val ver   = "2.0.0"
     private val jvm   = MultiModule.scala("com.github.japgolly.scala-graal", ver)
     private val both  = MultiModule.jvmAndJs("com.github.japgolly.scala-graal", ver)
-    val core          = jvm("core") ++ graal
+    val core          = jvm("core") ++ Graal.js
     val coreJs        = jvm("core-js") ++ core
     val extBoopickle  = both("ext-boopickle")
     val extPrometheus = jvm("ext-prometheus") ++ coreJs
-
-    lazy val graal = jvmOnly("org.graalvm.sdk" % "graal-sdk" % Graal.ver)
   }
 
   object SLF4J {

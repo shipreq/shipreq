@@ -5,7 +5,6 @@ import com.typesafe.sbt.GitPlugin.autoImport._
 import java.nio.file.{Files, Path}
 import org.scalajs.jsenv.Input
 import org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv
-import org.scalajs.jsenv.phantomjs.sbtplugin.PhantomJSEnvPlugin.autoImport._
 import org.scalajs.linker.interface._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import org.scalajs.sbtplugin.Stage
@@ -19,10 +18,9 @@ import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import LibDependency.{Dep, HasBoth, HasJs, HasJvm, JS, JVM, ModDepScope}
 
 sealed trait JsTestType
-case object NoTests                       extends JsTestType
-case object UseNode                       extends JsTestType
-case object UseNodeAdvanced               extends JsTestType
-final case class UsePhantomJs(memMB: Int) extends JsTestType
+case object NoTests         extends JsTestType
+case object UseNode         extends JsTestType
+case object UseNodeAdvanced extends JsTestType
 
 object Common {
 
@@ -322,14 +320,6 @@ object Common {
               "CI"       -> (if (inCI) "1" else "0"),
             ))
           ))
-      case UsePhantomJs(memMB) =>
-        _.settings(
-          Test / scalaJSLinkerConfig ~= { _.withESFeatures(_.withESVersion(ESVersion.ES5_1)) },
-          Test / jsEnv := PhantomJSEnv().value,
-          Test / jsEnvInput := Input.Script(((ThisBuild / baseDirectory).value / "project/phantomjs-fix.js").toPath) +: (Test / jsEnvInput).value,
-          Test / test / tags += CustomTags.PhantomJs -> 1,
-          Test / test / tags += CustomTags.MemoryMB -> memMB,
-        )
     }
 
   def devMode: Boolean = !releaseMode

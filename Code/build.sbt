@@ -65,10 +65,8 @@ val `scalafix-tests`      = ScalafixBuild.`scalafix-tests`
 // More than these crashes phantomjs for some reason
 Global / concurrentRestrictions += Tags.limit(CustomTags.WebappClientProjectTest, WebappBuild.WebappClientProject.parallelism)
 
-Global / concurrentRestrictions += Tags.limit(CustomTags.MemoryMB, 1024 * 16)
-// Global / concurrentRestrictions += Tags.limit(CustomTags.Node, 16)
-// Global / concurrentRestrictions += Tags.limit(CustomTags.PhantomJs, 8)
-// Global / concurrentRestrictions += Tags.limit(Tags.Test, 31)
-
+Global / concurrentRestrictions += Tags.limit(CustomTags.MemoryMB, 1024 * 2)
+Global / concurrentRestrictions += Tags.limit(CustomTags.Node, 2)
+Global / concurrentRestrictions += Tags.limit(Tags.Test, 2)
 
 ThisBuild / evictionErrorLevel := Level.Info

@@ -1,2 +1,4 @@
 -Xss2m
--XX:+CMSClassUnloadingEnabled
+-Xmx4g
+-XX:+UnlockExperimentalVMOptions
+-XX:+EnableJVMCI

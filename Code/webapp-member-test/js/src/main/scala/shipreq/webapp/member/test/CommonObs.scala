@@ -40,7 +40,7 @@ object CommonObs {
 
   final class Link($: DomZipperJs) {
     val dom = $.domAs[html.Anchor]
-    val label = $.innerText.trim
+    val label = $.domAsHtml.textContent.trim
     def click() = Simulate.click(dom)
   }
 
@@ -60,9 +60,9 @@ object CommonObs {
 
     val hasError = $.domAsHtml.classList.contains("error")
 
-    val text = dom.children(0).innerText
+    val text = dom.children(0).textContent
 
-    val selected = $$.collect01(".text").innerTexts.map(_.trim)
+    val selected = $$.collect01(".text").zippers.map(_.domAsHtml.textContent.trim)
 
     val items = $$.collect0n(".menu .item").map(new DropdownItem(_))
 
@@ -79,7 +79,7 @@ object CommonObs {
             case None        => throw new RuntimeException(s"Don't know how to select item in:\n\n${dom.outerHTML}")
           }
       } else if (itemDoms.nonEmpty)
-        throw new RuntimeException(itemDoms.map(_.innerText).mkString("Multiple candidates: ", ", ", "."))
+        throw new RuntimeException(itemDoms.map(_.textContent).mkString("Multiple candidates: ", ", ", "."))
       else if (items.isEmpty)
         throw new RuntimeException(s"No items found. DOM =\n${dom.outerHTML}")
       else
@@ -99,7 +99,7 @@ object CommonObs {
 
   final class DropdownItem($: DomZipperJs) {
     val dom  = $.domAsHtml
-    val text = dom.innerText.trim
+    val text = dom.textContent.trim
   }
 
 //  object DropdownItem {
@@ -130,10 +130,10 @@ object CommonObs {
   // ===================================================================================================================
 
   final class Message($: DomZipperJs) {
-    val header = $.collect01(".header").innerTexts.fold("")(_.trim)
+    val header = $.collect01(".header").zippers.fold("")(_.domAsHtml.textContent.trim)
 
     lazy val body = {
-      var t = $(".content").innerText
+      var t = $(".content").domAsHtml.textContent
       if (t.startsWith(header))
         t = t.drop(header.length)
       t.trim
@@ -144,12 +144,12 @@ object CommonObs {
 
   class Editor(val $: DomZipperJs) {
     final val dom                        = $.domAsHtml
-    final val text                       = $.innerText
+    final val text                       = $.domAsHtml.textContent
     final val editor                     = $.editables01.domsAsHtml
     final def editing                    = editor.isDefined
     final val editorValue                = editor.map(editableDomValue)
     final val editorValidity             = Invalid when $.exists(Selectors.editorInvalid)
-    final val editorError                = $.collect01(Selectors.editorInvalid).innerTexts
+    final val editorError                = $.collect01(Selectors.editorInvalid).zippers.map(_.domAsHtml.textContent.trim)
     final val fullscreenButton           = $.collect01("i.icon.maximize").domsAsHtml
     final val hasEnabledFullscreenButton = fullscreenButton.isDefined
     final val isFullscreen               = $.exists(Selectors.fullscreen)

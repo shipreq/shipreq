@@ -92,19 +92,14 @@ object ProjectSpaTestDsl {
       breadcrumbs.doms(1).textContent
 
     val dropdownCrumbName: Option[String] =
-      nav.collect01(".ui.dropdown.inline").doms.map { d =>
-        // Not sure why this is needed
-        val innerText = d.asInstanceOf[scalajs.js.Dynamic].innerText.asInstanceOf[String]
-        val selected = innerText.takeWhile(_ != '\n')
-        //println(s"[$innerText]")
-        //println(s"[$selected]")
-        selected
+      nav.collect01(".ui.dropdown.inline").zippers.flatMap { z =>
+        z.collect0n(">span,>.text,.header").zippers.iterator.map(_.domAsHtml.textContent.trim).find(_.nonEmpty)
       }
 
     val page: Page =
       dropdownCrumbName match {
         case Some("Req Table") => Page.ReqTable
-        case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.innerText.trim).get)
+        case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.domAsHtml.textContent.trim).get)
         case Some("Req Graph") => Page.ReqGraph
         case Some("Fields")    => Page.CfgFields
         case Some("Req Types") => Page.CfgReqTypes
@@ -115,7 +110,7 @@ object ProjectSpaTestDsl {
       }
 
     val unsavedChanges: Int =
-      nav.collect01(".icon.edit").zippers.fold(0)(_.parent("span").innerText.toInt)
+      nav.collect01(".icon.edit").zippers.fold(0)(_.parent("span").domAsHtml.textContent.trim.toInt)
   }
 
   final case class Obs($          : DomZipperJs,
@@ -317,18 +312,26 @@ object ProjectSpaTestDsl {
     val rc           = MockRouterCtl[Page]()
     val init         = TestState(page, global.unsafeProject(), rd)
 
-    ReactTestUtils.withRenderedIntoBody(spa.Component(Props(init.page, rc))) { m =>
-      TestClipboard.clear()
-      val tester = new ComponentTester(spa.Component)(m)
-      val report = Plan(action, invariants)
-                     .test(Observer(_.observe()))
-                     .withInitialState(init)
-                     .withRefByName(Ref(global, tester, confirmJs, promptJs, ww, loc))
-                     .run()
-      if (assertPass)
-        assertTestState(report)
-//        assertTestState(r, println(s"${"=" * 120}\n${htmlScrub run tester.component.getDOMNode.map(_.asElement).outerHTML}\n"))
-      report
-    }
+    val report =
+      try {
+        ReactTestUtils.withRenderedIntoBody(spa.Component(Props(init.page, rc))) { m =>
+          TestClipboard.clear()
+          val tester = new ComponentTester(spa.Component)(m)
+          Plan(action, invariants)
+            .test(Observer(_.observe()))
+            .withInitialState(init)
+            .withRefByName(Ref(global, tester, confirmJs, promptJs, ww, loc))
+            .run()
+        }
+      } finally {
+        // Semantic UI adds modals outside of our React component
+        TestUtil.removeSemanticUiFromBody()
+      }
+
+    if (assertPass)
+      assertTestState(report)
+      // assertTestState(r, println(s"${"=" * 120}\n${htmlScrub run tester.component.getDOMNode.map(_.asElement).outerHTML}\n"))
+
+    report
   }
 }

@@ -36,7 +36,7 @@ object TextFieldEdit {
   }
 
   // This is here so that tests can replace it.
-  // React 17 + (JSDOM | PhantomJS) + execCommand("insertText") doesn't work, where as it's fine in a real browser.
+  // React 17 + JSDOM + execCommand("insertText") doesn't work, where as it's fine in a real browser.
   var instance: TextFieldEdit = Real
 
   @inline def set(field: Field, text: String): Unit =

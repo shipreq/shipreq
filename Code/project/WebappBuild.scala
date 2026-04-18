@@ -99,7 +99,7 @@ object WebappBuild {
       .in(file("webapp-base-test"))
       .configureBoth(Common.testModuleSettings)
       .configureJvm(Common.jvmSettings)
-      .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UsePhantomJs(150)))
+      .configureJs(_.enablePlugins(JSDependenciesPlugin), Common.jsSettings(UseNode))
       .dependsOn(baseTest, webappBase)
       .depsForBoth(utest ++ Nyaya.test)
       .depsForJs(
@@ -151,9 +151,9 @@ object WebappBuild {
     *
     * ScalaCss is deliberately missing because it's too heavy for the public SPA.
     */
-  private def memberSpa(phantomJsMemMB: Int): Project => Project =
+  private def memberSpa: Project => Project =
     _.enablePlugins(ScalaJSPlugin, JSDependenciesPlugin)
-      .configure(Common.jsSettings(if (phantomJsMemMB > 0) UsePhantomJs(phantomJsMemMB) else UseNode))
+      .configure(Common.jsSettings(UseNode))
       .dependsOn(webappMemberJS, webappMemberTestJS % Test, webappServerLogicJS % Test)
       .settings(Test / jsDependencies += ProvidedJS / "webapp-client-test.js")
 
@@ -177,7 +177,7 @@ object WebappBuild {
   lazy val webappClientHome =
     project
       .in(file("webapp-client-home"))
-      .configure(memberSpa(0)) // PhantomJS crashes
+      .configure(memberSpa)
       .dependsOn(webappClientLoaders)
       .depsForJs(ScalaCSS.react)
 
@@ -207,14 +207,12 @@ object WebappBuild {
 
   object WebappClientProject {
     val parallelism = 4
-    val totalMemMB = 7000 + (if (parallelism > 2) (parallelism - 2) * 500 else 0)
-    val instanceMemMB = totalMemMB / parallelism
   }
 
   lazy val webappClientProject =
     project
       .in(file("webapp-client-project"))
-      .configure(memberSpa(WebappClientProject.instanceMemMB))
+      .configure(memberSpa)
       .dependsOn(webappClientWwApi, webappClientLoaders)
       .depsForJs(ScalaCSS.react ++ scalajsDom ++ shapeless ++ Nyaya.prop ++ parboiled)
       .settings(Test / test / tags += CustomTags.WebappClientProjectTest -> 1)
@@ -251,7 +249,7 @@ object WebappBuild {
       .configureJvm(
         Common.jvmSettings,
         _.dependsOn(taskmanApiLogic, webappClientPublicJVM, webappSsrJVM))
-      .configureJs(Common.jsSettings(UsePhantomJs(100)))
+      .configureJs(Common.jsSettings(UseNode))
       .dependsOn(webappMember)
       .dependsOn(baseTest % Test, webappMemberTest % Test)
       .depsForJvm(scaffeine ++ commonsText)
@@ -335,7 +333,7 @@ object WebappBuild {
     def dockerSettings = (_: Project)
       .enablePlugins(DockerPlugin)
       .configs(DockerDeps)
-      .configure(Docker.settingsFor("webapp"))
+      .configure(DockerCfg.settingsFor("webapp"))
       .deps(JettyDep.distTarGz % DockerDeps)
       .settings(
         cleanFiles += baseDirectory.value / "target",

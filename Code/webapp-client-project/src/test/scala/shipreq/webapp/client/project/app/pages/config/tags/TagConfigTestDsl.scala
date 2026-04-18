@@ -69,7 +69,7 @@ object TagConfigTestDsl {
     addRel("parent", _.editorParents)(name)
 
   def setReqTypeApplicability(txt: String): *.Actions =
-    *.action("setReqTypeApplicability: " + txt)(Simulate click _.obs.applicableReqTypes.get.items.find(_.innerText.trim == txt).get)
+    *.action("setReqTypeApplicability: " + txt)(Simulate click _.obs.applicableReqTypes.get.items.find(_.textContent.trim == txt).get)
 
   def setApplicableReqTypesText(txt: String): *.Actions =
     *.action("setApplicableReqTypesText: " + txt)(SimEvent.Change(txt) simulate _.obs.applicableReqTypes.get.inputDom)

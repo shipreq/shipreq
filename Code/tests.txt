@@ -1,0 +1,45 @@
+Compilation takes
+  - full power: 3m 27s
+
+base                  - pass
+basePredefJvm         - pass
+basePredefJs          - pass
+baseUtilJvm           - pass
+baseUtilJs            - pass
+baseOps               - pass
+baseDb                - pass
+baseTestJvm           - pass
+baseTestJs            - pass
+
+taskman               - pass
+taskmanApiLogic       - pass
+taskmanApi            - pass
+taskmanServerLogic    - pass
+taskmanServerSchema   - pass
+taskmanServer         - FAIL: Unexpected HTTP response: 404 . Response: {"errors":{"error":"Record Not Found"}}
+
+webapp                - n/a
+webappMacroJVM        - n/a
+webappMacroJS         - n/a
+webappBaseJVM         - n/a
+webappBaseJS          - n/a
+webappBaseTestJVM     - pass
+webappBaseTestJS      - pass
+webappMemberJVM       - n/a
+webappMemberJS        - n/a
+webappMemberTestJVM   - pass
+webappMemberTestJS    - pass
+webappSampleDataJVM   - n/a
+webappSampleDataJS    - n/a
+webappClientPublicJVM - pass
+webappClientPublicJS  - pass
+webappClientLoaders   - n/a
+webappClientHome      - pass
+webappClientWwApi     - n/a
+webappClientWw        - pass
+webappClientProject   - pass
+webappSsrJVM          - n/a
+webappSsrJS           - n/a
+webappServerLogicJVM  - pass
+webappServerLogicJS   - pass
+webappServer          - pass

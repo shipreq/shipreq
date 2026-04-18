@@ -31,15 +31,16 @@ RUN yum update -y \
 # Note: when changing this, make sure to also change:
 #   - :/Code/project/Dependencies.scala
 #   - :/Docker/dev-build_env/Dockerfile (the aur/jdk11-graalvm-bin git sha)
-ENV GRAAL_VERSION=21.2.0
+ENV GRAAL_VERSION=17.0.9
 
 RUN cd /opt \
- && f=graalvm-ce-java11-linux-amd64-${GRAAL_VERSION}.tar.gz \
- && wget https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${GRAAL_VERSION}/$f \
+ && f=graalvm-community-jdk-${GRAAL_VERSION}_linux-x64_bin.tar.gz \
+ && wget https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${GRAAL_VERSION}/$f \
  && tar xzf $f \
  && rm $f \
- && ln -s graalvm-ce-java11-${GRAAL_VERSION} graal \
+ && ln -s graalvm-*${GRAAL_VERSION}* graal \
  && cd graal \
+ && bin/gu install js \
  && rm -rf \
            {bin,languages/js/bin}/{js,node,npm} \
            bin/{gu,polyglot} \
