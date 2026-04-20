@@ -11,7 +11,6 @@ import utest._
 object ClientSideStorageTest extends TestSuite {
   import AsyncCallback.delay
 
-  @nowarn("msg=local val .* is never used")
   override def tests = Tests {
 
     "dynamic" - asyncTest {

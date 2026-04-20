@@ -29,7 +29,6 @@ final class TextComplete(val editor: Editor, options: Options = js.native) exten
 object TextComplete {
 
   @js.native
-  @nowarn
   sealed trait Editor extends js.Object {
     /** @param options code: ("UP" | "DOWN") */
     def emitMoveEvent(options: js.Object): Unit = js.native

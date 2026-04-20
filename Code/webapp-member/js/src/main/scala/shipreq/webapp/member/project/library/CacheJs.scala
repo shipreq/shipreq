@@ -171,7 +171,6 @@ object CacheJs {
   }
 
   @js.native
-  @nowarn("cat=unused")
   private[library] trait ArrayExt[A] extends js.Object {
     @JSBracketAccess
     def get(index: Int): js.UndefOr[A] = js.native

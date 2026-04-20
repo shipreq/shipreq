@@ -11,7 +11,6 @@ import scala.scalajs.js.annotation._
  */
 @JSGlobal("katex")
 @js.native
-@nowarn("cat=unused")
 object KaTeX extends js.Object {
 
   //def render(math: String, element: Element): Unit = js.native

@@ -61,7 +61,7 @@ object Common {
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:postfixOps",
-    "-target:" + Dependencies.Java.major,            // Target platform for object files. ([8],9,10,11,12)
+    "-release:" + Dependencies.Java.major,           // Target platform for object files. ([8],9,10,11,12)
     "-unchecked",                                    // Enable additional warnings where generated code depends on assumptions.
     "-Wconf:msg=may.not.be.exhaustive:e",            // Make non-exhaustive matches errors instead of warnings
     "-Wdead-code",                                   // Warn when dead code is identified.

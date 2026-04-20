@@ -16,7 +16,7 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
     removed.## * 31 + added.##
 
   override def equals(o: Any) = o match {
-    case b: SetDiff[A] => (removed == b.removed) && (added == b.added)
+    case b: SetDiff[_] => (removed == b.removed) && (added == b.added)
     case _             => false
   }
 

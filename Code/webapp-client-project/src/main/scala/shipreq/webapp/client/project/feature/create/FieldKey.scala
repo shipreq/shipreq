@@ -251,7 +251,7 @@ object FieldKey {
 
     final override def equals(obj: Any): Boolean =
       obj match {
-        case t: AndValue[FK, F] =>
+        case t: AndValue[_, _] =>
           @inline def valueRefTest = value.isInstanceOf[AnyRef] && (value.asInstanceOf[AnyRef] eq t.value.asInstanceOf[AnyRef])
           (field == t.field) && (valueRefTest || (value == t.value))
         case _ =>

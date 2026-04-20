@@ -11,7 +11,6 @@ import scala.scalajs.js.|
   */
 @JSGlobal("autosize")
 @js.native
-@nowarn
 object Autosize extends js.Object {
 
   type Target  = dom.Element
