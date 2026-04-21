@@ -208,6 +208,7 @@ object Common {
         scalafixSettings,
         dockerLayerReuse)
       .settings(
+        allowUnsafeScalaLibUpgrade := true,
         testFrameworks := List(new TestFramework("utest.runner.Framework"))
       ))
 
@@ -281,7 +282,6 @@ object Common {
           .withAvoidClasses(false)
         )
         .withPrettyPrint(false)
-        .withClosureCompiler(true)
         .withCheckIR(true)
       },
       // More than 1 running instance of Google Closure exponentially increases time & mem-usage
