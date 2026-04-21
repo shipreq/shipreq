@@ -64,6 +64,8 @@ object Common {
     "-release:" + Dependencies.Java.major,           // Target platform for object files. ([8],9,10,11,12)
     "-unchecked",                                    // Enable additional warnings where generated code depends on assumptions.
     "-Wconf:msg=may.not.be.exhaustive:e",            // Make non-exhaustive matches errors instead of warnings
+    "-Wconf:msg=Implicit.*should.*explicit.type:s",  // Ignore warnings about inferring implicit types
+    "-Wconf:msg=ambiguous.*in.*Scala.3:s",           // Ignore warnings about Scala 3 ambiguity
     "-Wdead-code",                                   // Warn when dead code is identified.
     "-Wunused:explicits",                            // Warn if an explicit parameter is unused.
     "-Wunused:implicits",                            // Warn if an implicit parameter is unused.
