@@ -240,7 +240,6 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
     }
 
     implicit final val reusabilityProps: Reusability[Props] = {
-      @nowarn("cat=unused")
       implicit val a = reusabilityRowEditor
       Reusability.derive
     }
@@ -508,4 +507,3 @@ object Table {
   val editorStyle =
     EditControlsFeature.Style.default.copy(openPreview = EditControlsFeature.OpenPreview.MinimallyWithControls)
 }
-

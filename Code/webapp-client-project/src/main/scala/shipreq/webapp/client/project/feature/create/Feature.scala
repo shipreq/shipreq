@@ -106,7 +106,6 @@ object Feature {
         ForProject(UnivEq.emptyMap, Vector.empty)
     }
 
-    @nowarn("cat=unused")
     private implicit def reusabilityMap[K, V]: Reusability[Map[K, V]] =
       Reusability.byRef
 

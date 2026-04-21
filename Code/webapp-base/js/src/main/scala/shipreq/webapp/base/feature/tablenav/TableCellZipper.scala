@@ -6,7 +6,6 @@ import japgolly.microlibs.stdlib_ext.MutableArray
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import org.scalajs.dom.html
 import shipreq.base.util.Deny
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.util.DomUtil._
 
 object TableCellZipper {

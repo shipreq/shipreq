@@ -66,7 +66,7 @@ object NewEditor {
             ctx => init(new InternalCtx[A, V](ctx))
         }
 
-      def prepareCG(@nowarn("cat=unused") r: RowKey.CodeGroup.type) = FieldKey.FoldForCodeGroup[LogicPerField](
+      def prepareCG(r: RowKey.CodeGroup.type) = FieldKey.FoldForCodeGroup[LogicPerField](
         _ => EditReqCodes.Single.apply,
         f => EditRichText.CodeGroupTitle(PreviewId(RowKey.CodeGroup, f), None))
 

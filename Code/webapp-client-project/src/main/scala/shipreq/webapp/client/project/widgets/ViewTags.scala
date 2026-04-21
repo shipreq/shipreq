@@ -396,13 +396,13 @@ object ViewTags {
 
   private val popupOptions =
     new Popup.Js.Options {
-      override val inline = true
-      override val hoverable = true
-      override val prefer = "opposite"
-      override val position = Popup.Position.TopLeft.value
-      override val delay = new Popup.Js.Options.Delay {
-        override val show = 200
-        override val hide = 300
+      this.inline = true
+      this.hoverable = true
+      this.prefer = "opposite"
+      this.position = Popup.Position.TopLeft.value
+      this.delay = new Popup.Js.Options.Delay {
+        this.show = 200
+        this.hide = 300
       }
     }
 }

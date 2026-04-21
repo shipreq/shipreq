@@ -8,7 +8,6 @@ import nyaya.util.NyayaUtilAnyExt
 import shipreq.base.util.DeletionMethod
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.Event._
-import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project.DataTestExt._
 import shipreq.webapp.member.test.project.RandomData
 import utest._

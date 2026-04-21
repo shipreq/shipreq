@@ -7,7 +7,6 @@ import shipreq.webapp.client.project.app.pages.config.Buttons
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test.PrepareEnv
 import shipreq.webapp.member.project.data._
-import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test.project.UnsafeTypes._
 import shipreq.webapp.member.test.project.{SampleProject, SampleProject3, SampleProject7}
 import utest._

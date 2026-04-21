@@ -83,7 +83,7 @@ object Dropdown {
 
     /** Dropdowns have multiple built-in actions that can occur on ITEM SELECTION. You can specify a built-in action by
       * passing its name to settings.action or pass a custom function that performs an action. */
-    val action: js.UndefOr[Action] = js.undefined
+    var action: js.UndefOr[Action] = js.undefined
 
     /** Event used to trigger dropdown. Default = click */
     var on: js.UndefOr[On] = js.undefined
@@ -137,8 +137,8 @@ object Dropdown {
     }
 
     trait Delay extends js.Object {
-      val show: js.UndefOr[Int] = js.undefined
-      val hide: js.UndefOr[Int] = js.undefined
+      var show: js.UndefOr[Int] = js.undefined
+      var hide: js.UndefOr[Int] = js.undefined
     }
 
     // Arg = itemValue
@@ -148,7 +148,7 @@ object Dropdown {
     def default: JsOptions =
       new JsOptions {
         // This prevents Semantic UI's JS modifying the DOM when the user clicks an item
-        override val action = Dropdown.JsOptions.Action.Hide
+        this.action = Dropdown.JsOptions.Action.Hide
       }
 
     def readOnly: JsOptions =
@@ -156,7 +156,7 @@ object Dropdown {
         // This prevents Semantic UI's JS:
         //   1. modifying the DOM when the user clicks an item
         //   2. marking items as selected/active when clicked
-        override val action = Dropdown.JsOptions.Action.nothing
+        this.action = Dropdown.JsOptions.Action.nothing
       }
   }
 
@@ -181,8 +181,8 @@ object Dropdown {
       val s = show
       val h = hide
       o.delay = new Delay {
-        override val show = s
-        override val hide = h
+        this.show = s
+        this.hide = h
       }
       o
     }

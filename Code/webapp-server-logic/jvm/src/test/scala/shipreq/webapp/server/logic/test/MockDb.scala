@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic.test
 
-import cats.syntax.all._
 import cats.{Eval, ~>}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant

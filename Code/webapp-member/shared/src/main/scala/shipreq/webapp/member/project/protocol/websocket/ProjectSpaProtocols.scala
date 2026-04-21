@@ -62,7 +62,6 @@ object ProjectSpaProtocols {
     val empty: StateUpdate =
       apply(VerifiedEvent.Seq.empty, Supplimentary.empty)
 
-    @nowarn("cat=unused")
     implicit def eqStateUpdate(implicit e: Eq[VerifiedEvent.Seq]): Eq[StateUpdate] = deriveEq
   }
 
