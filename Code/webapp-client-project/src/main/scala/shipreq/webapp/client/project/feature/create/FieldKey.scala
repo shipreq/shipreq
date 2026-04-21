@@ -258,7 +258,6 @@ object FieldKey {
           false
       }
 
-    @nowarn("cat=unused")
     final def unsafeSyncField[FKK >: FK <: FieldKey](f: FKK): f.AndValue[F] =
       this.asInstanceOf[f.AndValue[F]]
 

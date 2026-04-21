@@ -91,7 +91,6 @@ abstract class PredefShared
     UnivEq.force
 
   @inline
-  @scala.annotation.nowarn("cat=unused")
   final implicit def UnivEqObjExt(self: UnivEq.type): PredefShared.UnivEqObjExt =
     new PredefShared.UnivEqObjExt(UnivEq)
 
@@ -147,7 +146,6 @@ object PredefShared {
     @inline def emptySetMultimap[K: UnivEq, V: UnivEq] =
       Multimap.empty[K, immutable.Set, V]
 
-    @scala.annotation.nowarn("cat=unused")
     @inline def emptyMultimap[K: UnivEq, L[_] : MultiValues, V](implicit ev: L[V] =:!= immutable.Set[V]) =
       Multimap.empty[K, L, V]
   }

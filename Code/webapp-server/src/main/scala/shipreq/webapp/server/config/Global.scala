@@ -40,7 +40,6 @@ object Global {
   var Instance: Global = _
 
   @inline
-  @nowarn("cat=unused")
   implicit def autoInstance(g: Global.type): Global = Instance
 
   def modify(f: Global => Global): Unit =

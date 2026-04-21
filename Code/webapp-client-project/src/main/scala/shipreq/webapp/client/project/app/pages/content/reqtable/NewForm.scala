@@ -383,7 +383,6 @@ sealed trait NewForm {
   }
 
   implicit val reusability: Reusability[Props] = {
-    @nowarn("cat=unused")
     implicit def x = reusabilityInput
     Reusability.derive
   }

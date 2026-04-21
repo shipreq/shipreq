@@ -75,7 +75,7 @@ abstract class DataReusability extends BaseReusability {
     Reusability.byRefOrUnivEq
 
   implicit lazy val reusabilityProjectMetaData: Reusability[ProjectMetaData] = {
-    @nowarn("cat=unused") implicit val instant = Reusability.instant(Duration.ofMillis(500))
+    implicit val instant = Reusability.instant(Duration.ofMillis(500))
     Reusability.derive
   }
 

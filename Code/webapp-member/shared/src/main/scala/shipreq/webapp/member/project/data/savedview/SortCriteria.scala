@@ -1,7 +1,6 @@
 package shipreq.webapp.member.project.data.savedview
 
 import monocle.macros.Lenses
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.member.project.data.savedview.SortCriterion.SyntaxHelpers._
 import shipreq.webapp.member.project.data.savedview.SortCriterion._
 import shipreq.webapp.member.project.sort.SortMethod

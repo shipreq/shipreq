@@ -28,7 +28,6 @@ trait WebappTestEquality
 
 object WebappTestUtil extends WebappTestEquality with WebappTestUtil {
 
-  @nowarn("cat=unused")
   def projectEqualityWithHistoryTimestampEquality(implicit equalInstant: Eq[Instant]): Project.Equality = {
 
     implicit val equalVerifiedEvent: Eq[VerifiedEvent] =

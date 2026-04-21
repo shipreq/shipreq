@@ -11,8 +11,6 @@ import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.util._
 import shipreq.webapp.client.project.app.Style.widgets.{splitScreenCrud => *}
 import shipreq.webapp.member.project.data._
-import shipreq.webapp.member.project.util.DataReusability._
-
 
 /** Takes care of a common pattern in config screens where...
   *

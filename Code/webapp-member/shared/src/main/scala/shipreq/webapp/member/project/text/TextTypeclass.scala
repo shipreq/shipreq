@@ -38,7 +38,6 @@ object TextTC {
     new TextTC(a)
 }
 
-@nowarn("cat=unused")
 class TextTC[TC[_]](a: AtomTC[TC]) {
   import TextMacros._
   import a._

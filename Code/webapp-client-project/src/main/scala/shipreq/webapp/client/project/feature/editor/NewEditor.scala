@@ -59,7 +59,6 @@ object NewEditor {
       Hooks(Callback.empty, Callback.empty)
 
     implicit val reusability: Reusability[Hooks] = {
-      @nowarn("cat=unused")
       implicit val x: Reusability[Callback] = Reusability.callbackByRef
       Reusability.derive
     }

@@ -6,7 +6,6 @@ import io.circe.syntax._
 import java.time.Instant
 import shipreq.base.test.JsonTestUtil._
 import shipreq.webapp.base.data._
-import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.data._
