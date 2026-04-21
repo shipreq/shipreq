@@ -210,7 +210,6 @@ object Common {
         scalafixSettings,
         dockerLayerReuse)
       .settings(
-        allowUnsafeScalaLibUpgrade := true,
         testFrameworks := List(new TestFramework("utest.runner.Framework"))
       ))
 
