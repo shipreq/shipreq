@@ -16,6 +16,6 @@
 *.pid
 *.tmp
 ~*
-project/metals.sbt
+metals.sbt
 project/sjsincoptbench.sbt
 target
