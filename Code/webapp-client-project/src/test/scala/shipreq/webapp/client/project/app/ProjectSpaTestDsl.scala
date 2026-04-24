@@ -56,7 +56,7 @@ object ProjectSpaTestDsl {
 
     def observe(): Obs = {
       val $ = tester.component.domZipper
-      val inner = $(">div")(">div:nth-child(2)>*")
+      val inner = $(">div")(">div:nth-child(4)>*")
       val nav = new NavObs($(">nav"), inner)
 
       val base: Obs = {

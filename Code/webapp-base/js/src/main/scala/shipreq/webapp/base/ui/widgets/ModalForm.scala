@@ -46,7 +46,9 @@ abstract class ModalForm[A](name             : String,
     Callback {open = false} >> resetForm >> Callback.suspend(onCompletion)
 
   private lazy val modalInitProps =
-    js.Dynamic.literal(onHidden = onHide.toJsFn)
+    js.Dynamic.literal(
+      onHidden = onHide.toJsFn,
+      detachable = false)
 
   private lazy val modalInit =
     Callback(JQuery.byId(id).modal(modalInitProps))
@@ -58,7 +60,7 @@ abstract class ModalForm[A](name             : String,
     }
 
   protected val modalHide =
-    Callback(JQuery(rootDom.querySelector("#" + id)).modal("hide"))
+    Callback(JQuery.byId(id).modal("hide"))
 
   protected def complete(a: A): Callback =
     Callback {lastResult = a} >> modalHide
@@ -82,12 +84,14 @@ abstract class ModalForm[A](name             : String,
 
   private val cancelButton =
     <.button(
+      ^.tpe := "button",
       ^.cls := "ui button",
       ^.onClick --> modalHide,
       "Cancel")
 
   private lazy val submitButton =
     <.button(
+      ^.tpe := "button",
       ^.cls := "ui button primary",
       ^.onClick ==> (e => submit(Some(e))),
       submitLabel)
