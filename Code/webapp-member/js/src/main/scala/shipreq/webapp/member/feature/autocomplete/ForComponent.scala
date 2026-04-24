@@ -101,7 +101,7 @@ object ForComponent {
       } yield ()
 
     final protected lazy val autoCompleteKeyHandlers: KeyHandlers =
-      KeyHandlers(KeyHandler.Criterion.CtrlSpace.handle(trigger) :: Nil)
+      KeyHandlers(KeyHandler.Criterion.CtrlOrCmdSpace.handle(trigger) :: Nil)
 
     final protected val autoCompleteOnKeyDown: ReactKeyboardEvent => Callback = e =>
       CallbackOption.keyCodeSwitch(e, ctrlKey = true) {
