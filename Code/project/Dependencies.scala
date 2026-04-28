@@ -215,7 +215,7 @@ object Dependencies {
   // ===================================================================================================================
 
   val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.4.0")
-  val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "3.0.0")
+  val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "3.3.0")
   val parboiled   = jvmAndJs("org.parboiled",                    "parboiled",   "2.3.0")
   val pprint      = jvmAndJs("com.lihaoyi",                      "pprint",      "0.6.6")
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.7")

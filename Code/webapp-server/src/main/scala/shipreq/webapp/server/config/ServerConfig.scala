@@ -32,9 +32,9 @@ object ServerConfig {
   def config: ConfigDef[ServerConfig] =
     ( AnalyticsProxy.config.withPrefix("shipreq."),
       DbConfig.config,
-      RedissonConfig.config.withPrefix("redis.").option,
+      RedissonConfig.config.withPrefix("redis.").whenAtLeastOneKeySpecified,
       ServerLogicConfig.config,
-      Statcounter.config.withPrefix("shipreq.").option,
+      Statcounter.config.withPrefix("shipreq.").whenAtLeastOneKeySpecified,
       StatRecorder.config.withPrefix("shipreq."),
     ).mapN(apply)
 

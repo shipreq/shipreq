@@ -23,7 +23,7 @@ final case class TaskmanConfig(mail       : TaskmanConfig.Mail,
 object TaskmanConfig extends HasLogger {
 
   def config: ConfigDef[TaskmanConfig] =
-    logVars *> (
+    ConfigDef.logbackXmlOnClasspath *> (
       mail,
       MailChimp.config.withPrefix("mailchimp."),
       prometheus,
@@ -36,11 +36,6 @@ object TaskmanConfig extends HasLogger {
     ( ConfigDef.need[String](CfgKeys.Webapp.appName),
       ConfigDef.need[String](CfgKeys.Webapp.loginUrl)
     ).mapN(Email.TokenValues)
-
-  val logVars =
-    ConfigDef.getOrUse[String]("LOG_APPENDER", "JSON") <* ConfigDef.external(
-      "LOG_LEVEL_ROOT",
-      "LOG_LEVEL_SHIPREQ")
 
   // ===================================================================================================================
 
