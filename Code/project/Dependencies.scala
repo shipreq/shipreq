@@ -12,7 +12,7 @@ object Dependencies {
   }
 
   object Cats {
-    private val mm = MultiModule.jvmAndJs("org.typelevel", "2.6.1")
+    private val mm = MultiModule.jvmAndJs("org.typelevel", "2.13.0")
     val core = mm("cats-core")
     val free = mm("cats-free")
   }
