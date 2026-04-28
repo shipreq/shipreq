@@ -1,3 +1,35 @@
+========================================================================================================================
+# Open-source
+
+* add CI
+* record usage videos (Davinci Resolve)
+* change all saved credentials/secrets
+* revise documentation
+* at the very least, document clearly how to get up and running (including double-init (Taskman + Webapp) and local account registration)
+* create a blog
+* point shipreq.com (and/or .org) at a blog
+* CDN: update infra diagram
+* CDN: document use, reason, including need for fake-cdn docker image
+* add a place for discussion, maybe discord
+
+========================================================================================================================
+# Fix Taskman
+
+* MailChimp API now out-of-date
+* Does MailGun still work?
+* Add optional tests for all integrations?
+
+========================================================================================================================
+# Misc
+
+* Upgrade clear-config and use the new logback function
+
+========================================================================================================================
+# project access WIP
+
+* revise UI prototype for the project access config page
+* revise UI prototype for the project "status" page
+
 * only admin should be able to
   * rename the project
   * modify access
