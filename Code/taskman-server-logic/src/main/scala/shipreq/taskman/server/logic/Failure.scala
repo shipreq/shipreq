@@ -62,7 +62,7 @@ object Failure extends HasLogger {
       ctx.taskDetail.task match {
         case _: DummyTask if ctx.err.isDeterministic => abortAndDontNotify(ctx)
         case m: DummyTask                            => retryResponse(ctx, m.retryDelaySec seconds)
-        case _                                      => f(ctx)
+        case _                                       => f(ctx)
       }
     )
 

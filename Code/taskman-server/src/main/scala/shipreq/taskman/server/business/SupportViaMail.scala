@@ -3,9 +3,9 @@ package shipreq.taskman.server.business
 import cats.~>
 import japgolly.clearconfig._
 import shipreq.base.util.FxModule._
+import shipreq.taskman.server.business.SupportViaMail._
 import shipreq.taskman.server.logic.business.BusinessOp.SendEmail
 import shipreq.taskman.server.logic.business.{Email, Support}
-import SupportViaMail._
 
 object SupportViaMail {
   final case class Props(envelope: Email.Envelope)

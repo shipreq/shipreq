@@ -1,7 +1,7 @@
 package shipreq.taskman.server
 
-import cats.~>
 import cats.effect.Resource
+import cats.~>
 import japgolly.clearconfig.ConfigSources
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.{ExecutorService, TimeUnit}
