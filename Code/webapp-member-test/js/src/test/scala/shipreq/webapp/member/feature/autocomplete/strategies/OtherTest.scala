@@ -1,6 +1,5 @@
 package shipreq.webapp.member.feature.autocomplete.strategies
 
-import shipreq.webapp.member.feature.AutoCompleteFeature._
 import shipreq.webapp.member.test.AutoCompleteTestUtil._
 import shipreq.webapp.member.test.project.SampleProject3._
 import utest._
