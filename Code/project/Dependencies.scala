@@ -128,7 +128,7 @@ object Dependencies {
   }
 
   object Nyaya {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "1.0.0")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.nyaya", "1.1.0")
     val gen  = mm("nyaya-gen")  ++ Cats.core
     val prop = mm("nyaya-prop") ++ Cats.core
     val test = mm("nyaya-test")
@@ -151,7 +151,7 @@ object Dependencies {
   }
 
   object React {
-    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "2.0.0")
+    private val mm = MultiModule.js("com.github.japgolly.scalajs-react", "2.1.3")
     val cats    = mm("core-ext-cats")
     val core    = mm("core")
     val extra   = mm("extra")
@@ -196,7 +196,7 @@ object Dependencies {
   }
 
   object TestState {
-    val Ver = "3.0.0"
+    val Ver = "3.1.0"
     private val mm = MultiModule.jvmAndJs("com.github.japgolly.test-state", Ver)
     private val js = MultiModule.js("com.github.japgolly.test-state", Ver)
     val core            = mm("core")
@@ -207,7 +207,7 @@ object Dependencies {
   }
 
   object UnivEq {
-    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "2.0.0")
+    private val mm = MultiModule.jvmAndJs("com.github.japgolly.univeq", "2.1.0")
     val univeq = mm("univeq")
     val cats   = mm("univeq-cats") ++ univeq ++ Cats.core
   }
@@ -237,7 +237,7 @@ object Dependencies {
   val scalaz       = jvmOnly("org.scalaz"                 %% "scalaz-core"           % "7.3.5") // only used for scalaz.Heap
 
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.10.0")
-  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "2.0.0")
+  val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "2.8.1")
   val scalajsJavaTime  = jsOnly("org.scala-js"                          %% "scalajs-java-time" % "1.0.0")
 
   // ===================================================================================================================
