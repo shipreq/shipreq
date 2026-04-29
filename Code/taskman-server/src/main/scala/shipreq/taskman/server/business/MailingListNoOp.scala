@@ -15,8 +15,8 @@ object MailingListNoOp extends (MailingList.API ~> Fx) with HasLogger {
 
   override def apply[A](api: API[A]): Fx[A] =
     api match {
-      case a: Subscribe      => log(a); Fx.pure(Ok)
-      case a: UpdateMember   => log(a); Fx.pure(Ok)
-      case a: BatchSubscribe => log(a); Fx.pure(())
+      case a: Subscribe      => Fx { log(a); Ok }
+      case a: UpdateMember   => Fx { log(a); Ok }
+      case a: BatchSubscribe => Fx { log(a) }
     }
 }
