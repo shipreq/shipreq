@@ -10,23 +10,13 @@
 * CDN: update infra diagram
 * CDN: document use, reason, including need for fake-cdn docker image
 * add a place for discussion, maybe discord
-
-* change all saved credentials/secrets
-  * [x] test / taskman -- strategy: use fake data because no integration tests exist
-  * [x] test / webapp  -- strategy: no secrets
-
-  * [x] dev  / taskman -- strategy: fake data
-  * [x] dev  / webapp  -- strategy: harmless, just comment out
-
-  * [x] prod / taskman -- strategy: protected by git-crypt
-  * [x] prod / webapp  -- strategy: protected by git-crypt
+* choose a licence
 
 ========================================================================================================================
 # Fix Taskman
 
-* MailChimp API now out-of-date
 * Does MailGun still work?
-* Add optional tests for all integrations?
+* Find an alternative to MailChimp
 
 ========================================================================================================================
 # Misc
