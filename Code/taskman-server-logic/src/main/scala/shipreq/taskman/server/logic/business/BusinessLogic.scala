@@ -12,8 +12,7 @@ import shipreq.taskman.server.logic.{Deliberate, TaskDetail, TaskHeader, Worker}
 
 final class BusinessLogic[F[_]](emails        : Emails,
                                 emailScheduler: Worker.AsyncScheduler[F],
-                                mailingListId : MailingList.ListId)
-                               (implicit businessOpFx: BusinessOp ~> Fx) extends Worker.Processor[F] with HasLogger {
+                              )(implicit businessOpFx: BusinessOp ~> Fx) extends Worker.Processor[F] with HasLogger {
 
   type MO = Worker.ProcessorOut[F]
 
@@ -111,7 +110,7 @@ final class BusinessLogic[F[_]](emails        : Emails,
       get(id) flatMap updateML
 
     def updateML(u: ShipReqUser): Fx[Unit] =
-      run(API.BatchSubscribe(mailingListId, NonEmptyVector.one(subscription(u))))
+      run(API.BatchSubscribe(NonEmptyVector.one(subscription(u))))
 
     def syncToML(sqlCond: Option[String]): Fx[Unit] =
       run(FindShipReqUsers(sqlCond)).map(_ map subscription).flatMap {
@@ -120,7 +119,7 @@ final class BusinessLogic[F[_]](emails        : Emails,
         case h :: t =>
           val ss = NonEmptyVector(h, t.toVector)
           Fx(logger.info(s"Syncing ${ss.length} users to mailing list...")) >>
-            run(API.BatchSubscribe(mailingListId, ss))
+            run(API.BatchSubscribe(ss))
       }
   }
 
@@ -147,11 +146,11 @@ final class BusinessLogic[F[_]](emails        : Emails,
     def updateMailingList(addr: EmailAddr, name: String, newsletter: Boolean): Fx[Unit] = {
       import MailingList._
       val s = Subscription(addr, name, newsletter, AccountStatus.Never)
-      run(API.Subscribe(mailingListId, s, newsletter)) flatMap {
+      run(API.Subscribe(s, newsletter)) flatMap {
         case Ok =>
           Fx.unit
         case AlreadySubscribed =>
-          run(API.UpdateMember(mailingListId, s)).flatMap {
+          run(API.UpdateMember(s)).flatMap {
             case Ok => Fx.unit
             case f  => Fx fail ArticulateError(s"Failed to update mailing list: $f")
           }

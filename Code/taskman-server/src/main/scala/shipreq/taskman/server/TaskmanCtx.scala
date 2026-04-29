@@ -65,9 +65,8 @@ final class TaskmanCtx(val db          : DbAccessor,
       case \/-(props) => new FreshDesk0(props)(http).upgrade.unsafeRun()
     }
 
-  val emails        = new Emails(config.mail.envelopeProps, emailTokens)
-  val mailchimp     = new MailChimp(config.mailchimp)(http)
-  val mailingListId = config.mailchimp.audienceId
+  val emails    = new Emails(config.mail.envelopeProps, emailTokens)
+  val mailchimp = new MailChimp(config.mailchimp)(http)
 
   private val clockClock = Clock.systemUTC()
 
@@ -75,7 +74,7 @@ final class TaskmanCtx(val db          : DbAccessor,
   implicit val taskmanApi    = TaskmanApi.addLogging(TaskmanApiImpl(None).trans(xa.trans))
   implicit val businessOpFx  = new BusinessOpFx(sendMail, mailchimp, supportDesk, xa.trans, config.shipreq.schema)
   implicit val serverOpFx    = new ServerOpFx(xa, new Worker.FailureHandler(emails)(businessOpFx))
-  implicit val businessLogic = new BusinessLogic(emails, async.emailScheduler, mailingListId)(businessOpFx)
+  implicit val businessLogic = new BusinessLogic(emails, async.emailScheduler)(businessOpFx)
   implicit val failurePolicy = Failure.failurePolicy
   implicit val clock         = Fx(clockClock.instant())
   implicit val nodeId        = serverOpFx.getNextNodeId.unsafeRun()

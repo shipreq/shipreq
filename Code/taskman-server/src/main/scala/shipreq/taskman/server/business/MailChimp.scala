@@ -25,6 +25,8 @@ object MailChimp {
 
   final case class ApiKey(value: String)
 
+  final case class ListId(value: String)
+
   /**
     * @param dc MailChimp data center
     */
@@ -65,10 +67,10 @@ object MailChimp {
 
   object Endpoints {
     def apply(props: Props): Endpoints =
-      new Endpoints(s"https://${props.dc}.api.mailchimp.com/2.0", props.key)
+      new Endpoints(s"https://${props.dc}.api.mailchimp.com/2.0", props.key, props.audienceId)
   }
 
-  final class Endpoints(urlPrefix: String, apiKey: ApiKey) {
+  final class Endpoints(urlPrefix: String, apiKey: ApiKey, listId: ListId) {
 
     private def endpoint[I, O](path: String)
                               (ko: Json => Fx[O])
@@ -101,22 +103,10 @@ object MailChimp {
 
     object lists {
 
-      val list: Http[GetListId, Option[ListId]] = {
-        implicit val enc = Encoder.AsObject.instance[GetListId](i =>
-          JsonObject(
-            "filters" -> Json.obj(
-              ("list_name" -> i.name.asJson),
-              ("exact" -> true.asJson))))
-
-        implicit val dec = decoderGetListIdResponse
-
-        endpoint("lists/list")(ApiFailure.Total.handle)
-      }
-
       val batchSubscribe: Http[BatchSubscribe, Unit] = {
         implicit val enc = Encoder.AsObject.instance[BatchSubscribe](i =>
           JsonObject.fromIterable(
-            ("id" -> i.listId.value.asJson) ::
+            ("id" -> listId.value.asJson) ::
               ("batch" -> Json.arr(i.subs.iterator.map(s => Json.obj(buildReqSubscription(s): _*)).toSeq: _*)) ::
               batchSubscribeStatic))
 
@@ -128,7 +118,7 @@ object MailChimp {
       val subscribe: Http[Subscribe, SubscribeResult] = {
         implicit val enc = Encoder.AsObject.instance[Subscribe](i =>
           JsonObject.fromIterable(
-            ("id" -> i.listId.value.asJson) ::
+            ("id" -> listId.value.asJson) ::
               subscribeOptions(i.sendConfEmail, false) :::
               buildReqSubscription(i.sub)))
 
@@ -140,7 +130,7 @@ object MailChimp {
       val updateMember: Http[UpdateMember, UpdateMemberResult] = {
         implicit val enc = Encoder.AsObject.instance[UpdateMember](i =>
           JsonObject.fromIterable(
-            ("id" -> i.listId.value.asJson) ::
+            ("id" -> listId.value.asJson) ::
               buildReqSubscription(i.sub)))
 
         implicit val dec = decoderUpdateMember
@@ -299,7 +289,6 @@ final class MailChimp(props: Props)(implicit httpClient: HttpClient) extends (Ma
 
   override def apply[A](api: API[A]): Fx[A] =
     api match {
-      case a: GetListId      => endpoints.lists.list          .run(a)
       case a: BatchSubscribe => endpoints.lists.batchSubscribe.run(a)
       case a: Subscribe      => endpoints.lists.subscribe     .run(a)
       case a: UpdateMember   => endpoints.lists.updateMember  .run(a)
