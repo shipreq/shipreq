@@ -62,9 +62,9 @@ final class TaskmanCtx(val db          : DbAccessor,
     }
 
   val sendMail: BusinessOp.SendEmail => Fx[Unit] =
-    config.mail.mechanism match {
-      case \/-(p) => new MailGun(p)(http)
-      case -\/(p) => new JavaMail(p.sessionFn())
+    config.mail.props match {
+      case TaskmanConfig.MailProps.ViaMailGun(p)  => new MailGun(p)(http)
+      case TaskmanConfig.MailProps.ViaJavaMail(p) => new JavaMail(p.sessionFn())
     }
 
   val supportDesk: Support.API ~> Fx =

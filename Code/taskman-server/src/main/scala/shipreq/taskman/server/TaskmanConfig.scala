@@ -39,9 +39,16 @@ object TaskmanConfig extends HasLogger {
 
   // ===================================================================================================================
 
+  sealed trait MailProps
+
+  object MailProps {
+    final case class ViaJavaMail(props: TaskmanConfig.JavaMail) extends MailProps
+    final case class ViaMailGun (props: MailGun.Props)          extends MailProps
+  }
+
   final case class Mail(publicFrom    : Email.Addr,
                         archiveAddrs  : List[Email.Addr],
-                        mechanism     : TaskmanConfig.JavaMail \/ MailGun.Props,
+                        props         : MailProps,
                         concurrencyMax: Int) {
     def envelopeProps = Email.EnvelopeProps(publicFrom, archiveAddrs)
   }
@@ -51,13 +58,13 @@ object TaskmanConfig extends HasLogger {
       ConfigDef.getOrUse[List[Email.Addr]]("archive.to", Nil),
       ConfigDef.need    [Int]             ("concurrency.max").ensure(_ >= 1, "Must be ≥ 1."),
       ).tupled.withPrefix("mail."),
-      mailMechanism
+      mailProps
     ).mapN { case ((a, b, c), m) => Mail(a, b, m, c) }
 
-  def mailMechanism: ConfigDef[TaskmanConfig.JavaMail \/ MailGun.Props] =
+  def mailProps: ConfigDef[MailProps] =
     ConfigDef.need[String]("mail.via").map(_.toLowerCase).chooseAttempt {
-      case "javamail" => \/-(javaMail.map(-\/(_)))
-      case "mailgun"  => \/-(MailGun.config.withPrefix("mailgun.").map(\/-(_)))
+      case "javamail" => \/-(javaMail.map(MailProps.ViaJavaMail))
+      case "mailgun"  => \/-(MailGun.config.withPrefix("mailgun.").map(MailProps.ViaMailGun))
       case _          => -\/("Legal values are [JavaMail, MailGun].")
     }
 
