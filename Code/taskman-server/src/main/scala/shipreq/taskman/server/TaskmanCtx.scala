@@ -51,7 +51,15 @@ final class TaskmanCtx(val db          : DbAccessor,
       f(emailExecutorService)
   }
 
+  val emails = new Emails(config.mail.envelopeProps, emailTokens)
+
   private val http = new OkHttpClient()
+
+  val mailingList: MailingList.API ~> Fx =
+    config.mailingList match {
+      case TaskmanConfig.MailingListProps.NoOp            => MailingListNoOp
+      case TaskmanConfig.MailingListProps.ViaMailChimp(p) => new MailChimp(p)(http)
+    }
 
   val sendMail: BusinessOp.SendEmail => Fx[Unit] =
     config.mail.mechanism match {
@@ -65,14 +73,11 @@ final class TaskmanCtx(val db          : DbAccessor,
       case \/-(props) => new FreshDesk0(props)(http).upgrade.unsafeRun()
     }
 
-  val emails    = new Emails(config.mail.envelopeProps, emailTokens)
-  val mailchimp = new MailChimp(config.mailchimp)(http)
-
   private val clockClock = Clock.systemUTC()
 
   implicit def trustPeriod   = config.taskman.trustPeriod
   implicit val taskmanApi    = TaskmanApi.addLogging(TaskmanApiImpl(None).trans(xa.trans))
-  implicit val businessOpFx  = new BusinessOpFx(sendMail, mailchimp, supportDesk, xa.trans, config.shipreq.schema)
+  implicit val businessOpFx  = new BusinessOpFx(sendMail, mailingList, supportDesk, xa.trans, config.shipreq.schema)
   implicit val serverOpFx    = new ServerOpFx(xa, new Worker.FailureHandler(emails)(businessOpFx))
   implicit val businessLogic = new BusinessLogic(emails, async.emailScheduler)(businessOpFx)
   implicit val failurePolicy = Failure.failurePolicy

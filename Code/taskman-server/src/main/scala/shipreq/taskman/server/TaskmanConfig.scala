@@ -14,7 +14,7 @@ import shipreq.taskman.server.logic._
 import shipreq.taskman.server.logic.business._
 
 final case class TaskmanConfig(mail       : TaskmanConfig.Mail,
-                               mailchimp  : MailChimp.Props,
+                               mailingList: TaskmanConfig.MailingListProps,
                                prometheus : TaskmanConfig.Prometheus,
                                shipreq    : TaskmanConfig.ShipReq,
                                supportDesk: TaskmanConfig.SupportDeskProps,
@@ -25,7 +25,7 @@ object TaskmanConfig extends HasLogger {
   def config: ConfigDef[TaskmanConfig] =
     ConfigDef.logbackXmlOnClasspath *> (
       mail,
-      MailChimp.config.withPrefix("mailchimp."),
+      mailingList,
       prometheus,
       shipreq,
       supportDesk,
@@ -65,6 +65,22 @@ object TaskmanConfig extends HasLogger {
 
   def javaMail: ConfigDef[JavaMail] =
     JavaMailConfig.sessionFn.map(JavaMail.apply)
+
+  // ===================================================================================================================
+
+  sealed trait MailingListProps
+
+  object MailingListProps {
+    case object NoOp extends MailingListProps
+    final case class ViaMailChimp(props: MailChimp.Props) extends MailingListProps
+  }
+
+  def mailingList: ConfigDef[MailingListProps] =
+    ConfigDef.need[String]("mailingList").map(_.toLowerCase).chooseAttempt {
+      case "no-op"     => \/-(ConfigDef.const(MailingListProps.NoOp))
+      case "mailchimp" => \/-(MailChimp.config.withPrefix("mailchimp.").map(MailingListProps.ViaMailChimp))
+      case _          => -\/("Legal values are [mailchimp, no-op].")
+    }
 
   // ===================================================================================================================
 
