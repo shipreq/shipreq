@@ -71,7 +71,7 @@ object TextMod {
   lazy val nonBlank: Iso[String, Option[String]] =
     Iso[String, Option[String]](s => if (s.isEmpty) None else Some(s))(_ getOrElse "")
 
-  def removeTrailingChar(c: Char): Endo[String] =
+  def removeLeadingChar(c: Char): Endo[String] =
     s => if (s.length != 0 && s(0) == c) s.substring(1) else s
 
   def blacklistChars(isBlacklisted: Char => Boolean): Endo[String] =
