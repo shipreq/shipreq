@@ -173,8 +173,11 @@ object DB {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  trait ForUserRegistration[F[_]] extends Base[F] with VerificationTokenReadOnly[F] {
+  trait GetUserId[F[_]] {
     def getUserId(e: Username \/ EmailAddr): F[Option[UserId]]
+  }
+
+  trait ForUserRegistration[F[_]] extends Base[F] with VerificationTokenReadOnly[F] with GetUserId[F] {
 
     def getUserRegistration(e: EmailAddr): F[Option[UserRegistration]]
 
@@ -340,6 +343,7 @@ object DB {
 
   trait ForProjectSpa[F[_]]
       extends Base[F]
+         with GetUserId[F]
          with GetProjectMetaData[F]
          with GetProjectEvents[F]
          with SaveProjectEvent[F] {

@@ -73,7 +73,9 @@ object SqlTest extends TestSuite {
     "projectSpa" - {
       // "getUserIdsByUsernameQuery" - TestDb.check(db.getUserIdsByUsernameQuery)
       // "getUsernamesByUserIdQuery" - TestDb.check(db.getUsernamesByUserIdQuery)
-      "projectSpaInitPage"        - TestDb.check(db.projectSpaInitPageQuery)
+      "getUserIdByEmailSql"    - TestDb.check(db.getUserIdByEmailSql)
+      "getUserIdByUsernameSql" - TestDb.check(db.getUserIdByUsernameSql)
+      "projectSpaInitPage"     - TestDb.check(db.projectSpaInitPageQuery)
     }
 
     "ops" - {
@@ -82,8 +84,6 @@ object SqlTest extends TestSuite {
       "userStatsSql"           - TestDb.check(db.userStatsSql)
       "tableStatsSql"          - TestDb.check(db.tableStatsSql)
       "dbSizeSql"              - TestDb.check(db.dbSizeSql)
-      "userIdByUsernameSql"    - TestDb.check(db.userIdByUsernameSql)
-      "userIdByEmailSql"       - TestDb.check(db.userIdByEmailSql)
       "insertVerifiedEventSql" - TestDb.check(db.insertVerifiedEventSql)
     }
 

@@ -424,12 +424,12 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       }
     }
 
-    "updateProject" - {
+    "updateAccess" - {
       def test(c: CacheState, expectCacheWrites: Int, expectFullDbReads: Int)(implicit t: Tester): Unit = {
         import t._
 
         val u = db.newUserEntry()
-        val cmd = UpdateAccessCmd(Map(u.idP -> Some(ProjectPerm.Collaborator)))
+        val cmd = UpdateAccessCmd.Modify(Map(u.idP -> Some(ProjectPerm.Collaborator)))
         val req = WsReqRes.AccessUpdate.AndReq(cmd)
 
         assertDifference(s"[$c] db reads", db.loadProjectLog.length)(expectFullDbReads) {
@@ -449,12 +449,32 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
           }
         }
       }
-      withAllCacheConfig { implicit t => {
+
+      "modify" - withAllCacheConfig { implicit t => {
         case c: CacheState.Empty      => test(c, 2, 1)
         case c: CacheState.UpToDate   => test(c, 1, 0)
         case c: CacheState.Stale      => test(c, 2, 1)
         case c: CacheState.Incomplete => test(c, 2, 1)
       }}
+
+      "add" - {
+        implicit val t = new Tester; import t._
+        val u = db.newUserEntry()
+        val cmd = UpdateAccessCmd.Add(-\/(u.username), ProjectPerm.Collaborator)
+        val req = WsReqRes.AccessUpdate.AndReq(cmd)
+        val result = sendMsg(req, p1.static, subscribedState)._1
+        assertResponse(result)
+          .expectEventOrds(EventOrd(p1.events.length + 1))
+          .expectSupp(Supplimentary(Rolodex.init(u.idP, u.username)))
+      }
+
+      "addNotFound" - {
+        implicit val t = new Tester; import t._
+        val cmd = UpdateAccessCmd.Add(-\/(Username("nobody")), ProjectPerm.Collaborator)
+        val req = WsReqRes.AccessUpdate.AndReq(cmd)
+        val result = sendMsg(req, p1.static, subscribedState)._1
+        assertEq(result, \/-(-\/(ErrorMsg("User not found."))))
+      }
     }
 
     "updatesAndListeners" - {

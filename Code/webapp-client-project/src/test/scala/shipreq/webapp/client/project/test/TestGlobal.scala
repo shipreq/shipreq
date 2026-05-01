@@ -8,7 +8,7 @@ import org.scalajs.dom.{EventTarget, document, html}
 import scala.scalajs.js
 import shipreq.base.util.JsExt._
 import shipreq.base.util.{Allow, ErrorMsg, JsTimers, PotentialChange, Retries}
-import shipreq.webapp.base.data.{ProjectCreator, Rolodex, UserId, Username}
+import shipreq.webapp.base.data.{EmailAddr, ProjectCreator, Rolodex, UserId, Username}
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
@@ -24,7 +24,7 @@ import shipreq.webapp.member.project.data.{Project, ProjectAccess}
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.project.library.{CacheJs, ProjectLibrary}
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{StateUpdate, Supplimentary, WsReqRes}
-import shipreq.webapp.member.project.protocol.websocket.{ProjectSpaProtocols, SupplimentaryLogic}
+import shipreq.webapp.member.project.protocol.websocket.{ProjectSpaProtocols, SupplimentaryLogic, UpdateAccessCmd}
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test._
 import shipreq.webapp.member.ui.BaseStyles
@@ -249,7 +249,12 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
       onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
       onFieldMandatorinessMod = _ => None,
       onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
-      onAccessUpdate          = updateProject (MakeEvent.updateAccess),
+      onAccessUpdate          = cmd =>
+        UpdateAccessCmd.resolve[CallbackTo, MsgFoldOut[WsReqRes.AccessUpdate.type]](cmd)(
+          getUserId  = u => CallbackTo(TestGlobal.userDb.get(u)),
+          onNotFound = Some(CallbackTo.pure(-\/(ErrorMsg("User not found.")))),
+          modify     = m => CallbackTo.pure(updateProject(MakeEvent.updateAccess)(m))
+        ).runNow(),
     )
 
     testReq => {
@@ -269,10 +274,16 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
 
 object TestGlobal {
 
-  val userId: UserId.Public = Obfuscated("")
+  val userId = PublicUserId1
   val creator = ProjectCreator(userId)
 
-  val initialSupp = Supplimentary(Rolodex.init(userId, Username("u1")))
+  val userDb: Map[Username \/ EmailAddr, UserId.Public] = Map(
+    -\/(Username1) -> userId,
+    -\/(Username2) -> PublicUserId2,
+    -\/(Username3) -> PublicUserId3,
+  )
+
+  val initialSupp = Supplimentary(Rolodex.init(userId, Username1))
 
   def apply(p : Project                  = Project.empty,
             ww: WebWorkerClient.Instance = TestWebWorkerClient(),

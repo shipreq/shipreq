@@ -253,7 +253,7 @@ object MakeEventTest extends TestSuite {
 
       "update" - {
         def test(cmds: (UserId.Public, Option[ProjectPerm])*)(implicit l: Line): Unit =
-          assertMakeEvent(_.updateAccess(UpdateAccessCmd(cmds.toMap), _), {
+          assertMakeEvent(_.updateAccess(UpdateAccessCmd.Modify(cmds.toMap), _), {
             case a if a == AccessUpdate(cmds.toMap) => a
           })
 
@@ -264,7 +264,7 @@ object MakeEventTest extends TestSuite {
 
       "noop" - {
         def test(cmds: (UserId.Public, Option[ProjectPerm])*)(implicit l: Line) =
-          assertNoChange(_.updateAccess(UpdateAccessCmd(cmds.toMap), _))
+          assertNoChange(_.updateAccess(UpdateAccessCmd.Modify(cmds.toMap), _))
 
         "empty" - test()
         "del"   - test(PublicUserId2 -> None)

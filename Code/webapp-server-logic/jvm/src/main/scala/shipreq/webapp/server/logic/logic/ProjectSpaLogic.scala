@@ -464,7 +464,7 @@ object ProjectSpaLogic extends StrictLogging {
         onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
         onFieldMandatorinessMod = _ => F.pure(-\/(MsgError.FunctionNoLongerSupported("fieldMandatorinessMod"))),
         onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
-        onAccessUpdate          = updateProject (MakeEvent.updateAccess),
+        onAccessUpdate          = onAccessUpdate,
       )
 
       private val writeSnapshotInsteadOfEvents: Int => Boolean =
@@ -700,6 +700,15 @@ object ProjectSpaLogic extends StrictLogging {
           case -\/(e) => -\/(MsgError.ServerBehindDatabase(e))
         }
       }
+
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      private def onAccessUpdate: MsgFn[UpdateAccessCmd, EventResult] = in =>
+        UpdateAccessCmd.resolve(in.input)(
+          getUserId  = u => runDB(db.getUserId(u)).map(_.map(Obfuscators.userId.obfuscate)),
+          onNotFound = \/-(MsgFnOut(-\/(ErrorMsg("User not found.")), None)),
+          modify     = m => updateProject(MakeEvent.updateAccess)(in.copy(input = m))
+        )
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
