@@ -322,17 +322,17 @@ object DB {
         with GetProjectMetaData[F]
         with OnSaveProjectEvent[F] {
 
-    protected def _createProject(userId    : UserId,
+    protected def _createProject(creatorId : UserId,
                                  initEvents: Vector[ActiveEvent],
                                  project   : Project,
                                  encKey    : ProjectEncryptionKey): F[ProjectId]
 
-    final def createProject(userId    : UserId,
+    final def createProject(creatorId : UserId,
                             initEvents: Vector[ActiveEvent],
                             project   : Project,
                             encKey    : ProjectEncryptionKey): F[ProjectId] =
       for {
-        pid <- _createProject(userId, initEvents, project, encKey)
+        pid <- _createProject(creatorId, initEvents, project, encKey)
         _   <- throwOnLeft_(onSaveProjectEvents(pid, initEvents))
       } yield pid
 

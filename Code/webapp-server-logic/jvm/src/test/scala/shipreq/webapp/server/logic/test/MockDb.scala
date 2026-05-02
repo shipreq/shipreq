@@ -299,13 +299,13 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     }
   }
 
-  def addProject(projectId: ProjectId, userId: UserId, key: ProjectEncryptionKey)(events: Event*): Unit = {
+  def addProject(projectId: ProjectId, creatorId: UserId, key: ProjectEncryptionKey)(events: Event*): Unit = {
     val initEvents = events.size
-    val ves = verifyEvents(Project.init(userId))(events: _*)
+    val ves = verifyEvents(Project.init(creatorId))(events: _*)
     val now = Instant.now()
-    val mde = MockDb.ProjectEntry(projectId, userId, key, initEvents, ves, now, now, Some(now))
+    val mde = MockDb.ProjectEntry(projectId, creatorId, key, initEvents, ves, now, now, Some(now))
     projects += mde
-    addProjectAccess(projectId, userId, ProjectPerm.Admin)
+    addProjectAccess(projectId, creatorId, ProjectPerm.Admin)
   }
 
   private def getProjectAccessEntry(pid: ProjectId, uid: UserId) =
