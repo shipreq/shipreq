@@ -146,21 +146,24 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         Event.AccessUpdate(Map(user3.idP -> Some(ProjectPerm.Collaborator))),
       )
 
-      var verifiedEvents       = verifyEvents(emptyProject1)(events: _*)
-      var instance             = applyVerifiedEventSuccessfully(emptyProject1, verifiedEvents.toList: _*)
+      val creator              = ProjectCreator(user2.idP)
+      val emptyProject         = Project.init(creator)
+      var verifiedEvents       = verifyEvents(emptyProject)(events: _*)
+      var instance             = applyVerifiedEventSuccessfully(emptyProject, verifiedEvents.toList: _*)
       val latestOrd            = verifiedEvents.last.ord.asLatest
       val id                   = db.createProject(user2.id, events.map(_.active), instance, crypto.generateProjectKey()).value
       val data1                = db.getProjectMetaData(id, user2.id).value.get
       verifiedEvents           = db.getProjectEvents(id).value.getOrThrow()
-      instance                 = applyVerifiedEventSuccessfully(emptyProject1, verifiedEvents.toList: _*)
+      instance                 = applyVerifiedEventSuccessfully(emptyProject, verifiedEvents.toList: _*)
       db.loadProjectLog        = Vector.empty
 
-      lazy val initAppData     = InitAppData(-\/(instance), data1, Supplimentary(Rolodex(Map(user3.idP -> user3.username))))
+      lazy val initRolodex     = Rolodex(Map(user2.idP -> user2.username, user3.idP -> user3.username))
+      lazy val initAppData     = InitAppData(-\/(instance), data1, Supplimentary(initRolodex))
       lazy val static          = WebSocketStatic(user2.toUser, id, user2.id, SessionId.random(), (), svr.now.value, svr.now.value.plusSeconds(99999))
 
       lazy val eventsA         = events.take(1)
       lazy val verifiedEventsA = verifiedEvents.take(1)
-      lazy val instanceA       = applyVerifiedEventSuccessfully(emptyProject1, verifiedEventsA.toList: _*)
+      lazy val instanceA       = applyVerifiedEventSuccessfully(emptyProject, verifiedEventsA.toList: _*)
       lazy val latestOrdA      = verifiedEventsA.last.ord.asLatest
 
       lazy val eventsB         = events.drop(1).take(1)
@@ -290,7 +293,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
     }
   }
 
-  private def getProject(i: InitAppData, prev: Project = emptyProject1): Project =
+  private def getProject(i: InitAppData, prev: Project): Project =
     i.projectData match {
       case -\/(p) => p
       case \/-(e) => prev.updateOrThrow(e)
@@ -332,7 +335,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
               val result = sendMsg(initAppMsg_0, p1.static, subscribedState)
               val actual = result._1
 
-              val noProjectData = -\/(emptyProject1)
+              val noProjectData = -\/(p1.emptyProject)
               val actualWithoutProjectData = actual.map(_.map(_.copy(projectData = noProjectData)))
               val expectWithoutProjectData = \/-(p1.initAppData.copy(projectData = noProjectData))
               assertEq(actualWithoutProjectData, \/-(expectWithoutProjectData))
@@ -341,11 +344,10 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
 
               val initAppData = actual.getOrThrow().getOrThrow()
 
-              val actualProject = getProject(initAppData)
+              val actualProject = getProject(initAppData, p1.emptyProject)
               assertEq(actualProject, p1.instance)
 
-              val expectRolodex = Rolodex(Map(user3.idP -> user3.username))
-              val expectSupp = Supplimentary(expectRolodex)
+              val expectSupp = Supplimentary(p1.initRolodex)
               assertEq(initAppData.supp, expectSupp)
 
               val cache = redis.read(p1.id).value.getOrThrow()
@@ -380,9 +382,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
               assert(result._2.isEmpty)
 
               val initAppData = actual.getOrThrow().getOrThrow()
-
-              val expectRolodex = Rolodex(Map(user3.idP -> user3.username))
-              val expectSupp = Supplimentary(expectRolodex)
+              val expectSupp = Supplimentary(p1.initRolodex)
               assertEq(initAppData.supp, expectSupp)
 
               val cache = redis.read(p1.id).value.getOrThrow()
@@ -484,7 +484,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       var recv1     = Vector.empty[Push]
       val subState1 = projectSpa.onOpen(static, emptyState, onPush(recv1 :+= _), _ => ???).value
       val initData1 = sendMsgAndBroadcast(initAppMsg_0, static, subState1).getOrThrow()
-      val project1  = getProject(initData1)
+      val project1  = getProject(initData1, p1.emptyProject)
       assertEq("[1]", recv1, Vector.empty)
 
       val res1 = sendMsgAndBroadcast(newUC, static, subState1).getOrThrow()
@@ -493,7 +493,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       var recv2     = Vector.empty[Push]
       val subState2 = projectSpa.onOpen(static, emptyState, onPush(recv2 :+= _), _ => ???).value
       val initData2 = sendMsgAndBroadcast(initAppMsg_0, static, subState2).getOrThrow()
-      val project2  = getProject(initData2)
+      val project2  = getProject(initData2, p1.emptyProject)
       assertEq("[3]", recv2, Vector.empty)
       assertEq("[4]", recv1, Vector[Push](res1))
       assertEq("[5]", project2.ord, Some(project1.history.nextOrd.asLatest))
@@ -519,7 +519,9 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         implicit val t = new Tester; import t._
         assertDifference("db reads", db.loadProjectLog.length)(0) {
           val (res, newState) = sendMsg(WsReqRes.Reconnect.AndReq(p1.instance.ord), p1.static, emptyState)
-          assertResponse(res).expectNoEvents.expectSupp()
+          assertResponse(res)
+            .expectNoEvents
+            .expectSupp()
           assert(newState.exists(_.sub.isDefined))
         }
       }
@@ -530,7 +532,9 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
           import IgnoreEqualityOfVerifiedEventTimestamps._
           assertDifference(s"[$c] db reads", db.loadProjectLog.length)(expectFullDbReads) {
             val (res, newState) = sendMsg(WsReqRes.Reconnect.AndReq(Some(p1.latestOrdA)), p1.static, emptyState)
-            assertResponse(res).expectEvents(p1.verifiedEventsBC).expectSupp(p1.initAppData.supp)
+            assertResponse(res)
+              .expectEvents(p1.verifiedEventsBC)
+              .expectSupp(Supplimentary(Rolodex(Map(user3.idP -> user3.username))))
             assert(newState.exists(_.sub.isDefined))
           }
         }

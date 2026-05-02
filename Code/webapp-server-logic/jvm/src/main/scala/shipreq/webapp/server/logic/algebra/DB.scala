@@ -350,7 +350,7 @@ object DB {
 
     def projectSpaInitPage(id: ProjectId, uid: UserId): F[Option[ProjectSpaInitPage]]
 
-    def getProjectRolodex(id: ProjectId, exclude: UserId): F[Rolodex]
+    def getProjectRolodex(id: ProjectId): F[Rolodex]
 
     /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
     final def getUserIdsByUsername(usernames: Set[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]] =

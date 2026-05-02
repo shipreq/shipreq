@@ -463,8 +463,8 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     // Hmm, we don't store the project name in ProjectEntry
   }
 
-  override def getProjectRolodex(pid: ProjectId, exclude: UserId) = Eval.always[Rolodex] {
-    val ids = projectAccess.iterator.filter(a => a.pid ==* pid && a.uid !=* exclude).map(_.uid).toSet
+  override def getProjectRolodex(pid: ProjectId) = Eval.always[Rolodex] {
+    val ids = projectAccess.iterator.filter(a => a.pid ==* pid).map(_.uid).toSet
     Rolodex(needUsernamesByUserId(ids).value.mapKeysNow(Obfuscators.userId.obfuscate))
   }
 }

@@ -541,15 +541,15 @@ object DbInterpreter {
       }
     }
 
-    private[db] val getProjectRolodexQuery = Query[(ProjectId, UserId), (UserId.Public, Username)](
+    private[db] val getProjectRolodexQuery = Query[ProjectId, (UserId.Public, Username)](
         """SELECT a.usr_id, u.username
           |  FROM project_access a, usr u
           | WHERE a.usr_id=u.id
-          |   AND project_id=? AND a.usr_id<>?
+          |   AND project_id=?
         """.stripMargin.sql)
 
-    override def getProjectRolodex(id: ProjectId, exclude: UserId): ConnectionIO[Rolodex] =
-      getProjectRolodexQuery.toMap((id, exclude)).map(Rolodex.apply)
+    override def getProjectRolodex(id: ProjectId): ConnectionIO[Rolodex] =
+      getProjectRolodexQuery.toMap(id).map(Rolodex.apply)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

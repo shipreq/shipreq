@@ -541,7 +541,7 @@ object ProjectSpaLogic extends StrictLogging {
 
         def getSupplimentaryData: F[Supplimentary] =
           for {
-            rolodex <- runDB(db.getProjectRolodex(pid, uid))
+            rolodex <- runDB(db.getProjectRolodex(pid))
           } yield Supplimentary(rolodex)
 
         def ignoreCache(c: Redis.ProjectCache): F[MsgError \/ Result] = {
