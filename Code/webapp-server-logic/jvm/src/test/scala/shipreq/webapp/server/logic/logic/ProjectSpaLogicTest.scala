@@ -575,6 +575,24 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         .expectSupp()
     }
 
+    "initPage" - {
+      "noAccess" - {
+        implicit val t = new Tester; import t._
+        val u2 = db.newUserEntry()
+        val result = projectSpa.initPage(p1.id, u2.id, u2.username, assetManifest).value
+        assertEq(result, None)
+      }
+      "revokedAccess" - {
+        implicit val t = new Tester; import t._
+        val u2 = db.newUserEntry()
+        db.updateProjectAccess(p1.id, Set.empty, Map(u2.id -> ProjectPerm.Collaborator)).value.getOrThrow()
+        assert(projectSpa.initPage(p1.id, u2.id, u2.username, assetManifest).value.isDefined)
+        db.updateProjectAccess(p1.id, Set(u2.id), Map.empty).value.getOrThrow()
+        val result = projectSpa.initPage(p1.id, u2.id, u2.username, assetManifest).value
+        assertEq(result, None)
+      }
+    }
+
     "dataPropFailure" - {
       implicit val t = new Tester; import t._
       val subState = projectSpa.onOpen(p1.static, emptyState, onPush(_ => ()), _ => ???).value
