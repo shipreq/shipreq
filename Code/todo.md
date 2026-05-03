@@ -27,23 +27,24 @@
 
 * revise UI prototype for the project "status" page
 
-* only admin should be able to
-  * rename the project
-  * modify access
-  * this is implemented on the backend, add to the frontend too?
+* add permission checks to the frontend?
+  currently there are no checks on the frontend;
+  when a user attempts to submit a change, it is access-checked in the backend
 
 * testing project access
-  * read
-    * page load1
-    * websocket attempt
-  * write
-    * ajax calls (eg. rename)
-    * new events
-  * real-time
-    * web socket on server-side should recognise access has been prevented/re-granted
-    * page should update on access change
+  * websocket connection attempt
 
-* read-only access?
+* add read-only access?
+  seems trivially easy if permission checks only happen on the backend
+
+* when users can be used as field values:
+  * should the rolodex contain info of users who've had access revoked?
+    seems necessary to display references to them in fields
+    * potential solution:
+      - allow perm to be NULL in project_access table
+      - populate rolodex includes entries with NULL perms
+      - update DB projectSpaInitPage to require non-null perm
+  * references to users who've had access revoked should appear as issues in the Issues page
 
 ========================================================================================================================
 # Phase 3
