@@ -322,6 +322,16 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       "projectNotFound"  - test(user2.token, ProjectId(23432))(-\/(AccessDenied))
       "accessDenied"     - test(db.newUserEntry().token, p1.id)(-\/(AccessDenied))
       "ok"               - test(user2.token, p1.id)(\/-((p1.static.copy(sessionId = user2.token.sessionId, expiresAt = security.expiry()), emptyState)))
+      "collaboratorOk"   - test(user3.token, p1.id)(\/-((p1.static.copy(user = user3.toUser, sessionId = user3.token.sessionId, expiresAt = security.expiry()), emptyState)))
+      "revokedAccess"    - {
+        implicit val t = new Tester; import t._
+        val u = db.newUserEntry()
+        db.updateProjectAccess(p1.id, Set.empty, Map(u.id -> ProjectPerm.Collaborator)).value.getOrThrow()
+        assert(projectSpa.onConnect(u.token, p1.id, user2.id).value.isRight)
+        db.updateProjectAccess(p1.id, Set(u.id), Map.empty).value.getOrThrow()
+        val a = projectSpa.onConnect(u.token, p1.id, user2.id).value
+        assertEq(a, -\/(ConnectRejection.AccessDenied))
+      }
     }
 
     "initApp" - {

@@ -31,9 +31,6 @@
   currently there are no checks on the frontend;
   when a user attempts to submit a change, it is access-checked in the backend
 
-* testing project access
-  * websocket connection attempt
-
 * add read-only access?
   seems trivially easy if permission checks only happen on the backend
 
