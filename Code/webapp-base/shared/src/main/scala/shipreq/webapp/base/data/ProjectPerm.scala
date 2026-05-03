@@ -8,10 +8,14 @@ sealed abstract class ProjectPerm(final val ord: Int) {
 
   /** `this` is the required permission, `subject` is the actual permission of the user. */
   final def isSatisfiedBy(subject: ProjectPerm): Permission =
-    (this, subject) match {
-      case (Admin, Admin) => Allow
-      case (Collaborator, Admin | Collaborator) => Allow
-      case _ => Deny
+    this match {
+      case Admin => subject match {
+        case Admin => Allow
+        case Collaborator => Deny
+      }
+      case Collaborator => subject match {
+        case Admin | Collaborator => Allow
+      }
     }
 
   /** `this` is the required permission, `subject` is the actual permission of the user. */
