@@ -206,5 +206,24 @@ abstract class DbLaws extends TestSuite {
       "bulk" - testUpdateProjectAccessBulk()
     }
 
+    "projectSpaInitPage" - {
+      "ok" - test { (t, u) =>
+        val p = t.createProject(u)
+        assert(t.db.projectSpaInitPage(p, u).isDefined)
+      }
+      "noAccess" - test { (t, u) =>
+        val p = t.createProject(u)
+        val u2 = t.createUser()
+        assertEq(t.db.projectSpaInitPage(p, u2), None)
+      }
+      "revokedAccess" - test { (t, u) =>
+        val p = t.createProject(u)
+        val u2 = addProjectMember(t, p, ProjectPerm.Collaborator)
+        assert(t.db.projectSpaInitPage(p, u2).isDefined)
+        t.db.updateProjectAccess(p, Map(u2 -> None)).getOrThrow()
+        assertEq(t.db.projectSpaInitPage(p, u2), None)
+      }
+    }
+
   }
 }

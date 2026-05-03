@@ -346,6 +346,7 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
 
   override def projectSpaInitPage(pid: ProjectId, uid: UserId) = Eval.always[Option[DB.ProjectSpaInitPage]] {
     for {
+      _ <- getProjectAccessEntry(pid, uid)
       u <- users.find(_.id ==* uid)
       p <- projects.get(pid)
     } yield

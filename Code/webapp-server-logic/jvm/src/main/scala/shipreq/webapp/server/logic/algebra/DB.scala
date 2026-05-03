@@ -389,6 +389,9 @@ object DB {
                                       name      : Project.Name,
                                       projectKey: ProjectEncryptionKey,
                                       userKey   : UserEncryptionKey)
+  object ProjectSpaInitPage {
+    implicit def univEq: UnivEq[ProjectSpaInitPage] = UnivEq.derive
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
