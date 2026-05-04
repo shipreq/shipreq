@@ -1,4 +1,4 @@
-<self>               711.74 KB  53.2%
+<self>               712.18 KB  53.2%
 lodash               140.01 KB  10.5%
 moment               76.39 KB   5.71%
 react-color          75.34 KB   5.63%
@@ -24,4 +24,4 @@ prop-types           2.56 KB    0.191%
 @icons/material      1.69 KB    0.127%
 undate               1.48 KB    0.111%
 webpack              1021 B     0.0745%
-style-to-object      976 B      0.0713%
+style-to-object      976 B      0.0712%
