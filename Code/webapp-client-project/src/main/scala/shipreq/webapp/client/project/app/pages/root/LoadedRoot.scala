@@ -469,7 +469,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
       def usage            = pxUsage.value()
       def createPreviewRW  = pxCreatePreviewRW.value()
       def editorArgs       = pxEditorArgs.value()
-      def adminOnly        = ProjectPerm.Admin.isSatisfiedBy(pxProjectPerm.value())
+      def onlyAdminCanEdit = ProjectPerm.Admin.isSatisfiedBy(pxProjectPerm.value())
 
       val body: VdomElement = p.page match {
 
@@ -587,7 +587,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
             userId          = initPageData.userId,
             access          = project.access,
             rolodex         = unsafeSupp().rolodex,
-            editability     = adminOnly,
+            editability     = onlyAdminCanEdit,
             state           = StateSnapshot.zoomL(State.access)(s).setStateVia($),
             confirmJs       = confirmJs,
             sspUpdateAccess = sspUpdateAccess,
