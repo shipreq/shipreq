@@ -81,7 +81,7 @@ object ProjectSpaTestDsl {
         case Page.ReqDetail(_) => base.copy(reqDetail   = Try(new ReqDetailObs(inner, nav, base.global)))
         case Page.Issues       => base.copy(issues      = Try(new IssuesPageObs(inner)))
         case Page.ReqGraph     => base.copy(reqGraph    = Try(new ReqGraphObs(inner, base.global)))
-        case Page.Access       => base.copy(access      = Try(new AccessPageObs(inner)))
+        case Page.Access       => base.copy(access      = Try(new AccessPageObs(inner, base.global, base.confirmJs)))
       }
     }
   }
@@ -206,7 +206,7 @@ object ProjectSpaTestDsl {
 
   implicit lazy val transformAccessPage =
     AccessPageTestDsl.*.transformer
-      .mapR[Ref](_ => ())
+      .mapR[Ref](r => AccessPageTestDsl.Ref(r.global, r.confirmJs))
       .pmapO[Obs](_.access)
       .mapS[TestState](_ => ())((s, _) => s)
 
