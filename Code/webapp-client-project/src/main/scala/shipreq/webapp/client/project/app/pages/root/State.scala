@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import monocle.macros._
 import shipreq.base.util._
 import shipreq.webapp.base.feature._
+import shipreq.webapp.client.project.app.pages.admin.access.AccessPage
 import shipreq.webapp.client.project.app.pages.config.fields.FieldConfig
 import shipreq.webapp.client.project.app.pages.config.issues.IssueConfig
 import shipreq.webapp.client.project.app.pages.config.reqtypes.ReqTypeConfig
@@ -16,7 +17,7 @@ import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets.{NewReqButton, ReqSearch}
 import shipreq.webapp.member.feature.PreviewFeature
 import shipreq.webapp.member.project.data.{FilterDead, HideDead, Project}
-import shipreq.webapp.member.project.protocol.websocket.{ManualIssueCmd, UpdateConfigCmd, UpdateContentCmd}
+import shipreq.webapp.member.project.protocol.websocket.{ManualIssueCmd, UpdateAccessCmd, UpdateConfigCmd, UpdateContentCmd}
 import shipreq.webapp.member.ui.{ProjectItem, Toast}
 
 sealed trait PreviewId
@@ -118,6 +119,8 @@ final case class State(projectName               : ProjectItem.WithEditableName.
                        reqTypeConfigAsync        : AsyncFeature.State.D0[ErrorMsg],
                        customIssueTypeConfig     : IssueConfig.State,
                        customIssueTypeConfigAsync: AsyncFeature.State.D0[ErrorMsg],
+                       access                    : AccessPage.State,
+                       updateAccessCmdAsync      : AsyncFeature.State.D1[UpdateAccessCmd, ErrorMsg],
                       ) {
 
   @inline def filterDead = _filterDead
@@ -164,6 +167,8 @@ object State {
       reqTypeConfigAsync         = AsyncFeature.State.initD0,
       customIssueTypeConfig      = IssueConfig.initState,
       customIssueTypeConfigAsync = AsyncFeature.State.initD0,
+      access                     = AccessPage.State.init,
+      updateAccessCmdAsync       = AsyncFeature.State.initD1,
     )
 
   implicit val reusability: Reusability[State] =

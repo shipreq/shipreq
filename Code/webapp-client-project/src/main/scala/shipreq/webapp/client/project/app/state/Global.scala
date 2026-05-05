@@ -331,6 +331,7 @@ abstract class Global(userId          : UserId.Public,
   final lazy val sspUpdateSavedViews      = sspToEvents(WsReqRes.UpdateSavedViews)
   final lazy val sspUpdateManualIssues    = sspToEvents(WsReqRes.UpdateManualIssues)
   final lazy val sspReqTypeImplicationMod = sspToEvents(WsReqRes.ReqTypeImplicationMod)
+  final lazy val sspUpdateAccess          = sspToEvents(WsReqRes.UpdateAccess)
 }
 
 object Global {

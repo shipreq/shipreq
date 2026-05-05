@@ -248,6 +248,25 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
+  object accessPage {
+    private val segmentTopMargin = marginTop(3 rem).important
+
+    object leaveProjectSegment {
+      val segment = style(
+        segmentTopMargin,
+        display.flex,
+        alignItems.flexEnd)
+
+      val left = style(
+        flexGrow(1),
+        marginRight(8 ex))
+
+      val button = style(
+        whiteSpace.nowrap)
+    }
+  }
+
+  // ===================================================================================================================
   object reqgraphPage {
 
     val container = style(
@@ -1987,6 +2006,7 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
 
   initInnerObjects(
+    accessPage.leaveProjectSegment.segment,
     cfg.deadMnemonic,
     deletionForm.bottomSections,
     deletionRestorationForms.main,

@@ -70,6 +70,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
     private val sspUpdateSavedViews    = global.sspUpdateSavedViews.map(_.events)
     private val sspUpdateManualIssues  = Reusable.byRef(global.sspUpdateManualIssues)
     private val sspUpdateManualIssuesE = global.sspUpdateManualIssues.map(_.events)
+    private val sspUpdateAccess        = global.sspUpdateAccess
 
     private val feedbackModal: FeedbackModal = {
       val projectMetadata = global.projectMetadata(initPageData.projectId)
@@ -236,6 +237,9 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
     private val manualIssueCmdAsyncW: AsyncFeature.Write.D1[ManualIssueCmd, ErrorMsg] =
       AsyncFeature.Write.D1.init($ zoomStateL State.manualIssueCmdAsync)
+
+    private val updateAccessCmdAsyncW: AsyncFeature.Write.D1[UpdateAccessCmd, ErrorMsg] =
+      AsyncFeature.Write.D1.init($ zoomStateL State.updateAccessCmdAsync)
 
     private val updateConfigCmdInvoker: UpdateConfigCmd ~=> Callback =
       Reusable.fn(cmd => updateConfigCmdAsyncW(cmd)(sspUpdateConfigE(cmd)))
@@ -568,6 +572,15 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
             savedViewFeature = savedViewFeature,
             edgeEditorArgs   = someEdgeEditorArgs,
           ).render
+
+        case Page.Access =>
+          admin.access.AccessPage.Props(
+            state           = StateSnapshot.zoomL(State.access)(s).setStateVia($),
+            confirmJs       = confirmJs,
+            sspUpdateAccess = sspUpdateAccess,
+            async           = AsyncFeature.ReadWrite.D1(updateAccessCmdAsyncW, s.updateAccessCmdAsync.toRead),
+          ).render
+
       }
 
       State.recorder.record(s)
