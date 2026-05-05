@@ -298,6 +298,7 @@ object TestGlobal {
     -\/(Username1) -> userId,
     -\/(Username2) -> PublicUserId2,
     -\/(Username3) -> PublicUserId3,
+    -\/(Username4) -> PublicUserId4,
   )
 
   val initialSupp = Supplimentary(Rolodex.init(userId, Username1))

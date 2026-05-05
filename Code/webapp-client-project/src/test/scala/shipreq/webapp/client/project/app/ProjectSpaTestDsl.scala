@@ -29,6 +29,7 @@ import shipreq.webapp.member.project.event.Event
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
 import shipreq.webapp.member.test._
 import shipreq.webapp.member.test.project.SampleProject5
+import shipreq.webapp.member.test.WebappTestUtil.{PublicUserId1, Username1}
 import shipreq.webapp.member.ui.OnlyVisibleOnMouseMove
 
 object ProjectSpaTestDsl {
@@ -286,6 +287,8 @@ object ProjectSpaTestDsl {
               project   : Project                  = SampleProject5.project,
               rd        : RD.State                 = RD.unspecifiedState,
               wwPrep    : TestWebWorkerClient.Prep = TestWebWorkerClient.noInitialPrep,
+              userId    : UserId.Public            = PublicUserId1,
+              username  : Username                 = Username1,
               assertPass: Boolean                  = true,
              ): Unit = {
     runTestReturnReport(
@@ -294,6 +297,8 @@ object ProjectSpaTestDsl {
       project    = project,
       rd         = rd,
       wwPrep     = wwPrep,
+      userId     = userId,
+      username   = username,
       assertPass = assertPass,
     )
     ()
@@ -304,6 +309,8 @@ object ProjectSpaTestDsl {
                           project   : Project                  = SampleProject5.project,
                           rd        : RD.State                 = RD.unspecifiedState,
                           wwPrep    : TestWebWorkerClient.Prep = TestWebWorkerClient.noInitialPrep,
+                          userId    : UserId.Public            = PublicUserId1,
+                          username  : Username                 = Username1,
                           assertPass: Boolean                  = true,
                          ): Report[String] = {
 
@@ -314,8 +321,6 @@ object ProjectSpaTestDsl {
     val global       = TestGlobal(project)
     val confirmJs    = TestConfirmJs()
     val promptJs     = TestPromptJs()
-    val userId       = project.access.adminIterator().next()
-    val username     = Username("testuser")
     val projectId    = Obfuscated("pxx"): ProjectId.Public
     val creator      = ProjectCreator(userId)
     val initPageData = ProjectSpaEntryPoint.InitDataWithoutEncKey(username, userId, projectId, creator, project.name, AssetManifest(None), "/ww.js")
