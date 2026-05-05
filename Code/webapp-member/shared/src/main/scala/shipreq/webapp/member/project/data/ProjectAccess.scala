@@ -8,6 +8,9 @@ final case class ProjectAccess(asMap: Map[UserId.Public, ProjectPerm]) {
   def apply(user: UserId.Public): Option[ProjectPerm] =
     asMap.get(user)
 
+  def need(user: UserId.Public): ProjectPerm =
+    apply(user).get
+
   def adminIterator(): Iterator[UserId.Public] =
     asMap.iterator.filter(_._2 ==* ProjectPerm.Admin).map(_._1)
 

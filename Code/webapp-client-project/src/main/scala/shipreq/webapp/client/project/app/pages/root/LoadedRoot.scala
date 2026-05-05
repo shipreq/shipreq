@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.PackageBase._
 import monocle.Lens
 import org.scalajs.dom.window
 import shipreq.base.util.{Allow, ErrorMsg}
+import shipreq.webapp.base.data.ProjectPerm
 import shipreq.webapp.base.feature.AsyncFeature.Implicits._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
@@ -50,6 +51,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
   val pxProject       = global.pxProject
   def unsafeProject() = global.unsafeProject()
+  def unsafeSupp()    = global.unsafeSupp()
 
   private val stateLensFilterDead =
     Lens[State, FilterDead](_._filterDead)(fd => _.setFilterDead(fd, unsafeProject()))
@@ -89,6 +91,12 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
     private val pxFilterDead =
       pxState.map(_.filterDead).withReuse
+
+    private val pxProjectAccess =
+      pxProject.map(_.access).withReuse
+
+    private val pxProjectPerm =
+      pxProjectAccess.map(_(initPageData.userId)).withReuse
 
     private val pxUseCases =
       pxProject.map(_.content.reqs.useCases).withReuse
@@ -461,6 +469,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
       def usage            = pxUsage.value()
       def createPreviewRW  = pxCreatePreviewRW.value()
       def editorArgs       = pxEditorArgs.value()
+      def adminOnly        = ProjectPerm.Admin.isSatisfiedBy(pxProjectPerm.value())
 
       val body: VdomElement = p.page match {
 
@@ -575,8 +584,11 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
         case Page.Access =>
           admin.access.AccessPage.Props(
-            state           = StateSnapshot.zoomL(State.access)(s).setStateVia($),
             userId          = initPageData.userId,
+            access          = project.access,
+            rolodex         = unsafeSupp().rolodex,
+            editability     = adminOnly,
+            state           = StateSnapshot.zoomL(State.access)(s).setStateVia($),
             confirmJs       = confirmJs,
             sspUpdateAccess = sspUpdateAccess,
             async           = AsyncFeature.ReadWrite.D1(accessPageAsyncW, s.accessPageAsync.toRead),

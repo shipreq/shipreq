@@ -251,6 +251,24 @@ object Style extends StyleSheet.Inline {
   object accessPage {
     private val segmentTopMargin = marginTop(3 rem).important
 
+    object existingUserSegment {
+      val segment = style(
+        segmentTopMargin)
+
+      val table = style(
+        width(100 %%),
+        marginBottom(1 em))
+
+      val tableCellDropdown = style(
+        textAlign.center)
+
+      @inline def tableCellApply =
+        tableCellDropdown
+
+      val tableCellDelete = style(
+        textAlign.right)
+    }
+
     object leaveProjectSegment {
       val segment = style(
         segmentTopMargin,
@@ -2006,6 +2024,7 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
 
   initInnerObjects(
+    accessPage.existingUserSegment.segment,
     accessPage.leaveProjectSegment.segment,
     cfg.deadMnemonic,
     deletionForm.bottomSections,

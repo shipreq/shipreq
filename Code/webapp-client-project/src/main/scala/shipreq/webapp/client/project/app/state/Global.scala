@@ -79,6 +79,9 @@ abstract class Global(userId          : UserId.Public,
   final def unsafeProject(): Project =
     pxProject.value()
 
+  final def unsafeSupp(): Supplimentary =
+    unsafeState().supp
+
   def projectMetadata(id: ProjectId.Public): CallbackTo[Metadata.Project] =
     CallbackTo(unsafeState() match {
       case s: State.Active =>
