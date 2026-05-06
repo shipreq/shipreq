@@ -58,7 +58,7 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
 
   val optionalFullscreen = TestOptionalFullscreen()
 
-  override val reauthModal = reauth.modal(username)
+  override val reauthModal = reauth.modal(username)(localStorage)
 
   override protected def unsafeNow() = now
   var now = Instant.now()
