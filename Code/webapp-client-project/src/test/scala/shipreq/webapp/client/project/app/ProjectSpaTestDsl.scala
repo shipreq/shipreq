@@ -27,9 +27,9 @@ import shipreq.webapp.client.project.widgets.{ImplicationGraph, ReqSearch}
 import shipreq.webapp.member.project.data.{ExternalPubid, Project}
 import shipreq.webapp.member.project.event.Event
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
+import shipreq.webapp.member.test.WebappTestUtil.{PublicUserId1, Username1}
 import shipreq.webapp.member.test._
 import shipreq.webapp.member.test.project.SampleProject5
-import shipreq.webapp.member.test.WebappTestUtil.{PublicUserId1, Username1}
 import shipreq.webapp.member.ui.OnlyVisibleOnMouseMove
 
 object ProjectSpaTestDsl {
@@ -318,7 +318,7 @@ object ProjectSpaTestDsl {
     OnlyVisibleOnMouseMove.allowHide = false
     ImplicationGraph.runningInUnitTest = true
 
-    val global       = TestGlobal(project)
+    val global       = TestGlobal(project, userId, username, ProjectCreator(userId))
     val confirmJs    = TestConfirmJs()
     val promptJs     = TestPromptJs()
     val projectId    = Obfuscated("pxx"): ProjectId.Public
