@@ -30,7 +30,11 @@ object ProjectPerm {
   case object Admin        extends ProjectPerm(0)
   case object Collaborator extends ProjectPerm(1)
 
-  val values = AdtMacros.adtValues[ProjectPerm]
+  // The order specified here defines the order rendered in UI dropdowns
+  val values = AdtMacros.adtValuesManually[ProjectPerm](
+    Admin,
+    Collaborator,
+  )
 
   implicit def univEq: UnivEq[ProjectPerm] = UnivEq.derive
 

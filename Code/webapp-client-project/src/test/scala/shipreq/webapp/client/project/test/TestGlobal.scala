@@ -17,7 +17,6 @@ import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseCode
 import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.util.Obfuscated
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.app.state.Global
 import shipreq.webapp.member.project.data.{Project, ProjectAccess}
@@ -29,15 +28,20 @@ import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test._
 import shipreq.webapp.member.ui.BaseStyles
 import shipreq.webapp.server.logic.event._
+import shipreq.webapp.server.logic.util.Obfuscators
 
 final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
-                       ww                   : WebWorkerClient.Instance)
-  extends Global(
-    TestGlobal.userId,
-    ProjectCreator(TestGlobal.userId),
+                       val userId           : UserId.Public,
+                       val username         : Username,
+                       creator              : ProjectCreator,
+                       initialSupp          : Supplimentary,
+                       ww                   : WebWorkerClient.Instance,
+  ) extends Global(
+    userId,
+    creator,
     (_, _) => Callback.empty,
     _ => Callback.empty,
-    Global.State.Loading(initialProjectLibrary.withoutMetaData, TestGlobal.initialSupp),
+    Global.State.Loading(initialProjectLibrary.withoutMetaData, initialSupp),
     ww,
     LoggerJs.off) {
 
@@ -53,17 +57,14 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
 
   val optionalFullscreen = TestOptionalFullscreen()
 
-  def userPubId = TestGlobal.userId
-  val username = Username("nimander")
-
-  override val reauthModal = reauth.modal(username)
+  override val reauthModal = reauth.modal(username)(localStorage)
 
   override protected def unsafeNow() = now
   var now = Instant.now()
   def advanceTime(d: Duration): Unit = now = now.plusNanos(d.getNano).plusSeconds(d.getSeconds)
   def advanceTimeByMs(ms: Long) = advanceTime(Duration.ofMillis(ms))
 
-  lazy val protocol = ProjectSpaProtocols.WebSocket(initialProjectLibrary.latestMetaData.id, ProjectCreator(TestGlobal.userId))
+  lazy val protocol = ProjectSpaProtocols.WebSocket(initialProjectLibrary.latestMetaData.id, creator)
 
   lazy val svr = WebSocketServerHelper(protocol)
 
@@ -104,7 +105,7 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
         onUpdateManualIssues    = failLeft,
         onFieldMandatorinessMod = _ => (),
         onReqTypeImplicationMod = failLeft,
-        onAccessUpdate          = failLeft,
+        onUpdateAccess          = failLeft,
       )
       def reqReq = req.req
       val res = msgFold(req.reqRes)(reqReq)
@@ -207,9 +208,15 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
 
     val supplimentaryDataForEvents: VerifiedEvent.Seq => CallbackTo[Supplimentary] =
       SupplimentaryLogic[CallbackTo](
-        needUsernamesByUserId = ids => CallbackTo(ids.iterator.map(u => u -> Username("u" + u.value)).toMap),
-        obfuscate             = u => Obfuscated(u.value.toString),
-        deobfuscate           = o => UserId(o.value.toLong),
+        needUsernamesByUserId = ids => CallbackTo(ids.iterator.map { id =>
+          val publicId = Obfuscators.userId.obfuscate(id)
+          val username = TestGlobal.inverseUserDb.get(publicId).flatMap(_.left.toOption).getOrElse(
+            throw new IllegalStateException(s"Username not found for user ID $id (obfuscated: $publicId)")
+          )
+          id -> username
+        }.toMap),
+        obfuscate             = Obfuscators.userId.obfuscate,
+        deobfuscate           = Obfuscators.userId.deobfuscateOrThrow,
       )
 
     def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result, requiredPerm: ProjectPerm): MsgFn[I] = input => Some {
@@ -217,7 +224,7 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
 
         // This logic is duplicated in ProjectSpaLogic
         def permCheck: PotentialChange[ErrorMsg, Unit] =
-          p1.access.require(requiredPerm, userPubId) match {
+          p1.access.require(requiredPerm, userId) match {
             case Allow => PotentialChange.unit
             case Deny  => PotentialChange.Failure(ErrorMsg(s"$requiredPerm rights required."))
           }
@@ -235,7 +242,6 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
             for {
               ord  <- nextEventOrd
               ves   = VerifiedEvent.Seq.empty + VerifiedEvent(ord, event, Instant.now())
-              _    <- addEvents(ves)
               supp <- supplimentaryDataForEvents(ves)
             } yield \/-(StateUpdate(ves, supp))
 
@@ -265,9 +271,9 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
       onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues, ProjectPerm.Collaborator),
       onFieldMandatorinessMod = _ => None,
       onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod, ProjectPerm.Collaborator),
-      onAccessUpdate          = cmd =>
-        UpdateAccessCmd.resolve[CallbackTo, MsgFoldOut[WsReqRes.AccessUpdate.type]](cmd)(
-          userId     = userPubId,
+      onUpdateAccess          = cmd =>
+        UpdateAccessCmd.resolve[CallbackTo, MsgFoldOut[WsReqRes.UpdateAccess.type]](cmd)(
+          userId     = userId,
           getUserId  = u => CallbackTo(TestGlobal.userDb.get(u)),
           onNotFound = Some(CallbackTo.pure(-\/(ErrorMsg("User not found.")))),
           modify     = (m, p) => CallbackTo.pure(updateProject(MakeEvent.updateAccess, p)(m))
@@ -291,24 +297,31 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
 
 object TestGlobal {
 
-  val userId = PublicUserId1
-  val creator = ProjectCreator(userId)
-
   val userDb: Map[Username \/ EmailAddr, UserId.Public] = Map(
-    -\/(Username1) -> userId,
+    -\/(Username1) -> PublicUserId1,
     -\/(Username2) -> PublicUserId2,
     -\/(Username3) -> PublicUserId3,
+    -\/(Username4) -> PublicUserId4,
   )
 
-  val initialSupp = Supplimentary(Rolodex.init(userId, Username1))
+  val inverseUserDb = userDb.iterator.map(_.swap).toMap
 
-  def apply(p : Project                  = Project.empty,
-            ww: WebWorkerClient.Instance = TestWebWorkerClient(),
+  def rolodexForProject(p: Project): Rolodex =
+    Rolodex(p.access.asMap.map { case (id, _) =>
+      id -> userDb.find { case (_, pubId) => pubId ==* id }.get._1.swap.toOption.get
+    })
+
+  def apply(p       : Project                  = Project.empty,
+            userId  : UserId.Public            = PublicUserId1,
+            username: Username                 = Username1,
+            creator : ProjectCreator           = ProjectCreator(PublicUserId1),
+            ww      : WebWorkerClient.Instance = TestWebWorkerClient(),
            ): TestGlobal = {
     val p2 = if (p.access.asMap.nonEmpty) p else p.copy(access = ProjectAccess.init(creator))
     val md = looseProjectMetaData(p2, eventsTotal = p2.ordAsInt)
     val ps = ProjectLibrary.WithMetaData.init(creator, p2, md, userId, CacheJs(creator))
-    new TestGlobal(ps, ww)
+    val supp = Supplimentary(rolodexForProject(p2))
+    new TestGlobal(ps, userId, username, creator, supp, ww)
   }
 
   import shipreq.webapp.base.test.TestState._

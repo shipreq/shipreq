@@ -1221,7 +1221,7 @@
     39 [remove] i.icon.birthday:before
     50 [remove] i.icon.help.circle.outline:before
     35 [keep  ] i.icon.user:before
-    36 [remove] i.icon.users:before
+    36 [keep  ] i.icon.users:before
     37 [remove] i.icon.doctor:before
     39 [remove] i.icon.handicap:before
     38 [remove] i.icon.student:before
@@ -3209,8 +3209,8 @@
     43 [keep  ] .ui.fluid.card
    100 [keep  ] .ui.cards a.card,.ui.link.card,.ui.link.cards .card,a.ui.card
    307 [keep  ] .ui.cards a.card:hover,.ui.link.card:hover,.ui.link.cards .card:hover,a.ui.card:hover
-   195 [remove] .ui.cards>.red.card,.ui.red.card,.ui.red.cards>.card
-   213 [remove] .ui.cards>.red.card:hover,.ui.red.card:hover,.ui.red.cards>.card:hover
+   195 [keep  ] .ui.cards>.red.card,.ui.red.card,.ui.red.cards>.card
+   213 [keep  ] .ui.cards>.red.card:hover,.ui.red.card:hover,.ui.red.cards>.card:hover
    204 [remove] .ui.cards>.orange.card,.ui.orange.card,.ui.orange.cards>.card
    222 [remove] .ui.cards>.orange.card:hover,.ui.orange.card:hover,.ui.orange.cards>.card:hover
    204 [keep  ] .ui.cards>.yellow.card,.ui.yellow.card,.ui.yellow.cards>.card

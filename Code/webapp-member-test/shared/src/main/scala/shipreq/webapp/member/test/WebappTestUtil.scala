@@ -57,15 +57,19 @@ trait WebappTestUtil extends BaseTestUtil {
   lazy val PublicUserId1 = Obfuscators.userId.obfuscate(UserId1)
   lazy val Creator1 = ProjectCreator(PublicUserId1)
   lazy val emptyProject1 = Project.init(Creator1)
-  val Username1 = Username("u1")
+  val Username1 = Username("usr1")
 
   val UserId2 = UserId(2)
   lazy val PublicUserId2 = Obfuscators.userId.obfuscate(UserId2)
-  val Username2 = Username("u2")
+  val Username2 = Username("usr2")
 
   val UserId3 = UserId(3)
   lazy val PublicUserId3 = Obfuscators.userId.obfuscate(UserId3)
-  val Username3 = Username("u3")
+  val Username3 = Username("usr3")
+
+  val UserId4 = UserId(4)
+  lazy val PublicUserId4 = Obfuscators.userId.obfuscate(UserId4)
+  val Username4 = Username("usr4")
 
   def looseProjectMetaData(p: Project, eventsTotal: Int = 123, eventsInit: Int = 2, perm: ProjectPerm = ProjectPerm.Admin): ProjectMetaData =
     ProjectMetaData.fromProject(p)(

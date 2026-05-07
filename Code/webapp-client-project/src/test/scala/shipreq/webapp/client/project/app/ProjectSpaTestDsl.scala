@@ -10,6 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.TestLocation
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.util.Obfuscated
+import shipreq.webapp.client.project.app.pages.admin.access.{AccessPageObs, AccessPageTestDsl}
 import shipreq.webapp.client.project.app.pages.config.fields.{FieldConfigObs, FieldConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.issues.{IssueConfigObs, IssueConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigObs, ReqTypeConfigTestDsl}
@@ -26,6 +27,7 @@ import shipreq.webapp.client.project.widgets.{ImplicationGraph, ReqSearch}
 import shipreq.webapp.member.project.data.{ExternalPubid, Project}
 import shipreq.webapp.member.project.event.Event
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
+import shipreq.webapp.member.test.WebappTestUtil.{PublicUserId1, Username1}
 import shipreq.webapp.member.test._
 import shipreq.webapp.member.test.project.SampleProject5
 import shipreq.webapp.member.ui.OnlyVisibleOnMouseMove
@@ -67,7 +69,7 @@ object ProjectSpaTestDsl {
           new TestGlobal.Obs($, global),
           new TestConfirmJs.Obs(confirmJs),
           nav,
-          e, e, e, e, e, e, e, e, e)
+          e, e, e, e, e, e, e, e, e, e)
       }
 
       nav.page match {
@@ -80,6 +82,7 @@ object ProjectSpaTestDsl {
         case Page.ReqDetail(_) => base.copy(reqDetail   = Try(new ReqDetailObs(inner, nav, base.global)))
         case Page.Issues       => base.copy(issues      = Try(new IssuesPageObs(inner)))
         case Page.ReqGraph     => base.copy(reqGraph    = Try(new ReqGraphObs(inner, base.global)))
+        case Page.Access       => base.copy(access      = Try(new AccessPageObs(inner, base.global, base.confirmJs)))
       }
     }
   }
@@ -106,6 +109,7 @@ object ProjectSpaTestDsl {
         case Some("Tags")      => Page.CfgTags
         case None              => Page.Index
         case Some("Issues")    => if (inner.exists(Style.issues.newIssueCont.selector)) Page.Issues else Page.CfgIssues
+        case Some("Access")    => Page.Access
         case Some(n)           => sys error s"Unknown page: $n"
       }
 
@@ -126,7 +130,9 @@ object ProjectSpaTestDsl {
                        issues     : Maybe[IssuesPageObs],
                        reqGraph   : Maybe[ReqGraphObs],
                        reqTable   : Maybe[ReqTableObs],
-                       reqDetail  : Maybe[ReqDetailObs]) {
+                       reqDetail  : Maybe[ReqDetailObs],
+                       access     : Maybe[AccessPageObs],
+                      ) {
 
     lazy val reqSearch: ReqSearchObs =
       new ReqSearchObs(nav.nav(Style.widgets.reqSearch.container.selector))
@@ -199,6 +205,12 @@ object ProjectSpaTestDsl {
       .pmapO[Obs](_.reqGraph)
       .mapS[TestState](_ => ())((s, _) => s)
 
+  implicit lazy val transformAccessPage =
+    AccessPageTestDsl.*.transformer
+      .mapR[Ref](r => AccessPageTestDsl.Ref(r.global, r.confirmJs))
+      .pmapO[Obs](_.access)
+      .mapS[TestState](_ => ())((s, _) => s)
+
   private lazy val invariantsPH            = PH.invariants.lift
   private lazy val invariantsRT            = RT.invariants.lift
   private lazy val invariantsRD            = RD.invariants.lift
@@ -208,6 +220,7 @@ object ProjectSpaTestDsl {
   private lazy val invariantsIssueConfig   = IssueConfigTestDsl.invariants.lift
   private lazy val invariantsTagConfig     = TagConfigTestDsl.invariants.lift
   private lazy val invariantsReqGraph      = ReqGraphTestDsl.invariants.lift
+  private lazy val invariantsAccessPage    = AccessPageTestDsl.invariants.lift
 
   private val pageInvariants: *.Invariants =
     *.chooseInvariant("Page invariants")(_.state.page match {
@@ -220,6 +233,7 @@ object ProjectSpaTestDsl {
       case Page.CfgReqTypes  => invariantsReqTypeConfig
       case Page.CfgTags      => invariantsTagConfig
       case Page.ReqGraph     => invariantsReqGraph
+      case Page.Access       => invariantsAccessPage
     })
 
   private val invariants: *.Invariants =
@@ -260,6 +274,7 @@ object ProjectSpaTestDsl {
   def liftIssueConfigPageTests(p: IssueConfigTestDsl  .*.Plan): *.Plan = p.lift
   def liftTagConfigPageTests  (p: TagConfigTestDsl    .*.Plan): *.Plan = p.lift
   def liftReqGraphTests       (p: ReqGraphTestDsl     .*.Plan): *.Plan = p.lift
+  def liftAccessPageTests     (p: AccessPageTestDsl   .*.Plan): *.Plan = p.lift
 
   def testReqTable(action: RT.*.Actions): *.Actions =
     liftReqTableTests(Plan.action(action)).asAction("Test ReqTable")
@@ -272,6 +287,8 @@ object ProjectSpaTestDsl {
               project   : Project                  = SampleProject5.project,
               rd        : RD.State                 = RD.unspecifiedState,
               wwPrep    : TestWebWorkerClient.Prep = TestWebWorkerClient.noInitialPrep,
+              userId    : UserId.Public            = PublicUserId1,
+              username  : Username                 = Username1,
               assertPass: Boolean                  = true,
              ): Unit = {
     runTestReturnReport(
@@ -280,6 +297,8 @@ object ProjectSpaTestDsl {
       project    = project,
       rd         = rd,
       wwPrep     = wwPrep,
+      userId     = userId,
+      username   = username,
       assertPass = assertPass,
     )
     ()
@@ -290,6 +309,8 @@ object ProjectSpaTestDsl {
                           project   : Project                  = SampleProject5.project,
                           rd        : RD.State                 = RD.unspecifiedState,
                           wwPrep    : TestWebWorkerClient.Prep = TestWebWorkerClient.noInitialPrep,
+                          userId    : UserId.Public            = PublicUserId1,
+                          username  : Username                 = Username1,
                           assertPass: Boolean                  = true,
                          ): Report[String] = {
 
@@ -297,11 +318,9 @@ object ProjectSpaTestDsl {
     OnlyVisibleOnMouseMove.allowHide = false
     ImplicationGraph.runningInUnitTest = true
 
-    val global       = TestGlobal(project)
+    val global       = TestGlobal(project, userId, username, ProjectCreator(userId))
     val confirmJs    = TestConfirmJs()
     val promptJs     = TestPromptJs()
-    val userId       = project.access.adminIterator().next()
-    val username     = Username("testuser")
     val projectId    = Obfuscated("pxx"): ProjectId.Public
     val creator      = ProjectCreator(userId)
     val initPageData = ProjectSpaEntryPoint.InitDataWithoutEncKey(username, userId, projectId, creator, project.name, AssetManifest(None), "/ww.js")

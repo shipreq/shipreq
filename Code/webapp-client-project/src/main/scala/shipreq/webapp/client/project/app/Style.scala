@@ -248,6 +248,57 @@ object Style extends StyleSheet.Inline {
   }
 
   // ===================================================================================================================
+  object accessPage {
+    private val segmentTopMargin = marginTop(3 rem).important
+
+    object newUserSegment {
+      val segment = style(
+        segmentTopMargin)
+
+      val fieldUser = style(
+        width(50 %%))
+
+      @inline def fieldPerm = fieldUser
+
+      val fieldAdd = style(
+        textAlign.right,
+        marginTop(1 rem))
+    }
+
+    object existingUserSegment {
+      val segment = style(
+        segmentTopMargin)
+
+      val table = style(
+        width(100 %%),
+        marginBottom(1 em))
+
+      val tableCellDropdown = style(
+        textAlign.center)
+
+      @inline def tableCellApply =
+        tableCellDropdown
+
+      val tableCellDelete = style(
+        textAlign.right)
+    }
+
+    object leaveProjectSegment {
+      val segment = style(
+        segmentTopMargin,
+        display.flex,
+        alignItems.flexEnd)
+
+      val left = style(
+        flexGrow(1),
+        marginRight(8 ex))
+
+      val button = style(
+        whiteSpace.nowrap)
+    }
+  }
+
+  // ===================================================================================================================
   object reqgraphPage {
 
     val container = style(
@@ -1987,36 +2038,39 @@ object Style extends StyleSheet.Inline {
   // ===================================================================================================================
 
   initInnerObjects(
-    generic.table,
-    navBar.connected,
-    home.cardHeader,
-    help.table,
-    reqgraphPage.graph,
+    accessPage.existingUserSegment.segment,
+    accessPage.leaveProjectSegment.segment,
+    accessPage.newUserSegment.segment,
     cfg.deadMnemonic,
-    deletionRestorationForms.main,
     deletionForm.bottomSections,
-    issues.rowspanOuter,
+    deletionRestorationForms.main,
+    fieldConfig.fieldListTable,
+    generic.table,
+    help.table,
+    home.cardHeader,
     issueConfig.sectionTitle,
-    restorationForm.bottomSection,
-    reqtable.creation.formOuter,
-    reqtable.filterEditor.input(Valid),
-    reqtable.sortEditor.dragArea,
-    reqtable.page.viewCtrls,
-    reqtable.table.selectionColumnHeader,
+    issues.rowspanOuter,
+    navBar.connected,
     reqdetail.detailTable,
     reqdetail.impGraph.container,
     reqdetail.useCaseStep.container,
-    fieldConfig.fieldListTable,
+    reqgraphPage.graph,
+    reqtable.creation.formOuter,
+    reqtable.filterEditor.input(Valid),
+    reqtable.page.viewCtrls,
+    reqtable.sortEditor.dragArea,
+    reqtable.table.selectionColumnHeader,
     reqTypeConfig.implicationHelp,
+    restorationForm.bottomSection,
     savedViews.activeItem,
     tagConfig.tagTree,
     tags.iconDead,
+    widgets.impGraphEdgeEditor.root,
     widgets.issueDesc,
+    widgets.reqSearch.container,
     widgets.reqTypeSelector.dropdown,
     widgets.splitScreen.left,
     widgets.splitScreenCrud.emptyRight,
-    widgets.reqSearch.container,
-    widgets.impGraphEdgeEditor.root,
   )
 //  ConsoleIO(_.log(render[String])).unsafePerformIO()
 //  ConsoleIO(_.info(s"Styles: ${Style.register.styles.length}")).unsafePerformIO()

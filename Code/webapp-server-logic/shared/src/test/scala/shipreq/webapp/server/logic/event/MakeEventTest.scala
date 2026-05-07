@@ -296,9 +296,16 @@ object MakeEventTest extends TestSuite {
         }
 
         "soleAdmin" - {
-          val t = new Tester
-          val msg = UpdateAccessCmd.Modify(Map(PublicUserId1 -> None))
-          t.assertMakeEventFails(_.updateAccess(msg, _))
+          "del" - {
+            val t = new Tester
+            val msg = UpdateAccessCmd.Modify(Map(PublicUserId1 -> None))
+            t.assertMakeEventFails(_.updateAccess(msg, _))
+          }
+          "downgrade" - {
+            val t = new Tester
+            val msg = UpdateAccessCmd.Modify(Map(PublicUserId1 -> Some(Collaborator)))
+            t.assertMakeEventFails(_.updateAccess(msg, _))
+          }
         }
       }
 

@@ -49,9 +49,8 @@ object MakeEvent {
     if (updates.isEmpty)
       Unchanged
     else {
-      val admin = project.access.adminIterator().toSet
-      val removals = updates.iterator.filter(_._2.isEmpty).map(_._1).toSet
-      if ((admin -- removals).isEmpty)
+      val access2 = project.access.update(updates)
+      if (!access2.hasAdmin)
         Failure(userFacingErrorMsgCantRemoveAdmin)
       else
         Event.AccessUpdate(updates)

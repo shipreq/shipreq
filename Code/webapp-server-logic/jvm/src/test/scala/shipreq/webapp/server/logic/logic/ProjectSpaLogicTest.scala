@@ -440,7 +440,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
 
         val u = db.newUserEntry()
         val cmd = UpdateAccessCmd.Modify(Map(u.idP -> Some(ProjectPerm.Collaborator)))
-        val req = WsReqRes.AccessUpdate.AndReq(cmd)
+        val req = WsReqRes.UpdateAccess.AndReq(cmd)
 
         assertDifference(s"[$c] db reads", db.loadProjectLog.length)(expectFullDbReads) {
           assertDifference(s"[$c] redis writes", redis.writeCount())(expectCacheWrites) {
@@ -471,7 +471,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         implicit val t = new Tester; import t._
         val u = db.newUserEntry()
         val cmd = UpdateAccessCmd.Add(-\/(u.username), ProjectPerm.Collaborator)
-        val req = WsReqRes.AccessUpdate.AndReq(cmd)
+        val req = WsReqRes.UpdateAccess.AndReq(cmd)
         val result = sendMsg(req, p1.static, subscribedState)._1
         assertResponse(result)
           .expectEventOrds(EventOrd(p1.events.length + 1))
@@ -481,7 +481,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       "addNotFound" - {
         implicit val t = new Tester; import t._
         val cmd = UpdateAccessCmd.Add(-\/(Username("nobody")), ProjectPerm.Collaborator)
-        val req = WsReqRes.AccessUpdate.AndReq(cmd)
+        val req = WsReqRes.UpdateAccess.AndReq(cmd)
         val result = sendMsg(req, p1.static, subscribedState)._1
         assertEq(result, \/-(-\/(ErrorMsg("User not found."))))
       }
@@ -490,7 +490,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         implicit val t = new Tester; import t._
         val static3 = p1.static.copy(user = user3.toUser)
         val cmd = UpdateAccessCmd.Modify(Map(user2.idP -> None))
-        val req = WsReqRes.AccessUpdate.AndReq(cmd)
+        val req = WsReqRes.UpdateAccess.AndReq(cmd)
         val result = sendMsg(req, static3, subscribedState)._1
         assertEq(result, \/-(-\/(ErrorMsg("Admin rights required."))))
       }
@@ -499,7 +499,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         "collaborator" - {
           implicit val t = new Tester; import t._
           val static3 = p1.static.copy(user = user3.toUser)
-          val req = WsReqRes.AccessUpdate.AndReq(UpdateAccessCmd.RemoveSelf)
+          val req = WsReqRes.UpdateAccess.AndReq(UpdateAccessCmd.RemoveSelf)
           val result = sendMsg(req, static3, subscribedState)._1
           assertResponse(result)
             .expectEventOrds(EventOrd(p1.events.length + 1))
@@ -510,9 +510,9 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
           implicit val t = new Tester; import t._
           // First add another admin
           val addAdminCmd = UpdateAccessCmd.Modify(Map(user3.idP -> Some(ProjectPerm.Admin)))
-          sendMsg(WsReqRes.AccessUpdate.AndReq(addAdminCmd), p1.static, subscribedState)
+          sendMsg(WsReqRes.UpdateAccess.AndReq(addAdminCmd), p1.static, subscribedState)
           // Now remove self
-          val req = WsReqRes.AccessUpdate.AndReq(UpdateAccessCmd.RemoveSelf)
+          val req = WsReqRes.UpdateAccess.AndReq(UpdateAccessCmd.RemoveSelf)
           val result = sendMsg(req, p1.static, subscribedState)._1
           assertResponse(result)
             .expectEventOrds(EventOrd(p1.events.length + 2))
@@ -521,7 +521,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
 
         "soleAdmin" - {
           implicit val t = new Tester; import t._
-          val req = WsReqRes.AccessUpdate.AndReq(UpdateAccessCmd.RemoveSelf)
+          val req = WsReqRes.UpdateAccess.AndReq(UpdateAccessCmd.RemoveSelf)
           val result = sendMsg(req, p1.static, subscribedState)._1
           assertEq(result, \/-(-\/(userFacingErrorMsgCantRemoveAdmin)))
         }

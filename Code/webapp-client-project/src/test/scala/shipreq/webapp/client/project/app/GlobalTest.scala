@@ -108,7 +108,7 @@ object GlobalTest extends TestSuite {
 
     "wwMissingEvents" - {
       val ww = TestWebWorkerClient()
-      val g = TestGlobal(newProject(4), ww)
+      val g = TestGlobal(newProject(4), ww = ww)
       g.addEvents(newVerifiedEvents(6, 7)).runNow()
       assertEq(ww.requestCount(), 0)
 

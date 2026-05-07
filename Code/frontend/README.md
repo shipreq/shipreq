@@ -48,3 +48,14 @@ Semantic UI is a special beast...
 
 * `semantic-test/` is identical to `semantic/` except that I've manually modified certain files in
   `semantic-test/src/definitions/modules/` with changes needed for testing (i.e. SJS tests from SBT).
+
+### Pruning CSS
+
+We prune out around half of the CSS provided by Semantic UI.
+
+1. Edit `src/semantic/prune` and/or `src/semantic/icons-used`
+1. Run `src/semantic/prune`
+1. Check the results of `semantic/dist/semantic.pruned.log`
+    Eg. `git diff semantic/dist/semantic.pruned.log`
+    or `< ./semantic/dist/semantic.pruned.log | grep red | grep card`
+1. Run `./build-parallel`

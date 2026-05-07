@@ -61,6 +61,8 @@ object CommonObs {
 
     val hasError = $.domAsHtml.classList.contains("error")
 
+    val isDisabled = $$.domAsHtml.classList.contains("disabled")
+
     val text = dom.children(0).textContent
 
     val selected = $$.collect01(".text").zippers.map(_.domAsHtml.textContent.trim)

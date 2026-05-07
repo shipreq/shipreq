@@ -27,11 +27,11 @@
 # project access WIP
 
 * plan:
-  1. implement (with tests) project access API, ensure read-only unless admin
-    1. [ ] project access page
-    1. [ ] leave
-    1. [ ] new user (read-only unless admin)
-    1. [ ] existing user (read-only unless admin)
+  1. implement (with tests) project access API (ensuring read-only unless admin)
+    1. [x] project access page
+      1. [x] new user (read-only unless admin)
+      1. [x] existing user (read-only unless admin)
+      1. [x] leave
   1. add admin permission checks to the frontend:
     1. [ ] project renaming
   1. add read-only access
