@@ -53,10 +53,10 @@ object AccessPageTest extends TestSuite {
       >> global.autoRespondToLast
       +> newUserInput.assert("")
       +> existingUserRows.assert(
-        ExistingUserRow("You",            Admin,        EnabledE, None,          None),
-        ExistingUserRow(Username2.with_@, Admin,        EnabledE, None,          Some(Enabled)),
-        ExistingUserRow(Username3.with_@, Collaborator, EnabledE, None,          Some(Enabled)),
-        ExistingUserRow(Username4.with_@, Collaborator, EnabledE, None,          Some(Enabled)),
+        ExistingUserRow("You",            Admin,        EnabledE, None, None),
+        ExistingUserRow(Username2.with_@, Admin,        EnabledE, None, Some(Enabled)),
+        ExistingUserRow(Username3.with_@, Collaborator, EnabledE, None, Some(Enabled)),
+        ExistingUserRow(Username4.with_@, Collaborator, EnabledE, None, Some(Enabled)),
       )
     )
 

@@ -109,11 +109,11 @@ object NewUserSegment {
         .withOuterMod(_(*.fieldAdd))
 
     val form =
-    <.div(^.className := "ui form",
-      <.div(^.className := "fields",
-        fieldUserOrEmail.render,
-        fieldPerm.render),
-      fieldAdd.render)
+      <.div(^.className := "ui form",
+        <.div(^.className := "fields",
+          fieldUserOrEmail.render,
+          fieldPerm.render),
+        fieldAdd.render)
 
     Segment.raised(*.segment,
       Header.h4("New User"),
