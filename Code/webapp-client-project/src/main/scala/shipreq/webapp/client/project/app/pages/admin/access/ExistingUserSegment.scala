@@ -58,7 +58,9 @@ object ExistingUserSegment {
         p.async(asyncKey).isInProgress
 
       val saved: ProjectPerm =
-        p.access.need(id)
+        // Not using .need here because we don't want to crash between a user leaing the project, and them being
+        // redirected to the access-revoked page.
+        p.access(id).getOrElse(ProjectPerm.min)
 
       val selected: ProjectPerm =
         p.editability match {
