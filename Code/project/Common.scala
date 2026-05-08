@@ -306,7 +306,6 @@ object Common {
         _.settings(
           Test / jsEnv := new JSDOMNodeJSEnv(JSDOMNodeJSEnv.Config()),
           Test / test / tags += CustomTags.Node -> 1,
-          Test / test / tags += CustomTags.MemoryMB -> 150,
         )
       case UseNodeAdvanced =>
         _.settings(

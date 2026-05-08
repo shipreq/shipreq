@@ -57,10 +57,6 @@ val benchmarkJvm          = ShipReqBuild.benchmarkJvm
 val benchmarkJs           = ShipReqBuild.benchmarkJs
 val utils                 = ShipReqBuild.utils
 
-// More than these crashes phantomjs for some reason
-Global / concurrentRestrictions += Tags.limit(CustomTags.WebappClientProjectTest, WebappBuild.WebappClientProject.parallelism)
-
-Global / concurrentRestrictions += Tags.limit(CustomTags.MemoryMB, 1024 * 2)
 Global / concurrentRestrictions += Tags.limit(CustomTags.Node, 2)
 Global / concurrentRestrictions += Tags.limit(Tags.Test, 2)
 

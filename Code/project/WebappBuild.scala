@@ -205,17 +205,12 @@ object WebappBuild {
         scalaJSUseMainModuleInitializer := true,
         Compile / mainClass := Some("shipreq.webapp.client.ww.Main"))
 
-  object WebappClientProject {
-    val parallelism = 4
-  }
-
   lazy val webappClientProject =
     project
       .in(file("webapp-client-project"))
       .configure(memberSpa)
       .dependsOn(webappClientWwApi, webappClientLoaders)
       .depsForJs(ScalaCSS.react ++ scalajsDom ++ shapeless ++ Nyaya.prop ++ parboiled)
-      .settings(Test / test / tags += CustomTags.WebappClientProjectTest -> 1)
 
   lazy val webappSsr =
     crossProject(JSPlatform, JVMPlatform)
