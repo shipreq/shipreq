@@ -51,7 +51,7 @@ jobs:
       env:
         CI: 1
         # MODE: release
-        NODE_OPTIONS: --max-old-space-size=3072
+        NODE_OPTIONS: --max-old-space-size=3072 --gc-interval=100
       run: |
         cd Code && sbt \
           -Dsbt.server.autostart=false \
