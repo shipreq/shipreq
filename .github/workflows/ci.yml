@@ -45,7 +45,7 @@ jobs:
       uses: japgolly/setup-everything-scala@v4.1
       with:
         java-version: graalvm-community:17.0.9
-        jsdom-version: 28.1.0
+        jsdom-version: 27.0.0
         node-version: 25.9.0
 
     - name: Install JS module for Graal
