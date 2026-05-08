@@ -54,6 +54,9 @@ jobs:
     - name: Build postgres
       run: cd Docker/dev-postgres && ./build
 
+    - name: Start test env
+      run: cd Code && bin/env test up -d
+
     - name: Build
       run: cd Code && $SBT Test/compile
 
