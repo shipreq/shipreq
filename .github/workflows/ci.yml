@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+    paths:
+      - '.github/workflows/ci.yml'
+      - 'Docker/dev-postgres/**'
+      - 'Code/**'
+    tags-ignore:
+      - v*
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Git checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Setup Scala
+      uses: japgolly/setup-everything-scala@v4.1
+      with:
+        java-version: graalvm-community:17.0.9
+        jsdom-version: 26.1.0
+        node-version: 25.9.0
+
+    - name: Build postgres
+      run: cd Docker/dev-postgres && ./build
+
+    - name: Build Scala
+      env:
+        CI: 1
+        MODE: release
+      run: cd Code && sbt test
