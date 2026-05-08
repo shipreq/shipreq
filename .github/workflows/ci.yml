@@ -15,6 +15,16 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+
+    env:
+      SBT: >-
+        sbt
+        --no-server
+        -Dsbt.server.autostart=false
+        -Dsbt.server.forcestart=true
+        -Dsbt.supershell=never
+        -J-XX:+ExitOnOutOfMemoryError
+
     steps:
 
     - name: Git checkout
@@ -45,17 +55,11 @@ jobs:
       env:
         CI: 1
         # MODE: release
-      run: cd Code && sbt Test/compile Test/fastOptJS
+      run: cd Code && $SBT Test/compile Test/fastOptJS
 
     - name: Test
       env:
         CI: 1
         # MODE: release
         NODE_OPTIONS: --max-old-space-size=3072
-      run: |
-        cd Code && sbt \
-          -Dsbt.server.autostart=false \
-          -Dsbt.server.forcestart=true \
-          -Dsbt.supershell=never \
-          -J-XX:+ExitOnOutOfMemoryError \
-          test
+      run: cd Code && $SBT test
