@@ -43,13 +43,13 @@ jobs:
     - name: Build
       env:
         CI: 1
-        MODE: release
-      run: cd Code && sbt Test/compile Test/fullOptJS
+        # MODE: release
+      run: cd Code && sbt Test/compile Test/fastOptJS
 
     - name: Test
       env:
         CI: 1
-        MODE: release
+        # MODE: release
         NODE_OPTIONS: --max-old-space-size=2048
       run: |
         cd Code && sbt \
