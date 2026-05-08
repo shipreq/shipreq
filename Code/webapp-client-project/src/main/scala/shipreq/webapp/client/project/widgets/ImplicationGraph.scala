@@ -163,6 +163,9 @@ object ImplicationGraph {
         for (ee <- edgeEditor)
           ee.enrich(root, p.edgeEditorArgs)
       }
+
+    override def shutdown: Callback =
+      Callback(edgeEditor.foreach(_.disable()))
   }
 
   private[widgets] object HoverText {
@@ -366,9 +369,10 @@ object ImplicationGraph {
         }
     }
 
-    private def disable(): Unit = {
+    private[widgets] def disable(): Unit = {
       logger(_.debug("Disabling..."))
       point = null
+      setDragDelay(None)
 
       // Uninstall from global
       document.removeEventListener("keypress", onKeyPress)
