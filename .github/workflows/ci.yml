@@ -46,4 +46,10 @@ jobs:
         CI: 1
         MODE: release
         NODE_OPTIONS: --max-old-space-size=2048
-      run: cd Code && sbt test
+      run: |
+        cd Code && sbt \
+          -Dsbt.server.autostart=false \
+          -Dsbt.server.forcestart=true \
+          -Dsbt.supershell=never \
+          -J-XX:+ExitOnOutOfMemoryError \
+          test
