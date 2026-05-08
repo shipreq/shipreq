@@ -36,7 +36,7 @@ jobs:
       env:
         CI: 1
         MODE: release
-      run: cd Code && sbt Test/compile Test/fastOptJS
+      run: cd Code && sbt Test/compile Test/fullOptJS
 
     - name: Test
       env:
