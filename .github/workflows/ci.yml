@@ -29,6 +29,9 @@ jobs:
         jsdom-version: 26.1.0
         node-version: 25.9.0
 
+    - name: Install JS module for Graal
+      run: gu install js
+
     - name: Build postgres
       run: cd Docker/dev-postgres && ./build
 
