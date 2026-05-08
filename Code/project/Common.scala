@@ -131,7 +131,7 @@ object Common {
       _.settings(
         Test / parallelExecution := false,
         Global / concurrentRestrictions += Tags.limit(Tags.Test, 1),
-        Global / concurrentRestrictions += Tags.limitAll(1),
+        Global / concurrentRestrictions += Tags.limitAll(cores),
       )
     else
       _.settings(
