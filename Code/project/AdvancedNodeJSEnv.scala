@@ -74,8 +74,11 @@ class AdvancedNodeJSEnv(config: AdvancedNodeJSEnv.Config) extends JSEnv {
          |(function () {
          |  var jsdom = require("jsdom");
          |
-         |  var virtualConsole = new jsdom.VirtualConsole()
-         |    .sendTo(console, { omitJSDOMErrors: true });
+         |  var virtualConsole = new jsdom.VirtualConsole();
+         |  if (typeof virtualConsole.forwardTo === 'function')
+         |    virtualConsole.forwardTo(console, { omitJSDOMErrors: true })
+         |  else
+         |    virtualConsole.sendTo(console, { omitJSDOMErrors: true });
          |  virtualConsole.on("jsdomError", function (error) {
          |    /* #42 Counter-hack the hack that React's development mode uses
          |     * to bypass browsers' debugging tools. If we detect that we are
