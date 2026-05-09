@@ -62,8 +62,8 @@ jobs:
     - name: Build
       run: cd Code && $SBT Test/compile
 
-    - name: Test (JVM)
-      run: cd Code &&  $SBT testJVM
-
     - name: Test (JS)
       run: cd Code &&  $SBT testJS
+
+    - name: Test (JVM)
+      run: cd Code &&  $SBT testJVM
