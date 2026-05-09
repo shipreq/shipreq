@@ -45,7 +45,6 @@ jobs:
       uses: japgolly/setup-everything-scala@v4.1
       with:
         java-version: graalvm-community:17.0.9
-        jsdom-version: 29.1.1
         node-version: 25.9.0
 
     - name: Install JS module for Graal
@@ -56,6 +55,9 @@ jobs:
 
     - name: Start test env
       run: cd Code && bin/env test up -d
+
+    - name: Prepare Scala.js dependencies
+      run: cd Code && npm install
 
     - name: Build
       run: cd Code && $SBT Test/compile
