@@ -19,6 +19,9 @@ brew install parallel pigz
 ```sh
 cd ../Docker/dev-postgres
 ./build
+
+cd ../../Code
+npm install
 ```
 
 ### Without Docker

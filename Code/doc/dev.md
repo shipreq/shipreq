@@ -12,11 +12,8 @@ Development Environment Setup
   * unzip
 
 * For Scala.JS unit testing:
-  1. Install Node.JS and npm
-  2. `npm config set prefix $HOME/.npm`
-  3. `export NODE_PATH=$HOME/.npm/lib/node_modules` # Add this to your profile
-  4. `npm install -g jsdom source-map-support`
-
+  1. Install Node
+  2. Run `npm install` in the `Code` directory
 
 ### Dev account for web front-end
 
