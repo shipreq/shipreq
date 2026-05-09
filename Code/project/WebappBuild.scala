@@ -106,7 +106,6 @@ object WebappBuild {
         React.test ++ ScalaCSS.react ++
         TestState.nyaya ++ TestState.domZipperSizzle ++ TestState.scalajsReact)
       .jsSettings(
-        parallelExecution := false, // I don't know why this is needed
         Test / jsDependencies += ProvidedJS / "webapp-base-test.js")
 
   lazy val webappMemberJVM = webappMember.jvm
@@ -134,7 +133,6 @@ object WebappBuild {
       .depsForBoth(Circe.main)
       .depsForBoth(ScalaCSS.core % Test) // for NaturalOrdering
       .jsSettings(
-        parallelExecution := false, // Faster
         Test / jsDependencies += ProvidedJS / "webapp-member-test.js")
 
   lazy val webappSampleDataJVM = webappSampleData.jvm
