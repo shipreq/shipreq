@@ -30,7 +30,6 @@ docker / dockerfile := {
     s"""
        |cd "${tmpJetty.getAbsolutePath}"
        |  && tar xzf "$jettyDistTarGz" --strip-components=1
-       |  && sed -i 's|"0/>|"0"/>|' etc/jetty-gzip.xml
        |  && rm -rv */*{jaas,jsp}[.-]* lib/apache-jsp demo-base
      """.stripMargin.trim.replaceAll("\n\\s+", " "))
 
@@ -137,10 +136,10 @@ docker / dockerfile := {
       // Make jars deterministic
       if (fixJars)
         execInBash(s"""cd "$stageDir" && """ +
-          "for f in  $(find -name '*.jar'); do unzip -l $f| cut -b31- | grep '/$' | xargs zip -dq $f META-INF/MANIFEST.MF; done")
+          "for f in  $(find . -name '*.jar'); do unzip -l $f| cut -b31- | grep '/$' | xargs zip -dq $f META-INF/MANIFEST.MF; done")
 
       // Compress assets
-      val compressable = s"cd ${stage.getAbsolutePath} && find -type f | egrep -v '\\.(br|gz|zip|jar|html|xml|eot|woff2?)$$'"
+      val compressable = s"cd ${stage.getAbsolutePath} && find . -type f | egrep -v '\\.(br|gz|zip|jar|html|xml|eot|woff2?)$$'"
       execInBash(s"$compressable | parallel --no-notice $compGz")
       execInBash(s"$compressable | parallel --no-notice $compBr")
 
@@ -148,7 +147,9 @@ docker / dockerfile := {
       // finding the db migrations
       if (batch.exists(_._2 endsWith s"/$wsjar")) {
         wsjarEncountered = true
-        execInBash(s"cd $stageDir/WEB-INF && mkdir classes && cd classes && unzip -l ../lib/$wsjar | sed 1,3d | head -n -2 | tr -s ' ' | cut -d' ' -f5- | grep -v '\\.class$$' | xargs unzip ../lib/$wsjar")
+        // val removeLastTwoLines = "head -n -2" // doesn't work on mac
+        val removeLastTwoLines = "awk -v n=2 'NR > n { print buf[(NR-1) % n] } { buf[(NR-1) % n] = $0 }'"
+        execInBash(s"cd $stageDir/WEB-INF && mkdir classes && cd classes && unzip -l ../lib/$wsjar | sed 1,3d | $removeLastTwoLines | tr -s ' ' | cut -d' ' -f5- | grep -v '\\.class$$' | xargs unzip ../lib/$wsjar")
       }
 
       stage
@@ -169,7 +170,7 @@ docker / dockerfile := {
   new Dockerfile {
     def runInBash(cmds: String*) = run("/bin/bash", "-c", cmds.mkString(";"))
 
-    from(Docker.baseImage)
+    from(DockerCfg.baseImage)
 
     env(
       "NAME"                      -> "shipreq/webapp",
@@ -182,10 +183,9 @@ docker / dockerfile := {
 
     copy(tmpJetty, s"$jettyHome/")
 
-    // TODO Maybe not needed after use of quickstart
     // Jetty's start script only waits 60sec for the server to start before giving up.
     // On a micro EC2 instance this isn't enough time, so this increases the wait time.
-    runInBash("""sed -i 's/\(for T in \)\(1 2 3 .* 15\)\(\s+\d+\)*/\1\2 \2 \2 \2 \2/' """ + s"$jettyHome/bin/jetty.sh")
+    env("JETTY_START_TIMEOUT" -> "300")
 
     warStages.foreach(copy(_, s"$warExplode/"))
 
@@ -196,7 +196,7 @@ docker / dockerfile := {
 
     expose(8080)
 
-    env(Docker.envVars.value: _*)
+    env(DockerCfg.envVars.value: _*)
 
     cmd("bin/webapp")
   }

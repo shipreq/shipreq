@@ -57,18 +57,4 @@ val benchmarkJvm          = ShipReqBuild.benchmarkJvm
 val benchmarkJs           = ShipReqBuild.benchmarkJs
 val utils                 = ShipReqBuild.utils
 
-val `scalafix-input`      = ScalafixBuild.`scalafix-input`
-val `scalafix-output`     = ScalafixBuild.`scalafix-output`
-val `scalafix-rules`      = ScalafixBuild.`scalafix-rules`
-val `scalafix-tests`      = ScalafixBuild.`scalafix-tests`
-
-// More than these crashes phantomjs for some reason
-Global / concurrentRestrictions += Tags.limit(CustomTags.WebappClientProjectTest, WebappBuild.WebappClientProject.parallelism)
-
-Global / concurrentRestrictions += Tags.limit(CustomTags.MemoryMB, 1024 * 16)
-// Global / concurrentRestrictions += Tags.limit(CustomTags.Node, 16)
-// Global / concurrentRestrictions += Tags.limit(CustomTags.PhantomJs, 8)
-// Global / concurrentRestrictions += Tags.limit(Tags.Test, 31)
-
-
 ThisBuild / evictionErrorLevel := Level.Info

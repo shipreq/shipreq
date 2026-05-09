@@ -48,13 +48,13 @@ object MemberNavBar {
   private val dropdownOptions = {
     val preventSelection: Set[String] = Set(sendFeedbackTitle)
     new Dropdown.JsOptions {
-      override val action = Dropdown.JsOptions.Action.custom { args =>
+      this.action = Dropdown.JsOptions.Action.custom { args =>
         val text = args.element.innerText.trim
         if (!preventSelection.contains(text))
           args.select()
         args.hideAndClear()
       }
-      on = Dropdown.JsOptions.On.Hover
+      this.on = Dropdown.JsOptions.On.Hover
     }
   }
 

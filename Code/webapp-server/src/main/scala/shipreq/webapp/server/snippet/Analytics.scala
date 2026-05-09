@@ -1,5 +1,6 @@
 package shipreq.webapp.server.snippet
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import net.liftweb.http.DispatchSnippet
 import scala.xml._
 import shipreq.webapp.server.config.Global

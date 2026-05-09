@@ -146,21 +146,24 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         Event.AccessUpdate(Map(user3.idP -> Some(ProjectPerm.Collaborator))),
       )
 
-      var verifiedEvents       = verifyEvents(emptyProject1)(events: _*)
-      var instance             = applyVerifiedEventSuccessfully(emptyProject1, verifiedEvents.toList: _*)
+      val creator              = ProjectCreator(user2.idP)
+      val emptyProject         = Project.init(creator)
+      var verifiedEvents       = verifyEvents(emptyProject)(events: _*)
+      var instance             = applyVerifiedEventSuccessfully(emptyProject, verifiedEvents.toList: _*)
       val latestOrd            = verifiedEvents.last.ord.asLatest
       val id                   = db.createProject(user2.id, events.map(_.active), instance, crypto.generateProjectKey()).value
       val data1                = db.getProjectMetaData(id, user2.id).value.get
       verifiedEvents           = db.getProjectEvents(id).value.getOrThrow()
-      instance                 = applyVerifiedEventSuccessfully(emptyProject1, verifiedEvents.toList: _*)
+      instance                 = applyVerifiedEventSuccessfully(emptyProject, verifiedEvents.toList: _*)
       db.loadProjectLog        = Vector.empty
 
-      lazy val initAppData     = InitAppData(-\/(instance), data1, Supplimentary(Rolodex(Map(user3.idP -> user3.username))))
+      lazy val initRolodex     = Rolodex(Map(user2.idP -> user2.username, user3.idP -> user3.username))
+      lazy val initAppData     = InitAppData(-\/(instance), data1, Supplimentary(initRolodex))
       lazy val static          = WebSocketStatic(user2.toUser, id, user2.id, SessionId.random(), (), svr.now.value, svr.now.value.plusSeconds(99999))
 
       lazy val eventsA         = events.take(1)
       lazy val verifiedEventsA = verifiedEvents.take(1)
-      lazy val instanceA       = applyVerifiedEventSuccessfully(emptyProject1, verifiedEventsA.toList: _*)
+      lazy val instanceA       = applyVerifiedEventSuccessfully(emptyProject, verifiedEventsA.toList: _*)
       lazy val latestOrdA      = verifiedEventsA.last.ord.asLatest
 
       lazy val eventsB         = events.drop(1).take(1)
@@ -290,7 +293,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
     }
   }
 
-  private def getProject(i: InitAppData, prev: Project = emptyProject1): Project =
+  private def getProject(i: InitAppData, prev: Project): Project =
     i.projectData match {
       case -\/(p) => p
       case \/-(e) => prev.updateOrThrow(e)
@@ -319,6 +322,16 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       "projectNotFound"  - test(user2.token, ProjectId(23432))(-\/(AccessDenied))
       "accessDenied"     - test(db.newUserEntry().token, p1.id)(-\/(AccessDenied))
       "ok"               - test(user2.token, p1.id)(\/-((p1.static.copy(sessionId = user2.token.sessionId, expiresAt = security.expiry()), emptyState)))
+      "collaboratorOk"   - test(user3.token, p1.id)(\/-((p1.static.copy(user = user3.toUser, sessionId = user3.token.sessionId, expiresAt = security.expiry()), emptyState)))
+      "revokedAccess"    - {
+        implicit val t = new Tester; import t._
+        val u = db.newUserEntry()
+        db.updateProjectAccess(p1.id, Set.empty, Map(u.id -> ProjectPerm.Collaborator)).value.getOrThrow()
+        assert(projectSpa.onConnect(u.token, p1.id, user2.id).value.isRight)
+        db.updateProjectAccess(p1.id, Set(u.id), Map.empty).value.getOrThrow()
+        val a = projectSpa.onConnect(u.token, p1.id, user2.id).value
+        assertEq(a, -\/(ConnectRejection.AccessDenied))
+      }
     }
 
     "initApp" - {
@@ -332,7 +345,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
               val result = sendMsg(initAppMsg_0, p1.static, subscribedState)
               val actual = result._1
 
-              val noProjectData = -\/(emptyProject1)
+              val noProjectData = -\/(p1.emptyProject)
               val actualWithoutProjectData = actual.map(_.map(_.copy(projectData = noProjectData)))
               val expectWithoutProjectData = \/-(p1.initAppData.copy(projectData = noProjectData))
               assertEq(actualWithoutProjectData, \/-(expectWithoutProjectData))
@@ -341,11 +354,10 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
 
               val initAppData = actual.getOrThrow().getOrThrow()
 
-              val actualProject = getProject(initAppData)
+              val actualProject = getProject(initAppData, p1.emptyProject)
               assertEq(actualProject, p1.instance)
 
-              val expectRolodex = Rolodex(Map(user3.idP -> user3.username))
-              val expectSupp = Supplimentary(expectRolodex)
+              val expectSupp = Supplimentary(p1.initRolodex)
               assertEq(initAppData.supp, expectSupp)
 
               val cache = redis.read(p1.id).value.getOrThrow()
@@ -380,9 +392,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
               assert(result._2.isEmpty)
 
               val initAppData = actual.getOrThrow().getOrThrow()
-
-              val expectRolodex = Rolodex(Map(user3.idP -> user3.username))
-              val expectSupp = Supplimentary(expectRolodex)
+              val expectSupp = Supplimentary(p1.initRolodex)
               assertEq(initAppData.supp, expectSupp)
 
               val cache = redis.read(p1.id).value.getOrThrow()
@@ -424,13 +434,13 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       }
     }
 
-    "updateProject" - {
+    "updateAccess" - {
       def test(c: CacheState, expectCacheWrites: Int, expectFullDbReads: Int)(implicit t: Tester): Unit = {
         import t._
 
         val u = db.newUserEntry()
-        val cmd = UpdateAccessCmd(Map(u.idP -> Some(ProjectPerm.Collaborator)))
-        val req = WsReqRes.AccessUpdate.AndReq(cmd)
+        val cmd = UpdateAccessCmd.Modify(Map(u.idP -> Some(ProjectPerm.Collaborator)))
+        val req = WsReqRes.UpdateAccess.AndReq(cmd)
 
         assertDifference(s"[$c] db reads", db.loadProjectLog.length)(expectFullDbReads) {
           assertDifference(s"[$c] redis writes", redis.writeCount())(expectCacheWrites) {
@@ -449,12 +459,73 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
           }
         }
       }
-      withAllCacheConfig { implicit t => {
+
+      "modify" - withAllCacheConfig { implicit t => {
         case c: CacheState.Empty      => test(c, 2, 1)
         case c: CacheState.UpToDate   => test(c, 1, 0)
         case c: CacheState.Stale      => test(c, 2, 1)
         case c: CacheState.Incomplete => test(c, 2, 1)
       }}
+
+      "add" - {
+        implicit val t = new Tester; import t._
+        val u = db.newUserEntry()
+        val cmd = UpdateAccessCmd.Add(-\/(u.username), ProjectPerm.Collaborator)
+        val req = WsReqRes.UpdateAccess.AndReq(cmd)
+        val result = sendMsg(req, p1.static, subscribedState)._1
+        assertResponse(result)
+          .expectEventOrds(EventOrd(p1.events.length + 1))
+          .expectSupp(Supplimentary(Rolodex.init(u.idP, u.username)))
+      }
+
+      "addNotFound" - {
+        implicit val t = new Tester; import t._
+        val cmd = UpdateAccessCmd.Add(-\/(Username("nobody")), ProjectPerm.Collaborator)
+        val req = WsReqRes.UpdateAccess.AndReq(cmd)
+        val result = sendMsg(req, p1.static, subscribedState)._1
+        assertEq(result, \/-(-\/(ErrorMsg("User not found."))))
+      }
+
+      "denyCollaborator" - {
+        implicit val t = new Tester; import t._
+        val static3 = p1.static.copy(user = user3.toUser)
+        val cmd = UpdateAccessCmd.Modify(Map(user2.idP -> None))
+        val req = WsReqRes.UpdateAccess.AndReq(cmd)
+        val result = sendMsg(req, static3, subscribedState)._1
+        assertEq(result, \/-(-\/(ErrorMsg("Admin rights required."))))
+      }
+
+      "removeSelf" - {
+        "collaborator" - {
+          implicit val t = new Tester; import t._
+          val static3 = p1.static.copy(user = user3.toUser)
+          val req = WsReqRes.UpdateAccess.AndReq(UpdateAccessCmd.RemoveSelf)
+          val result = sendMsg(req, static3, subscribedState)._1
+          assertResponse(result)
+            .expectEventOrds(EventOrd(p1.events.length + 1))
+          ()
+        }
+
+        "adminWithOtherAdmin" - {
+          implicit val t = new Tester; import t._
+          // First add another admin
+          val addAdminCmd = UpdateAccessCmd.Modify(Map(user3.idP -> Some(ProjectPerm.Admin)))
+          sendMsg(WsReqRes.UpdateAccess.AndReq(addAdminCmd), p1.static, subscribedState)
+          // Now remove self
+          val req = WsReqRes.UpdateAccess.AndReq(UpdateAccessCmd.RemoveSelf)
+          val result = sendMsg(req, p1.static, subscribedState)._1
+          assertResponse(result)
+            .expectEventOrds(EventOrd(p1.events.length + 2))
+          ()
+        }
+
+        "soleAdmin" - {
+          implicit val t = new Tester; import t._
+          val req = WsReqRes.UpdateAccess.AndReq(UpdateAccessCmd.RemoveSelf)
+          val result = sendMsg(req, p1.static, subscribedState)._1
+          assertEq(result, \/-(-\/(userFacingErrorMsgCantRemoveAdmin)))
+        }
+      }
     }
 
     "updatesAndListeners" - {
@@ -464,7 +535,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       var recv1     = Vector.empty[Push]
       val subState1 = projectSpa.onOpen(static, emptyState, onPush(recv1 :+= _), _ => ???).value
       val initData1 = sendMsgAndBroadcast(initAppMsg_0, static, subState1).getOrThrow()
-      val project1  = getProject(initData1)
+      val project1  = getProject(initData1, p1.emptyProject)
       assertEq("[1]", recv1, Vector.empty)
 
       val res1 = sendMsgAndBroadcast(newUC, static, subState1).getOrThrow()
@@ -473,7 +544,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       var recv2     = Vector.empty[Push]
       val subState2 = projectSpa.onOpen(static, emptyState, onPush(recv2 :+= _), _ => ???).value
       val initData2 = sendMsgAndBroadcast(initAppMsg_0, static, subState2).getOrThrow()
-      val project2  = getProject(initData2)
+      val project2  = getProject(initData2, p1.emptyProject)
       assertEq("[3]", recv2, Vector.empty)
       assertEq("[4]", recv1, Vector[Push](res1))
       assertEq("[5]", project2.ord, Some(project1.history.nextOrd.asLatest))
@@ -499,7 +570,9 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         implicit val t = new Tester; import t._
         assertDifference("db reads", db.loadProjectLog.length)(0) {
           val (res, newState) = sendMsg(WsReqRes.Reconnect.AndReq(p1.instance.ord), p1.static, emptyState)
-          assertResponse(res).expectNoEvents.expectSupp()
+          assertResponse(res)
+            .expectNoEvents
+            .expectSupp()
           assert(newState.exists(_.sub.isDefined))
         }
       }
@@ -510,7 +583,9 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
           import IgnoreEqualityOfVerifiedEventTimestamps._
           assertDifference(s"[$c] db reads", db.loadProjectLog.length)(expectFullDbReads) {
             val (res, newState) = sendMsg(WsReqRes.Reconnect.AndReq(Some(p1.latestOrdA)), p1.static, emptyState)
-            assertResponse(res).expectEvents(p1.verifiedEventsBC).expectSupp(p1.initAppData.supp)
+            assertResponse(res)
+              .expectEvents(p1.verifiedEventsBC)
+              .expectSupp(Supplimentary(Rolodex(Map(user3.idP -> user3.username))))
             assert(newState.exists(_.sub.isDefined))
           }
         }
@@ -540,6 +615,24 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       assertStateUpdate(recvAll)
         .expectEventOrds(ords.whole.toSeq.filter(_ <= p1.verifiedEvents.last.ord): _*)
         .expectSupp()
+    }
+
+    "initPage" - {
+      "noAccess" - {
+        implicit val t = new Tester; import t._
+        val u2 = db.newUserEntry()
+        val result = projectSpa.initPage(p1.id, u2.id, u2.username, assetManifest).value
+        assertEq(result, None)
+      }
+      "revokedAccess" - {
+        implicit val t = new Tester; import t._
+        val u2 = db.newUserEntry()
+        db.updateProjectAccess(p1.id, Set.empty, Map(u2.id -> ProjectPerm.Collaborator)).value.getOrThrow()
+        assert(projectSpa.initPage(p1.id, u2.id, u2.username, assetManifest).value.isDefined)
+        db.updateProjectAccess(p1.id, Set(u2.id), Map.empty).value.getOrThrow()
+        val result = projectSpa.initPage(p1.id, u2.id, u2.username, assetManifest).value
+        assertEq(result, None)
+      }
     }
 
     "dataPropFailure" - {

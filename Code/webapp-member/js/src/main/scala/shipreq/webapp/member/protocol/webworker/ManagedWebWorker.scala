@@ -1,5 +1,6 @@
 package shipreq.webapp.member.protocol.webworker
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import scala.scalajs.js
 import scala.scalajs.js.isUndefined
@@ -99,7 +100,7 @@ object ManagedWebWorker {
 
             def listener(msg: Encoded): Callback = {
               val decoded = Try(protocol.decode[A](msg))
-              logger(_.debug(s"Received WW response #$id: ${decoded.fold(_.toString, a => ("" + a).take(100).quoteInner)}"))
+              logger(_.debug(s"Received WW response #$id: ${decoded.fold(_.toString, a => ("" + a).take(100).escape)}"))
               complete(decoded)
             }
 
@@ -107,7 +108,7 @@ object ManagedWebWorker {
             promises ::= promise
 
             val msg = new MessageWithId(id, enc)
-            logger(_.debug(s"Sending WW request #$id: ${("" + req).take(100).quoteInner}"))
+            logger(_.debug(s"Sending WW request #$id: ${("" + req).take(100).escape}"))
             worker.send(msg, protocol.transferables(enc)).runNow()
 
             result
@@ -194,7 +195,7 @@ object ManagedWebWorker {
         def respond[A](client: C, id: Int, req: Req[A]): AsyncCallback[Unit] =
           service(client, req).attemptTry.flatMap {
             case Success(a) =>
-              logger(_.debug(s"Responding to request #$id with result: ${(""+a).take(100).quoteInner}"))
+              logger(_.debug(s"Responding to request #$id with result: ${(""+a).take(100).escape}"))
               val enc = protocol.encode(a)(responseEncoder(req))
               val msg = new MessageWithId(id, enc)
               worker.send(client :: Nil, msg, protocol.transferables(enc)).asAsyncCallback

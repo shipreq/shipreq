@@ -24,7 +24,6 @@ import shipreq.webapp.member.project.data.savedview._
 import shipreq.webapp.member.project.filter.Filter
 import shipreq.webapp.member.project.protocol.websocket.UpdateContentCmd
 import shipreq.webapp.member.project.text.{PlainText, TextSearch}
-import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.ui.Toast
 
 object ReqTablePage {

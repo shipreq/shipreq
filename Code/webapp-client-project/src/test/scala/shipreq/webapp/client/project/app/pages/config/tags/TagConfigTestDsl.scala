@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.pages.config.tags
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react.test._
 import org.scalajs.dom.html
 import shipreq.webapp.base.test.TestState._
@@ -69,7 +70,7 @@ object TagConfigTestDsl {
     addRel("parent", _.editorParents)(name)
 
   def setReqTypeApplicability(txt: String): *.Actions =
-    *.action("setReqTypeApplicability: " + txt)(Simulate click _.obs.applicableReqTypes.get.items.find(_.innerText.trim == txt).get)
+    *.action("setReqTypeApplicability: " + txt)(Simulate click _.obs.applicableReqTypes.get.items.find(_.textContent.trim == txt).get)
 
   def setApplicableReqTypesText(txt: String): *.Actions =
     *.action("setApplicableReqTypesText: " + txt)(SimEvent.Change(txt) simulate _.obs.applicableReqTypes.get.inputDom)

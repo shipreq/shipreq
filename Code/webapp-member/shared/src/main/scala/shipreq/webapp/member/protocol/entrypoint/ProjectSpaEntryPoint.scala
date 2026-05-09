@@ -29,6 +29,10 @@ object ProjectSpaEntryPoint {
       )
   }
 
+  object InitData {
+    implicit def univEq: UnivEq[InitData] = UnivEq.derive
+  }
+
   /** Same as [[InitData]] except it excludes [[ClientSideProjectEncryptionKey]].
    * For reasons described in the [[ClientSideProjectEncryptionKey]] doc, we want to make the encryption key
    * garbage-collectable as soon as possible.

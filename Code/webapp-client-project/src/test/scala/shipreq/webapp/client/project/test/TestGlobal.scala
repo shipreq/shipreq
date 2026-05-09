@@ -7,8 +7,8 @@ import java.time.{Duration, Instant}
 import org.scalajs.dom.{EventTarget, document, html}
 import scala.scalajs.js
 import shipreq.base.util.JsExt._
-import shipreq.base.util.{Allow, ErrorMsg, JsTimers, PotentialChange, Retries}
-import shipreq.webapp.base.data.{ProjectCreator, Rolodex, UserId, Username}
+import shipreq.base.util.{Allow, Deny, ErrorMsg, JsTimers, PotentialChange, Retries}
+import shipreq.webapp.base.data.{EmailAddr, ProjectCreator, ProjectPerm, Rolodex, UserId, Username}
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
@@ -17,27 +17,31 @@ import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseCode
 import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.protocol.webstorage.AbstractWebStorage
 import shipreq.webapp.base.test._
-import shipreq.webapp.base.util.Obfuscated
 import shipreq.webapp.client.project.app.WebWorkerClient
 import shipreq.webapp.client.project.app.state.Global
 import shipreq.webapp.member.project.data.{Project, ProjectAccess}
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.project.library.{CacheJs, ProjectLibrary}
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{StateUpdate, Supplimentary, WsReqRes}
-import shipreq.webapp.member.project.protocol.websocket.{ProjectSpaProtocols, SupplimentaryLogic}
+import shipreq.webapp.member.project.protocol.websocket.{ProjectSpaProtocols, SupplimentaryLogic, UpdateAccessCmd}
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.member.test._
 import shipreq.webapp.member.ui.BaseStyles
 import shipreq.webapp.server.logic.event._
+import shipreq.webapp.server.logic.util.Obfuscators
 
 final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
-                       ww                   : WebWorkerClient.Instance)
-  extends Global(
-    TestGlobal.userId,
-    ProjectCreator(TestGlobal.userId),
+                       val userId           : UserId.Public,
+                       val username         : Username,
+                       creator              : ProjectCreator,
+                       initialSupp          : Supplimentary,
+                       ww                   : WebWorkerClient.Instance,
+  ) extends Global(
+    userId,
+    creator,
     (_, _) => Callback.empty,
     _ => Callback.empty,
-    Global.State.Loading(initialProjectLibrary.withoutMetaData, TestGlobal.initialSupp),
+    Global.State.Loading(initialProjectLibrary.withoutMetaData, initialSupp),
     ww,
     LoggerJs.off) {
 
@@ -53,16 +57,14 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
 
   val optionalFullscreen = TestOptionalFullscreen()
 
-  val username = Username("nimander")
-
-  override val reauthModal = reauth.modal(username)
+  override val reauthModal = reauth.modal(username)(localStorage)
 
   override protected def unsafeNow() = now
   var now = Instant.now()
   def advanceTime(d: Duration): Unit = now = now.plusNanos(d.getNano).plusSeconds(d.getSeconds)
   def advanceTimeByMs(ms: Long) = advanceTime(Duration.ofMillis(ms))
 
-  lazy val protocol = ProjectSpaProtocols.WebSocket(initialProjectLibrary.latestMetaData.id, ProjectCreator(TestGlobal.userId))
+  lazy val protocol = ProjectSpaProtocols.WebSocket(initialProjectLibrary.latestMetaData.id, creator)
 
   lazy val svr = WebSocketServerHelper(protocol)
 
@@ -103,7 +105,7 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
         onUpdateManualIssues    = failLeft,
         onFieldMandatorinessMod = _ => (),
         onReqTypeImplicationMod = failLeft,
-        onAccessUpdate          = failLeft,
+        onUpdateAccess          = failLeft,
       )
       def reqReq = req.req
       val res = msgFold(req.reqRes)(reqReq)
@@ -206,21 +208,40 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
 
     val supplimentaryDataForEvents: VerifiedEvent.Seq => CallbackTo[Supplimentary] =
       SupplimentaryLogic[CallbackTo](
-        needUsernamesByUserId = ids => CallbackTo(ids.iterator.map(u => u -> Username("u" + u.value)).toMap),
-        obfuscate             = u => Obfuscated(u.value.toString),
-        deobfuscate           = o => UserId(o.value.toLong),
+        needUsernamesByUserId = ids => CallbackTo(ids.iterator.map { id =>
+          val publicId = Obfuscators.userId.obfuscate(id)
+          val username = TestGlobal.inverseUserDb.get(publicId).flatMap(_.left.toOption).getOrElse(
+            throw new IllegalStateException(s"Username not found for user ID $id (obfuscated: $publicId)")
+          )
+          id -> username
+        }.toMap),
+        obfuscate             = Obfuscators.userId.obfuscate,
+        deobfuscate           = Obfuscators.userId.deobfuscateOrThrow,
       )
 
-    def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result): MsgFn[I] = input => Some {
+    def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result, requiredPerm: ProjectPerm): MsgFn[I] = input => Some {
       def run(p1: Project): CallbackTo[WsReqRes.EventResult] = {
-        val er = mkEvent(input, p1)
-        ApplyNewEvent(er, p1) match {
+
+        // This logic is duplicated in ProjectSpaLogic
+        def permCheck: PotentialChange[ErrorMsg, Unit] =
+          p1.access.require(requiredPerm, userId) match {
+            case Allow => PotentialChange.unit
+            case Deny  => PotentialChange.Failure(ErrorMsg(s"$requiredPerm rights required."))
+          }
+
+        val result: PotentialChange[ErrorMsg, ApplyNewEvent.Updated] =
+          for {
+            _ <- permCheck
+            er = mkEvent(input, p1)
+            u <- ApplyNewEvent(er, p1)
+          } yield u
+
+        result match {
 
           case PotentialChange.Success(ApplyNewEvent.Updated(_, event)) =>
             for {
               ord  <- nextEventOrd
               ves   = VerifiedEvent.Seq.empty + VerifiedEvent(ord, event, Instant.now())
-              _    <- addEvents(ves)
               supp <- supplimentaryDataForEvents(ves)
             } yield \/-(StateUpdate(ves, supp))
 
@@ -234,22 +255,29 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
       pxProject.toCallback.flatMap(run)
     }
 
-    def updateProjectI[I](mkEvent: I => MakeEvent.Result): MsgFn[I] =
-      updateProject((i, _) => mkEvent(i))
+    def updateProjectI[I](mkEvent: I => MakeEvent.Result, requiredPerm: ProjectPerm): MsgFn[I] =
+      updateProject((i, _) => mkEvent(i), requiredPerm)
 
+    // This logic is duplicated in ProjectSpaLogic
     val msgFold = WsReqRes.Fold[MsgFoldIn, MsgFoldOut](
       onInitApp               = _ => None,
       onReconnect             = _ => None,
       onSync                  = _ => None,
-      onUpdateConfig          = updateProject (MakeEvent.updateConfig),
-      onCreateContent         = updateProject (MakeEvent.createContent),
-      onUpdateContent         = updateProject (MakeEvent.updateContent),
-      onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
-      onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
-      onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
+      onUpdateConfig          = updateProject (MakeEvent.updateConfig, ProjectPerm.Collaborator),
+      onCreateContent         = updateProject (MakeEvent.createContent, ProjectPerm.Collaborator),
+      onUpdateContent         = updateProject (MakeEvent.updateContent, ProjectPerm.Collaborator),
+      onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn, ProjectPerm.Admin),
+      onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews, ProjectPerm.Collaborator),
+      onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues, ProjectPerm.Collaborator),
       onFieldMandatorinessMod = _ => None,
-      onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
-      onAccessUpdate          = updateProject (MakeEvent.updateAccess),
+      onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod, ProjectPerm.Collaborator),
+      onUpdateAccess          = cmd =>
+        UpdateAccessCmd.resolve[CallbackTo, MsgFoldOut[WsReqRes.UpdateAccess.type]](cmd)(
+          userId     = userId,
+          getUserId  = u => CallbackTo(TestGlobal.userDb.get(u)),
+          onNotFound = Some(CallbackTo.pure(-\/(ErrorMsg("User not found.")))),
+          modify     = (m, p) => CallbackTo.pure(updateProject(MakeEvent.updateAccess, p)(m))
+        ).runNow(),
     )
 
     testReq => {
@@ -269,18 +297,31 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
 
 object TestGlobal {
 
-  val userId: UserId.Public = Obfuscated("")
-  val creator = ProjectCreator(userId)
+  val userDb: Map[Username \/ EmailAddr, UserId.Public] = Map(
+    -\/(Username1) -> PublicUserId1,
+    -\/(Username2) -> PublicUserId2,
+    -\/(Username3) -> PublicUserId3,
+    -\/(Username4) -> PublicUserId4,
+  )
 
-  val initialSupp = Supplimentary(Rolodex.init(userId, Username("u1")))
+  val inverseUserDb = userDb.iterator.map(_.swap).toMap
 
-  def apply(p : Project                  = Project.empty,
-            ww: WebWorkerClient.Instance = TestWebWorkerClient(),
+  def rolodexForProject(p: Project): Rolodex =
+    Rolodex(p.access.asMap.map { case (id, _) =>
+      id -> userDb.find { case (_, pubId) => pubId ==* id }.get._1.swap.toOption.get
+    })
+
+  def apply(p       : Project                  = Project.empty,
+            userId  : UserId.Public            = PublicUserId1,
+            username: Username                 = Username1,
+            creator : ProjectCreator           = ProjectCreator(PublicUserId1),
+            ww      : WebWorkerClient.Instance = TestWebWorkerClient(),
            ): TestGlobal = {
     val p2 = if (p.access.asMap.nonEmpty) p else p.copy(access = ProjectAccess.init(creator))
     val md = looseProjectMetaData(p2, eventsTotal = p2.ordAsInt)
     val ps = ProjectLibrary.WithMetaData.init(creator, p2, md, userId, CacheJs(creator))
-    new TestGlobal(ps, ww)
+    val supp = Supplimentary(rolodexForProject(p2))
+    new TestGlobal(ps, userId, username, creator, supp, ww)
   }
 
   import shipreq.webapp.base.test.TestState._

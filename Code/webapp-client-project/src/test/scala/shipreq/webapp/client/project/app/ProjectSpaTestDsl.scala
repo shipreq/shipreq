@@ -10,6 +10,7 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.TestLocation
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.base.util.Obfuscated
+import shipreq.webapp.client.project.app.pages.admin.access.{AccessPageObs, AccessPageTestDsl}
 import shipreq.webapp.client.project.app.pages.config.fields.{FieldConfigObs, FieldConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.issues.{IssueConfigObs, IssueConfigTestDsl}
 import shipreq.webapp.client.project.app.pages.config.reqtypes.{ReqTypeConfigObs, ReqTypeConfigTestDsl}
@@ -26,6 +27,7 @@ import shipreq.webapp.client.project.widgets.{ImplicationGraph, ReqSearch}
 import shipreq.webapp.member.project.data.{ExternalPubid, Project}
 import shipreq.webapp.member.project.event.Event
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
+import shipreq.webapp.member.test.WebappTestUtil.{PublicUserId1, Username1}
 import shipreq.webapp.member.test._
 import shipreq.webapp.member.test.project.SampleProject5
 import shipreq.webapp.member.ui.OnlyVisibleOnMouseMove
@@ -56,7 +58,7 @@ object ProjectSpaTestDsl {
 
     def observe(): Obs = {
       val $ = tester.component.domZipper
-      val inner = $(">div")(">div:nth-child(2)>*")
+      val inner = $(">div")(">div:nth-child(4)>*")
       val nav = new NavObs($(">nav"), inner)
 
       val base: Obs = {
@@ -67,7 +69,7 @@ object ProjectSpaTestDsl {
           new TestGlobal.Obs($, global),
           new TestConfirmJs.Obs(confirmJs),
           nav,
-          e, e, e, e, e, e, e, e, e)
+          e, e, e, e, e, e, e, e, e, e)
       }
 
       nav.page match {
@@ -80,6 +82,7 @@ object ProjectSpaTestDsl {
         case Page.ReqDetail(_) => base.copy(reqDetail   = Try(new ReqDetailObs(inner, nav, base.global)))
         case Page.Issues       => base.copy(issues      = Try(new IssuesPageObs(inner)))
         case Page.ReqGraph     => base.copy(reqGraph    = Try(new ReqGraphObs(inner, base.global)))
+        case Page.Access       => base.copy(access      = Try(new AccessPageObs(inner, base.global, base.confirmJs)))
       }
     }
   }
@@ -92,30 +95,26 @@ object ProjectSpaTestDsl {
       breadcrumbs.doms(1).textContent
 
     val dropdownCrumbName: Option[String] =
-      nav.collect01(".ui.dropdown.inline").doms.map { d =>
-        // Not sure why this is needed
-        val innerText = d.asInstanceOf[scalajs.js.Dynamic].innerText.asInstanceOf[String]
-        val selected = innerText.takeWhile(_ != '\n')
-        //println(s"[$innerText]")
-        //println(s"[$selected]")
-        selected
+      nav.collect01(".ui.dropdown.inline").zippers.flatMap { z =>
+        z.collect0n(">span,>.text,.header").zippers.iterator.map(_.domAsHtml.textContent.trim).find(_.nonEmpty)
       }
 
     val page: Page =
       dropdownCrumbName match {
         case Some("Req Table") => Page.ReqTable
-        case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.innerText.trim).get)
+        case Some("Content")   => Page.ReqDetail(ExternalPubid.parse(breadcrumbs.zippers.last.domAsHtml.textContent.trim).get)
         case Some("Req Graph") => Page.ReqGraph
         case Some("Fields")    => Page.CfgFields
         case Some("Req Types") => Page.CfgReqTypes
         case Some("Tags")      => Page.CfgTags
         case None              => Page.Index
         case Some("Issues")    => if (inner.exists(Style.issues.newIssueCont.selector)) Page.Issues else Page.CfgIssues
+        case Some("Access")    => Page.Access
         case Some(n)           => sys error s"Unknown page: $n"
       }
 
     val unsavedChanges: Int =
-      nav.collect01(".icon.edit").zippers.fold(0)(_.parent("span").innerText.toInt)
+      nav.collect01(".icon.edit").zippers.fold(0)(_.parent("span").domAsHtml.textContent.trim.toInt)
   }
 
   final case class Obs($          : DomZipperJs,
@@ -131,7 +130,9 @@ object ProjectSpaTestDsl {
                        issues     : Maybe[IssuesPageObs],
                        reqGraph   : Maybe[ReqGraphObs],
                        reqTable   : Maybe[ReqTableObs],
-                       reqDetail  : Maybe[ReqDetailObs]) {
+                       reqDetail  : Maybe[ReqDetailObs],
+                       access     : Maybe[AccessPageObs],
+                      ) {
 
     lazy val reqSearch: ReqSearchObs =
       new ReqSearchObs(nav.nav(Style.widgets.reqSearch.container.selector))
@@ -204,6 +205,12 @@ object ProjectSpaTestDsl {
       .pmapO[Obs](_.reqGraph)
       .mapS[TestState](_ => ())((s, _) => s)
 
+  implicit lazy val transformAccessPage =
+    AccessPageTestDsl.*.transformer
+      .mapR[Ref](r => AccessPageTestDsl.Ref(r.global, r.confirmJs))
+      .pmapO[Obs](_.access)
+      .mapS[TestState](_ => ())((s, _) => s)
+
   private lazy val invariantsPH            = PH.invariants.lift
   private lazy val invariantsRT            = RT.invariants.lift
   private lazy val invariantsRD            = RD.invariants.lift
@@ -213,6 +220,7 @@ object ProjectSpaTestDsl {
   private lazy val invariantsIssueConfig   = IssueConfigTestDsl.invariants.lift
   private lazy val invariantsTagConfig     = TagConfigTestDsl.invariants.lift
   private lazy val invariantsReqGraph      = ReqGraphTestDsl.invariants.lift
+  private lazy val invariantsAccessPage    = AccessPageTestDsl.invariants.lift
 
   private val pageInvariants: *.Invariants =
     *.chooseInvariant("Page invariants")(_.state.page match {
@@ -225,6 +233,7 @@ object ProjectSpaTestDsl {
       case Page.CfgReqTypes  => invariantsReqTypeConfig
       case Page.CfgTags      => invariantsTagConfig
       case Page.ReqGraph     => invariantsReqGraph
+      case Page.Access       => invariantsAccessPage
     })
 
   private val invariants: *.Invariants =
@@ -265,6 +274,7 @@ object ProjectSpaTestDsl {
   def liftIssueConfigPageTests(p: IssueConfigTestDsl  .*.Plan): *.Plan = p.lift
   def liftTagConfigPageTests  (p: TagConfigTestDsl    .*.Plan): *.Plan = p.lift
   def liftReqGraphTests       (p: ReqGraphTestDsl     .*.Plan): *.Plan = p.lift
+  def liftAccessPageTests     (p: AccessPageTestDsl   .*.Plan): *.Plan = p.lift
 
   def testReqTable(action: RT.*.Actions): *.Actions =
     liftReqTableTests(Plan.action(action)).asAction("Test ReqTable")
@@ -277,6 +287,8 @@ object ProjectSpaTestDsl {
               project   : Project                  = SampleProject5.project,
               rd        : RD.State                 = RD.unspecifiedState,
               wwPrep    : TestWebWorkerClient.Prep = TestWebWorkerClient.noInitialPrep,
+              userId    : UserId.Public            = PublicUserId1,
+              username  : Username                 = Username1,
               assertPass: Boolean                  = true,
              ): Unit = {
     runTestReturnReport(
@@ -285,6 +297,8 @@ object ProjectSpaTestDsl {
       project    = project,
       rd         = rd,
       wwPrep     = wwPrep,
+      userId     = userId,
+      username   = username,
       assertPass = assertPass,
     )
     ()
@@ -295,6 +309,8 @@ object ProjectSpaTestDsl {
                           project   : Project                  = SampleProject5.project,
                           rd        : RD.State                 = RD.unspecifiedState,
                           wwPrep    : TestWebWorkerClient.Prep = TestWebWorkerClient.noInitialPrep,
+                          userId    : UserId.Public            = PublicUserId1,
+                          username  : Username                 = Username1,
                           assertPass: Boolean                  = true,
                          ): Report[String] = {
 
@@ -302,11 +318,9 @@ object ProjectSpaTestDsl {
     OnlyVisibleOnMouseMove.allowHide = false
     ImplicationGraph.runningInUnitTest = true
 
-    val global       = TestGlobal(project)
+    val global       = TestGlobal(project, userId, username, ProjectCreator(userId))
     val confirmJs    = TestConfirmJs()
     val promptJs     = TestPromptJs()
-    val userId       = project.access.adminIterator().next()
-    val username     = Username("testuser")
     val projectId    = Obfuscated("pxx"): ProjectId.Public
     val creator      = ProjectCreator(userId)
     val initPageData = ProjectSpaEntryPoint.InitDataWithoutEncKey(username, userId, projectId, creator, project.name, AssetManifest(None), "/ww.js")
@@ -317,18 +331,26 @@ object ProjectSpaTestDsl {
     val rc           = MockRouterCtl[Page]()
     val init         = TestState(page, global.unsafeProject(), rd)
 
-    ReactTestUtils.withRenderedIntoBody(spa.Component(Props(init.page, rc))) { m =>
-      TestClipboard.clear()
-      val tester = new ComponentTester(spa.Component)(m)
-      val report = Plan(action, invariants)
-                     .test(Observer(_.observe()))
-                     .withInitialState(init)
-                     .withRefByName(Ref(global, tester, confirmJs, promptJs, ww, loc))
-                     .run()
-      if (assertPass)
-        assertTestState(report)
-//        assertTestState(r, println(s"${"=" * 120}\n${htmlScrub run tester.component.getDOMNode.map(_.asElement).outerHTML}\n"))
-      report
-    }
+    val report =
+      try {
+        ReactTestUtils.withRenderedIntoBody(spa.Component(Props(init.page, rc))) { m =>
+          TestClipboard.clear()
+          val tester = new ComponentTester(spa.Component)(m)
+          Plan(action, invariants)
+            .test(Observer(_.observe()))
+            .withInitialState(init)
+            .withRefByName(Ref(global, tester, confirmJs, promptJs, ww, loc))
+            .run()
+        }
+      } finally {
+        // Semantic UI adds modals outside of our React component
+        TestUtil.removeSemanticUiFromBody()
+      }
+
+    if (assertPass)
+      assertTestState(report)
+      // assertTestState(r, println(s"${"=" * 120}\n${htmlScrub run tester.component.getDOMNode.map(_.asElement).outerHTML}\n"))
+
+    report
   }
 }

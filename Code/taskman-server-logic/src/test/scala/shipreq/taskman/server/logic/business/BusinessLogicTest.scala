@@ -11,7 +11,7 @@ import utest._
 object BusinessLogicTest extends TestSuite {
 
   private def testM(bop: MockBops, task: Task) = {
-    val bl = new BusinessLogic(mockEmails(false), null, null)(bop)
+    val bl = new BusinessLogic(mockEmails(false), null)(bop)
     val fx = bl(TaskDetail(th_1, task, 0))
     (bop, fx.attempt.unsafeRun())
   }

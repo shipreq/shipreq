@@ -66,19 +66,6 @@ object MailChimpTest extends TestSuite {
       }
     }
 
-    "lists/list" - {
-      val tester = decoderTester(decoderGetListIdResponse)
-
-      "ok" - {
-        val json = """{"total":1,"data":[{"id":"270dff4105","web_id":340229,"name":"Master","date_created":"2014-04-16 07:20:13","email_type_option":false,"use_awesomebar":true,"default_from_name":"Yoar Mum","default_from_email":"yoar.mum@gmail.com","default_subject":"","default_language":"en","list_rating":0,"subscribe_url_short":"http:\/\/eepurl.com\/SKedX","subscribe_url_long":"http:\/\/twitter.us8.list-manage.com\/subscribe?u=53543f1bb4e0a0dacc73d54e2&id=270dff4105","beamer_address":"us8-0b1dbef7ba-68b7f9f73e@inbound.mailchimp.com","visibility":"pub","stats":{"member_count":0,"unsubscribe_count":0,"cleaned_count":0,"member_count_since_send":0,"unsubscribe_count_since_send":0,"cleaned_count_since_send":0,"campaign_count":0,"grouping_count":0,"group_count":0,"merge_var_count":3,"avg_sub_rate":0,"avg_unsub_rate":0,"target_sub_rate":0,"open_rate":0,"click_rate":0,"date_last_campaign":null},"modules":[]}],"errors":[]}"""
-        tester.assertDecodeOk(json, Some(ListId("270dff4105")))
-      }
-
-      "no match" - {
-        tester.assertDecodeOk("""{"total":0,"data":[],"errors":[]}""", None)
-      }
-    }
-
     "lists/batch-subscribe" - {
       val tester = decoderTester(decoderBatchSubscribe)
 
@@ -103,5 +90,3 @@ object MailChimpTest extends TestSuite {
 
   }
 }
-
-

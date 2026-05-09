@@ -1,4 +1,3 @@
-version: '2.4'
 services:
 
   postgres:
@@ -15,10 +14,9 @@ services:
     mem_limit: 100m
 
   redis:
-    image: bitnami/redis:5.0.5
+    image: redis:5.0.14
     container_name: shipreq_test_redis
     ports:
       - "13079:6379"
-    environment:
-      - REDIS_PASSWORD=sqt
+    command: redis-server --requirepass sqt
     mem_limit: 100m

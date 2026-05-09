@@ -57,7 +57,6 @@ object ProjectTemplate {
 
     val tagId = new IdCounter(identity)
 
-    @nowarn("cat=unused")
     def tagGroup(name       : String,
                  desc       : Option[String],
                  exclusivity: Exclusivity,
@@ -68,7 +67,6 @@ object ProjectTemplate {
       id
     }
 
-    @nowarn("cat=unused")
     def applicableTagV1(name    : String,
                         desc    : Option[String],
                         key     : HashRefKey,
@@ -82,19 +80,16 @@ object ProjectTemplate {
     def allReqTypes = ApplicableReqTypes.empty
     val customFieldId = new IdCounter(identity)
 
-    @nowarn("cat=unused")
     def customTextField(name: String, key: String, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Text.Id(customFieldId.next())
       add(FieldCustomTextCreateV1(id, gdAllValues(CustomTextFieldGDv1, "")))
     }
 
-    @nowarn("cat=unused")
     def customTagField(tagId: TagId, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Tag.Id(customFieldId.next())
       add(FieldCustomTagCreateV1(id, gdAllValues(CustomTagFieldGDv1, "")))
     }
 
-    @nowarn("cat=unused")
     def customImpField(reqTypeId: ReqTypeId, mandatory: Mandatory, applicableReqTypes: ApplicableReqTypes): Unit = {
       val id = CustomField.Implication.Id(customFieldId.next())
       add(FieldCustomImpCreateV1(id, gdAllValues(CustomImpFieldGDv1, "")))

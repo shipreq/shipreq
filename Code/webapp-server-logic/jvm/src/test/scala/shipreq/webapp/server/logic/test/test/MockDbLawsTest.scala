@@ -17,7 +17,7 @@ object MockDbLawsTest extends DbLaws {
     override val createProject        = db.createProject(_, _, _, _).value
     override val getProjectAccess     = db.getProjectAccess(_).value
     override val projectSpaInitPage   = db.projectSpaInitPage(_, _).value
-    override val getProjectRolodex    = db.getProjectRolodex(_, _).value
+    override val getProjectRolodex    = db.getProjectRolodex(_).value
 
     override val needProjectCreator   = db.needProjectCreator(_)
     override val getProjectEvents     = db.getProjectEvents(_).value

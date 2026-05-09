@@ -5,7 +5,6 @@ import scala.scalajs.js.annotation._
 
 @JSGlobal("TM")
 @js.native
-@nowarn
 object TransformationMatrix extends js.Object {
 
   @js.native

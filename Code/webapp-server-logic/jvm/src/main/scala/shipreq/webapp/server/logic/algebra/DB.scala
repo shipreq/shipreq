@@ -173,8 +173,11 @@ object DB {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  trait ForUserRegistration[F[_]] extends Base[F] with VerificationTokenReadOnly[F] {
+  trait GetUserId[F[_]] {
     def getUserId(e: Username \/ EmailAddr): F[Option[UserId]]
+  }
+
+  trait ForUserRegistration[F[_]] extends Base[F] with VerificationTokenReadOnly[F] with GetUserId[F] {
 
     def getUserRegistration(e: EmailAddr): F[Option[UserRegistration]]
 
@@ -319,17 +322,17 @@ object DB {
         with GetProjectMetaData[F]
         with OnSaveProjectEvent[F] {
 
-    protected def _createProject(userId    : UserId,
+    protected def _createProject(creatorId : UserId,
                                  initEvents: Vector[ActiveEvent],
                                  project   : Project,
                                  encKey    : ProjectEncryptionKey): F[ProjectId]
 
-    final def createProject(userId    : UserId,
+    final def createProject(creatorId : UserId,
                             initEvents: Vector[ActiveEvent],
                             project   : Project,
                             encKey    : ProjectEncryptionKey): F[ProjectId] =
       for {
-        pid <- _createProject(userId, initEvents, project, encKey)
+        pid <- _createProject(creatorId, initEvents, project, encKey)
         _   <- throwOnLeft_(onSaveProjectEvents(pid, initEvents))
       } yield pid
 
@@ -340,13 +343,14 @@ object DB {
 
   trait ForProjectSpa[F[_]]
       extends Base[F]
+         with GetUserId[F]
          with GetProjectMetaData[F]
          with GetProjectEvents[F]
          with SaveProjectEvent[F] {
 
     def projectSpaInitPage(id: ProjectId, uid: UserId): F[Option[ProjectSpaInitPage]]
 
-    def getProjectRolodex(id: ProjectId, exclude: UserId): F[Rolodex]
+    def getProjectRolodex(id: ProjectId): F[Rolodex]
 
     /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
     final def getUserIdsByUsername(usernames: Set[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]] =
@@ -385,6 +389,9 @@ object DB {
                                       name      : Project.Name,
                                       projectKey: ProjectEncryptionKey,
                                       userKey   : UserEncryptionKey)
+  object ProjectSpaInitPage {
+    implicit def univEq: UnivEq[ProjectSpaInitPage] = UnivEq.derive
+  }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

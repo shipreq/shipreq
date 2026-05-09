@@ -6,7 +6,10 @@ import org.scalajs.dom.window
 object Browser {
 
   val isMac: Boolean =
-    window.navigator.platform.contains("Mac") || window.navigator.platform.toLowerCase.contains("darwin")
+    window.navigator.platform.contains("Mac") ||
+      window.navigator.platform.toLowerCase.contains("darwin") ||
+      window.navigator.platform.toLowerCase.contains("os x") ||
+      window.navigator.platform.toLowerCase.contains("apple")
 
   def cmdOrCtrlKeyCodeSwitch[A](e       : ReactKeyboardEvent,
                                 altKey  : Boolean = false,

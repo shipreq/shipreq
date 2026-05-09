@@ -1,6 +1,5 @@
 package shipreq.webapp.server.logic.test
 
-import cats.syntax.all._
 import cats.{Eval, ~>}
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.Instant
@@ -300,13 +299,13 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     }
   }
 
-  def addProject(projectId: ProjectId, userId: UserId, key: ProjectEncryptionKey)(events: Event*): Unit = {
+  def addProject(projectId: ProjectId, creatorId: UserId, key: ProjectEncryptionKey)(events: Event*): Unit = {
     val initEvents = events.size
-    val ves = verifyEvents(Project.init(userId))(events: _*)
+    val ves = verifyEvents(Project.init(creatorId))(events: _*)
     val now = Instant.now()
-    val mde = MockDb.ProjectEntry(projectId, userId, key, initEvents, ves, now, now, Some(now))
+    val mde = MockDb.ProjectEntry(projectId, creatorId, key, initEvents, ves, now, now, Some(now))
     projects += mde
-    addProjectAccess(projectId, userId, ProjectPerm.Admin)
+    addProjectAccess(projectId, creatorId, ProjectPerm.Admin)
   }
 
   private def getProjectAccessEntry(pid: ProjectId, uid: UserId) =
@@ -347,6 +346,7 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
 
   override def projectSpaInitPage(pid: ProjectId, uid: UserId) = Eval.always[Option[DB.ProjectSpaInitPage]] {
     for {
+      _ <- getProjectAccessEntry(pid, uid)
       u <- users.find(_.id ==* uid)
       p <- projects.get(pid)
     } yield
@@ -464,8 +464,8 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     // Hmm, we don't store the project name in ProjectEntry
   }
 
-  override def getProjectRolodex(pid: ProjectId, exclude: UserId) = Eval.always[Rolodex] {
-    val ids = projectAccess.iterator.filter(a => a.pid ==* pid && a.uid !=* exclude).map(_.uid).toSet
+  override def getProjectRolodex(pid: ProjectId) = Eval.always[Rolodex] {
+    val ids = projectAccess.iterator.filter(a => a.pid ==* pid).map(_.uid).toSet
     Rolodex(needUsernamesByUserId(ids).value.mapKeysNow(Obfuscators.userId.obfuscate))
   }
 }

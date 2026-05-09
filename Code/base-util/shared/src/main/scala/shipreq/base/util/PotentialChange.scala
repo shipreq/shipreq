@@ -4,6 +4,8 @@ import cats.Eq
 import japgolly.microlibs.nonempty.NonEmpty
 import shipreq.base.util.PotentialChange._
 
+/** PotentialChange e a = Success(a) | Failure(e) | Unchanged
+  */
 sealed abstract class PotentialChange[+E, +A] {
   final def foreach(f: A => Unit): Unit =
     this match {
@@ -165,4 +167,6 @@ object PotentialChange {
 
   def nonEmpty[A, B](a: A)(implicit p: NonEmpty.Proof[A, B]): NonFailure[B] =
     fromOption(p tryProve a)
+
+  val unit = Success(())
 }

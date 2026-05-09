@@ -1,5 +1,6 @@
 package shipreq.webapp.member.project.text
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import nyaya.gen._
 import nyaya.prop._
 import nyaya.test.PropTest._

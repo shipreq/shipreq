@@ -1,19 +1,53 @@
-* only admin should be able to
-  * rename the project
-  * modify access
+========================================================================================================================
+# Open-source
 
-* testing project access
-  * read
-    * page load1
-    * websocket attempt
-  * write
-    * ajax calls (eg. rename)
-    * new events
-  * real-time
-    * web socket on server-side should recognise access has been prevented/re-granted
-    * page should update on access change
+* record usage videos (Davinci Resolve)
+* revise documentation
+* at the very least, document clearly how to get up and running (including double-init (Taskman + Webapp) and local account registration)
+* create a blog
+* point shipreq.com (and/or .org) at a blog
+* CDN: update infra diagram
+* CDN: document use, reason, including need for fake-cdn docker image
+* add a place for discussion, maybe discord
+* choose a licence
 
-* read-only access?
+========================================================================================================================
+# Fix Taskman
+
+* Does MailGun still work?
+* Find an alternative to MailChimp
+
+========================================================================================================================
+# Misc
+
+* Try using `bun` instead of `node`; see how much faster it is
+
+========================================================================================================================
+# project access WIP
+
+* plan:
+  1. implement (with tests) project access API (ensuring read-only unless admin)
+    1. [x] project access page
+      1. [x] new user (read-only unless admin)
+      1. [x] existing user (read-only unless admin)
+      1. [x] leave
+  1. add admin permission checks to the frontend:
+    1. [ ] project renaming
+  1. add read-only access
+    1. [ ] backend and protocol work
+    1. [ ] read-only UI: Editability
+    1. [ ] read-only UI: everywhere else (manually check)
+
+* revise UI prototype for the project "status" page
+
+* when users can be used as field values:
+  * should the rolodex contain info of users who've had access revoked?
+    seems necessary to display references to them in fields
+    * potential solution:
+      - allow perm to be NULL in project_access table
+      - populate rolodex includes entries with NULL perms
+      - update DB projectSpaInitPage to require non-null perm
+  * references to users who've had access revoked should appear as issues in the Issues page
 
 ========================================================================================================================
 # Phase 3

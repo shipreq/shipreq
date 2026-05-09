@@ -326,7 +326,7 @@ object FieldConfig {
         case EditorType.Dead(id) =>
           val editor =
             id match {
-              case i: CustomField.Tag        .Id => tagFieldEditor (Some(i),  Disabled).render
+              case i: CustomField.Tag        .Id => tagFieldEditor (Some(i), Disabled).render
               case i: CustomField.Text       .Id => textFieldEditor(Some(i), Disabled).render
               case i: CustomField.Implication.Id => impFieldEditor (Some(i), Disabled).render
             }

@@ -37,9 +37,9 @@ object Dropdown {
 
     def Optional[A](items   : ArraySeq[Item[A]],
                     selected: Option[ItemKey] = None,
-                    enabled : Enabled           = Enabled,
-                    tagMod  : TagMod            = EmptyVdom,
-                    validity: Validity          = Valid)
+                    enabled : Enabled         = Enabled,
+                    tagMod  : TagMod          = EmptyVdom,
+                    validity: Validity        = Valid)
                    (onChange: Item[A] => Callback): Optional = {
       type _A       = A
       val _items    = items

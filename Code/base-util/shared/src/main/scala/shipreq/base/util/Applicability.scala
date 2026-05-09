@@ -16,7 +16,6 @@ case object NotApplicable extends Applicability {
   val left: IfApplicable[Nothing] = -\/(NotApplicable)
 
   @inline
-  @nowarn("cat=unused")
   implicit def autoLeft[A](a: NotApplicable.type): IfApplicable[A] = left
 }
 

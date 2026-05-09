@@ -37,7 +37,7 @@ abstract class DbLaws extends TestSuite {
     def getUserIdsByUsername: Set[Username] => NonEmptySet[Username] \/ Map[Username, UserId]
     def getProjectAccess: ProjectId => ProjectAccess
     def projectSpaInitPage: (ProjectId, UserId) => Option[ProjectSpaInitPage]
-    def getProjectRolodex: (ProjectId, UserId) => Rolodex
+    def getProjectRolodex: ProjectId => Rolodex
 
     def needProjectCreator: ProjectId => UserId
     def getProjectEvents: ProjectId => ReadProjectEventError \/ VerifiedEvent.Seq
@@ -72,9 +72,8 @@ abstract class DbLaws extends TestSuite {
       val actual = getProjectAccessByIds(pid)
       assertMap(actual, expect)
 
-      val user = expect.keys.head
-      val actualRolodex = db.getProjectRolodex(pid, user)
-      val expectRolodex = Rolodex(db.getUsernamesByUserId(expect.keySet - user).getOrThrow().mapKeysNow(Obfuscators.userId.obfuscate))
+      val actualRolodex = db.getProjectRolodex(pid)
+      val expectRolodex = Rolodex(db.getUsernamesByUserId(expect.keySet).getOrThrow().mapKeysNow(Obfuscators.userId.obfuscate))
       assertEq(actualRolodex, expectRolodex)
     }
 
@@ -205,6 +204,25 @@ abstract class DbLaws extends TestSuite {
       "del" - testUpdateProjectAccessDel()
       "upd" - testUpdateProjectAccessUpd()
       "bulk" - testUpdateProjectAccessBulk()
+    }
+
+    "projectSpaInitPage" - {
+      "ok" - test { (t, u) =>
+        val p = t.createProject(u)
+        assert(t.db.projectSpaInitPage(p, u).isDefined)
+      }
+      "noAccess" - test { (t, u) =>
+        val p = t.createProject(u)
+        val u2 = t.createUser()
+        assertEq(t.db.projectSpaInitPage(p, u2), None)
+      }
+      "revokedAccess" - test { (t, u) =>
+        val p = t.createProject(u)
+        val u2 = addProjectMember(t, p, ProjectPerm.Collaborator)
+        assert(t.db.projectSpaInitPage(p, u2).isDefined)
+        t.db.updateProjectAccess(p, Map(u2 -> None)).getOrThrow()
+        assertEq(t.db.projectSpaInitPage(p, u2), None)
+      }
     }
 
   }

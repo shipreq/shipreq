@@ -35,10 +35,10 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
     AsyncCallback.suspend {
       val id = requests.length
       requests :+= cmd
-      logger(_.info(s"WW received request #${id + 1}: ${cmd.toString.quoteInner.take(100)}"))
+      logger(_.info(s"WW received request #${id + 1}: ${cmd.toString.escape.take(100)}"))
       responses.iterator.map(_ (cmd, id)).filterDefined.nextOption() match {
         case Some(r) =>
-          logger(_.info(s"  Returning user-specified response: ${("" + r).quoteInner.take(100)}"))
+          logger(_.info(s"  Returning user-specified response: ${("" + r).escape.take(100)}"))
           AsyncCallback.delay(r.asInstanceOf[A])
         case None =>
           logger(_.info("  No user-specified response. Trying fallbacks..."))
@@ -96,7 +96,7 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
         p <- pendingNow
         r <- f(p.cmd, p.id)
       } yield {
-        logger(_.info(s"Completing WW request #${p.id + 1} with ${("" + r).quoteInner.take(100)}"))
+        logger(_.info(s"Completing WW request #${p.id + 1} with ${("" + r).escape.take(100)}"))
         p.complete(Success(r))
       }
     }

@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.PackageBase._
 import monocle.Lens
 import org.scalajs.dom.window
 import shipreq.base.util.{Allow, ErrorMsg}
+import shipreq.webapp.base.data.ProjectPerm
 import shipreq.webapp.base.feature.AsyncFeature.Implicits._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
@@ -50,6 +51,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
   val pxProject       = global.pxProject
   def unsafeProject() = global.unsafeProject()
+  def unsafeSupp()    = global.unsafeSupp()
 
   private val stateLensFilterDead =
     Lens[State, FilterDead](_._filterDead)(fd => _.setFilterDead(fd, unsafeProject()))
@@ -70,6 +72,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
     private val sspUpdateSavedViews    = global.sspUpdateSavedViews.map(_.events)
     private val sspUpdateManualIssues  = Reusable.byRef(global.sspUpdateManualIssues)
     private val sspUpdateManualIssuesE = global.sspUpdateManualIssues.map(_.events)
+    private val sspUpdateAccess        = global.sspUpdateAccess
 
     private val feedbackModal: FeedbackModal = {
       val projectMetadata = global.projectMetadata(initPageData.projectId)
@@ -88,6 +91,12 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
     private val pxFilterDead =
       pxState.map(_.filterDead).withReuse
+
+    private val pxProjectAccess =
+      pxProject.map(_.access).withReuse
+
+    private val pxProjectPerm =
+      pxProjectAccess.map(_(initPageData.userId)).withReuse
 
     private val pxUseCases =
       pxProject.map(_.content.reqs.useCases).withReuse
@@ -236,6 +245,9 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
     private val manualIssueCmdAsyncW: AsyncFeature.Write.D1[ManualIssueCmd, ErrorMsg] =
       AsyncFeature.Write.D1.init($ zoomStateL State.manualIssueCmdAsync)
+
+    private val accessPageAsyncW: AsyncFeature.Write.D1[admin.access.AccessPage.AsyncKey, ErrorMsg] =
+      AsyncFeature.Write.D1.init($ zoomStateL State.accessPageAsync)
 
     private val updateConfigCmdInvoker: UpdateConfigCmd ~=> Callback =
       Reusable.fn(cmd => updateConfigCmdAsyncW(cmd)(sspUpdateConfigE(cmd)))
@@ -457,6 +469,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
       def usage            = pxUsage.value()
       def createPreviewRW  = pxCreatePreviewRW.value()
       def editorArgs       = pxEditorArgs.value()
+      def onlyAdminCanEdit = ProjectPerm.Admin.isSatisfiedBy(pxProjectPerm.value())
 
       val body: VdomElement = p.page match {
 
@@ -568,6 +581,19 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
             savedViewFeature = savedViewFeature,
             edgeEditorArgs   = someEdgeEditorArgs,
           ).render
+
+        case Page.Access =>
+          admin.access.AccessPage.Props(
+            userId          = initPageData.userId,
+            access          = project.access,
+            rolodex         = unsafeSupp().rolodex,
+            editability     = onlyAdminCanEdit,
+            state           = StateSnapshot.zoomL(State.access)(s).setStateVia($),
+            confirmJs       = confirmJs,
+            sspUpdateAccess = sspUpdateAccess,
+            async           = AsyncFeature.ReadWrite.D1(accessPageAsyncW, s.accessPageAsync.toRead),
+          ).render
+
       }
 
       State.recorder.record(s)

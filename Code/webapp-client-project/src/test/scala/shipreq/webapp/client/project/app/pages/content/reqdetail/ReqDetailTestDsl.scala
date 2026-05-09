@@ -1,5 +1,6 @@
 package shipreq.webapp.client.project.app.pages.content.reqdetail
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react.test._
 import monocle.macros.Lenses

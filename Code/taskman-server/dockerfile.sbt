@@ -30,7 +30,7 @@ docker / dockerfile := {
   new Dockerfile {
     def runInBash(cmds: String*) = run("/bin/bash", "-c", cmds.mkString(";"))
 
-    from(Docker.baseImage)
+    from(DockerCfg.baseImage)
 
     env("NAME" -> "shipreq/taskman")
 
@@ -46,7 +46,7 @@ docker / dockerfile := {
       s"sed -i 's|{{cp}}|$classpath|' $root/bin/run",
       s"sed -i 's|{{mainClass}}|$serverClass|' $root/bin/taskman")
 
-    env(Docker.envVars.value: _*)
+    env(DockerCfg.envVars.value: _*)
 
     cmd("bin/taskman")
   }

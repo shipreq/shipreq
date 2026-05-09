@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "source-map-support": "^0.5.21"
+  }
+}

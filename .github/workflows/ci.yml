@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+    paths:
+      - '.github/workflows/ci.yml'
+      - 'Docker/dev-postgres/**'
+      - 'Code/**'
+    tags-ignore:
+      - v*
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    env:
+      CI: 1
+      # MODE: release # Add this to CD but not CI
+      NODE_OPTIONS: --max-old-space-size=3072
+      SBT: >-
+        sbt
+        --no-server
+        -Dsbt.server.autostart=false
+        -Dsbt.server.forcestart=true
+        -Dsbt.supershell=never
+        -J-XX:+ExitOnOutOfMemoryError
+
+    steps:
+
+    - name: Git checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    # This allows for ssh'ing into the runner and debugging
+    # - name: Setup tmate session
+    #   uses: mxschmitt/action-tmate@v3
+    #   with:
+    #     detached: true
+
+    - name: Setup Scala
+      uses: japgolly/setup-everything-scala@v4.1
+      with:
+        java-version: graalvm-community:17.0.9
+        node-version: 25.9.0
+
+    - name: Install JS module for Graal
+      run: gu install js
+
+    - name: Build postgres
+      run: cd Docker/dev-postgres && ./build
+
+    - name: Start test env
+      run: cd Code && bin/env test up -d
+
+    - name: Prepare Scala.js dependencies
+      run: cd Code && npm install
+
+    - name: Build
+      run: cd Code && $SBT Test/compile
+
+    - name: Test (JS)
+      run: cd Code &&  $SBT testJS
+
+    - name: Test (JVM)
+      run: cd Code &&  $SBT testJVM

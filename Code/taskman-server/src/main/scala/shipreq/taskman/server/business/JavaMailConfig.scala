@@ -4,6 +4,7 @@ import cats.syntax.all._
 import japgolly.clearconfig._
 import java.util.Properties
 import javax.mail.{Authenticator, PasswordAuthentication, Session}
+
 object JavaMailConfig {
 
   private def get[A](n1: String)(implicit prefix: Prefix, p: ConfigValueParser[A]): ConfigDef[Properties => Unit] = {

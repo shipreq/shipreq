@@ -37,12 +37,12 @@ object ColumnSelector {
 
   private val popupOptions: Popup.Js.Options =
     new Popup.Js.Options {
-      override val inline = true
-      override val hoverable = true
-      override val position = Popup.Position.LeftCenter.value
-      override val delay = new Popup.Js.Options.Delay {
-        override val show = 200
-        override val hide = 300
+      this.inline = true
+      this.hoverable = true
+      this.position = Popup.Position.LeftCenter.value
+      this.delay = new Popup.Js.Options.Delay {
+        this.show = 200
+        this.hide = 300
       }
     }
 

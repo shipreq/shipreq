@@ -62,7 +62,6 @@ object ProjectSpaProtocols {
     val empty: StateUpdate =
       apply(VerifiedEvent.Seq.empty, Supplimentary.empty)
 
-    @nowarn("cat=unused")
     implicit def eqStateUpdate(implicit e: Eq[VerifiedEvent.Seq]): Eq[StateUpdate] = deriveEq
   }
 
@@ -303,8 +302,8 @@ object ProjectSpaProtocols {
       override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onReqTypeImplicationMod(r)
     }
 
-    case object AccessUpdate extends Base[UpdateAccessCmd, EventResult](11) {
-      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onAccessUpdate(r)
+    case object UpdateAccess extends Base[UpdateAccessCmd, EventResult](11) {
+      override def fold[F[_ <: WsReqRes], G[_ <: WsReqRes]](f: WsReqRes.Fold[F, G])(r: F[this.type]) = f.onUpdateAccess(r)
     }
 
     implicit def univEq: UnivEq[WsReqRes] = UnivEq.derive
@@ -323,7 +322,7 @@ object ProjectSpaProtocols {
         onUpdateManualIssues   : F[UpdateManualIssues   .type] => G[UpdateManualIssues   .type],
         onFieldMandatorinessMod: F[FieldMandatorinessMod.type] => G[FieldMandatorinessMod.type],
         onReqTypeImplicationMod: F[ReqTypeImplicationMod.type] => G[ReqTypeImplicationMod.type],
-        onAccessUpdate         : F[AccessUpdate         .type] => G[AccessUpdate         .type],
+        onUpdateAccess         : F[UpdateAccess         .type] => G[UpdateAccess         .type],
         ) { self =>
       @inline def apply(r: WsReqRes)(f: F[r.type]) = r.fold(this)(f)
       def compose[H[_ <: WsReqRes]](h: Fold[G, H]): Fold[F, H] =
@@ -339,7 +338,7 @@ object ProjectSpaProtocols {
           onUpdateManualIssues    = f => h.onUpdateManualIssues   (self.onUpdateManualIssues   (f)),
           onFieldMandatorinessMod = f => h.onFieldMandatorinessMod(self.onFieldMandatorinessMod(f)),
           onReqTypeImplicationMod = f => h.onReqTypeImplicationMod(self.onReqTypeImplicationMod(f)),
-          onAccessUpdate          = f => h.onAccessUpdate         (self.onAccessUpdate         (f)),
+          onUpdateAccess          = f => h.onUpdateAccess         (self.onUpdateAccess         (f)),
         )
     }
 

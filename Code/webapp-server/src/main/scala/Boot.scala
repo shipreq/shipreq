@@ -88,18 +88,13 @@ class Boot {
 
   def readConfig(): (ServerConfig, Option[RunModes.Value], ConfigReport) = {
 
-    val logVars =
-      ConfigDef.getOrUse[String]("LOG_APPENDER", "JSON") <* ConfigDef.external(
-        "LOG_LEVEL_ROOT",
-        "LOG_LEVEL_SHIPREQ")
-
     val cfgRunMode: ConfigDef[Option[RunModes.Value]] =
       ConfigDef.get[String]("shipreq.lift.runMode").mapOption {
         case Some(i) => RunModes.values.iterator.filter(_.toString.toLowerCase ==* i).nextOption().map(Some(_))
         case None    => Some(None)
       }
 
-    (ServerConfig.config, cfgRunMode <* logVars)
+    (ServerConfig.config, cfgRunMode <* ConfigDef.logbackXmlOnClasspath)
       .tupled
       .withReport
       .map { case ((svr, runMode), report) => (svr, runMode, report) }

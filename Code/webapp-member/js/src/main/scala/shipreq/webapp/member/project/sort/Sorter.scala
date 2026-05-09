@@ -92,8 +92,8 @@ object Sorter {
          | SortMethod.DescThenBlanks => BlanksLast
     }
 
-    @inline @nowarn implicit def autoBlanksFirst(a: BlanksThenAsc.type): BlankPlacement = BlanksFirst
-    @inline @nowarn implicit def autoBlanksLast (a: AscThenBlanks.type): BlankPlacement = BlanksLast
+    @inline implicit def autoBlanksFirst(a: BlanksThenAsc.type): BlankPlacement = BlanksFirst
+    @inline implicit def autoBlanksLast (a: AscThenBlanks.type): BlankPlacement = BlanksLast
   }
 
   case object BlanksFirst extends BlankPlacement

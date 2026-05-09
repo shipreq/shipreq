@@ -1439,7 +1439,7 @@ object RandomData {
   private[this] val emptyATagIdSet = Gen.pure(Set.empty[ApplicableTagId])
   def reqFieldDataTags(reqs: Iterable[ReqId], tags: Set[ApplicableTagId]): Gen[ReqData.Tags] = {
     val rndTags = Gen.chooseGen(Gen.subset(tags), emptyATagIdSet)
-    (rndTags mapByKeySubset reqs.toIterable).map(Multimap(_))
+    (rndTags mapByKeySubset reqs).map(Multimap(_))
 //    subset2(reqs, 1, 0).flatMap(rndTags.mapByEachKey).map(Multimap(_))
   }
 

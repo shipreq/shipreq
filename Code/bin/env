@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd "$(dirname "$(readlink -e "$0")")/../envs" || exit 1
+cd "$(dirname "$0")/../envs" || exit 1
 
 if [ $# -eq 0 ]; then
   self="$0"
@@ -20,7 +20,7 @@ shift
 cd "$env"
 
 # ElasticSearch won't start if vm.max_map_count is too low
-if [[ "$env" != "test" ]]; then
+if [[ "$env" != "test" && "$(uname)" != "Darwin" ]]; then
   VM_MAX_MAP_COUNT="$(sysctl vm.max_map_count | sed 's/^.*= *//')"
   if [[ -z "$VM_MAX_MAP_COUNT" || "$VM_MAX_MAP_COUNT" -lt 262144 ]]; then
     echo "sysctl vm.max_map_count = $VM_MAX_MAP_COUNT. ElasticSearch requires it be >= 262144" >&2
@@ -32,8 +32,13 @@ fi
 
 # Expose localhost so that prometheus can collect metrics when running via SBT
 if [[ "$env" != "test" ]]; then
-  export DOCKER0="$(ip route show | grep docker0 | awk '{print $9}')"
-  [[ ! "$DOCKER0" =~ ^[0-9][0-9.]*$ ]] && echo "Invalid docker0 ip: $DOCKER0" && exit 3
+  if [[ "$(uname)" == "Darwin" ]]; then
+    # Mac doesn't have a docker0 bridge; use the internal DNS name instead
+    export DOCKER0="host.docker.internal"
+  else
+    export DOCKER0="$(ip route show | grep docker0 | awk '{print $9}')"
+    [[ ! "$DOCKER0" =~ ^[0-9][0-9.]*$ ]] && echo "Invalid docker0 ip: $DOCKER0" && exit 3
+  fi
 fi
 
 # Prevent muscle-memory blowing all state

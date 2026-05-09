@@ -872,7 +872,7 @@ object Icon {
   // case object UserDelete                        extends Unmodified("user delete")
   // case object UserOutline                       extends Unmodified("user outline")
   // case object UserPlus                          extends Unmodified("user plus")
-  // case object Users                             extends Unmodified("users")
+  case object Users                             extends Unmodified("users")
   // case object UserTimes                         extends Unmodified("user times")
   // case object UserX                             extends Unmodified("user x")
   // case object Vcard                             extends Unmodified("vcard")

@@ -209,7 +209,6 @@ object Feature {
           Editability.forManualIssues)
     }
 
-    @nowarn("cat=unused")
     private implicit val reusabilityForClipboardDataFn: Reusability[() => ClipboardData] =
       Reusability.byRef
 

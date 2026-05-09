@@ -89,6 +89,20 @@ object DbInterpreter {
       if (cond) logGlobalEvent(e) else ConnectionIoUnit
   }
 
+  trait GetUserId extends DB.GetUserId[ConnectionIO] {
+    private[db] final val getUserIdByEmailSql =
+      Query[EmailAddr, UserId](s"SELECT id FROM usr WHERE email=?")
+
+    private[db] final val getUserIdByUsernameSql =
+      Query[Username, UserId](s"SELECT id FROM usr WHERE username=?")
+
+    override final def getUserId(e: Username \/ EmailAddr): ConnectionIO[Option[UserId]] =
+      e match {
+        case -\/(u) => getUserIdByUsernameSql.option(u)
+        case \/-(e) => getUserIdByEmailSql.option(e)
+      }
+  }
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   object ForSecurity extends DB.ForSecurity[ConnectionIO] {
     private final def colsUserAndPasswordInfo = "id,username,password,password_salt"
@@ -145,7 +159,7 @@ object DbInterpreter {
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  trait ForPublicSpa extends DB.ForPublicSpa[ConnectionIO] with VerificationTokenReadOnly {
+  trait ForPublicSpa extends DB.ForPublicSpa[ConnectionIO] with GetUserId with VerificationTokenReadOnly {
     import shipreq.webapp.server.logic.algebra.DB.{PasswordResetState, UserRegistration, UserRegistrationResult}
 
     protected val tokenGen: () => VerificationToken
@@ -168,18 +182,6 @@ object DbInterpreter {
       case (id, _      , _, Some(i)) => DB.UserRegistration.Complete(id, i)
       case _                         => throw new IllegalStateException() // Impossible due to CONSTRAINT usr_confirmation_invariants
     }
-
-    private[db] final val getUserIdByEmailSql =
-      Query[EmailAddr, UserId](s"SELECT id FROM usr WHERE email=?")
-
-    private[db] final val getUserIdByUsernameSql =
-      Query[Username, UserId](s"SELECT id FROM usr WHERE username=?")
-
-    override final def getUserId(e: Username \/ EmailAddr): ConnectionIO[Option[UserId]] =
-      e match {
-        case -\/(u) => getUserIdByUsernameSql.option(u)
-        case \/-(e) => getUserIdByEmailSql.option(e)
-      }
 
     private[db] final val getUserRegistrationSql =
       Query[EmailAddr, RegInfo](s"SELECT $colsRegInfo FROM usr WHERE email=?").map(parseRegInfo)
@@ -498,6 +500,7 @@ object DbInterpreter {
       extends DB.ForProjectSpa[ConnectionIO]
          with GetProjectMetaData
          with GetProjectEvents
+         with GetUserId
          with SaveProjectEvent {
 
     private val logProjectRead: Update[ProjectId] =
@@ -538,19 +541,19 @@ object DbInterpreter {
       }
     }
 
-    private[db] val getProjectRolodexQuery = Query[(ProjectId, UserId), (UserId.Public, Username)](
+    private[db] val getProjectRolodexQuery = Query[ProjectId, (UserId.Public, Username)](
         """SELECT a.usr_id, u.username
           |  FROM project_access a, usr u
           | WHERE a.usr_id=u.id
-          |   AND project_id=? AND a.usr_id<>?
+          |   AND project_id=?
         """.stripMargin.sql)
 
-    override def getProjectRolodex(id: ProjectId, exclude: UserId): ConnectionIO[Rolodex] =
-      getProjectRolodexQuery.toMap((id, exclude)).map(Rolodex.apply)
+    override def getProjectRolodex(id: ProjectId): ConnectionIO[Rolodex] =
+      getProjectRolodexQuery.toMap(id).map(Rolodex.apply)
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  class ForOps(dbName: String) extends DB.ForOps[ConnectionIO] with GetProjectEvents with OnSaveProjectEvent with Effect {
+  class ForOps(dbName: String) extends DB.ForOps[ConnectionIO] with GetProjectEvents with GetUserId with OnSaveProjectEvent with Effect {
     import shipreq.webapp.server.logic.algebra.DB.ForOps._
 
     private[db] final val nowSql =
@@ -596,17 +599,6 @@ object DbInterpreter {
 
     override final val dbSize: ConnectionIO[Long] =
       dbSizeSql.unique(dbName.replaceFirst("^.*/", ""))
-
-    private[db] val userIdByUsernameSql = Query[Username, UserId]("SELECT id FROM usr WHERE username=?")
-
-    private[db] val userIdByEmailSql =
-      Query[EmailAddr, UserId]("SELECT id FROM usr WHERE email=?")
-
-    override def getUserId(user: Username \/ EmailAddr): ConnectionIO[Option[UserId]] =
-      user match {
-        case -\/(u) => userIdByUsernameSql.option(u)
-        case \/-(e) => userIdByEmailSql.option(e)
-      }
 
     private[db] val insertVerifiedEventSql: Update[(ProjectId, VerifiedEvent, UserId)] =
       Update[(ProjectId, EventOrd, Short, Json, UserId, Instant)](

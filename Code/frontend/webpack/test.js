@@ -48,7 +48,6 @@ const config = {
                 '@babel/preset-env',
                 {
                   targets: [
-                    "PhantomJS 2.1",
                     "maintained node versions",
                   ]
                 }

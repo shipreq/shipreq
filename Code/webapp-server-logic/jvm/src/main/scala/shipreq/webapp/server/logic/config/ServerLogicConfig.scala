@@ -168,12 +168,12 @@ object ServerLogicConfig {
     ).tupled
 
     val part2 = (
-      RetriesJvm.config.withPrefix             ("taskman.init.retry."),
-      ProjectSpaLogic.Config.defn.withPrefix   ("projectSpa."),
-      Prometheus.config.withPrefix             ("prometheus."),
-      Security.config.withPrefix               ("security."),
+      RetriesJvm.config             .withPrefix("taskman.init.retry."),
+      ProjectSpaLogic.Config.defn   .withPrefix("projectSpa."),
+      Prometheus.config             .withPrefix("prometheus."),
+      Security.config               .withPrefix("security."),
       ScalaJsManifest.config[String].withPrefix("scalajs."),
-      SsrConfig.config.withPrefix              ("ssr."),
+      SsrConfig.config              .withPrefix("ssr."),
       JaegerTracingConfig.main                 ("webapp"),
     ).tupled
 

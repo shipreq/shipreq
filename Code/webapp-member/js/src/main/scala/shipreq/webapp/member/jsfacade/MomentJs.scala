@@ -18,7 +18,6 @@ trait Moment extends js.Object {
 
 @JSGlobal("moment")
 @js.native
-@nowarn
 object Moment extends js.Any {
   def apply(): Moment = js.native
   def apply(epochMillis: Double): Moment = js.native

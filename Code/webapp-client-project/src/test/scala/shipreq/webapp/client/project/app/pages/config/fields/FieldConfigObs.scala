@@ -27,8 +27,8 @@ object FieldConfigObs {
 
   final class FieldListRow($: DomZipperJs) {
     val rowDom = $.domAsHtml
-    val name   = $.child("td", 2 of 5).innerText
-    val detail = $.child("td", 4 of 5).innerText
+    val name   = $.child("td", 2 of 5).domAsHtml.textContent
+    val detail = $.child("td", 4 of 5).domAsHtml.textContent
   }
 
   final class Editor($: DomZipperJs) {
@@ -38,7 +38,7 @@ object FieldConfigObs {
 
     val nameDom   = soleField.zippers.flatMap(_.collect01("input").domsAs[html.Input])
     val nameValue = nameDom.map(_.value)
-    val nameError = soleField.zippers.filter(_ => nameDom.isDefined).flatMap(_.children01("span").innerTexts)
+    val nameError = soleField.zippers.filter(_ => nameDom.isDefined).flatMap(_.children01("span").zippers.map(_.domAsHtml.textContent.trim))
 
     val dropdown = soleField.zippers.filter(_.exists(".menu")).map(new CommonObs.Dropdown(_))
 
@@ -58,8 +58,8 @@ object FieldConfigObs {
     private val button   = $.child("td", 3 of 3)
 
     val reqTypesDom   = reqTypes.collect01("input").domsAs[html.Input]
-    val reqTypesError = reqTypes.collect01(s"[${Input.errorAttr.attrName}]").innerTexts
-    val deadReqTypes  = reqTypes.collect01(selRulesDeadReqTypes).innerTexts
+    val reqTypesError = reqTypes.collect01(s"[${Input.errorAttr.attrName}]").zippers.map(_.domAsHtml.textContent.trim)
+    val deadReqTypes  = reqTypes.collect01(selRulesDeadReqTypes).zippers.map(_.domAsHtml.textContent.trim)
     val res           = new CommonObs.Dropdown(rule(".ui.dropdown.selection:first-child"))
     val default       = rule.collect01(".ui.dropdown.selection:not(:first-child)").map(new CommonObs.Dropdown(_))
     val dead          = button.collect01("button").isEmpty
@@ -67,7 +67,7 @@ object FieldConfigObs {
     val reqTypesDesc: String =
       reqTypesDom match {
         case Some(r) if !dead => r.value
-        case _                => reqTypes.innerText.replace("Dead req types:", "").trim
+        case _                => reqTypes.domAsHtml.textContent.replace("Dead req types:", "").trim
       }
 
     val desc = RuleRow(

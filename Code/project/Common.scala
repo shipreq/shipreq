@@ -5,7 +5,6 @@ import com.typesafe.sbt.GitPlugin.autoImport._
 import java.nio.file.{Files, Path}
 import org.scalajs.jsenv.Input
 import org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv
-import org.scalajs.jsenv.phantomjs.sbtplugin.PhantomJSEnvPlugin.autoImport._
 import org.scalajs.linker.interface._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import org.scalajs.sbtplugin.Stage
@@ -19,10 +18,9 @@ import scalajscrossproject.ScalaJSCrossPlugin.autoImport._
 import LibDependency.{Dep, HasBoth, HasJs, HasJvm, JS, JVM, ModDepScope}
 
 sealed trait JsTestType
-case object NoTests                       extends JsTestType
-case object UseNode                       extends JsTestType
-case object UseNodeAdvanced               extends JsTestType
-final case class UsePhantomJs(memMB: Int) extends JsTestType
+case object NoTests         extends JsTestType
+case object UseNode         extends JsTestType
+case object UseNodeAdvanced extends JsTestType
 
 object Common {
 
@@ -63,9 +61,11 @@ object Common {
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:postfixOps",
-    "-target:" + Dependencies.Java.major,            // Target platform for object files. ([8],9,10,11,12)
+    "-release:" + Dependencies.Java.major,           // Target platform for object files. ([8],9,10,11,12)
     "-unchecked",                                    // Enable additional warnings where generated code depends on assumptions.
     "-Wconf:msg=may.not.be.exhaustive:e",            // Make non-exhaustive matches errors instead of warnings
+    "-Wconf:msg=Implicit.*should.*explicit.type:s",  // Ignore warnings about inferring implicit types
+    "-Wconf:msg=ambiguous.*in.*Scala.3:s",           // Ignore warnings about Scala 3 ambiguity
     "-Wdead-code",                                   // Warn when dead code is identified.
     "-Wunused:explicits",                            // Warn if an explicit parameter is unused.
     "-Wunused:implicits",                            // Warn if an implicit parameter is unused.
@@ -93,7 +93,6 @@ object Common {
     "-Xmixin-force-forwarders:false",                // Only generate mixin forwarders required for program correctness.
     "-Xno-forwarders",                               // Do not generate static forwarders in mirror classes.
     "-Xsource:2.13",
-    "-Ybackend-parallelism", cores.min(16).toString,
     "-Ycache-macro-class-loader:last-modified",
     "-Ycache-plugin-class-loader:last-modified",
     "-Yimports:java.lang,scala,shipreq.Predef",      // Use custom Predef
@@ -102,9 +101,6 @@ object Common {
     "-Yno-generic-signatures",                       // Suppress generation of generic signatures for Java.
     "-Ypatmat-exhaust-depth", "off"
   )
-/*
-    "-Xsource:2.14",                                 // Prepare for Dotty -- Disabled because of warnings in macro-generated code. Fix 3rd-libs first.
-*/
 
   def scalacTestFlags = Seq(
     "-language:reflectiveCalls")
@@ -125,21 +121,27 @@ object Common {
   )
 
   val optimisationSettings: Project => Project =
-    nonTestCompilerFlags(
-      "-Xdisable-assertions",
-      "-Xelide-below", "OFF"
-    ) compose
-    nonTestCompilerFlags(optimisationScalacFlags: _*)
+    _
+      .configure(nonTestCompilerFlags("-Xdisable-assertions"))
+      .configure(nonTestCompilerFlags(optimisationScalacFlags: _*))
+      .settings(Compile / scalacOptions ++= Seq("-Xelide-below", "OFF"))
 
   val ciSettings: Project => Project =
     if (inCI && !localCI)
-      _.settings(Global / concurrentRestrictions += Tags.limit(Tags.Test, 1))
+      _.settings(
+        Test / parallelExecution := false,
+        Global / concurrentRestrictions += Tags.limit(Tags.Test, 1),
+        Global / concurrentRestrictions += Tags.limitAll(cores),
+      )
     else
-      identity
+      _.settings(
+        Global / concurrentRestrictions += Tags.limit(CustomTags.Node, 2),
+        Global / concurrentRestrictions += Tags.limit(Tags.Test, 2),
+      )
 
   val scalafixSettings: Project => Project =
     if (scalafixEnabled)
-      _.enablePlugins(ScalafixPlugin).dependsOn(ScalafixBuild.`scalafix-rules` % ScalafixConfig)
+      _.enablePlugins(ScalafixPlugin)
     else
       _.disablePlugins(ScalafixPlugin)
 
@@ -283,7 +285,6 @@ object Common {
           .withAvoidClasses(false)
         )
         .withPrettyPrint(false)
-        .withClosureCompiler(true)
         .withCheckIR(true)
       },
       // More than 1 running instance of Google Closure exponentially increases time & mem-usage
@@ -312,7 +313,6 @@ object Common {
         _.settings(
           Test / jsEnv := new JSDOMNodeJSEnv(JSDOMNodeJSEnv.Config()),
           Test / test / tags += CustomTags.Node -> 1,
-          Test / test / tags += CustomTags.MemoryMB -> 150,
         )
       case UseNodeAdvanced =>
         _.settings(
@@ -322,14 +322,6 @@ object Common {
               "CI"       -> (if (inCI) "1" else "0"),
             ))
           ))
-      case UsePhantomJs(memMB) =>
-        _.settings(
-          Test / scalaJSLinkerConfig ~= { _.withESFeatures(_.withESVersion(ESVersion.ES5_1)) },
-          Test / jsEnv := PhantomJSEnv().value,
-          Test / jsEnvInput := Input.Script(((ThisBuild / baseDirectory).value / "project/phantomjs-fix.js").toPath) +: (Test / jsEnvInput).value,
-          Test / test / tags += CustomTags.PhantomJs -> 1,
-          Test / test / tags += CustomTags.MemoryMB -> memMB,
-        )
     }
 
   def devMode: Boolean = !releaseMode

@@ -252,19 +252,66 @@ object MakeEventTest extends TestSuite {
       import ProjectPerm._
 
       "update" - {
-        def test(cmds: (UserId.Public, Option[ProjectPerm])*)(implicit l: Line): Unit =
-          assertMakeEvent(_.updateAccess(UpdateAccessCmd(cmds.toMap), _), {
+        // Note: this adds user #2 as an admin before testing begins
+        def test(cmds: (UserId.Public, Option[ProjectPerm])*)(implicit l: Line): Unit = {
+          val t = new Tester()
+          t.assertApplies(AccessUpdate(Map(PublicUserId2 -> Some(Admin))))
+          t.assertMakeEvent(_.updateAccess(UpdateAccessCmd.Modify(cmds.toMap), _), {
             case a if a == AccessUpdate(cmds.toMap) => a
           })
+        }
 
         "del" - test(PublicUserId1 -> None)
         "mod" - test(PublicUserId1 -> Some(Collaborator))
-        "add" - test(PublicUserId2 -> Some(Collaborator))
+        "add" - test(PublicUserId3 -> Some(Collaborator))
+      }
+
+      "removeSelf" - {
+        "collaborator" - {
+          val t = new Tester(SampleProject.projectWithOtherTags)
+          // Add a collaborator first
+          val msg1 = UpdateAccessCmd.Modify(Map(PublicUserId2 -> Some(Collaborator)))
+          val p = t.assertMakeEvent(_.updateAccess(msg1, _), { case a: AccessUpdate => a })
+          val t2 = new Tester(applyEventSuccessfully(t.project(), p))
+          // Now remove self (PublicUserId2)
+          val msg2 = UpdateAccessCmd.Modify(Map(PublicUserId2 -> None))
+          t2.assertMakeEvent[AccessUpdate](_.updateAccess(msg2, _), {
+            case a @ AccessUpdate(m) if m == Map(PublicUserId2 -> None) => a
+          })
+          ()
+        }
+
+        "adminWithOtherAdmin" - {
+          val t = new Tester
+          // Add another admin
+          val msg1 = UpdateAccessCmd.Modify(Map(PublicUserId2 -> Some(Admin)))
+          val p = t.assertMakeEvent(_.updateAccess(msg1, _), { case a: AccessUpdate => a })
+          val t2 = new Tester(applyEventSuccessfully(t.project(), p))
+          // Now remove self (PublicUserId1)
+          val msg2 = UpdateAccessCmd.Modify(Map(PublicUserId1 -> None))
+          t2.assertMakeEvent[AccessUpdate](_.updateAccess(msg2, _), {
+            case a @ AccessUpdate(m) if m == Map(PublicUserId1 -> None) => a
+          })
+          ()
+        }
+
+        "soleAdmin" - {
+          "del" - {
+            val t = new Tester
+            val msg = UpdateAccessCmd.Modify(Map(PublicUserId1 -> None))
+            t.assertMakeEventFails(_.updateAccess(msg, _))
+          }
+          "downgrade" - {
+            val t = new Tester
+            val msg = UpdateAccessCmd.Modify(Map(PublicUserId1 -> Some(Collaborator)))
+            t.assertMakeEventFails(_.updateAccess(msg, _))
+          }
+        }
       }
 
       "noop" - {
         def test(cmds: (UserId.Public, Option[ProjectPerm])*)(implicit l: Line) =
-          assertNoChange(_.updateAccess(UpdateAccessCmd(cmds.toMap), _))
+          assertNoChange(_.updateAccess(UpdateAccessCmd.Modify(cmds.toMap), _))
 
         "empty" - test()
         "del"   - test(PublicUserId2 -> None)

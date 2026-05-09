@@ -1,8 +1,10 @@
 package shipreq.webapp.base.protocol
 
 import japgolly.scalajs.react._
-import org.scalajs.dom.ext.AjaxException
+import japgolly.scalajs.react.extra.internal.{AjaxException => AjaxExceptionSJR}
+import org.scalajs.dom.ext.{AjaxException => AjaxExceptionDom}
 import shipreq.base.util.{ErrorMsg, Identity}
+import shipreq.webapp.base.protocol.ajax.AjaxClient.{AjaxException => AjaxExceptionInt}
 import shipreq.webapp.base.util.CallbackHelpers._
 
 final class ServerSideProcInvoker[-I, F, O](private[ServerSideProcInvoker] val run: I => AsyncCallback[F \/ O]) {
@@ -85,15 +87,30 @@ object ServerSideProcInvoker {
   implicit def variance[I, F, O, II <: I, FF >: F, OO >: O](a: ServerSideProcInvoker[I, F, O]): ServerSideProcInvoker[II, FF, OO] =
     new ServerSideProcInvoker(a.run)
 
-  def throwableToErrorMsg(t: Throwable): ErrorMsg =
+  @nowarn("cat=deprecation")
+  def throwableToErrorMsg(t: Throwable): ErrorMsg = {
+    val errorMsgAjaxTimeout = ErrorMsg("Server didn't respond. Please check your internet connectivity.")
+    val errorMsgAjax501     = ErrorMsg("Failed to find a compatible server. Please try again, or try reloading the page.")
+    val errorMsgAjaxOther   = ErrorMsg("Error contacting server. Please try again.")
+
     t match {
-      case e: AjaxException if e.isTimeout     => ErrorMsg("Server didn't respond. Please check your internet connectivity.")
-      case AjaxException(x) if x.status == 501 => ErrorMsg("Failed to find a compatible server. Please try again, or try reloading the page.")
-      case AjaxException(_)                    => ErrorMsg("Error contacting server. Please try again.")
+      case e: AjaxExceptionSJR if e.isTimeout     => errorMsgAjaxTimeout
+      case AjaxExceptionSJR(x) if x.status == 501 => errorMsgAjax501
+      case AjaxExceptionSJR(_)                    => errorMsgAjaxOther
+
+      case e: AjaxExceptionInt if e.isTimeout     => errorMsgAjaxTimeout
+      case AjaxExceptionInt(x) if x.status == 501 => errorMsgAjax501
+      case AjaxExceptionInt(_)                    => errorMsgAjaxOther
+
+      case e: AjaxExceptionDom if e.isTimeout     => errorMsgAjaxTimeout
+      case AjaxExceptionDom(x) if x.status == 501 => errorMsgAjax501
+      case AjaxExceptionDom(_)                    => errorMsgAjaxOther
+
       case tt =>
         Option(tt.getMessage).filter(_.nonEmpty) match {
           case Some(m) => ErrorMsg("Error occurred: " + m)
           case None    => ErrorMsg("Error occurred.")
         }
     }
+  }
 }

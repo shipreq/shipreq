@@ -18,9 +18,10 @@ object InputComponent {
 
     def render(p: Props): VdomNode =
       p.render(TagMod(
-        ^.onBlur --> autoCompleteOnBlur,
-        ^.onClick ==> autoCompleteOnClick,
-        ^.onKeyDown ==> autoCompleteOnKeyDown,
+        ^.onBlur           --> autoCompleteOnBlur,
+        ^.onClick          ==> autoCompleteOnClick,
+        ^.onKeyDown        ==> autoCompleteOnKeyDown,
+        ^.onKeyDownCapture ==> autoCompleteOnKeyDownCapture,
       ))
 
     override val autoCompleteCtx: CallbackOption[AutoCompleteCtx] =

@@ -62,4 +62,17 @@ object TestUtil extends WebappTestUtil with WebappTestEquality {
     s.replace("esc to cancel.", "")
       .replace("ctrl-enter to save,", "")
       .replace("enter for new line,", "")
+
+  def removeSemanticUiFromBody(): Unit = {
+    val body = dom.document.body
+    var i = body.childNodes.length
+    while (i > 0) {
+      i -= 1
+      body.childNodes(i) match {
+        case e: dom.Element if e.classList.contains("ui") =>
+          body.removeChild(e)
+        case _ =>
+      }
+    }
+  }
 }

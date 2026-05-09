@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import monocle.macros._
 import shipreq.base.util._
 import shipreq.webapp.base.feature._
+import shipreq.webapp.client.project.app.pages.admin.access.AccessPage
 import shipreq.webapp.client.project.app.pages.config.fields.FieldConfig
 import shipreq.webapp.client.project.app.pages.config.issues.IssueConfig
 import shipreq.webapp.client.project.app.pages.config.reqtypes.ReqTypeConfig
@@ -118,6 +119,8 @@ final case class State(projectName               : ProjectItem.WithEditableName.
                        reqTypeConfigAsync        : AsyncFeature.State.D0[ErrorMsg],
                        customIssueTypeConfig     : IssueConfig.State,
                        customIssueTypeConfigAsync: AsyncFeature.State.D0[ErrorMsg],
+                       access                    : AccessPage.State,
+                       accessPageAsync           : AsyncFeature.State.D1[AccessPage.AsyncKey, ErrorMsg],
                       ) {
 
   @inline def filterDead = _filterDead
@@ -164,6 +167,8 @@ object State {
       reqTypeConfigAsync         = AsyncFeature.State.initD0,
       customIssueTypeConfig      = IssueConfig.initState,
       customIssueTypeConfigAsync = AsyncFeature.State.initD0,
+      access                     = AccessPage.State.init,
+      accessPageAsync            = AsyncFeature.State.initD1,
     )
 
   implicit val reusability: Reusability[State] =

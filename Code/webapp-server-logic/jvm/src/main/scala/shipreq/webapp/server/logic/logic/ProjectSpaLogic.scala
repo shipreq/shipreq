@@ -16,7 +16,7 @@ import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.EventOrd.Implicits._
-import shipreq.webapp.member.project.event.{ApplyEvent, EventOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{ApplyEvent, Event, EventOrd, VerifiedEvent}
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WebSocket.Push
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WsReqRes.EventResult
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{InitAppData, StateUpdate, Supplimentary, WsReqRes}
@@ -86,8 +86,8 @@ object ProjectSpaLogic extends StrictLogging {
   val userFacingErrorMsgWhenDataPropFails =
     ErrorMsg("Invalid input. The fact the we can't be more specific is a bug. Our staff have been notified and we'll endeavour to fix this ASAP.")
 
-  val userFacingErrorMsgCantRemoveAdmin =
-    ErrorMsg("A project must have at least one admin user. You can't remove all admin.")
+  @inline def userFacingErrorMsgCantRemoveAdmin =
+    MakeEvent.userFacingErrorMsgCantRemoveAdmin
 
   final case class WebSocketStatic(user       : User,
                                    projectId  : ProjectId,
@@ -95,7 +95,11 @@ object ProjectSpaLogic extends StrictLogging {
                                    sessionId  : Security.SessionId,
                                    span       : Any,
                                    connectedAt: Instant,
-                                   expiresAt  : Instant)
+                                   expiresAt  : Instant) {
+
+    def userIdPublic: UserId.Public =
+      Obfuscators.userId.obfuscate(user.id)
+  }
 
   final case class WebSocketState[F[_]](sub: Option[Redis.Subscription[F]])
   object WebSocketState {
@@ -452,19 +456,20 @@ object ProjectSpaLogic extends StrictLogging {
       private type MsgFoldIn [R <: WsReqRes] = MsgFnIn[F, R#RequestType]
       private type MsgFoldOut[R <: WsReqRes] = F[MsgError \/ MsgFnOut[F, R#ResponseType]]
 
+      // This logic is duplicated in TestGlobal
       private val msgFold = WsReqRes.Fold[MsgFoldIn, MsgFoldOut](
         onInitApp               = onInitApp,
         onReconnect             = onReconnect,
         onSync                  = onSync,
-        onUpdateConfig          = updateProject (MakeEvent.updateConfig),
-        onCreateContent         = updateProject (MakeEvent.createContent),
-        onUpdateContent         = updateProject (MakeEvent.updateContent),
-        onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
-        onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
-        onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
+        onUpdateConfig          = updateProject (MakeEvent.updateConfig, ProjectPerm.Collaborator),
+        onCreateContent         = updateProject (MakeEvent.createContent, ProjectPerm.Collaborator),
+        onUpdateContent         = updateProject (MakeEvent.updateContent, ProjectPerm.Collaborator),
+        onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn, ProjectPerm.Admin),
+        onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews, ProjectPerm.Collaborator),
+        onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues, ProjectPerm.Collaborator),
         onFieldMandatorinessMod = _ => F.pure(-\/(MsgError.FunctionNoLongerSupported("fieldMandatorinessMod"))),
-        onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
-        onAccessUpdate          = updateProject (MakeEvent.updateAccess),
+        onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod, ProjectPerm.Collaborator),
+        onUpdateAccess          = onUpdateAccess,
       )
 
       private val writeSnapshotInsteadOfEvents: Int => Boolean =
@@ -500,16 +505,16 @@ object ProjectSpaLogic extends StrictLogging {
           }.flatMap(identity)
       }
 
-      private def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result): MsgFn[I, EventResult] =
-        in => projectUpdater(in.static.projectId, in.static.creator, in.static.user.id, mkEvent(in.input, _)).map {
+      private def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result, requiredPerm: ProjectPerm): MsgFn[I, EventResult] =
+        in => projectUpdater(in.static.projectId, in.static.creator, in.static.user.id, mkEvent(in.input, _), requiredPerm).map {
           case ProjectUpdater.Result.Ok(upd)                 => \/-(MsgFnOut(\/-(upd), None))
           case ProjectUpdater.Result.Reject(e)               => \/-(MsgFnOut(-\/(e), None))
           case ProjectUpdater.Result.ServerBehindDatabase(e) => -\/(MsgError.ServerBehindDatabase(e))
           case ProjectUpdater.Result.ServerBehindRedis(e)    => -\/(MsgError.ServerBehindRedis(e))
         }
 
-      private def updateProjectI[I](mkEvent: I => MakeEvent.Result): MsgFn[I, EventResult] =
-        updateProject((i, _) => mkEvent(i))
+      private def updateProjectI[I](mkEvent: I => MakeEvent.Result, requiredPerm: ProjectPerm): MsgFn[I, EventResult] =
+        updateProject((i, _) => mkEvent(i), requiredPerm)
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -541,7 +546,7 @@ object ProjectSpaLogic extends StrictLogging {
 
         def getSupplimentaryData: F[Supplimentary] =
           for {
-            rolodex <- runDB(db.getProjectRolodex(pid, uid))
+            rolodex <- runDB(db.getProjectRolodex(pid))
           } yield Supplimentary(rolodex)
 
         def ignoreCache(c: Redis.ProjectCache): F[MsgError \/ Result] = {
@@ -703,6 +708,16 @@ object ProjectSpaLogic extends StrictLogging {
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+      private def onUpdateAccess: MsgFn[UpdateAccessCmd, EventResult] = in =>
+        UpdateAccessCmd.resolve(in.input)(
+          userId     = in.static.userIdPublic,
+          getUserId  = u => runDB(db.getUserId(u)).map(_.map(Obfuscators.userId.obfuscate)),
+          onNotFound = \/-(MsgFnOut(-\/(ErrorMsg("User not found.")), None)),
+          modify     = (m, p) => updateProject(MakeEvent.updateAccess, p)(in.copy(input = m))
+        )
+
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
       private val supplimentaryDataForEvents: VerifiedEvent.Seq => F[Supplimentary] =
         SupplimentaryLogic[F](
           needUsernamesByUserId = a => runDB(db.needUsernamesByUserId(a)),
@@ -745,10 +760,12 @@ object ProjectSpaLogic extends StrictLogging {
                                                  trace   : Trace.Algebra[F]) {
     import ProjectUpdater._
 
-    def apply(pid    : ProjectId,
-              creator: ProjectCreator,
-              userId : UserId,
-              mkEvent: Project => MakeEvent.Result): F[Result] = {
+    def apply(pid         : ProjectId,
+              creator     : ProjectCreator,
+              userId      : UserId,
+              mkEvent     : Project => MakeEvent.Result,
+              requiredPerm: ProjectPerm,
+             ): F[Result] = {
 
       var gas = 200
 
@@ -801,9 +818,34 @@ object ProjectSpaLogic extends StrictLogging {
             } yield -\/(s.copy(status = if (ok) WriteDb else ReadRedis))
 
           case WriteDb =>
-            mkEvent(s.local).flatMap(ApplyNewEvent(_, s.local)) match {
+            val project = s.local
+            val userPubId = Obfuscators.userId.obfuscate(userId)
+
+            // This logic is duplicated in TestGlobal
+            def permCheck: PotentialChange[ErrorMsg, Unit] =
+              project.access.require(requiredPerm, userPubId) match {
+                case Allow => PotentialChange.unit
+                case Deny  => PotentialChange.Failure(ErrorMsg(s"$requiredPerm rights required."))
+              }
+
+            val result: PotentialChange[ErrorMsg, ApplyNewEvent.Updated] =
+              for {
+                _ <- permCheck
+                e <- mkEvent(project)
+                u <- ApplyNewEvent(e, project)
+              } yield u
+
+            result match {
               case PotentialChange.Success(updated) =>
-                runDB(db.saveProjectEvent(pid, s.local.history.nextOrd, updated.event, updated.projectPartial, userId)) map {
+                val f = db.saveProjectEvent(pid, s.local.history.nextOrd, updated.event, updated.projectPartial, userId)
+                val run = updated.event match {
+                  case _: Event.AccessUpdate =>
+                    // updateProjectAccess in DbInterpreter has assertTransactionLevelSerializable
+                    db.inStrictTxn(runDB)(f)
+                  case _ =>
+                    runDB(f)
+                }
+                run map {
                   case \/-(ve) =>
                     val p2 = updated.completeProject(ve)
                     val nextStatus = WriteRedis2(p2, ve)

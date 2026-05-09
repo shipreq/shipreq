@@ -1,5 +1,7 @@
 package shipreq.base.util.diff
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
+
 abstract class DiffSource[+S, +A] {
   assert(length >= 0 && offset >= 0, s"offset=$offset, length=$length")
 

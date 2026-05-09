@@ -4,13 +4,11 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
 import shipreq.webapp.base.feature.EditorStatus
 import shipreq.webapp.base.util.KeyHandlers
 import shipreq.webapp.base.validation.lib.Simple._
 import shipreq.webapp.client.project.feature.EditorFeature.PotentialValueAcceptor
-import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.member.feature.AutoCompleteFeature._
 import shipreq.webapp.member.feature.EditControlsFeature
 import shipreq.webapp.member.project.data._

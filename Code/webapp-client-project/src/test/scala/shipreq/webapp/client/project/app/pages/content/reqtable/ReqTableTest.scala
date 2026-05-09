@@ -323,9 +323,10 @@ object ReqTableTest extends TestSuite {
           >> press(KB.Up)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 1).dom)
           >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).dom)
           >> press(KB.Right)     +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom)
-          >> press(KB.F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).editor.get)
-          >> press(KB.Tab)       +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).dom) // tab out to cell
-          >> press(KB.F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 3).editor.get)
+          >> press(KB.Left)      +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).dom)
+          >> press(KB.F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).editor.get)
+          >> press(KB.Tab)       +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).dom) // tab out to cell
+          >> press(KB.F2)        +> activeElement.assert.equalBy(_.obs.table.cell(-1, 2).editor.get)
       ) named "Keyboard navigation",
       SampleProject4.projectWithOtherTags
     )

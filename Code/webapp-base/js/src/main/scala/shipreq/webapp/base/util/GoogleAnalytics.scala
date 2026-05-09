@@ -8,7 +8,13 @@ import shipreq.webapp.base.config.AnalyticsConfig._
 object GoogleAnalytics {
 
   private val GA: CallbackOption[js.Dynamic] =
-    CallbackTo(js.Dynamic.global.ga.asInstanceOf[js.UndefOr[js.Dynamic]].toOption).asCBO
+    CallbackTo {
+      try
+        js.Dynamic.global.ga.asInstanceOf[js.UndefOr[js.Dynamic]].toOption
+      catch {
+        case _: Throwable => None
+      }
+    }.asCBO
 
   def onRouteChange[P: UnivEq](prev: Option[P], current: P)(path: P => Url.Relative): Callback =
     Callback.when(prev.forall(_ !=* current))(

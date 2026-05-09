@@ -78,7 +78,7 @@ object TaskmanBuild {
         testScope(Akka.testkit ++ utest))
       .dependsOn(taskmanServerLogic, taskmanServerSchema, taskmanApi)
       .dependsOn(baseTestJvm % Test)
-      .configure(Docker.settingsFor("taskman"))
+      .configure(DockerCfg.settingsFor("taskman"))
       .configure(runWithDockerDev)
       .settings(
         dependencyOverrides ++= OkHttp.core(LibDependency.JVM), // because jaegerClient wants okhttp 4

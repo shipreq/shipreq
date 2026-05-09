@@ -64,7 +64,7 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
     val attrsAndValues = resolveAttrsAndValues(debug)(D)
     val nameToExpr = localNameToExpr(ctx)
 
-    val parts = for ((a,v) <- attrsAndValues) yield {
+    val parts = for ((a, _) <- attrsAndValues) yield {
       val n = lowerCaseHead(a.name.toString)
       val g = nameToExpr(n)
       q"$a($g)"
@@ -87,7 +87,7 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
     val nameToExpr = localNameToExpr(ctx)
 
     // val equal = c.typeOf[Eq[_]]
-    val stmts = for ((a,v) <- attrsAndValues) yield {
+    val stmts = for ((a, _) <- attrsAndValues) yield {
       val n      = lowerCaseHead(a.name.toString)
       val local  = nameToExpr(n)
       val refVal = q"$ref.${TermName(n)}"
@@ -116,7 +116,7 @@ class GenericDataMacroImpls(val c: scala.reflect.macros.blackbox.Context) extend
     val D = d.actualType.asInstanceOf[SingleType]
     val attrsAndValues = resolveAttrsAndValues(debug)(D)
 
-    val stmts = for ((a,v) <- attrsAndValues) yield {
+    val stmts = for ((a, _) <- attrsAndValues) yield {
       val n      = lowerCaseHead(a.name.toString)
       val refVal = q"$ref.${TermName(n)}"
       val e      = q"$a.dataEquality"

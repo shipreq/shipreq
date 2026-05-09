@@ -13,7 +13,6 @@ import shipreq.webapp.member.project.data.savedview.{Column => C, SortCriterion 
 import shipreq.webapp.member.project.filter.Filter
 import shipreq.webapp.member.project.sort.SortMethod._
 import shipreq.webapp.member.project.sort.Sorter.{BlankPlacement, BlanksFirst, BlanksLast, Dir, FlipDir, KeepDir}
-import shipreq.webapp.member.project.text.Text.Equality._
 import shipreq.webapp.member.project.text.{Atom, PlainText, TextSearch}
 import shipreq.webapp.member.test.project.RandomData
 import utest._

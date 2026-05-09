@@ -79,6 +79,9 @@ abstract class Global(userId          : UserId.Public,
   final def unsafeProject(): Project =
     pxProject.value()
 
+  final def unsafeSupp(): Supplimentary =
+    unsafeState().supp
+
   def projectMetadata(id: ProjectId.Public): CallbackTo[Metadata.Project] =
     CallbackTo(unsafeState() match {
       case s: State.Active =>
@@ -331,6 +334,7 @@ abstract class Global(userId          : UserId.Public,
   final lazy val sspUpdateSavedViews      = sspToEvents(WsReqRes.UpdateSavedViews)
   final lazy val sspUpdateManualIssues    = sspToEvents(WsReqRes.UpdateManualIssues)
   final lazy val sspReqTypeImplicationMod = sspToEvents(WsReqRes.ReqTypeImplicationMod)
+  final lazy val sspUpdateAccess          = sspToEvents(WsReqRes.UpdateAccess)
 }
 
 object Global {

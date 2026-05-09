@@ -1,11 +1,15 @@
 package shipreq.webapp.member.project.data
 
+import shipreq.base.util.Permission
 import shipreq.webapp.base.data.{ProjectCreator, ProjectPerm, UserId}
 
 final case class ProjectAccess(asMap: Map[UserId.Public, ProjectPerm]) {
 
   def apply(user: UserId.Public): Option[ProjectPerm] =
     asMap.get(user)
+
+  def need(user: UserId.Public): ProjectPerm =
+    apply(user).get
 
   def adminIterator(): Iterator[UserId.Public] =
     asMap.iterator.filter(_._2 ==* ProjectPerm.Admin).map(_._1)
@@ -21,6 +25,10 @@ final case class ProjectAccess(asMap: Map[UserId.Public, ProjectPerm]) {
     }
     ProjectAccess(m)
   }
+
+  /** Checks if the given user has the required permission. */
+  def require(requiredPerm: ProjectPerm, user: UserId.Public): Permission =
+    requiredPerm.isSatisfiedBy(apply(user))
 }
 
 object ProjectAccess {

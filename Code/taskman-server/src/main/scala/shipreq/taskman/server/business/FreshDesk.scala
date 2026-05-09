@@ -1,5 +1,6 @@
 package shipreq.taskman.server.business
 
+import cats.syntax.apply._
 import cats.~>
 import io.circe._
 import io.circe.syntax._
@@ -15,6 +16,30 @@ import shipreq.taskman.server.logic.business.Support.API._
 import shipreq.taskman.server.logic.business.Support._
 
 object FreshDesk {
+
+  private implicit def configParserTicketOrg(implicit s: ConfigValueParser[String]): ConfigValueParser[UnverifiedTicketOrg] =
+    s.mapOption(
+      """^\s*(\S[^/]*?)\s*/\s*(\S[^/]*?)\s*$""".r.findFirstMatchIn(_).map(m => UnverifiedTicketOrg(m group 1, m group 2)),
+      "Expected TicketOrg format: <groupName> / <ticketType>")
+
+  def config: ConfigDef[Props] =
+    ( ConfigDef.need[String]("domain"),
+      ConfigDef.need[String]("key").secret,
+      ConfigDef.need[EmailAddr]("taskmanEmail"),
+      ConfigDef.need[UnverifiedTicketOrg]("org.landingPage"),
+      ConfigDef.need[UnverifiedTicketOrg]("org.failure"),
+      ConfigDef.need[UnverifiedTicketOrg]("org.userFeedback"),
+    ).mapN {
+      case (domain, key, taskmanEmail, landingPage, failure, userFeedback) =>
+        Props(
+          domain       = domain,
+          key          = key,
+          taskmanEmail = taskmanEmail,
+          landingPage  = landingPage,
+          failure      = failure,
+          userFeedback = userFeedback,
+        )
+    }
 
   final case class Props(domain      : String,
                          key         : String,
@@ -32,13 +57,6 @@ object FreshDesk {
   final case class TicketOrg(group: Group, ticketType: String)
 
   final case class Group(id: Long, name: String)
-
-  object ConfigValueParsers {
-    implicit def parseTicketOrg(implicit s: ConfigValueParser[String]): ConfigValueParser[UnverifiedTicketOrg] =
-      s.mapOption(
-        """^\s*(\S[^/]*?)\s*/\s*(\S[^/]*?)\s*$""".r.findFirstMatchIn(_).map(m => UnverifiedTicketOrg(m group 1, m group 2)),
-        "Expected TicketOrg format: <groupName> / <ticketType>")
-  }
 
   sealed abstract class Source(val value: Int)
   object Source {

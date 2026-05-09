@@ -91,7 +91,6 @@ abstract class PredefShared
     UnivEq.force
 
   @inline
-  @scala.annotation.nowarn("cat=unused")
   final implicit def UnivEqObjExt(self: UnivEq.type): PredefShared.UnivEqObjExt =
     new PredefShared.UnivEqObjExt(UnivEq)
 
@@ -115,8 +114,6 @@ abstract class PredefShared
   final implicit def predefExtAnyRef[A <: AnyRef](a: A): PredefShared.ExtAnyRef[A] =
     new PredefShared.ExtAnyRef(a)
 
-  implicit def predefExtString(a: String): AnyVal with PredefShared.ExtString
-
   def ArraySeq1[@specialized A: ClassTag](a: A): ArraySeq[A] = {
     val x = new Array[A](1)
     x(0) = a
@@ -133,7 +130,6 @@ abstract class PredefShared
 object PredefShared {
   import japgolly.microlibs.multimap._
   import japgolly.univeq._
-  import java.lang.String
   import scala.collection.immutable.Set
 
   // Copied from Shapeless
@@ -147,7 +143,6 @@ object PredefShared {
     @inline def emptySetMultimap[K: UnivEq, V: UnivEq] =
       Multimap.empty[K, immutable.Set, V]
 
-    @scala.annotation.nowarn("cat=unused")
     @inline def emptyMultimap[K: UnivEq, L[_] : MultiValues, V](implicit ev: L[V] =:!= immutable.Set[V]) =
       Multimap.empty[K, L, V]
   }
@@ -183,15 +178,6 @@ object PredefShared {
   final class ExtAnyRef[A <: AnyRef](private val a: A) extends AnyVal {
     @inline def |>[@specialized B](f: A => B)   : B = f(a)
     @inline def <|                (f: A => Unit): A = {f(a); a}
-  }
-
-  trait ExtString extends Any {
-    def quote: String
-
-    def quoteInner: String = {
-      val q = quote
-      q.substring(1, q.length - 1)
-    }
   }
 }
 
