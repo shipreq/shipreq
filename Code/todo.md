@@ -2,8 +2,6 @@
 # Open-source
 
 * record usage videos (Davinci Resolve)
-* revise documentation
-* at the very least, document clearly how to get up and running (including double-init (Taskman + Webapp) and local account registration)
 * create a blog
 * point shipreq.com (and/or .org) at a blog
 * CDN: update infra diagram
