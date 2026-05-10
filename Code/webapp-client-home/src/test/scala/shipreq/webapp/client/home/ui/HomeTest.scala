@@ -10,7 +10,6 @@ import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.TestAjaxClient
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.home.test.PrepareEnv
-import shipreq.webapp.member.jsfacade.MomentJs
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.protocol.ajax.HomeSpaProtocols
 import shipreq.webapp.member.protocol.entrypoint.HomeSpaEntryPoint
@@ -25,9 +24,6 @@ final class HomeObs(cp: TestAjaxClient, $: DomZipperJs) {
 
   val projectNames: Vector[String] =
     projectDoms.map(_("h1").innerText)
-
-  val projectTimes: Vector[String] =
-    projectDoms.map(_("time").innerText)
 
   object createProject {
     private val cont = $("." + Styles.createProjectCont.className.value)
@@ -55,7 +51,7 @@ object HomeTestDsl {
   }
 
   @Lenses
-  case class State(cpText: String, cpState: CPState, projects: Vector[(String, String)], reqs: Int)
+  case class State(cpText: String, cpState: CPState, projects: Vector[String], reqs: Int)
 
   val clearCP = State.cpText.replace("") compose State.cpState.replace(CPState.Blank)
 
@@ -67,8 +63,7 @@ object HomeTestDsl {
     *.focus("CreateProject has error")      .value(_.obs.createProject.error.isDefined).assert(hasError)
 
   val invariants: *.Invariants = (
-    *.focus("Project names").obsAndState(_.projectNames, _.projects.map(_._1)).map(_.sorted).assert.equal &
-    *.focus("Project times").obsAndState(_.projectTimes, _.projects.sortBy(_._1).map(_._2)).assert.equal &
+    *.focus("Project names").obsAndState(_.projectNames, _.projects).map(_.sorted).assert.equal &
     *.focus("CreateProject text").obsAndState(_.createProject.inputText, _.cpText).assert.equal &
     *.chooseInvariant("CreateProject state")(_.state.cpState match {
       case CPState.Blank      => cpState(false, true , false)
@@ -98,7 +93,7 @@ object HomeTestDsl {
 
   def ajaxCreatedProject(p: ProjectMetaData) =
     *.action("Simulate project-creation AJAX")(_.ref.respondToLast(HomeSpaProtocols.CreateProject.ajax)(p))
-      .updateState(State.projects.modify(_ :+ (p.name -> MomentJs.fromInstant(p.lastUpdatedOrCreatedAt).ago())) compose clearCP)
+      .updateState(State.projects.modify(_ :+ p.name) compose clearCP)
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -115,7 +110,7 @@ object HomeTest extends TestSuite {
     ReactTestUtils.withRenderedIntoDocument(props.render)(c =>
       plan
         .addInvariants(invariants)
-        .withInitialState(State("", CPState.Blank, ps.iterator.map(p => p.name -> MomentJs.fromInstant(p.lastUpdatedOrCreatedAt).ago()).toVector, 0))
+        .withInitialState(State("", CPState.Blank, ps.iterator.map(_.name).toVector, 0))
         .test(Observer(new HomeObs(_, c.domZipper)))
         .withRef(cp)
         .run()
