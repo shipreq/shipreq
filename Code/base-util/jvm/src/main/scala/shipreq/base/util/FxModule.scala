@@ -1,7 +1,7 @@
 package shipreq.base.util
 
 import cats._
-import cats.effect.{IO, Sync}
+import cats.effect.{IO, Resource, Sync}
 import java.time.{Duration, Instant}
 import scala.collection.Factory
 
@@ -204,7 +204,7 @@ object FxModule {
 
     /** Note: This is the init clause. */
     def bracketFx[B, C](release: A => Fx[B], use: A => Fx[C]): Fx[C] =
-      cats.effect.Resource.make(fx)(release(_).void).use(use)
+      Resource.make(fx)(release(_).void).use(use)
 
     /** Note: This is the init clause. */
     def bracketFx_[B, C](release: Fx[B], use: Fx[C]): Fx[C] = {

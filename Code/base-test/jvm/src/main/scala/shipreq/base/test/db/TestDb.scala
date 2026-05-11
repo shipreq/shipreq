@@ -135,7 +135,10 @@ object TestDb extends TestDbHelpers with HasLogger {
               throw t
           }
       }
+
       _tables = exec(xa_, DbTable.all(db.schema))
+      debugLog(_tables.toList.sortBy(_.name).iterator.map("  - " + _.name).mkString("Detected tables:\n", "\n", ""))
+
       _truncateAllWithoutLocking(xa_)
       debugLog("Database initialised.")
       state
@@ -168,6 +171,7 @@ object TestDb extends TestDbHelpers with HasLogger {
     debugLog(s"Dropping schema in: $dbName")
     db.migrator.drop[Fx].unsafeRun()
     // Re-creating extension doesn't need singleConnXA if we have xa_
+    // Running because flyway.clean (i.e. db.migrator.drop) removes the hll extension 😨
     exec(xa, Update0("CREATE EXTENSION hll", None).run)
   }
 

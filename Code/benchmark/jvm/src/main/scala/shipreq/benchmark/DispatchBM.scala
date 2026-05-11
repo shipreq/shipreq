@@ -6,10 +6,10 @@ import cats.effect.{IO, Poll, Sync}
 import cats.free.Trampoline
 import cats.implicits._
 import cats.{Eval, Monad}
-import java.time.{Duration, Duration => JDuration, Instant}
+import java.time.{Duration, Instant}
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
-import scala.concurrent.duration.{Duration => _, FiniteDuration}
+import scala.concurrent.duration.FiniteDuration
 import shipreq.base.util._
 import shipreq.taskman.api.TaskId
 import shipreq.webapp.base.config.{AssetManifest, Urls}
@@ -154,15 +154,15 @@ object DispatchBM {
     scalaJsManifest            = ScalaJsManifest("/1.js", "/2.js", "/3.js", "/4.js"),
     ssr                        = ServerLogicConfig.SsrConfig(enabled = false),
     security = ServerLogicConfig.Security(
-      attackFrustrationDelay     = JDuration.ofHours(1),
+      attackFrustrationDelay     = Duration.ofHours(1),
       jwtCookieSecure            = false,
-      jwtLifespan                = JDuration.ofHours(24),
+      jwtLifespan                = Duration.ofHours(24),
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
       verificationTokenLength    = 8,
-      registrationTokenLifespan  = JDuration.ofDays(7),
-      passwordResetTokenLifespan = JDuration.ofDays(4)))
+      registrationTokenLifespan  = Duration.ofDays(7),
+      passwordResetTokenLifespan = Duration.ofDays(4)))
 
   val noBody: Eval[Option[BinaryData]] = Eval.now(None)
 
