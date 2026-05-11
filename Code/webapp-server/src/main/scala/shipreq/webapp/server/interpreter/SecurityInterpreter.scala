@@ -41,7 +41,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
   private[this] val fNoToken                 = F.pure[SessionRestoreResult[Instant]](SessionRestoreResult.None)
   private[this] val passwordSecretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
   private[this] val jwtMainKey               = Keys.hmacShaKeyFor(config.jwtSecret.bytes)
-  private[this] val jwtMainParser            = Jwts.parserBuilder().setSigningKey(jwtMainKey).build()
+  private[this] val jwtMainParser            = Jwts.parser.verifyWith(jwtMainKey).build
 
   private[this] val delay: F[Unit] =
     config.attackFrustrationDelayMs match {
@@ -83,13 +83,13 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
 
       val now = System.currentTimeMillis()
       val exp = new java.util.Date(now + config.jwtLifespanMs)
-      b.setExpiration(exp)
+      b.expiration(exp)
 
       b.claim(claimSessionId, token.sessionId.value)
 
       for (u <- token.authenticatedUser) {
         b.claim(claimUserId, Obfuscators.userId.obfuscate(u.id).value)
-        b.setSubject(u.username.value)
+        b.subject(u.username.value)
       }
 
       b.signWith(jwtMainKey).compact()
@@ -138,7 +138,7 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
     }
 
   private def parseAndVerifyJws(jws: String, parser: JwtParser): Try[SessionRestoreResult.NonEmpty[Instant]] =
-    Try(parser.parseClaimsJws(jws).getBody)
+    Try(parser.parseSignedClaims(jws).getPayload)
       .flatMap(parseClaims)
       .map(SessionRestoreResult.Success.apply)
       .recoverWith {
@@ -152,12 +152,13 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
         parseAndVerifyJws(_, jwtMainParser)
 
       case Some(altKey) =>
-        val altParser = Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(altKey.bytes)).build()
+        val jwtAltKey    = Keys.hmacShaKeyFor(altKey.bytes)
+        val jwtAltParser = Jwts.parser.verifyWith(jwtAltKey).build
         j => {
           val t1 = parseAndVerifyJws(j, jwtMainParser)
           t1.recoverWith {
             case _: SignatureException =>
-              val t2 = parseAndVerifyJws(j, altParser)
+              val t2 = parseAndVerifyJws(j, jwtAltParser)
               if (t2.isSuccess) t2 else t1
           }
         }

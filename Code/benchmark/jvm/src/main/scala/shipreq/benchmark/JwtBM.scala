@@ -3,7 +3,6 @@ package shipreq.benchmark
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import java.nio.charset.Charset
-import java.security.Key
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 
@@ -57,24 +56,24 @@ object JwtBM {
     val keyBytes = keyText.getBytes(ascii)
     assert(keyBytes.length == len)
 
-    val key: Key = Keys.hmacShaKeyFor(keyBytes)
+    val key = Keys.hmacShaKeyFor(keyBytes)
 
-    val parser = Jwts.parserBuilder().setSigningKey(key).build()
+    val parser = Jwts.parser.verifyWith(key).build
 
     def encode() = {
       val now = System.currentTimeMillis()
       val exp = new java.util.Date(now + expirationMs)
       Jwts.builder
-        .setExpiration(exp)
-        .setSubject("Aiden")
+        .expiration(exp)
+        .subject("Aiden")
         .signWith(key)
         .compact
     }
 
     def decode() =
       parser
-        .parseClaimsJws(sample)
-        .getBody
+        .parseSignedClaims(sample)
+        .getPayload
         .getSubject
 
     val sample = encode()
