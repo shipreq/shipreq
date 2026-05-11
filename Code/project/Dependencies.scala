@@ -82,7 +82,7 @@ object Dependencies {
   }
 
   object JJWT {
-    private val mm = MultiModule.java("io.jsonwebtoken", "0.11.2")
+    private val mm = MultiModule.java("io.jsonwebtoken", "0.13.0")
     val api     = mm("jjwt-api")
     val impl    = mm("jjwt-impl") % Runtime
     val jackson = mm("jjwt-jackson") % Runtime
