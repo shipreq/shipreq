@@ -30,6 +30,12 @@ object WebappDoobieCodecs {
   implicit val doobieMetaProjectId: Meta[ProjectId] =
     Meta[Long].timap(ProjectId.apply)(_.value)
 
+  implicit val doobieReadProjectId: Read[ProjectId] =
+    Read.fromGet(doobieMetaProjectId.get)
+
+  implicit val doobieWriteProjectId: Write[ProjectId] =
+    Write.fromPut(doobieMetaProjectId.put)
+
   implicit val doobieMetaSalt: Meta[Salt] =
     Meta[String].timap(Salt.apply)(_.base64)
 
@@ -38,6 +44,12 @@ object WebappDoobieCodecs {
 
   implicit val doobieMetaUserId: Meta[UserId] =
     Meta[Long].timap(UserId.apply)(_.value)
+
+  implicit val doobieReadUserId: Read[UserId] =
+    Read.fromGet(doobieMetaUserId.get)
+
+  implicit val doobieWriteUserId: Write[UserId] =
+    Write.fromPut(doobieMetaUserId.put)
 
   implicit val doobieMetaUsername: Meta[Username] =
     Meta[String].timap(Username.apply)(_.value)

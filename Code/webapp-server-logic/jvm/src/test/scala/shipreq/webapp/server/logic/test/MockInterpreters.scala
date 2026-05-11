@@ -2,9 +2,11 @@ package shipreq.webapp.server.logic.test
 
 import cats.Eval
 import cats.arrow.FunctionK
-import cats.effect.{ExitCase, Sync}
-import japgolly.microlibs.stdlib_ext.StdlibExt._
-import java.time.{Duration, Instant}
+import cats.effect.kernel.Outcome
+import cats.effect.{Poll, Sync}
+import java.time.{Duration => JDuration, Instant}
+import java.util.concurrent.TimeUnit
+import scala.concurrent.duration._
 import shipreq.base.ops.Trace
 import shipreq.base.util._
 import shipreq.webapp.base.config.AssetManifest
@@ -34,15 +36,15 @@ object MockInterpreters {
     prometheus                 = ServerLogicConfig.Prometheus.default,
     projectSpa                 = ProjectSpaLogic.Config.default.copy(2),
     security = ServerLogicConfig.Security(
-      attackFrustrationDelay     = 1 hours,
+      attackFrustrationDelay     = JDuration.ofHours(1),
       jwtCookieSecure            = false,
-      jwtLifespan                = 24 hours,
+      jwtLifespan                = JDuration.ofHours(24),
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
       verificationTokenLength    = 8,
-      registrationTokenLifespan  = 7 days,
-      passwordResetTokenLifespan = 4 days))
+      registrationTokenLifespan  = JDuration.ofDays(7),
+      passwordResetTokenLifespan = JDuration.ofDays(4)))
 
   implicit val syncEval: Sync[Eval] =
     new Sync[Eval] {
@@ -70,14 +72,55 @@ object MockInterpreters {
           @tailrec
           def go(a: A): B =
             f(a).value match {
-              case -\/(a2) => go(a2)
-              case \/-(b) => b
+              case Left(a2) => go(a2)
+              case Right(b) => b
             }
           go(z)
         }
 
-      override def bracketCase[A, B](acquire: Eval[A])(use: A => Eval[B])(release: (A, ExitCase[Throwable]) => Eval[Unit]): Eval[B] =
-        acquire.flatMap { a =>
+      override def uncancelable[A](body: Poll[Eval] => Eval[A]): Eval[A] =
+        body(new Poll[Eval] {
+          override def apply[B](fa: Eval[B]): Eval[B] = fa
+        })
+
+      override def canceled: Eval[Unit] =
+        Eval.now(())
+
+      override def onCancel[A](fa: Eval[A], fin: Eval[Unit]): Eval[A] =
+        fa
+
+      override def monotonic: Eval[FiniteDuration] =
+        Eval.always(FiniteDuration(System.nanoTime(), TimeUnit.NANOSECONDS))
+
+      override def realTime: Eval[FiniteDuration] =
+        Eval.always(FiniteDuration(System.currentTimeMillis(), TimeUnit.MILLISECONDS))
+
+      override def defer[A](thunk: => Eval[A]): Eval[A] =
+        Eval.defer(thunk)
+
+      override def delay[A](thunk: => A): Eval[A] =
+        Eval.always(thunk)
+
+      override def blocking[A](thunk: => A): Eval[A] =
+        Eval.always(thunk)
+
+      override def interruptible[A](thunk: => A): Eval[A] =
+        Eval.always(thunk)
+
+      override def interruptibleMany[A](thunk: => A): Eval[A] =
+        Eval.always(thunk)
+
+      override def suspend[A](hint: Sync.Type)(thunk: => A): Eval[A] =
+        Eval.always(thunk)
+
+      override def forceR[A, B](fa: Eval[A])(fb: Eval[B]): Eval[B] =
+        fa.flatMap(_ => fb)
+
+      override def rootCancelScope: cats.effect.kernel.CancelScope =
+        cats.effect.kernel.CancelScope.Uncancelable
+
+      override def bracketFull[A, B](acquire: Poll[Eval] => Eval[A])(use: A => Eval[B])(release: (A, Outcome[Eval, Throwable, B]) => Eval[Unit]): Eval[B] =
+        acquire(new Poll[Eval] { override def apply[X](fa: Eval[X]) = fa }).flatMap { a =>
           Eval.always {
             val result: Throwable \/ B =
               try
@@ -85,16 +128,20 @@ object MockInterpreters {
               catch {
                 case t: Throwable => -\/(t)
               }
-            release(a, ExitCase.attempt(result)).value
+
+            val outcome: Outcome[Eval, Throwable, B] = result match {
+              case \/-(b) => Outcome.Succeeded(Eval.now(b))
+              case -\/(e) => Outcome.Errored(e)
+            }
+
+            release(a, outcome).value
+
             result match {
               case \/-(b) => b
               case -\/(e) => throw e
             }
           }
         }
-
-      override def suspend[A](thunk: => Eval[A]): Eval[A] =
-        Eval.defer(thunk)
     }
 }
 
@@ -135,7 +182,7 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
     EmailAddr("blurp@bar.com"),
     security.hashPassword(user2password).value,
     UserEncryptionKey(crypto.generateKey256.value),
-    svr.clock minus Duration.ofDays(50))
+    svr.clock minus JDuration.ofDays(50))
 
   val user3password = PlainTextPassword("user3secret")
   lazy val user3 = MockDb.UserEntry(
@@ -144,7 +191,7 @@ class MockInterpreters(modCfg         : ServerLogicConfig => ServerLogicConfig =
     EmailAddr("u3@test.com"),
     security.hashPassword(user3password).value,
     UserEncryptionKey(crypto.generateKey256.value),
-    svr.clock minus Duration.ofDays(2))
+    svr.clock minus JDuration.ofDays(2))
 
   def withConfig(f: ServerLogicConfig => ServerLogicConfig): MockInterpreters =
     new MockInterpreters(

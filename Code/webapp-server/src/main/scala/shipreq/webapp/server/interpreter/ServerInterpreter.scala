@@ -1,6 +1,5 @@
 package shipreq.webapp.server.interpreter
 
-import cats.syntax.all._
 import java.time.{Duration, Instant}
 import net.liftweb.actor.LAScheduler
 import net.liftweb.common.{MDC => _, _}

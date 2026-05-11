@@ -1,5 +1,6 @@
 package shipreq.webapp.server.db
 
+import cats.effect.unsafe.implicits.global
 import cats.implicits._
 import doobie._
 import doobie.implicits._

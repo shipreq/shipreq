@@ -5,6 +5,7 @@ import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.test.db.{ImperativeXA, TestDb}
 import shipreq.webapp.base.data.{ProjectId, UserId}
 import shipreq.webapp.member.project.data.ProjectAccess
+import shipreq.webapp.server.db.WebappDoobieCodecs._
 import shipreq.webapp.server.logic.laws.DbLaws
 import shipreq.webapp.server.logic.util.Obfuscators
 import shipreq.webapp.server.test._

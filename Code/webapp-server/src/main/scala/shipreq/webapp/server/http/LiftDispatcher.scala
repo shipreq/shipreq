@@ -86,12 +86,6 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  private val paramFn: String => Option[String] =
-    S.param(_).toOption
-
-  private val cookieFn: Cookie.Name => Option[String] =
-    n => S.cookieValue(n.value).toOption
-
   private def liftReqUrl(r: LiftReq): Url.Relative =
     Url.Relative(r.request.uri)
 
@@ -103,15 +97,24 @@ final class LiftDispatcher(global: Global) extends StrictLogging {
 
     val url = liftReqUrl(r)
 
+    val params = r.params
+    val cookies = r.cookies.iterator.map(c => c.name -> c.value).toMap
+
     val body = Eval.later {
-      S.request.flatMap(_.body) match {
+      r.body match {
         case Full(b)       => Some(BinaryData.unsafeFromArray(b))
         case Empty         => None
         case e: BoxFailure => logger.warn(s"Failure reading request body: ${e.msg}", e.rootExceptionCause); None
       }
     }
 
-    dispatch.Request(method, url, body, paramFn, cookieFn, r)
+    dispatch.Request(
+      method = method,
+      path   = url,
+      body   = body,
+      param  = params.get(_).flatMap(_.headOption),
+      cookie = n => cookies.get(n.value).flatMap(_.toOption),
+      real   = r)
   }
 
   val makeResponse: (LiftReq, dispatch.Response) => Fx[Box[LiftResponse]] = {

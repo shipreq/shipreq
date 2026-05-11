@@ -1,6 +1,5 @@
 package shipreq.base.util
 
-import cats.effect.{ContextShift, IO, Timer}
 import com.typesafe.scalalogging.Logger
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
@@ -85,12 +84,6 @@ object ThreadUtils {
   final case class ThreadPool2(threadGroupName: String, threadPoolExecutor: ThreadPoolExecutor, logger: Logger) {
     def executionContext: ExecutionContext =
       ExecutionContext.fromExecutor(threadPoolExecutor).logUncaughtErrors(logger)
-
-    def contextShift: ContextShift[IO] =
-      IO.contextShift(executionContext)
-
-    def timer: Timer[IO] =
-      IO.timer(executionContext)
 
     def shutdownFx: Fx[Unit] =
       Fx(threadPoolExecutor.shutdown())

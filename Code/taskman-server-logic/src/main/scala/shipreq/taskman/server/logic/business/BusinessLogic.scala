@@ -1,6 +1,5 @@
 package shipreq.taskman.server.logic.business
 
-import cats.syntax.all._
 import cats.~>
 import shipreq.base.util.ArticulateError
 import shipreq.base.util.FxModule._

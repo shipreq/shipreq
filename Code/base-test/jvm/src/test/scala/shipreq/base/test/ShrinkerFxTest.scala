@@ -1,5 +1,6 @@
 package shipreq.base.test
 
+import cats.effect.unsafe.implicits.global
 import shipreq.base.util.FxModule._
 import shipreq.base.util.Valid
 import utest._

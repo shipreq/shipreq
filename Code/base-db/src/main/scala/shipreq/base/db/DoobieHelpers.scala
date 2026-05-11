@@ -1,6 +1,6 @@
 package shipreq.base.db
 
-import cats.effect.syntax.bracket._
+import cats.effect.syntax.all._
 import cats.free.Free
 import cats.implicits._
 import doobie._
@@ -136,25 +136,25 @@ object DoobieHelpers {
       self.run.void
   }
 
-  implicit class UpdateExt[A](private val self: Update[A]) extends AnyVal {
-    def executeBatch(as: IterableOnce[A])(implicit c: Write[A]): ConnectionIO[Unit] =
-      if (as.iterator.isEmpty) {
-        // 0 rows
-        ConnectionIoUnit
-      } else {
-        val it = as.iterator
-        val first = it.next()
-        if (it.isEmpty) {
-          // 1 row
-          self.toUpdate0(first).execute
-        } else {
-          // 2 or more rows
-          val addBatch = (a: A) => HPS.set(a) *> FPS.addBatch
-          val addBatches = it.map(addBatch).foldLeft(addBatch(first))(_ *> _)
-          HC.prepareStatement(self.sql)(addBatches *> FPS.executeBatch).void
-        }
-      }
-  }
+  // implicit class UpdateExt[A](private val self: Update[A]) extends AnyVal {
+  //   def executeBatch(as: IterableOnce[A])(implicit c: Write[A]): ConnectionIO[Unit] =
+  //     if (as.iterator.isEmpty) {
+  //       // 0 rows
+  //       ConnectionIoUnit
+  //     } else {
+  //       val it = as.iterator
+  //       val first = it.next()
+  //       if (it.isEmpty) {
+  //         // 1 row
+  //         self.toUpdate0(first).execute
+  //       } else {
+  //         // 2 or more rows
+  //         val addBatch = (a: A) => HPS.set(a) *> FPS.addBatch
+  //         val addBatches = it.map(addBatch).foldLeft(addBatch(first))(_ *> _)
+  //         HC.prepareStatement(self.sql)(addBatches *> FPS.executeBatch).void
+  //       }
+  //     }
+  // }
 
   def sequentially[A](cmds: IterableOnce[ConnectionIO[_]], ret: A): ConnectionIO[A] =
     if (cmds.iterator.isEmpty)

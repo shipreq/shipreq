@@ -1,7 +1,6 @@
 package shipreq.base.db
 
 import doobie._
-import doobie.implicits.javatime.JavaOffsetDateTimeMeta
 import doobie.postgres.implicits._
 import java.time._
 import org.postgresql.util.PGInterval
@@ -22,7 +21,19 @@ object BaseDoobieCodecs {
   implicit val doobieMetaInstant: Meta[Instant] =
     Meta[OffsetDateTime].timap(_.toInstant)(OffsetDateTime.ofInstant(_, UTC))
 
+  implicit val doobieReadInstant: Read[Instant] =
+    Read.fromGet(doobieMetaInstant.get)
+
+  implicit val doobieWriteInstant: Write[Instant] =
+    Write.fromPut(doobieMetaInstant.put)
+
   implicit val doobieMetaBinaryData: Meta[BinaryData] =
     Meta[Array[Byte]].timap(BinaryData.unsafeFromArray)(_.unsafeArray)
+
+  implicit val doobieReadBinaryData: Read[BinaryData] =
+    Read.fromGet(doobieMetaBinaryData.get)
+
+  implicit val doobieWriteBinaryData: Write[BinaryData] =
+    Write.fromPut(doobieMetaBinaryData.put)
 
 }

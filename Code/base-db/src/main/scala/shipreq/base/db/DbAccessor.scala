@@ -1,13 +1,11 @@
 package shipreq.base.db
 
-import cats.effect.{Blocker, ContextShift, IO, Resource}
+import cats.effect.Resource
 import com.zaxxer.hikari.HikariDataSource
 import doobie._
 import doobie.hikari.HikariTransactor
 import javax.sql.DataSource
-import scala.concurrent.ExecutionContext
 import shipreq.base.util.FxModule._
-import shipreq.base.util.ThreadUtils
 import shipreq.base.util.log.HasLogger
 
 final case class DbAccessor(config    : DbConfig,
@@ -59,17 +57,10 @@ object DbAccessor extends HasLogger {
 
       val ds = new HikariDataSource(cfg.hikariConfig)
 
-      implicit val ec: ExecutionContext =
-        ThreadUtils.newThreadPool("HikariCP", logger).withThreads(poolSize).executionContext
-
-      implicit val cs: ContextShift[Fx] =
-        IO.contextShift(ec)
-
       val xaRes: Resource[Fx, XA] =
         for {
           ce <- ExecutionContexts.fixedThreadPool[Fx](poolSize)
-          be <- Blocker[Fx]
-        } yield new XA(HikariTransactor[Fx](ds, ce, be))
+        } yield new XA(HikariTransactor[Fx](ds, ce))
 
       val migrator = SchemaMigrator(ds, cfg.schema)
 

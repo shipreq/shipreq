@@ -15,7 +15,7 @@ object ServerOpFx {
     def resultFlag: Char
     val resultFlagS = resultFlag.toString
     def incFailureCount_? : Boolean
-    def failureCountInc = if (incFailureCount_?) 1 else 0
+    def failureCountInc: Short = if (incFailureCount_?) 1.toShort else 0.toShort
   }
 
   case object Succeeded extends ArchiveIntent {

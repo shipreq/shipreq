@@ -1,6 +1,7 @@
 package shipreq.base.test.db
 
-import cats.effect.{Blocker, ContextShift, IO, Resource}
+import cats.effect.Resource
+import cats.effect.unsafe.implicits.global
 import cats.syntax.apply._
 import doobie._
 import doobie.free.{connection => C}
@@ -10,15 +11,14 @@ import doobie.util.testing._
 import doobie.util.transactor.Strategy
 import japgolly.microlibs.testutil.TestUtil._
 import java.sql.Connection
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
+import java.util.concurrent.Semaphore
+import org.tpolecat.typename._
 import scala.concurrent.ExecutionContext
-import scala.reflect.runtime.universe.TypeTag
 import shipreq.base.db._
 import shipreq.base.ops.{JdbcLogging, SqlTracer}
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
-import shipreq.base.util.{LockUtils, Props, ThreadUtils}
+import shipreq.base.util.{Props, ThreadUtils}
 import sourcecode.Line
 
 object TestDb extends TestDbHelpers with HasLogger {
@@ -26,9 +26,6 @@ object TestDb extends TestDbHelpers with HasLogger {
   var debug = false
 
   var rollback = true
-
-  private implicit val lockMechanism: LockUtils.LockMechanism =
-    LockUtils.LockMechanism.LimitWaitTime(30, TimeUnit.SECONDS, "TestDb")
 
   private def debugLog(msg: => String): Unit =
     if (debug) {
@@ -59,18 +56,6 @@ object TestDb extends TestDbHelpers with HasLogger {
 
     val sync = true
 
-    implicit val cs: ContextShift[Fx] =
-      if (sync)
-        IO.contextShift(ExecutionContexts.synchronous)
-      else
-        ThreadUtils.newThreadPool("DB", logger).withThreads(poolSize).contextShift
-
-    val blocker: Resource[Fx, Blocker] =
-      if (sync)
-        Resource.pure[Fx, Blocker](Blocker.liftExecutionContext(ExecutionContexts.synchronous))
-      else
-        Blocker[Fx]
-
     val executionContext: Resource[Fx, ExecutionContext] =
       if (sync)
         Resource.pure[Fx, ExecutionContext](ExecutionContexts.synchronous)
@@ -80,9 +65,8 @@ object TestDb extends TestDbHelpers with HasLogger {
     val xaRes: Resource[Fx, XA] =
       for {
         ce <- executionContext
-        be <- blocker
       } yield {
-        val xa = Transactor.fromDataSource[Fx](ds, ce, be).copy(strategy0 = txnStrategy)
+        val xa = Transactor.fromDataSource[Fx](ds, ce, None).copy(strategy0 = txnStrategy)
         new XA(xa)
       }
 
@@ -92,13 +76,16 @@ object TestDb extends TestDbHelpers with HasLogger {
     DbAccessor(cfg, ds, xaRes, migrator)
   }
 
-  private[this] val rwlock: ReadWriteLock =
-    new ReentrantReadWriteLock()
+  private[this] val semaphore: Semaphore =
+    new Semaphore(1)
 
   private case class State(xa: XA, shutdown: Fx[Unit], initError: Option[Throwable])
 
   @volatile private[this] var state: Option[State] =
     None
+
+  @volatile private[this] var _tables: Set[DbTable] =
+    null
 
   private[this] val initLock = new AnyRef
 
@@ -106,6 +93,9 @@ object TestDb extends TestDbHelpers with HasLogger {
     _init()
     ()
   }
+
+  private def exec[A](xa: XA, cio: ConnectionIO[A]): A =
+    cio.transact(xa).unsafeRun()
 
   private def _init(): State = {
 
@@ -128,7 +118,8 @@ object TestDb extends TestDbHelpers with HasLogger {
 
       debugLog("Database initialising...")
       val (xa, shutdown) = db.xa.allocated.unsafeRun()
-      val state = State(new XA(xa), shutdown, None)
+      val xa_ = new XA(xa)
+      val state = State(xa_, shutdown, None)
       this.state = Some(state)
       ThreadUtils.runOnShutdown("TestDb", this.shutdown())
       try {
@@ -136,7 +127,7 @@ object TestDb extends TestDbHelpers with HasLogger {
       } catch {
         case _: Throwable =>
           try {
-            dropSchema()
+            _dropSchemaWithoutLocking(xa_)
             db.migrator.migrate[Fx].unsafeRun()
           } catch {
             case t: Throwable =>
@@ -144,15 +135,19 @@ object TestDb extends TestDbHelpers with HasLogger {
               throw t
           }
       }
-      truncateAllWithoutLocking()
+
+      _tables = exec(xa_, DbTable.all(db.schema))
+      debugLog(_tables.toList.sortBy(_.name).iterator.map("  - " + _.name).mkString("Detected tables:\n", "\n", ""))
+
+      _truncateAllWithoutLocking(xa_)
       debugLog("Database initialised.")
       state
     }
   }
 
   def shutdown(): Unit = {
-    // No write-lock here because if I run only a single test in LiveTest, it doesn't shutdown which doesn't release
-    // the write-lock which freezes everything. Rather than avoid that scenario, let's just not use a write-lock here
+    // No lock here because if I run only a single test in LiveTest, it doesn't shutdown which doesn't release
+    // the lock which freezes everything. Rather than avoid that scenario, let's just not use a lock here
     // and avoid all similar issues. Remember that this is TestDb.shutdown() which NO ONE calls except for:
     // 1) SBT via Common.scala
     // 2) the shutdown hook registered in _init() above
@@ -168,91 +163,97 @@ object TestDb extends TestDbHelpers with HasLogger {
     }
   }
 
-  /** Drops all objects (tables, views, procedures, triggers, ...) in the configured schemas. */
-  def dropSchema(): Unit =
-    LockUtils.inMutex(rwlock.writeLock) {
-      val allowed = "shipreq_test"
-      val dbName = db.databaseName
-      if (dbName != allowed)
-        sys.error(s"You're trying to wipe $dbName. Only $allowed is allowed to be wiped.")
-      debugLog(s"Dropping schema in: $dbName")
-      db.migrator.drop[Fx].unsafeRun()
-      singleConnXA.use { xa =>
-        Fx {
-          val i = new ImperativeXA(xa, db, () => tables)
-          i.update("CREATE EXTENSION hll") // because flyway.clean (i.e. db.migrator.drop) removes the hll extension 😨
-        }
-      }.unsafeRun()
-    }
+  private def _dropSchemaWithoutLocking(xa: XA): Unit = {
+    val allowed = "shipreq_test"
+    val dbName = db.databaseName
+    if (dbName != allowed)
+      sys.error(s"You're trying to wipe $dbName. Only $allowed is allowed to be wiped.")
+    debugLog(s"Dropping schema in: $dbName")
+    db.migrator.drop[Fx].unsafeRun()
+    // Re-creating extension doesn't need singleConnXA if we have xa_
+    // Running because flyway.clean (i.e. db.migrator.drop) removes the hll extension 😨
+    exec(xa, Update0("CREATE EXTENSION hll", None).run)
+  }
 
-  // Unsafe because all usage should be wrapped in locks
-  private val _xa: Fx[XA] =
-    Fx(_init().xa)
+  /** Drops all objects (tables, views, procedures, triggers, ...) in the configured schemas. */
+  def dropSchema(): Unit = {
+    val s = _init()
+    semaphore.acquire()
+    try {
+      _dropSchemaWithoutLocking(s.xa)
+    } finally {
+      semaphore.release()
+    }
+  }
 
   // Don't expose because it allows downstream to execute multiple txns, all of which will be automatically rolled back
   // by the txn strategy.
-  private def useXa[A](mutex: Boolean)(f: XA => Fx[A]): Fx[A] = {
-    val lock = if (mutex) rwlock.writeLock else rwlock.readLock
-    LockUtils.inMutexFx(lock)(_xa.flatMap(f))
+  private def useXa[A](f: XA => Fx[A]): Fx[A] = {
+    val s = _init()
+    Fx.blocking(semaphore.acquire()).bracketFx_(
+      use = f(s.xa),
+      release = Fx(semaphore.release()))
   }
 
   // Unsafe in that we're not using Fx
-  private def unsafeUseXa[A](mutex: Boolean)(f: XA => A): A =
-    useXa(mutex)(xa => Fx(f(xa))).unsafeRun()
+  private def unsafeUseXa[A](f: XA => A): A =
+    useXa(xa => Fx(f(xa))).unsafeRun()
 
   override  def ![A](query: ConnectionIO[A]): A =
-    useXa(mutex = false)(query.transact(_)).unsafeRun()
+    useXa(query.transact(_)).unsafeRun()
 
-  override lazy val tables: Set[DbTable] = {
-    val t = this ! DbTable.all(db.schema)
-    debugLog(t.toList.sortBy(_.name).iterator.map("  - " + _.name).mkString("Detected tables:\n", "\n", ""))
-    t
+  override def tables: Set[DbTable] = {
+    if (_tables == null) _init()
+    _tables
   }
 
-  private def truncateAllWithoutLocking(): Unit = {
-    val t = tables
+  private def _truncateAllWithoutLocking(xa: XA): Unit = {
+    val t = if (_tables == null) exec(xa, DbTable.all(db.schema)) else _tables
     debugLog("Truncating all tables...")
-    this.!(DbTable.truncateAll(t) *> C.commit)
+    exec(xa, DbTable.truncateAll(t) *> C.commit)
   }
 
-  def truncateAll(): Unit =
-    LockUtils.inMutex(rwlock.writeLock) {
-      truncateAllWithoutLocking()
+  def truncateAll(): Unit = {
+    val s = _init()
+    semaphore.acquire()
+    try {
+      _truncateAllWithoutLocking(s.xa)
+    } finally {
+      semaphore.release()
     }
+  }
 
   // ===================================================================================================================
   // Imperative
 
   private lazy val connection: Resource[Fx, Connection] =
     Resource {
-      val lock = rwlock.readLock
-      Fx {
-        lock.lockInterruptibly()
-        val c = db.dataSource.getConnection()
+      Fx.blocking(semaphore.acquire()).flatMap { _ =>
+        Fx {
+          val c = db.dataSource.getConnection()
 
-        val c2: Connection =
-          new DelegateConnection(c) {
-            override def close(): Unit = ()
+          val c2: Connection =
+            new DelegateConnection(c) {
+              override def close(): Unit = ()
+            }
+
+          val teardown = Fx {
+            try
+              c.close()
+            finally
+              semaphore.release()
           }
 
-        val teardown = Fx {
-          try
-            c.close()
-          finally
-            lock.unlock()
+          (c2, teardown)
         }
-
-        (c2, teardown)
       }
     }
 
   private lazy val singleConnXA: Resource[Fx, XA] = {
-    implicit val ec = IO.contextShift(ExecutionContexts.synchronous)
     for {
       c <- connection
     } yield {
-      val b = Blocker.liftExecutionContext(ExecutionContexts.synchronous)
-      val x = Transactor.fromConnection[Fx](c, b).copy(strategy0 = Strategy.void)
+      val x = Transactor.fromConnection[Fx](c, None).copy(strategy0 = Strategy.void)
       new XA(x)
     }
   }
@@ -285,13 +286,15 @@ object TestDb extends TestDbHelpers with HasLogger {
     * Use as a last resort.
     */
   def acquireRealXA(): ImperativeXA = {
-    rwlock.writeLock().lockInterruptibly()
-    val xa = _xa.unsafeRun().copy(strategy0 = Strategy.default)
+    val s = _init()
+    semaphore.acquire()
+    val transactor: Transactor[Fx] = s.xa
+    val xa = transactor.copy(strategy0 = Strategy.default)
     new ImperativeXA(new XA(xa), db, () => tables)
   }
 
   def releaseRealXA(): Unit = {
-    rwlock.writeLock().unlock()
+    semaphore.release()
   }
 
   def withRealXA[A](f: ImperativeXA => A): A =
@@ -306,15 +309,15 @@ object TestDb extends TestDbHelpers with HasLogger {
   def check[A: Analyzable](a: A): Unit =
     checkImpl(Analyzable.unpack(a))
 
-  def checkOutput[A: TypeTag](q: Query0[A])(implicit l: Line): Unit =
-    checkImpl(AnalysisArgs(s"Query0[${typeName[A]}]", q.pos, q.sql, q.outputAnalysis))
+  def checkOutput[A: TypeName](q: Query0[A])(implicit l: Line): Unit =
+    checkImpl(AnalysisArgs(s"Query0[${typeName[A]}]", q.pos, q.sql, q.analysis))
 
-  def checkOutput[A: TypeTag, B: TypeTag](q: Query[A, B])(implicit l: Line): Unit =
-    checkImpl(AnalysisArgs(s"Query[${typeName[A]}, ${typeName[B]}]", q.pos, q.sql, q.outputAnalysis))
+  def checkOutput[A: TypeName, B: TypeName](q: Query[A, B])(implicit l: Line): Unit =
+    checkImpl(AnalysisArgs(s"Query[${typeName[A]}, ${typeName[B]}]", q.pos, q.sql, q.analysis))
 
   private def checkImpl(args: AnalysisArgs)(implicit l: Line): Unit =
-    unsafeUseXa(mutex = false) { xa =>
-      val report = analyzeIO(args, xa).unsafeRunSync()
+    unsafeUseXa { xa =>
+      val report = analyze(args).transact(xa).unsafeRunSync()
       def reportText = formatReport(args, report, Colors.Ansi).padLeft("  ").toString
       if (!report.succeeded)
         fail(reportText)

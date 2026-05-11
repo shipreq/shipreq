@@ -1,6 +1,5 @@
 package shipreq.taskman.server.business
 
-import cats.syntax.all._
 import com.typesafe.scalalogging.Logger
 import io.circe._
 import io.circe.parser._

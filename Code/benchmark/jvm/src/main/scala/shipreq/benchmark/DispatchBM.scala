@@ -1,13 +1,15 @@
 package shipreq.benchmark
 
-import cats.effect.{ExitCase, IO, Sync}
+import cats.effect.kernel.Outcome
+import cats.effect.unsafe.implicits.global
+import cats.effect.{IO, Poll, Sync}
 import cats.free.Trampoline
 import cats.implicits._
 import cats.{Eval, Monad}
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import java.time.{Duration, Instant}
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
+import scala.concurrent.duration.FiniteDuration
 import shipreq.base.util._
 import shipreq.taskman.api.TaskId
 import shipreq.webapp.base.config.{AssetManifest, Urls}
@@ -152,15 +154,15 @@ object DispatchBM {
     scalaJsManifest            = ScalaJsManifest("/1.js", "/2.js", "/3.js", "/4.js"),
     ssr                        = ServerLogicConfig.SsrConfig(enabled = false),
     security = ServerLogicConfig.Security(
-      attackFrustrationDelay     = 1 hours,
+      attackFrustrationDelay     = Duration.ofHours(1),
       jwtCookieSecure            = false,
-      jwtLifespan                = 24 hours,
+      jwtLifespan                = Duration.ofHours(24),
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
       verificationTokenLength    = 8,
-      registrationTokenLifespan  = 7 days,
-      passwordResetTokenLifespan = 4 days))
+      registrationTokenLifespan  = Duration.ofDays(7),
+      passwordResetTokenLifespan = Duration.ofDays(4)))
 
   val noBody: Eval[Option[BinaryData]] = Eval.now(None)
 
@@ -282,11 +284,59 @@ object DispatchBM {
       override def tailRecM[A, B](a: A)(f: A => F[Either[A,B]]): F[B] =
         ???
 
-      override def bracketCase[A, B](acquire: F[A])(use: A => F[B])(release: (A, ExitCase[Throwable]) => F[Unit]): F[B] =
-        ???
+      override def uncancelable[A](body: Poll[F] => F[A]): F[A] =
+        body(new Poll[F] { override def apply[X](fa: F[X]) = fa })
 
-      override def suspend[A](thunk: => F[A]): F[A] =
+      override def canceled: F[Unit] =
+        F.pure(())
+
+      override def onCancel[A](fa: F[A], fin: F[Unit]): F[A] =
+        fa
+
+      override def monotonic: F[FiniteDuration] =
+        F.pure(FiniteDuration(System.nanoTime(), TimeUnit.NANOSECONDS))
+
+      override def realTime: F[FiniteDuration] =
+        F.pure(FiniteDuration(System.currentTimeMillis(), TimeUnit.MILLISECONDS))
+
+      override def defer[A](thunk: => F[A]): F[A] =
         F.unit.flatMap(_ => thunk)
+
+      override def delay[A](thunk: => A): F[A] =
+        F.unit.map(_ => thunk)
+
+      override def blocking[A](thunk: => A): F[A] =
+        delay(thunk)
+
+      override def interruptible[A](thunk: => A): F[A] =
+        delay(thunk)
+
+      override def interruptibleMany[A](thunk: => A): F[A] =
+        delay(thunk)
+
+      override def suspend[A](hint: Sync.Type)(thunk: => A): F[A] =
+        delay(thunk)
+
+      override def forceR[A, B](fa: F[A])(fb: F[B]): F[B] =
+        fa.flatMap(_ => fb)
+
+      override def rootCancelScope: cats.effect.kernel.CancelScope =
+        cats.effect.kernel.CancelScope.Uncancelable
+
+      override def bracketFull[A, B](acquire: Poll[F] => F[A])(use: A => F[B])(release: (A, Outcome[F, Throwable, B]) => F[Unit]): F[B] =
+        acquire(new Poll[F] { override def apply[X](fa: F[X]) = fa }).flatMap { a =>
+          F.flatMap(F.pure(())) { _ =>
+            try {
+              use(a).flatMap { b =>
+                release(a, Outcome.Succeeded(F.pure(b))).map(_ => b)
+              }
+            } catch {
+              case t: Throwable =>
+                release(a, Outcome.Errored(t)).flatMap(_ => raiseError(t))
+            }
+
+          }
+        }
     }
 
     val dispatchLogic = {

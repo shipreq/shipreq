@@ -1,6 +1,7 @@
 package shipreq.webapp.server.logic.laws
 
 import cats.Eq
+import cats.effect.unsafe.implicits.global
 import io.circe._
 import io.circe.syntax._
 import japgolly.microlibs.stdlib_ext.StdlibExt._

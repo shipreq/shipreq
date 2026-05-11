@@ -1,10 +1,10 @@
 package shipreq.webapp.server.db.migration
 
 import cats.Applicative
-import cats.effect.{Blocker, IO, Resource}
+import cats.effect.unsafe.implicits.global
+import cats.effect.{IO, Resource}
 import doobie._
 import doobie.implicits._
-import doobie.util.ExecutionContexts
 import doobie.util.transactor.Strategy
 import org.flywaydb.core.api.migration.{BaseJavaMigration, Context}
 
@@ -16,14 +16,9 @@ private[migration] abstract class DbMigration extends BaseJavaMigration {
   override final def migrate(context: Context): Unit = {
 
     val resourceXA: Resource[IO, Transactor[IO]] =
-      for {
-        csEC  <- ExecutionContexts.cachedThreadPool[IO]
-        txnEC <- ExecutionContexts.cachedThreadPool[IO]
-      } yield {
-        implicit val cs = IO.contextShift(csEC)
-        val txnB = Blocker.liftExecutionContext(txnEC)
+      Resource.pure {
         val conn = context.getConnection
-        Transactor.fromConnection[IO](conn, txnB).copy(strategy0 = Strategy.void)
+        Transactor.fromConnection[IO](conn, None).copy(strategy0 = Strategy.void)
       }
 
     resourceXA

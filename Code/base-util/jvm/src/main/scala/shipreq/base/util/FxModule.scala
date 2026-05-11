@@ -1,10 +1,9 @@
 package shipreq.base.util
 
 import cats._
-import cats.effect.{IO, Sync}
+import cats.effect.{IO, Resource, Sync}
 import java.time.{Duration, Instant}
 import scala.collection.Factory
-import scala.concurrent.blocking
 
 /**
   * The chosen target for algebra interpretation.
@@ -48,6 +47,9 @@ object FxModule {
 
     def fail[A](err: Throwable): Fx[A] =
       IO.raiseError(err)
+
+    def blocking[A](a: => A): Fx[A] =
+      IO.blocking(a)
 
     def lift[A](fa: Throwable \/ A): Fx[A] =
       fa.fold(fail, pure)
@@ -107,8 +109,10 @@ object FxModule {
 
   implicit class FxOps[A](private val fx: Fx[A]) extends AnyVal {
 
-    @inline def unsafeRun(): A =
+    @inline def unsafeRun(): A = {
+      import cats.effect.unsafe.implicits.global // TODO: Replace
       fx.unsafeRunSync()
+    }
 
     def tap[B](f: A => Fx[B]): Fx[A] =
       for {
@@ -196,14 +200,11 @@ object FxModule {
       onException(t => action(ArticulateError(t)))
 
     def andFinally[B](finallyClause: Fx[B]): Fx[A] =
-      for {
-        r <- onException(_ => finallyClause)
-        _ <- finallyClause
-      } yield r
+      fx.guarantee(finallyClause.void)
 
     /** Note: This is the init clause. */
     def bracketFx[B, C](release: A => Fx[B], use: A => Fx[C]): Fx[C] =
-      fx.bracket(use)(release(_).map(_ => ()))
+      Resource.make(fx)(release(_).void).use(use)
 
     /** Note: This is the init clause. */
     def bracketFx_[B, C](release: Fx[B], use: Fx[C]): Fx[C] = {

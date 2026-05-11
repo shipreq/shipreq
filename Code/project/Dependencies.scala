@@ -18,7 +18,7 @@ object Dependencies {
   }
 
   object CatsEffect {
-    private val mm = MultiModule.jvmAndJs("org.typelevel", "2.5.4")
+    private val mm = MultiModule.jvmAndJs("org.typelevel", "3.7.0")
     val core    = mm("cats-effect")
     // val kernal  = mm("cats-effect-kernel")
     val laws    = mm("cats-effect-laws")
@@ -27,7 +27,7 @@ object Dependencies {
   }
 
   object Circe {
-    private val mm = MultiModule.jvmAndJs("io.circe", "0.14.1")
+    private val mm = MultiModule.jvmAndJs("io.circe", "0.14.15")
     val core    = mm("circe-core")
     val parser  = mm("circe-parser")
     val testing = mm("circe-testing")
@@ -35,7 +35,7 @@ object Dependencies {
   }
 
   object Doobie {
-    private val mm = MultiModule.scala("org.tpolecat", "0.9.4")
+    private val mm = MultiModule.scala("org.tpolecat", "1.0.0-RC12")
     val core          = mm("doobie-core")
     val postgres      = mm("doobie-postgres")
     val postgresCirce = mm("doobie-postgres-circe")
@@ -96,7 +96,7 @@ object Dependencies {
   }
 
   object Logback {
-    val version = "1.2.6"
+    val version = "1.5.32"
     private val mm = MultiModule.java("ch.qos.logback", version)
 
     val core = mm("logback-classic") ++ mm("logback-core")
@@ -190,7 +190,7 @@ object Dependencies {
   }
 
   object SLF4J {
-    private val mm = MultiModule.java("org.slf4j", "1.7.32")
+    private val mm = MultiModule.java("org.slf4j", "2.0.17")
     val api = mm("slf4j-api")
     val jcl = mm("jcl-over-slf4j")
   }
@@ -223,12 +223,12 @@ object Dependencies {
 
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.9")
-  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "8.0.1")
-  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "3.4.5") // don't go to v4 yet, wait for Doobie
+  val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "8.0.5")
+  val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "7.0.2")
   val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.14")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.6.0")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
-  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.2.20")
+  val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.7.11")
   val redisson     = jvmOnly("org.redisson"                % "redisson"              % "3.16.3")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "4.0.2")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.15.4")

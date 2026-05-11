@@ -6,8 +6,8 @@ import org.scalajs.dom.html
 import shipreq.webapp.client.project.test._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.text._
-import shipreq.webapp.member.test.project.SampleProject3
 import shipreq.webapp.member.test.WebappTestUtil
+import shipreq.webapp.member.test.project.SampleProject3
 import utest._
 
 object ProjectWidgetsTest extends TestSuite with WebappTestUtil {
