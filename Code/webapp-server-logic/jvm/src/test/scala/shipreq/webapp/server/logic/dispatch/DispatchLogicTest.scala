@@ -48,11 +48,11 @@ object DispatchLogicTest extends TestSuite {
       }
   }
 
-  private final case class Tester(mockInterpreters: MockInterpreters) {
+  private final case class Tester(mockInterpreters: MockInterpreters, private val initDB: Boolean = true) {
     import mockInterpreters._
 
     def withConfig(f: ServerLogicConfig => ServerLogicConfig): Tester =
-      Tester(mockInterpreters.withConfig(f))
+      Tester(mockInterpreters.withConfig(f), false)
 
     implicit val traceLogic = TraceAlgebra.off[Eval, TestRequest, Response]
 
@@ -69,11 +69,13 @@ object DispatchLogicTest extends TestSuite {
       }
     }
 
-    db.users ::= user2
-    db.users ::= user3
-
     val pid = ProjectId(9)
-    db.addProject(pid, user2.id)()
+
+    if (initDB) {
+      db.users ::= user2
+      db.users ::= user3
+      db.addProject(pid, user2.id, crypto.generateProjectKey())()
+    }
 
     def run(url    : Url.Relative,
             method : Method                   = Get,
@@ -254,19 +256,19 @@ object DispatchLogicTest extends TestSuite {
         def urls = spaUrls(Urls.project(pid))
         "anon"     - urls.foreach(testNeedAuth)
         "auth"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.Serve(user2.toUser, pid), _)(user2))
-        "notOwner" - urls.foreach(testRun(ResponseCmd.ProjectSpa.NotOwner, _)(user3))
+        "notOwner" - urls.foreach(testRun(ResponseCmd.ProjectSpa.AccessDenied, _)(user3))
         "nonGet"   - urls.foreach(testNonGet)
       }
       "noProject" - {
         def urls = spaUrls(Urls.project(ProjectId(1324675)))
         "anon"     - urls.foreach(testNeedAuth)
-        "auth"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.InvalidId, _)(user2))
+        "auth"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.AccessDenied, _)(user2))
         "nonGet"   - urls.foreach(testNonGet)
       }
       "invalidXId" - {
         def urls = List("@_@", "@").flatMap(x => spaUrls(s"${Urls.project.prefix.relativeUrl}/$x"))
-        "anon"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.InvalidId, _))
-        "auth"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.InvalidId, _)(user2))
+        "anon"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.AccessDenied, _))
+        "auth"     - urls.foreach(testRun(ResponseCmd.ProjectSpa.AccessDenied, _)(user2))
         "nonGet"   - urls.foreach(testNonGet)
       }
     }

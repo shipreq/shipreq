@@ -9,7 +9,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import shipreq.webapp.base.ui.semantic.{Button, Colour, Icon, Table => SemTable}
 import shipreq.webapp.client.project.app.Style.reqtable.{creation => *}
-import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.feature.CreateFeature
 import shipreq.webapp.client.project.feature.CreateFeature.FieldKey
 import shipreq.webapp.client.project.feature.SavedViewFeature.{ColumnLogic, ColumnPlus}
@@ -20,6 +19,7 @@ import shipreq.webapp.member.UiText
 import shipreq.webapp.member.feature.{EditControlsFeature, PreviewFeature}
 import shipreq.webapp.member.project.data.savedview._
 import shipreq.webapp.member.project.data.{CustomReqType, ExternalPubid, Project, ReqType, StaticReqType}
+import shipreq.webapp.member.project.library.NewEvents
 import shipreq.webapp.member.project.protocol.websocket.CreateContentCmd
 import shipreq.webapp.member.project.text.{PlainText, Text, TextSearch}
 import shipreq.webapp.member.ui.Toast
@@ -383,7 +383,6 @@ sealed trait NewForm {
   }
 
   implicit val reusability: Reusability[Props] = {
-    @nowarn("cat=unused")
     implicit def x = reusabilityInput
     Reusability.derive
   }

@@ -45,8 +45,8 @@ object TagConfigObs {
         $(">div").domAsHtml
 
     private def innerTextWithoutUsage($$: DomZipperJs): String = {
-      val t = $$.innerText.trim
-      $$.collect01(selUsage).innerTexts.map(_.trim) match {
+      val t = $$.domAsHtml.textContent.trim
+      $$.collect01(selUsage).zippers.map(_.domAsHtml.textContent.trim) match {
         case Some(u) if t.endsWith(u) => t.dropRight(u.length).trim
         case _                        => t
       }
@@ -96,7 +96,7 @@ object TagConfigObs {
   }
 
   final class RelTreeItem($: DomZipperJs) {
-    val title = $("span").innerText
+    val title = $("span").domAsHtml.textContent
 
     val text = {
       val dead      = $.exists(".ui.label.grey") || $.exists(selDeadGroup)
@@ -110,16 +110,16 @@ object TagConfigObs {
 
   final class RelTreeAddItem($: DomZipperJs) {
     val dom = $.domAsHtml
-    val title = $.innerText.trim
+    val title = $.domAsHtml.textContent.trim
   }
 
   final class ApplicableReqTypeEditor($: DomZipperJs) {
-    val selected   = $(".ui.dropdown")(".text").innerText
+    val selected   = $(".ui.dropdown")(".text").domAsHtml.textContent
     val items      = $(".ui.dropdown").collect1n(".item").domsAsHtml
     val inputDom   = $("input").domAs[html.Input]
     val inputValue = inputDom.value
-    val dead       = $.collect01(selARTDead).innerTexts
-    val error      = $.collect01(selARTError).innerTexts
+    val dead       = $.collect01(selARTDead).zippers.map(_.domAsHtml.textContent.trim)
+    val error      = $.collect01(selARTError).zippers.map(_.domAsHtml.textContent.trim)
   }
 }
 
@@ -154,7 +154,7 @@ final class TagConfigObs($: DomZipperJs) {
     Option.when(isEditorOpen)(
       new CommonObs.Input(
         right(".ui.form")
-          .collect1n(".field").filter(_.children01("label").innerTexts.contains("Name"))
+          .collect1n(".field").filter(_.children01("label").zippers.exists(_.domAsHtml.textContent.trim == "Name"))
           .singleton("input")))
 
   val buttonDoms: Buttons[html.Button] =
@@ -162,7 +162,7 @@ final class TagConfigObs($: DomZipperJs) {
       val $$ = right(selEditorButtons)
       var bs = Buttons.none: Buttons[html.Button]
       for (b <- $$.collect0n("button").zippers) {
-        b.innerText.trim match {
+        b.domAsHtml.textContent.trim match {
           case "Update" | "Create" => bs = bs.copy(save    = Some(b.domAs[html.Button]))
           case "Cancel"            => bs = bs.copy(cancel  = Some(b.domAs[html.Button]))
           case "Close"             => bs = bs.copy(close   = Some(b.domAs[html.Button]))
@@ -179,7 +179,7 @@ final class TagConfigObs($: DomZipperJs) {
 
   private def relTree(name: String): Option[RelTree] =
     $.collect01(selEditorRelRow + " > div")
-      .filter(_(".header").innerText == name)
+      .filter(_(".header").domAsHtml.textContent.trim == name)
       .zippers
       .map(new RelTree(_))
 
@@ -188,7 +188,7 @@ final class TagConfigObs($: DomZipperJs) {
 
   val applicableReqTypes: Option[ApplicableReqTypeEditor] =
     $.collect0n(".field")
-      .filter(_.collect0n("label").zippers.exists(_.innerText == "Applicable Req Types"))
+      .filter(_.collect0n("label").zippers.exists(_.domAsHtml.textContent.trim == "Applicable Req Types"))
       .zippers
       .headOption
       .map(new ApplicableReqTypeEditor(_))

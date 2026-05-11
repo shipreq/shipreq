@@ -1,11 +1,12 @@
 package shipreq.webapp.client.ww.graph
 
-import japgolly.scalajs.react.AsyncCallback
+import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
 import org.scalajs.dom.DedicatedWorkerGlobalScope
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 import shipreq.base.util.{Backwards, Direction, ErrorMsg, Forwards}
 import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.client.ww.WebWorkerUtil
 import shipreq.webapp.member.UiText
 import shipreq.webapp.member.project.data.Svg
 import shipreq.webapp.member.project.data.savedview.ImpGraphConfig.GraphDir
@@ -32,16 +33,18 @@ final class GraphViz(raw: GraphViz.RawFn) {
 object GraphViz {
   private type RawFn = js.Function1[String, js.Thenable[String]]
 
-  def load(am: AssetManifest): GraphViz = {
-    DedicatedWorkerGlobalScope.self.asInstanceOf[js.Dynamic].vizWasmFile = am.vizWasm
-    DedicatedWorkerGlobalScope.self.importScripts(js.Array(am.vizJs))
-    newInstance
-  }
+  def load(am: AssetManifest): CallbackTo[GraphViz] =
+    for {
+      _ <- Callback {DedicatedWorkerGlobalScope.self.asInstanceOf[js.Dynamic].vizWasmFile = am.vizWasm }
+      _ <- WebWorkerUtil.importScripts(am.vizJs)
+      g <- newInstance
+    } yield g
 
-  def newInstance: GraphViz = {
-    val raw = js.Dynamic.global.viz.asInstanceOf[RawFn]
-    new GraphViz(raw)
-  }
+  val newInstance: CallbackTo[GraphViz] =
+    CallbackTo {
+      val raw = js.Dynamic.global.viz.asInstanceOf[RawFn]
+      new GraphViz(raw)
+    }
 
   private val titlesAndComments = "(?:<title>[^<>]*?</title>|<!--[^\u0000]*?-->)".r
 

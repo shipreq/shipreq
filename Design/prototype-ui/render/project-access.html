@@ -1,256 +1,26 @@
 <!DOCTYPE html>
-<html><head><title>CardBoard | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.min.js"></script><style type="text/css">
+<html><head><title>Access | CardBoard | ShipReq</title><script src="../node_modules/jquery/dist/jquery.min.js"></script><link href="../semantic/dist/semantic.min.css" rel="stylesheet" type="text/css" /><script src="../semantic/dist/semantic.min.js"></script><style type="text/css">
 body {padding:1rem}
 .ui.menu.inverted .ui.breadcrumb a {color: #63c0ff}
 .ui.menu.inverted .ui.breadcrumb a:hover {color: #9bf3ff}
 .ui.menu.inverted .ui.breadcrumb > i {color: #ddd; margin-left: 0.8em; margin-right: 0.8em;}
 
-#info {
-  margin: 4rem 0;
+#perm-table {
+  width:100%;
+  margin-bottom:1em;
 }
-#info td:nth-child(1) {
-  white-space:nowrap;
-}
-#info td:nth-child(2) {
-  width: 100%;
+#perm-table td:nth-child(2), #perm-table td:nth-child(3) {
+  text-align: center;
 }
 
-#menu .segment {
-  display: flex;
-  align-items:flex-end;
-}
-#menu .left {
-  flex-grow:1;
-  margin-right: 8ex;
-}
-#menu .right .button {
-  margin-right:0!important;
-}
-
-/*
-.inline-perm {
-  _color:#333;
-  margin-left:1ex;
-}
-.inline-perm::before {
-  content: '(';
-}
-.inline-perm::after {
-  content: ')';
-}
-*/
-.inline-perm {
-  margin-left:1ex;
-}
-.inline-perm::before {
-  content: '—';
-  margin-right:1ex;
-}
-
-#header-row {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  margin-bottom:1.25rem;
-}
-.header-right {
-  float: right;
-  padding-left: 4ex;
-}
-
-.tree-container {
-  xborder: solid 1px red;
-  margin-top: 3rem;
-  margin-left: auto;
-  margin-right: auto;
-  _padding:0 2rem;
-  _max-width: 100ex;
-}
-.tree {
-  xborder: solid 1px red;
-  color: #333;
-  border-collapse: collapse;
-  width: calc(100% + 2ex);
-  margin-left:-1ex;
-  margin-right:-1ex;
-}
-.tree td:not(:first-child) {
-  padding-left:3rem;
-  text-align: right;
-}
-.tree tr:not(:first-child) td {
-  xborder-top:solid 1px #22242626;
-}
-.tree tr:hover td {
-  background: #0088ff11;
-  cursor:pointer;
-}
-.tree tr td:last-child {
-  padding-right: 1ex;
-}
-.tree td {
-  white-space: nowrap;
-  padding-top: 0.6em;
-  padding-bottom: 0.6em;
-  vertical-align: middle;
-}
-.tree .name {
-  xbackground: #ff000020;
-  width: 100%;
-  font-size: 1.5rem;
-}
-.tree .name i {
-  margin-right: 0.4ex!important;
-}
-.tree .updated, .tree .members {
-  color: #aaa;
-  text-transform: lowercase;
-}
-.tree .lvl1 {
-  padding-left: 1ex;
-}
-.tree .lvl2 {
-  padding-left: 3.5ex;
-}
-.tree .rel {
-  font-size: 1.1rem;
-}
 span.admin {
-  color: green;
+  xcolor: green;
 }
-span.collab, span.member {
-  color: #33b;
+span.collab {
+  xcolor: #33b;
 }
 span.read-only {
-  color: #963;
-}
-#dead-projects {
-  margin-left: 2rem;
-}
-.dead td,
-.dead td a:not(:hover),
-.dead .updated,
-.dead .rel span {
-  color:#bbb;
-  text-decoration:line-through;
-}
-
-#access-ro td {
-  padding-top:0.5em;
-  padding-bottom:0.5em;
-}
-#access-ro .lvl1 {
-  padding-left: 3ex;
-}
-#access-ro .lvl2 {
-  padding-left: 5.5ex;
-}
-
-.hide {display:none}
-.invis {visibility:hidden}
-_i.icon.users {display:none}
-
-.family {
-  display:flex;
-  flex-direction:column;
-  height:100%;
-}
-.family > .h {
-  margin-bottom:1em;
-}
-.family > .b {
-  flex-grow:1;
-  min-height: 2em;
-}
-.family .tagtree {
-  margin-left:2ex;
-  margin-top:0.25em;
-  margin-bottom:2em;
-  padding-left:0;
-}
-.family .tagtree li.tag {
-  xmargin-left:2ex;
-  xmargin-bottom:1em;
-}
-.family .tagtree .button {
-  margin:-0.5em 0 .5em 0!important;
-}
-.family .lvl1 {padding-left:3ex}
-.family .lvl2 {padding-left:6ex}
-.family .ui.dropdown .menu>.item {
-  padding-top   :0.4em!important;
-  padding-bottom:0.4em!important;
-}
-.tagtree ol {
-  padding-left:6.5ex;
-}
-.tagtree li {
-  list-style-type: none;
-}
-
-.family > .b > table {
-  margin-left:4ex;
-  width:calc(100% - 4ex);
-  border-collapse:collapse;
-  margin-bottom:1.25rem;
-}
-.family > .b > table tr:hover td {
-  background: #0088ff11;
-}
-.family > .b > table td:last-child {
-  padding:.25em 0;
-}
-.family > .b > table td:not(:nth-child(2)) {
-  white-space: nowrap;
-}
-
-#access-ro .pending-inv {
-  color:#c9621d;
-}
-.family table .inv {
-  color:#c9621d;
-  font-style:italic;
-}
-
-.ui.message > .content > .header {
-  margin-bottom:1em;
-}
-.msg-controls {
-  text-align:right;
-  margin-top:1rem;
-}
-.msg-controls > * {
-  margin:0 0 0 1.5rem !important;
-}
-
-.ip .comments {
-  font-style:italic;
-  margin-bottom: 1em;
-}
-.two-stats {
-  display:flex;
-  margin:0 4ex;
-}
-.two-stats > * {
-  width:50%;
-}
-.ip .stats {
-  border-collapse: collapse;
-}
-.ip .stats td:first-child {
-  _padding-left:4ex;
-  padding-right:1.6ex;
-  _text-align:right;
-}
-
-.events {
-  margin-top: 1em;
-}
-.events > ul {
-  margin:0;
-}
-.events .when::after {
-  content: ' — ';
+  xcolor: #963;
 }
 
 .segment.action {
@@ -265,16 +35,11 @@ _i.icon.users {display:none}
   margin-right:0!important;
 }
 
-</style></head><body><nav style="margin-bottom:5rem"><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Status&nbsp;<i class="icon dropdown"></i><div class="menu"></div></div></div></div></div><div class="right menu"><div onclick="$('#connected4 &gt; *').toggle()" class="item" id="connected4"><i style="opacity:.7" title="connected" class="icon large plug green"></i><i style="opacity:1;display:none" title="disconnected" class="icon large plug red"></i></div><div class="item ui dropdown simple">@japgolly<div class="menu"><a href="member-account.html" class="item">Account</a><div class="item">Send feedback</div><div class="item">Logout</div></div></div></div></div></nav><div style="max-width: 723px! important" class="ui container"><div style="margin-top:6rem"><section><div class="family"><div class="h"><div class="ui horizontal divider header"><h2>Access</h2></div></div><div class="b"><div class="ui segment raised" id="access-ro"><table style="margin-left:2ex"><tbody><tr><td><i class="icon user"></i>You<span class="inline-perm"><span class="admin">admin</span></span></td></tr><tr class="pending-inv"><td><i class="icon user"></i>@zatt<span class="inline-perm">collaborator invitation sent</span></td></tr><tr><td><i class="icon folder open outline"></i>ShipReq<span class="inline-perm"><span class="member">member</span></span></td></tr><tr><td class="lvl1"><i class="icon users"></i>Dev Team<span class="inline-perm"><span class="collab">collaborator</span></span></td></tr><tr><td class="lvl2"><i class="icon user"></i>@poop<span class="inline-perm"><span class="collab">collaborator</span></span></td></tr></tbody></table><div style="text-align:right; margin-top:2rem"><button style="margin-right:0!important" onClick="toggle_access()" class="ui button blue"><i class="icon edit"></i>Edit</button></div></div><div style="display:none" class="ui segment raised" id="access-rw"><table style="width:100%; margin-bottom:1em"><tbody><tr><td><i class="icon user"></i>You</td><td><div class="ui selection dropdown"><i class="icon dropdown"></i><div class="item"><span class="admin">admin</span></div><div class="menu"><div class="item"><span class="admin">admin</span></div><div class="item"><span class="collab">collaborator</span></div></div></div></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative invis"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr class="pending-inv"><td><i class="icon user"></i>@zatt</td><td><div class="ui selection dropdown"><i class="icon dropdown"></i><div class="item"><span class="collab">collaborator</span></div><div class="menu"><div class="item"><span class="admin">admin</span></div><div class="item"><span class="collab">collaborator</span></div></div></div><span style="margin-left:2ex" class="inv"><i class="icon envelope"></i>invitation will be sent</span></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon folder open outline"></i>ShipReq</td><td><div class="ui selection dropdown"><i class="icon dropdown"></i><div class="item"><span class="member">member</span></div><div class="menu"><div class="item"><span class="admin">admin</span></div><div class="item"><span class="member">member</span></div></div></div></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td class="lvl1"><i class="icon users"></i>Dev Team</td><td><div class="ui selection dropdown"><i class="icon dropdown"></i><div class="item"><span class="collab">collaborator</span></div><div class="menu"><div class="item"><span class="admin">admin</span></div><div class="item"><span class="collab">collaborator</span></div></div></div></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td class="lvl2"><i class="icon user"></i>@poop</td><td></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative invis"><i style="margin:0!important" class="icon trash"></i></div></td></tr></tbody></table><div><div class="ui floating labeled icon dropdown button"><i class="icon plus"></i><span class="text">Add...</span></div></div><div style="text-align:right; margin-top:2rem"><button style="margin-right:2em" onClick="toggle_access()" class="ui button black basic"><i class="icon remove"></i>Close</button><button style="margin-right:0!important" onClick="toggle_access()" class="ui button green"><i class="icon edit"></i>Save</button></div></div></div></div></section><div style="margin-top:3rem" class="ui segment action"><div class="left"><h4 class="ui header">Leave This Project</h4><p>Revoke your own access to this project. If you do this and change your mind, you'll need an admin to invite you back.</p></div><div class="right"><button style="white-space: nowrap; margin-right:2em" class="ui button negative">Leave This Project</button></div></div><section style="margin-top:5rem"><div class="family"><div class="h"><div class="ui horizontal divider header"><h2>Invitations</h2></div></div></div><div id="header-row"><div class="header-left"><a class="ui button green"><i class="icon plus"></i>New invitation page</a></div><div class="header-right"><span><!--/ this is important to prevent [.ui.header icon:only-child] affecting below--></span><button data-content="Click to show deleted content." class="ui button icon has-popup" id="dead-projects"><i class="icon trash outline large grey"></i></button></div></div><div class="ui icon message ip positive"><i style="margin:0 2rem 0 0!important; font-size:2.5rem" class="icon bullhorn"></i><div class="content"><div class="header">Invitation to team <a href="#">ShipReq / Dev Team</a> as <span style="color:red">admin</span></div><div style="margin-top:.5em" class="sub"><div class="comments">Hey there. These are some comments I left earlier.</div><div class="two-stats"><div><table class="stats"><tbody><tr><td>Acceptences:</td><td>1</td></tr><tr><td>Rejections:</td><td>0</td></tr><tr><td>Password:</td><td>yes</td></tr><tr><td>Password failures:</td><td>0</td></tr></tbody></table></div><div><table class="stats"><tbody><tr><td>Created by:</td><td>@voi</td></tr><tr><td>Created at:</td><td>2 weeks ago</td></tr><tr><td>Expiration date:</td><td>3 days from now</td></tr><tr><td>Status:</td><td>enabled</td></tr></tbody></table></div></div><div class="events"><div class="h">Latest activity</div><ul><li><span class="when">34 minutes ago</span><span class="what">Accepted by @bob</span></li><li><span class="when">34 minutes ago</span><span class="what">Viewed by @bob</span></li><li><span class="when">36 minutes ago</span><span class="what">Attempted view from anonymous user</span></li><li><span class="when">50 minutes ago</span><span class="what">Password change by @matt</span></li><li>More…</li></ul></div></div><div class="msg-controls"><div class="ui button primary"><i class="icon edit"></i>Edit</div><i style="cursor:pointer" class="icon toggle on big"></i></div></div></div><div class="ui icon message yellow"><i style="margin:0 2rem 0 0!important; font-size:2.5rem" class="icon user"></i><div class="content"><div class="header">@bob is invited to team <a href="#">Yeah bro</a> as <span style="color:red">admin</span></div><div class="body"><table class="stats"><tbody><tr><td>Created by:</td><td>@voi</td></tr><tr><td>Created at:</td><td>2 weeks ago</td></tr><tr><td>Expiration date:</td><td>3 days from now</td></tr></tbody></table><div class="msg-controls"><div class="ui button negative"><i class="icon close"></i>Revoke</div></div></div></div></div></section></div></div></body>
+</style></head><body><nav style="margin-bottom:5rem"><div class="ui menu borderless fixed inverted"><div class="item"><img src="logo-only-dark2.svg" /></div><div class="item"><div class="ui breadcrumb"><a href="member-home.html" class="section">Projects</a><i class="divider icon right angle"></i><a href="project-index.html" class="section">CardBoard</a><div class="ui dropdown inline">&nbsp;<i class="icon dropdown"></i><div class="menu"><div class="item active">CardBoard</div><div class="item">ShipReq</div></div></div><i class="divider icon right angle"></i><div class="section"><!--/ .active--><div class="ui dropdown inline">Access&nbsp;<i class="icon dropdown"></i><div class="menu"></div></div></div></div></div><div class="right menu"><div onclick="$('#connected4 &gt; *').toggle()" class="item" id="connected4"><i style="opacity:.7" title="connected" class="icon large plug green"></i><i style="opacity:1;display:none" title="disconnected" class="icon large plug red"></i></div><div class="item ui dropdown simple">@japgolly<div class="menu"><a href="member-account.html" class="item">Account</a><div class="item">Send feedback</div><div class="item">Logout</div></div></div></div></div></nav><div style="max-width: 723px! important" class="ui container"><div style="margin-top:6rem"><div class="ui segment raised" id="access-new"><h4 class="ui header">New User</h4><div style="width:100%" class="ui form"><div class="fields"><div style="width:50%" class="field"><label>Username or email address</label><input type="text" /></div><div style="width:50%" class="field"><label>Role</label><div class="ui selection dropdown"><i class="icon dropdown"></i><div class="item"><span class="collab">collaborator</span></div><div class="menu"><div class="item"><span class="admin">admin</span></div><div class="item"><span class="collab">collaborator</span></div></div></div></div></div><div style="text-align:right; margin-top:1rem" class="field"><button style="margin-right:0!important" class="ui button green disabled"><i class="icon plus"></i>Add</button></div></div></div><div style="margin-top:3rem" class="ui segment raised" id="access-rw"><h4 class="ui header">Existing Users</h4><table id="perm-table"><tbody><tr><td><i class="icon user"></i>You</td><td><div class="ui selection dropdown"><i class="icon dropdown"></i><div class="item"><span class="admin">admin</span></div><div class="menu"><div class="item"><span class="admin">admin</span></div><div class="item"><span class="collab">collaborator</span></div></div></div></td></tr><tr><td><i class="icon user"></i>@nim</td><td><div class="ui selection dropdown"><i class="icon dropdown"></i><div class="item"><span class="collab">admin</span></div><div class="menu"><div class="item"><span class="admin">admin</span></div><div class="item"><span class="collab">collaborator</span></div></div></div></td><td><button style="margin-right:0!important" onClick="toggle_access()" class="ui button green"><i class="icon edit"></i>Save</button></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr><tr><td><i class="icon user"></i>@aiden</td><td><div class="ui selection dropdown"><i class="icon dropdown"></i><div class="item"><span class="collab">collaborator</span></div><div class="menu"><div class="item"><span class="admin">admin</span></div><div class="item"><span class="collab">collaborator</span></div></div></div></td><td></td><td><div style="white-space: nowrap; float:right; background:#fff!important;" class="ui button basic negative"><i style="margin:0!important" class="icon trash"></i></div></td></tr></tbody></table></div><div style="margin-top:3rem" class="ui segment action"><div class="left"><h4 class="ui header">Leave This Project</h4><p>Revoke your own access to this project. If you do this and change your mind, you'll need an admin to invite you back.</p></div><div class="right"><button style="white-space: nowrap; margin-right:2em" class="ui button negative">Leave This Project</button></div></div></div></div></body>
 <script type="text/javascript">
 //<![CDATA[
 $('.ui.dropdown').dropdown();
 $('.omg-dimmable').dimmer({on: 'hover'});
-
-function toggle_access() {
-  $('#access-ro,#access-rw').toggle();
-}
-toggle_access()
 //]]>
 </script>
 </html>

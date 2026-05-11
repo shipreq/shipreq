@@ -147,7 +147,7 @@ object HomeContent {
 
       def projectList: VdomTag =
         <.div(Styles.projectList,
-          p.projects.sortBy(_.name).toTagMod(ProjectItem.AsLink.Component(_)))
+          p.projects.sortBy(_.name).toTagMod(p => ProjectItem.AsLink.Component.withKey(p.id.value)(p)))
 
       <.main(
         BaseStyles.containerLarge,

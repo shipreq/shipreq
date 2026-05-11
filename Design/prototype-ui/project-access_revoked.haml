@@ -1,0 +1,20 @@
+!!! 5
+%html
+  %head
+    -# %meta(http-equiv="refresh" content="1")
+    %title Access Revoked | ShipReq
+    %script{src: "../node_modules/jquery/dist/jquery.min.js"}
+    %link{href:  "../semantic/dist/semantic.min.css", rel: "stylesheet", type: "text/css"}/
+    %script{src: "../semantic/dist/semantic.min.js"}
+    :css
+
+  %body
+
+    .ui.container
+      .ui.icon.message.negative(style="margin-top:16vh")
+        %i.icon.lock
+        .content
+          .header Your project access has been revoked by another user.
+          %p(style="padding-top:0.5em")
+            %a(href="/")Click here
+            =" to return home."

@@ -78,7 +78,7 @@ private[strategies] object RefStrategies {
     )
 
   def combineCandidates(cs: Candidates*): Candidates =
-    term => cs.iterator.flatMap(_(term))
+    term => cs.iterator.flatMap(_(term)).distinctBy(_.replacement)
 
   // ===================================================================================================================
 

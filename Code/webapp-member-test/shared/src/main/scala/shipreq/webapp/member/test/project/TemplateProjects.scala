@@ -7,7 +7,7 @@ import shipreq.webapp.member.test.WebappTestUtil._
 object TemplateProjects {
 
   private def create(t: ProjectTemplate): Project =
-    applyEventSuccessfully(Project.empty, Event.ProjectTemplateApply(t))
+    applyEventSuccessfully(emptyProject1, Event.ProjectTemplateApply(t))
 
   // This is like this and not simply `object V1 {...}` because that somehow causes phantomjs
   // to crash when running WCP tests. (?)

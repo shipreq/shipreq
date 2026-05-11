@@ -4,16 +4,21 @@ import boopickle.PickleImpl
 import io.circe._
 import io.circe.syntax._
 import shipreq.base.util.BinaryData
+import shipreq.webapp.base.data.ProjectCreator
+import shipreq.webapp.base.util.Obfuscated
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.{Event, VerifiedEvent}
-import shipreq.webapp.member.project.protocol.binary.v1.Latest.{picklerProject, picklerVerifiedEventSeq}
-import shipreq.webapp.member.project.protocol.json.v1.Latest.encoderEvent
+import shipreq.webapp.member.project.protocol.binary.Latest.{picklerProject, picklerVerifiedEventSeq}
+import shipreq.webapp.member.project.protocol.json.Latest.encoderEvent
 
 abstract class AbstractSampleData(meta: SampleDataMeta, events: Vector[Event]) {
   final override def toString: String = s"SampleData($name)"
 
   def name: String =
     meta.filename
+
+  val creator: ProjectCreator =
+    ProjectCreator(Obfuscated("u1"))
 
   lazy val eventJson: Json =
     events.asJson
@@ -29,7 +34,7 @@ abstract class AbstractSampleData(meta: SampleDataMeta, events: Vector[Event]) {
 
   def newProject(deep: Boolean = true): Project =
     if (deep)
-      meta.annotateExceptions(SampleDataUtil.applyVerifiedEventsSuccessfully(Project.empty, verifiedEvents))
+      meta.annotateExceptions(SampleDataUtil.applyVerifiedEventsSuccessfully(Project.init(creator), verifiedEvents))
     else
       project.copy()
 

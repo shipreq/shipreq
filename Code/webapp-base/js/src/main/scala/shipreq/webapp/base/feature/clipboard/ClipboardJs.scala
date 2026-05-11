@@ -10,7 +10,6 @@ private[clipboard] object ClipboardJs {
     navigator.asInstanceOf[js.Dynamic].clipboard.asInstanceOf[js.UndefOr[ClipboardJs]]
 
   @js.native
-  @nowarn("cat=unused")
   sealed trait DataTransfer extends js.Object {
     def setData(`type`: String, value: String): Unit               = js.native
     def getData(`type`: String)               : js.UndefOr[String] = js.native
@@ -18,7 +17,6 @@ private[clipboard] object ClipboardJs {
 }
 
 @js.native
-@nowarn("cat=unused")
 private[clipboard] sealed trait ClipboardJs extends js.Object {
   import ClipboardJs.DataTransfer
 

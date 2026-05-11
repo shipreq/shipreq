@@ -13,12 +13,15 @@ import shipreq.webapp.server.db.{DbInterpreter, StatRecorder}
 import shipreq.webapp.server.interpreter._
 import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.event.ApplyEventAlgebra
-import shipreq.webapp.server.logic.impl.ServerLogic
+import shipreq.webapp.server.logic.inmem.InMemoryRedis
+import shipreq.webapp.server.logic.logic.ServerLogic
 import shipreq.webapp.server.redis.{RedisSchema, RedisViaRedisson}
 import shipreq.webapp.server.util.AnalyticsProxy
 import shipreq.webapp.ssr.SsrAlgebra
 
 final case class Global(config      : ServerConfig,
+                        cryptoD     : Crypto[ConnectionIO],
+                        cryptoF     : Crypto[Fx],
                         runDB       : ConnectionIO ~> Fx,
                         logic       : ServerLogic[Fx],
                         metrics     : MetricsAlgebra[Fx],
@@ -37,7 +40,6 @@ object Global {
   var Instance: Global = _
 
   @inline
-  @nowarn("cat=unused")
   implicit def autoInstance(g: Global.type): Global = Instance
 
   def modify(f: Global => Global): Unit =
@@ -94,6 +96,10 @@ object Global {
           x
         }
 
+      implicit val (cryptoD, cryptoF) = t("crypto") {
+        (Crypto.default[ConnectionIO], Crypto.default[Fx])
+      }
+
       implicit val trace = t("trace") {
         TraceAlgebra.on: TraceInterpreter.ForHttp[Fx]
       }
@@ -119,7 +125,7 @@ object Global {
       }
 
       implicit val dbForOps = t("dbForOps") {
-        DB.ForOps.trans(new DbInterpreter.ForOps(db.databaseName))(runDB)
+        (new DbInterpreter.ForOps(db.databaseName)).trans(runDB)
       }
 
       implicit val server = t("server") {
@@ -159,6 +165,8 @@ object Global {
 
       Global(
         config       = config,
+        cryptoD      = cryptoD,
+        cryptoF      = cryptoF,
         runDB        = runDB,
         logic        = logic,
         metrics      = metrics,
@@ -172,13 +180,13 @@ object Global {
     }
 
   private def useInMemoryRedis() = {
-    val redis          = new Redis.InMemory[Fx]
-    val threadGroup    = new ThreadGroup("RedisInMemory")
-    val timer          = Executors.newSingleThreadScheduledExecutor(new Thread(threadGroup, _, "RedisInMemory"))
+    val redis          = new InMemoryRedis[Fx]
+    val threadGroup    = new ThreadGroup("InMemoryRedis")
+    val timer          = Executors.newSingleThreadScheduledExecutor(new Thread(threadGroup, _, "InMemoryRedis"))
     val task: Runnable = () => redis.publishAll.unsafeRun()
     val everyMs        = 1000
     timer.scheduleAtFixedRate(task, everyMs, everyMs, TimeUnit.MILLISECONDS)
-    Runtime.getRuntime.addShutdownHook(new Thread(threadGroup, task, "RedisInMemory-shutdown"))
+    Runtime.getRuntime.addShutdownHook(new Thread(threadGroup, task, "InMemoryRedis-shutdown"))
     redis
   }
 }

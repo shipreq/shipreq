@@ -161,7 +161,7 @@ object PreviewFeature {
         Lens[Composite[A], Composite[B]](_.mapId(i))(b => _.merge(b)(i))
 
       private def _reusability[Id]: Reusability[Composite[Id]] = {
-        @nowarn("cat=unused") implicit val rd: Reusability[Map[Id, Status]] = Reusability.byRef
+        implicit val rd: Reusability[Map[Id, Status]] = Reusability.byRef
         implicit val rr: Reusability[Root[Id]] = Reusability.derive
         var r: Reusability[Composite[Id]] = new Reusability(null)
         r =  Reusability.byRef || Reusability((xx, yy) => xx match {

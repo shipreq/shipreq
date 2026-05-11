@@ -3,21 +3,20 @@ package shipreq.benchmark
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.scalajs.benchmark._
 import japgolly.scalajs.benchmark.gui._
-import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.ApplyEvent
 import shipreq.webapp.member.test.WebappTestUtil._
 import shipreq.webapp.sampledata.SampleData
 
 object ApplyEventBM {
 
-  private val pe = Project.empty
+  private val pe = emptyProject1
 
   sealed abstract class Method(ae: ApplyEvent) {
     def name = toString
 
     final lazy val bm: Benchmark[SampleData] =
       BenchmarkData.verifiedEvents(name) { events =>
-        ae.applyVerified(events)(pe).getOrThrow()
+        ae(events)(pe).getOrThrow()
       }
   }
 

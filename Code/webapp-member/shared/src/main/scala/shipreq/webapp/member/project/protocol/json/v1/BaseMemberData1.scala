@@ -15,7 +15,7 @@ import shipreq.webapp.member.protocol.json.JsonCodec
   *
   * Events (and their dependencies) are expected to be extremely stable and only change very, very rarely if ever.
   */
-private[v1] object BaseMemberData1 {
+private[json] object BaseMemberData1 {
   import JsonCodec.Implicits._
   import BaseData._
 

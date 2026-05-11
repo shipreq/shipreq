@@ -6,6 +6,7 @@ import io.circe._
 import japgolly.microlibs.adt_macros.AdtMacros
 import japgolly.microlibs.recursion._
 import scala.reflect.ClassTag
+import shipreq.webapp.base.util.Obfuscated
 
 final case class JsonCodec[A](encoder: Encoder[A], decoder: Decoder[A]) {
 
@@ -65,6 +66,12 @@ object JsonCodec {
 
   lazy val str: JsonCodec[String] =
     summon
+
+  lazy val long: JsonCodec[Long] =
+    summon
+
+  def obfuscated[A]: JsonCodec[Obfuscated[A]] =
+    str.xmap(Obfuscated.apply[A])(_.value)
 
   object Implicits {
     implicit def implicitJsonCodecToDecoder[A](implicit c: JsonCodec[A]): Decoder[A] = c.decoder

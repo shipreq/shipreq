@@ -67,15 +67,15 @@ trait ManualSubmitLogic extends IOApp with HasLogger {
   def submitAll(tasks: List[Task]): TaskmanApi[Fx] => Fx[Unit] =
     api => Fx {
       val taskCount = tasks.size
-      logger info ""
+      logger.info("")
 
-      logger info "Submitting..."
+      logger.info("Submitting...")
       val results = api.submitBulk(tasks).unsafeRun()
-      for (((m,id),i) <- results.zipWithIndex.map(_.map2(_+1))) {
-        logger info s"[$i/$taskCount] $id <= $m"
+      for (((m, id), i) <- results.zipWithIndex.map(_.map2(_ + 1))) {
+        logger.info(s"[$i/$taskCount] $id <= $m")
       }
-      logger info "Success."
+      logger.info("Success.")
 
-      logger info ""
+      logger.info("")
     }
 }

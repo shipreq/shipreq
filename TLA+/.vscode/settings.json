@@ -1,0 +1,11 @@
+{
+  "java.classPath": [
+    "/usr/share/java/tla2tools.jar"
+  ],
+  "java.project.referencedLibraries": [
+    "/usr/share/java/tla2tools.jar"
+  ],
+  "files.watcherExclude": {
+    "**/target": true
+  }
+}

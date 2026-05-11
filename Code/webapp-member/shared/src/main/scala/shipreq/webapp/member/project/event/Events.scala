@@ -2,6 +2,7 @@ package shipreq.webapp.member.project.event
 
 import japgolly.microlibs.nonempty.NonEmpty
 import shipreq.base.util._
+import shipreq.webapp.base.data._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.savedview.{ImpGraphConfig, SavedView}
 import shipreq.webapp.member.project.filter.Filter
@@ -259,4 +260,9 @@ object Event {
 
   final case class SavedViewUpdateV1(id: SavedView.Id,
                                      vs: RetiredGenericData.SavedViewGDv1.NonEmptyValues) extends RetiredEvent
+
+  // ===================================================================================================================
+  // Access
+
+  final case class AccessUpdate(updates: Map[UserId.Public, Option[ProjectPerm]]) extends ActiveEvent
 }

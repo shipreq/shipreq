@@ -21,13 +21,20 @@ object IssuesPageObs {
   final class Cell($: DomZipperJs) {
     private val td = $.domAs[html.TableCell]
     val rowSpan    = td.rowSpan
-    val text       = td.innerText.replace('\n', ' ').trim
+    val text       = {
+      val raw = td.textContent.replace('\n', ' ').trim
+      // Re-insert space between base text and rowspan count that textContent omits but innerText/PhantomJS included.
+      if (raw.contains("(") && raw.endsWith(")") && !raw.contains(" ("))
+        raw.replace("(", " (")
+      else
+        raw
+    }
     val editor     = new OptionalEditorObs($)
     val actions    = $.collect0n("button").map(new Action(_))
   }
 
   final class Action($: DomZipperJs) {
-    val label = $.innerText
+    val label = $.domAsHtml.textContent
     val dom   = $.prepare(_.domAs[html.Button])
   }
 }
@@ -96,7 +103,7 @@ final class IssuesPageObs($: DomZipperJs) {
   final class Summary {
     private val root = $(Style.issues.pageRow1.selector).child("div", 2 of 2)
 
-    val text = root.innerText
+    val text = root.domAsHtml.textContent
 
     val totalIssues: Option[Int] =
       text match {

@@ -36,6 +36,7 @@ object ProjectIndex {
     case object CfgIssues   extends WithPage("Issues"    , Icon.WarningSign   , Page.CfgIssues  , "Configure types and causes of issues.")
     case object CfgReqTypes extends WithPage("Req Types" , Icon.Inbox         , Page.CfgReqTypes, "Configure types of reqs.")
     case object CfgTags     extends WithPage("Tags"      , Icon.Tags          , Page.CfgTags    , "Configure attributes for content and organisation.")
+    case object Access      extends WithPage("Access"    , Icon.Users         , Page.Access     , "Configure users' access to this project.")
 
     implicit def univEq: UnivEq[Item] = UnivEq.derive
 
@@ -44,6 +45,7 @@ object ProjectIndex {
         case w: WithPage => Some(w.page)
         case ReqDetail   => None
       } {
+        case Page.Access       => Some(Access)
         case Page.ReqTable     => Some(ReqTable)
         case Page.ReqGraph     => Some(ReqGraph)
         case Page.Issues       => Some(Issues)
@@ -82,10 +84,16 @@ object ProjectIndex {
         CfgTags,
       ))
 
+    case object Admin extends Category(
+      "Admin", Icon.Lock, Colour.Red, Colour.Grey,
+      NonEmptyVector(
+        Access,
+      ))
+
     implicit def univEq: UnivEq[Category] = UnivEq.derive
 
     val All = AdtMacros.adtValuesManually[Category](
-      Content, Configuration)
+      Content, Configuration, Admin)
   }
 
   def dropdownItems(active: Option[Item], rc: RouterCtl): Dropdown.Items =

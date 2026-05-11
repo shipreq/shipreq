@@ -12,7 +12,7 @@ import shipreq.taskman.api.TaskmanApi
 import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.protocol.websocket.WebSocketShared.CloseReason
 import shipreq.webapp.server.config.Global
-import shipreq.webapp.server.logic.impl.ProjectSpaLogic._
+import shipreq.webapp.server.logic.logic.ProjectSpaLogic._
 import shipreq.webapp.server.protocol.websocket.WebSocketUtil
 import shipreq.webapp.server.protocol.websocket.WebSocketUtil.Implicits._
 import shipreq.webapp.server.protocol.websocket.WebSocketUtil.{CloseReasons, UserPropsLens}
@@ -31,26 +31,32 @@ object ProjectSpaWebSocket extends StrictLogging {
   val taskmanL          = UserPropsLens.atKey[TaskmanApi[Fx]    ]("T")
 
   final class Connector extends ServerEndpointConfig.Configurator {
-    private[this] val pathPrefix = Urls.ProjectSpaWebSocket.Base.length + 1
+    Urls.ProjectSpaWebSocket.Base.length + 1
 
     override def modifyHandshake(cfg: ServerEndpointConfig, req: HandshakeRequest, res: HandshakeResponse): Unit = {
-      val path           = req.getRequestURI.getPath
-      val projectIdParam = path.substring(pathPrefix)
-      val projectId      = Urls.ProjectSpaWebSocket.parseProjectId(projectIdParam)
-      val cookieLookup   = WebSocketUtil.cookieLookupFnOverHandshakeRequest(req)
-      val userProps      = cfg.getUserProperties
+      val userProps = cfg.getUserProperties
+      val path      = req.getRequestURI.getPath
 
       loggingDataL.set(userProps, LoggingData(path))
       taskmanL.set(userProps, Global.taskman)
 
-      projectSpaLogic.onConnect(cookieLookup, projectId).unsafeRun() match {
+      Urls.ProjectSpaWebSocket.parsePath(path) match {
+        case Some((projectId, creator)) =>
 
-        case \/-((static, state)) =>
-          staticL.set(userProps, static)
-          stateL.set(userProps, state)
+          val cookieLookup = WebSocketUtil.cookieLookupFnOverHandshakeRequest(req)
 
-        case -\/(r) =>
-          connectRejectionL.set(userProps, r)
+          projectSpaLogic.onConnect(cookieLookup, projectId, creator).unsafeRun() match {
+
+            case \/-((static, state)) =>
+              staticL.set(userProps, static)
+              stateL.set(userProps, state)
+
+            case -\/(r) =>
+              connectRejectionL.set(userProps, r)
+          }
+
+        case None =>
+          connectRejectionL.set(userProps, ConnectRejection.InvalidProjectId)
       }
     }
   }
@@ -120,7 +126,7 @@ final class ProjectSpaWebSocket extends StrictLogging {
       case Some(NoSession | ExpiredSession) =>
         fxClose(s, CloseReasons.unauthorised).unsafeRun()
 
-      case Some(r@ (AnonymousSession | AccessDenied | InvalidProjectId | ProjectNotFound)) =>
+      case Some(r@ (AnonymousSession | AccessDenied | InvalidProjectId)) =>
         logger.warn(s"Rejecting WebSocket connection: $r")
         // For security reasons, don't vary the response in a way that would allow attackers to know when they've
         // discovered a valid project ID, or an existing project.

@@ -16,22 +16,30 @@ object ProjectText {
     * presented.
     */
   sealed trait Context {
+    def inLink: Boolean
+    def withInLink: Context
+
     final def ucNum(p: Project): Option[ReqTypePos] =
       this match {
-        case ProjectText.Context.None
-           | ProjectText.Context.Req(_: GenericReqId) => None
-        case ProjectText.Context.Req(uc: UseCaseId)   => Some(p.content.reqs.need(uc).pubid.pos)
+        case _: ProjectText.Context.None
+           | ProjectText.Context.Req(_: GenericReqId, _) => None
+        case ProjectText.Context.Req(uc: UseCaseId, _)   => Some(p.content.reqs.need(uc).pubid.pos)
       }
   }
 
   object Context {
 
     /** User is looking at the entire project. */
-    case object None extends Context
-    type None = None.type
+    final case class None(inLink: Boolean = false) extends Context {
+      override def withInLink: Context = copy(inLink = true)
+    }
+
+    val none = None()
 
     /** User is looking at a single req. */
-    final case class Req(id: ReqId) extends Context
+    final case class Req(id: ReqId, inLink: Boolean = false) extends Context {
+      override def withInLink: Context = copy(inLink = true)
+    }
 
     implicit def univEq: UnivEq[Context] = UnivEq.derive
   }

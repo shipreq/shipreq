@@ -6,14 +6,14 @@ sealed trait TaskStatus {
 
 object TaskStatus {
   sealed trait Live extends TaskStatus {
-    def isArchived = false
+    final override def isArchived = false
   }
   case object Unassigned extends Live
   case object NodeAssigned extends Live
   case object Working extends Live
 
   sealed trait Archived extends TaskStatus  {
-    def isArchived = true
+    final override def isArchived = true
   }
   case object Complete extends Archived
   case object Aborted extends Archived

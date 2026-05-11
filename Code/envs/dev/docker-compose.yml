@@ -1,5 +1,3 @@
-version: '2.4'
-
 volumes:
   data-prometheus:
 
@@ -20,12 +18,11 @@ services:
     mem_limit: 400m
 
   redis:
-    image: bitnami/redis:5.0.5
+    image: redis:5.0.14
     container_name: shipreq_dev_redis
     ports:
       - $PORT_REDIS:6379
-    environment:
-      - REDIS_PASSWORD=sqd
+    command: redis-server --requirepass sqd
     logging:
       driver: none
     mem_limit: 200m

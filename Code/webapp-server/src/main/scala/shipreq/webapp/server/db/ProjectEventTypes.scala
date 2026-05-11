@@ -100,9 +100,12 @@ object ProjectEventTypes {
   final val TypeSavedViewCreate         = 3024
   final val TypeSavedViewUpdate         = 3025
 
+  final val TypeAccessUpdate            = 3100
+
   // ===================================================================================================================
 
   private def allTypes = AdtMacros.valuesForAdt[Event, Short] {
+    case _: AccessUpdate            => TypeAccessUpdate
     case _: ApplicableTagCreateV1   => TypeApplicableTagCreateV1
     case _: ApplicableTagCreate     => TypeApplicableTagCreateV2
     case _: ApplicableTagUpdateV1   => TypeApplicableTagUpdateV1

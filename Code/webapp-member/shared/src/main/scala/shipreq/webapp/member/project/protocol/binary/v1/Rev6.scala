@@ -389,7 +389,7 @@ object Rev6 {
     pickleNonEmptyMono[Values](values, implicitly)
   }
 
-  private[v1] implicit lazy val picklerEventFieldCustomTagCreate: Pickler[Event.FieldCustomTagCreate] =
+  private[binary] implicit lazy val picklerEventFieldCustomTagCreate: Pickler[Event.FieldCustomTagCreate] =
     new Pickler[Event.FieldCustomTagCreate] {
       override def pickle(a: Event.FieldCustomTagCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -404,7 +404,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit lazy val picklerEventFieldCustomTagUpdate: Pickler[Event.FieldCustomTagUpdate] =
+  private[binary] implicit lazy val picklerEventFieldCustomTagUpdate: Pickler[Event.FieldCustomTagUpdate] =
     new Pickler[Event.FieldCustomTagUpdate] {
       override def pickle(a: Event.FieldCustomTagUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -854,7 +854,7 @@ object Rev6 {
     pickleNonEmptyMono[Values](values, implicitly)
   }
 
-  private[v1] implicit val picklerEventGenericReqCreate: Pickler[Event.GenericReqCreate] =
+  private[binary] implicit val picklerEventGenericReqCreate: Pickler[Event.GenericReqCreate] =
     new Pickler[Event.GenericReqCreate] {
       override def pickle(a: Event.GenericReqCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -869,7 +869,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit val picklerEventGenericReqTitleSet: Pickler[Event.GenericReqTitleSet] =
+  private[binary] implicit val picklerEventGenericReqTitleSet: Pickler[Event.GenericReqTitleSet] =
     new Pickler[Event.GenericReqTitleSet] {
       override def pickle(a: Event.GenericReqTitleSet)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -882,7 +882,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit val picklerEventUseCaseCreate: Pickler[Event.UseCaseCreate] =
+  private[binary] implicit val picklerEventUseCaseCreate: Pickler[Event.UseCaseCreate] =
     new Pickler[Event.UseCaseCreate] {
       override def pickle(a: Event.UseCaseCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -897,7 +897,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit val picklerEventUseCaseTitleSet: Pickler[Event.UseCaseTitleSet] =
+  private[binary] implicit val picklerEventUseCaseTitleSet: Pickler[Event.UseCaseTitleSet] =
     new Pickler[Event.UseCaseTitleSet] {
       override def pickle(a: Event.UseCaseTitleSet)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -910,7 +910,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit val picklerEventUseCaseStepUpdate: Pickler[Event.UseCaseStepUpdate] =
+  private[binary] implicit val picklerEventUseCaseStepUpdate: Pickler[Event.UseCaseStepUpdate] =
     new Pickler[Event.UseCaseStepUpdate] {
       override def pickle(a: Event.UseCaseStepUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -923,7 +923,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit val picklerEventCodeGroupCreate: Pickler[Event.CodeGroupCreate] =
+  private[binary] implicit val picklerEventCodeGroupCreate: Pickler[Event.CodeGroupCreate] =
     new Pickler[Event.CodeGroupCreate] {
       override def pickle(a: Event.CodeGroupCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -936,7 +936,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit val picklerEventCodeGroupUpdate: Pickler[Event.CodeGroupUpdate] =
+  private[binary] implicit val picklerEventCodeGroupUpdate: Pickler[Event.CodeGroupUpdate] =
     new Pickler[Event.CodeGroupUpdate] {
       override def pickle(a: Event.CodeGroupUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -949,7 +949,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit val picklerEventReqFieldCustomTextSet: Pickler[Event.ReqFieldCustomTextSet] =
+  private[binary] implicit val picklerEventReqFieldCustomTextSet: Pickler[Event.ReqFieldCustomTextSet] =
     new Pickler[Event.ReqFieldCustomTextSet] {
       override def pickle(a: Event.ReqFieldCustomTextSet)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -964,7 +964,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit val picklerEventReqsDelete: Pickler[Event.ReqsDelete] =
+  private[binary] implicit val picklerEventReqsDelete: Pickler[Event.ReqsDelete] =
     new Pickler[Event.ReqsDelete] {
       override def pickle(a: Event.ReqsDelete)(implicit state: PickleState): Unit = {
         state.pickle(a.reqs)
@@ -979,7 +979,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit val picklerEventManualIssueCreate: Pickler[Event.ManualIssueCreate] =
+  private[binary] implicit val picklerEventManualIssueCreate: Pickler[Event.ManualIssueCreate] =
     new Pickler[Event.ManualIssueCreate] {
       override def pickle(a: Event.ManualIssueCreate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
@@ -992,7 +992,7 @@ object Rev6 {
       }
     }
 
-  private[v1] implicit val picklerEventManualIssueUpdate: Pickler[Event.ManualIssueUpdate] =
+  private[binary] implicit val picklerEventManualIssueUpdate: Pickler[Event.ManualIssueUpdate] =
     new Pickler[Event.ManualIssueUpdate] {
       override def pickle(a: Event.ManualIssueUpdate)(implicit state: PickleState): Unit = {
         state.pickle(a.id)

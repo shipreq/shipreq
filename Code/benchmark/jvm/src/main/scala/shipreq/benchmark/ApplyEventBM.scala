@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
+import shipreq.webapp.member.test.WebappTestUtil
 import shipreq.webapp.sampledata.SampleData
 
 @State(Scope.Benchmark)
@@ -19,7 +20,7 @@ class ApplyEventBM {
 
   var es: VerifiedEvent.Seq = _
 
-  val pe         = Project.empty
+  val pe         = WebappTestUtil.emptyProject1
   val ae_trusted = ApplyEvent.trusted
 
   @Setup
@@ -28,7 +29,7 @@ class ApplyEventBM {
   }
 
   private def go(ae: ApplyEvent): Project =
-    ae.applyVerified(es)(pe) match {
+    ae(es)(pe) match {
       case \/-(p) => p
       case -\/(e) => println(e); e.throwException()
     }

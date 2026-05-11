@@ -64,7 +64,7 @@ object GraphComponent {
 
     def refresh(p: Props): Callback =
       $.modState(_.copy(validity = Invalid)) >>
-        p.webWorker.post(cmd(p))
+        p.webWorker.send(cmd(p))
           .flatMapSync(result => $.setState(State(Some(result), Valid)))
           .toCallback
 
@@ -110,6 +110,9 @@ object GraphComponent {
 
     protected def graphNodeIterator(root: SVGSVGElement): Iterator[SVGGElement] =
       root.querySelectorAll("g.node").iterator.map(_.domCast[SVGGElement])
+
+    def shutdown: Callback =
+      Callback.empty
   }
 
   // Exposed for tests
@@ -125,4 +128,5 @@ object GraphComponent {
     _.configure(Reusability.shouldComponentUpdate)
       .componentDidMount($ => $.backend.onRender(None, $.props, $.state))
       .componentDidUpdate(i => i.backend.onRender(Some(i.prevProps), i.currentProps, i.currentState))
+      .componentWillUnmount(_.backend.shutdown)
 }

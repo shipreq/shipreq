@@ -57,5 +57,13 @@ import { scale, transform, translate } from 'transformation-matrix'
 const TM = { scale, transform, translate }
 export { TM }
 
+// pako
+const Pako = require('pako/dist/pako.min')
+export { Pako }
+
+// base32768
+import * as B32768 from 'base32768/dist/es6/base32768'
+export { B32768 }
+
 // Paste the following into web console for quick testing.
-// console.log("G: ", {autosize, ChromePicker, clipboard, GithubPicker, HRP, LRUC, moment, ReactCollapse, RSPZ, RVAS, scrollIntoView, screenfull, TextComplete, TextCompleteTA, TM, TFE, tinycolor})
+// console.log("G: ", {autosize, B32768, ChromePicker, clipboard, GithubPicker, HRP, LRUC, moment, Pako, ReactCollapse, RSPZ, RVAS, scrollIntoView, screenfull, TextComplete, TextCompleteTA, TM, TFE, tinycolor})

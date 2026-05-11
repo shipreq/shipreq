@@ -38,26 +38,57 @@ final class ApplyEvent(implicit val trust: Trust)
 
   import ApplyEvent.{Events, Result}
 
-  def apply(events: Events)(p: Project): Result =
-    safelyApply(events).exec(p)
+  private def validateResult(r: Result): Option[ErrorMsg] =
+    r match {
+      case \/-(_) => None
+      case -\/(e) => Some(e)
+    }
 
-  def apply1(event: Event)(p: Project): Result =
-    safelyApply1(event).exec(p)
+  def validate(event: Event)(p: Project): Option[ErrorMsg] =
+    validateResult(partialApplyUnverified(event)(p))
 
-  def applyVerified(ves: VerifiedEvent.Seq)(p: Project): Result =
+  def validate(events: Events)(p: Project): Option[ErrorMsg] =
+    validateResult(partialApplyUnverified(events)(p))
+
+  /** Partial because it doesn't update the project's [[ProjectEvents]]. */
+  def partialApplyUnverified(events: Events)(p: Project): Result =
+    safelyApplyUnverified(events).exec(p)
+
+  /** Partial because it doesn't update the project's [[ProjectEvents]]. */
+  def partialApplyUnverified(event: Event)(p: Project): Result =
+    safelyApplyUnverified1(event).exec(p)
+
+  def apply(ves: VerifiedEvent.Seq)(p: Project): Result =
     if (ves.isEmpty)
       \/-(p)
     else
-      applyVerified(VerifiedEvent.NonEmptySeq.force(ves))(p)
+      apply(VerifiedEvent.NonEmptySeq.force(ves))(p)
 
-  def applyVerified(ves: VerifiedEvent.NonEmptySeq)(p: Project): Result =
-    safelyApply(ves.iterator.map(_.event)).exec(p) match {
-      case ok @ \/-(_) => ok
-      case -\/(_)      => Eval.foldMapRun(ves)(safelyApplyVerified1).exec(p)
+  def apply(events: VerifiedEvent.NonEmptySeq)(p: Project): Result =
+    ensureEventFollows(p, events.head) {
+      safelyApplyUnverified(events.iterator.map(_.event)).exec(p) match {
+        case \/-(p) =>
+          \/-(Project.history.modify(_ ++ events)(p))
+
+        case -\/(_) =>
+          // Failure. Do it from scratch one-by-one so that the error is caught on the specific event that breaks things
+          Eval.foldMapRun(events)(safelyApply1).exec(p)
+      }
     }
 
-  def applyVerified1(event: VerifiedEvent)(p: Project): Result =
-    safelyApplyVerified1(event).exec(p)
+  def apply(event: VerifiedEvent)(p: Project): Result =
+    ensureEventFollows(p, event) {
+      safelyApply1(event).exec(p)
+        .map(Project.history.modify(_ + event))
+    }
+
+  // Note: onOk is by-ref instead of by-name because outside of tests this will never fail.
+  // No point allocating a function for no reason.
+  private def ensureEventFollows(p: Project, ve: VerifiedEvent)(onOk: Result): Result =
+    if (ve.ord.immediatelyFollowsLatest(p.ord))
+      onOk
+    else
+      -\/(ErrorMsg(s"Event v${ve.ord.value} can't be applied to project v${p.ordAsInt}"))
 
   // ===================================================================================================================
   // Safe
@@ -83,16 +114,16 @@ final class ApplyEvent(implicit val trust: Trust)
     i => (i >> validateDataProps).catchErrors(onError)
   }
 
-  private def safelyApply(events: Events): Eval[Unit] =
+  private def safelyApplyUnverified(events: Events): Eval[Unit] =
     safely(unsafelyApply(events))
 
-  private def safelyApply1(event: Event): Eval[Unit] =
+  private def safelyApplyUnverified1(event: Event): Eval[Unit] =
     safely(unsafelyApply1(event))
 
-  private def safelyApplyVerified1(ve: VerifiedEvent): Eval[Unit] = {
+  private def safelyApply1(ve: VerifiedEvent): Eval[Unit] = {
     val onFailure: ErrorMsg => Eval[Unit] =
       err => Eval.fail(err.withPrefix(s"[#${ve.ord.value}] "))
-    safelyApply1(ve.event).handleFailure(onFailure)
+    safelyApplyUnverified1(ve.event).handleFailure(onFailure)
   }
 
   // ===================================================================================================================
@@ -105,6 +136,7 @@ final class ApplyEvent(implicit val trust: Trust)
   private def unsafelyApply1(event: Event): Eval[Unit] = {
     import Event._
     event match {
+      case e: AccessUpdate            => OtherEvents             applyAccessUpdate          e
       case e: ApplicableTagCreate     => ApplicableTagEvents     applyCreate                e
       case e: ApplicableTagCreateV1   => ApplicableTagEventsV1   applyCreate                e
       case e: ApplicableTagUpdate     => ApplicableTagEvents     applyUpdate                e
@@ -172,7 +204,7 @@ final class ApplyEvent(implicit val trust: Trust)
       case e: UseCaseStepShiftRight   => UseCaseEvents           applyStepShiftRight        e
       case e: UseCaseStepUpdate       => UseCaseEvents           applyStepUpdate            e
       case e: UseCaseTitleSet         => UseCaseEvents           applyTitleSet              e
-      case e: ProjectTemplateApply    => safelyApply(e.template.events)
+      case e: ProjectTemplateApply    => safelyApplyUnverified(e.template.events)
     }
   }
 }

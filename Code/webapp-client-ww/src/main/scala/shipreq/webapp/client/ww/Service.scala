@@ -1,56 +1,73 @@
 package shipreq.webapp.client.ww
 
 import japgolly.scalajs.react.AsyncCallback
-import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.client.ww.api.WebWorkerCmd
+import shipreq.webapp.client.ww.api._
 import shipreq.webapp.client.ww.graph.GraphViz.DOT
 import shipreq.webapp.client.ww.graph.{ProjectImpGraph, ReqImpGraph, UseCaseFlowGraph}
-import shipreq.webapp.client.ww.state.WorkerState
+import shipreq.webapp.member.protocol.webworker._
 
-final class Service(logger: LoggerJs) extends Server.Service[WebWorkerCmd] {
+final class Service[Client](server: Service.Server[Client], state: WorkerState) extends ManagedWebWorker.Server.Service[Client, WebWorkerCmd] {
   import WebWorkerCmd._
 
-  val state = new WorkerState(logger)
-  import state.Implicits._
+  // Ask clients for missing events if our state ever goes stale
+  state.staleness.addStalenessListener { ords =>
+    val msg = WebWorkerPushCmd.MissingEvents(ords)
+    server.broadcast(msg, exclude = None)
+  }.runNow()
 
-  override def apply[A](cmd: WebWorkerCmd[A]): AsyncCallback[A] =
-    cmd match {
+  override def apply[A](client: Client, request: WebWorkerCmd[A]): AsyncCallback[A] =
+    request match {
 
-      case Init(p, am) =>
-        (state.setProject(p) >> state.setAssetManifest(am)).asAsyncCallback.ret(NoResult)
+      case i: Init =>
+        state.init(i).ret(NoResult)
 
-      case UpdateProject(ves) =>
-        state.updateProject(ves).asAsyncCallback.ret(NoResult)
+      case UpdateProject(u) =>
+        state.update(u).asAsyncCallback.ret(NoResult)
 
       case GraphUseCaseFlow(ord, id, ctx) =>
-        state.withGraphViz(
+        state.withGraphViz { implicit g =>
           for {
-            _ <- state.await(ord)
-            p <- state.acProject
+            p <- state.getProject(ord)
             x <- new UseCaseFlowGraph(id, p, ctx).svg
           } yield x
-        )
+        }
 
       case GraphReqImplications(ord, focus, filterDead, colours) =>
-        state.withGraphViz(
+        state.withGraphViz { implicit g =>
           for {
-            _ <- state.await(ord)
-            p <- state.acProject
+            p <- state.getProject(ord)
             x <- new ReqImpGraph(focus, filterDead, p, colours).svg
           } yield x
-        )
+        }
 
       case GraphAllImplications(ord, filterDead, scope, config) =>
-        state.withGraphViz(
+        state.withGraphViz { implicit g =>
           for {
-            _  <- state.await(ord)
-            p  <- state.acProject
-            pt <- state.acPlainText
+            p  <- state.getProject(ord)
+            pt <- state.getPlainText(p)
             x  <- new ProjectImpGraph(p, pt, filterDead, scope, config).svg
           } yield x
-        )
+        }
 
       case GraphInline(dot) =>
-        state.withGraphViz(graphviz.render(DOT(dot)))
+        state.withGraphViz(_.render(DOT(dot)))
+
+      case ClearAndDisableCache =>
+        state.clearAndDisable.ret(NoResult)
+    }
+}
+
+object Service {
+
+  type Push = WebWorkerPushCmd
+
+  type Server[Client] = ManagedWebWorker.Server[Client, Push]
+
+  type Maker = ManagedWebWorker.Server.ServiceMaker[WebWorkerCmd, Push]
+
+  def maker(state: WorkerState): Maker =
+    new Maker {
+      override def apply[Client](server: ManagedWebWorker.Server[Client, Push]) =
+        new Service(server, state)
     }
 }

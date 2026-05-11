@@ -1,6 +1,6 @@
 package shipreq.base.util
 
-final class MutableRef[@specialized(Double) A] private[util] (initialValue: A) {
+final class MutableRef[@specialized(Boolean, Double) A] private[util] (initialValue: A) {
 
   override def hashCode =
     initialValue.##
@@ -23,5 +23,8 @@ object MutableRef {
     apply(None)
 
   def double(initialValue: Double = 0): MutableRef[Double] =
+    new MutableRef(initialValue)
+
+  def boolean(initialValue: Boolean): MutableRef[Boolean] =
     new MutableRef(initialValue)
 }

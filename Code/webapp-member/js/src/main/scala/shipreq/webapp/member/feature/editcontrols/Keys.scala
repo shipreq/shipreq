@@ -12,7 +12,7 @@ object Keys {
    * in a text editor, just not everywhere. The penalty for trying to insert a newline into a single-line editor is
    * now nil, in that nothing happens; where as previously it would trigger a save which can be very annoying.
    */
-  @inline def commit = CtrlEnter
+  @inline def commit = CtrlOrCmdEnter
 
   /** Commit and progress, as in "save and let's move on".
    *

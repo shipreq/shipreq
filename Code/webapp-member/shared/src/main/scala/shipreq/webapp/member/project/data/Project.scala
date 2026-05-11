@@ -8,7 +8,9 @@ import monocle.macros.Lenses
 import monocle.std.option.pSome
 import monocle.{Lens, Traversal}
 import shipreq.base.util._
+import shipreq.webapp.base.data.ProjectCreator
 import shipreq.webapp.member.project.data.derivation._
+import shipreq.webapp.member.project.event.{ApplyEvent, EventOrd, ProjectEvents, VerifiedEvent}
 import shipreq.webapp.member.project.issue.IssueTracker
 import shipreq.webapp.member.project.text.PlainText
 
@@ -48,30 +50,64 @@ object Project {
   val savedViewTraversal: Traversal[Project, savedview.View] =
     savedViewsNE andThen savedview.SavedViews.NonEmpty.traversalSavedView andThen savedview.SavedView.view
 
-  implicit lazy val equality: Eq[Project] =
-    CatsMacros.deriveEq
-
   // Not allowed by validator.
   // This ensures that initial ProjectNameSet events (generated on project creation) apply instead of being discarded
   // as NO-OPs due to the hashcodes being unchanged before and after.
   final val emptyProjectName: Name =
     ""
 
+  def init(creator: ProjectCreator): Project =
+    _init(ProjectAccess.init(creator))
+
   val empty: Project =
+    _init(ProjectAccess.empty)
+
+  private def _init(access: ProjectAccess): Project =
     Project(
       name         = emptyProjectName,
       config       = ProjectConfig.empty,
       content      = ProjectContent.empty,
       manualIssues = ManualIssues.empty,
       savedViews   = savedview.SavedViews.empty,
-      idCeilings   = IdCeilings.zero)
+      access       = access,
+      history      = ProjectEvents.empty,
+      idCeilings   = IdCeilings.zero,
+    )
 
   def reqIdsSortedByPubId(reqs: Requirements, reqTypes: ReqTypes): ArraySeq[ReqId] =
     reqTypes.allSortedByMnemonic
       .iterator
       .flatMap(rt => reqs.pubids.value(rt.reqTypeId))
       .to(ArraySeq)
+
+  // -------------------------------------------------------------------------------------------------------------------
+
+  final class Equality(implicit val equalProjectEvents: Eq[ProjectEvents]) {
+    implicit val equalProject: Eq[Project] =
+      CatsMacros.deriveEq
+  }
+
+  object Equality {
+    lazy val WithHistoryByOrd: Equality = {
+      import ProjectEvents.ImplicitEqualityByOrd._
+      new Equality
+    }
+
+    lazy val IgnoringHistory: Equality = {
+      implicit val equalProjectEvents: Eq[ProjectEvents] =
+        (_, _) => true
+      new Equality
+    }
+  }
+
+  implicit val canCmp: EventOrd.CanCmp[Project] =
+    EventOrd.CanCmp(_.ordAsInt)
+
+  implicit val canCmpOption: EventOrd.CanCmp[Option[Project]] =
+    canCmp.option
 }
+
+// =====================================================================================================================
 
 @Lenses
 final case class Project(name        : Project.Name,
@@ -79,11 +115,46 @@ final case class Project(name        : Project.Name,
                          content     : ProjectContent,
                          manualIssues: ManualIssues,
                          savedViews  : savedview.SavedViews.Optional,
-                         idCeilings  : IdCeilings) {
+                         access      : ProjectAccess,
+                         history     : ProjectEvents,
+                         idCeilings  : IdCeilings) extends EventOrd.CmpOps {
 
   override def toString =
-    s"Project($idCeilings)"
+    s"Project{v${history.ordAsInt}}"
     //ShowSize(this).showTree
+
+  @inline def update(ves: VerifiedEvent.NonEmptySeq): ErrorMsg \/ Project =
+    update(ves.values)
+
+  @inline def update(ves: VerifiedEvent.Seq): ErrorMsg \/ Project =
+    ApplyEvent.trusted(ves)(this)
+
+  @inline def update(ve: VerifiedEvent): ErrorMsg \/ Project =
+    ApplyEvent.trusted(ve)(this)
+
+  private def _updateOrThrow(r: ApplyEvent.Result): Project =
+    r.fold(_.withPrefix("Project update failed. ").throwException(), identity)
+
+  def updateOrThrow(ves: VerifiedEvent.NonEmptySeq): Project =
+    _updateOrThrow(update(ves))
+
+  def updateOrThrow(ves: VerifiedEvent.Seq): Project =
+    _updateOrThrow(update(ves))
+
+  def updateOrThrow(ve: VerifiedEvent): Project =
+    _updateOrThrow(update(ve))
+
+  @inline def ord =
+    history.ord
+
+  override def ordAsInt =
+    history.ordAsInt
+
+  def min(p: Project): Project = if (this < p) this else p
+  def max(p: Project): Project = if (this > p) this else p
+
+  def min(p: Option[Project]): Project = p.fold(this)(min)
+  def max(p: Option[Project]): Project = p.fold(this)(max)
 
   lazy val deadReqIds: Set[ReqId] =
     content.reqs.reqIterator().filter(_.live(config.reqTypes) is Dead).map(_.id).toSet

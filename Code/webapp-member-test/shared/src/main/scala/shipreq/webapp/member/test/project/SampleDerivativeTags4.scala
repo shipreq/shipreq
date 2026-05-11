@@ -188,7 +188,7 @@ object SampleDerivativeTags4 {
     (w1, w2) -> w1,
   ))
 
-  val project = applyEventsSuccessfully(Project.empty,
+  val project = applyEventsSuccessfully(emptyProject1,
     Event.FieldStaticAdd(StaticField.AllTags),
 
     Event.CustomReqTypeCreate(a, CustomReqTypeGD("A", "A", Optional, ∅)),

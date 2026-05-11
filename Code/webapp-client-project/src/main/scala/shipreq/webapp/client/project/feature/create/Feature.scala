@@ -11,8 +11,8 @@ import shipreq.base.util._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.util.CallbackHelpers._
-import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.util.DataReusability._
+import shipreq.webapp.member.project.library.NewEvents
 import shipreq.webapp.member.project.protocol.websocket.{CreateContentCmd, ManualIssueCmd}
 
 object Feature {
@@ -106,7 +106,6 @@ object Feature {
         ForProject(UnivEq.emptyMap, Vector.empty)
     }
 
-    @nowarn("cat=unused")
     private implicit def reusabilityMap[K, V]: Reusability[Map[K, V]] =
       Reusability.byRef
 

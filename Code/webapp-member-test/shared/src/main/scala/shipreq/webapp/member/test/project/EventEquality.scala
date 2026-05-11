@@ -10,6 +10,7 @@ import shipreq.webapp.member.project.text.Text.Equality._
 
 object EventEquality extends EventEquality
 trait EventEquality {
+  implicit val equalAccessUpdate           : Eq[AccessUpdate           ] = CatsMacros.deriveEq
   implicit val equalApplicableTagCreate    : Eq[ApplicableTagCreate    ] = CatsMacros.deriveEq
   implicit val equalApplicableTagCreateV1  : Eq[ApplicableTagCreateV1  ] = CatsMacros.deriveEq
   implicit val equalApplicableTagUpdate    : Eq[ApplicableTagUpdate    ] = CatsMacros.deriveEq

@@ -9,7 +9,7 @@ import shipreq.base.util._
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.protocol.json.JsonCodec
 
-private[v1] object BaseData {
+private[json] object BaseData {
   import JsonCodec.Implicits._
 
   // ===================================================================================================================

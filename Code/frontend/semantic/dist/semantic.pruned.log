@@ -3,6 +3,7 @@
     71 [remove] ! normalize.css v7.0.0 | MIT License | github.com/necolas/normalize.css
    160 [remove] ! * # Semantic UI 2.2.13 - Site * http://github.com/semantic-org/semantic-ui/ * * * Released under the MIT license * http://opensource.org/licenses/MIT *
    162 [remove] ! * # Semantic UI 2.2.13 - Button * http://github.com/semantic-org/semantic-ui/ * * * Released under the MIT license * http://opensource.org/licenses/MIT *
+   165 [remove] ! * # Semantic UI 2.2.13 - Container * http://github.com/semantic-org/semantic-ui/ * * * Released under the MIT license * http://opensource.org/licenses/MIT *
    162 [remove] ! * # Semantic UI 2.2.13 - Header * http://github.com/semantic-org/semantic-ui/ * * * Released under the MIT license * http://opensource.org/licenses/MIT *
    160 [remove] ! * # Semantic UI 2.2.13 - Icon * http://github.com/semantic-org/semantic-ui/ * * * Released under the MIT license * http://opensource.org/licenses/MIT *
    161 [remove] ! * # Semantic UI 2.2.13 - Input * http://github.com/semantic-org/semantic-ui/ * * * Released under the MIT license * http://opensource.org/licenses/MIT *
@@ -25,6 +26,10 @@
     98 [keep  ] @import url(https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic&subset=latin)
    146 [keep  ] @-webkit-keyframes button-spin
    138 [keep  ] @keyframes button-spin
+   271 [keep  ] @media only screen and (max-width:767px)
+   328 [keep  ] @media only screen and (min-width:768px) and (max-width:991px)
+   329 [keep  ] @media only screen and (min-width:992px) and (max-width:1199px)
+   311 [keep  ] @media only screen and (min-width:1200px)
    501 [keep  ] @font-face 
    147 [keep  ] @-webkit-keyframes icon-loading
    139 [keep  ] @keyframes icon-loading
@@ -814,6 +819,30 @@
    114 [remove] .ui.vertical.buttons .button:first-child
    135 [remove] .ui.vertical.buttons .button:last-child
     67 [remove] .ui.vertical.buttons .button:only-child
+    53 [keep  ] .ui.container
+    88 [keep  ] @media only screen and (max-width:767px) .ui.container
+    40 [keep  ] @media only screen and (max-width:767px) .ui.grid.container
+    48 [keep  ] @media only screen and (max-width:767px) .ui.relaxed.grid.container
+    53 [keep  ] @media only screen and (max-width:767px) .ui.very.relaxed.grid.container
+    81 [keep  ] @media only screen and (min-width:768px) and (max-width:991px) .ui.container
+    54 [keep  ] @media only screen and (min-width:768px) and (max-width:991px) .ui.grid.container
+    62 [keep  ] @media only screen and (min-width:768px) and (max-width:991px) .ui.relaxed.grid.container
+    67 [keep  ] @media only screen and (min-width:768px) and (max-width:991px) .ui.very.relaxed.grid.container
+    81 [keep  ] @media only screen and (min-width:992px) and (max-width:1199px) .ui.container
+    54 [keep  ] @media only screen and (min-width:992px) and (max-width:1199px) .ui.grid.container
+    62 [keep  ] @media only screen and (min-width:992px) and (max-width:1199px) .ui.relaxed.grid.container
+    67 [keep  ] @media only screen and (min-width:992px) and (max-width:1199px) .ui.very.relaxed.grid.container
+    82 [keep  ] @media only screen and (min-width:1200px) .ui.container
+    55 [keep  ] @media only screen and (min-width:1200px) .ui.grid.container
+    63 [keep  ] @media only screen and (min-width:1200px) .ui.relaxed.grid.container
+    68 [keep  ] @media only screen and (min-width:1200px) .ui.very.relaxed.grid.container
+   122 [keep  ] .ui.text.container
+    43 [keep  ] .ui.text.container
+    31 [keep  ] .ui.fluid.container
+    53 [keep  ] .ui[class*="left aligned"].container
+    57 [keep  ] .ui[class*="center aligned"].container
+    55 [keep  ] .ui[class*="right aligned"].container
+    94 [keep  ] .ui.justified.container
    218 [keep  ] .ui.header
     47 [keep  ] .ui.header:first-child
     38 [keep  ] .ui.header:last-child
@@ -1192,7 +1221,7 @@
     39 [remove] i.icon.birthday:before
     50 [remove] i.icon.help.circle.outline:before
     35 [keep  ] i.icon.user:before
-    36 [remove] i.icon.users:before
+    36 [keep  ] i.icon.users:before
     37 [remove] i.icon.doctor:before
     39 [remove] i.icon.handicap:before
     38 [remove] i.icon.student:before
@@ -3180,8 +3209,8 @@
     43 [keep  ] .ui.fluid.card
    100 [keep  ] .ui.cards a.card,.ui.link.card,.ui.link.cards .card,a.ui.card
    307 [keep  ] .ui.cards a.card:hover,.ui.link.card:hover,.ui.link.cards .card:hover,a.ui.card:hover
-   195 [remove] .ui.cards>.red.card,.ui.red.card,.ui.red.cards>.card
-   213 [remove] .ui.cards>.red.card:hover,.ui.red.card:hover,.ui.red.cards>.card:hover
+   195 [keep  ] .ui.cards>.red.card,.ui.red.card,.ui.red.cards>.card
+   213 [keep  ] .ui.cards>.red.card:hover,.ui.red.card:hover,.ui.red.cards>.card:hover
    204 [remove] .ui.cards>.orange.card,.ui.orange.card,.ui.orange.cards>.card
    222 [remove] .ui.cards>.orange.card:hover,.ui.orange.card:hover,.ui.orange.cards>.card:hover
    204 [keep  ] .ui.cards>.yellow.card,.ui.yellow.card,.ui.yellow.cards>.card

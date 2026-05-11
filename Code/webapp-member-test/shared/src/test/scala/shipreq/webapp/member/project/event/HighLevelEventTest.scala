@@ -28,7 +28,7 @@ object HighLevelEventTest extends TestSuite {
         assertEq(actual, expect)
       }
 
-      val p1 = applyEventsSuccessfully(Project.empty,
+      val p1 = applyEventsSuccessfully(emptyProject1,
         createReqType(1, "MF", "a"),                            // → 1:MF
         createReqType(2, "FR", "b"),                            // → 1:MF 2:FR
         CustomReqTypeDelete(1),                                 // → 2:FR

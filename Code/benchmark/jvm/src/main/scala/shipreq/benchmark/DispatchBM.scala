@@ -16,7 +16,7 @@ import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config._
 import shipreq.webapp.server.logic.data._
 import shipreq.webapp.server.logic.dispatch._
-import shipreq.webapp.server.logic.impl._
+import shipreq.webapp.server.logic.logic._
 import zio.UIO
 
 /**
@@ -158,7 +158,6 @@ object DispatchBM {
       jwtSecret                  = new ServerLogicConfig.Security.JwtSecret("x"*64),
       jwtSecretPrevious          = None,
       passwordSaltLength         = 64,
-      projectAccessHacks         = ProjectAccessHacks.empty,
       verificationTokenLength    = 8,
       registrationTokenLifespan  = 7 days,
       passwordResetTokenLifespan = 4 days))
@@ -174,14 +173,13 @@ object DispatchBM {
     implicit object db extends DB.VerificationTokenReadOnly[F] with DB.ForSecurity[F] {
       var token = Option.empty[Instant]
       var getUserOk = true
-      var projectOwner: Option[UserId] = Some(user.id)
 
       override def getUserRegistrationTokenIssueDate(t: VerificationToken)      = F point token
       override def getResetPasswordTokenIssueDate   (t: VerificationToken)      = F point token
       override def getUserAndPasswordByEmail        (e: EmailAddr)              = F.point(Option.when(getUserOk)((user, ps)))
       override def getUserAndPasswordByUsername     (u: Username)               = F.point(Option.when(getUserOk)((user, ps)))
       override def logLoginSuccess                  (i: UserId, ip: Option[IP]) = F.point(())
-      override def getProjectOwner                  (id: ProjectId)             = F point projectOwner
+      override def getProjectAccess                 (p: ProjectId, u: UserId)   = F point Option.when(u ==* user.id)(ProjectPerm.Admin)
     }
 
     implicit object security extends Security.Algebra[F] {
@@ -209,9 +207,6 @@ object DispatchBM {
         val cookie = Cookie(cookieName, value, None, None, None)
         Cookie.Update.add(cookie)
       }
-
-      override def allowProjectAccess(requester: User, projectId: ProjectId, projectOwner: UserId) =
-        Allow.when(requester.id ==* projectOwner)
     }
 
     implicit val svrSession: Server.Session[F] = new Server.Session[F] {
@@ -268,7 +263,7 @@ object DispatchBM {
       override def taskmanMsgStatus(id: TaskId)                       = F.pure(null)
       override def sendMail(e: String)                                = F.pure(null)
       override def getProjectEvents(pid: ProjectId)                   = F.pure(null)
-      override def createProject(a: Username \/ EmailAddr, b: String) = F.pure(null)
+      override def importProject(a: Username \/ EmailAddr, b: String) = F.pure(null)
     }
 
     val sync = new Sync[F] {

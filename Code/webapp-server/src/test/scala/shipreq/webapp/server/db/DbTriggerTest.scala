@@ -4,6 +4,8 @@ import doobie._
 import shipreq.base.test.BaseTestUtil._
 import shipreq.base.test.db._
 import shipreq.webapp.base.data._
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.{Event, EventOrd}
 import shipreq.webapp.server.test._
 import sourcecode.Line
 import utest._
@@ -58,48 +60,19 @@ object DbTriggerTest extends TestSuite {
       }
     }
 
-    "usrd" - {
-      def nameHistory(userId: Long)(implicit xa: ImperativeXA) =
-        xa ! Query0[String](s"select name from usrh_name where usr_id=$userId order by updated_at").to[List]
-
-      def insert(userId: Long, name: String, newsletter: Boolean)(implicit xa: ImperativeXA) =
-        xa ! Update[(Long, String, Boolean)]("insert into usrd values(?,?,?)")
-          .toUpdate0((userId, name, newsletter)).run
-
-      def update(userId: Long, name: String, newsletter: Boolean)(implicit xa: ImperativeXA) =
-        xa ! Update[(String, Boolean, Long)]("update usrd set name=?, newsletter=? where usr_id=?")
-          .toUpdate0((name, newsletter, userId)).run
-
-      def read(userId: Long)(implicit xa: ImperativeXA) =
-        xa ! Query0[(String,Boolean)](s"select name, newsletter from usrd where usr_id=$userId").unique
-
-      "should record name changes" - TestDb.withImperativeXA { implicit xa =>
-        val u = DbUtil(xa).newUserId()
-        val (a,b,c) = ("Alice","Bob","Yay")
-        insert(u.value, a, true)
-        assertEq(nameHistory(u.value), Nil)
-        List(b,b,b,c).foreach(update(u.value, _, true))
-        assertEq(nameHistory(u.value), List(a, b))
-      }
-
-      "should updates without altercation by triggers" - TestDb.withImperativeXA { implicit xa =>
-        val u = DbUtil(xa).newUserId()
-        insert(u.value, "A", true)
-        update(u.value, "B", false)
-        assertEq(read(u.value), ("B", false))
-      }
-    }
-
     "project" - {
       "should update project_access_per_hour" - TestDb.withImperativeXA { implicit xa =>
 
         val db = new DbInterpreter()(PrepareEnv.global().config.server.security)
 
-        def read(p: ProjectId): Unit =
-          xa ! db.projectSpaInitPage(p)
+        def read(p: ProjectId)(implicit u: UserId): Unit =
+          xa ! db.projectSpaInitPage(p, u)
 
-        def writeTo(p: ProjectId): Unit =
-          assertEq(xa ! DbInterpreter.SaveProjectEventLogic.updateProjectN.toUpdate0(("A", p)).run, 1)
+        def writeTo(p: ProjectId, ordIdx: Int)(implicit u: UserId): Unit = {
+          val ord = EventOrd.fromIndex(ordIdx)
+          val e = Event.ProjectNameSet("A")
+          xa ! db.saveProjectEvent(p, ord, e, Project.empty, u)
+        }
 
         def stats = (
           xa ! DbTables.ProjectAccessPerHour.count,
@@ -110,20 +83,24 @@ object DbTriggerTest extends TestSuite {
         )
 
         def assertState(rows: Int)(totalReads: Int, uniqueReads: Int)(totalWrites: Int, uniqueWrites: Int)(implicit l: Line) =
-          assertEq(stats, (rows, totalReads, uniqueReads, totalWrites, uniqueWrites))
+          assertEq(
+            "(rows, totalReads, uniqueReads, totalWrites, uniqueWrites)",
+            stats,
+            (rows, totalReads, uniqueReads, totalWrites, uniqueWrites))
 
         considerHourBoundary {
           xa ! DbTables.ProjectAccessPerHour.truncate
           assertState(0)(0, 0)(0, 0)
-          val a = DbUtil(xa).newProjectId()
+          implicit val u = DbUtil(xa).getOrCreateUserId()
+          val a = DbUtil(xa).newProjectId(u)
           assertState(1)(0, 0)(1, 1)
-          val b = DbUtil(xa).newProjectId()
+          val b = DbUtil(xa).newProjectId(u)
           assertState(1)(0, 0)(2, 2)
-          writeTo(a); assertState(1)(0, 0)(3, 2)
-          read(b)   ; assertState(2)(1, 1)(3, 2)
-          read(b)   ; assertState(2)(2, 1)(3, 2)
-          writeTo(b); assertState(2)(2, 1)(4, 2)
-          read(a)   ; assertState(2)(3, 2)(4, 2)
+          writeTo(a, 0); assertState(1)(0, 0)(3, 2)
+          read(b)      ; assertState(2)(1, 1)(3, 2)
+          read(b)      ; assertState(2)(2, 1)(3, 2)
+          writeTo(b, 0); assertState(2)(2, 1)(4, 2)
+          read(a)      ; assertState(2)(3, 2)(4, 2)
         }
       }
     }

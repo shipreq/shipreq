@@ -11,11 +11,10 @@
 
 
 
-cd "$(dirname "$(readlink -e "$0")")" || exit 1
+cd "$(dirname "$0")" || exit 1
 [ $# -ne 1 ] && echo "Usage: $0 <conflicts file>" && exit 1
 
 cat "$1" \
   | fgrep 'scanned from multiple locations' \
   | perl -pe 's/^.+ (\S+) scanned from.+?: \[(.+)\]/$2\t$1/; s/![^\t,\n]+//g; s/jar:\S+\///g' \
   | sort
-

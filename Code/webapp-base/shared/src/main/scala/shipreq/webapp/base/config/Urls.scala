@@ -44,9 +44,10 @@ object Urls {
       @inline final def prefix = url.prefix
     }
 
-    case object Home    extends Static(Url.Relative("/home"))
-    case object Logout  extends Static(Url.Relative("/logout"))
-    case object Project extends Param1(Url.Relative("/project").thenParam[ProjectId.Public](_.value))
+    case object Home                 extends Static(Url.Relative("/home"))
+    case object Logout               extends Static(Url.Relative("/logout"))
+    case object Project              extends Param1(Url.Relative("/project").thenParam[ProjectId.Public](_.value))
+    case object ProjectAccessRevoked extends Static(Url.Relative("/project-revoked"))
 
     implicit def univEqStatic: UnivEq[Static] = UnivEq.derive
     val static = AdtMacros.adtValues[Static]
@@ -56,10 +57,26 @@ object Urls {
 
   object ProjectSpaWebSocket {
     final val ParamProjectId = "p"
+    final val ParamCreator   = "c"
     final val Base           = "/w/p"
-    final val ServerEndpoint = Base + "/{" + ParamProjectId + "}"
-    val url                  = Url.Relative(ProjectSpaWebSocket.Base).thenParam[ProjectId.Public](_.value)
-    val parseProjectId       = Obfuscated.apply: String => ProjectId.Public
+    final val ServerEndpoint = Base + "/{" + ParamProjectId + "}" + "/{" + ParamCreator + "}"
+
+    type Param1 = ProjectId.Public
+    type Param2 = ProjectCreator
+
+    val url = Url.Relative(ProjectSpaWebSocket.Base)
+                .thenParam((_: Param1).value)
+                .thenParam((_: Param2).userId.value)
+
+    def parsePath(path: String): Option[(Param1, Param2)] = {
+      val tail  = path.substring(Base.length + 1)
+      val colon = tail.indexOf('/')
+      Option.when(colon > 0) {
+        val p1: Param1 = Obfuscated(tail.take(colon))
+        val p2: Param2 = ProjectCreator(Obfuscated(tail.drop(colon + 1)))
+        (p1, p2)
+      }
+    }
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -75,10 +92,11 @@ object Urls {
 
   val ajaxRoot = Url.Relative("/x")
 
-  def publicHome          = PublicSpaRoute.Home.url
-  def login               = PublicSpaRoute.Login.url
-  def termsOfService      = PublicSpaRoute.TermsOfService.url
-  def memberHome          = MemberRoute.Home.url
-  def project             = MemberRoute.Project.url
-  def logout              = MemberRoute.Logout.url
+  def publicHome           = PublicSpaRoute.Home.url
+  def login                = PublicSpaRoute.Login.url
+  def termsOfService       = PublicSpaRoute.TermsOfService.url
+  def memberHome           = MemberRoute.Home.url
+  def project              = MemberRoute.Project.url
+  def projectAccessRevoked = MemberRoute.ProjectAccessRevoked.url
+  def logout               = MemberRoute.Logout.url
 }

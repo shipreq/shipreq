@@ -18,33 +18,15 @@ object \/ {
 }
 
 final class EitherOps[E, A](private val e: Either[E, A]) extends AnyVal {
-
-  def leftMap[B](f: E => B): Either[B, A] =
-    e match {
-      case r: Right[E, A] => r.asInstanceOf[Right[B, A]]
-      case Left(e)        => Left(f(e))
-    }
-
-  def toList: List[A] =
-    e match {
-      case Right(a) => a :: Nil
-      case Left(_)  => Nil
-    }
-
   @inline def castLeft() = e.asInstanceOf[Left[E, Nothing]]
   @inline def castRight() = e.asInstanceOf[Right[Nothing, A]]
-
-  def bimap[F, B](f: E => F, g: A => B): Either[F, B] =
-    if (e.isRight)
-      Right(g(castRight().value))
-    else
-      Left(f(castLeft().value))
 }
 // ===================================================================================================================
 
 
 abstract class PredefShared
   extends PredefScala
+     with cats.syntax.EitherSyntax
     //  with japgolly.microlibs.disjunction.Exports
      with japgolly.univeq.UnivEqCats
      with japgolly.univeq.UnivEqExports {
@@ -109,9 +91,12 @@ abstract class PredefShared
     UnivEq.force
 
   @inline
-  @scala.annotation.nowarn("cat=unused")
   final implicit def UnivEqObjExt(self: UnivEq.type): PredefShared.UnivEqObjExt =
     new PredefShared.UnivEqObjExt(UnivEq)
+
+  @inline
+  final implicit def predefExtMultimapSet[K, V](a: Multimap[K, Set, V]): PredefShared.ExtMultimapSet[K, V] =
+    new PredefShared.ExtMultimapSet(a)
 
   @inline
   final implicit def predefExtAny[A](a: A): PredefShared.ExtAny[A] =
@@ -129,8 +114,6 @@ abstract class PredefShared
   final implicit def predefExtAnyRef[A <: AnyRef](a: A): PredefShared.ExtAnyRef[A] =
     new PredefShared.ExtAnyRef(a)
 
-  implicit def predefExtString(a: String): AnyVal with PredefShared.ExtString
-
   def ArraySeq1[@specialized A: ClassTag](a: A): ArraySeq[A] = {
     val x = new Array[A](1)
     x(0) = a
@@ -147,7 +130,7 @@ abstract class PredefShared
 object PredefShared {
   import japgolly.microlibs.multimap._
   import japgolly.univeq._
-  import java.lang.String
+  import scala.collection.immutable.Set
 
   // Copied from Shapeless
   trait =:!=[A, B]
@@ -160,9 +143,21 @@ object PredefShared {
     @inline def emptySetMultimap[K: UnivEq, V: UnivEq] =
       Multimap.empty[K, immutable.Set, V]
 
-    @scala.annotation.nowarn("cat=unused")
     @inline def emptyMultimap[K: UnivEq, L[_] : MultiValues, V](implicit ev: L[V] =:!= immutable.Set[V]) =
       Multimap.empty[K, L, V]
+  }
+
+  final class ExtMultimapSet[K, V](private val m: Multimap[K, Set, V]) extends AnyVal {
+    def asSubsetOf(f: Multimap[K, Set, V]): Multimap[K, Set, V] = {
+      val ff = f.m
+      val m2 = m.iterator.flatMap { case (k, vs) =>
+          ff.get(k).flatMap { fvs =>
+            val vs2 = vs.intersect(fvs)
+            Option.when(vs2.nonEmpty)((k, vs2))
+          }
+        }.toMap
+      new Multimap(m2)
+    }
   }
 
   final class ExtAny[A](private val a: A) extends AnyVal {
@@ -183,15 +178,6 @@ object PredefShared {
   final class ExtAnyRef[A <: AnyRef](private val a: A) extends AnyVal {
     @inline def |>[@specialized B](f: A => B)   : B = f(a)
     @inline def <|                (f: A => Unit): A = {f(a); a}
-  }
-
-  trait ExtString extends Any {
-    def quote: String
-
-    def quoteInner: String = {
-      val q = quote
-      q.substring(1, q.length - 1)
-    }
   }
 }
 
@@ -261,6 +247,11 @@ sealed abstract class PredefScala extends LowPriorityImplicits {
   final def assert(assertion: Boolean, message: => Any): Unit =
     if (!assertion)
       throw new java.lang.AssertionError("assertion failed: "+ message)
+
+  @scala.annotation.elidable(ASSERTION)
+  @inline
+  final def assert(error: Option[String]): Unit =
+    assert(error.isEmpty, error.get)
 
   @inline final def ??? : Nothing = throw new NotImplementedError
 

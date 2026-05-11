@@ -184,7 +184,6 @@ object BopTypeTags extends OpTypeProvider[BusinessOp] {
     case _: SendEmail                     => manifest[SendEmail]
     case _: FindShipReqUser               => manifest[FindShipReqUser]
     case _: FindShipReqUsers              => manifest[FindShipReqUsers]
-    case MailingListOp(_: GetListId)      => manifest[MailingListOp[GetListId]]
     case MailingListOp(_: Subscribe)      => manifest[MailingListOp[Subscribe]]
     case MailingListOp(_: UpdateMember)   => manifest[MailingListOp[UpdateMember]]
     case MailingListOp(_: BatchSubscribe) => manifest[MailingListOp[BatchSubscribe]]
@@ -204,7 +203,6 @@ class MockBops extends MockOpTransformer[BusinessOp, Fx] {
   val sendEmail             = MockResponse[Throwable \/ Unit](\/-(()))
   val findShipReqUser       = MockResponse[Option[ShipReqUser]](None)
   val findShipReqUsers      = MockResponse[List[ShipReqUser]](Nil)
-  val mlGetListId           = MockResponse[Option[ListId]](None)
   val mlSubscribe           = MockResponse[SubscribeResult](Ok)
   val mlUpdateMember        = MockResponse[UpdateMemberResult](Ok)
   val mlBatchSubscribe      = MockResponse[Throwable \/ Unit](\/-(()))
@@ -216,7 +214,6 @@ class MockBops extends MockOpTransformer[BusinessOp, Fx] {
     case _: SendEmail                     => Fx.lift(sendEmail.pop())
     case _: FindShipReqUser               => Fx(findShipReqUser.pop())
     case _: FindShipReqUsers              => Fx(findShipReqUsers.pop())
-    case MailingListOp(_: GetListId)      => Fx(mlGetListId.pop())
     case MailingListOp(_: Subscribe)      => Fx(mlSubscribe.pop())
     case MailingListOp(_: UpdateMember)   => Fx(mlUpdateMember.pop())
     case MailingListOp(_: BatchSubscribe) => Fx.lift(mlBatchSubscribe.pop())

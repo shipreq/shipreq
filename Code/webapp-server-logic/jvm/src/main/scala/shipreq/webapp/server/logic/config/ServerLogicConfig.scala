@@ -11,7 +11,7 @@ import shipreq.base.util.FxModule._
 import shipreq.base.util._
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.server.logic.dispatch.DispatchLogic
-import shipreq.webapp.server.logic.impl.ProjectSpaLogic
+import shipreq.webapp.server.logic.logic.ProjectSpaLogic
 
 @Lenses
 final case class ServerLogicConfig(baseUrl: Url.Absolute.Base,
@@ -74,8 +74,6 @@ object ServerLogicConfig {
                             /** Number of bytes that will comprise the salt for new passwords */
                             passwordSaltLength: Int,
 
-                            projectAccessHacks: ProjectAccessHacks,
-
                             /** Number of characters in tokens used for email & reset-password verification. */
                             verificationTokenLength: Int,
 
@@ -119,7 +117,6 @@ object ServerLogicConfig {
         ConfigDef.need    [JwtSecret]("jwt.secret"),
         ConfigDef.get     [JwtSecret]("jwt.secret.previous"),
         ConfigDef.getOrUse[Int      ]("password.salt", 64),
-        ConfigDef.getOrUse           ("hack.project_access", ProjectAccessHacks.empty),
         ConfigDef.need    [Int      ]("verification_token.length"),
         ConfigDef.need    [Duration ]("verification_token.lifespan.register"),
         ConfigDef.need    [Duration ]("verification_token.lifespan.resetpw"),
@@ -171,12 +168,12 @@ object ServerLogicConfig {
     ).tupled
 
     val part2 = (
-      RetriesJvm.config.withPrefix             ("taskman.init.retry."),
-      ProjectSpaLogic.Config.defn.withPrefix   ("projectSpa."),
-      Prometheus.config.withPrefix             ("prometheus."),
-      Security.config.withPrefix               ("security."),
+      RetriesJvm.config             .withPrefix("taskman.init.retry."),
+      ProjectSpaLogic.Config.defn   .withPrefix("projectSpa."),
+      Prometheus.config             .withPrefix("prometheus."),
+      Security.config               .withPrefix("security."),
       ScalaJsManifest.config[String].withPrefix("scalajs."),
-      SsrConfig.config.withPrefix              ("ssr."),
+      SsrConfig.config              .withPrefix("ssr."),
       JaegerTracingConfig.main                 ("webapp"),
     ).tupled
 

@@ -21,9 +21,10 @@
   </appender>
 
   <logger name="net.liftmodules.scamljade" level="INFO" />
-  <logger name="org.fusesource.scalate" level="INFO" />
-  <logger name="org.apache.commons" level="WARN" />
-  <logger name="shipreq" level="DEBUG" />
+  <logger name="org.apache.commons"        level="WARN" />
+  <logger name="org.fusesource.scalate"    level="INFO" />
+  <logger name="org.redisson"              level="DEBUG" />
+  <logger name="shipreq"                   level="DEBUG" />
 
   <root level="INFO">
     <!--<appender-ref ref="STDOUT"/>-->

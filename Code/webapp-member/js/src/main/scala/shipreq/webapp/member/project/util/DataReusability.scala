@@ -5,12 +5,13 @@ import japgolly.scalajs.react._
 import java.time.Duration
 import shipreq.base.util._
 import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data.{ProjectPerm, Rolodex, UserId}
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.jsfacade.MomentJs
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.derivation._
 import shipreq.webapp.member.project.data.savedview.ImpGraphConfig
-import shipreq.webapp.member.project.event.{EventOrd, ProjectAndOrd}
+import shipreq.webapp.member.project.event.{EventOrd, ProjectEvents}
 import shipreq.webapp.member.project.filter.Filter.Implicits._
 import shipreq.webapp.member.project.filter.{CompiledFilter, Filter}
 import shipreq.webapp.member.project.issue.{Issue, Issues}
@@ -64,6 +65,18 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityColour: Reusability[Colour] =
     Reusability.byUnivEq
 
+  implicit def reusabilityProjectPerm: Reusability[ProjectPerm] =
+    Reusability.byUnivEq
+
+  implicit def reusabilityUserIdPublic: Reusability[UserId.Public] =
+    Reusability.byUnivEq
+
+  implicit def reusabilityProjectAccess: Reusability[ProjectAccess] =
+    Reusability.byRefOrUnivEq
+
+  implicit def reusabilityRolodex: Reusability[Rolodex] =
+    Reusability.byRefOrUnivEq
+
   implicit def reusabilityFieldReqTypeRulesResolution[D: UnivEq]: Reusability[FieldReqTypeRules.Resolution[D]] =
     Reusability.byUnivEq
 
@@ -71,7 +84,7 @@ abstract class DataReusability extends BaseReusability {
     Reusability.byRefOrUnivEq
 
   implicit lazy val reusabilityProjectMetaData: Reusability[ProjectMetaData] = {
-    @nowarn("cat=unused") implicit val instant = Reusability.instant(Duration.ofMillis(500))
+    implicit val instant = Reusability.instant(Duration.ofMillis(500))
     Reusability.derive
   }
 
@@ -87,8 +100,11 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityEventOrdLatest: Reusability[EventOrd.Latest] =
     Reusability.byUnivEq
 
-  implicit def reusabilityProjectAndOrd: Reusability[ProjectAndOrd] =
-    Reusability.derive
+  // Safe to only check ord because:
+  // 1) Each client only ever has one Project in memory at one time
+  // 2) Project history is immutable
+  implicit def reusabilityProjectEvents: Reusability[ProjectEvents] =
+    Reusability.by(_.ordAsInt)
 
   implicit def reusabilityProject: Reusability[Project] =
     Reusability.byRef

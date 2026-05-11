@@ -1,6 +1,7 @@
 package shipreq.taskman.api
 
 import japgolly.microlibs.adt_macros.AdtMacros
+
 sealed trait TaskType
 object TaskType {
   case object DummyTask               extends TaskType

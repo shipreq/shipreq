@@ -1,6 +1,7 @@
 package shipreq.taskman.server
 
 import cats.effect.Resource
+import cats.~>
 import japgolly.clearconfig.ConfigSources
 import java.time.{Clock, Duration, Instant}
 import java.util.concurrent.{ExecutorService, TimeUnit}
@@ -50,26 +51,36 @@ final class TaskmanCtx(val db          : DbAccessor,
       f(emailExecutorService)
   }
 
+  val emails = new Emails(config.mail.envelopeProps, emailTokens)
+
   private val http = new OkHttpClient()
 
-  val sendMail: BusinessOp.SendEmail => Fx[Unit] =
-    config.mail.mechanism match {
-      case \/-(p) => new MailGun(p)(http)
-      case -\/(p) => new JavaMail(p.sessionFn())
+  val mailingList: MailingList.API ~> Fx =
+    config.mailingList match {
+      case TaskmanConfig.MailingListProps.NoOp            => MailingListNoOp
+      case TaskmanConfig.MailingListProps.ViaMailChimp(p) => new MailChimp(p)(http)
     }
 
-  val emails        = new Emails(config.mail.envelopeProps, emailTokens)
-  val freshdesk     = new FreshDesk0(config.freshdesk)(http).upgrade.unsafeRun()
-  val mailchimp     = new MailChimp(config.mailchimp)(http)
-  val mailingListId = config.mailchimp.audienceId
+  val sendMail: BusinessOp.SendEmail => Fx[Unit] =
+    config.mail.props match {
+      case TaskmanConfig.MailProps.ViaMailGun(p)  => new MailGun(p)(http)
+      case TaskmanConfig.MailProps.ViaJavaMail(p) => new JavaMail(p.sessionFn())
+      case TaskmanConfig.MailProps.NoOp           => MailNoOp
+    }
+
+  val supportDesk: Support.API ~> Fx =
+    config.supportDesk match {
+      case -\/(props) => new SupportViaMail(props, sendMail)
+      case \/-(props) => new FreshDesk0(props)(http).upgrade.unsafeRun()
+    }
 
   private val clockClock = Clock.systemUTC()
 
   implicit def trustPeriod   = config.taskman.trustPeriod
   implicit val taskmanApi    = TaskmanApi.addLogging(TaskmanApiImpl(None).trans(xa.trans))
-  implicit val businessOpFx  = new BusinessOpFx(sendMail, mailchimp, freshdesk, xa.trans, config.shipreq.schema)
+  implicit val businessOpFx  = new BusinessOpFx(sendMail, mailingList, supportDesk, xa.trans, config.shipreq.schema)
   implicit val serverOpFx    = new ServerOpFx(xa, new Worker.FailureHandler(emails)(businessOpFx))
-  implicit val businessLogic = new BusinessLogic(emails, async.emailScheduler, mailingListId)(businessOpFx)
+  implicit val businessLogic = new BusinessLogic(emails, async.emailScheduler)(businessOpFx)
   implicit val failurePolicy = Failure.failurePolicy
   implicit val clock         = Fx(clockClock.instant())
   implicit val nodeId        = serverOpFx.getNextNodeId.unsafeRun()

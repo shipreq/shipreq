@@ -34,6 +34,7 @@ const makeConfig = ({ mode, name, staticDir, htmlMinifyOptions }) => {
     }],
   });
   const webpackOutput = `/tmp/shipreq.webpack.${mode}`;
+  const webpackOutputWW = `/tmp/shipreq.webpack.${mode}.ww`;
   const dotMin = mode == 'dev' ? '' : '.min';
 
   const addSlash = d => (!d || /\/$/.test(d)) ? d : `${d}/`;
@@ -41,6 +42,13 @@ const makeConfig = ({ mode, name, staticDir, htmlMinifyOptions }) => {
   const fromWebpack = o => Object.assign({
     type: 'local',
     src: webpackOutput,
+    outputPath: staticDir,
+    outputName: name,
+  }, o);
+
+  const fromWebpackWW = o => Object.assign({
+    type: 'local',
+    src: webpackOutputWW,
     outputPath: staticDir,
     outputName: name,
   }, o);
@@ -187,6 +195,8 @@ const makeConfig = ({ mode, name, staticDir, htmlMinifyOptions }) => {
       vizJs: { type: 'local', files: 'vendor/viz.js', manifest: true },
 
       vizWasm: { type: 'local', files: 'vendor/viz.wasm', manifest: true },
+
+      ww: fromWebpackWW({ files: 'ww.js', manifest: CamelCase }),
 
       loadjs: { type: 'local', files: `node_modules/loadjs/dist/loadjs${dotMin}.js`, manifest: true },
     },

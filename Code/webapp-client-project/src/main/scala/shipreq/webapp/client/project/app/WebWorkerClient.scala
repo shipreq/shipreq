@@ -1,34 +1,46 @@
 package shipreq.webapp.client.project.app
 
 import boopickle.Pickler
-import japgolly.scalajs.react.AsyncCallback
+import japgolly.scalajs.react._
 import java.time.Duration
-import org.scalajs.dom.Worker
 import scala.scalajs.js.typedarray.ArrayBuffer
 import shipreq.base.util.JsExt._
 import shipreq.base.util._
 import shipreq.webapp.base.lib.LoggerJs
-import shipreq.webapp.client.ww.api.Protocol.Codec.{default => codec}
 import shipreq.webapp.client.ww.api._
-import shipreq.webapp.member.project.util.LruCache
+import shipreq.webapp.member.protocol.webworker._
+import shipreq.webapp.member.util.LruCache
 
 object WebWorkerClient {
 
-  type Instance = Client[WebWorkerCmd, codec.Reader, codec.Encoded]
+  val protocol = WebWorkerProtocol.default
 
-  def apply(wwJsUrl: String, logger: LoggerJs): Instance = {
-    val real = withoutCache(wwJsUrl, logger)
-    cache(real, logger)
-  }
+  type Instance = ManagedWebWorker.Client[WebWorkerCmd, WebWorkerPushCmd, protocol.Reader, protocol.Encoded]
 
-  def withoutCache(wwJsUrl: String, logger: LoggerJs): Instance = {
-    lazy val worker = new Worker(wwJsUrl)
-    Client.default[WebWorkerCmd](worker, logger)
-  }
+  def apply(worker: AbstractWebWorker.Client,
+            onPush: WebWorkerPushCmd => Callback,
+            logger: LoggerJs): CallbackTo[Instance] =
+    ManagedWebWorker.Client[WebWorkerCmd, WebWorkerPushCmd](
+      worker,
+      protocol,
+      onPush,
+      OnError.logToConsole, // TODO do better
+      logger
+    )
 
-  def cache(instance: Instance, logger: LoggerJs): Instance = {
+  def default(worker: AbstractWebWorker.Client,
+              onPush: WebWorkerPushCmd => Callback,
+              logger: LoggerJs): CallbackTo[Instance] =
+    apply(worker, onPush, logger).map(addCaching(_, logger))
+
+  def addCaching(instance: Instance, logger: LoggerJs): Instance = {
+    type Push = WebWorkerPushCmd
 
     type Cache = LruCache.ToAny[String]
+
+    var _cachingAllowed = true
+    val cachingAllowed  = AsyncCallback.delay { _cachingAllowed }
+    val disableCaching  = AsyncCallback.delay { _cachingAllowed = false }
 
     def newCache(dur: Duration): Cache =
       LruCache.toAny[String]
@@ -49,19 +61,29 @@ object WebWorkerClient {
       cacheByProject.reset.asAsyncCallback
 
     new Instance {
+
+      override def modOnPush(f: (Push => Callback) => Push => Callback): Callback =
+        instance.modOnPush(f)
+
       override def encode(cmd: WebWorkerCmd[_]): ArrayBuffer =
         instance.encode(cmd)
 
-      override def postEnc[A](cmd: WebWorkerCmd[A], enc: ArrayBuffer)(implicit p: Pickler[A]): AsyncCallback[A] = {
-        @inline def real = instance.postEnc(cmd, enc)
+      override def postEnc[A](req: WebWorkerCmd[A], enc: ArrayBuffer)(implicit p: Pickler[A]): AsyncCallback[A] = {
+        @inline def real = instance.postEnc(req, enc)
 
-        @inline def useCache(c: Cache) = {
-          val bin = BinaryData.unsafeFromArrayBuffer(enc)
-          val key = bin.binaryLikeString
-          c.asyncGetOrSetR(key, real)
-        }
+        @inline def useCache(c: Cache) =
+          cachingAllowed.flatMap {
 
-        cmd match {
+            case true =>
+              val bin = BinaryData.unsafeFromArrayBuffer(enc)
+              val key = bin.binaryLikeString
+              c.asyncGetOrSetR(key, real)
+
+            case false =>
+              real
+          }
+
+        req match {
           case _: WebWorkerCmd.GraphAllImplications
              | _: WebWorkerCmd.GraphReqImplications
              | _: WebWorkerCmd.GraphUseCaseFlow =>
@@ -75,8 +97,14 @@ object WebWorkerClient {
 
           case _: WebWorkerCmd.Init =>
             real
+
+          case WebWorkerCmd.ClearAndDisableCache =>
+            disableCaching >> clearProjectCache >> real
         }
       }
+
+      override def close: Callback =
+        instance.close
     }
   }
 }

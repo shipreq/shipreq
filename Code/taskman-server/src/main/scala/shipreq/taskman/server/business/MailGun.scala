@@ -2,6 +2,7 @@ package shipreq.taskman.server.business
 
 import cats.syntax.all._
 import io.circe.Json
+import japgolly.clearconfig._
 import scala.runtime.AbstractFunction1
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
@@ -11,6 +12,12 @@ import shipreq.taskman.server.logic.business.BusinessOp
 import shipreq.taskman.server.logic.business.BusinessOp.SendEmail
 
 object MailGun {
+
+  def config: ConfigDef[Props] =
+    ( ConfigDef.need[String]("domain"),
+      ConfigDef.need[String]("apiKey").secret,
+      ConfigDef.need[String]("tags").map(_.split(',').map(_.trim).filter(_.nonEmpty).toSet),
+    ).mapN(Props.apply)
 
   final case class Props(domain: String, apiKey: String, tags: Set[String]) {
 

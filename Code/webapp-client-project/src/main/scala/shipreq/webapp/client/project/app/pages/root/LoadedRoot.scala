@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.PackageBase._
 import monocle.Lens
 import org.scalajs.dom.window
 import shipreq.base.util.{Allow, ErrorMsg}
+import shipreq.webapp.base.data.ProjectPerm
 import shipreq.webapp.base.feature.AsyncFeature.Implicits._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
@@ -24,11 +25,10 @@ import shipreq.webapp.client.project.app.state._
 import shipreq.webapp.client.project.feature.{Usage, _}
 import shipreq.webapp.client.project.util.DataReusability._
 import shipreq.webapp.client.project.widgets._
-import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.member.feature.PreviewFeature
 import shipreq.webapp.member.project.data.{FilterDead, HideDead, Project, ProjectConfig, ReqId}
-import shipreq.webapp.member.project.event.VerifiedEvent
 import shipreq.webapp.member.project.filter.Filter
+import shipreq.webapp.member.project.library.ProjectLibrary
 import shipreq.webapp.member.project.protocol.websocket._
 import shipreq.webapp.member.project.text.{PlainText, ProjectText, TextSearch}
 import shipreq.webapp.member.protocol.entrypoint.ProjectSpaEntryPoint
@@ -38,17 +38,20 @@ object LoadedRoot {
   final case class Props(page: Page, routerCtl: RouterCtl)
 }
 
-final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
+final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutEncKey,
                        global            : Global,
                        confirmJs         : ConfirmJs,
                        promptJs          : PromptJs,
                        optionalFullscreen: OptionalFullscreen,
                        webWorkerClient   : WebWorkerClient.Instance,
+                       accessHandler     : AccessHandler,
                       ) {
 
-  val pxProjectAndOrd = global.pxProjectAndOrd
+  implicit def webStorage = global.localStorage
+
   val pxProject       = global.pxProject
   def unsafeProject() = global.unsafeProject()
+  def unsafeSupp()    = global.unsafeSupp()
 
   private val stateLensFilterDead =
     Lens[State, FilterDead](_._filterDead)(fd => _.setFilterDead(fd, unsafeProject()))
@@ -69,6 +72,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     private val sspUpdateSavedViews    = global.sspUpdateSavedViews.map(_.events)
     private val sspUpdateManualIssues  = Reusable.byRef(global.sspUpdateManualIssues)
     private val sspUpdateManualIssuesE = global.sspUpdateManualIssues.map(_.events)
+    private val sspUpdateAccess        = global.sspUpdateAccess
 
     private val feedbackModal: FeedbackModal = {
       val projectMetadata = global.projectMetadata(initPageData.projectId)
@@ -87,6 +91,12 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
     private val pxFilterDead =
       pxState.map(_.filterDead).withReuse
+
+    private val pxProjectAccess =
+      pxProject.map(_.access).withReuse
+
+    private val pxProjectPerm =
+      pxProjectAccess.map(_(initPageData.userId)).withReuse
 
     private val pxUseCases =
       pxProject.map(_.content.reqs.useCases).withReuse
@@ -236,6 +246,9 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
     private val manualIssueCmdAsyncW: AsyncFeature.Write.D1[ManualIssueCmd, ErrorMsg] =
       AsyncFeature.Write.D1.init($ zoomStateL State.manualIssueCmdAsync)
 
+    private val accessPageAsyncW: AsyncFeature.Write.D1[admin.access.AccessPage.AsyncKey, ErrorMsg] =
+      AsyncFeature.Write.D1.init($ zoomStateL State.accessPageAsync)
+
     private val updateConfigCmdInvoker: UpdateConfigCmd ~=> Callback =
       Reusable.fn(cmd => updateConfigCmdAsyncW(cmd)(sspUpdateConfigE(cmd)))
 
@@ -364,7 +377,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       sspCreateContent      = sspCreateContent,
       reqDetailRC           = routerCtlEP,
       webWorker             = webWorkerClient,
-      pxProjectAndOrd       = pxProjectAndOrd,
+      pxProject             = pxProject,
       pxViewReqDataCache    = pxViewReqDataCache,
       pxTextSearch          = pxTextSearch,
       pxProjectWidgetsNoCtx = pxProjectWidgets,
@@ -450,13 +463,13 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       def editRW           = editW.toReadWrite(editR)
       def filterDeadSS     = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
       def project          = unsafeProject()
-      def projectAndOrd    = pxProjectAndOrd.value()
       def projectWidgets   = pxProjectWidgets.value.value()
       def renderFeature    = pxRenderFeatureText.value()(s.filterDead)
       def savedViewFeature = SavedViewFeature(savedViewFeatureStatic, s.savedViews, project, s.filterDead)
       def usage            = pxUsage.value()
       def createPreviewRW  = pxCreatePreviewRW.value()
       def editorArgs       = pxEditorArgs.value()
+      def onlyAdminCanEdit = ProjectPerm.Admin.isSatisfiedBy(pxProjectPerm.value())
 
       val body: VdomElement = p.page match {
 
@@ -470,6 +483,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
           val pname = ProjectItem.WithEditableName.Props(
             cbProjectMetaData.runNow(),
+            onlyAdminCanEdit,
             StateSnapshot.zoomL(State.projectName)(s).setStateVia($),
             setProjectNameIO)
 
@@ -561,13 +575,26 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
 
         case Page.ReqGraph =>
           content.reqgraph.ReqGraphPage.Props(
-            projectAndOrd    = projectAndOrd,
+            project          = project,
             plainText        = pxPlainText.value(),
             reqDetailRC      = routerCtlEP,
             webWorker        = webWorkerClient,
             savedViewFeature = savedViewFeature,
             edgeEditorArgs   = someEdgeEditorArgs,
           ).render
+
+        case Page.Access =>
+          admin.access.AccessPage.Props(
+            userId          = initPageData.userId,
+            access          = project.access,
+            rolodex         = unsafeSupp().rolodex,
+            editability     = onlyAdminCanEdit,
+            state           = StateSnapshot.zoomL(State.access)(s).setStateVia($),
+            confirmJs       = confirmJs,
+            sspUpdateAccess = sspUpdateAccess,
+            async           = AsyncFeature.ReadWrite.D1(accessPageAsyncW, s.accessPageAsync.toRead),
+          ).render
+
       }
 
       State.recorder.record(s)
@@ -589,35 +616,30 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitData,
       ).render
     }
 
-    def onMount: Callback = {
-      val sendProjectToWebWorker: Callback =
-        for {
-          pao <- pxProjectAndOrd.toCallback
-          _   <- webWorkerClient.post(WebWorkerCmd.Init(pao, initPageData.assetManifest)).toCallback
-        } yield ()
+    def onMount: Callback =
+      Callback {
 
-      val installHooks: Callback =
-        Callback {
-          window.onbeforeunload = event => {
-            val u = pxUnsavedChanges.value()
-            if (u.nonEmpty) {
-              event.preventDefault()
-              event.returnValue = ""
-              ""
-            } else
-              ()
-          }
+        window.onbeforeunload = event => {
+          val u = pxUnsavedChanges.value()
+          if (u.nonEmpty) {
+            event.preventDefault()
+            event.returnValue = ""
+            ""
+          } else
+            ()
         }
 
-      sendProjectToWebWorker >> installHooks
-    }
+        window.onunload = _ => {
+          webWorkerClient.close.runNow()
+        }
+      }
 
-    def onProjectChange(u: ProjectState.Update): Callback = {
-      val updateWebWorker: Callback =
-        Callback.traverseOption(VerifiedEvent.NonEmptySeq.maybe(u.newlyAppliedEvents))(ves =>
-          webWorkerClient.post(WebWorkerCmd.UpdateProject(ves)).toCallback)
-
-      updateWebWorker >> $.forceUpdate
+    def onProjectChange(u: ProjectLibrary.Update): Callback = {
+      val access = u.newLibrary.latest.access(initPageData.userId)
+      if (access.isEmpty)
+        accessHandler.onRevoke
+      else
+        $.forceUpdate
     }
 
     def onConnectionStatusChange(c: ConnectionStatus): Callback = {

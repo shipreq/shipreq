@@ -3,7 +3,7 @@ package shipreq.webapp.base.feature.dragtoreorder
 import japgolly.microlibs.utils.Memo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.DragEffect
+import org.scalajs.dom.{DataTransferDropEffectKind, DataTransferEffectAllowedKind}
 import shipreq.webapp.base.feature.DragToReorderFeature
 import shipreq.webapp.base.feature.DragToReorderFeature.{Item, Update}
 import shipreq.webapp.base.util.{DomUtil, Reorder}
@@ -46,7 +46,7 @@ private[feature] final class Instance[A](getData            : CallbackTo[Vector[
     }
 
     def requireOwnMimeType(e: ReactDragEvent) =
-      CallbackOption.require(e.dataTransfer.types.contains(ownMimeType))
+      CallbackOption.require(e.dataTransfer.types.iterator.contains(ownMimeType))
 
     def detectIfDraggedOutside(expectedLoc: Option[DragLoc])(e: ReactDragEvent): Callback =
       for {
@@ -107,7 +107,7 @@ private[feature] final class Instance[A](getData            : CallbackTo[Vector[
           } yield {
             val dt = e.dataTransfer
             dt.setData(ownMimeType, "")
-            dt.effectAllowed = DragEffect.Move
+            dt.effectAllowed = DataTransferEffectAllowedKind.move
           }
 
         def dragEnd: ReactDragEvent => Callback =
@@ -143,7 +143,7 @@ private[feature] final class Instance[A](getData            : CallbackTo[Vector[
             _ <- requireOwnMimeType(e)
             s <- getDragState
             _ <- e.preventDefaultCB
-            _ <- Callback(e.dataTransfer.dropEffect = DragEffect.Move)
+            _ <- Callback(e.dataTransfer.dropEffect = DataTransferDropEffectKind.move)
             l = DragLoc.InChild(i)
             _ <- CallbackOption.unless((s.dragSource ==* i) && (s.dragLoc ==* l))
             _ <- setState(s.copy(dragLoc = l, currentOrder = Reorder.usingUnivEq(s.dragSource, i)(s.currentOrder)))

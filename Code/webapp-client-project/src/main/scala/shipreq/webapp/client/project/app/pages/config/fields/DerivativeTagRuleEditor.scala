@@ -433,12 +433,13 @@ private[fields] object DerivativeTagRuleEditor {
         editorRef.component(TagMod(
           *.derivativeTagsEditor(validity),
           updateOnChange,
-          ^.onBlur     --> autoCompleteOnBlur,
-          ^.onClick    ==> autoCompleteOnClick,
-          ^.onKeyDown  ==> autoCompleteOnKeyDown,
-          ^.spellCheck  := false,
-          ^.placeholder := "Define rules to combine tags by typing:\nrule1 + rule2 = newRule",
-          ^.value       := txt,
+          ^.onBlur           --> autoCompleteOnBlur,
+          ^.onClick          ==> autoCompleteOnClick,
+          ^.onKeyDown        ==> autoCompleteOnKeyDown,
+          ^.onKeyDownCapture ==> autoCompleteOnKeyDownCapture,
+          ^.spellCheck        := false,
+          ^.placeholder       := "Define rules to combine tags by typing:\nrule1 + rule2 = newRule",
+          ^.value             := txt,
         ))
 
       val showTag: TagId => String =

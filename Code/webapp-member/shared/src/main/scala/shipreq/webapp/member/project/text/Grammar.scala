@@ -2,7 +2,6 @@ package shipreq.webapp.member.project.text
 
 import monocle._
 import org.parboiled2.CharPredicate
-import shipreq.base.util.ScalaExt._
 import shipreq.webapp.base.util.TextMod
 import shipreq.webapp.member.project.data.{ExternalPubid, ReqType, ReqTypePos}
 import shipreq.webapp.member.project.text.GrammarSpec._

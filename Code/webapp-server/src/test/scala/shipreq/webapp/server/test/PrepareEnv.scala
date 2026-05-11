@@ -26,6 +26,8 @@ object PrepareEnv {
 
   Global.Instance = Global(
     config       = cfg,
+    cryptoD      = Crypto.default,
+    cryptoF      = Crypto.default,
     runDB        = null,
     logic        = null,
     metrics      = MetricsAlgebra.const(Fx.unit),

@@ -348,7 +348,7 @@ object Rev1 {
   implicit def encoderFieldReqTypeRules[D: Encoder]: Encoder[FieldReqTypeRules[D]] =
     Encoder.forProduct2("perReqType", "otherwise")(a => (a.perReqType, a.otherwise))
 
-  private[v1] implicit lazy val codecApplicableTagGD: JsonCodec[ApplicableTagGD.NonEmptyValues] = {
+  private[json] implicit lazy val codecApplicableTagGD: JsonCodec[ApplicableTagGD.NonEmptyValues] = {
     import ApplicableTagGD._
 
     implicit val codecValueForApplicableReqTypes = JsonCodec.xmap(ValueForApplicableReqTypes.apply)(_.value)
@@ -380,7 +380,7 @@ object Rev1 {
     codecNonEmptyMono[Values]
   }
 
-  private[v1] implicit lazy val codecCustomImpFieldGDv1: JsonCodec[CustomImpFieldGDv1.NonEmptyValues] = {
+  private[json] implicit lazy val codecCustomImpFieldGDv1: JsonCodec[CustomImpFieldGDv1.NonEmptyValues] = {
     import CustomImpFieldGDv1._
 
     implicit val codecValueForApplicableReqTypes = JsonCodec.xmap(ValueForApplicableReqTypes.apply)(_.value)
@@ -403,7 +403,7 @@ object Rev1 {
     codecNonEmptyMono[Values]
   }
 
-  private[v1] implicit lazy val codecCustomImpFieldGD: JsonCodec[CustomImpFieldGD.NonEmptyValues] = {
+  private[json] implicit lazy val codecCustomImpFieldGD: JsonCodec[CustomImpFieldGD.NonEmptyValues] = {
     import CustomImpFieldGD._
 
     implicit val codecValueForFieldReqTypeRules = JsonCodec.xmap(ValueForFieldReqTypeRules.apply)(_.value)
@@ -420,7 +420,7 @@ object Rev1 {
     codecNonEmptyMono[Values]
   }
 
-  private[v1] implicit lazy val codecCustomIssueTypeGD: JsonCodec[CustomIssueTypeGD.NonEmptyValues] = {
+  private[json] implicit lazy val codecCustomIssueTypeGD: JsonCodec[CustomIssueTypeGD.NonEmptyValues] = {
     import CustomIssueTypeGD._
 
     implicit val codecValueForDesc = JsonCodec.xmap(ValueForDesc.apply)(_.value)
@@ -440,7 +440,7 @@ object Rev1 {
     codecNonEmptyMono[Values]
   }
 
-  private[v1] implicit lazy val codecCustomReqTypeGD: JsonCodec[CustomReqTypeGD.NonEmptyValues] = {
+  private[json] implicit lazy val codecCustomReqTypeGD: JsonCodec[CustomReqTypeGD.NonEmptyValues] = {
     import CustomReqTypeGD._
 
     implicit val codecValueForImplication = JsonCodec.xmap(ValueForImplication.apply)(_.value)
@@ -466,7 +466,7 @@ object Rev1 {
     codecNonEmptyMono[Values]
   }
 
-  private[v1] implicit lazy val codecCustomTagFieldGDv1: JsonCodec[CustomTagFieldGDv1.NonEmptyValues] = {
+  private[json] implicit lazy val codecCustomTagFieldGDv1: JsonCodec[CustomTagFieldGDv1.NonEmptyValues] = {
     import CustomTagFieldGDv1._
 
     implicit val codecValueForMandatory          = JsonCodec.xmap(ValueForMandatory         .apply)(_.value)
@@ -489,7 +489,7 @@ object Rev1 {
     codecNonEmptyMono[Values]
   }
 
-  private[v1] implicit lazy val codecCustomTextFieldGDv1: JsonCodec[CustomTextFieldGDv1.NonEmptyValues] = {
+  private[json] implicit lazy val codecCustomTextFieldGDv1: JsonCodec[CustomTextFieldGDv1.NonEmptyValues] = {
     import CustomTextFieldGDv1._
 
     implicit val codecValueForKey                = JsonCodec.xmap(ValueForKey               .apply)(_.value)
@@ -515,7 +515,7 @@ object Rev1 {
     codecNonEmptyMono[Values]
   }
 
-  private[v1] implicit lazy val codecCustomTextFieldGD: JsonCodec[CustomTextFieldGD.NonEmptyValues] = {
+  private[json] implicit lazy val codecCustomTextFieldGD: JsonCodec[CustomTextFieldGD.NonEmptyValues] = {
     import CustomTextFieldGD._
 
     implicit val codecValueForName              = JsonCodec.xmap(ValueForName             .apply)(_.value)

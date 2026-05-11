@@ -1,6 +1,7 @@
 package shipreq.webapp.client.project.widgets
 
 import japgolly.microlibs.nonempty.NonEmpty
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.VdomElement
@@ -43,8 +44,7 @@ object ImplicationGraph {
 
   object Props {
 
-    final case class FocusReq(ord        : WebWorkerCmd.Ord,
-                              focus      : ReqId,
+    final case class FocusReq(focus      : ReqId,
                               filterDead : FilterDead,
                               project    : Project,
                               plainText  : PlainText.ForProject.AnyCtx,
@@ -55,8 +55,7 @@ object ImplicationGraph {
       override def edgeEditorArgs = None
     }
 
-    final case class All(ord           : WebWorkerCmd.Ord,
-                         reqWhitelist  : Option[Set[ReqId]],
+    final case class All(reqWhitelist  : Option[Set[ReqId]],
                          filterDead    : FilterDead,
                          config        : ImpGraphConfig,
                          project       : Project,
@@ -103,7 +102,7 @@ object ImplicationGraph {
       props match {
         case p: Props.FocusReq =>
           WebWorkerCmd.GraphReqImplications(
-            ord        = p.ord,
+            ord        = p.project.ord,
             focus      = p.focus,
             filterDead = p.filterDead,
             colours    = p.colours,
@@ -111,7 +110,7 @@ object ImplicationGraph {
 
         case p: Props.All =>
           WebWorkerCmd.GraphAllImplications(
-            ord        = p.ord,
+            ord        = p.project.ord,
             filterDead = p.filterDead,
             scope      = p.reqWhitelist,
             config     = p.config,
@@ -164,6 +163,9 @@ object ImplicationGraph {
         for (ee <- edgeEditor)
           ee.enrich(root, p.edgeEditorArgs)
       }
+
+    override def shutdown: Callback =
+      Callback(edgeEditor.foreach(_.disable()))
   }
 
   private[widgets] object HoverText {
@@ -367,9 +369,10 @@ object ImplicationGraph {
         }
     }
 
-    private def disable(): Unit = {
+    private[widgets] def disable(): Unit = {
       logger(_.debug("Disabling..."))
       point = null
+      setDragDelay(None)
 
       // Uninstall from global
       document.removeEventListener("keypress", onKeyPress)

@@ -13,10 +13,10 @@ import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
 import shipreq.webapp.base.util.Dirty
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
-import shipreq.webapp.client.project.app.state.NewEvents
 import shipreq.webapp.client.project.feature.Usage
 import shipreq.webapp.client.project.widgets.{ButtonAndDropdown, EditorButtons, ProjectWidgets, SplitScreenCrud, ViewTags}
 import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.project.library.NewEvents
 import shipreq.webapp.member.project.protocol.websocket.UpdateConfigCmd
 import shipreq.webapp.member.project.util.DataReusability._
 import shipreq.webapp.member.ui.Toast

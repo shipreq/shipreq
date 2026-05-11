@@ -1,11 +1,14 @@
 package shipreq.webapp.server.db
 
 import doobie._
+import doobie.postgres.circe.jsonb.implicits._
 import doobie.postgres.implicits._
-import japgolly.microlibs.adt_macros.AdtMacros
+import shipreq.base.db.BaseDoobieCodecs._
 import shipreq.base.db.DoobieHelpers._
+import shipreq.base.util.BinaryData
 import shipreq.webapp.base.data._
 import shipreq.webapp.server.logic.data._
+import shipreq.webapp.server.logic.util.Obfuscators
 
 object WebappDoobieCodecs {
 
@@ -48,40 +51,40 @@ object WebappDoobieCodecs {
   implicit val doobieReadUser: Read[User] =
     Read.apply2(User.apply)
 
-}
+  implicit val doobieReadGlobalEventSerialisationRowData: Read[GlobalEventSerialisation.RowData] =
+    Read.apply3(GlobalEventSerialisation.RowData.apply)
 
-/** @since DB migration v4.4 */
-sealed abstract class ResponseType(final val dbValue: String, final val idx: Int)
-object ResponseType {
-  case object `1xx` extends ResponseType("1xx", 0)
-  case object `2xx` extends ResponseType("2xx", 1)
-  case object `3xx` extends ResponseType("3xx", 2)
-  case object `4xx` extends ResponseType("4xx", 3)
-  case object `5xx` extends ResponseType("5xx", 4)
-  case object Other extends ResponseType("other", 5)
+  implicit val doobieWriteGlobalEventSerialisationRowData: Write[GlobalEventSerialisation.RowData] =
+    Write.apply3(a => (a.data, a.ip, a.userId))
 
-  def apply(code: Int): ResponseType =
-    if (code >= 200) {
-      if (code < 300)
-        `2xx`
-      else if (code < 400)
-        `3xx`
-      else if (code < 500)
-        `4xx`
-      else if (code < 600)
-        `5xx`
-      else
-        Other
-    } else {
-      if (code >= 100)
-        `1xx`
-      else
-        Other
-    }
+  implicit val doobieReadGlobalEventSerialisationRow: Read[GlobalEventSerialisation.Row] =
+    Read.apply2(GlobalEventSerialisation.Row)
 
-  implicit def univEq: UnivEq[ResponseType] = UnivEq.derive
+  implicit val doobieWriteGlobalEventSerialisationRow: Write[GlobalEventSerialisation.Row] =
+    Write.apply2(a => (a.`type`, a.data))
 
-  val values = AdtMacros.adtValues[ResponseType]
+  implicit val doobieMetaProjectEncryptionKey: Meta[ProjectEncryptionKey] =
+    Meta[BinaryData].timap(ProjectEncryptionKey.apply)(_.value)
 
-  assert(values.whole.indices.toSet == values.whole.map(_.idx).toSet)
+  implicit val doobieMetaUserEncryptionKey: Meta[UserEncryptionKey] =
+    Meta[BinaryData].timap(UserEncryptionKey.apply)(_.value)
+
+  implicit val doobieMetaProjectPerm: Meta[ProjectPerm] =
+    pgEnumString[ProjectPerm]("project_perm", {
+      case "admin"        => ProjectPerm.Admin
+      case "collaborator" => ProjectPerm.Collaborator
+    }, {
+      case ProjectPerm.Admin        => "admin"
+      case ProjectPerm.Collaborator => "collaborator"
+    })
+
+  implicit val doobieWriteArrayUsername: Write[Set[Username]] =
+    Write[List[String]].contramap(_.iterator.map(_.value).toList)
+
+  implicit val doobieWriteArrayUserId: Write[Set[UserId]] =
+    Write[List[Long]].contramap(_.iterator.map(_.value).toList)
+
+  implicit val doobieReadUserIdPublic: Read[UserId.Public] =
+    Read[Long].map(id => Obfuscators.userId.obfuscate(UserId(id)))
+
 }

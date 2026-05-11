@@ -6,7 +6,8 @@ import com.typesafe.scalalogging.StrictLogging
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.ops.Trace
 import shipreq.base.util.ErrorMsg
-import shipreq.webapp.base.data.ProjectId
+import shipreq.webapp.base.data.{ProjectCreator, ProjectId}
+import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.server.logic.algebra.{MetricsAlgebra, Server}
 
@@ -17,23 +18,23 @@ trait ApplyEventAlgebra[F[_]] { self =>
   def trust: Trust
   val appendFn: AppendFn[F]
 
-  final def create(pid: ProjectId, events: VerifiedEvent.Seq): F[Result] =
-    append(pid, ProjectAndOrd.empty, events)
+  final def create(pid: ProjectId, creator: ProjectCreator, events: VerifiedEvent.Seq): F[Result] =
+    append(pid, Project.init(creator), events)
 
   final def append(pid: ProjectId,
-                   pao: ProjectAndOrd,
+                   p: Project,
                    events: VerifiedEvent.Seq): F[Result] =
     if (events.isEmpty)
-      F.pure(\/-(pao))
+      F.point(\/-(p))
     else
-      appendFn(pid, pao, VerifiedEvent.NonEmptySeq.force(events))
+      appendFn(pid, p, VerifiedEvent.NonEmptySeq.force(events))
 }
 
 object ApplyEventAlgebra extends StrictLogging {
 
-  type Result = ErrorMsg \/ ProjectAndOrd
+  type Result = ErrorMsg \/ Project
 
-  type AppendFn[F[_]] = (ProjectId, ProjectAndOrd, VerifiedEvent.NonEmptySeq) => F[Result]
+  type AppendFn[F[_]] = (ProjectId, Project, VerifiedEvent.NonEmptySeq) => F[Result]
 
   def apply[F[_]](_trust: Trust)
                  (_appendFn: AppendFn[F])
@@ -45,13 +46,10 @@ object ApplyEventAlgebra extends StrictLogging {
     }
 
   def trusted[F[_]](implicit _F: Applicative[F]): ApplyEventAlgebra[F] =
-    apply(Trusted)((pid, pao, events) => _F.unit.map { _ =>
-      ApplyEvent.trusted.applyVerified(events)(pao.project) match {
-        case \/-(p2) =>
-          \/-(ProjectAndOrd(p2, Some(events.lastKey.ord.asLatest)))
-        case -\/(e) =>
-          logger.error(s"Failed to apply events [${events.head.ord},${events.last.ord}] on project #${pid.value}: $e")
-          -\/(ErrorMsg(s"${Server.ErrorMsgs.ShouldNeverHappen.value}: Event application failure."))
+    apply(Trusted)((pid, p, events) => _F.unit.map { _ =>
+      ApplyEvent.trusted(events)(p).leftMap { e =>
+        logger.error(s"Failed to apply events [${events.head.ord},${events.last.ord}] on project #${pid.value}: $e")
+        ErrorMsg(s"${Server.ErrorMsgs.ShouldNeverHappen.value}: Event application failure.")
       }
     })
 
@@ -68,19 +66,19 @@ object ApplyEventAlgebra extends StrictLogging {
     val trust              = underlying.trust
     val warnIfDurExceedsNs = warnIfDurExceedsMs * 1000 * 1000
 
-    apply(trust) { (pid, pao1, events) =>
+    apply(trust) { (pid, p1, events) =>
       for {
-        (res, dur) <- svr.measureDuration(underlying.appendFn(pid, pao1, events))
+        (res, dur) <- svr.measureDuration(underlying.appendFn(pid, p1, events))
         eventCount = res match {
-                       case \/-(pao2) => pao2.ordAsInt - pao1.ordAsInt
-                       case -\/(_)    => events.size
+                       case \/-(p2) => p2.ordAsInt - p1.ordAsInt
+                       case -\/(_)  => events.size
                      }
         _          <- metrics.appliedEvents(eventCount, dur, trust = trust)
       } yield {
         if (dur.getSeconds == 0 && dur.getNano < warnIfDurExceedsNs)
-          logger.info(s"Applied $eventCount events to project #${pid.value} v${pao1.ordAsInt} in ${dur.conciseDesc}")
+          logger.info(s"Applied $eventCount events to project #${pid.value} v${p1.ordAsInt} in ${dur.conciseDesc}")
         else
-          logger.warn(s"Applied $eventCount events to project #${pid.value} v${pao1.ordAsInt} in ${dur.conciseDesc}")
+          logger.warn(s"Applied $eventCount events to project #${pid.value} v${p1.ordAsInt} in ${dur.conciseDesc}")
         res
       }
     }

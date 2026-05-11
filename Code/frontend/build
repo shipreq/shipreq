@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd "$(dirname "$(readlink -e "$0")")" || exit 1
+cd "$(dirname "$0")" || exit 1
 
 # Run via docker if not already
 if [ -z "$SHIPREQ_DEV_NODE" ]; then
@@ -9,12 +9,12 @@ fi
 
 # ====================================================================================================================
 
-valid_targets=(dev prod test ssr)
+valid_targets=(dev prod test test-node ssr)
 
 args="$@"
 [ $# -eq 0 ] && args="${valid_targets[@]}"
 
-webpack="node_modules/.bin/webpack --color --display-reasons --display-modules --progress --config"
+webpack="node_modules/.bin/webpack --color --config"
 webtamp="node_modules/.bin/webtamp"
 [ -n "$WEBTAMP" ] && webtamp="$WEBTAMP/dist/cli.js"
 webtamp="$webtamp --config"
@@ -27,30 +27,47 @@ for mode in ${args[@]}; do
     dev|prod)
 
       # Clean
-      target1=/tmp/shipreq.webpack.$mode
+      target1r=/tmp/shipreq.webpack.$mode
+      target1w=/tmp/shipreq.webpack.$mode.ww
       target2=dist/$mode
-      rm -rf $target1 $target2 analysis/$mode.*
+      rm -rf $target1w $target1r $target2 analysis/$mode.* analysis/ww-$mode.*
 
-      # Webpack
-      $webpack webpack/$mode.js || exit $?
-      rm -f $target1/{admin}.js # These are empty. Their entrypoints in webpack exist for CSS only.
-      dos2unix $target1/*.{css,js}
-      [ $mode == prod ] && perl -pi -e 's/\n//g' $target1/*.css
-      cp $target1/analysis/* analysis/.
+      # Webpack (ww)
+      $webpack webpack/ww-$mode.js || exit $?
+      dos2unix $target1w/*.js
+      cp $target1w/analysis/* analysis/.
       echo
 
-      # Webtamp
-      $webtamp webtamp/$mode.js || exit $?
+      # Analysis (ww)
+      stats=analysis/ww-$mode.json
+      report=analysis/ww-$mode.txt
+      ./node_modules/.bin/webpack-bundle-size-analyzer < $stats \
+        | fgrep -v 'calculated before minification' \
+        | perl -pe 's/: /,/; s/ \(/,/; s/%\)$//' | column -t -s, | sort -k4nr | perl -pe 's/$/%/' \
+        > $report
+      cat $report
+      echo
 
-      # Analysis
+      # Webpack (runtime)
+      $webpack webpack/runtime-$mode.js || exit $?
+      rm -f $target1r/{admin}.js # These are empty. Their entrypoints in webpack exist for CSS only.
+      dos2unix $target1r/*.{css,js}
+      [ $mode == prod ] && perl -pi -e 's/\n//g' $target1r/*.css
+      cp $target1r/analysis/* analysis/.
+      echo
+
+      # Analysis (runtime)
       stats=analysis/$mode.json
       report=analysis/$mode.txt
       ./node_modules/.bin/webpack-bundle-size-analyzer < $stats \
         | fgrep -v 'calculated before minification' \
         | perl -pe 's/: /,/; s/ \(/,/; s/%\)$//' | column -t -s, | sort -k4nr | perl -pe 's/$/%/' \
         > $report
-      echo
       cat $report
+      echo
+
+      # Webtamp
+      $webtamp webtamp/$mode.js || exit $?
 
       # Done
       echo
@@ -61,6 +78,14 @@ for mode in ${args[@]}; do
       target=dist/test
       rm -rf $target
       $webpack webpack/test.js || exit $?
+      echo
+      ls -l $target
+      ;;
+
+    test-node)
+      target=dist/test-node
+      rm -rf $target
+      $webpack webpack/test-node.js || exit $?
       echo
       ls -l $target
       ;;

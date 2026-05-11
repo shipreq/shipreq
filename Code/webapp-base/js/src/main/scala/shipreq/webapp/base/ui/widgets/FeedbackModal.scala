@@ -86,7 +86,7 @@ object FeedbackModal {
               ^.placeholder := "What would you like to say?",
               ^.rows := 12,
               ^.onChange --> setState(SetState(Enabled, None, inFlight = false)),
-              GeneralTheme.submitOnCtrlEnter(submit(None))))),
+              GeneralTheme.submitOnCtrlOrCmdEnter(submit(None))))),
         errorMessage)
 
       override val justSubmit: AsyncCallback[SetState \/ OpResult] =

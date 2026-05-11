@@ -1,5 +1,6 @@
 package shipreq.webapp.member.test
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.test._
@@ -27,11 +28,12 @@ object AutoCompleteTestUtil {
     def render(state: String) = {
       def change = (e: ReactEventFromInput) => $.setState(e.target.value)
       <.textarea(
-        ^.value := state,
-        ^.onChange ==> change,
-        ^.onBlur --> autoCompleteOnBlur,
-        ^.onClick ==> autoCompleteOnClick,
-        ^.onKeyDown ==> autoCompleteOnKeyDown,
+        ^.onBlur           --> autoCompleteOnBlur,
+        ^.onChange         ==> change,
+        ^.onClick          ==> autoCompleteOnClick,
+        ^.onKeyDown        ==> autoCompleteOnKeyDown,
+        ^.onKeyDownCapture ==> autoCompleteOnKeyDownCapture,
+        ^.value             := state,
       ).withRef(domRef)
     }
 

@@ -10,9 +10,10 @@ import java.time.Instant
 import nyaya.gen._
 import nyaya.prop.LogicPropExt
 import shipreq.base.test.BaseUtilGen._
-import shipreq.base.test.IncCounter
+import shipreq.base.test.Incrementor
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
+import shipreq.webapp.base.data.{ProjectCreator, ProjectPerm, UserId}
 import shipreq.webapp.base.test.RandomBaseData
 import shipreq.webapp.base.test.RandomBaseData.unicodeString1
 import shipreq.webapp.member.project.data._
@@ -22,20 +23,42 @@ import shipreq.webapp.member.project.event.RetiredGenericData._
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.project.text.Text
 import shipreq.webapp.member.test.WebappBaseGen._
+import shipreq.webapp.member.test.WebappTestUtil
 import shipreq.webapp.member.test.project.ApplicableEventGen.ObserveFn
 import shipreq.webapp.member.test.project.DataTestExt._
 import shipreq.webapp.member.test.project.RandomData
-import shipreq.webapp.member.test.project.RandomData.{TextGen, TextGenExt, customReqTypeName, desc, exclusivity, fieldName, fieldRefKey, filter, filterDead, genColour, hashRefKey, implicationRequired, mandatory, reqCode, reqTypeMnemonic, tagGroupName}
+import shipreq.webapp.member.test.project.RandomData.{TextGen, TextGenExt, customReqTypeName, desc, exclusivity, fieldName, fieldRefKey, filter, filterDead, genColour, hashRefKey, implicationRequired, mandatory, projectPerm, reqCode, reqTypeMnemonic, tagGroupName}
 import shipreq.webapp.member.test.project.RandomEventStream.{ProjectDepGen, State}
+import shipreq.webapp.server.logic.util.Obfuscators
 
 final case class RandomEventStreamConfig(retiredEvents: Boolean,
                                          reqCodeEvents: Boolean,
-                                        )
+                                         userIds      : Option[NonEmptySet[UserId.Public]],
+                                         emptyProject : Project,
+                                        ) {
+
+  def activeOnly: RandomEventStreamConfig =
+    copy(retiredEvents = false)
+
+  def withUserIds(ids: NonEmptySet[UserId]): RandomEventStreamConfig =
+    withPublicUserIds(ids.map(Obfuscators.userId.obfuscate))
+
+  def withPublicUserIds(ids: NonEmptySet[UserId.Public]): RandomEventStreamConfig =
+    copy(userIds = Some(ids))
+
+  def withEmptyProject(p: Project): RandomEventStreamConfig =
+    copy(emptyProject = p)
+
+  def withCreator(p: ProjectCreator): RandomEventStreamConfig =
+    withEmptyProject(Project.init(p))
+}
 
 object RandomEventStreamConfig {
   val default = apply(
     retiredEvents = true,
     reqCodeEvents = true,
+    userIds       = None,
+    emptyProject  = WebappTestUtil.emptyProject1,
   )
 }
 
@@ -46,41 +69,42 @@ object RandomEventStreamConfig {
   * This differs from the events that [[RandomData]] can generate which are only valid in isolation and often don't
   * make sense as a consecutive stream.
   */
-object RandomEventStream extends RandomEventStreamDsl(ApplicableEventGen(_)) {
+object RandomEventStream extends RandomEventStreamDsl(RandomEventStreamConfig.default.emptyProject, ApplicableEventGen(_, _)) {
 
-  type State = (Project, EventOrd)
+  type State = Project
 
   type ProjectDepGen[A] = StateGen[State, A]
 
   def liftGE(eventGen: Gen[Event]): ProjectDepGen[VerifiedEvent] =
     liftPGE(_ => eventGen)
 
-  def liftPGE(eventGen: State => Gen[Event], maxAttempts: Int = 40): ProjectDepGen[VerifiedEvent] =
-    StateGen(s =>
-      eventGen(s).map(e =>
-        ApplyEvent.untrusted.apply1(e)(s._1) match {
-          case \/-(p2) => Some(((p2, s._2 + 1), VerifiedEvent(s._2, e, Instant.now())))
+  def liftPGE(eventGen: State => Gen[Event], maxAttempts: Int = 60): ProjectDepGen[VerifiedEvent] =
+    StateGen(p1 =>
+      eventGen(p1).map(e =>
+        ApplyEvent.untrusted.partialApplyUnverified(e)(p1) match {
+          case \/-(p2) => Some {
+            val ve = VerifiedEvent(p1.history.nextOrd, e, Instant.now())
+            val p3 = Project.history.modify(_ + ve)(p2)
+            (p3, ve)
+          }
           case -\/(_)  => None
         }
       ).optionGetLimit(maxAttempts)
     )
 
   private[project] def keepProject[A](g: ProjectDepGen[A]): ProjectDepGen[(A, Project)] =
-    StateGen(s => g.run(s).map(x => (x._1, (x._2, x._1._1))))
-
-  private[project] val emptyState: State =
-    (Project.empty, EventOrd.first)
+    StateGen(s => g.run(s).map(x => (x._1, (x._2, x._1))))
 
   val InitialEventCount = 2
 
-  private[project] lazy val initialEventGens: Vector[ProjectDepGen[VerifiedEvent]] =
+  private[project] def initialEventGens(emptyState: State): Vector[ProjectDepGen[VerifiedEvent]] =
     Vector(
       liftGE(RandomData.events.genProjectTemplateApply),
-      liftPGE(ApplicableEventGen(_).genProjectNameSet),
+      liftPGE(ApplicableEventGen(emptyState, _).genProjectNameSet),
     )
 
-  lazy val initialEvents: Gen[(State, Vector[VerifiedEvent])] =
-    initialEventGens.sequence.run(emptyState)
+  def initialEvents(emptyState: State): Gen[(State, Vector[VerifiedEvent])] =
+    initialEventGens(emptyState).sequence.run(emptyState)
 
 //  def applicableEventS[S](observe: ObserveFn[S]): StateGen[(S, Project), Event] =
 //    StateGen(sp =>
@@ -102,30 +126,32 @@ object RandomEventStream extends RandomEventStreamDsl(ApplicableEventGen(_)) {
 //    StateGen(spv => ss.gen.flatMap(n => gen.replicateM_(n)(spv)))
 //  }
 //
-//  def genEventStreamS[S](s0: S, p0: Project = Project.empty)(observe: ObserveFn[S])(implicit ss: SizeSpec): Gen[(S, VerifiedEvents)] =
+//  def genEventStreamS[S](s0: S, p0: Project = x)(observe: ObserveFn[S])(implicit ss: SizeSpec): Gen[(S, VerifiedEvents)] =
 //    eventStreamS(addVerifiedEventS(applicableEventS(observe)))(ss)((s0, p0), Vector.empty)
 //      .map { case (((s, _), vs), ()) => (s, vs) }
 //
-//  def withEventStats(p: Project = Project.empty)(implicit ss: SizeSpec): Gen[(EventStats, VerifiedEvents)] =
+//  def withEventStats(p: Project = x)(implicit ss: SizeSpec): Gen[(EventStats, VerifiedEvents)] =
 //    genEventStreamS(EventStats.empty, p)(EventStats.observeFn)
 
   def withConfig(mod: RandomEventStreamConfig => RandomEventStreamConfig): RandomEventStreamDsl =
     withConfig(mod(RandomEventStreamConfig.default))
 
   def withConfig(cfg: RandomEventStreamConfig): RandomEventStreamDsl =
-    new RandomEventStreamDsl(ApplicableEventGen(_, cfg))
+    new RandomEventStreamDsl(cfg.emptyProject, ApplicableEventGen(_, _, cfg))
 
-  val activeOnly =
+  val activeOnly: RandomEventStreamDsl =
     withConfig(_.copy(retiredEvents = false))
+
+  val projectPermOptions = ProjectPerm.values.iterator.map(Option(_)).toSet + None
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-sealed class RandomEventStreamDsl(applicableEventGen: State => ApplicableEventGen) {
-  import RandomEventStream.{emptyState, initialEvents, initialEventGens, keepProject, liftPGE}
+sealed class RandomEventStreamDsl(emptyState: State, applicableEventGen: (State, State) => ApplicableEventGen) {
+  import RandomEventStream.{initialEvents, initialEventGens, keepProject, liftPGE}
 
   val verifiedEvent: ProjectDepGen[VerifiedEvent] =
-    StateGen(applicableEventGen(_).verifiedEvent)
+    StateGen(applicableEventGen(emptyState, _).verifiedEvent)
 
   def verifiedEvents(implicit ss: SizeSpec): ProjectDepGen[Vector[VerifiedEvent]] =
     StateGen(state =>
@@ -133,14 +159,14 @@ sealed class RandomEventStreamDsl(applicableEventGen: State => ApplicableEventGe
         Vector.fill(size)(verifiedEvent).sequence.run(state)))
 
   def verifiedEventMatching(accept: Event => Boolean, maxAttempts: Int = 100): ProjectDepGen[VerifiedEvent] =
-    liftPGE(ApplicableEventGen(_).eventGen.map(e => Option.when(accept(e))(e)).optionGetLimit(maxAttempts))
+    liftPGE(ApplicableEventGen(emptyState, _).eventGen.map(e => Option.when(accept(e))(e)).optionGetLimit(maxAttempts))
 
   def verifiedEventOfTypes(types: NonEmptySet[EventName]): ProjectDepGen[VerifiedEvent] =
-    liftPGE(ApplicableEventGen(_).eventGenOfTypes(types))
+    liftPGE(ApplicableEventGen(emptyState, _).eventGenOfTypes(types))
 
   def entireEventStream(implicit ss: SizeSpec): Gen[(State, Vector[VerifiedEvent], Vector[VerifiedEvent])] =
     for {
-      (s1, e1) <- initialEvents
+      (s1, e1) <- initialEvents(emptyState)
       (s2, e2) <- verifiedEvents(ss).run(s1)
     } yield (s2, e1, e2)
 
@@ -152,7 +178,7 @@ sealed class RandomEventStreamDsl(applicableEventGen: State => ApplicableEventGe
   def eventStreamWithProjects(implicit ss: SizeSpec): Gen[Vector[(VerifiedEvent, Project)]] = {
     StateGen { (state: State) =>
       ss.gen.flatMap { size =>
-        def steps() = initialEventGens.iterator.map(keepProject) ++ Iterator.fill(size)(keepProject(verifiedEvent))
+        def steps() = initialEventGens(emptyState).iterator.map(keepProject) ++ Iterator.fill(size)(keepProject(verifiedEvent))
         steps().toVector.sequence.run(state)
       }
     }.runA(emptyState)
@@ -164,24 +190,20 @@ sealed class RandomEventStreamDsl(applicableEventGen: State => ApplicableEventGe
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
 
-
-
-// =====================================================================================================================
-
 object ApplicableEventGen {
-  def apply(curState: State, config: RandomEventStreamConfig = RandomEventStreamConfig.default): ApplicableEventGen =
-    new ApplicableEventGen(curState, config)
+  def apply(emptyState: State, curState: State, config: RandomEventStreamConfig = RandomEventStreamConfig.default): ApplicableEventGen =
+    new ApplicableEventGen(emptyState, curState, config)
 
   type ObserveFn[S] = (S, Event, ApplyEvent.Result) => S
 }
 
-final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig) {
-  val p = curState._1
+final class ApplicableEventGen(emptyState: State, curState: State, config: RandomEventStreamConfig) {
+  val p = curState
 
   private implicit val gss: SizeSpec = 0 to 3
 
   // If the starting state isn't valid, event application will never succeed and thus, loop forever
-  if (p ne Project.empty)
+  if (p ne emptyState)
     DataProp.project.allIncludingConfig assert p
 
   private val cfg = p.config
@@ -195,25 +217,25 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
     StaticField.optional.whole.partition(cfg.fields.staticFieldSet.contains)
 
   val nextReqId: Gen[Int] =
-    IncCounter genInt p.idCeilings.req
+    Incrementor.int gen p.idCeilings.req
 
   val nextGenericReqId: Gen[GenericReqId] =
     nextReqId map GenericReqId
 
   val nextReqCodeIdA: Gen[ApReqCodeId] =
-    IncCounter genInt p.idCeilings.reqCode map ApReqCodeId.apply
+    Incrementor.int gen p.idCeilings.reqCode map ApReqCodeId.apply
 
   val nextReqCodeIdG: Gen[ReqCodeGroupId] =
-    IncCounter genInt p.idCeilings.reqCode map ReqCodeGroupId
+    Incrementor.int gen p.idCeilings.reqCode map ReqCodeGroupId
 
   val nextCustomIssueTypeId: Gen[CustomIssueTypeId] =
-    IncCounter genInt p.idCeilings.customIssueType map CustomIssueTypeId
+    Incrementor.int gen p.idCeilings.customIssueType map CustomIssueTypeId
 
   val nextCustomReqTypeId: Gen[CustomReqTypeId] =
-    IncCounter genInt p.idCeilings.customReqType map CustomReqTypeId
+    Incrementor.int gen p.idCeilings.customReqType map CustomReqTypeId
 
   val nextCustomField: Gen[Int] =
-    IncCounter genInt p.idCeilings.customField
+    Incrementor.int gen p.idCeilings.customField
 
   val nextCustomFieldImplicationId: Gen[CustomField.Implication.Id] =
     nextCustomField map CustomField.Implication.Id
@@ -225,7 +247,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
     nextCustomField map CustomField.Text.Id
 
   val nextTagId: Gen[Int] =
-    IncCounter genInt p.idCeilings.tag
+    Incrementor.int gen p.idCeilings.tag
 
   val nextApplicableTagId: Gen[ApplicableTagId] =
     nextTagId map ApplicableTagId
@@ -237,10 +259,10 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
     nextReqId map UseCaseId
 
   val nextUseCaseStepId: Gen[UseCaseStepId] =
-    IncCounter genInt p.idCeilings.useCaseStep map UseCaseStepId
+    Incrementor.int gen p.idCeilings.useCaseStep map UseCaseStepId
 
   val nextSavedViewId: Gen[SavedView.Id] =
-    IncCounter genInt p.idCeilings.savedView map SavedView.Id
+    Incrementor.int gen p.idCeilings.savedView map SavedView.Id
 
   val tagId: Live => Option[Gen[TagId]] =
     tryGenChooseLiveDead(l => p.config.tags.tree.valuesIterator.map(_.tag).filter(_.live is l).map(_.id))
@@ -629,7 +651,7 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
     )
 
   def genProjectTemplateApply: Option[Gen[ProjectTemplateApply]] =
-    if (p eq Project.empty)
+    if (p eq emptyState)
       Some(RandomData.events.genProjectTemplateApply)
     else
       None
@@ -1031,9 +1053,70 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
   def genManualIssueDelete: Option[Gen[ManualIssueDelete]] =
     manualIssueId.map(_ map ManualIssueDelete)
 
+  def genAccessUpdate: Option[Gen[AccessUpdate]] = {
+    type Entries = Vector[(UserId.Public, Option[ProjectPerm])]
+
+    val access = p.access.asMap
+
+    val newUserGen: Option[Gen[UserId.Public]] =
+      config.userIds match {
+        case Some(ids) => NonEmptySet.option(ids.whole -- access.keySet).map(Gen.chooseNE(_))
+        case None      => Some(RandomData.userIdPublic)
+      }
+
+    def update: Gen[Entries] =
+      Gen.subset1(access.keys.toVector).flatMap { ids =>
+        Gen.traverse(ids) { id =>
+          Gen.choose_!(RandomEventStream.projectPermOptions - access.get(id))
+            .map((id, _))
+        }
+      }
+
+    newUserGen match {
+
+      case Some(genNewUser) =>
+        // Can add new users
+
+        def add: Gen[Entries] =
+          (genNewUser & projectPerm.map(Some(_))).vector(1 to 4)
+
+        val entries: Gen[Entries] =
+          Gen.chooseInt(3).flatMap {
+            case 0 => update
+            case 1 => add
+            case _ => Gen.lift2(update, add)(_ ++ _)
+          }
+
+        Some(entries.flatMap { es =>
+          val m = es.toMap
+          val u = ProjectAccess.empty.update(m)
+          if (u.hasAdmin)
+            Gen pure AccessUpdate(m)
+          else
+            genNewUser.map(u => AccessUpdate(m.updated(u, Some(ProjectPerm.Admin))))
+        })
+
+      case None =>
+        // Can't add new users
+        Option.when(access.sizeIs >= 2) {
+          update.map { es =>
+            val m = es.toMap
+            val u = ProjectAccess.empty.update(m)
+            if (u.hasAdmin)
+              AccessUpdate(m)
+            else {
+              val existingAdmin = access.find(_._2 ==* ProjectPerm.Admin).get._1
+              AccessUpdate(m - existingAdmin)
+            }
+          }
+        }
+    }
+  }
+
   private val possibleActiveEventGensWithNames: NonEmptyVector[(EventName, Option[Gen[ActiveEvent]])] =
     valuesForAdt[ActiveEvent, (EventName, Option[Gen[ActiveEvent]])] {
       // Note: not using [case e: Xxx => EventName(e) -> xxx] here because the valuesForAdt doesn't like it
+      case _: AccessUpdate            => EventName("AccessUpdate"           ) -> genAccessUpdate
       case _: ApplicableTagCreate     => EventName("ApplicableTagCreate"    ) -> genApplicableTagCreate
       case _: ApplicableTagUpdate     => EventName("ApplicableTagUpdate"    ) -> genApplicableTagUpdate
       case _: ContentRestore          => EventName("ContentRestore"         ) -> genContentRestore
@@ -1140,21 +1223,23 @@ final class ApplicableEventGen(curState: State, config: RandomEventStreamConfig)
 //  def applyEventSG[S](observe: ObserveFn[S]): StateGen[S, (Event, Project)] =
 //    StateGen.tailrec[S, (Event, Project)](s =>
 //      eventGen.map { e =>
-//        val r = ApplyEvent.untrusted.apply1(e)(p)
+//        val r = ApplyEvent.untrusted(e)(p)
 //        val s2 = observe(s, e, r)
 //        r.bimap(_ => s2, p2 => (s2, (e, p2)))
 //      }
 //    )
 
-  def applicableEventS[S](init: S)(observe: ObserveFn[S]): Gen[((S, Project), Event)] =
+  def applicableEventS[S](init: S)(observe: ObserveFn[S]): Gen[((S, Project), Event)] = {
+    import Project.Equality.WithHistoryByOrd._
     Monad[Gen].tailRecM(init)(s =>
       eventGen.map { e =>
-        var r = ApplyEvent.untrusted.apply1(e)(p)
+        var r = ApplyEvent.untrusted.partialApplyUnverified(e)(p)
         r foreach { p2 => if (p === p2) r = -\/(ErrorMsg("No change")) }
         val s2 = observe(s, e, r)
         r.bimap(_ => s2, p2 => ((s2, p2), e))
       }
     )
+  }
 
   def verifiedEvent: Gen[(State, VerifiedEvent)] =
     RandomEventStream.liftGE(eventGen).run(curState)

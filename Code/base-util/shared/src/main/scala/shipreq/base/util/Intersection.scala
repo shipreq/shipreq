@@ -78,12 +78,14 @@ abstract class Intersection[A, B] {
     Prism((_: Option[A]) flatMap getOption)(reverse.getOption)
 
   def strengthL[L]: Intersection[(L, A), (L, B)] = {
-    def lift[X, Y](f: X => Option[Y]): ((L, X)) => Option[(L, Y)] = lx => f(lx._2).map((lx._1, _))
+    def lift[X, Y](f: X => Option[Y]): ((L, X)) => Option[(L, Y)] =
+      lx => f(lx._2).map((lx._1, _))
     Intersection(lift(getOption))(lift(reverse.getOption))
   }
 
   def strengthR[R]: Intersection[(A, R), (B, R)] = {
-    def lift[X, Y](f: X => Option[Y]): ((X, R)) => Option[(Y, R)] = xr => f(xr._1).map((_, xr._2))
+    def lift[X, Y](f: X => Option[Y]): ((X, R)) => Option[(Y, R)] =
+      xr => f(xr._1).map((_, xr._2))
     Intersection(lift(getOption))(lift(reverse.getOption))
   }
 

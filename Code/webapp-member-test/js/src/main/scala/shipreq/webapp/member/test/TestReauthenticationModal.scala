@@ -30,8 +30,8 @@ class TestReauthenticationModal(initialResponse: Option[ErrorMsg \/ Permission])
         }
       }.flatten
 
-  def modal(username: Username, rootDom: Element = document.body) =
-    ReauthenticationModal(username, proc, rootDom, 0)(localStorage)
+  def modal(username: Username, rootDom: Element = document.body)(implicit ls: AbstractWebStorage) =
+    ReauthenticationModal(username, proc, rootDom, 0)(ls)
 }
 
 object TestReauthenticationModal {

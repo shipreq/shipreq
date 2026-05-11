@@ -73,6 +73,25 @@ object Url {
 
       def apply(a: A): Relative =
         new Relative(prefixNoHeadSlash + suffix(a))
+
+      def thenParam[B](f: B => String): Relative.Param2[A, B] =
+        thenParam("/", f)
+
+      def thenParam[B](sep: String, f: B => String): Relative.Param2[A, B] =
+        new Relative.Param2(prefix, suffix, sep, f)
+    }
+
+    /** Represents `/prefix/<A><sep><B>`; the param is always last */
+    final class Param2[-A, -B] private[Relative](val prefix: Relative, val pa: A => String, val sep: String, val pb: B => String) {
+
+      val prefixNoHeadSlash: String =
+        if (prefix.isRoot)
+          ""
+        else
+          prefix.relativeUrlNoHeadOrTailSlash + "/"
+
+      def apply(a: A, b: B): Relative =
+        new Relative(prefixNoHeadSlash + pa(a) + sep + pb(b))
     }
 
     final class MutableMap[A] {

@@ -1,7 +1,91 @@
+========================================================================================================================
+# Open-source
+
+* record usage videos (Davinci Resolve)
+* create a blog
+* point shipreq.com (and/or .org) at a blog
+* CDN: update infra diagram
+* CDN: document use, reason, including need for fake-cdn docker image
+* add a place for discussion, maybe discord
+* choose a licence
+
+========================================================================================================================
+# Fix Taskman
+
+* Does MailGun still work?
+* Find an alternative to MailChimp
+
+========================================================================================================================
+# Misc
+
+* revise UI prototype for the project "status" page
+
+========================================================================================================================
+# project access WIP
+
+* plan:
+  1. implement (with tests) project access API (ensuring read-only unless admin)
+    1. [x] project access page
+      1. [x] new user (read-only unless admin)
+      1. [x] existing user (read-only unless admin)
+      1. [x] leave
+  1. add admin permission checks to the frontend:
+    1. [x] project renaming
+  1. add read-only access
+    1. [ ] backend and protocol work
+    1. [ ] read-only UI: Editability
+    1. [ ] read-only UI: everywhere else (manually check)
+
+* when users can be used as field values:
+  * should the rolodex contain info of users who've had access revoked?
+    seems necessary to display references to them in fields
+    * potential solution:
+      - allow perm to be NULL in project_access table
+      - populate rolodex includes entries with NULL perms
+      - update DB projectSpaInitPage to require non-null perm
+  * references to users who've had access revoked should appear as issues in the Issues page
+
+========================================================================================================================
+# Phase 3
+
+* Getting back in to it:
+  * Add usernames to teams (`@@xxx`)
+  * Create user_group in DB, plus r/w ability, and verification on writes
+  * Add contacts to DB (for users and user groups)
+  * Create invitations in DB
+  * Ensure that contacts are always kept up-to-date on appropriate events
+  * Create new home page layout/sidebar
+  * Add the teams UI (minus the projects part) including update, and invitation management
+  * Broadcast certain global events so that teams and invitations UIs update in real-time (including contacts updates too)
+  * Test changes from actions -> redis -> client. Make this pretty reusable cos it's gonna get used a lot
+
+
+* Require node > 15 in docker build env
+* Upgrade sbt in docker build env
+* upgrade graal & docker images
+
+* fix duplicated scalacOptions
+
+* Test (and implement?) desired behaviour when SafePickler protocol fails
+  - server -> spa via web-socket
+  - spa <- css
+  - ww <- css
+
+* add test ProjectSpaProtocolsTest:InitApp:resp:success
+
+* DB tables:
+  * new table: user_group
+  * new table: project_group
+  * new table: inv
+  * new table: invpage
+  * new table: draft
+
+* recreate RedisProtocolTest at the end of topic/v3.0
+
+========================================================================================================================
 ### Problems
 * Use full name in Req Type column - the abbreviation is already in the ID (which is always on the screen)
 * Auto list-item spacing is annoying
-* Bug: Create new project, it appears with "Created 7 months ago". Refreshing page fixes the problem.
 
 
 ### Improvements
@@ -12,6 +96,8 @@
 * Consider edge replacement in validation (eg. turning A->B into B->A) -- requires new event
 * add a KB shortcut to show/hide preview
 * add a req type filter to field config
+* add autocomplete from ` [lab` to ` [label="$CURSOR$"]`
+* add trailing NL to multiline editor text
 
 
 
@@ -21,7 +107,6 @@ Backlog (maybe-probably soon)
 * Need a way to import/export project config
 * Add Change Count field to ReqTable/Detail (help find most volatile/unstable reqs)
 * Bulk tag add/remove
-* Advanced colour picker doesn't work
 * ReqTable doesn't respect `max-width` unless `table-layout:fixed`
 * Add percentages to deriv expl (?)
 * add blockquotes

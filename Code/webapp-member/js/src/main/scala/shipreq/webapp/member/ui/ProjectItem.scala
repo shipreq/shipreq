@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.base.util.ErrorMsg
+import shipreq.base.util.{Allow, ErrorMsg, Permission}
 import shipreq.webapp.base.config.Urls
 import shipreq.webapp.base.feature.{AsyncFeature, EditorStatus}
 import shipreq.webapp.base.ui.semantic.{Icon, Size, Statistic, StatisticGroup}
@@ -71,6 +71,7 @@ object ProjectItem {
   object WithEditableName {
 
     final case class Props(item           : ProjectMetaData,
+                           editability    : Permission,
                            state          : StateSnapshot[State],
                            renameProjectIO: String => Callback) {
       @inline def render = Component(this)
@@ -109,12 +110,14 @@ object ProjectItem {
       val updateEditText: String => Callback =
         s => $.props.flatMap(_.state.modState(State setEdit s))
 
-      def renderView(p: Props): TagMod =
+      def renderView(p: Props): TagMod = {
+        val editableInline = EditControlsFeature.editableInline(p.state setState Some(EditState(p.item.name, None)))
         TagMod(
           <.h1(*.itemHeaderRW,
-            EditControlsFeature.editableInline(p.state setState Some(EditState(p.item.name, None))),
+            editableInline.when(p.editability is Allow),
             p.item.name),
           ProjectItem.renderMeta(p.item))
+      }
 
       def renderEditor(p: Props, s: EditState): TagMod = {
         val status =
@@ -130,9 +133,13 @@ object ProjectItem {
           .render
       }
 
-      def render(p: Props): VdomElement =
-        ProjectItem.renderLeftContent(p.item)(
-          p.state.value.fold(renderView(p))(renderEditor(p, _)))
+      def render(p: Props): VdomElement = {
+        val body = p.state.value match {
+          case Some(s) if p.editability is Allow => renderEditor(p, s)
+          case _                                 => renderView(p)
+        }
+        ProjectItem.renderLeftContent(p.item)(body)
+      }
     }
 
     val Component = ScalaComponent.builder[Props]

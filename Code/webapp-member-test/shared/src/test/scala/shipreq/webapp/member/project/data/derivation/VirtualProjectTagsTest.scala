@@ -594,13 +594,18 @@ object VirtualProjectTagsTest extends TestSuite {
       "sdt5"   - assertProps(SampleDerivativeTags5.project)
       "real1"  - assertProps(RealProject1.project)
 
+      "rnd3" - {
+        val p = RandomData.projectNoHistory.withSeed(3).sample()
+        assertProps(p)
+      }
+
       "random" - {
 //        import nyaya.prop._
 //        import nyaya.test.PropTestOps._
 //        import nyaya.test.DefaultSettings._
 //        RandomData.project.bugHunt(308, seeds = 1000)(Prop.eval(p => Eval.atom("Props", (), { assertProps(p); None })))
 
-        RandomData.project.samples().take(3).foreach(assertProps)
+        RandomData.projectNoHistory.samples().take(3).foreach(assertProps)
       }
     }
   }

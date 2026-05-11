@@ -1,5 +1,6 @@
 package shipreq.webapp.base.test
 
+import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.testutil.TestUtil
 import japgolly.scalajs.react.test._
 import japgolly.scalajs.react.vdom.html_<^.VdomAttr
@@ -45,10 +46,10 @@ import teststate.run.Report.AssertionSettings
 //   implicit def catsNatTransToTestState[F[_], G[_]](implicit t: T.~~>[F, G]): F ~> G =
 //     new (F ~> G) { def apply[A](fa: F[A]) = t(fa) }
 
-//   implicit def catsEqualFromTestState[A](implicit e: Equal[A]): Eq[A] =
+//   implicit def catsEqualFromTestState[A](implicit e: Eq[A]): Eq[A] =
 //     Eq.instance(e.equal)
 
-//   implicit def catsEqualToTestState[A](implicit e: Eq[A]): Equal[A] =
+//   implicit def catsEqualToTestState[A](implicit e: Eq[A]): Eq[A] =
 //     Equal(e.eqv)
 // }
 
@@ -110,15 +111,28 @@ object TestState
     val name = eventName.toLowerCase
     val interface =
       if (name.startsWith("mouse") || name.contains("click"))
-        "MouseEvents" // pluralised - not a typo. See MDN
+        "MouseEvent"
       else if (name.startsWith("key"))
-        "KeyboardEvents" // pluralised - not a typo. See MDN
+        "KeyboardEvent"
       else
-        "Event" // singular - not a typo. See MDN
+        "Event"
     val event = document.createEvent(interface)
     event.asInstanceOf[js.Dynamic].initEvent(name, true, true)
+
+    // JSDOM has read-only properties on Event objects.
+    // This proxy-like approach allows SimEvent to set properties.
+    val proxy = new js.Object().asInstanceOf[js.Dynamic]
     if (mod ne null)
-      mod(event)
+      mod(proxy.asInstanceOf[dom.Event])
+
+    js.Dynamic.global.Object.keys(proxy).asInstanceOf[js.Array[String]].foreach { key =>
+      js.Dynamic.global.Object.defineProperty(event, key, js.Dynamic.literal(
+        value = proxy.selectDynamic(key),
+        writable = true,
+        configurable = true
+      ))
+    }
+
     target.dispatchEvent(event)
   }
 

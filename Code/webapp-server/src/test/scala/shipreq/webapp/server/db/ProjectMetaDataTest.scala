@@ -1,10 +1,11 @@
 package shipreq.webapp.server.db
 
 import shipreq.base.test.db.TestDb
+import shipreq.webapp.base.data.ProjectCreator
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.project.event.{ActiveEvent, EventOrd, VerifiedEvent}
 import shipreq.webapp.member.test.project.RandomEventStream
-import shipreq.webapp.server.logic.config.ProjectAccessHacks
+import shipreq.webapp.member.test.project.UnsafeTypes.projectCreatorFromUserId
 import shipreq.webapp.server.logic.util.Obfuscators
 import shipreq.webapp.server.test.DbUtil
 import shipreq.webapp.server.test.WebappServerTestUtil._
@@ -19,13 +20,14 @@ object ProjectMetaDataTest extends TestSuite {
     "test" - TestDb.withImperativeXA { xa =>
       val dbu = DbUtil(xa)
       import dbu.dbAlgebra
-      val hacks = ProjectAccessHacks.empty
 
       val uid = dbu.newUserId()
 
       // Do this twice to ensure that other projects' events don't interfere
       for (_ <- 1 to 2) {
-        val (_, ves1, ves2) = RandomEventStream.activeOnly.entireEventStream(50).samples().next()
+        val uids = dbu.userIdsNE()
+        val creator = uids.head: ProjectCreator
+        val (_, ves1, ves2) = RandomEventStream.withConfig(_.activeOnly.withCreator(creator).withUserIds(uids)).entireEventStream(50).samples().next()
         val initEvents = ves1.length
 
         val pid = dbu.newProjectId(uid, ves1.map(_.event.active))
@@ -42,7 +44,7 @@ object ProjectMetaDataTest extends TestSuite {
           }
 
         // Mandatory events first
-        var p = applyVerifiedEventSuccessfully(Project.empty, ves1: _*)
+        var p = applyVerifiedEventSuccessfully(Project.init(creator), ves1: _*)
 
         for (idx <- ves2.indices) {
           val ve = ves2(idx)
@@ -50,7 +52,7 @@ object ProjectMetaDataTest extends TestSuite {
           p = applyEventSuccessfully(p, ve.event)
           writeEvent(ve, idx2, p)
 
-          val md = (xa ! dbAlgebra.getAllProjectMetaDataForUser(uid, hacks)).find(_.id == pidPub).getOrElse(
+          val md = (xa ! dbAlgebra.getAllProjectMetaDataForUser(uid)).find(_.id == pidPub).getOrElse(
             fail(s"ProjectMetaData not found for $pid."))
 
           val expectTotal = idx2 + 1

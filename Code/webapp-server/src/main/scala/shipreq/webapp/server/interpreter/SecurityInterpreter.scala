@@ -16,7 +16,6 @@ import scala.util.{Failure, Success, Try}
 import shipreq.base.ops.Trace
 import shipreq.base.util.CatsExtra.ApplicativeDelay
 import shipreq.base.util.log.WebappLogFields
-import shipreq.base.util.{Allow, Permission}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.util.Obfuscated
 import shipreq.webapp.server.logic.algebra.Security.{SessionId, SessionRestoreResult, SessionToken}
@@ -180,7 +179,4 @@ final class SecurityInterpreter[F[_]](implicit _F: Monad[F],
       case None =>
         fNoToken
     }
-
-  override def allowProjectAccess(requester: User, projectId: ProjectId, projectOwner: UserId): Permission =
-    Allow.when(requester.id ==* projectOwner) | config.projectAccessHacks(requester, projectId)
 }

@@ -7,8 +7,8 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.util.{Success, Try}
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.client.project.app.WebWorkerClient
-import shipreq.webapp.client.ww.api.WebWorkerCmd
 import shipreq.webapp.client.ww.api.WebWorkerCmd.NoResult
+import shipreq.webapp.client.ww.api._
 import shipreq.webapp.member.project.data.Svg
 
 final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
@@ -18,6 +18,15 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
   private var responses = Vector.empty[(WebWorkerCmd[_], Int) => Option[Any]]
   private var requests  = Vector.empty[WebWorkerCmd[_]]
   private var pending   = Vector.empty[Pending]
+  private var onPush    = (cmd: WebWorkerPushCmd) => Callback.log("Ignoring WebWorkerPushCmd." + cmd)
+
+  override def modOnPush(f: (WebWorkerPushCmd => Callback) => WebWorkerPushCmd => Callback): Callback =
+    Callback {
+      onPush = f(onPush)
+    }
+
+  override def close: Callback =
+    Callback.empty
 
   override def encode(cmd: WebWorkerCmd[_]): ArrayBuffer =
     null
@@ -26,10 +35,10 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
     AsyncCallback.suspend {
       val id = requests.length
       requests :+= cmd
-      logger(_.info(s"WW received request #${id + 1}: ${cmd.toString.quoteInner.take(100)}"))
+      logger(_.info(s"WW received request #${id + 1}: ${cmd.toString.escape.take(100)}"))
       responses.iterator.map(_ (cmd, id)).filterDefined.nextOption() match {
         case Some(r) =>
-          logger(_.info(s"  Returning user-specified response: ${("" + r).quoteInner.take(100)}"))
+          logger(_.info(s"  Returning user-specified response: ${("" + r).escape.take(100)}"))
           AsyncCallback.delay(r.asInstanceOf[A])
         case None =>
           logger(_.info("  No user-specified response. Trying fallbacks..."))
@@ -40,7 +49,8 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
   private def fallbackResponse[A](id: Int, cmd: WebWorkerCmd[A]): AsyncCallback[A] =
     cmd match {
       case _: WebWorkerCmd.Init
-         | _: WebWorkerCmd.UpdateProject =>
+         | _: WebWorkerCmd.UpdateProject
+         |    WebWorkerCmd.ClearAndDisableCache =>
         logger(_.info("  Responding with NoResult."))
         AsyncCallback.pure(NoResult)
 
@@ -86,14 +96,18 @@ final class TestWebWorkerClient(initialPrep: TestWebWorkerClient.Prep,
         p <- pendingNow
         r <- f(p.cmd, p.id)
       } yield {
-        logger(_.info(s"Completing WW request #${p.id + 1} with ${("" + r).quoteInner.take(100)}"))
+        logger(_.info(s"Completing WW request #${p.id + 1} with ${("" + r).escape.take(100)}"))
         p.complete(Success(r))
       }
     }
   }
 
-//  def requestCount() = requests.length
-//  def lastRequest()  = requests.lastOption
+  def requestCount() = requests.length
+  def lastRequest()  = requests.lastOption
+
+  def push(cmd: WebWorkerPushCmd): Unit = {
+    onPush(cmd).runNow()
+  }
 
   initialPrep(this)
 }
@@ -121,11 +135,14 @@ object TestWebWorkerClient {
 
   private val isGraph: WebWorkerCmd[_] => Boolean = {
     case _: WebWorkerCmd.Init
-       | _: WebWorkerCmd.UpdateProject => false
+       | _: WebWorkerCmd.UpdateProject
+       |    WebWorkerCmd.ClearAndDisableCache
+       => false
     case _: WebWorkerCmd.GraphUseCaseFlow
        | _: WebWorkerCmd.GraphReqImplications
        | _: WebWorkerCmd.GraphAllImplications
-       | _: WebWorkerCmd.GraphInline => true
+       | _: WebWorkerCmd.GraphInline
+       => true
   }
 
   // ===================================================================================================================

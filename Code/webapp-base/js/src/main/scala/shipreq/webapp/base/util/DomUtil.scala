@@ -154,4 +154,16 @@ object DomUtil {
     siblingAt(e, _ + offset)
 
   val unfocus = CallbackOption.activeHtmlElement.map(_.blur()).toCallback
+
+  def queryParams(): URLSearchParams = {
+    var search: String =
+      try
+        document.location.search
+      catch {
+        case _: Throwable =>
+          SharedWorkerGlobalScope.self.location.search
+      }
+    if (search.nonEmpty) search = search.tail // drop the "?"
+    new URLSearchParams(search)
+  }
 }

@@ -2,7 +2,7 @@ package shipreq.webapp.member.project.data
 
 import java.time.Instant
 import nyaya.prop.Prop
-import shipreq.webapp.base.data.ProjectId
+import shipreq.webapp.base.data._
 import shipreq.webapp.member.project.event._
 
 /**
@@ -10,6 +10,7 @@ import shipreq.webapp.member.project.event._
   */
 final case class ProjectMetaData(id           : ProjectId.Public,
                                  name         : Project.Name,
+                                 perm         : Option[ProjectPerm],
                                  eventsInit   : Int,
                                  eventsTotal  : Int,
                                  reqsLive     : Int,
@@ -31,12 +32,13 @@ final case class ProjectMetaData(id           : ProjectId.Public,
   def assertInSyncWith(p: => Project): Unit =
     ProjectMetaData.props(p) assert this
 
-  def applyEvent(ve: VerifiedEvent, newProject: Project, when: Instant): ProjectMetaData =
-    applyEvents(ve :: Nil, newProject, when)
+  def applyEvent(uid: UserId.Public, ve: VerifiedEvent, newProject: Project, when: Instant): ProjectMetaData =
+    applyEvents(uid, ve :: Nil, newProject, when)
 
-  def applyEvents(ves: IterableOnce[VerifiedEvent], newProject: Project, when: Instant): ProjectMetaData =
+  def applyEvents(uid: UserId.Public, ves: IterableOnce[VerifiedEvent], newProject: Project, when: Instant): ProjectMetaData =
     ProjectMetaData.fromProject(newProject)(
       id            = id,
+      userId        = uid,
       eventsInit    = eventsInit,
       eventsTotal   = eventsTotal + ves.iterator.size,
       createdAt     = createdAt,
@@ -45,10 +47,11 @@ final case class ProjectMetaData(id           : ProjectId.Public,
 }
 
 object ProjectMetaData {
-  implicit def equality: UnivEq[ProjectMetaData] = UnivEq.derive
+  implicit def univEq: UnivEq[ProjectMetaData] = UnivEq.derive
 
   def fromProject(p            : Project)
                  (id           : ProjectId.Public,
+                  userId       : UserId.Public,
                   eventsInit   : Int,
                   eventsTotal  : Int,
                   createdAt    : Instant,
@@ -57,6 +60,7 @@ object ProjectMetaData {
     ProjectMetaData(
       id            = id,
       name          = p.name,
+      perm          = p.access(userId),
       eventsInit    = eventsInit,
       eventsTotal   = eventsTotal,
       reqsLive      = p.liveReqCount,

@@ -8,6 +8,12 @@ final case class Obfuscator[@specialized(Int, Long) A](
     validate   : Obfuscated[A] => Validity,
     deobfuscate: Obfuscated[A] => String \/ A) {
 
+  def deobfuscateOrThrow(o: Obfuscated[A]): A =
+    deobfuscate(o) match {
+      case \/-(a) => a
+      case -\/(e) => throw new RuntimeException(e)
+    }
+
   def xmap[B](f: A => B)(g: B => A): Obfuscator[B] =
     Obfuscator(
       b => obfuscate(g(b)).subst,

@@ -1,6 +1,7 @@
 package shipreq.webapp.member.project.event
 
 import shipreq.base.util.Forwards
+import shipreq.webapp.base.data.{ProjectPerm, UserId}
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.savedview._
 import shipreq.webapp.member.project.filter._
@@ -406,6 +407,41 @@ object OtherEventTest extends TestSuite {
         "two"      - test(ManualIssueDelete(2))(1 -> "one")(3)
         "both"     - test(ManualIssueDelete(1), ManualIssueDelete(2))()(3)
         "notFound" - assertFail("not found")(ManualIssueDelete(3))
+      }
+    }
+
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    "AccessUpdate" - {
+      import ProjectPerm._
+
+      def p = Project.empty.copy(access = ProjectAccess(Map(
+        PublicUserId1 -> Admin,
+        PublicUserId2 -> Collaborator,
+      )))
+
+      def event(cmds: (UserId.Public, Option[ProjectPerm])*): Event.AccessUpdate =
+        Event.AccessUpdate(cmds.toMap)
+
+      def test(cmds: (UserId.Public, Option[ProjectPerm])*)
+              (expect: (UserId.Public, ProjectPerm)*)
+              (implicit l: Line): Unit = {
+        val ev = event(cmds: _*)
+        val p2 = applyEventSuccessfully(p, ev)
+        val ex = ProjectAccess(expect.toMap)
+        assertEq(p2.access, ex)
+      }
+
+      "ok" - {
+        "del" - test(PublicUserId2 -> None)(PublicUserId1 -> Admin)
+        "mod" - test(PublicUserId2 -> Some(Admin))(PublicUserId1 -> Admin, PublicUserId2 -> Admin)
+        "add" - test(PublicUserId3 -> Some(Admin))(PublicUserId1 -> Admin, PublicUserId2 -> Collaborator, PublicUserId3 -> Admin)
+      }
+
+      "lastAdmin" - {
+        "del" - assertEventFails(p, event(PublicUserId1 -> None), "at least one admin")
+        "mod" - assertEventFails(p, event(PublicUserId1 -> Some(Collaborator)), "at least one admin")
       }
     }
 

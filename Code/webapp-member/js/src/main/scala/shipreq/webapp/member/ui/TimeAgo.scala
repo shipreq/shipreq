@@ -46,6 +46,6 @@ object TimeAgo {
     .configure(Reusability.shouldComponentUpdate)
     .configure(TimerSupport.install)
     .componentDidMount(_.backend.scheduleUpdates)
-    .componentDidUpdate(i => i.backend.onPropUpdate(i.currentProps, i.currentProps))
+    .componentDidUpdate(i => i.backend.onPropUpdate(i.prevProps, i.currentProps))
     .build
 }

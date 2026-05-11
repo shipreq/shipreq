@@ -1,9 +1,7 @@
 package shipreq.webapp.member.project.protocol.binary.v1
 
 import boopickle.DefaultBasic._
-import java.time.Instant
 import shipreq.base.util.{Direction, Exclusivity, SetDiff}
-import shipreq.webapp.base.data.ProjectId
 import shipreq.webapp.member.project.data.DataImplicits._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.text.ProjectText
@@ -92,56 +90,21 @@ object BaseMemberData2 {
   implicit lazy val picklerMultimapReqIdSetApReqCodeId: Pickler[Multimap[ReqId, Set, ApReqCodeId]] =
     pickleMultimap[ReqId, Set, ApReqCodeId]
 
-  implicit lazy val picklerProjectMetaData: Pickler[ProjectMetaData] =
-    new Pickler[ProjectMetaData] {
-      override def pickle(a: ProjectMetaData)(implicit state: PickleState): Unit = {
-        state.pickle(a.id)
-        state.pickle(a.name)
-        state.pickle(a.eventsInit)
-        state.pickle(a.eventsTotal)
-        state.pickle(a.reqsLive)
-        state.pickle(a.reqsTotal)
-        state.pickle(a.createdAt)
-        state.pickle(a.accessedAt)
-        state.pickle(a.lastUpdatedAt)
-      }
-      override def unpickle(implicit state: UnpickleState): ProjectMetaData = {
-        val id            = state.unpickle[ProjectId.Public]
-        val name          = state.unpickle[Project.Name]
-        val eventsInit    = state.unpickle[Int]
-        val eventsTotal   = state.unpickle[Int]
-        val reqsLive      = state.unpickle[Int]
-        val reqsTotal     = state.unpickle[Int]
-        val createdAt     = state.unpickle[Instant]
-        val accessedAt    = state.unpickle[Instant]
-        val lastUpdatedAt = state.unpickle[Option[Instant]]
-        ProjectMetaData(
-          id            = id           ,
-          name          = name         ,
-          eventsInit    = eventsInit   ,
-          eventsTotal   = eventsTotal  ,
-          reqsLive      = reqsLive     ,
-          reqsTotal     = reqsTotal    ,
-          createdAt     = createdAt    ,
-          accessedAt    = accessedAt   ,
-          lastUpdatedAt = lastUpdatedAt)
-      }
-    }
-
   implicit lazy val picklerProjectTextContext: Pickler[ProjectText.Context] =
     new Pickler[ProjectText.Context] {
       import ProjectText.Context._
-      private[this] implicit val picklerReq: Pickler[Req] = transformPickler(Req.apply)(_.id)
+      private[this] implicit val picklerNone: Pickler[None] = transformPickler(None.apply)(_.inLink)
+      private[this] implicit val picklerReq: Pickler[Req] = transformPickler((p: (ReqId, Boolean)) => Req(p._1, p._2))(r => (r.id, r.inLink))
       private[this] final val KeyNone = 0
       private[this] final val KeyReq  = 'r'
       override def pickle(a: ProjectText.Context)(implicit state: PickleState): Unit =
         a match {
-          case None    => state.enc.writeByte(KeyNone)
+          case b: None => state.enc.writeByte(KeyNone); state.pickle(b)
           case b: Req  => state.enc.writeByte(KeyReq ); state.pickle(b)
         }
       override def unpickle(implicit state: UnpickleState): ProjectText.Context =
         state.dec.readByte match {
-          case KeyNone => None
+          case KeyNone => state.unpickle[None]
           case KeyReq  => state.unpickle[Req]
         }
     }

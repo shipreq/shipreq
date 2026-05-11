@@ -57,7 +57,7 @@ object SampleImplicationGraph2 {
   val uc2     = UseCaseId(52)
   val mfField = CustomField.Implication.Id(1)
 
-  val project = applyEventsSuccessfully(Project.empty,
+  val project = applyEventsSuccessfully(emptyProject1,
 
     Event.CustomReqTypeCreate(mf, CustomReqTypeGD("MF", "Major Feature", Optional, None)),
     Event.CustomReqTypeCreate(fb, CustomReqTypeGD("FB", "Feedback", Optional, None)),

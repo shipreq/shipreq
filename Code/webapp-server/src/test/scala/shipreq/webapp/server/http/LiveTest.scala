@@ -1,6 +1,7 @@
 package shipreq.webapp.server.http
 
 import shipreq.base.test.BaseTestUtil._
+import shipreq.base.util.FxModule._
 import shipreq.webapp.base.config.{Urls, WebappConfig}
 import shipreq.webapp.base.data.{EmailAddr, PersonName, ProjectId}
 import shipreq.webapp.base.protocol.ajax.CommonProtocols
@@ -9,6 +10,7 @@ import shipreq.webapp.client.public.{PublicSpaEntryPoint, PublicSpaProtocols}
 import shipreq.webapp.member.project.data.Project
 import shipreq.webapp.member.protocol.entrypoint._
 import shipreq.webapp.server.logic.algebra.Security
+import shipreq.webapp.server.logic.data.ProjectEncryptionKey
 import shipreq.webapp.server.logic.util.Obfuscators
 import shipreq.webapp.server.test._
 import utest._
@@ -28,7 +30,8 @@ object LiveTest extends TestSuite {
   private val prepare = onceUnit {
     init()
     userFixture.setup()
-    pid = Some(xa ! dbAlgebra.createProject(user1.id, Vector.empty, Project.empty))
+    val pek = ProjectEncryptionKey(DbUtil.crypto.generateKey256.unsafeRun())
+    pid = Some(xa ! dbAlgebra.createProject(user1.id, Vector.empty, Project.empty, pek))
   }
 
   private implicit def userToToken(u: TestUser): Option[Security.SessionToken[Unit]] =
@@ -153,6 +156,14 @@ object LiveTest extends TestSuite {
       val Some(s4) = get(Urls.logout.relativeUrl, Some(s3)).newJwt()
       assertEq(s4.withoutExpiry, s3.withoutExpiry.logout)
 
+      ()
+    }
+
+    "projectAccessRevoked" - {
+      get(Urls.projectAccessRevoked.relativeUrl, user1)
+        .assertOk
+        .assertContentTypeHtml
+        .assertBodyContains("Your project access has been revoked")
       ()
     }
 

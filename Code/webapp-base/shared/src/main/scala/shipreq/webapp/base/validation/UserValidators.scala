@@ -98,7 +98,7 @@ object UserValidators {
   val username: Composite.Stateful[Set[Username], String, String, Username] =
     CV.endoValidator.lengthInRange(WebappConfig.usernameLength)
       .prependCorrector(TextMod.noWhitespace.andThen(TextMod.lowerCase).correctLive)
-      .appendCorrector(TextMod.removeTrailingChar('@').correctFull)
+      .appendCorrector(TextMod.removeLeadingChar('@').correctFull)
       .addInvalidator(CV.invalidator.whitelistCharRangeRegex("a-z0-9_")(Invalidity("Can only contain letters, numbers and underscores.")))
       .addInvalidator(CV.invalidator.startsWithRegex("[a-z]")(Invalidity("Must start with a letter.")))
       .addInvalidator(CV.invalidator.endsWithRegex("[a-z0-9]")(Invalidity("Must end with a letter or a number.")))

@@ -119,10 +119,11 @@ object HomeTest extends TestSuite {
 
   object Data {
     import shipreq.webapp.member.test.project.UnsafeTypes._
+    import ProjectPerm._
     val now = Instant.now()
-    val piE = ProjectMetaData("abeF", "Empty", 0, 0, 0, 0, now.minus(18, DAYS), now.minus(19, DAYS), None)
-    val piO = ProjectMetaData("qwe3F", "Old", 2, 1581, 311, 340, now.minus(92, DAYS), now.minus(7, MINUTES), Some(now.minus(7, MINUTES)))
-    val piN = ProjectMetaData("wenkj", "New", 2, 2, 0, 0, now, now, None)
+    val piE = ProjectMetaData("abeF", "Empty", Admin, 0, 0, 0, 0, now.minus(18, DAYS), now.minus(19, DAYS), None)
+    val piO = ProjectMetaData("qwe3F", "Old", Admin, 2, 1581, 311, 340, now.minus(92, DAYS), now.minus(7, MINUTES), Some(now.minus(7, MINUTES)))
+    val piN = ProjectMetaData("wenkj", "New", Admin, 2, 2, 0, 0, now, now, None)
     val pc  = List(piE, piO)
   }
 

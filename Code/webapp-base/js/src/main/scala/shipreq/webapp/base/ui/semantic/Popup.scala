@@ -46,26 +46,26 @@ object Popup {
 
     trait Options extends js.Object {
       import Options._
-      val closable      : js.UndefOr[Boolean] = js.undefined
-      val delay         : js.UndefOr[Delay  ] = js.undefined
-      val duration      : js.UndefOr[Int    ] = js.undefined
-      val distanceAway  : js.UndefOr[Int    ] = js.undefined
-      val inline        : js.UndefOr[Boolean] = js.undefined
-      val prefer        : js.UndefOr[String ] = js.undefined
-      val hoverable     : js.UndefOr[Boolean] = js.undefined
-      val lastResort    : js.UndefOr[Boolean] = js.undefined
-      val movePopup     : js.UndefOr[Boolean] = js.undefined
-      val observeChanges: js.UndefOr[Boolean] = js.undefined
-      val offset        : js.UndefOr[Int    ] = js.undefined
-      val preserve      : js.UndefOr[Boolean] = js.undefined
-      val position      : js.UndefOr[String ] = js.undefined
-      val setFluidWidth : js.UndefOr[String ] = js.undefined
+      var closable      : js.UndefOr[Boolean] = js.undefined
+      var delay         : js.UndefOr[Delay  ] = js.undefined
+      var duration      : js.UndefOr[Int    ] = js.undefined
+      var distanceAway  : js.UndefOr[Int    ] = js.undefined
+      var inline        : js.UndefOr[Boolean] = js.undefined
+      var prefer        : js.UndefOr[String ] = js.undefined
+      var hoverable     : js.UndefOr[Boolean] = js.undefined
+      var lastResort    : js.UndefOr[Boolean] = js.undefined
+      var movePopup     : js.UndefOr[Boolean] = js.undefined
+      var observeChanges: js.UndefOr[Boolean] = js.undefined
+      var offset        : js.UndefOr[Int    ] = js.undefined
+      var preserve      : js.UndefOr[Boolean] = js.undefined
+      var position      : js.UndefOr[String ] = js.undefined
+      var setFluidWidth : js.UndefOr[String ] = js.undefined
     }
 
     object Options {
       trait Delay extends js.Object {
-        val show: js.UndefOr[Int] = js.undefined
-        val hide: js.UndefOr[Int] = js.undefined
+        var show: js.UndefOr[Int] = js.undefined
+        var hide: js.UndefOr[Int] = js.undefined
       }
     }
 

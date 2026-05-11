@@ -3,6 +3,7 @@ package shipreq.webapp.member.jsfacade
 import japgolly.scalajs.react._
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
+import scala.scalajs.js.|
 
 object ReactColor {
 
@@ -105,12 +106,13 @@ object ReactColor {
       def apply(): Props =
         (new js.Object).asInstanceOf[Props]
 
-      def apply(color       : TinyColor,
-                onChange    : TinyColor => Callback,
+      def apply(color       : String | ColorObject,
+                onChange    : ColorObject => Callback,
                 disableAlpha: Boolean,
                ): Props = {
-        val p          = ColorObject(color).asInstanceOf[Props]
-        p.onChange     = Props.onChange(o => onChange(TinyColor(o)))
+        val p = (new js.Object).asInstanceOf[Props]
+        p.color        = color
+        p.onChange     = (o: ColorObject) => onChange(o).runNow()
         p.disableAlpha = disableAlpha
         p
       }
@@ -119,14 +121,13 @@ object ReactColor {
               onChange    : String => Callback,
               disableAlpha: Boolean,
              ): Props =
-        apply(TinyColor(color), (c: TinyColor) => onChange(c.toHex()), disableAlpha)
-
-      def onChange(f: ColorObject => Callback): js.Function1[ColorObject, Unit] =
-        f(_).runNow()
+        apply(color, (o: ColorObject) => onChange(o.hex), disableAlpha)
     }
 
     @js.native
-    trait Props extends ColorObject {
+    trait Props extends js.Object {
+      var color: String | ColorObject
+
       var onChange: js.Function1[ColorObject, Unit]
 
       /** Remove alpha slider and options from picker. Default false */

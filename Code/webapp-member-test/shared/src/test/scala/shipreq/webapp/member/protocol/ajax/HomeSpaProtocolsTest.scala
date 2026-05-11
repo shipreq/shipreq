@@ -2,8 +2,8 @@ package shipreq.webapp.member.protocol.ajax
 
 import java.time.Instant
 import nyaya.gen.Gen
-import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util.BinaryData
+import shipreq.webapp.base.data.ProjectPerm
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.util.Obfuscated
 import shipreq.webapp.member.project.data.ProjectMetaData
@@ -40,9 +40,9 @@ object HomeSpaProtocolsTest extends TestSuite {
           propTestRoundTrip(codec)(RandomData.projectMetaData)
         }
 
-        "v1.0" - {
-          val bin    = BinaryData.fromHex("C3407BB2010008434B627850647249092432686C557766232102816180F0815FE0D93ADB5B362FC92DE0EB3ADB5BE63E331F01E7704A00")
-          val expect = ProjectMetaData(Obfuscated("CKbxPdrI"), "$2hlUwf#!", 2, 353, 240, 351, Instant.ofEpochSecond(1541094105L, 768159542), Instant.ofEpochSecond(1541094123L, 523452134), None)
+        "v2.0" - {
+          val bin    = BinaryData.fromHex("C3407BB2020008434B62785064724901092432686C557766232102816180F0815FE0D93ADB5B362FC92DE0EB3ADB5BE63E331F01E7704A00")
+          val expect = ProjectMetaData(Obfuscated("CKbxPdrI"), "$2hlUwf#!", Some(ProjectPerm.Admin), 2, 353, 240, 351, Instant.ofEpochSecond(1541094105L, 768159542), Instant.ofEpochSecond(1541094123L, 523452134), None)
           assertDecodeOk(codec)(bin, expect)
         }
       }

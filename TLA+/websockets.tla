@@ -30,78 +30,78 @@ closed     == "closed    "
 WSStates == {connecting, open, closing, closed}
 
 TypeInvariants ==
-  /\ PrintT([cli |-> cli, svr |-> svr])
-  /\ cli \in WSStates
-  /\ svr \in WSStates
+  & PrintT([cli |-> cli, svr |-> svr])
+  & cli \in WSStates
+  & svr \in WSStates
 
 Init ==
-  /\ cli = closed
-  /\ svr = closed
+  & cli = closed
+  & svr = closed
 
 -----------------------------------------------------------------------------------------
 
 ClientConnect ==
-  /\ cli = closed
-  /\ svr = closed
-  /\ cli' = connecting
-  /\ UNCHANGED svr
+  & cli = closed
+  & svr = closed
+  & cli' = connecting
+  & UNCHANGED svr
 
 ClientConnected ==
-  /\ cli = connecting
-  /\ svr \in {connecting,open}
-  /\ cli' = open
-  /\ UNCHANGED svr
+  & cli = connecting
+  & svr \in {connecting,open}
+  & cli' = open
+  & UNCHANGED svr
 
 ClientClose ==
-  /\ cli /= closed
-  /\ cli' = closing
-  /\ UNCHANGED svr
+  & cli != closed
+  & cli' = closing
+  & UNCHANGED svr
 
 ClientClosed ==
-  /\ cli' = closed
-  /\ UNCHANGED svr
+  & cli' = closed
+  & UNCHANGED svr
 
 Client ==
-  \/ ClientConnect
-  \/ ClientConnected
-  \/ ClientClose
-  \/ ClientClosed
+  | ClientConnect
+  | ClientConnected
+  | ClientClose
+  | ClientClosed
 
 -----------------------------------------------------------------------------------------
 
 ServerConnect ==
-  /\ svr = closed
-  /\ cli = connecting
-  /\ svr' = connecting
-  /\ UNCHANGED cli
+  & svr = closed
+  & cli = connecting
+  & svr' = connecting
+  & UNCHANGED cli
 
 ServerConnected ==
-  /\ svr = connecting
-  /\ cli \in {connecting,open}
-  /\ svr' = open
-  /\ UNCHANGED cli
+  & svr = connecting
+  & cli \in {connecting,open}
+  & svr' = open
+  & UNCHANGED cli
 
 ServerClose ==
-  /\ svr /= closed
-  /\ svr' = closing
-  /\ UNCHANGED cli
+  & svr != closed
+  & svr' = closing
+  & UNCHANGED cli
 
 ServerClosed ==
-  /\ svr' = closed
-  /\ UNCHANGED cli
+  & svr' = closed
+  & UNCHANGED cli
 
 Server ==
-  \/ ServerConnect
-  \/ ServerConnected
-  \/ ServerClose
-  \/ ServerClosed
+  | ServerConnect
+  | ServerConnected
+  | ServerClose
+  | ServerClosed
 
 -----------------------------------------------------------------------------------------
 
 Next ==
-  \/ Client
-  \/ Server
+  | Client
+  | Server
 
-Spec == Init /\ [][Next]_vars
+Spec == Init & [][Next]_vars
 
 ========================================================================================================================

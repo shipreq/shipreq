@@ -2,7 +2,7 @@ package shipreq.utils
 
 import japgolly.microlibs.stdlib_ext.StdlibExt._
 import shipreq.base.util.FxModule._
-import shipreq.webapp.member.project.data._
+import shipreq.webapp.member.test.WebappTestUtil.emptyProject1
 import shipreq.webapp.sampledata.SampleData
 
 object Profile {
@@ -20,7 +20,7 @@ object Profile {
     import shipreq.webapp.member.project.event._
     val trusted = ApplyEvent.trusted
     val verifiedEvents = sd.verifiedEvents
-    profile(1)(trusted.applyVerified(verifiedEvents)(Project.empty))
+    profile(1)(trusted(verifiedEvents)(emptyProject1))
   }
 
   private def loadSampleData(): SampleData = {

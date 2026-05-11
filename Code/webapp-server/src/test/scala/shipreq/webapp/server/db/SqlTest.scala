@@ -13,12 +13,17 @@ object SqlTest extends TestSuite {
 
   override def tests = Tests {
 
+    "base" - {
+      "logGlobalEventSql" - TestDb.check(db.logGlobalEventSql)
+      "sqlInsertUsrd"     - TestDb.check(DbInterpreter.sqlInsertUsrd)
+    }
+
     "security" - {
       val db = ForSecurity
       "getUserAndPasswordByEmailSql"    - TestDb.check(db.getUserAndPasswordByEmailSql)
       "getUserAndPasswordByUsernameSql" - TestDb.check(db.getUserAndPasswordByUsernameSql)
       "logLoginSuccessSql"              - TestDb.check(db.logLoginSuccessSql)
-      "getProjectOwnerSql"              - TestDb.check(db.getProjectOwnerSql)
+      "getProjectAccessSql"             - TestDb.check(db.getProjectAccessSql)
     }
 
     "verificationTokenReadOnly" - {
@@ -28,11 +33,12 @@ object SqlTest extends TestSuite {
     }
 
     "publicSpa" - {
+      "getUserIdByEmailSql"                  - TestDb.check(db.getUserIdByEmailSql)
+      "getUserIdByUsernameSql"               - TestDb.check(db.getUserIdByUsernameSql)
       "getUserRegistrationSql"               - TestDb.check(db.getUserRegistrationSql)
       "createUserPlaceholderSql"             - TestDb.check(db.createUserPlaceholderSql)
       "updateUserRegistrationTokenSql"       - TestDb.check(db.updateUserRegistrationTokenSql)
       "sqlRegisterUser"                      - TestDb.check(db.sqlRegisterUser)
-      "sqlInsertUsrd"                        - TestDb.check(db.sqlInsertUsrd)
       "getPasswordResetStateByEmailSql"      - TestDb.check(db.getPasswordResetStateByEmailSql)
       "getPasswordResetStateByUsernameSql"   - TestDb.check(db.getPasswordResetStateByUsernameSql)
       "createResetPasswordTokenSql"          - TestDb.check(db.createResetPasswordTokenSql)
@@ -53,18 +59,23 @@ object SqlTest extends TestSuite {
     }
 
     "saveProjectEvent" - {
-      "insertEventQuery" - TestDb.check(SaveProjectEventLogic.insertEventQuery)
-      "updateProjectN"   - TestDb.check(SaveProjectEventLogic.updateProjectN)
-      "updateProjectR"   - TestDb.check(SaveProjectEventLogic.updateProjectR)
+      "insertEventQuery"   - TestDb.check(SaveProjectEventLogic.insertEventQuery)
+      "updateProjectName"  - TestDb.check(SaveProjectEventLogic.updateProjectName)
+      "updateProjectStats" - TestDb.check(SaveProjectEventLogic.updateProjectStats)
     }
 
     "homeSpa" - {
       "createProject"                - TestDb.check(DbInterpreter.ForHomeSpa.createProjectQuery)
+      "createProjectAccess"          - TestDb.check(DbInterpreter.ForHomeSpa.createProjectAccessQuery)
       "getAllProjectMetaDataForUser" - TestDb.check(db.getAllProjectMetaDataForUserQuery)
     }
 
     "projectSpa" - {
-      "projectSpaInitPage" - TestDb.check(db.projectSpaInitPageQuery)
+      // "getUserIdsByUsernameQuery" - TestDb.check(db.getUserIdsByUsernameQuery)
+      // "getUsernamesByUserIdQuery" - TestDb.check(db.getUsernamesByUserIdQuery)
+      "getUserIdByEmailSql"    - TestDb.check(db.getUserIdByEmailSql)
+      "getUserIdByUsernameSql" - TestDb.check(db.getUserIdByUsernameSql)
+      "projectSpaInitPage"     - TestDb.check(db.projectSpaInitPageQuery)
     }
 
     "ops" - {
@@ -73,8 +84,6 @@ object SqlTest extends TestSuite {
       "userStatsSql"           - TestDb.check(db.userStatsSql)
       "tableStatsSql"          - TestDb.check(db.tableStatsSql)
       "dbSizeSql"              - TestDb.check(db.dbSizeSql)
-      "userIdByUsernameSql"    - TestDb.check(db.userIdByUsernameSql)
-      "userIdByEmailSql"       - TestDb.check(db.userIdByEmailSql)
       "insertVerifiedEventSql" - TestDb.check(db.insertVerifiedEventSql)
     }
 

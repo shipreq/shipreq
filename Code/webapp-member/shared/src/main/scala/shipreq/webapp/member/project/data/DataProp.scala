@@ -713,28 +713,31 @@ object DataProp {
         px.contramap[TR](tr => (refs(tr._1) , tr))
       }
 
-      ( validReqTypeIds("Pubid keys",                       _.content.reqs.pubids.value.m.keys)
-      ∧ validReqIds    ("ReqCode ReqIds (active)",          _.content.reqCodes.activeReqCodesByReqId.keys)
-      ∧ validReqIds    ("ReqCode ReqIds (inactive)",        _.content.reqCodes.inactiveIdsByReqId.keys)
-      ∧ validFieldIds  ("ReqData.text TextField ids",       _.content.reqText.data.keys)
-      ∧ validReqIds    ("ReqData.text.*.reqIds",            _.content.reqText.data.valuesIterator.flatMap(_.keysIterator))
-      ∧ validReqIds    ("ReqData.config.tags keys",         _.content.reqTags.keys)
-      ∧ validTagIds    ("ReqData.config.tags values",       _.content.reqTags.valueIterator)
-      ∧ validReqIds    ("ReqData.implications",             _.content.implications.members)
-      ∧ validReqIds    ("Atoms: ReqRefs",                   _.atomScan.reqRefs)
-      ∧ validReqCodeIds("Atoms: CodeRefs",                  _.content.codeRefs)
-      ∧ validUCStepIds ("Atoms: UseCaseStepRefs",           _.content.useCaseStepRefs)
-      ∧ validTagIds    ("Atoms: TagRefs",                   _.atomScan.tagRefs.all.all.iterator.map(_.value)) // TODO check .loc
-      ∧ validIssueTypes("Atoms: Issues in reqs",            _.atomScan.issuesInReqs.all.all.map(_.value.typ))
-      ∧ validIssueTypes("Atoms: Issues in RCGs",            _.atomScan.issuesInRcgs.all.all.map(_.typ))
-      ∧ validReqIds    ("DeletionReason reqIds",            _.content.deletionReasons.reqApplication.keys)
-      ∧ validUCStepIds ("UseCase step flow",                p => Digraph.memberIterator(p.content.reqs.useCases.stepFlow.forwards))
-      ∧ fullRefCmp     ("SavedView filters",                p => Refs.savedViewFilters(p.savedViews))
-      ∧ validFieldIds  ("SavedViews: Columns",              _.savedViewIterator.flatMap(_.view.columns.whole).flatMap(Refs.reqtableColumnField))
-      ∧ validFieldIds  ("SavedViews: Sort Columns",         _.savedViewIterator.flatMap(_.view.order.all.whole).map(_.column).flatMap(Refs.reqtableColumnField))
+      ( validReqTypeIds("Pubid keys",                 _.content.reqs.pubids.value.m.keys)
+      ∧ validReqIds    ("ReqCode ReqIds (active)",    _.content.reqCodes.activeReqCodesByReqId.keys)
+      ∧ validReqIds    ("ReqCode ReqIds (inactive)",  _.content.reqCodes.inactiveIdsByReqId.keys)
+      ∧ validFieldIds  ("ReqData.text TextField ids", _.content.reqText.data.keys)
+      ∧ validReqIds    ("ReqData.text.*.reqIds",      _.content.reqText.data.valuesIterator.flatMap(_.keysIterator))
+      ∧ validReqIds    ("ReqData.config.tags keys",   _.content.reqTags.keys)
+      ∧ validTagIds    ("ReqData.config.tags values", _.content.reqTags.valueIterator)
+      ∧ validReqIds    ("ReqData.implications",       _.content.implications.members)
+      ∧ validReqIds    ("Atoms: ReqRefs",             _.atomScan.reqRefs)
+      ∧ validReqCodeIds("Atoms: CodeRefs",            _.content.codeRefs)
+      ∧ validUCStepIds ("Atoms: UseCaseStepRefs",     _.content.useCaseStepRefs)
+      ∧ validTagIds    ("Atoms: TagRefs",             _.atomScan.tagRefs.all.all.iterator.map(_.value)) // TODO check .loc
+      ∧ validIssueTypes("Atoms: Issues in reqs",      _.atomScan.issuesInReqs.all.all.map(_.value.typ))
+      ∧ validIssueTypes("Atoms: Issues in RCGs",      _.atomScan.issuesInRcgs.all.all.map(_.typ))
+      ∧ validReqIds    ("DeletionReason reqIds",      _.content.deletionReasons.reqApplication.keys)
+      ∧ validUCStepIds ("UseCase step flow",          p => Digraph.memberIterator(p.content.reqs.useCases.stepFlow.forwards))
+      ∧ fullRefCmp     ("SavedView filters",          p => Refs.savedViewFilters(p.savedViews))
+      ∧ validFieldIds  ("SavedViews: Columns",        _.savedViewIterator.flatMap(_.view.columns.whole).flatMap(Refs.reqtableColumnField))
+      ∧ validFieldIds  ("SavedViews: Sort Columns",   _.savedViewIterator.flatMap(_.view.order.all.whole).map(_.column).flatMap(Refs.reqtableColumnField))
 
       ).rename("Cross-constituent refs").contramap[P](_ mapStrengthR mkRefs)
     }
+
+    val validAccess: Prop[Project] =
+      Prop.test[Project]("At least one admin user is required", _.access.hasAdmin)
 
     val validateIdCeiling: Prop[Project] = {
       val idCeilingIndices = 0 until IdCeilings.zero.productArity
@@ -752,7 +755,7 @@ object DataProp {
     }
 
     val allExcludingConfig: Prop[Project] = "Project" rename_: (
-      constituents ∧ atoms ∧ liveReqCodeRequiresLiveTarget ∧ validRefs ∧ validateIdCeiling)
+      constituents ∧ atoms ∧ liveReqCodeRequiresLiveTarget ∧ validRefs ∧ validAccess ∧ validateIdCeiling)
 
     val allIncludingConfig: Prop[Project] =
       allExcludingConfig ∧ projectConfig.all.contramap(_.config)

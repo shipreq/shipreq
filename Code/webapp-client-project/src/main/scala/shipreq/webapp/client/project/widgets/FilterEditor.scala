@@ -244,11 +244,12 @@ object FilterEditor {
       inputNode.get.asCBO.map(AutoCompleteCtx(pxAutoComplete.value(), _))
 
     private lazy val inputTagMod = TagMod(
-      ^.onBlur     --> autoCompleteOnBlur,
-      ^.onClick    ==> autoCompleteOnClick,
-      ^.onKeyDown  ==> autoCompleteOnKeyDown,
-      ^.placeholder := "Filter...",
-      ^.minWidth    := "32ex",
+      ^.onBlur           --> autoCompleteOnBlur,
+      ^.onClick          ==> autoCompleteOnClick,
+      ^.onKeyDown        ==> autoCompleteOnKeyDown,
+      ^.onKeyDownCapture ==> autoCompleteOnKeyDownCapture,
+      ^.placeholder       := "Filter...",
+      ^.minWidth          := "32ex",
     )
 
     private val inputExtraWidth =

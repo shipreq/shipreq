@@ -18,7 +18,7 @@ object UseCaseFlowGraphTest extends TestSuite {
     "init" - {
       import shipreq.webapp.member.test.project.UnsafeTypes._
       val uc = UseCaseId(1)
-      val project = applyEventsSuccessfully(Project.empty, UseCaseCreate(uc, 2, UseCaseGD.emptyValues))
+      val project = applyEventsSuccessfully(emptyProject1, UseCaseCreate(uc, 2, UseCaseGD.emptyValues))
       val actual = new UseCaseFlowGraph(uc, project, ProjectText.Context.Req(uc)).dot
       val expect = DOT(
         """

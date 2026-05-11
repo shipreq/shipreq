@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# cd "$(dirname "$0")" || exit 1
+[ $# -eq 0 ] && echo "Usage: $0 [args] <module>" && exit 1
+
+set -euo pipefail
+
+cmd=(unbuffer tlc-colour)
+
+while [ $# -gt 1 ]; do
+  cmd+=("$1")
+  shift
+done
+module="$1"
+
+tmp="run/$module"
+mkdir -p $tmp
+# trap "rm -rf $tmp" EXIT
+
+for m in $module Network Util; do
+  ./convert_dialect <$m.tla >$tmp/$m.tla
+done
+cp $module.cfg $tmp
+cp classes/* $tmp
+
+cmd+=($module)
+
+echo "> cd $tmp && ${cmd[@]}"
+cd $tmp
+
+set +e
+
+export TLA_EXTRA_CLASSPATH="$HOME/.cache/coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.4/scala-library-2.13.4.jar"
+"${cmd[@]}"
+r=$?
+
+if [ $r -eq 0 ]; then
+  rm -rf $tmp
+fi
+
+exit $r

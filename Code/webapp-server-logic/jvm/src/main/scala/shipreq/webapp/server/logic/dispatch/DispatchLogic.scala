@@ -21,7 +21,7 @@ import shipreq.webapp.server.logic._
 import shipreq.webapp.server.logic.algebra._
 import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.dispatch.{Request => _}
-import shipreq.webapp.server.logic.impl._
+import shipreq.webapp.server.logic.logic._
 import shipreq.webapp.server.logic.util._
 
 /** Usage:
@@ -274,25 +274,17 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
           case \/-(projectId) =>
             tracer.alg.addAttrs(Trace.Attr.ShipReqProjectId(projectId) :: Nil) >>
             needAuth(user =>
-              security.db.getProjectOwner(projectId).map {
-
-                case Some(owner) =>
-                  security.allowProjectAccess(
-                    requester    = user,
-                    projectId    = projectId,
-                    projectOwner = owner,
-                  ) match {
-                    case Allow => ResponseCmd.ProjectSpa.Serve(user, projectId)
-                    case Deny  => ResponseCmd.ProjectSpa.NotOwner
-                  }
-
-                case None =>
-                  ResponseCmd.ProjectSpa.InvalidId
+              security.db.getProjectAccess(projectId, user.id).map {
+                case Some(_) => ResponseCmd.ProjectSpa.Serve(user, projectId)
+                case None    => ResponseCmd.ProjectSpa.AccessDenied
               }
             )
-          case -\/(_) => F pure Response(ResponseCmd.ProjectSpa.InvalidId, Cookie.Update.empty)
+          case -\/(_) => F pure Response(ResponseCmd.ProjectSpa.AccessDenied, Cookie.Update.empty)
         }
       }
+
+    val projectAccessRevoked: Request ?=> F[Response] =
+      get(Urls.projectAccessRevoked, F.pure(ResponseCmd.ProjectAccessRevoked.withoutCookieUpdate))
 
     val logout: Request ?=> F[Response] =
       getF(Urls.logout, req =>
@@ -302,7 +294,7 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
       )
 
     val routes: Request ?=> F[Response] =
-      publicSpa | memberHomeSpa | projectSpa | logout
+      publicSpa | memberHomeSpa | projectSpa | projectAccessRevoked | logout
 
     val fallback: Request => F[Response] = { implicit req =>
       val cmd =
@@ -582,15 +574,15 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
         )
       )
 
-    private val createProject: Request ?=> F[Response] =
-      endpoint(Post, Url.Relative("project/create"))(req =>
+    private val importProject: Request ?=> F[Response] =
+      endpoint(Post, Url.Relative("project/import"))(req =>
         parseParams(
           for {
             user   <- req.param("user")
             events <- req.param("events")
           } yield (Username.orEmail(user), events)
         ){ case (user, events) =>
-          ops.createProject(user, events).map(response)
+          ops.importProject(user, events).map(response)
         }
       )
 
@@ -601,7 +593,7 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
             jsonResponse)))
 
     private def innerRoutes: Request ?=> F[Response] =
-      ok | register1 | statsDb | statsUsers | task | testSendMail | getProjectEvents | createProject
+      ok | register1 | statsDb | statsUsers | task | testSendMail | getProjectEvents | importProject
 
     private val fallback: Request => F[Response] =
       _ => notFoundSecure

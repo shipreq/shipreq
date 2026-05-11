@@ -46,7 +46,9 @@ object ProjectSpa extends SingleOpStatelessSnippet {
     val logic = Global.logic.projectSpa
 
     val init: ProjectSpaEntryPoint.InitData =
-      logic.initPage(projectId, user.username, assetManifest).unsafeRun()
+      logic.initPage(projectId, user.id, user.username, assetManifest)
+        .unsafeRun()
+        .getOrElse(throw SnippetError.MemberDataNotFound)
 
     val loaderData =
       ProjectSpaLoaderData(user.username, init.projectName, assetManifest)

@@ -3,4 +3,17 @@ cd "$(dirname "$0")" || exit 1
 
 set -e
 
+if [ "$(uname)" == "Darwin" ]; then
+
+  # Copy to /tmp
+  tmp=/tmp/$(date +%Y%m%d-%H%M%S)-$$
+  mkdir $tmp
+  cp * .??* $tmp
+  cd $tmp
+
+  # Apply patches
+  echo "Patching for OSX"
+  perl -pi -e 's/linux-x64/linux-aarch64/g' Dockerfile
+fi
+
 exec docker build -t shipreq/base:latest .

@@ -112,13 +112,14 @@ object DockerEnv {
       val jaegerPort   = envFileValue(envRoot, "PORT_JAEGER_COLLECTOR")
       val redisPort    = envFileValue(envRoot, "PORT_REDIS")
       JavaOptions.fromDockerComposeEnv(serviceName, envRoot)
-        .add("JAEGER_ENDPOINT", s"http://localhost:$jaegerPort/api/traces")
-        .add("LOG_APPENDER"   , "STDOUT")
-        .add("db.host"        , "localhost")
-        .add("db.port"        , postgresPort)
-        .add("redis.url"      , s"redis://localhost:$redisPort")
-        .add("run.mode"       , runMode)
-        .add("shipreq.url"    , "http://localhost:8080")
+        .add("JAEGER_ENDPOINT"    , s"http://localhost:$jaegerPort/api/traces")
+        .add("LOG_APPENDER"       , "STDOUT")
+        .add("db.host"            , "localhost")
+        .add("db.port"            , postgresPort)
+        .add("redis.url"          , s"redis://localhost:$redisPort")
+        .add("run.mode"           , runMode)
+        .add("shipreq.ssr.enabled", "false")
+        .add("shipreq.url"        , "http://localhost:8080")
         .asList
     }
 

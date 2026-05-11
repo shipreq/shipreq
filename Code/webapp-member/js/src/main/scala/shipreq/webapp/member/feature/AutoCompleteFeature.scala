@@ -25,10 +25,14 @@ import shipreq.webapp.member.ui.AutosizeTextarea
   *
   * 5. Wire up your editor:
   *    ```
-  *    ^.onBlur    --> autoCompleteOnBlur,
-  *    ^.onClick   ==> autoCompleteOnClick,
-  *    ^.onKeyDown ==> autoCompleteOnKeyDown,
+  *    ^.onBlur           --> autoCompleteOnBlur,
+  *    ^.onClick          ==> autoCompleteOnClick,
+  *    ^.onKeyDown        ==> autoCompleteOnKeyDown,
+  *    ^.onKeyDownCapture ==> autoCompleteOnKeyDownCapture,
   *    ```
+  *
+  *    If you need to handle keys of your own, compose them by using `autoCompleteKeyHandlers` instead of
+  *    wiring up `autoCompleteOnKeyDown` and `autoCompleteOnKeyDownCapture`.
   *
   * 6. Add `.configure(AutoComplete.install)` to your component builder.
   *    If you're using an input instead of a textarea use

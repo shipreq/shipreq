@@ -250,11 +250,11 @@ object DeletionProps {
         imps2     = imps1.forwards.m.mapValuesNow(_.take(1))
         imps3     = Implications.Graph.BiDir(Implications.Graph.UniDir(imps2).reverse) // reverse ensures take(1) is on parent side
         content   = ProjectContent.empty.copy(reqs = reqs2, implications = Implications(imps3))
-        project   = Project.empty.copy(config = config, content = content)
+        project   = emptyProject1.copy(config = config, content = content)
       } yield IdCeilings.supply(ic => project.copy(idCeilings = ic))
 
     val genProjectFree: Gen[Project] =
-      *.project
+      *.projectNoHistory
 
     val genProps: Gen[DeletionProps] =
       for {

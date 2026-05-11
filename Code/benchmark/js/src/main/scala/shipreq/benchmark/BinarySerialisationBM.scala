@@ -10,8 +10,8 @@ object BinarySerialisationBM {
 
   type BM = Benchmark[SampleData]
 
-  private implicit val picklerProject          = shipreq.webapp.member.project.protocol.binary.v1.Latest.picklerProject
-  private implicit val picklerVerifiedEventSeq = shipreq.webapp.member.project.protocol.binary.v1.Latest.picklerVerifiedEventSeq
+  private implicit val picklerProject          = shipreq.webapp.member.project.protocol.binary.Latest.picklerProject
+  private implicit val picklerVerifiedEventSeq = shipreq.webapp.member.project.protocol.binary.Latest.picklerVerifiedEventSeq
 
   sealed trait Method {
     val bm: BM

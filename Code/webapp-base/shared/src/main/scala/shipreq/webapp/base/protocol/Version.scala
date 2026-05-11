@@ -35,10 +35,9 @@ object Version {
       }
     }
 
-  private val memoV1: Int => Version =
-    Memo.int(minorVer =>
-      Version.fromInts(1, minorVer))
+  private val memoV1: Int => Version = Memo.int(minorVer => Version.fromInts(1, minorVer))
+  def v1(minorVer: Int): Version = memoV1(minorVer)
 
-  def v1(minorVer: Int): Version =
-    memoV1(minorVer)
+  private val memoV2: Int => Version = Memo.int(minorVer => Version.fromInts(2, minorVer))
+  def v2(minorVer: Int): Version = memoV2(minorVer)
 }

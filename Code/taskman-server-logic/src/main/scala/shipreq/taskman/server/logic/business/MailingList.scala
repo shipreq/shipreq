@@ -7,10 +7,6 @@ object MailingList {
   // ===================================================================================================================
   // Data
 
-  final case class ListId(value: String)
-
-  implicit def univEqListId: UnivEq[ListId] = UnivEq.derive
-
   sealed abstract class AccountStatus(final val remoteValue: String)
   object AccountStatus {
 
@@ -45,13 +41,10 @@ object MailingList {
   sealed trait API[A]
   object API {
 
-    /** Looks up the ID of a mailing list by name. */
-    final case class GetListId(name: String) extends API[Option[ListId]]
+    final case class Subscribe(sub: Subscription, sendConfEmail: Boolean) extends API[SubscribeResult]
 
-    final case class Subscribe(listId: ListId, sub: Subscription, sendConfEmail: Boolean) extends API[SubscribeResult]
+    final case class UpdateMember(sub: Subscription) extends API[UpdateMemberResult]
 
-    final case class UpdateMember(listId: ListId, sub: Subscription) extends API[UpdateMemberResult]
-
-    final case class BatchSubscribe(listId: ListId, subs: NonEmptyVector[Subscription]) extends API[Unit]
+    final case class BatchSubscribe(subs: NonEmptyVector[Subscription]) extends API[Unit]
   }
 }

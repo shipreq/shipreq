@@ -38,7 +38,24 @@ object MakeEvent {
 
   private def fail(s: String) = Failure(ErrorMsg(s))
 
+  val userFacingErrorMsgCantRemoveAdmin =
+    ErrorMsg("A project must have at least one admin user. You can't remove all admin.")
+
   // ===================================================================================================================
+
+  def updateAccess(cmd: UpdateAccessCmd.Modify, project: Project): Result = {
+    val access = project.access.asMap
+    val updates = cmd.updates.filterNot { case (u, o) => access.get(u) ==* o }
+    if (updates.isEmpty)
+      Unchanged
+    else {
+      val access2 = project.access.update(updates)
+      if (!access2.hasAdmin)
+        Failure(userFacingErrorMsgCantRemoveAdmin)
+      else
+        Event.AccessUpdate(updates)
+    }
+  }
 
   def projectNameSetFn(name: String): Result =
     ProjectNameSet(name)

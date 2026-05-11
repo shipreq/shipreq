@@ -417,6 +417,9 @@ object BaseData {
   implicit lazy val picklerProjectIdPublic: Pickler[ProjectId.Public] =
     pickleObfuscated
 
+  implicit lazy val picklerUserIdPublic: Pickler[UserId.Public] =
+    pickleObfuscated
+
   implicit lazy val picklerVerificationToken: Pickler[VerificationToken] =
     transformPickler(VerificationToken.apply)(_.value)
 
@@ -470,4 +473,33 @@ object BaseData {
 
   implicit lazy val pickleAssetManifest =
     transformPickler(AssetManifest.apply)(_.staticAssetCdn)
+
+  implicit lazy val picklerBinaryData: Pickler[BinaryData] =
+    transformPickler(BinaryData.unsafeFromArray)(_.unsafeArray)
+
+  def picklerBinaryDataFixedLength(len: Int): Pickler[BinaryData] =
+    new Pickler[BinaryData] {
+
+      override def pickle(bin: BinaryData)(implicit state: PickleState): Unit = {
+        assert(bin.length == len)
+        val enc = state.enc
+        val bytes = bin.unsafeArray
+        var i = 0
+        while (i < len) {
+          enc.writeByte(bytes(i))
+          i += 1
+        }
+      }
+
+      override def unpickle(implicit state: UnpickleState): BinaryData = {
+        val dec = state.dec
+        val bytes = new Array[Byte](len)
+        var i = 0
+        while (i < len) {
+          bytes(i) = dec.readByte
+          i += 1
+        }
+        BinaryData.unsafeFromArray(bytes)
+      }
+    }
 }

@@ -1,15 +1,15 @@
 package shipreq.webapp.member.project.event
 
 import java.time.Instant
-import shipreq.base.test.BaseTestUtil._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.Event._
+import shipreq.webapp.member.test.WebappTestUtil._
 import utest._
 
 object ApplyEventTest extends TestSuite {
 
   def verifyEvent(p1: Project, e1: Event) = {
-    val p2 = ApplyEvent.untrusted.apply1(e1)(p1) match {
+    val p2 = ApplyEvent.untrusted.partialApplyUnverified(e1)(p1) match {
       case \/-(p) => p
       case -\/(x) => fail(s"Init failed: $x")
     }
@@ -20,13 +20,13 @@ object ApplyEventTest extends TestSuite {
   }
 
   def assertApplicationFailure(vef: VerifiedEvent, p1: Project): Unit =
-    ApplyEvent.untrusted.applyVerified1(vef)(p1) match {
+    ApplyEvent.untrusted(vef)(p1) match {
       case \/-(_) => fail(s"applyVerified passed when it shouldn't have.")
       case -\/(_) => ()
     }
 
   object Data1 {
-    val p1 = Project.empty
+    val p1 = emptyProject1
     val e1 = FieldStaticRemove(StaticField.StepGraph)
     val (p2, ve) = verifyEvent(p1, e1)
   }
@@ -43,7 +43,7 @@ object ApplyEventTest extends TestSuite {
       Gen { ctx =>
         var lvs   = genLogicVerSeq run ctx
         var hss   = genHashSchemeSeq run ctx
-        var p     = Project.empty
+        var p     = emptyProject1
         var stats = EventStats.empty
         var ves   = Vector.empty[VerifiedEvent]
 
@@ -102,7 +102,7 @@ object ApplyEventTest extends TestSuite {
 
     def mkProp(AE: ApplyEvent) = Prop.atom[Vector[VerifiedEvent]](AE.trust.toString,
       ves => {
-        def getP2 = AE(ves.map(_.event))(Project.empty).toOption
+        def getP2 = AE(ves.map(_.event))(emptyProject1).toOption
 
 //        def printHashValues(): Unit =
 //          for (p2 <- getP2) {
@@ -117,18 +117,18 @@ object ApplyEventTest extends TestSuite {
 //              logic <- logicVers
 //            } {
 //              def h(p: Project) = HashScope.hash(scope, scheme.value, p)
-//              println(s"  > $scope $logic $scheme = ${h(Project.empty)} → ${h(p2)}")
+//              println(s"  > $scope $logic $scheme = ${h(emptyProject1)} → ${h(p2)}")
 //            }
 //            println()
 //          }
 
-        AE.applyVerified(ves)(Project.empty) match {
+        AE(ves)(emptyProject1) match {
           case \/-(_) => None
           case -\/(failure) =>
             for (p2 <- getP2)
               println {
                 // printHashValues()
-                //AE.applyVerified2(ves)(Project.empty)
+                //AE.applyVerified2(ves)(emptyProject1)
                 def inspect(h: HashRec, p: Project): String = {
                   import h._
                   hash.fold("pass") { e =>
@@ -159,8 +159,9 @@ object ApplyEventTest extends TestSuite {
 
     "applyVerified" - {
       "pass" - {
+        import Project.Equality.IgnoringHistory._
         import Data1._
-        ApplyEvent.untrusted.applyVerified1(ve)(p1) match {
+        ApplyEvent.untrusted(ve)(p1) match {
           case \/-(p) => assertEq(p, p2)
           case -\/(e) => fail(s"applyVerified failed: $e")
         }

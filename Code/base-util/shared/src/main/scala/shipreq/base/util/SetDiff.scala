@@ -1,5 +1,6 @@
 package shipreq.base.util
 
+import cats.Functor
 import japgolly.microlibs.nonempty.NonEmpty
 
 /**
@@ -15,7 +16,7 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
     removed.## * 31 + added.##
 
   override def equals(o: Any) = o match {
-    case b: SetDiff[A] => (removed == b.removed) && (added == b.added)
+    case b: SetDiff[_] => (removed == b.removed) && (added == b.added)
     case _             => false
   }
 
@@ -23,6 +24,12 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
     removed.isEmpty && added.isEmpty
 
   def nonEmpty = !isEmpty
+
+  def ++(as: IterableOnce[A]): SetDiff[A] =
+    new SetDiff(removed, added ++ as)
+
+  def --(as: IterableOnce[A]): SetDiff[A] =
+    new SetDiff(removed ++ as, added)
 
   def inverse: SetDiff[A] =
     new SetDiff(added, removed)
@@ -33,6 +40,9 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
   def apply(to: Set[A]): Set[A] =
     (to -- removed) ++ added
 
+  def mapApply[B](f: A => B, to: Set[B]): Set[B] =
+    (to -- removed.iterator.map(f)) ++ added.iterator.map(f)
+
   def applyToMultimapKeys[V](mm: Multimap[A, Set, V])(v: V): Multimap[A, Set, V] = {
     var tmp = mm
     removed.foreach(a => tmp = tmp.del(a, v))
@@ -42,6 +52,9 @@ final class SetDiff[A](val removed: Set[A], val added: Set[A]) {
 
   def applyToMultimapValues[K](mm: Multimap[K, Set, A])(k: K): Multimap[K, Set, A] =
     mm.mod(k, apply)
+
+  def map[B: UnivEq](f: A => B): SetDiff[B] =
+    SetDiff(removed = removed.map(f), added = added.map(f))
 }
 
 object SetDiff {
@@ -77,4 +90,9 @@ object SetDiff {
     val (del, add) = xor.partition(current.contains)
     SetDiff(del, add)
   }
+
+  implicit def functor: Functor[SetDiff] =
+    new Functor[SetDiff] {
+      override def map[A, B](fa: SetDiff[A])(f: A => B) = fa.map(f)(UnivEq.force)
+    }
 }

@@ -4,6 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.util.JsUtil
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.html
+import scala.scalajs.js
 import shipreq.webapp.base.util.{KeyHandler, KeyHandlers}
 import shipreq.webapp.member.feature.autocomplete.Implicits._
 import shipreq.webapp.member.feature.autocomplete.strategies.Strategies
@@ -47,6 +48,7 @@ object ForComponent {
     private[this] var textComplete    : Option[TextComplete]    = None
     private[this] var textCompletePrev: Option[AutoCompleteCtx] = None
     private[this] var hideNext        : Boolean                 = false
+    private[this] var dropdownVisible : Boolean                 = false
 
     final protected val textCompleteCBO: CallbackOption[TextComplete] =
       CallbackOption.option(textComplete)
@@ -100,13 +102,26 @@ object ForComponent {
         _ <- autoCompleteClose.toCBO
       } yield ()
 
+    // Alternative to using autoCompleteOnKeyDown and autoCompleteOnKeyDownCapture
     final protected lazy val autoCompleteKeyHandlers: KeyHandlers =
-      KeyHandlers(KeyHandler.Criterion.CtrlSpace.handle(trigger) :: Nil)
+      KeyHandlers(
+        KeyHandler.Criterion.CtrlOrCmdSpace.handle(trigger) ::
+
+        // asNonDefault is necessary here so that when tab is pressed when no dropdown is visible, it doesn't prevent
+        // fallback behaviour (e.g. focusing the outer cell in table nav).
+        KeyHandler.Criterion.TabCapture.handle(handleTab(_).asCallback.void).asNonDefault ::
+
+        Nil)
 
     final protected val autoCompleteOnKeyDown: ReactKeyboardEvent => Callback = e =>
       CallbackOption.keyCodeSwitch(e, ctrlKey = true) {
         case KeyCode.Space => trigger
       }.asEventDefault(e)
+
+    final protected val autoCompleteOnKeyDownCapture: ReactKeyboardEvent => Callback = e =>
+      CallbackOption.keyCodeSwitch(e) {
+        case KeyCode.Tab => handleTab(e)
+      }.asCallback.void
 
     final private val addEventListeners: Callback =
       for {
@@ -119,6 +134,13 @@ object ForComponent {
         if (tc._events.select.isEmpty) {
           tc.on("select", () => {
             hideNext = true
+            dropdownVisible = false
+          })
+          tc.on("show", () => {
+            dropdownVisible = true
+          })
+          tc.on("hide", () => {
+            dropdownVisible = false
           })
         }
       }
@@ -139,6 +161,16 @@ object ForComponent {
         tc.trigger(txt)
         ()
       }
+
+    /** Focuses the next dropdown item */
+    private def handleTab(e: ReactKeyboardEvent): CallbackOption[Unit] =
+      for {
+        tc <- textCompleteCBO
+        _  <- CallbackOption.require(dropdownVisible)
+        _  <- e.preventDefaultCB.toCBO
+        _  <- e.stopPropagationCB.toCBO
+        _  <- Callback(tc.editor.emitMoveEvent(js.Dynamic.literal(code = "DOWN"))).toCBO
+      } yield ()
   }
 
   def install[P, C <: Children, S, B <: Backend[D], D <: html.Element: AutoCompletable]: ScalaComponent.Config[P, C, S, B, UpdateSnapshot.None, UpdateSnapshot.Some[Unit]] =

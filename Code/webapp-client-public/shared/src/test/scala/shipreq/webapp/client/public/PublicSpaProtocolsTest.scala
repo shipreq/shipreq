@@ -2,7 +2,6 @@ package shipreq.webapp.client.public
 
 import japgolly.microlibs.adt_macros.AdtMacros
 import nyaya.gen.Gen
-import shipreq.base.test.BaseTestUtil._
 import shipreq.base.util._
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.test.BinaryTestUtil._

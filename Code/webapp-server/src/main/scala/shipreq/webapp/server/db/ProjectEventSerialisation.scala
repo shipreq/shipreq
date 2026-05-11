@@ -8,6 +8,8 @@ import shipreq.webapp.member.project.protocol.json.v1.Events.EventData._
 import shipreq.webapp.member.project.protocol.json.v1.Rev1.EventData._
 import shipreq.webapp.member.project.protocol.json.v1.Rev6.EventData._
 import shipreq.webapp.member.project.protocol.json.v1.Rev7.EventData._
+import shipreq.webapp.member.project.protocol.json.v2.Rev0.EventData._
+import shipreq.webapp.member.protocol.json.JsonCodec.Implicits._
 import shipreq.webapp.server.logic.algebra.DB.ReadProjectEventError
 
 object ProjectEventSerialisation {
@@ -15,6 +17,7 @@ object ProjectEventSerialisation {
   import ProjectEventTypes._
 
   val encode: ActiveEvent => (Short, Json) = {
+    case e: AccessUpdate            => (TypeAccessUpdate           , e.asJson)
     case e: ApplicableTagCreate     => (TypeApplicableTagCreateV2  , e.asJson)
     case e: ApplicableTagUpdate     => (TypeApplicableTagUpdateV2  , e.asJson)
     case e: CodeGroupCreate         => (TypeCodeGroupCreate        , e.asJson)
@@ -109,6 +112,7 @@ object ProjectEventSerialisation {
       }
 
     typeId match {
+      case TypeAccessUpdate            => parse[AccessUpdate]
       case TypeApplicableTagCreateV1   => parse[ApplicableTagCreateV1]
       case TypeApplicableTagCreateV2   => parse[ApplicableTagCreate]
       case TypeApplicableTagUpdateV1   => parse[ApplicableTagUpdateV1]

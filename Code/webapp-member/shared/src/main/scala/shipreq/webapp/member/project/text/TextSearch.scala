@@ -1,7 +1,6 @@
 package shipreq.webapp.member.project.text
 
 import cats.Eval
-import shipreq.base.util.ScalaExt._
 import shipreq.base.util.algorithm.BoyerMooreHorspool
 import shipreq.base.util.{IMap, OptionalBoolFn}
 import shipreq.webapp.member.project.data._

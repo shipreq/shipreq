@@ -23,10 +23,12 @@ object ApplyEventTestFns {
     _assertPass(es: _*)
 
   def _assertPass(es: Event*)(implicit init: InitialEvents, l: Line): Project = {
+    import Project.Equality.IgnoringHistory._
+
     val es2 = init ++ es
 
     def go(ae: ApplyEvent): Project = {
-      val r = ae(es2)(Project.empty)
+      val r = ae.partialApplyUnverified(es2)(emptyProject1)
       val p =
         r match {
           case \/-(v) => v
@@ -51,7 +53,7 @@ object ApplyEventTestFns {
     val p1 = _assertPass(ev.init: _*)(NoInitialEvents.init, l)
 
     // Now apply the last event
-    val r = apply.apply1(ev.last)(p1)
+    val r = apply.partialApplyUnverified(ev.last)(p1)
     r match {
       case -\/(e) => assertContainsCI(e.value, errFrag)
       case \/-(_) => fail(s"\nFailure expected but didn't occur.\nEvents were:\n${fmtEvents(es)}")
@@ -112,7 +114,8 @@ object ApplyEventTestFns {
       case _: ManualIssueCreate => manualIssues += 1
       case _: ManualIssueDelete => manualIssues -= 1
 
-      case _: ApplicableTagUpdate
+      case _: AccessUpdate
+         | _: ApplicableTagUpdate
          | _: ApplicableTagUpdateV1
          | _: CustomIssueTypeDelete
          | _: CustomIssueTypeRestore
@@ -210,7 +213,7 @@ class EventTester(implicit init: InitialEvents, l: Line) {
   def apply(e: Event)(test: (=> String) => Unit)(implicit l: Line): Unit = {
     testNo += 1
     def name = makeName(testNo, e)
-    ApplyEventTestFns.apply.apply1(e)(p) match {
+    ApplyEventTestFns.apply.partialApplyUnverified(e)(p) match {
       case \/-(p2)  => p = p2
       case -\/(err) => fail(s"$name failed: $err")
     }

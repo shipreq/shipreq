@@ -1,0 +1,133 @@
+package shipreq.webapp.client.ww
+
+import japgolly.scalajs.react.{AsyncCallback, Callback, CallbackTo}
+import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data.ProjectCreator
+import shipreq.webapp.base.lib.LoggerJs
+import shipreq.webapp.base.util.LruMemo
+import shipreq.webapp.client.ww.api.WebWorkerCmd
+import shipreq.webapp.client.ww.graph.GraphViz
+import shipreq.webapp.member.project.data.Project
+import shipreq.webapp.member.project.event.{EventOrd, VerifiedEvent}
+import shipreq.webapp.member.project.library.{MutableProjectLibrary, ProjectLibrary}
+import shipreq.webapp.member.project.storage.ClientSideStorage
+import shipreq.webapp.member.project.text.PlainText
+
+final class WorkerState(creator: ProjectCreator,
+                        logic  : WorkerState.Logic,
+                        logger : LoggerJs) {
+
+  private val assetManifest  = AsyncCallback.ref[AssetManifest].runNow()
+  private val graphViz       = AsyncCallback.ref[GraphViz].runNow()
+  private val storage        = AsyncCallback.ref[ClientSideStorage.ReadWrite].runNow()
+  private val projectLibrary = MutableProjectLibrary.empty(creator)
+
+  def init(cmd: WebWorkerCmd.Init): AsyncCallback[Unit] = {
+    import cmd._
+    for {
+      firstTime <- assetManifest.setIfUnset(am)
+      _         <- logic.importScripts(am.wwJs).asAsyncCallback.when_(firstTime)
+      _         <- graphViz.setIfUnsetSync(logic.loadGraphViz(am))
+      _         <- storage.setIfUnsetAsync(logic.cssProvider(cssCtx, encKey))
+      _         <- loadFromClientSideStorage.when_(firstTime)
+    } yield ()
+  }
+
+  def withGraphViz[A](f: GraphViz => AsyncCallback[A], retries: Int = 4): AsyncCallback[A] = {
+    val main = graphViz.get.flatMap(f).attempt.timeoutMs(2000)
+
+    def go(retries: Int): AsyncCallback[A] =
+      main.flatMap {
+        case Some(Right(a)) =>
+          AsyncCallback.pure(a)
+
+        case result =>
+          val createNewInstance: AsyncCallback[Unit] =
+            graphViz.setSync(GraphViz.newInstance)
+
+          val next: AsyncCallback[A] =
+            if (retries > 0)
+              go(retries - 1)
+            else
+              result match {
+                case Some(Left(err)) => AsyncCallback.throwException(err)
+                case _               => AsyncCallback.throwException(new RuntimeException("Timeout rendering graph"))
+              }
+
+          createNewInstance >> next
+      }
+
+    go(retries)
+  }
+
+  private def loadFromClientSideStorage: AsyncCallback[Unit] =
+    for {
+      s  <- storage.get
+      pl <- s.getProjectLibraryOrEmpty
+      _  <- projectLibrary.set(pl).asAsyncCallback
+      _  <- logger.async(_.info(s"Loaded v${pl.ordAsInt} from ClientSideStorage"))
+    } yield ()
+
+  def update(u: Project \/ VerifiedEvent.Seq): Callback =
+    for {
+      _  <- projectLibrary.update(u)
+      pl <- projectLibrary.get
+      _  <- saveToClientSideStorage(pl).toCallback
+    } yield ()
+
+  private def saveToClientSideStorage(pl: ProjectLibrary): AsyncCallback[Unit] =
+    for {
+      s <- storage.get
+      _ <- logger.async(_.info(s"Saving ProjectLibrary v${pl.ordAsInt} to ClientSideStorage"))
+      _ <- s.saveProjectLibrary(pl)
+    } yield ()
+
+  def clearAndDisable: AsyncCallback[Unit] =
+    for {
+      os <- storage.getIfAvailable.asAsyncCallback
+      _  <- AsyncCallback.traverseOption(os)(clearAndDisable)
+    } yield ()
+
+  private def clearAndDisable(s: ClientSideStorage.ReadWrite): AsyncCallback[Unit] =
+    storage.set(s.disabled) >> s.clear
+
+  def getProject(ord: Option[EventOrd.Latest]): AsyncCallback[Project] =
+    projectLibrary.projectAt(ord)
+
+  private val plainTextMemo: LruMemo[Project, PlainText.ForProject.NoCtx] =
+    LruMemo(PlainText.ForProject.noCtx.apply, 3).by(_.ordAsInt).byUnivEq
+
+  def getPlainText(p: Project): AsyncCallback[PlainText.ForProject.NoCtx] =
+    AsyncCallback.pure(plainTextMemo(p))
+
+  def staleness: MutableProjectLibrary.Staleness =
+    projectLibrary
+
+  // For tests
+  private[ww] def pendingPromiseCount(): Int =
+    projectLibrary.pendingPromiseCount()
+
+  // For tests
+  private[ww] def ordAsInt(): Int =
+    projectLibrary.get.runNow().ordAsInt
+}
+
+object WorkerState {
+
+  trait Logic {
+    val importScriptList: List[String] => Callback
+    val loadGraphViz    : AssetManifest => CallbackTo[GraphViz]
+    val cssProvider     : ClientSideStorage.ReadWrite.Provider
+
+    final def importScripts(urls: String*) =
+      importScriptList(urls.toList)
+  }
+
+  object Logic {
+    object Real extends Logic {
+      override val importScriptList = WebWorkerUtil.importScriptList
+      override val loadGraphViz     = GraphViz.load
+      override val cssProvider      = ClientSideStorage.ReadWrite.apply
+    }
+  }
+}

@@ -30,9 +30,12 @@ object KeyHandler {
 
   sealed abstract class EventType(val domKey: VdomAttr.Event[ReactKeyboardEventFrom])
   object EventType {
-    case object KeyPress extends EventType(^.onKeyPress)
-    case object KeyDown  extends EventType(^.onKeyDown)
-    case object KeyUp    extends EventType(^.onKeyUp)
+    case object KeyPress        extends EventType(^.onKeyPress)
+    case object KeyDown         extends EventType(^.onKeyDown)
+    case object KeyUp           extends EventType(^.onKeyUp)
+    case object KeyPressCapture extends EventType(^.onKeyPressCapture)
+    case object KeyDownCapture  extends EventType(^.onKeyDownCapture)
+    case object KeyUpCapture    extends EventType(^.onKeyUpCapture)
 
     implicit def univEq: UnivEq[EventType] = UnivEq.derive
   }
@@ -107,13 +110,17 @@ object KeyHandler {
       Criteria.empty + m
 
     import org.scalajs.dom.ext.KeyCode
-    val Escape    = Criterion("esc",        EventType.KeyDown, KeyCode.Escape)
-    val Enter     = Criterion("enter",      EventType.KeyDown, KeyCode.Enter)
-    val AltEnter  = Criterion("alt-enter",  EventType.KeyDown, KeyCode.Enter, ModKey.Alt)
-    val AltT      = Criterion("alt-t",      EventType.KeyDown, KeyCode.T,     ModKey.Alt)
-    val AltZ      = Criterion("alt-z",      EventType.KeyDown, KeyCode.Z,     ModKey.Alt)
-    val CtrlEnter = Criterion("ctrl-enter", EventType.KeyDown, KeyCode.Enter, ModKey.Ctrl)
-    val CtrlSpace = Criterion("ctrl-space", EventType.KeyDown, KeyCode.Space, ModKey.Ctrl)
+    private val ctrlOrCmd       = if (Browser.isMac) ModKey.Meta else ModKey.Ctrl
+    private val ctrlOrCmdPrefix = if (Browser.isMac) "⌘ " else "ctrl-"
+    private val altPrefix       = if (Browser.isMac) "⌥ " else "alt-"
+    val Escape         = Criterion("esc",                     EventType.KeyDown,        KeyCode.Escape)
+    val Enter          = Criterion("enter",                   EventType.KeyDown,        KeyCode.Enter)
+    val AltEnter       = Criterion(altPrefix + "enter",       EventType.KeyDown,        KeyCode.Enter, ModKey.Alt)
+    val AltT           = Criterion(altPrefix + "t",           EventType.KeyDown,        KeyCode.T,     ModKey.Alt)
+    val AltZ           = Criterion(altPrefix + "z",           EventType.KeyDown,        KeyCode.Z,     ModKey.Alt)
+    val CtrlOrCmdEnter = Criterion(ctrlOrCmdPrefix + "enter", EventType.KeyDown,        KeyCode.Enter, ctrlOrCmd)
+    val CtrlOrCmdSpace = Criterion(ctrlOrCmdPrefix + "space", EventType.KeyDown,        KeyCode.Space, ctrlOrCmd)
+    val TabCapture     = Criterion("tab",                     EventType.KeyDownCapture, KeyCode.Tab)
   }
 
   type Criteria = ListSet[Criterion]

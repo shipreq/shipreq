@@ -88,7 +88,7 @@ object SampleDerivativeTags5 {
   val yRules = FieldReqTypeRules.empty
   val yDerivativeTags = DerivativeTags(Enabled, Map.empty)
 
-  val project = applyEventsSuccessfully(Project.empty,
+  val project = applyEventsSuccessfully(emptyProject1,
     Event.FieldStaticAdd(StaticField.AllTags),
 
     Event.CustomReqTypeCreate(a, CustomReqTypeGD("A", "A", Optional, ∅)),

@@ -8,13 +8,14 @@ import doobie.implicits._
 import doobie.util.Colors
 import doobie.util.testing._
 import doobie.util.transactor.Strategy
-import japgolly.microlibs.stdlib_ext.StdlibExt._
 import japgolly.microlibs.testutil.TestUtil._
 import java.sql.Connection
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.{ReadWriteLock, ReentrantReadWriteLock}
 import scala.concurrent.ExecutionContext
 import scala.reflect.runtime.universe.TypeTag
 import shipreq.base.db._
+import shipreq.base.ops.{JdbcLogging, SqlTracer}
 import shipreq.base.util.FxModule._
 import shipreq.base.util.log.HasLogger
 import shipreq.base.util.{LockUtils, Props, ThreadUtils}
@@ -24,14 +25,26 @@ object TestDb extends TestDbHelpers with HasLogger {
 
   var debug = false
 
+  var rollback = true
+
+  private implicit val lockMechanism: LockUtils.LockMechanism =
+    LockUtils.LockMechanism.LimitWaitTime(30, TimeUnit.SECONDS, "TestDb")
+
   private def debugLog(msg: => String): Unit =
     if (debug) {
       import Console._
       println(s"$BOLD$YELLOW[TestDb] $msg$RESET")
     }
 
-  lazy val (cfg, cfgReport) = DbConfig.config.withReport.run(Props.sources).unsafeRun().getOrDie()
-  debugLog(cfgReport.used)
+  private def sqlTracer: SqlTracer =
+    JdbcLogging
+
+  lazy val (cfg, cfgReport) = {
+    val (cfg, cfgReport) = DbConfig.config.withReport.run(Props.sources).unsafeRun().getOrDie()
+    cfg.modifyHikariDataSource(sqlTracer.inject)
+    debugLog(cfgReport.used)
+    (cfg, cfgReport)
+  }
 
   lazy val db: DbAccessor = {
     debugLog("Creating DbAccessor...")
@@ -39,7 +52,7 @@ object TestDb extends TestDbHelpers with HasLogger {
     val poolSize = if (cfg.poolSize == -1) 4 else cfg.poolSize
     assert(poolSize >= 1, s"DB pool size = $poolSize ?!")
 
-    val ds = cfg.pgDataSource
+    val ds = sqlTracer.inject(cfg.pgDataSource)
 
     /** Rollback everything */
     val txnStrategy = Strategy(C.setAutoCommit(false), C.rollback, C.rollback, C.unit)
@@ -82,43 +95,78 @@ object TestDb extends TestDbHelpers with HasLogger {
   private[this] val rwlock: ReadWriteLock =
     new ReentrantReadWriteLock()
 
-  @volatile private[this] var state: Option[(XA, Fx[Unit])] =
+  private case class State(xa: XA, shutdown: Fx[Unit], initError: Option[Throwable])
+
+  @volatile private[this] var state: Option[State] =
     None
 
-  def initialised = state.isDefined
-  def initPending = !initialised
   private[this] val initLock = new AnyRef
 
-  def init(): Unit =
-    if (initPending)
-      initLock.synchronized(
-        if (initPending) {
-          debugLog("Database initialising...")
-          val s = db.xa.allocated.unsafeRun().map1(new XA(_))
-          state = Some(s)
-          ThreadUtils.runOnShutdown("TestDb", shutdown())
-          db.migrator.migrate[Fx].unsafeRun()
-          truncateAllWithoutLocking()
-          debugLog("Database initialised.")
-        }
-      )
+  def init(): Unit = {
+    _init()
+    ()
+  }
 
-  def shutdown(): Unit =
+  private def _init(): State = {
+
+    @inline def get(): State =
+      state match {
+        case Some(s) =>
+          for (t <- s.initError)
+            throw t
+          s
+        case None =>
+          throw new IllegalStateException("Init failed")
+      }
+
+    if (this.state.isDefined)
+      return get()
+
+    initLock.synchronized {
+      if (this.state.isDefined)
+        return get()
+
+      debugLog("Database initialising...")
+      val (xa, shutdown) = db.xa.allocated.unsafeRun()
+      val state = State(new XA(xa), shutdown, None)
+      this.state = Some(state)
+      ThreadUtils.runOnShutdown("TestDb", this.shutdown())
+      try {
+        db.migrator.migrate[Fx].unsafeRun()
+      } catch {
+        case _: Throwable =>
+          try {
+            dropSchema()
+            db.migrator.migrate[Fx].unsafeRun()
+          } catch {
+            case t: Throwable =>
+              this.state = Some(state.copy(initError = Some(t)))
+              throw t
+          }
+      }
+      truncateAllWithoutLocking()
+      debugLog("Database initialised.")
+      state
+    }
+  }
+
+  def shutdown(): Unit = {
     // No write-lock here because if I run only a single test in LiveTest, it doesn't shutdown which doesn't release
     // the write-lock which freezes everything. Rather than avoid that scenario, let's just not use a write-lock here
     // and avoid all similar issues. Remember that this is TestDb.shutdown() which NO ONE calls except for:
     // 1) SBT via Common.scala
-    // 2) the shutdown hook registered in init() above
-    if (initialised)
-      state match {
-        case Some(s) =>
-          debugLog("Database shutting down...")
-          s._2.unsafeRun()
-          state = None
-          debugLog("Database shut down.")
-        case None =>
-          ()
-      }
+    // 2) the shutdown hook registered in _init() above
+    val state = initLock.synchronized(this.state)
+    state match {
+      case Some(s) =>
+        debugLog("Database shutting down...")
+        s.shutdown.unsafeRun()
+        this.state = None
+        debugLog("Database shut down.")
+      case None =>
+        ()
+    }
+  }
 
   /** Drops all objects (tables, views, procedures, triggers, ...) in the configured schemas. */
   def dropSchema(): Unit =
@@ -129,14 +177,17 @@ object TestDb extends TestDbHelpers with HasLogger {
         sys.error(s"You're trying to wipe $dbName. Only $allowed is allowed to be wiped.")
       debugLog(s"Dropping schema in: $dbName")
       db.migrator.drop[Fx].unsafeRun()
+      singleConnXA.use { xa =>
+        Fx {
+          val i = new ImperativeXA(xa, db, () => tables)
+          i.update("CREATE EXTENSION hll") // because flyway.clean (i.e. db.migrator.drop) removes the hll extension 😨
+        }
+      }.unsafeRun()
     }
 
   // Unsafe because all usage should be wrapped in locks
   private val _xa: Fx[XA] =
-    Fx {
-      init()
-      state.get._1 // good enough
-    }
+    Fx(_init().xa)
 
   // Don't expose because it allows downstream to execute multiple txns, all of which will be automatically rolled back
   // by the txn strategy.
@@ -208,16 +259,20 @@ object TestDb extends TestDbHelpers with HasLogger {
 
   /** Everything runs in a transaction and is automatically rolled back */
   def withImperativeXA[A](f: ImperativeXA => A): A = {
-    init()
+    _init()
     singleConnXA.use { xa =>
       Fx {
         val i = new ImperativeXA(xa, db, () => tables)
+        i ! C.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE)
         i ! C.setAutoCommit(false)
         val s = i ! C.setSavepoint
         try
           f(i)
         finally
-          i ! C.rollback(s)
+          if (rollback)
+            i ! C.rollback(s)
+          else
+            i ! C.commit
       }
     }.unsafeRun()
   }
