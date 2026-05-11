@@ -30,7 +30,7 @@ object PlainText {
     object noCtx {
 
       def apply(p: Project): NoCtx =
-        ForProject(p, ProjectText.Context.None)
+        ForProject(p, ProjectText.Context.none)
 
       lazy val empty: NoCtx =
         apply(Project.empty)
@@ -441,11 +441,10 @@ object PlainText {
 
     def useCaseStepLabel(focus: UseCaseStep.Focus): String = {
       val fmt = gctx match {
-     // case ProjectText.Context.Req(i: UseCaseId) if i ==* uc.id => UseCaseStepLabelFmt.    `.m` // looks too confusing
-        case ProjectText.Context.Req(_: UseCaseId)                => UseCaseStepLabelFmt.   `N.m`
-        case ProjectText.Context.None
-           | ProjectText.Context.Link
-           | ProjectText.Context.Req(_: GenericReqId)             => UseCaseStepLabelFmt.`UC-N.m`
+     // case ProjectText.Context.Req(i: UseCaseId, _) if i ==* uc.id => UseCaseStepLabelFmt.    `.m` // looks too confusing
+        case ProjectText.Context.Req(_: UseCaseId, _)                => UseCaseStepLabelFmt.   `N.m`
+        case _: ProjectText.Context.None
+           | ProjectText.Context.Req(_: GenericReqId, _)             => UseCaseStepLabelFmt.`UC-N.m`
       }
       focus.label(fmt)
     }

@@ -93,20 +93,18 @@ object BaseMemberData2 {
   implicit lazy val picklerProjectTextContext: Pickler[ProjectText.Context] =
     new Pickler[ProjectText.Context] {
       import ProjectText.Context._
-      private[this] implicit val picklerReq: Pickler[Req] = transformPickler(Req.apply)(_.id)
+      private[this] implicit val picklerNone: Pickler[None] = transformPickler(None.apply)(_.inLink)
+      private[this] implicit val picklerReq: Pickler[Req] = transformPickler((p: (ReqId, Boolean)) => Req(p._1, p._2))(r => (r.id, r.inLink))
       private[this] final val KeyNone = 0
       private[this] final val KeyReq  = 'r'
-      private[this] final val KeyLink = 'l'
       override def pickle(a: ProjectText.Context)(implicit state: PickleState): Unit =
         a match {
-          case None    => state.enc.writeByte(KeyNone)
-          case Link    => state.enc.writeByte(KeyLink)
+          case b: None => state.enc.writeByte(KeyNone); state.pickle(b)
           case b: Req  => state.enc.writeByte(KeyReq ); state.pickle(b)
         }
       override def unpickle(implicit state: UnpickleState): ProjectText.Context =
         state.dec.readByte match {
-          case KeyNone => None
-          case KeyLink => Link
+          case KeyNone => state.unpickle[None]
           case KeyReq  => state.unpickle[Req]
         }
     }

@@ -43,7 +43,7 @@ final class Table(rootPxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]],
                      modifyView: ModFn[View]) {
 
       // This is a no-op because it's what's already provided by LoadedRoot
-      val pw = editorArgs.projectWidgets.withCtx(ProjectText.Context.None)
+      val pw = editorArgs.projectWidgets.withCtx(ProjectText.Context.none)
 
       @inline def config = editorArgs.project.config
       @inline def render = Component(this)
