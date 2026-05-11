@@ -25,6 +25,7 @@ This uses React and Semantic UI.
 * Always prefer immutable data over mutable data
 * Code should be tested thoroughly
 * Never use `==` or `!=`; instead use `==*` or `!=*` from the `univeq` library
+* Implicit instances of `UnivEq` should always be `def`s and not `val`s
 
 * When you grep, ignore the .metals directory
 
