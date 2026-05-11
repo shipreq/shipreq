@@ -122,7 +122,7 @@ object Dependencies {
   }
 
   object Monocle {
-    private val mm = MultiModule.jvmAndJs("dev.optics", "3.1.0")
+    private val mm = MultiModule.jvmAndJs("dev.optics", "3.3.0")
     val core   = mm("monocle-core")
     val macros = mm("monocle-macro") ++ core
   }
@@ -214,11 +214,11 @@ object Dependencies {
 
   // ===================================================================================================================
 
-  val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.4.0")
+  val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.5.0")
   val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "3.3.0")
   val parboiled   = jvmAndJs("org.parboiled",                    "parboiled",   "2.3.0")
   val pprint      = jvmAndJs("com.lihaoyi",                      "pprint",      "0.6.6")
-  val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.7")
+  val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.13")
   val utest       = jvmAndJs("com.github.japgolly.fork",         "utest",       "1.0.3")
 
   val commonsIo    = jvmOnly("org.apache.directory.studio" % "org.apache.commons.io" % "2.4")
@@ -234,7 +234,7 @@ object Dependencies {
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.15.4")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.4")
   val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.3.0")
-  val scalaz       = jvmOnly("org.scalaz"                 %% "scalaz-core"           % "7.3.5") // only used for scalaz.Heap
+  val scalaz       = jvmOnly("org.scalaz"                 %% "scalaz-core"           % "7.3.8") // only used for scalaz.Heap
 
   val scalajsBenchmark = jsOnly("com.github.japgolly.scalajs-benchmark" %% "benchmark"         % "0.10.0")
   val scalajsDom       = jsOnly("org.scala-js"                          %% "scalajs-dom"       % "2.8.1")
