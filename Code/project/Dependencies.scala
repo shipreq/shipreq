@@ -225,7 +225,7 @@ object Dependencies {
   val commonsText  = jvmOnly("org.apache.commons"          % "commons-text"          % "1.15.0")
   val flyway       = jvmOnly("org.flywaydb"                % "flyway-core"           % "8.0.5")
   val hikariCP     = jvmOnly("com.zaxxer"                  % "HikariCP"              % "7.0.2")
-  val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.14")
+  val httpCore     = jvmOnly("org.apache.httpcomponents"   % "httpcore"              % "4.4.16")
   val jaegerClient = jvmOnly("io.jaegertracing"            % "jaeger-client"         % "1.6.0")
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.7.11")
