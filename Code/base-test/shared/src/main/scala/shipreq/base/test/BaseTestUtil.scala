@@ -51,7 +51,7 @@ object BaseTestUtil extends BaseTestEquality with BaseTestUtil {
       defaultWidth = 1,
       defaultHeight = 2000,
       additionalHandlers = {
-        case x: NonEmptyArraySeq[Any] => pprint.treeify(x.whole)
+        case x: NonEmptyArraySeq[Any] => pprint.treeify(x.whole, escapeUnicode = true, showFieldNames = false)
       }
     )
 }

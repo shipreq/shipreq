@@ -217,7 +217,7 @@ object Dependencies {
   val boopickle   = jvmAndJs("io.suzaku",                        "boopickle",   "1.5.0")
   val clearConfig = jvmAndJs("com.github.japgolly.clearconfig",  "core",        "3.3.0")
   val parboiled   = jvmAndJs("org.parboiled",                    "parboiled",   "2.3.0")
-  val pprint      = jvmAndJs("com.lihaoyi",                      "pprint",      "0.6.6")
+  val pprint      = jvmAndJs("com.lihaoyi",                      "pprint",      "0.9.6")
   val shapeless   = jvmAndJs("com.chuusai",                      "shapeless",   "2.3.13")
   val utest       = jvmAndJs("com.github.japgolly.fork",         "utest",       "1.0.3")
 
