@@ -159,7 +159,7 @@ final class RedisViaRedisson(client: RedissonClient, schema: RedisSchema) extend
 
     // Call Redis
     val keys = Keys(schema.snapshot(id), schema.events(id))
-    val result = evalSha[JList[_]](Mode.READ_ONLY, sha, RScript.ReturnType.MULTI, keys)
+    val result = evalSha[JList[_]](Mode.READ_ONLY, sha, RScript.ReturnType.LIST, keys)
 
     // Parse results
     val binSS = Option(result.get(0).asInstanceOf[Array[Byte]])
@@ -189,7 +189,7 @@ final class RedisViaRedisson(client: RedissonClient, schema: RedisSchema) extend
     val args = Args()
     args += beyond.fold(0)(_.value)
 
-    val result = evalSha[JList[Array[Byte]]](Mode.READ_ONLY, sha, RScript.ReturnType.MULTI, keys, args)
+    val result = evalSha[JList[Array[Byte]]](Mode.READ_ONLY, sha, RScript.ReturnType.LIST, keys, args)
 
     decodeEvents(result)
   }
@@ -260,7 +260,7 @@ final class RedisViaRedisson(client: RedissonClient, schema: RedisSchema) extend
     args += schema.topic(id)
     args ++= events
 
-    evalSha[Unit](Mode.READ_WRITE, sha, RScript.ReturnType.STATUS, Keys.none, args)
+    evalSha[Unit](Mode.READ_WRITE, sha, RScript.ReturnType.STRING, Keys.none, args)
   }
 
   override def publishEvents(id: ProjectId, events: VerifiedEvent.NonEmptySeq) =
