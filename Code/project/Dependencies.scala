@@ -230,7 +230,7 @@ object Dependencies {
   val javaMail     = jvmOnly("com.sun.mail"                % "javax.mail"            % "1.6.2")
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.7.11")
   val redisson     = jvmOnly("org.redisson"                % "redisson"              % "4.3.1")
-  val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "4.0.2")
+  val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "5.3.0")
   val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.19.0")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.6")
   val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.3.1")
