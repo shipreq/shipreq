@@ -53,7 +53,7 @@ abstract class DbLaws extends TestSuite {
       saveProjectEvent(pid, ve.ord, e, p2, uid).void
     }
 
-    final def updateProjectAccess(pid: ProjectId, updates: Map[UserId, Option[ProjectPerm]]): SaveProjectEventError \/ Unit =
+    final def updateProjectAccess(pid: ProjectId, updates: Map[UserId, Option[ProjectRole]]): SaveProjectEventError \/ Unit =
       addEvent(pid, Event.AccessUpdate(updates.mapKeysNow(Obfuscators.userId.obfuscate)))
   }
 
@@ -66,7 +66,7 @@ abstract class DbLaws extends TestSuite {
     def createProject(uid: UserId): ProjectId =
       db.createProject(uid, Vector.empty, Project.empty, genProjectEncryptionKey.sample())
 
-    def assertProjectAccess(pid: ProjectId)(entries: (UserId, ProjectPerm)*)(implicit q: Line): Unit = {
+    def assertProjectAccess(pid: ProjectId)(entries: (UserId, ProjectRole)*)(implicit q: Line): Unit = {
       val expect = entries.toMap
       assert(expect.size == entries.size)
       val actual = getProjectAccessByIds(pid)
@@ -80,7 +80,7 @@ abstract class DbLaws extends TestSuite {
     def needUserId(u: Username): UserId =
       db.getUserIdsByUsername(Set(u)).getOrThrow()(u)
 
-    def getProjectAccessByIds(pid: ProjectId): Map[UserId, ProjectPerm] =
+    def getProjectAccessByIds(pid: ProjectId): Map[UserId, ProjectRole] =
       db.getProjectAccess(pid).asMap.mapKeysNow(Obfuscators.userId.deobfuscateOrThrow)
 
     def getUserIdsByUsername(ids: Set[Username]): NonEmptySet[Username] \/ Map[Username, UserId] =
@@ -125,8 +125,8 @@ abstract class DbLaws extends TestSuite {
     assertEq(e, NonEmptySet(u2, u3))
   }
 
-  private def testUpdateProjectAccess(t: Tester, pid: ProjectId)(access: (UserId, Option[ProjectPerm])*)
-                                     (expect: SaveProjectEventError \/ Map[UserId, ProjectPerm])(implicit q: Line): Unit = {
+  private def testUpdateProjectAccess(t: Tester, pid: ProjectId)(access: (UserId, Option[ProjectRole])*)
+                                     (expect: SaveProjectEventError \/ Map[UserId, ProjectRole])(implicit q: Line): Unit = {
 
     val before = t.getProjectAccessByIds(pid)
     val actual = t.db.updateProjectAccess(pid, access.toMap)
@@ -136,9 +136,9 @@ abstract class DbLaws extends TestSuite {
     assertMap(expectAfter, t.getProjectAccessByIds(pid))
   }
 
-  private def addProjectMember(t: Tester, pid: ProjectId, perm: ProjectPerm): UserId = {
+  private def addProjectMember(t: Tester, pid: ProjectId, role: ProjectRole): UserId = {
     val u = t.db.createUser().id
-    t.db.updateProjectAccess(pid, Map(u -> perm.some)).getOrThrow()
+    t.db.updateProjectAccess(pid, Map(u -> role.some)).getOrThrow()
     u
   }
 
@@ -149,40 +149,40 @@ abstract class DbLaws extends TestSuite {
 
   private def testUpdateProjectAccessOnlyCollab() = test { (t, u) =>
     val p = t.createProject(u)
-    testUpdateProjectAccess(t, p)(u.id -> ProjectPerm.Collaborator.some)(-\/(SaveProjectEventError.OnAccess.CantRemoveLastAdmin))
+    testUpdateProjectAccess(t, p)(u.id -> ProjectRole.Collaborator.some)(-\/(SaveProjectEventError.OnAccess.CantRemoveLastAdmin))
   }
 
   private def testUpdateProjectAccessAdd() = test { (t, u) =>
     val p = t.createProject(u)
     val u2 = t.db.createUser().id
-    testUpdateProjectAccess(t, p)(u2 -> ProjectPerm.Collaborator.some)(\/-(Map(u.id -> ProjectPerm.Admin, u2 -> ProjectPerm.Collaborator)))
+    testUpdateProjectAccess(t, p)(u2 -> ProjectRole.Collaborator.some)(\/-(Map(u.id -> ProjectRole.Admin, u2 -> ProjectRole.Collaborator)))
   }
 
   private def testUpdateProjectAccessDel() = test { (t, u) =>
     val p = t.createProject(u)
-    val u2 = addProjectMember(t, p, ProjectPerm.Admin)
-    testUpdateProjectAccess(t, p)(u.id -> None)(\/-(Map(u2 -> ProjectPerm.Admin)))
+    val u2 = addProjectMember(t, p, ProjectRole.Admin)
+    testUpdateProjectAccess(t, p)(u.id -> None)(\/-(Map(u2 -> ProjectRole.Admin)))
   }
 
   private def testUpdateProjectAccessUpd() = test { (t, u) =>
     val p = t.createProject(u)
-    val u2 = addProjectMember(t, p, ProjectPerm.Admin)
-    testUpdateProjectAccess(t, p)(u.id -> ProjectPerm.Collaborator.some)(\/-(Map(u.id -> ProjectPerm.Collaborator, u2 -> ProjectPerm.Admin)))
+    val u2 = addProjectMember(t, p, ProjectRole.Admin)
+    testUpdateProjectAccess(t, p)(u.id -> ProjectRole.Collaborator.some)(\/-(Map(u.id -> ProjectRole.Collaborator, u2 -> ProjectRole.Admin)))
   }
 
   private def testUpdateProjectAccessBulk() = test { (t, u) =>
     val p = t.createProject(u)
-    val u2 = addProjectMember(t, p, ProjectPerm.Collaborator)
-    val u3 = addProjectMember(t, p, ProjectPerm.Admin)
+    val u2 = addProjectMember(t, p, ProjectRole.Collaborator)
+    val u3 = addProjectMember(t, p, ProjectRole.Admin)
     val u4 = t.db.createUser().id
     testUpdateProjectAccess(t, p)(
       u.id -> None,
-      u3 -> ProjectPerm.Collaborator.some,
-      u4 -> ProjectPerm.Admin.some,
+      u3 -> ProjectRole.Collaborator.some,
+      u4 -> ProjectRole.Admin.some,
     )(\/-(Map(
-      u2 -> ProjectPerm.Collaborator,
-      u3 -> ProjectPerm.Collaborator,
-      u4 -> ProjectPerm.Admin,
+      u2 -> ProjectRole.Collaborator,
+      u3 -> ProjectRole.Collaborator,
+      u4 -> ProjectRole.Admin,
     )))
   }
 
@@ -218,7 +218,7 @@ abstract class DbLaws extends TestSuite {
       }
       "revokedAccess" - test { (t, u) =>
         val p = t.createProject(u)
-        val u2 = addProjectMember(t, p, ProjectPerm.Collaborator)
+        val u2 = addProjectMember(t, p, ProjectRole.Collaborator)
         assert(t.db.projectSpaInitPage(p, u2).isDefined)
         t.db.updateProjectAccess(p, Map(u2 -> None)).getOrThrow()
         assertEq(t.db.projectSpaInitPage(p, u2), None)

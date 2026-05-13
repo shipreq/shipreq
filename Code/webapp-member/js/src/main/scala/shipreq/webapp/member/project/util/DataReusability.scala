@@ -5,7 +5,7 @@ import japgolly.scalajs.react._
 import java.time.Duration
 import shipreq.base.util._
 import shipreq.webapp.base.config.AssetManifest
-import shipreq.webapp.base.data.{ProjectPerm, Rolodex, UserId}
+import shipreq.webapp.base.data.{ProjectRole, Rolodex, UserId}
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.jsfacade.MomentJs
 import shipreq.webapp.member.project.data._
@@ -65,7 +65,7 @@ abstract class DataReusability extends BaseReusability {
   implicit def reusabilityColour: Reusability[Colour] =
     Reusability.byUnivEq
 
-  implicit def reusabilityProjectPerm: Reusability[ProjectPerm] =
+  implicit def reusabilityProjectRole: Reusability[ProjectRole] =
     Reusability.byUnivEq
 
   implicit def reusabilityUserIdPublic: Reusability[UserId.Public] =

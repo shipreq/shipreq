@@ -34,7 +34,7 @@ object ExistingUserSegment {
       Reusability.derive
   }
 
-  type State = Map[UserId.Public, ProjectPerm]
+  type State = Map[UserId.Public, ProjectRole]
 
   object State {
     implicit val reusability: Reusability[State] =
@@ -57,18 +57,18 @@ object ExistingUserSegment {
       val inFlight: Boolean =
         p.async(asyncKey).isInProgress
 
-      val saved: ProjectPerm =
+      val saved: ProjectRole =
         // Not using .need here because we don't want to crash between a user leaing the project, and them being
         // redirected to the access-revoked page.
-        p.access(id).getOrElse(ProjectPerm.min)
+        p.access(id).getOrElse(ProjectRole.min)
 
-      val selected: ProjectPerm =
+      val selected: ProjectRole =
         p.editability match {
           case Allow => s.get(id).getOrElse(saved)
           case Deny  => saved
         }
 
-      def setSelected(selected: ProjectPerm): State => State =
+      def setSelected(selected: ProjectRole): State => State =
         if (selected ==* saved)
           _ - id
         else
@@ -105,7 +105,7 @@ object ExistingUserSegment {
       }
 
       val dropdown =
-        PermDropdown(
+        RoleDropdown(
           selected = selected,
           enabled  = Enabled.when(p.editability.is(Allow) && !inFlight),
           onChange = i => p.state.modState(setSelected(i.value)))

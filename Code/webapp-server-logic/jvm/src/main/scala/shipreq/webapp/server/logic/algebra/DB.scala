@@ -134,7 +134,7 @@ object DB {
     def getUserAndPasswordByEmail(email: EmailAddr): F[Option[(User, PasswordAndSalt)]]
     def getUserAndPasswordByUsername(username: Username): F[Option[(User, PasswordAndSalt)]]
     def logLoginSuccess(id: UserId, ip: Option[IP]): F[Unit]
-    def getProjectAccess(pid: ProjectId, uid: UserId): F[Option[ProjectPerm]]
+    def getProjectAccess(pid: ProjectId, uid: UserId): F[Option[ProjectRole]]
 
     final def getUserAndPassword(usernameOrEmail: String): F[Option[(User, PasswordAndSalt)]] =
       if (EmailAddr.isEmailAddr(usernameOrEmail))
@@ -240,7 +240,7 @@ object DB {
   trait OnSaveProjectEvent[F[_]] extends Effect[F] {
     protected def updateProjectAccess(id    : ProjectId,
                                       remove: Set[UserId],
-                                      add   : Map[UserId, ProjectPerm]): F[SaveProjectEventError.OnAccess \/ Unit]
+                                      add   : Map[UserId, ProjectRole]): F[SaveProjectEventError.OnAccess \/ Unit]
 
     protected def updateProjectName(id: ProjectId, name: Project.Name): F[Unit]
 
@@ -427,7 +427,7 @@ object DB {
         override def getProjectEvents(a: ProjectId, b: EventFilter) = t(self.getProjectEvents(a, b))
         override def getUserId(a: Username \/ EmailAddr) = t(self.getUserId(a))
         override def _importProject(a: UserId, b: VerifiedEvent.Seq, c: Project, d: ProjectEncryptionKey) = t(self._importProject(a, b, c, d))
-        override def updateProjectAccess(a: ProjectId, b: Set[UserId], c: Map[UserId,ProjectPerm]) = t(self.updateProjectAccess(a, b, c))
+        override def updateProjectAccess(a: ProjectId, b: Set[UserId], c: Map[UserId,ProjectRole]) = t(self.updateProjectAccess(a, b, c))
         override def updateProjectName(a: ProjectId, b: Project.Name): G[Unit] = t(self.updateProjectName(a, b))
       }
   }

@@ -2,32 +2,32 @@ package shipreq.webapp.client.project.app.pages.admin.access
 
 import org.scalajs.dom.html
 import shipreq.base.util.Enabled
-import shipreq.webapp.base.data.ProjectPerm
+import shipreq.webapp.base.data.ProjectRole
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.test._
 import shipreq.webapp.member.test.CommonObs
 
 object AccessPageObs {
 
-  def parsePerm(perm: String): ProjectPerm =
-    perm match {
-      case "Admin"        => ProjectPerm.Admin
-      case "Collaborator" => ProjectPerm.Collaborator
-      case _              => sys.error(s"Unknown perm '$perm'")
+  def parseRole(role: String): ProjectRole =
+    role match {
+      case "Admin"        => ProjectRole.Admin
+      case "Collaborator" => ProjectRole.Collaborator
+      case _              => sys.error(s"Unknown role '$role'")
     }
 
   final class ExistingUserRowObs($: DomZipperJs) {
     val name               = $("td", 1 of 4).domAsHtml.textContent.trim
     val dropdown           = new CommonObs.Dropdown($("td", 2 of 4))
     val dropdownEnabled    = Enabled.unless(dropdown.isDisabled)
-    val selectedPerm       = parsePerm(dropdown.selected.get)
+    val selectedRole       = parseRole(dropdown.selected.get)
     val saveButtonZipper   = $("td", 3 of 4)("button")
     val saveButton         = saveButtonZipper.domAsHtml
     val saveButtonStatus   = ButtonStatus(saveButtonZipper)
     val deleteButtonZipper = $("td", 4 of 4)("button")
     val deleteButton       = deleteButtonZipper.domAsHtml
     val deleteButtonStatus = ButtonStatus(deleteButtonZipper)
-    val row                = ExistingUserRow(name, selectedPerm, dropdownEnabled, saveButtonStatus, deleteButtonStatus)
+    val row                = ExistingUserRow(name, selectedRole, dropdownEnabled, saveButtonStatus, deleteButtonStatus)
   }
 
   sealed trait ButtonStatus
@@ -52,7 +52,7 @@ object AccessPageObs {
   }
 
   final case class ExistingUserRow(name        : String,
-                                   perm        : ProjectPerm,
+                                   role        : ProjectRole,
                                    dropdown    : Enabled,
                                    saveButton  : Option[ButtonStatus],
                                    deleteButton: Option[ButtonStatus])

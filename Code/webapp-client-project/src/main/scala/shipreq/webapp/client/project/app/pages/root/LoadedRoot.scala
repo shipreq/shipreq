@@ -7,7 +7,7 @@ import japgolly.scalajs.react.vdom.PackageBase._
 import monocle.Lens
 import org.scalajs.dom.window
 import shipreq.base.util.{Allow, ErrorMsg}
-import shipreq.webapp.base.data.ProjectPerm
+import shipreq.webapp.base.data.ProjectRole
 import shipreq.webapp.base.feature.AsyncFeature.Implicits._
 import shipreq.webapp.base.feature._
 import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
@@ -95,7 +95,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
     private val pxProjectAccess =
       pxProject.map(_.access).withReuse
 
-    private val pxProjectPerm =
+    private val pxProjectRole =
       pxProjectAccess.map(_(initPageData.userId)).withReuse
 
     private val pxUseCases =
@@ -469,7 +469,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
       def usage            = pxUsage.value()
       def createPreviewRW  = pxCreatePreviewRW.value()
       def editorArgs       = pxEditorArgs.value()
-      def onlyAdminCanEdit = ProjectPerm.Admin.isSatisfiedBy(pxProjectPerm.value())
+      def onlyAdminCanEdit = ProjectRole.Admin.isSatisfiedBy(pxProjectRole.value())
 
       val body: VdomElement = p.page match {
 

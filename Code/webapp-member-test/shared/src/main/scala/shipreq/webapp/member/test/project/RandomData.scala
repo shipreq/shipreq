@@ -21,7 +21,7 @@ import shipreq.base.util.ScalaExt._
 import shipreq.base.util.TaggedTypes.TaggedInt
 import shipreq.base.util._
 import shipreq.webapp.base.config._
-import shipreq.webapp.base.data.{ProjectCreator, ProjectId, ProjectPerm, Rolodex, UserId}
+import shipreq.webapp.base.data.{ProjectCreator, ProjectId, ProjectRole, Rolodex, UserId}
 import shipreq.webapp.base.test._
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data._
@@ -1682,7 +1682,7 @@ object RandomData {
     } yield ProjectConfig(issues, ReqTypes(reqtypes), fields, Tags(tags))
 
   lazy val projectAccess: Gen[ProjectAccess] =
-    userIdPublic.mapTo(projectPerm)(0 to 4).map(ProjectAccess.apply).flatMap { a =>
+    userIdPublic.mapTo(projectRole)(0 to 4).map(ProjectAccess.apply).flatMap { a =>
       if (a.hasAdmin)
         Gen pure a
       else
@@ -1780,13 +1780,13 @@ object RandomData {
   lazy val instantPast: Gen[Instant] =
     instantPast(Duration.ofDays(365 * 5))
 
-  lazy val projectPerm: Gen[ProjectPerm] =
-    Gen.chooseNE(ProjectPerm.values)
+  lazy val projectRole: Gen[ProjectRole] =
+    Gen.chooseNE(ProjectRole.values)
 
   lazy val projectMetaData: Gen[ProjectMetaData] =
     for {
       id            <- projectIdPublic
-      perm          <- projectPerm.option
+      role          <- projectRole.option
       name          <- projectName
       eventsInit    <- Gen.chooseInt(3)
       eventsTotal   <- Gen.chooseInt(30000)
@@ -1799,7 +1799,7 @@ object RandomData {
     } yield
     ProjectMetaData(
       id            = id,
-      perm          = perm,
+      role          = role,
       name          = name,
       eventsInit    = eventsInit.min(eventsTotal),
       eventsTotal   = eventsTotal,
@@ -2672,7 +2672,7 @@ object RandomData {
       genProjectTemplate map ProjectTemplateApply
 
     val genAccessUpdate: Gen[AccessUpdate] =
-      userIdPublic.mapTo(projectPerm.option)(1 to 8).map(AccessUpdate.apply)
+      userIdPublic.mapTo(projectRole.option)(1 to 8).map(AccessUpdate.apply)
 
     val genApplicableTagCreate: Gen[ApplicableTagCreate] =
       Gen.apply2(ApplicableTagCreate)(applicableTagId, applicableTagGD.nonEmptyValues)

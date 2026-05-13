@@ -35,14 +35,14 @@ object NewUserSegment {
 
   @Lenses
   final case class State(user: String,
-                         perm: ProjectPerm)
+                         role: ProjectRole)
 
   object State {
     implicit val reusability: Reusability[State] =
       Reusability.derive
 
     def init: State =
-      State("", ProjectPerm.Collaborator)
+      State("", ProjectRole.Collaborator)
   }
 
   // ===================================================================================================================
@@ -70,14 +70,14 @@ object NewUserSegment {
         .withEnabled(enabled)
         .withOuterMod(_(*.fieldUser))
 
-    val permDropdown = PermDropdown(
-      selected = p.state.value.perm,
+    val roleDropdown = RoleDropdown(
+      selected = p.state.value.role,
       enabled  = enabled,
-      onChange = item => p.state.setStateL(State.perm)(item.value)
+      onChange = item => p.state.setStateL(State.role)(item.value)
     ).render
 
     val fieldPerm: Form.Field[Unit] =
-      Form.Field.ofEditor(permDropdown)
+      Form.Field.ofEditor(roleDropdown)
         .withLabel("Role")
         .withEnabled(enabled)
         .withOuterMod(_(*.fieldPerm))
@@ -85,7 +85,7 @@ object NewUserSegment {
     val onAdd: Option[Callback] =
       enabled match {
         case Enabled => userValidator(p.state.value.user).toOption.map { userOrEmail =>
-          val cmd = UpdateAccessCmd.Add(userOrEmail, p.state.value.perm)
+          val cmd = UpdateAccessCmd.Add(userOrEmail, p.state.value.role)
           val run = p.sspUpdateAccess(cmd).flatTap {
             case \/-(_) => p.state.setState(State.init).asAsyncCallback // reset form on success
             case -\/(_) => AsyncCallback.unit

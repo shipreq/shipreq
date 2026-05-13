@@ -1,7 +1,7 @@
 package shipreq.webapp.member.project.event
 
 import shipreq.base.util.Forwards
-import shipreq.webapp.base.data.{ProjectPerm, UserId}
+import shipreq.webapp.base.data.{ProjectRole, UserId}
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.data.savedview._
 import shipreq.webapp.member.project.filter._
@@ -414,18 +414,18 @@ object OtherEventTest extends TestSuite {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     "AccessUpdate" - {
-      import ProjectPerm._
+      import ProjectRole._
 
       def p = Project.empty.copy(access = ProjectAccess(Map(
         PublicUserId1 -> Admin,
         PublicUserId2 -> Collaborator,
       )))
 
-      def event(cmds: (UserId.Public, Option[ProjectPerm])*): Event.AccessUpdate =
+      def event(cmds: (UserId.Public, Option[ProjectRole])*): Event.AccessUpdate =
         Event.AccessUpdate(cmds.toMap)
 
-      def test(cmds: (UserId.Public, Option[ProjectPerm])*)
-              (expect: (UserId.Public, ProjectPerm)*)
+      def test(cmds: (UserId.Public, Option[ProjectRole])*)
+              (expect: (UserId.Public, ProjectRole)*)
               (implicit l: Line): Unit = {
         val ev = event(cmds: _*)
         val p2 = applyEventSuccessfully(p, ev)

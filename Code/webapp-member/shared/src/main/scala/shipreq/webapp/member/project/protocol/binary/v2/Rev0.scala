@@ -21,41 +21,41 @@ object Rev0 {
   implicit lazy val picklerProjectCreator: Pickler[ProjectCreator] =
     implicitly[Pickler[UserId.Public]].xmap(ProjectCreator.apply)(_.userId)
 
-  implicit lazy val picklerProjectPerm: Pickler[ProjectPerm] =
-    new Pickler[ProjectPerm] {
-      // Note: 0 is reserved for Option[ProjectPerm]
+  implicit lazy val picklerProjectRole: Pickler[ProjectRole] =
+    new Pickler[ProjectRole] {
+      // Note: 0 is reserved for Option[ProjectRole]
       private[this] final val KeyAdmin        = 1
       private[this] final val KeyCollaborator = 2
-      override def pickle(a: ProjectPerm)(implicit state: PickleState): Unit =
+      override def pickle(a: ProjectRole)(implicit state: PickleState): Unit =
         a match {
-          case ProjectPerm.Admin        => state.enc.writeByte(KeyAdmin       )
-          case ProjectPerm.Collaborator => state.enc.writeByte(KeyCollaborator)
+          case ProjectRole.Admin        => state.enc.writeByte(KeyAdmin       )
+          case ProjectRole.Collaborator => state.enc.writeByte(KeyCollaborator)
         }
-      override def unpickle(implicit state: UnpickleState): ProjectPerm =
+      override def unpickle(implicit state: UnpickleState): ProjectRole =
         state.dec.readByte match {
-          case KeyAdmin        => ProjectPerm.Admin
-          case KeyCollaborator => ProjectPerm.Collaborator
+          case KeyAdmin        => ProjectRole.Admin
+          case KeyCollaborator => ProjectRole.Collaborator
         }
     }
 
-  implicit lazy val picklerOptionProjectPerm: Pickler[Option[ProjectPerm]] =
-    new Pickler[Option[ProjectPerm]] {
+  implicit lazy val picklerOptionProjectRole: Pickler[Option[ProjectRole]] =
+    new Pickler[Option[ProjectRole]] {
       private[this] final val KeyNone = 0
-      override def pickle(a: Option[ProjectPerm])(implicit state: PickleState): Unit =
+      override def pickle(a: Option[ProjectRole])(implicit state: PickleState): Unit =
         a match {
-          case Some(p) => picklerProjectPerm.pickle(p)
+          case Some(p) => picklerProjectRole.pickle(p)
           case None    => state.enc.writeByte(KeyNone)
         }
-      override def unpickle(implicit state: UnpickleState): Option[ProjectPerm] =
+      override def unpickle(implicit state: UnpickleState): Option[ProjectRole] =
         if (state.dec.peek(_.readByte) == KeyNone) {
           state.dec.readByte
           None
         } else
-          Some(picklerProjectPerm.unpickle)
+          Some(picklerProjectRole.unpickle)
     }
 
   private[binary] implicit lazy val picklerEventAccessUpdate: Pickler[Event.AccessUpdate] =
-    pickleMap[UserId.Public, Option[ProjectPerm]].xmap(Event.AccessUpdate.apply)(_.updates)
+    pickleMap[UserId.Public, Option[ProjectRole]].xmap(Event.AccessUpdate.apply)(_.updates)
 
   implicit lazy val picklerEvent: Pickler[Event] =
     new Pickler[Event] {
@@ -321,7 +321,7 @@ object Rev0 {
     transformPickler(ClientSideProjectEncryptionKey.apply)(_.value)
 
   implicit lazy val picklerProjectAccess: Pickler[ProjectAccess] =
-    pickleMap[UserId.Public, ProjectPerm].xmap(ProjectAccess.apply)(_.asMap)
+    pickleMap[UserId.Public, ProjectRole].xmap(ProjectAccess.apply)(_.asMap)
 
   implicit lazy val picklerProject: Pickler[Project] =
     new Pickler[Project] {
@@ -355,7 +355,7 @@ object Rev0 {
     new Pickler[ProjectMetaData] {
       override def pickle(a: ProjectMetaData)(implicit state: PickleState): Unit = {
         state.pickle(a.id)
-        state.pickle(a.perm)
+        state.pickle(a.role)
         state.pickle(a.name)
         state.pickle(a.eventsInit)
         state.pickle(a.eventsTotal)
@@ -367,7 +367,7 @@ object Rev0 {
       }
       override def unpickle(implicit state: UnpickleState): ProjectMetaData = {
         val id            = state.unpickle[ProjectId.Public]
-        val perm          = state.unpickle[Option[ProjectPerm]]
+        val role          = state.unpickle[Option[ProjectRole]]
         val name          = state.unpickle[Project.Name]
         val eventsInit    = state.unpickle[Int]
         val eventsTotal   = state.unpickle[Int]
@@ -378,7 +378,7 @@ object Rev0 {
         val lastUpdatedAt = state.unpickle[Option[Instant]]
         ProjectMetaData(
           id            = id           ,
-          perm          = perm         ,
+          role          = role         ,
           name          = name         ,
           eventsInit    = eventsInit   ,
           eventsTotal   = eventsTotal  ,

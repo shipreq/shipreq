@@ -1,6 +1,6 @@
 package shipreq.webapp.client.project.app.pages.admin.access
 
-import shipreq.webapp.base.data.ProjectPerm
+import shipreq.webapp.base.data.ProjectRole
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.test._
 
@@ -35,8 +35,8 @@ object AccessPageTestDsl {
   def setNewUserInput(usernameOrEmail: String): *.Actions =
     *.action(s"Set new user input to '$usernameOrEmail'")(_.obs.newUserInput.setValue(usernameOrEmail))
 
-  def existingUserSelect(rowIdx: Int, perm: ProjectPerm): *.Actions =
-    *.action(s"Select '$perm' in dropdown in row $rowIdx")(_.obs.existingUserRows(rowIdx).dropdown.select(perm.toString))
+  def existingUserSelect(rowIdx: Int, role: ProjectRole): *.Actions =
+    *.action(s"Select '$role' in dropdown in row $rowIdx")(_.obs.existingUserRows(rowIdx).dropdown.select(role.toString))
 
   def existingUserClickSave(rowIdx: Int): *.Actions =
     *.action(s"Click 'Save' button in row $rowIdx")(_.obs.existingUserRows(rowIdx).saveButton.click())

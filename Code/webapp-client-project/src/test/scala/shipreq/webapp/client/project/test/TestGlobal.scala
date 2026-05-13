@@ -8,7 +8,7 @@ import org.scalajs.dom.{EventTarget, document, html}
 import scala.scalajs.js
 import shipreq.base.util.JsExt._
 import shipreq.base.util.{Allow, Deny, ErrorMsg, JsTimers, PotentialChange, Retries}
-import shipreq.webapp.base.data.{EmailAddr, ProjectCreator, ProjectPerm, Rolodex, UserId, Username}
+import shipreq.webapp.base.data.{EmailAddr, ProjectCreator, ProjectRole, Rolodex, UserId, Username}
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
@@ -219,14 +219,14 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
         deobfuscate           = Obfuscators.userId.deobfuscateOrThrow,
       )
 
-    def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result, requiredPerm: ProjectPerm): MsgFn[I] = input => Some {
+    def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result, requiredRole: ProjectRole): MsgFn[I] = input => Some {
       def run(p1: Project): CallbackTo[WsReqRes.EventResult] = {
 
         // This logic is duplicated in ProjectSpaLogic
         def permCheck: PotentialChange[ErrorMsg, Unit] =
-          p1.access.require(requiredPerm, userId) match {
+          p1.access.require(requiredRole, userId) match {
             case Allow => PotentialChange.unit
-            case Deny  => PotentialChange.Failure(ErrorMsg(s"$requiredPerm rights required."))
+            case Deny  => PotentialChange.Failure(ErrorMsg(s"$requiredRole rights required."))
           }
 
         val result: PotentialChange[ErrorMsg, ApplyNewEvent.Updated] =
@@ -255,22 +255,22 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
       pxProject.toCallback.flatMap(run)
     }
 
-    def updateProjectI[I](mkEvent: I => MakeEvent.Result, requiredPerm: ProjectPerm): MsgFn[I] =
-      updateProject((i, _) => mkEvent(i), requiredPerm)
+    def updateProjectI[I](mkEvent: I => MakeEvent.Result, requiredRole: ProjectRole): MsgFn[I] =
+      updateProject((i, _) => mkEvent(i), requiredRole)
 
     // This logic is duplicated in ProjectSpaLogic
     val msgFold = WsReqRes.Fold[MsgFoldIn, MsgFoldOut](
       onInitApp               = _ => None,
       onReconnect             = _ => None,
       onSync                  = _ => None,
-      onUpdateConfig          = updateProject (MakeEvent.updateConfig, ProjectPerm.Collaborator),
-      onCreateContent         = updateProject (MakeEvent.createContent, ProjectPerm.Collaborator),
-      onUpdateContent         = updateProject (MakeEvent.updateContent, ProjectPerm.Collaborator),
-      onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn, ProjectPerm.Admin),
-      onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews, ProjectPerm.Collaborator),
-      onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues, ProjectPerm.Collaborator),
+      onUpdateConfig          = updateProject (MakeEvent.updateConfig, ProjectRole.Collaborator),
+      onCreateContent         = updateProject (MakeEvent.createContent, ProjectRole.Collaborator),
+      onUpdateContent         = updateProject (MakeEvent.updateContent, ProjectRole.Collaborator),
+      onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn, ProjectRole.Admin),
+      onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews, ProjectRole.Collaborator),
+      onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues, ProjectRole.Collaborator),
       onFieldMandatorinessMod = _ => None,
-      onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod, ProjectPerm.Collaborator),
+      onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod, ProjectRole.Collaborator),
       onUpdateAccess          = cmd =>
         UpdateAccessCmd.resolve[CallbackTo, MsgFoldOut[WsReqRes.UpdateAccess.type]](cmd)(
           userId     = userId,

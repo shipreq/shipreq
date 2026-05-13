@@ -10,7 +10,7 @@ import shipreq.webapp.member.project.event._
   */
 final case class ProjectMetaData(id           : ProjectId.Public,
                                  name         : Project.Name,
-                                 perm         : Option[ProjectPerm],
+                                 role         : Option[ProjectRole],
                                  eventsInit   : Int,
                                  eventsTotal  : Int,
                                  reqsLive     : Int,
@@ -60,7 +60,7 @@ object ProjectMetaData {
     ProjectMetaData(
       id            = id,
       name          = p.name,
-      perm          = p.access(userId),
+      role          = p.access(userId),
       eventsInit    = eventsInit,
       eventsTotal   = eventsTotal,
       reqsLive      = p.liveReqCount,

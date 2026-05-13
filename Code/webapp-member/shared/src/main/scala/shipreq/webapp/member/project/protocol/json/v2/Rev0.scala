@@ -21,37 +21,37 @@ object Rev0 {
   implicit lazy val keyEncoderUserIdPublic: KeyEncoder[UserId.Public] =
     KeyEncoder.encodeKeyString.contramap(_.value)
 
-  implicit lazy val decoderProjectPerm: Decoder[ProjectPerm] =
+  implicit lazy val decoderProjectRole: Decoder[ProjectRole] =
     Decoder.instance(c =>
       c.value.asString match {
-        case Some("admin")        => Right(ProjectPerm.Admin)
-        case Some("collaborator") => Right(ProjectPerm.Collaborator)
-        case _                    => Left(DecodingFailure("Invalid project permission: " + c.value.noSpaces, c.history))
+        case Some("admin")        => Right(ProjectRole.Admin)
+        case Some("collaborator") => Right(ProjectRole.Collaborator)
+        case _                    => Left(DecodingFailure("Invalid project role: " + c.value.noSpaces, c.history))
       }
     )
 
-  implicit lazy val encoderProjectPerm: Encoder[ProjectPerm] = Encoder.instance {
-    case ProjectPerm.Admin        => Json.fromString("admin")
-    case ProjectPerm.Collaborator => Json.fromString("collaborator")
+  implicit lazy val encoderProjectRole: Encoder[ProjectRole] = Encoder.instance {
+    case ProjectRole.Admin        => Json.fromString("admin")
+    case ProjectRole.Collaborator => Json.fromString("collaborator")
   }
 
-  implicit lazy val decoderOptionProjectPerm: Decoder[Option[ProjectPerm]] =
+  implicit lazy val decoderOptionProjectRole: Decoder[Option[ProjectRole]] =
     Decoder.instance(c =>
       c.value.asString match {
         case Some("-") => Right(None)
-        case _         => decoderProjectPerm(c).map(Some(_))
+        case _         => decoderProjectRole(c).map(Some(_))
       }
     )
 
-  implicit lazy val encoderOptionProjectPerm: Encoder[Option[ProjectPerm]] = Encoder.instance {
+  implicit lazy val encoderOptionProjectRole: Encoder[Option[ProjectRole]] = Encoder.instance {
     case None    => Json.fromString("-")
-    case Some(p) => encoderProjectPerm(p)
+    case Some(p) => encoderProjectRole(p)
   }
 
   object EventData {
 
     implicit val jsonCodecEventAccessUpdate: JsonCodec[Event.AccessUpdate] =
-      JsonCodec.map[UserId.Public, Option[ProjectPerm]]
+      JsonCodec.map[UserId.Public, Option[ProjectRole]]
         .xmap(Event.AccessUpdate.apply)(_.updates)
   }
 

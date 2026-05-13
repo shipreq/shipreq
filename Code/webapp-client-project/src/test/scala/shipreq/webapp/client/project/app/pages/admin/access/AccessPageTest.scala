@@ -1,7 +1,7 @@
 package shipreq.webapp.client.project.app.pages.admin.access
 
 import shipreq.base.util.{Disabled => DisabledE, Enabled => EnabledE}
-import shipreq.webapp.base.data.ProjectPerm._
+import shipreq.webapp.base.data.ProjectRole._
 import shipreq.webapp.base.test.TestState._
 import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page

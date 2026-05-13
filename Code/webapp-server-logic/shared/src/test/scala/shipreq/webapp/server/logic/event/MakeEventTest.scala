@@ -1,7 +1,7 @@
 package shipreq.webapp.server.logic.event
 
 import shipreq.base.util.PotentialChange._
-import shipreq.webapp.base.data.{ProjectPerm, UserId}
+import shipreq.webapp.base.data.{ProjectRole, UserId}
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event._
 import shipreq.webapp.member.project.protocol.websocket._
@@ -249,11 +249,11 @@ object MakeEventTest extends TestSuite {
     }
 
     "AccessUpdate" - {
-      import ProjectPerm._
+      import ProjectRole._
 
       "update" - {
         // Note: this adds user #2 as an admin before testing begins
-        def test(cmds: (UserId.Public, Option[ProjectPerm])*)(implicit l: Line): Unit = {
+        def test(cmds: (UserId.Public, Option[ProjectRole])*)(implicit l: Line): Unit = {
           val t = new Tester()
           t.assertApplies(AccessUpdate(Map(PublicUserId2 -> Some(Admin))))
           t.assertMakeEvent(_.updateAccess(UpdateAccessCmd.Modify(cmds.toMap), _), {
@@ -310,7 +310,7 @@ object MakeEventTest extends TestSuite {
       }
 
       "noop" - {
-        def test(cmds: (UserId.Public, Option[ProjectPerm])*)(implicit l: Line) =
+        def test(cmds: (UserId.Public, Option[ProjectRole])*)(implicit l: Line) =
           assertNoChange(_.updateAccess(UpdateAccessCmd.Modify(cmds.toMap), _))
 
         "empty" - test()

@@ -56,7 +56,7 @@ object MockDb {
     lazy val project: Project =
       ApplyEvent.trusted(events)(Project.init(creatorId)).getOrThrow()
 
-    def projectMetaData(perm: ProjectPerm): ProjectMetaData =
+    def projectMetaData(role: ProjectRole): ProjectMetaData =
       ProjectMetaData.fromProject(project)(
         id            = Obfuscators.projectId.obfuscate(projectId),
         userId        = Obfuscated(""),
@@ -65,13 +65,13 @@ object MockDb {
         createdAt     = createdAt,
         accessedAt    = accessedAt,
         lastUpdatedAt = lastUpdatedAt,
-      ).copy(perm = Some(perm))
+      ).copy(role = Some(role))
 
     def projectLoad: VerifiedEvent.Seq =
       events
   }
 
-  final case class ProjectAccessEntry(pid: ProjectId, uid: UserId, perm: ProjectPerm)
+  final case class ProjectAccessEntry(pid: ProjectId, uid: UserId, role: ProjectRole)
 
   def withLiveClock(): MockDb =
     new MockDb(Eval.always(Instant.now()))
@@ -292,9 +292,9 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
   private var projects: IMap[ProjectId, MockDb.ProjectEntry] = IMap.empty(_.projectId)
   private var projectAccess = List.empty[MockDb.ProjectAccessEntry]
 
-  private def addProjectAccess(pid: ProjectId, uid: UserId, perm: ProjectPerm): Unit = {
+  private def addProjectAccess(pid: ProjectId, uid: UserId, role: ProjectRole): Unit = {
     projectAccess.find(e => e.pid ==* pid && e.uid ==* uid) match {
-      case None    => projectAccess ::= MockDb.ProjectAccessEntry(pid, uid, perm)
+      case None    => projectAccess ::= MockDb.ProjectAccessEntry(pid, uid, role)
       case Some(e) => throw new RuntimeException("Duplicate entry in project_access: " + e)
     }
   }
@@ -305,14 +305,14 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     val now = Instant.now()
     val mde = MockDb.ProjectEntry(projectId, creatorId, key, initEvents, ves, now, now, Some(now))
     projects += mde
-    addProjectAccess(projectId, creatorId, ProjectPerm.Admin)
+    addProjectAccess(projectId, creatorId, ProjectRole.Admin)
   }
 
   private def getProjectAccessEntry(pid: ProjectId, uid: UserId) =
     projectAccess.find(e => e.pid ==* pid && e.uid ==* uid)
 
-  override def getProjectAccess(pid: ProjectId, uid: UserId) = Eval.always[Option[ProjectPerm]] {
-    getProjectAccessEntry(pid, uid).map(_.perm)
+  override def getProjectAccess(pid: ProjectId, uid: UserId) = Eval.always[Option[ProjectRole]] {
+    getProjectAccessEntry(pid, uid).map(_.role)
   }
 
   private def nextProjectId(): ProjectId =
@@ -328,11 +328,11 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     createProject(id, Vector.empty, Project.init(id), DbLaws.genProjectEncryptionKey.sample()).value
 
   override def getAllProjectMetaDataForUser(id: UserId) = Eval.always[List[ProjectMetaData]] {
-    val perms = projectAccess.iterator.filter(_.uid ==* id).map(e => e.pid -> e.perm).toMap
+    val roles = projectAccess.iterator.filter(_.uid ==* id).map(e => e.pid -> e.role).toMap
 
     projects.valuesIterator
-      .filter(perms.keySet contains _.projectId)
-      .map(e => e.projectMetaData(perms(e.projectId)))
+      .filter(roles.keySet contains _.projectId)
+      .map(e => e.projectMetaData(roles(e.projectId)))
       .toList
   }
 
@@ -340,7 +340,7 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
   override def getProjectMetaData(pid: ProjectId, uid: UserId) = Eval.always[Option[ProjectMetaData]] {
     loadProjectMetaDataLog :+= pid
     getProjectAccessEntry(pid, uid).map { a =>
-      projects.need(pid).projectMetaData(a.perm)
+      projects.need(pid).projectMetaData(a.role)
     }
   }
 
@@ -428,16 +428,16 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
 
   override def updateProjectAccess(id    : ProjectId,
                                    remove: Set[UserId],
-                                   add   : Map[UserId, ProjectPerm]) = Eval.always[DB.SaveProjectEventError.OnAccess \/ Unit] {
+                                   add   : Map[UserId, ProjectRole]) = Eval.always[DB.SaveProjectEventError.OnAccess \/ Unit] {
     val orig = projectAccess
     val remove2 = remove ++ add.keys
 
     projectAccess = projectAccess.filterNot { e => e.pid ==* id && remove2.contains(e.uid) }
 
-    add.foreach { case (u, perm) => addProjectAccess(id, u, perm) }
+    add.foreach { case (u, role) => addProjectAccess(id, u, role) }
 
     val result: DB.SaveProjectEventError.OnAccess \/ Unit =
-      projectAccess.find(e => e.pid ==* id && e.perm ==* ProjectPerm.Admin) match {
+      projectAccess.find(e => e.pid ==* id && e.role ==* ProjectRole.Admin) match {
         case Some(_) => \/-(())
         case None    => -\/(DB.SaveProjectEventError.OnAccess.CantRemoveLastAdmin)
       }
@@ -452,7 +452,7 @@ final class MockDb(_now: Eval[Instant]) extends DB.Algebra[Eval] with DB.ForSecu
     ProjectAccess(
       projectAccess.iterator
         .filter(_.pid ==* id)
-        .map(e => (Obfuscators.userId.obfuscate(e.uid), e.perm))
+        .map(e => (Obfuscators.userId.obfuscate(e.uid), e.role))
         .toMap
     )
   }

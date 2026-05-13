@@ -181,7 +181,7 @@ object DispatchBM {
       override def getUserAndPasswordByEmail        (e: EmailAddr)              = F.point(Option.when(getUserOk)((user, ps)))
       override def getUserAndPasswordByUsername     (u: Username)               = F.point(Option.when(getUserOk)((user, ps)))
       override def logLoginSuccess                  (i: UserId, ip: Option[IP]) = F.point(())
-      override def getProjectAccess                 (p: ProjectId, u: UserId)   = F point Option.when(u ==* user.id)(ProjectPerm.Admin)
+      override def getProjectAccess                 (p: ProjectId, u: UserId)   = F point Option.when(u ==* user.id)(ProjectRole.Admin)
     }
 
     implicit object security extends Security.Algebra[F] {

@@ -8,30 +8,30 @@ sealed trait UpdateAccessCmd
 
 object UpdateAccessCmd {
 
-  final case class Add(user: Username \/ EmailAddr, perm: ProjectPerm) extends UpdateAccessCmd
-  final case class Modify(updates: Map[UserId.Public, Option[ProjectPerm]]) extends UpdateAccessCmd
+  final case class Add(user: Username \/ EmailAddr, role: ProjectRole) extends UpdateAccessCmd
+  final case class Modify(updates: Map[UserId.Public, Option[ProjectRole]]) extends UpdateAccessCmd
   final case object RemoveSelf extends UpdateAccessCmd
 
   implicit def univEq: UnivEq[UpdateAccessCmd] = UnivEq.derive
 
-  /** @param modify The ProjectPerm argument is what is required of the current user to make the change */
+  /** @param modify The ProjectRole argument is what is required of the current user to make the change */
   def resolve[F[_], A](cmd       : UpdateAccessCmd)(
                        userId    : UserId.Public,
                        getUserId : (Username \/ EmailAddr) => F[Option[UserId.Public]],
                        onNotFound: => A,
-                       modify    : (UpdateAccessCmd.Modify, ProjectPerm) => F[A])(implicit F: Monad[F]): F[A] =
+                       modify    : (UpdateAccessCmd.Modify, ProjectRole) => F[A])(implicit F: Monad[F]): F[A] =
     cmd match {
       case a: Add =>
         getUserId(a.user).flatMap {
-          case Some(u) => modify(Modify(Map(u -> Some(a.perm))), ProjectPerm.Admin)
+          case Some(u) => modify(Modify(Map(u -> Some(a.role))), ProjectRole.Admin)
           case None    => F.pure(onNotFound)
         }
 
       case RemoveSelf =>
-        modify(Modify(Map(userId -> None)), ProjectPerm.min)
+        modify(Modify(Map(userId -> None)), ProjectRole.min)
 
       case m: Modify =>
-        modify(m, ProjectPerm.Admin)
+        modify(m, ProjectRole.Admin)
     }
 
   object CodecsV1 {
@@ -43,17 +43,17 @@ object UpdateAccessCmd {
       new Pickler[Add] {
         override def pickle(a: Add)(implicit state: PickleState): Unit = {
           state.pickle(a.user)
-          state.pickle(a.perm)
+          state.pickle(a.role)
         }
         override def unpickle(implicit state: UnpickleState): Add = {
           val user = state.unpickle[Username \/ EmailAddr]
-          val perm = state.unpickle[ProjectPerm]
-          Add(user, perm)
+          val role = state.unpickle[ProjectRole]
+          Add(user, role)
         }
       }
 
     private implicit val picklerUpdateAccessCmdModify: Pickler[Modify] =
-      pickleMap[UserId.Public, Option[ProjectPerm]].xmap(Modify.apply)(_.updates)
+      pickleMap[UserId.Public, Option[ProjectRole]].xmap(Modify.apply)(_.updates)
 
     implicit val picklerUpdateAccessCmd: Pickler[UpdateAccessCmd] =
       new Pickler[UpdateAccessCmd] {

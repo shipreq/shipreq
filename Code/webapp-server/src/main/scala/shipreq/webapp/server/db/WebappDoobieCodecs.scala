@@ -81,13 +81,13 @@ object WebappDoobieCodecs {
   implicit val doobieMetaUserEncryptionKey: Meta[UserEncryptionKey] =
     Meta[BinaryData].timap(UserEncryptionKey.apply)(_.value)
 
-  implicit val doobieMetaProjectPerm: Meta[ProjectPerm] =
-    pgEnumString[ProjectPerm]("project_perm", {
-      case "admin"        => ProjectPerm.Admin
-      case "collaborator" => ProjectPerm.Collaborator
+  implicit val doobieMetaProjectRole: Meta[ProjectRole] =
+    pgEnumString[ProjectRole]("project_role", {
+      case "admin"        => ProjectRole.Admin
+      case "collaborator" => ProjectRole.Collaborator
     }, {
-      case ProjectPerm.Admin        => "admin"
-      case ProjectPerm.Collaborator => "collaborator"
+      case ProjectRole.Admin        => "admin"
+      case ProjectRole.Collaborator => "collaborator"
     })
 
   implicit val doobieWriteArrayUsername: Write[Set[Username]] =

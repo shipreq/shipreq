@@ -71,7 +71,7 @@ trait WebappTestUtil extends BaseTestUtil {
   lazy val PublicUserId4 = Obfuscators.userId.obfuscate(UserId4)
   val Username4 = Username("usr4")
 
-  def looseProjectMetaData(p: Project, eventsTotal: Int = 123, eventsInit: Int = 2, perm: ProjectPerm = ProjectPerm.Admin): ProjectMetaData =
+  def looseProjectMetaData(p: Project, eventsTotal: Int = 123, eventsInit: Int = 2, role: ProjectRole = ProjectRole.Admin): ProjectMetaData =
     ProjectMetaData.fromProject(p)(
       id            = Obfuscated("t3sT"),
       userId        = Obfuscated(""),
@@ -80,7 +80,7 @@ trait WebappTestUtil extends BaseTestUtil {
       createdAt     = Instant.now().minus(28, DAYS),
       accessedAt    = Instant.now().minus(1, DAYS),
       lastUpdatedAt = Some(Instant.now().minus(1, DAYS)),
-    ).copy(perm = Option(perm))
+    ).copy(role = Option(role))
 
   def verifyEvent(p: Project, e: Event): VerifiedEvent = {
     val ve = VerifiedEvent(p.history.nextOrd, e, Instant.now())

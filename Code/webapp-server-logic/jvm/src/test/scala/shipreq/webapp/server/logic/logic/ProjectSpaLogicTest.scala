@@ -143,7 +143,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         Event.ProjectTemplateApply(ProjectTemplate.V1),
         Event.ProjectNameSet("hell"),
         Event.ProjectNameSet("hello"),
-        Event.AccessUpdate(Map(user3.idP -> Some(ProjectPerm.Collaborator))),
+        Event.AccessUpdate(Map(user3.idP -> Some(ProjectRole.Collaborator))),
       )
 
       val creator              = ProjectCreator(user2.idP)
@@ -326,7 +326,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       "revokedAccess"    - {
         implicit val t = new Tester; import t._
         val u = db.newUserEntry()
-        db.updateProjectAccess(p1.id, Set.empty, Map(u.id -> ProjectPerm.Collaborator)).value.getOrThrow()
+        db.updateProjectAccess(p1.id, Set.empty, Map(u.id -> ProjectRole.Collaborator)).value.getOrThrow()
         assert(projectSpa.onConnect(u.token, p1.id, user2.id).value.isRight)
         db.updateProjectAccess(p1.id, Set(u.id), Map.empty).value.getOrThrow()
         val a = projectSpa.onConnect(u.token, p1.id, user2.id).value
@@ -439,7 +439,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         import t._
 
         val u = db.newUserEntry()
-        val cmd = UpdateAccessCmd.Modify(Map(u.idP -> Some(ProjectPerm.Collaborator)))
+        val cmd = UpdateAccessCmd.Modify(Map(u.idP -> Some(ProjectRole.Collaborator)))
         val req = WsReqRes.UpdateAccess.AndReq(cmd)
 
         assertDifference(s"[$c] db reads", db.loadProjectLog.length)(expectFullDbReads) {
@@ -470,7 +470,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       "add" - {
         implicit val t = new Tester; import t._
         val u = db.newUserEntry()
-        val cmd = UpdateAccessCmd.Add(-\/(u.username), ProjectPerm.Collaborator)
+        val cmd = UpdateAccessCmd.Add(-\/(u.username), ProjectRole.Collaborator)
         val req = WsReqRes.UpdateAccess.AndReq(cmd)
         val result = sendMsg(req, p1.static, subscribedState)._1
         assertResponse(result)
@@ -480,7 +480,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
 
       "addNotFound" - {
         implicit val t = new Tester; import t._
-        val cmd = UpdateAccessCmd.Add(-\/(Username("nobody")), ProjectPerm.Collaborator)
+        val cmd = UpdateAccessCmd.Add(-\/(Username("nobody")), ProjectRole.Collaborator)
         val req = WsReqRes.UpdateAccess.AndReq(cmd)
         val result = sendMsg(req, p1.static, subscribedState)._1
         assertEq(result, \/-(-\/(ErrorMsg("User not found."))))
@@ -509,7 +509,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
         "adminWithOtherAdmin" - {
           implicit val t = new Tester; import t._
           // First add another admin
-          val addAdminCmd = UpdateAccessCmd.Modify(Map(user3.idP -> Some(ProjectPerm.Admin)))
+          val addAdminCmd = UpdateAccessCmd.Modify(Map(user3.idP -> Some(ProjectRole.Admin)))
           sendMsg(WsReqRes.UpdateAccess.AndReq(addAdminCmd), p1.static, subscribedState)
           // Now remove self
           val req = WsReqRes.UpdateAccess.AndReq(UpdateAccessCmd.RemoveSelf)
@@ -627,7 +627,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       "revokedAccess" - {
         implicit val t = new Tester; import t._
         val u2 = db.newUserEntry()
-        db.updateProjectAccess(p1.id, Set.empty, Map(u2.id -> ProjectPerm.Collaborator)).value.getOrThrow()
+        db.updateProjectAccess(p1.id, Set.empty, Map(u2.id -> ProjectRole.Collaborator)).value.getOrThrow()
         assert(projectSpa.initPage(p1.id, u2.id, u2.username, assetManifest).value.isDefined)
         db.updateProjectAccess(p1.id, Set(u2.id), Map.empty).value.getOrThrow()
         val result = projectSpa.initPage(p1.id, u2.id, u2.username, assetManifest).value

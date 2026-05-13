@@ -4,7 +4,7 @@ import cats.Eq
 import japgolly.microlibs.cats_ext.CatsMacros
 import java.time.Instant
 import shipreq.base.util._
-import shipreq.webapp.base.data.{ProjectPerm, Rolodex, Username}
+import shipreq.webapp.base.data.{ProjectRole, Rolodex, Username}
 import shipreq.webapp.base.protocol.websocket.WebSocketShared
 import shipreq.webapp.base.test.BinaryTestUtil._
 import shipreq.webapp.base.util.Obfuscated
@@ -482,7 +482,7 @@ object ProjectSpaProtocolsTest extends TestSuite {
 
         "AccessUpdate" - {
           val bin     = BinaryData.fromHex("0200010C44020371776502037A786300E0B05ECB61C0D454070190020468656865060CF606")
-          val expectE = Event.AccessUpdate(Map(Obfuscated("qwe") -> Some(ProjectPerm.Collaborator), Obfuscated("zxc") -> None)).verified(12, Instant.parse("2021-12-28T19:00:00.123Z"))
+          val expectE = Event.AccessUpdate(Map(Obfuscated("qwe") -> Some(ProjectRole.Collaborator), Obfuscated("zxc") -> None)).verified(12, Instant.parse("2021-12-28T19:00:00.123Z"))
           val expectR = Rolodex(Map(Obfuscated("qwe") -> Username("hehe")))
           val expect  = StateUpdate(expectE, Supplimentary(expectR))
           assertDecodeOk(codec)(bin, expect)

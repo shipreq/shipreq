@@ -461,14 +461,14 @@ object ProjectSpaLogic extends StrictLogging {
         onInitApp               = onInitApp,
         onReconnect             = onReconnect,
         onSync                  = onSync,
-        onUpdateConfig          = updateProject (MakeEvent.updateConfig, ProjectPerm.Collaborator),
-        onCreateContent         = updateProject (MakeEvent.createContent, ProjectPerm.Collaborator),
-        onUpdateContent         = updateProject (MakeEvent.updateContent, ProjectPerm.Collaborator),
-        onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn, ProjectPerm.Admin),
-        onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews, ProjectPerm.Collaborator),
-        onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues, ProjectPerm.Collaborator),
+        onUpdateConfig          = updateProject (MakeEvent.updateConfig, ProjectRole.Collaborator),
+        onCreateContent         = updateProject (MakeEvent.createContent, ProjectRole.Collaborator),
+        onUpdateContent         = updateProject (MakeEvent.updateContent, ProjectRole.Collaborator),
+        onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn, ProjectRole.Admin),
+        onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews, ProjectRole.Collaborator),
+        onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues, ProjectRole.Collaborator),
         onFieldMandatorinessMod = _ => F.pure(-\/(MsgError.FunctionNoLongerSupported("fieldMandatorinessMod"))),
-        onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod, ProjectPerm.Collaborator),
+        onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod, ProjectRole.Collaborator),
         onUpdateAccess          = onUpdateAccess,
       )
 
@@ -505,16 +505,16 @@ object ProjectSpaLogic extends StrictLogging {
           }.flatMap(identity)
       }
 
-      private def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result, requiredPerm: ProjectPerm): MsgFn[I, EventResult] =
-        in => projectUpdater(in.static.projectId, in.static.creator, in.static.user.id, mkEvent(in.input, _), requiredPerm).map {
+      private def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result, requiredRole: ProjectRole): MsgFn[I, EventResult] =
+        in => projectUpdater(in.static.projectId, in.static.creator, in.static.user.id, mkEvent(in.input, _), requiredRole).map {
           case ProjectUpdater.Result.Ok(upd)                 => \/-(MsgFnOut(\/-(upd), None))
           case ProjectUpdater.Result.Reject(e)               => \/-(MsgFnOut(-\/(e), None))
           case ProjectUpdater.Result.ServerBehindDatabase(e) => -\/(MsgError.ServerBehindDatabase(e))
           case ProjectUpdater.Result.ServerBehindRedis(e)    => -\/(MsgError.ServerBehindRedis(e))
         }
 
-      private def updateProjectI[I](mkEvent: I => MakeEvent.Result, requiredPerm: ProjectPerm): MsgFn[I, EventResult] =
-        updateProject((i, _) => mkEvent(i), requiredPerm)
+      private def updateProjectI[I](mkEvent: I => MakeEvent.Result, requiredRole: ProjectRole): MsgFn[I, EventResult] =
+        updateProject((i, _) => mkEvent(i), requiredRole)
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -764,7 +764,7 @@ object ProjectSpaLogic extends StrictLogging {
               creator     : ProjectCreator,
               userId      : UserId,
               mkEvent     : Project => MakeEvent.Result,
-              requiredPerm: ProjectPerm,
+              requiredRole: ProjectRole,
              ): F[Result] = {
 
       var gas = 200
@@ -823,9 +823,9 @@ object ProjectSpaLogic extends StrictLogging {
 
             // This logic is duplicated in TestGlobal
             def permCheck: PotentialChange[ErrorMsg, Unit] =
-              project.access.require(requiredPerm, userPubId) match {
+              project.access.require(requiredRole, userPubId) match {
                 case Allow => PotentialChange.unit
-                case Deny  => PotentialChange.Failure(ErrorMsg(s"$requiredPerm rights required."))
+                case Deny  => PotentialChange.Failure(ErrorMsg(s"$requiredRole rights required."))
               }
 
             val result: PotentialChange[ErrorMsg, ApplyNewEvent.Updated] =

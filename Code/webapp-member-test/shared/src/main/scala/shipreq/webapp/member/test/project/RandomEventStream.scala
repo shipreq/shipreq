@@ -13,7 +13,7 @@ import shipreq.base.test.BaseUtilGen._
 import shipreq.base.test.Incrementor
 import shipreq.base.util.ScalaExt._
 import shipreq.base.util._
-import shipreq.webapp.base.data.{ProjectCreator, ProjectPerm, UserId}
+import shipreq.webapp.base.data.{ProjectCreator, ProjectRole, UserId}
 import shipreq.webapp.base.test.RandomBaseData
 import shipreq.webapp.base.test.RandomBaseData.unicodeString1
 import shipreq.webapp.member.project.data._
@@ -27,7 +27,7 @@ import shipreq.webapp.member.test.WebappTestUtil
 import shipreq.webapp.member.test.project.ApplicableEventGen.ObserveFn
 import shipreq.webapp.member.test.project.DataTestExt._
 import shipreq.webapp.member.test.project.RandomData
-import shipreq.webapp.member.test.project.RandomData.{TextGen, TextGenExt, customReqTypeName, desc, exclusivity, fieldName, fieldRefKey, filter, filterDead, genColour, hashRefKey, implicationRequired, mandatory, projectPerm, reqCode, reqTypeMnemonic, tagGroupName}
+import shipreq.webapp.member.test.project.RandomData.{TextGen, TextGenExt, customReqTypeName, desc, exclusivity, fieldName, fieldRefKey, filter, filterDead, genColour, hashRefKey, implicationRequired, mandatory, projectRole, reqCode, reqTypeMnemonic, tagGroupName}
 import shipreq.webapp.member.test.project.RandomEventStream.{ProjectDepGen, State}
 import shipreq.webapp.server.logic.util.Obfuscators
 
@@ -142,7 +142,7 @@ object RandomEventStream extends RandomEventStreamDsl(RandomEventStreamConfig.de
   val activeOnly: RandomEventStreamDsl =
     withConfig(_.copy(retiredEvents = false))
 
-  val projectPermOptions = ProjectPerm.values.iterator.map(Option(_)).toSet + None
+  val projectRoleOptions = ProjectRole.values.iterator.map(Option(_)).toSet + None
 }
 
 // █████████████████████████████████████████████████████████████████████████████████████████████████████████████████████
@@ -1054,7 +1054,7 @@ final class ApplicableEventGen(emptyState: State, curState: State, config: Rando
     manualIssueId.map(_ map ManualIssueDelete)
 
   def genAccessUpdate: Option[Gen[AccessUpdate]] = {
-    type Entries = Vector[(UserId.Public, Option[ProjectPerm])]
+    type Entries = Vector[(UserId.Public, Option[ProjectRole])]
 
     val access = p.access.asMap
 
@@ -1067,7 +1067,7 @@ final class ApplicableEventGen(emptyState: State, curState: State, config: Rando
     def update: Gen[Entries] =
       Gen.subset1(access.keys.toVector).flatMap { ids =>
         Gen.traverse(ids) { id =>
-          Gen.choose_!(RandomEventStream.projectPermOptions - access.get(id))
+          Gen.choose_!(RandomEventStream.projectRoleOptions - access.get(id))
             .map((id, _))
         }
       }
@@ -1078,7 +1078,7 @@ final class ApplicableEventGen(emptyState: State, curState: State, config: Rando
         // Can add new users
 
         def add: Gen[Entries] =
-          (genNewUser & projectPerm.map(Some(_))).vector(1 to 4)
+          (genNewUser & projectRole.map(Some(_))).vector(1 to 4)
 
         val entries: Gen[Entries] =
           Gen.chooseInt(3).flatMap {
@@ -1093,7 +1093,7 @@ final class ApplicableEventGen(emptyState: State, curState: State, config: Rando
           if (u.hasAdmin)
             Gen pure AccessUpdate(m)
           else
-            genNewUser.map(u => AccessUpdate(m.updated(u, Some(ProjectPerm.Admin))))
+            genNewUser.map(u => AccessUpdate(m.updated(u, Some(ProjectRole.Admin))))
         })
 
       case None =>
@@ -1105,7 +1105,7 @@ final class ApplicableEventGen(emptyState: State, curState: State, config: Rando
             if (u.hasAdmin)
               AccessUpdate(m)
             else {
-              val existingAdmin = access.find(_._2 ==* ProjectPerm.Admin).get._1
+              val existingAdmin = access.find(_._2 ==* ProjectRole.Admin).get._1
               AccessUpdate(m - existingAdmin)
             }
           }
