@@ -17,7 +17,6 @@
 # Misc
 
 * revise UI prototype for the project "status" page
-* use a custom IORuntime? (and install it globally)
 
 ========================================================================================================================
 # project access WIP
