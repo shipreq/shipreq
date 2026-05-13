@@ -568,7 +568,7 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
       )
 
     private val getProjectEvents: Request ?=> F[Response] =
-      endpoint(Post, Url.Relative("project/events"))(req =>
+      endpoint(Post, Url.Relative("project/export"))(req =>
         parseParams(req.param("id") flatMap ParseLong.unapply)(id =>
           ops.getProjectEvents(ProjectId(id)).map(response)
         )

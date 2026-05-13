@@ -36,7 +36,7 @@ Poetry Hub is #13
 
 ```sh
 id=3
- curl http://localhost:$port/ops/project/events -X POST $auth -F id=$id -o /tmp/project-$id.json
+ curl http://localhost:$port/ops/project/export -X POST $auth -F id=$id -o /tmp/project-$id.json
  wc -l /tmp/project-$id.json
  aws s3 mv /tmp/project-$id.json s3://shipreq-tmp
 ```
@@ -47,7 +47,7 @@ and then locally, with ShipReq local/dev running
 id=3
 aws --profile=shipreq s3 cp s3://shipreq-tmp/project-$id.json .
  auth="-F secret=Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid"
- curl -v http://localhost:8080/ops/project/create -X POST $auth -F events='<'project-$id.json -F user=japgolly
+ curl -v http://localhost:8080/ops/project/import -X POST $auth -F events='<'project-$id.json -F user=japgolly
 ```
 
 
