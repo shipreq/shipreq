@@ -13,10 +13,15 @@ object PermDropdown {
   private def mkKey(perm: ProjectPerm): Dropdown.ItemKey =
     perm.ord.toString
 
+  private val mkLabel: ProjectPerm => String = {
+    case ProjectPerm.Admin        => "Admin"
+    case ProjectPerm.Collaborator => "Collaborator"
+  }
+
   private def mkItem(perm: ProjectPerm): Item =
     Dropdown.Item(
       key   = mkKey(perm),
-      label = perm.toString,
+      label = mkLabel(perm),
       value = perm,
     )
 
