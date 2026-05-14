@@ -44,7 +44,10 @@ object MockInterpreters {
       passwordSaltLength         = 64,
       verificationTokenLength    = 8,
       registrationTokenLifespan  = JDuration.ofDays(7),
-      passwordResetTokenLifespan = JDuration.ofDays(4)))
+      passwordResetTokenLifespan = JDuration.ofDays(4),
+      opsEndpointSecret          = new PlainTextPassword("test_ops_secret"),
+    )
+  )
 
   implicit val syncEval: Sync[Eval] =
     new Sync[Eval] {

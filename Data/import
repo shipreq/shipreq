@@ -4,7 +4,7 @@ set -euo pipefail
 if [ $# -ne 4 ]; then
   echo "Usage: $0 <url> <secret> <username> <file>"
   echo
-  echo "Example: $0 http://localhost:8080 Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid japgolly /tmp/shipreq-project-12.json"
+  echo "Example: $0 http://localhost:8080 dev-ops japgolly /tmp/shipreq-project-12.json"
   exit 1
 fi
 

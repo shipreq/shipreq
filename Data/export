@@ -4,7 +4,7 @@ set -euo pipefail
 if [ $# -ne 3 ]; then
   echo "Usage: $0 <url> <secret> <id>"
   echo
-  echo "Example: $0 http://localhost:8080 Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid 12"
+  echo "Example: $0 http://localhost:8080 dev-ops 12"
   exit 1
 fi
 
