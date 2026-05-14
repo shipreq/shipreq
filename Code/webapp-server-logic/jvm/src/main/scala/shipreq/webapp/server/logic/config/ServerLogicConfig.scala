@@ -10,6 +10,7 @@ import shipreq.base.ops._
 import shipreq.base.util.FxModule._
 import shipreq.base.util._
 import shipreq.webapp.base.config.AssetManifest
+import shipreq.webapp.base.data.PlainTextPassword
 import shipreq.webapp.server.logic.dispatch.DispatchLogic
 import shipreq.webapp.server.logic.logic.ProjectSpaLogic
 
@@ -81,7 +82,11 @@ object ServerLogicConfig {
                             registrationTokenLifespan: Duration,
 
                             /** How long password-reset tokens are valid for after issuing. */
-                            passwordResetTokenLifespan: Duration) {
+                            passwordResetTokenLifespan: Duration,
+
+                            /** The secret key necessary to invoke operations endpoints. */
+                            opsEndpointSecret: PlainTextPassword,
+                           ) {
 
     val attackFrustrationDelayMs = attackFrustrationDelay.toMillis
     val jwtCookieHttpOnlySome    = Some(true)
@@ -110,16 +115,20 @@ object ServerLogicConfig {
           .map(new JwtSecret(_))
     }
 
+    private implicit def configValueParserPlainTextPassword: ConfigValueParser[PlainTextPassword] =
+      ConfigValueParser.id.map(new PlainTextPassword(_))
+
     def config: ConfigDef[Security] =
-      ( ConfigDef.getOrUse[Duration ]("attack_frustration_delay", Duration.ofMillis(120)),
-        ConfigDef.need    [Boolean  ]("jwt.cookie.secure"),
-        ConfigDef.need    [Duration ]("jwt.lifespan"),
-        ConfigDef.need    [JwtSecret]("jwt.secret"),
-        ConfigDef.get     [JwtSecret]("jwt.secret.previous"),
-        ConfigDef.getOrUse[Int      ]("password.salt", 64),
-        ConfigDef.need    [Int      ]("verification_token.length"),
-        ConfigDef.need    [Duration ]("verification_token.lifespan.register"),
-        ConfigDef.need    [Duration ]("verification_token.lifespan.resetpw"),
+      ( ConfigDef.getOrUse[Duration         ]("attack_frustration_delay", Duration.ofMillis(120)),
+        ConfigDef.need    [Boolean          ]("jwt.cookie.secure"),
+        ConfigDef.need    [Duration         ]("jwt.lifespan"),
+        ConfigDef.need    [JwtSecret        ]("jwt.secret"),
+        ConfigDef.get     [JwtSecret        ]("jwt.secret.previous"),
+        ConfigDef.getOrUse[Int              ]("password.salt", 64),
+        ConfigDef.need    [Int              ]("verification_token.length"),
+        ConfigDef.need    [Duration         ]("verification_token.lifespan.register"),
+        ConfigDef.need    [Duration         ]("verification_token.lifespan.resetpw"),
+        ConfigDef.need    [PlainTextPassword]("ops.endpoint.secret")
       ).mapN(apply)
   }
 

@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+
+if [ $# -ne 3 ]; then
+  echo "Usage: $0 <url> <secret> <id>"
+  echo
+  echo "Example: $0 http://localhost:8080 dev-ops 12"
+  exit 1
+fi
+
+url="$1"
+secret="$2"
+id="$3"
+
+file=/tmp/shipreq-project-$id.json
+
+curl $url/ops/project/export -X POST -F "secret=$secret" -F id="$id" -o "$file"
+wc -l "$file"

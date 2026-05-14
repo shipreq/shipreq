@@ -78,11 +78,6 @@ object DispatchLogic {
 
   val opsSecretKey = "secret"
 
-  /** This is a lazy, hardcoded password to validate admin access. When ShipReq gets serious this shit will be
-    * replaced with proper authentication and authorisation.
-    */
-  val opsSecretValue = PlainTextPassword("Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid")
-
   /** FOR UNIT-TESTS ONLY */
   val unitTestLoginUrl = Url.Relative("/c8c8f430-93b2-43fe-a072-11f9a1ab52a0")
 }
@@ -503,6 +498,8 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
 
   object Ops {
     import shipreq.taskman.api.TaskId
+
+    private def opsSecretValue = config.security.opsEndpointSecret
 
     private def response(cmd: ResponseCmd): Response =
       Response(cmd, Cookie.Update.empty)

@@ -28,28 +28,6 @@ port=$(sudo docker ps | fgrep webapp | sed -e 's/.*:\([0-9][0-9]*\)->8080.*/\1/'
  curl http://localhost:$port/ops/register1 -X POST $auth -F email=japgolly@gmail.com
 ```
 
-### Download a project as json
-
-ShipReq is #3
-CryptoFolio is #12
-Poetry Hub is #13
-
-```sh
-id=3
- curl http://localhost:$port/ops/project/export -X POST $auth -F id=$id -o /tmp/project-$id.json
- wc -l /tmp/project-$id.json
- aws s3 mv /tmp/project-$id.json s3://shipreq-tmp
-```
-
-and then locally, with ShipReq local/dev running
-
-```sh
-id=3
-aws --profile=shipreq s3 cp s3://shipreq-tmp/project-$id.json .
- auth="-F secret=Hooquail2aehiey1viemiefaayengeiGhuch8Eishee3OHu4aiKieth3lieshaid"
- curl -v http://localhost:8080/ops/project/import -X POST $auth -F events='<'project-$id.json -F user=japgolly
-```
-
 
 Prod Issues
 ============

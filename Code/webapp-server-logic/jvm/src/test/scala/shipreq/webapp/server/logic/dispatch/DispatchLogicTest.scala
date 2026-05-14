@@ -18,6 +18,7 @@ import shipreq.webapp.server.logic.config.ServerLogicConfig
 import shipreq.webapp.server.logic.dispatch.DispatchLogic._
 import shipreq.webapp.server.logic.dispatch.Method._
 import shipreq.webapp.server.logic.test.{MockDb, MockInterpreters}
+import shipreq.webapp.server.logic.test.MockInterpreters.config.security.opsEndpointSecret
 import shipreq.webapp.server.logic.util.Obfuscators
 import sourcecode.Line
 import utest._
@@ -352,7 +353,7 @@ object DispatchLogicTest extends TestSuite {
       "ok" - testRun(ResponseCmd.Text(200, "OK."), "/ops/ok")
 
       def register1Url = opsRoot / "register1"
-      def register1Params = Map(opsSecretKey -> opsSecretValue.value, "email" -> "a@bc.com")
+      def register1Params = Map(opsSecretKey -> opsEndpointSecret.value, "email" -> "a@bc.com")
 
       "register1" - assertProtected(testRun(
         ResponseCmd.Json(200, Json.obj("taskId" -> 1.asJson)),

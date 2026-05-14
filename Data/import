@@ -1,0 +1,16 @@
+#!/bin/bash
+set -euo pipefail
+
+if [ $# -ne 4 ]; then
+  echo "Usage: $0 <url> <secret> <username> <file>"
+  echo
+  echo "Example: $0 http://localhost:8080 dev-ops japgolly /tmp/shipreq-project-12.json"
+  exit 1
+fi
+
+url="$1"
+secret="$2"
+username="$3"
+file="$4"
+
+curl -v $url/ops/project/import -X POST -F "secret=$secret" -F events='<'"$file" -F user=$username
