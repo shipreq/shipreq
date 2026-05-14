@@ -162,7 +162,10 @@ object DispatchBM {
       passwordSaltLength         = 64,
       verificationTokenLength    = 8,
       registrationTokenLifespan  = Duration.ofDays(7),
-      passwordResetTokenLifespan = Duration.ofDays(4)))
+      passwordResetTokenLifespan = Duration.ofDays(4),
+      opsEndpointSecret          = new PlainTextPassword("bm_ops_secret"),
+    )
+  )
 
   val noBody: Eval[Option[BinaryData]] = Eval.now(None)
 
