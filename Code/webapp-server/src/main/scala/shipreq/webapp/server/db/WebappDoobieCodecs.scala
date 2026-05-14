@@ -85,9 +85,11 @@ object WebappDoobieCodecs {
     pgEnumString[ProjectRole]("project_role", {
       case "admin"        => ProjectRole.Admin
       case "collaborator" => ProjectRole.Collaborator
+      case "viewer"       => ProjectRole.Viewer
     }, {
       case ProjectRole.Admin        => "admin"
       case ProjectRole.Collaborator => "collaborator"
+      case ProjectRole.Viewer       => "viewer"
     })
 
   implicit val doobieWriteArrayUsername: Write[Set[Username]] =

@@ -11,9 +11,10 @@ object AccessPageObs {
 
   def parseRole(role: String): ProjectRole =
     role match {
-      case "Admin"        => ProjectRole.Admin
-      case "Collaborator" => ProjectRole.Collaborator
-      case _              => sys.error(s"Unknown role '$role'")
+      case "Admin"                => ProjectRole.Admin
+      case "Collaborator"         => ProjectRole.Collaborator
+      case "Viewer" | "Read-Only" => ProjectRole.Viewer
+      case _                      => sys.error(s"Unknown role '$role'")
     }
 
   final class ExistingUserRowObs($: DomZipperJs) {

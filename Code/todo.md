@@ -29,7 +29,7 @@
   1. add admin permission checks to the frontend:
     1. [x] project renaming
   1. add read-only access
-    1. [ ] backend and protocol work
+    1. [x] backend and protocol work
     1. [ ] read-only UI: Editability
     1. [ ] read-only UI: everywhere else (manually check)
 

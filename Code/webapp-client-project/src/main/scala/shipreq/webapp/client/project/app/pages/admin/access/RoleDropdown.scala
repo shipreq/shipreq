@@ -16,6 +16,7 @@ object RoleDropdown {
   private val mkLabel: ProjectRole => String = {
     case ProjectRole.Admin        => "Admin"
     case ProjectRole.Collaborator => "Collaborator"
+    case ProjectRole.Viewer       => "Read-Only"
   }
 
   private def mkItem(role: ProjectRole): Item =

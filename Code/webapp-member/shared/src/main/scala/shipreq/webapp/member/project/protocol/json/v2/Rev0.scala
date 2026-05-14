@@ -26,6 +26,7 @@ object Rev0 {
       c.value.asString match {
         case Some("admin")        => Right(ProjectRole.Admin)
         case Some("collaborator") => Right(ProjectRole.Collaborator)
+        case Some("viewer")       => Right(ProjectRole.Viewer      )
         case _                    => Left(DecodingFailure("Invalid project role: " + c.value.noSpaces, c.history))
       }
     )
@@ -33,6 +34,7 @@ object Rev0 {
   implicit lazy val encoderProjectRole: Encoder[ProjectRole] = Encoder.instance {
     case ProjectRole.Admin        => Json.fromString("admin")
     case ProjectRole.Collaborator => Json.fromString("collaborator")
+    case ProjectRole.Viewer       => Json.fromString("viewer")
   }
 
   implicit lazy val decoderOptionProjectRole: Decoder[Option[ProjectRole]] =

@@ -10,11 +10,15 @@ sealed abstract class ProjectRole(final val ord: Int) {
   final def isSatisfiedBy(subject: ProjectRole): Permission =
     this match {
       case Admin => subject match {
-        case Admin => Allow
-        case Collaborator => Deny
+        case Admin                 => Allow
+        case Collaborator | Viewer => Deny
       }
       case Collaborator => subject match {
         case Admin | Collaborator => Allow
+        case Viewer               => Deny
+      }
+      case Viewer => subject match {
+        case Admin | Collaborator | Viewer => Allow
       }
     }
 
@@ -29,15 +33,17 @@ sealed abstract class ProjectRole(final val ord: Int) {
 object ProjectRole {
   case object Admin        extends ProjectRole(0)
   case object Collaborator extends ProjectRole(1)
+  case object Viewer       extends ProjectRole(2)
 
   // The order specified here defines the order rendered in UI dropdowns
   val values = AdtMacros.adtValuesManually[ProjectRole](
     Admin,
     Collaborator,
+    Viewer,
   )
 
   implicit def univEq: UnivEq[ProjectRole] = UnivEq.derive
 
   /** [[ProjectRole]] with the least rights */
-  def min: ProjectRole = Collaborator
+  def min: ProjectRole = Viewer
 }

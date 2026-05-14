@@ -26,15 +26,18 @@ object Rev0 {
       // Note: 0 is reserved for Option[ProjectRole]
       private[this] final val KeyAdmin        = 1
       private[this] final val KeyCollaborator = 2
+      private[this] final val KeyViewer       = 3
       override def pickle(a: ProjectRole)(implicit state: PickleState): Unit =
         a match {
           case ProjectRole.Admin        => state.enc.writeByte(KeyAdmin       )
           case ProjectRole.Collaborator => state.enc.writeByte(KeyCollaborator)
+          case ProjectRole.Viewer       => state.enc.writeByte(KeyViewer      )
         }
       override def unpickle(implicit state: UnpickleState): ProjectRole =
         state.dec.readByte match {
           case KeyAdmin        => ProjectRole.Admin
           case KeyCollaborator => ProjectRole.Collaborator
+          case KeyViewer       => ProjectRole.Viewer
         }
     }
 
