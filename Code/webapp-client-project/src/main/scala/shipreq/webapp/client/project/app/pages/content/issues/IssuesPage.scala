@@ -103,29 +103,27 @@ object IssuesPage {
       def projectWidgets = pxProjectWidgets.value()
       def textSearch     = pxTextSearch.value()
 
-      def renderNew(p: Props) =
-        p.creator(CreateFeature.FieldKey.ManualIssue).toOption.map(createE =>
-          NewIssue.Props(
-            previewRW      = p.previewRW,
-            project        = project,
-            textSearch     = textSearch,
-            projectWidgets = projectWidgets,
-            state          = p.state.zoomStateL(State.newIssue),
-            createR        = p.creator,
-            createE        = createE,
-          ).render)
+      def renderNew =
+        NewIssue.Props(
+          previewRW      = p.previewRW,
+          project        = project,
+          textSearch     = textSearch,
+          projectWidgets = projectWidgets,
+          state          = p.state.zoomStateL(State.newIssue),
+          createR        = p.creator,
+        ).render
 
-      def renderEmpty(p: Props) =
+      def renderEmpty =
         <.div(
-          renderNew(p),
+          renderNew,
           <.div(*.emptyCont, NoContent.render))
 
-      def renderContent(p: Props, issues: Issues, project: Project) = {
+      def renderContent(issues: Issues, project: Project) = {
         val filteredOut = project.issues.vector.length - issues.vector.length
 
         <.div(
           <.div(*.pageRow1,
-            <.div(*.pageNew, renderNew(p)),
+            <.div(*.pageNew, renderNew),
             <.div(Summary.Props(issues.stats, filteredOut).render)),
           <.div(*.pageRow2,
             <.div(*.pageSort),
@@ -135,9 +133,9 @@ object IssuesPage {
 
       val issues = project.issues
       if (issues.isEmpty)
-        renderEmpty(p)
+        renderEmpty
       else
-        renderContent(p, pxFilteredIssues.value(), project)
+        renderContent(pxFilteredIssues.value(), project)
     }
   }
 }

@@ -24,8 +24,11 @@ object NewIssue {
                          projectWidgets: ProjectWidgets.NoCtx,
                          state         : StateSnapshot[State],
                          createR       : CreateFeature.ReadWrite.ForManualIssueR,
-                         createE       : CreateFeature.ReadWrite.ForManualIssueE,
                          ) {
+
+    val createE: Option[CreateFeature.ReadWrite.ForManualIssueE] =
+      createR(CreateFeature.FieldKey.ManualIssue).toOption
+
     @inline def render: VdomElement = Component(this)
   }
 
@@ -46,8 +49,9 @@ object NewIssue {
     private def setState(s: State): Callback =
       $.props.flatMap(_.state.setState(s))
 
-    private def newIssueButton(s: State) = {
-      val open = Option.when(s.open is Closed)(setState(State(Open)))
+    private def newIssueButton(p: Props) = {
+      val s = p.state.value
+      val open = Option.when(s.open.is(Closed) && p.createE.isDefined)(setState(State(Open)))
       Button(
         tipe = Button.Type.IconAndText(Icon.Plus, "New issue"),
         colour = Colour.Orange,
@@ -58,14 +62,14 @@ object NewIssue {
     private val closeEditor: Reusable[Callback] =
       Reusable.callbackByRef(setState(State(Closed)))
 
-    private def editorValue(p: Props): Option[Text.ManualIssue.NonEmptyText] = {
+    private def editorValue(p: Props, createE: CreateFeature.ReadWrite.ForManualIssueE): Option[Text.ManualIssue.NonEmptyText] = {
       val emptyArgs =
         CreateFeature.EditorArgs.ForTextEditor.empty(
           project        = p.project,
           textSearch     = p.textSearch,
           projectWidgets = p.projectWidgets)
 
-      p.createE.value(emptyArgs).toOption
+      createE.value(emptyArgs).toOption
     }
 
     private def save(p: Props, value: Text.ManualIssue.NonEmptyText): Callback = {
@@ -84,26 +88,28 @@ object NewIssue {
 
     def render(p: Props): VdomElement = {
 
-      val editor =
-        Option.when(p.state.value.open is Open) {
+      val editor: Option[VdomElement] =
+        if (p.state.value.open is Closed)
+          None
+        else
+          p.createE.map { createE =>
+            val value = editorValue(p, createE)
+            val commit = value.map(_ => this.commit)
 
-          val value = editorValue(p)
-          val commit = value.map(_ => this.commit)
+            val args =
+              CreateFeature.EditorArgs.ForTextEditor.basic(
+                previewRW      = p.previewRW,
+                project        = p.project,
+                textSearch     = p.textSearch,
+                projectWidgets = p.projectWidgets,
+                abort          = Some(closeEditor),
+                commit         = commit)
 
-          val args =
-            CreateFeature.EditorArgs.ForTextEditor.basic(
-              previewRW      = p.previewRW,
-              project        = p.project,
-              textSearch     = p.textSearch,
-              projectWidgets = p.projectWidgets,
-              abort          = Some(closeEditor),
-              commit         = commit)
-
-          p.createE.render(args)
-        }
+            createE.render(args)
+          }
 
       <.div(*.newIssueCont,
-        <.div(newIssueButton(p.state.value)),
+        <.div(newIssueButton(p)),
         <.div(*.newIssueForm, editor))
     }
 
