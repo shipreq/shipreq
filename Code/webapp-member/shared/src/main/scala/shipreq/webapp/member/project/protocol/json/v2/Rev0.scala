@@ -26,7 +26,7 @@ object Rev0 {
       c.value.asString match {
         case Some("admin")        => Right(ProjectRole.Admin)
         case Some("collaborator") => Right(ProjectRole.Collaborator)
-        case Some("viewer")       => Right(ProjectRole.Viewer      )
+        case Some("viewer")       => Right(ProjectRole.Viewer)
         case _                    => Left(DecodingFailure("Invalid project role: " + c.value.noSpaces, c.history))
       }
     )
