@@ -509,49 +509,53 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
         case Page.CfgFields =>
           config.fields.FieldConfig.Props(
-            project = project,
-            pw      = projectWidgets,
-            state   = StateSnapshot.zoomL(State.fieldConfig)(s).setStateVia($),
-            ssp     = sspUpdateConfig,
-            async   = AsyncFeature.ReadWrite.D0(fieldConfigAsyncW, s.fieldConfigAsync),
-            router  = routerCtl,
-            toast   = toast,
-            usage   = usage,
+            project     = project,
+            pw          = projectWidgets,
+            state       = StateSnapshot.zoomL(State.fieldConfig)(s).setStateVia($),
+            ssp         = sspUpdateConfig,
+            async       = AsyncFeature.ReadWrite.D0(fieldConfigAsyncW, s.fieldConfigAsync),
+            router      = routerCtl,
+            toast       = toast,
+            usage       = usage,
+            editability = globalEditability,
           ).render
 
         case Page.CfgIssues =>
           config.issues.IssueConfig.Props(
-            project = project,
-            pw      = projectWidgets,
-            state   = StateSnapshot.zoomL(State.customIssueTypeConfig)(s).setStateVia($),
-            ssp     = sspUpdateConfig,
-            async   = AsyncFeature.ReadWrite.D0(customIssueTypeConfigAsyncW, s.customIssueTypeConfigAsync),
-            router  = routerCtl,
-            toast   = toast,
-            usage   = usage,
+            project     = project,
+            pw          = projectWidgets,
+            state       = StateSnapshot.zoomL(State.customIssueTypeConfig)(s).setStateVia($),
+            ssp         = sspUpdateConfig,
+            async       = AsyncFeature.ReadWrite.D0(customIssueTypeConfigAsyncW, s.customIssueTypeConfigAsync),
+            router      = routerCtl,
+            toast       = toast,
+            usage       = usage,
+            editability = globalEditability,
           ).render
 
         case Page.CfgReqTypes =>
           config.reqtypes.ReqTypeConfig.Props(
-            project = project,
-            pw      = projectWidgets,
-            state   = StateSnapshot.zoomL(State.reqTypeConfig)(s).setStateVia($),
-            ssp     = sspUpdateConfig,
-            async   = AsyncFeature.ReadWrite.D0(reqTypeConfigAsyncW, s.reqTypeConfigAsync),
-            confirm = confirmJs,
-            toast   = toast,
-            usage   = usage,
+            project     = project,
+            pw          = projectWidgets,
+            state       = StateSnapshot.zoomL(State.reqTypeConfig)(s).setStateVia($),
+            ssp         = sspUpdateConfig,
+            async       = AsyncFeature.ReadWrite.D0(reqTypeConfigAsyncW, s.reqTypeConfigAsync),
+            confirm     = confirmJs,
+            toast       = toast,
+            usage       = usage,
+            editability = globalEditability,
           ).render
 
         case Page.CfgTags =>
           config.tags.TagConfig.Props(
-            project = project,
-            pw      = projectWidgets,
-            state   = StateSnapshot.zoomL(State.tagConfig)(s).setStateVia($),
-            ssp     = sspUpdateConfig,
-            async   = AsyncFeature.ReadWrite.D0(tagConfigAsyncW, s.tagConfigAsync),
-            toast   = toast,
-            usage   = usage,
+            project     = project,
+            pw          = projectWidgets,
+            state       = StateSnapshot.zoomL(State.tagConfig)(s).setStateVia($),
+            ssp         = sspUpdateConfig,
+            async       = AsyncFeature.ReadWrite.D0(tagConfigAsyncW, s.tagConfigAsync),
+            toast       = toast,
+            usage       = usage,
+            editability = globalEditability,
           ).render
 
         case Page.ReqTable =>

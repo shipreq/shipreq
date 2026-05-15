@@ -40,14 +40,15 @@ object FieldConfig {
 
   val dropdownButton = new ButtonAndDropdown.Types[NewFieldType]
 
-  final case class Props(project: Project,
-                         state  : StateSnapshot[State],
-                         pw     : ProjectWidgets.NoCtx,
-                         ssp    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyFields, ErrorMsg, NewEvents],
-                         async  : AsyncFeature.ReadWrite.D0[ErrorMsg],
-                         router : Routes.RouterCtl,
-                         toast  : Toast,
-                         usage  : Usage,
+  final case class Props(project    : Project,
+                         state      : StateSnapshot[State],
+                         pw         : ProjectWidgets.NoCtx,
+                         ssp        : ServerSideProcInvoker[UpdateConfigCmd.ToModifyFields, ErrorMsg, NewEvents],
+                         async      : AsyncFeature.ReadWrite.D0[ErrorMsg],
+                         router     : Routes.RouterCtl,
+                         toast      : Toast,
+                         usage      : Usage,
+                         editability: Permission,
                         ) {
 
     val asyncInProgress: Boolean =
@@ -199,7 +200,8 @@ object FieldConfig {
       })
 
     private def newButtonProps(p: Props, args: splitScreenCrud.NewArgs): dropdownButton.DBProps = {
-      val items = pxNewItems.value()
+      val items   = pxNewItems.value()
+      val enabled = Disabled.when(p.editability.is(Deny))
 
       args match {
 
@@ -210,12 +212,13 @@ object FieldConfig {
             selectItem = None,
             create     = None,
             inProgress = p.asyncInProgress,
+            enabled    = enabled,
           )
 
         case a: NewArgs.Enabled[NewState] =>
 
           def callback[A](f: A => Callback) =
-            Option.unless(p.asyncInProgress)(Reusable.byRef(a).withValue(f))
+            Option.unless(p.asyncInProgress || p.editability.is(Deny))(Reusable.byRef(a).withValue(f))
 
           ButtonAndDropdown.Props.newReq[NewFieldType](
             items      = items,
@@ -223,6 +226,7 @@ object FieldConfig {
             selectItem = callback[NewState](a.state.setState),
             create     = callback[ButtonAndDropdown.Click[NewState]](c => a.openEditor.unless_(c.targetsNewTab_?)),
             inProgress = p.asyncInProgress,
+            enabled    = enabled,
           )
       }
     }
@@ -252,6 +256,8 @@ object FieldConfig {
       val header: VdomNode =
         renderHeader(p, args)
 
+      val enabled = Enabled.when(p.editability.is(Allow))
+
       val editorType: EditorType =
         args.id match {
           case \/-(fid: CustomFieldId) =>
@@ -271,7 +277,7 @@ object FieldConfig {
 
       def createOrUpdateButtons(idOption: Option[CustomFieldId]): EditorButtons.Props =
         EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(
-          submitCmdF[CustomFieldId](p, _, _, _), UpdateConfigCmd.CustomFieldDelete)
+          submitCmdF[CustomFieldId](p, _, _, _), UpdateConfigCmd.CustomFieldDelete, enabled)
 
       def impFieldEditor(idOption: Option[CustomField.Implication.Id], enabled: Enabled) = {
         val lens = editorStateLensForImp(ImpFieldEditor.State.init(idOption, p.project.config))
@@ -287,12 +293,13 @@ object FieldConfig {
       def tagFieldEditor(idOption: Option[CustomField.Tag.Id], enabled: Enabled) = {
         val lens = editorStateLensForTag(TagFieldEditor.State.init(idOption, p.project.config))
         TagFieldEditor.Props(
-          state      = args.state.zoomStateL(lens),
-          cfg        = p.project.config,
-          filterDead = p.effectiveFilterDead,
-          enabled    = enabled,
-          pw         = p.pw,
-          router     = p.router,
+          state       = args.state.zoomStateL(lens),
+          cfg         = p.project.config,
+          filterDead  = p.effectiveFilterDead,
+          enabled     = enabled,
+          pw          = p.pw,
+          router      = p.router,
+          editability = p.editability,
         )
       }
 
@@ -309,17 +316,17 @@ object FieldConfig {
       editorType match {
 
         case EditorType.LiveImp(idOption) =>
-          val editor = impFieldEditor(idOption, Enabled)
+          val editor = impFieldEditor(idOption, enabled)
           val buttons = if (editor.isPossible) createOrUpdateButtons(idOption) else EditorButtons.cancel(args)
           <.div(header, editor.render, buttons.render)
 
         case EditorType.LiveTag(idOption) =>
-          val editor = tagFieldEditor(idOption, Enabled)
+          val editor = tagFieldEditor(idOption, enabled)
           val buttons = if (editor.isPossible) createOrUpdateButtons(idOption) else EditorButtons.cancel(args)
           <.div(header, editor.render, buttons.render)
 
         case EditorType.LiveText(idOption) =>
-          val editor = textFieldEditor(idOption, Enabled).render
+          val editor = textFieldEditor(idOption, enabled).render
           val buttons = createOrUpdateButtons(idOption).render
           <.div(header, editor, buttons)
 
@@ -331,7 +338,7 @@ object FieldConfig {
               case i: CustomField.Implication.Id => impFieldEditor (Some(i), Disabled).render
             }
           val buttons =
-            EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.CustomFieldRestore(id), _, _)).render
+            EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.CustomFieldRestore(id), _, _), enabled).render
           <.div(header, editor, buttons)
 
         case EditorType.Static(f: StaticField.Mandatory) =>
@@ -344,9 +351,9 @@ object FieldConfig {
           val inUse   = p.project.config.fields.includes(f)
           val buttons =
             if (inUse)
-              EditorButtons.remove(args)(submitCmd(p, UpdateConfigCmd.StaticFieldRemove(f), _, _))
+              EditorButtons.remove(args)(submitCmd(p, UpdateConfigCmd.StaticFieldRemove(f), _, _), enabled)
             else
-              EditorButtons.add(args)(submitCmd(p, UpdateConfigCmd.StaticFieldAdd(f), _, _))
+              EditorButtons.add(args)(submitCmd(p, UpdateConfigCmd.StaticFieldAdd(f), _, _), enabled)
           <.div(header, editor, buttons.render)
       }
     }
