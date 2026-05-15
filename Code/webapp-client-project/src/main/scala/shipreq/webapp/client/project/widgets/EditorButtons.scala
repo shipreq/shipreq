@@ -19,7 +19,7 @@ object EditorButtons {
                                                potentialSaveCmd: PotentialChange[Any, Cmd])
                                               (submitCmd       : (Cmd, String, (Project, Id2) => Callback) => Callback,
                                                deleteCmd       : Id2 => Cmd,
-                                               enabled         : Enabled = Enabled): Props =
+                                               enabled         : Enabled): Props =
     idOption match {
       case Some(id) =>
         Props.Update(
@@ -44,7 +44,7 @@ object EditorButtons {
                                                    hardDeleteConfirm: CallbackTo[Boolean],
                                                    hardDeleteCmd    : Id2 => Cmd,
                                                    softDeleteCmd    : Id2 => Cmd,
-                                                   enabled          : Enabled = Enabled): Props =
+                                                   enabled          : Enabled): Props =
     idOption match {
       case Some(id) =>
         Props.HardUpdate(
@@ -71,7 +71,7 @@ object EditorButtons {
 
   def restore[N, Id, S, Cmd](args     : SplitScreenCrud.EditorArgs[N, Id, S])
                             (submitCmd: (String, (Project, Id) => Callback) => Callback,
-                             enabled  : Enabled = Enabled): Props =
+                             enabled  : Enabled): Props =
     Props.Restore(
       abort   = args.close,
       restore = submitCmd("Restored", (p, _) => args.reset(p)),
@@ -80,7 +80,7 @@ object EditorButtons {
 
   def add[N, Id, S, Cmd](args     : SplitScreenCrud.EditorArgs[N, Id, S])
                         (submitCmd: (String, (Project, Id) => Callback) => Callback,
-                         enabled  : Enabled = Enabled): Props =
+                         enabled  : Enabled): Props =
     Props.Add(
       abort   = args.close,
       add     = submitCmd("Added", (p, _) => args.reset(p)),
@@ -89,7 +89,7 @@ object EditorButtons {
 
   def remove[N, Id, S, Cmd](args     : SplitScreenCrud.EditorArgs[N, Id, S])
                            (submitCmd: (String, (Project, Id) => Callback) => Callback,
-                            enabled  : Enabled = Enabled): Props =
+                            enabled  : Enabled): Props =
     Props.Remove(
       abort   = args.close,
       remove  = submitCmd("Removed", (p, _) => args.reset(p)),
@@ -104,7 +104,7 @@ object EditorButtons {
 
     final case class Add(abort  : Callback,
                          add    : Callback,
-                         enabled: Enabled = Enabled) extends Props
+                         enabled: Enabled) extends Props
 
     final case class Cancel(abort: Callback) extends Props
 
@@ -112,26 +112,26 @@ object EditorButtons {
 
     final case class Create(abort  : Callback,
                             create : Option[Callback],
-                            enabled: Enabled = Enabled) extends Props
+                            enabled: Enabled) extends Props
 
     final case class Remove(abort  : Callback,
                             remove : Callback,
-                            enabled: Enabled = Enabled) extends Props
+                            enabled: Enabled) extends Props
 
     final case class Restore(abort  : Callback,
                              restore: Callback,
-                             enabled: Enabled = Enabled) extends Props
+                             enabled: Enabled) extends Props
 
     final case class Update(abort  : Callback,
                             delete : Callback,
                             update : PotentialChange[Any, Callback],
-                            enabled: Enabled = Enabled) extends Props
+                            enabled: Enabled) extends Props
 
     final case class HardUpdate(abort     : Callback,
                                 hardDelete: Callback,
                                 softDelete: Callback,
                                 update    : PotentialChange[Any, Callback],
-                                enabled   : Enabled = Enabled) extends Props
+                                enabled   : Enabled) extends Props
 
   }
 
