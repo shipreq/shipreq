@@ -3,7 +3,8 @@ package shipreq.webapp.client.project.feature.savedview
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.ErrorMsg
+import shipreq.webapp.base.util.BaseReusability._
+import shipreq.base.util.{Allow, ErrorMsg, Permission}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -23,6 +24,7 @@ object ViewManager {
                          asyncRW    : AsyncFeature.ReadWrite.D0[ErrorMsg],
                          promptJs   : PromptJs,
                          confirmJs  : ConfirmJs,
+                         editability: Permission,
                          runAction  : Action ~=> Callback,
                          savedViewIO: ServerSideProcInvoker[SavedViewCmd, ErrorMsg, VerifiedEvent.Seq]) {
     @inline def render: VdomElement = Component(this)
@@ -58,6 +60,7 @@ object ViewManager {
 
     private def interpretMenuItem(runAction          : Action => Callback,
                                   asyncR             : AsyncFeature.Read.D0[Any],
+                                  editability        : Permission,
                                   interpretMenuAction: MenuAction => Dropdown.Item): (MenuItem, Boolean) => SemUiMenu.Item = {
 
       val itemState =
@@ -73,7 +76,13 @@ object ViewManager {
         val actions =
           mi.actions.whole.map(interpretMenuAction)
 
-        SemUiMenu.DropdownType.OnHover(label, actions)
+        val itemType =
+          if (editability.is(Allow) && actions.nonEmpty)
+            SemUiMenu.DropdownType.OnHover(label, actions)
+          else
+            SemUiMenu.ItemType.Div(TagMod(*.readOnlyItem, label))
+
+        itemType
           .toItem(itemState, tagMod = *.activeItem.when(active))
           .withOnClick($.getDOMNode.map(_.toElement).asCBO, mi.optionId.map(id => runAction(Action.Select(id))).getOrEmpty)
       }
@@ -144,7 +153,7 @@ object ViewManager {
 
     def render(p: Props): VdomElement = {
       val i = interpretMenu(
-        interpretMenuItem(p.runAction, p.asyncRW.read,
+        interpretMenuItem(p.runAction, p.asyncRW.read, p.editability,
           interpretMenuAction(p.runAction, p.confirmJs, p.promptJs, p.asyncRW.write, p.savedViewIO)))
       val semUiMenu = i(p.menu)
       <.div(

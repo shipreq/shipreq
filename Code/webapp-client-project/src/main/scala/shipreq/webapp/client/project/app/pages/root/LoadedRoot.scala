@@ -277,6 +277,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
         pxProject                      = pxProject,
         pxFilterDead                   = pxFilterDead,
         pxFilterCompilerFromFilterDead = pxFilterCompilerFromFilterDead,
+        pxGlobalEditability            = pxGlobalEditability,
         confirmJs                      = confirmJs,
         promptJs                       = promptJs,
         savedViewAsyncW                = savedViewAsyncW,
