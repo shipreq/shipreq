@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.widgets
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import shipreq.base.util.Enabled
 import shipreq.webapp.base.ui.semantic.{Button, Colour, ColourPlus, Icon}
 import shipreq.webapp.member.UiText
 import shipreq.webapp.member.project.data.{Dead, Live}
@@ -13,20 +14,19 @@ import shipreq.webapp.member.project.data.{Dead, Live}
   * Dead. [Restore]
   */
 sealed abstract class LifeButton(status: String, button: Button) {
-  private val base = button.tag(^.whiteSpace.nowrap)
 
-  def apply(onClick: Callback): VdomTag =
-    base(^.onClick --> onClick)
+  def apply(onClick: Callback, enabled: Enabled = Enabled): VdomTag =
+    button.disableMaybe(enabled).onClick(onClick)(^.whiteSpace.nowrap)
 
   val justStatus = <.span(status + ".")
 
-  def withStatusOnLeft(onClick: Callback): TagMod =
+  def withStatusOnLeft(onClick: Callback, enabled: Enabled = Enabled): TagMod =
     TagMod(
       justStatus,
-      apply(onClick)(^.float.right))
+      apply(onClick, enabled)(^.float.right))
 
   def withStatusOnLeft(onClick: Option[Callback]): TagMod =
-    onClick.fold[TagMod](justStatus)(withStatusOnLeft)
+    onClick.fold[TagMod](justStatus)(withStatusOnLeft(_))
 }
 
 object LifeButton {

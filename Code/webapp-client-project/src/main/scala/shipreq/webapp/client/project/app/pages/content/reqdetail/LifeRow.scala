@@ -16,6 +16,7 @@ private[reqdetail] object LifeRow {
                          allowLiveChange: Permission,
                          delete         : Reusable[ReqId => Callback],
                          restore        : Reusable[ReqId => Callback],
+                         editability    : Permission,
                         ) {
     @inline def render: VdomElement = Component.withKey(row.key)(this)
   }
@@ -31,15 +32,17 @@ private[reqdetail] object LifeRow {
       dataLive   = Live, // When req is dead, [Restore] should be highlighted is active
     )(renderRowData(_, p))
 
-  private def renderRowData(cell: Shared.DataCell, p: Props): VdomNode =
+  private def renderRowData(cell: Shared.DataCell, p: Props): VdomNode = {
+    val enabled = Enabled.when(p.editability.is(Allow))
     cell.nonDirectlyEditableNavParent(
       p.live match {
         case Live =>
-          LifeButton.Delete withStatusOnLeft p.delete(p.reqId)
+          LifeButton.Delete.withStatusOnLeft(p.delete(p.reqId), enabled)
         case Dead =>
-          LifeButton.Restore.withStatusOnLeft(
-            p.allowLiveChange option p.restore(p.reqId))
+          p.allowLiveChange.option(p.restore(p.reqId)).fold[TagMod](LifeButton.Restore.justStatus)(
+            LifeButton.Restore.withStatusOnLeft(_, enabled))
       })
+  }
 
   val Component = ScalaComponent.builder[Props]
     .render_P(render)

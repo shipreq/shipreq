@@ -469,6 +469,7 @@ object ReqDetail {
               allowLiveChange = req.allowLiveChange(project.config.reqTypes),
               delete          = deleteFn,
               restore         = restoreFn,
+              editability     = reqProps.editability,
             ).render
 
           case Row.Implications =>
