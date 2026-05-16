@@ -48,7 +48,7 @@ object ButtonAndDropdown {
                   inProgress  : Boolean,
                   outerTagMod : TagMod = TagMod.empty,
                   basic       : Boolean = false,
-                  enabled     : Enabled = Enabled
+                  enabled     : Enabled = Enabled,
                 )(implicit A  : UnivEq[A]): Of[A] = {
 
       val button = ButtonProps.newReq(create, inProgress)

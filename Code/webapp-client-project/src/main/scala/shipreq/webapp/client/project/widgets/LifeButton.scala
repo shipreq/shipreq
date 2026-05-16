@@ -20,13 +20,10 @@ sealed abstract class LifeButton(status: String, button: Button) {
 
   val justStatus = <.span(status + ".")
 
-  def withStatusOnLeft(onClick: Callback, enabled: Enabled = Enabled): TagMod =
+  def withStatusOnLeft(onClick: Callback, enabled: Enabled): TagMod =
     TagMod(
       justStatus,
       apply(onClick, enabled)(^.float.right))
-
-  def withStatusOnLeft(onClick: Option[Callback]): TagMod =
-    onClick.fold[TagMod](justStatus)(withStatusOnLeft(_))
 }
 
 object LifeButton {

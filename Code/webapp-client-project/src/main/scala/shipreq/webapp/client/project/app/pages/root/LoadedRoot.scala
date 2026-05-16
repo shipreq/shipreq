@@ -127,13 +127,13 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
         ProjectRole.Collaborator.isSatisfiedBy(usersRole)
       ).withReuse
 
-    private val pxEditEditability: Px[EditorFeature.Editability.ForProject] =
+    private val pxEditorEditability: Px[EditorFeature.Editability.ForProject] =
       Px.apply2(pxProject, pxGlobalEditability)(EditorFeature.Editability.apply)
 
     private val pxUnsavedChangesInput: Px[UnsavedChanges.Input] =
       Px.apply6(
         pxState,
-        pxEditEditability,
+        pxEditorEditability,
         pxProject,
         pxTextSearch,
         pxProjectWidgets,
@@ -350,7 +350,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
     private val pxReqDetailReqProps: Px[Option[State => ReqDetail.ReqProps]] =
       for {
         globalEditability <- pxGlobalEditability
-        editability       <- pxEditEditability
+        editorEditability <- pxEditorEditability
         reqDetailId       <- pxReqDetailId
         project           <- pxProject
         vt                <- pxViewTags
@@ -369,7 +369,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
           val ar = as(row).mapKey(AsyncKey.ToReqDetail)
           val af = aw.toReadWrite(ar)
           val rf = rff(s.filterDead)
-          val er = EditorFeature.Read.ForProject(s.edit, rf, editability, as.mapKey1(AsyncKey.ToEditor)).forReq(id)
+          val er = EditorFeature.Read.ForProject(s.edit, rf, editorEditability, as.mapKey1(AsyncKey.ToEditor)).forReq(id)
           val ef = EditorFeature.ReadWrite.ForFields(er, ew)
           ReqDetail.ReqProps(ef, af, globalEditability)
         }
@@ -467,7 +467,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
       lazy val editAsyncState = s.editAsync.toRead
       def createR           = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.newReqAsync)
       def createRW          = createW.toReadWrite(createR)
-      def editR             = EditorFeature.Read.ForProject(s.edit, renderFeature, pxEditEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
+      def editR             = EditorFeature.Read.ForProject(s.edit, renderFeature, pxEditorEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
       def editRW            = editW.toReadWrite(editR)
       def filterDeadSS      = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
       def project           = unsafeProject()

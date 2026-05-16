@@ -39,8 +39,10 @@ private[reqdetail] object LifeRow {
         case Live =>
           LifeButton.Delete.withStatusOnLeft(p.delete(p.reqId), enabled)
         case Dead =>
-          p.allowLiveChange.option(p.restore(p.reqId)).fold[TagMod](LifeButton.Restore.justStatus)(
-            LifeButton.Restore.withStatusOnLeft(_, enabled))
+          p.allowLiveChange.option(p.restore(p.reqId)) match {
+            case Some(cb) => LifeButton.Restore.withStatusOnLeft(cb, enabled)
+            case None     => LifeButton.Restore.justStatus
+          }
       })
   }
 
