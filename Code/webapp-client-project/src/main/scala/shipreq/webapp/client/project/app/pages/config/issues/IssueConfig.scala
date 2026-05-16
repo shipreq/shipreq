@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{Disabled, Enabled, ErrorMsg, PotentialChange}
+import shipreq.base.util.{Allow, Disabled, Enabled, ErrorMsg, Permission, PotentialChange}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
@@ -30,14 +30,15 @@ object IssueConfig {
 
   val splitScreenCrud = new SplitScreenCrud[NewState, CustomIssueTypeId, EditorState]
 
-  final case class Props(project: Project,
-                         state  : StateSnapshot[State],
-                         pw     : ProjectWidgets.NoCtx,
-                         ssp    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyCustomIssueTypes, ErrorMsg, NewEvents],
-                         async  : AsyncFeature.ReadWrite.D0[ErrorMsg],
-                         router : Routes.RouterCtl,
-                         toast  : Toast,
-                         usage  : Usage,
+  final case class Props(project    : Project,
+                         state      : StateSnapshot[State],
+                         pw         : ProjectWidgets.NoCtx,
+                         ssp        : ServerSideProcInvoker[UpdateConfigCmd.ToModifyCustomIssueTypes, ErrorMsg, NewEvents],
+                         async      : AsyncFeature.ReadWrite.D0[ErrorMsg],
+                         router     : Routes.RouterCtl,
+                         toast      : Toast,
+                         usage      : Usage,
+                         editability: Permission,
                         ) {
 
     val asyncInProgress: Boolean =
@@ -115,7 +116,8 @@ object IssueConfig {
       args match {
 
         case a: NewArgs.Enabled[NewState] =>
-          newButton.disableMaybe(Disabled when p.asyncInProgress).onClick(a.openEditor)
+          val enabled = Enabled.when(p.editability.is(Allow) && !p.asyncInProgress)
+          newButton.disableMaybe(enabled).onClick(a.openEditor)
 
         case NewArgs.Disabled(()) =>
           newButton.disabled
@@ -156,6 +158,8 @@ object IssueConfig {
       val header: VdomNode =
         renderHeader(p, args)
 
+      val enabled = Enabled.when(p.editability.is(Allow))
+
       val editorType: EditorType =
         args.id match {
           case -\/(()) => EditorType.Editor(None)
@@ -170,7 +174,8 @@ object IssueConfig {
       def createOrUpdateButtons(idOption: Option[CustomIssueTypeId]): EditorButtons.Props =
         EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(
           submitCmd = submitCmd(p, _, _, _),
-          deleteCmd = UpdateConfigCmd.CustomIssueTypeDelete)
+          deleteCmd = UpdateConfigCmd.CustomIssueTypeDelete,
+          enabled   = enabled)
 
       def customIssueTypeEditor(enabled: Enabled) =
         CustomIssueTypeEditor.Props(
@@ -182,13 +187,13 @@ object IssueConfig {
       editorType match {
 
         case EditorType.Editor(itOption) =>
-          val editor  = customIssueTypeEditor(Enabled)
+          val editor  = customIssueTypeEditor(enabled)
           val buttons = createOrUpdateButtons(itOption.map(_.id)).render
           <.div(header, editor, buttons)
 
         case EditorType.Dead(i) =>
           val editor = customIssueTypeEditor(Disabled)
-          val buttons = EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.CustomIssueTypeRestore(i.id), _, _)).render
+          val buttons = EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.CustomIssueTypeRestore(i.id), _, _), enabled).render
           <.div(header, editor, buttons)
       }
     }

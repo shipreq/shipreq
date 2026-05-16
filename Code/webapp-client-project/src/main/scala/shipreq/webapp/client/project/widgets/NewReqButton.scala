@@ -19,13 +19,14 @@ object NewReqButton extends ButtonAndDropdown.Types[CreateFeature.RowKey] {
   @inline def initState: State =
     None
 
-  final case class Props(state     : State,
-                         reqTypes  : ReqTypes,
-                         allowRCG  : Permission,
-                         pw        : ProjectWidgets.AnyCtx,
-                         callbacks : Option[Reusable[Callbacks]],
-                         inProgress: Boolean,
-                         basic     : Boolean = false,
+  final case class Props(state      : State,
+                         reqTypes   : ReqTypes,
+                         allowRCG   : Permission,
+                         pw         : ProjectWidgets.AnyCtx,
+                         callbacks  : Option[Reusable[Callbacks]],
+                         inProgress : Boolean,
+                         editability: Permission,
+                         basic      : Boolean = false,
                         ) {
 
     val dropdownProps: DBProps =
@@ -36,6 +37,7 @@ object NewReqButton extends ButtonAndDropdown.Types[CreateFeature.RowKey] {
         create     = callbacks.map(_.map(_.click)),
         inProgress = inProgress,
         basic      = basic,
+        enabled    = Disabled.when(editability.is(Deny)),
       )
 
     @inline def render: VdomNode =

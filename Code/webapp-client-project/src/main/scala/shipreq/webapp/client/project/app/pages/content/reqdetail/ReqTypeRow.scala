@@ -32,7 +32,8 @@ private[reqdetail] object ReqTypeRow {
                          newReqState     : StateSnapshot[ImplyNewReqButton.State],
                          newReqAsync     : AsyncFeature.ReadWrite.D0[ErrorMsg],
                          sspCreateContent: ServerSideProcInvoker[CreateContentCmd, ErrorMsg, NewEvents],
-                         reqDetailRC     : RouterCtl[ExternalPubid]) {
+                         reqDetailRC     : RouterCtl[ExternalPubid],
+                         editability     : Permission) {
     @inline def render: VdomElement = Component.withKey(row.key)(this)
   }
 
@@ -88,14 +89,15 @@ private[reqdetail] object ReqTypeRow {
 
       def newButton =
         ImplyNewReqButton.Props(
-          state      = p.newReqState.value.orElse(defaultSelected),
-          reqTypes   = p.reqTypes,
-          allowRCG   = Deny,
-          pw         = p.projectWidgets,
-          selectItem = onReqTypeSelect,
-          create     = onCreate,
-          inProgress = p.newReqAsync.isInProgress,
-          basic      = true,
+          state       = p.newReqState.value.orElse(defaultSelected),
+          reqTypes    = p.reqTypes,
+          allowRCG    = Deny,
+          pw          = p.projectWidgets,
+          selectItem  = onReqTypeSelect,
+          create      = onCreate,
+          inProgress  = p.newReqAsync.isInProgress,
+          basic       = true,
+          editability = p.editability,
         ).render
 
       p.live match {

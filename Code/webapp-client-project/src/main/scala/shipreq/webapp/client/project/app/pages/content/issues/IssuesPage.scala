@@ -6,7 +6,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.base.util.ErrorMsg
+import shipreq.base.util.{ErrorMsg, Permission}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.client.project.app.Style.{issues => *}
 import shipreq.webapp.client.project.app.pages.root.Routes
@@ -49,12 +49,13 @@ object IssuesPage {
       cmdInvoker)
   }
 
-  final case class Props(state     : StateSnapshot[State],
-                         creator   : CreateFeature.ReadWrite.ForManualIssueR,
-                         editor    : EditorFeature.ReadWrite.ForProject,
-                         editorArgs: EditorFeature.EditorArgs.ForAny,
-                         previewRW : PreviewFeature.ReadWrite.Composite[PreviewId],
-                         cmdAsync  : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
+  final case class Props(state      : StateSnapshot[State],
+                         creator    : CreateFeature.ReadWrite.ForManualIssueR,
+                         editor     : EditorFeature.ReadWrite.ForProject,
+                         editorArgs : EditorFeature.EditorArgs.ForAny,
+                         previewRW  : PreviewFeature.ReadWrite.Composite[PreviewId],
+                         cmdAsync   : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg],
+                         editability: Permission)
 
   @Lenses
   final case class State(newIssue    : NewIssue.State,
@@ -103,41 +104,39 @@ object IssuesPage {
       def projectWidgets = pxProjectWidgets.value()
       def textSearch     = pxTextSearch.value()
 
-      def renderNew(p: Props) =
-        p.creator(CreateFeature.FieldKey.ManualIssue).toOption.map(createE =>
-          NewIssue.Props(
-            previewRW      = p.previewRW,
-            project        = project,
-            textSearch     = textSearch,
-            projectWidgets = projectWidgets,
-            state          = p.state.zoomStateL(State.newIssue),
-            createR        = p.creator,
-            createE        = createE,
-          ).render)
+      def renderNew =
+        NewIssue.Props(
+          previewRW      = p.previewRW,
+          project        = project,
+          textSearch     = textSearch,
+          projectWidgets = projectWidgets,
+          state          = p.state.zoomStateL(State.newIssue),
+          createR        = p.creator,
+        ).render
 
-      def renderEmpty(p: Props) =
+      def renderEmpty =
         <.div(
-          renderNew(p),
+          renderNew,
           <.div(*.emptyCont, NoContent.render))
 
-      def renderContent(p: Props, issues: Issues, project: Project) = {
+      def renderContent(issues: Issues, project: Project) = {
         val filteredOut = project.issues.vector.length - issues.vector.length
 
         <.div(
           <.div(*.pageRow1,
-            <.div(*.pageNew, renderNew(p)),
+            <.div(*.pageNew, renderNew),
             <.div(Summary.Props(issues.stats, filteredOut).render)),
           <.div(*.pageRow2,
             <.div(*.pageSort),
             <.div(FilterEditor.Props(p.state.value.filterEditor, project, filterUpdateFn).render)),
-          table.component(Table.Props(issues, p.editor, p.editorArgs, p.cmdAsync)))
+          table.component(Table.Props(issues, p.editor, p.editorArgs, p.cmdAsync, p.editability)))
       }
 
       val issues = project.issues
       if (issues.isEmpty)
-        renderEmpty(p)
+        renderEmpty
       else
-        renderContent(p, pxFilteredIssues.value(), project)
+        renderContent(pxFilteredIssues.value(), project)
     }
   }
 }

@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{ConsolidatedSeq, Disabled, Enabled, ErrorMsg, IfApplicable}
+import shipreq.base.util.{Allow, ConsolidatedSeq, Disabled, Enabled, ErrorMsg, IfApplicable, Permission}
 import shipreq.webapp.base.feature.clipboard.ClipboardKeys
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
 import shipreq.webapp.client.project.app.Style.{issues => *}
@@ -30,6 +30,7 @@ object TableRow {
                          issueClass      : Option[Reusable[TD]],
                          idBase          : Option[Reusable[TD]],
                          titleBase       : Option[Reusable[TD]],
+                         editability     : Permission,
                         )
 
   implicit val reusabilityProps: Reusability[Props] =
@@ -116,7 +117,8 @@ object TableRow {
                 case a: Action.Button =>
                   import AsyncFeature.Status._
                   val async = p.cmdAsync(a.cmd)
-                  def ok = a.button(Enabled)(^.onClick --> p.cmdInvoker(a.cmd))
+                  val enabled = Enabled.when(p.editability.is(Allow))
+                  def ok = a.button(enabled)(^.onClick --> p.cmdInvoker(a.cmd))
                   async match {
                     case None                    => ok
                     case Some(InProgress)        => a.button(Disabled)

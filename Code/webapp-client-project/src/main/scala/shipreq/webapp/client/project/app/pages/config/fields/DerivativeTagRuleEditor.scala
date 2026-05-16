@@ -19,9 +19,10 @@ import shipreq.webapp.member.ui.AutosizeTextarea
 private[fields] object DerivativeTagRuleEditor {
   import DerivativeTags.TagPair
 
-  final case class Props(state: StateSnapshot[State],
-                         group: TagGroupId,
-                         tags: Tags) {
+  final case class Props(state      : StateSnapshot[State],
+                         group      : TagGroupId,
+                         tags       : Tags,
+                         editability: Permission) {
     @inline def render: VdomElement = Component(this)
   }
 
@@ -440,6 +441,7 @@ private[fields] object DerivativeTagRuleEditor {
           ^.spellCheck        := false,
           ^.placeholder       := "Define rules to combine tags by typing:\nrule1 + rule2 = newRule",
           ^.value             := txt,
+          ^.disabled          := p.editability.is(Deny),
         ))
 
       val showTag: TagId => String =

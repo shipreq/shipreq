@@ -44,6 +44,7 @@ object ImplyNewReqButton {
                          pw         : ProjectWidgets.AnyCtx,
                          inProgress : Boolean,
                          basic      : Boolean,
+                         editability: Permission,
                          outerTagMod: TagMod = EmptyVdom,
                         ) {
 
@@ -69,6 +70,7 @@ object ImplyNewReqButton {
         outerTagMod        = outerTagMod,
         dropdownTagMod     = *.dropdownButtonGreenDropdown(basic),
         middleButtonTagMod = middleButtonTagMod,
+        enabled            = Disabled.when(editability.is(Deny)),
         basic              = basic,
       )
     }

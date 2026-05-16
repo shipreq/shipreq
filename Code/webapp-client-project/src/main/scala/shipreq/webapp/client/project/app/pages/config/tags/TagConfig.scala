@@ -7,7 +7,7 @@ import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{Disabled, Enabled, ErrorMsg, Optics, PotentialChange}
+import shipreq.base.util.{Allow, Deny, Disabled, Enabled, ErrorMsg, Optics, Permission, PotentialChange}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
 import shipreq.webapp.base.ui.GeneralTheme
@@ -31,13 +31,14 @@ object TagConfig {
 
   val dropdownButton = new ButtonAndDropdown.Types[NewTagType]
 
-  final case class Props(project: Project,
-                         state  : StateSnapshot[State],
-                         pw     : ProjectWidgets.NoCtx,
-                         ssp    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyTags, ErrorMsg, NewEvents],
-                         async  : AsyncFeature.ReadWrite.D0[ErrorMsg],
-                         toast  : Toast,
-                         usage  : Usage,
+  final case class Props(project    : Project,
+                         state      : StateSnapshot[State],
+                         pw         : ProjectWidgets.NoCtx,
+                         ssp        : ServerSideProcInvoker[UpdateConfigCmd.ToModifyTags, ErrorMsg, NewEvents],
+                         async      : AsyncFeature.ReadWrite.D0[ErrorMsg],
+                         toast      : Toast,
+                         usage      : Usage,
+                         editability: Permission,
                         ) {
 
     val asyncInProgress: Boolean =
@@ -145,7 +146,8 @@ object TagConfig {
         }
       )
 
-    private def newButtonProps(p: Props, args: splitScreenCrud.NewArgs): dropdownButton.DBProps =
+    private def newButtonProps(p: Props, args: splitScreenCrud.NewArgs): dropdownButton.DBProps = {
+      val enabled = Disabled.when(p.editability.is(Deny))
       args match {
 
         case NewArgs.Disabled(sel) =>
@@ -155,12 +157,13 @@ object TagConfig {
             selectItem = None,
             create     = None,
             inProgress = p.asyncInProgress,
+            enabled    = enabled,
           )
 
         case a: NewArgs.Enabled[NewState] =>
 
           def callback[A](f: A => Callback) =
-            Option.unless(p.asyncInProgress)(Reusable.byRef(a).withValue(f))
+            Option.unless(p.asyncInProgress || p.editability.is(Deny))(Reusable.byRef(a).withValue(f))
 
           ButtonAndDropdown.Props.newReq[NewTagType](
             items      = NewTagType.items,
@@ -168,8 +171,10 @@ object TagConfig {
             selectItem = callback[NewState](a.state.setState),
             create     = callback[ButtonAndDropdown.Click[NewState]](c => a.openEditor.unless_(c.targetsNewTab_?)),
             inProgress = p.asyncInProgress,
+            enabled    = enabled,
           )
       }
+    }
 
     private def renderLeft(p: Props, colourOverride: Option[Colour], args: splitScreenCrud.ListArgs): VdomNode =
       NonEmptySet.option(p.project.config.tags.topLevelIds) match {
@@ -228,6 +233,8 @@ object TagConfig {
                              header: VdomNode,
                              args  : splitScreenCrud.EditorArgs): VdomNode = {
 
+      val enabled = Enabled.when(p.editability.is(Allow))
+
       val editorType: EditorType =
         args.id match {
           case \/-(id) if p.project.config.tags.tree.need(id).tag.live.is(Dead) => EditorType.Dead(id)
@@ -238,7 +245,7 @@ object TagConfig {
         }
 
       def createOrUpdateButtons(idOption: Option[TagId]): EditorButtons.Props =
-        EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(submitCmd(p, _, _, _), UpdateConfigCmd.TagDelete)
+        EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(submitCmd(p, _, _, _), UpdateConfigCmd.TagDelete, enabled)
 
       def applicableTagEditor(idOption: Option[ApplicableTagId], enabled: Enabled) = {
         val lens = editorStateLensForApTag(ApplicableTagEditor.State.init(idOption, p.project.config.tags, p.project.config.reqTypes))
@@ -266,12 +273,12 @@ object TagConfig {
 
       editorType match {
         case EditorType.ApplicableTag(idOption) =>
-          val editor = applicableTagEditor(idOption, Enabled)
+          val editor = applicableTagEditor(idOption, enabled)
           val buttons = createOrUpdateButtons(idOption).render
           <.div(header, editor, buttons)
 
         case EditorType.TagGroup(idOption) =>
-          val editor = tagGroupEditor(idOption, Enabled)
+          val editor = tagGroupEditor(idOption, enabled)
           val buttons = createOrUpdateButtons(idOption).render
           <.div(header, editor, buttons)
 
@@ -283,7 +290,7 @@ object TagConfig {
             }
 
           val buttons =
-            EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.TagRestore(id), _, _)).render
+            EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.TagRestore(id), _, _), enabled).render
 
           <.div(header, editor, buttons)
       }

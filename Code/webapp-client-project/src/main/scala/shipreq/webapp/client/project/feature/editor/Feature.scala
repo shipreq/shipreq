@@ -206,7 +206,7 @@ object Feature {
       lazy val forManualIssues: ForManualIssues =
         forRow(RowKey.ManualIssues)(
           renderText.forManualIssues.widen(None),
-          Editability.forManualIssues)
+          editability.forManualIssues)
     }
 
     private implicit val reusabilityForClipboardDataFn: Reusability[() => ClipboardData] =

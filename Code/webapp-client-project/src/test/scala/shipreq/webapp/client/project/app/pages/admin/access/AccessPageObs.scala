@@ -10,11 +10,7 @@ import shipreq.webapp.member.test.CommonObs
 object AccessPageObs {
 
   def parseRole(role: String): ProjectRole =
-    role match {
-      case "Admin"        => ProjectRole.Admin
-      case "Collaborator" => ProjectRole.Collaborator
-      case _              => sys.error(s"Unknown role '$role'")
-    }
+    ProjectRole.values.find(_.label ==* role).getOrElse(sys.error(s"Unknown role '$role'"))
 
   final class ExistingUserRowObs($: DomZipperJs) {
     val name               = $("td", 1 of 4).domAsHtml.textContent.trim

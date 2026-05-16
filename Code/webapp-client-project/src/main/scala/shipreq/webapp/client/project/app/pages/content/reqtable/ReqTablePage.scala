@@ -7,7 +7,7 @@ import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.macros.Lenses
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{Allow, ErrorMsg}
+import shipreq.base.util.{Allow, ErrorMsg, Permission}
 import shipreq.webapp.base.config.AssetManifest
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -54,6 +54,7 @@ object ReqTablePage {
                          savedViews     : SavedViewFeature,
                          rowAsync       : AsyncFeature.Read.D1[Row.SourceId, ErrorMsg],
                          filterDead     : FilterDead,
+                         editability    : Permission,
                          state          : State)
 
   @Lenses
@@ -233,6 +234,7 @@ object ReqTablePage {
         allowRCG       = Allow when activeView.viewCodeGroups,
         create         = p.create,
         activeColumns  = newFormColumns,
+        editability    = p.editability,
       )
 
       val filterEditor =

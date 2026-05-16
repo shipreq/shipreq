@@ -68,8 +68,9 @@ object ReqDetail {
                                 newReqState: StateSnapshot[NewReqButton.State],
                                 newReqAsync: AsyncFeature.ReadWrite.D0[ErrorMsg])
 
-  final case class ReqProps(editor: EditorFeature.ReadWrite.ForReq,
-                            async : AsyncFeature.ReadWrite.D1[Cell, ErrorMsg])
+  final case class ReqProps(editor     : EditorFeature.ReadWrite.ForReq,
+                            async      : AsyncFeature.ReadWrite.D1[Cell, ErrorMsg],
+                            editability: Permission)
 
   @Lenses
   final case class State(modal: Modal.State, graph: ReqImplicationGraph.State)
@@ -458,6 +459,7 @@ object ReqDetail {
               newReqAsync      = props.newReqAsync,
               sspCreateContent = sspCreateContent,
               reqDetailRC      = reqDetailRC,
+              editability      = reqProps.editability,
             ).render
 
           case Row.Life =>
@@ -467,6 +469,7 @@ object ReqDetail {
               allowLiveChange = req.allowLiveChange(project.config.reqTypes),
               delete          = deleteFn,
               restore         = restoreFn,
+              editability     = reqProps.editability,
             ).render
 
           case Row.Implications =>
@@ -551,6 +554,7 @@ object ReqDetail {
           renderBody   = useCaseStepTreeRenderFn(i),
           cmdRunner    = i.cmdRunner,
           addCmdRunner = i.addCmdRunner,
+          editability  = reqProps.editability,
         ).render
       }
 

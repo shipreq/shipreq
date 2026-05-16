@@ -3,18 +3,22 @@ package shipreq.webapp.base.data
 import japgolly.microlibs.adt_macros.AdtMacros
 import shipreq.base.util._
 
-sealed abstract class ProjectRole(final val ord: Int) {
+sealed abstract class ProjectRole(final val ord: Int, final val label: String) {
   import ProjectRole._
 
   /** `this` is the required role, `subject` is the actual role of the user. */
   final def isSatisfiedBy(subject: ProjectRole): Permission =
     this match {
       case Admin => subject match {
-        case Admin => Allow
-        case Collaborator => Deny
+        case Admin                 => Allow
+        case Collaborator | Viewer => Deny
       }
       case Collaborator => subject match {
         case Admin | Collaborator => Allow
+        case Viewer               => Deny
+      }
+      case Viewer => subject match {
+        case Admin | Collaborator | Viewer => Allow
       }
     }
 
@@ -24,20 +28,25 @@ sealed abstract class ProjectRole(final val ord: Int) {
       case Some(s) => isSatisfiedBy(s)
       case None    => Deny
     }
+
+  final def errorMsgWhenUnsatisfied: ErrorMsg =
+    ErrorMsg(label + " rights required.")
 }
 
 object ProjectRole {
-  case object Admin        extends ProjectRole(0)
-  case object Collaborator extends ProjectRole(1)
+  case object Admin        extends ProjectRole(0, "Admin")
+  case object Collaborator extends ProjectRole(1, "Collaborator")
+  case object Viewer       extends ProjectRole(2, "Viewer")
 
   // The order specified here defines the order rendered in UI dropdowns
   val values = AdtMacros.adtValuesManually[ProjectRole](
     Admin,
     Collaborator,
+    Viewer,
   )
 
   implicit def univEq: UnivEq[ProjectRole] = UnivEq.derive
 
   /** [[ProjectRole]] with the least rights */
-  def min: ProjectRole = Collaborator
+  def min: ProjectRole = Viewer
 }

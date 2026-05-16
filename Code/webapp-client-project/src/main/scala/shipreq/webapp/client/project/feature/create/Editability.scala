@@ -18,36 +18,36 @@ import shipreq.webapp.member.project.util.DataReusability._
   */
 object Editability {
 
-  def apply(cfg: ProjectConfig): ForProject =
-    ForProject(cfg)
+  def apply(cfg: ProjectConfig, globalPerm: Permission): ForProject =
+    ForProject(cfg, globalPerm)
 
-  final case class ForProject(cfg: ProjectConfig) {
+  final case class ForProject(cfg: ProjectConfig, globalPerm: Permission) {
     def apply(r: RowKey): ForFields[r.FieldKey] =
       r.foldF(RowKey.Fold(
-        _ => ForCodeGroup,
+        _ => forCodeGroup(globalPerm),
         x => forGenericReq(x.reqTypeId),
         _ => forUseCase,
-        _ => ForManualIssue,
+        _ => forManualIssue(globalPerm),
       ))
 
-    def forGenericReq(reqTypeId: CustomReqTypeId): ForFields[FieldKey.ForGenericReq] =
+    private def forGenericReq(reqTypeId: CustomReqTypeId): ForFields[FieldKey.ForGenericReq] =
       ForFields.via(
-        EE.ForGenericReq(Some((cfg, reqTypeId))),
+        EE.ForGenericReq(Some((cfg, reqTypeId)), globalPerm),
         FieldKey.editorFieldGR.reverseGet)
 
-    lazy val forUseCase: ForFields[FieldKey.ForUseCase] =
+    private lazy val forUseCase: ForFields[FieldKey.ForUseCase] =
       ForFields.via(
-        EE.ForUseCase(Some(cfg)),
+        EE.ForUseCase(Some(cfg), globalPerm),
         FieldKey.editorFieldUC.reverseGet)
   }
 
-  lazy val ForCodeGroup: ForFields[FieldKey.ForCodeGroup] =
+  private def forCodeGroup(globalPerm: Permission): ForFields[FieldKey.ForCodeGroup] =
     ForFields.via(
-      EE.ForCodeGroup(Allow),
+      EE.ForCodeGroup(globalPerm),
       FieldKey.editorFieldCG.reverseGet)
 
-  val ForManualIssue: ForFields[FieldKey.ForManualIssue] =
-    ForFields(Reusable.byRef(_ => Allow))
+  private val forManualIssue: Permission => ForFields[FieldKey.ForManualIssue] =
+    Permission.memo(perm => ForFields(Reusable.byRef(_ => perm)))
 
   final case class ForFields[-FK <: FieldKey](fn: Reusable[FK => Permission]) {
     def apply(field: FK): Permission =

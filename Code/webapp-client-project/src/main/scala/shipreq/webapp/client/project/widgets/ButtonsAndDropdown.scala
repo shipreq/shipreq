@@ -144,7 +144,7 @@ object ButtonsAndDropdown {
         val onClick: ReactMouseEvent => Option[Callback] =
           e =>
             b.callback
-              .filter(_ => !p.inProgress)
+              .filter(_ => !p.inProgress && p.enabled.is(Enabled))
               .map { f =>
                 e.persist()
                 e.preventDefaultCB >> f(Click(e, p.selectedItem))
@@ -201,7 +201,7 @@ object ButtonsAndDropdown {
     private def selectItem(key: String): Callback =
       for {
         p <- $.props.toCBO
-        _ <- CallbackOption.unless(p.inProgress)
+        _ <- CallbackOption.unless(p.inProgress || p.enabled.is(Disabled))
         s <- CallbackOption.option(p.selectItem)
         i <- CallbackOption.option(p.items.find(_.key ==* key))
         _ <- s.value(i.value).toCBO

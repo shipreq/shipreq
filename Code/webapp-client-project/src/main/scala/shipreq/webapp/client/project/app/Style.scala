@@ -578,6 +578,8 @@ object Style extends StyleSheet.Inline {
       borderColor(c"#F2711C").important,
       color(c"#F2711C").important)
 
+    val readOnlyItem = style(
+      cursor.pointer.important)
   }
 
   // ===================================================================================================================

@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import scalacss.StyleA
-import shipreq.base.util.LeftRight
+import shipreq.base.util.{Allow, LeftRight, Permission}
 import shipreq.webapp.base.feature.{AsyncFeature, TableNavigationFeature}
 import shipreq.webapp.base.ui.semantic.{Button, Icon}
 import shipreq.webapp.client.project.app.Style.reqdetail.{useCaseStep => *}
@@ -22,9 +22,9 @@ object UseCaseStepControls {
 
   case class ButtonDesc(callback: Callback, hoverText: HoverText)
 
-  private def mkButton(as: AsyncState, style: StyleA, icon: Icon, ob: Option[ButtonDesc]) = {
+  private def mkButton(as: AsyncState, style: StyleA, icon: Icon, ob: Option[ButtonDesc], editability: Permission) = {
     // When async action in progress, disable all buttons
-    val attr = if (as.isEmpty) ob else None
+    val attr = if (as.isEmpty && editability.is(Allow)) ob else None
 
     val base =
       Button(
@@ -63,22 +63,23 @@ object UseCaseStepControls {
   def renderStep(curStepButtons: CurStepButtons,
                  curStepAsync  : AsyncState,
                  insertButton  : Option[ButtonDesc],
-                 insertAsync   : AsyncState): VdomElement = {
+                 insertAsync   : AsyncState,
+                 editability   : Permission): VdomElement = {
 
     val buttons = curStepButtons match {
 
       case b: CurStepButtons.WhenLive =>
-        mkButton(curStepAsync, *.ctrlButtonDelete,       IconDelete,       b.delete) ::
-        mkButton(curStepAsync, *.ctrlButtonShift(Left),  IconShift(Left),  b.shift(Left)) ::
-        mkButton(curStepAsync, *.ctrlButtonShift(Right), IconShift(Right), b.shift(Right)) ::
-        mkButton(insertAsync,  *.ctrlButtonInsert,       IconAdd,          insertButton) ::
+        mkButton(curStepAsync, *.ctrlButtonDelete,       IconDelete,       b.delete,       editability) ::
+        mkButton(curStepAsync, *.ctrlButtonShift(Left),  IconShift(Left),  b.shift(Left),  editability) ::
+        mkButton(curStepAsync, *.ctrlButtonShift(Right), IconShift(Right), b.shift(Right), editability) ::
+        mkButton(insertAsync,  *.ctrlButtonInsert,       IconAdd,          insertButton,   editability) ::
         Nil
 
       case CurStepButtons.WhenDead(r) =>
-        mkButton(curStepAsync, *.ctrlButtonRestore,      IconRestore,      Some(r)) ::
-        mkButton(curStepAsync, *.ctrlButtonShift(Left),  IconShift(Left),  None) ::
-        mkButton(curStepAsync, *.ctrlButtonShift(Right), IconShift(Right), None) ::
-        mkButton(insertAsync,  *.ctrlButtonInsert,       IconAdd,          None) ::
+        mkButton(curStepAsync, *.ctrlButtonRestore,      IconRestore,      Some(r), editability) ::
+        mkButton(curStepAsync, *.ctrlButtonShift(Left),  IconShift(Left),  None,    editability) ::
+        mkButton(curStepAsync, *.ctrlButtonShift(Right), IconShift(Right), None,    editability) ::
+        mkButton(insertAsync,  *.ctrlButtonInsert,       IconAdd,          None,    editability) ::
         Nil
     }
 
@@ -90,9 +91,8 @@ object UseCaseStepControls {
 
   // ===================================================================================================================
 
-  def renderTailStep(button: ButtonDesc, async: AsyncState): VdomElement = {
-    val b = mkButton(async, *.ctrlButtonInsert, IconAdd, Some(button))
+  def renderTailStep(button: ButtonDesc, async: AsyncState, editability: Permission): VdomElement = {
+    val b = mkButton(async, *.ctrlButtonInsert, IconAdd, Some(button), editability)
     <.div(*.ctrls, b)
   }
 }
-

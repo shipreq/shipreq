@@ -20,19 +20,6 @@
 ========================================================================================================================
 # project access WIP
 
-* plan:
-  1. implement (with tests) project access API (ensuring read-only unless admin)
-    1. [x] project access page
-      1. [x] new user (read-only unless admin)
-      1. [x] existing user (read-only unless admin)
-      1. [x] leave
-  1. add admin permission checks to the frontend:
-    1. [x] project renaming
-  1. add read-only access
-    1. [ ] backend and protocol work
-    1. [ ] read-only UI: Editability
-    1. [ ] read-only UI: everywhere else (manually check)
-
 * when users can be used as field values:
   * should the rolodex contain info of users who've had access revoked?
     seems necessary to display references to them in fields

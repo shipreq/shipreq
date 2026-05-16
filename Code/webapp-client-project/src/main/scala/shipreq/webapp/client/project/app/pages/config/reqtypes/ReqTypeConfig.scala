@@ -6,7 +6,7 @@ import japgolly.scalajs.react.extra.StateSnapshot
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{Disabled, Enabled, ErrorMsg, Optics, PotentialChange}
+import shipreq.base.util.{Allow, Disabled, Enabled, ErrorMsg, Optics, Permission, PotentialChange}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.ConfirmJs
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -36,14 +36,15 @@ object ReqTypeConfig {
 
   val splitScreenCrud = new SplitScreenCrud[NewState, ReqTypeId, EditorState]
 
-  final case class Props(project: Project,
-                         state  : StateSnapshot[State],
-                         pw     : ProjectWidgets.NoCtx,
-                         ssp    : ServerSideProcInvoker[UpdateConfigCmd.ToModifyReqTypes, ErrorMsg, NewEvents],
-                         async  : AsyncFeature.ReadWrite.D0[ErrorMsg],
-                         confirm: ConfirmJs,
-                         toast  : Toast,
-                         usage  : Usage,
+  final case class Props(project    : Project,
+                         state      : StateSnapshot[State],
+                         pw         : ProjectWidgets.NoCtx,
+                         ssp        : ServerSideProcInvoker[UpdateConfigCmd.ToModifyReqTypes, ErrorMsg, NewEvents],
+                         async      : AsyncFeature.ReadWrite.D0[ErrorMsg],
+                         confirm    : ConfirmJs,
+                         toast      : Toast,
+                         usage      : Usage,
+                         editability: Permission,
                         ) {
 
     val asyncInProgress: Boolean =
@@ -154,7 +155,8 @@ object ReqTypeConfig {
       args match {
 
         case a: NewArgs.Enabled[NewState] =>
-          newButton.disableMaybe(Disabled when p.asyncInProgress).onClick(a.openEditor)
+          val enabled = Enabled.when(p.editability.is(Allow) && !p.asyncInProgress)
+          newButton.disableMaybe(enabled).onClick(a.openEditor)
 
         case NewArgs.Disabled(()) =>
           newButton.disabled
@@ -188,6 +190,8 @@ object ReqTypeConfig {
       val header: VdomNode =
         renderHeader(p, args)
 
+      val enabled = Enabled.when(p.editability.is(Allow))
+
       val editorType: EditorType =
         args.id match {
           case \/-(rt: StaticReqType)   => EditorType.Static(rt)
@@ -211,12 +215,14 @@ object ReqTypeConfig {
             submitCmd         = submitCmd(p, _, _, _),
             hardDeleteConfirm = p.confirm("Are you sure you want to permanently delete this?"),
             hardDeleteCmd     = UpdateConfigCmd.CustomReqTypeDeleteHard,
-            softDeleteCmd     = UpdateConfigCmd.CustomReqTypeDeleteSoft)
+            softDeleteCmd     = UpdateConfigCmd.CustomReqTypeDeleteSoft,
+            enabled           = enabled)
 
         else
           EditorButtons.createOrUpdate(args)(idOption, p.potentialSaveCmd)(
             submitCmd = submitCmd(p, _, _, _),
-            deleteCmd = UpdateConfigCmd.CustomReqTypeDeleteSoft)
+            deleteCmd = UpdateConfigCmd.CustomReqTypeDeleteSoft,
+            enabled   = enabled)
 
       def customReqTypeEditor(rtOption: Option[CustomReqType], enabled: Enabled) = {
         val lens = editorStateLensForCustom(CustomReqTypeEditor.State.init(rtOption))
@@ -236,7 +242,7 @@ object ReqTypeConfig {
         case EditorType.Custom(rtOption) =>
           val notInUse = rtOption.exists(rt => !p.project.isReqTypeInUse(rt.id))
           val notice   = notInUseNotice.when(notInUse)
-          val editor   = customReqTypeEditor(rtOption, Enabled)
+          val editor   = customReqTypeEditor(rtOption, enabled)
           val buttons  = createOrUpdateButtons(rtOption.map(_.id), hard = notInUse).render
           <.div(header, notice, editor, buttons)
 
@@ -247,7 +253,7 @@ object ReqTypeConfig {
 
         case EditorType.Dead(rt) =>
           val editor = customReqTypeEditor(Some(rt), Disabled)
-          val buttons = EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.CustomReqTypeRestore(rt.id), _, _)).render
+          val buttons = EditorButtons.restore(args)(submitCmd(p, UpdateConfigCmd.CustomReqTypeRestore(rt.id), _, _), enabled).render
           <.div(header, editor, buttons)
 
         case EditorType.ReqTypeDeleted =>

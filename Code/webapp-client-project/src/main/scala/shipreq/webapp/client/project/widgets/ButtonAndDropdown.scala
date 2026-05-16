@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.Disabled
+import shipreq.base.util.{Disabled, Enabled}
 import shipreq.webapp.base.ui.semantic._
 import shipreq.webapp.client.project.app.Style.{widgets => *}
 
@@ -47,7 +47,8 @@ object ButtonAndDropdown {
                   create      : Option[Reusable[Click[A] => Callback]],
                   inProgress  : Boolean,
                   outerTagMod : TagMod = TagMod.empty,
-                  basic       : Boolean = false
+                  basic       : Boolean = false,
+                  enabled     : Enabled = Enabled,
                 )(implicit A  : UnivEq[A]): Of[A] = {
 
       val button = ButtonProps.newReq(create, inProgress)
@@ -59,7 +60,7 @@ object ButtonAndDropdown {
         selected       = selected,
         outerTagMod    = outerTagMod,
         dropdownTagMod = *.dropdownButtonGreenDropdown(basic),
-        enabled        = Disabled.when(create.isEmpty && selectItem.isEmpty),
+        enabled        = enabled & Disabled.when(create.isEmpty && selectItem.isEmpty),
         basic          = basic,
       )
     }

@@ -3,7 +3,7 @@ package shipreq.webapp.client.project.widgets
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.PotentialChange
+import shipreq.base.util.{Enabled, PotentialChange}
 import shipreq.webapp.base.ui.semantic.{Button, Colour, ColourPlus, Icon}
 import shipreq.webapp.client.project.app.Style.{tagConfig => *}
 import shipreq.webapp.member.project.data.Project
@@ -18,19 +18,22 @@ object EditorButtons {
                                               (idOption        : Option[Id2],
                                                potentialSaveCmd: PotentialChange[Any, Cmd])
                                               (submitCmd       : (Cmd, String, (Project, Id2) => Callback) => Callback,
-                                               deleteCmd       : Id2 => Cmd): Props =
+                                               deleteCmd       : Id2 => Cmd,
+                                               enabled         : Enabled): Props =
     idOption match {
       case Some(id) =>
         Props.Update(
-          abort  = args.close,
-          delete = submitCmd(deleteCmd(id), "Deleted", (p, _) => args.reset(p)),
-          update = potentialSaveCmd.map(submitCmd(_, "Updated", (p, _) => args.reset(p))),
+          abort   = args.close,
+          delete  = submitCmd(deleteCmd(id), "Deleted", (p, _) => args.reset(p)),
+          update  = potentialSaveCmd.map(submitCmd(_, "Updated", (p, _) => args.reset(p))),
+          enabled = enabled,
         )
 
       case None =>
         Props.Create(
-          abort  = args.close,
-          create = potentialSaveCmd.toOption.map(submitCmd(_, "Created", args.selectP)),
+          abort   = args.close,
+          create  = potentialSaveCmd.toOption.map(submitCmd(_, "Created", args.selectP)),
+          enabled = enabled,
         )
     }
 
@@ -40,7 +43,8 @@ object EditorButtons {
                                                   (submitCmd        : (Cmd, String, (Project, Id2) => Callback) => Callback,
                                                    hardDeleteConfirm: CallbackTo[Boolean],
                                                    hardDeleteCmd    : Id2 => Cmd,
-                                                   softDeleteCmd    : Id2 => Cmd): Props =
+                                                   softDeleteCmd    : Id2 => Cmd,
+                                                   enabled          : Enabled): Props =
     idOption match {
       case Some(id) =>
         Props.HardUpdate(
@@ -48,12 +52,14 @@ object EditorButtons {
           hardDelete = hardDeleteConfirm.flatMap(submitCmd(hardDeleteCmd(id), "Permanently deleted", (_, _) => args.close).when_(_)),
           softDelete = submitCmd(softDeleteCmd(id), "Deleted", (p, _) => args.reset(p)),
           update     = potentialSaveCmd.map(submitCmd(_, "Updated", (p, _) => args.reset(p))),
+          enabled    = enabled,
         )
 
       case None =>
         Props.Create(
-          abort  = args.close,
-          create = potentialSaveCmd.toOption.map(submitCmd(_, "Created", args.selectP)),
+          abort   = args.close,
+          create  = potentialSaveCmd.toOption.map(submitCmd(_, "Created", args.selectP)),
+          enabled = enabled,
         )
     }
 
@@ -64,24 +70,30 @@ object EditorButtons {
     Props.Close(args.close)
 
   def restore[N, Id, S, Cmd](args     : SplitScreenCrud.EditorArgs[N, Id, S])
-                            (submitCmd: (String, (Project, Id) => Callback) => Callback): Props =
+                            (submitCmd: (String, (Project, Id) => Callback) => Callback,
+                             enabled  : Enabled): Props =
     Props.Restore(
       abort   = args.close,
       restore = submitCmd("Restored", (p, _) => args.reset(p)),
+      enabled = enabled,
     )
 
   def add[N, Id, S, Cmd](args     : SplitScreenCrud.EditorArgs[N, Id, S])
-                        (submitCmd: (String, (Project, Id) => Callback) => Callback): Props =
+                        (submitCmd: (String, (Project, Id) => Callback) => Callback,
+                         enabled  : Enabled): Props =
     Props.Add(
-      abort = args.close,
-      add   = submitCmd("Added", (p, _) => args.reset(p)),
+      abort   = args.close,
+      add     = submitCmd("Added", (p, _) => args.reset(p)),
+      enabled = enabled,
     )
 
   def remove[N, Id, S, Cmd](args     : SplitScreenCrud.EditorArgs[N, Id, S])
-                           (submitCmd: (String, (Project, Id) => Callback) => Callback): Props =
+                           (submitCmd: (String, (Project, Id) => Callback) => Callback,
+                            enabled  : Enabled): Props =
     Props.Remove(
-      abort  = args.close,
-      remove = submitCmd("Removed", (p, _) => args.reset(p)),
+      abort   = args.close,
+      remove  = submitCmd("Removed", (p, _) => args.reset(p)),
+      enabled = enabled,
     )
 
   sealed trait Props {
@@ -90,29 +102,36 @@ object EditorButtons {
 
   object Props {
 
-    final case class Add(abort: Callback,
-                         add  : Callback) extends Props
+    final case class Add(abort  : Callback,
+                         add    : Callback,
+                         enabled: Enabled) extends Props
 
     final case class Cancel(abort: Callback) extends Props
 
     final case class Close(abort: Callback) extends Props
 
-    final case class Create(abort : Callback,
-                            create: Option[Callback]) extends Props
-    final case class Remove(abort : Callback,
-                            remove: Callback) extends Props
+    final case class Create(abort  : Callback,
+                            create : Option[Callback],
+                            enabled: Enabled) extends Props
+
+    final case class Remove(abort  : Callback,
+                            remove : Callback,
+                            enabled: Enabled) extends Props
 
     final case class Restore(abort  : Callback,
-                             restore: Callback) extends Props
+                             restore: Callback,
+                             enabled: Enabled) extends Props
 
-    final case class Update(abort : Callback,
-                            delete: Callback,
-                            update: PotentialChange[Any, Callback]) extends Props
+    final case class Update(abort  : Callback,
+                            delete : Callback,
+                            update : PotentialChange[Any, Callback],
+                            enabled: Enabled) extends Props
 
     final case class HardUpdate(abort     : Callback,
                                 hardDelete: Callback,
                                 softDelete: Callback,
-                                update    : PotentialChange[Any, Callback]) extends Props
+                                update    : PotentialChange[Any, Callback],
+                                enabled   : Enabled) extends Props
 
   }
 
@@ -177,59 +196,59 @@ object EditorButtons {
           gap,
           closeButton.onClick(abort))
 
-      case Props.Create(abort, create) =>
+      case Props.Create(abort, create, enabled) =>
         outer(
           gap,
           cancelButton.onClick(abort),
-          createButton.onClickWhenDefined(create))
+          createButton.disableMaybe(enabled).onClickWhenDefined(create))
 
-      case Props.Update(abort, delete, PotentialChange.Unchanged) =>
+      case Props.Update(abort, delete, PotentialChange.Unchanged, enabled) =>
         outer(
-          deleteButton.onClick(delete),
+          deleteButton.disableMaybe(enabled).onClick(delete),
           gap,
           closeButton.onClick(abort),
           updateButton.disabled)
 
-      case Props.Update(abort, delete, u: PotentialChange.Changed[Any, Callback]) =>
+      case Props.Update(abort, delete, u: PotentialChange.Changed[Any, Callback], enabled) =>
         outer(
-          deleteButton.onClick(delete),
+          deleteButton.disableMaybe(enabled).onClick(delete),
           gap,
           cancelButton.onClick(abort),
-          updateButton.onClickWhenDefined(u.getUpdate))
+          updateButton.disableMaybe(enabled).onClickWhenDefined(u.getUpdate))
 
-      case p@ Props.HardUpdate(_, _, _, PotentialChange.Unchanged) =>
+      case p@ Props.HardUpdate(_, _, _, PotentialChange.Unchanged, _) =>
         import p._
         outer(
-          hardDeleteButton.onClick(hardDelete),
-          deleteButton.onClick(softDelete),
+          hardDeleteButton.disableMaybe(enabled).onClick(hardDelete),
+          deleteButton.disableMaybe(enabled).onClick(softDelete),
           gap,
           closeButton.onClick(abort),
           updateButton.disabled)
 
-      case p@ Props.HardUpdate(_, _, _, u: PotentialChange.Changed[Any, Callback]) =>
+      case p@ Props.HardUpdate(_, _, _, u: PotentialChange.Changed[Any, Callback], _) =>
         import p._
         outer(
-          hardDeleteButton.onClick(hardDelete),
-          deleteButton.onClick(softDelete),
+          hardDeleteButton.disableMaybe(enabled).onClick(hardDelete),
+          deleteButton.disableMaybe(enabled).onClick(softDelete),
           gap,
           cancelButton.onClick(abort),
-          updateButton.onClickWhenDefined(u.getUpdate))
+          updateButton.disableMaybe(enabled).onClickWhenDefined(u.getUpdate))
 
-      case Props.Restore(abort, restore) =>
+      case Props.Restore(abort, restore, enabled) =>
         outer(
-          restoreButton.onClick(restore),
+          restoreButton.disableMaybe(enabled).onClick(restore),
           gap,
           closeButton.onClick(abort))
 
-      case Props.Add(abort, add) =>
+      case Props.Add(abort, add, enabled) =>
         outer(
           gap,
           closeButton.onClick(abort),
-          addButton.onClick(add))
+          addButton.disableMaybe(enabled).onClick(add))
 
-      case Props.Remove(abort, remove) =>
+      case Props.Remove(abort, remove, enabled) =>
         outer(
-          removeButton.onClick(remove),
+          removeButton.disableMaybe(enabled).onClick(remove),
           gap,
           closeButton.onClick(abort))
     }

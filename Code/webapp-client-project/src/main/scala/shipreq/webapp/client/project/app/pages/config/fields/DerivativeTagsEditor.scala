@@ -17,11 +17,12 @@ import shipreq.webapp.member.project.data._
 
 private[fields] object DerivativeTagsEditor {
 
-  final case class Props(tagGroupId: Option[TagGroupId],
-                         filterDead: FilterDead,
-                         cfg       : ProjectConfig,
-                         pw        : ProjectWidgets.NoCtx,
-                         state     : StateSnapshot[State]) {
+  final case class Props(tagGroupId : Option[TagGroupId],
+                         filterDead : FilterDead,
+                         cfg        : ProjectConfig,
+                         pw         : ProjectWidgets.NoCtx,
+                         state      : StateSnapshot[State],
+                         editability: Permission) {
     @inline def render: VdomElement = Component(this)
   }
 
@@ -79,11 +80,11 @@ private[fields] object DerivativeTagsEditor {
       Message(style, Icon.Sitemap, desc)
     }
 
-    private def renderToggle(p: Props, enabled: Enabled): VdomNode =
+    private def renderToggle(p: Props, locallyEnabled: Enabled): VdomNode =
       Input.Checkbox.fromStateSnapshot(
         ss      = p.state.zoomStateL(State.on),
         label   = "Derivative tags (experimental)",
-        enabled = enabled,
+        enabled = locallyEnabled & Enabled.when(p.editability.is(Allow)),
       )
 
     private def renderMatrix(p: Props, tagGroupId: TagGroupId): Option[VdomNode] = {
@@ -136,7 +137,7 @@ private[fields] object DerivativeTagsEditor {
 
     private def renderRuleEditor(p: Props, tagGroupId: TagGroupId): VdomNode = {
       val ss = ssRuleEditor(p.state.value)
-      DerivativeTagRuleEditor.Props(ss, tagGroupId, p.cfg.tags).render
+      DerivativeTagRuleEditor.Props(ss, tagGroupId, p.cfg.tags, p.editability).render
     }
 
     private def renderBeforeGroupChosen(p: Props): VdomNode =

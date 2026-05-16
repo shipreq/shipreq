@@ -13,15 +13,10 @@ object RoleDropdown {
   private def mkKey(role: ProjectRole): Dropdown.ItemKey =
     role.ord.toString
 
-  private val mkLabel: ProjectRole => String = {
-    case ProjectRole.Admin        => "Admin"
-    case ProjectRole.Collaborator => "Collaborator"
-  }
-
   private def mkItem(role: ProjectRole): Item =
     Dropdown.Item(
       key   = mkKey(role),
-      label = mkLabel(role),
+      label = role.label,
       value = role,
     )
 

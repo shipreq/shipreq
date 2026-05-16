@@ -6,7 +6,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.PackageBase._
 import monocle.Lens
 import org.scalajs.dom.window
-import shipreq.base.util.{Allow, ErrorMsg}
+import shipreq.base.util.{Allow, ErrorMsg, Permission}
 import shipreq.webapp.base.data.ProjectRole
 import shipreq.webapp.base.feature.AsyncFeature.Implicits._
 import shipreq.webapp.base.feature._
@@ -121,13 +121,19 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
     private val pxProjectWidgets: Reusable[Px[ProjectWidgets.NoCtx]] =
       Reusable byRef Px.apply3(pxProject, pxPlainText, pxViewTags)(ProjectWidgets(_, _, _, routerCtlEP, webWorkerClient))
 
-    private val pxEditEditability: Px[EditorFeature.Editability.ForProject] =
-      pxProject.map(EditorFeature.Editability.apply)
+    /** Whether the user has permission to change the project. */
+    private val pxGlobalEditability: Px[Permission] =
+      pxProjectRole.map(usersRole =>
+        ProjectRole.Collaborator.isSatisfiedBy(usersRole)
+      ).withReuse
+
+    private val pxEditorEditability: Px[EditorFeature.Editability.ForProject] =
+      Px.apply2(pxProject, pxGlobalEditability)(EditorFeature.Editability.apply)
 
     private val pxUnsavedChangesInput: Px[UnsavedChanges.Input] =
       Px.apply6(
         pxState,
-        pxEditEditability,
+        pxEditorEditability,
         pxProject,
         pxTextSearch,
         pxProjectWidgets,
@@ -170,7 +176,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
       Px.apply3(pxProject, pxViewReqCacheText, pxPlainText)(RenderFeature.ToText.NoCtx.ApplicableOption.prepare)
 
     private val pxCreateEditability =
-      pxProject.map(p => CreateFeature.Editability(p.config))
+      Px.apply2(pxProjectConfig, pxGlobalEditability)(CreateFeature.Editability.apply)
 
     private val pxFilterCompilerFromFilterDead: Px[FilterDead => Filter.Valid.Compiler] =
       for {
@@ -271,6 +277,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
         pxProject                      = pxProject,
         pxFilterDead                   = pxFilterDead,
         pxFilterCompilerFromFilterDead = pxFilterCompilerFromFilterDead,
+        pxGlobalEditability            = pxGlobalEditability,
         confirmJs                      = confirmJs,
         promptJs                       = promptJs,
         savedViewAsyncW                = savedViewAsyncW,
@@ -342,11 +349,12 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
     private val pxReqDetailReqProps: Px[Option[State => ReqDetail.ReqProps]] =
       for {
-        editability   <- pxEditEditability
-        reqDetailId   <- pxReqDetailId
-        project       <- pxProject
-        vt            <- pxViewTags
-        vrdc          <- pxViewReqDataCache
+        globalEditability <- pxGlobalEditability
+        editorEditability <- pxEditorEditability
+        reqDetailId       <- pxReqDetailId
+        project           <- pxProject
+        vt                <- pxViewTags
+        vrdc              <- pxViewReqDataCache
       } yield reqDetailId.map { id =>
         val row = EditorFeature.RowKey.req(id)
         val aw  = editAsyncW(row).mapKey(AsyncKey.ToReqDetail)
@@ -361,9 +369,9 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
           val ar = as(row).mapKey(AsyncKey.ToReqDetail)
           val af = aw.toReadWrite(ar)
           val rf = rff(s.filterDead)
-          val er = EditorFeature.Read.ForProject(s.edit, rf, editability, as.mapKey1(AsyncKey.ToEditor)).forReq(id)
+          val er = EditorFeature.Read.ForProject(s.edit, rf, editorEditability, as.mapKey1(AsyncKey.ToEditor)).forReq(id)
           val ef = EditorFeature.ReadWrite.ForFields(er, ew)
-          ReqDetail.ReqProps(ef, af)
+          ReqDetail.ReqProps(ef, af, globalEditability)
         }
       }
 
@@ -457,19 +465,20 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
 
     def render(p: Props, s: State): VdomElement = {
       lazy val editAsyncState = s.editAsync.toRead
-      def createR          = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.newReqAsync)
-      def createRW         = createW.toReadWrite(createR)
-      def editR            = EditorFeature.Read.ForProject(s.edit, renderFeature, pxEditEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
-      def editRW           = editW.toReadWrite(editR)
-      def filterDeadSS     = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
-      def project          = unsafeProject()
-      def projectWidgets   = pxProjectWidgets.value.value()
-      def renderFeature    = pxRenderFeatureText.value()(s.filterDead)
-      def savedViewFeature = SavedViewFeature(savedViewFeatureStatic, s.savedViews, project, s.filterDead)
-      def usage            = pxUsage.value()
-      def createPreviewRW  = pxCreatePreviewRW.value()
-      def editorArgs       = pxEditorArgs.value()
-      def onlyAdminCanEdit = ProjectRole.Admin.isSatisfiedBy(pxProjectRole.value())
+      def createR           = CreateFeature.Read.ForProject(s.create, pxCreateEditability.value(), s.newReqAsync)
+      def createRW          = createW.toReadWrite(createR)
+      def editR             = EditorFeature.Read.ForProject(s.edit, renderFeature, pxEditorEditability.value(), editAsyncState.mapKey1(AsyncKey.ToEditor))
+      def editRW            = editW.toReadWrite(editR)
+      def filterDeadSS      = StateSnapshot.withReuse(s.filterDead)(setFilterDead)
+      def project           = unsafeProject()
+      def projectWidgets    = pxProjectWidgets.value.value()
+      def renderFeature     = pxRenderFeatureText.value()(s.filterDead)
+      def savedViewFeature  = SavedViewFeature(savedViewFeatureStatic, s.savedViews, project, s.filterDead)
+      def usage             = pxUsage.value()
+      def createPreviewRW   = pxCreatePreviewRW.value()
+      def editorArgs        = pxEditorArgs.value()
+      def onlyAdminCanEdit  = ProjectRole.Admin.isSatisfiedBy(pxProjectRole.value())
+      def globalEditability = pxGlobalEditability.value()
 
       val body: VdomElement = p.page match {
 
@@ -495,54 +504,66 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
           val cmdAsync = s.manualIssueCmdAsync.toRead
                            .either(s.updateConfigCmdAsync.toRead)
                            .either(s.updateContentCmdAsync.toRead)
-          val p = content.issues.IssuesPage.Props(state, creator, editRW, editorArgs, createPreviewRW, cmdAsync)
+          val p = content.issues.IssuesPage.Props(
+            state       = state,
+            creator     = creator,
+            editor      = editRW,
+            editorArgs  = editorArgs,
+            previewRW   = createPreviewRW,
+            cmdAsync    = cmdAsync,
+            editability = globalEditability,
+          )
           issuesPage.component(p)
 
         case Page.CfgFields =>
           config.fields.FieldConfig.Props(
-            project = project,
-            pw      = projectWidgets,
-            state   = StateSnapshot.zoomL(State.fieldConfig)(s).setStateVia($),
-            ssp     = sspUpdateConfig,
-            async   = AsyncFeature.ReadWrite.D0(fieldConfigAsyncW, s.fieldConfigAsync),
-            router  = routerCtl,
-            toast   = toast,
-            usage   = usage,
+            project     = project,
+            pw          = projectWidgets,
+            state       = StateSnapshot.zoomL(State.fieldConfig)(s).setStateVia($),
+            ssp         = sspUpdateConfig,
+            async       = AsyncFeature.ReadWrite.D0(fieldConfigAsyncW, s.fieldConfigAsync),
+            router      = routerCtl,
+            toast       = toast,
+            usage       = usage,
+            editability = globalEditability,
           ).render
 
         case Page.CfgIssues =>
           config.issues.IssueConfig.Props(
-            project = project,
-            pw      = projectWidgets,
-            state   = StateSnapshot.zoomL(State.customIssueTypeConfig)(s).setStateVia($),
-            ssp     = sspUpdateConfig,
-            async   = AsyncFeature.ReadWrite.D0(customIssueTypeConfigAsyncW, s.customIssueTypeConfigAsync),
-            router  = routerCtl,
-            toast   = toast,
-            usage   = usage,
+            project     = project,
+            pw          = projectWidgets,
+            state       = StateSnapshot.zoomL(State.customIssueTypeConfig)(s).setStateVia($),
+            ssp         = sspUpdateConfig,
+            async       = AsyncFeature.ReadWrite.D0(customIssueTypeConfigAsyncW, s.customIssueTypeConfigAsync),
+            router      = routerCtl,
+            toast       = toast,
+            usage       = usage,
+            editability = globalEditability,
           ).render
 
         case Page.CfgReqTypes =>
           config.reqtypes.ReqTypeConfig.Props(
-            project = project,
-            pw      = projectWidgets,
-            state   = StateSnapshot.zoomL(State.reqTypeConfig)(s).setStateVia($),
-            ssp     = sspUpdateConfig,
-            async   = AsyncFeature.ReadWrite.D0(reqTypeConfigAsyncW, s.reqTypeConfigAsync),
-            confirm = confirmJs,
-            toast   = toast,
-            usage   = usage,
+            project     = project,
+            pw          = projectWidgets,
+            state       = StateSnapshot.zoomL(State.reqTypeConfig)(s).setStateVia($),
+            ssp         = sspUpdateConfig,
+            async       = AsyncFeature.ReadWrite.D0(reqTypeConfigAsyncW, s.reqTypeConfigAsync),
+            confirm     = confirmJs,
+            toast       = toast,
+            usage       = usage,
+            editability = globalEditability,
           ).render
 
         case Page.CfgTags =>
           config.tags.TagConfig.Props(
-            project = project,
-            pw      = projectWidgets,
-            state   = StateSnapshot.zoomL(State.tagConfig)(s).setStateVia($),
-            ssp     = sspUpdateConfig,
-            async   = AsyncFeature.ReadWrite.D0(tagConfigAsyncW, s.tagConfigAsync),
-            toast   = toast,
-            usage   = usage,
+            project     = project,
+            pw          = projectWidgets,
+            state       = StateSnapshot.zoomL(State.tagConfig)(s).setStateVia($),
+            ssp         = sspUpdateConfig,
+            async       = AsyncFeature.ReadWrite.D0(tagConfigAsyncW, s.tagConfigAsync),
+            toast       = toast,
+            usage       = usage,
+            editability = globalEditability,
           ).render
 
         case Page.ReqTable =>
@@ -558,6 +579,7 @@ final class LoadedRoot(initPageData      : ProjectSpaEntryPoint.InitDataWithoutE
               savedViews      = savedViewFeature,
               rowAsync        = rowAsync,
               filterDead      = s.filterDead,
+              editability     = globalEditability,
               state           = s.reqTable))
 
         case Page.ReqDetail(pubid) =>

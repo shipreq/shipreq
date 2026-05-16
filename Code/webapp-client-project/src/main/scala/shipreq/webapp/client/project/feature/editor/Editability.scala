@@ -15,13 +15,16 @@ import shipreq.webapp.member.project.data._
   */
 object Editability {
 
-  def apply(p: Project): ForProject =
-    ForProject(p.config, p.content.reqs, p.content.reqCodes)
+  def apply(p: Project, globalPerm: Permission): ForProject =
+    ForProject(p.config, p.content.reqs, p.content.reqCodes, globalPerm)
 
-  final case class ForProject(cfg: ProjectConfig, reqs: Requirements, reqCodes: ReqCodes) {
-    val forReqs         = ForReqs(cfg, reqs)
-    val forCodeGroups   = ForCodeGroups(reqCodes)
-    val forUseCaseSteps = ForUseCaseSteps(reqs.useCases)
+  final case class ForProject(cfg: ProjectConfig, reqs: Requirements, reqCodes: ReqCodes, globalPerm: Permission) {
+    val forReqs         = ForReqs(cfg, reqs, globalPerm)
+    val forCodeGroups   = ForCodeGroups(reqCodes, globalPerm)
+    val forUseCaseSteps = ForUseCaseSteps(reqs.useCases, globalPerm)
+
+    val forManualIssues: Reusable[ForFields[FieldKey.ManualIssue]] =
+      forManualIssueCache(globalPerm)
 
     def apply(row: RowKey): ForFields[FieldKey] =
       row match {
@@ -33,24 +36,24 @@ object Editability {
       }
   }
 
-  val forManualIssues: Reusable[ForFields[FieldKey.ManualIssue]] =
-    Reusable.byRef(_ => Allow)
+  private val forManualIssueCache: Permission => Reusable[ForFields[FieldKey.ManualIssue]] =
+    Permission.memo(perm => Reusable.byRef(_ => perm))
 
-  final case class ForReqs(cfg: ProjectConfig, reqs: Requirements) {
+  final case class ForReqs(cfg: ProjectConfig, reqs: Requirements, globalPerm: Permission) {
 
     def apply(id: GenericReqId): ForGenericReq = {
       val req: GenericReq = reqs.genericReqs.imap.need(id)
       req.live(cfg.reqTypes) match {
-        case Live => ForGenericReq(Some((cfg, req.reqTypeId)))
-        case Dead => ForGenericReq(None)
+        case Live => ForGenericReq(Some((cfg, req.reqTypeId)), globalPerm)
+        case Dead => ForGenericReq(None, globalPerm)
       }
     }
 
     def apply(id: UseCaseId): ForUseCase = {
       val req: UseCase = reqs.useCases.imap.need(id)
       req.live(cfg.reqTypes) match {
-        case Live => ForUseCase(Some(cfg))
-        case Dead => ForUseCase(None)
+        case Live => ForUseCase(Some(cfg), globalPerm)
+        case Dead => ForUseCase(None, globalPerm)
       }
     }
   }
@@ -59,7 +62,7 @@ object Editability {
     def apply(field: FK): Permission
   }
 
-  implicit class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {
+  implicit final class ForFieldsInvariantExt[FK <: FieldKey](private val self: ForFields[FK]) extends AnyVal {
     def widen[W >: FK <: FieldKey](implicit t: FieldKey.Type[FK]): ForFields[W] =
       new ForFields[W] {
         val newFn = t.widenFn[W, Permission](self.apply)(Deny)
@@ -67,7 +70,7 @@ object Editability {
       }
   }
 
-  final case class ForGenericReq(whenReqIsLive: Option[(ProjectConfig, CustomReqTypeId)]) extends ForFields[FieldKey.ForGenericReq] {
+  final case class ForGenericReq(whenReqIsLive: Option[(ProjectConfig, CustomReqTypeId)], globalPerm: Permission) extends ForFields[FieldKey.ForGenericReq] {
     override def apply(k: FieldKey.ForGenericReq): Permission =
       whenReqIsLive match {
         case Some((cfg, reqTypeId)) =>
@@ -75,18 +78,18 @@ object Editability {
             case FieldKey.Codes
                | FieldKey.GenericReqTitle
                | FieldKey.ReqType
-               | FieldKey.Implications   (\/-(_))   => Allow
-            case FieldKey.Implications   (-\/(fid)) => customField(cfg, reqTypeId, fid)
-            case FieldKey.CustomTextField(fid)      => customField(cfg, reqTypeId, fid)
-            case FieldKey.CustomFieldTags(fid)      => customField(cfg, reqTypeId, fid)
-            case FieldKey.AllTags                   => staticField(cfg, StaticField.AllTags)
-            case FieldKey.OtherTags                 => staticField(cfg, StaticField.OtherTags)
+               | FieldKey.Implications   (\/-(_))   => globalPerm
+            case FieldKey.Implications   (-\/(fid)) => customField(cfg, reqTypeId, fid, globalPerm)
+            case FieldKey.CustomTextField(fid)      => customField(cfg, reqTypeId, fid, globalPerm)
+            case FieldKey.CustomFieldTags(fid)      => customField(cfg, reqTypeId, fid, globalPerm)
+            case FieldKey.AllTags                   => staticField(cfg, StaticField.AllTags, globalPerm)
+            case FieldKey.OtherTags                 => staticField(cfg, StaticField.OtherTags, globalPerm)
           }
         case None => Deny
       }
   }
 
-  final case class ForUseCase(whenReqIsLive: Option[ProjectConfig]) extends ForFields[FieldKey.ForUseCase] {
+  final case class ForUseCase(whenReqIsLive: Option[ProjectConfig], globalPerm: Permission) extends ForFields[FieldKey.ForUseCase] {
     private def reqTypeId = StaticReqType.UseCase
 
     override def apply(k: FieldKey.ForUseCase): Permission =
@@ -95,31 +98,31 @@ object Editability {
           k match {
             case FieldKey.Codes
                | FieldKey.UseCaseTitle
-               | FieldKey.Implications   (\/-(_))   => Allow
-            case FieldKey.Implications   (-\/(fid)) => customField(cfg, reqTypeId, fid)
-            case FieldKey.CustomTextField(fid)      => customField(cfg, reqTypeId, fid)
-            case FieldKey.CustomFieldTags(fid)      => customField(cfg, reqTypeId, fid)
-            case FieldKey.AllTags                   => staticField(cfg, StaticField.AllTags)
-            case FieldKey.OtherTags                 => staticField(cfg, StaticField.OtherTags)
+               | FieldKey.Implications   (\/-(_))   => globalPerm
+            case FieldKey.Implications   (-\/(fid)) => customField(cfg, reqTypeId, fid, globalPerm)
+            case FieldKey.CustomTextField(fid)      => customField(cfg, reqTypeId, fid, globalPerm)
+            case FieldKey.CustomFieldTags(fid)      => customField(cfg, reqTypeId, fid, globalPerm)
+            case FieldKey.AllTags                   => staticField(cfg, StaticField.AllTags, globalPerm)
+            case FieldKey.OtherTags                 => staticField(cfg, StaticField.OtherTags, globalPerm)
           }
         case None => Deny
       }
   }
 
-  private def staticField(cfg: ProjectConfig, f: StaticField): Permission =
-    Allow when cfg.fields.includes(f)
+  private def staticField(cfg: ProjectConfig, f: StaticField, globalPerm: Permission): Permission =
+    Allow.when(cfg.fields.includes(f)) & globalPerm
 
-  private def customField(cfg: ProjectConfig, reqTypeId: ReqTypeId, fid: CustomFieldId): Permission =
-    cfg.fields.get(fid) match {
+  private def customField(cfg: ProjectConfig, reqTypeId: ReqTypeId, fid: CustomFieldId, globalPerm: Permission): Permission =
+    (cfg.fields.get(fid) match {
       case Some(f) => Allow when cfg.applicability(reqTypeId, fid).is(Applicable) && f.live(cfg).is(Live)
       case None    => Deny // Field has been removed
-    }
+    }) & globalPerm
 
-  final case class ForCodeGroups(reqCodes: ReqCodes) extends AnyVal {
+  final case class ForCodeGroups(reqCodes: ReqCodes, globalPerm: Permission) {
     def apply(id: ReqCodeId): ForCodeGroup =
       ForCodeGroup(
         reqCodes.getById(id) match {
-          case Some(_: ReqCode.ActiveGroup) => Allow
+          case Some(_: ReqCode.ActiveGroup) => globalPerm
           case Some(_: ReqCode.ActiveReq)
              | Some(_: ReqCode.Inactive)
              | None                         => Deny
@@ -135,9 +138,9 @@ object Editability {
       }
   }
 
-  final case class ForUseCaseSteps(useCases: UseCases) extends ForFields[FieldKey.UseCaseStep] {
+  final case class ForUseCaseSteps(useCases: UseCases, globalPerm: Permission) extends ForFields[FieldKey.UseCaseStep] {
     def apply(k: FieldKey.UseCaseStep): Permission =
-      Allow when useCases.focusStep(k.id).live.is(Live)
+      Allow.when(useCases.focusStep(k.id).live.is(Live)) & globalPerm
   }
 
   implicit val reusabilityForProject     : Reusability[ForProject     ] = Reusability.derive

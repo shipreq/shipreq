@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra.{Px, StateSnapshot}
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{ErrorMsg, Invalid, Valid}
+import shipreq.base.util.{ErrorMsg, Invalid, Permission, Valid}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.lib.{ConfirmJs, PromptJs}
 import shipreq.webapp.base.protocol.ServerSideProcInvoker
@@ -21,6 +21,7 @@ final case class Static(stateAccess                   : StateAccessPure[(State, 
                         pxProject                     : Px[Project],
                         pxFilterDead                  : Px[FilterDead],
                         pxFilterCompilerFromFilterDead: Px[FilterDead => Filter.Valid.Compiler],
+                        pxGlobalEditability           : Px[Permission],
                         confirmJs                     : ConfirmJs,
                         promptJs                      : PromptJs,
                         savedViewAsyncW               : AsyncFeature.Write.D0[ErrorMsg],
@@ -168,6 +169,7 @@ final case class Static(stateAccess                   : StateAccessPure[(State, 
       asyncRW     = AsyncFeature.ReadWrite.D0(savedViewAsyncW, savedViewAsync),
       confirmJs   = confirmJs,
       promptJs    = promptJs,
+      editability = pxGlobalEditability.value(),
       runAction   = runSavedViewAction,
       savedViewIO = savedViewIO,
     ).render

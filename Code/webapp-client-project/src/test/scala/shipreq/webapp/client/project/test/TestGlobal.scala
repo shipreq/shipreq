@@ -226,7 +226,7 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
         def permCheck: PotentialChange[ErrorMsg, Unit] =
           p1.access.require(requiredRole, userId) match {
             case Allow => PotentialChange.unit
-            case Deny  => PotentialChange.Failure(ErrorMsg(s"$requiredRole rights required."))
+            case Deny  => PotentialChange.Failure(requiredRole.errorMsgWhenUnsatisfied)
           }
 
         val result: PotentialChange[ErrorMsg, ApplyNewEvent.Updated] =

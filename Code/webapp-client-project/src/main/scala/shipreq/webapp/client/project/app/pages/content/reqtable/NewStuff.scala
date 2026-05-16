@@ -64,7 +64,8 @@ final class NewStuff(previewRW     : PreviewFeature.ReadWrite.Composite[CreateFe
                      toast         : Toast,
                      allowRCG      : Permission,
                      create        : CreateFeature.ReadWrite.ForProject,
-                     activeColumns : NonEmptyVector[ColumnPlus]) {
+                     activeColumns : NonEmptyVector[ColumnPlus],
+                     editability   : Permission) {
 
   private val buttonCallbacks: Reusable[NewReqButton.Callbacks] =
     modState.map { f =>
@@ -89,12 +90,13 @@ final class NewStuff(previewRW     : PreviewFeature.ReadWrite.Composite[CreateFe
     state match {
       case State.Open(s) =>
         var b = NewReqButton.Props(
-          state      = Some(s),
-          reqTypes   = project.config.reqTypes,
-          allowRCG   = allowRCG,
-          pw         = projectWidgets,
-          callbacks  = Some(buttonCallbacks),
-          inProgress = false,
+          state       = Some(s),
+          reqTypes    = project.config.reqTypes,
+          allowRCG    = allowRCG,
+          pw          = projectWidgets,
+          callbacks   = Some(buttonCallbacks),
+          inProgress  = false,
+          editability = editability,
         )
 
         // If what we thought was open is no longer acceptable, proceed as if closed
@@ -104,12 +106,13 @@ final class NewStuff(previewRW     : PreviewFeature.ReadWrite.Composite[CreateFe
 
       case State.Closed(o) =>
         NewReqButton.Props(
-          state      = o,
-          reqTypes   = project.config.reqTypes,
-          allowRCG   = allowRCG,
-          pw         = projectWidgets,
-          callbacks  = Some(buttonCallbacks),
-          inProgress = false,
+          state       = o,
+          reqTypes    = project.config.reqTypes,
+          allowRCG    = allowRCG,
+          pw          = projectWidgets,
+          callbacks   = Some(buttonCallbacks),
+          inProgress  = false,
+          editability = editability,
         )
     }
 

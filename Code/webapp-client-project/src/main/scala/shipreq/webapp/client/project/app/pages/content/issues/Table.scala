@@ -4,7 +4,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
-import shipreq.base.util.{ConsolidatedSeq, ErrorMsg, IfApplicable}
+import shipreq.base.util.{ConsolidatedSeq, ErrorMsg, IfApplicable, Permission}
 import shipreq.webapp.base.feature.AsyncFeature
 import shipreq.webapp.base.ui.semantic
 import shipreq.webapp.client.project.app.Style.{issues => *}
@@ -37,10 +37,11 @@ object Table {
       .build
   }
 
-  final case class Props(issues    : Issues,
-                         editRW    : EditorFeature.ReadWrite.ForProject,
-                         editorArgs: EditorFeature.EditorArgs.ForAny,
-                         cmdAsync  : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg])
+  final case class Props(issues     : Issues,
+                         editRW     : EditorFeature.ReadWrite.ForProject,
+                         editorArgs : EditorFeature.EditorArgs.ForAny,
+                         cmdAsync   : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg],
+                         editability: Permission)
 
   implicit val reusabilityProps: Reusability[Props] =
     Reusability.derive
@@ -157,6 +158,7 @@ object Table {
               issueClass    = csIssueClass(rowIdx),
               idBase        = csIds(rowIdx),
               titleBase     = csTitles(rowIdx),
+              editability   = p.editability,
             )
 
             TableRow.Component.withKey(row.key)(rowProps)

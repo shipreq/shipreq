@@ -825,7 +825,7 @@ object ProjectSpaLogic extends StrictLogging {
             def permCheck: PotentialChange[ErrorMsg, Unit] =
               project.access.require(requiredRole, userPubId) match {
                 case Allow => PotentialChange.unit
-                case Deny  => PotentialChange.Failure(ErrorMsg(s"$requiredRole rights required."))
+                case Deny  => PotentialChange.Failure(requiredRole.errorMsgWhenUnsatisfied)
               }
 
             val result: PotentialChange[ErrorMsg, ApplyNewEvent.Updated] =

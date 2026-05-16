@@ -8,7 +8,7 @@ import japgolly.scalajs.react.extra._
 import japgolly.scalajs.react.vdom.html_<^._
 import monocle.Lens
 import monocle.macros.Lenses
-import shipreq.base.util.{Enabled, PotentialChange}
+import shipreq.base.util.{Enabled, Permission, PotentialChange}
 import shipreq.webapp.base.ui.widgets.{Dropdown, Form}
 import shipreq.webapp.base.validation.ValidationUX
 import shipreq.webapp.client.project.app.pages.root.Routes
@@ -42,12 +42,13 @@ object TagFieldEditor {
 
   // ===================================================================================================================
 
-  final case class Props(state     : StateSnapshot[State],
-                         cfg       : ProjectConfig,
-                         filterDead: FilterDead,
-                         enabled   : Enabled,
-                         pw        : ProjectWidgets.NoCtx,
-                         router    : Routes.RouterCtl) {
+  final case class Props(state      : StateSnapshot[State],
+                         cfg        : ProjectConfig,
+                         filterDead : FilterDead,
+                         enabled    : Enabled,
+                         pw         : ProjectWidgets.NoCtx,
+                         router     : Routes.RouterCtl,
+                         editability: Permission) {
 
     lazy val legalDefaults: ArraySeq[ApplicableTagId] =
       legalDefaultIterator(state.value, cfg).to(ArraySeq).distinct
@@ -207,11 +208,12 @@ object TagFieldEditor {
 
       val derivativeTags =
         DerivativeTagsEditor.Props(
-          tagGroupId = p.state.value.tagIdOption(p.cfg),
-          filterDead = p.filterDead,
-          cfg        = p.cfg,
-          pw         = p.pw,
-          state      = p.state.zoomStateL(State.derivativeTags),
+          tagGroupId  = p.state.value.tagIdOption(p.cfg),
+          filterDead  = p.filterDead,
+          cfg         = p.cfg,
+          pw          = p.pw,
+          state       = p.state.zoomStateL(State.derivativeTags),
+          editability = p.editability,
         ).render
 
       val editors =
