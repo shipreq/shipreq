@@ -78,7 +78,8 @@ object UseCaseStepRow {
                            loc          : VectorTree.Location,
                            canShiftRight: Permission,
                            runCtrl      : AsyncFeature.Runner.D0[UpdateContentCmd.ForUseCaseStep, Any],
-                           runAdd       : AsyncFeature.Runner.D0[UpdateContentCmd.AddUseCaseStep, Any]) {
+                           runAdd       : AsyncFeature.Runner.D0[UpdateContentCmd.AddUseCaseStep, Any],
+                           editability  : Permission) {
       @inline def render = Component(this)
     }
 
@@ -119,7 +120,8 @@ object UseCaseStepRow {
         curStepButtons = curStepButtons,
         curStepAsync   = runCtrl.asyncState,
         insertButton   = addButton,
-        insertAsync    = runAdd.asyncState)
+        insertAsync    = runAdd.asyncState,
+        editability    = editability)
     }
 
     val Component = ScalaComponent.builder[Props]

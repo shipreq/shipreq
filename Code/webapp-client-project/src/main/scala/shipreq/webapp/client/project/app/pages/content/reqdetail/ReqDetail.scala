@@ -554,6 +554,7 @@ object ReqDetail {
           renderBody   = useCaseStepTreeRenderFn(i),
           cmdRunner    = i.cmdRunner,
           addCmdRunner = i.addCmdRunner,
+          editability  = reqProps.editability,
         ).render
       }
 

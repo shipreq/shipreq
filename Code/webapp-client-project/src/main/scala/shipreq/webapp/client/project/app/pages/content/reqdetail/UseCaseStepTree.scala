@@ -36,7 +36,8 @@ object UseCaseStepTree {
                          useCases    : UseCases,
                          renderBody  : Reusable[RenderBodyFn],
                          cmdRunner   : AsyncFeature.Runner.D1[Cell, UpdateContentCmd.ForUseCaseStep, Any],
-                         addCmdRunner: AsyncFeature.Runner.D1[Cell, UpdateContentCmd.AddUseCaseStep, Any]) {
+                         addCmdRunner: AsyncFeature.Runner.D1[Cell, UpdateContentCmd.AddUseCaseStep, Any],
+                         editability : Permission) {
     @inline def render = Component(this)
   }
 
@@ -101,6 +102,7 @@ object UseCaseStepTree {
                 canShiftRight = field.canShiftRight(loc, steps.locValidity, stepData.mdt),
                 runCtrl       = cmdRunner(cellCtrls),
                 runAdd        = addCmdRunner(cellAdd),
+                editability   = p.editability,
               ).render
 
             case Dead =>
@@ -125,7 +127,7 @@ object UseCaseStepTree {
       val cb    = addCmdRunner(cell).run(cmd)
       val as    = addCmdRunner.asyncState(cell)
       val bd    = UseCaseStepControls.ButtonDesc(cb, "Create " + lbl)
-      val ctrls = UseCaseStepControls.renderTailStep(bd, as)
+      val ctrls = UseCaseStepControls.renderTailStep(bd, as, p.editability)
       results  += tailStepBase(ctrls)
     }
 
