@@ -1,5 +1,6 @@
 package shipreq.webapp.member.feature.autocomplete.strategies
 
+import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.test.AutoCompleteTestUtil._
 import shipreq.webapp.member.test.project.SampleProject3._
 import utest._
@@ -30,6 +31,28 @@ object OtherTest extends TestSuite {
           println(s"\nDEBUG: labels = $labels\n")
         }
         assert(labels.size == 1)
+      }
+    }
+
+    // Auto-completing on "deferred" was resulting in "analysed ddeferred"
+    "badInsertion" - {
+      implicit val strategies: Strategies =
+        HashtagStrategies(List(HashRefKey("deferred")))(Plain)
+
+      "startOfString" - {
+        assertSuggestionsAndSelectionFor("d")("deferred")("deferred")
+      }
+
+      "onSpace" - {
+        assertSuggestionsAndSelectionFor("analysed ")("deferred")("analysed deferred")
+      }
+
+      "afterSpace1" - {
+        assertSuggestionsAndSelectionFor("analysed d")("deferred")("analysed deferred")
+      }
+
+      "afterSpace2" - {
+        assertSuggestionsAndSelectionFor("analysed de")("deferred")("analysed deferred")
       }
     }
 

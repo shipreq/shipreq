@@ -65,10 +65,10 @@ private[strategies] object Context {
   val hashtag: Context = {
     assert(Grammar.hashRefKey.prefix == "#")
     new Context(
-      prefixRegex  = "(^|[^#])#",
+      prefixRegex  = "(?:(?<=^|[^#])#)",
       suffixRegex  = "",
       applyContext = "#" + _,
-      prefixGroups = 1,
+      prefixGroups = 0,
     )
   }
 
