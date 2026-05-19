@@ -34,7 +34,7 @@ trait QueryModule {
       }
 
     def ignorePerfectMatchStr(query: Query[String]): Query[String] =
-      ignorePerfectMatch(query)(_ == _)
+      ignorePerfectMatch(query)(_ ==* _)
 
     /**
      * Normalises term and options before comparison.
