@@ -232,19 +232,19 @@
         .content Admin
       .ui.cards.four(style="margin-top:-.875em")
 
-        .ui.card.red.full{onclick: "location.href='project-status-live.html'", style: "cursor:pointer"}
-          .content.pic
-            %i.icon.cogs.grey
-          .content
-            .header Status
-            .description Configure the status of this project.
-
         .ui.card.red.full{onclick: "location.href='project-access.html'", style: "cursor:pointer"}
           .content.pic
             %i.icon.users.grey
           .content
             .header Access
             .description Configure users' access to this project.
+
+        .ui.card.red.full{onclick: "location.href='project-status-live.html'", style: "cursor:pointer"}
+          .content.pic
+            %i.icon.cogs.grey
+          .content
+            .header Status
+            .description Configure the status of this project.
 
   :javascript
     $('.ui.dropdown').dropdown();

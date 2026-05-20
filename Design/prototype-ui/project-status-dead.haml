@@ -78,31 +78,50 @@
     -# =============================================================================================
     .ui.container{style: "max-width: 723px! important"}
 
-      %div(style="margin-top:6rem; margin-bottom:4rem")
+      -# %div(style="margin-top:6rem; margin-bottom:4rem")
         %h1.ui.header.dividing
           CardBoard
 
-      .ui.message.icon.huge.black
+      .ui.message.icon.huge.black(style="margin-top:6rem")
         %i.icon.trash
         .content
           .header This project is deleted.
-          %p
-            = "Reason: "
-            %em Don't think this is needed anymore.
+
+      .ui.message.icon.huge.black(style="margin-top:2rem")
+        %i.icon.trash
+        .content
+          .header This project is deleted.
+          %div(style="font-size:16px")
+            %p
+              %br
+              Don't think this is needed anymore.
+
+      .ui.message.icon.huge.black(style="margin-top:2rem")
+        %i.icon.trash
+        .content
+          .header This project is deleted.
+          %div(style="font-size:16px")
+            %p
+              -# = "Reason: "
+              %br
+              Don't think this is needed anymore.
+              %br
+              %br
+              This is a large deletion-reason.
+            %ul
+              %li reason 1
+              %li reason 2
 
       %table.ui.definition.table#info
         %tbody
           %tr
-            %td Created at
+            %td Created
             %td %time{datetime: "2015-12-17T09:24:17Z", title: "December 17, 2015"} 4 months ago
           %tr
-            %td Deleted at
+            %td Deleted
             %td %time{datetime: "2015-12-17T09:24:17Z", title: "December 17, 2015"} 2 months ago
           %tr
-            %td Deleted by
-            %td %a(href="#") @matt
-          %tr
-            %td Edits
+            %td Changes
             %td 1504
           %tr
             %td Reqs
@@ -111,7 +130,7 @@
               = "( + 24"
               %i.icon.trash.outline(style="margin:0")
               = " = 344 )"
-          %tr
+          -# %tr
             %td Active<br>Connections
             %td
               -# %div 5: you (2), @matt (1), @tyzz (2)
@@ -127,11 +146,12 @@
             %h4.ui.header Restore
             %p Unmark this project as deleted and reinstate it.
           .right
-            %button.ui.button.green(style="margin-right:2em")
-              %i.icon.undo
-              Restore
+            %a(href="project-status-live.html")
+              %button.ui.button.green(style="margin-right:2em")
+                %i.icon.undo
+                Restore
 
-        .ui.segment
+        -# .ui.segment
           .left
             %h4.ui.header Permanently Delete
             %p Delete this project forever. You won't be able to view or restore this project.

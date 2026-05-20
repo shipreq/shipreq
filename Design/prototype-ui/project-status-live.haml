@@ -78,20 +78,20 @@
     -# =============================================================================================
     .ui.container{style: "max-width: 723px! important"}
 
-      %div(style="margin-top:6rem")
+      -# %div(style="margin-top:6rem")
         %h1.ui.header.dividing
           CardBoard
 
-      %table.ui.definition.table#info
+      %table.ui.definition.table#info(style="margin-top:6rem")
         %tbody
           %tr
-            %td Created at
+            %td Created
             %td %time{datetime: "2015-12-17T09:24:17Z", title: "December 17, 2015"} 4 months ago
           %tr
-            %td Updated at
+            %td Last updated
             %td %time{datetime: "2015-12-17T09:24:17Z", title: "December 17, 2015"} 2 months ago
           %tr
-            %td Edits
+            %td Changes
             %td 1504
           %tr
             %td Reqs
@@ -100,7 +100,7 @@
               = "( + 24"
               %i.icon.trash.outline(style="margin:0")
               = " = 344 )"
-          %tr
+          -# %tr
             %td Active<br>Connections
             %td
               -# %div 5: you (2), @matt (1), @tyzz (2)
@@ -120,11 +120,12 @@
             %h4.ui.header Delete
             %p Mark this project as deleted and read-only. It can be restored at any time.
           .right
-            %button.ui.button.negative.basic(style="white-space: nowrap;")
-              %i.icon.trash
-              Delete
+            %a(href="project-status-dead.html")
+              %button.ui.button.negative.basic(style="white-space: nowrap;")
+                %i.icon.trash
+                Delete
 
-        .ui.segment
+        -# .ui.segment
           .left
             %h4.ui.header Permanently Delete
             %p Delete this project forever. You won't be able to view or restore this project.
