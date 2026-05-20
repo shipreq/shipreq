@@ -1,12 +1,4 @@
 ========================================================================================================================
-# Open-source
-
-* record usage videos (Davinci Resolve)
-* create a blog
-* point shipreq.com (and/or .org) at a blog
-* add a place for discussion, maybe discord
-
-========================================================================================================================
 # Fix Taskman
 
 * Does MailGun still work?
