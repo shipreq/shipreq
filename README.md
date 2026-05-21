@@ -41,9 +41,9 @@ There are two apps: the webapp and taskman.
 The webapp works great.
 
 Taskman is the service that is supposed to run all background tasks like sending emails, updating mailing lists, and raising tickets in an external support-desk platform.
-All of this functionality is now configured (by default) to be off, meaning it just logs and does nothing.
+All of this functionality is now [configured (in dev)](./Code/envs/dev/taskman/shipreq.properties) to be off, meaning it just logs and does nothing.
 This is because the third-party integration APIs have all changed over the years, and I haven't spent the time to upgrade.
-I haven't tried the MailGun integration (for email sending) so that *may* still work.
+For email sending, both the MailGun integration and Java mail (via SMTP) should still work.
 For running locally with no email-sending or third-party integrations, this is all fine.
 
 (Upgrading these third-party APIs would make an excellent first issue for anyone looking to contribute!)
