@@ -1,6 +1,6 @@
 package shipreq.webapp.member.project.data
 
-import shipreq.base.util.Permission
+import shipreq.base.util._
 import shipreq.webapp.base.data.{ProjectCreator, ProjectRole, UserId}
 
 final case class ProjectAccess(asMap: Map[UserId.Public, ProjectRole]) {
@@ -29,6 +29,12 @@ final case class ProjectAccess(asMap: Map[UserId.Public, ProjectRole]) {
   /** Checks if the given user has the required permission. */
   def require(requiredRole: ProjectRole, user: UserId.Public): Permission =
     requiredRole.isSatisfiedBy(apply(user))
+
+  def requirePC(requiredRole: ProjectRole, user: UserId.Public): PotentialChange[ErrorMsg, Unit] =
+    require(requiredRole, user) match {
+      case Allow => PotentialChange.unit
+      case Deny  => PotentialChange.Failure(requiredRole.errorMsgWhenUnsatisfied)
+    }
 }
 
 object ProjectAccess {

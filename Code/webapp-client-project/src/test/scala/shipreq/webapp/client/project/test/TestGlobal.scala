@@ -7,7 +7,7 @@ import java.time.{Duration, Instant}
 import org.scalajs.dom.{EventTarget, document, html}
 import scala.scalajs.js
 import shipreq.base.util.JsExt._
-import shipreq.base.util.{Allow, Deny, ErrorMsg, JsTimers, PotentialChange, Retries}
+import shipreq.base.util.{Allow, ErrorMsg, JsTimers, PotentialChange, Retries}
 import shipreq.webapp.base.data.{EmailAddr, ProjectCreator, ProjectRole, Rolodex, UserId, Username}
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol._
@@ -222,16 +222,9 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
     def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result, requiredRole: ProjectRole): MsgFn[I] = input => Some {
       def run(p1: Project): CallbackTo[WsReqRes.EventResult] = {
 
-        // This logic is duplicated in ProjectSpaLogic
-        def permCheck: PotentialChange[ErrorMsg, Unit] =
-          p1.access.require(requiredRole, userId) match {
-            case Allow => PotentialChange.unit
-            case Deny  => PotentialChange.Failure(requiredRole.errorMsgWhenUnsatisfied)
-          }
-
         val result: PotentialChange[ErrorMsg, ApplyNewEvent.Updated] =
           for {
-            _ <- permCheck
+            _ <- p1.access.requirePC(requiredRole, userId)
             er = mkEvent(input, p1)
             u <- ApplyNewEvent(er, p1)
           } yield u

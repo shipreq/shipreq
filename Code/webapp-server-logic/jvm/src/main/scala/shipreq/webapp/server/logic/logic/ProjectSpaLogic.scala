@@ -821,16 +821,9 @@ object ProjectSpaLogic extends StrictLogging {
             val project = s.local
             val userPubId = Obfuscators.userId.obfuscate(userId)
 
-            // This logic is duplicated in TestGlobal
-            def permCheck: PotentialChange[ErrorMsg, Unit] =
-              project.access.require(requiredRole, userPubId) match {
-                case Allow => PotentialChange.unit
-                case Deny  => PotentialChange.Failure(requiredRole.errorMsgWhenUnsatisfied)
-              }
-
             val result: PotentialChange[ErrorMsg, ApplyNewEvent.Updated] =
               for {
-                _ <- permCheck
+                _ <- project.access.requirePC(requiredRole, userPubId)
                 e <- mkEvent(project)
                 u <- ApplyNewEvent(e, project)
               } yield u
