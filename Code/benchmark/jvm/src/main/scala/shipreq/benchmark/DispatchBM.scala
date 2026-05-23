@@ -263,13 +263,13 @@ object DispatchBM {
     }
 
     implicit object ops extends OpsEndpointLogic[F] {
-      override def dbStats                                            = F.pure(null)
-      override def userStats                                          = F.pure(null)
-      override def taskmanMsgStatus(id: TaskId)                       = F.pure(null)
-      override def sendMail(e: String)                                = F.pure(null)
-      override def getProjectEvents(pid: ProjectId)                   = F.pure(null)
-      override def importProject(a: Username \/ EmailAddr, b: String) = F.pure(null)
-    }
+      override def dbStats                           = F.pure(null)
+      override def userStats                         = F.pure(null)
+      override def taskmanMsgStatus(id: TaskId)      = F.pure(null)
+      override def sendMail(e: String)               = F.pure(null)
+      override def exportProject(pid: ProjectId)     = F.pure(null)
+      override def importProject(eventsJson: String) = F.pure(null)
+      }
 
     val sync = new Sync[F] {
       override def pure[A](x: A): F[A] =

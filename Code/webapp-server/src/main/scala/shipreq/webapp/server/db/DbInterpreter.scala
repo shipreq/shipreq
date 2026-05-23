@@ -67,6 +67,12 @@ object DbInterpreter {
   val getProjectAccessQuery = Query[ProjectId, (UserId, ProjectRole)](
     "SELECT usr_id, role FROM project_access WHERE project_id=?")
 
+  val getUserIdsByUsernameQuery = Query[Set[Username], (Username, UserId)](
+    "SELECT username,id FROM usr WHERE username = ANY(?::VARCHAR[])")
+
+  val getUsernamesByUserIdQuery = Query[Set[UserId], (UserId, Username)](
+    "SELECT id,username FROM usr WHERE id = ANY(?::BIGINT[])")
+
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   private def implicitInstance = implicitly[DB.EffectTC[ConnectionIO]]
 
@@ -496,11 +502,28 @@ object DbInterpreter {
       Update("INSERT INTO project_access VALUES(?,?,?)")
   }
 
+  trait GetUserMetaData extends DB.GetUserMetaData[ConnectionIO] with GetUserId {
+    override def getUsernamesByUserIdNE(userIds: NonEmptySet[UserId]): ConnectionIO[NonEmptySet[UserId] \/ Map[UserId, Username]] =
+      getMap(DbInterpreter.getUsernamesByUserIdQuery)(userIds)
+
+    override def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]): ConnectionIO[NonEmptySet[Username] \/ Map[Username, UserId]] =
+      getMap(DbInterpreter.getUserIdsByUsernameQuery)(usernames)
+
+    private def getMap[K: UnivEq, V](query: Query[Set[K], (K, V)])(keys: NonEmptySet[K]): ConnectionIO[NonEmptySet[K] \/ Map[K, V]] = {
+      val all = keys.whole
+      query.to[List](all).map { tuples =>
+        var notFound = all
+        tuples.foreach(notFound -= _._1)
+        NonEmptySet.option(notFound).toLeft(tuples.toMap)
+      }
+    }
+  }
+
   trait ForProjectSpa
       extends DB.ForProjectSpa[ConnectionIO]
          with GetProjectMetaData
          with GetProjectEvents
-         with GetUserId
+         with GetUserMetaData
          with SaveProjectEvent {
 
     private val logProjectRead: Update[ProjectId] =
@@ -520,27 +543,6 @@ object DbInterpreter {
         o <- projectSpaInitPageQuery.option((pid, uid))
       } yield o.map((DB.ProjectSpaInitPage.apply _).tupled)
 
-    private[db] val getUserIdsByUsernameQuery = Query[Set[Username], (Username, UserId)](
-      "SELECT username,id FROM usr WHERE username = ANY(?::VARCHAR[])")
-
-    override def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]): ConnectionIO[NonEmptySet[Username] \/ Map[Username, UserId]] =
-      getMap(getUserIdsByUsernameQuery)(usernames)
-
-    private[db] val getUsernamesByUserIdQuery = Query[Set[UserId], (UserId, Username)](
-      "SELECT id,username FROM usr WHERE id = ANY(?::BIGINT[])")
-
-    override def getUsernamesByUserIdNE(userIds: NonEmptySet[UserId]): ConnectionIO[NonEmptySet[UserId] \/ Map[UserId, Username]] =
-      getMap(getUsernamesByUserIdQuery)(userIds)
-
-    private def getMap[K: UnivEq, V](query: Query[Set[K], (K, V)])(keys: NonEmptySet[K]): ConnectionIO[NonEmptySet[K] \/ Map[K, V]] = {
-      val all = keys.whole
-      query.to[List](all).map { tuples =>
-        var notFound = all
-        tuples.foreach(notFound -= _._1)
-        NonEmptySet.option(notFound).toLeft(tuples.toMap)
-      }
-    }
-
     private[db] val getProjectRolodexQuery = Query[ProjectId, (UserId, Username)](
         """SELECT a.usr_id, u.username
           |  FROM project_access a, usr u
@@ -553,7 +555,7 @@ object DbInterpreter {
   }
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  class ForOps(dbName: String) extends DB.ForOps[ConnectionIO] with GetProjectEvents with GetUserId with OnSaveProjectEvent with Effect {
+  class ForOps(dbName: String) extends DB.ForOps[ConnectionIO] with GetProjectEvents with GetUserMetaData with OnSaveProjectEvent with Effect {
     import shipreq.webapp.server.logic.algebra.DB.ForOps._
 
     private[db] final val nowSql =
@@ -612,7 +614,7 @@ object DbInterpreter {
                                           events : VerifiedEvent.Seq,
                                           project: Project,
                                           encKey : ProjectEncryptionKey): ConnectionIO[ProjectId] = {
-      val events_init  = 0
+      val events_init  = 2
       val events_total = events.size
       val reqs_live    = project.content.reqs.reqIterator().count(_.live(project.config.reqTypes) is Live)
       val reqs_total   = project.content.reqs.size

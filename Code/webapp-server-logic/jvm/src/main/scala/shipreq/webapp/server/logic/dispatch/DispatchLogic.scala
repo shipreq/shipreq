@@ -564,25 +564,19 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
         )
       )
 
-    private val getProjectEvents: Request ?=> F[Response] =
+    private val exportProject: Request ?=> F[Response] =
       endpoint(Post, Url.Relative("project/export"))(req =>
         parseParams(req.param("id") flatMap ParseLong.unapply)(id =>
-          ops.getProjectEvents(ProjectId(id)).map(response)
+          ops.exportProject(ProjectId(id)).map(response)
         )
       )
 
     private val importProject: Request ?=> F[Response] =
       endpoint(Post, Url.Relative("project/import"))(req =>
-        parseParams(
-          for {
-            user   <- req.param("user")
-            events <- req.param("events")
-          } yield (Username.orEmail(user), events)
-        ){ case (user, events) =>
-          ops.importProject(user, events).map(response)
-        }
+        parseParams(req.param("events"))(events =>
+          ops.importProject(events).map(response)
+        )
       )
-
     private val testSendMail: Request ?=> F[Response] =
       endpoint(Post, Url.Relative("test-sendmail"))(req =>
         parseParams(req.param("email"))(email =>
@@ -590,7 +584,7 @@ final class DispatchLogic[F[_], RealReq](readRealReq: RealReq => dispatch.Reques
             jsonResponse)))
 
     private def innerRoutes: Request ?=> F[Response] =
-      ok | register1 | statsDb | statsUsers | task | testSendMail | getProjectEvents | importProject
+      ok | register1 | statsDb | statsUsers | task | testSendMail | exportProject | importProject
 
     private val fallback: Request => F[Response] =
       _ => notFoundSecure

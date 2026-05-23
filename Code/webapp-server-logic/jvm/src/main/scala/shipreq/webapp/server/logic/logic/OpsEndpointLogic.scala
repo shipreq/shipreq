@@ -13,7 +13,7 @@ import shipreq.taskman.api.{Task, TaskId, TaskmanApi}
 import shipreq.webapp.base.data._
 import shipreq.webapp.base.validation.UserValidators
 import shipreq.webapp.member.project.data._
-import shipreq.webapp.member.project.event.{ApplyEvent, VerifiedEvent}
+import shipreq.webapp.member.project.event.{ApplyEvent, Event, EventOrd, VerifiedEvent}
 import shipreq.webapp.server.logic.algebra.{Crypto, DB, Server}
 import shipreq.webapp.server.logic.data.ProjectEncryptionKey
 import shipreq.webapp.server.logic.dispatch.{ResponseCmd, StatusCode}
@@ -29,9 +29,9 @@ trait OpsEndpointLogic[F[_]] {
 
   def sendMail(emailAddr: String): F[ErrorMsg \/ SendMailResult]
 
-  def getProjectEvents(pid: ProjectId): F[ResponseCmd]
+  def exportProject(pid: ProjectId): F[ResponseCmd]
 
-  def importProject(user: Username \/ EmailAddr, eventsJson: String): F[ResponseCmd]
+  def importProject(eventsJson: String): F[ResponseCmd]
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -45,7 +45,6 @@ object OpsEndpointLogic extends HasLogger {
                             svr: Server.Time[F],
                             taskman: TaskmanApi[F]) extends OpsEndpointLogic[F] {
 
-    import shipreq.webapp.member.project.protocol.json.Latest.{decoderVerifiedEvent, encoderVerifiedEvent}
     import shipreq.webapp.server.logic.util.WebappTaskmanConverters._
 
     protected def randomToken: F[String]
@@ -89,14 +88,21 @@ object OpsEndpointLogic extends HasLogger {
         } yield \/-(SendMailResult(r._1, r._2, token))
       )
 
-    override def getProjectEvents(pid: ProjectId): F[ResponseCmd] =
-      db.getProjectEvents(pid).map {
+    override def exportProject(pid: ProjectId): F[ResponseCmd] =
+      db.getProjectEvents(pid).flatMap {
         case \/-(ves) =>
           if (ves.isEmpty)
-            ResponseCmd.StatusOnly.NotFound
+            F.pure(ResponseCmd.StatusOnly.NotFound)
           else {
-            val json = ves.iterator.map(_.asJson.noSpacesSortKeys).mkString("[", "\n,", "\n]")
-            ResponseCmd.Json(StatusCode.OK, json)
+            val authorIds = ves.iterator.map(_.author).toSet
+            db.needUsernamesByUserId(authorIds).map { usernames =>
+              def exported = ves.iterator.map { ve =>
+                val author = usernames(ve.author)
+                ExportedEvent(ve.ord, ve.event, author, ve.createdAt)
+              }
+              val json = exported.map(_.asJson.noSpacesSortKeys).mkString("[", "\n,", "\n]")
+              ResponseCmd.Json(StatusCode.OK, json)
+            }
           }
         case -\/(e: DB.ReadProjectEventError.DecodeFailure) =>
           logger.warn(s"Failed to decode project ${pid.value} event ${e.ord.value}: ${e.logMsg}")
@@ -104,37 +110,48 @@ object OpsEndpointLogic extends HasLogger {
             "error"  -> "Failed to decode event".asJson,
             "ord"    -> e.ord.value.asJson,
             "reason" -> e.logMsg.asJson)
-          ResponseCmd.Json(StatusCode.NotImplemented, json)
+          F.pure(ResponseCmd.Json(StatusCode.NotImplemented, json))
       }
 
-    override def importProject(user: Username \/ EmailAddr, eventsJson: String): F[ResponseCmd] =
+    override def importProject(eventsJson: String): F[ResponseCmd] =
       decodeEvents(eventsJson) match {
-        case \/-(ves) =>
-          db.getUserId(user).flatMap {
-            case Some(uid) =>
-              val creator = ProjectCreator(uid)
-              ApplyEvent.untrusted(ves)(Project.init(creator)) match {
-                case \/-(p) =>
-                  for {
-                    key <- crypto.generateKey256
-                    pid <- db.importProject(uid, ves, p, ProjectEncryptionKey(key))
-                  } yield {
-                    val response = CreateProjectResult(uid, pid)
-                    ResponseCmd.Json(StatusCode.OK, response.toJson)
-                  }
-                case -\/(err) =>
-                  F pure ResponseCmd.Text(StatusCode.Forbidden, err.value)
+        case \/-(ees) =>
+          if (ees.isEmpty)
+            F.pure(ResponseCmd.Text(StatusCode.BadRequest, "No events provided"))
+          else {
+            val usernames = ees.iterator.map(_.author).toSet
+            db.needUserIdsByUsername(usernames).flatMap { usernameToId =>
+              val missing = usernames -- usernameToId.keySet
+              if (missing.nonEmpty)
+                F.pure(ResponseCmd.Text(StatusCode.BadRequest, s"Unknown usernames: ${missing.iterator.map(_.value).mkString(", ")}"))
+              else {
+                val ves = VerifiedEvent.Seq.empty ++ ees.iterator.map { ee =>
+                  VerifiedEvent(ee.ord, ee.event, usernameToId(ee.author), ee.createdAt)
+                }
+                val creatorId = ves.head.author
+                val creator = ProjectCreator(creatorId)
+                ApplyEvent.untrusted(ves)(Project.init(creator)) match {
+                  case \/-(p) =>
+                    for {
+                      key <- crypto.generateKey256
+                      pid <- db.importProject(creatorId, ves, p, ProjectEncryptionKey(key))
+                    } yield {
+                      val response = CreateProjectResult(creatorId, pid)
+                      ResponseCmd.Json(StatusCode.OK, response.toJson)
+                    }
+                  case -\/(err) =>
+                    F pure ResponseCmd.Text(StatusCode.Forbidden, err.value)
+                }
               }
-            case None =>
-              F pure ResponseCmd.Text(StatusCode.BadRequest, "User not found")
+            }
           }
         case -\/(res) =>
           F pure res
       }
 
-    private def decodeEvents(jsonStr: String): ResponseCmd \/ VerifiedEvent.Seq =
-      decode[VerifiedEvent.Seq](jsonStr) match {
-        case Right(ves) => \/-(ves)
+    private def decodeEvents(jsonStr: String): ResponseCmd \/ Vector[ExportedEvent] =
+      decode[Vector[ExportedEvent]](jsonStr) match {
+        case Right(ees) => \/-(ees)
         case Left(e) => -\/(ResponseCmd.Text(StatusCode.BadRequest, "Failed to parse event JSON: " + e))
       }
   }
@@ -146,6 +163,34 @@ object OpsEndpointLogic extends HasLogger {
 
   private implicit val encoderInstant: Encoder[Instant] =
     Encoder.encodeString.contramap(_.toStringIso8601)
+
+  private implicit val encoderEventOrd: Encoder[EventOrd] =
+    Encoder.encodeInt.contramap(_.value)
+
+  private implicit val decoderEventOrd: Decoder[EventOrd] =
+    Decoder.decodeInt.map(EventOrd.apply)
+
+  private implicit val encoderUsername: Encoder[Username] =
+    Encoder.encodeString.contramap(_.value)
+
+  private implicit val decoderUsername: Decoder[Username] =
+    Decoder.decodeString.map(Username.apply)
+
+  private implicit val encoderExportedEvent: Encoder[ExportedEvent] = {
+    import shipreq.webapp.member.project.protocol.json.Latest.encoderEvent
+    Encoder.instance { e =>
+      Json.obj(
+        "#"         -> e.ord.asJson,
+        "event"     -> e.event.asJson,
+        "author"    -> e.author.asJson,
+        "createdAt" -> e.createdAt.asJson)
+    }
+  }
+
+  private implicit val decoderExportedEvent: Decoder[ExportedEvent] = {
+    import shipreq.webapp.member.project.protocol.json.Latest.decoderEvent
+    Decoder.forProduct4("#", "event", "author", "createdAt")(ExportedEvent.apply)
+  }
 
   trait HasJson {
     def toJson: Json
@@ -216,4 +261,6 @@ object OpsEndpointLogic extends HasLogger {
         "userId"    -> userId.value.asJson,
         "projectId" -> projectId.value.asJson)
   }
+
+  final case class ExportedEvent(ord: EventOrd, event: Event, author: Username, createdAt: Instant)
 }
