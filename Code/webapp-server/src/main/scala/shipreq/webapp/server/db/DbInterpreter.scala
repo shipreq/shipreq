@@ -614,7 +614,7 @@ object DbInterpreter {
                                           events : VerifiedEvent.Seq,
                                           project: Project,
                                           encKey : ProjectEncryptionKey): ConnectionIO[ProjectId] = {
-      val events_init  = 0
+      val events_init  = 2
       val events_total = events.size
       val reqs_live    = project.content.reqs.reqIterator().count(_.live(project.config.reqTypes) is Live)
       val reqs_total   = project.content.reqs.size
