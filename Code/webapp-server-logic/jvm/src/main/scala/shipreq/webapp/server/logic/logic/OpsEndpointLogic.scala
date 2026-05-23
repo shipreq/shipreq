@@ -29,7 +29,7 @@ trait OpsEndpointLogic[F[_]] {
 
   def sendMail(emailAddr: String): F[ErrorMsg \/ SendMailResult]
 
-  def getProjectEvents(pid: ProjectId): F[ResponseCmd]
+  def exportProject(pid: ProjectId): F[ResponseCmd]
 
   def importProject(user: Username \/ EmailAddr, eventsJson: String): F[ResponseCmd]
 }
@@ -88,7 +88,7 @@ object OpsEndpointLogic extends HasLogger {
         } yield \/-(SendMailResult(r._1, r._2, token))
       )
 
-    override def getProjectEvents(pid: ProjectId): F[ResponseCmd] =
+    override def exportProject(pid: ProjectId): F[ResponseCmd] =
       db.getProjectEvents(pid).flatMap {
         case \/-(ves) =>
           if (ves.isEmpty)
