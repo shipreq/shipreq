@@ -33,9 +33,6 @@ object ApplyNewEvent {
         Failure(err)
     }
 
-  def apply(r: MakeEvent.Result, p1: Project): Result =
-    r.flatMap(apply(_, p1))
-
   def mustApply(e: ActiveEvent, p1: Project): Updated =
     apply(e, p1) match {
       case Success(a) => a

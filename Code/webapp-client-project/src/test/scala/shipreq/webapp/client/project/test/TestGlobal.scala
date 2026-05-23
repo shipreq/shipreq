@@ -8,7 +8,7 @@ import org.scalajs.dom.{EventTarget, document, html}
 import scala.scalajs.js
 import shipreq.base.util.JsExt._
 import shipreq.base.util.{Allow, ErrorMsg, JsTimers, PotentialChange, Retries}
-import shipreq.webapp.base.data.{EmailAddr, ProjectCreator, ProjectRole, Rolodex, UserId, Username}
+import shipreq.webapp.base.data.{EmailAddr, ProjectCreator, Rolodex, UserId, Username}
 import shipreq.webapp.base.lib.LoggerJs
 import shipreq.webapp.base.protocol._
 import shipreq.webapp.base.protocol.binary.SafePickler
@@ -215,14 +215,15 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
         }.toMap),
       )
 
-    def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result, requiredRole: ProjectRole): MsgFn[I] = input => Some {
+    def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result): MsgFn[I] = input => Some {
       def run(p1: Project): CallbackTo[WsReqRes.EventResult] = {
 
         val result: PotentialChange[ErrorMsg, ApplyNewEvent.Updated] =
           for {
-            _ <- p1.access.requirePC(requiredRole, userId)
-            er = mkEvent(input, p1)
-            u <- ApplyNewEvent(er, p1)
+            e           <- mkEvent(input, p1)
+            requiredRole = EventPermission.requiredRole(userId, e)
+            _           <- p1.access.requirePC(requiredRole, userId)
+            u           <- ApplyNewEvent(e, p1)
           } yield u
 
         result match {
@@ -244,29 +245,28 @@ final class TestGlobal(initialProjectLibrary: ProjectLibrary.WithMetaData,
       pxProject.toCallback.flatMap(run)
     }
 
-    def updateProjectI[I](mkEvent: I => MakeEvent.Result, requiredRole: ProjectRole): MsgFn[I] =
-      updateProject((i, _) => mkEvent(i), requiredRole)
+    def updateProjectI[I](mkEvent: I => MakeEvent.Result): MsgFn[I] =
+      updateProject((i, _) => mkEvent(i))
 
-    // This logic is duplicated in ProjectSpaLogic
     val msgFold = WsReqRes.Fold[MsgFoldIn, MsgFoldOut](
       onInitApp               = _ => None,
       onReconnect             = _ => None,
       onSync                  = _ => None,
-      onUpdateConfig          = updateProject (MakeEvent.updateConfig, ProjectRole.Collaborator),
-      onCreateContent         = updateProject (MakeEvent.createContent, ProjectRole.Collaborator),
-      onUpdateContent         = updateProject (MakeEvent.updateContent, ProjectRole.Collaborator),
-      onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn, ProjectRole.Admin),
-      onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews, ProjectRole.Collaborator),
-      onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues, ProjectRole.Collaborator),
-      onFieldMandatorinessMod = _ => None,
-      onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod, ProjectRole.Collaborator),
+      onUpdateConfig          = updateProject (MakeEvent.updateConfig),
+      onCreateContent         = updateProject (MakeEvent.createContent),
+      onUpdateContent         = updateProject (MakeEvent.updateContent),
+      onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
+      onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
+      onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
+      onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
       onUpdateAccess          = cmd =>
         UpdateAccessCmd.resolve[CallbackTo, MsgFoldOut[WsReqRes.UpdateAccess.type]](cmd)(
           userId     = userId,
           getUserId  = u => CallbackTo(TestGlobal.userDb.get(u)),
           onNotFound = Some(CallbackTo.pure(-\/(ErrorMsg("User not found.")))),
-          modify     = (m, p) => CallbackTo.pure(updateProject(MakeEvent.updateAccess, p)(m))
+          modify     = m => CallbackTo.pure(updateProject(MakeEvent.updateAccess)(m))
         ).runNow(),
+      onFieldMandatorinessMod = _ => None,
     )
 
     testReq => {

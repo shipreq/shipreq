@@ -486,7 +486,7 @@ abstract class ProjectSpaLogicTest(cfg: Config) extends TestSuite {
       "denyCollaborator" - {
         implicit val t = new Tester; import t._
         val static3 = p1.static.copy(user = user3.toUser)
-        val cmd = UpdateAccessCmd.Modify(user2.id, None)
+        val cmd = UpdateAccessCmd.Modify(user3.id, Some(ProjectRole.Admin))
         val req = WsReqRes.UpdateAccess.AndReq(cmd)
         val result = sendMsg(req, static3, subscribedState)._1
         assertEq(result, \/-(-\/(ErrorMsg("Admin rights required."))))

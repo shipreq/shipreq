@@ -16,7 +16,7 @@ import shipreq.webapp.base.protocol.websocket._
 import shipreq.webapp.base.util._
 import shipreq.webapp.member.project.data._
 import shipreq.webapp.member.project.event.EventOrd.Implicits._
-import shipreq.webapp.member.project.event.{ApplyEvent, Event, EventOrd, VerifiedEvent}
+import shipreq.webapp.member.project.event.{ApplyEvent, Event, EventOrd, EventPermission, VerifiedEvent}
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WebSocket.Push
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.WsReqRes.EventResult
 import shipreq.webapp.member.project.protocol.websocket.ProjectSpaProtocols.{InitAppData, StateUpdate, Supplimentary, WsReqRes}
@@ -450,20 +450,19 @@ object ProjectSpaLogic extends StrictLogging {
       private type MsgFoldIn [R <: WsReqRes] = MsgFnIn[F, R#RequestType]
       private type MsgFoldOut[R <: WsReqRes] = F[MsgError \/ MsgFnOut[F, R#ResponseType]]
 
-      // This logic is duplicated in TestGlobal
       private val msgFold = WsReqRes.Fold[MsgFoldIn, MsgFoldOut](
         onInitApp               = onInitApp,
         onReconnect             = onReconnect,
         onSync                  = onSync,
-        onUpdateConfig          = updateProject (MakeEvent.updateConfig, ProjectRole.Collaborator),
-        onCreateContent         = updateProject (MakeEvent.createContent, ProjectRole.Collaborator),
-        onUpdateContent         = updateProject (MakeEvent.updateContent, ProjectRole.Collaborator),
-        onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn, ProjectRole.Admin),
-        onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews, ProjectRole.Collaborator),
-        onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues, ProjectRole.Collaborator),
-        onFieldMandatorinessMod = _ => F.pure(-\/(MsgError.FunctionNoLongerSupported("fieldMandatorinessMod"))),
-        onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod, ProjectRole.Collaborator),
+        onUpdateConfig          = updateProject (MakeEvent.updateConfig),
+        onCreateContent         = updateProject (MakeEvent.createContent),
+        onUpdateContent         = updateProject (MakeEvent.updateContent),
+        onProjectNameSet        = updateProjectI(MakeEvent.projectNameSetFn),
+        onUpdateSavedViews      = updateProject (MakeEvent.updateSavedViews),
+        onUpdateManualIssues    = updateProject (MakeEvent.updateManualIssues),
+        onReqTypeImplicationMod = updateProjectI(MakeEvent.reqTypeImplicationMod),
         onUpdateAccess          = onUpdateAccess,
+        onFieldMandatorinessMod = _ => F.pure(-\/(MsgError.FunctionNoLongerSupported("fieldMandatorinessMod"))),
       )
 
       private val writeSnapshotInsteadOfEvents: Int => Boolean =
@@ -499,16 +498,16 @@ object ProjectSpaLogic extends StrictLogging {
           }.flatMap(identity)
       }
 
-      private def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result, requiredRole: ProjectRole): MsgFn[I, EventResult] =
-        in => projectUpdater(in.static.projectId, in.static.creator, in.static.user.id, mkEvent(in.input, _), requiredRole).map {
+      private def updateProject[I](mkEvent: (I, Project) => MakeEvent.Result): MsgFn[I, EventResult] =
+        in => projectUpdater(in.static.projectId, in.static.creator, in.static.user.id, mkEvent(in.input, _)).map {
           case ProjectUpdater.Result.Ok(upd)                 => \/-(MsgFnOut(\/-(upd), None))
           case ProjectUpdater.Result.Reject(e)               => \/-(MsgFnOut(-\/(e), None))
           case ProjectUpdater.Result.ServerBehindDatabase(e) => -\/(MsgError.ServerBehindDatabase(e))
           case ProjectUpdater.Result.ServerBehindRedis(e)    => -\/(MsgError.ServerBehindRedis(e))
         }
 
-      private def updateProjectI[I](mkEvent: I => MakeEvent.Result, requiredRole: ProjectRole): MsgFn[I, EventResult] =
-        updateProject((i, _) => mkEvent(i), requiredRole)
+      private def updateProjectI[I](mkEvent: I => MakeEvent.Result): MsgFn[I, EventResult] =
+        updateProject((i, _) => mkEvent(i))
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -707,7 +706,7 @@ object ProjectSpaLogic extends StrictLogging {
           userId     = in.static.user.id,
           getUserId  = u => runDB(db.getUserId(u)),
           onNotFound = \/-(MsgFnOut(-\/(ErrorMsg("User not found.")), None)),
-          modify     = (m, p) => updateProject(MakeEvent.updateAccess, p)(in.copy(input = m))
+          modify     = m => updateProject(MakeEvent.updateAccess)(in.copy(input = m))
         )
 
       // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -752,11 +751,10 @@ object ProjectSpaLogic extends StrictLogging {
                                                  trace   : Trace.Algebra[F]) {
     import ProjectUpdater._
 
-    def apply(pid         : ProjectId,
-              creator     : ProjectCreator,
-              userId      : UserId,
-              mkEvent     : Project => MakeEvent.Result,
-              requiredRole: ProjectRole,
+    def apply(pid    : ProjectId,
+              creator: ProjectCreator,
+              userId : UserId,
+              mkEvent: Project => MakeEvent.Result,
              ): F[Result] = {
 
       var gas = 200
@@ -814,9 +812,10 @@ object ProjectSpaLogic extends StrictLogging {
 
             val result: PotentialChange[ErrorMsg, ApplyNewEvent.Updated] =
               for {
-                _ <- project.access.requirePC(requiredRole, userId)
-                e <- mkEvent(project)
-                u <- ApplyNewEvent(e, project)
+                e           <- mkEvent(project)
+                requiredRole = EventPermission.requiredRole(userId, e)
+                _           <- project.access.requirePC(requiredRole, userId)
+                u           <- ApplyNewEvent(e, project)
               } yield u
 
             result match {
