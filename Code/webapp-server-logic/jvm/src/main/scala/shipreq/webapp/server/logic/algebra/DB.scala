@@ -176,6 +176,52 @@ object DB {
     def getUserId(e: Username \/ EmailAddr): F[Option[UserId]]
   }
 
+  trait GetUserMetaData[F[_]] extends GetUserId[F] with Effect[F] {
+
+    /** @return Either usernames for all provided user ids, or a set of invalid user ids. */
+    def getUsernamesByUserIdNE(userIds: NonEmptySet[UserId]): F[NonEmptySet[UserId] \/ Map[UserId, Username]]
+
+    final def getUsernamesByUserId(userIds: Set[UserId]): F[NonEmptySet[UserId] \/ Map[UserId, Username]] =
+      if (userIds.isEmpty)
+        F.pure(\/-(Map.empty))
+      else
+        getUsernamesByUserIdNE(NonEmptySet force userIds)
+
+    final def needUsernamesByUserId(userIds: Set[UserId]): F[Map[UserId, Username]] =
+      if (userIds.isEmpty)
+        F.pure(Map.empty)
+      else
+        needUsernamesByUserIdNE(NonEmptySet force userIds)
+
+    final def needUsernamesByUserIdNE(userIds: NonEmptySet[UserId]): F[Map[UserId, Username]] =
+      F.map(getUsernamesByUserIdNE(userIds)) {
+        case \/-(m) => m
+        case -\/(e) => throw new RuntimeException("Invalid user ids specified to needUsernamesByUserIdNE: " + e)
+      }
+
+    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
+    def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]]
+
+    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
+    final def getUserIdsByUsername(usernames: Set[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]] =
+      if (usernames.isEmpty)
+        F.pure(\/-(Map.empty))
+      else
+        getUserIdsByUsernameNE(NonEmptySet force usernames)
+
+    final def needUserIdsByUsername(usernames: Set[Username]): F[Map[Username, UserId]] =
+      if (usernames.isEmpty)
+        F.pure(Map.empty)
+      else
+        needUserIdsByUsernameNE(NonEmptySet force usernames)
+
+    final def needUserIdsByUsernameNE(usernames: NonEmptySet[Username]): F[Map[Username, UserId]] =
+      F.map(getUserIdsByUsernameNE(usernames)) {
+        case \/-(m) => m
+        case -\/(e) => throw new RuntimeException("Invalid usernames specified to needUserIdsByUsernameNE: " + e)
+      }
+  }
+
   trait ForUserRegistration[F[_]] extends Base[F] with VerificationTokenReadOnly[F] with GetUserId[F] {
 
     def getUserRegistration(e: EmailAddr): F[Option[UserRegistration]]
@@ -343,7 +389,7 @@ object DB {
 
   trait ForProjectSpa[F[_]]
       extends Base[F]
-         with GetUserId[F]
+         with GetUserMetaData[F]
          with GetProjectMetaData[F]
          with GetProjectEvents[F]
          with SaveProjectEvent[F] {
@@ -351,38 +397,6 @@ object DB {
     def projectSpaInitPage(id: ProjectId, uid: UserId): F[Option[ProjectSpaInitPage]]
 
     def getProjectRolodex(id: ProjectId): F[Rolodex]
-
-    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
-    final def getUserIdsByUsername(usernames: Set[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]] =
-      if (usernames.isEmpty)
-        F.pure(\/-(Map.empty))
-      else
-        getUserIdsByUsernameNE(NonEmptySet force usernames)
-
-    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
-    def getUserIdsByUsernameNE(usernames: NonEmptySet[Username]): F[NonEmptySet[Username] \/ Map[Username, UserId]]
-
-    /** @return Either user ids for all provided usernames, or a set of invalid usernames. */
-    final def getUsernamesByUserId(userIds: Set[UserId]): F[NonEmptySet[UserId] \/ Map[UserId, Username]] =
-      if (userIds.isEmpty)
-        F.pure(\/-(Map.empty))
-      else
-        getUsernamesByUserIdNE(NonEmptySet force userIds)
-
-    /** @return Either usernames for all provided user ids, or a set of invalid user ids. */
-    def getUsernamesByUserIdNE(userIds: NonEmptySet[UserId]): F[NonEmptySet[UserId] \/ Map[UserId, Username]]
-
-    final def needUsernamesByUserId(userIds: Set[UserId]): F[Map[UserId, Username]] =
-      if (userIds.isEmpty)
-        F.pure(Map.empty)
-      else
-        needUsernamesByUserIdNE(NonEmptySet force userIds)
-
-    final def needUsernamesByUserIdNE(userIds: NonEmptySet[UserId]): F[Map[UserId, Username]] =
-      F.map(getUsernamesByUserIdNE(userIds)) {
-        case \/-(m) => m
-        case -\/(e) => throw new RuntimeException("Invalid user ids specified to needUsernamesByUserIdNE: " + e)
-      }
   }
 
   final case class ProjectSpaInitPage(creatorId : UserId,
@@ -395,13 +409,11 @@ object DB {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  trait ForOps[F[_]] extends GetProjectEvents[F] with OnSaveProjectEvent[F] { self =>
+  trait ForOps[F[_]] extends GetUserMetaData[F] with GetProjectEvents[F] with OnSaveProjectEvent[F] { self =>
     val now       : F[Instant]
     val userStats : F[ForOps.UserStats]
     val tableStats: F[List[ForOps.TableStat]]
     val dbSize    : F[Long]
-
-    def getUserId(user: Username \/ EmailAddr): F[Option[UserId]]
 
     protected def _importProject(userId : UserId,
                                  events : VerifiedEvent.Seq,
@@ -426,6 +438,8 @@ object DB {
         override val dbSize = t(self.dbSize)
         override def getProjectEvents(a: ProjectId, b: EventFilter) = t(self.getProjectEvents(a, b))
         override def getUserId(a: Username \/ EmailAddr) = t(self.getUserId(a))
+        override def getUsernamesByUserIdNE(a: NonEmptySet[UserId]) = t(self.getUsernamesByUserIdNE(a))
+        override def getUserIdsByUsernameNE(a: NonEmptySet[Username]) = t(self.getUserIdsByUsernameNE(a))
         override def _importProject(a: UserId, b: VerifiedEvent.Seq, c: Project, d: ProjectEncryptionKey) = t(self._importProject(a, b, c, d))
         override def updateProjectAccess(a: ProjectId, b: Set[UserId], c: Map[UserId,ProjectRole]) = t(self.updateProjectAccess(a, b, c))
         override def updateProjectName(a: ProjectId, b: Project.Name): G[Unit] = t(self.updateProjectName(a, b))
