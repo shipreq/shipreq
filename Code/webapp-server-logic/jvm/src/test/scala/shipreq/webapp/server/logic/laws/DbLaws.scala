@@ -73,7 +73,7 @@ abstract class DbLaws extends TestSuite {
     def needUserId(u: Username): UserId =
       db.getUserIdsByUsername(Set(u)).getOrThrow()(u)
 
-    def getProjectAccessAsIds(pid: ProjectId): Map[UserId, ProjectRole] =
+    def getProjectAccessAsMap(pid: ProjectId): Map[UserId, ProjectRole] =
       db.getProjectAccess(pid).asMap
 
     def getUserIdsByUsername(ids: Set[Username]): NonEmptySet[Username] \/ Map[Username, UserId] =
@@ -123,16 +123,16 @@ abstract class DbLaws extends TestSuite {
   private def testUpdateProjectAccess(t: Tester, pid: ProjectId)(access: (UserId, Option[ProjectRole])*)
                                      (expect: SaveProjectEventError \/ Map[UserId, ProjectRole])(implicit q: Line): Unit = {
 
-    // Apply access events
-    val before = t.getProjectAccessAsIds(pid)
+    // Test db.saveProjectEvent and access events application
+    val before = t.getProjectAccessAsMap(pid)
     val actual = t.db.updateProjectAccess(pid, access.toMap)
     assertEq(actual, expect.void)
 
     // Test db.getProjectAccess
     val expectAfter = expect.getOrElse(before)
-    assertMap(expectAfter, t.getProjectAccessAsIds(pid))
+    assertMap(expectAfter, t.getProjectAccessAsMap(pid))
 
-    // Test that all users with access are in the rolodex
+    // Test db.getProjectRolodex: test that all known users are in the rolodex
     val p            = t.db.loadProject(pid)
     val allAuthors   = p.allKnownUsers
     val rolodex      = t.db.getProjectRolodex(pid)

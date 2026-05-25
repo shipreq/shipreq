@@ -286,6 +286,7 @@ final case class Project(name        : Project.Name,
 
   lazy val allKnownUsers: Set[UserId] =
     access.asMap.keySet ++
+      // This covers all VerifiedEvent authors
       history.events.iterator.map(_.event).flatMap {
         case e: Event.AccessUpdate => Some(e.userId)
         case _                     => None
