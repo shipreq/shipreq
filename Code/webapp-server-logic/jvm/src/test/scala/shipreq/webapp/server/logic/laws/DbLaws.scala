@@ -41,19 +41,23 @@ abstract class DbLaws extends TestSuite {
     def getProjectEvents: ProjectId => ReadProjectEventError \/ VerifiedEvent.Seq
     def saveProjectEvent: (ProjectId, EventOrd, ActiveEvent, Project, UserId) => SaveProjectEventError \/ VerifiedEvent
 
-    final def addEvent(pid: ProjectId, e: ActiveEvent): SaveProjectEventError \/ Unit = {
+    final def loadProject(pid: ProjectId): Project = {
       val creator = needProjectCreator(pid)
       val events  = getProjectEvents(pid).getOrThrow()
-      val p1      = applyVerifiedEventsSuccessfully(Project.init(creator), events)
-      val uid     = p1.access.adminIterator().next()
-      val ve      = VerifiedEvent(p1.history.nextOrd, e, uid, Instant.now())
-      val p2      = ApplyEvent.trusted(ve)(p1).fold(_.throwException(), identity)
+      applyVerifiedEventsSuccessfully(Project.init(creator), events)
+    }
+
+    final def addEvent(pid: ProjectId, e: ActiveEvent): SaveProjectEventError \/ Unit = {
+      val p1  = loadProject(pid)
+      val uid = p1.access.adminIterator().next()
+      val ve  = VerifiedEvent(p1.history.nextOrd, e, uid, Instant.now())
+      val p2  = ApplyEvent.trusted(ve)(p1).fold(_.throwException(), identity)
       saveProjectEvent(pid, ve.ord, e, p2, uid).void
     }
 
     final def updateProjectAccess(pid: ProjectId, updates: Map[UserId, Option[ProjectRole]]): SaveProjectEventError \/ Unit =
       updates.toList
-        .sortBy(e => if (e._2.nonEmpty) -e._1.value else e._1.value)
+        .sortBy(e => if (e._2.nonEmpty) -e._1.value else e._1.value) // do adds before removes
         .traverseVoid(e => addEvent(pid, Event.AccessUpdate(e._1, e._2)))
   }
 
@@ -66,21 +70,10 @@ abstract class DbLaws extends TestSuite {
     def createProject(uid: UserId): ProjectId =
       db.createProject(uid, Vector.empty, Project.empty, genProjectEncryptionKey.sample())
 
-    def assertProjectAccess(pid: ProjectId)(entries: (UserId, ProjectRole)*)(implicit q: Line): Unit = {
-      val expect = entries.toMap
-      assert(expect.size == entries.size)
-      val actual = getProjectAccessByIds(pid)
-      assertMap(actual, expect)
-
-      val actualRolodex = db.getProjectRolodex(pid)
-      val expectRolodex = Rolodex(db.getUsernamesByUserId(expect.keySet).getOrThrow())
-      assertEq(actualRolodex, expectRolodex)
-    }
-
     def needUserId(u: Username): UserId =
       db.getUserIdsByUsername(Set(u)).getOrThrow()(u)
 
-    def getProjectAccessByIds(pid: ProjectId): Map[UserId, ProjectRole] =
+    def getProjectAccessAsIds(pid: ProjectId): Map[UserId, ProjectRole] =
       db.getProjectAccess(pid).asMap
 
     def getUserIdsByUsername(ids: Set[Username]): NonEmptySet[Username] \/ Map[Username, UserId] =
@@ -98,10 +91,12 @@ abstract class DbLaws extends TestSuite {
       val t = new Tester
 
       // Create some irrelevant noise
-      val u = db.createUser()
-      t.createProject(u)
+      t.createProject(db.createUser())
 
-      f(t, db.createUser())
+      // Create a user for tests
+      val u = db.createUser()
+
+      f(t, u)
     }
 
   // ===================================================================================================================
@@ -128,12 +123,21 @@ abstract class DbLaws extends TestSuite {
   private def testUpdateProjectAccess(t: Tester, pid: ProjectId)(access: (UserId, Option[ProjectRole])*)
                                      (expect: SaveProjectEventError \/ Map[UserId, ProjectRole])(implicit q: Line): Unit = {
 
-    val before = t.getProjectAccessByIds(pid)
+    // Apply access events
+    val before = t.getProjectAccessAsIds(pid)
     val actual = t.db.updateProjectAccess(pid, access.toMap)
-    assertEq(actual.void, expect.void)
+    assertEq(actual, expect.void)
 
+    // Test db.getProjectAccess
     val expectAfter = expect.getOrElse(before)
-    assertMap(expectAfter, t.getProjectAccessByIds(pid))
+    assertMap(expectAfter, t.getProjectAccessAsIds(pid))
+
+    // Test that all users with access are in the rolodex
+    val p            = t.db.loadProject(pid)
+    val allAuthors   = p.access.asMap.keySet
+    val rolodex      = t.db.getProjectRolodex(pid)
+    val rolodexUsers = rolodex.asMap.keySet
+    assertEq(rolodexUsers, allAuthors)
   }
 
   private def addProjectMember(t: Tester, pid: ProjectId, role: ProjectRole): UserId = {
