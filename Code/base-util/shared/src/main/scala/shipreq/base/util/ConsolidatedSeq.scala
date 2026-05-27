@@ -87,14 +87,12 @@ object ConsolidatedSeq {
 
       while (it.hasNext) {
         val cur = it.next()
-        if (buffer.isEmpty)
-          buffer :+= cur
-        else {
-          val c = Candidate(buffer, cur, srcIndexStart, group)
+        for (nev <- NonEmptyVector.option(buffer)) {
+          val c = Candidate(nev, cur, srcIndexStart, group)
           if (!doConsolidate(c))
             commit()
-          buffer :+= cur
         }
+        buffer :+= cur
       }
 
       if (buffer.nonEmpty)
@@ -104,9 +102,9 @@ object ConsolidatedSeq {
     }
   }
 
-  final case class Candidate[+A](allPrev: Vector[A], cur: A, srcIndexStart: Int, group: Int) {
+  final case class Candidate[+A](allPrev: NonEmptyVector[A], cur: A, srcIndexStart: Int, group: Int) {
     val prev        = allPrev.last
-    def first       = if (allPrev.nonEmpty) allPrev.head else prev
+    def first       = allPrev.head
     def srcIndexEnd = srcIndexStart + allPrev.length
     def map[B](f: A => B) = copy(allPrev.map(f), f(cur))
   }
