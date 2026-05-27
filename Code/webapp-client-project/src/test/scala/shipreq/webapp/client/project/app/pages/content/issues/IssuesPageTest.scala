@@ -5,12 +5,14 @@ import shipreq.webapp.client.project.app.ProjectSpaTestDsl
 import shipreq.webapp.client.project.app.pages.root.Routes.Page
 import shipreq.webapp.client.project.test.PrepareEnv
 import shipreq.webapp.member.project.data.Project
-import shipreq.webapp.member.test.project.SampleProject6
+import shipreq.webapp.member.test.project.{ProjectDsl, SampleProject, SampleProject6}
+import shipreq.webapp.member.test.project.UnsafeTypes._
 import utest._
 import utest.framework.TestPath
 
 object IssuesPageTest extends TestSuite {
   import IssuesPageTestDsl._
+  import ProjectDsl._
 
   PrepareEnv()
 
@@ -338,6 +340,22 @@ object IssuesPageTest extends TestSuite {
       +> issueClasses.assert.equal(Some("Manual"))
       +> ids.assert.equal(Some("–"))
     )
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    "doubleFields" - {
+      import shipreq.webapp.member.project.text.Text
+      import SampleProject.Values._
+      val p0 = SampleProject.project
+      val t = Text.CustomTextField.parseNonEmpty(p0, None)("#TBD #TBD").get
+      val p = GReq(reqType = co, title = "Double tag").tag(priHigh).cftext(notesField, t) ! p0
+      runActions(p)(
+        *.emptyAction
+        +> issueCategories.assert.equal(Some("User-defined (2)"), None)
+        +> issueClasses.assert.equal(Some("#TBD (2)"), None)
+        +> ids.assert.equal(Some("CO-1"), None)
+        +> fieldNames.assert.equal(Some("Notes"), Some("Notes"))
+      )
+    }
 
   }
 }
