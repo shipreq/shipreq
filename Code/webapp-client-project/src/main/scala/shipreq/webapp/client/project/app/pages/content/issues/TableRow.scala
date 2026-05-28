@@ -191,13 +191,11 @@ object TableRow {
 
     private val logic = ConsolidatedSeq.Logic.cmp[Field]((a, b) => a.value.isDefined && (a ==* b))
 
-  private def renderFieldNameGroup(col: Column): ConsolidatedSeq.Group[Field] => Reusable[TD] =
-    renderGroupWithCount[Field](col, _.value.value.flatMap(_.desc).fold(na)(d => d))
+    private def renderFieldNameGroup(col: Column): ConsolidatedSeq.Group[Field] => Reusable[TD] =
+      renderGroupWithCount[Field](col, _.value.value.flatMap(_.desc).fold(na)(d => d))
 
     private def renderEditorBase: ConsolidatedSeq.Group[Any] => Reusable[TagMod] =
       g => Reusable.implicitly(g.size).map(^.rowSpan := _)
-
-// row.fieldOption.flatMap(_.desc).fold(na)(d => d)
 
     val consolidateNames   = logic(renderFieldNameGroup(Column.FieldName))
     val consolidateEditors = logic(renderEditorBase)
