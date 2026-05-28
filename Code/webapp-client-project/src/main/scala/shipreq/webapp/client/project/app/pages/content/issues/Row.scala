@@ -21,7 +21,7 @@ sealed trait Row {
   val editor: Row.EditorInput => Option[Reusable[IfApplicable[EditorNavParent.Props]]]
 
   final def issueCategoryDesc = UI.category(issue.category)
-  final val key: Key = issue.hashCode
+  val key: Key
 }
 
 object Row {
@@ -42,7 +42,8 @@ object Row {
                                  req           : GenericReq,
                                  field         : IssueField[EditorFeature.FieldKey.ForGenericReq],
                                  renderer      : RenderFeature.ForGenericReq,
-                                 actions       : List[Action]) extends ForReq {
+                                 actions       : List[Action],
+                                 key           : Key) extends ForReq {
     override val fieldOption = Some(field)
     override val editor = input => Some {
       val f      = field.key
@@ -57,7 +58,8 @@ object Row {
                               req           : UseCase,
                               field         : IssueField[EditorFeature.FieldKey.ForUseCase],
                               renderer      : RenderFeature.ForUseCase,
-                              actions       : List[Action]) extends ForReq {
+                              actions       : List[Action],
+                              key           : Key) extends ForReq {
     override val fieldOption = Some(field)
     override val editor = input => Some {
       val f      = field.key
@@ -73,7 +75,8 @@ object Row {
                                   field         : IssueField[EditorFeature.FieldKey.UseCaseStep],
                                   ucRenderer    : RenderFeature.ForUseCase,
                                   renderer      : RenderFeature.ForUseCaseSteps,
-                                  actions       : List[Action]) extends ForReq {
+                                  actions       : List[Action],
+                                  key           : Key) extends ForReq {
     override val fieldOption = Some(field)
     override val editor = input => Some {
       val f      = field.key
@@ -89,7 +92,8 @@ object Row {
                           fieldOption   : Option[IssueField[EditorFeature.FieldKey.ForCodeGroup]],
                           code          : ReqCode.Value,
                           renderer      : RenderFeature.ForCodeGroup,
-                          actions       : List[Action]) extends Row {
+                          actions       : List[Action],
+                          key           : Key) extends Row {
 
     override val editor = input =>
       fieldOption.map { field =>
@@ -102,7 +106,8 @@ object Row {
 
   final case class ForManualIssue(issue   : Issue.ManualIssue,
                                   actions : List[Action],
-                                  renderer: RenderFeature.ForManualIssues) extends Row {
+                                  renderer: RenderFeature.ForManualIssues,
+                                  key           : Key) extends Row {
     val field = IssueField.manual(issue.issue)
     override val issueClassDesc = UI.descManualIssue
     override def fieldOption = Some(field)
@@ -116,7 +121,8 @@ object Row {
 
   final case class ForConfig(issue         : Issue,
                              issueClassDesc: String,
-                             actions       : List[Action]) extends Row {
+                             actions       : List[Action],
+                             key           : Key) extends Row {
     override def fieldOption = None
     override val editor = _ => None
   }
@@ -146,6 +152,16 @@ object Row {
     implicit val cfg = p.config
     val actionBuilder = new Actions.Builder(p, routerCtl)
 
+    // Because duplicate issues are legal, using hashCode isn't enough
+    val makeKey: Issue => Key = {
+      val map = collection.mutable.Map.empty[Issue, Int]
+      i => {
+        val add = map.getOrElse(i, -1) + 1
+        map.update(i, add)
+        i.hashCode + add
+      }
+    }
+
     def forReqA(i: Issue, desc: String, req: Req, fk: IssueField[EditorFeature.FieldKey.ForAllReqs]): ForReq =
       req match {
         case r: GenericReq => forGR(i, desc, r, fk)
@@ -169,7 +185,8 @@ object Row {
         req            = req,
         field          = fk,
         renderer       = rf.forGenericReq(req.id),
-        actions        = actionBuilder(i))
+        actions        = actionBuilder(i),
+        key            = makeKey(i))
 
     def forUC(i: Issue, desc: String, req: UseCase, fk: IssueField[EditorFeature.FieldKey.ForUseCase]) =
       ForUseCase(
@@ -178,7 +195,8 @@ object Row {
         req            = req,
         field          = fk,
         renderer       = rf.forUseCase(req.id),
-        actions        = actionBuilder(i))
+        actions        = actionBuilder(i),
+        key            = makeKey(i))
 
     def forReqAndLoc(i: Issue, desc: String, r: Req, loc: LocationOf.Text.InReq): Row =
       loc match {
@@ -195,7 +213,8 @@ object Row {
         fieldOption    = fk,
         code           = p.content.reqCodes.reqCode(g.id),
         renderer       = rf.forCodeGroup(g),
-        actions        = actionBuilder(i))
+        actions        = actionBuilder(i),
+        key            = makeKey(i))
 
     def forUcsI(i: Issue, desc: String, id: UseCaseStepId): ForUseCaseStep =
       forUcs(i, desc, p.content.reqs.useCases.focusStep(id))
@@ -208,13 +227,15 @@ object Row {
         field          = IssueField.useCaseStep(f),
         ucRenderer     = rf.forUseCase(f.uc.id),
         renderer       = rf.forUseCaseSteps,
-        actions        = actionBuilder(i))
+        actions        = actionBuilder(i),
+        key            = makeKey(i))
 
     def forConfig(i: Issue, desc: String): ForConfig =
       ForConfig(
         issue          = i,
         issueClassDesc = desc,
-        actions        = actionBuilder(i))
+        actions        = actionBuilder(i),
+        key            = makeKey(i))
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -314,7 +335,7 @@ object Row {
         forReqAndLoc(i, desc, i.req, i.loc)
 
       case i: Issue.ManualIssue =>
-        ForManualIssue(i, actionBuilder(i), rf.forManualIssues)
+        ForManualIssue(i, actionBuilder(i), rf.forManualIssues, makeKey(i))
 
       case i: Issue.NonApplicableField =>
         val fieldName = cfg.fieldName(i.field.id)
