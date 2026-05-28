@@ -28,6 +28,7 @@ This uses React and Semantic UI.
 * Implicit instances of `UnivEq` should always be `def`s and not `val`s
 * Avoid calling .asInstanceOf where possible
 * Avoid calling `==*` or `!=*` when dealing with `IsoBool`s; instead call `.is`
+* Avoid catch-all cases in pattern matches. Instead of `case _ =>`, list all the remaining cases explicitly
 
 * When you grep, ignore the .metals directory
 
