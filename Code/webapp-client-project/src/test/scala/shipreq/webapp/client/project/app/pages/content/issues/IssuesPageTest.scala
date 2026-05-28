@@ -342,6 +342,8 @@ object IssuesPageTest extends TestSuite {
     )
 
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // When there are two tags in the same field in the same req, the results should be consolidated so that the view
+    // and editor for that field isn't displayed twice in a row.
     "doubleFields" - {
       import shipreq.webapp.member.project.text.Text
       import SampleProject.Values._

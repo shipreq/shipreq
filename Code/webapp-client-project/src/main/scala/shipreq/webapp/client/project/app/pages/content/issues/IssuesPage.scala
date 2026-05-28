@@ -119,7 +119,7 @@ object IssuesPage {
           renderNew,
           <.div(*.emptyCont, NoContent.render))
 
-      def renderContent(issues: Issues, project: Project) = {
+      def renderContent(issues: Issues) = {
         val filteredOut = project.issues.vector.length - issues.vector.length
 
         <.div(
@@ -136,7 +136,7 @@ object IssuesPage {
       if (issues.isEmpty)
         renderEmpty
       else
-        renderContent(pxFilteredIssues.value(), project)
+        renderContent(pxFilteredIssues.value())
     }
   }
 }
