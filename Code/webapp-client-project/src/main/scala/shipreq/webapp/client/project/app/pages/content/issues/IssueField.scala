@@ -9,6 +9,8 @@ final case class IssueField[+FK <: FieldKey](key: FK, desc: Option[String])
 object IssueField {
   import DataImplicits._
 
+  implicit def univEq: UnivEq[IssueField[FieldKey]] = UnivEq.derive
+
   val CodeGroupTitle  = IssueField(FieldKey.CodeGroupTitle , Some(SpecialBuiltInField.Title.name))
   val GenericReqTitle = IssueField(FieldKey.GenericReqTitle, Some(SpecialBuiltInField.Title.name))
   val UseCaseTitle    = IssueField(FieldKey.UseCaseTitle   , Some(SpecialBuiltInField.Title.name))

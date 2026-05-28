@@ -21,7 +21,7 @@ object Summary {
       Reusability.byRefOrUnivEq
   }
 
-  private val iconReappearances = SummaryIcon.reappearances("reappearances due to having multiple issues")
+  private val iconReappearances = SummaryIcon.reappearances("having multiple issues")
 
   def render(p: Props): VdomElement = {
     val s = p.stats

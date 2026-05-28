@@ -90,12 +90,16 @@ object Table {
          | _: Row.ForManualIssue => None
     })(TableRow.Id.apply))
 
-    val csTitles = TableRow.consolidateTitle(groupedRows(csIds, {
+    val csTitles = TableRow.consolidateTitles(groupedRows(csIds, {
       case i: Row.ForReq         => i.req.title
       case i: Row.ForRcg         => i.rcg.title
       case _: Row.ForConfig      => Text.empty
       case _: Row.ForManualIssue => Text.empty // Don't consolidate manual issue titles
     })((_, _)))
+
+    val csFieldNames   = TableRow.Field.consolidateNames  (groupedRows(csIds, _.fieldOption)(TableRow.Field.apply))
+    val csFieldEditors = TableRow.Field.consolidateEditors(groupedRows(csIds, _.fieldOption)(TableRow.Field.apply))
+    val csFieldActions = TableRow.Field.consolidateActions(groupedRows(csIds, _.fieldOption)(TableRow.Field.apply))
   }
 
   final class Backend(static: StaticProps, $: BackendScope[Props, Unit]) {
@@ -140,11 +144,11 @@ object Table {
 
             val row = rows(rowIdx)
 
-            val editor: Option[Reusable[IfApplicable[EditorNavParent.Props]]] = {
+            val editor: Option[Reusable[IfApplicable[TagMod => EditorNavParent.Props]]] = {
               row.editor(rowEditorInput).map(
                 _.tuple(Reusable.implicitly(rowIdx))
                   .map(_._1.map(p =>
-                    p.modEditor(_.onClose(focusAlternateRow(rowIdx))))))
+                    p(_).modEditor(_.onClose(focusAlternateRow(rowIdx))))))
             }
 
             val rowProps = TableRow.Props(
@@ -154,11 +158,14 @@ object Table {
               pubidFormat,
               cmdInvoker,
               p.cmdAsync.filterHolistic(cmd => row.actions.exists(_.cmdOption.exists(_ ==* cmd))), // for better Reusability
-              issueCategory = csIssueCategory(rowIdx),
-              issueClass    = csIssueClass(rowIdx),
-              idBase        = csIds(rowIdx),
-              titleBase     = csTitles(rowIdx),
-              editability   = p.editability,
+              issueCategory   = csIssueCategory(rowIdx),
+              issueClass      = csIssueClass   (rowIdx),
+              idBase          = csIds          (rowIdx),
+              titleBase       = csTitles       (rowIdx),
+              fieldName       = csFieldNames   (rowIdx),
+              fieldEditorBase = csFieldEditors (rowIdx),
+              fieldActionBase = csFieldActions (rowIdx),
+              editability     = p.editability,
             )
 
             TableRow.Component.withKey(row.key)(rowProps)

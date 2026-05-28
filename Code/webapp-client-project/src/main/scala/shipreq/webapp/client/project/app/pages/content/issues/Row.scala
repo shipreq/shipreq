@@ -2,6 +2,7 @@ package shipreq.webapp.client.project.app.pages.content.issues
 
 import japgolly.scalajs.react.extra.Px
 import japgolly.scalajs.react.{Key, Reusability, Reusable}
+import japgolly.scalajs.react.vdom.html_<^.TagMod
 import shipreq.base.util.IfApplicable
 import shipreq.webapp.client.project.app.pages.root.Routes
 import shipreq.webapp.client.project.feature.EditorFeature
@@ -18,7 +19,7 @@ sealed trait Row {
   def fieldOption: Option[IssueField[EditorFeature.FieldKey]]
   val actions: List[Action]
 
-  val editor: Row.EditorInput => Option[Reusable[IfApplicable[EditorNavParent.Props]]]
+  val editor: Row.EditorInput => Option[Reusable[IfApplicable[TagMod => EditorNavParent.Props]]]
 
   final def issueCategoryDesc = UI.category(issue.category)
   val key: Key
@@ -136,7 +137,7 @@ object Row {
                                                           (render: RenderFeature.ForField[fk.RenderFieldKey],
                                                            editor: EditorFeature.ReadWrite.ForFields[FK],
                                                            args  : fk.Args,
-                                                           pw    : Reusable[Px[ProjectWidgets.NoCtx]]): Reusable[IfApplicable[EditorNavParent.Props]] = {
+                                                           pw    : Reusable[Px[ProjectWidgets.NoCtx]]): Reusable[IfApplicable[TagMod => EditorNavParent.Props]] = {
     render(fk.forRender) match {
       case \/-(view) =>
         val e = editor(fk, pw, HideDead)

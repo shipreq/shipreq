@@ -74,7 +74,7 @@ object IssuesPageTest extends TestSuite {
         Some("FR-2"),
         Some("FR-1"))
 
-      >> row(1).col(Column.FieldEditor).edit("[UC-1.0.X.1] and [UC-1.E.X.1] are dead. [UC-1.0.2.a] and [UC-1.E.1] are not." -> "#TODO", 2)
+      >> row(1).col(Column.FieldEditor).edit("[UC-1.0.X.1] and [UC-1.E.X.1] are dead. [UC-1.0.2.a] and [UC-1.E.1] are not." -> "#TODO", 1)
       +> rowCount.assert.equal(10)
       +> issueCategories.assert.equal(
         Some("Bad data"),
@@ -360,9 +360,9 @@ object IssuesPageTest extends TestSuite {
         +> issueCategories.assert.equal(Some("User-defined (3)"), None, None)
         +> issueClasses   .assert.equal(Some("#TBD (3)"), None, None)
         +> ids            .assert.equal(Some("CO-1"), None, Some("CO-2"))
-        +> fieldNames     .assert.equal(Some("Notes"), Some("Notes"), Some("Notes"))
-        +> fieldEditors   .assert.equal(Some("#TBD #TBD"), Some("#TBD #TBD"), Some("#TBD"))
-        +> actions        .assert.equal(Some("–"), Some("–"), Some("–"))
+        +> fieldNames     .assert.equal(Some("Notes (2)"), None, Some("Notes"))
+        +> fieldEditors   .assert.equal(Some("#TBD #TBD"), None, Some("#TBD"))
+        +> actions        .assert.equal(Some("–"), None, Some("–"))
       )
     }
 

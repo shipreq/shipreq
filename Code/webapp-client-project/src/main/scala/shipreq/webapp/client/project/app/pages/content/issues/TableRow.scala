@@ -20,17 +20,20 @@ import shipreq.webapp.member.ui.BaseStyles
 object TableRow {
   type TD = VdomTagOf[html.TableCell]
 
-  final case class Props(row             : Row,
-                         columns         : NonEmptyVector[Column],
-                         editor          : Option[Reusable[IfApplicable[EditorNavParent.Props]]],
-                         pubidFormat     : ProjectWidgets.NoCtx#PubidFormat,
-                         cmdInvoker      : Action.Cmd ~=> Callback,
-                         cmdAsync        : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg],
-                         issueCategory   : Option[Reusable[TD]],
-                         issueClass      : Option[Reusable[TD]],
-                         idBase          : Option[Reusable[TD]],
-                         titleBase       : Option[Reusable[TD]],
-                         editability     : Permission,
+  final case class Props(row            : Row,
+                         columns        : NonEmptyVector[Column],
+                         editor         : Option[Reusable[IfApplicable[TagMod => EditorNavParent.Props]]],
+                         pubidFormat    : ProjectWidgets.NoCtx#PubidFormat,
+                         cmdInvoker     : Action.Cmd ~=> Callback,
+                         cmdAsync       : AsyncFeature.Read.D1[Action.Cmd, ErrorMsg],
+                         issueCategory  : Option[Reusable[TD]],
+                         issueClass     : Option[Reusable[TD]],
+                         idBase         : Option[Reusable[TD]],
+                         titleBase      : Option[Reusable[TD]],
+                         fieldName      : Option[Reusable[TD]],
+                         fieldEditorBase: Option[Reusable[TagMod]],
+                         fieldActionBase: Option[Reusable[TD]],
+                         editability    : Permission,
                         )
 
   implicit val reusabilityProps: Reusability[Props] =
@@ -62,9 +65,6 @@ object TableRow {
     val cells = VdomArray.empty()
 
     for (col <- p.columns) {
-
-      def addTD(content: TagMod, addNav: Boolean = true, allowCopy: Boolean = true) =
-        cells += cellBase(col, addNav = addNav, allowCopy = allowCopy)(content)
 
       col match {
 
@@ -99,16 +99,19 @@ object TableRow {
           }
 
         case Column.FieldName =>
-          addTD(row.fieldOption.flatMap(_.desc).fold(na)(d => d))
+          p.fieldName.foreach(cells += _.value)
 
         case Column.FieldEditor =>
-          p.editor.flatMap(_.value.toOption) match {
-            case Some(props) => cells += props.renderWithKey(col.key)
-            case None        => addTD(na, allowCopy = false)
+          for (base <- p.fieldEditorBase) {
+            val c = p.editor.flatMap(_.value.toOption) match {
+              case Some(props) => props(base).renderWithKey(col.key)
+              case None        => cellBase(col, allowCopy = false)(base, na)
+            }
+            cells += c
           }
 
         case Column.Actions =>
-          val content =
+          def content =
             if (row.actions.isEmpty)
               na
             else
@@ -129,7 +132,9 @@ object TableRow {
                   a.render
               }
 
-          addTD(content, allowCopy = false)
+          for (base <- p.fieldActionBase) {
+            cells += base(content)
+          }
       }
     }
 
@@ -144,13 +149,11 @@ object TableRow {
   // ===================================================================================================================
   // Consolidation
 
-  private type RenderGroup[-A] = ConsolidatedSeq.Group[A] => Reusable[TD]
+  private def renderGroupBase(col: Column): ConsolidatedSeq.Group[Any] => Reusable[TD] = g =>
+    Reusable.byRef(cellBase(col)(^.rowSpan := g.size))
 
-  private def renderGroupBase(col: Column): RenderGroup[Any] =
-    g => Reusable.byRef(cellBase(col)(^.rowSpan := g.size))
-
-  private def renderIssueGroup(col: Column): RenderGroup[String] = g => {
-    val base = cellBase(col)(g.value)
+  private def renderGroupWithCount[A](col: Column, renderName: ConsolidatedSeq.Group[A] => TagMod): ConsolidatedSeq.Group[A] => Reusable[TD] = g => {
+    val base = cellBase(col)(renderName(g))
     val result =
       if (g.size == 1)
         base
@@ -160,6 +163,9 @@ object TableRow {
           ^.rowSpan := g.size)
     Reusable.byRef(result)
   }
+
+  private def renderIssueGroup(col: Column): ConsolidatedSeq.Group[String] => Reusable[TD] =
+    renderGroupWithCount[String](col, _.value)
 
   private val consolidateStrings = ConsolidatedSeq.Logic.consolidateByUnivEq[String]
 
@@ -176,7 +182,27 @@ object TableRow {
 
   private val consolidateText = ConsolidatedSeq.Logic.consolidateByUnivEq[(Int, Text.AnyOptional)]
 
-  val consolidateTitle = consolidateText(renderGroupBase(Column.Title))
+  val consolidateTitles = consolidateText(renderGroupBase(Column.Title))
+
+  final case class Field(group: Int, value: Option[IssueField[EditorFeature.FieldKey]])
+
+  object Field {
+    implicit def univEq: UnivEq[Field] = UnivEq.derive
+
+    private val logic = ConsolidatedSeq.Logic.cmp[Field]((a, b) => a.value.isDefined && (a ==* b))
+
+  private def renderFieldNameGroup(col: Column): ConsolidatedSeq.Group[Field] => Reusable[TD] =
+    renderGroupWithCount[Field](col, _.value.value.flatMap(_.desc).fold(na)(d => d))
+
+    private def renderEditorBase: ConsolidatedSeq.Group[Any] => Reusable[TagMod] =
+      g => Reusable.implicitly(g.size).map(^.rowSpan := _)
+
+// row.fieldOption.flatMap(_.desc).fold(na)(d => d)
+
+    val consolidateNames   = logic(renderFieldNameGroup(Column.FieldName))
+    val consolidateEditors = logic(renderEditorBase)
+    val consolidateActions = logic(renderGroupBase(Column.Actions))
+  }
 
   // ===================================================================================================================
   // Cells
@@ -184,8 +210,8 @@ object TableRow {
   def renderEditor[A](column: Column,
                       render: => TagMod,
                       editor: EditorFeature.ReadWrite.ForEditor[A, Any],
-                      args  : A): EditorNavParent.Props = {
-    val base = cellBase(column, addNav = false)(fieldEditorTagMod)
+                      args  : A): TagMod => EditorNavParent.Props = baseTagMod => {
+    val base = cellBase(column, addNav = false)(fieldEditorTagMod, baseTagMod)
     EditorNavParent.Props(base, editor, args, render)
   }
 }
