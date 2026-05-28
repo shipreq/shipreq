@@ -95,6 +95,9 @@ object DockerEnv {
 
     private val services = Services.fromDockerCompose(env = "dev", only = Seq("postgres", "redis"))
 
+    // The port on which to serve the webapp when it's run from sbt
+    val port = 8080
+
     val commands: Project => Project =
       _.settings(
         ThisBuild / devEnvStart := services.start(),
@@ -119,7 +122,7 @@ object DockerEnv {
         .add("redis.url"          , s"redis://localhost:$redisPort")
         .add("run.mode"           , runMode)
         .add("shipreq.ssr.enabled", "false")
-        .add("shipreq.url"        , "http://localhost:8080")
+        .add("shipreq.url"        , s"http://localhost:$port")
         .asList
     }
 

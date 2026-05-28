@@ -367,6 +367,7 @@ object WebappBuild {
         dockerSettings)
       .settings(
         scalacOptions -= "-Yno-generic-signatures", // Without this, snippets break. LiveTest confirms.
+        Jetty / containerPort := DockerEnv.dev.port,
         Jetty / containerLibs := JettyDep.devRun(JVM),
         Jetty / javaOptions ++= List(
           "-XX:+UseJVMCINativeLibrary",
