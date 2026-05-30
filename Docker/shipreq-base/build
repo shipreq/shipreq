@@ -16,4 +16,7 @@ if [ "$(uname)" == "Darwin" ]; then
   perl -pi -e 's/linux-x64/linux-aarch64/g' Dockerfile
 fi
 
-exec docker build -t shipreq/base:latest .
+exec docker build \
+  --cache-from shipreq/base:latest \
+  --build-arg BUILDKIT_INLINE_CACHE=1 \
+  -t shipreq/base:latest .

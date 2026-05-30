@@ -63,7 +63,7 @@ jobs:
       run: cd Code && $SBT Test/compile
 
     - name: Test (JS)
-      run: cd Code &&  $SBT testJS
+      run: cd Code && $SBT testJS
 
     - name: Test (JVM)
-      run: cd Code &&  $SBT testJVM
+      run: cd Code && $SBT testJVM

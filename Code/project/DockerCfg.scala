@@ -16,7 +16,11 @@ object DockerCfg {
     _.settings(
 
       docker / buildOptions :=
-        BuildOptions(pullBaseImage = BuildOptions.Pull.IfMissing),
+        BuildOptions(
+          pullBaseImage       = BuildOptions.Pull.IfMissing,
+          additionalArguments = Seq(
+            "--cache-from", s"shipreq/$name:latest",
+            "--build-arg", "BUILDKIT_INLINE_CACHE=1")),
 
       docker / imageNames := {
         val imageUrl = propOrEnv(name.toUpperCase + "_IMAGE_URL")

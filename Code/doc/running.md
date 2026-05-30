@@ -104,3 +104,16 @@ bin/dev up -d taskman webapp
 ```
 
 Navigate to http://localhost:14080
+
+# Running Locally (via prebuilt docker images)
+
+*(Note: this only works for x64 architecture)*
+
+```sh
+docker pull ghcr.io/shipreq/taskman:latest
+docker pull ghcr.io/shipreq/webapp:latest
+docker tag ghcr.io/shipreq/webapp:latest shipreq/webapp:latest
+docker tag ghcr.io/shipreq/taskman:latest shipreq/taskman:latest
+cd Code
+bin/dev up -d taskman webapp
+```

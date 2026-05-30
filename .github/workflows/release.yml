@@ -1,0 +1,118 @@
+name: Release
+
+on:
+  pull_request:
+  push:
+    branches:
+      - topic/releases
+    tags:
+      - v*.*.*
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    # Required for GHCR
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      CI: 1
+      MODE: release
+      DOCKER_BUILDKIT: 1
+      NODE_OPTIONS: --max-old-space-size=3072
+      SBT: >-
+        sbt
+        --no-server
+        -Dsbt.server.autostart=false
+        -Dsbt.server.forcestart=true
+        -Dsbt.supershell=never
+        -J-XX:+ExitOnOutOfMemoryError
+
+    steps:
+
+    - name: Git checkout
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    # This allows for ssh'ing into the runner and debugging
+    # - name: Setup tmate session
+    #   uses: mxschmitt/action-tmate@v3
+    #   with:
+    #     detached: true
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Pull existing images for cache
+      run: |
+        docker pull ghcr.io/shipreq/base:latest    || true
+        docker pull ghcr.io/shipreq/taskman:latest || true
+        docker pull ghcr.io/shipreq/webapp:latest  || true
+        docker tag ghcr.io/shipreq/base:latest    shipreq/base:latest    || true
+        docker tag ghcr.io/shipreq/webapp:latest  shipreq/webapp:latest  || true
+        docker tag ghcr.io/shipreq/taskman:latest shipreq/taskman:latest || true
+
+    - name: Build base image
+      run: cd Docker/shipreq-base && ./build
+
+    - name: Setup Scala
+      uses: japgolly/setup-everything-scala@v4.1
+      with:
+        java-version: graalvm-community:17.0.9
+        node-version: 25.9.0
+
+    - name: Install JS module for Graal
+      run: gu install js
+
+    - name: Build postgres
+      run: cd Docker/dev-postgres && ./build
+
+    - name: Start test env
+      run: cd Code && bin/env test up -d
+
+    - name: Prepare Scala.js dependencies
+      run: cd Code && npm install
+
+    - name: Build
+      run: cd Code && $SBT Test/compile
+
+    - name: Test (JS)
+      run: cd Code && $SBT testJS
+
+    - name: Test (JVM)
+      run: cd Code && $SBT testJVM
+
+    - name: Build app images
+      run: cd Code && $SBT dockers
+
+    - name: Tag images
+      run: |
+        docker tag shipreq/base:latest    ghcr.io/shipreq/base:latest
+        docker tag shipreq/webapp:latest  ghcr.io/shipreq/webapp:latest
+        docker tag shipreq/taskman:latest ghcr.io/shipreq/taskman:latest
+
+        tag=git-$(git rev-parse HEAD)
+        docker tag shipreq/base:latest    ghcr.io/shipreq/base:$tag
+        docker tag shipreq/webapp:latest  ghcr.io/shipreq/webapp:$tag
+        docker tag shipreq/taskman:latest ghcr.io/shipreq/taskman:$tag
+
+    - name: Tag images with git tag
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        tag=${{ github.ref_name }}
+        docker tag shipreq/base:latest    ghcr.io/shipreq/base:$tag
+        docker tag shipreq/webapp:latest  ghcr.io/shipreq/webapp:$tag
+        docker tag shipreq/taskman:latest ghcr.io/shipreq/taskman:$tag
+
+    - name: Publish images
+      run: |
+        docker push --all-tags ghcr.io/shipreq/base
+        docker push --all-tags ghcr.io/shipreq/webapp
+        docker push --all-tags ghcr.io/shipreq/taskman
