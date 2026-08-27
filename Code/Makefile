@@ -1,4 +1,4 @@
-.PHONY: build_env ci-local ci-shell info deploy diff_prod docker-push-dev prod_ver publish pull_images push rm_targets since_prod watch_codebuild
+.PHONY: build_env ci-local ci-shell cloc info deploy diff_prod docker-push-dev prod_ver publish pull_images push rm_targets since_prod watch_codebuild
 
 GIT_SHA  := $(shell git rev-parse HEAD)
 BRANCH   := $(shell git rev-parse --abbrev-ref HEAD)
@@ -164,3 +164,6 @@ since_prod:
 
 watch_codebuild:
 	$(WATCH_CODEBUILD)
+
+cloc:
+	cloc --include-lang=Scala --exclude-dir=target,.metals,frontend,node_modules .
