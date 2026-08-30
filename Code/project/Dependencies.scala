@@ -237,7 +237,7 @@ object Dependencies {
   val postgresql   = jvmOnly("org.postgresql"              % "postgresql"            % "42.7.13")
   val redisson     = jvmOnly("org.redisson"                % "redisson"              % "4.7.0")
   val scaffeine    = jvmOnly("com.github.blemale"         %% "scaffeine"             % "5.3.0")
-  val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.19.0")
+  val scalaCheck   = jvmOnly("org.scalacheck"             %% "scalacheck"            % "1.20.0")
   val scalaLogging = jvmOnly("com.typesafe.scala-logging" %% "scala-logging"         % "3.9.6")
   val scalaXml     = jvmOnly("org.scala-lang.modules"     %% "scala-xml"             % "1.3.1")
   val scalaz       = jvmOnly("org.scalaz"                 %% "scalaz-core"           % "7.3.9") // only used for scalaz.Heap
