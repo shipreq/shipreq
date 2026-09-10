@@ -2,7 +2,31 @@ package shipreq.webapp.member.project.event
 
 import cats.Eq
 
-final case class ProjectEvents(events: VerifiedEvent.Seq) extends AnyVal with EventOrd.CmpOps {
+final case class ProjectEvents(events: VerifiedEvent.Seq) extends EventOrd.CmpOps {
+
+  // Project events must always be complete.
+  assert(
+    ordAsInt == events.size,
+    s"ProjectEvents: ordAsInt=${ordAsInt} != events.size=${events.size}. Events=$describe")
+
+  private lazy val asArray: Array[VerifiedEvent] = {
+    val a = new Array[VerifiedEvent](ordAsInt)
+    var i = 0
+    events.foreach { e =>
+      a(i) = e
+      i += 1
+    }
+    a
+  }
+
+  def need(ord: EventOrd): VerifiedEvent =
+    asArray(ord.value - 1)
+
+  def describe: String =
+    VerifiedEvent.Seq.describe(events)
+
+  override def toString: String =
+    "ProjectEvents" + describe
 
   def +(e: VerifiedEvent): ProjectEvents =
     ProjectEvents(events + e)
