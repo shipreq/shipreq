@@ -3249,9 +3249,9 @@ object RandomData {
         val genMs = milliseconds(Duration.ofDays(45))
         var i = sizeSpec.gen.run(ctx)
         while (i > 0) {
+          val o = EventOrd(i)
           i -= 1
           val e = event.run(ctx)
-          val o = EventOrd(i)
           val a = userId.run(ctx)
           val ve = VerifiedEvent(o, e, a, t)
           events += ve
