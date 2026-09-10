@@ -2,7 +2,15 @@ package shipreq.webapp.member.project.event
 
 import cats.Eq
 
-final case class ProjectEvents(events: VerifiedEvent.Seq) extends AnyVal with EventOrd.CmpOps {
+final case class ProjectEvents(events: VerifiedEvent.Seq) extends EventOrd.CmpOps {
+
+  // Project events must always be complete.
+  assert(
+    ordAsInt == events.size,
+    s"ProjectEvents: ordAsInt=${ordAsInt} != events.size=${events.size}. Events=$describeOrds")
+
+  def describeOrds: String =
+    VerifiedEvent.Seq.describe(events)
 
   def +(e: VerifiedEvent): ProjectEvents =
     ProjectEvents(events + e)
