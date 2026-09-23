@@ -1,4 +1,4 @@
-addSbtPlugin("ch.epfl.scala"      % "sbt-scalafix"             % "0.14.8")
+addSbtPlugin("ch.epfl.scala"      % "sbt-scalafix"             % "0.14.9")
 addSbtPlugin("com.earldouglas"    % "xsbt-web-plugin"          % "4.2.5")
 addSbtPlugin("com.timushev.sbt"   % "sbt-updates"              % "0.7.0")
 addSbtPlugin("com.github.sbt"     % "sbt-git"                  % "2.2.0")
