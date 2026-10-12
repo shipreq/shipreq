@@ -109,7 +109,7 @@ object Dependencies {
     val core = mm("logback-classic") ++ mm("logback-core")
 
     val withPlugins = core ++
-      jvmOnly("net.logstash.logback" % "logstash-logback-encoder" % "6.6")
+      jvmOnly("net.logstash.logback" % "logstash-logback-encoder" % "9.0")
   }
 
   object Microlibs {
