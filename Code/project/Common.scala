@@ -296,6 +296,7 @@ object Common {
         )
         .withPrettyPrint(false)
         .withCheckIR(true)
+        .withClosureCompiler(true)
       },
       // More than 1 running instance of Google Closure exponentially increases time & mem-usage
       Global / concurrentRestrictions += Tags.limit(ScalaJSTags.Link, 1)

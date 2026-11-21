@@ -35,7 +35,7 @@ object Dependencies {
   }
 
   object Doobie {
-    private val mm = MultiModule.scala("org.typelevel", "1.0.0-RC13")
+    private val mm = MultiModule.scala("org.typelevel", "1.0.0-RC14")
     val core          = mm("doobie-core")
     val postgres      = mm("doobie-postgres")
     val postgresCirce = mm("doobie-postgres-circe")
@@ -44,7 +44,7 @@ object Dependencies {
   }
 
   object Flyway {
-    private val mm = MultiModule.java("org.flywaydb", "13.12.1")
+    private val mm = MultiModule.java("org.flywaydb", "13.13.0")
     val core     = mm("flyway-core")
     val postgres = mm("flyway-database-postgresql")
     val all      = core ++ postgres
@@ -103,7 +103,7 @@ object Dependencies {
   }
 
   object Logback {
-    val version = "1.5.32"
+    val version = "1.6.8"
     private val mm = MultiModule.java("ch.qos.logback", version)
 
     val core = mm("logback-classic") ++ mm("logback-core")
@@ -179,7 +179,7 @@ object Dependencies {
   }
 
   object ScalaCSS {
-    private val ver      = "1.0.0"
+    private val ver      = "1.1.1"
     private val jvmAndJs = MultiModule.jvmAndJs("com.github.japgolly.scalacss", ver)
     private val js       = MultiModule.js("com.github.japgolly.scalacss", ver)
     val core             = jvmAndJs("core")
