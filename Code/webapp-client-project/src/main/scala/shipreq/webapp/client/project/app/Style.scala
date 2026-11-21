@@ -1935,14 +1935,14 @@ object Style extends StyleSheet.Inline {
           ),
           unsafeExt(_ + ">polygon")(
             svgStroke :=! colour,
-            svgFill := colour,
+            svgFill :=! colour,
           ),
         )
 
       val root = style(
 
         unsafeChild(s".$clsDragArrow > path")(
-          svgFill := "none",
+          svgFill.none,
           svgStrokeWidth := "3",
         ),
 
