@@ -18,6 +18,7 @@ jobs:
 
     env:
       CI: 1
+      GRAALVM_CATALOG: https://raw.githubusercontent.com/graalvm/graalvm-website/master/component-catalog/v2/graal-updater-component-catalog-java17.properties
       MODE: release
       DOCKER_BUILDKIT: 1
       NODE_OPTIONS: --max-old-space-size=4096
