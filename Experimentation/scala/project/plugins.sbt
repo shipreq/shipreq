@@ -16,7 +16,7 @@ addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.5")
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.11.2")
 
 // Benchmarking
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.2.2")
+addSbtPlugin("com.github.sbt" % "sbt-jmh" % "0.2.2")
 
 // Shows new versions available of dependencies
 addSbtPlugin("com.timushev.sbt" % "sbt-updates" % "0.1.9")
